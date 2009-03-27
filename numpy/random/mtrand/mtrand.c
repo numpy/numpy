@@ -1,4 +1,4 @@
-/* 0.9.7 on Tue Oct 28 02:15:49 2008 */
+/* 0.9.7.2 on Sat Mar 28 00:52:11 2009 */
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
@@ -49,6 +49,10 @@ static int __Pyx_GetStarArgs(PyObject **args, PyObject **kwds, char *kwd_list[],
 static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list); /*proto*/
 
 static PyObject *__Pyx_GetName(PyObject *dict, PyObject *name); /*proto*/
+
+static int __Pyx_SetItemInt(PyObject *o, Py_ssize_t i, PyObject *v); /*proto*/
+
+static PyObject *__Pyx_GetItemInt(PyObject *o, Py_ssize_t i); /*proto*/
 
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb); /*proto*/
 
@@ -247,7 +251,7 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state,__pyx_t_6mt
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":131 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":131 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyFloat_FromDouble(__pyx_v_func(__pyx_v_state)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 132; goto __pyx_L1;}
@@ -258,7 +262,7 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state,__pyx_t_6mt
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":134 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":134 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -278,18 +282,18 @@ static PyObject *__pyx_f_6mtrand_cont0_array(rk_state *__pyx_v_state,__pyx_t_6mt
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":135 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":135 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":136 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":136 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":137 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":137 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":139 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":139 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -323,7 +327,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state,__pyx_t_
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":148 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":148 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyFloat_FromDouble(__pyx_v_func(__pyx_v_state,__pyx_v_a)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 149; goto __pyx_L1;}
@@ -334,7 +338,7 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state,__pyx_t_
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":151 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":151 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 151; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 151; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -354,18 +358,18 @@ static PyObject *__pyx_f_6mtrand_cont1_array_sc(rk_state *__pyx_v_state,__pyx_t_
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":152 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":152 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":153 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":153 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":154 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":154 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_a);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":156 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":156 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -410,44 +414,44 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state,__pyx_t_6mt
   __pyx_v_itera = ((PyArrayIterObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":167 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":167 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":168 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":168 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_oa->nd,__pyx_v_oa->dimensions,NPY_DOUBLE); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 168; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":169 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":169 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":170 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":170 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":171 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":171 */
     __pyx_2 = PyArray_IterNew(((PyObject *)__pyx_v_oa)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 171; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_itera));
     __pyx_v_itera = ((PyArrayIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":172 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":172 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":173 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":173 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(((double *)__pyx_v_itera->dataptr)[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":174 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":174 */
       PyArray_ITER_NEXT(__pyx_v_itera);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":176 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":176 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 176; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 176; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -467,17 +471,17 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state,__pyx_t_6mt
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":177 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":177 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":178 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":178 */
     __pyx_3 = PyArray_MultiIterNew(2,((void *)arrayObject),((void *)__pyx_v_oa)); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 178; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_3)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_3);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":180 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":180 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 181; goto __pyx_L1;}
@@ -492,23 +496,23 @@ static PyObject *__pyx_f_6mtrand_cont1_array(rk_state *__pyx_v_state,__pyx_t_6mt
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":182 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":182 */
     __pyx_5 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_5; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":183 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":183 */
       __pyx_v_oa_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":184 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":184 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_oa_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":185 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":185 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,1);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":186 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":186 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -543,7 +547,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state,__pyx_t_
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":195 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":195 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyFloat_FromDouble(__pyx_v_func(__pyx_v_state,__pyx_v_a,__pyx_v_b)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 196; goto __pyx_L1;}
@@ -554,7 +558,7 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state,__pyx_t_
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":198 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":198 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 198; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 198; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -574,18 +578,18 @@ static PyObject *__pyx_f_6mtrand_cont2_array_sc(rk_state *__pyx_v_state,__pyx_t_
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":199 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":199 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":200 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":200 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":201 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":201 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_a,__pyx_v_b);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":203 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":203 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -629,48 +633,48 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state,__pyx_t_6mt
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":216 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":216 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":217 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":217 */
     __pyx_2 = PyArray_MultiIterNew(2,((void *)__pyx_v_oa),((void *)__pyx_v_ob)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 217; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":218 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":218 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_multi->nd,__pyx_v_multi->dimensions,NPY_DOUBLE); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 218; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":219 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":219 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":220 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":220 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":221 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":221 */
       __pyx_v_oa_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,0));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":222 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":222 */
       __pyx_v_ob_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":223 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":223 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_oa_data[0]),(__pyx_v_ob_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":224 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":224 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":226 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":226 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; goto __pyx_L1;}
     __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -690,17 +694,17 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state,__pyx_t_6mt
     arrayObject = ((PyArrayObject *)__pyx_5);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":227 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":227 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":228 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":228 */
     __pyx_4 = PyArray_MultiIterNew(3,((void *)arrayObject),((void *)__pyx_v_oa),((void *)__pyx_v_ob)); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 228; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_4)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":229 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":229 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 230; goto __pyx_L1;}
@@ -715,29 +719,29 @@ static PyObject *__pyx_f_6mtrand_cont2_array(rk_state *__pyx_v_state,__pyx_t_6mt
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":231 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":231 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":232 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":232 */
       __pyx_v_oa_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":233 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":233 */
       __pyx_v_ob_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":234 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":234 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_oa_data[0]),(__pyx_v_ob_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":235 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":235 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,1);
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":236 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":236 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,2);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":237 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":237 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -772,7 +776,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state,__pyx_t_
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":247 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":247 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyFloat_FromDouble(__pyx_v_func(__pyx_v_state,__pyx_v_a,__pyx_v_b,__pyx_v_c)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 248; goto __pyx_L1;}
@@ -783,7 +787,7 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state,__pyx_t_
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":250 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":250 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 250; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 250; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -803,18 +807,18 @@ static PyObject *__pyx_f_6mtrand_cont3_array_sc(rk_state *__pyx_v_state,__pyx_t_
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":251 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":251 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":252 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":252 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":253 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":253 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_a,__pyx_v_b,__pyx_v_c);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":255 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":255 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -860,51 +864,51 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state,__pyx_t_6mt
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":269 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":269 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":270 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":270 */
     __pyx_2 = PyArray_MultiIterNew(3,((void *)__pyx_v_oa),((void *)__pyx_v_ob),((void *)__pyx_v_oc)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":271 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":271 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_multi->nd,__pyx_v_multi->dimensions,NPY_DOUBLE); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":272 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":272 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":273 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":273 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":274 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":274 */
       __pyx_v_oa_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,0));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":275 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":275 */
       __pyx_v_ob_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":276 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":276 */
       __pyx_v_oc_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":277 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":277 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_oa_data[0]),(__pyx_v_ob_data[0]),(__pyx_v_oc_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":278 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":278 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":280 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":280 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 280; goto __pyx_L1;}
     __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 280; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -924,17 +928,17 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state,__pyx_t_6mt
     arrayObject = ((PyArrayObject *)__pyx_5);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":281 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":281 */
     __pyx_v_array_data = ((double *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":282 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":282 */
     __pyx_4 = PyArray_MultiIterNew(4,((void *)arrayObject),((void *)__pyx_v_oa),((void *)__pyx_v_ob),((void *)__pyx_v_oc)); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 282; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_4)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":284 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":284 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 285; goto __pyx_L1;}
@@ -949,29 +953,29 @@ static PyObject *__pyx_f_6mtrand_cont3_array(rk_state *__pyx_v_state,__pyx_t_6mt
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":286 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":286 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":287 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":287 */
       __pyx_v_oa_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":288 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":288 */
       __pyx_v_ob_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":289 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":289 */
       __pyx_v_oc_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,3));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":290 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":290 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_oa_data[0]),(__pyx_v_ob_data[0]),(__pyx_v_oc_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":291 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":291 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":292 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":292 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -1007,7 +1011,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state,__pyx_t_6mt
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":300 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":300 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyInt_FromLong(__pyx_v_func(__pyx_v_state)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; goto __pyx_L1;}
@@ -1018,7 +1022,7 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state,__pyx_t_6mt
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":303 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":303 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 303; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 303; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1035,18 +1039,18 @@ static PyObject *__pyx_f_6mtrand_disc0_array(rk_state *__pyx_v_state,__pyx_t_6mt
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":304 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":304 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":305 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":305 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":306 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":306 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":308 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":308 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -1080,7 +1084,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state,__pyx_t
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":316 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":316 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyInt_FromLong(__pyx_v_func(__pyx_v_state,__pyx_v_n,__pyx_v_p)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 317; goto __pyx_L1;}
@@ -1091,7 +1095,7 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state,__pyx_t
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":319 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":319 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 319; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 319; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1108,18 +1112,18 @@ static PyObject *__pyx_f_6mtrand_discnp_array_sc(rk_state *__pyx_v_state,__pyx_t
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":320 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":320 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":321 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":321 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":322 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":322 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_n,__pyx_v_p);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":324 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":324 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -1163,48 +1167,48 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state,__pyx_t_6m
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":335 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":335 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":336 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":336 */
     __pyx_2 = PyArray_MultiIterNew(2,((void *)__pyx_v_on),((void *)__pyx_v_op)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 336; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":337 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":337 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_multi->nd,__pyx_v_multi->dimensions,NPY_LONG); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 337; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":338 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":338 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":339 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":339 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":340 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":340 */
       __pyx_v_on_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,0));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":341 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":341 */
       __pyx_v_op_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":342 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":342 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_on_data[0]),(__pyx_v_op_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":343 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":343 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":345 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":345 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 345; goto __pyx_L1;}
     __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 345; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1221,17 +1225,17 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state,__pyx_t_6m
     arrayObject = ((PyArrayObject *)__pyx_5);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":346 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":346 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":347 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":347 */
     __pyx_4 = PyArray_MultiIterNew(3,((void *)arrayObject),((void *)__pyx_v_on),((void *)__pyx_v_op)); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 347; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_4)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":348 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":348 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 349; goto __pyx_L1;}
@@ -1246,29 +1250,29 @@ static PyObject *__pyx_f_6mtrand_discnp_array(rk_state *__pyx_v_state,__pyx_t_6m
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":350 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":350 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":351 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":351 */
       __pyx_v_on_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":352 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":352 */
       __pyx_v_op_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":353 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":353 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_on_data[0]),(__pyx_v_op_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":354 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":354 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,1);
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":355 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":355 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,2);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":357 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":357 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -1303,7 +1307,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state,__pyx_t
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":365 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":365 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyInt_FromLong(__pyx_v_func(__pyx_v_state,__pyx_v_n,__pyx_v_p)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 366; goto __pyx_L1;}
@@ -1314,7 +1318,7 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state,__pyx_t
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":368 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":368 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 368; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 368; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1331,18 +1335,18 @@ static PyObject *__pyx_f_6mtrand_discdd_array_sc(rk_state *__pyx_v_state,__pyx_t
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":369 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":369 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":370 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":370 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":371 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":371 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_n,__pyx_v_p);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":373 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":373 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -1386,48 +1390,48 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state,__pyx_t_6m
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":384 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":384 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":385 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":385 */
     __pyx_2 = PyArray_MultiIterNew(2,((void *)__pyx_v_on),((void *)__pyx_v_op)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 385; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":386 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":386 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_multi->nd,__pyx_v_multi->dimensions,NPY_LONG); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 386; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":387 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":387 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":388 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":388 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":389 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":389 */
       __pyx_v_on_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,0));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":390 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":390 */
       __pyx_v_op_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":391 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":391 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_on_data[0]),(__pyx_v_op_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":392 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":392 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":394 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":394 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 394; goto __pyx_L1;}
     __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 394; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1444,17 +1448,17 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state,__pyx_t_6m
     arrayObject = ((PyArrayObject *)__pyx_5);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":395 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":395 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":396 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":396 */
     __pyx_4 = PyArray_MultiIterNew(3,((void *)arrayObject),((void *)__pyx_v_on),((void *)__pyx_v_op)); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 396; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_4)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":397 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":397 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; goto __pyx_L1;}
@@ -1469,29 +1473,29 @@ static PyObject *__pyx_f_6mtrand_discdd_array(rk_state *__pyx_v_state,__pyx_t_6m
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":399 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":399 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":400 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":400 */
       __pyx_v_on_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":401 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":401 */
       __pyx_v_op_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":402 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":402 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_on_data[0]),(__pyx_v_op_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":403 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":403 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,1);
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":404 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":404 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,2);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":406 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":406 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -1526,7 +1530,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state,__pyx_
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":415 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":415 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyInt_FromLong(__pyx_v_func(__pyx_v_state,__pyx_v_n,__pyx_v_m,__pyx_v_N)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 416; goto __pyx_L1;}
@@ -1537,7 +1541,7 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state,__pyx_
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":418 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":418 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 418; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 418; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1554,18 +1558,18 @@ static PyObject *__pyx_f_6mtrand_discnmN_array_sc(rk_state *__pyx_v_state,__pyx_
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":419 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":419 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":420 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":420 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":421 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":421 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_n,__pyx_v_m,__pyx_v_N);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":423 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":423 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -1611,51 +1615,51 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state,__pyx_t_6
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":436 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":436 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":437 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":437 */
     __pyx_2 = PyArray_MultiIterNew(3,((void *)__pyx_v_on),((void *)__pyx_v_om),((void *)__pyx_v_oN)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 437; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":438 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":438 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_multi->nd,__pyx_v_multi->dimensions,NPY_LONG); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 438; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":439 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":439 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":440 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":440 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":441 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":441 */
       __pyx_v_on_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,0));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":442 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":442 */
       __pyx_v_om_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":443 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":443 */
       __pyx_v_oN_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":444 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":444 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_on_data[0]),(__pyx_v_om_data[0]),(__pyx_v_oN_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":445 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":445 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":447 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":447 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 447; goto __pyx_L1;}
     __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 447; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1672,17 +1676,17 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state,__pyx_t_6
     arrayObject = ((PyArrayObject *)__pyx_5);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":448 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":448 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":449 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":449 */
     __pyx_4 = PyArray_MultiIterNew(4,((void *)arrayObject),((void *)__pyx_v_on),((void *)__pyx_v_om),((void *)__pyx_v_oN)); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 449; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_4)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":451 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":451 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 452; goto __pyx_L1;}
@@ -1697,29 +1701,29 @@ static PyObject *__pyx_f_6mtrand_discnmN_array(rk_state *__pyx_v_state,__pyx_t_6
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":453 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":453 */
     __pyx_3 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_3; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":454 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":454 */
       __pyx_v_on_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":455 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":455 */
       __pyx_v_om_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,2));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":456 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":456 */
       __pyx_v_oN_data = ((long *)PyArray_MultiIter_DATA(__pyx_v_multi,3));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":457 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":457 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_on_data[0]),(__pyx_v_om_data[0]),(__pyx_v_oN_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":458 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":458 */
       PyArray_MultiIter_NEXT(__pyx_v_multi);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":460 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":460 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -1755,7 +1759,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state,__pyx_t_
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":468 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":468 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
     __pyx_2 = PyInt_FromLong(__pyx_v_func(__pyx_v_state,__pyx_v_a)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 469; goto __pyx_L1;}
@@ -1766,7 +1770,7 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state,__pyx_t_
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":471 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":471 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 471; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 471; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1783,18 +1787,18 @@ static PyObject *__pyx_f_6mtrand_discd_array_sc(rk_state *__pyx_v_state,__pyx_t_
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":472 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":472 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":473 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":473 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":474 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":474 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,__pyx_v_a);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":476 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":476 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -1839,44 +1843,44 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state,__pyx_t_6mt
   __pyx_v_multi = ((PyArrayMultiIterObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_itera = ((PyArrayIterObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":487 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":487 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":488 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":488 */
     __pyx_2 = PyArray_SimpleNew(__pyx_v_oa->nd,__pyx_v_oa->dimensions,NPY_LONG); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 488; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject));
     arrayObject = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":489 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":489 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":490 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":490 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":491 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":491 */
     __pyx_2 = PyArray_IterNew(((PyObject *)__pyx_v_oa)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 491; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayIterObject *)__pyx_2)));
     Py_DECREF(((PyObject *)__pyx_v_itera));
     __pyx_v_itera = ((PyArrayIterObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":492 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":492 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":493 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":493 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(((double *)__pyx_v_itera->dataptr)[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":494 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":494 */
       PyArray_ITER_NEXT(__pyx_v_itera);
     }
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":496 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":496 */
     __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 496; goto __pyx_L1;}
     __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 496; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
@@ -1893,17 +1897,17 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state,__pyx_t_6mt
     arrayObject = ((PyArrayObject *)__pyx_4);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":497 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":497 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":498 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":498 */
     __pyx_3 = PyArray_MultiIterNew(2,((void *)arrayObject),((void *)__pyx_v_oa)); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayMultiIterObject *)__pyx_3)));
     Py_DECREF(((PyObject *)__pyx_v_multi));
     __pyx_v_multi = ((PyArrayMultiIterObject *)__pyx_3);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":499 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":499 */
     __pyx_1 = (__pyx_v_multi->size != PyArray_SIZE(arrayObject));
     if (__pyx_1) {
       __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 500; goto __pyx_L1;}
@@ -1918,23 +1922,23 @@ static PyObject *__pyx_f_6mtrand_discd_array(rk_state *__pyx_v_state,__pyx_t_6mt
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":501 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":501 */
     __pyx_5 = __pyx_v_multi->size;
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_5; ++__pyx_v_i) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":502 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":502 */
       __pyx_v_oa_data = ((double *)PyArray_MultiIter_DATA(__pyx_v_multi,1));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":503 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":503 */
       (__pyx_v_array_data[__pyx_v_i]) = __pyx_v_func(__pyx_v_state,(__pyx_v_oa_data[0]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":504 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":504 */
       PyArray_MultiIter_NEXTi(__pyx_v_multi,1);
     }
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":505 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":505 */
   Py_INCREF(((PyObject *)arrayObject));
   __pyx_r = ((PyObject *)arrayObject);
   goto __pyx_L0;
@@ -1964,29 +1968,29 @@ static double __pyx_f_6mtrand_kahan_sum(double *__pyx_v_darr,long __pyx_v_n) {
   long __pyx_v_i;
   double __pyx_r;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":510 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":510 */
   __pyx_v_sum = (__pyx_v_darr[0]);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":511 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":511 */
   __pyx_v_c = 0.0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":512 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":512 */
   for (__pyx_v_i = 1; __pyx_v_i < __pyx_v_n; ++__pyx_v_i) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":513 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":513 */
     __pyx_v_y = ((__pyx_v_darr[__pyx_v_i]) - __pyx_v_c);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":514 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":514 */
     __pyx_v_t = (__pyx_v_sum + __pyx_v_y);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":515 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":515 */
     __pyx_v_c = ((__pyx_v_t - __pyx_v_sum) - __pyx_v_y);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":516 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":516 */
     __pyx_v_sum = __pyx_v_t;
   }
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":517 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":517 */
   __pyx_r = __pyx_v_sum;
   goto __pyx_L0;
 
@@ -2008,10 +2012,10 @@ static int __pyx_f_6mtrand_11RandomState___init__(PyObject *__pyx_v_self, PyObje
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_seed);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":547 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":547 */
   ((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state = ((rk_state *)PyMem_Malloc((sizeof(rk_state))));
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":549 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":549 */
   __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_seed); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 549; goto __pyx_L1;}
   __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 549; goto __pyx_L1;}
   Py_INCREF(__pyx_v_seed);
@@ -2042,10 +2046,10 @@ static void __pyx_f_6mtrand_11RandomState___dealloc__(PyObject *__pyx_v_self) {
   __pyx_1 = (((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state != NULL);
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":553 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":553 */
     PyMem_Free(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":554 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":554 */
     ((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state = NULL;
     goto __pyx_L2;
   }
@@ -2076,7 +2080,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_seed(PyObject *__pyx_v_self, PyOb
   arrayObject_obj = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_iseed = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":570 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":570 */
   __pyx_1 = __pyx_v_seed == Py_None;
   if (__pyx_1) {
     __pyx_v_errcode = rk_randomseed(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
@@ -2101,7 +2105,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_seed(PyObject *__pyx_v_self, PyOb
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":575 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":575 */
     __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 575; goto __pyx_L1;}
     Py_INCREF(__pyx_v_seed);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_v_seed);
@@ -2111,21 +2115,21 @@ static PyObject *__pyx_f_6mtrand_11RandomState_seed(PyObject *__pyx_v_self, PyOb
     __pyx_v_iseed = __pyx_3;
     __pyx_3 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":576 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":576 */
     __pyx_4 = PyInt_AsUnsignedLongMask(__pyx_v_iseed); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 576; goto __pyx_L1;}
     rk_seed(__pyx_4,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":578 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":578 */
     __pyx_2 = PyArray_ContiguousFromObject(__pyx_v_seed,NPY_LONG,1,1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 578; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
     Py_DECREF(((PyObject *)arrayObject_obj));
     arrayObject_obj = ((PyArrayObject *)__pyx_2);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":579 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":579 */
     init_by_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,((unsigned long *)arrayObject_obj->data),(arrayObject_obj->dimensions[0]));
   }
   __pyx_L2:;
@@ -2152,7 +2156,7 @@ static PyObject *__pyx_n_MT19937;
 
 
 static PyObject *__pyx_f_6mtrand_11RandomState_get_state(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6mtrand_11RandomState_get_state[] = "\n        get_state()\n\n        Return a tuple representing the internal state of the generator::\n\n            (\'MT19937\', int key[624], int pos, int has_gauss, float cached_gaussian)\n\n        ";
+static char __pyx_doc_6mtrand_11RandomState_get_state[] = "\n        get_state()\n\n        Return a tuple representing the internal state of the generator.\n\n        Returns\n        -------\n        out : tuple(string, list of 624 integers, int, int, float)\n            The returned tuple has the following items:\n\n            1. the string \'MT19937\'\n            2. a list of 624 integer keys\n            3. an integer pos\n            4. an integer has_gauss\n            5. and a float cached_gaussian\n\n        See Also\n        --------\n        set_state\n\n        ";
 static PyObject *__pyx_f_6mtrand_11RandomState_get_state(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *arrayObject_state;
   PyObject *__pyx_r;
@@ -2165,20 +2169,20 @@ static PyObject *__pyx_f_6mtrand_11RandomState_get_state(PyObject *__pyx_v_self,
   Py_INCREF(__pyx_v_self);
   arrayObject_state = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":592 */
-  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_empty); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":605 */
+  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_empty); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_1 = PyInt_FromLong(624); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_uint); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
+  __pyx_1 = PyInt_FromLong(624); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_uint); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_1);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_1 = 0;
   __pyx_4 = 0;
-  __pyx_1 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; goto __pyx_L1;}
+  __pyx_1 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_1)));
@@ -2186,22 +2190,22 @@ static PyObject *__pyx_f_6mtrand_11RandomState_get_state(PyObject *__pyx_v_self,
   arrayObject_state = ((PyArrayObject *)__pyx_1);
   Py_DECREF(__pyx_1); __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":593 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":606 */
   memcpy(((void *)arrayObject_state->data),((void *)((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->key),(624 * (sizeof(long))));
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":594 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_asarray); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":607 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 607; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_asarray); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 607; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; goto __pyx_L1;}
-  __pyx_1 = PyObject_GetAttr(__pyx_3, __pyx_n_uint32); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 607; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_3, __pyx_n_uint32); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 607; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 607; goto __pyx_L1;}
   Py_INCREF(((PyObject *)arrayObject_state));
   PyTuple_SET_ITEM(__pyx_4, 0, ((PyObject *)arrayObject_state));
   PyTuple_SET_ITEM(__pyx_4, 1, __pyx_1);
   __pyx_1 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 607; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
@@ -2209,11 +2213,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_get_state(PyObject *__pyx_v_self,
   arrayObject_state = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":595 */
-  __pyx_1 = PyInt_FromLong(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->pos); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; goto __pyx_L1;}
-  __pyx_2 = PyInt_FromLong(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->has_gauss); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; goto __pyx_L1;}
-  __pyx_4 = PyFloat_FromDouble(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->gauss); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":608 */
+  __pyx_1 = PyInt_FromLong(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->pos); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 608; goto __pyx_L1;}
+  __pyx_2 = PyInt_FromLong(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->has_gauss); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 609; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->gauss); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 609; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 608; goto __pyx_L1;}
   Py_INCREF(__pyx_n_MT19937);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_n_MT19937);
   Py_INCREF(((PyObject *)arrayObject_state));
@@ -2250,7 +2254,7 @@ static char __pyx_k70[] = "algorithm must be 'MT19937'";
 static char __pyx_k71[] = "state must be 624 longs";
 
 static PyObject *__pyx_f_6mtrand_11RandomState_set_state(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6mtrand_11RandomState_set_state[] = "\n        set_state(state)\n\n        Set the state from a tuple.\n\n        state = (\'MT19937\', int key[624], int pos, int has_gauss, float cached_gaussian)\n\n        For backwards compatibility, the following form is also accepted\n        although it is missing some information about the cached Gaussian value.\n\n        state = (\'MT19937\', int key[624], int pos)\n\n        ";
+static char __pyx_doc_6mtrand_11RandomState_set_state[] = "\n        set_state(state)\n\n        Set the state from a tuple.\n\n        Parameters\n        ----------\n        state : tuple(string, list of 624 ints, int, int, float)\n            The `state` tuple is made up of\n\n            1. the string \'MT19937\'\n            2. a list of 624 integer keys\n            3. an integer pos\n            4. an integer has_gauss\n            5. and a float for the cached_gaussian\n\n        Returns\n        -------\n        out : None\n            Returns \'None\' on success.\n\n        See Also\n        --------\n        get_state\n\n        Notes\n        -----\n        For backwards compatibility, the following form is also accepted\n        although it is missing some information about the cached Gaussian value.\n\n        state = (\'MT19937\', int key[624], int pos)\n\n        ";
 static PyObject *__pyx_f_6mtrand_11RandomState_set_state(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_state = 0;
   PyArrayObject *arrayObject_obj;
@@ -2277,81 +2281,81 @@ static PyObject *__pyx_f_6mtrand_11RandomState_set_state(PyObject *__pyx_v_self,
   __pyx_v_has_gauss = Py_None; Py_INCREF(Py_None);
   __pyx_v_cached_gaussian = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":614 */
-  __pyx_1 = PySequence_GetItem(__pyx_v_state, 0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 614; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":647 */
+  __pyx_1 = __Pyx_GetItemInt(__pyx_v_state, 0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 647; goto __pyx_L1;}
   Py_DECREF(__pyx_v_algorithm_name);
   __pyx_v_algorithm_name = __pyx_1;
   __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":615 */
-  if (PyObject_Cmp(__pyx_v_algorithm_name, __pyx_n_MT19937, &__pyx_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 615; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":648 */
+  if (PyObject_Cmp(__pyx_v_algorithm_name, __pyx_n_MT19937, &__pyx_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 648; goto __pyx_L1;}
   __pyx_2 = __pyx_2 != 0;
   if (__pyx_2) {
-    __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 616; goto __pyx_L1;}
+    __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 649; goto __pyx_L1;}
     Py_INCREF(__pyx_k70p);
     PyTuple_SET_ITEM(__pyx_1, 0, __pyx_k70p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 616; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 649; goto __pyx_L1;}
     Py_DECREF(__pyx_1); __pyx_1 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 616; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 649; goto __pyx_L1;}
     goto __pyx_L2;
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":617 */
-  __pyx_1 = PySequence_GetSlice(__pyx_v_state, 1, 3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetIter(__pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":650 */
+  __pyx_1 = PySequence_GetSlice(__pyx_v_state, 1, 3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetIter(__pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; goto __pyx_L1;}
+  __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; goto __pyx_L1;}
   Py_DECREF(__pyx_v_key);
   __pyx_v_key = __pyx_1;
   __pyx_1 = 0;
-  __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; goto __pyx_L1;}
-  __pyx_2 = PyInt_AsLong(__pyx_1); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; goto __pyx_L1;}
+  __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; goto __pyx_L1;}
+  __pyx_2 = PyInt_AsLong(__pyx_1); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   __pyx_v_pos = __pyx_2;
-  if (__Pyx_EndUnpack(__pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; goto __pyx_L1;}
+  if (__Pyx_EndUnpack(__pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":618 */
-  __pyx_4 = PyObject_Length(__pyx_v_state); if (__pyx_4 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 618; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":651 */
+  __pyx_4 = PyObject_Length(__pyx_v_state); if (__pyx_4 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; goto __pyx_L1;}
   __pyx_2 = (__pyx_4 == 3);
   if (__pyx_2) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":619 */
-    __pyx_1 = PyInt_FromLong(0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 619; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":652 */
+    __pyx_1 = PyInt_FromLong(0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 652; goto __pyx_L1;}
     Py_DECREF(__pyx_v_has_gauss);
     __pyx_v_has_gauss = __pyx_1;
     __pyx_1 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":620 */
-    __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 620; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":653 */
+    __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 653; goto __pyx_L1;}
     Py_DECREF(__pyx_v_cached_gaussian);
     __pyx_v_cached_gaussian = __pyx_3;
     __pyx_3 = 0;
     goto __pyx_L3;
   }
   /*else*/ {
-    __pyx_1 = PySequence_GetSlice(__pyx_v_state, 3, 5); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; goto __pyx_L1;}
-    __pyx_3 = PyObject_GetIter(__pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; goto __pyx_L1;}
+    __pyx_1 = PySequence_GetSlice(__pyx_v_state, 3, 5); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetIter(__pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; goto __pyx_L1;}
     Py_DECREF(__pyx_1); __pyx_1 = 0;
-    __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; goto __pyx_L1;}
+    __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; goto __pyx_L1;}
     Py_DECREF(__pyx_v_has_gauss);
     __pyx_v_has_gauss = __pyx_1;
     __pyx_1 = 0;
-    __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; goto __pyx_L1;}
+    __pyx_1 = __Pyx_UnpackItem(__pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; goto __pyx_L1;}
     Py_DECREF(__pyx_v_cached_gaussian);
     __pyx_v_cached_gaussian = __pyx_1;
     __pyx_1 = 0;
-    if (__Pyx_EndUnpack(__pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; goto __pyx_L1;}
+    if (__Pyx_EndUnpack(__pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
   }
   __pyx_L3:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":623 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":656 */
   /*try:*/ {
-    __pyx_1 = PyArray_ContiguousFromObject(__pyx_v_key,NPY_ULONG,1,1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 624; goto __pyx_L4;}
+    __pyx_1 = PyArray_ContiguousFromObject(__pyx_v_key,NPY_ULONG,1,1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 657; goto __pyx_L4;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_1)));
     Py_DECREF(((PyObject *)arrayObject_obj));
     arrayObject_obj = ((PyArrayObject *)__pyx_1);
@@ -2362,12 +2366,12 @@ static PyObject *__pyx_f_6mtrand_11RandomState_set_state(PyObject *__pyx_v_self,
   Py_XDECREF(__pyx_3); __pyx_3 = 0;
   Py_XDECREF(__pyx_1); __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":625 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":658 */
   __pyx_2 = PyErr_ExceptionMatches(PyExc_TypeError);
   if (__pyx_2) {
     __Pyx_AddTraceback("mtrand.set_state");
-    if (__Pyx_GetException(&__pyx_3, &__pyx_1, &__pyx_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 625; goto __pyx_L1;}
-    __pyx_6 = PyArray_ContiguousFromObject(__pyx_v_key,NPY_LONG,1,1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 627; goto __pyx_L1;}
+    if (__Pyx_GetException(&__pyx_3, &__pyx_1, &__pyx_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 658; goto __pyx_L1;}
+    __pyx_6 = PyArray_ContiguousFromObject(__pyx_v_key,NPY_LONG,1,1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 660; goto __pyx_L1;}
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_6)));
     Py_DECREF(((PyObject *)arrayObject_obj));
     arrayObject_obj = ((PyArrayObject *)__pyx_6);
@@ -2380,33 +2384,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_set_state(PyObject *__pyx_v_self,
   goto __pyx_L1;
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":628 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":661 */
   __pyx_2 = ((arrayObject_obj->dimensions[0]) != 624);
   if (__pyx_2) {
-    __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 629; goto __pyx_L1;}
+    __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 662; goto __pyx_L1;}
     Py_INCREF(__pyx_k71p);
     PyTuple_SET_ITEM(__pyx_6, 0, __pyx_k71p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_6); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 629; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_6); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 662; goto __pyx_L1;}
     Py_DECREF(__pyx_6); __pyx_6 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 629; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 662; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":630 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":663 */
   memcpy(((void *)((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->key),((void *)arrayObject_obj->data),(624 * (sizeof(long))));
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":631 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":664 */
   ((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->pos = __pyx_v_pos;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":632 */
-  __pyx_2 = PyInt_AsLong(__pyx_v_has_gauss); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":665 */
+  __pyx_2 = PyInt_AsLong(__pyx_v_has_gauss); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 665; goto __pyx_L1;}
   ((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->has_gauss = __pyx_2;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":633 */
-  __pyx_7 = PyFloat_AsDouble(__pyx_v_cached_gaussian); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 633; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":666 */
+  __pyx_7 = PyFloat_AsDouble(__pyx_v_cached_gaussian); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 666; goto __pyx_L1;}
   ((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state->gauss = __pyx_7;
 
   __pyx_r = Py_None; Py_INCREF(Py_None);
@@ -2437,8 +2441,8 @@ static PyObject *__pyx_f_6mtrand_11RandomState___getstate__(PyObject *__pyx_v_se
   static char *__pyx_argnames[] = {0};
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "", __pyx_argnames)) return 0;
   Py_INCREF(__pyx_v_self);
-  __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_get_state); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 637; goto __pyx_L1;}
-  __pyx_2 = PyObject_CallObject(__pyx_1, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 637; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_get_state); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 670; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_1, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 670; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
@@ -2467,11 +2471,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState___setstate__(PyObject *__pyx_v_se
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "O", __pyx_argnames, &__pyx_v_state)) return 0;
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_state);
-  __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_set_state); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 640; goto __pyx_L1;}
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 640; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_set_state); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; goto __pyx_L1;}
   Py_INCREF(__pyx_v_state);
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_v_state);
-  __pyx_3 = PyObject_CallObject(__pyx_1, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 640; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_1, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
@@ -2503,16 +2507,16 @@ static PyObject *__pyx_f_6mtrand_11RandomState___reduce__(PyObject *__pyx_v_self
   static char *__pyx_argnames[] = {0};
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "", __pyx_argnames)) return 0;
   Py_INCREF(__pyx_v_self);
-  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_random); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
+  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_random); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n___RandomState_ctor); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n___RandomState_ctor); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyTuple_New(0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_get_state); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
-  __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_get_state); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyTuple_New(3); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(3); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_1);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_2);
   PyTuple_SET_ITEM(__pyx_3, 2, __pyx_4);
@@ -2538,7 +2542,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState___reduce__(PyObject *__pyx_v_self
 }
 
 static PyObject *__pyx_f_6mtrand_11RandomState_random_sample(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6mtrand_11RandomState_random_sample[] = "\n        random_sample(size=None)\n\n        Return random floats in the half-open interval [0.0, 1.0).\n\n        ";
+static char __pyx_doc_6mtrand_11RandomState_random_sample[] = "\n        random_sample(size=None)\n\n        Return random floats in the half-open interval [0.0, 1.0).\n\n        Parameters\n        ----------\n        size : shape tuple, optional\n            Defines the shape of the returned array of random floats.\n\n        Returns\n        -------\n        out : ndarray, floats\n            Array of random of floats with shape of `size`.\n\n        ";
 static PyObject *__pyx_f_6mtrand_11RandomState_random_sample(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_size = 0;
   PyObject *__pyx_r;
@@ -2548,7 +2552,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_random_sample(PyObject *__pyx_v_s
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "|O", __pyx_argnames, &__pyx_v_size)) return 0;
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_size);
-  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_double,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 653; goto __pyx_L1;}
+  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_double,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 696; goto __pyx_L1;}
   __pyx_r = __pyx_1;
   __pyx_1 = 0;
   goto __pyx_L0;
@@ -2576,7 +2580,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_tomaxint(PyObject *__pyx_v_self, 
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "|O", __pyx_argnames, &__pyx_v_size)) return 0;
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_size);
-  __pyx_1 = __pyx_f_6mtrand_disc0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_long,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; goto __pyx_L1;}
+  __pyx_1 = __pyx_f_6mtrand_disc0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_long,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; goto __pyx_L1;}
   __pyx_r = __pyx_1;
   __pyx_1 = 0;
   goto __pyx_L0;
@@ -2626,52 +2630,52 @@ static PyObject *__pyx_f_6mtrand_11RandomState_randint(PyObject *__pyx_v_self, P
   Py_INCREF(__pyx_v_size);
   arrayObject = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":698 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":741 */
   __pyx_1 = __pyx_v_high == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":699 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":742 */
     __pyx_v_lo = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":700 */
-    __pyx_2 = PyInt_AsLong(__pyx_v_low); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 700; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":743 */
+    __pyx_2 = PyInt_AsLong(__pyx_v_low); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; goto __pyx_L1;}
     __pyx_v_hi = __pyx_2;
     goto __pyx_L2;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":702 */
-    __pyx_2 = PyInt_AsLong(__pyx_v_low); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 702; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":745 */
+    __pyx_2 = PyInt_AsLong(__pyx_v_low); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; goto __pyx_L1;}
     __pyx_v_lo = __pyx_2;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":703 */
-    __pyx_2 = PyInt_AsLong(__pyx_v_high); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":746 */
+    __pyx_2 = PyInt_AsLong(__pyx_v_high); if (PyErr_Occurred()) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; goto __pyx_L1;}
     __pyx_v_hi = __pyx_2;
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":705 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":748 */
   __pyx_v_diff = ((__pyx_v_hi - __pyx_v_lo) - 1);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":706 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":749 */
   __pyx_1 = (__pyx_v_diff < 0);
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; goto __pyx_L1;}
     Py_INCREF(__pyx_k72p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k72p);
-    __pyx_4 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; goto __pyx_L1;}
+    __pyx_4 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_4, 0, 0);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; goto __pyx_L1;}
     goto __pyx_L3;
   }
   __pyx_L3:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":709 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":752 */
   __pyx_1 = __pyx_v_size == Py_None;
   if (__pyx_1) {
-    __pyx_3 = PyInt_FromLong((((long)rk_interval(__pyx_v_diff,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state)) + __pyx_v_lo)); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 710; goto __pyx_L1;}
+    __pyx_3 = PyInt_FromLong((((long)rk_interval(__pyx_v_diff,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state)) + __pyx_v_lo)); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; goto __pyx_L1;}
     __pyx_r = __pyx_3;
     __pyx_3 = 0;
     goto __pyx_L0;
@@ -2679,16 +2683,16 @@ static PyObject *__pyx_f_6mtrand_11RandomState_randint(PyObject *__pyx_v_self, P
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":712 */
-    __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; goto __pyx_L1;}
-    __pyx_3 = PyObject_GetAttr(__pyx_4, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":755 */
+    __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetAttr(__pyx_4, __pyx_n_empty); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
-    __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; goto __pyx_L1;}
     Py_INCREF(__pyx_v_size);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_size);
     Py_INCREF(((PyObject *)(&PyInt_Type)));
     PyTuple_SET_ITEM(__pyx_4, 1, ((PyObject *)(&PyInt_Type)));
-    __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_5)));
@@ -2696,18 +2700,18 @@ static PyObject *__pyx_f_6mtrand_11RandomState_randint(PyObject *__pyx_v_self, P
     arrayObject = ((PyArrayObject *)__pyx_5);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":713 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":756 */
     __pyx_v_length = PyArray_SIZE(arrayObject);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":714 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":757 */
     __pyx_v_array_data = ((long *)arrayObject->data);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":715 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":758 */
     for (__pyx_v_i = 0; __pyx_v_i < __pyx_v_length; ++__pyx_v_i) {
       (__pyx_v_array_data[__pyx_v_i]) = (__pyx_v_lo + ((long)rk_interval(__pyx_v_diff,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state)));
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":717 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":760 */
     Py_INCREF(((PyObject *)arrayObject));
     __pyx_r = ((PyObject *)arrayObject);
     goto __pyx_L0;
@@ -2744,19 +2748,19 @@ static PyObject *__pyx_f_6mtrand_11RandomState_bytes(PyObject *__pyx_v_self, PyO
   Py_INCREF(__pyx_v_self);
   __pyx_v_bytestring = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":742 */
-  __pyx_1 = PyString_FromStringAndSize(NULL,__pyx_v_length); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":785 */
+  __pyx_1 = PyString_FromStringAndSize(NULL,__pyx_v_length); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 785; goto __pyx_L1;}
   Py_DECREF(__pyx_v_bytestring);
   __pyx_v_bytestring = __pyx_1;
   __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":743 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":786 */
   __pyx_v_bytes = PyString_AS_STRING(__pyx_v_bytestring);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":744 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":787 */
   rk_fill(__pyx_v_bytes,__pyx_v_length,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":745 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":788 */
   Py_INCREF(__pyx_v_bytestring);
   __pyx_r = __pyx_v_bytestring;
   goto __pyx_L0;
@@ -2806,16 +2810,16 @@ static PyObject *__pyx_f_6mtrand_11RandomState_uniform(PyObject *__pyx_v_self, P
   __pyx_v_odiff = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_temp = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":822 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":865 */
   __pyx_v_flow = PyFloat_AsDouble(__pyx_v_low);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":823 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":866 */
   __pyx_v_fhigh = PyFloat_AsDouble(__pyx_v_high);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":824 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":867 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_uniform,__pyx_v_size,__pyx_v_flow,(__pyx_v_fhigh - __pyx_v_flow)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 825; goto __pyx_L1;}
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_uniform,__pyx_v_size,__pyx_v_flow,(__pyx_v_fhigh - __pyx_v_flow)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 868; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -2823,51 +2827,51 @@ static PyObject *__pyx_f_6mtrand_11RandomState_uniform(PyObject *__pyx_v_self, P
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":826 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":869 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":827 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_low,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 827; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":870 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_low,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 870; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_olow));
   __pyx_v_olow = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":828 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_high,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 828; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":871 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_high,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 871; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_ohigh));
   __pyx_v_ohigh = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":829 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 829; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_subtract); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 829; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":872 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 872; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_subtract); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 872; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 829; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 872; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_ohigh));
   PyTuple_SET_ITEM(__pyx_2, 0, ((PyObject *)__pyx_v_ohigh));
   Py_INCREF(((PyObject *)__pyx_v_olow));
   PyTuple_SET_ITEM(__pyx_2, 1, ((PyObject *)__pyx_v_olow));
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 829; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 872; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_v_temp);
   __pyx_v_temp = __pyx_4;
   __pyx_4 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":830 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":873 */
   Py_INCREF(__pyx_v_temp);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":832 */
-  __pyx_3 = PyArray_EnsureArray(__pyx_v_temp); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 832; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":875 */
+  __pyx_3 = PyArray_EnsureArray(__pyx_v_temp); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 875; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_odiff));
   __pyx_v_odiff = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":833 */
-  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_uniform,__pyx_v_size,__pyx_v_olow,__pyx_v_odiff); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 833; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":876 */
+  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_uniform,__pyx_v_size,__pyx_v_olow,__pyx_v_odiff); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 876; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -2915,11 +2919,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_rand(PyObject *__pyx_v_self, PyOb
     return 0;
   }
   Py_INCREF(__pyx_v_self);
-  __pyx_1 = PyObject_Length(__pyx_v_args); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; goto __pyx_L1;}
+  __pyx_1 = PyObject_Length(__pyx_v_args); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 916; goto __pyx_L1;}
   __pyx_2 = (__pyx_1 == 0);
   if (__pyx_2) {
-    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_random_sample); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 874; goto __pyx_L1;}
-    __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 874; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_random_sample); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 917; goto __pyx_L1;}
+    __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 917; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __pyx_r = __pyx_4;
     __pyx_4 = 0;
@@ -2927,11 +2931,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_rand(PyObject *__pyx_v_self, PyOb
     goto __pyx_L2;
   }
   /*else*/ {
-    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_random_sample); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 876; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 876; goto __pyx_L1;}
-    __pyx_5 = PyDict_New(); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 876; goto __pyx_L1;}
-    if (PyDict_SetItem(__pyx_5, __pyx_n_size, __pyx_v_args) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 876; goto __pyx_L1;}
-    __pyx_6 = PyEval_CallObjectWithKeywords(__pyx_3, __pyx_4, __pyx_5); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 876; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_random_sample); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
+    __pyx_5 = PyDict_New(); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
+    if (PyDict_SetItem(__pyx_5, __pyx_n_size, __pyx_v_args) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
+    __pyx_6 = PyEval_CallObjectWithKeywords(__pyx_3, __pyx_4, __pyx_5); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     Py_DECREF(__pyx_5); __pyx_5 = 0;
@@ -2977,11 +2981,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_randn(PyObject *__pyx_v_self, PyO
     return 0;
   }
   Py_INCREF(__pyx_v_self);
-  __pyx_1 = PyObject_Length(__pyx_v_args); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 890; goto __pyx_L1;}
+  __pyx_1 = PyObject_Length(__pyx_v_args); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 933; goto __pyx_L1;}
   __pyx_2 = (__pyx_1 == 0);
   if (__pyx_2) {
-    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_standard_normal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 891; goto __pyx_L1;}
-    __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 891; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_standard_normal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 934; goto __pyx_L1;}
+    __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 934; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __pyx_r = __pyx_4;
     __pyx_4 = 0;
@@ -2989,11 +2993,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_randn(PyObject *__pyx_v_self, PyO
     goto __pyx_L2;
   }
   /*else*/ {
-    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_standard_normal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 893; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 893; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetAttr(__pyx_v_self, __pyx_n_standard_normal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 936; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 936; goto __pyx_L1;}
     Py_INCREF(__pyx_v_args);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_args);
-    __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 893; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 936; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __pyx_r = __pyx_5;
@@ -3038,17 +3042,17 @@ static PyObject *__pyx_f_6mtrand_11RandomState_random_integers(PyObject *__pyx_v
   Py_INCREF(__pyx_v_high);
   Py_INCREF(__pyx_v_size);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":904 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":947 */
   __pyx_1 = __pyx_v_high == Py_None;
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":905 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":948 */
     Py_INCREF(__pyx_v_low);
     Py_DECREF(__pyx_v_high);
     __pyx_v_high = __pyx_v_low;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":906 */
-    __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 906; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":949 */
+    __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; goto __pyx_L1;}
     Py_DECREF(__pyx_v_low);
     __pyx_v_low = __pyx_2;
     __pyx_2 = 0;
@@ -3056,19 +3060,19 @@ static PyObject *__pyx_f_6mtrand_11RandomState_random_integers(PyObject *__pyx_v
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":907 */
-  __pyx_2 = PyObject_GetAttr(__pyx_v_self, __pyx_n_randint); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 907; goto __pyx_L1;}
-  __pyx_3 = PyInt_FromLong(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 907; goto __pyx_L1;}
-  __pyx_4 = PyNumber_Add(__pyx_v_high, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 907; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":950 */
+  __pyx_2 = PyObject_GetAttr(__pyx_v_self, __pyx_n_randint); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; goto __pyx_L1;}
+  __pyx_3 = PyInt_FromLong(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; goto __pyx_L1;}
+  __pyx_4 = PyNumber_Add(__pyx_v_high, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyTuple_New(3); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 907; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(3); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; goto __pyx_L1;}
   Py_INCREF(__pyx_v_low);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_v_low);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   Py_INCREF(__pyx_v_size);
   PyTuple_SET_ITEM(__pyx_3, 2, __pyx_v_size);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 907; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   __pyx_r = __pyx_4;
@@ -3092,7 +3096,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_random_integers(PyObject *__pyx_v
 }
 
 static PyObject *__pyx_f_6mtrand_11RandomState_standard_normal(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6mtrand_11RandomState_standard_normal[] = "\n        standard_normal(size=None)\n\n        Standard Normal distribution (mean=0, stdev=1).\n\n        ";
+static char __pyx_doc_6mtrand_11RandomState_standard_normal[] = "\n        standard_normal(size=None)\n\n        Returns samples from a Standard Normal distribution (mean=0, stdev=1).\n\n        Parameters\n        ----------\n        size : int, shape tuple, optional\n            Returns the number of samples required to satisfy the `size` parameter.\n            If not given or \'None\' indicates to return one sample.\n\n        Returns\n        -------\n        out : float, ndarray\n            Samples the Standard Normal distribution with a shape satisfying the\n            `size` parameter.\n\n        ";
 static PyObject *__pyx_f_6mtrand_11RandomState_standard_normal(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_size = 0;
   PyObject *__pyx_r;
@@ -3102,7 +3106,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_normal(PyObject *__pyx_v
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "|O", __pyx_argnames, &__pyx_v_size)) return 0;
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_size);
-  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gauss,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 917; goto __pyx_L1;}
+  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gauss,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 972; goto __pyx_L1;}
   __pyx_r = __pyx_1;
   __pyx_1 = 0;
   goto __pyx_L0;
@@ -3156,33 +3160,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_normal(PyObject *__pyx_v_self, Py
   __pyx_v_oloc = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1004 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1059 */
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1005 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1060 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1006 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1061 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1007 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1062 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1008; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1063; goto __pyx_L1;}
       Py_INCREF(__pyx_k74p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k74p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1008; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1063; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1008; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1063; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1009 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_normal,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1009; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1064 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_normal,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1064; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -3190,62 +3194,62 @@ static PyObject *__pyx_f_6mtrand_11RandomState_normal(PyObject *__pyx_v_self, Py
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1011 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1066 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1013 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1013; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1068 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1068; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oloc));
   __pyx_v_oloc = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1014 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1014; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1069 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1069; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1015 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1070 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1015; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1016; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1071; goto __pyx_L1;}
     Py_INCREF(__pyx_k75p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k75p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1016; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1071; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1016; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1071; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1017 */
-  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_normal,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1017; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1072 */
+  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_normal,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -3305,48 +3309,48 @@ static PyObject *__pyx_f_6mtrand_11RandomState_beta(PyObject *__pyx_v_self, PyOb
   __pyx_v_oa = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_ob = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1059 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1114 */
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1060 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1115 */
   __pyx_v_fb = PyFloat_AsDouble(__pyx_v_b);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1061 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1116 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1062 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1117 */
     __pyx_1 = (__pyx_v_fa <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1063; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1118; goto __pyx_L1;}
       Py_INCREF(__pyx_k76p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k76p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1063; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1118; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1063; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1118; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1064 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1119 */
     __pyx_1 = (__pyx_v_fb <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1065; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1120; goto __pyx_L1;}
       Py_INCREF(__pyx_k77p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k77p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1065; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1120; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1065; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1120; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1066 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_beta,__pyx_v_size,__pyx_v_fa,__pyx_v_fb); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1066; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1121 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_beta,__pyx_v_size,__pyx_v_fa,__pyx_v_fb); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1121; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -3354,99 +3358,99 @@ static PyObject *__pyx_f_6mtrand_11RandomState_beta(PyObject *__pyx_v_self, PyOb
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1068 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1123 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1070 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1070; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1125 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1125; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oa));
   __pyx_v_oa = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1071 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_b,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1071; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1126 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_b,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1126; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_ob));
   __pyx_v_ob = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1072 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1127 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1072; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1127; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1073; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1128; goto __pyx_L1;}
     Py_INCREF(__pyx_k78p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k78p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1073; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1128; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1073; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1128; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1074 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1129 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyInt_FromLong(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  __pyx_4 = PyInt_FromLong(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_ob));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_ob));
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1074; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1129; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1075; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1130; goto __pyx_L1;}
     Py_INCREF(__pyx_k79p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k79p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1075; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1130; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1075; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1130; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1076 */
-  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_beta,__pyx_v_size,__pyx_v_oa,__pyx_v_ob); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1076; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1131 */
+  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_beta,__pyx_v_size,__pyx_v_oa,__pyx_v_ob); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1131; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -3477,7 +3481,7 @@ static char __pyx_k80[] = "scale <= 0";
 static char __pyx_k81[] = "scale <= 0";
 
 static PyObject *__pyx_f_6mtrand_11RandomState_exponential(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6mtrand_11RandomState_exponential[] = "\n        exponential(scale=1.0, size=None)\n\n        Exponential distribution.\n\n        Its probability density function is\n\n        .. math:: f(x; \\lambda) = \\lambda \\exp(-\\lambda x),\n\n        for ``x > 0`` and 0 elsewhere.  :math:`lambda` is\n        known as the rate parameter.\n\n        The exponential distribution is a continuous analogue of the\n        geometric distribution.  It describes many common situations, such as\n        the size of raindrops measured over many rainstorms [1]_, or the time\n        between page requests to Wikipedia [2]_.\n\n        Parameters\n        ----------\n        scale : float\n            The rate parameter, :math:`\\lambda`.\n        size : tuple of ints\n            Number of samples to draw.  The output is shaped\n            according to `size`.\n\n        References\n        ----------\n        .. [1] Peyton Z. Peebles Jr., \"Probability, Random Variables and\n               Random Signal Principles\", 4th ed, 2001, p. 57.\n        .. [2] \"Poisson Process\", Wikipedia,\n               http://en.wikipedia.org/wiki/Poisson_process\n\n        ";
+static char __pyx_doc_6mtrand_11RandomState_exponential[] = "\n        exponential(scale=1.0, size=None)\n\n        Exponential distribution.\n\n        Its probability density function is\n\n        .. math:: f(x; \\frac{1}{\\beta}) = \\frac{1}{\\beta} \\exp(-\\frac{x}{\\beta}),\n\n        for ``x > 0`` and 0 elsewhere. :math:`\\beta` is the scale parameter,\n        which is the inverse of the rate parameter :math:`\\lambda = 1/\\beta`.\n        The rate parameter is an alternative, widely used parameterization\n        of the exponential distribution [3]_.\n\n        The exponential distribution is a continuous analogue of the\n        geometric distribution.  It describes many common situations, such as\n        the size of raindrops measured over many rainstorms [1]_, or the time\n        between page requests to Wikipedia [2]_.\n\n        Parameters\n        ----------\n        scale : float\n            The scale parameter, :math:`\\beta = 1/\\lambda`.\n        size : tuple of ints\n            Number of samples to draw.  The output is shaped\n            according to `size`.\n\n        References\n        ----------\n        .. [1] Peyton Z. Peebles Jr., \"Probability, Random Variables and\n               Random Signal Principles\", 4th ed, 2001, p. 57.\n        .. [2] \"Poisson Process\", Wikipedia,\n               http://en.wikipedia.org/wiki/Poisson_process\n        .. [3] \"Exponential Distribution, Wikipedia,\n               http://en.wikipedia.org/wiki/Exponential_distribution\n\n        ";
 static PyObject *__pyx_f_6mtrand_11RandomState_exponential(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_scale = 0;
   PyObject *__pyx_v_size = 0;
@@ -3498,30 +3502,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_exponential(PyObject *__pyx_v_sel
   Py_INCREF(__pyx_v_size);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1115 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1174 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1116 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1175 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1117 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1176 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1118; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1177; goto __pyx_L1;}
       Py_INCREF(__pyx_k80p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k80p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1118; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1177; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1118; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1177; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1119 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_exponential,__pyx_v_size,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1119; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1178 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_exponential,__pyx_v_size,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1178; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -3529,55 +3533,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_exponential(PyObject *__pyx_v_sel
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1121 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1180 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1123 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1123; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1182 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1182; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1124 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1183 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1124; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1183; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1125; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1184; goto __pyx_L1;}
     Py_INCREF(__pyx_k81p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k81p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1125; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1184; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1125; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1184; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1126 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_exponential,__pyx_v_size,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1126; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1185 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_exponential,__pyx_v_size,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1185; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -3610,7 +3614,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_exponential(PyObject *__
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "|O", __pyx_argnames, &__pyx_v_size)) return 0;
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_size);
-  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_exponential,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1135; goto __pyx_L1;}
+  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_exponential,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1194; goto __pyx_L1;}
   __pyx_r = __pyx_1;
   __pyx_1 = 0;
   goto __pyx_L0;
@@ -3654,30 +3658,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_gamma(PyObject *__pyx_v_
   Py_INCREF(__pyx_v_size);
   __pyx_v_oshape = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1147 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1206 */
   __pyx_v_fshape = PyFloat_AsDouble(__pyx_v_shape);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1148 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1207 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1149 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1208 */
     __pyx_1 = (__pyx_v_fshape <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1150; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1209; goto __pyx_L1;}
       Py_INCREF(__pyx_k82p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k82p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1150; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1209; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1150; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1209; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1151 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_gamma,__pyx_v_size,__pyx_v_fshape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1151; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1210 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_gamma,__pyx_v_size,__pyx_v_fshape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1210; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -3685,55 +3689,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_gamma(PyObject *__pyx_v_
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1153 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1212 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1154 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_shape,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1154; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1213 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_shape,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1213; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oshape));
   __pyx_v_oshape = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1155 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1214 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oshape));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oshape));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1155; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1214; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1156; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; goto __pyx_L1;}
     Py_INCREF(__pyx_k83p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k83p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1156; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1156; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1157 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_gamma,__pyx_v_size,__pyx_v_oshape); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1157; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1216 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_gamma,__pyx_v_size,__pyx_v_oshape); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1216; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -3792,48 +3796,48 @@ static PyObject *__pyx_f_6mtrand_11RandomState_gamma(PyObject *__pyx_v_self, PyO
   __pyx_v_oshape = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1232 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1291 */
   __pyx_v_fshape = PyFloat_AsDouble(__pyx_v_shape);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1233 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1292 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1234 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1293 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1235 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1294 */
     __pyx_1 = (__pyx_v_fshape <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1236; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1295; goto __pyx_L1;}
       Py_INCREF(__pyx_k84p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k84p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1236; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1295; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1236; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1295; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1237 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1296 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1238; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1297; goto __pyx_L1;}
       Py_INCREF(__pyx_k85p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k85p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1238; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1297; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1238; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1297; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1239 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gamma,__pyx_v_size,__pyx_v_fshape,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1239; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1298 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gamma,__pyx_v_size,__pyx_v_fshape,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1298; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -3841,99 +3845,99 @@ static PyObject *__pyx_f_6mtrand_11RandomState_gamma(PyObject *__pyx_v_self, PyO
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1241 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1300 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1242 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_shape,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1301 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_shape,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1301; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oshape));
   __pyx_v_oshape = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1243 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1243; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1302 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1302; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1244 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1303 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oshape));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oshape));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1303; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1245; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1304; goto __pyx_L1;}
     Py_INCREF(__pyx_k86p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k86p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1245; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1304; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1245; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1304; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1246 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1305 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1305; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1247; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1306; goto __pyx_L1;}
     Py_INCREF(__pyx_k87p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k87p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1247; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1306; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1247; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1306; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1248 */
-  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gamma,__pyx_v_size,__pyx_v_oshape,__pyx_v_oscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1248; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1307 */
+  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gamma,__pyx_v_size,__pyx_v_oshape,__pyx_v_oscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1307; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -3993,48 +3997,48 @@ static PyObject *__pyx_f_6mtrand_11RandomState_f(PyObject *__pyx_v_self, PyObjec
   __pyx_v_odfnum = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_odfden = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1334 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1393 */
   __pyx_v_fdfnum = PyFloat_AsDouble(__pyx_v_dfnum);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1335 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1394 */
   __pyx_v_fdfden = PyFloat_AsDouble(__pyx_v_dfden);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1336 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1395 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1337 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1396 */
     __pyx_1 = (__pyx_v_fdfnum <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1338; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1397; goto __pyx_L1;}
       Py_INCREF(__pyx_k88p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k88p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1338; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1397; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1338; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1397; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1339 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1398 */
     __pyx_1 = (__pyx_v_fdfden <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1340; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1399; goto __pyx_L1;}
       Py_INCREF(__pyx_k89p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k89p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1340; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1399; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1340; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1399; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1341 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_f,__pyx_v_size,__pyx_v_fdfnum,__pyx_v_fdfden); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1341; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1400 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_f,__pyx_v_size,__pyx_v_fdfnum,__pyx_v_fdfden); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1400; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -4042,99 +4046,99 @@ static PyObject *__pyx_f_6mtrand_11RandomState_f(PyObject *__pyx_v_self, PyObjec
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1343 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1402 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1345 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_dfnum,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1345; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1404 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_dfnum,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1404; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_odfnum));
   __pyx_v_odfnum = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1346 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_dfden,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1346; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1405 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_dfden,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1405; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_odfden));
   __pyx_v_odfden = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1347 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1406 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odfnum));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_odfnum));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1347; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1406; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1348; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1407; goto __pyx_L1;}
     Py_INCREF(__pyx_k90p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k90p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1348; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1407; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1348; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1407; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1349 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1408 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odfden));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_odfden));
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1349; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1408; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1350; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1409; goto __pyx_L1;}
     Py_INCREF(__pyx_k91p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k91p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1350; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1409; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1350; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1409; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1351 */
-  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_f,__pyx_v_size,__pyx_v_odfnum,__pyx_v_odfden); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1351; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1410 */
+  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_f,__pyx_v_size,__pyx_v_odfnum,__pyx_v_odfden); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -4205,66 +4209,66 @@ static PyObject *__pyx_f_6mtrand_11RandomState_noncentral_f(PyObject *__pyx_v_se
   __pyx_v_odfden = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_ononc = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1363 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1422 */
   __pyx_v_fdfnum = PyFloat_AsDouble(__pyx_v_dfnum);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1364 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1423 */
   __pyx_v_fdfden = PyFloat_AsDouble(__pyx_v_dfden);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1365 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1424 */
   __pyx_v_fnonc = PyFloat_AsDouble(__pyx_v_nonc);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1366 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1425 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1367 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1426 */
     __pyx_1 = (__pyx_v_fdfnum <= 1);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1368; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1427; goto __pyx_L1;}
       Py_INCREF(__pyx_k92p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k92p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1368; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1427; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1368; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1427; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1369 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1428 */
     __pyx_1 = (__pyx_v_fdfden <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1370; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1429; goto __pyx_L1;}
       Py_INCREF(__pyx_k93p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k93p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1370; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1429; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1370; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1429; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1371 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1430 */
     __pyx_1 = (__pyx_v_fnonc < 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1372; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1431; goto __pyx_L1;}
       Py_INCREF(__pyx_k94p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k94p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1372; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1431; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1372; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1431; goto __pyx_L1;}
       goto __pyx_L5;
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1373 */
-    __pyx_2 = __pyx_f_6mtrand_cont3_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_f,__pyx_v_size,__pyx_v_fdfnum,__pyx_v_fdfden,__pyx_v_fnonc); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1373; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1432 */
+    __pyx_2 = __pyx_f_6mtrand_cont3_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_f,__pyx_v_size,__pyx_v_fdfnum,__pyx_v_fdfden,__pyx_v_fnonc); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1432; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -4272,143 +4276,143 @@ static PyObject *__pyx_f_6mtrand_11RandomState_noncentral_f(PyObject *__pyx_v_se
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1376 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1435 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1378 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_dfnum,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1378; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1437 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_dfnum,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1437; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_odfnum));
   __pyx_v_odfnum = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1379 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_dfden,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1379; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1438 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_dfden,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1438; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_odfden));
   __pyx_v_odfden = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1380 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_nonc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1380; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1439 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_nonc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1439; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_ononc));
   __pyx_v_ononc = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1382 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1441 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(1.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(1.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odfnum));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_odfnum));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1382; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1441; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1383; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; goto __pyx_L1;}
     Py_INCREF(__pyx_k95p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k95p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1383; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1383; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1384 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1443 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
-  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odfden));
   PyTuple_SET_ITEM(__pyx_2, 0, ((PyObject *)__pyx_v_odfden));
   PyTuple_SET_ITEM(__pyx_2, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1384; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1385; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1444; goto __pyx_L1;}
     Py_INCREF(__pyx_k96p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k96p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1385; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1444; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1385; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1444; goto __pyx_L1;}
     goto __pyx_L7;
   }
   __pyx_L7:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1386 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1445 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_less); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_less); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_ononc));
   PyTuple_SET_ITEM(__pyx_4, 0, ((PyObject *)__pyx_v_ononc));
   PyTuple_SET_ITEM(__pyx_4, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_5, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1386; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1445; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1387; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1446; goto __pyx_L1;}
     Py_INCREF(__pyx_k97p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k97p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1387; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1446; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1387; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1446; goto __pyx_L1;}
     goto __pyx_L8;
   }
   __pyx_L8:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1388 */
-  __pyx_5 = __pyx_f_6mtrand_cont3_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_f,__pyx_v_size,__pyx_v_odfnum,__pyx_v_odfden,__pyx_v_ononc); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1388; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1447 */
+  __pyx_5 = __pyx_f_6mtrand_cont3_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_f,__pyx_v_size,__pyx_v_odfnum,__pyx_v_odfden,__pyx_v_ononc); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1447; goto __pyx_L1;}
   __pyx_r = __pyx_5;
   __pyx_5 = 0;
   goto __pyx_L0;
@@ -4461,30 +4465,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_chisquare(PyObject *__pyx_v_self,
   Py_INCREF(__pyx_v_size);
   __pyx_v_odf = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1458 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1517 */
   __pyx_v_fdf = PyFloat_AsDouble(__pyx_v_df);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1459 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1518 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1460 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1519 */
     __pyx_1 = (__pyx_v_fdf <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1461; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1520; goto __pyx_L1;}
       Py_INCREF(__pyx_k98p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k98p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1461; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1520; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1461; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1520; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1462 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_chisquare,__pyx_v_size,__pyx_v_fdf); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1462; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1521 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_chisquare,__pyx_v_size,__pyx_v_fdf); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1521; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -4492,55 +4496,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_chisquare(PyObject *__pyx_v_self,
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1464 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1523 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1466 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_df,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1466; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1525 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_df,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1525; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_odf));
   __pyx_v_odf = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1467 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1526 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odf));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_odf));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1467; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1468; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1527; goto __pyx_L1;}
     Py_INCREF(__pyx_k99p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k99p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1468; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1527; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1468; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1527; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1469 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_chisquare,__pyx_v_size,__pyx_v_odf); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1469; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1528 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_chisquare,__pyx_v_size,__pyx_v_odf); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1528; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -4598,48 +4602,48 @@ static PyObject *__pyx_f_6mtrand_11RandomState_noncentral_chisquare(PyObject *__
   __pyx_v_odf = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_ononc = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1492 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1551 */
   __pyx_v_fdf = PyFloat_AsDouble(__pyx_v_df);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1493 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1552 */
   __pyx_v_fnonc = PyFloat_AsDouble(__pyx_v_nonc);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1494 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1553 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1495 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1554 */
     __pyx_1 = (__pyx_v_fdf <= 1);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1496; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1555; goto __pyx_L1;}
       Py_INCREF(__pyx_k100p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k100p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1496; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1555; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1496; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1555; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1497 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1556 */
     __pyx_1 = (__pyx_v_fnonc <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1498; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1557; goto __pyx_L1;}
       Py_INCREF(__pyx_k101p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k101p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1498; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1557; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1498; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1557; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1499 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_chisquare,__pyx_v_size,__pyx_v_fdf,__pyx_v_fnonc); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1499; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1558 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_chisquare,__pyx_v_size,__pyx_v_fdf,__pyx_v_fnonc); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1558; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -4647,99 +4651,99 @@ static PyObject *__pyx_f_6mtrand_11RandomState_noncentral_chisquare(PyObject *__
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1502 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1561 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1504 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_df,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1504; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1563 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_df,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1563; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_odf));
   __pyx_v_odf = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1505 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_nonc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1505; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1564 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_nonc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1564; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_ononc));
   __pyx_v_ononc = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1506 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1565 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odf));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_odf));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1506; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1565; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1507; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; goto __pyx_L1;}
     Py_INCREF(__pyx_k102p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k102p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1507; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1507; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1508 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1567 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_ononc));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_ononc));
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1567; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1509; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1568; goto __pyx_L1;}
     Py_INCREF(__pyx_k103p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k103p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1509; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1568; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1509; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1568; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1510 */
-  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_chisquare,__pyx_v_size,__pyx_v_odf,__pyx_v_ononc); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1510; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1569 */
+  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_noncentral_chisquare,__pyx_v_size,__pyx_v_odf,__pyx_v_ononc); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1569; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -4774,7 +4778,7 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_cauchy(PyObject *__pyx_v
   if (!PyArg_ParseTupleAndKeywords(__pyx_args, __pyx_kwds, "|O", __pyx_argnames, &__pyx_v_size)) return 0;
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_size);
-  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_cauchy,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1520; goto __pyx_L1;}
+  __pyx_1 = __pyx_f_6mtrand_cont0_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_cauchy,__pyx_v_size); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1579; goto __pyx_L1;}
   __pyx_r = __pyx_1;
   __pyx_1 = 0;
   goto __pyx_L0;
@@ -4818,30 +4822,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_t(PyObject *__pyx_v_self
   Py_INCREF(__pyx_v_size);
   __pyx_v_odf = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1532 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1591 */
   __pyx_v_fdf = PyFloat_AsDouble(__pyx_v_df);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1533 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1592 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1534 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1593 */
     __pyx_1 = (__pyx_v_fdf <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1535; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1594; goto __pyx_L1;}
       Py_INCREF(__pyx_k104p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k104p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1535; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1594; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1535; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1594; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1536 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_t,__pyx_v_size,__pyx_v_fdf); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1595 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_t,__pyx_v_size,__pyx_v_fdf); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1595; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -4849,55 +4853,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_standard_t(PyObject *__pyx_v_self
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1538 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1597 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1540 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_df,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1540; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1599 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_df,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1599; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_odf));
   __pyx_v_odf = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1541 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1600 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_odf));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_odf));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1541; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1600; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1542; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1601; goto __pyx_L1;}
     Py_INCREF(__pyx_k105p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k105p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1542; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1601; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1542; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1601; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1543 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_t,__pyx_v_size,__pyx_v_odf); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1602 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_standard_t,__pyx_v_size,__pyx_v_odf); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1602; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -4951,33 +4955,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_vonmises(PyObject *__pyx_v_self, 
   __pyx_v_omu = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_okappa = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1625 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1684 */
   __pyx_v_fmu = PyFloat_AsDouble(__pyx_v_mu);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1626 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1685 */
   __pyx_v_fkappa = PyFloat_AsDouble(__pyx_v_kappa);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1627 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1686 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1628 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1687 */
     __pyx_1 = (__pyx_v_fkappa < 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1629; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1688; goto __pyx_L1;}
       Py_INCREF(__pyx_k106p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k106p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1629; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1688; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1629; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1688; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1630 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_vonmises,__pyx_v_size,__pyx_v_fmu,__pyx_v_fkappa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1630; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1689 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_vonmises,__pyx_v_size,__pyx_v_fmu,__pyx_v_fkappa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1689; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -4985,62 +4989,62 @@ static PyObject *__pyx_f_6mtrand_11RandomState_vonmises(PyObject *__pyx_v_self, 
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1632 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1691 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1634 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_mu,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1634; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1693 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_mu,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1693; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_omu));
   __pyx_v_omu = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1635 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_kappa,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1635; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1694 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_kappa,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1694; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_okappa));
   __pyx_v_okappa = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1636 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1695 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_okappa));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_okappa));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1636; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1695; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1637; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1696; goto __pyx_L1;}
     Py_INCREF(__pyx_k107p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k107p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1637; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1696; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1637; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1696; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1638 */
-  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_vonmises,__pyx_v_size,__pyx_v_omu,__pyx_v_okappa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1638; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1697 */
+  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_vonmises,__pyx_v_size,__pyx_v_omu,__pyx_v_okappa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1697; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5091,30 +5095,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_pareto(PyObject *__pyx_v_self, Py
   Py_INCREF(__pyx_v_size);
   __pyx_v_oa = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1716 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1775 */
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1717 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1776 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1718 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1777 */
     __pyx_1 = (__pyx_v_fa <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1719; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1778; goto __pyx_L1;}
       Py_INCREF(__pyx_k108p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k108p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1719; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1778; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1719; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1778; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1720 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_pareto,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1720; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1779 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_pareto,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1779; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5122,55 +5126,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_pareto(PyObject *__pyx_v_self, Py
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1722 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1781 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1724 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1724; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1783 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1783; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oa));
   __pyx_v_oa = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1725 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1784 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1725; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1784; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1726; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1785; goto __pyx_L1;}
     Py_INCREF(__pyx_k109p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k109p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1726; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1785; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1726; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1785; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1727 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_pareto,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1727; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1786 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_pareto,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1786; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5199,7 +5203,7 @@ static char __pyx_k110[] = "a <= 0";
 static char __pyx_k111[] = "a <= 0";
 
 static PyObject *__pyx_f_6mtrand_11RandomState_weibull(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6mtrand_11RandomState_weibull[] = "\n        weibull(a, size=None)\n\n        Weibull distribution.\n\n        Draw samples from a 1-parameter Weibull distribution with the given\n        shape parameter.\n\n        .. math:: X = (-ln(U))^{1/a}\n\n        Here, U is drawn from the uniform distribution over (0,1].\n\n        The more common 2-parameter Weibull, including a scale parameter\n        :math:`\\lambda` is just :math:`X = \\lambda(-ln(U))^{1/a}`.\n\n        The Weibull (or Type III asymptotic extreme value distribution for smallest\n        values, SEV Type III, or Rosin-Rammler distribution) is one of a class of\n        Generalized Extreme Value (GEV) distributions used in modeling extreme\n        value problems.  This class includes the Gumbel and Frechet distributions.\n\n        Parameters\n        ----------\n        a : float\n            Shape of the distribution.\n        size : tuple of ints\n            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then\n            ``m * n * k`` samples are drawn.\n\n        See Also\n        --------\n        scipy.stats.distributions.weibull : probability density function,\n            distribution or cumulative density function, etc.\n\n        gumbel, scipy.stats.distributions.genextreme\n\n        Notes\n        -----\n        The probability density for the Weibull distribution is\n\n        .. math:: p(x) = \\frac{a}\n                         {\\lambda}(\\frac{x}{\\lambda})^{a-1}e^{-(x/\\lambda)^a},\n\n        where :math:`a` is the shape and :math:`\\lambda` the scale.\n\n        The function has its peak (the mode) at\n        :math:`\\lambda(\\frac{a-1}{a})^{1/a}`.\n\n        When ``a = 1``, the Weibull distribution reduces to the exponential\n        distribution.\n\n        References\n        ----------\n        .. [1] Waloddi Weibull, Professor, Royal Technical University, Stockholm,\n               1939 \"A Statistical Theory Of The Strength Of Materials\",\n               Ingeniorsvetenskapsakademiens Handlingar Nr 151, 1939,\n               Generalstabens Litografiska Anstalts Forlag, Stockholm.\n        .. [2] Waloddi Weibull, 1951 \"A Statistical Distribution Function of Wide\n               Applicability\",  Journal Of Applied Mechanics ASME Paper.\n        .. [3] Wikipedia, \"Weibull distribution\",\n               http://en.wikipedia.org/wiki/Weibull_distribution\n\n        Examples\n        --------\n        Draw samples from the distribution:\n\n        >>> a = 5. # shape\n        >>> s = np.random.weibull(a, 1000)\n\n        Display the histogram of the samples, along with\n        the probability density function:\n\n        >>> import matplotlib.pyplot as plt\n        >>> def weib(x,n,a):\n        ...     return (a/n)*(x/n)**(a-1)*exp(-(x/n)**a)\n\n        >>> count, bins, ignored = plt.hist(numpy.random.weibull(5.,1000))\n        >>> scale = count.max()/weib(x, 1., 5.).max()\n        >>> x = arange(1,100.)/50.\n        >>> plt.plot(x, weib(x, 1., 5.)*scale)\n        >>> plt.show()\n\n        ";
+static char __pyx_doc_6mtrand_11RandomState_weibull[] = "\n        weibull(a, size=None)\n\n        Weibull distribution.\n\n        Draw samples from a 1-parameter Weibull distribution with the given\n        shape parameter.\n\n        .. math:: X = (-ln(U))^{1/a}\n\n        Here, U is drawn from the uniform distribution over (0,1].\n\n        The more common 2-parameter Weibull, including a scale parameter\n        :math:`\\lambda` is just :math:`X = \\lambda(-ln(U))^{1/a}`.\n\n        The Weibull (or Type III asymptotic extreme value distribution for smallest\n        values, SEV Type III, or Rosin-Rammler distribution) is one of a class of\n        Generalized Extreme Value (GEV) distributions used in modeling extreme\n        value problems.  This class includes the Gumbel and Frechet distributions.\n\n        Parameters\n        ----------\n        a : float\n            Shape of the distribution.\n        size : tuple of ints\n            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then\n            ``m * n * k`` samples are drawn.\n\n        See Also\n        --------\n        scipy.stats.distributions.weibull : probability density function,\n            distribution or cumulative density function, etc.\n\n        gumbel, scipy.stats.distributions.genextreme\n\n        Notes\n        -----\n        The probability density for the Weibull distribution is\n\n        .. math:: p(x) = \\frac{a}\n                         {\\lambda}(\\frac{x}{\\lambda})^{a-1}e^{-(x/\\lambda)^a},\n\n        where :math:`a` is the shape and :math:`\\lambda` the scale.\n\n        The function has its peak (the mode) at\n        :math:`\\lambda(\\frac{a-1}{a})^{1/a}`.\n\n        When ``a = 1``, the Weibull distribution reduces to the exponential\n        distribution.\n\n        References\n        ----------\n        .. [1] Waloddi Weibull, Professor, Royal Technical University, Stockholm,\n               1939 \"A Statistical Theory Of The Strength Of Materials\",\n               Ingeniorsvetenskapsakademiens Handlingar Nr 151, 1939,\n               Generalstabens Litografiska Anstalts Forlag, Stockholm.\n        .. [2] Waloddi Weibull, 1951 \"A Statistical Distribution Function of Wide\n               Applicability\",  Journal Of Applied Mechanics ASME Paper.\n        .. [3] Wikipedia, \"Weibull distribution\",\n               http://en.wikipedia.org/wiki/Weibull_distribution\n\n        Examples\n        --------\n        Draw samples from the distribution:\n\n        >>> a = 5. # shape\n        >>> s = np.random.weibull(a, 1000)\n\n        Display the histogram of the samples, along with\n        the probability density function:\n\n        >>> import matplotlib.pyplot as plt\n        >>> def weib(x,n,a):\n        ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)\n\n        >>> count, bins, ignored = plt.hist(np.random.weibull(5.,1000))\n        >>> x = np.arange(1,100.)/50.\n        >>> scale = count.max()/weib(x, 1., 5.).max()\n        >>> plt.plot(x, weib(x, 1., 5.)*scale)\n        >>> plt.show()\n\n        ";
 static PyObject *__pyx_f_6mtrand_11RandomState_weibull(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_a = 0;
   PyObject *__pyx_v_size = 0;
@@ -5219,30 +5223,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_weibull(PyObject *__pyx_v_self, P
   Py_INCREF(__pyx_v_size);
   __pyx_v_oa = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1815 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1874 */
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1816 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1875 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1817 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1876 */
     __pyx_1 = (__pyx_v_fa <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1818; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1877; goto __pyx_L1;}
       Py_INCREF(__pyx_k110p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k110p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1818; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1877; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1818; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1877; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1819 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_weibull,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1819; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1878 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_weibull,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1878; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5250,55 +5254,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_weibull(PyObject *__pyx_v_self, P
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1821 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1880 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1823 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1823; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1882 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1882; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oa));
   __pyx_v_oa = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1824 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1883 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1824; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1883; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1825; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1884; goto __pyx_L1;}
     Py_INCREF(__pyx_k111p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k111p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1825; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1884; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1825; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1884; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1826 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_weibull,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1826; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1885 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_weibull,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1885; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5347,30 +5351,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_power(PyObject *__pyx_v_self, PyO
   Py_INCREF(__pyx_v_size);
   __pyx_v_oa = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1838 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1897 */
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1839 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1898 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1840 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1899 */
     __pyx_1 = (__pyx_v_fa <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1841; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1900; goto __pyx_L1;}
       Py_INCREF(__pyx_k112p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k112p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1841; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1900; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1841; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1900; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1842 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_power,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1842; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1901 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_power,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1901; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5378,55 +5382,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_power(PyObject *__pyx_v_self, PyO
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1844 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1903 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1846 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1846; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1905 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1905; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oa));
   __pyx_v_oa = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1847 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1906 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1847; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1906; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1848; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1907; goto __pyx_L1;}
     Py_INCREF(__pyx_k113p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k113p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1848; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1907; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1848; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1907; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1849 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_power,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1849; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1908 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_power,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1908; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5482,33 +5486,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_laplace(PyObject *__pyx_v_self, P
   __pyx_v_oloc = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1876 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1935 */
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1877 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1936 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1878 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1937 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1879 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1938 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1880; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1939; goto __pyx_L1;}
       Py_INCREF(__pyx_k114p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k114p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1880; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1939; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1880; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1939; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1881 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_laplace,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1881; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1940 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_laplace,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1940; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5516,62 +5520,62 @@ static PyObject *__pyx_f_6mtrand_11RandomState_laplace(PyObject *__pyx_v_self, P
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1883 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1942 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1884 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1884; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1884; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1943 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1943; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1943; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oloc));
   __pyx_v_oloc = ((PyArrayObject *)__pyx_3);
   __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1885 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1885; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1885; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1944 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1944; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1944; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_2);
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1886 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1945 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1886; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1945; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1887; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1946; goto __pyx_L1;}
     Py_INCREF(__pyx_k115p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k115p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1887; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1946; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1887; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1946; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1888 */
-  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_laplace,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1888; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1947 */
+  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_laplace,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1947; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5629,33 +5633,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_gumbel(PyObject *__pyx_v_self, Py
   __pyx_v_oloc = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2000 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2059 */
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2001 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2060 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2002 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2061 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2003 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2062 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2004; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2063; goto __pyx_L1;}
       Py_INCREF(__pyx_k116p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k116p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2004; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2063; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2004; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2063; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2005 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gumbel,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2005; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2064 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gumbel,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2064; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5663,62 +5667,62 @@ static PyObject *__pyx_f_6mtrand_11RandomState_gumbel(PyObject *__pyx_v_self, Py
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2007 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2066 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2008 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2008; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2008; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2067 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2067; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2067; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oloc));
   __pyx_v_oloc = ((PyArrayObject *)__pyx_3);
   __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2009 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2009; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2009; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2068 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2068; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2068; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_2);
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2010 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2069 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2010; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2069; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2011; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2070; goto __pyx_L1;}
     Py_INCREF(__pyx_k117p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k117p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2011; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2070; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2011; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2070; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2012 */
-  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gumbel,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2012; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2071 */
+  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_gumbel,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2071; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5776,33 +5780,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_logistic(PyObject *__pyx_v_self, 
   __pyx_v_oloc = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2088 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2147 */
   __pyx_v_floc = PyFloat_AsDouble(__pyx_v_loc);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2089 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2148 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2090 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2149 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2091 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2150 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2092; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2151; goto __pyx_L1;}
       Py_INCREF(__pyx_k118p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k118p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2092; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2151; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2092; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2151; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2093 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logistic,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2093; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2152 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logistic,__pyx_v_size,__pyx_v_floc,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2152; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5810,62 +5814,62 @@ static PyObject *__pyx_f_6mtrand_11RandomState_logistic(PyObject *__pyx_v_self, 
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2095 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2154 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2096 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2096; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2096; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2155 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_loc,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2155; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2155; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oloc));
   __pyx_v_oloc = ((PyArrayObject *)__pyx_3);
   __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2097 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2097; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2097; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2156 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2156; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2156; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_2);
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2098 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2157 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2098; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2157; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2099; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2158; goto __pyx_L1;}
     Py_INCREF(__pyx_k119p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k119p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2099; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2158; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2099; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2158; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2100 */
-  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logistic,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2100; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2159 */
+  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logistic,__pyx_v_size,__pyx_v_oloc,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2159; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -5923,33 +5927,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_lognormal(PyObject *__pyx_v_self,
   __pyx_v_omean = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_osigma = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2217 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2276 */
   __pyx_v_fmean = PyFloat_AsDouble(__pyx_v_mean);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2218 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2277 */
   __pyx_v_fsigma = PyFloat_AsDouble(__pyx_v_sigma);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2220 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2279 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2221 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2280 */
     __pyx_1 = (__pyx_v_fsigma <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2222; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
       Py_INCREF(__pyx_k120p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k120p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2222; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2222; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2223 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_lognormal,__pyx_v_size,__pyx_v_fmean,__pyx_v_fsigma); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2223; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2282 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_lognormal,__pyx_v_size,__pyx_v_fmean,__pyx_v_fsigma); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2282; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -5957,62 +5961,62 @@ static PyObject *__pyx_f_6mtrand_11RandomState_lognormal(PyObject *__pyx_v_self,
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2225 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2284 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2227 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_mean,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2227; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2227; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2286 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_mean,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2286; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2286; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_omean));
   __pyx_v_omean = ((PyArrayObject *)__pyx_3);
   __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2228 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_sigma,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2228; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2228; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2287 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_sigma,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2287; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2287; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_osigma));
   __pyx_v_osigma = ((PyArrayObject *)__pyx_2);
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2229 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2288 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_osigma));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_osigma));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2229; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2288; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2230; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2289; goto __pyx_L1;}
     Py_INCREF(__pyx_k121p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k121p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2230; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2289; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2230; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2289; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2231 */
-  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_lognormal,__pyx_v_size,__pyx_v_omean,__pyx_v_osigma); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2231; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2290 */
+  __pyx_4 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_lognormal,__pyx_v_size,__pyx_v_omean,__pyx_v_osigma); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2290; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -6064,30 +6068,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_rayleigh(PyObject *__pyx_v_self, 
   Py_INCREF(__pyx_v_size);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2243 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2302 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2245 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2304 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2246 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2305 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2247; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2306; goto __pyx_L1;}
       Py_INCREF(__pyx_k122p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k122p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2247; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2306; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2247; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2306; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2248 */
-    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_rayleigh,__pyx_v_size,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2248; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2307 */
+    __pyx_2 = __pyx_f_6mtrand_cont1_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_rayleigh,__pyx_v_size,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2307; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -6095,55 +6099,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_rayleigh(PyObject *__pyx_v_self, 
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2250 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2309 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2252 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2252; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2311 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2311; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2253 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2312 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2253; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2254; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2313; goto __pyx_L1;}
     Py_INCREF(__pyx_k123p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k123p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2254; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2313; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2254; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2313; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2255 */
-  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_rayleigh,__pyx_v_size,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2255; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2314 */
+  __pyx_4 = __pyx_f_6mtrand_cont1_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_rayleigh,__pyx_v_size,__pyx_v_oscale); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2314; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -6201,48 +6205,48 @@ static PyObject *__pyx_f_6mtrand_11RandomState_wald(PyObject *__pyx_v_self, PyOb
   __pyx_v_omean = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oscale = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2267 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2326 */
   __pyx_v_fmean = PyFloat_AsDouble(__pyx_v_mean);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2268 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2327 */
   __pyx_v_fscale = PyFloat_AsDouble(__pyx_v_scale);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2269 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2328 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2270 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2329 */
     __pyx_1 = (__pyx_v_fmean <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2271; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2330; goto __pyx_L1;}
       Py_INCREF(__pyx_k124p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k124p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2271; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2330; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2271; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2330; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2272 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2331 */
     __pyx_1 = (__pyx_v_fscale <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2273; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2332; goto __pyx_L1;}
       Py_INCREF(__pyx_k125p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k125p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2273; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2332; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2273; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2332; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2274 */
-    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_wald,__pyx_v_size,__pyx_v_fmean,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2274; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2333 */
+    __pyx_2 = __pyx_f_6mtrand_cont2_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_wald,__pyx_v_size,__pyx_v_fmean,__pyx_v_fscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2333; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -6250,96 +6254,96 @@ static PyObject *__pyx_f_6mtrand_11RandomState_wald(PyObject *__pyx_v_self, PyOb
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2276 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2335 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2277 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_mean,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2277; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2277; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2336 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_mean,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2336; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_3, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2336; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_omean));
   __pyx_v_omean = ((PyArrayObject *)__pyx_3);
   __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2278 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2278; goto __pyx_L1;}
-  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2278; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2337 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_scale,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2337; goto __pyx_L1;}
+  if (!__Pyx_TypeTest(__pyx_2, __pyx_ptype_6mtrand_ndarray)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2337; goto __pyx_L1;}
   Py_DECREF(((PyObject *)__pyx_v_oscale));
   __pyx_v_oscale = ((PyArrayObject *)__pyx_2);
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2279 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2338 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_omean));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_omean));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2279; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2338; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2280; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2339; goto __pyx_L1;}
     Py_INCREF(__pyx_k126p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k126p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2280; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2339; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2280; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2339; goto __pyx_L1;}
     goto __pyx_L5;
   }
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(0.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_oscale));
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2281; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2340; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2282; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2341; goto __pyx_L1;}
     Py_INCREF(__pyx_k127p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k127p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2282; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2341; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2282; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2341; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2283 */
-  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_wald,__pyx_v_size,__pyx_v_omean,__pyx_v_oscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2283; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2342 */
+  __pyx_2 = __pyx_f_6mtrand_cont2_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_wald,__pyx_v_size,__pyx_v_omean,__pyx_v_oscale); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2342; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -6411,66 +6415,66 @@ static PyObject *__pyx_f_6mtrand_11RandomState_triangular(PyObject *__pyx_v_self
   __pyx_v_omode = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_oright = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2298 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2357 */
   __pyx_v_fleft = PyFloat_AsDouble(__pyx_v_left);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2299 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2358 */
   __pyx_v_fright = PyFloat_AsDouble(__pyx_v_right);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2300 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2359 */
   __pyx_v_fmode = PyFloat_AsDouble(__pyx_v_mode);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2301 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2360 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2302 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2361 */
     __pyx_1 = (__pyx_v_fleft > __pyx_v_fmode);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2303; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2362; goto __pyx_L1;}
       Py_INCREF(__pyx_k128p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k128p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2303; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2362; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2303; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2362; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2304 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2363 */
     __pyx_1 = (__pyx_v_fmode > __pyx_v_fright);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2305; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2364; goto __pyx_L1;}
       Py_INCREF(__pyx_k129p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k129p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2305; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2364; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2305; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2364; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2306 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2365 */
     __pyx_1 = (__pyx_v_fleft == __pyx_v_fright);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2307; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2366; goto __pyx_L1;}
       Py_INCREF(__pyx_k130p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k130p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2307; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2366; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2307; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2366; goto __pyx_L1;}
       goto __pyx_L5;
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2308 */
-    __pyx_2 = __pyx_f_6mtrand_cont3_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_triangular,__pyx_v_size,__pyx_v_fleft,__pyx_v_fmode,__pyx_v_fright); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2308; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2367 */
+    __pyx_2 = __pyx_f_6mtrand_cont3_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_triangular,__pyx_v_size,__pyx_v_fleft,__pyx_v_fmode,__pyx_v_fright); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2367; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -6478,140 +6482,140 @@ static PyObject *__pyx_f_6mtrand_11RandomState_triangular(PyObject *__pyx_v_self
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2311 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2370 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2312 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_left,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2312; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2371 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_left,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2371; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oleft));
   __pyx_v_oleft = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2313 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_mode,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2313; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2372 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_mode,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2372; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_omode));
   __pyx_v_omode = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2314 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_right,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2314; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2373 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_right,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2373; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oright));
   __pyx_v_oright = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2316 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2375 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_greater); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_greater); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oleft));
   PyTuple_SET_ITEM(__pyx_2, 0, ((PyObject *)__pyx_v_oleft));
   Py_INCREF(((PyObject *)__pyx_v_omode));
   PyTuple_SET_ITEM(__pyx_2, 1, ((PyObject *)__pyx_v_omode));
-  __pyx_5 = PyObject_CallObject(__pyx_4, __pyx_2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_4, __pyx_2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_5);
   __pyx_5 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2316; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2375; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   if (__pyx_1) {
-    __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2317; goto __pyx_L1;}
+    __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2376; goto __pyx_L1;}
     Py_INCREF(__pyx_k131p);
     PyTuple_SET_ITEM(__pyx_5, 0, __pyx_k131p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2317; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2376; goto __pyx_L1;}
     Py_DECREF(__pyx_5); __pyx_5 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2317; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2376; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2318 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2377 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_5, __pyx_n_greater); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_5, __pyx_n_greater); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_omode));
   PyTuple_SET_ITEM(__pyx_4, 0, ((PyObject *)__pyx_v_omode));
   Py_INCREF(((PyObject *)__pyx_v_oright));
   PyTuple_SET_ITEM(__pyx_4, 1, ((PyObject *)__pyx_v_oright));
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_5);
   __pyx_5 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2318; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2377; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_1) {
-    __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2319; goto __pyx_L1;}
+    __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2378; goto __pyx_L1;}
     Py_INCREF(__pyx_k132p);
     PyTuple_SET_ITEM(__pyx_5, 0, __pyx_k132p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2319; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2378; goto __pyx_L1;}
     Py_DECREF(__pyx_5); __pyx_5 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2319; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2378; goto __pyx_L1;}
     goto __pyx_L7;
   }
   __pyx_L7:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2320 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2379 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_5, __pyx_n_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_5, __pyx_n_equal); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oleft));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_oleft));
   Py_INCREF(((PyObject *)__pyx_v_oright));
   PyTuple_SET_ITEM(__pyx_3, 1, ((PyObject *)__pyx_v_oright));
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_5);
   __pyx_5 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2320; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2379; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2321; goto __pyx_L1;}
+    __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2380; goto __pyx_L1;}
     Py_INCREF(__pyx_k133p);
     PyTuple_SET_ITEM(__pyx_5, 0, __pyx_k133p);
-    __pyx_4 = PyObject_CallObject(PyExc_ValueError, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2321; goto __pyx_L1;}
+    __pyx_4 = PyObject_CallObject(PyExc_ValueError, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2380; goto __pyx_L1;}
     Py_DECREF(__pyx_5); __pyx_5 = 0;
     __Pyx_Raise(__pyx_4, 0, 0);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2321; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2380; goto __pyx_L1;}
     goto __pyx_L8;
   }
   __pyx_L8:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2322 */
-  __pyx_2 = __pyx_f_6mtrand_cont3_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_triangular,__pyx_v_size,__pyx_v_oleft,__pyx_v_omode,__pyx_v_oright); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2322; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2381 */
+  __pyx_2 = __pyx_f_6mtrand_cont3_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_triangular,__pyx_v_size,__pyx_v_oleft,__pyx_v_omode,__pyx_v_oright); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2381; goto __pyx_L1;}
   __pyx_r = __pyx_2;
   __pyx_2 = 0;
   goto __pyx_L0;
@@ -6677,60 +6681,60 @@ static PyObject *__pyx_f_6mtrand_11RandomState_binomial(PyObject *__pyx_v_self, 
   __pyx_v_on = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_op = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2411 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2470 */
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2412 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2471 */
   __pyx_v_ln = PyInt_AsLong(__pyx_v_n);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2413 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2472 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2414 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2473 */
     __pyx_1 = (__pyx_v_ln <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2415; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2474; goto __pyx_L1;}
       Py_INCREF(__pyx_k134p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k134p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2415; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2474; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2415; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2474; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2416 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2475 */
     __pyx_1 = (__pyx_v_fp < 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2417; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2476; goto __pyx_L1;}
       Py_INCREF(__pyx_k135p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k135p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2417; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2476; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2417; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2476; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_1 = (__pyx_v_fp > 1);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2419; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2478; goto __pyx_L1;}
       Py_INCREF(__pyx_k136p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k136p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2419; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2478; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2419; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2478; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2420 */
-    __pyx_2 = __pyx_f_6mtrand_discnp_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_binomial,__pyx_v_size,__pyx_v_ln,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2420; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2479 */
+    __pyx_2 = __pyx_f_6mtrand_discnp_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_binomial,__pyx_v_size,__pyx_v_ln,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2479; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -6738,136 +6742,136 @@ static PyObject *__pyx_f_6mtrand_11RandomState_binomial(PyObject *__pyx_v_self, 
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2422 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2481 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2424 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_n,NPY_LONG,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2424; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2483 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_n,NPY_LONG,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2483; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_on));
   __pyx_v_on = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2425 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2425; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2484 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2484; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_op));
   __pyx_v_op = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2426 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2485 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   Py_INCREF(__pyx_v_n);
   PyTuple_SET_ITEM(__pyx_5, 0, __pyx_v_n);
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2426; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2485; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2427; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2486; goto __pyx_L1;}
     Py_INCREF(__pyx_k137p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k137p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2427; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2486; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2427; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2486; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2428 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2487 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyInt_FromLong(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  __pyx_4 = PyInt_FromLong(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   Py_INCREF(__pyx_v_p);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_v_p);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2428; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2487; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2429; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2488; goto __pyx_L1;}
     Py_INCREF(__pyx_k138p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k138p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2429; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2488; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2429; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2488; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2430 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2489 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_greater); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_greater); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   Py_INCREF(__pyx_v_p);
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_p);
   PyTuple_SET_ITEM(__pyx_4, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_5, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2430; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2431; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2490; goto __pyx_L1;}
     Py_INCREF(__pyx_k139p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k139p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2431; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2490; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2431; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2490; goto __pyx_L1;}
     goto __pyx_L7;
   }
   __pyx_L7:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2432 */
-  __pyx_5 = __pyx_f_6mtrand_discnp_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_binomial,__pyx_v_size,__pyx_v_on,__pyx_v_op); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2432; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2491 */
+  __pyx_5 = __pyx_f_6mtrand_discnp_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_binomial,__pyx_v_size,__pyx_v_on,__pyx_v_op); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2491; goto __pyx_L1;}
   __pyx_r = __pyx_5;
   __pyx_5 = 0;
   goto __pyx_L0;
@@ -6931,60 +6935,60 @@ static PyObject *__pyx_f_6mtrand_11RandomState_negative_binomial(PyObject *__pyx
   __pyx_v_on = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_op = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2446 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2505 */
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2447 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2506 */
   __pyx_v_fn = PyFloat_AsDouble(__pyx_v_n);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2448 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2507 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2449 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2508 */
     __pyx_1 = (__pyx_v_fn <= 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2450; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2509; goto __pyx_L1;}
       Py_INCREF(__pyx_k140p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k140p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2450; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2509; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2450; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2509; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2451 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2510 */
     __pyx_1 = (__pyx_v_fp < 0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2452; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2511; goto __pyx_L1;}
       Py_INCREF(__pyx_k141p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k141p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2452; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2511; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2452; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2511; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_1 = (__pyx_v_fp > 1);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2454; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2513; goto __pyx_L1;}
       Py_INCREF(__pyx_k142p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k142p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2454; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2513; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2454; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2513; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2455 */
-    __pyx_2 = __pyx_f_6mtrand_discdd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_negative_binomial,__pyx_v_size,__pyx_v_fn,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2455; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2514 */
+    __pyx_2 = __pyx_f_6mtrand_discdd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_negative_binomial,__pyx_v_size,__pyx_v_fn,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2514; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -6992,136 +6996,136 @@ static PyObject *__pyx_f_6mtrand_11RandomState_negative_binomial(PyObject *__pyx
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2458 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2517 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2460 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_n,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2460; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2519 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_n,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2519; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_on));
   __pyx_v_on = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2461 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2461; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2520 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2520; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_op));
   __pyx_v_op = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2462 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2521 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  __pyx_3 = PyInt_FromLong(0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   Py_INCREF(__pyx_v_n);
   PyTuple_SET_ITEM(__pyx_5, 0, __pyx_v_n);
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2462; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2521; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2463; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2522; goto __pyx_L1;}
     Py_INCREF(__pyx_k143p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k143p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2463; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2522; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2463; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2522; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2464 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2523 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyInt_FromLong(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  __pyx_4 = PyInt_FromLong(0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   Py_INCREF(__pyx_v_p);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_v_p);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2464; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2523; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2465; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2524; goto __pyx_L1;}
     Py_INCREF(__pyx_k144p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k144p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2465; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2524; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2465; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2524; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2466 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2525 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_greater); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_greater); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   Py_INCREF(__pyx_v_p);
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_p);
   PyTuple_SET_ITEM(__pyx_4, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_5, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2466; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2525; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2467; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2526; goto __pyx_L1;}
     Py_INCREF(__pyx_k145p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k145p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2467; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2526; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2467; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2526; goto __pyx_L1;}
     goto __pyx_L7;
   }
   __pyx_L7:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2468 */
-  __pyx_5 = __pyx_f_6mtrand_discdd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_negative_binomial,__pyx_v_size,__pyx_v_on,__pyx_v_op); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2468; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2527 */
+  __pyx_5 = __pyx_f_6mtrand_discdd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_negative_binomial,__pyx_v_size,__pyx_v_on,__pyx_v_op); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2527; goto __pyx_L1;}
   __pyx_r = __pyx_5;
   __pyx_5 = 0;
   goto __pyx_L0;
@@ -7173,33 +7177,33 @@ static PyObject *__pyx_f_6mtrand_11RandomState_poisson(PyObject *__pyx_v_self, P
   Py_INCREF(__pyx_v_size);
   __pyx_v_olam = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2480 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2539 */
   __pyx_v_flam = PyFloat_AsDouble(__pyx_v_lam);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2481 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2540 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2482 */
-    __pyx_2 = PyInt_FromLong(0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2482; goto __pyx_L1;}
-    if (PyObject_Cmp(__pyx_v_lam, __pyx_2, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2482; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2541 */
+    __pyx_2 = PyInt_FromLong(0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2541; goto __pyx_L1;}
+    if (PyObject_Cmp(__pyx_v_lam, __pyx_2, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2541; goto __pyx_L1;}
     __pyx_1 = __pyx_1 < 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2483; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2542; goto __pyx_L1;}
       Py_INCREF(__pyx_k146p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k146p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2483; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2542; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2483; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2542; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2484 */
-    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_poisson,__pyx_v_size,__pyx_v_flam); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2484; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2543 */
+    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_poisson,__pyx_v_size,__pyx_v_flam); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2543; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -7207,55 +7211,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_poisson(PyObject *__pyx_v_self, P
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2486 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2545 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2488 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_lam,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2488; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2547 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_lam,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2547; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_olam));
   __pyx_v_olam = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2489 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2548 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyInt_FromLong(0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_2 = PyInt_FromLong(0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_olam));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_olam));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2489; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2548; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2490; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2549; goto __pyx_L1;}
     Py_INCREF(__pyx_k147p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k147p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2490; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2549; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2490; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2549; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2491 */
-  __pyx_4 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_poisson,__pyx_v_size,__pyx_v_olam); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2491; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2550 */
+  __pyx_4 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_poisson,__pyx_v_size,__pyx_v_olam); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2550; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -7304,30 +7308,30 @@ static PyObject *__pyx_f_6mtrand_11RandomState_zipf(PyObject *__pyx_v_self, PyOb
   Py_INCREF(__pyx_v_size);
   __pyx_v_oa = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2572 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2631 */
   __pyx_v_fa = PyFloat_AsDouble(__pyx_v_a);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2573 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2632 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2574 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2633 */
     __pyx_1 = (__pyx_v_fa <= 1.0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2575; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2634; goto __pyx_L1;}
       Py_INCREF(__pyx_k148p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k148p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2575; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2634; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2575; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2634; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2576 */
-    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_zipf,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2576; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2635 */
+    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_zipf,__pyx_v_size,__pyx_v_fa); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2635; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -7335,55 +7339,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_zipf(PyObject *__pyx_v_self, PyOb
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2578 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2637 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2580 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2580; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2639 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_a,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2639; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_oa));
   __pyx_v_oa = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2581 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2640 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(1.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(1.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_oa));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2581; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2640; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2582; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2641; goto __pyx_L1;}
     Py_INCREF(__pyx_k149p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k149p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2582; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2641; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2582; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2641; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2583 */
-  __pyx_4 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_zipf,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2583; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2642 */
+  __pyx_4 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_zipf,__pyx_v_size,__pyx_v_oa); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2642; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -7436,45 +7440,45 @@ static PyObject *__pyx_f_6mtrand_11RandomState_geometric(PyObject *__pyx_v_self,
   Py_INCREF(__pyx_v_size);
   __pyx_v_op = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2633 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2692 */
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2634 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2693 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2635 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2694 */
     __pyx_1 = (__pyx_v_fp < 0.0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2636; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2695; goto __pyx_L1;}
       Py_INCREF(__pyx_k150p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k150p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2636; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2695; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2636; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2695; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2637 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2696 */
     __pyx_1 = (__pyx_v_fp > 1.0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2638; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2697; goto __pyx_L1;}
       Py_INCREF(__pyx_k151p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k151p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2638; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2697; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2638; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2697; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2639 */
-    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_geometric,__pyx_v_size,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2639; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2698 */
+    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_geometric,__pyx_v_size,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2698; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -7482,92 +7486,92 @@ static PyObject *__pyx_f_6mtrand_11RandomState_geometric(PyObject *__pyx_v_self,
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2641 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2700 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2644 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2644; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2703 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2703; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_op));
   __pyx_v_op = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2645 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2704 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2645; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2704; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2646; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2705; goto __pyx_L1;}
     Py_INCREF(__pyx_k152p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k152p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2646; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2705; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2646; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2705; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2647 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2706 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_greater); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_greater); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = PyFloat_FromDouble(1.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
-  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(1.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_2, 0, ((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_2, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2647; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2706; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2648; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2707; goto __pyx_L1;}
     Py_INCREF(__pyx_k153p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k153p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2648; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2707; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2648; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2707; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2649 */
-  __pyx_3 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_geometric,__pyx_v_size,__pyx_v_op); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2649; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2708 */
+  __pyx_3 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_geometric,__pyx_v_size,__pyx_v_op); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2708; goto __pyx_L1;}
   __pyx_r = __pyx_3;
   __pyx_3 = 0;
   goto __pyx_L0;
@@ -7641,93 +7645,93 @@ static PyObject *__pyx_f_6mtrand_11RandomState_hypergeometric(PyObject *__pyx_v_
   __pyx_v_onbad = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
   __pyx_v_onsample = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2738 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2797 */
   __pyx_v_lngood = PyInt_AsLong(__pyx_v_ngood);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2739 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2798 */
   __pyx_v_lnbad = PyInt_AsLong(__pyx_v_nbad);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2740 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2799 */
   __pyx_v_lnsample = PyInt_AsLong(__pyx_v_nsample);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2741 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2800 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2742 */
-    __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2742; goto __pyx_L1;}
-    if (PyObject_Cmp(__pyx_v_ngood, __pyx_2, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2742; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2801 */
+    __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2801; goto __pyx_L1;}
+    if (PyObject_Cmp(__pyx_v_ngood, __pyx_2, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2801; goto __pyx_L1;}
     __pyx_1 = __pyx_1 < 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2743; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2802; goto __pyx_L1;}
       Py_INCREF(__pyx_k154p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k154p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2743; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2802; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2743; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2802; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2744 */
-    __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2744; goto __pyx_L1;}
-    if (PyObject_Cmp(__pyx_v_nbad, __pyx_2, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2744; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2803 */
+    __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2803; goto __pyx_L1;}
+    if (PyObject_Cmp(__pyx_v_nbad, __pyx_2, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2803; goto __pyx_L1;}
     __pyx_1 = __pyx_1 < 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     if (__pyx_1) {
-      __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2745; goto __pyx_L1;}
+      __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2804; goto __pyx_L1;}
       Py_INCREF(__pyx_k155p);
       PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k155p);
-      __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2745; goto __pyx_L1;}
+      __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2804; goto __pyx_L1;}
       Py_DECREF(__pyx_3); __pyx_3 = 0;
       __Pyx_Raise(__pyx_2, 0, 0);
       Py_DECREF(__pyx_2); __pyx_2 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2745; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2804; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2746 */
-    __pyx_3 = PyInt_FromLong(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2746; goto __pyx_L1;}
-    if (PyObject_Cmp(__pyx_v_nsample, __pyx_3, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2746; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2805 */
+    __pyx_3 = PyInt_FromLong(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2805; goto __pyx_L1;}
+    if (PyObject_Cmp(__pyx_v_nsample, __pyx_3, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2805; goto __pyx_L1;}
     __pyx_1 = __pyx_1 < 0;
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2747; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2806; goto __pyx_L1;}
       Py_INCREF(__pyx_k156p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k156p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2747; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2806; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2747; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2806; goto __pyx_L1;}
       goto __pyx_L5;
     }
     __pyx_L5:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2748 */
-    __pyx_2 = PyNumber_Add(__pyx_v_ngood, __pyx_v_nbad); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2748; goto __pyx_L1;}
-    if (PyObject_Cmp(__pyx_2, __pyx_v_nsample, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2748; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2807 */
+    __pyx_2 = PyNumber_Add(__pyx_v_ngood, __pyx_v_nbad); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2807; goto __pyx_L1;}
+    if (PyObject_Cmp(__pyx_2, __pyx_v_nsample, &__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2807; goto __pyx_L1;}
     __pyx_1 = __pyx_1 < 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     if (__pyx_1) {
-      __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2749; goto __pyx_L1;}
+      __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2808; goto __pyx_L1;}
       Py_INCREF(__pyx_k157p);
       PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k157p);
-      __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2749; goto __pyx_L1;}
+      __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2808; goto __pyx_L1;}
       Py_DECREF(__pyx_3); __pyx_3 = 0;
       __Pyx_Raise(__pyx_2, 0, 0);
       Py_DECREF(__pyx_2); __pyx_2 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2749; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2808; goto __pyx_L1;}
       goto __pyx_L6;
     }
     __pyx_L6:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2750 */
-    __pyx_3 = __pyx_f_6mtrand_discnmN_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_hypergeometric,__pyx_v_size,__pyx_v_lngood,__pyx_v_lnbad,__pyx_v_lnsample); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2750; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2809 */
+    __pyx_3 = __pyx_f_6mtrand_discnmN_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_hypergeometric,__pyx_v_size,__pyx_v_lngood,__pyx_v_lnbad,__pyx_v_lnsample); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2809; goto __pyx_L1;}
     __pyx_r = __pyx_3;
     __pyx_3 = 0;
     goto __pyx_L0;
@@ -7735,190 +7739,190 @@ static PyObject *__pyx_f_6mtrand_11RandomState_hypergeometric(PyObject *__pyx_v_
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2754 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2813 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2756 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_ngood,NPY_LONG,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2756; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2815 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_ngood,NPY_LONG,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2815; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_ongood));
   __pyx_v_ongood = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2757 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_nbad,NPY_LONG,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2757; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2816 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_nbad,NPY_LONG,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2816; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_onbad));
   __pyx_v_onbad = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2758 */
-  __pyx_2 = PyArray_FROM_OTF(__pyx_v_nsample,NPY_LONG,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2758; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2817 */
+  __pyx_2 = PyArray_FROM_OTF(__pyx_v_nsample,NPY_LONG,NPY_ALIGNED); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2817; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_onsample));
   __pyx_v_onsample = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2759 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2818 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_any); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyInt_FromLong(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  __pyx_3 = PyInt_FromLong(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_ongood));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_ongood));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_3);
   __pyx_3 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_3);
   __pyx_3 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2759; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2818; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2760; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2819; goto __pyx_L1;}
     Py_INCREF(__pyx_k158p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k158p);
-    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2760; goto __pyx_L1;}
+    __pyx_2 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2819; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_2, 0, 0);
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2760; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2819; goto __pyx_L1;}
     goto __pyx_L7;
   }
   __pyx_L7:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2761 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2820 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_less); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_4 = PyInt_FromLong(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  __pyx_4 = PyInt_FromLong(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_onbad));
   PyTuple_SET_ITEM(__pyx_3, 0, ((PyObject *)__pyx_v_onbad));
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_2, __pyx_3); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_5, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2761; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2820; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2762; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2821; goto __pyx_L1;}
     Py_INCREF(__pyx_k159p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k159p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2762; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2821; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2762; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2821; goto __pyx_L1;}
     goto __pyx_L8;
   }
   __pyx_L8:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2763 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2822 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_less); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_less); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  __pyx_2 = PyInt_FromLong(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_onsample));
   PyTuple_SET_ITEM(__pyx_4, 0, ((PyObject *)__pyx_v_onsample));
   PyTuple_SET_ITEM(__pyx_4, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(1); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_5, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_5); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2763; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_4); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2822; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2764; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2823; goto __pyx_L1;}
     Py_INCREF(__pyx_k160p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k160p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2764; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2823; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2764; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2823; goto __pyx_L1;}
     goto __pyx_L9;
   }
   __pyx_L9:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2765 */
-  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_5, __pyx_n_any); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2824 */
+  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_5, __pyx_n_any); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_less); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_less); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_5, __pyx_n_add); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_5 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_5, __pyx_n_add); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_ongood));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_ongood));
   Py_INCREF(((PyObject *)__pyx_v_onbad));
   PyTuple_SET_ITEM(__pyx_5, 1, ((PyObject *)__pyx_v_onbad));
-  __pyx_6 = PyObject_CallObject(__pyx_2, __pyx_5); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_6 = PyObject_CallObject(__pyx_2, __pyx_5); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_6);
   Py_INCREF(((PyObject *)__pyx_v_onsample));
   PyTuple_SET_ITEM(__pyx_2, 1, ((PyObject *)__pyx_v_onsample));
   __pyx_6 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_6, 0, __pyx_5);
   __pyx_5 = 0;
-  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_6); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_4, __pyx_6); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_6); __pyx_6 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2765; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_3); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2824; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2766; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2825; goto __pyx_L1;}
     Py_INCREF(__pyx_k161p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k161p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2766; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2825; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2766; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2825; goto __pyx_L1;}
     goto __pyx_L10;
   }
   __pyx_L10:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2767 */
-  __pyx_4 = __pyx_f_6mtrand_discnmN_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_hypergeometric,__pyx_v_size,__pyx_v_ongood,__pyx_v_onbad,__pyx_v_onsample); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2767; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2826 */
+  __pyx_4 = __pyx_f_6mtrand_discnmN_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_hypergeometric,__pyx_v_size,__pyx_v_ongood,__pyx_v_onbad,__pyx_v_onsample); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2826; goto __pyx_L1;}
   __pyx_r = __pyx_4;
   __pyx_4 = 0;
   goto __pyx_L0;
@@ -7978,45 +7982,45 @@ static PyObject *__pyx_f_6mtrand_11RandomState_logseries(PyObject *__pyx_v_self,
   Py_INCREF(__pyx_v_size);
   __pyx_v_op = ((PyArrayObject *)Py_None); Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2847 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2906 */
   __pyx_v_fp = PyFloat_AsDouble(__pyx_v_p);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2848 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2907 */
   __pyx_1 = (!PyErr_Occurred());
   if (__pyx_1) {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2849 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2908 */
     __pyx_1 = (__pyx_v_fp <= 0.0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2850; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2909; goto __pyx_L1;}
       Py_INCREF(__pyx_k162p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k162p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2850; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2909; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2850; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2909; goto __pyx_L1;}
       goto __pyx_L3;
     }
     __pyx_L3:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2851 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2910 */
     __pyx_1 = (__pyx_v_fp >= 1.0);
     if (__pyx_1) {
-      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2852; goto __pyx_L1;}
+      __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2911; goto __pyx_L1;}
       Py_INCREF(__pyx_k163p);
       PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k163p);
-      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2852; goto __pyx_L1;}
+      __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2911; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
       __Pyx_Raise(__pyx_3, 0, 0);
       Py_DECREF(__pyx_3); __pyx_3 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2852; goto __pyx_L1;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2911; goto __pyx_L1;}
       goto __pyx_L4;
     }
     __pyx_L4:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2853 */
-    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logseries,__pyx_v_size,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2853; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2912 */
+    __pyx_2 = __pyx_f_6mtrand_discd_array_sc(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logseries,__pyx_v_size,__pyx_v_fp); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2912; goto __pyx_L1;}
     __pyx_r = __pyx_2;
     __pyx_2 = 0;
     goto __pyx_L0;
@@ -8024,92 +8028,92 @@ static PyObject *__pyx_f_6mtrand_11RandomState_logseries(PyObject *__pyx_v_self,
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2855 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2914 */
   PyErr_Clear();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2857 */
-  __pyx_3 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2857; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2916 */
+  __pyx_3 = PyArray_FROM_OTF(__pyx_v_p,NPY_DOUBLE,NPY_ALIGNED); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2916; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_3)));
   Py_DECREF(((PyObject *)__pyx_v_op));
   __pyx_v_op = ((PyArrayObject *)__pyx_3);
   Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2858 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2917 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_any); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
-  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
+  __pyx_4 = PyObject_GetAttr(__pyx_2, __pyx_n_less_equal); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
-  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(0.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
+  __pyx_5 = PyTuple_New(2); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_5, 0, ((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_5, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_4, __pyx_5); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_5); __pyx_5 = 0;
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_3, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2858; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_5); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2917; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   if (__pyx_1) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2859; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2918; goto __pyx_L1;}
     Py_INCREF(__pyx_k164p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k164p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2859; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2918; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2859; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2918; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2860 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2919 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_any); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_greater_equal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_greater_equal); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_4 = PyFloat_FromDouble(1.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
-  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(1.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(2); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   Py_INCREF(((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_2, 0, ((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_2, 1, __pyx_4);
   __pyx_4 = 0;
-  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_4);
   __pyx_4 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_5, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   Py_DECREF(__pyx_5); __pyx_5 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2860; goto __pyx_L1;}
+  __pyx_1 = PyObject_IsTrue(__pyx_2); if (__pyx_1 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2919; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   if (__pyx_1) {
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2861; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2920; goto __pyx_L1;}
     Py_INCREF(__pyx_k165p);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_k165p);
-    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2861; goto __pyx_L1;}
+    __pyx_5 = PyObject_CallObject(PyExc_ValueError, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2920; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __Pyx_Raise(__pyx_5, 0, 0);
     Py_DECREF(__pyx_5); __pyx_5 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2861; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2920; goto __pyx_L1;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2862 */
-  __pyx_3 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logseries,__pyx_v_size,__pyx_v_op); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2862; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2921 */
+  __pyx_3 = __pyx_f_6mtrand_discd_array(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,rk_logseries,__pyx_v_size,__pyx_v_op); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2921; goto __pyx_L1;}
   __pyx_r = __pyx_3;
   __pyx_3 = 0;
   goto __pyx_L0;
@@ -8185,38 +8189,38 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multivariate_normal(PyObject *__p
   __pyx_v_s = Py_None; Py_INCREF(Py_None);
   __pyx_v_v = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2958 */
-  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2958; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_array); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2958; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3017 */
+  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3017; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_array); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3017; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2958; goto __pyx_L1;}
+  __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3017; goto __pyx_L1;}
   Py_INCREF(__pyx_v_mean);
   PyTuple_SET_ITEM(__pyx_1, 0, __pyx_v_mean);
-  __pyx_3 = PyObject_CallObject(__pyx_2, __pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2958; goto __pyx_L1;}
+  __pyx_3 = PyObject_CallObject(__pyx_2, __pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3017; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   Py_DECREF(__pyx_v_mean);
   __pyx_v_mean = __pyx_3;
   __pyx_3 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2959 */
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2959; goto __pyx_L1;}
-  __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n_array); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2959; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3018 */
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3018; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n_array); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3018; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2959; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3018; goto __pyx_L1;}
   Py_INCREF(__pyx_v_cov);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_v_cov);
-  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2959; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3018; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_v_cov);
   __pyx_v_cov = __pyx_2;
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2960 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3019 */
   __pyx_4 = __pyx_v_size == Py_None;
   if (__pyx_4) {
-    __pyx_1 = PyList_New(0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2961; goto __pyx_L1;}
+    __pyx_1 = PyList_New(0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3020; goto __pyx_L1;}
     Py_DECREF(__pyx_v_shape);
     __pyx_v_shape = __pyx_1;
     __pyx_1 = 0;
@@ -8229,82 +8233,82 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multivariate_normal(PyObject *__p
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2964 */
-  __pyx_3 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2964; goto __pyx_L1;}
-  __pyx_5 = PyObject_Length(__pyx_3); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2964; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3023 */
+  __pyx_3 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3023; goto __pyx_L1;}
+  __pyx_5 = PyObject_Length(__pyx_3); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3023; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   __pyx_4 = (__pyx_5 != 1);
   if (__pyx_4) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2965; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3024; goto __pyx_L1;}
     Py_INCREF(__pyx_k166p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k166p);
-    __pyx_1 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2965; goto __pyx_L1;}
+    __pyx_1 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3024; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_1, 0, 0);
     Py_DECREF(__pyx_1); __pyx_1 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2965; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3024; goto __pyx_L1;}
     goto __pyx_L3;
   }
   __pyx_L3:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2966 */
-  __pyx_3 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
-  __pyx_5 = PyObject_Length(__pyx_3); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3025 */
+  __pyx_3 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
+  __pyx_5 = PyObject_Length(__pyx_3); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   __pyx_4 = (__pyx_5 != 2);
   if (!__pyx_4) {
-    __pyx_2 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
-    __pyx_1 = PySequence_GetItem(__pyx_2, 0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
+    __pyx_2 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
+    __pyx_1 = __Pyx_GetItemInt(__pyx_2, 0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    __pyx_3 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
-    __pyx_2 = PySequence_GetItem(__pyx_3, 1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
+    __pyx_3 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
+    __pyx_2 = __Pyx_GetItemInt(__pyx_3, 1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    if (PyObject_Cmp(__pyx_1, __pyx_2, &__pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2966; goto __pyx_L1;}
+    if (PyObject_Cmp(__pyx_1, __pyx_2, &__pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3025; goto __pyx_L1;}
     __pyx_4 = __pyx_4 != 0;
     Py_DECREF(__pyx_1); __pyx_1 = 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
   }
   if (__pyx_4) {
-    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2967; goto __pyx_L1;}
+    __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3026; goto __pyx_L1;}
     Py_INCREF(__pyx_k167p);
     PyTuple_SET_ITEM(__pyx_3, 0, __pyx_k167p);
-    __pyx_1 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2967; goto __pyx_L1;}
+    __pyx_1 = PyObject_CallObject(PyExc_ValueError, __pyx_3); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3026; goto __pyx_L1;}
     Py_DECREF(__pyx_3); __pyx_3 = 0;
     __Pyx_Raise(__pyx_1, 0, 0);
     Py_DECREF(__pyx_1); __pyx_1 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2967; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3026; goto __pyx_L1;}
     goto __pyx_L4;
   }
   __pyx_L4:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2968 */
-  __pyx_2 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2968; goto __pyx_L1;}
-  __pyx_3 = PySequence_GetItem(__pyx_2, 0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2968; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3027 */
+  __pyx_2 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3027; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetItemInt(__pyx_2, 0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3027; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_1 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2968; goto __pyx_L1;}
-  __pyx_2 = PySequence_GetItem(__pyx_1, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2968; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_v_cov, __pyx_n_shape); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3027; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetItemInt(__pyx_1, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3027; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  if (PyObject_Cmp(__pyx_3, __pyx_2, &__pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2968; goto __pyx_L1;}
+  if (PyObject_Cmp(__pyx_3, __pyx_2, &__pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3027; goto __pyx_L1;}
   __pyx_4 = __pyx_4 != 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   if (__pyx_4) {
-    __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2969; goto __pyx_L1;}
+    __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3028; goto __pyx_L1;}
     Py_INCREF(__pyx_k168p);
     PyTuple_SET_ITEM(__pyx_1, 0, __pyx_k168p);
-    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2969; goto __pyx_L1;}
+    __pyx_3 = PyObject_CallObject(PyExc_ValueError, __pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3028; goto __pyx_L1;}
     Py_DECREF(__pyx_1); __pyx_1 = 0;
     __Pyx_Raise(__pyx_3, 0, 0);
     Py_DECREF(__pyx_3); __pyx_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2969; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3028; goto __pyx_L1;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2971 */
-  __pyx_4 = PyObject_IsInstance(__pyx_v_shape,((PyObject *)(&PyInt_Type))); if (__pyx_4 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2971; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3030 */
+  __pyx_4 = PyObject_IsInstance(__pyx_v_shape,((PyObject *)(&PyInt_Type))); if (__pyx_4 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3030; goto __pyx_L1;}
   if (__pyx_4) {
-    __pyx_2 = PyList_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2972; goto __pyx_L1;}
+    __pyx_2 = PyList_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3031; goto __pyx_L1;}
     Py_INCREF(__pyx_v_shape);
     PyList_SET_ITEM(__pyx_2, 0, __pyx_v_shape);
     Py_DECREF(__pyx_v_shape);
@@ -8314,166 +8318,166 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multivariate_normal(PyObject *__p
   }
   __pyx_L6:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2973 */
-  __pyx_1 = PySequence_GetSlice(__pyx_v_shape, 0, PY_SSIZE_T_MAX); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2973; goto __pyx_L1;}
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2973; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3032 */
+  __pyx_1 = PySequence_GetSlice(__pyx_v_shape, 0, PY_SSIZE_T_MAX); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3032; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3032; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_1);
   __pyx_1 = 0;
-  __pyx_2 = PyObject_CallObject(((PyObject *)(&PyList_Type)), __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2973; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(((PyObject *)(&PyList_Type)), __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3032; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_v_final_shape);
   __pyx_v_final_shape = __pyx_2;
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2974 */
-  __pyx_1 = PyObject_GetAttr(__pyx_v_final_shape, __pyx_n_append); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2974; goto __pyx_L1;}
-  __pyx_3 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2974; goto __pyx_L1;}
-  __pyx_2 = PySequence_GetItem(__pyx_3, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2974; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3033 */
+  __pyx_1 = PyObject_GetAttr(__pyx_v_final_shape, __pyx_n_append); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3033; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3033; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetItemInt(__pyx_3, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3033; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2974; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3033; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2974; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3033; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2978 */
-  __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_standard_normal); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_multiply); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3037 */
+  __pyx_1 = PyObject_GetAttr(__pyx_v_self, __pyx_n_standard_normal); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_3, __pyx_n_multiply); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_reduce); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_reduce); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
   Py_INCREF(__pyx_v_final_shape);
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_v_final_shape);
-  __pyx_6 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
+  __pyx_6 = PyObject_CallObject(__pyx_3, __pyx_2); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_6);
   __pyx_6 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2978; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3037; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_v_x);
   __pyx_v_x = __pyx_2;
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2979 */
-  __pyx_6 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
-  __pyx_1 = PyObject_GetAttr(__pyx_6, __pyx_n_multiply); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3038 */
+  __pyx_6 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_6, __pyx_n_multiply); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
   Py_DECREF(__pyx_6); __pyx_6 = 0;
-  __pyx_3 = PyObject_GetAttr(__pyx_1, __pyx_n_reduce); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_1, __pyx_n_reduce); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_5 = PyObject_Length(__pyx_v_final_shape); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
-  __pyx_2 = PySequence_GetSlice(__pyx_v_final_shape, 0, (__pyx_5 - 1)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
-  __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
+  __pyx_5 = PyObject_Length(__pyx_v_final_shape); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
+  __pyx_2 = PySequence_GetSlice(__pyx_v_final_shape, 0, (__pyx_5 - 1)); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
+  __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_6, 0, __pyx_2);
   __pyx_2 = 0;
-  __pyx_1 = PyObject_CallObject(__pyx_3, __pyx_6); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
+  __pyx_1 = PyObject_CallObject(__pyx_3, __pyx_6); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_6); __pyx_6 = 0;
-  __pyx_2 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2980; goto __pyx_L1;}
-  __pyx_3 = PySequence_GetItem(__pyx_2, 0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2980; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_v_mean, __pyx_n_shape); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3039; goto __pyx_L1;}
+  __pyx_3 = __Pyx_GetItemInt(__pyx_2, 0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3039; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_6 = PyTuple_New(2); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
+  __pyx_6 = PyTuple_New(2); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_6, 0, __pyx_1);
   PyTuple_SET_ITEM(__pyx_6, 1, __pyx_3);
   __pyx_1 = 0;
   __pyx_3 = 0;
-  if (PyObject_SetAttr(__pyx_v_x, __pyx_n_shape, __pyx_6) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2979; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_v_x, __pyx_n_shape, __pyx_6) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3038; goto __pyx_L1;}
   Py_DECREF(__pyx_6); __pyx_6 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2988 */
-  __pyx_2 = PyList_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2988; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3047 */
+  __pyx_2 = PyList_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3047; goto __pyx_L1;}
   Py_INCREF(__pyx_n_svd);
   PyList_SET_ITEM(__pyx_2, 0, __pyx_n_svd);
-  __pyx_1 = __Pyx_Import(__pyx_k169p, __pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2988; goto __pyx_L1;}
+  __pyx_1 = __Pyx_Import(__pyx_k169p, __pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3047; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyObject_GetAttr(__pyx_1, __pyx_n_svd); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2988; goto __pyx_L1;}
+  __pyx_3 = PyObject_GetAttr(__pyx_1, __pyx_n_svd); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3047; goto __pyx_L1;}
   Py_DECREF(__pyx_v_svd);
   __pyx_v_svd = __pyx_3;
   __pyx_3 = 0;
   Py_DECREF(__pyx_1); __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2990 */
-  __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3049 */
+  __pyx_6 = PyTuple_New(1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_INCREF(__pyx_v_cov);
   PyTuple_SET_ITEM(__pyx_6, 0, __pyx_v_cov);
-  __pyx_2 = PyObject_CallObject(__pyx_v_svd, __pyx_6); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_v_svd, __pyx_6); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_DECREF(__pyx_6); __pyx_6 = 0;
-  __pyx_1 = PyObject_GetIter(__pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetIter(__pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = __Pyx_UnpackItem(__pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  __pyx_3 = __Pyx_UnpackItem(__pyx_1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_DECREF(__pyx_v_u);
   __pyx_v_u = __pyx_3;
   __pyx_3 = 0;
-  __pyx_6 = __Pyx_UnpackItem(__pyx_1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  __pyx_6 = __Pyx_UnpackItem(__pyx_1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_DECREF(__pyx_v_s);
   __pyx_v_s = __pyx_6;
   __pyx_6 = 0;
-  __pyx_2 = __Pyx_UnpackItem(__pyx_1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  __pyx_2 = __Pyx_UnpackItem(__pyx_1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_DECREF(__pyx_v_v);
   __pyx_v_v = __pyx_2;
   __pyx_2 = 0;
-  if (__Pyx_EndUnpack(__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2990; goto __pyx_L1;}
+  if (__Pyx_EndUnpack(__pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3049; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2991 */
-  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
-  __pyx_6 = PyObject_GetAttr(__pyx_3, __pyx_n_dot); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3050 */
+  __pyx_3 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
+  __pyx_6 = PyObject_GetAttr(__pyx_3, __pyx_n_dot); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
-  __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n_sqrt); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
+  __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n_sqrt); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(1); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   Py_INCREF(__pyx_v_s);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_v_s);
-  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_1, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
-  __pyx_1 = PyNumber_Multiply(__pyx_v_x, __pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  __pyx_1 = PyNumber_Multiply(__pyx_v_x, __pyx_2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
-  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(2); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_1);
   Py_INCREF(__pyx_v_v);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_v_v);
   __pyx_1 = 0;
-  __pyx_2 = PyObject_CallObject(__pyx_6, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2991; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_6, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3050; goto __pyx_L1;}
   Py_DECREF(__pyx_6); __pyx_6 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_v_x);
   __pyx_v_x = __pyx_2;
   __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2994 */
-  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2994; goto __pyx_L1;}
-  __pyx_6 = PyObject_GetAttr(__pyx_1, __pyx_n_add); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2994; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3053 */
+  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3053; goto __pyx_L1;}
+  __pyx_6 = PyObject_GetAttr(__pyx_1, __pyx_n_add); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3053; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_3 = PyTuple_New(3); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2994; goto __pyx_L1;}
+  __pyx_3 = PyTuple_New(3); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3053; goto __pyx_L1;}
   Py_INCREF(__pyx_v_mean);
   PyTuple_SET_ITEM(__pyx_3, 0, __pyx_v_mean);
   Py_INCREF(__pyx_v_x);
   PyTuple_SET_ITEM(__pyx_3, 1, __pyx_v_x);
   Py_INCREF(__pyx_v_x);
   PyTuple_SET_ITEM(__pyx_3, 2, __pyx_v_x);
-  __pyx_2 = PyObject_CallObject(__pyx_6, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2994; goto __pyx_L1;}
+  __pyx_2 = PyObject_CallObject(__pyx_6, __pyx_3); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3053; goto __pyx_L1;}
   Py_DECREF(__pyx_6); __pyx_6 = 0;
   Py_DECREF(__pyx_3); __pyx_3 = 0;
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2995 */
-  __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2995; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3054 */
+  __pyx_1 = PyTuple_New(1); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3054; goto __pyx_L1;}
   Py_INCREF(__pyx_v_final_shape);
   PyTuple_SET_ITEM(__pyx_1, 0, __pyx_v_final_shape);
-  __pyx_6 = PyObject_CallObject(((PyObject *)(&PyTuple_Type)), __pyx_1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2995; goto __pyx_L1;}
+  __pyx_6 = PyObject_CallObject(((PyObject *)(&PyTuple_Type)), __pyx_1); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3054; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  if (PyObject_SetAttr(__pyx_v_x, __pyx_n_shape, __pyx_6) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2995; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_v_x, __pyx_n_shape, __pyx_6) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3054; goto __pyx_L1;}
   Py_DECREF(__pyx_6); __pyx_6 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2996 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3055 */
   Py_INCREF(__pyx_v_x);
   __pyx_r = __pyx_v_x;
   goto __pyx_L0;
@@ -8543,40 +8547,40 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multinomial(PyObject *__pyx_v_sel
   __pyx_v_shape = Py_None; Py_INCREF(Py_None);
   __pyx_v_multin = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3057 */
-  __pyx_1 = PyObject_Length(__pyx_v_pvals); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3057; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3116 */
+  __pyx_1 = PyObject_Length(__pyx_v_pvals); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3116; goto __pyx_L1;}
   __pyx_v_d = __pyx_1;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3058 */
-  __pyx_2 = PyArray_ContiguousFromObject(__pyx_v_pvals,NPY_DOUBLE,1,1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3058; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3117 */
+  __pyx_2 = PyArray_ContiguousFromObject(__pyx_v_pvals,NPY_DOUBLE,1,1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3117; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)arrayObject_parr));
   arrayObject_parr = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3059 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3118 */
   __pyx_v_pix = ((double *)arrayObject_parr->data);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3061 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3120 */
   __pyx_3 = (__pyx_f_6mtrand_kahan_sum(__pyx_v_pix,(__pyx_v_d - 1)) > (1.0 + 1e-12));
   if (__pyx_3) {
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3062; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3121; goto __pyx_L1;}
     Py_INCREF(__pyx_k171p);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_k171p);
-    __pyx_4 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3062; goto __pyx_L1;}
+    __pyx_4 = PyObject_CallObject(PyExc_ValueError, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3121; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __Pyx_Raise(__pyx_4, 0, 0);
     Py_DECREF(__pyx_4); __pyx_4 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3062; goto __pyx_L1;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3121; goto __pyx_L1;}
     goto __pyx_L2;
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3064 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3123 */
   __pyx_3 = __pyx_v_size == Py_None;
   if (__pyx_3) {
-    __pyx_2 = PyInt_FromLong(__pyx_v_d); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3065; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3065; goto __pyx_L1;}
+    __pyx_2 = PyInt_FromLong(__pyx_v_d); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3124; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3124; goto __pyx_L1;}
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
     __pyx_2 = 0;
     Py_DECREF(__pyx_v_shape);
@@ -8584,16 +8588,16 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multinomial(PyObject *__pyx_v_sel
     __pyx_4 = 0;
     goto __pyx_L3;
   }
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3066; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3125; goto __pyx_L1;}
   Py_INCREF(__pyx_v_size);
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_v_size);
-  __pyx_4 = PyObject_CallObject(((PyObject *)(&PyType_Type)), __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3066; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(((PyObject *)(&PyType_Type)), __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3125; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   __pyx_3 = __pyx_4 == ((PyObject *)(&PyInt_Type));
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_3) {
-    __pyx_2 = PyInt_FromLong(__pyx_v_d); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3067; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3067; goto __pyx_L1;}
+    __pyx_2 = PyInt_FromLong(__pyx_v_d); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3126; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3126; goto __pyx_L1;}
     Py_INCREF(__pyx_v_size);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_size);
     PyTuple_SET_ITEM(__pyx_4, 1, __pyx_2);
@@ -8604,11 +8608,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multinomial(PyObject *__pyx_v_sel
     goto __pyx_L3;
   }
   /*else*/ {
-    __pyx_2 = PyInt_FromLong(__pyx_v_d); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3069; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3069; goto __pyx_L1;}
+    __pyx_2 = PyInt_FromLong(__pyx_v_d); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3128; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3128; goto __pyx_L1;}
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
     __pyx_2 = 0;
-    __pyx_2 = PyNumber_Add(__pyx_v_size, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3069; goto __pyx_L1;}
+    __pyx_2 = PyNumber_Add(__pyx_v_size, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3128; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     Py_DECREF(__pyx_v_shape);
     __pyx_v_shape = __pyx_2;
@@ -8616,55 +8620,55 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multinomial(PyObject *__pyx_v_sel
   }
   __pyx_L3:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3071 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3071; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_zeros); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3071; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3130 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3130; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_zeros); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3130; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3071; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3130; goto __pyx_L1;}
   Py_INCREF(__pyx_v_shape);
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_shape);
   Py_INCREF(((PyObject *)(&PyInt_Type)));
   PyTuple_SET_ITEM(__pyx_4, 1, ((PyObject *)(&PyInt_Type)));
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3071; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3130; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_v_multin);
   __pyx_v_multin = __pyx_5;
   __pyx_5 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3072 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3131 */
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_v_multin)));
   Py_DECREF(((PyObject *)arrayObject_mnarr));
   arrayObject_mnarr = ((PyArrayObject *)__pyx_v_multin);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3073 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3132 */
   __pyx_v_mnix = ((long *)arrayObject_mnarr->data);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3074 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3133 */
   __pyx_v_i = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3075 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3134 */
   while (1) {
     __pyx_3 = (__pyx_v_i < PyArray_SIZE(arrayObject_mnarr));
     if (!__pyx_3) break;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3076 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3135 */
     __pyx_v_Sum = 1.0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3077 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3136 */
     __pyx_v_dn = __pyx_v_n;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3078 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3137 */
     __pyx_6 = (__pyx_v_d - 1);
     for (__pyx_v_j = 0; __pyx_v_j < __pyx_6; ++__pyx_v_j) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3079 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3138 */
       (__pyx_v_mnix[(__pyx_v_i + __pyx_v_j)]) = rk_binomial(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,__pyx_v_dn,((__pyx_v_pix[__pyx_v_j]) / __pyx_v_Sum));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3080 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3139 */
       __pyx_v_dn = (__pyx_v_dn - (__pyx_v_mnix[(__pyx_v_i + __pyx_v_j)]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3081 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3140 */
       __pyx_3 = (__pyx_v_dn <= 0);
       if (__pyx_3) {
         goto __pyx_L7;
@@ -8672,12 +8676,12 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multinomial(PyObject *__pyx_v_sel
       }
       __pyx_L8:;
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3083 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3142 */
       __pyx_v_Sum = (__pyx_v_Sum - (__pyx_v_pix[__pyx_v_j]));
     }
     __pyx_L7:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3084 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3143 */
     __pyx_3 = (__pyx_v_dn > 0);
     if (__pyx_3) {
       (__pyx_v_mnix[((__pyx_v_i + __pyx_v_d) - 1)]) = __pyx_v_dn;
@@ -8685,11 +8689,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_multinomial(PyObject *__pyx_v_sel
     }
     __pyx_L9:;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3087 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3146 */
     __pyx_v_i = (__pyx_v_i + __pyx_v_d);
   }
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3089 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3148 */
   Py_INCREF(__pyx_v_multin);
   __pyx_r = __pyx_v_multin;
   goto __pyx_L0;
@@ -8747,25 +8751,25 @@ static PyObject *__pyx_f_6mtrand_11RandomState_dirichlet(PyObject *__pyx_v_self,
   __pyx_v_shape = Py_None; Py_INCREF(Py_None);
   __pyx_v_diric = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3155 */
-  __pyx_1 = PyObject_Length(__pyx_v_alpha); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3155; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3214 */
+  __pyx_1 = PyObject_Length(__pyx_v_alpha); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3214; goto __pyx_L1;}
   __pyx_v_k = __pyx_1;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3156 */
-  __pyx_2 = PyArray_ContiguousFromObject(__pyx_v_alpha,NPY_DOUBLE,1,1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3156; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3215 */
+  __pyx_2 = PyArray_ContiguousFromObject(__pyx_v_alpha,NPY_DOUBLE,1,1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3215; goto __pyx_L1;}
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_2)));
   Py_DECREF(((PyObject *)__pyx_v_alpha_arr));
   __pyx_v_alpha_arr = ((PyArrayObject *)__pyx_2);
   Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3157 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3216 */
   __pyx_v_alpha_data = ((double *)__pyx_v_alpha_arr->data);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3159 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3218 */
   __pyx_3 = __pyx_v_size == Py_None;
   if (__pyx_3) {
-    __pyx_2 = PyInt_FromLong(__pyx_v_k); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3160; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3160; goto __pyx_L1;}
+    __pyx_2 = PyInt_FromLong(__pyx_v_k); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3219; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3219; goto __pyx_L1;}
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
     __pyx_2 = 0;
     Py_DECREF(__pyx_v_shape);
@@ -8773,16 +8777,16 @@ static PyObject *__pyx_f_6mtrand_11RandomState_dirichlet(PyObject *__pyx_v_self,
     __pyx_4 = 0;
     goto __pyx_L2;
   }
-  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3161; goto __pyx_L1;}
+  __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3220; goto __pyx_L1;}
   Py_INCREF(__pyx_v_size);
   PyTuple_SET_ITEM(__pyx_2, 0, __pyx_v_size);
-  __pyx_4 = PyObject_CallObject(((PyObject *)(&PyType_Type)), __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3161; goto __pyx_L1;}
+  __pyx_4 = PyObject_CallObject(((PyObject *)(&PyType_Type)), __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3220; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   __pyx_3 = __pyx_4 == ((PyObject *)(&PyInt_Type));
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   if (__pyx_3) {
-    __pyx_2 = PyInt_FromLong(__pyx_v_k); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3162; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3162; goto __pyx_L1;}
+    __pyx_2 = PyInt_FromLong(__pyx_v_k); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3221; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3221; goto __pyx_L1;}
     Py_INCREF(__pyx_v_size);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_size);
     PyTuple_SET_ITEM(__pyx_4, 1, __pyx_2);
@@ -8793,11 +8797,11 @@ static PyObject *__pyx_f_6mtrand_11RandomState_dirichlet(PyObject *__pyx_v_self,
     goto __pyx_L2;
   }
   /*else*/ {
-    __pyx_2 = PyInt_FromLong(__pyx_v_k); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3164; goto __pyx_L1;}
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3164; goto __pyx_L1;}
+    __pyx_2 = PyInt_FromLong(__pyx_v_k); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3223; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3223; goto __pyx_L1;}
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_2);
     __pyx_2 = 0;
-    __pyx_2 = PyNumber_Add(__pyx_v_size, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3164; goto __pyx_L1;}
+    __pyx_2 = PyNumber_Add(__pyx_v_size, __pyx_4); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3223; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     Py_DECREF(__pyx_v_shape);
     __pyx_v_shape = __pyx_2;
@@ -8805,70 +8809,70 @@ static PyObject *__pyx_f_6mtrand_11RandomState_dirichlet(PyObject *__pyx_v_self,
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3166 */
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3166; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_zeros); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3166; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3225 */
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3225; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_4, __pyx_n_zeros); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3225; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3166; goto __pyx_L1;}
-  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_float64); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3166; goto __pyx_L1;}
+  __pyx_4 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3225; goto __pyx_L1;}
+  __pyx_5 = PyObject_GetAttr(__pyx_4, __pyx_n_float64); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3225; goto __pyx_L1;}
   Py_DECREF(__pyx_4); __pyx_4 = 0;
-  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3166; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3225; goto __pyx_L1;}
   Py_INCREF(__pyx_v_shape);
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_shape);
   PyTuple_SET_ITEM(__pyx_4, 1, __pyx_5);
   __pyx_5 = 0;
-  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3166; goto __pyx_L1;}
+  __pyx_5 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3225; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_v_diric);
   __pyx_v_diric = __pyx_5;
   __pyx_5 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3167 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3226 */
   Py_INCREF(((PyObject *)((PyArrayObject *)__pyx_v_diric)));
   Py_DECREF(((PyObject *)__pyx_v_val_arr));
   __pyx_v_val_arr = ((PyArrayObject *)__pyx_v_diric);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3168 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3227 */
   __pyx_v_val_data = ((double *)__pyx_v_val_arr->data);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3170 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3229 */
   __pyx_v_i = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3171 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3230 */
   __pyx_v_totsize = PyArray_SIZE(__pyx_v_val_arr);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3172 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3231 */
   while (1) {
     __pyx_3 = (__pyx_v_i < __pyx_v_totsize);
     if (!__pyx_3) break;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3173 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3232 */
     __pyx_v_acc = 0.0;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3174 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3233 */
     for (__pyx_v_j = 0; __pyx_v_j < __pyx_v_k; ++__pyx_v_j) {
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3175 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3234 */
       (__pyx_v_val_data[(__pyx_v_i + __pyx_v_j)]) = rk_standard_gamma(((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state,(__pyx_v_alpha_data[__pyx_v_j]));
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3176 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3235 */
       __pyx_v_acc = (__pyx_v_acc + (__pyx_v_val_data[(__pyx_v_i + __pyx_v_j)]));
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3177 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3236 */
     __pyx_v_invacc = (1 / __pyx_v_acc);
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3178 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3237 */
     for (__pyx_v_j = 0; __pyx_v_j < __pyx_v_k; ++__pyx_v_j) {
       (__pyx_v_val_data[(__pyx_v_i + __pyx_v_j)]) = ((__pyx_v_val_data[(__pyx_v_i + __pyx_v_j)]) * __pyx_v_invacc);
     }
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3180 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3239 */
     __pyx_v_i = (__pyx_v_i + __pyx_v_k);
   }
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3182 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3241 */
   Py_INCREF(__pyx_v_diric);
   __pyx_r = __pyx_v_diric;
   goto __pyx_L0;
@@ -8913,14 +8917,14 @@ static PyObject *__pyx_f_6mtrand_11RandomState_shuffle(PyObject *__pyx_v_self, P
   Py_INCREF(__pyx_v_self);
   Py_INCREF(__pyx_v_x);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3195 */
-  __pyx_1 = PyObject_Length(__pyx_v_x); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3195; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3254 */
+  __pyx_1 = PyObject_Length(__pyx_v_x); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3254; goto __pyx_L1;}
   __pyx_v_i = (__pyx_1 - 1);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3196 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3255 */
   /*try:*/ {
-    __pyx_2 = PySequence_GetItem(__pyx_v_x, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3197; goto __pyx_L2;}
-    __pyx_1 = PyObject_Length(__pyx_2); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3197; goto __pyx_L2;}
+    __pyx_2 = __Pyx_GetItemInt(__pyx_v_x, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3256; goto __pyx_L2;}
+    __pyx_1 = PyObject_Length(__pyx_2); if (__pyx_1 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3256; goto __pyx_L2;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     __pyx_v_j = __pyx_1;
   }
@@ -8928,10 +8932,10 @@ static PyObject *__pyx_f_6mtrand_11RandomState_shuffle(PyObject *__pyx_v_self, P
   __pyx_L2:;
   Py_XDECREF(__pyx_2); __pyx_2 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3198 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3257 */
   /*except:*/ {
     __Pyx_AddTraceback("mtrand.shuffle");
-    if (__Pyx_GetException(&__pyx_2, &__pyx_3, &__pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3198; goto __pyx_L1;}
+    if (__Pyx_GetException(&__pyx_2, &__pyx_3, &__pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3257; goto __pyx_L1;}
     __pyx_v_j = 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     Py_DECREF(__pyx_3); __pyx_3 = 0;
@@ -8940,64 +8944,64 @@ static PyObject *__pyx_f_6mtrand_11RandomState_shuffle(PyObject *__pyx_v_self, P
   }
   __pyx_L3:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3201 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3260 */
   __pyx_5 = (__pyx_v_j == 0);
   if (__pyx_5) {
     while (1) {
       __pyx_5 = (__pyx_v_i > 0);
       if (!__pyx_5) break;
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3204 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3263 */
       __pyx_v_j = rk_interval(__pyx_v_i,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3205 */
-      __pyx_2 = PySequence_GetItem(__pyx_v_x, __pyx_v_j); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3205; goto __pyx_L1;}
-      __pyx_3 = PySequence_GetItem(__pyx_v_x, __pyx_v_i); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3205; goto __pyx_L1;}
-      if (PySequence_SetItem(__pyx_v_x, __pyx_v_i, __pyx_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3205; goto __pyx_L1;}
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3264 */
+      __pyx_2 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_j); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
+      __pyx_3 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_i); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
+      if (__Pyx_SetItemInt(__pyx_v_x, __pyx_v_i, __pyx_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
       Py_DECREF(__pyx_2); __pyx_2 = 0;
-      if (PySequence_SetItem(__pyx_v_x, __pyx_v_j, __pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3205; goto __pyx_L1;}
+      if (__Pyx_SetItemInt(__pyx_v_x, __pyx_v_j, __pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
       Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-      /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3206 */
+      /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3265 */
       __pyx_v_i = (__pyx_v_i - 1);
     }
     goto __pyx_L4;
   }
   /*else*/ {
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3209 */
-    __pyx_4 = PySequence_GetItem(__pyx_v_x, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3209; goto __pyx_L1;}
-    __pyx_5 = PyObject_HasAttr(__pyx_4,__pyx_n_copy); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3209; goto __pyx_L1;}
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3268 */
+    __pyx_4 = __Pyx_GetItemInt(__pyx_v_x, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3268; goto __pyx_L1;}
+    __pyx_5 = PyObject_HasAttr(__pyx_4,__pyx_n_copy); if (__pyx_5 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3268; goto __pyx_L1;}
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     __pyx_v_copy = __pyx_5;
 
-    /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3210 */
+    /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3269 */
     __pyx_5 = __pyx_v_copy;
     if (__pyx_5) {
       while (1) {
         __pyx_5 = (__pyx_v_i > 0);
         if (!__pyx_5) break;
 
-        /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3212 */
+        /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3271 */
         __pyx_v_j = rk_interval(__pyx_v_i,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
 
-        /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3213 */
-        __pyx_2 = PySequence_GetItem(__pyx_v_x, __pyx_v_j); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
-        __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_copy); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
+        /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3272 */
+        __pyx_2 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_j); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
+        __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_copy); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
         Py_DECREF(__pyx_2); __pyx_2 = 0;
-        __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
+        __pyx_4 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
         Py_DECREF(__pyx_3); __pyx_3 = 0;
-        __pyx_2 = PySequence_GetItem(__pyx_v_x, __pyx_v_i); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
-        __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_copy); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
+        __pyx_2 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_i); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
+        __pyx_3 = PyObject_GetAttr(__pyx_2, __pyx_n_copy); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
         Py_DECREF(__pyx_2); __pyx_2 = 0;
-        __pyx_2 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
+        __pyx_2 = PyObject_CallObject(__pyx_3, 0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
         Py_DECREF(__pyx_3); __pyx_3 = 0;
-        if (PySequence_SetItem(__pyx_v_x, __pyx_v_i, __pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
+        if (__Pyx_SetItemInt(__pyx_v_x, __pyx_v_i, __pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
         Py_DECREF(__pyx_4); __pyx_4 = 0;
-        if (PySequence_SetItem(__pyx_v_x, __pyx_v_j, __pyx_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3213; goto __pyx_L1;}
+        if (__Pyx_SetItemInt(__pyx_v_x, __pyx_v_j, __pyx_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
         Py_DECREF(__pyx_2); __pyx_2 = 0;
 
-        /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3214 */
+        /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3273 */
         __pyx_v_i = (__pyx_v_i - 1);
       }
       goto __pyx_L7;
@@ -9007,22 +9011,22 @@ static PyObject *__pyx_f_6mtrand_11RandomState_shuffle(PyObject *__pyx_v_self, P
         __pyx_5 = (__pyx_v_i > 0);
         if (!__pyx_5) break;
 
-        /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3217 */
+        /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3276 */
         __pyx_v_j = rk_interval(__pyx_v_i,((struct __pyx_obj_6mtrand_RandomState *)__pyx_v_self)->internal_state);
 
-        /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3218 */
-        __pyx_3 = PySequence_GetItem(__pyx_v_x, __pyx_v_j); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3218; goto __pyx_L1;}
-        __pyx_4 = PySequence_GetSlice(__pyx_3, 0, PY_SSIZE_T_MAX); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3218; goto __pyx_L1;}
+        /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3277 */
+        __pyx_3 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_j); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
+        __pyx_4 = PySequence_GetSlice(__pyx_3, 0, PY_SSIZE_T_MAX); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
         Py_DECREF(__pyx_3); __pyx_3 = 0;
-        __pyx_2 = PySequence_GetItem(__pyx_v_x, __pyx_v_i); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3218; goto __pyx_L1;}
-        __pyx_3 = PySequence_GetSlice(__pyx_2, 0, PY_SSIZE_T_MAX); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3218; goto __pyx_L1;}
+        __pyx_2 = __Pyx_GetItemInt(__pyx_v_x, __pyx_v_i); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
+        __pyx_3 = PySequence_GetSlice(__pyx_2, 0, PY_SSIZE_T_MAX); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
         Py_DECREF(__pyx_2); __pyx_2 = 0;
-        if (PySequence_SetItem(__pyx_v_x, __pyx_v_i, __pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3218; goto __pyx_L1;}
+        if (__Pyx_SetItemInt(__pyx_v_x, __pyx_v_i, __pyx_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
         Py_DECREF(__pyx_4); __pyx_4 = 0;
-        if (PySequence_SetItem(__pyx_v_x, __pyx_v_j, __pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3218; goto __pyx_L1;}
+        if (__Pyx_SetItemInt(__pyx_v_x, __pyx_v_j, __pyx_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
         Py_DECREF(__pyx_3); __pyx_3 = 0;
 
-        /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3219 */
+        /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3278 */
         __pyx_v_i = (__pyx_v_i - 1);
       }
     }
@@ -9062,25 +9066,25 @@ static PyObject *__pyx_f_6mtrand_11RandomState_permutation(PyObject *__pyx_v_sel
   Py_INCREF(__pyx_v_x);
   __pyx_v_arr = Py_None; Py_INCREF(Py_None);
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3248 */
-  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3248; goto __pyx_L1;}
-  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_integer); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3248; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3307 */
+  __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3307; goto __pyx_L1;}
+  __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_integer); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3307; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
-  __pyx_1 = PyTuple_New(2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3248; goto __pyx_L1;}
+  __pyx_1 = PyTuple_New(2); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3307; goto __pyx_L1;}
   Py_INCREF(((PyObject *)(&PyInt_Type)));
   PyTuple_SET_ITEM(__pyx_1, 0, ((PyObject *)(&PyInt_Type)));
   PyTuple_SET_ITEM(__pyx_1, 1, __pyx_2);
   __pyx_2 = 0;
-  __pyx_3 = PyObject_IsInstance(__pyx_v_x,__pyx_1); if (__pyx_3 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3248; goto __pyx_L1;}
+  __pyx_3 = PyObject_IsInstance(__pyx_v_x,__pyx_1); if (__pyx_3 == -1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3307; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
   if (__pyx_3) {
-    __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3249; goto __pyx_L1;}
-    __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n_arange); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3249; goto __pyx_L1;}
+    __pyx_2 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3308; goto __pyx_L1;}
+    __pyx_1 = PyObject_GetAttr(__pyx_2, __pyx_n_arange); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3308; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
-    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3249; goto __pyx_L1;}
+    __pyx_2 = PyTuple_New(1); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3308; goto __pyx_L1;}
     Py_INCREF(__pyx_v_x);
     PyTuple_SET_ITEM(__pyx_2, 0, __pyx_v_x);
-    __pyx_4 = PyObject_CallObject(__pyx_1, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3249; goto __pyx_L1;}
+    __pyx_4 = PyObject_CallObject(__pyx_1, __pyx_2); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3308; goto __pyx_L1;}
     Py_DECREF(__pyx_1); __pyx_1 = 0;
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     Py_DECREF(__pyx_v_arr);
@@ -9089,13 +9093,13 @@ static PyObject *__pyx_f_6mtrand_11RandomState_permutation(PyObject *__pyx_v_sel
     goto __pyx_L2;
   }
   /*else*/ {
-    __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3251; goto __pyx_L1;}
-    __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_array); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3251; goto __pyx_L1;}
+    __pyx_1 = __Pyx_GetName(__pyx_m, __pyx_n_np); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3310; goto __pyx_L1;}
+    __pyx_2 = PyObject_GetAttr(__pyx_1, __pyx_n_array); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3310; goto __pyx_L1;}
     Py_DECREF(__pyx_1); __pyx_1 = 0;
-    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3251; goto __pyx_L1;}
+    __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3310; goto __pyx_L1;}
     Py_INCREF(__pyx_v_x);
     PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_x);
-    __pyx_1 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3251; goto __pyx_L1;}
+    __pyx_1 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3310; goto __pyx_L1;}
     Py_DECREF(__pyx_2); __pyx_2 = 0;
     Py_DECREF(__pyx_4); __pyx_4 = 0;
     Py_DECREF(__pyx_v_arr);
@@ -9104,17 +9108,17 @@ static PyObject *__pyx_f_6mtrand_11RandomState_permutation(PyObject *__pyx_v_sel
   }
   __pyx_L2:;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3252 */
-  __pyx_2 = PyObject_GetAttr(__pyx_v_self, __pyx_n_shuffle); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3252; goto __pyx_L1;}
-  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3252; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3311 */
+  __pyx_2 = PyObject_GetAttr(__pyx_v_self, __pyx_n_shuffle); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3311; goto __pyx_L1;}
+  __pyx_4 = PyTuple_New(1); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3311; goto __pyx_L1;}
   Py_INCREF(__pyx_v_arr);
   PyTuple_SET_ITEM(__pyx_4, 0, __pyx_v_arr);
-  __pyx_1 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3252; goto __pyx_L1;}
+  __pyx_1 = PyObject_CallObject(__pyx_2, __pyx_4); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3311; goto __pyx_L1;}
   Py_DECREF(__pyx_2); __pyx_2 = 0;
   Py_DECREF(__pyx_4); __pyx_4 = 0;
   Py_DECREF(__pyx_1); __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3253 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3312 */
   Py_INCREF(__pyx_v_arr);
   __pyx_r = __pyx_v_arr;
   goto __pyx_L0;
@@ -9562,555 +9566,555 @@ PyMODINIT_FUNC initmtrand(void) {
   if (PyObject_SetAttrString(__pyx_m, "RandomState", (PyObject *)&__pyx_type_6mtrand_RandomState) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; goto __pyx_L1;}
   __pyx_ptype_6mtrand_RandomState = &__pyx_type_6mtrand_RandomState;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":121 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":121 */
   import_array();
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":123 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":123 */
   __pyx_1 = __Pyx_Import(__pyx_n_numpy, 0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 123; goto __pyx_L1;}
   if (PyObject_SetAttr(__pyx_m, __pyx_n_np, __pyx_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 123; goto __pyx_L1;}
   Py_DECREF(__pyx_1); __pyx_1 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":546 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":546 */
   Py_INCREF(Py_None);
   __pyx_k2 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":556 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":556 */
   Py_INCREF(Py_None);
   __pyx_k3 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":646 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":679 */
   Py_INCREF(Py_None);
   __pyx_k4 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":655 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":698 */
   Py_INCREF(Py_None);
   __pyx_k5 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":683 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":726 */
   Py_INCREF(Py_None);
   __pyx_k6 = Py_None;
   Py_INCREF(Py_None);
   __pyx_k7 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":747 */
-  __pyx_1 = PyFloat_FromDouble(0.0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":790 */
+  __pyx_1 = PyFloat_FromDouble(0.0); if (!__pyx_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 790; goto __pyx_L1;}
   __pyx_k8 = __pyx_1;
   __pyx_1 = 0;
-  __pyx_2 = PyFloat_FromDouble(1.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; goto __pyx_L1;}
+  __pyx_2 = PyFloat_FromDouble(1.0); if (!__pyx_2) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 790; goto __pyx_L1;}
   __pyx_k9 = __pyx_2;
   __pyx_2 = 0;
   Py_INCREF(Py_None);
   __pyx_k10 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":895 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":938 */
   Py_INCREF(Py_None);
   __pyx_k11 = Py_None;
   Py_INCREF(Py_None);
   __pyx_k12 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":910 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":953 */
   Py_INCREF(Py_None);
   __pyx_k13 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":919 */
-  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":974 */
+  __pyx_3 = PyFloat_FromDouble(0.0); if (!__pyx_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 974; goto __pyx_L1;}
   __pyx_k14 = __pyx_3;
   __pyx_3 = 0;
-  __pyx_4 = PyFloat_FromDouble(1.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 919; goto __pyx_L1;}
+  __pyx_4 = PyFloat_FromDouble(1.0); if (!__pyx_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 974; goto __pyx_L1;}
   __pyx_k15 = __pyx_4;
   __pyx_4 = 0;
   Py_INCREF(Py_None);
   __pyx_k16 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1019 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1074 */
   Py_INCREF(Py_None);
   __pyx_k17 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1078 */
-  __pyx_5 = PyFloat_FromDouble(1.0); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1078; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1133 */
+  __pyx_5 = PyFloat_FromDouble(1.0); if (!__pyx_5) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1133; goto __pyx_L1;}
   __pyx_k18 = __pyx_5;
   __pyx_5 = 0;
   Py_INCREF(Py_None);
   __pyx_k19 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1128 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1187 */
   Py_INCREF(Py_None);
   __pyx_k20 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1137 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1196 */
   Py_INCREF(Py_None);
   __pyx_k21 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1159 */
-  __pyx_6 = PyFloat_FromDouble(1.0); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1159; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1218 */
+  __pyx_6 = PyFloat_FromDouble(1.0); if (!__pyx_6) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1218; goto __pyx_L1;}
   __pyx_k22 = __pyx_6;
   __pyx_6 = 0;
   Py_INCREF(Py_None);
   __pyx_k23 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1250 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1309 */
   Py_INCREF(Py_None);
   __pyx_k24 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1353 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1412 */
   Py_INCREF(Py_None);
   __pyx_k25 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1391 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1450 */
   Py_INCREF(Py_None);
   __pyx_k26 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1471 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1530 */
   Py_INCREF(Py_None);
   __pyx_k27 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1513 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1572 */
   Py_INCREF(Py_None);
   __pyx_k28 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1522 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1581 */
   Py_INCREF(Py_None);
   __pyx_k29 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1545 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1604 */
   Py_INCREF(Py_None);
   __pyx_k30 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1640 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1699 */
   Py_INCREF(Py_None);
   __pyx_k31 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1729 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1788 */
   Py_INCREF(Py_None);
   __pyx_k32 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1828 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1887 */
   Py_INCREF(Py_None);
   __pyx_k33 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1851 */
-  __pyx_7 = PyFloat_FromDouble(0.0); if (!__pyx_7) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1851; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1910 */
+  __pyx_7 = PyFloat_FromDouble(0.0); if (!__pyx_7) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1910; goto __pyx_L1;}
   __pyx_k34 = __pyx_7;
   __pyx_7 = 0;
-  __pyx_8 = PyFloat_FromDouble(1.0); if (!__pyx_8) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1851; goto __pyx_L1;}
+  __pyx_8 = PyFloat_FromDouble(1.0); if (!__pyx_8) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1910; goto __pyx_L1;}
   __pyx_k35 = __pyx_8;
   __pyx_8 = 0;
   Py_INCREF(Py_None);
   __pyx_k36 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":1890 */
-  __pyx_9 = PyFloat_FromDouble(0.0); if (!__pyx_9) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1890; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":1949 */
+  __pyx_9 = PyFloat_FromDouble(0.0); if (!__pyx_9) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1949; goto __pyx_L1;}
   __pyx_k37 = __pyx_9;
   __pyx_9 = 0;
-  __pyx_10 = PyFloat_FromDouble(1.0); if (!__pyx_10) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1890; goto __pyx_L1;}
+  __pyx_10 = PyFloat_FromDouble(1.0); if (!__pyx_10) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1949; goto __pyx_L1;}
   __pyx_k38 = __pyx_10;
   __pyx_10 = 0;
   Py_INCREF(Py_None);
   __pyx_k39 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2014 */
-  __pyx_11 = PyFloat_FromDouble(0.0); if (!__pyx_11) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2014; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2073 */
+  __pyx_11 = PyFloat_FromDouble(0.0); if (!__pyx_11) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2073; goto __pyx_L1;}
   __pyx_k40 = __pyx_11;
   __pyx_11 = 0;
-  __pyx_12 = PyFloat_FromDouble(1.0); if (!__pyx_12) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2014; goto __pyx_L1;}
+  __pyx_12 = PyFloat_FromDouble(1.0); if (!__pyx_12) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2073; goto __pyx_L1;}
   __pyx_k41 = __pyx_12;
   __pyx_12 = 0;
   Py_INCREF(Py_None);
   __pyx_k42 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2102 */
-  __pyx_13 = PyFloat_FromDouble(0.0); if (!__pyx_13) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2102; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2161 */
+  __pyx_13 = PyFloat_FromDouble(0.0); if (!__pyx_13) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2161; goto __pyx_L1;}
   __pyx_k43 = __pyx_13;
   __pyx_13 = 0;
-  __pyx_14 = PyFloat_FromDouble(1.0); if (!__pyx_14) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2102; goto __pyx_L1;}
+  __pyx_14 = PyFloat_FromDouble(1.0); if (!__pyx_14) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2161; goto __pyx_L1;}
   __pyx_k44 = __pyx_14;
   __pyx_14 = 0;
   Py_INCREF(Py_None);
   __pyx_k45 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2233 */
-  __pyx_15 = PyFloat_FromDouble(1.0); if (!__pyx_15) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2233; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2292 */
+  __pyx_15 = PyFloat_FromDouble(1.0); if (!__pyx_15) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2292; goto __pyx_L1;}
   __pyx_k46 = __pyx_15;
   __pyx_15 = 0;
   Py_INCREF(Py_None);
   __pyx_k47 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2257 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2316 */
   Py_INCREF(Py_None);
   __pyx_k48 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2287 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2346 */
   Py_INCREF(Py_None);
   __pyx_k49 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2326 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2385 */
   Py_INCREF(Py_None);
   __pyx_k50 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2434 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2493 */
   Py_INCREF(Py_None);
   __pyx_k51 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2471 */
-  __pyx_16 = PyFloat_FromDouble(1.0); if (!__pyx_16) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2471; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2530 */
+  __pyx_16 = PyFloat_FromDouble(1.0); if (!__pyx_16) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2530; goto __pyx_L1;}
   __pyx_k52 = __pyx_16;
   __pyx_16 = 0;
   Py_INCREF(Py_None);
   __pyx_k53 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2493 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2552 */
   Py_INCREF(Py_None);
   __pyx_k54 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2585 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2644 */
   Py_INCREF(Py_None);
   __pyx_k55 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2651 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2710 */
   Py_INCREF(Py_None);
   __pyx_k56 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2770 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2829 */
   Py_INCREF(Py_None);
   __pyx_k57 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2865 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":2924 */
   Py_INCREF(Py_None);
   __pyx_k58 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":2998 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3057 */
   Py_INCREF(Py_None);
   __pyx_k59 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3091 */
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3150 */
   Py_INCREF(Py_None);
   __pyx_k60 = Py_None;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3255 */
-  __pyx_17 = PyObject_CallObject(((PyObject *)__pyx_ptype_6mtrand_RandomState), 0); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3255; goto __pyx_L1;}
-  if (PyObject_SetAttr(__pyx_m, __pyx_n__rand, __pyx_17) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3255; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3314 */
+  __pyx_17 = PyObject_CallObject(((PyObject *)__pyx_ptype_6mtrand_RandomState), 0); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3314; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n__rand, __pyx_17) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3314; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3256 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3256; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_seed); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3256; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3315 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3315; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_seed); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3315; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_seed, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3256; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_seed, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3315; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3257 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3257; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_get_state); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3257; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3316 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3316; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_get_state); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3316; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_get_state, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3257; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_get_state, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3316; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3258 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3258; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_set_state); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3258; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3317 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3317; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_set_state); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3317; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_set_state, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3258; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_set_state, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3317; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3259 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3259; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_random_sample); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3259; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3318 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3318; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_random_sample); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3318; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_random_sample, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3259; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_random_sample, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3318; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3260 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3260; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_randint); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3260; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3319 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3319; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_randint); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3319; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_randint, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3260; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_randint, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3319; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3261 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3261; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_bytes); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3261; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3320 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3320; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_bytes); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3320; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_bytes, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3261; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_bytes, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3320; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3262 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3262; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_uniform); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3262; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3321 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3321; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_uniform); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3321; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_uniform, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3262; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_uniform, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3321; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3263 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3263; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_rand); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3263; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3322 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3322; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_rand); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3322; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_rand, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3263; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_rand, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3322; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3264 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_randn); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3323 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3323; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_randn); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3323; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_randn, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3264; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_randn, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3323; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3265 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3265; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_random_integers); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3265; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3324 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3324; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_random_integers); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3324; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_random_integers, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3265; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_random_integers, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3324; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3266 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3266; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_normal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3266; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3325 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3325; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_normal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3325; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_normal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3266; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_normal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3325; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3267 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3267; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_normal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3267; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3326 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3326; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_normal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3326; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_normal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3267; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_normal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3326; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3268 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3268; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_beta); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3268; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3327 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3327; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_beta); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3327; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_beta, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3268; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_beta, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3327; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3269 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3269; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_exponential); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3269; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3328 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3328; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_exponential); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3328; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_exponential, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3269; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_exponential, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3328; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3270 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3270; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_exponential); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3270; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3329 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3329; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_exponential); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3329; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_exponential, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3270; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_exponential, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3329; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3271 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3271; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_gamma); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3271; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3330 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3330; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_gamma); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3330; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_gamma, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3271; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_gamma, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3330; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3272 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_gamma); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3331 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3331; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_gamma); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3331; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_gamma, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3272; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_gamma, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3331; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3273 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3273; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_f); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3273; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3332 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3332; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_f); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3332; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_f, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3273; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_f, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3332; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3274 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3274; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_noncentral_f); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3274; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3333 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3333; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_noncentral_f); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3333; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_noncentral_f, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3274; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_noncentral_f, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3333; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3275 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3275; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_chisquare); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3275; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3334 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3334; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_chisquare); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3334; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_chisquare, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3275; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_chisquare, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3334; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3276 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3276; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_noncentral_chisquare); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3276; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3335 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3335; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_noncentral_chisquare); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3335; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_noncentral_chisquare, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3276; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_noncentral_chisquare, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3335; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3277 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_cauchy); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3336 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3336; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_cauchy); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3336; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_cauchy, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3277; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_cauchy, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3336; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3278 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3278; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_t); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3278; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3337 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3337; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_standard_t); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3337; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_t, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3278; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_standard_t, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3337; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3279 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3279; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_vonmises); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3279; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3338 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3338; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_vonmises); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3338; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_vonmises, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3279; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_vonmises, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3338; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3280 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3280; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_pareto); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3280; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3339 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3339; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_pareto); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3339; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_pareto, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3280; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_pareto, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3339; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3281 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3281; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_weibull); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3281; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3340 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3340; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_weibull); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3340; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_weibull, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3281; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_weibull, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3340; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3282 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3282; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_power); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3282; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3341 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3341; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_power); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3341; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_power, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3282; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_power, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3341; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3283 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3283; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_laplace); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3283; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3342 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3342; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_laplace); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3342; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_laplace, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3283; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_laplace, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3342; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3284 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3284; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_gumbel); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3284; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3343 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3343; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_gumbel); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3343; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_gumbel, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3284; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_gumbel, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3343; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3285 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3285; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_logistic); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3285; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3344 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3344; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_logistic); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3344; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_logistic, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3285; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_logistic, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3344; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3286 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3286; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_lognormal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3286; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3345 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3345; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_lognormal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3345; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_lognormal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3286; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_lognormal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3345; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3287 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3287; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_rayleigh); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3287; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3346 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3346; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_rayleigh); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3346; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_rayleigh, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3287; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_rayleigh, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3346; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3288 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3288; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_wald); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3288; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3347 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3347; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_wald); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3347; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_wald, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3288; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_wald, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3347; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3289 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3289; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_triangular); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3289; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3348 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3348; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_triangular); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3348; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_triangular, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3289; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_triangular, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3348; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3291 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3291; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_binomial); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3291; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3350 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3350; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_binomial); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3350; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_binomial, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3291; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_binomial, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3350; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3292 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3292; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_negative_binomial); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3292; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3351 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3351; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_negative_binomial); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3351; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_negative_binomial, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3292; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_negative_binomial, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3351; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3293 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3293; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_poisson); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3293; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3352 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3352; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_poisson); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3352; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_poisson, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3293; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_poisson, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3352; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3294 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3294; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_zipf); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3294; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3353 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3353; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_zipf); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3353; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_zipf, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3294; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_zipf, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3353; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3295 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3295; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_geometric); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3295; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3354 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3354; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_geometric); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3354; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_geometric, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3295; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_geometric, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3354; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3296 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3296; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_hypergeometric); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3296; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3355 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3355; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_hypergeometric); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3355; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_hypergeometric, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3296; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_hypergeometric, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3355; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3297 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3297; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_logseries); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3297; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3356 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3356; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_logseries); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3356; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_logseries, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3297; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_logseries, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3356; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3299 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3299; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_multivariate_normal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3299; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3358 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3358; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_multivariate_normal); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3358; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_multivariate_normal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3299; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_multivariate_normal, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3358; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3300 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3300; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_multinomial); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3300; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3359 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3359; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_multinomial); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3359; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_multinomial, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3300; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_multinomial, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3359; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3301 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3301; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_dirichlet); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3301; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3360 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3360; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_dirichlet); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3360; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_dirichlet, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3301; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_dirichlet, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3360; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3303 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3303; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_shuffle); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3303; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3362 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3362; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_shuffle); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3362; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_shuffle, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3303; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_shuffle, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3362; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
 
-  /* "/home/pauli/koodi/proj/numpy/one-shot/numpy/random/mtrand/mtrand.pyx":3304 */
-  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3304; goto __pyx_L1;}
-  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_permutation); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3304; goto __pyx_L1;}
+  /* "/home/pauli/koodi/proj/scipy/numpy.git/numpy/random/mtrand/mtrand.pyx":3363 */
+  __pyx_17 = __Pyx_GetName(__pyx_m, __pyx_n__rand); if (!__pyx_17) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3363; goto __pyx_L1;}
+  __pyx_18 = PyObject_GetAttr(__pyx_17, __pyx_n_permutation); if (!__pyx_18) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3363; goto __pyx_L1;}
   Py_DECREF(__pyx_17); __pyx_17 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_permutation, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3304; goto __pyx_L1;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_permutation, __pyx_18) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3363; goto __pyx_L1;}
   Py_DECREF(__pyx_18); __pyx_18 = 0;
   return;
   __pyx_L1:;
@@ -10282,6 +10286,36 @@ static PyObject *__Pyx_GetName(PyObject *dict, PyObject *name) {
     if (!result)
         PyErr_SetObject(PyExc_NameError, name);
     return result;
+}
+
+static int __Pyx_SetItemInt(PyObject *o, Py_ssize_t i, PyObject *v) {
+    PyTypeObject *t = o->ob_type;
+    int r;
+    if (t->tp_as_sequence && t->tp_as_sequence->sq_item)
+        r = PySequence_SetItem(o, i, v);
+    else {
+        PyObject *j = PyInt_FromLong(i);
+        if (!j)
+            return -1;
+        r = PyObject_SetItem(o, j, v);
+        Py_DECREF(j);
+    }
+    return r;
+}
+
+static PyObject *__Pyx_GetItemInt(PyObject *o, Py_ssize_t i) {
+    PyTypeObject *t = o->ob_type;
+    PyObject *r;
+    if (t->tp_as_sequence && t->tp_as_sequence->sq_item)
+        r = PySequence_GetItem(o, i);
+    else {
+        PyObject *j = PyInt_FromLong(i);
+        if (!j)
+            return 0;
+        r = PyObject_GetItem(o, j);
+        Py_DECREF(j);
+    }
+    return r;
 }
 
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb) {
