@@ -24,6 +24,12 @@ import paver.path
 from paver.easy import options, Bunch, task, needs, dry, sh, call_task
 from paver.setuputils import setup
 
+# Wine config for win32 builds
+WINE_SITE_CFG = ""
+WINE_PY25 = "/home/david/.wine/drive_c/Python25/python.exe"
+WINE_PY26 = "/home/david/.wine/drive_c/Python26/python.exe"
+WINE_PYS = {'2.6' : WINE_PY26, '2.5': WINE_PY25}
+
 PDF_DESTDIR = paver.path.path('build') / 'pdf'
 HTML_DESTDIR = paver.path.path('build') / 'html'
 
@@ -116,3 +122,39 @@ def sdist():
     # To be sure to bypass paver when building sdist... paver + numpy.distutils
     # do not play well together.
     sh('python setup.py sdist --formats=gztar,zip')
+
+@task
+@needs('clean')
+def bdist_wininst_26():
+    _bdist_wininst(pyver='2.6')
+
+@task
+@needs('clean')
+def bdist_wininst_25():
+    _bdist_wininst(pyver='2.5')
+
+@task
+@needs('bdist_wininst_25', 'bdist_wininst_26')
+def bdist_wininst():
+    pass
+
+@task
+@needs('clean', 'bdist_wininst')
+def winbin():
+    pass
+
+def _bdist_wininst(pyver):
+    site = paver.path.path('site.cfg')
+    exists = site.exists()
+    try:
+        if exists:
+            site.move('site.cfg.bak')
+        a = open(str(site), 'w')
+        a.writelines(WINE_SITE_CFG)
+        a.close()
+        sh('%s setup.py build -c mingw32 bdist_wininst' % WINE_PYS[pyver])
+    finally:
+        site.remove()
+        if exists:
+            paver.path.path('site.cfg.bak').move(site)
+
