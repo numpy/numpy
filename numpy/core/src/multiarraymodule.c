@@ -7151,7 +7151,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
               50% overallocation => 0, 4, 8, 14, 23, 36, 56, 86 ...
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
-            if (elcount <= (intp)((~(size_t)0) / elsize)) {
+            if (elcount <= NPY_MAX_INTP/elsize) {
                 new_data = PyDataMem_RENEW(ret->data, elcount * elsize);
             }
             else {
