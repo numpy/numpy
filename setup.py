@@ -52,7 +52,7 @@ MAJOR               = 1
 MINOR               = 3
 MICRO               = 0
 ISRELEASED          = False
-VERSION             = '%d.%d.%db1' % (MAJOR, MINOR, MICRO)
+VERSION             = '%d.%d.%rc1' % (MAJOR, MINOR, MICRO)
 
 # Return the svn version as a string (copied from setuptools)
 def svn_revision():
