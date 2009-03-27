@@ -79,7 +79,8 @@ BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
-        virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT))
+        virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT),
+        wininst=Bunch(pyver="2.5"))
 
 # Bootstrap stuff
 @task
@@ -203,34 +204,85 @@ def sdist():
     # do not play well together.
     sh('python setup.py sdist --formats=gztar,zip')
 
-@task
-@needs('clean')
-def bdist_wininst_26():
-    _bdist_wininst(pyver='2.6')
+#------------------
+# Wine-based builds
+#------------------
+_SSE3_CFG = r"""[atlas]
+library_dirs = C:\local\lib\yop\sse3"""
+_SSE2_CFG = r"""[atlas]
+library_dirs = C:\local\lib\yop\sse2"""
+_NOSSE_CFG = r"""[DEFAULT]
+library_dirs = C:\local\lib\yop\nosse"""
+
+SITECFG = {"sse2" : _SSE2_CFG, "sse3" : _SSE3_CFG, "nosse" : _NOSSE_CFG}
+
+def internal_wininst_name(arch, ismsi=False):
+    """Return the name of the wininst as it will be inside the superpack (i.e.
+    with the arch encoded."""
+    if ismsi:
+        ext = '.msi'
+    else:
+        ext = '.exe'
+    return "numpy-%s-%s%s" % (FULLVERSION, arch, ext)
+
+def wininst_name(pyver, ismsi=False):
+    """Return the name of the installer built by wininst command."""
+    # Yeah, the name logic is harcoded in distutils. We have to reproduce it
+    # here
+    if ismsi:
+        ext = '.msi'
+    else:
+        ext = '.exe'
+    name = "numpy-%s.win32-py%s%s" % (FULLVERSION, pyver, ext)
+    return name
+
+def bdist_wininst_arch(pyver, arch):
+    """Arch specific wininst build."""
+    _bdist_wininst(pyver, SITECFG[arch])
+    source = os.path.join('dist', wininst_name(pyver))
+    target = os.path.join('dist', internal_wininst_name(arch))
+    if os.path.exists(target):
+        os.remove(target)
+    os.rename(source, target)
 
 @task
 @needs('clean')
-def bdist_wininst_25():
-    _bdist_wininst(pyver='2.5')
+def bdist_wininst_nosse(options):
+    """Build the nosse wininst installer."""
+    bdist_wininst_arch(options.wininst.pyver, 'nosse')
 
 @task
-@needs('bdist_wininst_25', 'bdist_wininst_26')
-def bdist_wininst():
+@needs('clean')
+def bdist_wininst_sse2(options):
+    """Build the sse2 wininst installer."""
+    bdist_wininst_arch(options.wininst.pyver, 'sse2')
+
+@task
+@needs('clean')
+def bdist_wininst_sse3(options):
+    """Build the sse3 wininst installer."""
+    bdist_wininst_arch(options.wininst.pyver, 'sse3')
+
+@task
+@needs('bdist_wininst_nosse', 'bdist_wininst_sse2', 'bdist_wininst_sse3')
+def bdist_wininst_all(options):
+    """Build all arch specific wininst installers."""
     pass
 
 @task
 @needs('clean', 'bdist_wininst')
-def winbin():
-    pass
+def bdist_wininst_simple():
+    """Simple wininst-based installer."""
+    _bdist_wininst(pyver=options.wininst.pyver)
 
-def _bdist_wininst(pyver):
+def _bdist_wininst(pyver, cfgstr=WINE_SITE_CFG):
     site = paver.path.path('site.cfg')
     exists = site.exists()
     try:
         if exists:
             site.move('site.cfg.bak')
         a = open(str(site), 'w')
-        a.writelines(WINE_SITE_CFG)
+        a.writelines(cfgstr)
         a.close()
         sh('%s setup.py build -c mingw32 bdist_wininst' % WINE_PYS[pyver])
     finally:
@@ -238,7 +290,9 @@ def _bdist_wininst(pyver):
         if exists:
             paver.path.path('site.cfg.bak').move(site)
 
+#-------------------
 # Mac OS X installer
+#-------------------
 def macosx_version():
     if not sys.platform == 'darwin':
         raise ValueError("Not darwin ??")
