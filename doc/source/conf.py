@@ -39,10 +39,12 @@ copyright = '2008-2009, The Scipy community'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
+import numpy.version
 # The short X.Y version.
-version = '1.4.dev'
+version = numpy.version.short_version
 # The full version, including alpha/beta/rc tags.
-release = '1.4.dev'
+release = numpy.version.version
+print version, release
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
