@@ -46,6 +46,8 @@ CLASSIFIERS         = filter(None, CLASSIFIERS.split('\n')),
 AUTHOR              = "Travis E. Oliphant, et.al.",
 AUTHOR_EMAIL        = "oliphant@enthought.com",
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+VERSION             = '1.4.0'
+ISRELEASED          = False
 
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
@@ -56,6 +58,31 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # avoid attempting to load components that aren't built yet.  While ugly, it's
 # a lot more robust than what was previously being used.
 __builtin__.__NUMPY_SETUP__ = True
+
+def write_version_py(filename='numpy/version.py'):
+    cnt = """
+short_version='%(version)s'
+version='%(version)s'
+release=%(isrelease)s
+
+if not release:
+    version += '.dev'
+    import os
+    svn_version_file = os.path.join(os.path.dirname(__file__),
+                                   'core','__svn_version__.py')
+    if os.path.isfile(svn_version_file):
+        import imp
+        svn = imp.load_module('numpy.core.__svn_version__',
+                              open(svn_version_file),
+                              svn_version_file,
+                              ('.py','U',1))
+        version += svn.version
+"""
+    a = open(filename, 'w')
+    try:
+        a.write(cnt % {'version': VERSION, 'isrelease': str(ISRELEASED)})
+    finally:
+        a.close()
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -84,6 +111,10 @@ def setup_package():
     local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     os.chdir(local_path)
     sys.path.insert(0,local_path)
+
+    # Rewrite the version file everytime
+    if os.path.exists('numpy/version.py'): os.remove('numpy/version.py')
+    write_version_py()
 
     try:
         setup(
