@@ -16,6 +16,7 @@ basic linear algebra and random number generation.
 DOCLINES = __doc__.split("\n")
 
 import __builtin__
+import subprocess
 import os
 import sys
 
