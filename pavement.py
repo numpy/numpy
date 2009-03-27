@@ -62,8 +62,12 @@ FULLVERSION = setup_py.FULLVERSION
 
 # Wine config for win32 builds
 WINE_SITE_CFG = ""
-WINE_PY25 = "/home/david/.wine/drive_c/Python25/python.exe"
-WINE_PY26 = "/home/david/.wine/drive_c/Python26/python.exe"
+if sys.platform == "darwin":
+	WINE_PY25 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python25/python.exe"
+	WINE_PY26 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python26/python.exe"
+else:
+	WINE_PY25 = "/home/david/.wine/drive_c/Python25/python.exe"
+	WINE_PY26 = "/home/david/.wine/drive_c/Python26/python.exe"
 WINE_PYS = {'2.6' : WINE_PY26, '2.5': WINE_PY25}
 SUPERPACK_BUILD = 'build-superpack'
 SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
