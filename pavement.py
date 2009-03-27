@@ -50,7 +50,7 @@ def bootstrap():
 @task
 def clean():
     """Remove build, dist, egg-info garbage."""
-    d = ['build', 'dist']
+    d = ['build', 'dist', 'numpy.egg-info']
     for i in d:
         paver.path.path(i).rmtree()
 
