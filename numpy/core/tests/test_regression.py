@@ -1248,5 +1248,12 @@ class TestRegression(TestCase):
                     assert np.all(z == 0)
                     assert z.shape == (m, n)
 
+    def test_fromiter_comparison(self, level=rlevel):
+        """Ticket #1058"""
+        a = np.fromiter(range(10), dtype='b')
+        b = np.fromiter(range(10), dtype='B')
+        assert np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9]))
+        assert np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9]))
+
 if __name__ == "__main__":
     run_module_suite()
