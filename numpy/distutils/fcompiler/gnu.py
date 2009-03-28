@@ -11,6 +11,14 @@ from numpy.distutils.misc_util import msvc_runtime_library
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
 TARGET_R = re.compile("Target: ([a-zA-Z0-9_\-]*)")
+
+# XXX: do we really need to check for target ? If the arch is not supported,
+# the return code should be != 0
+_R_ARCHS = {"ppc": r"^Target: (powerpc-.*)$",
+    "i686": r"^Target: (i686-.*)$",
+    "x86_64": r"^Target: (i686-.*)$",
+    "ppc64": r"^Target: (powerpc-.*)$",}
+
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
     compiler_aliases = ('g77',)
@@ -236,47 +244,40 @@ class Gnu95FCompiler(GnuFCompiler):
     # Note that this is here instead of GnuFCompiler as gcc < 4 uses a
     # different output format (which isn't as useful) than gcc >= 4,
     # and we don't have to worry about g77 being universal (as it can't be).
-    def target_architecture(self, extra_opts=()):
-        """Return the architecture that the compiler will build for.
-        This is most useful for detecting universal compilers in OS X."""
-        extra_opts = list(extra_opts)
-        status, output = exec_command(self.compiler_f90 + ['-v'] + extra_opts,
-                                      use_tee=False)
-        if status == 0:
-            m = re.match(r'(?m)^Target: (.*)$', output)
-            if m:
-                return m.group(1)
-        return None
-
-    def is_universal_compiler(self):
-        """Return True if this compiler can compile universal binaries
-        (for OS X).
-
-        Currently only checks for i686 and powerpc architectures (no 64-bit
-        support yet).
-        """
-        if sys.platform != 'darwin':
-            return False
-        i686_arch = self.target_architecture(extra_opts=['-arch', 'i686'])
-        if not i686_arch or not i686_arch.startswith('i686-'):
-            return False
-        ppc_arch = self.target_architecture(extra_opts=['-arch', 'ppc'])
-        if not ppc_arch or not ppc_arch.startswith('powerpc-'):
-            return False
-        return True
-
-    def _add_arches_for_universal_build(self, flags):
-        if self.is_universal_compiler():
-            flags[:0] = ['-arch', 'i686', '-arch', 'ppc']
-        return flags
+    def _can_target(self, cmd, arch):
+        """Return true is the compiler support the -arch flag for the given
+        architecture."""
+        newcmd = cmd[:]
+        newcmd.extend(["-arch", arch, "-v"])
+        st, out = exec_command(" ".join(newcmd))
+        if st == 0:
+            for line in out.splitlines():
+                m = re.search(_R_ARCHS[arch], line)
+                if m:
+                    return True
+        return False
+            
+    def _universal_flags(self, cmd):
+        """Return a list of -arch flags for every supported architecture."""
+        arch_flags = []
+        for arch in ["ppc", "i686"]:
+            if self._can_target(cmd, arch):
+                arch_flags.extend(["-arch", arch])
+        return arch_flags
 
     def get_flags(self):
         flags = GnuFCompiler.get_flags(self)
-        return self._add_arches_for_universal_build(flags)
+        arch_flags = self._universal_flags(self.compiler_f90)
+        if arch_flags:
+            flags[:0] = arch_flags
+        return flags
 
     def get_flags_linker_so(self):
         flags = GnuFCompiler.get_flags_linker_so(self)
-        return self._add_arches_for_universal_build(flags)
+        arch_flags = self._universal_flags(self.linker_so)
+        if arch_flags:
+            flags[:0] = arch_flags
+        return flags
 
     def get_library_dirs(self):
         opt = GnuFCompiler.get_library_dirs(self)
