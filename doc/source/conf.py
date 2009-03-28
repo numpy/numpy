@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys, os
+import sys, os, re
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -39,11 +39,11 @@ copyright = '2008-2009, The Scipy community'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
-import numpy.version
-# The short X.Y version.
-version = numpy.version.short_version
+import numpy
+# The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
+version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 # The full version, including alpha/beta/rc tags.
-release = numpy.version.version
+release = numpy.__version__
 print version, release
 
 # There are two options for replacing |today|: either, you set today to some
