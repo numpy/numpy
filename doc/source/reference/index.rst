@@ -19,6 +19,7 @@ For learning how to use NumPy, see also :ref:`user`.
 
    arrays
    ufuncs
+   generalized_ufuncs
    routines
    ctypes
    distutils
