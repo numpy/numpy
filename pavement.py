@@ -71,18 +71,26 @@ WINE_PYS = {'2.6' : WINE_PY26, '2.5': WINE_PY25}
 SUPERPACK_BUILD = 'build-superpack'
 SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
 
+# Where to put built documentation (where it will picked up for copy to
+# binaries)
 PDF_DESTDIR = paver.path.path('build') / 'pdf'
 HTML_DESTDIR = paver.path.path('build') / 'html'
 
+# Source of the release notes
 RELEASE = 'doc/release/1.3.0-notes.rst'
+
+# Start/end of the log (from git)
 LOG_START = 'tags/1.2.0'
 LOG_END = 'master'
+
+# Virtualenv bootstrap stuff
 BOOTSTRAP_DIR = "bootstrap"
 BOOTSTRAP_PYEXEC = "%s/bin/python" % BOOTSTRAP_DIR
 BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 
 DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 
+# Where to put the final installers, as put on sourceforge
 INSTALLERS_DIR = 'installers'
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
