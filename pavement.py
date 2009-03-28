@@ -41,8 +41,6 @@ try:
 except ImportError:
     import md5
 
-import sphinx
-
 import distutils
 
 try:
@@ -76,6 +74,10 @@ SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
 # binaries)
 PDF_DESTDIR = paver.path.path('build') / 'pdf'
 HTML_DESTDIR = paver.path.path('build') / 'html'
+DOC_ROOT = paver.path.path("doc")
+DOC_SRC = DOC_ROOT / "source"
+DOC_BLD = DOC_ROOT / "build"
+DOC_BLD_LATEX = DOC_BLD / "latex"
 
 # Source of the release notes
 RELEASE = 'doc/release/1.3.0-notes.rst'
@@ -96,7 +98,7 @@ RELEASE_DIR = 'release'
 INSTALLERS_DIR = os.path.join(RELEASE_DIR, 'installers')
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
-        virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT),
+        virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT,packages_to_install=["sphinx==0.5.1"]),
         wininst=Bunch(pyver="2.5", scratch=True))
 
 # Bootstrap stuff
@@ -181,46 +183,25 @@ def html(options):
     HTML_DESTDIR.rmtree()
     builtdocs.copytree(HTML_DESTDIR)
 
-def _latex_paths():
-    """look up the options that determine where all of the files are."""
-    opts = options
-    docroot = paver.path.path(opts.get('docroot', 'docs'))
-    if not docroot.exists():
-        raise BuildFailure("Sphinx documentation root (%s) does not exist."
-                % docroot)
-    builddir = docroot / opts.get("builddir", ".build")
-    builddir.mkdir()
-    srcdir = docroot / opts.get("sourcedir", "")
-    if not srcdir.exists():
-        raise BuildFailure("Sphinx source file dir (%s) does not exist"
-                % srcdir)
-    latexdir = builddir / "latex"
-    latexdir.mkdir()
-    return Bunch(locals())
-
 @task
 def latex():
     """Build samplerate's documentation and install it into
     scikits/samplerate/docs"""
-    paths = _latex_paths()
-    sphinxopts = ['', '-b', 'latex', paths.srcdir, paths.latexdir]
-    #dry("sphinx-build %s" % (" ".join(sphinxopts),), sphinx.main, sphinxopts)
     subprocess.check_call(["make", "latex"], cwd="doc")
 
 @task
 @needs('latex')
 def pdf():
-    paths = _latex_paths()
     def build_latex():
-        subprocess.check_call(["make", "all-pdf"], cwd=paths.latexdir)
+        subprocess.check_call(["make", "all-pdf"], cwd=str(DOC_BLD_LATEX))
     dry("Build pdf doc", build_latex)
 
     PDF_DESTDIR.rmtree()
     PDF_DESTDIR.makedirs()
 
-    user = paths.latexdir / "numpy-user.pdf"
+    user = DOC_BLD_LATEX / "numpy-user.pdf"
     user.copy(PDF_DESTDIR / "userguide.pdf")
-    ref = paths.latexdir / "numpy-ref.pdf"
+    ref =  DOC_BLD_LATEX / "numpy-ref.pdf"
     ref.copy(PDF_DESTDIR / "reference.pdf")
 
 def tarball_name(type='gztar'):
