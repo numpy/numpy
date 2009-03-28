@@ -63,11 +63,11 @@ FULLVERSION = setup_py.FULLVERSION
 # Wine config for win32 builds
 WINE_SITE_CFG = ""
 if sys.platform == "darwin":
-	WINE_PY25 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python25/python.exe"
-	WINE_PY26 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python26/python.exe"
+    WINE_PY25 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python25/python.exe"
+    WINE_PY26 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python26/python.exe"
 else:
-	WINE_PY25 = "/home/david/.wine/drive_c/Python25/python.exe"
-	WINE_PY26 = "/home/david/.wine/drive_c/Python26/python.exe"
+    WINE_PY25 = "/home/david/.wine/drive_c/Python25/python.exe"
+    WINE_PY26 = "/home/david/.wine/drive_c/Python26/python.exe"
 WINE_PYS = {'2.6' : WINE_PY26, '2.5': WINE_PY25}
 SUPERPACK_BUILD = 'build-superpack'
 SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
@@ -355,7 +355,7 @@ def dmg_name():
 
 @task
 def bdist_mpkg():
-	sh("python setupegg.py bdist_mpkg")
+    sh("python setupegg.py bdist_mpkg")
 
 @task
 @needs("bdist_mpkg", "pdf")
@@ -367,7 +367,7 @@ def dmg():
     if dmg.exists():
         dmg.remove()
 
-	# Clean the image source
+    # Clean the image source
     content = DMG_CONTENT
     content.rmtree()
     content.mkdir()
