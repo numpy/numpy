@@ -318,13 +318,13 @@ defdict = {
           ),
 'fmax' :
     Ufunc(2, 1, None,
-          "",
+          docstrings.get('numpy.core.umath.fmax'),
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin' :
     Ufunc(2, 1, None,
-          "",
+          docstrings.get('numpy.core.umath.fmin'),
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
