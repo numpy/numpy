@@ -43,7 +43,6 @@ except ImportError:
 import sphinx
 
 import distutils
-import numpy.distutils
 
 try:
     from paver.tasks import VERSION as _PVER
