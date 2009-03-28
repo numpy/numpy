@@ -35,6 +35,7 @@ import os
 import sys
 import subprocess
 import re
+import shutil
 try:
     from hash import md5
 except ImportError:
@@ -91,7 +92,7 @@ BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 
 # Where to put the final installers, as put on sourceforge
-INSTALLERS_DIR = 'installers'
+INSTALLERS_DIR = 'release/installers'
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT),
@@ -221,11 +222,28 @@ def pdf():
     ref = paths.latexdir / "numpy-ref.pdf"
     ref.copy(PDF_DESTDIR / "reference.pdf")
 
+def tarball_name(type='gztar'):
+    root = 'numpy-%s' % FULLVERSION
+    if type == 'gztar':
+        return root + '.tar.gz'
+    elif type == 'zip':
+        return root + '.zip'
+    raise ValueError("Unknown type %s" % type)
+
 @task
 def sdist():
     # To be sure to bypass paver when building sdist... paver + numpy.distutils
     # do not play well together.
     sh('python setup.py sdist --formats=gztar,zip')
+
+    # Copy the superpack into installers dir
+    if not os.path.exists(INSTALLERS_DIR):
+        os.makedirs(INSTALLERS_DIR)
+
+    for t in ['gztar', 'zip']:
+        source = os.path.join('dist', tarball_name(t))
+        target = os.path.join(INSTALLERS_DIR, tarball_name(t))
+        shutil.copy(source, target)
 
 #------------------
 # Wine-based builds
@@ -316,6 +334,16 @@ def bdist_superpack(options):
     prepare_nsis_script(options.wininst.pyver, FULLVERSION)
     subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'],
             cwd=SUPERPACK_BUILD)
+
+    # Copy the superpack into installers dir
+    if not os.path.exists(INSTALLERS_DIR):
+        os.makedirs(INSTALLERS_DIR)
+
+    source = os.path.join(SUPERPACK_BUILD,
+                superpack_name(options.wininst.pyver, FULLVERSION))
+    target = os.path.join(INSTALLERS_DIR,
+                superpack_name(options.wininst.pyver, FULLVERSION))
+    shutil.copy(source, target)
 
 @task
 @needs('clean', 'bdist_wininst')
