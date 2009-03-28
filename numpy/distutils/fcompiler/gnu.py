@@ -259,6 +259,8 @@ class Gnu95FCompiler(GnuFCompiler):
             
     def _universal_flags(self, cmd):
         """Return a list of -arch flags for every supported architecture."""
+        if not sys.platform == 'darwin':
+            return []
         arch_flags = []
         for arch in ["ppc", "i686"]:
             if self._can_target(cmd, arch):
