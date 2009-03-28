@@ -273,6 +273,10 @@ def bdist_wininst_arch(pyver, arch, scratch=True):
         os.remove(target)
     os.rename(source, target)
 
+def superpack_name(pyver, numver):
+    """Return the filename of the superpack installer."""
+    return 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
+
 def prepare_nsis_script(pyver, numver):
     if not os.path.exists(SUPERPACK_BUILD):
         os.makedirs(SUPERPACK_BUILD)
@@ -281,7 +285,7 @@ def prepare_nsis_script(pyver, numver):
     source = open(tpl, 'r')
     target = open(os.path.join(SUPERPACK_BUILD, 'numpy-superinstaller.nsi'), 'w')
 
-    installer_name = 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
+    installer_name = superpack_name(pyver, numver)
     cnt = "".join(source.readlines())
     cnt = cnt.replace('@NUMPY_INSTALLER_NAME@', installer_name)
     for arch in ['nosse', 'sse2', 'sse3']:
