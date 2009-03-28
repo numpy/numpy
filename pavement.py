@@ -310,7 +310,7 @@ def bdist_wininst_sse3(options):
     bdist_wininst_arch(options.wininst.pyver, 'sse3', scratch=options.wininst.scratch)
 
 @task
-#@needs('bdist_wininst_nosse', 'bdist_wininst_sse2', 'bdist_wininst_sse3')
+@needs('bdist_wininst_nosse', 'bdist_wininst_sse2', 'bdist_wininst_sse3')
 def bdist_superpack(options):
     """Build all arch specific wininst installers."""
     prepare_nsis_script(options.wininst.pyver, FULLVERSION)
