@@ -92,7 +92,8 @@ BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 
 # Where to put the final installers, as put on sourceforge
-INSTALLERS_DIR = 'release/installers'
+RELEASE_DIR = 'release'
+INSTALLERS_DIR = os.path.join(RELEASE_DIR, 'installers')
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT),
@@ -447,3 +448,8 @@ def simple_dmg():
     image.remove()
     cmd = ["hdiutil", "create", image_name, "-srcdir", str(builddir)]
     sh(" ".join(cmd))
+
+@task
+def write_note_changelog():
+    write_release_task(os.path.join(RELEASE_DIR, 'NOTES.txt'))
+    write_log_task(os.path.join(RELEASE_DIR, 'Changelog'))
