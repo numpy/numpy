@@ -35,6 +35,7 @@ import os
 import sys
 import subprocess
 import re
+import shutil
 try:
     from hash import md5
 except ImportError:
@@ -71,19 +72,28 @@ WINE_PYS = {'2.6' : WINE_PY26, '2.5': WINE_PY25}
 SUPERPACK_BUILD = 'build-superpack'
 SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
 
+# Where to put built documentation (where it will picked up for copy to
+# binaries)
 PDF_DESTDIR = paver.path.path('build') / 'pdf'
 HTML_DESTDIR = paver.path.path('build') / 'html'
 
+# Source of the release notes
 RELEASE = 'doc/release/1.3.0-notes.rst'
+
+# Start/end of the log (from git)
 LOG_START = 'tags/1.2.0'
 LOG_END = '1.3.x'
+
+# Virtualenv bootstrap stuff
 BOOTSTRAP_DIR = "bootstrap"
 BOOTSTRAP_PYEXEC = "%s/bin/python" % BOOTSTRAP_DIR
 BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 
 DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 
-INSTALLERS_DIR = 'installers'
+# Where to put the final installers, as put on sourceforge
+RELEASE_DIR = 'release'
+INSTALLERS_DIR = os.path.join(RELEASE_DIR, 'installers')
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT),
@@ -213,11 +223,28 @@ def pdf():
     ref = paths.latexdir / "numpy-ref.pdf"
     ref.copy(PDF_DESTDIR / "reference.pdf")
 
+def tarball_name(type='gztar'):
+    root = 'numpy-%s' % FULLVERSION
+    if type == 'gztar':
+        return root + '.tar.gz'
+    elif type == 'zip':
+        return root + '.zip'
+    raise ValueError("Unknown type %s" % type)
+
 @task
 def sdist():
     # To be sure to bypass paver when building sdist... paver + numpy.distutils
     # do not play well together.
     sh('python setup.py sdist --formats=gztar,zip')
+
+    # Copy the superpack into installers dir
+    if not os.path.exists(INSTALLERS_DIR):
+        os.makedirs(INSTALLERS_DIR)
+
+    for t in ['gztar', 'zip']:
+        source = os.path.join('dist', tarball_name(t))
+        target = os.path.join(INSTALLERS_DIR, tarball_name(t))
+        shutil.copy(source, target)
 
 #------------------
 # Wine-based builds
@@ -265,6 +292,10 @@ def bdist_wininst_arch(pyver, arch, scratch=True):
         os.remove(target)
     os.rename(source, target)
 
+def superpack_name(pyver, numver):
+    """Return the filename of the superpack installer."""
+    return 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
+
 def prepare_nsis_script(pyver, numver):
     if not os.path.exists(SUPERPACK_BUILD):
         os.makedirs(SUPERPACK_BUILD)
@@ -273,7 +304,7 @@ def prepare_nsis_script(pyver, numver):
     source = open(tpl, 'r')
     target = open(os.path.join(SUPERPACK_BUILD, 'numpy-superinstaller.nsi'), 'w')
 
-    installer_name = 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
+    installer_name = superpack_name(pyver, numver)
     cnt = "".join(source.readlines())
     cnt = cnt.replace('@NUMPY_INSTALLER_NAME@', installer_name)
     for arch in ['nosse', 'sse2', 'sse3']:
@@ -304,6 +335,16 @@ def bdist_superpack(options):
     prepare_nsis_script(options.wininst.pyver, FULLVERSION)
     subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'],
             cwd=SUPERPACK_BUILD)
+
+    # Copy the superpack into installers dir
+    if not os.path.exists(INSTALLERS_DIR):
+        os.makedirs(INSTALLERS_DIR)
+
+    source = os.path.join(SUPERPACK_BUILD,
+                superpack_name(options.wininst.pyver, FULLVERSION))
+    target = os.path.join(INSTALLERS_DIR,
+                superpack_name(options.wininst.pyver, FULLVERSION))
+    shutil.copy(source, target)
 
 @task
 @needs('clean', 'bdist_wininst')
@@ -407,3 +448,8 @@ def simple_dmg():
     image.remove()
     cmd = ["hdiutil", "create", image_name, "-srcdir", str(builddir)]
     sh(" ".join(cmd))
+
+@task
+def write_note_changelog():
+    write_release_task(os.path.join(RELEASE_DIR, 'NOTES.txt'))
+    write_log_task(os.path.join(RELEASE_DIR, 'Changelog'))
