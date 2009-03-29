@@ -125,7 +125,7 @@ def knownfailureif(fail_condition, msg=None):
     ''' Make function raise KnownFailureTest exception if fail_condition is true
 
     Parameters
-    ---------
+    ----------
     fail_condition : bool or callable.
         Flag to determine whether to mark test as known failure (True)
         or not (False).  If the condition is a callable, it is used at
