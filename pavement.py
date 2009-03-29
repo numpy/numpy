@@ -207,14 +207,13 @@ def html(options):
 
 @task
 def latex():
-    """Build samplerate's documentation and install it into
-    scikits/samplerate/docs"""
+    """Build numpy documentation in latex format."""
     subprocess.check_call(["make", "latex"], cwd="doc")
 
 @task
 @needs('latex')
 def pdf():
-    def build_latex():
+    def build_pdf():
         subprocess.check_call(["make", "all-pdf"], cwd=str(DOC_BLD_LATEX))
     dry("Build pdf doc", build_latex)
 
