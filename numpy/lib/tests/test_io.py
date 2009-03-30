@@ -5,6 +5,7 @@ from numpy.ma.testutils import *
 import StringIO
 import gzip
 import os
+import threading
 
 from tempfile import mkstemp, NamedTemporaryFile
 import sys, time
@@ -120,6 +121,32 @@ class TestSavezLoad(RoundtripTest, TestCase):
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
 
+    def test_savez_filename_clashes(self):
+        # Test that issue #852 is fixed
+        # and savez functions in multithreaded environment
+
+        def writer(error_list):
+            fd, tmp = mkstemp(suffix='.npz')
+            os.close(fd)
+            try:
+                arr = np.random.randn(500,500)
+                try:
+                    np.savez(tmp, arr=arr)
+                except OSError, err:
+                    error_list.append(err)
+            finally:
+                os.remove(tmp)
+
+        errors = []
+        threads = [threading.Thread(target=writer, args=(errors,))
+                   for j in xrange(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        if errors:
+            raise AssertionError(errors)
 
 class TestSaveTxt(TestCase):
     def test_array(self):

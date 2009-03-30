@@ -278,6 +278,8 @@ def savez(file, *args, **kwds):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
+    # Import deferred for startup time improvement
+    import tempfile
 
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
@@ -292,24 +294,25 @@ def savez(file, *args, **kwds):
 
     zip = zipfile.ZipFile(file, mode="w")
 
-    # Place to write temporary .npy files
-    #  before storing them in the zip
-    import tempfile
-    direc = tempfile.gettempdir()
-    todel = []
-
-    for key, val in namedict.iteritems():
-        fname = key + '.npy'
-        filename = os.path.join(direc, fname)
-        todel.append(filename)
-        fid = open(filename,'wb')
-        format.write_array(fid, np.asanyarray(val))
-        fid.close()
-        zip.write(filename, arcname=fname)
+    # Stage arrays in a temporary file on disk, before writing to zip.
+    fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
+    os.close(fd)
+    try:
+        for key, val in namedict.iteritems():
+            fname = key + '.npy'
+            fid = open(tmpfile, 'wb')
+            try:
+                format.write_array(fid, np.asanyarray(val))
+                fid.close()
+                fid = None
+                zip.write(tmpfile, arcname=fname)
+            finally:
+                if fid:
+                    fid.close()
+    finally:
+        os.remove(tmpfile)
 
     zip.close()
-    for name in todel:
-        os.remove(name)
 
 # Adapted from matplotlib
 
