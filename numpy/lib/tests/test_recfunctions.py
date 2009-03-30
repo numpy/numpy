@@ -137,8 +137,6 @@ class TestRecFunctions(TestCase):
                    'BBA': ['B', 'BB'], 'BBB': ['B', 'BB']}
         assert_equal(test, control)
 
-
-    #@np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_find_duplicates(self):
         "Test find_duplicates"
         a = ma.array([(2, (2., 'B')), (1, (2., 'B')), (2, (2., 'B')),
@@ -160,20 +158,18 @@ class TestRecFunctions(TestCase):
         test = find_duplicates(a, key='B', return_index=True)
         control = [0, 1, 2, 4]
         assert_equal(sorted(test[-1]), control)
-        assert_equal(test[0], a[control])
+        assert_equal(test[0], a[test[-1]])
         #
         test = find_duplicates(a, key='BA', return_index=True)
         control = [0, 1, 2, 4]
         assert_equal(sorted(test[-1]), control)
-        assert_equal(test[0], a[control])
+        assert_equal(test[0], a[test[-1]])
         #
         test = find_duplicates(a, key='BB', return_index=True)
         control = [0, 1, 2, 3, 4]
         assert_equal(sorted(test[-1]), control)
-        assert_equal(test[0], a[control])
+        assert_equal(test[0], a[test[-1]])
 
-
-    #@np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_find_duplicates_ignoremask(self):
         "Test the ignoremask option of find_duplicates"
         ndtype = [('a', int)]
@@ -187,7 +183,7 @@ class TestRecFunctions(TestCase):
         test = find_duplicates(a, ignoremask=False, return_index=True)
         control = [0, 1, 2, 3, 4, 6]
         assert_equal(sorted(test[-1]), control)
-        assert_equal(test[0], a[control])
+        assert_equal(test[0], a[test[-1]])
 
 
 class TestRecursiveFillFields(TestCase):
