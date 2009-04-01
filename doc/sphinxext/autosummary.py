@@ -56,11 +56,17 @@ from docutils.parsers.rst import directives
 from docutils.statemachine import ViewList
 from docutils import nodes
 
-import sphinx.addnodes, sphinx.roles, sphinx.builder
+import sphinx.addnodes, sphinx.roles
 from sphinx.util import patfilter
 
 from docscrape_sphinx import get_doc_object
 
+import warnings
+warnings.warn("This autosummary extension will be eventually moved to "
+              "sphinx.ext.autosummary. One version is already available in "
+              "Sphinx >= 0.6; expect this module to be deprecated after all "
+              "remaining features have been integrated there.",
+              FutureWarning, stacklevel=2)
 
 def setup(app):
     app.add_directive('autosummary', autosummary_directive, True, (0, 0, False),
@@ -161,6 +167,7 @@ def autosummary_directive(dirname, arguments, options, content, lineno,
         tocnode['includefiles'] = docnames
         tocnode['maxdepth'] = -1
         tocnode['glob'] = None
+        tocnode['entries'] = [(None, docname) for docname in docnames]
 
         tocnode = autosummary_toc('', '', tocnode)
         return warnings + [node] + [tocnode]

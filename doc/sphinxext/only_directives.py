@@ -5,7 +5,16 @@
 
 from docutils.nodes import Body, Element
 from docutils.writers.html4css1 import HTMLTranslator
-from sphinx.latexwriter import LaTeXTranslator
+try:
+    from sphinx.latexwriter import LaTeXTranslator
+except ImportError:
+    from sphinx.writers.latex import LaTeXTranslator
+
+    import warnings
+    warnings.warn("The only_directives module is deprecated; please use "
+                  "the only:: directive available in Sphinx >= 0.6",
+                  DeprecationWarning, stacklevel=2)
+
 from docutils.parsers.rst import directives
 
 class html_only(Body, Element):

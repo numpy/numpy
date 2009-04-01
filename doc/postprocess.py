@@ -44,6 +44,7 @@ def process_tex(lines):
     """
     new_lines = []
     for line in lines:
+        line = unicode(line, 'utf-8').replace(u"\00a0", u"~").encode('utf-8')
         if (line.startswith(r'\section{numpy.')
             or line.startswith(r'\subsection{numpy.')
             or line.startswith(r'\subsubsection{numpy.')
