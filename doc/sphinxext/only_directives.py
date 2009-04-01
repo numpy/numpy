@@ -11,8 +11,8 @@ except ImportError:
     from sphinx.writers.latex import LaTeXTranslator
 
     import warnings
-    warnings.warn("The only_directives module is deprecated; please use "
-                  "the only:: directive available in Sphinx >= 0.6",
+    warnings.warn("The numpydoc.only_directives module is deprecated;"
+                  "please use the only:: directive available in Sphinx >= 0.6",
                   DeprecationWarning, stacklevel=2)
 
 from docutils.parsers.rst import directives

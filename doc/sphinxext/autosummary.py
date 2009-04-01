@@ -62,7 +62,7 @@ from sphinx.util import patfilter
 from docscrape_sphinx import get_doc_object
 
 import warnings
-warnings.warn("This autosummary extension will be eventually moved to "
+warnings.warn("The numpydoc.autosummary extension will be eventually moved to "
               "sphinx.ext.autosummary. One version is already available in "
               "Sphinx >= 0.6; expect this module to be deprecated after all "
               "remaining features have been integrated there.",
