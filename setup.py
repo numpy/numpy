@@ -56,6 +56,7 @@ VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
     
 # Return the svn version as a string (copied from setuptools)
 def svn_revision():
+    from numpy.distutils import log
     revision = 0
     urlre = re.compile('url="([^"]+)"')
     revre = re.compile('committed-rev="(\d+)"')
@@ -90,13 +91,6 @@ def svn_revision():
 
     return str(revision)
 
-FULLVERSION = VERSION
-if not ISRELEASED:
-    FULLVERSION += '.dev'
-    # If in git or something, bypass the svn rev
-    if os.path.exists('.svn'):
-        FULLVERSION += svn_revision()
-
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
@@ -106,6 +100,13 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # avoid attempting to load components that aren't built yet.  While ugly, it's
 # a lot more robust than what was previously being used.
 __builtin__.__NUMPY_SETUP__ = True
+
+FULLVERSION = VERSION
+if not ISRELEASED:
+    FULLVERSION += '.dev'
+    # If in git or something, bypass the svn rev
+    if os.path.exists('.svn'):
+        FULLVERSION += svn_revision()
 
 def write_version_py(filename='numpy/version.py'):
     cnt = """
