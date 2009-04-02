@@ -52,6 +52,8 @@ TODO
     - the script is messy, lots of global variables
     - make it more easily customizable (through command line args)
     - missing targets: install & test, sdist test, debian packaging
+    - fix bdist_mpkg: we build the same source twice -> how to make sure we use
+      the same underlying python for egg install in venv and for bdist_mpkg
 """
 import os
 import sys
@@ -118,6 +120,10 @@ DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 # Where to put the final installers, as put on sourceforge
 RELEASE_DIR = 'release'
 INSTALLERS_DIR = os.path.join(RELEASE_DIR, 'installers')
+
+# XXX: fix this in a sane way
+MPKG_PYTHON = {"25": "/Library/Frameworks/Python.framework/Versions/2.5/bin/python",
+	"26": "/Library/Frameworks/Python.framework/Versions/2.6/bin/python"}
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT,packages_to_install=["sphinx==0.5.1"]),
@@ -215,7 +221,7 @@ def latex():
 def pdf():
     def build_pdf():
         subprocess.check_call(["make", "all-pdf"], cwd=str(DOC_BLD_LATEX))
-    dry("Build pdf doc", build_latex)
+    dry("Build pdf doc", build_pdf)
 
     PDF_DESTDIR.rmtree()
     PDF_DESTDIR.makedirs()
@@ -397,7 +403,9 @@ def dmg_name():
 
 @task
 def bdist_mpkg():
-    sh("python setupegg.py bdist_mpkg")
+    call_task("clean")
+    pyver = "".join([str(i) for i in sys.version_info[:2]])
+    sh("%s setupegg.py bdist_mpkg" % MPKG_PYTHON[pyver])
 
 @task
 @needs("bdist_mpkg", "pdf")
