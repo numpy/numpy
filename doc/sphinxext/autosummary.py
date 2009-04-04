@@ -209,6 +209,11 @@ def get_autosummary(names, state, no_signatures=False):
             vl = ViewList()
             vl.append(text, '<autosummary>')
             state.nested_parse(vl, 0, node)
+            try:
+                if isinstance(node[0], nodes.paragraph):
+                    node = node[0]
+            except IndexError:
+                pass
             row.append(nodes.entry('', node))
         body.append(row)
 

@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 import sys, os
 
-version = "0.1"
+version = "0.2.dev"
 
 setup(
     name="numpydoc",
