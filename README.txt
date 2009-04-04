@@ -1,31 +1,22 @@
-NumPy is a replacement of Numeric Python that adds the features of numarray.
-To install system-wide on Unix-like systems:
+NumPy is the fundamental package needed for scientific computing with Python. 
+This package contains:
 
-sudo python setup.py install
+    * a powerful N-dimensional array object
+    * sophisticated (broadcasting) functions
+    * tools for integrating C/C++ and Fortran code
+    * useful linear algebra, Fourier transform, and random number capabilities. 
 
-or (for system without sudo):
+It derives from the old Numeric code base and can be used as a replacement for Numeric. It also adds the features introduced by numarray and can be used to replace numarray.
 
-su -c python setup.py install
+More information can be found at the website:
 
-On windows, it is advised to use the official binaries.
+http://scipy.org/NumPy
 
-The setup.py script will take advantage of fast BLAS on your system if it can
-find it.  You can guide the process using a site.cfg file.
-
-If fast BLAS and LAPACK cannot be found, then a slower default version is used.
-
-After installation, tests can be run (from outside the source
-directory) with:
+After installation, tests can be run with:
 
 python -c 'import numpy; numpy.test()'
 
-Please note that you must have version 0.10 or later of the 'nose' test
-framework installed in order to run the tests.  More information about nose is
-available here: 
-
-http://somethingaboutorange.com/mrl/projects/nose/ 
-
-The most current development version of NumPy is always available from our
+The most current development version is always available from our
 subversion repository:
 
 http://svn.scipy.org/svn/numpy/trunk
