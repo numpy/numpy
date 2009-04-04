@@ -27,7 +27,12 @@ Building NumPy requires the following software installed:
 
    Python must also be compiled with the zlib module enabled.
 
-__ http://www.python.org
+2) nose__ (pptional) 0.10.3 or later
+
+   This is required for testing numpy, but not for using it.
+
+Python__ http://www.python.org
+nose__ http://somethingaboutorange.com/mrl/projects/nose/ 
 
 Fortran ABI mismatch
 ====================
