@@ -246,7 +246,7 @@ def check_mathlib(config_cmd):
     if mathlib:
         mathlibs_choices.insert(0,mathlib.split(','))
     for libs in mathlibs_choices:
-        if config_cmd.try_run(tc,libraries=libs):
+        if config_cmd.try_link(tc,libraries=libs):
             mathlibs = libs
             break
     else:
@@ -560,7 +560,7 @@ def testcode_mathlib():
 #include <math.h>
 int main(int argc, char *argv[])
 {
-  return exp(-720.) > 1.0;  /* typically an IEEE denormal */
+  return exp(-1.) > 1.0;
 }
 """
 
