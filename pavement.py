@@ -126,7 +126,7 @@ MPKG_PYTHON = {"25": "/Library/Frameworks/Python.framework/Versions/2.5/bin/pyth
 	"26": "/Library/Frameworks/Python.framework/Versions/2.6/bin/python"}
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
-        virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT,packages_to_install=["sphinx==0.5.1"]),
+        virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT,packages_to_install=["sphinx==0.6.1"]),
         wininst=Bunch(pyver="2.5", scratch=True))
 
 # Bootstrap stuff
