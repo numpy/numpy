@@ -282,6 +282,11 @@ def configuration(parent_package='',top_path=None):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
 
+            # Check that the toolchain works, to fail early if it doesn't
+            # (avoid late errors with MATHLIB which are confusing if the
+            # compiler does not work).
+            config_cmd.try_link('int main(void) { return 0;}')
+
             # Check sizeof
             moredefs, ignored = cocache.check_types(config_cmd, ext, build_dir)
 
