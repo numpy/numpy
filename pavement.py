@@ -257,14 +257,11 @@ def sdist():
 #------------------
 # Wine-based builds
 #------------------
-_SSE3_CFG = r"""[atlas]
-library_dirs = C:\local\lib\yop\sse3"""
-_SSE2_CFG = r"""[atlas]
-library_dirs = C:\local\lib\yop\sse2"""
-_NOSSE_CFG = r"""[DEFAULT]
-library_dirs = C:\local\lib\yop\nosse"""
+SSE3_CFG = {'BLAS': r'C:\local\lib\yop\sse3', 'LAPACK': r'C:\local\lib\yop\sse3'}
+SSE2_CFG = {'BLAS': r'C:\local\lib\yop\sse2', 'LAPACK': r'C:\local\lib\yop\sse2'}
+NOSSE_CFG = {'BLAS': r'C:\local\lib\yop\nosse', 'LAPACK': r'C:\local\lib\yop\nosse'}
 
-SITECFG = {"sse2" : _SSE2_CFG, "sse3" : _SSE3_CFG, "nosse" : _NOSSE_CFG}
+SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
 def internal_wininst_name(arch, ismsi=False):
     """Return the name of the wininst as it will be inside the superpack (i.e.
@@ -360,20 +357,8 @@ def bdist_wininst_simple():
     """Simple wininst-based installer."""
     _bdist_wininst(pyver=options.wininst.pyver)
 
-def _bdist_wininst(pyver, cfgstr=WINE_SITE_CFG):
-    site = paver.path.path('site.cfg')
-    exists = site.exists()
-    try:
-        if exists:
-            site.move('site.cfg.bak')
-        a = open(str(site), 'w')
-        a.writelines(cfgstr)
-        a.close()
-        sh('%s setup.py build -c mingw32 bdist_wininst' % WINE_PYS[pyver])
-    finally:
-        site.remove()
-        if exists:
-            paver.path.path('site.cfg.bak').move(site)
+def _bdist_wininst(pyver, cfg_env=WINE_SITE_CFG):
+    subprocess.check_call([WINE_PYS[pyver], 'setup.py', 'build', '-c', 'mingw32', 'bdist_wininst'], env=cfg_env)
 
 #-------------------
 # Mac OS X installer
