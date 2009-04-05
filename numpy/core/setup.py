@@ -556,11 +556,14 @@ def configuration(parent_package='',top_path=None):
 
 def testcode_mathlib():
     return """\
-/* check whether libm is broken */
-#include <math.h>
-int main(int argc, char *argv[])
+/*
+ * check whether libm is explicitly needed for access to basic math functions
+ */
+char exp(void);
+int main(void)
 {
-  return exp(-1.) > 1.0;
+  exp();
+  return 0;
 }
 """
 
