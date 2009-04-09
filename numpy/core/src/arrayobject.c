@@ -5903,27 +5903,35 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         else {
             descr->elsize = sizeof(PyArray_UCS4);
         }
-        sd = (size_t) descr->elsize;
+        sd = descr->elsize;
     }
-    largest = MAX_INTP / sd;
+
+    largest = NPY_MAX_INTP / sd;
     for (i = 0; i < nd; i++) {
-        if (dims[i] == 0) {
+        intp dim = dims[i];
+
+        if (dim == 0) {
+            /*
+             * Compare to PyArray_OverflowMultiplyList that
+             * returns 0 in this case.
+             */
             continue;
         }
-        if (dims[i] < 0) {
+        if (dim < 0) {
             PyErr_SetString(PyExc_ValueError,
                             "negative dimensions "  \
                             "are not allowed");
             Py_DECREF(descr);
             return NULL;
         }
-        size *= dims[i];
-        if (size > largest || size < 0) {
+        if (dim > largest) {
             PyErr_SetString(PyExc_ValueError,
                             "dimensions too large.");
             Py_DECREF(descr);
             return NULL;
         }
+        size *= dim;
+        largest /= dim;
     }
 
     self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
@@ -10883,7 +10891,7 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
      */
     tmp = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (tmp < 0) {
-	PyErr_SetString(PyExc_ValueError, 
+	PyErr_SetString(PyExc_ValueError,
 			"broadcast dimensions too large.");
 	return -1;
     }
@@ -11151,7 +11159,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     /* Here check the indexes (now that we have iteraxes) */
     mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (mit->size < 0) {
-	PyErr_SetString(PyExc_ValueError, 
+	PyErr_SetString(PyExc_ValueError,
 			"dimensions too large in fancy indexing");
 	goto fail;
     }

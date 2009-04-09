@@ -1275,12 +1275,16 @@ class TestRegression(TestCase):
         except Exception, e:
             self.fail("Got exception of type %s instead of ValueError" % type(e))
 
-    def test_fromiter_bytes(self, level=rlevel):
+    def test_fromiter_bytes(self):
         """Ticket #1058"""
         a = np.fromiter(range(10), dtype='b')
         b = np.fromiter(range(10), dtype='B')
         assert np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9]))
         assert np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9]))
+
+    def test_array_too_big(self):
+        """Ticket #1080."""
+        assert_raises(ValueError,zeros,[1048576, 1048576, 1048576, 1048576])
 
 if __name__ == "__main__":
     run_module_suite()
