@@ -1284,7 +1284,7 @@ class TestRegression(TestCase):
 
     def test_array_too_big(self):
         """Ticket #1080."""
-        assert_raises(ValueError,zeros,[1048576, 1048576, 1048576, 1048576])
+        assert_raises(ValueError,np.zeros,[1048576, 1048576, 1048576, 1048576])
 
 if __name__ == "__main__":
     run_module_suite()
