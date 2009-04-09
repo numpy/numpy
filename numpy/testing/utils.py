@@ -679,7 +679,7 @@ def raises(*args,**kwargs):
 
 def assert_raises(*args,**kwargs):
     """
-    assert_raises(excecption_class, callable, *args, **kwargs)
+    assert_raises(exception_class, callable, *args, **kwargs)
 
     Fail unless an exception of class exception_class is thrown
     by callable when invoked with arguments args and keyword
