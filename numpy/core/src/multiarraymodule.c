@@ -140,20 +140,25 @@ PyArray_MultiplyList(register intp *l1, register int n)
  * Multiply a List of Non-negative numbers with over-flow detection.
  */
 static intp
-PyArray_OverflowMultiplyList(register intp *l1, register int n)
+PyArray_OverflowMultiplyList(intp *l1, int n)
 {
-    intp s = 1;
+    intp prod = 1;
+    intp imax = NPY_MAX_INTP;
+    int i;
 
-    while (n--) {
-	if (*l1 == 0) {
+    for (i = 0; i < n; i++) {
+        intp dim = l1[i];
+
+	if (dim == 0) {
             return 0;
         }
-	if ((s > MAX_INTP / *l1) || (*l1 > MAX_INTP / s)) {
+	if (dim > imax) {
 	    return -1;
         }
-	s *= (*l1++);
+        imax /= dim;
+	prod *= dim;
     }
-    return s;
+    return prod;
 }
 
 /*NUMPY_API
