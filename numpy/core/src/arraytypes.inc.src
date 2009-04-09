@@ -771,7 +771,7 @@ BOOL_to_@TOTYPE@(Bool *ip, @totype@ *op, intp n,
  *             longlong, ulonglong, float, double, longdouble#
  */
 static void
-@FROMTYPE@_to_@TOTYPE@(register @fromtype@ *ip, register @totype@ *op, register intp n,
+@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
                PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
@@ -893,7 +893,7 @@ static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
              PyArrayObject *aop)
 {
-    register intp i;
+    intp i;
     PyObject *temp = NULL;
     int skip = aip->descr->elsize;
     int oskip = @oskip@;
@@ -1229,7 +1229,7 @@ static void
         memcpy(dst, src, sizeof(@type@));
 
     if (swap) {
-        register char *a, *b, c;
+        char *a, *b, c;
         a = (char *)dst;
 #if SIZEOF_@fsize@ == 4
         b = a + 3;
@@ -1303,7 +1303,7 @@ static void
         c = *a; *a++ = *b; *b   = c;
 #else
         {
-            register int i, nn;
+            int i, nn;
             b = a + (SIZEOF_@fsize@-1);
             nn = SIZEOF_@fsize@ / 2;
             for (i=0; i<nn; i++) {
@@ -1325,9 +1325,9 @@ static void
 #define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 static void
 OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
-                  register intp n, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
+                  intp n, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
-    register intp i;
+    intp i;
     if (src != NULL) {
         dstride /= sizeof(PyObject **);
         sstride /= sizeof(PyObject **);
@@ -1509,7 +1509,7 @@ UNICODE_copyswapn (char *dst, intp dstride, char *src, intp sstride,
 
     n *= itemsize;
     if (swap) {
-        register char *a, *b, c;
+        char *a, *b, c;
         n >>= 2; /* n is the number of unicode characters to swap */
         for (a = (char *)dst; n>0; n--) {
             b = a + 3;
@@ -1540,7 +1540,7 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
     }
 
     if (swap) {
-        register char *a, *b, c;
+        char *a, *b, c;
         itemsize >>= 2;
         for (a = (char *)dst; itemsize>0; itemsize--) {
             b = a + 3;
@@ -1798,11 +1798,11 @@ STRING_compare(char *ip1, char *ip2, PyArrayObject *ap)
 
 /* taken from Python */
 static int
-UNICODE_compare(register PyArray_UCS4 *ip1, register PyArray_UCS4 *ip2,
+UNICODE_compare(PyArray_UCS4 *ip1, PyArray_UCS4 *ip2,
                 PyArrayObject *ap)
 {
-    register int itemsize=ap->descr->elsize;
-    register PyArray_UCS4 c1, c2;
+    int itemsize=ap->descr->elsize;
+    PyArray_UCS4 c1, c2;
 
     if (itemsize < 0) return 0;
 
@@ -1897,7 +1897,7 @@ finish:
 static int
 @fname@_argmax(@type@ *ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(aip))
 {
-    register intp i;
+    intp i;
     @type@ mp=*ip;
     *max_ind=0;
     for (i=1; i<n; i++) {
@@ -1915,7 +1915,7 @@ static int
 static int
 OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(aip))
 {
-    register intp i;
+    intp i;
     PyObject *mp=ip[0]; *max_ind=0;
     i = 1;
     while(i<n && mp==NULL) {
@@ -1941,7 +1941,7 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(ai
 static int
 @fname@_argmax(@type@ *ip, intp n, intp *max_ind, PyArrayObject *aip)
 {
-    register intp i;
+    intp i;
     int elsize = aip->descr->elsize;
     @type@ *mp = (@type@ *)_pya_malloc(elsize);
 
@@ -1967,8 +1967,8 @@ static void
 BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
          void *NPY_UNUSED(ignore))
 {
-    register Bool tmp=FALSE;
-    register intp i;
+    Bool tmp=FALSE;
+    intp i;
     for(i=0;i<n;i++,ip1+=is1,ip2+=is2) {
         if ((*((Bool *)ip1) != 0) && (*((Bool *)ip2) != 0)) {
             tmp = TRUE;
@@ -1987,8 +1987,8 @@ static void
 @name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
            void *NPY_UNUSED(ignore))
 {
-    register @out@ tmp=(@out@)0;
-    register intp i;
+    @out@ tmp=(@out@)0;
+    intp i;
     for(i=0;i<n;i++,ip1+=is1,ip2+=is2) {
         tmp += (@out@)(*((@type@ *)ip1)) * \
                (@out@)(*((@type@ *)ip2));
@@ -2085,7 +2085,7 @@ finish:
 static void
 @NAME@_fill(@typ@ *buffer, intp length, void *NPY_UNUSED(ignored))
 {
-    register intp i;
+    intp i;
     @typ@ start = buffer[0];
     @typ@ delta = buffer[1];
     delta -= start;
@@ -2102,7 +2102,7 @@ static void
 static void
 @NAME@_fill(@typ@ *buffer, intp length, void *NPY_UNUSED(ignore))
 {
-    register intp i;
+    intp i;
     @typ@ start;
     @typ@ delta;
 
@@ -2151,7 +2151,7 @@ static void
 static void
 @NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *NPY_UNUSED(ignored))
 {
-    register intp i;
+    intp i;
     @typ@ val = *value;
     for (i=0; i<length; ++i) {
         buffer[i] = val;
@@ -2173,7 +2173,7 @@ static void
 static void
 @name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
 {
-    register npy_intp i;
+    npy_intp i;
     @type@ max_val=0, min_val=0;
 
     if (max != NULL)
@@ -2218,7 +2218,7 @@ static void
 static void
 @name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
 {
-    register npy_intp i;
+    npy_intp i;
     @type@ max_val, min_val;
 
     min_val = *min;
@@ -2272,7 +2272,7 @@ static void
 static void
 @name@_fastputmask(@type@ *in, Bool *mask, intp ni, @type@ *vals, intp nv)
 {
-    register npy_intp i;
+    npy_intp i;
     @type@ s_val;
 
     if (nv == 1) {

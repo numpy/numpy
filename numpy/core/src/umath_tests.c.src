@@ -151,7 +151,7 @@ static void
         char *ip1=args[0], *ip2=args[1], *op=args[2];
         for (m = 0; m < dm; m++) {
             for (n = 0; n < dn; n++) {
-                register @typ@ val1 = (*(@typ@ *)ip1);
+                @typ@ val1 = (*(@typ@ *)ip1);
                 for (p = 0; p < dp; p++) {
                     if (n == 0) *(@typ@ *)op = 0;
                     *(@typ@ *)op += val1 * (*(@typ@ *)ip2);

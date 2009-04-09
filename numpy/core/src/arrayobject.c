@@ -1798,17 +1798,19 @@ _append_new(int *types, int insert)
 }
 
 /*NUMPY_API
-  Register a type number indicating that a descriptor can be cast
-  to it safely
-*/
+ * Register a type number indicating that a descriptor can be cast
+ * to it safely
+ */
 static int
 PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
                         NPY_SCALARKIND scalar)
 {
     if (scalar == PyArray_NOSCALAR) {
-        /* register with cancastto */
-        /* These lists won't be freed once created
-           -- they become part of the data-type */
+        /*
+         * register with cancastto
+         * These lists won't be freed once created
+         * -- they become part of the data-type
+         */
         if (descr->f->cancastto == NULL) {
             descr->f->cancastto = (int *)malloc(1*sizeof(int));
             descr->f->cancastto[0] = PyArray_NOTYPE;
@@ -4621,9 +4623,9 @@ array_str(PyArrayObject *self)
 /*NUMPY_API
  */
 static int
-PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, register size_t len)
+PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 {
-    register PyArray_UCS4 c1, c2;
+    PyArray_UCS4 c1, c2;
     while(len-- > 0) {
         c1 = *s1++;
         c2 = *s2++;
@@ -5449,9 +5451,9 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 static int
 _IsContiguous(PyArrayObject *ap)
 {
-    register intp sd;
-    register intp dim;
-    register int i;
+    intp sd;
+    intp dim;
+    int i;
 
     if (ap->nd == 0) {
         return 1;
@@ -5479,9 +5481,9 @@ _IsContiguous(PyArrayObject *ap)
 static int
 _IsFortranContiguous(PyArrayObject *ap)
 {
-    register intp sd;
-    register intp dim;
-    register int i;
+    intp sd;
+    intp dim;
+    int i;
 
     if (ap->nd == 0) {
         return 1;
@@ -5850,7 +5852,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                      int flags, PyObject *obj)
 {
     PyArrayObject *self;
-    register int i;
+    int i;
     size_t sd;
     intp largest;
     intp size;
@@ -8609,7 +8611,7 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in,
     char *inbuffer, *bptr, *optr;
     char *outbuffer=NULL;
     PyArrayIterObject *it_in = NULL, *it_out = NULL;
-    register intp i, index;
+    intp i, index;
     intp ncopies = PyArray_SIZE(out) / PyArray_SIZE(in);
     int elsize=in->descr->elsize;
     int nels = PyArray_BUFSIZE;
@@ -9629,7 +9631,7 @@ static int
 PyArray_CanCastSafely(int fromtype, int totype)
 {
     PyArray_Descr *from, *to;
-    register int felsize, telsize;
+    int felsize, telsize;
 
     if (fromtype == totype) {
         return 1;

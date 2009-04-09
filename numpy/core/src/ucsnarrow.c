@@ -15,7 +15,7 @@
 static int
 PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
 {
-    register int i;
+    int i;
     int numucs2 = 0;
     PyArray_UCS4 chr;
     for (i=0; i<ucs4length; i++) {
@@ -47,10 +47,10 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
 static int
 PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4len)
 {
-    register int i;
-    register PyArray_UCS4 chr;
-    register Py_UNICODE ch;
-    register int numchars=0;
+    int i;
+    PyArray_UCS4 chr;
+    Py_UNICODE ch;
+    int numchars=0;
 
     for (i=0; (i < ucs2len) && (numchars < ucs4len); i++) {
         ch = *ucs2++;

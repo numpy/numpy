@@ -112,7 +112,7 @@ static PyObject *MultiArrayError;
  * Multiply a List of ints
  */
 static int
-PyArray_MultiplyIntList(register int *l1, register int n)
+PyArray_MultiplyIntList(int *l1, int n)
 {
     int s = 1;
 
@@ -126,7 +126,7 @@ PyArray_MultiplyIntList(register int *l1, register int n)
  * Multiply a List
  */
 static intp
-PyArray_MultiplyList(register intp *l1, register int n)
+PyArray_MultiplyList(intp *l1, int n)
 {
     intp s = 1;
 
@@ -165,7 +165,7 @@ PyArray_OverflowMultiplyList(intp *l1, int n)
  * Produce a pointer into array
  */
 static void *
-PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
+PyArray_GetPtr(PyArrayObject *obj, intp* ind)
 {
     int n = obj->nd;
     intp *strides = obj->strides;
@@ -4879,7 +4879,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
 static int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
-    register int newtype = gentype;
+    int newtype = gentype;
 
     if (gentype == PyArray_GENBOOLLTR) {
         if (itemsize == 1) {
