@@ -44,6 +44,10 @@ class TestRegression(object):
         q,r = np.polydiv(x,x)
         assert_(q.dtype == np.float, msg)
 
+    def test_histogramdd_too_many_bins(self) :
+        """Ticket 928."""
+        assert_raises(ValueError, np.histogramdd, [np.ones(10)]*32)
+
 
 if __name__ == "__main__":
     run_module_suite()

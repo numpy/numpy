@@ -505,7 +505,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         Ncount[i][on_edge] -= 1
 
     # Flattened histogram matrix (1D)
-    hist = zeros(nbin.prod(), float)
+    # Reshape is used so that overlarge arrays
+    # will raise an error.
+    hist = zeros(nbin, float).reshape(-1)
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
