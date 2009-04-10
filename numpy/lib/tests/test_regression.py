@@ -46,7 +46,7 @@ class TestRegression(object):
 
     def test_histogramdd_too_many_bins(self) :
         """Ticket 928."""
-        assert_raises(ValueError, np.histogramdd, [np.ones(10)]*32)
+        assert_raises(ValueError, np.histogramdd, np.ones((1,10)), bins=2**10)
 
 
 if __name__ == "__main__":
