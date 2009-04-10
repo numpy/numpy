@@ -391,8 +391,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     Parameters
     ----------
     sample : array_like
-        Data to histogram passed as a sequence of D arrays of length N, or
-        as an (N,D) array.
+        The data to be histogrammed. It must be an (N,D) array or data
+        that can be converted to such. The rows of the resulting array
+        are the coordinates of points in a D dimensional polytope.
     bins : sequence or int, optional
         The bin specification:
 
