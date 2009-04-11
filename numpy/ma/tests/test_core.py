@@ -2272,6 +2272,18 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(test, a)
         assert_equal(test.data, a.data)
 
+
+    def test_arraymethod(self):
+        "Test a _arraymethod w/ n argument"
+        marray = masked_array([[1, 2, 3, 4, 5]], mask=[0, 0, 1, 0, 0])
+        control = masked_array([[1], [2], [3], [4], [5]],
+                               mask=[0, 0, 1, 0, 0])
+        assert_equal(marray.T, control)
+        assert_equal(marray.transpose(), control)
+        #
+        assert_equal(MaskedArray.cumsum(marray.T, 0), control.cumsum(0))
+
+
 #------------------------------------------------------------------------------
 
 

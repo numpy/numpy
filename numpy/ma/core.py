@@ -2124,11 +2124,16 @@ class _arraymethod(object):
     #
     def __call__(self, *args, **params):
         methodname = self.__name__
-        data = self.obj._data
-        mask = self.obj._mask
-        cls = type(self.obj)
+        instance = self.obj
+        # Fallback : if the instance has not been initialized, use the first arg
+        if instance is None:
+            args = list(args)
+            instance = args.pop(0)
+        data = instance._data
+        mask = instance._mask
+        cls = type(instance)
         result = getattr(data, methodname)(*args, **params).view(cls)
-        result._update_from(self.obj)
+        result._update_from(instance)
         if result.ndim:
             if not self._onmask:
                 result.__setmask__(mask)
