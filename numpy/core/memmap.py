@@ -2,6 +2,7 @@ __all__ = ['memmap']
 
 import warnings
 from numeric import uint8, ndarray, dtype
+import sys
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
@@ -223,10 +224,17 @@ class memmap(ndarray):
         else:
             acc = mmap.ACCESS_WRITE
 
-        mm = mmap.mmap(fid.fileno(), bytes, access=acc)
 
-        self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-                               offset=offset, order=order)
+        if sys.version_info[:2] >= (2,6):
+            # The offset keyword in mmap.mmap needs Python >= 2.6
+            bytes = bytes - offset
+            mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=offset)
+            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
+                offset=0, order=order)
+        else:
+            mm = mmap.mmap(fid.fileno(), bytes, access=acc)
+            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
+                offset=offset, order=order)
         self._mmap = mm
         return self
 
