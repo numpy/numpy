@@ -226,14 +226,16 @@ class memmap(ndarray):
 
         if sys.version_info[:2] >= (2,6):
             # The offset keyword in mmap.mmap needs Python >= 2.6
-            bytes = bytes - offset
-            mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=offset)
-            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-                offset=0, order=order)
+            blocks = offset // mmap.ALLOCATIONGRANULARITY
+            aligned_offset = blocks * mmap.ALLOCATIONGRANULARITY
+            bytes = bytes - aligned_offset
+            offset = offset - aligned_offset
+            mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=aligned_offset)
         else:
             mm = mmap.mmap(fid.fileno(), bytes, access=acc)
-            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-                offset=offset, order=order)
+
+        self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
+            offset=offset, order=order)
         self._mmap = mm
         return self
 
