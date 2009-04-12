@@ -190,13 +190,13 @@ class memmap(ndarray):
         if (mode == 'w+') and shape is None:
             raise ValueError, "shape must be given"
 
-        fid.seek(0,2)
+        fid.seek(0, 2)
         flen = fid.tell()
         descr = dtypedescr(dtype)
         _dbytes = descr.itemsize
 
         if shape is None:
-            bytes = flen-offset
+            bytes = flen - offset
             if (bytes % _dbytes):
                 fid.close()
                 raise ValueError, "Size of available data is not a "\
@@ -213,7 +213,7 @@ class memmap(ndarray):
         bytes = long(offset + size*_dbytes)
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
-            fid.seek(bytes-1,0)
+            fid.seek(bytes - 1, 0)
             fid.write(chr(0))
             fid.flush()
 
@@ -223,7 +223,6 @@ class memmap(ndarray):
             acc = mmap.ACCESS_READ
         else:
             acc = mmap.ACCESS_WRITE
-
 
         if sys.version_info[:2] >= (2,6):
             # The offset keyword in mmap.mmap needs Python >= 2.6
