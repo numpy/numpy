@@ -1249,8 +1249,8 @@ mr_ = mr_class()
 
 def flatnotmasked_edges(a):
     """
-    Find the indices of the first and last not masked values in a
-    1D masked array.  If all values are masked, returns None.
+    Find the indices of the first and last valid values in a 1D masked array. 
+    If all values are masked, returns None.
 
     """
     m = getmask(a)
@@ -1282,7 +1282,7 @@ def notmasked_edges(a, axis=None):
     a = asarray(a)
     if axis is None or a.ndim == 1:
         return flatnotmasked_edges(a)
-    m = getmask(a)
+    m = getmaskarray(a)
     idx = array(np.indices(a.shape), mask=np.asarray([m]*a.ndim))
     return [tuple([idx[i].min(axis).compressed() for i in range(a.ndim)]),
             tuple([idx[i].max(axis).compressed() for i in range(a.ndim)]),]
@@ -1338,7 +1338,7 @@ def notmasked_contiguous(a, axis=None):
     result = []
     #
     other = (axis+1)%2
-    idx = [0,0]
+    idx = [0, 0]
     idx[axis] = slice(None, None)
     #
     for i in range(a.shape[other]):
