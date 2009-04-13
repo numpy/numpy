@@ -183,24 +183,45 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[5:,:],b_2)
         assert_array_equal(d.mask, np.r_[m_1,m_2])
 
+
+
 class TestNotMasked(TestCase):
     "Tests notmasked_edges and notmasked_contiguous."
     def test_edges(self):
         "Tests unmasked_edges"
-        a = masked_array(np.arange(24).reshape(3,8),
-                         mask=[[0,0,0,0,1,1,1,0],
-                               [1,1,1,1,1,1,1,1],
-                               [0,0,0,0,0,0,1,0],])
+        data = masked_array(np.arange(25).reshape(5, 5),
+                            mask=[[0, 0, 1, 0, 0],
+                                  [0, 0, 0, 1, 1],
+                                  [1, 1, 0, 0, 0],
+                                  [0, 0, 0, 0, 0],
+                                  [1, 1, 1, 0, 0]],)
+        test = notmasked_edges(data, None)
+        assert_equal(test, [0, 24])
+        test = notmasked_edges(data, 0)
+        assert_equal(test[0], [(0, 0, 1, 0, 0), (0, 1, 2, 3, 4)])
+        assert_equal(test[1], [(3, 3, 3, 4, 4), (0, 1, 2, 3, 4)])
+        test = notmasked_edges(data, 1)
+        assert_equal(test[0], [(0, 1, 2, 3, 4), (0, 0, 2, 0, 3)])
+        assert_equal(test[1], [(0, 1, 2, 3, 4), (4, 2, 4, 4, 4)])
         #
-        assert_equal(notmasked_edges(a, None), [0,23])
+        test = notmasked_edges(data.data, None)
+        assert_equal(test, [0, -1])
+        test = notmasked_edges(data.data, 0)
+        assert_equal(test[0], [(0, 0, 0, 0, 0), (0, 1, 2, 3, 4)])
+        assert_equal(test[1], [(4, 4, 4, 4, 4), (0, 1, 2, 3, 4)])
+        test = notmasked_edges(data.data, -1)
+        assert_equal(test[0], [(0, 1, 2, 3, 4), (0, 0, 0, 0, 0)])
+        assert_equal(test[1], [(0, 1, 2, 3, 4), (4, 4, 4, 4, 4)])
         #
-        tmp = notmasked_edges(a, 0)
-        assert_equal(tmp[0], (array([0,0,0,0,2,2,0]), array([0,1,2,3,4,5,7])))
-        assert_equal(tmp[1], (array([2,2,2,2,2,2,2]), array([0,1,2,3,4,5,7])))
-        #
-        tmp = notmasked_edges(a, 1)
-        assert_equal(tmp[0], (array([0,2,]), array([0,0])))
-        assert_equal(tmp[1], (array([0,2,]), array([7,7])))
+        data[-2] = masked
+        test = notmasked_edges(data, 0)
+        assert_equal(test[0], [(0, 0, 1, 0, 0), (0, 1, 2, 3, 4)])
+        assert_equal(test[1], [(1, 1, 2, 4, 4), (0, 1, 2, 3, 4)])
+        test = notmasked_edges(data, -1)
+        assert_equal(test[0], [(0, 1, 2, 4), (0, 0, 2, 3)])
+        assert_equal(test[1], [(0, 1, 2, 4), (4, 2, 4, 4)])
+
+
 
     def test_contiguous(self):
         "Tests notmasked_contiguous"
@@ -224,6 +245,9 @@ class TestNotMasked(TestCase):
         self.failUnless(tmp[1] is None)
         assert_equal(tmp[2][-1], slice(7,7,None))
         assert_equal(tmp[2][-2], slice(0,5,None))
+
+
+
 
 class Test2DFunctions(TestCase):
     "Tests 2D functions"
