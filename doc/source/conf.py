@@ -2,16 +2,10 @@
 
 import sys, os, re
 
-# If your extensions are in another directory, add it here. If the directory
-# is relative to the documentation root, use os.path.abspath to make it
-# absolute, like shown here.
-sys.path.append(os.path.abspath('../sphinxext'))
-
 # Check Sphinx version
 import sphinx
 if sphinx.__version__ < "0.5":
     raise RuntimeError("Sphinx 0.5.dev or newer required")
-
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -19,9 +13,17 @@ if sphinx.__version__ < "0.5":
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+
+sys.path.append(os.path.abspath('../sphinxext'))
+
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
-              'phantom_import', 'autosummary', 'sphinx.ext.intersphinx',
-              'sphinx.ext.coverage', 'only_directives']
+              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
+              'only_directives']
+
+if sphinx.__version__ >= "0.7":
+    extensions.append('sphinx.ext.autosummary')
+else:
+    extensions.append('autosummary')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -209,6 +211,13 @@ intersphinx_mapping = {'http://docs.python.org/dev': None}
 
 # If we want to do a phantom import from an XML file for all autodocs
 phantom_import_file = 'dump.xml'
+
+# -----------------------------------------------------------------------------
+# Autosummary
+# -----------------------------------------------------------------------------
+
+import glob
+autosummary_generate = glob.glob("reference/*.rst")
 
 # -----------------------------------------------------------------------------
 # Coverage checker

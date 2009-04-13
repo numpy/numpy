@@ -9,6 +9,8 @@ SPHINXOPTS    =
 SPHINXBUILD   = LANG=C sphinx-build
 PAPER         =
 
+NEED_AUTOSUMMARY = $(shell $(PYTHON) -c 'import sphinx; print sphinx.__version__ >= "0.7" and "1" or ""')
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
@@ -95,9 +97,11 @@ dist-build:
 generate: build/generate-stamp
 build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
+ifeq ($(NEED_AUTOSUMMARY),1)
 	$(PYTHON) \
 		./sphinxext/autosummary_generate.py source/reference/*.rst \
 		-p dump.xml -o source/reference/generated 
+endif
 	touch build/generate-stamp
 
 html: generate

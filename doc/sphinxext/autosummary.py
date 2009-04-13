@@ -62,11 +62,12 @@ from sphinx.util import patfilter
 from docscrape_sphinx import get_doc_object
 
 import warnings
-warnings.warn("The numpydoc.autosummary extension will be eventually moved to "
-              "sphinx.ext.autosummary. One version is already available in "
-              "Sphinx >= 0.6; expect this module to be deprecated after all "
-              "remaining features have been integrated there.",
-              FutureWarning, stacklevel=2)
+warnings.warn(
+    "The numpydoc.autosummary extension can also be found as "
+    "sphinx.ext.autosummary in Sphinx >= 0.6, and the version in "
+    "Sphinx >= 0.7 is superior to the one in numpydoc. This numpydoc "
+    "version of autosummary is no longer maintained.",
+    DeprecationWarning, stacklevel=2)
 
 def setup(app):
     app.add_directive('autosummary', autosummary_directive, True, (0, 0, False),
