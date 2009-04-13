@@ -216,8 +216,9 @@ phantom_import_file = 'dump.xml'
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
-autosummary_generate = glob.glob("reference/*.rst")
+if sphinx.__version__ >= "0.7": 
+    import glob
+    autosummary_generate = glob.glob("reference/*.rst")
 
 # -----------------------------------------------------------------------------
 # Coverage checker
