@@ -9,7 +9,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = LANG=C sphinx-build
 PAPER         =
 
-NEED_AUTOSUMMARY = $(shell $(PYTHON) -c 'import sphinx; print sphinx.__version__ >= "0.7" and "1" or ""')
+NEED_AUTOSUMMARY = $(shell $(PYTHON) -c 'import sphinx; print sphinx.__version__ < "0.7" and "1" or ""')
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
