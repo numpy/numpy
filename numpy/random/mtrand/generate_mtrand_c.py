@@ -13,7 +13,9 @@ unused_internal_funcs = ['__Pyx_PrintItem',
                          '__Pyx_CreateClass']
 
 if __name__ == '__main__':
-    os.system('pyrexc mtrand.pyx')
+    # Use cython here so that long docstrings are broken up.
+    # This is needed for some VC++ compilers.
+    os.system('cython mtrand.pyx')
     mtrand_c = open('mtrand.c', 'r')
     processed = open('mtrand_pp.c', 'w')
     unused_funcs_str = '(' + '|'.join(unused_internal_funcs) + ')'
