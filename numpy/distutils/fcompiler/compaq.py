@@ -79,7 +79,7 @@ class CompaqVisualFCompiler(FCompiler):
             m.initialize()
             ar_exe = m.lib
         except DistutilsPlatformError, msg:
-			pass
+                        pass
         except AttributeError, msg:
             if '_MSVCCompiler__root' in str(msg):
                 print 'Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg)
@@ -90,7 +90,7 @@ class CompaqVisualFCompiler(FCompiler):
                 print "Unexpected IOError in", __file__
                 raise e
         except ValueError, e:
-	    if not "path']" in str(e):
+            if not "path']" in str(e):
                 print "Unexpected ValueError in", __file__
                 raise e
 

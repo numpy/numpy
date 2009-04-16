@@ -481,7 +481,7 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
-    config.add_library('npymath', 
+    config.add_library('npymath',
             sources=[join('src', 'npy_math.c.src')],
             depends=[])
 
@@ -544,8 +544,8 @@ def configuration(parent_package='',top_path=None):
                          extra_info = blas_info
                          )
 
-    config.add_extension('umath_tests', 
-		    sources = [join('src','umath_tests.c.src')])
+    config.add_extension('umath_tests',
+                    sources = [join('src','umath_tests.c.src')])
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')

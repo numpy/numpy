@@ -102,10 +102,10 @@ class TestRepr(TestCase):
                 assert_equal(val, val2)
 
     def test_float_repr(self):
-	# long double test cannot work, because eval goes through a python
-	# float
+        # long double test cannot work, because eval goes through a python
+        # float
         for t in [np.float32, np.float64]:
-	    yield test_float_repr, t
+            yield test_float_repr, t
 
 if __name__ == "__main__":
     run_module_suite()

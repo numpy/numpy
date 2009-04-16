@@ -1636,8 +1636,8 @@ def msvc_version(compiler):
     """Return version major and minor of compiler instance if it is
     MSVC, raise an exception otherwise."""
     if not compiler.compiler_type == "msvc":
-	raise ValueError("Compiler instance is not msvc (%s)"\
-			 % compiler.compiler_type)
+        raise ValueError("Compiler instance is not msvc (%s)"\
+                         % compiler.compiler_type)
     return compiler._MSVCCompiler__version
 
 if sys.version[:3] >= '2.5':
