@@ -123,7 +123,7 @@ INSTALLERS_DIR = os.path.join(RELEASE_DIR, 'installers')
 
 # XXX: fix this in a sane way
 MPKG_PYTHON = {"25": "/Library/Frameworks/Python.framework/Versions/2.5/bin/python",
-	"26": "/Library/Frameworks/Python.framework/Versions/2.6/bin/python"}
+        "26": "/Library/Frameworks/Python.framework/Versions/2.6/bin/python"}
 
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT,packages_to_install=["sphinx==0.6.1"]),
@@ -430,11 +430,11 @@ def dmg():
 
     # Build the dmg
     cmd = ["./create-dmg", "--window-size", "500", "500", "--background",
-        "art/dmgbackground.png", "--icon-size", "128", "--icon", mpkg_tn, 
+        "art/dmgbackground.png", "--icon-size", "128", "--icon", mpkg_tn,
         "125", "320", "--icon", "Documentation", "375", "320", "--volname", "numpy",
         dmg_n, "./content"]
     subprocess.check_call(cmd, cwd="numpy-macosx-installer")
-    
+
 @task
 def simple_dmg():
     # Build the dmg
