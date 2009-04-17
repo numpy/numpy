@@ -204,9 +204,10 @@ def write_log():
 
 # Doc stuff
 @task
-@needs('paver.doctools.html')
 def html(options):
     """Build numpy documentation and put it into build/docs"""
+    # Don't use paver html target because of numpy bootstrapping problems
+    subprocess.check_call(["make", "html"], cwd="doc")
     builtdocs = paver.path.path("doc") / options.sphinx.builddir / "html"
     HTML_DESTDIR.rmtree()
     builtdocs.copytree(HTML_DESTDIR)
