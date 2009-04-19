@@ -1,4 +1,5 @@
 import re, inspect, textwrap, pydoc
+import sphinx
 from docscrape import NumpyDocString, FunctionDoc, ClassDoc
 
 class SphinxDocString(NumpyDocString):
@@ -90,6 +91,18 @@ class SphinxDocString(NumpyDocString):
                 self['References'] = [self['References']]
             out.extend(self['References'])
             out += ['']
+            # Latex collects all references to a separate bibliography,
+            # so we need to insert links to it
+            if sphinx.__version__ >= 0.6:
+                out += ['.. only:: latex','']
+            else:
+                out += ['.. latexonly::','']
+            items = []
+            for line in self['References']:
+                m = re.match(r'.. \[([a-z0-9._-]+)\]', line, re.I)
+                if m:
+                    items.append(m.group(1))
+            out += ['   ' + ", ".join(["[%s]_" % item for item in items]), '']
         return out
 
     def __str__(self, indent=0, func_role="obj"):
