@@ -241,29 +241,13 @@ class Gnu95FCompiler(GnuFCompiler):
 
     g2c = 'gfortran'
 
-    # Note that this is here instead of GnuFCompiler as gcc < 4 uses a
-    # different output format (which isn't as useful) than gcc >= 4,
-    # and we don't have to worry about g77 being universal (as it can't be).
-    def _can_target(self, cmd, arch):
-        """Return true is the compiler support the -arch flag for the given
-        architecture."""
-        newcmd = cmd[:]
-        newcmd.extend(["-arch", arch, "-v"])
-        st, out = exec_command(" ".join(newcmd))
-        if st == 0:
-            for line in out.splitlines():
-                m = re.search(_R_ARCHS[arch], line)
-                if m:
-                    return True
-        return False
-            
     def _universal_flags(self, cmd):
         """Return a list of -arch flags for every supported architecture."""
         if not sys.platform == 'darwin':
             return []
         arch_flags = []
         for arch in ["ppc", "i686"]:
-            if self._can_target(cmd, arch):
+            if _can_target(cmd, arch):
                 arch_flags.extend(["-arch", arch])
         return arch_flags
 
@@ -319,6 +303,19 @@ class Gnu95FCompiler(GnuFCompiler):
                 return m.group(1)
         return ""
 
+def _can_target(cmd, arch):
+    """Return true is the command supports the -arch flag for the given
+    architecture."""
+    newcmd = cmd[:]
+    newcmd.extend(["-arch", arch, "-v"])
+    st, out = exec_command(" ".join(newcmd))
+    if st == 0:
+        for line in out.splitlines():
+            m = re.search(_R_ARCHS[arch], line)
+            if m:
+                return True
+    return False
+        
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
