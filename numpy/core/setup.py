@@ -188,13 +188,17 @@ def check_types(config_cmd, ext, build_dir):
 
     # Check basic types sizes
     for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
-        res = config_cmd.check_type_size(type, expected=expected[type])
-        if res >= 0:
-            if not type == 'long double':
-                private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
-            public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
+        res = config_cmd.check_decl("SIZEOF_%s" % sym2def(type), headers = ["Python.h"])
+        if res:
+            public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), "SIZEOF_%s" % sym2def(type)))
         else:
-            raise SystemError("Checking sizeof (%s) failed !" % type)
+            res = config_cmd.check_type_size(type, expected=expected[type])
+            if res >= 0:
+                if not type == 'long double':
+                    private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+                public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
+            else:
+                raise SystemError("Checking sizeof (%s) failed !" % type)
 
     for type in ('Py_intptr_t',):
         res = config_cmd.check_type_size(type, headers=["Python.h"],
