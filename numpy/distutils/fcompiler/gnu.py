@@ -246,7 +246,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not sys.platform == 'darwin':
             return []
         arch_flags = []
-        for arch in ["ppc", "i686"]:
+        for arch in ["ppc", "i686", "x86_64"]:
             if _can_target(cmd, arch):
                 arch_flags.extend(["-arch", arch])
         return arch_flags
