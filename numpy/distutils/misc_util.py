@@ -1502,6 +1502,15 @@ def get_numpy_include_dirs():
     # else running numpy/core/setup.py
     return include_dirs
 
+def is_bootstrapping():
+    import __builtin__
+    try:
+        __builtin__.__NUMPY_SETUP__
+        return True
+    except AttributeError:
+        return False
+        __NUMPY_SETUP__ = False
+
 def scons_generate_config_py(target):
     """generate config.py file containing system_info information
     used during building the package.

@@ -10,6 +10,7 @@ from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
+from numpy.distutils.misc_util import is_bootstrapping
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
@@ -228,15 +229,6 @@ def select_packages(sconspkg, pkglist):
               "the current list. The current list is %s" % sconspkg
         raise ValueError(msg)
     return common
-
-def is_bootstrapping():
-    import __builtin__
-    try:
-        __builtin__.__NUMPY_SETUP__
-        return True
-    except AttributeError:
-        return False
-        __NUMPY_SETUP__ = False
 
 # XXX: this is a giantic mess. Refactor this at some point.
 class scons(old_build_ext):
