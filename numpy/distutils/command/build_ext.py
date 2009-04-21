@@ -399,9 +399,6 @@ class build_ext (old_build_ext):
         else:
             kws = {}
 
-        print "$$$$$$$$$$$$$$$$$$$$$$$", dir(self)
-        print "$$$$$$$$$$$$$$$$$$$$$$$", self.build_lib
-        print "is bootstrapping ?"
         linker(objects, ext_filename,
                libraries=libraries,
                library_dirs=library_dirs,
