@@ -978,7 +978,7 @@ def analyzeline(m,case,line):
                                replace(',','+1j*(')
             try:
                 v = eval(initexpr,{},params)
-            except (SyntaxError,NameError),msg:
+            except (SyntaxError,NameError,TypeError),msg:
                 errmess('analyzeline: Failed to evaluate %r. Ignoring: %s\n'\
                         % (initexpr, msg))
                 continue
