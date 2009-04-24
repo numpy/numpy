@@ -649,8 +649,10 @@ def assert_string_equal(actual, desired):
         raise AssertionError(msg)
 
 
-def rundocs(filename=None):
-    """ Run doc string tests found in filename.
+def rundocs(filename=None, raise_on_error=True):
+    """Run doc string tests found in file.
+
+    By default raises AssertionError on failure.
     """
     import doctest, imp
     if filename is None:
@@ -663,14 +665,21 @@ def rundocs(filename=None):
         m = imp.load_module(name, file, pathname, description)
     finally:
         file.close()
-    if sys.version[:3]<'2.4':
-        doctest.testmod(m, verbose=False)
+
+    tests = doctest.DocTestFinder().find(m)
+    runner = doctest.DocTestRunner(verbose=False)
+
+    msg = []
+    if raise_on_error:
+        out = lambda s: msg.append(s)
     else:
-        tests = doctest.DocTestFinder().find(m)
-        runner = doctest.DocTestRunner(verbose=False)
-        for test in tests:
-            runner.run(test)
-    return
+        out = None
+
+    for test in tests:
+        runner.run(test, out=out)
+
+    if runner.failures > 0 and raise_on_error:
+        raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
 def raises(*args,**kwargs):
