@@ -241,15 +241,14 @@ def polyint(p, m=1, k=None):
               "k must be a scalar or a rank-1 array of length 1 or >m."
 
     truepoly = isinstance(p, poly1d)
-    p = NX.asarray(p) + 0.0
+    p = NX.asarray(p)
     if m == 0:
         if truepoly:
             return poly1d(p)
         return p
     else:
-        y = NX.zeros(len(p) + 1, p.dtype)
-        y[:-1] = p*1.0/NX.arange(len(p), 0, -1)
-        y[-1] = k[0]
+        # Note: this must work also with object and integer arrays
+        y = NX.concatenate((p.__truediv__(NX.arange(len(p), 0, -1)), [k[0]]))
         val = polyint(y, m - 1, k=k[1:])
         if truepoly:
             return poly1d(val)

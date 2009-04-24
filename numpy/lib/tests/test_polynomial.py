@@ -110,6 +110,29 @@ class TestDocs(TestCase):
         cc = np.concatenate((c,c), axis=1)
         assert_almost_equal(cc, np.polyfit(x,yy,2))
 
+    def test_objects(self):
+        from decimal import Decimal
+        p = np.poly1d([Decimal('4.0'), Decimal('3.0'), Decimal('2.0')])
+        p2 = p * Decimal('1.333333333333333')
+        assert p2[1] == Decimal("3.9999999999999990")
+        p2 = p.deriv()
+        assert p2[1] == Decimal('8.0')
+        p2 = p.integ()
+        assert p2[3] == Decimal("1.333333333333333333333333333")
+        assert p2[2] == Decimal('1.5')
+        assert np.issubdtype(p2.coeffs.dtype, np.object_)
+
+    def test_complex(self):
+        p = np.poly1d([3j, 2j, 1j])
+        p2 = p.integ()
+        assert (p2.coeffs == [1j,1j,1j,0]).all()
+        p2 = p.deriv()
+        assert (p2.coeffs == [6j,2j]).all()
+
+    def test_integ_coeffs(self):
+        p = np.poly1d([3,2,1])
+        p2 = p.integ(3, k=[9,7,6])
+        assert (p2.coeffs == [1/4./5.,1/3./4.,1/2./3.,9/1./2.,7,6]).all()
 
 if __name__ == "__main__":
     run_module_suite()
