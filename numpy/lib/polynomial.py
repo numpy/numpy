@@ -15,6 +15,7 @@ from numpy.lib.getlimits import finfo
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
+from numpy.lib.type_check import iscomplex, real, imag
 from numpy.linalg import eigvals, lstsq
 
 class RankWarning(UserWarning):
@@ -891,10 +892,21 @@ class poly1d(object):
         coeffs = self.coeffs[NX.logical_or.accumulate(self.coeffs != 0)]
         N = len(coeffs)-1
 
+        def fmt_float(q):
+            s = '%.4g' % q
+            if s.endswith('.0000'):
+                s = s[:-5]
+            return s
+
         for k in range(len(coeffs)):
-            coefstr ='%.4g' % abs(coeffs[k])
-            if coefstr[-4:] == '0000':
-                coefstr = coefstr[:-5]
+            if not iscomplex(coeffs[k]):
+                coefstr = fmt_float(real(coeffs[k]))
+            elif real(coeffs[k]) == 0:
+                coefstr = '%sj' % fmt_float(imag(coeffs[k]))
+            else:
+                coefstr = '(%s + %sj)' % (fmt_float(real(coeffs[k])),
+                                          fmt_float(imag(coeffs[k])))
+
             power = (N-k)
             if power == 0:
                 if coefstr != '0':
@@ -921,12 +933,10 @@ class poly1d(object):
 
             if k > 0:
                 if newstr != '':
-                    if coeffs[k] < 0:
-                        thestr = "%s - %s" % (thestr, newstr)
+                    if newstr.startswith('-'):
+                        thestr = "%s - %s" % (thestr, newstr[1:])
                     else:
                         thestr = "%s + %s" % (thestr, newstr)
-            elif (k == 0) and (newstr != '') and (coeffs[k] < 0):
-                thestr = "-%s" % (newstr,)
             else:
                 thestr = newstr
         return _raise_power(thestr)
