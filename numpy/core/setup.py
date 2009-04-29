@@ -424,8 +424,8 @@ def configuration(parent_package='',top_path=None):
                       "codegen_dir/cversions.txt is %s. "
                 warnings.warn(msg % (C_API_VERSION, curapi_hash, api_hash))
 
-            moredefs.append(('NPY_ABI_VERSION', hex(C_ABI_VERSION)))
-            moredefs.append(('NPY_API_VERSION', hex(C_API_VERSION)))
+            moredefs.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
+            moredefs.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
             # Add moredefs to header
             target_f = open(target,'a')
