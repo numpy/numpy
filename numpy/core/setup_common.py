@@ -1,5 +1,8 @@
 # Code shared by distutils and scons builds
 
+C_ABI_VERSION = 0x01000009
+C_API_VERSION = 0x00000001
+
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",

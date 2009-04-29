@@ -5,6 +5,7 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
+import warnings
 
 from setup_common import *
 
@@ -259,26 +260,11 @@ def check_mathlib(config_cmd):
                                "MATHLIB env variable")
     return mathlibs
 
-def read_cversion(codegen_dir):
-    """Return abi and api versions."""
-    import re
-
+def check_api_versions(apiversion, codegen_dir):
+    """Return current C API checksum and the recorded checksum for the given
+    version of the C API version."""
     api_files = [join(codegen_dir, 'numpy_api_order.txt'),
                  join(codegen_dir, 'ufunc_api_order.txt')]
-    version_filename = join(os.path.dirname(__file__), 'cversion.txt')
-    cnt = open(version_filename, 'r').readlines()
-
-    abiversion = None
-    apiversion = None
-    for line in cnt:
-        m = re.search(r'ABI_VERSION\s*=\s*(0x[\da-f]{8})', line)
-        if m:
-            abiversion = int(m.group(1), 16)
-
-    for line in cnt:
-        m = re.search(r'API_VERSION\s*=\s*(0x[\da-f]{8})', line)
-        if m:
-            apiversion = int(m.group(1), 16)
 
     # Compute the hash of the current API as defined in the .txt files in
     # code_generators
@@ -290,17 +276,7 @@ def read_cversion(codegen_dir):
     finally:
         del sys.path[0]
 
-    # If exception raised, it means that the api .txt files in codegen_dir have
-    # been updated without the API version being updated. Any modification in
-    # those .txt files should be reflected in the api and eventually abi
-    # versions
-    if not curapi_hash == apis_hash[apiversion]:
-        msg = "API mismatch detected, the C API version " \
-              "numbers have to be updated. Current C api version is %d, " \
-              "with checksum %s, but recorded checksum in " \
-              "codegen_dir/cversions.txt is %s. "
-        raise SystemError(msg % (apiversion, curapi_hash, apis_hash[apiversion]))
-    return abiversion, apiversion
+    return curapi_hash, apis_hash[apiversion]
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
@@ -433,9 +409,23 @@ def configuration(parent_package='',top_path=None):
             inline = config_cmd.check_inline()
 
             # Add the C API/ABI versions
-            abi, api = read_cversion(codegen_dir)
-            moredefs.append(('NPY_ABI_VERSION', hex(abi)))
-            moredefs.append(('NPY_API_VERSION', hex(api)))
+            curapi_hash, api_hash = check_api_versions(C_API_VERSION, codegen_dir)
+
+            # If different hash, it means that the api .txt files in
+            # codegen_dir have been updated without the API version being
+            # updated. Any modification in those .txt files should be reflected
+            # in the api and eventually abi versions.
+            # To compute the checksum of the current API, use
+            # code_generators/cversions.py script
+            if not curapi_hash == api_hash:
+                msg = "API mismatch detected, the C API version " \
+                      "numbers have to be updated. Current C api version is %d, " \
+                      "with checksum %s, but recorded checksum in " \
+                      "codegen_dir/cversions.txt is %s. "
+                warnings.warn(msg % (C_API_VERSION, curapi_hash, api_hash))
+
+            moredefs.append(('NPY_ABI_VERSION', hex(C_ABI_VERSION)))
+            moredefs.append(('NPY_API_VERSION', hex(C_API_VERSION)))
 
             # Add moredefs to header
             target_f = open(target,'a')
