@@ -280,6 +280,20 @@ def should_rebuild(targets, source_files):
         return True
     return False
 
+def fullapi_hash(files):
+    """Given a list of .txt files defining the numpy C API, compute a checksum
+    of the list of functions."""
+    a = []
+    for f in files:
+        order = read_order(f)
+        def sorted_by_values(d):
+            """Sort a dictionary by its values. Assume the dictionary items is of
+            the form func_name -> order"""
+            return sorted(d.items(), key=lambda (x, y): (y, x))
+        a.extend([i[0] for i in sorted_by_values(order)])
+
+    return md5.new(''.join(a)).hexdigest()
+
 def main():
     tagname = sys.argv[1]
     order_file = sys.argv[2]
