@@ -1291,7 +1291,7 @@
   npy_intp dims[1];
   if (!PyInt_Check($input))
   {
-    char* typestring = pytype_string($input);
+    const char* typestring = pytype_string($input);
     PyErr_Format(PyExc_TypeError,
                  "Int dimension expected.  '%s' given.",
                  typestring);
@@ -1319,7 +1319,7 @@
   npy_intp dims[1];
   if (!PyInt_Check($input))
   {
-    char* typestring = pytype_string($input);
+    const char* typestring = pytype_string($input);
     PyErr_Format(PyExc_TypeError,
                  "Int dimension expected.  '%s' given.",
                  typestring);
