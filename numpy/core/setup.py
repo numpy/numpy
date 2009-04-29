@@ -259,9 +259,12 @@ def check_mathlib(config_cmd):
                                "MATHLIB env variable")
     return mathlibs
 
-def read_cversion():
+def read_cversion(codegen_dir):
     """Return abi and api versions."""
     import re
+
+    api_files = [join(codegen_dir, 'numpy_api_order.txt'),
+                 join(codegen_dir, 'ufunc_api_order.txt')]
     version_filename = join(os.path.dirname(__file__), 'cversion.txt')
     cnt = open(version_filename, 'r').readlines()
 
@@ -277,6 +280,26 @@ def read_cversion():
         if m:
             apiversion = int(m.group(1), 16)
 
+    # Compute the hash of the current API as defined in the .txt files in
+    # code_generators
+    sys.path.insert(0, codegen_dir)
+    try:
+        m = __import__('genapi')
+        curapi_hash = m.fullapi_hash(api_files)
+        apis_hash = m.get_versions_hash()
+    finally:
+        del sys.path[0]
+
+    # If exception raised, it means that the api .txt files in codegen_dir have
+    # been updated without the API version being updated. Any modification in
+    # those .txt files should be reflected in the api and eventually abi
+    # versions
+    if not curapi_hash == apis_hash[apiversion]:
+        msg = "API mismatch detected, the C API version " \
+              "numbers have to be updated. Current C api version is %d, " \
+              "with checksum %s, but recorded checksum in " \
+              "codegen_dir/cversions.txt is %s. "
+        raise SystemError(msg % (apiversion, curapi_hash, apis_hash[apiversion]))
     return abiversion, apiversion
 
 def configuration(parent_package='',top_path=None):
@@ -410,7 +433,7 @@ def configuration(parent_package='',top_path=None):
             inline = config_cmd.check_inline()
 
             # Add the C API/ABI versions
-            abi, api = read_cversion()
+            abi, api = read_cversion(codegen_dir)
             moredefs.append(('NPY_ABI_VERSION', hex(abi)))
             moredefs.append(('NPY_API_VERSION', hex(api)))
 
