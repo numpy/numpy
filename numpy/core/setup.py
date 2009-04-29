@@ -259,6 +259,26 @@ def check_mathlib(config_cmd):
                                "MATHLIB env variable")
     return mathlibs
 
+def read_cversion():
+    """Return abi and api versions."""
+    import re
+    version_filename = join(os.path.dirname(__file__), 'cversion.txt')
+    cnt = open(version_filename, 'r').readlines()
+
+    abiversion = None
+    apiversion = None
+    for line in cnt:
+        m = re.search(r'ABI_VERSION\s*=\s*(0x[\da-f]{8})', line)
+        if m:
+            abiversion = int(m.group(1), 16)
+
+    for line in cnt:
+        m = re.search(r'API_VERSION\s*=\s*(0x[\da-f]{8})', line)
+        if m:
+            apiversion = int(m.group(1), 16)
+
+    return abiversion, apiversion
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -388,6 +408,11 @@ def configuration(parent_package='',top_path=None):
 
             # Inline check
             inline = config_cmd.check_inline()
+
+            # Add the C API/ABI versions
+            abi, api = read_cversion()
+            moredefs.append(('NPY_ABI_VERSION', hex(abi)))
+            moredefs.append(('NPY_API_VERSION', hex(api)))
 
             # Add moredefs to header
             target_f = open(target,'a')
