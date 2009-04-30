@@ -508,6 +508,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','multiarray','item_selection.c'),
                                     join('src','multiarray','numpyos.c'),
                                     join('src','multiarray','scalarapi.c'),
+                                    join('src','multiarray','usertypes.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
                                     ],

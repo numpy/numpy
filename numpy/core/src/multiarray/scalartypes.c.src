@@ -13,9 +13,10 @@
 
 
 #include "config.h"
-#include "common.h"
 #include "arrayobject.h"
+#include "usertypes.h"
 #include "numpyos.h"
+#include "common.h"
 #include "scalartypes.h"
 
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {

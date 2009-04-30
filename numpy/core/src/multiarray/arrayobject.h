@@ -5,8 +5,6 @@
 #error You should not include this
 #endif
 
-extern NPY_NO_EXPORT PyArray_Descr **userdescrs;
-
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
                              intp instrides, intp N, int elsize);
