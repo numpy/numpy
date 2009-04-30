@@ -15,6 +15,7 @@ __docformat__ = 'restructuredtext'
 API_FILES = ['arraymethods.c',
              'arrayobject.c',
              'arrayflagsobject.c',
+             'arraydescr.c',
              'arraytypes.c.src',
              'multiarraymodule.c',
              'scalartypes.c.src',
