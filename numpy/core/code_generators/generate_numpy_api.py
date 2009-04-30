@@ -20,15 +20,15 @@ typedef struct {
 extern NPY_NO_EXPORT int NPY_NUMUSERTYPES;
 
 NPY_NO_EXPORT unsigned int PyArray_GetNDArrayCVersion (void);
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
-NPY_NO_EXPORT PyTypeObject PyArray_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
-NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
-NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
+extern NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArray_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
+extern NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
+extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
 %s
 
@@ -185,7 +185,7 @@ def do_generate_api(targets, sources):
         num = fixed + k
         astr = "        (void *) &Py%sArrType_Type," % types[k]
         init_list.append(astr)
-        astr = "NPY_NO_EXPORT PyTypeObject Py%sArrType_Type;" % types[k]
+        astr = "extern NPY_NO_EXPORT PyTypeObject Py%sArrType_Type;" % types[k]
         module_list.append(astr)
         astr = "#define Py%sArrType_Type (*(PyTypeObject *)PyArray_API[%d])" % \
                (types[k], num)

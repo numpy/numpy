@@ -53,6 +53,7 @@
 
 //#include "arrayobject.c"
 
+NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
 /*NUMPY_API
  * Multiply a List of ints

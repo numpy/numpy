@@ -256,9 +256,12 @@ PyArray_XDECREF(PyArrayObject *mp)
     return 0;
 }
 
+/* 
+ * FIXME 
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.c"
 #endif
+ */
 
 /* Helper functions */
 
