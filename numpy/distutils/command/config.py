@@ -15,7 +15,7 @@ from distutils.ccompiler import CompileError, LinkError
 import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
-from numpy.distutils.command.autodist import check_inline
+from numpy.distutils.command.autodist import check_inline, check_compiler_gcc4
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -345,6 +345,10 @@ int main ()
         """Return the inline keyword recognized by the compiler, empty string
         otherwise."""
         return check_inline(self)
+
+    def check_compiler_gcc4(self):
+        """Return True if the C compiler is gcc >= 4."""
+        return check_compiler_gcc4(self)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,

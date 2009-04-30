@@ -1,4 +1,4 @@
-#! Last Change: Fri Mar 13 01:00 PM 2009 J
+#! Last Change: Sun Apr 26 05:00 PM 2009 J
 
 """Code to support special facilities to scons which are only useful for
 numpy.core, hence not put into numpy.distutils.scons"""
@@ -97,6 +97,26 @@ def generate_umath_emitter(target, source, env):
 #-----------------------------------------
 # Other functions related to configuration
 #-----------------------------------------
+def CheckGCC4(context):
+    src = """
+int
+main()
+{
+#if !(defined __GNUC__ && (__GNUC__ >= 4))
+die from an horrible death
+#endif
+}
+"""
+
+    context.Message("Checking if compiled with gcc 4.x or above ... ")
+    st = context.TryCompile(src, '.c')
+
+    if st:
+        context.Result(' yes')
+    else:
+        context.Result(' no')
+    return st == 1
+
 def CheckBrokenMathlib(context, mathlib):
     src = """
 /* check whether libm is broken */

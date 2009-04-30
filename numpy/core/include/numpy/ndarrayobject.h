@@ -18,7 +18,7 @@ extern "C" CONFUSE_EMACS
 #include "numpyconfig.h"
 
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
-        #define NPY_NO_EXPORT __attribute__((visibility("hidden")))
+        #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 #else
         #define NPY_NO_EXPORT static
 #endif

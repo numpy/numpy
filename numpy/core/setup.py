@@ -9,7 +9,7 @@ from distutils.sysconfig import get_config_var
 from setup_common import *
 
 # Set to True to enable multiple file compilations (experimental)
-ENABLE_SEPARATE_COMPILATION = False
+ENABLE_SEPARATE_COMPILATION = True
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
@@ -264,6 +264,14 @@ def check_mathlib(config_cmd):
                                "MATHLIB env variable")
     return mathlibs
 
+def visibility_define(config):
+    """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
+    string)."""
+    if config.check_compiler_gcc4():
+        return '__attribute__((visibility("hidden")))'
+    else:
+        return ''
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -405,6 +413,10 @@ def configuration(parent_package='',top_path=None):
 
             # Inline check
             inline = config_cmd.check_inline()
+
+            # visibility check
+            hidden_visibility = visibility_define(config_cmd)
+            moredefs.append(('NPY_VISIBILITY_HIDDEN', hidden_visibility))
 
             # Add moredefs to header
             target_f = open(target,'a')

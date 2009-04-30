@@ -1,4 +1,4 @@
-# Last Change: Fri Apr 24 08:00 PM 2009 J
+# Last Change: Sun Apr 26 05:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -13,10 +13,10 @@ from numscons import write_info
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal, CheckInline
 from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
-                          umath_bld
+                          umath_bld, CheckGCC4
 from setup_common import *
 
-ENABLE_SEPARATE_COMPILATION = False
+ENABLE_SEPARATE_COMPILATION = True
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = env["PYEXTCPPPATH"])
@@ -30,7 +30,8 @@ if os.name == 'nt':
 # Starting Configuration
 #=======================
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
-    'CheckCBLAS' : CheckCBLAS, 'CheckInline': CheckInline}, config_h = pjoin('config.h'))
+    'CheckCBLAS' : CheckCBLAS, 'CheckInline': CheckInline, 'CheckGCC4' : CheckGCC4},
+    config_h = pjoin('config.h'))
 
 # numpyconfig_sym will keep the values of some configuration variables, the one
 # needed for the public numpy API.
@@ -189,6 +190,16 @@ numpyconfig_sym.append(('NPY_INLINE', inline))
 if ENABLE_SEPARATE_COMPILATION:
     config.Define("ENABLE_SEPARATE_COMPILATION", 1)
     numpyconfig_sym.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
+
+# Checking for visibility macro
+def visibility_define():
+    if config.CheckGCC4():
+        return '__attribute__((visibility("hidden")))'
+    else:
+        return ''
+
+numpyconfig_sym.append(('VISIBILITY_HIDDEN', visibility_define()))
+
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
 #-------------------------------------------------------

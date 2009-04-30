@@ -23,3 +23,17 @@ static %(inline)s int static_func (void)
             return kw
 
     return ''
+
+def check_compiler_gcc4(cmd):
+    """Return True if the C compiler is GCC 4.x."""
+    cmd._check_compiler()
+    body = """
+int
+main()
+{
+#ifndef __GNUC__ && (__GNUC__ >= 4)
+die in an horrible death
+#endif
+}
+"""
+    return cmd.try_compile(body, None, None)
