@@ -811,3 +811,130 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
     Py_XDECREF(intype);
     return ret;
 }
+
+/* Raises error when len(op) == 0 */
+
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArrayObject **
+PyArray_ConvertToCommonType(PyObject *op, int *retn)
+{
+    int i, n, allscalars = 0;
+    PyArrayObject **mps = NULL;
+    PyObject *otmp;
+    PyArray_Descr *intype = NULL, *stype = NULL;
+    PyArray_Descr *newtype = NULL;
+    NPY_SCALARKIND scalarkind = NPY_NOSCALAR, intypekind = NPY_NOSCALAR;
+
+    *retn = n = PySequence_Length(op);
+    if (n == 0) {
+	PyErr_SetString(PyExc_ValueError, "0-length sequence.");
+    }
+    if (PyErr_Occurred()) {
+        *retn = 0;
+        return NULL;
+    }
+    mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
+    if (mps == NULL) {
+        *retn = 0;
+        return (void*)PyErr_NoMemory();
+    }
+
+    if (PyArray_Check(op)) {
+        for (i = 0; i < n; i++) {
+            mps[i] = (PyArrayObject *) array_big_item((PyArrayObject *)op, i);
+        }
+        if (!PyArray_ISCARRAY(op)) {
+            for (i = 0; i < n; i++) {
+                PyObject *obj;
+                obj = PyArray_NewCopy(mps[i], NPY_CORDER);
+                Py_DECREF(mps[i]);
+                mps[i] = (PyArrayObject *)obj;
+            }
+        }
+        return mps;
+    }
+
+    for (i = 0; i < n; i++) {
+        otmp = PySequence_GetItem(op, i);
+        if (!PyArray_CheckAnyScalar(otmp)) {
+            newtype = PyArray_DescrFromObject(otmp, intype);
+            Py_XDECREF(intype);
+            intype = newtype;
+            mps[i] = NULL;
+            intypekind = PyArray_ScalarKind(intype->type_num, NULL);
+        }
+        else {
+            newtype = PyArray_DescrFromObject(otmp, stype);
+            Py_XDECREF(stype);
+            stype = newtype;
+            scalarkind = PyArray_ScalarKind(newtype->type_num, NULL);
+            mps[i] = (PyArrayObject *)Py_None;
+            Py_INCREF(Py_None);
+        }
+        Py_XDECREF(otmp);
+    }
+    if (intype==NULL) {
+        /* all scalars */
+        allscalars = 1;
+        intype = stype;
+        Py_INCREF(intype);
+        for (i = 0; i < n; i++) {
+            Py_XDECREF(mps[i]);
+            mps[i] = NULL;
+        }
+    }
+    else if ((stype != NULL) && (intypekind != scalarkind)) {
+        /*
+         * we need to upconvert to type that
+         * handles both intype and stype
+         * also don't forcecast the scalars.
+         */
+        if (!PyArray_CanCoerceScalar(stype->type_num,
+                                     intype->type_num,
+                                     scalarkind)) {
+            newtype = _array_small_type(intype, stype);
+            Py_XDECREF(intype);
+            intype = newtype;
+        }
+        for (i = 0; i < n; i++) {
+            Py_XDECREF(mps[i]);
+            mps[i] = NULL;
+        }
+    }
+
+
+    /* Make sure all arrays are actual array objects. */
+    for (i = 0; i < n; i++) {
+        int flags = CARRAY;
+
+        if ((otmp = PySequence_GetItem(op, i)) == NULL) {
+            goto fail;
+        }
+        if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
+            /* forcecast scalars */
+            flags |= FORCECAST;
+            Py_DECREF(Py_None);
+        }
+        Py_INCREF(intype);
+        mps[i] = (PyArrayObject*)
+            PyArray_FromAny(otmp, intype, 0, 0, flags, NULL);
+        Py_DECREF(otmp);
+        if (mps[i] == NULL) {
+            goto fail;
+        }
+    }
+    Py_DECREF(intype);
+    Py_XDECREF(stype);
+    return mps;
+
+ fail:
+    Py_XDECREF(intype);
+    Py_XDECREF(stype);
+    *retn = 0;
+    for (i = 0; i < n; i++) {
+        Py_XDECREF(mps[i]);
+    }
+    PyDataMem_FREE(mps);
+    return NULL;
+}
+
