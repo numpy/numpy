@@ -9,6 +9,7 @@
 
 
 #include "arrayobject.h"
+#include "scalartypes.h"
 
 #include "convert_datatype.h"
 

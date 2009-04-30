@@ -82,22 +82,6 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char *str);
 
-/* FIXME: this is in scalartypes.inc.src */
-NPY_NO_EXPORT void
-initialize_numeric_types(void);
-
-NPY_NO_EXPORT void
-format_longdouble(char *buf, size_t buflen, longdouble val, unsigned int prec);
-
-NPY_NO_EXPORT void
-gentype_struct_free(void *ptr, void *arg);
-
-NPY_NO_EXPORT int
-_typenum_fromtypeobj(PyObject *type, int user);
-
-NPY_NO_EXPORT void *
-scalar_value(PyObject *scalar, PyArray_Descr *descr);
-
 /* Number protocol */
 #include "number.h"
 

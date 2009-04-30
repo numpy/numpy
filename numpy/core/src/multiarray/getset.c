@@ -8,7 +8,7 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
-#include "arrayobject.h"
+#include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
 

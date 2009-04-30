@@ -10,7 +10,7 @@
 #include "numpy/npy_math.h"
 
 #include "descriptor.h"
-#include "arrayobject.h"
+#include "scalartypes.h"
 
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)

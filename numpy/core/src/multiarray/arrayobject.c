@@ -32,6 +32,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 
 #include "arraytypes.h"
+#include "scalartypes.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "methods.h"

@@ -35,6 +35,8 @@
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "calculation.h"
+#include "number.h"
+#include "scalartypes.h"
 
 /*
  * Including this file is the only way I know how to declare functions
