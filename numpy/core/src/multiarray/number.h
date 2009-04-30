@@ -1,6 +1,43 @@
 #ifndef _NPY_ARRAY_NUMBER_H_
 #define _NPY_ARRAY_NUMBER_H_
 
+typedef struct {
+    PyObject *add;
+    PyObject *subtract;
+    PyObject *multiply;
+    PyObject *divide;
+    PyObject *remainder;
+    PyObject *power;
+    PyObject *square;
+    PyObject *reciprocal;
+    PyObject *ones_like;
+    PyObject *sqrt;
+    PyObject *negative;
+    PyObject *absolute;
+    PyObject *invert;
+    PyObject *left_shift;
+    PyObject *right_shift;
+    PyObject *bitwise_and;
+    PyObject *bitwise_xor;
+    PyObject *bitwise_or;
+    PyObject *less;
+    PyObject *less_equal;
+    PyObject *equal;
+    PyObject *not_equal;
+    PyObject *greater;
+    PyObject *greater_equal;
+    PyObject *floor_divide;
+    PyObject *true_divide;
+    PyObject *logical_or;
+    PyObject *logical_and;
+    PyObject *floor;
+    PyObject *ceil;
+    PyObject *maximum;
+    PyObject *minimum;
+    PyObject *rint;
+    PyObject *conjugate;
+} NumericOps;
+
 extern NPY_NO_EXPORT NumericOps n_ops;
 extern NPY_NO_EXPORT PyNumberMethods array_as_number;
 
