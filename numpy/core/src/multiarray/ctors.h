@@ -49,4 +49,8 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags);
 NPY_NO_EXPORT int
 _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order);
 
+NPY_NO_EXPORT size_t
+_array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
+                    int inflag, int *objflags);
+
 #endif

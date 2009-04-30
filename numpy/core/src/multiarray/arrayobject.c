@@ -2278,58 +2278,6 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
 }
 
 
-/*
- * This is the main array creation routine.
- *
- * Flags argument has multiple related meanings
- * depending on data and strides:
- *
- * If data is given, then flags is flags associated with data.
- * If strides is not given, then a contiguous strides array will be created
- * and the CONTIGUOUS bit will be set.  If the flags argument
- * has the FORTRAN bit set, then a FORTRAN-style strides array will be
- * created (and of course the FORTRAN flag bit will be set).
- *
- * If data is not given but created here, then flags will be DEFAULT
- * and a non-zero flags argument can be used to indicate a FORTRAN style
- * array is desired.
- */
-
-NPY_NO_EXPORT size_t
-_array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
-                    int inflag, int *objflags)
-{
-    int i;
-    /* Only make Fortran strides if not contiguous as well */
-    if ((inflag & FORTRAN) && !(inflag & CONTIGUOUS)) {
-        for (i = 0; i < nd; i++) {
-            strides[i] = itemsize;
-            itemsize *= dims[i] ? dims[i] : 1;
-        }
-        *objflags |= FORTRAN;
-        if (nd > 1) {
-            *objflags &= ~CONTIGUOUS;
-        }
-        else {
-            *objflags |= CONTIGUOUS;
-        }
-    }
-    else {
-        for (i = nd - 1; i >= 0; i--) {
-            strides[i] = itemsize;
-            itemsize *= dims[i] ? dims[i] : 1;
-        }
-        *objflags |= CONTIGUOUS;
-        if (nd > 1) {
-            *objflags &= ~FORTRAN;
-        }
-        else {
-            *objflags |= FORTRAN;
-        }
-    }
-    return itemsize;
-}
-
 static void
 _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
 {
