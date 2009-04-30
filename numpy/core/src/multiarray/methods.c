@@ -8,6 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 
+#include "common.h"
 #include "arrayobject.h"
 #include "calculation.h"
 

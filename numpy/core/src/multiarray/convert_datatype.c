@@ -8,8 +8,9 @@
 #include "numpy/arrayscalars.h"
 
 
-#include "arrayobject.h"
+#include "common.h"
 #include "scalartypes.h"
+#include "mapping.h"
 
 #include "convert_datatype.h"
 

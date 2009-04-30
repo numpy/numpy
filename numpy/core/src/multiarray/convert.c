@@ -9,6 +9,7 @@
 
 
 #include "arrayobject.h"
+#include "mapping.h"
 
 #include "convert.h"
 

@@ -10,6 +10,8 @@
 
 #include "arrayobject.h"
 #include "iterators.h"
+#include "ctors.h"
+#include "common.h"
 
 #define PseudoIndex -1
 #define RubberIndex -2

@@ -8,22 +8,11 @@
 extern NPY_NO_EXPORT PyArray_Descr **userdescrs;
 
 
-#define error_converting(x)  (((x) == -1) && PyErr_Occurred())
-
 #define SOBJ_NOTFANCY 0
 #define SOBJ_ISFANCY 1
 #define SOBJ_BADARRAY 2
 #define SOBJ_TOOMANY 3
 #define SOBJ_LISTTUP 4
-
-NPY_NO_EXPORT int
-_flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype);
-
-NPY_NO_EXPORT PyObject *
-array_big_item(PyArrayObject *, intp);
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
@@ -48,8 +37,6 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, intp n, int size);
-/* FIXME: just remove _check_axis ? */
-#define _check_axis PyArray_CheckAxis
 
 NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *,  int);
@@ -72,9 +59,6 @@ _IsAligned(PyArrayObject *ap);
 
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_find_type(PyObject *op, PyArray_Descr *minitype, int max);
 
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);

@@ -3,6 +3,9 @@
 
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
+NPY_NO_EXPORT PyObject *
+array_big_item(PyArrayObject *self, intp i);
+
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
 

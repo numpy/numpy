@@ -12,6 +12,7 @@
 #include "arrayobject.h"
 
 #define PyAO PyArrayObject
+#define _check_axis PyArray_CheckAxis
 
 /*NUMPY_API
  * Take

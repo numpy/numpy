@@ -13,6 +13,7 @@
 
 
 #include "config.h"
+#include "common.h"
 #include "arrayobject.h"
 #include "numpyos.h"
 #include "scalartypes.h"

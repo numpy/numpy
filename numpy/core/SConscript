@@ -1,4 +1,4 @@
-# Last Change: Fri Apr 24 01:00 PM 2009 J
+# Last Change: Fri Apr 24 03:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -304,6 +304,7 @@ multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
     pjoin('src', 'multiarray', 'shape.c'),
     pjoin('src', 'multiarray', 'item_selection.c'),
     pjoin('src', 'multiarray', 'calculation.c'),
+    pjoin('src', 'multiarray', 'common.c'),
     pjoin('src', 'multiarray', 'scalarapi.c')]
 multiarray_src.extend(arraytypes_src)
 multiarray_src.extend(scalartypes_src)

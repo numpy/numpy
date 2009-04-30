@@ -6,8 +6,8 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
+#include "common.h"
 #include "number.h"
-#include "arrayobject.h"
 
 #include "calculation.h"
 
