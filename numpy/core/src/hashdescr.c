@@ -268,7 +268,8 @@ clean_l:
     return -1;
 }
 
-long PyArray_DescrHash(PyObject* odescr)
+NPY_NO_EXPORT long
+PyArray_DescrHash(PyObject* odescr)
 {
     PyArray_Descr *descr;
     int st;

@@ -1,6 +1,7 @@
 #ifndef _NPY_HASHDESCR_H_
 #define _NPY_HASHDESCR_H_
 
-long PyArray_DescrHash(PyObject* odescr);
+NPY_NO_EXPORT long
+PyArray_DescrHash(PyObject* odescr);
 
 #endif
