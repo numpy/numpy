@@ -112,7 +112,7 @@ static PyObject *MultiArrayError;
  * Multiply a List of ints
  */
 static int
-PyArray_MultiplyIntList(register int *l1, register int n)
+PyArray_MultiplyIntList(int *l1, int n)
 {
     int s = 1;
 
@@ -126,7 +126,7 @@ PyArray_MultiplyIntList(register int *l1, register int n)
  * Multiply a List
  */
 static intp
-PyArray_MultiplyList(register intp *l1, register int n)
+PyArray_MultiplyList(intp *l1, int n)
 {
     intp s = 1;
 
@@ -140,27 +140,32 @@ PyArray_MultiplyList(register intp *l1, register int n)
  * Multiply a List of Non-negative numbers with over-flow detection.
  */
 static intp
-PyArray_OverflowMultiplyList(register intp *l1, register int n)
+PyArray_OverflowMultiplyList(intp *l1, int n)
 {
-    intp s = 1;
+    intp prod = 1;
+    intp imax = NPY_MAX_INTP;
+    int i;
 
-    while (n--) {
-	if (*l1 == 0) {
+    for (i = 0; i < n; i++) {
+        intp dim = l1[i];
+
+	if (dim == 0) {
             return 0;
         }
-	if ((s > MAX_INTP / *l1) || (*l1 > MAX_INTP / s)) {
+	if (dim > imax) {
 	    return -1;
         }
-	s *= (*l1++);
+        imax /= dim;
+	prod *= dim;
     }
-    return s;
+    return prod;
 }
 
 /*NUMPY_API
  * Produce a pointer into array
  */
 static void *
-PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
+PyArray_GetPtr(PyArrayObject *obj, intp* ind)
 {
     int n = obj->nd;
     intp *strides = obj->strides;
@@ -4874,7 +4879,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
 static int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
-    register int newtype = gentype;
+    int newtype = gentype;
 
     if (gentype == PyArray_GENBOOLLTR) {
         if (itemsize == 1) {
@@ -7404,6 +7409,25 @@ static PyObject *array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
     return PyArray_Correlate(a0, shape, mode);
 }
 
+/*
+ * Like ceil(value), but check for overflow.
+ *
+ * Return 0 on success, -1 on failure. In case of failure, set a PyExc_Overflow
+ * exception
+ */
+static int _safe_ceil_to_intp(double value, intp* ret)
+{
+    double ivalue;
+
+    ivalue = npy_ceil(value);
+    if (ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
+        return -1;
+    }
+
+    *ret = (intp)ivalue;
+    return 0;
+}
+
 
 /*NUMPY_API
   Arange,
@@ -7417,7 +7441,10 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     PyObject *obj;
     int ret;
 
-    length = (intp ) ceil((stop - start)/step);
+    if (_safe_ceil_to_intp((stop - start)/step, &length)) {
+        PyErr_SetString(PyExc_OverflowError,
+                "arange: overflow while computing length");
+    }
 
     if (length <= 0) {
         length = 0;
@@ -7476,7 +7503,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 static intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
-    intp len;
+    intp len, tmp;
     PyObject *val;
     double value;
 
@@ -7502,13 +7529,23 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
             Py_DECREF(val);
             return -1;
         }
-        len = (intp) ceil(value);
+        if (_safe_ceil_to_intp(value, &len)) {
+            Py_DECREF(val);
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
+            return -1;
+        }
         value = PyComplex_ImagAsDouble(val);
         Py_DECREF(val);
         if (error_converting(value)) {
             return -1;
         }
-        len = MIN(len, (intp) ceil(value));
+        if (_safe_ceil_to_intp(value, &tmp)) {
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
+            return -1;
+        }
+        len = MIN(len, tmp);
     }
     else {
         value = PyFloat_AsDouble(val);
@@ -7516,7 +7553,11 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         if (error_converting(value)) {
             return -1;
         }
-        len = (intp) ceil(value);
+        if (_safe_ceil_to_intp(value, &len)) {
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
+            return -1;
+        }
     }
     if (len > 0) {
         *next = PyNumber_Add(start, step);
@@ -7538,7 +7579,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 {
     PyObject *range;
     PyArray_ArrFuncs *funcs;
-    PyObject *next;
+    PyObject *next, *err;
     intp length;
     PyArray_Descr *native = NULL;
     int swap;
@@ -7582,8 +7623,12 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     /* calculate the length and next = start + step*/
     length = _calc_length(start, stop, step, &next,
                           PyTypeNum_ISCOMPLEX(dtype->type_num));
-    if (PyErr_Occurred()) {
+    err = PyErr_Occurred(); 
+    if (err) {
         Py_DECREF(dtype);
+        if (err && PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_ValueError, "Maximum allowed size exceeded");
+        }
         goto fail;
     }
     if (length <= 0) {

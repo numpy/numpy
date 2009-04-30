@@ -1798,17 +1798,19 @@ _append_new(int *types, int insert)
 }
 
 /*NUMPY_API
-  Register a type number indicating that a descriptor can be cast
-  to it safely
-*/
+ * Register a type number indicating that a descriptor can be cast
+ * to it safely
+ */
 static int
 PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
                         NPY_SCALARKIND scalar)
 {
     if (scalar == PyArray_NOSCALAR) {
-        /* register with cancastto */
-        /* These lists won't be freed once created
-           -- they become part of the data-type */
+        /*
+         * register with cancastto
+         * These lists won't be freed once created
+         * -- they become part of the data-type
+         */
         if (descr->f->cancastto == NULL) {
             descr->f->cancastto = (int *)malloc(1*sizeof(int));
             descr->f->cancastto[0] = PyArray_NOTYPE;
@@ -4621,9 +4623,9 @@ array_str(PyArrayObject *self)
 /*NUMPY_API
  */
 static int
-PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, register size_t len)
+PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 {
-    register PyArray_UCS4 c1, c2;
+    PyArray_UCS4 c1, c2;
     while(len-- > 0) {
         c1 = *s1++;
         c2 = *s2++;
@@ -5364,7 +5366,7 @@ static int
 PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 {
     int nd, i;
-    PyObject *op;
+    PyObject *op, *err;
 
     /*
      * Check to see if sequence is a single integer first.
@@ -5388,6 +5390,22 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
         vals[0] = (intp ) PyLong_AsLongLong(op);
 #endif
         Py_DECREF(op);
+
+        /*
+         * Check wether there was an error - if the error was an overflow, raise
+         * a ValueError instead to be more helpful
+         */
+        if(vals[0] == -1) {
+            err = PyErr_Occurred();
+            if (err  &&
+                PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Maximum allowed dimension exceeded");
+            }
+            if(err != NULL) {
+                return -1;
+            }
+        }
     }
     else {
         for (i = 0; i < MIN(nd,maxvals); i++) {
@@ -5401,8 +5419,21 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
             vals[i]=(intp )PyLong_AsLongLong(op);
 #endif
             Py_DECREF(op);
-            if(PyErr_Occurred()) {
-                return -1;
+
+            /*
+             * Check wether there was an error - if the error was an overflow,
+             * raise a ValueError instead to be more helpful
+             */
+            if(vals[0] == -1) {
+                err = PyErr_Occurred();
+                if (err  &&
+                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Maximum allowed dimension exceeded");
+                }
+                if(err != NULL) {
+                    return -1;
+                }
             }
         }
     }
@@ -5420,9 +5451,9 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 static int
 _IsContiguous(PyArrayObject *ap)
 {
-    register intp sd;
-    register intp dim;
-    register int i;
+    intp sd;
+    intp dim;
+    int i;
 
     if (ap->nd == 0) {
         return 1;
@@ -5450,9 +5481,9 @@ _IsContiguous(PyArrayObject *ap)
 static int
 _IsFortranContiguous(PyArrayObject *ap)
 {
-    register intp sd;
-    register intp dim;
-    register int i;
+    intp sd;
+    intp dim;
+    int i;
 
     if (ap->nd == 0) {
         return 1;
@@ -5821,7 +5852,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                      int flags, PyObject *obj)
 {
     PyArrayObject *self;
-    register int i;
+    int i;
     size_t sd;
     intp largest;
     intp size;
@@ -5874,27 +5905,35 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         else {
             descr->elsize = sizeof(PyArray_UCS4);
         }
-        sd = (size_t) descr->elsize;
+        sd = descr->elsize;
     }
-    largest = MAX_INTP / sd;
+
+    largest = NPY_MAX_INTP / sd;
     for (i = 0; i < nd; i++) {
-        if (dims[i] == 0) {
+        intp dim = dims[i];
+
+        if (dim == 0) {
+            /*
+             * Compare to PyArray_OverflowMultiplyList that
+             * returns 0 in this case.
+             */
             continue;
         }
-        if (dims[i] < 0) {
+        if (dim < 0) {
             PyErr_SetString(PyExc_ValueError,
                             "negative dimensions "  \
                             "are not allowed");
             Py_DECREF(descr);
             return NULL;
         }
-        size *= dims[i];
-        if (size > largest || size < 0) {
+        if (dim > largest) {
             PyErr_SetString(PyExc_ValueError,
-                            "dimensions too large.");
+                            "array is too big.");
             Py_DECREF(descr);
             return NULL;
         }
+        size *= dim;
+        largest /= dim;
     }
 
     self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
@@ -8572,7 +8611,7 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in,
     char *inbuffer, *bptr, *optr;
     char *outbuffer=NULL;
     PyArrayIterObject *it_in = NULL, *it_out = NULL;
-    register intp i, index;
+    intp i, index;
     intp ncopies = PyArray_SIZE(out) / PyArray_SIZE(in);
     int elsize=in->descr->elsize;
     int nels = PyArray_BUFSIZE;
@@ -9592,7 +9631,7 @@ static int
 PyArray_CanCastSafely(int fromtype, int totype)
 {
     PyArray_Descr *from, *to;
-    register int felsize, telsize;
+    int felsize, telsize;
 
     if (fromtype == totype) {
         return 1;
@@ -10854,7 +10893,7 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
      */
     tmp = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (tmp < 0) {
-	PyErr_SetString(PyExc_ValueError, 
+	PyErr_SetString(PyExc_ValueError,
 			"broadcast dimensions too large.");
 	return -1;
     }
@@ -11122,7 +11161,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     /* Here check the indexes (now that we have iteraxes) */
     mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (mit->size < 0) {
-	PyErr_SetString(PyExc_ValueError, 
+	PyErr_SetString(PyExc_ValueError,
 			"dimensions too large in fancy indexing");
 	goto fail;
     }
