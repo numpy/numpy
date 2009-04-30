@@ -449,7 +449,8 @@ def configuration(parent_package='',top_path=None):
         return []
 
     config.add_data_files('include/numpy/*.h')
-    config.add_include_dirs('src')
+    config.add_include_dirs(join('src', 'multiarray'))
+    config.add_include_dirs(join('src', 'umath'))
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
@@ -482,39 +483,63 @@ def configuration(parent_package='',top_path=None):
             sources=[join('src', 'npy_math.c.src')],
             depends=[])
 
+    multiarray_src = [join('src', 'multiarray', 'multiarraymodule.c'),
+        join('src', 'multiarray', 'hashdescr.c'),
+        join('src', 'multiarray', 'arrayobject.c'),
+        join('src', 'multiarray', 'numpyos.c'),
+        join('src', 'multiarray', 'flagsobject.c'),
+        join('src', 'multiarray', 'descriptor.c'),
+        join('src', 'multiarray', 'iterators.c'),
+        join('src', 'multiarray', 'mapping.c'),
+        join('src', 'multiarray', 'number.c'),
+        join('src', 'multiarray', 'getset.c'),
+        join('src', 'multiarray', 'sequence.c'),
+        join('src', 'multiarray', 'methods.c'),
+        join('src', 'multiarray', 'ctors.c'),
+        join('src', 'multiarray', 'convert_datatype.c'),
+        join('src', 'multiarray', 'convert.c'),
+        join('src', 'multiarray', 'shape.c'),
+        join('src', 'multiarray', 'item_selection.c'),
+        join('src', 'multiarray', 'calculation.c'),
+        join('src', 'multiarray', 'common.c'),
+        join('src', 'multiarray', 'ucsnarrow.c'),
+        join('src', 'multiarray', 'usertypes.c'),
+        join('src', 'multiarray', 'scalarapi.c'),
+        join('src', 'multiarray', 'arraytypes.c.src'),
+        join('src', 'multiarray', 'scalartypes.c.src')]
+
+    multiarray_deps = [
+            join('src', 'multiarray', 'arrayobject.h'),
+            join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'calculation.h'),
+            join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'convert_datatype.h'),
+            join('src', 'multiarray', 'convert.h'),
+            join('src', 'multiarray', 'ctors.h'),
+            join('src', 'multiarray', 'descriptor.h'),
+            join('src', 'multiarray', 'getset.h'),
+            join('src', 'multiarray', 'hashdescr.h'),
+            join('src', 'multiarray', 'iterators.h'),
+            join('src', 'multiarray', 'mapping.h'),
+            join('src', 'multiarray', 'methods.h'),
+            join('src', 'multiarray', 'multiarraymodule.h'),
+            join('src', 'multiarray', 'number.h'),
+            join('src', 'multiarray', 'numpyos.h'),
+            join('src', 'multiarray', 'scalartypes.h'),
+            join('src', 'multiarray', 'sequence.h'),
+            join('src', 'multiarray', 'shape.h'),
+            join('src', 'multiarray', 'ucsnarrow.h'),
+            join('src', 'multiarray', 'usertypes.h')]
+
     config.add_extension('multiarray',
-                         sources = [join('src','multiarray','multiarraymodule.c'),
-                                    generate_config_h,
-                                    generate_numpyconfig_h,
-                                    generate_numpy_api,
-                                    join('src','multiarray','scalartypes.c.src'),
-                                    join('src','multiarray','arraytypes.c.src'),
-                                    join('src','multiarray', 'hashdescr.c'),
-                                    join('src','multiarray','arrayobject.c'),
-                                    join('src','multiarray','common.c'),
-                                    join('src','multiarray','calculation.c'),
-                                    join('src','multiarray','flagsobject.c'),
-                                    join('src','multiarray','descriptor.c'),
-                                    join('src','multiarray','iterators.c'),
-                                    join('src','multiarray','mapping.c'),
-                                    join('src','multiarray','number.c'),
-                                    join('src','multiarray','getset.c'),
-                                    join('src','multiarray','sequence.c'),
-                                    join('src','multiarray','methods.c'),
-                                    join('src','multiarray','ctors.c'),
-                                    join('src','multiarray','convert_datatype.c'),
-                                    join('src','multiarray','convert.c'),
-                                    join('src','multiarray','shape.c'),
-                                    join('src','multiarray','item_selection.c'),
-                                    join('src','multiarray','numpyos.c'),
-                                    join('src','multiarray','scalarapi.c'),
-                                    join('src','multiarray','usertypes.c'),
-                                    join(codegen_dir,'generate_numpy_api.py'),
-                                    join('*.py')
-                                    ],
-                         depends = deps,
-                         libraries=['npymath'],
-                         )
+                         sources = multiarray_src +
+                                [generate_config_h,
+                                 generate_numpyconfig_h,
+                                 generate_numpy_api,
+                                 join(codegen_dir,'generate_numpy_api.py'),
+                                 join('*.py')],
+                         depends = deps + multiarray_deps,
+                         libraries=['npymath'])
 
     config.add_extension('umath',
                          sources = [generate_config_h,
