@@ -165,12 +165,12 @@ extern NPY_NO_EXPORT PyArray_Descr LONG_Descr;
 extern NPY_NO_EXPORT PyArray_Descr INT_Descr;
 
 /* Number protocol */
-#include "arraynumber.h"
+#include "number.h"
 
 /* Converting data types API */
-#include "arrayconvert_datatype.h"
+#include "convert_datatype.h"
 
 /* Object Conversion API */
-#include "arrayconvert.h"
+#include "convert.h"
 
 #endif

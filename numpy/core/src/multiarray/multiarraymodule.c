@@ -25,14 +25,14 @@
 
 #include "numpy/npy_math.h"
 
+#include "global.c"
+
 #define PyAO PyArrayObject
 
 /* Internal APIs */
 #include "arrayobject.h"
 #include "hashdescr.h"
-#include "arraydescr.h"
-
-NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
+#include "descriptor.h"
 
 NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)

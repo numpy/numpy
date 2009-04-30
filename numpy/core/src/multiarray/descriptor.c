@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+
 #include "arrayobject.h"
 
 #define _chk_byteorder(arg) (arg == '>' || arg == '<' ||        \

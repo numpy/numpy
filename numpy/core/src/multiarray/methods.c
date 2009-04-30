@@ -7,9 +7,10 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+
 #include "arrayobject.h"
 
-#include "arraymethods.h"
+#include "methods.h"
 
 /* Should only be used if x is known to be an nd-array */
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))

@@ -7,8 +7,9 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+
 #include "arrayobject.h"
-#include "arrayiterators.h"
+#include "iterators.h"
 
 #define PseudoIndex -1
 #define RubberIndex -2

@@ -30,20 +30,15 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+
 #include "arrayobject.h"
-#include "arrayctors.h"
-#include "arraymethods.h"
-#include "arraydescr.h"
-#include "arrayiterators.h"
-#include "arraymapping.h"
-#include "arraygetset.h"
-#include "arraysequence.h"
-
-#ifndef Py_UNICODE_WIDE
-#include "ucsnarrow.h"
-#endif
-
-
+#include "ctors.h"
+#include "methods.h"
+#include "descriptor.h"
+#include "iterators.h"
+#include "mapping.h"
+#include "getset.h"
+#include "sequence.h"
 
 /*NUMPY_API
  * Get Priority from object
@@ -255,6 +250,11 @@ PyArray_XDECREF(PyArrayObject *mp)
     }
     return 0;
 }
+
+#ifndef Py_UNICODE_WIDE
+#include "ucsnarrow.c"
+#endif
+
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 

@@ -8,8 +8,8 @@
 #include "numpy/arrayobject.h"
 
 #include "arrayobject.h"
-#include "arrayiterators.h"
-#include "arraymapping.h"
+#include "iterators.h"
+#include "mapping.h"
 
 /*************************************************************************
  ****************   Implement Mapping Protocol ***************************

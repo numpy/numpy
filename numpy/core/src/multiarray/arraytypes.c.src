@@ -8,14 +8,12 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+
 #include "numpy/npy_math.h"
 #include "arrayobject.h"
 #include "config.h"
 
 #include "numpyos.h"
-#ifndef Py_UNICODE_WIDE
-#include "ucsnarrow.h"
-#endif
 
 static double
 MyPyFloat_AsDouble(PyObject *obj)

@@ -8,7 +8,7 @@
 #include "numpy/arrayobject.h"
 
 #include "arrayobject.h"
-#include "arraynumber.h"
+#include "number.h"
 
 /*************************************************************************
  ****************   Implement Number Protocol ****************************

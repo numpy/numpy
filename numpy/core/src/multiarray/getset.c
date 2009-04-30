@@ -9,8 +9,8 @@
 #include "numpy/arrayobject.h"
 
 #include "arrayobject.h"
-#include "arraydescr.h"
-#include "arraygetset.h"
+#include "descriptor.h"
+#include "getset.h"
 
 /*******************  array attribute get and set routines ******************/
 

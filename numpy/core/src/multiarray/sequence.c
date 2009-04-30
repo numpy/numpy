@@ -7,10 +7,11 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "arrayobject.h"
-#include "arraymapping.h"
 
-#include "arraysequence.h"
+#include "arrayobject.h"
+#include "mapping.h"
+
+#include "sequence.h"
 
 /*************************************************************************
  ****************   Implement Sequence Protocol **************************

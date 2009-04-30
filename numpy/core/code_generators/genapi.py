@@ -9,25 +9,27 @@ import sys, os, re
 import md5
 import textwrap
 
+from os.path import join
+
 __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
-API_FILES = ['arraymethods.c',
-             'arrayobject.c',
-             'arrayflagsobject.c',
-             'arraydescr.c',
-             'arrayiterators.c',
-             'arraygetset.c',
-             'arraynumber.c',
-             'arraysequence.c',
-             'arrayctors.c',
-             'arrayconvert.c',
-             'arrayshape.c',
-             'array_item_selection.c',
-             'arrayconvert_datatype.c',
-             'arraytypes.c.src',
-             'multiarraymodule.c',
-             'scalartypes.c.src',
+API_FILES = [join('multiarray', 'methods.c'),
+             join('multiarray', 'arrayobject.c'),
+             join('multiarray', 'flagsobject.c'),
+             join('multiarray', 'descriptor.c'),
+             join('multiarray', 'iterators.c'),
+             join('multiarray', 'getset.c'),
+             join('multiarray', 'number.c'),
+             join('multiarray', 'sequence.c'),
+             join('multiarray', 'ctors.c'),
+             join('multiarray', 'convert.c'),
+             join('multiarray', 'shape.c'),
+             join('multiarray', 'item_selection.c'),
+             join('multiarray', 'convert_datatype.c'),
+             join('multiarray', 'arraytypes.c.src'),
+             join('multiarray', 'multiarraymodule.c'),
+             join('multiarray', 'scalartypes.c.src'),
              'umath_ufunc_object.c',
              'umath_loops.c.src'
             ]

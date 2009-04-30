@@ -7,9 +7,10 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+
 #include "arrayobject.h"
 
-#include "arrayconvert_datatype.h"
+#include "convert_datatype.h"
 
 /*NUMPY_API
  * For backward compatibility
