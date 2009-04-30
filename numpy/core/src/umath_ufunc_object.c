@@ -23,6 +23,16 @@
  * Rick White
  *
  */
+#define _UMATHMODULE
+
+#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
+#define NO_IMPORT_ARRAY
+
+#include "Python.h"
+#include "numpy/noprefix.h"
+#include "numpy/ufuncobject.h"
+
+#include "umath_ufunc_object.h"
 
 #define USE_USE_DEFAULTS 1
 
@@ -3359,7 +3369,7 @@ fail:
     return NULL;
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *thedict;
@@ -3424,7 +3434,7 @@ ufunc_update_use_defaults(void)
 }
 #endif
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *thedict;
@@ -3460,116 +3470,6 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
-
-static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
-
-static char
-doc_frompyfunc[] = "frompyfunc(func, nin, nout) take an arbitrary python\n"   \
-                   "function that takes nin objects as input and returns\n"   \
-                   "nout objects and return a universal function (ufunc).\n"  \
-                   "This ufunc always returns PyObject arrays\n";
-
-static PyObject *
-ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
-    /* Keywords are ignored for now */
-
-    PyObject *function, *pyname = NULL;
-    int nin, nout, i;
-    PyUFunc_PyFuncData *fdata;
-    PyUFuncObject *self;
-    char *fname, *str;
-    Py_ssize_t fname_len = -1;
-    int offset[2];
-
-    if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) {
-        return NULL;
-    }
-    if (!PyCallable_Check(function)) {
-        PyErr_SetString(PyExc_TypeError, "function must be callable");
-        return NULL;
-    }
-    self = _pya_malloc(sizeof(PyUFuncObject));
-    if (self == NULL) {
-        return NULL;
-    }
-    PyObject_Init((PyObject *)self, &PyUFunc_Type);
-
-    self->userloops = NULL;
-    self->nin = nin;
-    self->nout = nout;
-    self->nargs = nin + nout;
-    self->identity = PyUFunc_None;
-    self->functions = pyfunc_functions;
-    self->ntypes = 1;
-    self->check_return = 0;
-
-    /* generalized ufunc */
-    self->core_enabled = 0;
-    self->core_num_dim_ix = 0;
-    self->core_num_dims = NULL;
-    self->core_dim_ixs = NULL;
-    self->core_offsets = NULL;
-    self->core_signature = NULL;
-
-    pyname = PyObject_GetAttrString(function, "__name__");
-    if (pyname) {
-        (void) PyString_AsStringAndSize(pyname, &fname, &fname_len);
-    }
-    if (PyErr_Occurred()) {
-        fname = "?";
-        fname_len = 1;
-        PyErr_Clear();
-    }
-    Py_XDECREF(pyname);
-
-    /*
-     * self->ptr holds a pointer for enough memory for
-     * self->data[0] (fdata)
-     * self->data
-     * self->name
-     * self->types
-     *
-     * To be safest, all of these need their memory aligned on void * pointers
-     * Therefore, we may need to allocate extra space.
-     */
-    offset[0] = sizeof(PyUFunc_PyFuncData);
-    i = (sizeof(PyUFunc_PyFuncData) % sizeof(void *));
-    if (i) {
-        offset[0] += (sizeof(void *) - i);
-    }
-    offset[1] = self->nargs;
-    i = (self->nargs % sizeof(void *));
-    if (i) {
-        offset[1] += (sizeof(void *)-i);
-    }
-    self->ptr = _pya_malloc(offset[0] + offset[1] + sizeof(void *) +
-                            (fname_len + 14));
-    if (self->ptr == NULL) {
-        return PyErr_NoMemory();
-    }
-    Py_INCREF(function);
-    self->obj = function;
-    fdata = (PyUFunc_PyFuncData *)(self->ptr);
-    fdata->nin = nin;
-    fdata->nout = nout;
-    fdata->callable = function;
-
-    self->data = (void **)(((char *)self->ptr) + offset[0]);
-    self->data[0] = (void *)fdata;
-    self->types = (char *)self->data + sizeof(void *);
-    for (i = 0; i < self->nargs; i++) {
-        self->types[i] = PyArray_OBJECT;
-    }
-    str = self->types + offset[1];
-    memcpy(str, fname, fname_len);
-    memcpy(str+fname_len, " (vectorized)", 14);
-    self->name = str;
-
-    /* Do a better job someday */
-    self->doc = "dynamic ufunc based on a python function";
-
-    return (PyObject *)self;
-}
 
 /*UFUNC_API*/
 NPY_NO_EXPORT int
@@ -4196,7 +4096,7 @@ static PyGetSetDef ufunc_getset[] = {
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
-static PyTypeObject PyUFunc_Type = {
+NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     PyObject_HEAD_INIT(0)
     0,                                           /* ob_size */
     "numpy.ufunc",                               /* tp_name */

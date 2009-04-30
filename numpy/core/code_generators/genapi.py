@@ -28,8 +28,8 @@ API_FILES = ['arraymethods.c',
              'arraytypes.c.src',
              'multiarraymodule.c',
              'scalartypes.c.src',
-             'umath_ufunc_object.inc',
-             'umath_loops.inc.src'
+             'umath_ufunc_object.c',
+             'umath_loops.c.src'
             ]
 THIS_DIR = os.path.dirname(__file__)
 API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]

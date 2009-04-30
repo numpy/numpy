@@ -1,4 +1,4 @@
-# Last Change: Thu Apr 23 05:00 PM 2009 J
+# Last Change: Thu Apr 23 08:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -254,7 +254,7 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.c.src'))
 umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs.inc.src'))
-umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.inc.src'))
+umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.c.src'))
 arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.c.src'))
 sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
@@ -304,6 +304,8 @@ sort = env.DistutilsPythonExtension('_sort', source = sortmodule_src)
 #-------------------
 # Build umath module
 #-------------------
+umathmodule_src.extend([pjoin('src', 'umath_ufunc_object.c')])
+umathmodule_src.extend(umath_loops_src)
 umathmodule = env.DistutilsPythonExtension('umath', source = umathmodule_src)
 
 #------------------------

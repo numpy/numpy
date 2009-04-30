@@ -1,5 +1,19 @@
 /* -*- c -*- */
 
+#define _UMATHMODULE
+
+#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
+#define NO_IMPORT_ARRAY
+
+#include "Python.h"
+#include "numpy/noprefix.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
+
+#include "config.h"
+
+#include "umath_ufunc_object.h"
+
 /*
  *****************************************************************************
  **                             UFUNC LOOPS                                 **
@@ -416,24 +430,13 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
  *****************************************************************************
  */
 
-#define BOOL_invert BOOL_logical_not
-#define BOOL_negative BOOL_logical_not
-#define BOOL_add BOOL_logical_or
-#define BOOL_bitwise_and BOOL_logical_and
-#define BOOL_bitwise_or BOOL_logical_or
-#define BOOL_bitwise_xor BOOL_logical_xor
-#define BOOL_multiply BOOL_logical_and
-#define BOOL_subtract BOOL_logical_xor
-#define BOOL_fmax BOOL_maximum
-#define BOOL_fmin BOOL_minimum
-
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
  *         logical_and, logical_or#
  * #OP =  ==, !=, >, >=, <, <=, &&, ||#
  **/
 
-static void
+NPY_NO_EXPORT void
 BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -444,7 +447,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 }
 /**end repeat**/
 
-static void
+NPY_NO_EXPORT void
 BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -458,7 +461,7 @@ BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
  * #kind = maximum, minimum#
  * #OP =  >, <#
  **/
-static void
+NPY_NO_EXPORT void
 BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -473,7 +476,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
  * #kind = absolute, logical_not#
  * #OP =  !=, ==#
  **/
-static void
+NPY_NO_EXPORT void
 BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -483,7 +486,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 }
 /**end repeat**/
 
-static void
+NPY_NO_EXPORT void
 BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -514,7 +517,7 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data
 #define @S@@TYPE@_fmax @S@@TYPE@_maximum
 #define @S@@TYPE@_fmin @S@@TYPE@_minimum
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -522,7 +525,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -531,7 +534,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -540,7 +543,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -549,7 +552,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -558,7 +561,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -567,7 +570,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_invert(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -582,7 +585,7 @@ static void
  *          left_shift, right_shift#
  * #OP = +, -,*, &, |, ^, <<, >>#
  */
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -598,7 +601,7 @@ static void
  *         logical_and, logical_or#
  * #OP =  ==, !=, >, >=, <, <=, &&, ||#
  */
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -609,7 +612,7 @@ static void
 }
 /**end repeat2**/
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -623,7 +626,7 @@ static void
  * #kind = maximum, minimum#
  * #OP =  >, <#
  **/
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -634,7 +637,7 @@ static void
 }
 /**end repeat2**/
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -650,7 +653,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_power(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -660,7 +663,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @S@@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -679,7 +682,7 @@ static void
 
 /**end repeat1**/
 
-static void
+NPY_NO_EXPORT void
 U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -688,7 +691,7 @@ U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -697,7 +700,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -706,7 +709,7 @@ U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -715,7 +718,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -734,7 +737,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -750,7 +753,7 @@ U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -773,7 +776,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -812,7 +815,7 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
  */
-static void
+NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -828,7 +831,7 @@ static void
  *        logical_and, logical_or#
  * #OP = ==, !=, <, <=, >, >=, &&, ||#
  */
-static void
+NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -839,7 +842,7 @@ static void
 }
 /**end repeat1**/
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -849,7 +852,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -862,7 +865,7 @@ static void
  * #kind = isnan, isinf, isfinite, signbit#
  * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
  **/
-static void
+NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -876,7 +879,7 @@ static void
  * #kind = maximum, minimum#
  * #OP =  >=, <=#
  **/
-static void
+NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
@@ -892,7 +895,7 @@ static void
  * #kind = fmax, fmin#
  * #OP =  >=, <=#
  **/
-static void
+NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
@@ -904,7 +907,7 @@ static void
 }
 /**end repeat1**/
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -914,7 +917,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -930,7 +933,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -939,7 +942,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -948,7 +951,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -956,7 +959,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -965,7 +968,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -976,7 +979,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -985,7 +988,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /* Sign of nan is nan */
@@ -995,7 +998,7 @@ static void
     }
 }
 
-static void
+NPY_NO_EXPORT void
 @TYPE@_modf(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_TWO_OUT {
@@ -1005,7 +1008,7 @@ static void
 }
 
 #ifdef HAVE_FREXP@C@
-static void
+NPY_NO_EXPORT void
 @TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_TWO_OUT {
@@ -1016,7 +1019,7 @@ static void
 #endif
 
 #ifdef HAVE_LDEXP@C@
-static void
+NPY_NO_EXPORT void
 @TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1058,7 +1061,7 @@ static void
  * #kind = add, subtract#
  * #OP = +, -#
  */
-static void
+NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1072,7 +1075,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 }
 /**end repeat1**/
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1085,7 +1088,7 @@ C@TYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1099,7 +1102,7 @@ C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1117,7 +1120,7 @@ C@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSE
  * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
  * #OP = CGT, CGE, CLT, CLE, CEQ, CNE#
  */
-static void
+NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1135,7 +1138,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
    #OP1 = ||, ||#
    #OP2 = &&, ||#
 */
-static void
+NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1148,7 +1151,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 }
 /**end repeat1**/
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1162,7 +1165,7 @@ C@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -1177,7 +1180,7 @@ C@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
  * #func = npy_isnan, npy_isinf, npy_isfinite#
  * #OP = ||, ||, &&#
  **/
-static void
+NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -1188,7 +1191,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 }
 /**end repeat1**/
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -1199,7 +1202,7 @@ C@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -1219,7 +1222,7 @@ C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -1228,7 +1231,7 @@ C@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(d
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1238,7 +1241,7 @@ C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
@@ -1248,7 +1251,7 @@ C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
     }
 }
 
-static void
+NPY_NO_EXPORT void
 C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /* fixme: sign of nan is currently 0 */
@@ -1266,7 +1269,7 @@ C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
  * #kind = maximum, minimum#
  * #OP = CGE, CLE#
  */
-static void
+NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1290,7 +1293,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
  * #kind = fmax, fmin#
  * #OP = CGE, CLE#
  */
-static void
+NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -1331,7 +1334,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
  * #OP = EQ, NE, GT, GE, LT, LE#
  */
-static void
+NPY_NO_EXPORT void
 OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
@@ -1345,7 +1348,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 }
 /**end repeat**/
 
-static void
+NPY_NO_EXPORT void
 OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     PyObject *zero = PyInt_FromLong(0);

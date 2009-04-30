@@ -4,7 +4,7 @@ import genapi
 h_template = r"""
 #ifdef _UMATHMODULE
 
-static PyTypeObject PyUFunc_Type;
+NPY_NO_EXPORT PyTypeObject PyUFunc_Type;
 
 %s
 

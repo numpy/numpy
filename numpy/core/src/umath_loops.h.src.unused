@@ -1,0 +1,405 @@
+/*
+ * vim:syntax=c
+ */
+
+/*
+ *****************************************************************************
+ **                             BOOLEAN LOOPS                               **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
+ *         logical_and, logical_or#
+ * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ **/
+
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+NPY_NO_EXPORT void
+BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat
+ * #kind = maximum, minimum#
+ * #OP =  >, <#
+ **/
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+/**begin repeat
+ * #kind = absolute, logical_not#
+ * #OP =  !=, ==#
+ **/
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+NPY_NO_EXPORT void
+BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+/*
+ *****************************************************************************
+ **                           INTEGER LOOPS
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #type = byte, short, int, long, longlong#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
+ * #ftype = float, float, double, double, double#
+ */
+
+/**begin repeat1
+ * both signed and unsigned integer types
+ * #s = , u#
+ * #S = , U#
+ */
+
+#define @S@@TYPE@_floor_divide @S@@TYPE@_divide
+#define @S@@TYPE@_fmax @S@@TYPE@_maximum
+#define @S@@TYPE@_fmin @S@@TYPE@_minimum
+
+NPY_NO_EXPORT void
+@S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_invert(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat2
+ * Arithmetic
+ * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
+ *          left_shift, right_shift#
+ * #OP = +, -,*, &, |, ^, <<, >>#
+ */
+NPY_NO_EXPORT void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat2**/
+
+/**begin repeat2
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
+ *         logical_and, logical_or#
+ * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ */
+NPY_NO_EXPORT void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat2**/
+
+NPY_NO_EXPORT void
+@S@@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat2
+ * #kind = maximum, minimum#
+ * #OP =  >, <#
+ **/
+NPY_NO_EXPORT void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat2**/
+
+NPY_NO_EXPORT void
+@S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_power(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat1**/
+
+NPY_NO_EXPORT void
+U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                             FLOAT LOOPS                                 **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ * Float types
+ *  #type = float, double, longdouble#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ *  #c = f, , l#
+ *  #C = F, , L#
+ */
+
+
+/**begin repeat1
+ * Arithmetic
+ * # kind = add, subtract, multiply, divide#
+ * # OP = +, -, *, /#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
+ *        logical_and, logical_or#
+ * #OP = ==, !=, <, <=, >, >=, &&, ||#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite, signbit#
+ * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = maximum, minimum#
+ * #OP =  >=, <=#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP =  >=, <=#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+
+NPY_NO_EXPORT void
+@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+
+NPY_NO_EXPORT void
+@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+
+NPY_NO_EXPORT void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+
+NPY_NO_EXPORT void
+@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+#ifdef HAVE_FREXP@C@
+NPY_NO_EXPORT void
+@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+#endif
+
+#ifdef HAVE_LDEXP@C@
+NPY_NO_EXPORT void
+@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+#endif
+
+#define @TYPE@_true_divide @TYPE@_divide
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                           COMPLEX LOOPS                                 **
+ *****************************************************************************
+ */
+
+#define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi));
+#define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi));
+#define CGT(xr,xi,yr,yi) (xr > yr || (xr == yr && xi > yi));
+#define CLT(xr,xi,yr,yi) (xr < yr || (xr == yr && xi < yi));
+#define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi);
+#define CNE(xr,xi,yr,yi) (xr != yr || xi != yi);
+
+/**begin repeat
+ * complex types
+ * #type = float, double, longdouble#
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ * #c = f, , l#
+ * #C = F, , L#
+ */
+
+/**begin repeat1
+ * arithmetic
+ * #kind = add, subtract#
+ * #OP = +, -#
+ */
+NPY_NO_EXPORT void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat1**/
+
+NPY_NO_EXPORT void
+C@TYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
+ * #OP = CGT, CGE, CLT, CLE, CEQ, CNE#
+ */
+NPY_NO_EXPORT void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+/**begin repeat1
+   #kind = logical_and, logical_or#
+   #OP1 = ||, ||#
+   #OP2 = &&, ||#
+*/
+NPY_NO_EXPORT void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+NPY_NO_EXPORT void
+C@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #OP = ||, ||, &&#
+ **/
+NPY_NO_EXPORT void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+NPY_NO_EXPORT void
+C@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+C@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #kind = maximum, minimum#
+ * #OP = CGE, CLE#
+ */
+NPY_NO_EXPORT void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP = CGE, CLE#
+ */
+NPY_NO_EXPORT void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+
+#define C@TYPE@_true_divide C@TYPE@_divide
+
+/**end repeat**/
+
+#undef CGE
+#undef CLE
+#undef CGT
+#undef CLT
+#undef CEQ
+#undef CNE
+
+/*
+ *****************************************************************************
+ **                            OBJECT LOOPS                                 **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP = EQ, NE, GT, GE, LT, LE#
+ */
+NPY_NO_EXPORT void
+OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+NPY_NO_EXPORT void
+OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+/*
+ *****************************************************************************
+ **                              END LOOPS                                  **
+ *****************************************************************************
+ */
+
+
