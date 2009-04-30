@@ -30,6 +30,7 @@ API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'arraytypes.c.src'),
              join('multiarray', 'multiarraymodule.c'),
              join('multiarray', 'scalartypes.c.src'),
+             join('multiarray', 'scalarapi.c'),
              join('umath', 'ufunc_object.c'),
              join('umath', 'loops.c.src'),
             ]
