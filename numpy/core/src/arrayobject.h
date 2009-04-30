@@ -170,4 +170,7 @@ extern NPY_NO_EXPORT PyArray_Descr INT_Descr;
 /* Converting data types API */
 #include "arrayconvert_datatype.h"
 
+/* Object Conversion API */
+#include "arrayconvert.h"
+
 #endif
