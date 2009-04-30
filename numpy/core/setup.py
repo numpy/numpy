@@ -493,6 +493,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','scalartypes.c.src'),
                                     join('src','arraytypes.c.src'),
                                     join('src', 'hashdescr.c'),
+                                    join('src', 'numpyos.c'),
                                     join('src','arrayobject.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')

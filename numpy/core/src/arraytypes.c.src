@@ -12,8 +12,7 @@
 #include "arrayobject.h"
 #include "config.h"
 
-/* FIXME: this should be built separately */
-#include "numpyos.c"
+#include "numpyos.h"
 
 static double
 MyPyFloat_AsDouble(PyObject *obj)

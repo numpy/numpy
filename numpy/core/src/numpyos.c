@@ -1,6 +1,12 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <locale.h>
 #include <stdio.h>
 
+#define _MULTIARRAYMODULE
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
 /*
@@ -278,7 +284,7 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
  * Return value: The pointer to the buffer with the converted string.
  */
 #define _ASCII_FORMAT(type, suffix, print_type)                         \
-    static char*                                                        \
+    NPY_NO_EXPORT char*                                                 \
     NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size,       \
                                    const char *format,                  \
                                    type val, int decimal)               \
@@ -416,7 +422,7 @@ NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
  *
  * Work around bugs in PyOS_ascii_strtod
  */
-static double
+NPY_NO_EXPORT double
 NumPyOS_ascii_strtod(const char *s, char** endptr)
 {
     struct lconv *locale_data = localeconv();
@@ -526,7 +532,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
  *      * 1 if a number read,
  *      * EOF if end-of-file met before reading anything.
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_ftolf(FILE *fp, double *value)
 {
     char buffer[FLOAT_FORMATBUFLEN + 1];
