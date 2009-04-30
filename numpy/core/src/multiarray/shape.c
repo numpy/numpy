@@ -10,7 +10,6 @@
 #include "numpy/npy_math.h"
 
 #include "ctors.h"
-#include "arrayobject.h"
 
 #include "shape.h"
 
