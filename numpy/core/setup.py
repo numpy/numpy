@@ -9,7 +9,7 @@ from distutils.sysconfig import get_config_var
 from setup_common import *
 
 # Set to True to enable multiple file compilations (experimental)
-ENABLE_SEPARATE_COMPILATION = True
+ENABLE_SEPARATE_COMPILATION = False
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
