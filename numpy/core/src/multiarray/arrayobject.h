@@ -7,13 +7,6 @@
 
 extern NPY_NO_EXPORT PyArray_Descr **userdescrs;
 
-
-#define SOBJ_NOTFANCY 0
-#define SOBJ_ISFANCY 1
-#define SOBJ_BADARRAY 2
-#define SOBJ_TOOMANY 3
-#define SOBJ_LISTTUP 4
-
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
                              intp instrides, intp N, int elsize);

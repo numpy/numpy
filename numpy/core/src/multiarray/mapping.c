@@ -12,6 +12,12 @@
 #include "iterators.h"
 #include "mapping.h"
 
+#define SOBJ_NOTFANCY 0
+#define SOBJ_ISFANCY 1
+#define SOBJ_BADARRAY 2
+#define SOBJ_TOOMANY 3
+#define SOBJ_LISTTUP 4
+
 /*************************************************************************
  ****************   Implement Mapping Protocol ***************************
  *************************************************************************/
@@ -992,5 +998,675 @@ NPY_NO_EXPORT PyMappingMethods array_as_mapping = {
 };
 
 /****************** End of Mapping Protocol ******************************/
+
+/*********************** Subscript Array Iterator *************************
+ *                                                                        *
+ * This object handles subscript behavior for array objects.              *
+ *  It is an iterator object with a next method                           *
+ *  It abstracts the n-dimensional mapping behavior to make the looping   *
+ *     code more understandable (maybe)                                   *
+ *     and so that indexing can be set up ahead of time                   *
+ */
+
+/*
+ * This function takes a Boolean array and constructs index objects and
+ * iterators as if nonzero(Bool) had been called
+ */
+static int
+_nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
+{
+    PyArray_Descr *typecode;
+    PyArrayObject *ba = NULL, *new = NULL;
+    int nd, j;
+    intp size, i, count;
+    Bool *ptr;
+    intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
+    intp *dptr[MAX_DIMS];
+
+    typecode=PyArray_DescrFromType(PyArray_BOOL);
+    ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
+                                          CARRAY, NULL);
+    if (ba == NULL) {
+        return -1;
+    }
+    nd = ba->nd;
+    for (j = 0; j < nd; j++) {
+        iters[j] = NULL;
+    }
+    size = PyArray_SIZE(ba);
+    ptr = (Bool *)ba->data;
+    count = 0;
+
+    /* pre-determine how many nonzero entries there are */
+    for (i = 0; i < size; i++) {
+        if (*(ptr++)) {
+            count++;
+        }
+    }
+
+    /* create count-sized index arrays for each dimension */
+    for (j = 0; j < nd; j++) {
+        new = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
+                                           PyArray_INTP, NULL, NULL,
+                                           0, 0, NULL);
+        if (new == NULL) {
+            goto fail;
+        }
+        iters[j] = (PyArrayIterObject *)
+            PyArray_IterNew((PyObject *)new);
+        Py_DECREF(new);
+        if (iters[j] == NULL) {
+            goto fail;
+        }
+        dptr[j] = (intp *)iters[j]->ao->data;
+        coords[j] = 0;
+        dims_m1[j] = ba->dimensions[j]-1;
+    }
+    ptr = (Bool *)ba->data;
+    if (count == 0) {
+        goto finish;
+    }
+
+    /*
+     * Loop through the Boolean array  and copy coordinates
+     * for non-zero entries
+     */
+    for (i = 0; i < size; i++) {
+        if (*(ptr++)) {
+            for (j = 0; j < nd; j++) {
+                *(dptr[j]++) = coords[j];
+            }
+        }
+        /* Borrowed from ITER_NEXT macro */
+        for (j = nd - 1; j >= 0; j--) {
+            if (coords[j] < dims_m1[j]) {
+                coords[j]++;
+                break;
+            }
+            else {
+                coords[j] = 0;
+            }
+        }
+    }
+
+ finish:
+    Py_DECREF(ba);
+    return nd;
+
+ fail:
+    for (j = 0; j < nd; j++) {
+        Py_XDECREF(iters[j]);
+    }
+    Py_XDECREF(ba);
+    return -1;
+}
+
+/* convert an indexing object to an INTP indexing array iterator
+   if possible -- otherwise, it is a Slice or Ellipsis object
+   and has to be interpreted on bind to a particular
+   array so leave it NULL for now.
+*/
+static int
+_convert_obj(PyObject *obj, PyArrayIterObject **iter)
+{
+    PyArray_Descr *indtype;
+    PyObject *arr;
+
+    if (PySlice_Check(obj) || (obj == Py_Ellipsis)) {
+        return 0;
+    }
+    else if (PyArray_Check(obj) && PyArray_ISBOOL(obj)) {
+        return _nonzero_indices(obj, iter);
+    }
+    else {
+        indtype = PyArray_DescrFromType(PyArray_INTP);
+        arr = PyArray_FromAny(obj, indtype, 0, 0, FORCECAST, NULL);
+        if (arr == NULL) {
+            return -1;
+        }
+        *iter = (PyArrayIterObject *)PyArray_IterNew(arr);
+        Py_DECREF(arr);
+        if (*iter == NULL) {
+            return -1;
+        }
+    }
+    return 1;
+}
+
+/* Reset the map iterator to the beginning */
+NPY_NO_EXPORT void
+PyArray_MapIterReset(PyArrayMapIterObject *mit)
+{
+    int i,j; intp coord[MAX_DIMS];
+    PyArrayIterObject *it;
+    PyArray_CopySwapFunc *copyswap;
+
+    mit->index = 0;
+
+    copyswap = mit->iters[0]->ao->descr->f->copyswap;
+
+    if (mit->subspace != NULL) {
+        memcpy(coord, mit->bscoord, sizeof(intp)*mit->ait->ao->nd);
+        PyArray_ITER_RESET(mit->subspace);
+        for (i = 0; i < mit->numiter; i++) {
+            it = mit->iters[i];
+            PyArray_ITER_RESET(it);
+            j = mit->iteraxes[i];
+            copyswap(coord+j,it->dataptr, !PyArray_ISNOTSWAPPED(it->ao),
+                     it->ao);
+        }
+        PyArray_ITER_GOTO(mit->ait, coord);
+        mit->subspace->dataptr = mit->ait->dataptr;
+        mit->dataptr = mit->subspace->dataptr;
+    }
+    else {
+        for (i = 0; i < mit->numiter; i++) {
+            it = mit->iters[i];
+            if (it->size != 0) {
+                PyArray_ITER_RESET(it);
+                copyswap(coord+i,it->dataptr, !PyArray_ISNOTSWAPPED(it->ao),
+                         it->ao);
+            }
+            else {
+                coord[i] = 0;
+            }
+        }
+        PyArray_ITER_GOTO(mit->ait, coord);
+        mit->dataptr = mit->ait->dataptr;
+    }
+    return;
+}
+
+/*
+ * This function needs to update the state of the map iterator
+ * and point mit->dataptr to the memory-location of the next object
+ */
+NPY_NO_EXPORT void
+PyArray_MapIterNext(PyArrayMapIterObject *mit)
+{
+    int i, j;
+    intp coord[MAX_DIMS];
+    PyArrayIterObject *it;
+    PyArray_CopySwapFunc *copyswap;
+
+    mit->index += 1;
+    if (mit->index >= mit->size) {
+        return;
+    }
+    copyswap = mit->iters[0]->ao->descr->f->copyswap;
+    /* Sub-space iteration */
+    if (mit->subspace != NULL) {
+        PyArray_ITER_NEXT(mit->subspace);
+        if (mit->subspace->index >= mit->subspace->size) {
+            /* reset coord to coordinates of beginning of the subspace */
+            memcpy(coord, mit->bscoord, sizeof(intp)*mit->ait->ao->nd);
+            PyArray_ITER_RESET(mit->subspace);
+            for (i = 0; i < mit->numiter; i++) {
+                it = mit->iters[i];
+                PyArray_ITER_NEXT(it);
+                j = mit->iteraxes[i];
+                copyswap(coord+j,it->dataptr, !PyArray_ISNOTSWAPPED(it->ao),
+                         it->ao);
+            }
+            PyArray_ITER_GOTO(mit->ait, coord);
+            mit->subspace->dataptr = mit->ait->dataptr;
+        }
+        mit->dataptr = mit->subspace->dataptr;
+    }
+    else {
+        for (i = 0; i < mit->numiter; i++) {
+            it = mit->iters[i];
+            PyArray_ITER_NEXT(it);
+            copyswap(coord+i,it->dataptr,
+                     !PyArray_ISNOTSWAPPED(it->ao),
+                     it->ao);
+        }
+        PyArray_ITER_GOTO(mit->ait, coord);
+        mit->dataptr = mit->ait->dataptr;
+    }
+    return;
+}
+
+/*
+ * Bind a mapiteration to a particular array
+ *
+ *  Determine if subspace iteration is necessary.  If so,
+ *  1) Fill in mit->iteraxes
+ *  2) Create subspace iterator
+ *  3) Update nd, dimensions, and size.
+ *
+ *  Subspace iteration is necessary if:  arr->nd > mit->numiter
+ *
+ * Need to check for index-errors somewhere.
+ *
+ * Let's do it at bind time and also convert all <0 values to >0 here
+ * as well.
+ */
+NPY_NO_EXPORT void
+PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
+{
+    int subnd;
+    PyObject *sub, *obj = NULL;
+    int i, j, n, curraxis, ellipexp, noellip;
+    PyArrayIterObject *it;
+    intp dimsize;
+    intp *indptr;
+
+    subnd = arr->nd - mit->numiter;
+    if (subnd < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "too many indices for array");
+        return;
+    }
+
+    mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
+    if (mit->ait == NULL) {
+        return;
+    }
+    /* no subspace iteration needed.  Finish up and Return */
+    if (subnd == 0) {
+        n = arr->nd;
+        for (i = 0; i < n; i++) {
+            mit->iteraxes[i] = i;
+        }
+        goto finish;
+    }
+
+    /*
+     * all indexing arrays have been converted to 0
+     * therefore we can extract the subspace with a simple
+     * getitem call which will use view semantics
+     *
+     * But, be sure to do it with a true array.
+     */
+    if (PyArray_CheckExact(arr)) {
+        sub = array_subscript_simple(arr, mit->indexobj);
+    }
+    else {
+        Py_INCREF(arr);
+        obj = PyArray_EnsureArray((PyObject *)arr);
+        if (obj == NULL) {
+            goto fail;
+        }
+        sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj);
+        Py_DECREF(obj);
+    }
+
+    if (sub == NULL) {
+        goto fail;
+    }
+    mit->subspace = (PyArrayIterObject *)PyArray_IterNew(sub);
+    Py_DECREF(sub);
+    if (mit->subspace == NULL) {
+        goto fail;
+    }
+    /* Expand dimensions of result */
+    n = mit->subspace->ao->nd;
+    for (i = 0; i < n; i++) {
+        mit->dimensions[mit->nd+i] = mit->subspace->ao->dimensions[i];
+    }
+    mit->nd += n;
+
+    /*
+     * Now, we still need to interpret the ellipsis and slice objects
+     * to determine which axes the indexing arrays are referring to
+     */
+    n = PyTuple_GET_SIZE(mit->indexobj);
+    /* The number of dimensions an ellipsis takes up */
+    ellipexp = arr->nd - n + 1;
+    /*
+     * Now fill in iteraxes -- remember indexing arrays have been
+     * converted to 0's in mit->indexobj
+     */
+    curraxis = 0;
+    j = 0;
+    /* Only expand the first ellipsis */
+    noellip = 1;
+    memset(mit->bscoord, 0, sizeof(intp)*arr->nd);
+    for (i = 0; i < n; i++) {
+        /*
+         * We need to fill in the starting coordinates for
+         * the subspace
+         */
+        obj = PyTuple_GET_ITEM(mit->indexobj, i);
+        if (PyInt_Check(obj) || PyLong_Check(obj)) {
+            mit->iteraxes[j++] = curraxis++;
+        }
+        else if (noellip && obj == Py_Ellipsis) {
+            curraxis += ellipexp;
+            noellip = 0;
+        }
+        else {
+            intp start = 0;
+            intp stop, step;
+            /* Should be slice object or another Ellipsis */
+            if (obj == Py_Ellipsis) {
+                mit->bscoord[curraxis] = 0;
+            }
+            else if (!PySlice_Check(obj) ||
+                     (slice_GetIndices((PySliceObject *)obj,
+                                       arr->dimensions[curraxis],
+                                       &start, &stop, &step,
+                                       &dimsize) < 0)) {
+                PyErr_Format(PyExc_ValueError,
+                             "unexpected object "       \
+                             "(%s) in selection position %d",
+                             obj->ob_type->tp_name, i);
+                goto fail;
+            }
+            else {
+                mit->bscoord[curraxis] = start;
+            }
+            curraxis += 1;
+        }
+    }
+
+ finish:
+    /* Here check the indexes (now that we have iteraxes) */
+    mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
+    if (mit->size < 0) {
+	PyErr_SetString(PyExc_ValueError,
+			"dimensions too large in fancy indexing");
+	goto fail;
+    }
+    if (mit->ait->size == 0 && mit->size != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "invalid index into a 0-size array");
+        goto fail;
+    }
+
+    for (i = 0; i < mit->numiter; i++) {
+        intp indval;
+        it = mit->iters[i];
+        PyArray_ITER_RESET(it);
+        dimsize = arr->dimensions[mit->iteraxes[i]];
+        while (it->index < it->size) {
+            indptr = ((intp *)it->dataptr);
+            indval = *indptr;
+            if (indval < 0) {
+                indval += dimsize;
+            }
+            if (indval < 0 || indval >= dimsize) {
+                PyErr_Format(PyExc_IndexError,
+                             "index (%"INTP_FMT") out of range "\
+                             "(0<=index<%"INTP_FMT") in dimension %d",
+                             indval, (dimsize-1), mit->iteraxes[i]);
+                goto fail;
+            }
+            PyArray_ITER_NEXT(it);
+        }
+        PyArray_ITER_RESET(it);
+    }
+    return;
+
+ fail:
+    Py_XDECREF(mit->subspace);
+    Py_XDECREF(mit->ait);
+    mit->subspace = NULL;
+    mit->ait = NULL;
+    return;
+}
+
+
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
+{
+    PyArrayMapIterObject *mit;
+    PyArray_Descr *indtype;
+    PyObject *arr = NULL;
+    int i, n, started, nonindex;
+
+    if (fancy == SOBJ_BADARRAY) {
+        PyErr_SetString(PyExc_IndexError,                       \
+                        "arrays used as indices must be of "    \
+                        "integer (or boolean) type");
+        return NULL;
+    }
+    if (fancy == SOBJ_TOOMANY) {
+        PyErr_SetString(PyExc_IndexError, "too many indices");
+        return NULL;
+    }
+
+    mit = (PyArrayMapIterObject *)_pya_malloc(sizeof(PyArrayMapIterObject));
+    PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
+    if (mit == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < MAX_DIMS; i++) {
+        mit->iters[i] = NULL;
+    }
+    mit->index = 0;
+    mit->ait = NULL;
+    mit->subspace = NULL;
+    mit->numiter = 0;
+    mit->consec = 1;
+    Py_INCREF(indexobj);
+    mit->indexobj = indexobj;
+
+    if (fancy == SOBJ_LISTTUP) {
+        PyObject *newobj;
+        newobj = PySequence_Tuple(indexobj);
+        if (newobj == NULL) {
+            goto fail;
+        }
+        Py_DECREF(indexobj);
+        indexobj = newobj;
+        mit->indexobj = indexobj;
+    }
+
+#undef SOBJ_NOTFANCY
+#undef SOBJ_ISFANCY
+#undef SOBJ_BADARRAY
+#undef SOBJ_TOOMANY
+#undef SOBJ_LISTTUP
+
+    if (oned) {
+        return (PyObject *)mit;
+    }
+    /*
+     * Must have some kind of fancy indexing if we are here
+     * indexobj is either a list, an arrayobject, or a tuple
+     * (with at least 1 list or arrayobject or Bool object)
+     */
+
+    /* convert all inputs to iterators */
+    if (PyArray_Check(indexobj) && (PyArray_TYPE(indexobj) == PyArray_BOOL)) {
+        mit->numiter = _nonzero_indices(indexobj, mit->iters);
+        if (mit->numiter < 0) {
+            goto fail;
+        }
+        mit->nd = 1;
+        mit->dimensions[0] = mit->iters[0]->dims_m1[0]+1;
+        Py_DECREF(mit->indexobj);
+        mit->indexobj = PyTuple_New(mit->numiter);
+        if (mit->indexobj == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < mit->numiter; i++) {
+            PyTuple_SET_ITEM(mit->indexobj, i, PyInt_FromLong(0));
+        }
+    }
+
+    else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
+        mit->numiter = 1;
+        indtype = PyArray_DescrFromType(PyArray_INTP);
+        arr = PyArray_FromAny(indexobj, indtype, 0, 0, FORCECAST, NULL);
+        if (arr == NULL) {
+            goto fail;
+        }
+        mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew(arr);
+        if (mit->iters[0] == NULL) {
+            Py_DECREF(arr);
+            goto fail;
+        }
+        mit->nd = PyArray_NDIM(arr);
+        memcpy(mit->dimensions, PyArray_DIMS(arr), mit->nd*sizeof(intp));
+        mit->size = PyArray_SIZE(arr);
+        Py_DECREF(arr);
+        Py_DECREF(mit->indexobj);
+        mit->indexobj = Py_BuildValue("(N)", PyInt_FromLong(0));
+    }
+    else {
+        /* must be a tuple */
+        PyObject *obj;
+        PyArrayIterObject **iterp;
+        PyObject *new;
+        int numiters, j, n2;
+        /*
+         * Make a copy of the tuple -- we will be replacing
+         * index objects with 0's
+         */
+        n = PyTuple_GET_SIZE(indexobj);
+        n2 = n;
+        new = PyTuple_New(n2);
+        if (new == NULL) {
+            goto fail;
+        }
+        started = 0;
+        nonindex = 0;
+        j = 0;
+        for (i = 0; i < n; i++) {
+            obj = PyTuple_GET_ITEM(indexobj,i);
+            iterp = mit->iters + mit->numiter;
+            if ((numiters=_convert_obj(obj, iterp)) < 0) {
+                Py_DECREF(new);
+                goto fail;
+            }
+            if (numiters > 0) {
+                started = 1;
+                if (nonindex) {
+                    mit->consec = 0;
+                }
+                mit->numiter += numiters;
+                if (numiters == 1) {
+                    PyTuple_SET_ITEM(new,j++, PyInt_FromLong(0));
+                }
+                else {
+                    /*
+                     * we need to grow the new indexing object and fill
+                     * it with 0s for each of the iterators produced
+                     */
+                    int k;
+                    n2 += numiters - 1;
+                    if (_PyTuple_Resize(&new, n2) < 0) {
+                        goto fail;
+                    }
+                    for (k = 0; k < numiters; k++) {
+                        PyTuple_SET_ITEM(new, j++, PyInt_FromLong(0));
+                    }
+                }
+            }
+            else {
+                if (started) {
+                    nonindex = 1;
+                }
+                Py_INCREF(obj);
+                PyTuple_SET_ITEM(new,j++,obj);
+            }
+        }
+        Py_DECREF(mit->indexobj);
+        mit->indexobj = new;
+        /*
+         * Store the number of iterators actually converted
+         * These will be mapped to actual axes at bind time
+         */
+        if (PyArray_Broadcast((PyArrayMultiIterObject *)mit) < 0) {
+            goto fail;
+        }
+    }
+
+    return (PyObject *)mit;
+
+ fail:
+    Py_DECREF(mit);
+    return NULL;
+}
+
+
+static void
+arraymapiter_dealloc(PyArrayMapIterObject *mit)
+{
+    int i;
+    Py_XDECREF(mit->indexobj);
+    Py_XDECREF(mit->ait);
+    Py_XDECREF(mit->subspace);
+    for (i = 0; i < mit->numiter; i++) {
+        Py_XDECREF(mit->iters[i]);
+    }
+    _pya_free(mit);
+}
+
+/*
+ * The mapiter object must be created new each time.  It does not work
+ * to bind to a new array, and continue.
+ *
+ * This was the orginal intention, but currently that does not work.
+ * Do not expose the MapIter_Type to Python.
+ *
+ * It's not very useful anyway, since mapiter(indexobj); mapiter.bind(a);
+ * mapiter is equivalent to a[indexobj].flat but the latter gets to use
+ * slice syntax.
+ */
+NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
+    PyObject_HEAD_INIT(NULL)
+    0,                                           /* ob_size */
+    "numpy.mapiter",                             /* tp_name */
+    sizeof(PyArrayIterObject),                   /* tp_basicsize */
+    0,                                           /* tp_itemsize */
+    /* methods */
+    (destructor)arraymapiter_dealloc,            /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
+    0,                                           /* tp_doc */
+    (traverseproc)0,                             /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    (iternextfunc)0,                             /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    (initproc)0,                                 /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,   				         /* tp_del */
+
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
+#endif
+};
+
+/** END of Subscript Iterator **/
 
 

@@ -33,4 +33,20 @@ _array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
 #define array_ass_item _array_ass_item
 #endif
 
+/*
+ * Prototypes for Mapping calls --- not part of the C-API
+ * because only useful as part of a getitem call.
+ */
+NPY_NO_EXPORT void
+PyArray_MapIterReset(PyArrayMapIterObject *mit);
+
+NPY_NO_EXPORT void
+PyArray_MapIterNext(PyArrayMapIterObject *mit);
+
+NPY_NO_EXPORT void
+PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
+
+NPY_NO_EXPORT PyObject*
+PyArray_MapIterNew(PyObject *, int, int);
+
 #endif

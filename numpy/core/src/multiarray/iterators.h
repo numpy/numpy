@@ -19,20 +19,4 @@ slice_GetIndices(PySliceObject *r, intp length,
                  intp *start, intp *stop, intp *step,
                  intp *slicelength);
 
-/*
- * Prototypes for Mapping calls --- not part of the C-API
- * because only useful as part of a getitem call.
- */
-NPY_NO_EXPORT void
-PyArray_MapIterReset(PyArrayMapIterObject *mit);
-
-NPY_NO_EXPORT void
-PyArray_MapIterNext(PyArrayMapIterObject *mit);
-
-NPY_NO_EXPORT void
-PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
-
-NPY_NO_EXPORT PyObject*
-PyArray_MapIterNew(PyObject *, int, int);
-
 #endif
