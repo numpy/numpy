@@ -185,6 +185,10 @@ inline = config.CheckInline()
 config.Define('inline', inline)
 numpyconfig_sym.append(('NPY_INLINE', inline))
 
+
+if ENABLE_SEPARATE_COMPILATION:
+    config.Define("ENABLE_SEPARATE_COMPILATION", 1)
+    numpyconfig_sym.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
 #-------------------------------------------------------

@@ -323,6 +323,9 @@ def configuration(parent_package='',top_path=None):
             else:
                 PYTHON_HAS_UNICODE_WIDE = False
                 
+            if ENABLE_SEPARATE_COMPILATION:
+                moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
+
             # Generate the config.h file from moredefs
             target_f = open(target,'a')
             for d in moredefs:

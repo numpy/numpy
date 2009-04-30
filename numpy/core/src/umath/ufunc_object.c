@@ -27,16 +27,14 @@
 
 #include "Python.h"
 
-#include "numpyconfig.h"
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+#include "config.h"
+#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
 #endif
 
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"
-
-#include "config.h"
 
 #include "ufunc_object.h"
 
