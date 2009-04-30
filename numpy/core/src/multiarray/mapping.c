@@ -57,6 +57,11 @@ array_big_item(PyArrayObject *self, intp i)
     return (PyObject *)r;
 }
 
+NPY_NO_EXPORT int
+_array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
+{
+    return array_ass_big_item(self, (intp) i, v);
+}
 /* contains optimization for 1-d arrays */
 NPY_NO_EXPORT PyObject *
 array_item_nice(PyArrayObject *self, Py_ssize_t i)

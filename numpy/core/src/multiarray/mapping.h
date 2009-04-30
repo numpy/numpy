@@ -16,20 +16,18 @@ NPY_NO_EXPORT int
 array_ass_big_item(PyArrayObject *self, intp i, PyObject *v);
 
 #if PY_VERSION_HEX < 0x02050000
-#if SIZEOF_INT == SIZEOF_INTP
-#define array_ass_item array_ass_big_item
-#endif
+        #if SIZEOF_INT == SIZEOF_INTP
+                #define array_ass_item array_ass_big_item
+        #endif
 #else
-#if SIZEOF_SIZE_T == SIZEOF_INTP
-#define array_ass_item array_ass_big_item
-#endif
+        #if SIZEOF_SIZE_T == SIZEOF_INTP
+                #define array_ass_item array_ass_big_item
+        #endif
 #endif
 #ifndef array_ass_item
 NPY_NO_EXPORT int
-array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
-{
-    return array_ass_big_item(self, (intp) i, v);
-}
+_array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
+#define array_ass_item _array_ass_item
 #endif
 
 #endif
