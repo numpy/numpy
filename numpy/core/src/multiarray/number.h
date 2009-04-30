@@ -38,8 +38,13 @@ typedef struct {
     PyObject *conjugate;
 } NumericOps;
 
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT NumericOps n_ops;
 extern NPY_NO_EXPORT PyNumberMethods array_as_number;
+#else
+NPY_NO_EXPORT NumericOps n_ops;
+NPY_NO_EXPORT PyNumberMethods array_as_number;
+#endif
 
 NPY_NO_EXPORT int
 array_any_nonzero(PyArrayObject *mp);

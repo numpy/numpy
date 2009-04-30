@@ -2,10 +2,14 @@
 
 #define _UMATHMODULE
 
+#include "Python.h"
+
+#include "numpyconfig.h"
+#ifdef  NPY_ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
+#endif
 
-#include "Python.h"
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"

@@ -1,4 +1,4 @@
-# Last Change: Fri Apr 24 03:00 PM 2009 J
+# Last Change: Fri Apr 24 08:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -16,6 +16,7 @@ from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
                           umath_bld
 from setup_common import *
 
+ENABLE_SEPARATE_COMPILATION = False
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = env["PYEXTCPPPATH"])
@@ -286,29 +287,32 @@ env.Prepend(LIBPATH=["."])
 #-----------------
 # Build multiarray
 #-----------------
-multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
-    pjoin('src', 'multiarray', 'hashdescr.c'),
-    pjoin('src', 'multiarray', 'arrayobject.c'),
-    pjoin('src', 'multiarray', 'numpyos.c'),
-    pjoin('src', 'multiarray', 'flagsobject.c'),
-    pjoin('src', 'multiarray', 'descriptor.c'),
-    pjoin('src', 'multiarray', 'iterators.c'),
-    pjoin('src', 'multiarray', 'mapping.c'),
-    pjoin('src', 'multiarray', 'number.c'),
-    pjoin('src', 'multiarray', 'getset.c'),
-    pjoin('src', 'multiarray', 'sequence.c'),
-    pjoin('src', 'multiarray', 'methods.c'),
-    pjoin('src', 'multiarray', 'ctors.c'),
-    pjoin('src', 'multiarray', 'convert_datatype.c'),
-    pjoin('src', 'multiarray', 'convert.c'),
-    pjoin('src', 'multiarray', 'shape.c'),
-    pjoin('src', 'multiarray', 'item_selection.c'),
-    pjoin('src', 'multiarray', 'calculation.c'),
-    pjoin('src', 'multiarray', 'common.c'),
-    pjoin('src', 'multiarray', 'usertypes.c'),
-    pjoin('src', 'multiarray', 'scalarapi.c')]
-multiarray_src.extend(arraytypes_src)
-multiarray_src.extend(scalartypes_src)
+if ENABLE_SEPARATE_COMPILATION:
+    multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
+        pjoin('src', 'multiarray', 'hashdescr.c'),
+        pjoin('src', 'multiarray', 'arrayobject.c'),
+        pjoin('src', 'multiarray', 'numpyos.c'),
+        pjoin('src', 'multiarray', 'flagsobject.c'),
+        pjoin('src', 'multiarray', 'descriptor.c'),
+        pjoin('src', 'multiarray', 'iterators.c'),
+        pjoin('src', 'multiarray', 'mapping.c'),
+        pjoin('src', 'multiarray', 'number.c'),
+        pjoin('src', 'multiarray', 'getset.c'),
+        pjoin('src', 'multiarray', 'sequence.c'),
+        pjoin('src', 'multiarray', 'methods.c'),
+        pjoin('src', 'multiarray', 'ctors.c'),
+        pjoin('src', 'multiarray', 'convert_datatype.c'),
+        pjoin('src', 'multiarray', 'convert.c'),
+        pjoin('src', 'multiarray', 'shape.c'),
+        pjoin('src', 'multiarray', 'item_selection.c'),
+        pjoin('src', 'multiarray', 'calculation.c'),
+        pjoin('src', 'multiarray', 'common.c'),
+        pjoin('src', 'multiarray', 'usertypes.c'),
+        pjoin('src', 'multiarray', 'scalarapi.c')]
+    multiarray_src.extend(arraytypes_src)
+    multiarray_src.extend(scalartypes_src)
+else:
+    multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule_onefile.c')]
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
 
 #------------------
@@ -319,8 +323,11 @@ sort = env.DistutilsPythonExtension('_sort', source = sortmodule_src)
 #-------------------
 # Build umath module
 #-------------------
-umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_object.c')])
-umathmodule_src.extend(umath_loops_src)
+if ENABLE_SEPARATE_COMPILATION:
+    umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_object.c')])
+    umathmodule_src.extend(umath_loops_src)
+else:
+    umathmodule_src = [pjoin('src', 'umath', 'umathmodule_onefile.c')]
 umathmodule = env.DistutilsPythonExtension('umath', source = umathmodule_src)
 
 #------------------------

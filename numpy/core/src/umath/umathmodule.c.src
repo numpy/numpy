@@ -17,9 +17,13 @@
  */
 #define _UMATHMODULE
 
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-
 #include "Python.h"
+
+#include "numpyconfig.h"
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
+#endif
+
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"
 #include "abstract.h"

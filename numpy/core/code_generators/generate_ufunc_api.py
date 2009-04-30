@@ -4,7 +4,11 @@ import genapi
 h_template = r"""
 #ifdef _UMATHMODULE
 
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyTypeObject PyUFunc_Type;
+#else
+NPY_NO_EXPORT PyTypeObject PyUFunc_Type;
+#endif
 
 %s
 

@@ -8,6 +8,9 @@ from distutils.sysconfig import get_config_var
 
 from setup_common import *
 
+# Set to True to enable multiple file compilations (experimental)
+ENABLE_SEPARATE_COMPILATION = False
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -380,6 +383,9 @@ def configuration(parent_package='',top_path=None):
 
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
 
+            if ENABLE_SEPARATE_COMPILATION:
+                moredefs.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
+
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
                 moredefs.append(('NPY_USE_C99_FORMATS', 1))
@@ -435,6 +441,45 @@ def configuration(parent_package='',top_path=None):
     generate_numpy_api = generate_api_func('generate_numpy_api')
     generate_ufunc_api = generate_api_func('generate_ufunc_api')
 
+    # Multiarray version: this function is needed to build foo.c from foo.c.src
+    # when foo.c is included in another file and as such not in the src
+    # argument of build_ext command
+    def generate_multiarray_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'multiarray')
+        sources = [join(local_dir, subpath, 'scalartypes.c.src'),
+                   join(local_dir, subpath, 'arraytypes.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+
+        cmd.template_sources(sources, ext)
+
+    # umath version: this function is needed to build foo.c from foo.c.src
+    # when foo.c is included in another file and as such not in the src
+    # argument of build_ext command
+    def generate_umath_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'umath')
+        sources = [join(local_dir, subpath, 'loops.c.src'),
+                   join(local_dir, subpath, 'umathmodule.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+
+        cmd.template_sources(sources, ext)
+
+
     def generate_umath_c(ext,build_dir):
         target = join(build_dir,header_dir,'__umath_generated.c')
         dir = os.path.dirname(target)
@@ -482,6 +527,29 @@ def configuration(parent_package='',top_path=None):
     config.add_library('npymath',
             sources=[join('src', 'npy_math.c.src')],
             depends=[])
+    
+    multiarray_deps = [
+            join('src', 'multiarray', 'arrayobject.h'),
+            join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'calculation.h'),
+            join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'convert_datatype.h'),
+            join('src', 'multiarray', 'convert.h'),
+            join('src', 'multiarray', 'ctors.h'),
+            join('src', 'multiarray', 'descriptor.h'),
+            join('src', 'multiarray', 'getset.h'),
+            join('src', 'multiarray', 'hashdescr.h'),
+            join('src', 'multiarray', 'iterators.h'),
+            join('src', 'multiarray', 'mapping.h'),
+            join('src', 'multiarray', 'methods.h'),
+            join('src', 'multiarray', 'multiarraymodule.h'),
+            join('src', 'multiarray', 'number.h'),
+            join('src', 'multiarray', 'numpyos.h'),
+            join('src', 'multiarray', 'scalartypes.h'),
+            join('src', 'multiarray', 'sequence.h'),
+            join('src', 'multiarray', 'shape.h'),
+            join('src', 'multiarray', 'ucsnarrow.h'),
+            join('src', 'multiarray', 'usertypes.h')]
 
     multiarray_src = [join('src', 'multiarray', 'multiarraymodule.c'),
         join('src', 'multiarray', 'hashdescr.c'),
@@ -508,28 +576,23 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'arraytypes.c.src'),
         join('src', 'multiarray', 'scalartypes.c.src')]
 
-    multiarray_deps = [
-            join('src', 'multiarray', 'arrayobject.h'),
-            join('src', 'multiarray', 'arraytypes.h'),
-            join('src', 'multiarray', 'calculation.h'),
-            join('src', 'multiarray', 'common.h'),
-            join('src', 'multiarray', 'convert_datatype.h'),
-            join('src', 'multiarray', 'convert.h'),
-            join('src', 'multiarray', 'ctors.h'),
-            join('src', 'multiarray', 'descriptor.h'),
-            join('src', 'multiarray', 'getset.h'),
-            join('src', 'multiarray', 'hashdescr.h'),
-            join('src', 'multiarray', 'iterators.h'),
-            join('src', 'multiarray', 'mapping.h'),
-            join('src', 'multiarray', 'methods.h'),
-            join('src', 'multiarray', 'multiarraymodule.h'),
-            join('src', 'multiarray', 'number.h'),
-            join('src', 'multiarray', 'numpyos.h'),
-            join('src', 'multiarray', 'scalartypes.h'),
-            join('src', 'multiarray', 'sequence.h'),
-            join('src', 'multiarray', 'shape.h'),
-            join('src', 'multiarray', 'ucsnarrow.h'),
-            join('src', 'multiarray', 'usertypes.h')]
+    umath_src = [join('src', 'umath', 'umathmodule.c.src'),
+            join('src', 'umath', 'funcs.inc.src'),
+            join('src', 'umath', 'loops.c.src'),
+            join('src', 'umath', 'ufunc_object.c')]
+
+    umath_deps = [generate_umath_py,
+            join(codegen_dir,'generate_ufunc_api.py')]
+
+    if not ENABLE_SEPARATE_COMPILATION:
+        multiarray_deps.extend(multiarray_src)
+        multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
+        multiarray_src.append(generate_multiarray_templated_sources)
+ 
+        umath_deps.extend(umath_src)
+        umath_src = [join('src', 'umath', 'umathmodule_onefile.c')]
+        umath_src.append(generate_umath_templated_sources)
+        umath_src.append(join('src', 'umath', 'funcs.inc.src'))
 
     config.add_extension('multiarray',
                          sources = multiarray_src +
@@ -544,16 +607,10 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     generate_numpyconfig_h,
-                                    join('src','umath', 'umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
-                                    join('src','umath', 'funcs.inc.src'),
-                                    join('src','umath', 'loops.c.src'),
-                                    join('src','umath', 'ufunc_object.c'),
-                                    ],
-                         depends = [generate_umath_py,
-                                    join(codegen_dir,'generate_ufunc_api.py'),
-                                    ]+deps,
+                                    ] + umath_src,
+                         depends = deps + umath_deps,
                          libraries=['npymath'],
                          )
 

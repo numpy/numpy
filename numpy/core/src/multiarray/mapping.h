@@ -1,7 +1,11 @@
 #ifndef _NPY_ARRAYMAPPING_H_
 #define _NPY_ARRAYMAPPING_H_
 
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
+#else
+NPY_NO_EXPORT PyMappingMethods array_as_mapping;
+#endif
 
 NPY_NO_EXPORT PyObject *
 array_big_item(PyArrayObject *self, intp i);

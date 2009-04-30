@@ -1,7 +1,11 @@
 #ifndef _NPY_CALCULATION_H_
 #define _NPY_CALCULATION_H_
 
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyObject *MultiArrayError;
+#else
+NPY_NO_EXPORT PyObject *MultiArrayError;
+#endif
 
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject *out);
