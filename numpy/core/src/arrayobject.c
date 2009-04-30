@@ -33,6 +33,11 @@ maintainer email:  oliphant.travis@ieee.org
 #include "arrayobject.h"
 #include "arraydescr.h"
 #include "arrayiterators.h"
+#ifndef Py_UNICODE_WIDE
+#include "ucsnarrow.h"
+#endif
+
+
 
 /*NUMPY_API
  * Get Priority from object
@@ -543,11 +548,6 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
         byte_swap_vector(d1, numitems, itemsize);
     }
 }
-
-
-#ifndef Py_UNICODE_WIDE
-#include "ucsnarrow.c"
-#endif
 
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;

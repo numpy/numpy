@@ -285,7 +285,8 @@ env.Prepend(LIBPATH=["."])
 multiarray_src = [pjoin('src', 'multiarraymodule.c'),
     pjoin('src', 'hashdescr.c'), pjoin('src', 'arrayobject.c'),
     pjoin('src', 'numpyos.c'), pjoin('src', 'arrayflagsobject.c'),
-    pjoin('src', 'arraydescr.c'), pjoin('src', 'arrayiterators.c')]
+    pjoin('src', 'arraydescr.c'), pjoin('src', 'arrayiterators.c'),
+    pjoin('src', 'ucsnarrow.c')]
 multiarray_src.extend(arraytypes_src)
 multiarray_src.extend(scalartypes_src)
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)

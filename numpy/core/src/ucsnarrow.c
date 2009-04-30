@@ -1,3 +1,14 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#include <locale.h>
+#include <stdio.h>
+
+#define _MULTIARRAYMODULE
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
+
 /* Functions only needed on narrow builds of Python
    for converting back and forth between the NumPy Unicode data-type
    (always 4-byte)
@@ -12,7 +23,7 @@
 
    values above 0xffff are converted to surrogate pairs.
 */
-static int
+NPY_NO_EXPORT int
 PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
 {
     int i;
@@ -44,7 +55,7 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
    The return value is the actual size of the used part of the ucs4 buffer.
 */
 
-static int
+NPY_NO_EXPORT int
 PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4len)
 {
     int i;
@@ -70,7 +81,7 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4l
 }
 
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 MyPyUnicode_New(int length)
 {
     PyUnicodeObject *unicode;
@@ -90,7 +101,7 @@ MyPyUnicode_New(int length)
     return (PyObject *)unicode;
 }
 
-static int
+NPY_NO_EXPORT int
 MyPyUnicode_Resize(PyUnicodeObject *uni, int length)
 {
     void *oldstr;

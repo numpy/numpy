@@ -13,6 +13,9 @@
 #include "config.h"
 
 #include "numpyos.h"
+#ifndef Py_UNICODE_WIDE
+#include "ucsnarrow.h"
+#endif
 
 static double
 MyPyFloat_AsDouble(PyObject *obj)
