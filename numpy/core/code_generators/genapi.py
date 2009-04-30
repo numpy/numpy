@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 # The files under src/ that are scanned for API functions
 API_FILES = ['arraymethods.c',
              'arrayobject.c',
+             'arrayflagsobject.c',
              'arraytypes.c.src',
              'multiarraymodule.c',
              'scalartypes.c.src',

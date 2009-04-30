@@ -495,6 +495,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src', 'hashdescr.c'),
                                     join('src', 'numpyos.c'),
                                     join('src','arrayobject.c'),
+                                    join('src','arrayflagsobject.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
                                     ],
