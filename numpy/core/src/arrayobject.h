@@ -48,6 +48,12 @@ extern NPY_NO_EXPORT PyArray_Descr **userdescrs;
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+#define SOBJ_NOTFANCY 0
+#define SOBJ_ISFANCY 1
+#define SOBJ_BADARRAY 2
+#define SOBJ_TOOMANY 3
+#define SOBJ_LISTTUP 4
+
 NPY_NO_EXPORT int
 _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order);
 
@@ -102,6 +108,12 @@ add_new_axes_0d(PyArrayObject *,  int);
 
 NPY_NO_EXPORT int
 count_new_axes_0d(PyObject *tuple);
+
+NPY_NO_EXPORT PyObject *
+array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op);
+
+NPY_NO_EXPORT PyObject *
+array_subscript_simple(PyArrayObject *self, PyObject *op);
 
 /* FIXME: this is defined in multiarraymodule.c ... */
 NPY_NO_EXPORT PyObject *

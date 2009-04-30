@@ -454,7 +454,9 @@ def configuration(parent_package='',top_path=None):
     config.numpy_include_dirs.extend(config.paths('include'))
 
     deps = [join('src','arrayobject.h'),
-            join('src','numpyos.c'),
+            join('src','arrayiterators.h'),
+            join('src','arraydescr.h'),
+            join('src','numpyos.h'),
             join('src','_signbit.c'),
             join('src','ucsnarrow.c'),
             join('include','numpy','*object.h'),
@@ -496,6 +498,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','arrayobject.c'),
                                     join('src','arrayflagsobject.c'),
                                     join('src','arraydescr.c'),
+                                    join('src','arrayiterators.c'),
                                     join('src','numpyos.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
