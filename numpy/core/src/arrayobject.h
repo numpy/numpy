@@ -42,7 +42,6 @@ typedef struct {
     PyObject *conjugate;
 } NumericOps;
 
-extern NPY_NO_EXPORT NumericOps n_ops;
 extern NPY_NO_EXPORT PyArray_Descr **userdescrs;
 
 
@@ -145,5 +144,8 @@ set_typeinfo(PyObject *dict);
 
 extern NPY_NO_EXPORT PyArray_Descr LONG_Descr;
 extern NPY_NO_EXPORT PyArray_Descr INT_Descr;
+
+/* Number protocol */
+#include "arraynumber.h"
 
 #endif
