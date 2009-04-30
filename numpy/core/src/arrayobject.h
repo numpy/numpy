@@ -114,6 +114,16 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op);
 NPY_NO_EXPORT PyObject *
 array_subscript_simple(PyArrayObject *self, PyObject *op);
 
+NPY_NO_EXPORT size_t
+_array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
+                    int inflag, int *objflags);
+
+NPY_NO_EXPORT int
+_IsAligned(PyArrayObject *ap);
+
+NPY_NO_EXPORT Bool
+_IsWriteable(PyArrayObject *ap);
+
 /* FIXME: this is defined in multiarraymodule.c ... */
 NPY_NO_EXPORT PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,

@@ -1,3 +1,16 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include "structmember.h"
+
+#define _MULTIARRAYMODULE
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
+
+#include "arrayobject.h"
+
+#include "arraymethods.h"
+
 /* Should only be used if x is known to be an nd-array */
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
@@ -1264,14 +1277,6 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return ret;
 }
 
-
-
-static size_t _array_fill_strides(intp *, intp *, int, size_t, int, int *);
-
-static int _IsAligned(PyArrayObject *);
-
-static PyArray_Descr * _array_typedescr_fromstr(char *);
-
 static PyObject *
 array_setstate(PyArrayObject *self, PyObject *args)
 {
@@ -1934,9 +1939,6 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 
-static int _IsAligned(PyArrayObject *);
-static Bool _IsWriteable(PyArrayObject *);
-
 static PyObject *
 array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -2020,7 +2022,7 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 }
 
-static PyMethodDef array_methods[] = {
+NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
     {"__array__", (PyCFunction)array_getarray,

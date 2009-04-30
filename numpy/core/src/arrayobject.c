@@ -31,11 +31,15 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpy/arrayscalars.h"
 
 #include "arrayobject.h"
+#include "arraymethods.h"
 #include "arraydescr.h"
 #include "arrayiterators.h"
 #include "arraymapping.h"
 #include "arraygetset.h"
 #include "arraysequence.h"
+
+static PyArray_Descr * _array_typedescr_fromstr(char *);
+
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.h"
 #endif
@@ -3087,8 +3091,6 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 
 #define _check_axis PyArray_CheckAxis
 
-#include "arraymethods.c"
-
 /* Lifted from numarray */
 /*NUMPY_API
   PyArray_IntTupleFromIntp
@@ -3269,7 +3271,7 @@ _IsFortranContiguous(PyArrayObject *ap)
     return 1;
 }
 
-static int
+NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
     int i, alignment, aligned = 1;
@@ -3291,7 +3293,7 @@ _IsAligned(PyArrayObject *ap)
     return aligned != 0;
 }
 
-static Bool
+NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap)
 {
     PyObject *base=ap->base;
@@ -3462,7 +3464,7 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
  * array is desired.
  */
 
-static size_t
+NPY_NO_EXPORT size_t
 _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {

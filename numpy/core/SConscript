@@ -288,7 +288,8 @@ multiarray_src = [pjoin('src', 'multiarraymodule.c'),
     pjoin('src', 'numpyos.c'), pjoin('src', 'arrayflagsobject.c'),
     pjoin('src', 'arraydescr.c'), pjoin('src', 'arrayiterators.c'),
     pjoin('src', 'arraymapping.c'), pjoin('src', 'arraynumber.c'),
-    pjoin('src', 'arraygetset.c'), pjoin('src', 'arraysequence.c')]
+    pjoin('src', 'arraygetset.c'), pjoin('src', 'arraysequence.c'),
+    pjoin('src', 'arraymethods.c')]
 multiarray_src.extend(arraytypes_src)
 multiarray_src.extend(scalartypes_src)
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
