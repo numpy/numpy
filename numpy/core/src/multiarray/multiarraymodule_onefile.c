@@ -22,5 +22,10 @@
 #include "arraytypes.c"
 #include "scalartypes.c"
 
+#ifndef Py_UNICODE_WIDE
+#include "ucsnarrow.c"
+#endif
+
 #include "arrayobject.c"
+
 #include "multiarraymodule.c"

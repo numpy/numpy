@@ -44,6 +44,8 @@ class CallOnceOnly(object):
             out = copy.deepcopy(_pik.loads(self._check_ieee_macros))
         return out
 
+PYTHON_HAS_UNICODE_WIDE = True
+
 def pythonlib_dir():
     """return path where libpython* is."""
     if sys.platform == 'win32':
@@ -315,6 +317,12 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
+            # Check whether we need our own wide character support
+            if not config_cmd.check_decl('Py_UNICODE_WIDE', headers=['Python.h']):
+                PYTHON_HAS_UNICODE_WIDE = True
+            else:
+                PYTHON_HAS_UNICODE_WIDE = False
+                
             # Generate the config.h file from moredefs
             target_f = open(target,'a')
             for d in moredefs:
@@ -570,11 +578,13 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'item_selection.c'),
         join('src', 'multiarray', 'calculation.c'),
         join('src', 'multiarray', 'common.c'),
-        join('src', 'multiarray', 'ucsnarrow.c'),
         join('src', 'multiarray', 'usertypes.c'),
         join('src', 'multiarray', 'scalarapi.c'),
         join('src', 'multiarray', 'arraytypes.c.src'),
         join('src', 'multiarray', 'scalartypes.c.src')]
+
+    if PYTHON_HAS_UNICODE_WIDE:
+        multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))
 
     umath_src = [join('src', 'umath', 'umathmodule.c.src'),
             join('src', 'umath', 'funcs.inc.src'),
