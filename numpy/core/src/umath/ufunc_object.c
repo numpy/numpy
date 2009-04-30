@@ -32,6 +32,8 @@
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"
 
+#include "config.h"
+
 #include "ufunc_object.h"
 
 #define USE_USE_DEFAULTS 1

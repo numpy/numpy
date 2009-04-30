@@ -9,6 +9,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 
+#include "config.h"
+
 /*
  *****************************************************************************
  **                            BASICS                                       **
