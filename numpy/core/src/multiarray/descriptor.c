@@ -20,6 +20,67 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
+NPY_NO_EXPORT PyArray_Descr *
+_arraydescr_fromobj(PyObject *obj)
+{
+    PyObject *dtypedescr;
+    PyArray_Descr *new;
+    int ret;
+
+    dtypedescr = PyObject_GetAttrString(obj, "dtype");
+    PyErr_Clear();
+    if (dtypedescr) {
+        ret = PyArray_DescrConverter(dtypedescr, &new);
+        Py_DECREF(dtypedescr);
+        if (ret == PY_SUCCEED) {
+            return new;
+        }
+        PyErr_Clear();
+    }
+    /* Understand basic ctypes */
+    dtypedescr = PyObject_GetAttrString(obj, "_type_");
+    PyErr_Clear();
+    if (dtypedescr) {
+        ret = PyArray_DescrConverter(dtypedescr, &new);
+        Py_DECREF(dtypedescr);
+        if (ret == PY_SUCCEED) {
+            PyObject *length;
+            length = PyObject_GetAttrString(obj, "_length_");
+            PyErr_Clear();
+            if (length) {
+                /* derived type */
+                PyObject *newtup;
+                PyArray_Descr *derived;
+                newtup = Py_BuildValue("NO", new, length);
+                ret = PyArray_DescrConverter(newtup, &derived);
+                Py_DECREF(newtup);
+                if (ret == PY_SUCCEED) {
+                    return derived;
+                }
+                PyErr_Clear();
+                return NULL;
+            }
+            return new;
+        }
+        PyErr_Clear();
+        return NULL;
+    }
+    /* Understand ctypes structures --
+       bit-fields are not supported
+       automatically aligns */
+    dtypedescr = PyObject_GetAttrString(obj, "_fields_");
+    PyErr_Clear();
+    if (dtypedescr) {
+        ret = PyArray_DescrAlignConverter(dtypedescr, &new);
+        Py_DECREF(dtypedescr);
+        if (ret == PY_SUCCEED) {
+            return new;
+        }
+        PyErr_Clear();
+    }
+    return NULL;
+}
+
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {

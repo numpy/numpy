@@ -31,6 +31,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpy/arrayscalars.h"
 
 
+#include "arraytypes.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "methods.h"

@@ -9,6 +9,7 @@
 
 #include "numpy/npy_math.h"
 
+#include "descriptor.h"
 #include "arrayobject.h"
 
 static PyArray_Descr *

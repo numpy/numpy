@@ -52,20 +52,6 @@ byte_swap_vector(void *p, intp n, int size);
 #define _check_axis PyArray_CheckAxis
 
 NPY_NO_EXPORT PyObject *
-PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
-                              int rtype, PyArrayObject *out);
-
-NPY_NO_EXPORT PyObject *
-PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
-                                  int rtype, PyArrayObject *out);
-
-NPY_NO_EXPORT PyObject *
-PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op);
-
-NPY_NO_EXPORT PyObject *
-PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op);
-
-NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *,  int);
 
 NPY_NO_EXPORT int
@@ -96,11 +82,6 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char *str);
 
-/* FIXME: this is defined in multiarraymodule.c ... */
-
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_fromobj(PyObject *obj);
-
 /* FIXME: this is in scalartypes.inc.src */
 NPY_NO_EXPORT void
 initialize_numeric_types(void);
@@ -116,13 +97,6 @@ _typenum_fromtypeobj(PyObject *type, int user);
 
 NPY_NO_EXPORT void *
 scalar_value(PyObject *scalar, PyArray_Descr *descr);
-
-/* FIXME: this is defined in arratypes.inc.src */
-NPY_NO_EXPORT int
-set_typeinfo(PyObject *dict);
-
-extern NPY_NO_EXPORT PyArray_Descr LONG_Descr;
-extern NPY_NO_EXPORT PyArray_Descr INT_Descr;
 
 /* Number protocol */
 #include "number.h"
