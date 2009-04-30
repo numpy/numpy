@@ -1,4 +1,4 @@
-# Last Change: Wed Apr 22 09:00 PM 2009 J
+# Last Change: Thu Apr 23 12:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -283,10 +283,11 @@ env.Prepend(LIBPATH=["."])
 # Build multiarray
 #-----------------
 multiarray_src = [pjoin('src', 'multiarraymodule.c'),
+    pjoin('src', 'ucsnarrow.c'),
     pjoin('src', 'hashdescr.c'), pjoin('src', 'arrayobject.c'),
     pjoin('src', 'numpyos.c'), pjoin('src', 'arrayflagsobject.c'),
     pjoin('src', 'arraydescr.c'), pjoin('src', 'arrayiterators.c'),
-    pjoin('src', 'ucsnarrow.c')]
+    pjoin('src', 'arraymapping.c')]
 multiarray_src.extend(arraytypes_src)
 multiarray_src.extend(scalartypes_src)
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)

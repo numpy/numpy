@@ -499,6 +499,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','arrayflagsobject.c'),
                                     join('src','arraydescr.c'),
                                     join('src','arrayiterators.c'),
+                                    join('src','arraymapping.c'),
                                     join('src','numpyos.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
