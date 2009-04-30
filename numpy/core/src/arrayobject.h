@@ -167,4 +167,7 @@ extern NPY_NO_EXPORT PyArray_Descr INT_Descr;
 /* Number protocol */
 #include "arraynumber.h"
 
+/* Converting data types API */
+#include "arrayconvert_datatype.h"
+
 #endif
