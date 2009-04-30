@@ -502,6 +502,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','arraymapping.c'),
                                     join('src','arraynumber.c'),
                                     join('src','arraygetset.c'),
+                                    join('src','arraysequence.c'),
                                     join('src','numpyos.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
