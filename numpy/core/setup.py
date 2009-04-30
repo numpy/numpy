@@ -515,12 +515,12 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     generate_numpyconfig_h,
-                                    join('src','umathmodule.c.src'),
+                                    join('src','umath', 'umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
-                                    join('src','umath_funcs.inc.src'),
-                                    join('src','umath_loops.c.src'),
-                                    join('src','umath_ufunc_object.c'),
+                                    join('src','umath', 'funcs.inc.src'),
+                                    join('src','umath', 'loops.c.src'),
+                                    join('src','umath', 'ufunc_object.c'),
                                     ],
                          depends = [generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py'),
@@ -556,7 +556,7 @@ def configuration(parent_package='',top_path=None):
                          )
 
     config.add_extension('umath_tests',
-                    sources = [join('src','umath_tests.c.src')])
+                    sources = [join('src','umath', 'umath_tests.c.src')])
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')

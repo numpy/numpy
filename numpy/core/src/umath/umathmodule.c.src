@@ -32,9 +32,9 @@
  **                    INCLUDE GENERATED CODE                               **
  *****************************************************************************
  */
-#include "umath_funcs.inc"
-#include "umath_loops.h"
-#include "umath_ufunc_object.h"
+#include "funcs.inc"
+#include "loops.h"
+#include "ufunc_object.h"
 #include "__umath_generated.c"
 #include "__ufunc_api.c"
 

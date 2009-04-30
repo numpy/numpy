@@ -254,13 +254,15 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 scalartypes_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'scalartypes.c.src'))
-umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs.inc.src'))
-umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.c.src'))
+umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath', 'funcs.inc.src'))
+umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath', 'loops.c.src'))
 arraytypes_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'arraytypes.c.src'))
 sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
-umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
-umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath_tests.c.src'))
+umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
+    'umathmodule.c.src'))
+umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',
+    'umath_tests.c.src'))
 scalarmathmodule_src = env.GenerateFromTemplate(
                             pjoin('src', 'scalarmathmodule.c.src'))
 
@@ -313,7 +315,7 @@ sort = env.DistutilsPythonExtension('_sort', source = sortmodule_src)
 #-------------------
 # Build umath module
 #-------------------
-umathmodule_src.extend([pjoin('src', 'umath_ufunc_object.c')])
+umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_object.c')])
 umathmodule_src.extend(umath_loops_src)
 umathmodule = env.DistutilsPythonExtension('umath', source = umathmodule_src)
 

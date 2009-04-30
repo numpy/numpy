@@ -30,8 +30,8 @@ API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'arraytypes.c.src'),
              join('multiarray', 'multiarraymodule.c'),
              join('multiarray', 'scalartypes.c.src'),
-             'umath_ufunc_object.c',
-             'umath_loops.c.src'
+             join('umath', 'ufunc_object.c'),
+             join('umath', 'loops.c.src'),
             ]
 THIS_DIR = os.path.dirname(__file__)
 API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]

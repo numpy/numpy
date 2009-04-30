@@ -12,7 +12,7 @@
 
 #include "config.h"
 
-#include "umath_ufunc_object.h"
+#include "ufunc_object.h"
 
 /*
  *****************************************************************************
