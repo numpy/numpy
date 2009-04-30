@@ -124,6 +124,15 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap);
 
+NPY_NO_EXPORT PyArray_Descr *
+_array_find_type(PyObject *op, PyArray_Descr *minitype, int max);
+
+NPY_NO_EXPORT PyArray_Descr *
+_array_find_python_scalar_type(PyObject *op);
+
+NPY_NO_EXPORT PyArray_Descr *
+_array_typedescr_fromstr(char *str);
+
 /* FIXME: this is defined in multiarraymodule.c ... */
 NPY_NO_EXPORT PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
