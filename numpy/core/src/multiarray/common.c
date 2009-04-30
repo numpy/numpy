@@ -502,4 +502,66 @@ _zerofill(PyArrayObject *ret)
     return 0;
 }
 
+NPY_NO_EXPORT int
+_IsAligned(PyArrayObject *ap)
+{
+    int i, alignment, aligned = 1;
+    intp ptr;
+    int type = ap->descr->type_num;
 
+    if ((type == PyArray_STRING) || (type == PyArray_VOID)) {
+        return 1;
+    }
+    alignment = ap->descr->alignment;
+    if (alignment == 1) {
+        return 1;
+    }
+    ptr = (intp) ap->data;
+    aligned = (ptr % alignment) == 0;
+    for (i = 0; i < ap->nd; i++) {
+        aligned &= ((ap->strides[i] % alignment) == 0);
+    }
+    return aligned != 0;
+}
+
+NPY_NO_EXPORT Bool
+_IsWriteable(PyArrayObject *ap)
+{
+    PyObject *base=ap->base;
+    void *dummy;
+    Py_ssize_t n;
+
+    /* If we own our own data, then no-problem */
+    if ((base == NULL) || (ap->flags & OWNDATA)) {
+        return TRUE;
+    }
+    /*
+     * Get to the final base object
+     * If it is a writeable array, then return TRUE
+     * If we can find an array object
+     * or a writeable buffer object as the final base object
+     * or a string object (for pickling support memory savings).
+     * - this last could be removed if a proper pickleable
+     * buffer was added to Python.
+     */
+
+    while(PyArray_Check(base)) {
+        if (PyArray_CHKFLAGS(base, OWNDATA)) {
+            return (Bool) (PyArray_ISWRITEABLE(base));
+        }
+        base = PyArray_BASE(base);
+    }
+
+    /*
+     * here so pickle support works seamlessly
+     * and unpickled array can be set and reset writeable
+     * -- could be abused --
+     */
+    if PyString_Check(base) {
+        return TRUE;
+    }
+    if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
+        return FALSE;
+    }
+    return TRUE;
+}

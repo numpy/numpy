@@ -9,9 +9,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-
-#include "arrayobject.h"
-
 /*NUMPY_API
  *
  * Get New ArrayFlagsObject

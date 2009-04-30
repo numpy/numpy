@@ -7,9 +7,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-
 #include "common.h"
-#include "arrayobject.h"
 #include "ctors.h"
 #include "calculation.h"
 

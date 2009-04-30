@@ -21,4 +21,10 @@ index2ptr(PyArrayObject *mp, intp i);
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
 
+NPY_NO_EXPORT int
+_IsAligned(PyArrayObject *ap);
+
+NPY_NO_EXPORT Bool
+_IsWriteable(PyArrayObject *ap);
+
 #endif
