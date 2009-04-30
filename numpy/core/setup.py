@@ -507,6 +507,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','arrayctors.c'),
                                     join('src','arrayconvert_datatype.c'),
                                     join('src','arrayconvert.c'),
+                                    join('src','arrayshape.c'),
                                     join('src','numpyos.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')

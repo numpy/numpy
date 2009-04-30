@@ -344,3 +344,43 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
     return (PyObject *)ret;
 }
 
+/*NUMPY_API
+ * View
+ * steals a reference to type -- accepts NULL
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
+{
+    PyObject *new = NULL;
+    PyTypeObject *subtype;
+
+    if (pytype) {
+        subtype = pytype;
+    }
+    else {
+        subtype = self->ob_type;
+    }
+    Py_INCREF(self->descr);
+    new = PyArray_NewFromDescr(subtype,
+                               self->descr,
+                               self->nd, self->dimensions,
+                               self->strides,
+                               self->data,
+                               self->flags, (PyObject *)self);
+    if (new == NULL) {
+        return NULL;
+    }
+    Py_INCREF(self);
+    PyArray_BASE(new) = (PyObject *)self;
+
+    if (type != NULL) {
+        if (PyObject_SetAttrString(new, "dtype",
+                                   (PyObject *)type) < 0) {
+            Py_DECREF(new);
+            Py_DECREF(type);
+            return NULL;
+        }
+        Py_DECREF(type);
+    }
+    return new;
+}

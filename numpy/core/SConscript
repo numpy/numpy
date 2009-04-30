@@ -1,4 +1,4 @@
-# Last Change: Thu Apr 23 04:00 PM 2009 J
+# Last Change: Thu Apr 23 05:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -290,7 +290,8 @@ multiarray_src = [pjoin('src', 'multiarraymodule.c'),
     pjoin('src', 'arraymapping.c'), pjoin('src', 'arraynumber.c'),
     pjoin('src', 'arraygetset.c'), pjoin('src', 'arraysequence.c'),
     pjoin('src', 'arraymethods.c'), pjoin('src', 'arrayctors.c'),
-    pjoin('src', 'arrayconvert_datatype.c'), pjoin('src', 'arrayconvert.c')]
+    pjoin('src', 'arrayconvert_datatype.c'), pjoin('src', 'arrayconvert.c'),
+    pjoin('src', 'arrayshape.c')]
 multiarray_src.extend(arraytypes_src)
 multiarray_src.extend(scalartypes_src)
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
