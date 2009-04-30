@@ -20,7 +20,17 @@ maintainer email:  oliphant.travis@ieee.org
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include "structmember.h"
+
 /*#include <stdio.h>*/
+#define _MULTIARRAYMODULE
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
+
+#include "arrayobject.h"
 
 /*NUMPY_API
  * Get Priority from object
@@ -422,7 +432,7 @@ _unaligned_strided_byte_move(char *dst, intp outstrides, char *src,
 
 }
 
-static void
+NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
                              intp instrides, intp N, int elsize)
 {
@@ -456,7 +466,7 @@ _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
 
 }
 
-static void
+NPY_NO_EXPORT void
 _strided_byte_swap(void *p, intp stride, intp n, int size)
 {
     char *a, *b, c = 0;
@@ -499,7 +509,7 @@ _strided_byte_swap(void *p, intp stride, intp n, int size)
     }
 }
 
-static void
+NPY_NO_EXPORT void
 byte_swap_vector(void *p, intp n, int size)
 {
     _strided_byte_swap(p, (intp) size, n, size);
@@ -507,7 +517,7 @@ byte_swap_vector(void *p, intp n, int size)
 }
 
 /* If numitems > 1, then dst must be contiguous */
-static void
+NPY_NO_EXPORT void
 copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
               intp srcstrides, int swap)
 {
@@ -538,13 +548,7 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 #endif
 
 
-static PyArray_Descr **userdescrs=NULL;
-#define error_converting(x)  (((x) == -1) && PyErr_Occurred())
-
-
-/* Computer-generated arraytype and scalartype code */
-#include "scalartypes.inc"
-#include "arraytypes.inc"
+NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 
 
 /* Helper functions */
@@ -735,7 +739,7 @@ PyArray_PyIntAsInt(PyObject *o)
     return (int) long_value;
 }
 
-static char *
+NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, intp i)
 {
     intp dim0;
@@ -877,7 +881,7 @@ finish:
  * PyArray_CopyInto requires broadcastable arrays while
  * this one is a flattening operation...
  */
-int
+NPY_NO_EXPORT int
 _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order)
 {
     PyArrayIterObject *it;
@@ -1397,8 +1401,6 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
 
     return (PyObject *)ret;
 }
-
-static PyObject *array_big_item(PyArrayObject *, intp);
 
 /* Does nothing with descr (cannot be NULL) */
 /*NUMPY_API
@@ -2155,7 +2157,7 @@ array_length(PyArrayObject *self)
     }
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 array_big_item(PyArrayObject *self, intp i)
 {
     char *item;
@@ -2732,7 +2734,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     return 0;
 }
 
-static int
+NPY_NO_EXPORT int
 count_new_axes_0d(PyObject *tuple)
 {
     int i, argument_count;
@@ -2766,7 +2768,7 @@ count_new_axes_0d(PyObject *tuple)
     return newaxis_count;
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
 {
     PyArrayObject *other;
@@ -3482,45 +3484,7 @@ static PyBufferProcs array_as_buffer = {
  ****************   Implement Number Protocol ****************************
  *************************************************************************/
 
-
-typedef struct {
-    PyObject *add;
-    PyObject *subtract;
-    PyObject *multiply;
-    PyObject *divide;
-    PyObject *remainder;
-    PyObject *power;
-    PyObject *square;
-    PyObject *reciprocal;
-    PyObject *ones_like;
-    PyObject *sqrt;
-    PyObject *negative;
-    PyObject *absolute;
-    PyObject *invert;
-    PyObject *left_shift;
-    PyObject *right_shift;
-    PyObject *bitwise_and;
-    PyObject *bitwise_xor;
-    PyObject *bitwise_or;
-    PyObject *less;
-    PyObject *less_equal;
-    PyObject *equal;
-    PyObject *not_equal;
-    PyObject *greater;
-    PyObject *greater_equal;
-    PyObject *floor_divide;
-    PyObject *true_divide;
-    PyObject *logical_or;
-    PyObject *logical_and;
-    PyObject *floor;
-    PyObject *ceil;
-    PyObject *maximum;
-    PyObject *minimum;
-    PyObject *rint;
-    PyObject *conjugate;
-} NumericOps;
-
-static NumericOps n_ops; /* NB: static objects initialized to zero */
+NPY_NO_EXPORT NumericOps n_ops; /* NB: static objects initialized to zero */
 
 /* Dictionary can contain any of the numeric operations, by name.
    Those not present will not be changed
@@ -3653,7 +3617,7 @@ _get_keywords(int rtype, PyArrayObject *out)
     return kwds;
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
                               int rtype, PyArrayObject *out)
 {
@@ -3676,7 +3640,7 @@ PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
 }
 
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
                                   int rtype, PyArrayObject *out)
 {
@@ -3699,7 +3663,7 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 }
 
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
 {
     if (op == NULL) {
@@ -3709,7 +3673,7 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
     return PyObject_CallFunction(op, "OO", m1, m2);
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op)
 {
     if (op == NULL) {
@@ -4935,7 +4899,7 @@ _compare_strings(PyObject *result, PyArrayMultiIterObject *multi,
 #undef _rstrip_loop
 #undef SMALL_STRING
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip)
 {
@@ -7095,7 +7059,7 @@ array_base_get(PyArrayObject *self)
 }
 
 
-static int
+NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
 {
     if (PyDataType_REFCHK(ret->descr)) {
@@ -7664,7 +7628,7 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
  * doesn't alter refcount of chktype or mintype ---
  * unless one of them is returned
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 {
     PyArray_Descr *outtype;

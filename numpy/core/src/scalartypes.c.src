@@ -1,11 +1,17 @@
 /* -*- c -*- */
+#define PY_SSIZE_T_CLEAN
+#include "Python.h"
+#include "structmember.h"
 
 #ifndef _MULTIARRAYMODULE
 #define _MULTIARRAYMODULE
 #endif
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "config.h"
+#include "arrayobject.h"
 #include "numpyos.c"
 
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
@@ -85,7 +91,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 };
 /**end repeat**/
 
-static void *
+NPY_NO_EXPORT void *
 scalar_value(PyObject *scalar, PyArray_Descr *descr)
 {
     int type_num;
@@ -684,7 +690,7 @@ gentype_repr(PyObject *self)
 #define _FMT1 "%%.%i" NPY_@NAME@_FMT
 #define _FMT2 "%%+.%i" NPY_@NAME@_FMT
 
-static void
+NPY_NO_EXPORT void
 format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
     /* XXX: Find a correct size here for format string */
@@ -1071,7 +1077,7 @@ gentype_size_get(PyObject *NPY_UNUSED(self))
     return PyInt_FromLong(1);
 }
 
-static void
+NPY_NO_EXPORT void
 gentype_struct_free(void *ptr, void *arg)
 {
     PyArrayInterface *arrif = (PyArrayInterface *)ptr;
@@ -2974,13 +2980,6 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
 #endif
 };
 
-
-static PyObject *
-add_new_axes_0d(PyArrayObject *,  int);
-
-static int
-count_new_axes_0d(PyObject *);
-
 static PyObject *
 gen_arrtype_subscript(PyObject *self, PyObject *key)
 {
@@ -3276,7 +3275,7 @@ static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
 
 
-static void
+NPY_NO_EXPORT void
 initialize_numeric_types(void)
 {
     PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
@@ -3431,7 +3430,7 @@ static PyTypeObject *typeobjects[] = {
     &PyVoidArrType_Type
 };
 
-static int
+NPY_NO_EXPORT int
 _typenum_fromtypeobj(PyObject *type, int user)
 {
     int typenum, i;

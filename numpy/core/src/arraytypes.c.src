@@ -1,5 +1,19 @@
 /* -*- c -*- */
+#define PY_SSIZE_T_CLEAN
+#include "Python.h"
+#include "structmember.h"
+
+#define _MULTIARRAYMODULE
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
+
+#include "numpy/npy_math.h"
+#include "arrayobject.h"
 #include "config.h"
+
+/* FIXME: this should be built separately */
+#include "numpyos.c"
 
 static double
 MyPyFloat_AsDouble(PyObject *obj)
@@ -2528,7 +2542,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_FastTakeFunc*)@from@_fasttake
 };
 
-static PyArray_Descr @from@_Descr = {
+NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
         &Py@NAME@ArrType_Type,
     PyArray_@kind@LTR,
@@ -2627,7 +2641,7 @@ PyArray_DescrFromType(int type)
 }
 
 
-static int
+NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict)
 {
     PyObject *infodict, *s;

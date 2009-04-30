@@ -1,4 +1,4 @@
-# Last Change: Fri Mar 13 01:00 PM 2009 J
+# Last Change: Wed Apr 22 07:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -252,10 +252,10 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 # Generate generated code
 #------------------------
-scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.inc.src'))
+scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.c.src'))
 umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs.inc.src'))
 umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.inc.src'))
-arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
+arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.c.src'))
 sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath_tests.c.src'))
@@ -282,7 +282,10 @@ env.Prepend(LIBPATH=["."])
 #-----------------
 # Build multiarray
 #-----------------
-multiarray_src = [pjoin('src', 'multiarraymodule.c')]
+multiarray_src = [pjoin('src', 'multiarraymodule.c'),
+    pjoin('src', 'hashdescr.c'), pjoin('src', 'arrayobject.c')]
+multiarray_src.extend(arraytypes_src)
+multiarray_src.extend(scalartypes_src)
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
 
 #------------------

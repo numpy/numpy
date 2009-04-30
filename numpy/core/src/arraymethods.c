@@ -1738,9 +1738,6 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-__New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-		  int variance, int num);
-static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis = MAX_DIMS;

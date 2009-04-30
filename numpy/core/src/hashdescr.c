@@ -1,6 +1,9 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
+
+#include "hashdescr.h"
 
 /*
  * How does this work ? The hash is computed from a list which contains all the

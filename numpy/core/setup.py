@@ -453,14 +453,10 @@ def configuration(parent_package='',top_path=None):
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
-    deps = [join('src','arrayobject.c'),
-            join('src','arraymethods.c'),
-            join('src','scalartypes.inc.src'),
+    deps = [join('src','arrayobject.h'),
             join('src','numpyos.c'),
-            join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
             join('src','ucsnarrow.c'),
-            join('src','hashdescr.c'),
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
             'include/numpy/fenv/fenv.h',
@@ -494,12 +490,14 @@ def configuration(parent_package='',top_path=None):
                                     generate_config_h,
                                     generate_numpyconfig_h,
                                     generate_numpy_api,
-                                    join('src','scalartypes.inc.src'),
-                                    join('src','arraytypes.inc.src'),
+                                    join('src','scalartypes.c.src'),
+                                    join('src','arraytypes.c.src'),
+                                    join('src', 'hashdescr.c'),
+                                    join('src','arrayobject.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
                                     ],
-                         depends = deps,
+                         depends = deps + [join('src', 'arraymethods.c')],
                          libraries=['npymath'],
                          )
 
@@ -509,8 +507,6 @@ def configuration(parent_package='',top_path=None):
                                     join('src','umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
-                                    join('src','scalartypes.inc.src'),
-                                    join('src','arraytypes.inc.src'),
                                     join('src','umath_funcs.inc.src'),
                                     join('src','umath_loops.inc.src'),
                                     ],

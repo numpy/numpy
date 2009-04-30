@@ -21,14 +21,21 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
+
+#include "numpy/npy_math.h"
 
 #define PyAO PyArrayObject
 
-#include "hashdescr.c"
+/* Internal APIs */
+#include "arrayobject.h"
+#include "hashdescr.h"
+
+NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
 {
     PyObject *dtypedescr;
@@ -102,7 +109,7 @@ _arraydescr_fromobj(PyObject *obj)
  * This file would just be the module calls.
  */
 
-#include "arrayobject.c"
+//#include "arrayobject.c"
 
 
 /* An Error object -- rarely used? */
@@ -965,7 +972,7 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     return __New_PyArray_Std(self, axis, rtype, out, variance, 0);
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 		  int variance, int num)
 {

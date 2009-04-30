@@ -14,9 +14,9 @@ __docformat__ = 'restructuredtext'
 # The files under src/ that are scanned for API functions
 API_FILES = ['arraymethods.c',
              'arrayobject.c',
-             'arraytypes.inc.src',
+             'arraytypes.c.src',
              'multiarraymodule.c',
-             'scalartypes.inc.src',
+             'scalartypes.c.src',
              'umath_ufunc_object.inc',
              'umath_loops.inc.src'
             ]

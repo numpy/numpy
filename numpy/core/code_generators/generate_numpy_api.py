@@ -17,6 +17,7 @@ typedef struct {
         npy_bool obval;
 } PyBoolScalarObject;
 
+extern NPY_NO_EXPORT int NPY_NUMUSERTYPES;
 
 NPY_NO_EXPORT unsigned int PyArray_GetNDArrayCVersion (void);
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -26,7 +27,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
-NPY_NO_EXPORT int NPY_NUMUSERTYPES=0;
 NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
