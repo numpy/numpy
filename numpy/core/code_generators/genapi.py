@@ -186,7 +186,7 @@ def find_functions(filename, tag='API'):
                     doclist.append(line)
             elif state == STATE_RETTYPE:
                 # first line of declaration with return type
-                m = re.match(r'static\s+(.*)$', line)
+                m = re.match(r'NPY_NO_EXPORT\s+(.*)$', line)
                 if m:
                     line = m.group(1)
                 return_type = line
@@ -260,7 +260,7 @@ def add_api_list(offset, APIname, api_list,
     """
     for k, func in enumerate(api_list):
         num = offset + k
-        astr = "static %s %s \\\n       (%s);" % \
+        astr = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
                (func.return_type, func.name, func.argtypes_string())
         module_list.append(astr)
         astr = "#define %s \\\n        (*(%s (*)(%s)) \\\n"\

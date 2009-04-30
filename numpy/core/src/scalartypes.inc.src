@@ -8,7 +8,7 @@
 #include "config.h"
 #include "numpyos.c"
 
-static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
+NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
@@ -24,7 +24,7 @@ static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
  * #NAME = Number, Integer, SignedInteger, UnsignedInteger, Inexact,
  *         Floating, ComplexFloating, Flexible, Character#
  */
-static PyTypeObject Py@NAME@ArrType_Type = {
+NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size*/
     "numpy.@name@",                              /* tp_name*/
@@ -214,7 +214,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
  * in case of flexible type, the data is not copied
  * into ctypeptr which is expected to be a pointer to pointer
  */
-static void
+NPY_NO_EXPORT void
 PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 {
     PyArray_Descr *typecode;
@@ -242,7 +242,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
  *
  * This may not work right on narrow builds for NumPy unicode scalars.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                           PyArray_Descr *outcode)
 {
@@ -287,7 +287,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 /*NUMPY_API
  * Cast Scalar to c-type
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
                          void *ctypeptr, int outtype)
 {
@@ -312,7 +312,7 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
  *
  * steals reference to outcode
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
     PyArray_Descr *typecode;
@@ -391,7 +391,7 @@ finish:
  * Returns NULL if unsuccessful but error is only set if another error occurred.
  * Currently only Numeric-like object supported.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ScalarFromObject(PyObject *object)
 {
     PyObject *ret=NULL;
@@ -2154,7 +2154,7 @@ static PyBufferProcs gentype_as_buffer = {
 #define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES
 #define LEAFFLAGS  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES
 
-static PyTypeObject PyGenericArrType_Type = {
+NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size*/
     "numpy.generic",                             /* tp_name*/
@@ -2476,7 +2476,7 @@ bool_index(PyObject *a)
 #endif
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
-static PyNumberMethods bool_arrtype_as_number = {
+NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     0,                                           /* nb_add */
     0,                                           /* nb_subtract */
     0,                                           /* nb_multiply */
@@ -2916,7 +2916,7 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
     return PyObject_Call(obj->obval, args, kwds);
 }
 
-static PyTypeObject PyObjectArrType_Type = {
+NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size*/
     "numpy.object_",                             /* tp_name*/
@@ -3027,7 +3027,7 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
  * #NAME = Bool, String, Unicode, Void#
  * #ex = _,_,_,#
  */
-static PyTypeObject Py@NAME@ArrType_Type = {
+NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size*/
     "numpy.@name@@ex@",                          /* tp_name*/
@@ -3109,7 +3109,7 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 #elif BITSOF_@CNAME@ == 256
 #define _THIS_SIZE "256"
 #endif
-static PyTypeObject Py@NAME@ArrType_Type = {
+NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size*/
     "numpy.@name@" _THIS_SIZE,                   /* tp_name*/
@@ -3208,7 +3208,7 @@ static PyMappingMethods gentype_as_mapping = {
 
 #define _THIS_DOC "Composed of two " _THIS_SIZE2 " bit floats"
 
-    static PyTypeObject Py@NAME@ArrType_Type = {
+    NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size*/
     "numpy.@name@" _THIS_SIZE1,                  /* tp_name*/
@@ -3475,7 +3475,7 @@ _descr_from_subtype(PyObject *type)
 /*New reference */
 /*NUMPY_API
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromTypeObject(PyObject *type)
 {
     int typenum;
@@ -3546,7 +3546,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 /*NUMPY_API
  * Return the tuple of ordered field names from a dictionary.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FieldNames(PyObject *fields)
 {
     PyObject *tup;
@@ -3578,7 +3578,7 @@ PyArray_FieldNames(PyObject *fields)
  *
  * New reference
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromScalar(PyObject *sc)
 {
     int type_num;
@@ -3625,7 +3625,7 @@ PyArray_DescrFromScalar(PyObject *sc)
  *
  * New reference
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_TypeObjectFromType(int type)
 {
     PyArray_Descr *descr;

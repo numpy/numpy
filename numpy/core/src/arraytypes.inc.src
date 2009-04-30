@@ -550,7 +550,7 @@ fail:
 
 
 
-static int PyArray_CopyObject(PyArrayObject *, PyObject *);
+NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
 
 static int
 VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
@@ -2575,7 +2575,7 @@ static PyArray_Descr *_builtin_descrs[] = {
 /*NUMPY_API
  Get the PyArray_Descr structure for a type.
 */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromType(int type)
 {
     PyArray_Descr *ret = NULL;

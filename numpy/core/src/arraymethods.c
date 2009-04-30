@@ -259,7 +259,7 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 /*NUMPY_API
   Get a subset of bytes from each element of the array
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
     PyObject *ret = NULL;
@@ -310,7 +310,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 /*NUMPY_API
   Set a subset of bytes from each element of the array
 */
-static int
+NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
                  int offset, PyObject *val)
 {
@@ -367,7 +367,7 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
  */
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 {
     PyArrayObject *ret;
@@ -1449,7 +1449,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 }
 
 /*NUMPY_API*/
-static int
+NPY_NO_EXPORT int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
     PyObject *cpick = NULL;
@@ -1482,7 +1482,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 }
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
     PyObject *cpick = NULL;

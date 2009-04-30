@@ -111,7 +111,7 @@ static PyObject *MultiArrayError;
 /*NUMPY_API
  * Multiply a List of ints
  */
-static int
+NPY_NO_EXPORT int
 PyArray_MultiplyIntList(int *l1, int n)
 {
     int s = 1;
@@ -125,7 +125,7 @@ PyArray_MultiplyIntList(int *l1, int n)
 /*NUMPY_API
  * Multiply a List
  */
-static intp
+NPY_NO_EXPORT intp
 PyArray_MultiplyList(intp *l1, int n)
 {
     intp s = 1;
@@ -139,7 +139,7 @@ PyArray_MultiplyList(intp *l1, int n)
 /*NUMPY_API
  * Multiply a List of Non-negative numbers with over-flow detection.
  */
-static intp
+NPY_NO_EXPORT intp
 PyArray_OverflowMultiplyList(intp *l1, int n)
 {
     intp prod = 1;
@@ -164,7 +164,7 @@ PyArray_OverflowMultiplyList(intp *l1, int n)
 /*NUMPY_API
  * Produce a pointer into array
  */
-static void *
+NPY_NO_EXPORT void *
 PyArray_GetPtr(PyArrayObject *obj, intp* ind)
 {
     int n = obj->nd;
@@ -180,7 +180,7 @@ PyArray_GetPtr(PyArrayObject *obj, intp* ind)
 /*NUMPY_API
  * Get axis from an object (possibly None) -- a converter function,
  */
-static int
+NPY_NO_EXPORT int
 PyArray_AxisConverter(PyObject *obj, int *axis)
 {
     if (obj == Py_None) {
@@ -198,7 +198,7 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
 /*NUMPY_API
  * Compare Lists
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CompareLists(intp *l1, intp *l2, int n)
 {
     int i;
@@ -215,7 +215,7 @@ PyArray_CompareLists(intp *l1, intp *l2, int n)
  * View
  * steals a reference to type -- accepts NULL
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
     PyObject *new = NULL;
@@ -257,7 +257,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
  * Ravel
  * Returns a contiguous array
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Ravel(PyArrayObject *a, NPY_ORDER fortran)
 {
     PyArray_Dims newdim = {NULL,1};
@@ -298,7 +298,7 @@ power_of_ten(int n)
 /*NUMPY_API
  * Round
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
 {
     PyObject *f, *ret = NULL, *tmp, *op1, *op2;
@@ -457,7 +457,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
 /*NUMPY_API
  * Flatten
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 {
     PyObject *ret;
@@ -491,7 +491,7 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 /*NUMPY_API
  * Reshape
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Reshape(PyArrayObject *self, PyObject *shape)
 {
     PyObject *ret;
@@ -723,7 +723,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 /*NUMPY_API
  * New shape for an array
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                  NPY_ORDER fortran)
 {
@@ -881,7 +881,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
  * dimensions squeezed out if needed, otherwise
  * return the same array.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Squeeze(PyArrayObject *self)
 {
     int nd = self->nd;
@@ -925,7 +925,7 @@ PyArray_Squeeze(PyArrayObject *self)
 /*NUMPY_API
  * Mean
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Mean(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 {
     PyObject *obj1 = NULL, *obj2 = NULL;
@@ -958,7 +958,7 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
  * Set variance to 1 to by-pass square-root calculation and return variance
  * Std
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 	    int variance)
 {
@@ -1114,7 +1114,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 /*NUMPY_API
  *Sum
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Sum(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 {
     PyObject *new, *ret;
@@ -1131,7 +1131,7 @@ PyArray_Sum(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 /*NUMPY_API
  * Prod
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Prod(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 {
     PyObject *new, *ret;
@@ -1148,7 +1148,7 @@ PyArray_Prod(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 /*NUMPY_API
  *CumSum
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_CumSum(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 {
     PyObject *new, *ret;
@@ -1165,7 +1165,7 @@ PyArray_CumSum(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 /*NUMPY_API
  * CumProd
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_CumProd(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 {
     PyObject *new, *ret;
@@ -1184,7 +1184,7 @@ PyArray_CumProd(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 /*NUMPY_API
  * Any
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Any(PyArrayObject *self, int axis, PyArrayObject *out)
 {
     PyObject *new, *ret;
@@ -1202,7 +1202,7 @@ PyArray_Any(PyArrayObject *self, int axis, PyArrayObject *out)
 /*NUMPY_API
  * All
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_All(PyArrayObject *self, int axis, PyArrayObject *out)
 {
     PyObject *new, *ret;
@@ -1221,7 +1221,7 @@ PyArray_All(PyArrayObject *self, int axis, PyArrayObject *out)
 /*NUMPY_API
  * Compress
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
                  PyArrayObject *out)
 {
@@ -1253,7 +1253,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 /*NUMPY_API
  * Nonzero
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
     int n = self->nd, j;
@@ -1367,7 +1367,7 @@ _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObjec
 /*NUMPY_API
  * Clip
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
     PyArray_FastClipFunc *func;
@@ -1630,7 +1630,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 /*NUMPY_API
  * Conjugate
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
     if (PyArray_ISCOMPLEX(self)) {
@@ -1663,7 +1663,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 /*NUMPY_API
  * Trace
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Trace(PyArrayObject *self, int offset, int axis1, int axis2,
               int rtype, PyArrayObject *out)
 {
@@ -1681,7 +1681,7 @@ PyArray_Trace(PyArrayObject *self, int offset, int axis1, int axis2,
 /*NUMPY_API
  * Diagonal
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
     int n = self->nd;
@@ -1833,7 +1833,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
  * Simulate a C-array
  * steals a reference to typedescr -- can be NULL
  */
-static int
+NPY_NO_EXPORT int
 PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
                  PyArray_Descr* typedescr)
 {
@@ -1896,7 +1896,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 /*NUMPY_API
  * Convert to a 1D C-array
  */
-static int
+NPY_NO_EXPORT int
 PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 {
     intp newd1;
@@ -1917,7 +1917,7 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 /*NUMPY_API
  * Convert to a 2D C-array
  */
-static int
+NPY_NO_EXPORT int
 PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 {
     intp newdims[2];
@@ -1941,7 +1941,7 @@ PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 /*NUMPY_API
  * Free pointers created if As2D is called
  */
-static int
+NPY_NO_EXPORT int
 PyArray_Free(PyObject *op, void *ptr)
 {
     PyArrayObject *ap = (PyArrayObject *)op;
@@ -2005,7 +2005,7 @@ _swap_and_concat(PyObject *op, int axis, int n)
  * multidimensional array. If axis is MAX_DIMS or bigger, then
  * each sequence object will be flattened before concatenation
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Concatenate(PyObject *op, int axis)
 {
     PyArrayObject *ret, **mps;
@@ -2127,7 +2127,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 /*NUMPY_API
  * SwapAxes
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 {
     PyArray_Dims new_axes;
@@ -2184,7 +2184,7 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 /*NUMPY_API
  * Return Transpose.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 {
     intp *axes, axis;
@@ -2261,7 +2261,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 /*NUMPY_API
  * Repeat the array.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 {
     intp *counts;
@@ -2388,7 +2388,7 @@ _signbit_set(PyArrayObject *arr)
 /*NUMPY_API
  * ScalarKind
  */
-static NPY_SCALARKIND
+NPY_NO_EXPORT NPY_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 {
     if (PyTypeNum_ISSIGNED(typenum)) {
@@ -2429,7 +2429,7 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 }
 
 /*NUMPY_API*/
-static int
+NPY_NO_EXPORT int
 PyArray_CanCoerceScalar(int thistype, int neededtype,
                         NPY_SCALARKIND scalar)
 {
@@ -2479,7 +2479,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
 /* Raises error when len(op) == 0 */
 
 /*NUMPY_API*/
-static PyArrayObject **
+NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
     int i, n, allscalars = 0;
@@ -2604,7 +2604,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
 /*NUMPY_API
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
                NPY_CLIPMODE clipmode)
 {
@@ -2974,7 +2974,7 @@ qsortCompare (const void *a, const void *b)
 /*NUMPY_API
  * Sort an array in-place
  */
-static int
+NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayObject *ap = NULL, *store_arr = NULL;
@@ -3064,7 +3064,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
 /*NUMPY_API
  * ArgSort an array
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayObject *ap = NULL, *ret = NULL, *store, *op2;
@@ -3162,7 +3162,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
  *Returns an index array that shows the indexes for the lexicographic sort along
  *the given axis.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_LexSort(PyObject *sort_keys, int axis)
 {
     PyArrayObject **mps;
@@ -3459,7 +3459,7 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
 /*NUMPY_API
  * Convert object to searchsorted side
  */
-static int
+NPY_NO_EXPORT int
 PyArray_SearchsideConverter(PyObject *obj, void *addr)
 {
     NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)addr;
@@ -3489,7 +3489,7 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
 /*NUMPY_API
  * Numeric.searchsorted(a,v)
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
 {
     PyArrayObject *ap1 = NULL;
@@ -3586,7 +3586,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
 /*NUMPY_API
  * Numeric.innerproduct(a,v)
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
@@ -3694,7 +3694,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
  *Numeric.matrixproduct(a,v)
  * just like inner product but does the swapaxes stuff on the fly
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
@@ -3824,7 +3824,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 /*NUMPY_API
  * Fast Copy and Transpose
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_CopyAndTranspose(PyObject *op)
 {
     PyObject *ret, *arr;
@@ -3889,7 +3889,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 /*NUMPY_API
  * Numeric.correlate(a1,a2,mode)
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
@@ -4008,7 +4008,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 /*NUMPY_API
  * ArgMin
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ArgMin(PyArrayObject *ap, int axis, PyArrayObject *out)
 {
     PyObject *obj, *new, *ret;
@@ -4040,7 +4040,7 @@ PyArray_ArgMin(PyArrayObject *ap, int axis, PyArrayObject *out)
 /*NUMPY_API
  * Max
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Max(PyArrayObject *ap, int axis, PyArrayObject *out)
 {
     PyArrayObject *arr;
@@ -4058,7 +4058,7 @@ PyArray_Max(PyArrayObject *ap, int axis, PyArrayObject *out)
 /*NUMPY_API
  * Min
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Min(PyArrayObject *ap, int axis, PyArrayObject *out)
 {
     PyArrayObject *arr;
@@ -4076,7 +4076,7 @@ PyArray_Min(PyArrayObject *ap, int axis, PyArrayObject *out)
 /*NUMPY_API
  * Ptp
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Ptp(PyArrayObject *ap, int axis, PyArrayObject *out)
 {
     PyArrayObject *arr;
@@ -4116,7 +4116,7 @@ PyArray_Ptp(PyArrayObject *ap, int axis, PyArrayObject *out)
 /*NUMPY_API
  * ArgMax
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
@@ -4233,7 +4233,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 /*NUMPY_API
  * Take
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *ret, NPY_CLIPMODE clipmode)
 {
@@ -4414,7 +4414,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 /*NUMPY_API
  * Put values into an array
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
@@ -4608,7 +4608,7 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 /*NUMPY_API
  * Put values into an array according to a mask.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
     PyArray_FastPutmaskFunc *func;
@@ -4722,7 +4722,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
  * If you use PyArray_Converter, you must DECREF the array when finished
  * as you get a new reference to it.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_Converter(PyObject *object, PyObject **address)
 {
     if (PyArray_Check(object)) {
@@ -4743,7 +4743,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
  * Useful to pass as converter function for O& processing in
  * PyArgs_ParseTuple for output arrays
  */
-static int
+NPY_NO_EXPORT int
 PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 {
     if (object == NULL || object == Py_None) {
@@ -4766,7 +4766,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 /*NUMPY_API
  * Convert an object to true / false
  */
-static int
+NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, Bool *val)
 {
     if (PyObject_IsTrue(object)) {
@@ -4784,7 +4784,7 @@ PyArray_BoolConverter(PyObject *object, Bool *val)
 /*NUMPY_API
  * Convert an object to FORTRAN / C / ANY
  */
-static int
+NPY_NO_EXPORT int
 PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 {
     char *str;
@@ -4826,7 +4826,7 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 /*NUMPY_API
  * Convert an object to NPY_RAISE / NPY_CLIP / NPY_WRAP
  */
-static int
+NPY_NO_EXPORT int
 PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
 {
     if (object == NULL || object == Py_None) {
@@ -4876,7 +4876,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
 /*NUMPY_API
  * Typestr converter
  */
-static int
+NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
     int newtype = gentype;
@@ -5006,7 +5006,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
  * You only get a borrowed reference to the object. Do not free the
  * memory...
  */
-static int
+NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
     Py_ssize_t buflen;
@@ -5048,7 +5048,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
  * Remember to free the pointer seq.ptr when done using
  * PyDimMem_FREE(seq.ptr)**
  */
-static int
+NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
     int len;
@@ -5763,7 +5763,7 @@ _check_for_commastring(char *type, int len)
  * The .fields attribute must return a convertible dictionary if present.
  * Result inherits from PyArray_VOID.
 */
-static int
+NPY_NO_EXPORT int
 PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
 {
     if PyDict_Check(obj) {
@@ -5792,7 +5792,7 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
  * Get type-descriptor from an object forcing alignment if possible
  * None goes to NULL.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
 {
     if PyDict_Check(obj) {
@@ -5821,7 +5821,7 @@ PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
 /*NUMPY_API
  * Get typenum from an object -- None goes to NULL
  */
-static int
+NPY_NO_EXPORT int
 PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 {
     if (obj == Py_None) {
@@ -5845,7 +5845,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
  * Type-descriptor objects that are used throughout numpy.
  * new reference in *at
  */
-static int
+NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
     char *type;
@@ -6057,7 +6057,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 /*NUMPY_API
  * Convert object to endian
  */
-static int
+NPY_NO_EXPORT int
 PyArray_ByteorderConverter(PyObject *obj, char *endian)
 {
     char *str;
@@ -6103,7 +6103,7 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
 /*NUMPY_API
  * Convert object to sort kind
  */
-static int
+NPY_NO_EXPORT int
 PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
 {
     char *str;
@@ -6169,7 +6169,7 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
  * This function returns true if the two typecodes are
  * equivalent (same basic kind and same itemsize).
  */
-static unsigned char
+NPY_NO_EXPORT unsigned char
 PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 {
     int typenum1 = typ1->type_num;
@@ -6192,7 +6192,7 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 }
 
 /*NUMPY_API*/
-static unsigned char
+NPY_NO_EXPORT unsigned char
 PyArray_EquivTypenums(int typenum1, int typenum2)
 {
     PyArray_Descr *d1, *d2;
@@ -6355,7 +6355,7 @@ clean_type:
  * accepts NULL type
  * steals referenct to type
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
     PyArrayObject *ret;
@@ -6487,7 +6487,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
  * steal a reference
  * accepts NULL type
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
     PyArrayObject *ret;
@@ -6837,7 +6837,7 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
  * the separator matches any length of whitespace in the text, and a match
  * for whitespace around the separator is added.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
                    intp num, char *sep)
 {
@@ -7008,7 +7008,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, intp num, size_t *nread)
  * For memory-mapped files, use the buffer interface. No more data than
  * necessary is read by this routine.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
 {
     PyArrayObject *ret;
@@ -7112,7 +7112,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
  *
  * steals a reference to dtype (which cannot be NULL)
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
 {
     PyObject *value;
@@ -7231,7 +7231,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
                    intp count, intp offset)
 {
@@ -7432,7 +7432,7 @@ static int _safe_ceil_to_intp(double value, intp* ret)
 /*NUMPY_API
   Arange,
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Arange(double start, double stop, double step, int type_num)
 {
     intp length;
@@ -7574,7 +7574,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
  *
  * this doesn't change the references
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr *dtype)
 {
     PyObject *range;
@@ -7725,7 +7725,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
  * Included at the very first so not auto-grabbed and thus not
  * labeled.
  */
-static unsigned int
+NPY_NO_EXPORT unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
     return (unsigned int)NPY_VERSION;
@@ -7744,7 +7744,7 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
 
 /*NUMPY_API
 */
-static int
+NPY_NO_EXPORT int
 PyArray_GetEndianness(void)
 {
     const union {
@@ -7848,7 +7848,7 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), P
 /*NUMPY_API
  * Where
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {
     PyArrayObject *arr;
@@ -8180,7 +8180,7 @@ SIGJMP_BUF _NPY_SIGINT_BUF;
 
 /*NUMPY_API
  */
-static void
+NPY_NO_EXPORT void
 _PyArray_SigintHandler(int signum)
 {
     PyOS_setsig(signum, SIG_IGN);
@@ -8189,7 +8189,7 @@ _PyArray_SigintHandler(int signum)
 
 /*NUMPY_API
  */
-static void*
+NPY_NO_EXPORT void*
 _PyArray_GetSigintBuf(void)
 {
     return (void *)&_NPY_SIGINT_BUF;

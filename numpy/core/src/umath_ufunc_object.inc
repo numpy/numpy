@@ -122,7 +122,7 @@ fail:
 
 
 /*UFUNC_API*/
-static int
+NPY_NO_EXPORT int
 PyUFunc_getfperr(void)
 {
     int retstatus;
@@ -139,7 +139,7 @@ PyUFunc_getfperr(void)
         }}
 
 /*UFUNC_API*/
-static int
+NPY_NO_EXPORT int
 PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 {
     int handle;
@@ -156,7 +156,7 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 
 
 /*UFUNC_API*/
-static int
+NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
     int retstatus;
@@ -169,7 +169,7 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 
 /* Checking the status flag clears it */
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_clearfperr()
 {
     PyUFunc_getfperr();
@@ -627,7 +627,7 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 
 
 /*UFUNC_API*/
-static int
+NPY_NO_EXPORT int
 PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
     PyObject *thedict;
@@ -1827,7 +1827,7 @@ fail:
  * and an array of (pointers to) PyArrayObjects which are NULL.  The
  * arguments are parsed and placed in mps in construct_loop (construct_arrays)
  */
-static int
+NPY_NO_EXPORT int
 PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
                         PyArrayObject **mps)
 {
@@ -3572,7 +3572,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 }
 
 /*UFUNC_API*/
-static int
+NPY_NO_EXPORT int
 PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
                                PyUFuncGenericFunction newfunc,
                                int *signature,
@@ -3601,7 +3601,7 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
 }
 
 /*UFUNC_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
                         char *types, int ntypes,
                         int nin, int nout, int identity,
@@ -3612,7 +3612,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 }
 
 /*UFUNC_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      char *types, int ntypes,
                                      int nin, int nout, int identity,
@@ -3723,7 +3723,7 @@ _loop1d_list_free(void *ptr)
 
 
 /*UFUNC_API*/
-static int
+NPY_NO_EXPORT int
 PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
                             int usertype,
                             PyUFuncGenericFunction function,

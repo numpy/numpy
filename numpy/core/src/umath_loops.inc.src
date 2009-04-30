@@ -55,7 +55,7 @@ typedef longdouble longdoubleBinaryFunc(longdouble x, longdouble y);
 
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
 {
     floatUnaryFunc *f = (floatUnaryFunc *)func;
@@ -66,7 +66,7 @@ PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 {
     doubleUnaryFunc *f = (doubleUnaryFunc *)func;
@@ -77,7 +77,7 @@ PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 {
     floatBinaryFunc *f = (floatBinaryFunc *)func;
@@ -89,7 +89,7 @@ PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
     doubleBinaryFunc *f = (doubleBinaryFunc *)func;
@@ -101,7 +101,7 @@ PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 {
     doubleUnaryFunc *f = (doubleUnaryFunc *)func;
@@ -112,7 +112,7 @@ PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
     doubleBinaryFunc *f = (doubleBinaryFunc *)func;
@@ -124,7 +124,7 @@ PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 {
     longdoubleUnaryFunc *f = (longdoubleUnaryFunc *)func;
@@ -135,7 +135,7 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 {
     longdoubleBinaryFunc *f = (longdoubleBinaryFunc *)func;
@@ -162,7 +162,7 @@ typedef void clongdoubleBinaryFunc(clongdouble *x, clongdouble *y,
                                    clongdouble *r);
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
 {
     cfloatUnaryFunc *f = (cfloatUnaryFunc *)func;
@@ -174,7 +174,7 @@ PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 {
     cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
@@ -189,7 +189,7 @@ PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
 {
     cfloatBinaryFunc *f = (cfloatBinaryFunc *)func;
@@ -202,7 +202,7 @@ PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
     cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
@@ -219,7 +219,7 @@ PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
 {
     cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
@@ -231,7 +231,7 @@ PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
     cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
@@ -244,7 +244,7 @@ PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
 {
     clongdoubleUnaryFunc *f = (clongdoubleUnaryFunc *)func;
@@ -256,7 +256,7 @@ PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
 {
     clongdoubleBinaryFunc *f = (clongdoubleBinaryFunc *)func;
@@ -274,7 +274,7 @@ PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
  *****************************************************************************/
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
 {
     unaryfunc f = (unaryfunc)func;
@@ -291,7 +291,7 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 {
     char *meth = (char *)func;
@@ -308,7 +308,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 {
     binaryfunc f = (binaryfunc)func;
@@ -326,7 +326,7 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
 {
     char *meth = (char *)func;
@@ -349,7 +349,7 @@ PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
  */
 
 /*UFUNC_API*/
-static void
+NPY_NO_EXPORT void
 PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 {
     intp n =  dimensions[0];

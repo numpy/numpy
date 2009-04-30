@@ -25,7 +25,7 @@ maintainer email:  oliphant.travis@ieee.org
 /*NUMPY_API
  * Get Priority from object
  */
-static double
+NPY_NO_EXPORT double
 PyArray_GetPriority(PyObject *obj, double default_)
 {
     PyObject *ret;
@@ -74,7 +74,7 @@ The memory for the ptr still must be freed in any case;
 /*NUMPY_API
   Get pointer to zero of correct type for array.
 */
-static char *
+NPY_NO_EXPORT char *
 PyArray_Zero(PyArrayObject *arr)
 {
     char *zeroval;
@@ -111,7 +111,7 @@ PyArray_Zero(PyArrayObject *arr)
 /*NUMPY_API
   Get pointer to one of correct type for array
 */
-static char *
+NPY_NO_EXPORT char *
 PyArray_One(PyArrayObject *arr)
 {
     char *oneval;
@@ -149,14 +149,14 @@ PyArray_One(PyArrayObject *arr)
 /* End deprecated */
 
 
-static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
+NPY_NO_EXPORT PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
                              int, intp *, void *, int, int, PyObject *);
 
 
 /* Incref all objects found at this record */
 /*NUMPY_API
  */
-static void
+NPY_NO_EXPORT void
 PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
 {
     PyObject **temp;
@@ -191,7 +191,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
 /* XDECREF all objects found at this record */
 /*NUMPY_API
  */
-static void
+NPY_NO_EXPORT void
 PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
 {
     PyObject **temp;
@@ -231,7 +231,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
 /*NUMPY_API
   For object arrays, increment all internal references.
 */
-static int
+NPY_NO_EXPORT int
 PyArray_INCREF(PyArrayObject *mp)
 {
     intp i, n;
@@ -288,7 +288,7 @@ PyArray_INCREF(PyArrayObject *mp)
   Decrement all internal references for object arrays.
   (or arrays with object fields)
 */
-static int
+NPY_NO_EXPORT int
 PyArray_XDECREF(PyArrayObject *mp)
 {
     intp i, n;
@@ -550,7 +550,7 @@ static PyArray_Descr **userdescrs=NULL;
 /* Helper functions */
 
 /*NUMPY_API*/
-static intp
+NPY_NO_EXPORT intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
     longlong long_value = -1;
@@ -649,7 +649,7 @@ PyArray_PyIntAsIntp(PyObject *o)
 static PyObject *array_int(PyArrayObject *v);
 
 /*NUMPY_API*/
-static int
+NPY_NO_EXPORT int
 PyArray_PyIntAsInt(PyObject *o)
 {
     long long_value = -1;
@@ -761,7 +761,7 @@ index2ptr(PyArrayObject *mp, intp i)
 /*NUMPY_API
   Compute the size of an array (in number of items)
 */
-static intp
+NPY_NO_EXPORT intp
 PyArray_Size(PyObject *op)
 {
     if (PyArray_Check(op)) {
@@ -1155,7 +1155,7 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
  * Does not require src and dest to have "broadcastable" shapes
  * (only the same number of elements).
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 {
     int elsize, simple;
@@ -1232,7 +1232,7 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 /*NUMPY_API
  * Copy an Array into another array -- memory must not overlap.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 {
     return _array_copy_into(dest, src, 1);
@@ -1242,7 +1242,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 /*NUMPY_API
  * Move the memory of one array into another.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_MoveInto(PyArrayObject *dest, PyArrayObject *src)
 {
     return _array_copy_into(dest, src, 0);
@@ -1250,7 +1250,7 @@ PyArray_MoveInto(PyArrayObject *dest, PyArrayObject *src)
 
 
 /*NUMPY_API*/
-static int
+NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
     PyArrayObject *src;
@@ -1315,7 +1315,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
   Like FromDimsAndData but uses the Descr structure instead of typecode
   as input.
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d,
                                 PyArray_Descr *descr,
                                 char *data)
@@ -1343,7 +1343,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 /*NUMPY_API
   Construct an empty array from dimensions and typenum
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromDims(int nd, int *d, int type)
 {
     PyObject *ret;
@@ -1372,7 +1372,7 @@ PyArray_FromDims(int nd, int *d, int type)
 /*NUMPY_API
   Copy an array.
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
 {
     PyArrayObject *ret;
@@ -1404,7 +1404,7 @@ static PyObject *array_big_item(PyArrayObject *, intp);
 /*NUMPY_API
   Get scalar-equivalent to a region of memory described by a descriptor.
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 {
     PyTypeObject *type;
@@ -1570,7 +1570,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
   Return either an array or the appropriate Python object if the array
   is 0d and matches a Python type.
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Return(PyArrayObject *mp)
 {
 
@@ -1599,7 +1599,7 @@ PyArray_Return(PyArrayObject *mp)
 /*NUMPY_API
   Initialize arrfuncs to NULL
 */
-static void
+NPY_NO_EXPORT void
 PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
 {
     int i;
@@ -1669,7 +1669,7 @@ _default_copyswapn(void *dst, npy_intp dstride, void *src,
 
 /*NUMPY_API
  */
-static int
+NPY_NO_EXPORT int
 PyArray_TypeNumFromName(char *str)
 {
     int i;
@@ -1693,7 +1693,7 @@ PyArray_TypeNumFromName(char *str)
   Register Data type
   Does not change the reference count of descr
 */
-static int
+NPY_NO_EXPORT int
 PyArray_RegisterDataType(PyArray_Descr *descr)
 {
     PyArray_Descr *descr2;
@@ -1746,7 +1746,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
   Register Casting Function
   Replaces any function currently stored.
 */
-static int
+NPY_NO_EXPORT int
 PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
                          PyArray_VectorUnaryFunc *castfunc)
 {
@@ -1801,7 +1801,7 @@ _append_new(int *types, int insert)
  * Register a type number indicating that a descriptor can be cast
  * to it safely
  */
-static int
+NPY_NO_EXPORT int
 PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
                         NPY_SCALARKIND scalar)
 {
@@ -1849,7 +1849,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
 /*NUMPY_API
   To File
 */
-static int
+NPY_NO_EXPORT int
 PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 {
     intp size;
@@ -1988,7 +1988,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 /*NUMPY_API
  * To List
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ToList(PyArrayObject *self)
 {
     PyObject *lp;
@@ -2021,7 +2021,7 @@ PyArray_ToList(PyArrayObject *self)
 }
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
     intp numbytes;
@@ -3537,7 +3537,7 @@ static NumericOps n_ops; /* NB: static objects initialized to zero */
 /*NUMPY_API
   Set internal structure with number functions that all arrays will use
 */
-int
+NPY_NO_EXPORT int
 PyArray_SetNumericOps(PyObject *dict)
 {
     PyObject *temp = NULL;
@@ -3585,7 +3585,7 @@ PyArray_SetNumericOps(PyObject *dict)
 /*NUMPY_API
   Get dictionary showing number functions that all arrays will use
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GetNumericOps(void)
 {
     PyObject *dict;
@@ -4565,7 +4565,7 @@ static PyObject *PyArray_ReprFunction = NULL;
 /*NUMPY_API
  * Set the array print function to be a Python function.
  */
-static void
+NPY_NO_EXPORT void
 PyArray_SetStringFunction(PyObject *op, int repr)
 {
     if (repr) {
@@ -4622,7 +4622,7 @@ array_str(PyArrayObject *self)
 
 /*NUMPY_API
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 {
     PyArray_UCS4 c1, c2;
@@ -4638,7 +4638,7 @@ PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 
 /*NUMPY_API
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CompareString(char *s1, char *s2, size_t len)
 {
     const unsigned char *c1 = (unsigned char *)s1;
@@ -5270,7 +5270,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 /*NUMPY_API
   PyArray_CheckAxis
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {
     PyObject *temp1, *temp2;
@@ -5330,7 +5330,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 /*NUMPY_API
   PyArray_IntTupleFromIntp
 */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_IntTupleFromIntp(int len, intp *vals)
 {
     int i;
@@ -5362,7 +5362,7 @@ PyArray_IntTupleFromIntp(int len, intp *vals)
  * Returns the number of dimensions or -1 if an error occurred.
  * vals must be large enough to hold maxvals
  */
-static int
+NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 {
     int nd, i;
@@ -5573,7 +5573,7 @@ _IsWriteable(PyArrayObject *ap)
 
 /*NUMPY_API
  */
-static int
+NPY_NO_EXPORT int
 PyArray_ElementStrides(PyObject *arr)
 {
     int itemsize = PyArray_ITEMSIZE(arr);
@@ -5591,7 +5591,7 @@ PyArray_ElementStrides(PyObject *arr)
 /*NUMPY_API
  * Update Several Flags at once.
  */
-static void
+NPY_NO_EXPORT void
 PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 {
 
@@ -5658,7 +5658,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  */
 
 /*NUMPY_API*/
-static Bool
+NPY_NO_EXPORT Bool
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
                      intp *dims, intp *newstrides)
 {
@@ -5737,7 +5737,7 @@ _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
 /*NUMPY_API
  * Generic new array creation routine.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
             intp *strides, void *data, int itemsize, int flags,
             PyObject *obj)
@@ -5846,7 +5846,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
  *
  * steals a reference to descr (even on failure)
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                      intp *dims, intp *strides, void *data,
                      int flags, PyObject *obj)
@@ -6113,7 +6113,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  * not checked and assumed to be 1.  You still must own this data and have no
  * weak-references and no base object.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                NPY_ORDER fortran)
 {
@@ -6289,7 +6289,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 /*NUMPY_API
  * Assumes contiguous
  */
-static void
+NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
     intp i,n;
@@ -6321,7 +6321,7 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 }
 
 /*NUMPY_API*/
-static int
+NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
     PyObject *newarr;
@@ -7429,7 +7429,7 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 }
 
 
-static PyTypeObject PyArray_Type = {
+NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size */
     "numpy.ndarray",                             /* tp_name */
@@ -8261,7 +8261,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 /*NUMPY_API
  * Is the typenum valid?
  */
-static int
+NPY_NO_EXPORT int
 PyArray_ValidType(int type)
 {
     PyArray_Descr *descr;
@@ -8281,7 +8281,7 @@ PyArray_ValidType(int type)
  * Cast an array using typecode structure.
  * steals reference to at --- cannot be NULL
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 {
     PyObject *out;
@@ -8343,7 +8343,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
  * output type_number (must be a registered data-type).
  * Returns NULL if un-successful.
  */
-static PyArray_VectorUnaryFunc *
+NPY_NO_EXPORT PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 {
     PyArray_VectorUnaryFunc *castfunc = NULL;
@@ -8541,7 +8541,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 /*NUMPY_API
  * Cast to an already created array.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 {
     int simple;
@@ -8711,7 +8711,7 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in,
  * Cast to an already created array.  Arrays don't have to be "broadcastable"
  * Only requirement is they have the same number of elements.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
 {
     int simple;
@@ -8757,7 +8757,7 @@ PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
 /*NUMPY_API
  * steals reference to newtype --- acc. NULL
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 {
 
@@ -9055,7 +9055,7 @@ _array_typedescr_fromstr(char *str)
 }
 
 /*NUMPY_API */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromStructInterface(PyObject *input)
 {
     PyArray_Descr *thetype = NULL;
@@ -9116,7 +9116,7 @@ PyArray_FromStructInterface(PyObject *input)
 #define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *input)
 {
     PyObject *attr = NULL, *item = NULL;
@@ -9293,7 +9293,7 @@ PyArray_FromInterface(PyObject *input)
 }
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 {
     PyObject *new;
@@ -9346,7 +9346,7 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
  * Does not check for ENSURECOPY and NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context)
 {
@@ -9476,7 +9476,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 /*NUMPY_API
 * new reference -- accepts NULL for mintype
 */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 {
     return _array_find_type(op, mintype, MAX_DIMS);
@@ -9485,7 +9485,7 @@ PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 /*NUMPY_API
  * Return the typecode of the array a Python object would be converted to
  */
-static int
+NPY_NO_EXPORT int
 PyArray_ObjectType(PyObject *op, int minimum_type)
 {
     PyArray_Descr *intype;
@@ -9548,7 +9548,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 /*NUMPY_API
  * steals a reference to descr -- accepts NULL
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
@@ -9588,7 +9588,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
  * Because it decrefs op if any conversion needs to take place
  * so it can be used like PyArray_EnsureArray(some_function(...))
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_EnsureArray(PyObject *op)
 {
     PyObject *new;
@@ -9615,7 +9615,7 @@ PyArray_EnsureArray(PyObject *op)
 }
 
 /*NUMPY_API*/
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_EnsureAnyArray(PyObject *op)
 {
     if (op && PyArray_Check(op)) {
@@ -9627,7 +9627,7 @@ PyArray_EnsureAnyArray(PyObject *op)
 /*NUMPY_API
  *Check the type coercion rules.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CanCastSafely(int fromtype, int totype)
 {
     PyArray_Descr *from, *to;
@@ -9760,7 +9760,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 /*NUMPY_API
  * leaves reference count alone --- cannot be NULL
  */
-static Bool
+NPY_NO_EXPORT Bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
     int fromtype=from->type_num;
@@ -9795,7 +9795,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 /*NUMPY_API
  * See if array scalars can be cast.
  */
-static Bool
+NPY_NO_EXPORT Bool
 PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 {
     int fromtype;
@@ -9817,7 +9817,7 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 /*NUMPY_API
  * Get Iterator.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_IterNew(PyObject *obj)
 {
     PyArrayIterObject *it;
@@ -9864,7 +9864,7 @@ PyArray_IterNew(PyObject *obj)
 /*NUMPY_API
  * Get Iterator broadcast to a particular shape
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
 {
     PyArrayIterObject *it;
@@ -9939,7 +9939,7 @@ PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
  * PyArray_ITER_GOTO1D).  The axis will be over-written if negative
  * with the axis having the smallest stride.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
 {
     PyArrayIterObject *it;
@@ -9992,7 +9992,7 @@ PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
  *
  * don't use with PyArray_ITER_GOTO1D because factors are not adjusted
  */
-static int
+NPY_NO_EXPORT int
 PyArray_RemoveSmallest(PyArrayMultiIterObject *multi)
 {
     PyArrayIterObject *it;
@@ -10736,7 +10736,7 @@ static PyGetSetDef iter_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
-static PyTypeObject PyArrayIter_Type = {
+NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size */
     "numpy.flatiter",                            /* tp_name */
@@ -10847,7 +10847,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
    --- i.e. broadcast
 */
 /*NUMPY_API*/
-static int
+NPY_NO_EXPORT int
 PyArray_Broadcast(PyArrayMultiIterObject *mit)
 {
     int i, nd, k, j;
@@ -11495,7 +11495,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * mapiter is equivalent to a[indexobj].flat but the latter gets to use
  * slice syntax.
  */
-static PyTypeObject PyArrayMapIter_Type = {
+NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size */
     "numpy.mapiter",                             /* tp_name */
@@ -11567,7 +11567,7 @@ static PyTypeObject PyArrayMapIter_Type = {
  *
  * Returns a multi-iterator object.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
 {
     va_list va;
@@ -11630,7 +11630,7 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
 /*NUMPY_API
  * Get MultiIterator,
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_MultiIterNew(int n, ...)
 {
     va_list va;
@@ -11873,7 +11873,7 @@ static PyMethodDef arraymultiter_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
-static PyTypeObject PyArrayMultiIter_Type = {
+NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size */
     "numpy.broadcast",                           /* tp_name */
@@ -11934,7 +11934,7 @@ static PyTypeObject PyArrayMultiIter_Type = {
 };
 
 /*NUMPY_API*/
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNewFromType(int type_num)
 {
     PyArray_Descr *old;
@@ -11963,7 +11963,7 @@ PyArray_DescrNewFromType(int type_num)
 /*NUMPY_API
  * base cannot be NULL
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
     PyArray_Descr *new = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
@@ -12673,7 +12673,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
  * Deep bytorder change of a data-type descriptor
  * *** Leaves reference count of self unchanged --- does not DECREF self ***
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 {
     PyArray_Descr *new;
@@ -13031,7 +13031,7 @@ static PyMappingMethods descr_as_mapping = {
 /****************** End of Mapping Protocol ******************************/
 
 
-static PyTypeObject PyArrayDescr_Type = {
+NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                           /* ob_size */
     "numpy.dtype",                               /* tp_name */
@@ -13098,7 +13098,7 @@ static PyTypeObject PyArrayDescr_Type = {
  *
  * Get New ArrayFlagsObject
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_NewFlagsObject(PyObject *obj)
 {
     PyObject *flagobj;
@@ -13511,7 +13511,7 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
     }
 }
 
-static PyTypeObject PyArrayFlags_Type = {
+NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     PyObject_HEAD_INIT(NULL)
     0,
     "numpy.flagsobj",
