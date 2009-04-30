@@ -9,6 +9,8 @@
 
 #include "numpy/npy_math.h"
 
+#include "config.h"
+
 #include "ctors.h"
 
 #include "shape.h"

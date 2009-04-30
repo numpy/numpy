@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "config.h"
 
 #include "common.h"
 

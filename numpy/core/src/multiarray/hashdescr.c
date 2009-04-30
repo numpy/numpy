@@ -3,6 +3,8 @@
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 
+#include "config.h"
+
 #include "hashdescr.h"
 
 /*

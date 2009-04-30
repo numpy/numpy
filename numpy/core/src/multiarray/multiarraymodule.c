@@ -25,6 +25,8 @@
 
 #include "numpy/npy_math.h"
 
+#include "config.h"
+
 #include "global.c"
 
 #define PyAO PyArrayObject

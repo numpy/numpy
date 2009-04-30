@@ -7,6 +7,8 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
+#include "config.h"
+
 #include "common.h"
 #include "iterators.h"
 #include "mapping.h"

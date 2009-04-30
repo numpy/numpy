@@ -8,6 +8,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "config.h"
+
 #include "usertypes.h"
  
 #include "common.h"
