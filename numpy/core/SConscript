@@ -303,6 +303,7 @@ multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
     pjoin('src', 'multiarray', 'convert.c'),
     pjoin('src', 'multiarray', 'shape.c'),
     pjoin('src', 'multiarray', 'item_selection.c'),
+    pjoin('src', 'multiarray', 'calculation.c'),
     pjoin('src', 'multiarray', 'scalarapi.c')]
 multiarray_src.extend(arraytypes_src)
 multiarray_src.extend(scalartypes_src)

@@ -9,6 +9,7 @@
 
 
 #include "arrayobject.h"
+#include "calculation.h"
 
 #include "methods.h"
 

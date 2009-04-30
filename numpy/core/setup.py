@@ -491,6 +491,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','multiarray','arraytypes.c.src'),
                                     join('src','multiarray', 'hashdescr.c'),
                                     join('src','multiarray','arrayobject.c'),
+                                    join('src','multiarray','calculation.c'),
                                     join('src','multiarray','flagsobject.c'),
                                     join('src','multiarray','descriptor.c'),
                                     join('src','multiarray','iterators.c'),

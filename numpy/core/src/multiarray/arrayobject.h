@@ -97,9 +97,6 @@ NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char *str);
 
 /* FIXME: this is defined in multiarraymodule.c ... */
-NPY_NO_EXPORT PyObject *
-__New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-		  int variance, int num);
 
 NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj);
