@@ -1524,6 +1524,47 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     return NULL;
 }
 
+/*
+ * flags is any of
+ * CONTIGUOUS,
+ * FORTRAN,
+ * ALIGNED,
+ * WRITEABLE,
+ * NOTSWAPPED,
+ * ENSURECOPY,
+ * UPDATEIFCOPY,
+ * FORCECAST,
+ * ENSUREARRAY,
+ * ELEMENTSTRIDES
+ *
+ * or'd (|) together
+ *
+ * Any of these flags present means that the returned array should
+ * guarantee that aspect of the array.  Otherwise the returned array
+ * won't guarantee it -- it will depend on the object as to whether or
+ * not it has such features.
+ *
+ * Note that ENSURECOPY is enough
+ * to guarantee CONTIGUOUS, ALIGNED and WRITEABLE
+ * and therefore it is redundant to include those as well.
+ *
+ * BEHAVED == ALIGNED | WRITEABLE
+ * CARRAY = CONTIGUOUS | BEHAVED
+ * FARRAY = FORTRAN | BEHAVED
+ *
+ * FORTRAN can be set in the FLAGS to request a FORTRAN array.
+ * Fortran arrays are always behaved (aligned,
+ * notswapped, and writeable) and not (C) CONTIGUOUS (if > 1d).
+ *
+ * UPDATEIFCOPY flag sets this flag in the returned array if a copy is
+ * made and the base argument points to the (possibly) misbehaved array.
+ * When the new array is deallocated, the original array held in base
+ * is updated with the contents of the new array.
+ *
+ * FORCECAST will cause a cast to occur regardless of whether or not
+ * it is safe.
+ */
+
 /*NUMPY_API
  * steals a reference to descr -- accepts NULL
  */
