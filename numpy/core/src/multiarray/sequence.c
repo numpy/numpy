@@ -8,7 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 
-#include "arrayobject.h"
+#include "common.h"
 #include "mapping.h"
 
 #include "sequence.h"

@@ -5,19 +5,6 @@
 #error You should not include this
 #endif
 
-NPY_NO_EXPORT void
-_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
-                             intp instrides, intp N, int elsize);
-
-NPY_NO_EXPORT void
-_strided_byte_swap(void *p, intp stride, intp n, int size);
-
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret);
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, intp i);
-
 NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip);
@@ -46,20 +33,5 @@ _IsAligned(PyArrayObject *ap);
 
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_find_python_scalar_type(PyObject *op);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *str);
-
-/* Number protocol */
-#include "number.h"
-
-/* Converting data types API */
-#include "convert_datatype.h"
-
-/* Object Conversion API */
-#include "convert.h"
 
 #endif

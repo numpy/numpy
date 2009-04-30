@@ -8,6 +8,7 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
+#include "common.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
@@ -557,27 +558,6 @@ array_base_get(PyArrayObject *self)
         return self->base;
     }
 }
-
-
-NPY_NO_EXPORT int
-_zerofill(PyArrayObject *ret)
-{
-    if (PyDataType_REFCHK(ret->descr)) {
-        PyObject *zero = PyInt_FromLong(0);
-        PyArray_FillObjectArray(ret, zero);
-        Py_DECREF(zero);
-        if (PyErr_Occurred()) {
-            Py_DECREF(ret);
-            return -1;
-        }
-    }
-    else {
-        intp n = PyArray_NBYTES(ret);
-        memset(ret->data, 0, n);
-    }
-    return 0;
-}
-
 
 /*
  * Create a view of a complex array with an equivalent data-type
