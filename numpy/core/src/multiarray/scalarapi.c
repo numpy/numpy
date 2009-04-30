@@ -13,9 +13,6 @@
 
 #include "descriptor.h"
 #include "scalartypes.h"
-#ifndef Py_UNICODE_WIDE
-#include "ucsnarrow.h"
-#endif
 
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)
