@@ -34,7 +34,8 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'ceil', 'choose', 'clip', 'common_fill_value', 'compress',
            'compressed', 'concatenate', 'conjugate', 'copy', 'cos', 'cosh',
            'count', 'cumprod', 'cumsum',
-           'default_fill_value', 'diag', 'diagonal', 'divide', 'dump', 'dumps',
+           'default_fill_value', 'diag', 'diagonal', 'diff', 'divide', 'dump',
+           'dumps',
            'empty', 'empty_like', 'equal', 'exp', 'expand_dims',
            'fabs', 'flatten_mask', 'fmod', 'filled', 'floor', 'floor_divide',
            'fix_invalid', 'flatten_structured_array', 'frombuffer', 'fromflex',
@@ -5646,6 +5647,7 @@ class _convert2ma:
 
 arange = _convert2ma('arange')
 clip = np.clip
+diff = np.diff
 empty = _convert2ma('empty')
 empty_like = _convert2ma('empty_like')
 frombuffer = _convert2ma('frombuffer')
