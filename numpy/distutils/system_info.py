@@ -516,8 +516,13 @@ class system_info:
         dirs.extend(default_dirs)
         ret = []
         for d in dirs:
-            if os.path.isdir(d) and d not in ret:
+            if not os.path.isdir(d):
+                warnings.warn('Specified path %s is invalid.' % d)
+                continue
+
+            if d not in ret:
                 ret.append(d)
+
         log.debug('( %s = %s )', key, ':'.join(ret))
         return ret
 
