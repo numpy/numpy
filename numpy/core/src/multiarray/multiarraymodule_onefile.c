@@ -25,6 +25,7 @@
 #include "usertypes.c"
 #include "refcount.c"
 #include "conversion_utils.c"
+#include "buffer.c"
 
 #include "arraytypes.c"
 #include "scalartypes.c"
