@@ -1094,70 +1094,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
-/*
- * Check whether the given array is stored contiguously
- * (row-wise) in memory.
- *
- * 0-strided arrays are not contiguous (even if dimension == 1)
- */
-static int
-_IsContiguous(PyArrayObject *ap)
-{
-    intp sd;
-    intp dim;
-    int i;
-
-    if (ap->nd == 0) {
-        return 1;
-    }
-    sd = ap->descr->elsize;
-    if (ap->nd == 1) {
-        return ap->dimensions[0] == 1 || sd == ap->strides[0];
-    }
-    for (i = ap->nd - 1; i >= 0; --i) {
-        dim = ap->dimensions[i];
-        /* contiguous by definition */
-        if (dim == 0) {
-            return 1;
-        }
-        if (ap->strides[i] != sd) {
-            return 0;
-        }
-        sd *= dim;
-    }
-    return 1;
-}
-
-
-/* 0-strided arrays are not contiguous (even if dimension == 1) */
-static int
-_IsFortranContiguous(PyArrayObject *ap)
-{
-    intp sd;
-    intp dim;
-    int i;
-
-    if (ap->nd == 0) {
-        return 1;
-    }
-    sd = ap->descr->elsize;
-    if (ap->nd == 1) {
-        return ap->dimensions[0] == 1 || sd == ap->strides[0];
-    }
-    for (i = 0; i < ap->nd; ++i) {
-        dim = ap->dimensions[i];
-        /* fortran contiguous by definition */
-        if (dim == 0) {
-            return 1;
-        }
-        if (ap->strides[i] != sd) {
-            return 0;
-        }
-        sd *= dim;
-    }
-    return 1;
-}
-
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
@@ -1173,58 +1109,6 @@ PyArray_ElementStrides(PyObject *arr)
         }
     }
     return 1;
-}
-
-/*NUMPY_API
- * Update Several Flags at once.
- */
-NPY_NO_EXPORT void
-PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
-{
-
-    if (flagmask & FORTRAN) {
-        if (_IsFortranContiguous(ret)) {
-            ret->flags |= FORTRAN;
-            if (ret->nd > 1) {
-                ret->flags &= ~CONTIGUOUS;
-            }
-        }
-        else {
-            ret->flags &= ~FORTRAN;
-        }
-    }
-    if (flagmask & CONTIGUOUS) {
-        if (_IsContiguous(ret)) {
-            ret->flags |= CONTIGUOUS;
-            if (ret->nd > 1) {
-                ret->flags &= ~FORTRAN;
-            }
-        }
-        else {
-            ret->flags &= ~CONTIGUOUS;
-        }
-    }
-    if (flagmask & ALIGNED) {
-        if (_IsAligned(ret)) {
-            ret->flags |= ALIGNED;
-        }
-        else {
-            ret->flags &= ~ALIGNED;
-        }
-    }
-    /*
-     * This is not checked by default WRITEABLE is not
-     * part of UPDATE_ALL
-     */
-    if (flagmask & WRITEABLE) {
-        if (_IsWriteable(ret)) {
-            ret->flags |= WRITEABLE;
-        }
-        else {
-            ret->flags &= ~WRITEABLE;
-        }
-    }
-    return;
 }
 
 /*
