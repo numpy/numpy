@@ -1,3 +1,8 @@
+/*
+ * This file includes all the .c files needed for a complete multiarray module.
+ * This is used in the case where separate compilation is not enabled
+ */
+
 #include "common.c"
 
 #include "hashdescr.c"
