@@ -554,3 +554,189 @@ PyArray_TypeObjectFromType(int type)
     Py_DECREF(descr);
     return obj;
 }
+
+/* Does nothing with descr (cannot be NULL) */
+/*NUMPY_API
+  Get scalar-equivalent to a region of memory described by a descriptor.
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
+{
+    PyTypeObject *type;
+    PyObject *obj;
+    void *destptr;
+    PyArray_CopySwapFunc *copyswap;
+    int type_num;
+    int itemsize;
+    int swap;
+
+    type_num = descr->type_num;
+    if (type_num == PyArray_BOOL) {
+        PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
+    }
+    else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
+        return descr->f->getitem(data, base);
+    }
+    itemsize = descr->elsize;
+    copyswap = descr->f->copyswap;
+    type = descr->typeobj;
+    swap = !PyArray_ISNBO(descr->byteorder);
+    if PyTypeNum_ISSTRING(type_num) { /* Eliminate NULL bytes */
+            char *dptr = data;
+
+            dptr += itemsize - 1;
+            while(itemsize && *dptr-- == 0) {
+                itemsize--;
+            }
+            if (type_num == PyArray_UNICODE && itemsize) {
+                /* make sure itemsize is a multiple of 4 */
+                /* so round up to nearest multiple */
+                itemsize = (((itemsize-1) >> 2) + 1) << 2;
+            }
+        }
+    if (type->tp_itemsize != 0) { /* String type */
+        obj = type->tp_alloc(type, itemsize);
+    }
+    else {
+        obj = type->tp_alloc(type, 0);
+    }
+    if (obj == NULL) {
+        return NULL;
+    }
+    if PyTypeNum_ISFLEXIBLE(type_num) {
+            if (type_num == PyArray_STRING) {
+                destptr = PyString_AS_STRING(obj);
+                ((PyStringObject *)obj)->ob_shash = -1;
+                ((PyStringObject *)obj)->ob_sstate =    \
+                    SSTATE_NOT_INTERNED;
+                memcpy(destptr, data, itemsize);
+                return obj;
+            }
+            else if (type_num == PyArray_UNICODE) {
+                PyUnicodeObject *uni = (PyUnicodeObject*)obj;
+                size_t length = itemsize >> 2;
+#ifndef Py_UNICODE_WIDE
+                char *buffer;
+                int alloc = 0;
+                length *= 2;
+#endif
+                /* Need an extra slot and need to use
+                   Python memory manager */
+                uni->str = NULL;
+                destptr = PyMem_NEW(Py_UNICODE,length+1);
+                if (destptr == NULL) {
+                    Py_DECREF(obj);
+                    return PyErr_NoMemory();
+                }
+                uni->str = (Py_UNICODE *)destptr;
+                uni->str[0] = 0;
+                uni->str[length] = 0;
+                uni->length = length;
+                uni->hash = -1;
+                uni->defenc = NULL;
+#ifdef Py_UNICODE_WIDE
+                memcpy(destptr, data, itemsize);
+                if (swap) {
+                    byte_swap_vector(destptr, length, 4);
+                }
+#else
+                /* need aligned data buffer */
+                if ((swap) || ((((intp)data) % descr->alignment) != 0)) {
+                    buffer = _pya_malloc(itemsize);
+                    if (buffer == NULL) {
+                        return PyErr_NoMemory();
+                    }
+                    alloc = 1;
+                    memcpy(buffer, data, itemsize);
+                    if (swap) {
+                        byte_swap_vector(buffer, itemsize >> 2, 4);
+                    }
+                }
+                else {
+                    buffer = data;
+                }
+
+                /* Allocated enough for 2-characters per itemsize.
+                   Now convert from the data-buffer
+                */
+                length = PyUCS2Buffer_FromUCS4(uni->str,
+                                               (PyArray_UCS4 *)buffer,
+                                               itemsize >> 2);
+                if (alloc) {
+                    _pya_free(buffer);
+                }
+                /* Resize the unicode result */
+                if (MyPyUnicode_Resize(uni, length) < 0) {
+                    Py_DECREF(obj);
+                    return NULL;
+                }
+#endif
+                return obj;
+            }
+            else {
+                PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
+                vobj->base = NULL;
+                vobj->descr = descr;
+                Py_INCREF(descr);
+                vobj->obval = NULL;
+                vobj->ob_size = itemsize;
+                vobj->flags = BEHAVED | OWNDATA;
+                swap = 0;
+                if (descr->names) {
+                    if (base) {
+                        Py_INCREF(base);
+                        vobj->base = base;
+                        vobj->flags = PyArray_FLAGS(base);
+                        vobj->flags &= ~OWNDATA;
+                        vobj->obval = data;
+                        return obj;
+                    }
+                }
+                destptr = PyDataMem_NEW(itemsize);
+                if (destptr == NULL) {
+                    Py_DECREF(obj);
+                    return PyErr_NoMemory();
+                }
+                vobj->obval = destptr;
+            }
+        }
+    else {
+        destptr = scalar_value(obj, descr);
+    }
+    /* copyswap for OBJECT increments the reference count */
+    copyswap(destptr, data, swap, base);
+    return obj;
+}
+
+/* Return Array Scalar if 0-d array object is encountered */
+
+/*NUMPY_API
+  Return either an array or the appropriate Python object if the array
+  is 0d and matches a Python type.
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_Return(PyArrayObject *mp)
+{
+
+    if (mp == NULL) {
+        return NULL;
+    }
+    if (PyErr_Occurred()) {
+        Py_XDECREF(mp);
+        return NULL;
+    }
+    if (!PyArray_Check(mp)) {
+        return (PyObject *)mp;
+    }
+    if (mp->nd == 0) {
+        PyObject *ret;
+        ret = PyArray_ToScalar(mp->data, mp);
+        Py_DECREF(mp);
+        return ret;
+    }
+    else {
+        return (PyObject *)mp;
+    }
+}
+
+
