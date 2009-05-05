@@ -704,6 +704,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 }
 
 /* Lifted from numarray */
+/* TODO: not documented */
 /*NUMPY_API
   PyArray_IntTupleFromIntp
 */
