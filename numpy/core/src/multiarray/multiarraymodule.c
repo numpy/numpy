@@ -58,6 +58,30 @@
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
 /*NUMPY_API
+ * Get Priority from object
+ */
+NPY_NO_EXPORT double
+PyArray_GetPriority(PyObject *obj, double default_)
+{
+    PyObject *ret;
+    double priority = PyArray_PRIORITY;
+
+    if (PyArray_CheckExact(obj))
+        return priority;
+
+    ret = PyObject_GetAttrString(obj, "__array_priority__");
+    if (ret != NULL) {
+        priority = PyFloat_AsDouble(ret);
+    }
+    if (PyErr_Occurred()) {
+        PyErr_Clear();
+        priority = default_;
+    }
+    Py_XDECREF(ret);
+    return priority;
+}
+
+/*NUMPY_API
  * Multiply a List of ints
  */
 NPY_NO_EXPORT int

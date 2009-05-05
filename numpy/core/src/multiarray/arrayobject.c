@@ -47,30 +47,6 @@ maintainer email:  oliphant.travis@ieee.org
 #include "getset.h"
 #include "sequence.h"
 
-/*NUMPY_API
- * Get Priority from object
- */
-NPY_NO_EXPORT double
-PyArray_GetPriority(PyObject *obj, double default_)
-{
-    PyObject *ret;
-    double priority = PyArray_PRIORITY;
-
-    if (PyArray_CheckExact(obj))
-        return priority;
-
-    ret = PyObject_GetAttrString(obj, "__array_priority__");
-    if (ret != NULL) {
-        priority = PyFloat_AsDouble(ret);
-    }
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
-        priority = default_;
-    }
-    Py_XDECREF(ret);
-    return priority;
-}
-
 /* Incref all objects found at this record */
 /*NUMPY_API
  */
