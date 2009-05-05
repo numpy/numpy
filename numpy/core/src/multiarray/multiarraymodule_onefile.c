@@ -23,6 +23,7 @@
 #include "item_selection.c"
 #include "calculation.c"
 #include "usertypes.c"
+#include "refcount.c"
 
 #include "arraytypes.c"
 #include "scalartypes.c"

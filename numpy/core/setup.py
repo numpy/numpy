@@ -568,6 +568,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'multiarraymodule.h'),
             join('src', 'multiarray', 'number.h'),
             join('src', 'multiarray', 'numpyos.h'),
+            join('src', 'multiarray', 'refcount.h'),
             join('src', 'multiarray', 'scalartypes.h'),
             join('src', 'multiarray', 'sequence.h'),
             join('src', 'multiarray', 'shape.h'),
@@ -595,6 +596,7 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'common.c'),
         join('src', 'multiarray', 'usertypes.c'),
         join('src', 'multiarray', 'scalarapi.c'),
+        join('src', 'multiarray', 'refecount.c'),
         join('src', 'multiarray', 'arraytypes.c.src'),
         join('src', 'multiarray', 'scalartypes.c.src')]
 
