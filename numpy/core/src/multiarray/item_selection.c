@@ -1439,37 +1439,6 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
     }
 }
 
-
-/*NUMPY_API
- * Convert object to searchsorted side
- */
-NPY_NO_EXPORT int
-PyArray_SearchsideConverter(PyObject *obj, void *addr)
-{
-    NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)addr;
-    char *str = PyString_AsString(obj);
-
-    if (!str || strlen(str) < 1) {
-        PyErr_SetString(PyExc_ValueError,
-                        "expected nonempty string for keyword 'side'");
-        return PY_FAIL;
-    }
-
-    if (str[0] == 'l' || str[0] == 'L') {
-        *side = NPY_SEARCHLEFT;
-    }
-    else if (str[0] == 'r' || str[0] == 'R') {
-        *side = NPY_SEARCHRIGHT;
-    }
-    else {
-        PyErr_Format(PyExc_ValueError,
-                     "'%s' is an invalid value for keyword 'side'", str);
-        return PY_FAIL;
-    }
-    return PY_SUCCEED;
-}
-
-
 /*NUMPY_API
  * Numeric.searchsorted(a,v)
  */

@@ -16,7 +16,7 @@ from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
                           umath_bld, CheckGCC4
 from setup_common import *
 
-ENABLE_SEPARATE_COMPILATION = False
+ENABLE_SEPARATE_COMPILATION = True
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = env["PYEXTCPPPATH"])
@@ -323,6 +323,7 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'calculation.c'),
         pjoin('src', 'multiarray', 'common.c'),
         pjoin('src', 'multiarray', 'refcount.c'),
+        pjoin('src', 'multiarray', 'conversion_utils.c'),
         pjoin('src', 'multiarray', 'usertypes.c'),
         pjoin('src', 'multiarray', 'scalarapi.c')]
     multiarray_src.extend(arraytypes_src)
