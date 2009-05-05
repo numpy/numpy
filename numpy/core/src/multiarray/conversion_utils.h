@@ -25,4 +25,19 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind);
 NPY_NO_EXPORT int
 PyArray_SearchsideConverter(PyObject *obj, void *addr);
 
+NPY_NO_EXPORT int
+PyArray_PyIntAsInt(PyObject *o);
+
+NPY_NO_EXPORT intp
+PyArray_PyIntAsIntp(PyObject *o);
+
+NPY_NO_EXPORT int
+PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals);
+
+NPY_NO_EXPORT int
+PyArray_TypestrConvert(int itemsize, int gentype);
+
+NPY_NO_EXPORT PyObject *
+PyArray_IntTupleFromIntp(int len, intp *vals);
+
 #endif
