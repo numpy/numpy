@@ -11,6 +11,7 @@
 
 #include "config.h"
 
+#include "ctors.h"
 #include "descriptor.h"
 #include "scalartypes.h"
 
