@@ -3,8 +3,6 @@
 
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
-#else
-NPY_NO_EXPORT PyMethodDef array_methods[];
 #endif
 
 #endif
