@@ -2151,13 +2151,13 @@ _PyArray_GetSigintBuf(void)
 
 #else
 
-static void
+NPY_NO_EXPORT void
 _PyArray_SigintHandler(int signum)
 {
     return;
 }
 
-static void*
+NPY_NO_EXPORT void*
 _PyArray_GetSigintBuf(void)
 {
     return NULL;
