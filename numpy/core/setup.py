@@ -334,7 +334,7 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
 
             # Generate the config.h file from moredefs
-            target_f = open(target,'a')
+            target_f = open(target, 'w')
             for d in moredefs:
                 if isinstance(d,str):
                     target_f.write('#define %s\n' % (d))
@@ -418,7 +418,7 @@ def configuration(parent_package='',top_path=None):
             moredefs.append(('NPY_VISIBILITY_HIDDEN', hidden_visibility))
 
             # Add moredefs to header
-            target_f = open(target,'a')
+            target_f = open(target, 'w')
             for d in moredefs:
                 if isinstance(d,str):
                     target_f.write('#define %s\n' % (d))
