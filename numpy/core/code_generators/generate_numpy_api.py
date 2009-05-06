@@ -29,7 +29,7 @@ extern NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
-extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[];
+extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #else
 NPY_NO_EXPORT int NPY_NUMUSERTYPES;
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -40,7 +40,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
 NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
-NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[];
+NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #endif
 
 %s

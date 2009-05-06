@@ -20,7 +20,7 @@
 #include "common.h"
 #include "scalartypes.h"
 
-NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
+NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
