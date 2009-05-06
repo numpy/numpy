@@ -46,9 +46,6 @@ NPY_NO_EXPORT NumericOps n_ops;
 NPY_NO_EXPORT PyNumberMethods array_as_number;
 #endif
 
-NPY_NO_EXPORT int
-array_any_nonzero(PyArrayObject *mp);
-
 NPY_NO_EXPORT PyObject *
 array_int(PyArrayObject *v);
 

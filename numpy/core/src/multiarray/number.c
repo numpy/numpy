@@ -531,30 +531,6 @@ array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
                                                 n_ops.true_divide);
 }
 
-/* Array evaluates as "TRUE" if any of the elements are non-zero*/
-NPY_NO_EXPORT int
-array_any_nonzero(PyArrayObject *mp)
-{
-    intp index;
-    PyArrayIterObject *it;
-    Bool anyTRUE = FALSE;
-
-    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
-    if (it == NULL) {
-        return anyTRUE;
-    }
-    index = it->size;
-    while(index--) {
-        if (mp->descr->f->nonzero(it->dataptr, mp)) {
-            anyTRUE = TRUE;
-            break;
-        }
-        PyArray_ITER_NEXT(it);
-    }
-    Py_DECREF(it);
-    return anyTRUE;
-}
-
 static int
 _array_nonzero(PyArrayObject *mp)
 {
