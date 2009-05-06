@@ -554,6 +554,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
@@ -579,6 +580,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_src = [join('src', 'multiarray', 'multiarraymodule.c'),
         join('src', 'multiarray', 'hashdescr.c'),
         join('src', 'multiarray', 'arrayobject.c'),
+        join('src', 'multiarray', 'buffer.c'),
         join('src', 'multiarray', 'numpyos.c'),
         join('src', 'multiarray', 'conversion_utils.c'),
         join('src', 'multiarray', 'flagsobject.c'),
