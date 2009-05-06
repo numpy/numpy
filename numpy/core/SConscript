@@ -16,7 +16,7 @@ from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
                           umath_bld, CheckGCC4
 from setup_common import *
 
-ENABLE_SEPARATE_COMPILATION = True
+ENABLE_SEPARATE_COMPILATION = False
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = env["PYEXTCPPPATH"])
@@ -200,6 +200,12 @@ def visibility_define():
 
 numpyconfig_sym.append(('VISIBILITY_HIDDEN', visibility_define()))
 
+# Check whether we need our own wide character support
+if not config.CheckDeclaration('Py_UNICODE_WIDE', includes='#include <Python.h>'):
+    PYTHON_HAS_UNICODE_WIDE = True
+else:
+    PYTHON_HAS_UNICODE_WIDE = False
+
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
 #-------------------------------------------------------
@@ -329,6 +335,8 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'scalarapi.c')]
     multiarray_src.extend(arraytypes_src)
     multiarray_src.extend(scalartypes_src)
+    if PYTHON_HAS_UNICODE_WIDE:
+        multiarray_src.extend([pjoin("src", "multiarray", "ucsnarrow.c")])
 else:
     multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule_onefile.c')]
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
