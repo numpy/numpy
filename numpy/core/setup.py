@@ -249,13 +249,12 @@ def sym2def(symbol):
 def check_mathlib(config_cmd):
     # Testing the C math library
     mathlibs = []
-    tc = testcode_mathlib()
     mathlibs_choices = [[],['m'],['cpml']]
     mathlib = os.environ.get('MATHLIB')
     if mathlib:
         mathlibs_choices.insert(0,mathlib.split(','))
     for libs in mathlibs_choices:
-        if config_cmd.try_link(tc,libraries=libs):
+        if config_cmd.check_func("exp", libraries=libs, decl=True):
             mathlibs = libs
             break
     else:
@@ -679,19 +678,6 @@ def configuration(parent_package='',top_path=None):
     config.make_svn_version_py()
 
     return config
-
-def testcode_mathlib():
-    return """\
-/*
- * check whether libm is explicitly needed for access to basic math functions
- */
-char exp(void);
-int main(void)
-{
-  exp();
-  return 0;
-}
-"""
 
 if __name__=='__main__':
     from numpy.distutils.core import setup
