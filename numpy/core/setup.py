@@ -254,7 +254,7 @@ def check_mathlib(config_cmd):
     if mathlib:
         mathlibs_choices.insert(0,mathlib.split(','))
     for libs in mathlibs_choices:
-        if config_cmd.check_func("exp", libraries=libs, decl=True):
+        if config_cmd.check_func("exp", libraries=libs, decl=True, call=True):
             mathlibs = libs
             break
     else:
