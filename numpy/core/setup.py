@@ -598,7 +598,7 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'common.c'),
         join('src', 'multiarray', 'usertypes.c'),
         join('src', 'multiarray', 'scalarapi.c'),
-        join('src', 'multiarray', 'refecount.c'),
+        join('src', 'multiarray', 'refcount.c'),
         join('src', 'multiarray', 'arraytypes.c.src'),
         join('src', 'multiarray', 'scalartypes.c.src')]
 
