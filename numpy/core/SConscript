@@ -16,7 +16,12 @@ from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
                           umath_bld, CheckGCC4
 from setup_common import *
 
-ENABLE_SEPARATE_COMPILATION = False
+# Set to True to enable multiple file compilations (experimental)
+try:
+    os.environ['NPY_SEPARATE_COMPILATION']
+    ENABLE_SEPARATE_COMPILATION = True
+except KeyError:
+    ENABLE_SEPARATE_COMPILATION = False
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = env["PYEXTCPPPATH"])
