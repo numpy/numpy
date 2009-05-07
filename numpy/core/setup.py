@@ -141,7 +141,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # config.h in the public namespace, so we have a clash for the common
     # functions we test. We remove every function tested by python's
     # autoconf, hoping their own test are correct
-    if sys.version_info[0] == 2 and sys.version_info[1] >= 6:
+    if sys.version_info[:2] >= (2, 6):
         for f in OPTIONAL_STDFUNCS_MAYBE:
             if config.check_decl(fname2def(f),
                         headers=["Python.h", "math.h"]):
@@ -157,12 +157,27 @@ def check_ieee_macros(config):
     priv = []
     pub = []
 
+    macros = []
+
+    # XXX: hack to circumvent cpp pollution from python: python put its
+    # config.h in the public namespace, so we have a clash for the common
+    # functions we test. We remove every function tested by python's
+    # autoconf, hoping their own test are correct
+    _macros = ["isnan", "isinf", "signbit", "isfinite"]
+    if sys.version_info[:2] >= (2, 7):
+        for f in _macros:
+            st = config.check_decl(fname2def("decl_%s" % f),
+                    headers=["Python.h", "math.h"])
+            if not st:
+                macros.append(f)
+    else:
+        macros = _macros[:]
     # Normally, isnan and isinf are macro (C99), but some platforms only have
     # func, or both func and macro version. Check for macro only, and define
     # replacement ones if not found.
     # Note: including Python.h is necessary because it modifies some math.h
     # definitions
-    for f in ["isnan", "isinf", "signbit", "isfinite"]:
+    for f in macros:
         st = config.check_decl(f, headers = ["Python.h", "math.h"])
         if st:
             priv.append(fname2def("decl_%s" % f))
