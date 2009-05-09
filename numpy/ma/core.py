@@ -2805,12 +2805,14 @@ class MaskedArray(ndarray):
 
         """
         self._hardmask = True
+        return self
 
     def soften_mask(self):
         """Force the mask to soft.
 
         """
         self._hardmask = False
+        return self
 
     hardmask = property(fget=lambda self: self._hardmask,
                         doc="Hardness of the mask")
@@ -2823,6 +2825,7 @@ class MaskedArray(ndarray):
         if self._sharedmask:
             self._mask = self._mask.copy()
             self._sharedmask = False
+        return self
 
     sharedmask = property(fget=lambda self: self._sharedmask,
                           doc="Share status of the mask (read-only).")
@@ -2834,6 +2837,7 @@ class MaskedArray(ndarray):
         m = self._mask
         if m.ndim and not m.any():
             self._mask = nomask
+        return self
 
     #............................................
 
