@@ -2926,7 +2926,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
             ptr = (intp *)ind->data;
             for(i=0; i<nn; i++) {
                 loop->bufptr[1] = loop->it->dataptr +   \
-                                  (*ptr)*loop->instrides;
+                                  (*ptr)*loop->steps[1];
                 if (loop->obj) {
                     Py_XINCREF(*((PyObject **)loop->bufptr[1]));
                 }
@@ -2935,7 +2935,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
                 mm = (i==nn-1 ? arr->dimensions[axis]-*ptr : \
                         *(ptr+1) - *ptr) - 1;
                 if (mm > 0) {
-                    loop->bufptr[1] += loop->instrides;
+                    loop->bufptr[1] += loop->steps[1];
                     loop->bufptr[2] = loop->bufptr[0];
                     loop->function((char **)loop->bufptr,
                             &mm, loop->steps,
