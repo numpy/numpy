@@ -1142,16 +1142,16 @@ class TestMaskedArrayAttributes(TestCase):
     def test_hardmask_oncemore_yay(self):
         "OK, yet another test of hardmask"
         "Make sure that harden_mask/soften_mask//unshare_mask retursn self"
-        a = ma.array([1,2,3], mask=[1, 0, 0])
+        a = array([1,2,3], mask=[1, 0, 0])
         b = a.harden_mask()
         assert_equal(a, b)
         b[0] = 0
         assert_equal(a, b)
-        assert_equal(b, ma.array([1,2,3], mask=[1, 0, 0]))
+        assert_equal(b, array([1,2,3], mask=[1, 0, 0]))
         a = b.soften_mask()
         a[0] = 0
         assert_equal(a, b)
-        assert_equal(b, ma.array([0,2,3], mask=[0, 0, 0]))
+        assert_equal(b, array([0,2,3], mask=[0, 0, 0]))
 
 
     def test_smallmask(self):
@@ -1169,7 +1169,7 @@ class TestMaskedArrayAttributes(TestCase):
 
     def test_shrink_mask(self):
         "Tests .shrink_mask()"
-        a = ma.array([1,2,3], mask=[0, 0, 0])
+        a = array([1,2,3], mask=[0, 0, 0])
         b = a.shrink_mask()
         assert_equal(a, b)
         assert_equal(a.mask, nomask)
