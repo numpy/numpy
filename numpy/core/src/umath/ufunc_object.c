@@ -2304,7 +2304,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     if (loop->N == 0) {
         loop->meth = ZERO_EL_REDUCELOOP;
     }
-    else if (PyArray_ISBEHAVED_RO(aar) && otype == (aar)->descr->type_num) {
+    else if (PyArray_ISBEHAVED_RO(aar) && (otype == (aar)->descr->type_num)) {
         if (loop->N == 1) {
             loop->meth = ONE_EL_REDUCELOOP;
         }
@@ -2862,7 +2862,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         while (loop->index < loop->size) {
             ptr = (intp *)ind->data;
             for (i = 0; i < nn; i++) {
-                loop->bufptr[1] = loop->it->dataptr + (*ptr)*loop->instrides;
+                loop->bufptr[1] = loop->it->dataptr + (*ptr)*loop->steps[1];
                 if (loop->obj) {
                     Py_XINCREF(*((PyObject **)loop->bufptr[1]));
                 }
@@ -2870,7 +2870,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
                 mm = (i == nn - 1 ? arr->dimensions[axis] - *ptr :
                         *(ptr + 1) - *ptr) - 1;
                 if (mm > 0) {
-                    loop->bufptr[1] += loop->instrides;
+                    loop->bufptr[1] += loop->steps[1];
                     loop->bufptr[2] = loop->bufptr[0];
                     loop->function((char **)loop->bufptr, &mm,
                             loop->steps, loop->funcdata);
@@ -2890,7 +2890,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         /* Reduceat
          * BUFFER -- misbehaved array or different types
          */
-         /* fprintf(stderr, "BUFFERED..%d\n", loop->size); */
+        /* fprintf(stderr, "BUFFERED..%d\n", loop->size); */
         while (loop->index < loop->size) {
             ptr = (intp *)ind->data;
             for (i = 0; i < nn; i++) {
