@@ -69,10 +69,12 @@ if ctypes is None:
     as_ctypes = _dummy
     as_array = _dummy
     from numpy import intp as c_intp
+    _ndptr_base = object
 else:
     import numpy.core._internal as nic
     c_intp = nic._getintp_ctype()
     del nic
+    _ndptr_base = ctypes.c_void_p
 
     # Adapted from Albert Strasheim
     def load_library(libname, loader_path):
@@ -130,7 +132,26 @@ def _flags_fromnum(num):
     return res
 
 
-class _ndptr(object):
+class _ndptr(_ndptr_base):
+
+    def _check_retval_(self):
+        """This method is called when this class is used as the .restype
+        asttribute for a shared-library function.   It constructs a numpy
+        array from a void pointer."""
+        return array(self)
+
+    @property
+    def __array_interface__(self):
+        return {'descr': self._dtype_.descr,
+                '__ref': self,
+                'strides': None,
+                'shape': self._shape_,
+                'version': 3,
+                'typestr': self._dtype_.descr[0][1],
+                'data': (self.value, False),
+                }
+    
+    @classmethod
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
             raise TypeError, "argument must be an ndarray"
@@ -148,7 +169,6 @@ class _ndptr(object):
             raise TypeError, "array must have flags %s" % \
                   _flags_fromnum(cls._flags_)
         return obj.ctypes
-    from_param = classmethod(from_param)
 
 
 # Factory for an array-checking class with from_param defined for
