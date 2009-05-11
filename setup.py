@@ -50,8 +50,8 @@ AUTHOR_EMAIL        = "oliphant@enthought.com"
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 3
-MICRO               = 0
-ISRELEASED          = True
+MICRO               = 1
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
     
 # Return the svn version as a string, raise a ValueError otherwise
