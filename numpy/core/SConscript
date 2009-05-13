@@ -10,11 +10,11 @@ from numscons import GetNumpyEnvironment
 from numscons import CheckCBLAS
 from numscons import write_info
 
+from setup_common import *
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal, CheckInline
 from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
-                          umath_bld, CheckGCC4
-from setup_common import *
+                          umath_bld, CheckGCC4, check_api_version
 
 # Set to True to enable multiple file compilations (experimental)
 try:
@@ -30,6 +30,10 @@ if os.name == 'nt':
     # simple code using only typedef and so on, so we need it for configuration
     # checks
     env.AppendUnique(LIBPATH = [get_pythonlib_dir()])
+
+# Check whether we have a mismatch between the set C API VERSION and the
+# actual C API VERSION
+check_api_version(C_API_VERSION)
 
 #=======================
 # Starting Configuration

@@ -9,10 +9,12 @@ import os
 from os.path import join as pjoin, dirname as pdirname, basename as pbasename
 from copy import deepcopy
 
+import code_generators
 from code_generators.generate_numpy_api import \
      do_generate_api as nowrap_do_generate_numpy_api
 from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
+from setup_common import check_api_version as _check_api_version
 
 from numscons.numdist import process_c_str as process_str
 
@@ -20,6 +22,9 @@ import SCons.Node
 import SCons
 from SCons.Builder import Builder
 from SCons.Action import Action
+
+def check_api_version(apiversion):
+    return _check_api_version(apiversion, pdirname(code_generators.__file__))
 
 def split_ext(string):
     sp = string.rsplit( '.', 1)
