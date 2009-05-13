@@ -5,6 +5,7 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
+import warnings
 
 from setup_common import *
 
@@ -298,6 +299,13 @@ def configuration(parent_package='',top_path=None):
     local_dir = config.local_path
     codegen_dir = join(local_dir,'code_generators')
 
+    if is_released(config):
+        warnings.simplefilter('error', MismatchCAPIWarning)
+
+    # Check whether we have a mismatch between the set C API VERSION and the
+    # actual C API VERSION
+    check_api_version(C_API_VERSION, codegen_dir)
+
     generate_umath_py = join(codegen_dir,'generate_umath.py')
     n = dot_join(config.name,'generate_umath')
     generate_umath = imp.load_module('_'.join(n.split('.')),
@@ -435,6 +443,10 @@ def configuration(parent_package='',top_path=None):
             # visibility check
             hidden_visibility = visibility_define(config_cmd)
             moredefs.append(('NPY_VISIBILITY_HIDDEN', hidden_visibility))
+
+            # Add the C API/ABI versions
+            moredefs.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
+            moredefs.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
             # Add moredefs to header
             target_f = open(target, 'w')

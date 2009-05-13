@@ -299,6 +299,39 @@ def should_rebuild(targets, source_files):
         return True
     return False
 
+def fullapi_hash(files):
+    """Given a list of .txt files defining the numpy C API, compute a checksum
+    of the list of functions (as a string)."""
+    a = []
+    for f in files:
+        order = read_order(f)
+        def sorted_by_values(d):
+            """Sort a dictionary by its values. Assume the dictionary items is of
+            the form func_name -> order"""
+            return sorted(d.items(), key=lambda (x, y): (y, x))
+        a.extend([i[0] for i in sorted_by_values(order)])
+
+    return md5.new(''.join(a)).hexdigest()
+
+# To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
+# checksum a 128 bits md5 checksum (hex format as well)
+VERRE = re.compile('(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
+
+def get_versions_hash():
+    d = []
+
+    file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
+    fid = open(file, 'r')
+    try:
+        for line in fid.readlines():
+            m = VERRE.match(line)
+            if m:
+                d.append((int(m.group(1), 16), m.group(2)))
+    finally:
+        fid.close()
+
+    return dict(d)
+
 def main():
     tagname = sys.argv[1]
     order_file = sys.argv[2]

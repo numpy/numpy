@@ -53,7 +53,7 @@ extern "C" CONFUSE_EMACS
    whenever the C-API is changed such that binary compatibility is
    broken, i.e. whenever a recompile of extension modules is
    needed. */
-#define NPY_VERSION 0x01000009
+#define NPY_VERSION NPY_ABI_VERSION
 
 /* Minor API version.  This number is increased whenever a change is
    made to the C-API -- whether it breaks binary compatibility or not.
@@ -63,7 +63,7 @@ extern "C" CONFUSE_EMACS
    would be increased.  Whenever binary compatibility is broken, both
    NPY_VERSION and NPY_FEATURE_VERSION should be increased.
  */
-#define NPY_FEATURE_VERSION 0x00000001
+#define NPY_FEATURE_VERSION NPY_API_VERSION
 
 #include "npy_common.h"
 
