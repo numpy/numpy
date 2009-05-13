@@ -97,6 +97,12 @@ _import_array(void)
         (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
     return -1;
   }
+  if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
+    PyErr_Format(PyExc_RuntimeError, "module compiled against "\
+        "version %%x of C-API but this version of numpy is %%x", \
+        (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
+    return -1;
+  }
  
   /* 
    * Perform runtime check of endianness and check it matches the one set by
