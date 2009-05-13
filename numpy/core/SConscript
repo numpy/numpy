@@ -209,6 +209,10 @@ def visibility_define():
 
 numpyconfig_sym.append(('VISIBILITY_HIDDEN', visibility_define()))
 
+# Add the C API/ABI versions
+numpyconfig_sym.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
+numpyconfig_sym.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
+
 # Check whether we need our own wide character support
 if not config.CheckDeclaration('Py_UNICODE_WIDE', includes='#include <Python.h>'):
     PYTHON_HAS_UNICODE_WIDE = True
