@@ -2272,14 +2272,50 @@ the C-API is needed then some additional steps must be taken.
         #define NO_IMPORT_ARRAY
         #include numpy/arrayobject.h
 
+Checking the API Version
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Because python extensions are not used in the same way as usual libraries on
+most platforms, some errors cannot be automatically detected at build time or
+even runtime. For example, if you build an extension using a function available
+only for numpy >= 1.3.0, and you import the extension later with numpy 1.2, you
+will not get an import error (but almost certainly a segmentation fault when
+calling the function). That's why several functions are provided to check for
+numpy versions. The macros :cdata:`NPY_VERSION`  and
+:cdata:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
+extension, whereas the versions returned by the functions
+PyArray_GetNDArrayCVersion and PyArray_GetNDArrayCFeatureVersion corresponds to
+the runtime numpy's version.
+
+The rules for ABI and API compatibilities can be summarized as follows:
+
+    * Whenever :cdata:`NPY_VERSION` != PyArray_GetNDArrayCVersion, the
+      extension has to be recompiled (ABI incompatibility).
+    * :cdata:`NPY_VERSION` == PyArray_GetNDArrayCVersion and
+      :cdata:`NPY_FEATURE_VERSION` <= PyArray_GetNDArrayCFeatureVersion means
+      backward compatible changes.
+
+ABI incompatibility is automatically detected in every numpy's version. API
+incompatibility detection was added in numpy 1.4.0. If you want to supported
+many different numpy versions with one extension binary, you have to build your
+extension with the lowest NPY_FEATURE_VERSION as possible.
+      
 .. cfunction:: unsigned int PyArray_GetNDArrayCVersion(void)
 
-    This just returns the value :cdata:`NPY_VERSION`. Because it is in the
-    C-API, however, comparing the output of this function from the
-    value defined in the current header gives a way to test if the
-    C-API has changed thus requiring a re-compilation of extension
-    modules that use the C-API.
+    This just returns the value :cdata:`NPY_VERSION`. :cdata:`NPY_VERSION`
+    changes whenever a backward incompatible change at the ABI level. Because
+    it is in the C-API, however, comparing the output of this function from the
+    value defined in the current header gives a way to test if the C-API has
+    changed thus requiring a re-compilation of extension modules that use the
+    C-API. This is automatically checked in the function import_array.
 
+.. cfunction:: unsigned int PyArray_GetNDArrayCFeatureVersion(void)
+
+    .. versionadded:: 1.4.0
+
+    This just returns the value :cdata:`NPY_FEATURE_VERSION`.
+    :cdata:`NPY_FEATURE_VERSION` changes whenever the API changes (e.g. a
+    function is added). A changed value does not always require a recompile.
 
 Internal Flexibility
 ^^^^^^^^^^^^^^^^^^^^
