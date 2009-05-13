@@ -99,7 +99,7 @@ _import_array(void)
   }
   if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
     PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-        "version %%x of the C-API but this version of is %%x", \
+        "API version %%x but this version of numpy is %%x", \
         (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
     return -1;
   }
