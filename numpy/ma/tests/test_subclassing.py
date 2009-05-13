@@ -70,6 +70,11 @@ mmatrix = MMatrix
 class TestSubclassing(TestCase):
     """Test suite for masked subclasses of ndarray."""
 
+    def setUp(self):
+        x = np.arange(5)
+        mx = mmatrix(x, mask=[0, 1, 0, 0, 0])
+        self.data = (x, mx)
+
     def test_data_subclassing(self):
         "Tests whether the subclass is kept."
         x = np.arange(5)
@@ -82,18 +87,35 @@ class TestSubclassing(TestCase):
 
     def test_maskedarray_subclassing(self):
         "Tests subclassing MaskedArray"
-        x = np.arange(5)
-        mx = mmatrix(x,mask=[0,1,0,0,0])
+        (x, mx) = self.data
         self.failUnless(isinstance(mx._data, np.matrix))
+
+    def test_masked_unary_operations(self):
         "Tests masked_unary_operation"
+        (x, mx) = self.data
+        self.failUnless(isinstance(log(mx), mmatrix))
+        assert_equal(log(x), np.log(x))
+
+    def test_masked_binary_operations(self):
+        "Tests masked_binary_operation"
+        (x, mx) = self.data
+        # Result should be a mmatrix
         self.failUnless(isinstance(add(mx,mx), mmatrix))
         self.failUnless(isinstance(add(mx,x), mmatrix))
+        # Result should work
         assert_equal(add(mx,x), mx+x)
         self.failUnless(isinstance(add(mx,mx)._data, np.matrix))
         self.failUnless(isinstance(add.outer(mx,mx), mmatrix))
-        "Tests masked_binary_operation"
         self.failUnless(isinstance(hypot(mx,mx), mmatrix))
         self.failUnless(isinstance(hypot(mx,x), mmatrix))
+
+    def test_masked_binary_operations(self):
+        "Tests domained_masked_binary_operation"
+        (x, mx) = self.data
+        xmx = masked_array(mx.data.__array__(), mask=mx.mask)
+        self.failUnless(isinstance(divide(mx,mx), mmatrix))
+        self.failUnless(isinstance(divide(mx,x), mmatrix))
+        assert_equal(divide(mx, mx), divide(xmx, xmx))
 
     def test_attributepropagation(self):
         x = array(arange(5), mask=[0]+[1]*4)
