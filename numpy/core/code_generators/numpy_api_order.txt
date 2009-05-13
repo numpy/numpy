@@ -172,3 +172,4 @@ PyArray_OverflowMultiplyList
 PyArray_CompareString
 PyArray_MultiIterFromObjects
 PyArray_GetEndianness
+PyArray_GetNDArrayCFeatureVersion

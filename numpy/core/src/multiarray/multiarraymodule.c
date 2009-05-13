@@ -1685,6 +1685,15 @@ PyArray_GetNDArrayCVersion(void)
     return (unsigned int)NPY_VERSION;
 }
 
+/*NUMPY_API
+ * Returns the built-in (at compilation time) C API version
+ */
+NPY_NO_EXPORT unsigned int
+PyArray_GetNDArrayCFeatureVersion(void)
+{
+    return (unsigned int)NPY_FEATURE_VERSION;
+}
+
 static PyObject *
 array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
