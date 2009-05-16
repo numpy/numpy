@@ -38,6 +38,14 @@ Operating System :: MacOS
 # update it when the contents of directories change.
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 
+sys.path.insert(0, os.path.dirname(__file__))
+try:
+    setup_py = __import__("setup")
+    FULLVERSION = setup_py.FULLVERSION
+    write_version_py = setup_py.write_version_py
+finally:
+    sys.path.pop(0)
+
 # This is a bit hackish: we are setting a global variable so that the main
 # numpy __init__ can detect if it is being loaded by the setup routine, to
 # avoid attempting to load components that aren't built yet.  While ugly, it's
@@ -83,6 +91,10 @@ def setup_package():
     local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     os.chdir(local_path)
     sys.path.insert(0,local_path)
+
+    # Rewrite the version file everytime
+    if os.path.exists('numpy/version.py'): os.remove('numpy/version.py')
+    write_version_py()
 
     try:
         setup(
