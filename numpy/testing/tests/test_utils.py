@@ -43,6 +43,11 @@ class _GenericTest(object):
 
         self._test_not_equal(a, b)
 
+    def test_objarray(self):
+        """Test object arrays."""
+        a = np.array([1, 1], dtype=np.object)
+        self._test_equal(a, 1)
+
 class TestEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_equal
