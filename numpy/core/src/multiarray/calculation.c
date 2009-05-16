@@ -17,9 +17,6 @@
 #define _check_axis PyArray_CheckAxis
 #define PyAO PyArrayObject
 
-/* An Error object -- rarely used? */
-NPY_NO_EXPORT PyObject *MultiArrayError;
-
 static double
 power_of_ten(int n)
 {
@@ -95,7 +92,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     elsize = ap->descr->elsize;
     m = ap->dimensions[ap->nd-1];
     if (m == 0) {
-        PyErr_SetString(MultiArrayError,
+        PyErr_SetString(PyExc_ValueError,
                         "attempt to get argmax/argmin "\
                         "of an empty sequence");
         goto fail;

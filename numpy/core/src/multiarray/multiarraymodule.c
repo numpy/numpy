@@ -2534,8 +2534,7 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyErr_Occurred()) {
         goto err;
     }
-    MultiArrayError = PyString_FromString ("multiarray.error");
-    PyDict_SetItemString (d, "error", MultiArrayError);
+    PyDict_SetItemString (d, "error", PyString_FromString("multiarray.error"));
     s = PyString_FromString("3.0");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
