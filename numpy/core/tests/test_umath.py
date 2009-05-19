@@ -661,12 +661,12 @@ def test_reduceat():
     # test buffered
     res = np.setbufsize(32)
     h1 = np.add.reduceat(a['value'], indx)
-    assert np.all(h1 == h2)
+    assert_array_almost_equal(h1, h2)
     
     # test nobuffer
     np.setbufsize(res)
     h1 = np.add.reduceat(a['value'], indx)    
-    assert np.all(h1 == h2)
+    assert_array_almost_equal(h1, h2)
     
 
 if __name__ == "__main__":
