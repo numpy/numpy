@@ -1,12 +1,9 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include "structmember.h"
 
-/*#include <stdio.h>*/
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
-#include "numpy/arrayscalars.h"
 
 #include "config.h"
 
