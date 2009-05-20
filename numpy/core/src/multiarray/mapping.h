@@ -37,6 +37,12 @@ _array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
 #define array_ass_item _array_ass_item
 #endif
 
+NPY_NO_EXPORT PyObject *
+add_new_axes_0d(PyArrayObject *,  int);
+
+NPY_NO_EXPORT int
+count_new_axes_0d(PyObject *tuple);
+
 /*
  * Prototypes for Mapping calls --- not part of the C-API
  * because only useful as part of a getitem call.
