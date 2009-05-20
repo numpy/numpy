@@ -1279,8 +1279,8 @@ cdef class RandomState:
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
         >>> count, bins, ignored = plt.hist(s, 50, normed=True)
-        >>> y = bins**(shape-1)*((exp(-bins/scale))/\\
-            (sps.gamma(shape)*scale**shape))
+        >>> y = bins**(shape-1)*(exp(-bins/scale) /
+        ...                      (sps.gamma(shape)*scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
         >>> plt.show()
 
@@ -1672,8 +1672,8 @@ cdef class RandomState:
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
         >>> count, bins, ignored = plt.hist(s, 50, normed=True)
-        >>> x = arange(-pi, pi, 2*pi/50.)
-        >>> y = -np.exp(kappa*np.cos(x-mu))/(2*pi*sps.jn(0,kappa))
+        >>> x = np.arange(-np.pi, np.pi, 2*np.pi/50.)
+        >>> y = -np.exp(kappa*np.cos(x-mu))/(2*np.pi*sps.jn(0,kappa))
         >>> plt.plot(x, y/max(y), linewidth=2, color='r')
         >>> plt.show()
 
@@ -1858,6 +1858,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
+        >>> x = np.arange(1,100.)/50.
         >>> def weib(x,n,a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
 
@@ -2619,7 +2620,7 @@ cdef class RandomState:
         >>> import scipy.special as sps
         Truncate s values at 50 so plot is interesting
         >>> count, bins, ignored = plt.hist(s[s<50], 50, normed=True)
-        >>> x = arange(1., 50.)
+        >>> x = np.arange(1., 50.)
         >>> y = x**(-a)/sps.zetac(a)
         >>> plt.plot(x, y/max(y), linewidth=2, color='r')
         >>> plt.show()
