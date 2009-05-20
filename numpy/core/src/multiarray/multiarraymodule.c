@@ -40,21 +40,6 @@
 #include "number.h"
 #include "scalartypes.h"
 
-/*
- * Including this file is the only way I know how to declare functions
- * static in each file, and store the pointers from functions in both
- * arrayobject.c and multiarraymodule.c for the C-API
- *
- * Declarying an external pointer-containing variable in arrayobject.c
- * and trying to copy it to PyArray_API, did not work.
- *
- * Think about two modules with a common api that import each other...
- *
- * This file would just be the module calls.
- */
-
-//#include "arrayobject.c"
-
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
 /*NUMPY_API
