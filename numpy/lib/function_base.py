@@ -2187,7 +2187,7 @@ def bartlett(M):
     >>> response = 20*log10(mag)
     >>> response = clip(response,-100,100)
     >>> plt.plot(freq, response)
-    >>> plt.title("Frequency response of Bartlett window")
+    >>> plt.title("Frequency response of Blackman window")
     >>> plt.ylabel("Magnitude [dB]")
     >>> plt.xlabel("Normalized frequency [cycles per sample]")
     >>> plt.axis('tight')
