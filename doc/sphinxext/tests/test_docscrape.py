@@ -488,3 +488,24 @@ def test_unicode():
 
     """)
     assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+
+def test_plot_examples():
+    doc = SphinxDocString("""
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot([1,2,3],[4,5,6])
+    >>> plt.show()
+    """)
+    assert 'plot::' in str(doc), str(doc)
+
+    doc = SphinxDocString("""
+    Examples
+    --------
+    .. plot::
+    
+       import matplotlib.pyplot as plt
+       plt.plot([1,2,3],[4,5,6])
+       plt.show()
+    """)
+    assert str(doc).count('plot::') == 1, str(doc)

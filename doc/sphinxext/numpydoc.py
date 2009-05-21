@@ -30,6 +30,7 @@ def mangle_docstrings(app, what, name, obj, options, lines,
         lines[:] = title_re.sub('', "\n".join(lines)).split("\n")
     else:
         doc = get_doc_object(obj, what, "\n".join(lines))
+        doc.use_plots = app.config.numpydoc_use_plots
         lines[:] = str(doc).split("\n")
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
@@ -93,6 +94,7 @@ def setup(app, get_doc_object_=get_doc_object):
     app.connect('autodoc-process-docstring', mangle_docstrings)
     app.connect('builder-inited', initialize)
     app.add_config_value('numpydoc_edit_link', None, True)
+    app.add_config_value('numpydoc_use_plots', None, False)
 
 #------------------------------------------------------------------------------
 # Monkeypatch sphinx.ext.autodoc to accept argspecless autodocs (Sphinx < 0.5)

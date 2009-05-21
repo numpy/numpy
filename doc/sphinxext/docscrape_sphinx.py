@@ -3,6 +3,8 @@ import sphinx
 from docscrape import NumpyDocString, FunctionDoc, ClassDoc
 
 class SphinxDocString(NumpyDocString):
+    use_plots = False
+
     # string conversion routines
     def _str_header(self, name, symbol='`'):
         return ['.. rubric:: ' + name, '']
@@ -105,6 +107,20 @@ class SphinxDocString(NumpyDocString):
             out += ['   ' + ", ".join(["[%s]_" % item for item in items]), '']
         return out
 
+    def _str_examples(self):
+        examples_str = "\n".join(self['Examples'])
+
+        if (self.use_plots and 'import matplotlib' in examples_str
+                and 'plot::' not in examples_str):
+            out = []
+            out += self._str_header('Examples')
+            out += ['.. plot::', '']
+            out += self._str_indent(self['Examples'])
+            out += ['']
+            return out
+        else:
+            return self._str_section('Examples')
+
     def __str__(self, indent=0, func_role="obj"):
         out = []
         out += self._str_signature()
@@ -118,7 +134,7 @@ class SphinxDocString(NumpyDocString):
         out += self._str_see_also(func_role)
         out += self._str_section('Notes')
         out += self._str_references()
-        out += self._str_section('Examples')
+        out += self._str_examples()
         out = self._str_indent(out,indent)
         return '\n'.join(out)
 

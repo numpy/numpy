@@ -160,7 +160,7 @@ TEMPLATE = """
 .. htmlonly::
 
    {% if source_code %}
-       (`Source code <{{ source_link }}>`__)
+   (`Source code <{{ source_link }}>`__)
 
    .. admonition:: Output
       :class: plot-output
@@ -293,9 +293,10 @@ def run(arguments, content, options, state_machine, state, lineno):
     if options['include-source']:
         if is_doctest:
             lines = ['']
+            lines += [row.rstrip() for row in code.split('\n')]
         else:
             lines = ['.. code-block:: python', '']
-        lines += ['    %s' % row.rstrip() for row in code.split('\n')]
+            lines += ['    %s' % row.rstrip() for row in code.split('\n')]
         source_code = "\n".join(lines)
     else:
         source_code = ""
