@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'only_directives']
+              'only_directives', 'plot_directive']
 
 if sphinx.__version__ >= "0.7":
     extensions.append('sphinx.ext.autosummary')
@@ -240,3 +240,29 @@ coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
 
+# -----------------------------------------------------------------------------
+# Plots
+# -----------------------------------------------------------------------------
+plot_pre_code = """
+import numpy as np
+np.random.seed(0)
+"""
+plot_include_source = True
+plot_formats = [('png', 100), 'pdf']
+
+import matplotlib
+matplotlib.rcParams.update({
+    'font.size': 8,
+    'axes.titlesize': 8,
+    'axes.labelsize': 8,
+    'xtick.labelsize': 8,
+    'ytick.labelsize': 8,
+    'legend.fontsize': 8,
+    'figure.figsize': (3.236068, 2),
+    'figure.subplot.bottom': 0.2,
+    'figure.subplot.left': 0.2,
+    'figure.subplot.right': 0.9,
+    'figure.subplot.top': 0.85,
+    'figure.subplot.wspace': 0.4,
+    'text.usetex': False,
+})
