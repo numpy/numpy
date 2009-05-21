@@ -26,7 +26,7 @@
         #define NPY_LITTLE_ENDIAN
         #define NPY_BYTE_ORDER 1234
     #elif defined(NPY_CPU_PPC) || defined(NPY_CPU_SPARC)\
-            || defined(NPY_CPU_S390) || defined(NPY_CPU_PARISC)
+            || defined(NPY_CPU_S390) || defined(NPY_CPU_PARISC) || defined(NPY_CPU_PPC64)
         #define NPY_BIG_ENDIAN
         #define NPY_BYTE_ORDER 4321
     #else
