@@ -125,6 +125,30 @@ div.tip {
   border: 1px solid #ee6;
 }
 
+div.plot-output { 
+  clear-after: both;
+}
+
+div.plot-output .figure { 
+  float: left;
+  text-align: center;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+div.plot-output .caption { 
+  margin-top: 2;
+  padding-top: 0;
+}
+
+div.plot-output:after { 
+  content: ""; 
+  display: block; 
+  height: 0; 
+  clear: both; 
+}
+
+
 /*
 div.admonition-example {
     background-color: #e4ffe4;
