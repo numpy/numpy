@@ -141,6 +141,10 @@ div.plot-output .caption {
   padding-top: 0;
 }
 
+div.plot-output p.admonition-title {
+  display: none;
+}
+
 div.plot-output:after { 
   content: ""; 
   display: block; 
