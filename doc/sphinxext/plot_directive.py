@@ -406,7 +406,7 @@ def run_code(code, code_path):
             ns = {}
             exec setup.config.plot_pre_code in ns
             exec code in ns
-        except exceptions.BaseException, err:
+        except (Exception, SystemExit), err:
             raise PlotError(traceback.format_exc())
     finally:
         os.chdir(pwd)
