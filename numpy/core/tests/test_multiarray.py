@@ -782,7 +782,7 @@ class TestLexsort(TestCase):
 
 class TestIO(object):
     """Test tofile, fromfile, tostring, and fromstring"""
-    
+
     def setUp(self):
         shape = (2,4,3)
         rand = np.random.random
@@ -795,6 +795,18 @@ class TestIO(object):
         if os.path.isfile(self.filename):
             os.unlink(self.filename)
             #tmp_file.close()
+
+    def test_empty_files_binary(self):
+        f = open(self.filename, 'w')
+        f.close()
+        y = fromfile(self.filename)
+        assert_(y.size == 0, "Array not empty")
+
+    def test_empty_files_text(self):
+        f = open(self.filename, 'w')
+        f.close()
+        y = fromfile(self.filename, sep=" ")
+        assert_(y.size == 0, "Array not empty")
 
     def test_roundtrip_file(self):
         f = open(self.filename, 'wb')
