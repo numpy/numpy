@@ -2932,12 +2932,12 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
         }
     }
     if (num < 0) {
-        tmp = PyDataMem_RENEW(r->data, (*nread)*dtype->elsize);
+        tmp = PyDataMem_RENEW(r->data, NPY_MAX(*nread,1)*dtype->elsize);
 	if (tmp == NULL) {
             err = 1;
         }
 	else {
-	    PyArray_DIM(r,0) = *nread;
+            PyArray_DIM(r,0) = *nread;
 	    r->data = tmp;
 	}
     }
