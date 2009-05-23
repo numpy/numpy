@@ -2084,54 +2084,55 @@ descr_repeat(PyObject *self, Py_ssize_t length)
 static PyObject *
 descr_subscript(PyArray_Descr *self, PyObject *op)
 {
+    PyObject *retval;
 
-    if (self->names) {
-        if (PyString_Check(op) || PyUnicode_Check(op)) {
-            PyObject *obj = PyDict_GetItem(self->fields, op);
-            if (obj != NULL) {
-                PyObject *descr = PyTuple_GET_ITEM(obj, 0);
-                Py_INCREF(descr);
-                return descr;
-            }
-            else {
-                PyErr_Format(PyExc_KeyError,
-                             "field named \'%s\' not found.",
-                             PyString_AsString(op));
-            }
-        }
-        else if (PyInt_Check(op)) {
-            PyObject *name;
-            int value = PyArray_PyIntAsInt(op);
-            if (!PyErr_Occurred()) {
-                int size = PyTuple_GET_SIZE(self->names);
-                if (value < 0) {
-                    value += size;
-                }
-                if (value < 0 || value >= size) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "0<=index<%d not %d",
-                                 size, value);
-                    return NULL;
-                }
-                name = PyTuple_GET_ITEM(self->names, value);
-                return descr_subscript(self, name);
-            }
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                            "only integers, strings or unicode values "\
-                            "allowed for getting fields.");
-        }
-    }
-    else {
+    if (!self->names) {
         PyObject *astr;
         astr = arraydescr_str(self);
         PyErr_Format(PyExc_KeyError,
-                     "there are no fields in dtype %s.",
+                     "There are no fields in dtype %s.",
                      PyString_AsString(astr));
         Py_DECREF(astr);
+        return NULL;
     }
-    return NULL;
+    if (PyString_Check(op) || PyUnicode_Check(op)) {
+        PyObject *obj = PyDict_GetItem(self->fields, op);
+
+        if (obj == NULL) {
+            PyErr_Format(PyExc_KeyError,
+                    "Field named \'%s\' not found.",
+                    PyString_AsString(op));
+            return NULL;
+        }
+        PyObject *descr = PyTuple_GET_ITEM(obj, 0);
+        Py_INCREF(descr);
+        retval = descr;
+    }
+    else if (PyInt_Check(op)) {
+        PyObject *name;
+        int size = PyTuple_GET_SIZE(self->names);
+        int value = PyArray_PyIntAsInt(op);
+
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
+        if (value < 0) {
+            value += size;
+        }
+        if (value < 0 || value >= size) {
+            PyErr_Format(PyExc_IndexError,
+                    "Field index out of range.");
+            return NULL;
+        }
+        name = PyTuple_GET_ITEM(self->names, value);
+        retval = descr_subscript(self, name);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                "Field key must be an integer, string, or unicode.");
+        return NULL;
+    }
+    return retval;
 }
 
 static PySequenceMethods descr_as_sequence = {
