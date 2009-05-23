@@ -1284,7 +1284,14 @@ class TestRegression(TestCase):
 
     def test_array_too_big(self):
         """Ticket #1080."""
-        assert_raises(ValueError,np.zeros,[2**10]*10)
+        assert_raises(ValueError, np.zeros, [2**10]*10)
+
+    def test_dtype_keyerrors_(self):
+        """Ticket #1106."""
+        dt = np.dtype([('f1', np.uint)])
+        assert_raises(KeyError, dt.__getitem__, "f2")
+        assert_raises(IndexError, dt.__getitem__, 1)
+        assert_raises(ValueError, dt.__getitem__, 0.0)
 
 if __name__ == "__main__":
     run_module_suite()
