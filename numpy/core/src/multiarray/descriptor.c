@@ -2099,7 +2099,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
                              PyString_AsString(op));
             }
         }
-        else {
+        else if (PyInt_Check(op)) {
             PyObject *name;
             int value = PyArray_PyIntAsInt(op);
             if (!PyErr_Occurred()) {
@@ -2117,9 +2117,11 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
                 return descr_subscript(self, name);
             }
         }
-        PyErr_SetString(PyExc_ValueError,
-                        "only integers, strings or unicode values "
-                        "allowed for getting fields.");
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                            "only integers, strings or unicode values "\
+                            "allowed for getting fields.");
+        }
     }
     else {
         PyObject *astr;
