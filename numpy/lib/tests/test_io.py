@@ -344,6 +344,15 @@ class TestLoadTxt(TestCase):
         a = np.array([(1, (2, 3.0)), (4, (5, 6.0))], dt)
         assert_array_equal(x, a)
 
+    def test_shaped_dtype(self):
+        c = StringIO.StringIO("aaaa  1.0  8.0  1 2 3 4 5 6")
+        dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
+                       ('block', int, (2, 3))])
+        x = np.loadtxt(c, dtype=dt)
+        a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
+                     dtype=dt)
+        assert_array_equal(x, a)
+
     def test_empty_file(self):
         c = StringIO.StringIO()
         assert_raises(IOError, np.loadtxt, c)

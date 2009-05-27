@@ -424,7 +424,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     def flatten_dtype(dt):
         """Unpack a structured data-type."""
         if dt.names is None:
-            return [dt]
+            # If the dtype is flattened, return.
+            # If the dtype has a shape, the dtype occurs
+            # in the list more than once.
+            return [dt.base] * int(np.prod(dt.shape))
         else:
             types = []
             for field in dt.names:
