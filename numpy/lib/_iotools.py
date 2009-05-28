@@ -64,21 +64,44 @@ def has_nested_fields(ndtype):
     return False
 
 
-def flatten_dtype(ndtype):
+def flatten_dtype(ndtype, flatten_base=False):
     """
-    Unpack a structured data-type.
+    Unpack a structured data-type by collapsing nested fields and/or fields with
+    a shape.
 
+    Note that the field names are lost.
+
+    Parameters
+    ----------
+    ndtype : dtype
+        The datatype to collapse
+    flatten_base : {False, True}, optional
+        Whether to transform a field with a shape into several fields or not.
+
+    Examples
+    --------
+    >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
+   ...                 ('block', int, (2, 3))])
+    >>> flatten_dtype(dt)
+     [dtype('|S4'), dtype('float64'), dtype('float64'), dtype(('int32',(2, 3)))]
+    >>> flatten_dtype(dt, flatten_base=True)
+    [dtype('|S4'), dtype('float64'), dtype('float64'), dtype('int32'),
+     dtype('int32'), dtype('int32'), dtype('int32'), dtype('int32'),
+     dtype('int32')]
     """
     names = ndtype.names
     if names is None:
-        return [ndtype]
+        if flatten_base:
+            return [ndtype.base] * int(np.prod(ndtype.shape))
+        return [ndtype.base]
     else:
         types = []
         for field in names:
             (typ, _) = ndtype.fields[field]
-            flat_dt = flatten_dtype(typ)
+            flat_dt = flatten_dtype(typ, flatten_base)
             types.extend(flat_dt)
         return types
+
 
 
 class LineSplitter:

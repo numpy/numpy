@@ -370,6 +370,25 @@ class TestLoadTxt(TestCase):
                           converters={1: lambda s: int(s, 16)})
         assert_array_equal(data, [33, 66])
 
+    def test_dtype_with_object(self):
+        "Test using an explicit dtype with an object"
+        from datetime import date
+        import time
+        data = """
+        1; 2001-01-01
+        2; 2002-01-31
+        """
+        ndtype = [('idx', int), ('code', np.object)]
+        func = lambda s: strptime(s.strip(), "%Y-%m-%d")
+        converters = {1: func}
+        test = np.loadtxt(StringIO.StringIO(data), delimiter=";", dtype=ndtype,
+                             converters=converters)
+        control = np.array([(1, datetime(2001,1,1)), (2, datetime(2002,1,31))],
+                           dtype=ndtype)
+        assert_equal(test, control)
+
+
+
 class Testfromregex(TestCase):
     def test_record(self):
         c = StringIO.StringIO()
@@ -715,6 +734,16 @@ M   33  21.99
         test = np.mafromtxt(data, dtype=fancydtype, delimiter=',')
         control = ma.array([(1,(2,3.0)),(4,(5,6.0))], dtype=fancydtype)
         assert_equal(test, control)
+
+
+    def test_shaped_dtype(self):
+        c = StringIO.StringIO("aaaa  1.0  8.0  1 2 3 4 5 6")
+        dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
+                       ('block', int, (2, 3))])
+        x = np.ndfromtxt(c, dtype=dt)
+        a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
+                     dtype=dt)
+        assert_array_equal(x, a)
 
 
     def test_withmissing(self):

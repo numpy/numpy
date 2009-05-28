@@ -505,8 +505,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         # [('x', int), ('s', int), ('t', float)]
         #
         # Then, view the array using the specified dtype.
-        X = np.array(X, dtype=np.dtype([('', t) for t in dtype_types]))
-        X = X.view(dtype)
+        try:
+            X = np.array(X, dtype=np.dtype([('', t) for t in dtype_types]))
+            X = X.view(dtype)
+        except TypeError:
+            # In the case we have an object dtype
+            X = np.array(X, dtype=dtype)
     else:
         X = np.array(X, dtype)
 
@@ -895,14 +899,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
                               missing_values=missing_values.get(_, defmissing))
                       for _ in range(nbcols)]
     else:
-        flatdtypes = flatten_dtype(dtype)
+        dtype_flat = flatten_dtype(dtype, flatten_base=True)
         # Initialize the converters
-        if len(flatdtypes) > 1:
+        if len(dtype_flat) > 1:
             # Flexible type : get a converter from each dtype
             converters = [StringConverter(dt,
                               missing_values=missing_values.get(i, defmissing),
                               locked=True)
-                          for (i, dt) in enumerate(flatdtypes)]
+                          for (i, dt) in enumerate(dtype_flat)]
         else:
             # Set to a default converter (but w/ different missing values)
             converters = [StringConverter(dtype,
@@ -1000,27 +1004,27 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         # Overwrite the initial dtype names if needed
         if names and dtype.names:
             dtype.names = names
-        flatdtypes = flatten_dtype(dtype)
         # Case 1. We have a structured type
-        if len(flatdtypes) > 1:
+        if len(dtype_flat) > 1:
             # Nested dtype, eg  [('a', int), ('b', [('b0', int), ('b1', 'f4')])]
             # First, create the array using a flattened dtype:
             # [('a', int), ('b1', int), ('b2', float)]
             # Then, view the array using the specified dtype.
-            if has_nested_fields(dtype):
-                if 'O' in (_.char for _ in flatdtypes):
+            if 'O' in (_.char for _ in dtype_flat):
+                if has_nested_fields(dtype):
                     errmsg = "Nested fields involving objects "\
                              "are not supported..."
                     raise NotImplementedError(errmsg)
-                rows = np.array(data, dtype=[('', t) for t in flatdtypes])
-                output = rows.view(dtype)
+                else:
+                    output = np.array(data, dtype=dtype)
             else:
-                output = np.array(data, dtype=dtype)
+                rows = np.array(data, dtype=[('', _) for _ in dtype_flat])
+                output = rows.view(dtype)
             # Now, process the rowmasks the same way
             if usemask:
                 rowmasks = np.array(masks,
                                     dtype=np.dtype([('', np.bool)
-                                                    for t in flatdtypes]))
+                                                    for t in dtype_flat]))
                 # Construct the new dtype
                 mdtype = make_mask_descr(dtype)
                 outputmask = rowmasks.view(mdtype)
