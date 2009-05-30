@@ -10,7 +10,7 @@ include setupegg.py
 # Adding scons build relateed files not found by distutils
 recursive-include numpy/core/code_generators *.py
 include numpy/core/include/numpy/numpyconfig.h.in
-recursive-include numpy SConstruct
+recursive-include numpy SConstruct SConscript
 # Add documentation: we don't use add_data_dir since we do not want to include
 # this at installation, only for sdist-generated tarballs
 include doc/Makefile doc/postprocess.py
