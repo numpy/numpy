@@ -2097,6 +2097,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
     }
     if (PyString_Check(op) || PyUnicode_Check(op)) {
         PyObject *obj = PyDict_GetItem(self->fields, op);
+        PyObject *descr;
 
         if (obj == NULL) {
             PyErr_Format(PyExc_KeyError,
@@ -2104,7 +2105,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
                     PyString_AsString(op));
             return NULL;
         }
-        PyObject *descr = PyTuple_GET_ITEM(obj, 0);
+        descr = PyTuple_GET_ITEM(obj, 0);
         Py_INCREF(descr);
         retval = descr;
     }
