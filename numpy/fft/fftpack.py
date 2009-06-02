@@ -685,7 +685,7 @@ def ifftn(a, s=None, axes=None):
            [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
            [ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j]])
 
-    >>> from numpy import zeros, exp
+    >>> from numpy import zeros, exp, pi
     >>> from numpy.random import uniform
     >>> from numpy.fft import ifftn
     >>> import matplotlib.pyplot as plt
