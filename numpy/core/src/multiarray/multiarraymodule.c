@@ -905,37 +905,24 @@ PyArray_CopyAndTranspose(PyObject *op)
     return ret;
 }
 
-/*NUMPY_API
- * Numeric.correlate(a1,a2,mode)
+/*
+ * Implementation which is common between PyArray_Correlate and PyArray_Acorrelate
+ *
+ * inverted is set to 1 if computed correlate(ap2, ap1), 0 otherwise
  */
-NPY_NO_EXPORT PyObject *
-PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
+static PyArrayObject*
+_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
+                   int mode, int *inverted)
 {
-    PyArrayObject *ap1, *ap2, *ret = NULL;
+    PyArrayObject *ret;
     intp length;
     intp i, n1, n2, n, n_left, n_right;
-    int typenum;
     intp is1, is2, os;
     char *ip1, *ip2, *op;
     PyArray_DotFunc *dot;
-    PyArray_Descr *typec;
 
     NPY_BEGIN_THREADS_DEF;
 
-        typenum = PyArray_ObjectType(op1, 0);
-    typenum = PyArray_ObjectType(op2, typenum);
-
-    typec = PyArray_DescrFromType(typenum);
-    Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1, DEFAULT, NULL);
-    if (ap1 == NULL) {
-        Py_DECREF(typec);
-        return NULL;
-    }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1, DEFAULT, NULL);
-    if (ap2 == NULL) {
-        goto fail;
-    }
     n1 = ap1->dimensions[0];
     n2 = ap2->dimensions[0];
     if (n1 < n2) {
@@ -946,7 +933,11 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         i = n1;
         n1 = n2;
         n2 = i;
+        *inverted = 1;
+    } else {
+        *inverted = 0;
     }
+
     length = n1;
     n = n2;
     switch(mode) {
@@ -965,7 +956,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         break;
     default:
         PyErr_SetString(PyExc_ValueError, "mode must be 0, 1, or 2");
-        goto fail;
+        return NULL;
     }
 
     /*
@@ -974,13 +965,13 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
      */
     ret = new_array_for_sum(ap1, ap2, 1, &length, typenum);
     if (ret == NULL) {
-        goto fail;
+        return NULL;
     }
     dot = ret->descr->f->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
-        goto fail;
+        goto clean_ret;
     }
 
     NPY_BEGIN_THREADS_DESCR(ret->descr);
@@ -1008,15 +999,175 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         ip1 += is1;
         op += os;
     }
+
     NPY_END_THREADS_DESCR(ret->descr);
     if (PyErr_Occurred()) {
+        goto clean_ret;
+    }
+
+    return ret;
+
+clean_ret:
+    Py_DECREF(ret);
+    return NULL;
+}
+
+/*
+ * Revert a one dimensional array in-place
+ *
+ * Return 0 on success, other value on failure
+ */
+static int
+_pyarray_revert(PyArrayObject *ret)
+{
+    intp length;
+    intp i;
+    PyArray_CopySwapFunc *copyswap;
+    char *tmp = NULL, *sw1, *sw2;
+    intp os;
+    char *op;
+
+    length = ret->dimensions[0];
+    copyswap = ret->descr->f->copyswap;
+
+    tmp = PyArray_malloc(ret->descr->elsize);
+    if (tmp == NULL) {
+        return -1;
+    }
+
+    os = ret->descr->elsize;
+    op = ret->data;
+    sw1 = op;
+    sw2 = op + (length - 1) * os;
+    if (PyArray_ISFLEXIBLE(ret) || PyArray_ISOBJECT(ret)) {
+        for(i = 0; i < length/2; ++i) {
+            memmove(tmp, sw1, os);
+            copyswap(tmp, NULL, 0, NULL);
+            memmove(sw1, sw2, os);
+            copyswap(sw1, NULL, 0, NULL);
+            memmove(sw2, tmp, os);
+            copyswap(sw2, NULL, 0, NULL);
+            sw1 += os;
+            sw2 -= os;
+        }
+    } else {
+        for(i = 0; i < length/2; ++i) {
+            memcpy(tmp, sw1, os);
+            memcpy(sw1, sw2, os);
+            memcpy(sw2, tmp, os);
+            sw1 += os;
+            sw2 -= os;
+        }
+    }
+
+    PyArray_free(tmp);
+    return 0;
+}
+
+/*NUMPY_API
+ * acorrelate(a1,a2,mode)
+ *
+ * This function computes the usual correlation (acorrelate(a1, a2) !=
+ * accorrelate(a2, a1), and conjugate the second argument for complex inputs
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Acorrelate(PyObject *op1, PyObject *op2, int mode)
+{
+    PyArrayObject *ap1, *ap2, *ret = NULL;
+    int typenum;
+    PyArray_Descr *typec;
+    int inverted;
+    int st;
+
+    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op2, typenum);
+
+    typec = PyArray_DescrFromType(typenum);
+    Py_INCREF(typec);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1, DEFAULT, NULL);
+    if (ap1 == NULL) {
+        Py_DECREF(typec);
+        return NULL;
+    }
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1, DEFAULT, NULL);
+    if (ap2 == NULL) {
+        goto clean_ap1;
+    }
+
+    if (PyArray_ISCOMPLEX(ap2)) {
+        PyArrayObject *cap2;
+        cap2 = (PyArrayObject *)PyArray_Conjugate(ap2, NULL);
+        if (cap2 == NULL) {
+            goto clean_ap2;
+        }
+        Py_DECREF(ap2);
+        ap2 = cap2;
+    }
+
+    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &inverted);
+    if (ret == NULL) {
+        goto clean_ap2;
+    }
+
+    /*
+     * If we inverted input orders, we need to reverse the output array (i.e.
+     * ret = ret[::-1])
+     */
+    if (inverted) {
+        st = _pyarray_revert(ret);
+        if(st) {
+            goto clean_ret;
+        }
+    }
+
+    Py_DECREF(ap1);
+    Py_DECREF(ap2);
+    return (PyObject *)ret;
+
+clean_ret:
+    Py_DECREF(ret);
+clean_ap2:
+    Py_DECREF(ap2);
+clean_ap1:
+    Py_DECREF(ap1);
+    return NULL;
+}
+
+/*NUMPY_API
+ * Numeric.correlate(a1,a2,mode)
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
+{
+    PyArrayObject *ap1, *ap2, *ret = NULL;
+    int typenum;
+    int unused;
+    PyArray_Descr *typec;
+
+    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op2, typenum);
+
+    typec = PyArray_DescrFromType(typenum);
+    Py_INCREF(typec);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1, DEFAULT, NULL);
+    if (ap1 == NULL) {
+        Py_DECREF(typec);
+        return NULL;
+    }
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1, DEFAULT, NULL);
+    if (ap2 == NULL) {
+        goto fail;
+    }
+
+    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &unused);
+    if(ret == NULL) {
         goto fail;
     }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
@@ -1644,6 +1795,20 @@ static PyObject *array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
     return PyArray_Correlate(a0, shape, mode);
 }
 
+static PyObject*
+array_acorrelate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) 
+{
+    PyObject *shape, *a0;
+    int mode = 0;
+    static char *kwlist[] = {"a", "v", "mode", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+                                     &a0, &shape, &mode)) {
+        return NULL;
+    }
+    return PyArray_Acorrelate(a0, shape, mode);
+}
+
 static PyObject *
 array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL;
@@ -2250,6 +2415,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"correlate",
         (PyCFunction)array_correlate,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"acorrelate",
+        (PyCFunction)array_acorrelate,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"frombuffer",
         (PyCFunction)array_frombuffer,

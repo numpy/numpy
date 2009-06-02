@@ -6,7 +6,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
-           'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
+           'correlate', 'acorrelate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
@@ -579,10 +579,45 @@ def correlate(a,v,mode='valid'):
     --------
     convolve : Discrete, linear convolution of two
                one-dimensional sequences.
-
+    acorrelate: Discrete correlation following the usual signal processing
+               definition for complex arrays, and without assuming that
+               correlate(a, b) == correlate(b, a)
     """
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,v,mode)
+
+def acorrelate(a, v, mode='valid'):
+    """
+    Discrete, linear correlation of two 1-dimensional sequences.
+
+    This function computes the correlation as generally defined in signal
+    processing texts:
+
+    z[k] = sum_n a[n] * conj(v[n+k])
+
+    with a and v sequences being zero-padded where necessary and conj being the
+    conjugate.
+
+    Parameters
+    ----------
+    a, v : array_like
+        Input sequences.
+    mode : {'valid', 'same', 'full'}, optional
+        Refer to the `convolve` docstring.  Note that the default
+        is `valid`, unlike `convolve`, which uses `full`.
+
+    Note
+    ----
+    This is the function which corresponds to matlab xcorr.
+
+    See Also
+    --------
+    convolve : Discrete, linear convolution of two
+               one-dimensional sequences.
+    correlate: Deprecated function to compute correlation
+    """
+    mode = _mode_from_name(mode)
+    return multiarray.acorrelate(a, v, mode)
 
 
 def convolve(a,v,mode='full'):
