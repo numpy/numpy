@@ -2,16 +2,6 @@
 #include "structmember.h"
 #include "numpy/noprefix.h"
 
-static PyObject *ErrorObject;
-#define Py_Try(BOOLEAN) {if (!(BOOLEAN)) goto fail;}
-#define Py_Assert(BOOLEAN,MESS) {if (!(BOOLEAN)) {      \
-            PyErr_SetString(ErrorObject, (MESS));       \
-            goto fail;}                                 \
-    }
-
-#define PYSETERROR(message) \
-{ PyErr_SetString(ErrorObject, message); goto fail; }
-
 static intp
 incr_slot_(double x, double *bins, intp lbins)
 {
@@ -118,32 +108,47 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", NULL};
 
-    Py_Try(PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist,
-                                       &list, &weight));
-    Py_Try(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1));
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O",
+                kwlist, &list, &weight)) {
+            goto fail;
+    }
+    if (!(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1))) {
+            goto fail;
+    }
     len = PyArray_SIZE(lst);
     numbers = (intp *) PyArray_DATA(lst);
-    mxi = mxx (numbers, len);
-    mni = mnx (numbers, len);
-    Py_Assert(numbers[mni] >= 0,
-              "bincount: first argument of bincount must be non-negative");
+    mxi = mxx(numbers, len);
+    mni = mnx(numbers, len);
+    if (numbers[mni] < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "The first argument of bincount must be non-negative");
+        goto fail;
+    }
     ans_size = numbers [mxi] + 1;
     type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
-        Py_Try(ans = PyArray_Zeros(1, &ans_size, type, 0));
+        if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {
+            goto fail;
+        }
         ians = (intp *)(PyArray_DATA(ans));
         for (i = 0; i < len; i++)
             ians [numbers [i]] += 1;
         Py_DECREF(lst);
     }
     else {
-        Py_Try(wts = PyArray_ContiguousFromAny(weight,
-                                               PyArray_DOUBLE, 1, 1));
+        if (!(wts = PyArray_ContiguousFromAny(weight, PyArray_DOUBLE, 1, 1))) {
+            goto fail;
+        }
         weights = (double *)PyArray_DATA (wts);
-        Py_Assert(PyArray_SIZE(wts) == len,
-                "bincount: length of weights does not match that of list");
+        if (PyArray_SIZE(wts) != len) {
+            PyErr_SetString(PyExc_ValueError,
+                    "The weights and list don't have the same length.");
+            goto fail;
+        }
         type = PyArray_DescrFromType(PyArray_DOUBLE);
-        Py_Try(ans = PyArray_Zeros(1, &ans_size, type, 0));
+        if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {
+            goto fail;
+        }
         dans = (double *)PyArray_DATA (ans);
         for (i = 0; i < len; i++) {
             dans[numbers[i]] += weights[i];
@@ -181,23 +186,32 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"x", "bins", NULL};
     PyArray_Descr *type;
 
-    Py_Try(PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist,
-                                       &ox, &obins));
-
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &ox, &obins)) {
+        goto fail;
+    }
     type = PyArray_DescrFromType(PyArray_DOUBLE);
-    Py_Try(ax=PyArray_FromAny(ox, type, 1, 1, CARRAY, NULL));
+    if (!(ax = PyArray_FromAny(ox, type, 1, 1, CARRAY, NULL))) {
+        goto fail;
+    }
     Py_INCREF(type);
-    Py_Try(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY, NULL));
+    if (!(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY, NULL))) {
+        goto fail;
+    }
 
     lx = PyArray_SIZE(ax);
     dx = (double *)PyArray_DATA(ax);
     lbins = PyArray_SIZE(abins);
     dbins = (double *)PyArray_DATA(abins);
-    Py_Try(aret = PyArray_SimpleNew(1, &lx, PyArray_INTP));
+    if (!(aret = PyArray_SimpleNew(1, &lx, PyArray_INTP))) {
+        goto fail;
+    }
     iret = (intp *)PyArray_DATA(aret);
 
-    Py_Assert(lx > 0 && lbins > 0,
-              "x and bins both must have non-zero length");
+    if (lx <= 0 || lbins < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "Both x and bins must have non-zero length");
+            goto fail;
+    }
 
     if (lbins == 1)  {
         for (i = 0; i < lx; i++) {
@@ -213,16 +227,18 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         m = monotonic_ (dbins, lbins);
         if ( m == -1 ) {
             for ( i = 0; i < lx; i ++ ) {
-                iret [i] = decr_slot_ ((double)dx [i], dbins, lbins);
+                iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
             }
         }
         else if ( m == 1 ) {
             for ( i = 0; i < lx; i ++ ) {
-                iret [i] = incr_slot_ ((double)dx [i], dbins, lbins);
+                iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
             }
         }
         else {
-            Py_Assert(0, "bins must be montonically increasing or decreasing");
+            PyErr_SetString(PyExc_ValueError,
+                    "The bins must be montonically increasing or decreasing");
+            goto fail;
         }
     }
 
@@ -349,7 +365,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             /* compute indx into input array */
             rem_indx = mindx;
             indx = 0;
-            for(i=nd-1; i > 0; --i) {
+            for(i = nd - 1; i > 0; --i) {
                 indx += (rem_indx % inshape[i]) * instrides[i];
                 rem_indx /= inshape[i];
             }
@@ -459,7 +475,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     lenxp = axp->dimensions[0];
     if (afp->dimensions[0] != lenxp) {
-        PyErr_SetString(PyExc_ValueError, "interp: fp and xp are not the same length.");
+        PyErr_SetString(PyExc_ValueError,
+                "fp and xp are not of the same length.");
         goto fail;
     }
 
@@ -696,6 +713,7 @@ _unpackbits(void *In,
     return;
 }
 
+/* Fixme -- pack and unpack should be separate routines */
 static PyObject *
 pack_or_unpack_bits(PyObject *input, int axis, int unpack)
 {
@@ -714,13 +732,15 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     }
     if (unpack) {
         if (PyArray_TYPE(inp) != NPY_UBYTE) {
-            PYSETERROR("Expecting an input array of unsigned byte data type");
+            PyErr_SetString(PyExc_ValueError,
+                    "Expected an input array of unsigned byte data type");
+            goto fail;
         }
     }
-    else {
-        if (!PyArray_ISINTEGER(inp)) {
-            PYSETERROR("Expecting an input array of integer data type");
-        }
+    else if (!PyArray_ISINTEGER(inp)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Expected an input array of integer data type");
+        goto fail;
     }
 
     new = PyArray_CheckAxis(inp, &axis, 0);
@@ -899,8 +919,8 @@ define_types(void)
 }
 
 /* Initialization function for the module (*must* be called init<name>) */
-
 PyMODINIT_FUNC init_compiled_base(void) {
+    PyObject *err = PyString_FromString("numpy.lib.error");
     PyObject *m, *d, *s;
 
     /* Create the module and add the functions */
@@ -916,9 +936,9 @@ PyMODINIT_FUNC init_compiled_base(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-    ErrorObject = PyString_FromString("numpy.lib.error");
-    PyDict_SetItemString(d, "error", ErrorObject);
-    Py_DECREF(ErrorObject);
+    /* Fixme; We might want to remove this error string from the dictionary */
+    PyDict_SetItemString(d, "error", err);
+    Py_DECREF(err);
 
 
     /* define PyGetSetDescr_Type and PyMemberDescr_Type */
