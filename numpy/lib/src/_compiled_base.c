@@ -920,7 +920,6 @@ define_types(void)
 
 /* Initialization function for the module (*must* be called init<name>) */
 PyMODINIT_FUNC init_compiled_base(void) {
-    PyObject *err = PyString_FromString("numpy.lib.error");
     PyObject *m, *d, *s;
 
     /* Create the module and add the functions */
@@ -937,8 +936,9 @@ PyMODINIT_FUNC init_compiled_base(void) {
     Py_DECREF(s);
 
     /* Fixme; We might want to remove this error string from the dictionary */
-    PyDict_SetItemString(d, "error", err);
-    Py_DECREF(err);
+    s = PyString_FromString("numpy.lib.error");
+    PyDict_SetItemString(d, "error", s);
+    Py_DECREF(s);
 
 
     /* define PyGetSetDescr_Type and PyMemberDescr_Type */
