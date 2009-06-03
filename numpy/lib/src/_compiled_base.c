@@ -732,13 +732,13 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     }
     if (unpack) {
         if (PyArray_TYPE(inp) != NPY_UBYTE) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                     "Expected an input array of unsigned byte data type");
             goto fail;
         }
     }
     else if (!PyArray_ISINTEGER(inp)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "Expected an input array of integer data type");
         goto fail;
     }
