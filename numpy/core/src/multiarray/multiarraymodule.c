@@ -2687,10 +2687,12 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyErr_Occurred()) {
         goto err;
     }
-    /* Fixme: we might want to remove this old string exception string */
-    s = PyString_FromString("multiarray.error");
-    PyDict_SetItemString (d, "error", s);
-    Py_DECREF(s);
+    /*
+     * PyExc_Exception should catch all the standard errors that are
+     * now raised instead of the string exception "multiarray.error".
+     * This is for backward compatibility with existing code.
+     */
+    PyDict_SetItemString (d, "error", PyExc_Exception);
     s = PyString_FromString("3.0");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);

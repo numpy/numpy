@@ -935,10 +935,12 @@ PyMODINIT_FUNC init_compiled_base(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-    /* Fixme; We might want to remove this error string from the dictionary */
-    s = PyString_FromString("numpy.lib.error");
-    PyDict_SetItemString(d, "error", s);
-    Py_DECREF(s);
+    /*
+     * PyExc_Exception should catch all the standard errors that are
+     * now raised instead of the string exception "numpy.lib.error".
+     * This is for backward compatibility with existing code.
+     */
+    PyDict_SetItemString(d, "error", PyExc_Exception);
 
 
     /* define PyGetSetDescr_Type and PyMemberDescr_Type */
