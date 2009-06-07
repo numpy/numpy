@@ -649,3 +649,29 @@ byte_swap_vector(void *p, intp n, int size)
     return;
 }
 
+/* If numitems > 1, then dst must be contiguous */
+NPY_NO_EXPORT void
+copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
+              intp srcstrides, int swap)
+{
+    intp i;
+    char *s1 = (char *)src;
+    char *d1 = (char *)dst;
+
+
+    if ((numitems == 1) || (itemsize == srcstrides)) {
+        memcpy(d1, s1, itemsize*numitems);
+    }
+    else {
+        for (i = 0; i < numitems; i++) {
+            memcpy(d1, s1, itemsize);
+            d1 += itemsize;
+            s1 += srcstrides;
+        }
+    }
+
+    if (swap) {
+        byte_swap_vector(d1, numitems, itemsize);
+    }
+}
+

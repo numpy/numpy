@@ -37,6 +37,10 @@ _strided_byte_swap(void *p, intp stride, intp n, int size);
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, intp n, int size);
 
+NPY_NO_EXPORT void
+copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
+              intp srcstrides, int swap);
+
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.h"
 #endif

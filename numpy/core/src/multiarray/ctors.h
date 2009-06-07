@@ -53,8 +53,4 @@ NPY_NO_EXPORT size_t
 _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags);
 
-NPY_NO_EXPORT void
-copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
-              intp srcstrides, int swap);
-
 #endif
