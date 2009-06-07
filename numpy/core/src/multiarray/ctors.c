@@ -1433,6 +1433,23 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     return NULL;
 }
 
+/*
+ * This is the main array creation routine.
+ *
+ * Flags argument has multiple related meanings
+ * depending on data and strides:
+ *
+ * If data is given, then flags is flags associated with data.
+ * If strides is not given, then a contiguous strides array will be created
+ * and the CONTIGUOUS bit will be set.  If the flags argument
+ * has the FORTRAN bit set, then a FORTRAN-style strides array will be
+ * created (and of course the FORTRAN flag bit will be set).
+ *
+ * If data is not given but created here, then flags will be DEFAULT
+ * and a non-zero flags argument can be used to indicate a FORTRAN style
+ * array is desired.
+ */
+
 /*NUMPY_API
  * Generic new array creation routine.
  */
@@ -3224,23 +3241,6 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
     }
     return (PyObject *)ret;
 }
-
-/*
- * This is the main array creation routine.
- *
- * Flags argument has multiple related meanings
- * depending on data and strides:
- *
- * If data is given, then flags is flags associated with data.
- * If strides is not given, then a contiguous strides array will be created
- * and the CONTIGUOUS bit will be set.  If the flags argument
- * has the FORTRAN bit set, then a FORTRAN-style strides array will be
- * created (and of course the FORTRAN flag bit will be set).
- *
- * If data is not given but created here, then flags will be DEFAULT
- * and a non-zero flags argument can be used to indicate a FORTRAN style
- * array is desired.
- */
 
 NPY_NO_EXPORT size_t
 _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
