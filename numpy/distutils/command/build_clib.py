@@ -52,9 +52,11 @@ class build_clib(old_build_clib):
 
         # Make sure that library sources are complete.
         languages = []
+
+        # Make sure that extension sources are complete.
+        self.run_command('build_src')
+
         for (lib_name, build_info) in self.libraries:
-            if not all_strings(build_info.get('sources',[])):
-                self.run_command('build_src')
             l = build_info.get('language',None)
             if l and l not in languages: languages.append(l)
 
