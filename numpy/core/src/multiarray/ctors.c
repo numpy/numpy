@@ -417,56 +417,6 @@ _unaligned_strided_byte_move(char *dst, intp outstrides, char *src,
 
 }
 
-NPY_NO_EXPORT void
-_strided_byte_swap(void *p, intp stride, intp n, int size)
-{
-    char *a, *b, c = 0;
-    int j, m;
-
-    switch(size) {
-    case 1: /* no byteswap necessary */
-        break;
-    case 4:
-        for (a = (char*)p; n > 0; n--, a += stride - 1) {
-            b = a + 3;
-            c = *a; *a++ = *b; *b-- = c;
-            c = *a; *a = *b; *b   = c;
-        }
-        break;
-    case 8:
-        for (a = (char*)p; n > 0; n--, a += stride - 3) {
-            b = a + 7;
-            c = *a; *a++ = *b; *b-- = c;
-            c = *a; *a++ = *b; *b-- = c;
-            c = *a; *a++ = *b; *b-- = c;
-            c = *a; *a = *b; *b   = c;
-        }
-        break;
-    case 2:
-        for (a = (char*)p; n > 0; n--, a += stride) {
-            b = a + 1;
-            c = *a; *a = *b; *b = c;
-        }
-        break;
-    default:
-        m = size/2;
-        for (a = (char *)p; n > 0; n--, a += stride - m) {
-            b = a + (size - 1);
-            for (j = 0; j < m; j++) {
-                c=*a; *a++ = *b; *b-- = c;
-            }
-        }
-        break;
-    }
-}
-
-NPY_NO_EXPORT void
-byte_swap_vector(void *p, intp n, int size)
-{
-    _strided_byte_swap(p, (intp) size, n, size);
-    return;
-}
-
 /* If numitems > 1, then dst must be contiguous */
 NPY_NO_EXPORT void
 copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
