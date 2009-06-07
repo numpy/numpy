@@ -54,10 +54,6 @@ _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags);
 
 NPY_NO_EXPORT void
-_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
-                             intp instrides, intp N, int elsize);
-
-NPY_NO_EXPORT void
 _strided_byte_swap(void *p, intp stride, intp n, int size);
 
 NPY_NO_EXPORT void

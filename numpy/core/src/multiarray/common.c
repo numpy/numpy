@@ -564,3 +564,38 @@ _IsWriteable(PyArrayObject *ap)
     }
     return TRUE;
 }
+
+NPY_NO_EXPORT void
+_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
+                             intp instrides, intp N, int elsize)
+{
+    intp i;
+    char *tout = dst;
+    char *tin = src;
+
+#define _COPY_N_SIZE(size)                      \
+    for(i=0; i<N; i++) {                       \
+        memcpy(tout, tin, size);                \
+        tin += instrides;                       \
+        tout += outstrides;                     \
+    }                                           \
+    return
+
+    switch(elsize) {
+    case 8:
+        _COPY_N_SIZE(8);
+    case 4:
+        _COPY_N_SIZE(4);
+    case 1:
+        _COPY_N_SIZE(1);
+    case 2:
+        _COPY_N_SIZE(2);
+    case 16:
+        _COPY_N_SIZE(16);
+    default:
+        _COPY_N_SIZE(elsize);
+    }
+#undef _COPY_N_SIZE
+
+}
+

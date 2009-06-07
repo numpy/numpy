@@ -27,6 +27,10 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap);
 
+NPY_NO_EXPORT void
+_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
+                             intp instrides, intp N, int elsize);
+
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.h"
 #endif
