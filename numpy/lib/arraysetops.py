@@ -8,6 +8,7 @@ Set operations for 1D numeric arrays based on sorting.
   intersect1d_nu,
   setxor1d,
   setmember1d,
+  setmember1d_nu,
   union1d,
   setdiff1d
 
@@ -33,7 +34,7 @@ last revision: 07.01.2007
 :Author: Robert Cimrman
 """
 __all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
-           'setmember1d', 'union1d', 'setdiff1d']
+           'setmember1d', 'setmember1d_nu', 'union1d', 'setdiff1d']
 
 import numpy as np
 
@@ -287,6 +288,7 @@ def setmember1d(ar1, ar2):
 
     See Also
     --------
+    setmember1d_nu : Works for arrays with non-unique elements.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
 
@@ -301,29 +303,51 @@ def setmember1d(ar1, ar2):
     array([0, 2])
 
     """
-    ar1 = np.asarray( ar1 )
-    ar2 = np.asarray( ar2 )
-    ar = np.concatenate( (ar1, ar2 ) )
-    b1 = np.zeros( ar1.shape, dtype = np.int8 )
-    b2 = np.ones( ar2.shape, dtype = np.int8 )
-    tt = np.concatenate( (b1, b2) )
-
     # We need this to be a stable sort, so always use 'mergesort' here. The
     # values from the first array should always come before the values from the
     # second array.
-    perm = ar.argsort(kind='mergesort')
-    aux = ar[perm]
-    aux2 = tt[perm]
-#    flag = ediff1d( aux, 1 ) == 0
-    flag = np.concatenate( (aux[1:] == aux[:-1], [False] ) )
-    ii = np.where( flag * aux2 )[0]
-    aux = perm[ii+1]
-    perm[ii+1] = perm[ii]
-    perm[ii] = aux
+    ar = np.concatenate( (ar1, ar2 ) )
+    order = ar.argsort(kind='mergesort')
+    sar = ar[order]
+    equal_adj = (sar[1:] == sar[:-1])
+    flag = np.concatenate( (equal_adj, [False] ) )
 
-    indx = perm.argsort(kind='mergesort')[:len( ar1 )]
-
+    indx = order.argsort(kind='mergesort')[:len( ar1 )]
     return flag[indx]
+
+def setmember1d_nu(ar1, ar2):
+    """
+    Return a boolean array set True where first element is in second array.
+
+    Boolean array is the shape of `ar1` containing True where the elements
+    of `ar1` are in `ar2` and False otherwise.
+
+    Unlike setmember1d(), this version works also for arrays with duplicate
+    values.  It uses setmember1d() internally. For arrays with unique
+    entries it is slower than calling setmember1d() directly.
+
+    Parameters
+    ----------
+    ar1 : array_like
+        Input array.
+    ar2 : array_like
+        Input array.
+
+    Returns
+    -------
+    mask : ndarray, bool
+        The values `ar1[mask]` are in `ar2`.
+
+    See Also
+    --------
+    setmember1d : Faster for arrays with unique elements.
+    numpy.lib.arraysetops : Module with a number of other functions for
+                            performing set operations on arrays.
+
+    """
+    unique_ar1, rev_idx = np.unique1d(ar1, return_inverse=True)
+    mask = np.setmember1d(unique_ar1, np.unique1d(ar2))
+    return mask[rev_idx]
 
 def union1d(ar1, ar2):
     """

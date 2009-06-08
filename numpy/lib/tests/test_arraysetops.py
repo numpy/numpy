@@ -102,6 +102,52 @@ class TestAso(TestCase):
 
         assert_array_equal([], setmember1d([],[]))
 
+    def test_setmember1d_nu(self):
+        a = np.array([5,4,5,3,4,4,3,4,3,5,2,1,5,5])
+        b = [2,3,4]
+
+        ec = [False, True, False, True, True, True, True, True, True, False,
+              True, False, False, False]
+        c = setmember1d_nu(a, b)
+        assert_array_equal(c, ec)
+
+        b = b + [5, 5, 4]
+
+        ec = [True, True, True, True, True, True, True, True, True, True,
+              True, False, True, True]
+        c = setmember1d_nu(a, b)
+        assert_array_equal(c, ec)
+
+        a = np.array([5, 7, 1, 2])
+        b = np.array([2, 4, 3, 1, 5])
+
+        ec = np.array([True, False, True, True])
+        c = setmember1d_nu(a, b)
+        assert_array_equal(c, ec)
+
+        a = np.array([5, 7, 1, 1, 2])
+        b = np.array([2, 4, 3, 3, 1, 5])
+
+        ec = np.array([True, False, True, True, True])
+        c = setmember1d_nu(a, b)
+        assert_array_equal(c, ec)
+
+        a = np.array([5])
+        b = np.array([2])
+
+        ec = np.array([False])
+        c = setmember1d_nu(a, b)
+        assert_array_equal(c, ec)
+
+        a = np.array([5, 5])
+        b = np.array([2, 2])
+
+        ec = np.array([False, False])
+        c = setmember1d_nu(a, b)
+        assert_array_equal(c, ec)
+
+        assert_array_equal(setmember1d_nu([], []), [])
+
     def test_union1d( self ):
         a = np.array( [5, 4, 7, 1, 2] )
         b = np.array( [2, 4, 3, 3, 2, 1, 5] )
