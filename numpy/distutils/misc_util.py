@@ -1176,6 +1176,11 @@ class Configuration(object):
         name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
 
+        # Sometimes, depends is not set up to an empty list by default, and if
+        # depends is not given to add_library, distutils barfs (#1134)
+        if not build_info.has_key('depends'):
+            build_info['depends'] = []
+
         self._fix_paths_dict(build_info)
 
         self.libraries.append((name,build_info))
