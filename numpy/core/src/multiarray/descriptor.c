@@ -1044,6 +1044,7 @@ PyArray_DescrNew(PyArray_Descr *base)
         Py_INCREF(new->subarray->base);
     }
     Py_XINCREF(new->typeobj);
+    Py_XINCREF(new->metadata);
     return new;
 }
 
@@ -1070,6 +1071,7 @@ arraydescr_dealloc(PyArray_Descr *self)
         Py_DECREF(self->subarray->base);
         _pya_free(self->subarray);
     }
+    Py_XDECREF(self->metadata);
     self->ob_type->tp_free((PyObject *)self);
 }
 
@@ -1476,7 +1478,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
      * change the format. Be sure to handle the old versions in
      * arraydescr_setstate.
     */
-    const int version = 3;
+    const int version = 4;
     PyObject *ret, *mod, *obj;
     PyObject *state;
     char endian;
@@ -1553,6 +1555,15 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
+    if (self->metadata) {
+	Py_INCREF(self->metadata);
+	PyTuple_SET_ITEM(state, 8, self->metadata);
+    }
+    else {
+	PyTuple_SET_ITEM(state, 8, Py_None);
+	Py_INCREF(Py_None);
+    }
+    
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
 }
@@ -1598,9 +1609,9 @@ static PyObject *
 arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
     int elsize = -1, alignment = -1;
-    int version = 3;
+    int version = 4;
     char endian;
-    PyObject *subarray, *fields, *names = NULL;
+    PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
     int dtypeflags = 0;
 
@@ -1614,6 +1625,12 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         return NULL;
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
+    case 9:
+        if (!PyArg_ParseTuple(args, "(icOOOiiiO)", &version, &endian,
+                    &subarray, &names, &fields, &elsize,
+		    &alignment, &dtypeflags, &metadata)) {
+            return NULL;
+        }	
     case 8:
         if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
                     &subarray, &names, &fields, &elsize,
@@ -1652,7 +1669,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
      * If we ever need another pickle format, increment the version
      * number. But we should still be able to handle the old versions.
      */
-    if (version < 0 || version > 3) {
+    if (version < 0 || version > 4) {
         PyErr_Format(PyExc_ValueError,
                      "can't handle version %d of numpy.dtype pickle",
                      version);
@@ -1724,6 +1741,10 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     if (version < 3) {
         self->hasobject = _descr_find_object(self);
     }
+
+    Py_XDECREF(self->metadata);
+    self->metadata = metadata;
+
     Py_INCREF(Py_None);
     return Py_None;
 }
