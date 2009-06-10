@@ -125,6 +125,14 @@ _check_for_commastring(char *type, int len)
     return 0;
 }
 
+static int
+_check_for_datetime(char *type, int len)
+{
+    return 0;
+}
+
+
+
 #undef _chk_byteorder
 
 static PyArray_Descr *
@@ -440,6 +448,13 @@ _convert_from_list(PyObject *obj, int align)
  fail:
     Py_DECREF(nameslist);
     Py_DECREF(fields);
+    return NULL;
+}
+
+
+static PyArray_Descr *
+_convert_from_datetime(PyObject *obj, int align)
+{
     return NULL;
 }
 
@@ -868,6 +883,14 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         if (len <= 0) {
             goto fail;
         }
+	/* check for datetime format */
+	if (_check_for_datetime(type, len)) {
+	    *at = _convert_from_datetime(obj);
+	    if (*at) {
+		return PY_SUCCEED;
+	    }
+	    return PY_FAIL;
+	}
         /* check for commas present or first (or second) element a digit */
         if (_check_for_commastring(type, len)) {
             *at = _convert_from_commastring(obj, 0);
