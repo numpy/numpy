@@ -27,20 +27,6 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap);
 
-NPY_NO_EXPORT void
-_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
-                             intp instrides, intp N, int elsize);
-
-NPY_NO_EXPORT void
-_strided_byte_swap(void *p, intp stride, intp n, int size);
-
-NPY_NO_EXPORT void
-byte_swap_vector(void *p, intp n, int size);
-
-NPY_NO_EXPORT void
-copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
-              intp srcstrides, int swap);
-
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.h"
 #endif

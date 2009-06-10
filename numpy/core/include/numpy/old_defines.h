@@ -33,6 +33,8 @@
 #define PyArray_STRING      NPY_STRING
 #define PyArray_UNICODE     NPY_UNICODE
 #define PyArray_VOID        NPY_VOID
+#define PyArray_DATETIME    NPY_DATETIME
+#define PyArray_TIMEDELTA   NPY_TIMEDELTA
 #define PyArray_NTYPES      NPY_NTYPES
 #define PyArray_NOTYPE      NPY_NOTYPE
 #define PyArray_CHAR        NPY_CHAR
@@ -108,6 +110,8 @@
 #define PyArray_STRINGLTR2      NPY_STRINGLTR2
 #define PyArray_UNICODELTR      NPY_UNICODELTR
 #define PyArray_VOIDLTR         NPY_VOIDLTR
+#define PyArray_DATETIMELTR     NPY_DATETIMELTR
+#define PyArray_TIMEDELTALTR    NPY_TIMEDELTALTR
 #define PyArray_CHARLTR         NPY_CHARLTR
 #define PyArray_INTPLTR         NPY_INTPLTR
 #define PyArray_UINTPLTR        NPY_UINTPLTR

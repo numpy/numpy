@@ -81,18 +81,19 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 /**begin repeat
  *
  * #TYP = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
- *        LONGLONG, ULONGLONG, FLOAT, DOUBLE#
+ *        LONGLONG, ULONGLONG, FLOAT, DOUBLE, DATETIME, TIMEDELTA#
  * #func1 = PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2,
  *          PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
- *          PyFloat_FromDouble*2#
+ *          PyFloat_FromDouble*2, MyPyLong_FromInt64*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
  *          MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong,
- *          MyPyFloat_AsDouble*2#
+ *          MyPyFloat_AsDouble*2, MyPyLong_AsInt64*2#
  * #typ = Bool, byte, ubyte, short, ushort, int, long, uint, ulong,
- *        longlong, ulonglong, float, double#
- * #typ1 = long*7, ulong*2, longlong, ulonglong, float, double#
+ *        longlong, ulonglong, float, double, datetime, timedelta#
+ * #typ1 = long*7, ulong*2, longlong, ulonglong, float, double, datetime,
+ *         timedelta#
  * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
- *         LongLong, ULongLong, Float, Double#
+ *         LongLong, ULongLong, Float, Double, Datetime, Timedelta#
 */
 static PyObject *
 @TYP@_getitem(char *ip, PyArrayObject *ap) {
@@ -684,17 +685,21 @@ fail:
 /**begin repeat
  *
  * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *           TIMEDELTA#
  * #totype = byte, ubyte, short, ushort, int, uint, long, ulong,
- *           longlong, ulonglong, float, double, longdouble#
+ *           longlong, ulonglong, float, double, longdouble, datetime,
+ *           timedelta#
 */
 
 /**begin repeat1
  *
  * #FROMTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *             TIMEDELTA#
  * #fromtype = byte, ubyte, short, ushort, int, uint, long, ulong,
- *             longlong, ulonglong, float, double, longdouble#
+ *             longlong, ulonglong, float, double, longdouble, datetime,
+ *             timedelta#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
@@ -728,9 +733,11 @@ static void
 /**begin repeat
  *
  * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *             TIMEDELTA#
  * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *             longlong, ulonglong, float, double, longdouble#
+ *             longlong, ulonglong, float, double, longdouble, datetime,
+ *             timedelta#
 */
 static void
 @FROMTYPE@_to_BOOL(@fromtype@ *ip, Bool *op, intp n,
@@ -761,9 +768,11 @@ static void
 
 /**begin repeat
  * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *           TIMEDELTA#
  * #totype = byte, ubyte, short, ushort, int, uint, long, ulong,
- *           longlong, ulonglong, float, double, longdouble#
+ *           longlong, ulonglong, float, double, longdouble, datetime,
+ *           timedelta#
 */
 static void
 BOOL_to_@TOTYPE@(Bool *ip, @totype@ *op, intp n,
@@ -783,9 +792,11 @@ BOOL_to_@TOTYPE@(Bool *ip, @totype@ *op, intp n,
 
 /**begin repeat1
  * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *             TIMEDELTA#
  * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *             longlong, ulonglong, float, double, longdouble#
+ *             longlong, ulonglong, float, double, longdouble, datetime,
+ *             timedelta#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
@@ -827,11 +838,13 @@ static void
  *
  * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
- *             CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT#
+ *             CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT,
+ *             DATETIME, TIMEDELTA#
  * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *             longlong, ulonglong, float, double, longdouble,
- *             cfloat, cdouble, clongdouble, char, char, char, PyObject *#
- * #skip = 1*17, aip->descr->elsize*3, 1#
+ *             cfloat, cdouble, clongdouble, char, char, char, PyObject *,
+ *             datetime, timedelta#
+ * #skip = 1*17, aip->descr->elsize*3, 1*3#
  */
 static void
 @FROMTYPE@_to_OBJECT(@fromtype@ *ip, PyObject **op, intp n, PyArrayObject *aip,
@@ -863,6 +876,8 @@ static void
 #define _NPY_UNUSEDCFLOAT  NPY_UNUSED
 #define _NPY_UNUSEDCDOUBLE  NPY_UNUSED
 #define _NPY_UNUSEDCLONGDOUBLE  NPY_UNUSED
+#define _NPY_UNUSEDDATETIME  NPY_UNUSED
+#define _NPY_UNUSEDTIMEDELTA  NPY_UNUSED
 #define _NPY_UNUSEDSTRING
 #define _NPY_UNUSEDVOID
 #define _NPY_UNUSEDUNICODE
@@ -871,11 +886,13 @@ static void
  *
  * #TOTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
- *           CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID#
+ *           CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, DATETIME,
+ *           TIMEDELTA#
  * #totype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *           longlong, ulonglong, float, double, longdouble,
- *           cfloat, cdouble, clongdouble, char, char, char#
- * #skip = 1*17, aip->descr->elsize*3#
+ *           cfloat, cdouble, clongdouble, char, char, char, datetime,
+ *           timedelta#
+ * #skip = 1*17, aip->descr->elsize*3, 1*2#
  */
 static void
 OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, intp n,
@@ -898,13 +915,13 @@ OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, intp n,
 
 /**begin repeat
  *
- * #from = STRING*20, UNICODE*20, VOID*20#
- * #fromtyp = char*60#
- * #to = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID)*3#
- * #totyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char)*3#
- * #oskip = (1*17,aop->descr->elsize*3)*3#
- * #convert = 1*17, 0*3, 1*17, 0*3, 0*20#
- * #convstr = (Int*9, Long*2, Float*3, Complex*3, Tuple*3)*3#
+ * #from = STRING*22, UNICODE*22, VOID*22#
+ * #fromtyp = char*66#
+ * #to = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, DATETIME, TIMEDELTA)*3#
+ * #totyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char, datetime, timedelta)*3#
+ * #oskip = (1*17,aop->descr->elsize*3,1*2)*3#
+ * #convert = 1*17, 0*3, 1*2, 1*17, 0*3, 1*2, 0*22#
+ * #convstr = (Int*9, Long*2, Float*3, Complex*3, Tuple*3, Long*2)*3#
 */
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
@@ -940,10 +957,10 @@ static void
 
 /**begin repeat
  *
- * #to = STRING*17, UNICODE*17, VOID*17#
- * #totyp = char*17, char*17, char*17#
- * #from = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
- * #fromtyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble)*3#
+ * #to = STRING*19, UNICODE*19, VOID*19#
+ * #totyp = char*19, char*19, char*19#
+ * #from = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA)*3#
+ * #fromtyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, datetime, timedelta)*3#
  */
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
@@ -1032,7 +1049,8 @@ BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSE
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID#
+ * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID,
+ *          DATETIME, TIMEDELTA#
  */
 #define @fname@_scan NULL
 /**end repeat**/
@@ -1040,10 +1058,12 @@ BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSE
 /****************** fromstr *************************************/
 
 /**begin repeat
- * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG#
- * #type = byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
- * #func = (l, ul)*5#
- * #btype = (long, ulong)*5#
+ * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG,
+ *          ULONGLONG, DATETIME, TIMEDELTA#
+ * #type = byte, ubyte, short, ushort, int, uint, long, ulong, longlong,
+ *         ulonglong, datetime, timedelta#
+ * #func = (l, ul)*5, l, l#
+ * #btype = (long, ulong)*5, long, long#
  */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
@@ -1085,9 +1105,12 @@ static int
 
 /**begin repeat
  *
- * #fname = SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
- * #fsize = SHORT, SHORT, INT, INT, LONG, LONG, LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
- * #type = short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+ * #fname = SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT,
+ *          DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+ * #fsize = SHORT, SHORT, INT, INT, LONG, LONG, LONGLONG, LONGLONG, FLOAT,
+ *          DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+ * #type = short, ushort, int, uint, long, ulong, longlong, ulonglong, float,
+ *         double, longdouble, datetime, timedelta#
  */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride,
@@ -1572,8 +1595,8 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 /****************** nonzero **********************************/
 
 /**begin repeat
-#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,DATETIME,TIMEDELTA#
+#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static Bool
 @fname@_nonzero (@type@ *ip, PyArrayObject *ap)
@@ -1756,8 +1779,8 @@ BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *NPY_UNUSED(ap))
 }
 
 /**begin repeat
-#fname=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#fname=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,DATETIME,TIMEDELTA#
+#type=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 
 static int
@@ -1906,9 +1929,9 @@ finish:
 
 /**begin repeat
 
-#fname= BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
-#incr= ip++*14, ip+=2*3#
+#fname= BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, datetime, timedelta#
+#incr= ip++*14, ip+=2*3, ip++*2#
 */
 
 static int
@@ -1996,9 +2019,9 @@ BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 }
 
 /**begin repeat
-#name=BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#type= byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-#out= long, ulong, long, ulong, long, ulong, long, ulong, longlong, ulonglong, float, double, longdouble#
+#name=BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+#type= byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
+#out= long, ulong, long, ulong, long, ulong, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static void
 @name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
@@ -2096,8 +2119,8 @@ finish:
 }
 
 /**begin repeat
-#NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
+#NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,DATETIME,TIMEDELTA#
+#typ=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,datetime,timedelta#
 */
 static void
 @NAME@_fill(@typ@ *buffer, intp length, void *NPY_UNUSED(ignored))
@@ -2162,8 +2185,8 @@ static void
 /**end repeat**/
 
 /**begin repeat
-#NAME=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+#NAME=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,DATETIME,TIMEDELTA#
+#typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble,datetime,timedelta#
 */
 static void
 @NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *NPY_UNUSED(ignored))
@@ -2184,8 +2207,8 @@ static void
  *************************/
 
 /**begin repeat
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#name=BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static void
 @name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
@@ -2283,8 +2306,8 @@ static void
  *************************/
 
 /**begin repeat
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble, datetime, timedelta#
 */
 static void
 @name@_fastputmask(@type@ *in, Bool *mask, intp ni, @type@ *vals, intp nv)
@@ -2320,8 +2343,8 @@ static void
  *************************/
 
 /**begin repeat
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble, datetime, timedelta#
 */
 static int
 @name@_fasttake(@type@ *dest, @type@ *src, intp *indarray,
@@ -2437,7 +2460,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
+        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
+        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA
     },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
@@ -2485,13 +2510,13 @@ static PyArray_Descr @from@_Descr = {
 
 /**begin repeat
 
-#from= BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT#
-#num= 1*14,2*3,1#
-#fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *#
-#NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
-#kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT#
-#endian= |*3, =*14, |#
-#isobject= 0*17,NPY_OBJECT_DTYPE_FLAGS#
+#from= BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,DATETIME,TIMEDELTA#
+#num= 1*14,2*3,1*3#
+#fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *, datetime, timedelta#
+#NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object, Datetime, Timedelta#
+#kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT, DATETIME, TIMEDELTA#
+#endian= |*3, =*14, |, =*2#
+#isobject= 0*17,NPY_OBJECT_DTYPE_FLAGS,0*2#
 */
 
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
@@ -2516,7 +2541,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
+        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
+        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA
     },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
@@ -2587,6 +2614,8 @@ static PyArray_Descr *_builtin_descrs[] = {
     &STRING_Descr,
     &UNICODE_Descr,
     &VOID_Descr,
+    &DATETIME_Descr,
+    &TIMEDELTA_Descr,
 };
 
 /*NUMPY_API
@@ -2655,14 +2684,14 @@ set_typeinfo(PyObject *dict)
     }
 
 /**begin repeat
-#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,INTP,UINTP,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,INTP,UINTP,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID,DATETIME,TIMEDELTA#
 */
     _letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
 /**end repeat**/
     _letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
 
 /**begin repeat
-#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID,DATETIME,TIMEDELTA#
 */
     @name@_Descr.fields = Py_None;
 /**end repeat**/
@@ -2743,6 +2772,22 @@ set_typeinfo(PyObject *dict)
                 _ALIGN(char),
                 (PyObject *)\
                 &PyVoidArrType_Type));
+    Py_DECREF(s);
+    PyDict_SetItemString(infodict, "DATETIME",
+            s=Py_BuildValue("ciiiNNO", PyArray_DATETIMELTR,
+                PyArray_DATETIME,
+                sizeof(npy_datetime)*CHAR_BIT,
+                _ALIGN(npy_datetime),
+                MyPyLong_FromInt64(MAX_DATETIME), MyPyLong_FromInt64(MIN_DATETIME),
+                (PyObject *)&PyDatetimeArrType_Type));
+    Py_DECREF(s);
+    PyDict_SetItemString(infodict, "TIMEDELTA",
+            s=Py_BuildValue("ciiiNNO", PyArray_TIMEDELTALTR,
+                PyArray_TIMEDELTA,
+                sizeof(npy_timedelta)*CHAR_BIT,
+                _ALIGN(npy_timedelta),
+                MyPyLong_FromInt64(MAX_TIMEDELTA), MyPyLong_FromInt64(MIN_TIMEDELTA),
+                (PyObject *)&PyTimedeltaArrType_Type));
     Py_DECREF(s);
 
 #define SETTYPE(name)                           \

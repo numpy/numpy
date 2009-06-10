@@ -15,6 +15,7 @@ Exported symbols include:
     uint8 uint16 uint32 uint64 uint128
     float16 float32 float64 float96 float128 float256
     complex32 complex64 complex128 complex192 complex256 complex512
+    datetime64 timedelta64
 
     c-based names
 
@@ -34,6 +35,7 @@ Exported symbols include:
     single, csingle,
     float_, complex_,
     longfloat, clongfloat,
+
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -624,17 +626,22 @@ typecodes = {'Character':'c',
              'Complex':'FDG',
              'AllInteger':'bBhHiIlLqQpP',
              'AllFloat':'fdgFDG',
-             'All':'?bhilqpBHILQPfdgFDGSUVO'}
+             'Datetime': 'Tt',
+             'All':'?bhilqpBHILQPfdgFDGSUVOTt'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
 typeNA = sctypeNA
+
+# FIXME: Decide how T and t need to be integrated here.
 
 # b -> boolean
 # u -> unsigned integer
 # i -> signed integer
 # f -> floating point
 # c -> complex
+# T -> datetime
+# t -> timedelta
 # S -> string
 # U -> Unicode string
 # V -> record

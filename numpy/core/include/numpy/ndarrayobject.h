@@ -78,6 +78,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_OBJECT=17,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
+                    NPY_DATETIME, NPY_TIMEDELTA,
                     NPY_NTYPES,
                     NPY_NOTYPE,
                     NPY_CHAR,      /* special flag */
@@ -128,6 +129,8 @@ enum NPY_TYPECHAR { NPY_BOOLLTR = '?',
                         NPY_STRINGLTR2 = 'a',
                         NPY_UNICODELTR = 'U',
                         NPY_VOIDLTR = 'V',
+                        NPY_DATETIMELTR = 'T',
+                        NPY_TIMEDELTALTR = 't',
                         NPY_CHARLTR = 'c',
 
                         /* No Descriptor, just a define -- this let's
@@ -478,6 +481,8 @@ typedef struct _PyArray_Descr {
 
         PyArray_ArrFuncs *f;     /* a table of functions specific for each
                                     basic data descriptor */
+
+        PyObject *metadata;     /* Metadata about this dtype */
 } PyArray_Descr;
 
 typedef struct _arr_descr {
@@ -989,6 +994,9 @@ typedef struct {
 #define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
                                     ((type) <=NPY_VOID))
 
+#define PyTypeNum_ISDATETIME(type) (((type) >=NPY_DATETIME) &&  \
+                                    ((type) <=NPY_TIMEDELTA))
+
 #define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
                                    ((type) < NPY_USERDEF+     \
                                     NPY_NUMUSERTYPES))
@@ -1009,6 +1017,7 @@ typedef struct {
 #define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
@@ -1024,6 +1033,7 @@ typedef struct {
 #define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
 #define PyArray_ISPYTHON(obj) PyTypeNum_ISPYTHON(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
+#define PyArray_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyArray_TYPE(obj))
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))

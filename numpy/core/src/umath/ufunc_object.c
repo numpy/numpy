@@ -42,6 +42,9 @@
 
 /* ---------------------------------------------------------------- */
 
+static int
+_does_loop_use_arrays(void *data);
+
 /*
  * fpstatus is the ufunc_formatted hardware status
  * errmask is the handling mask specified by the user.
@@ -210,6 +213,8 @@ _lowest_type(char intype)
     case PyArray_INT:
     case PyArray_LONG:
     case PyArray_LONGLONG:
+    case PyArray_DATETIME:
+    case PyArray_TIMEDELTA:
         return PyArray_BYTE;
     /* case PyArray_UBYTE */
     case PyArray_USHORT:
@@ -1113,10 +1118,11 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     }
 
     /* We don't do strings */
-    if (flexible && !object) {
+/*    if (flexible && !object) {
         loop->notimplemented = 1;
         return nargs;
     }
+*/
 
     /*
      * If everything is a scalar, or scalars mixed with arrays of
@@ -1367,14 +1373,21 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             loop->meth = BUFFER_UFUNCLOOP;
             loop->needbuffer[i] = 1;
         }
-        if (!loop->obj
+        if (!(loop->obj & UFUNC_OBJ_ISOBJECT)
                 && ((mps[i]->descr->type_num == PyArray_OBJECT)
                     || (arg_types[i] == PyArray_OBJECT))) {
-            loop->obj = 1;
+            loop->obj = UFUNC_OBJ_ISOBJECT|UFUNC_OBJ_NEEDS_API;
+        }
+        if (!(loop->obj & UFUNC_OBJ_NEEDS_API)
+                && ((mps[i]->descr->type_num == PyArray_DATETIME)
+                    || (mps[i]->descr->type_num == PyArray_TIMEDELTA)
+                    || (arg_types[i] == PyArray_DATETIME)
+                    || (arg_types[i] == PyArray_TIMEDELTA))) {
+            loop->obj = UFUNC_OBJ_NEEDS_API;
         }
     }
 
-    if (self->core_enabled && loop->obj) {
+    if (self->core_enabled && (loop->obj & UFUNC_OBJ_ISOBJECT)) {
 	PyErr_SetString(PyExc_TypeError,
 			"Object type not allowed in ufunc with signature");
 	return -1;
@@ -1580,7 +1593,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             PyErr_NoMemory();
             return -1;
         }
-        if (loop->obj) {
+        if (loop->obj & UFUNC_OBJ_ISOBJECT) {
             memset(loop->buffer[0], 0, memsize);
         }
         castptr = loop->buffer[0] + loop->bufsize*cnt + scbufsize*scnt;
@@ -1614,13 +1627,18 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             else {
                 loop->bufptr[i] = loop->buffer[i];
             }
-            if (!loop->objfunc && loop->obj) {
+            if (!loop->objfunc && (loop->obj & UFUNC_OBJ_ISOBJECT)) {
                 if (arg_types[i] == PyArray_OBJECT) {
                     loop->objfunc = 1;
                 }
             }
         }
     }
+
+    if (_does_loop_use_arrays(loop->funcdata)) {
+        loop->funcdata = (void*)mps;
+    }
+
     return nargs;
 }
 
@@ -1941,7 +1959,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
         for (i = 0; i <self->nargs; i++) {
             copyswapn[i] = mps[i]->descr->f->copyswapn;
             mpselsize[i] = mps[i]->descr->elsize;
-            pyobject[i] = (loop->obj
+            pyobject[i] = ((loop->obj & UFUNC_OBJ_ISOBJECT)
                     && (mps[i]->descr->type_num == PyArray_OBJECT));
             laststrides[i] = iters[i]->strides[loop->lastdim];
             if (steps[i] && laststrides[i] != mpselsize[i]) {
@@ -2321,7 +2339,14 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
 
     /* Determine if object arrays are involved */
     if (otype == PyArray_OBJECT || aar->descr->type_num == PyArray_OBJECT) {
-        loop->obj = 1;
+        loop->obj = UFUNC_OBJ_ISOBJECT | UFUNC_OBJ_NEEDS_API;
+    }
+    else if ((otype == PyArray_DATETIME)
+            || (aar->descr->type_num == PyArray_DATETIME)
+            || (otype == PyArray_TIMEDELTA)
+            || (aar->descr->type_num == PyArray_TIMEDELTA))
+    {
+        loop->obj = UFUNC_OBJ_NEEDS_API;
     }
     else {
         loop->obj = 0;
@@ -2472,7 +2497,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
             if (loop->buffer == NULL) {
                 goto fail;
             }
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 memset(loop->buffer, 0, _size);
             }
             loop->castbuf = loop->buffer + loop->bufsize*aar->descr->elsize;
@@ -2488,7 +2513,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
             if (loop->buffer == NULL) {
                 goto fail;
             }
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 memset(loop->buffer, 0, _size);
             }
             loop->bufptr[1] = loop->buffer;
@@ -2532,7 +2557,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     case ZERO_EL_REDUCELOOP:
         /* fprintf(stderr, "ZERO..%d\n", loop->size); */
         for (i = 0; i < loop->size; i++) {
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 Py_INCREF(*((PyObject **)loop->idptr));
             }
             memmove(loop->bufptr[0], loop->idptr, loop->outsize);
@@ -2542,7 +2567,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     case ONE_EL_REDUCELOOP:
         /*fprintf(stderr, "ONEDIM..%d\n", loop->size); */
         while (loop->index < loop->size) {
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
             }
             memmove(loop->bufptr[0], loop->it->dataptr, loop->outsize);
@@ -2555,7 +2580,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         /*fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
         while (loop->index < loop->size) {
             /* Copy first element to output */
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
             }
             memmove(loop->bufptr[0], loop->it->dataptr, loop->outsize);
@@ -2591,7 +2616,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 arr->descr->f->copyswap(loop->buffer, loop->inptr,
                         loop->swap, NULL);
                 loop->cast(loop->buffer, loop->castbuf, 1, NULL, NULL);
-                if (loop->obj) {
+                if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                     Py_XINCREF(*((PyObject **)loop->castbuf));
                 }
                 memcpy(loop->bufptr[0], loop->castbuf, loop->outsize);
@@ -2674,7 +2699,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         /* Accumulate */
         /* fprintf(stderr, "ZERO..%d\n", loop->size); */
         for (i = 0; i < loop->size; i++) {
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 Py_INCREF(*((PyObject **)loop->idptr));
             }
             memcpy(loop->bufptr[0], loop->idptr, loop->outsize);
@@ -2685,7 +2710,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         /* Accumulate */
         /* fprintf(stderr, "ONEDIM..%d\n", loop->size); */
         while (loop->index < loop->size) {
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
             }
             memmove(loop->bufptr[0], loop->it->dataptr, loop->outsize);
@@ -2699,7 +2724,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         /* fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
         while (loop->index < loop->size) {
             /* Copy first element to output */
-            if (loop->obj) {
+            if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
             }
             memmove(loop->bufptr[0], loop->it->dataptr, loop->outsize);
@@ -2738,7 +2763,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 arr->descr->f->copyswap(loop->buffer, loop->inptr,
                                         loop->swap, NULL);
                 loop->cast(loop->buffer, loop->castbuf, 1, NULL, NULL);
-                if (loop->obj) {
+                if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                     Py_XINCREF(*((PyObject **)loop->castbuf));
                 }
                 memcpy(loop->bufptr[0], loop->castbuf, loop->outsize);
@@ -2863,7 +2888,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
             ptr = (intp *)ind->data;
             for (i = 0; i < nn; i++) {
                 loop->bufptr[1] = loop->it->dataptr + (*ptr)*loop->steps[1];
-                if (loop->obj) {
+                if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                     Py_XINCREF(*((PyObject **)loop->bufptr[1]));
                 }
                 memcpy(loop->bufptr[0], loop->bufptr[1], loop->outsize);
@@ -2894,7 +2919,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         while (loop->index < loop->size) {
             ptr = (intp *)ind->data;
             for (i = 0; i < nn; i++) {
-                if (loop->obj) {
+                if (loop->obj & UFUNC_OBJ_ISOBJECT) {
                     Py_XINCREF(*((PyObject **)loop->idptr));
                 }
                 memcpy(loop->bufptr[0], loop->idptr, loop->outsize);
@@ -3572,6 +3597,27 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     return (PyObject *)self;
 }
+
+/* Specify that the loop specified by the given index should use the array of
+ * input and arrays as the data pointer to the loop.
+ */
+/*UFUNC_API*/
+NPY_NO_EXPORT int
+PyUFunc_SetUsesArraysAsData(void **data, size_t i)
+{
+    data[i] = (void*)PyUFunc_SetUsesArraysAsData;
+    return 0;
+}
+
+/* Return 1 if the given data pointer for the loop specifies that it needs the
+ * arrays as the data pointer.
+ */
+static int
+_does_loop_use_arrays(void *data)
+{
+    return (data == PyUFunc_SetUsesArraysAsData);
+}
+
 
 /*
  * This is the first-part of the CObject structure.

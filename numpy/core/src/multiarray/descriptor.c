@@ -1301,6 +1301,16 @@ arraydescr_fields_get(PyArray_Descr *self)
 }
 
 static PyObject *
+arraydescr_metadata_get(PyArray_Descr *self)
+{
+    if (self->metadata == NULL) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    return PyDictProxy_New(self->metadata);
+}
+
+static PyObject *
 arraydescr_hasobject_get(PyArray_Descr *self)
 {
     PyObject *res;
@@ -1407,6 +1417,9 @@ static PyGetSetDef arraydescr_getsets[] = {
     {"fields",
         (getter)arraydescr_fields_get,
         NULL, NULL, NULL},
+    {"metadata",
+        (getter)arraydescr_metadata_get,
+        NULL, NULL, NULL},
     {"names",
         (getter)arraydescr_names_get,
         (setter)arraydescr_names_set,
@@ -1420,16 +1433,18 @@ static PyGetSetDef arraydescr_getsets[] = {
 static PyObject *
 arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
 {
-    PyObject *odescr;
+    PyObject *odescr, *ometadata=NULL;
     PyArray_Descr *descr, *conv;
     Bool align = FALSE;
     Bool copy = FALSE;
-    static char *kwlist[] = {"dtype", "align", "copy", NULL};
+    static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!",
                                      kwlist, &odescr,
                                      PyArray_BoolConverter, &align,
-                                     PyArray_BoolConverter, &copy)) {
+                                     PyArray_BoolConverter, &copy,
+                                     &PyDict_Type, &ometadata
+                                     )) {
         return NULL;
     }
     if (align) {
@@ -1446,6 +1461,8 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
         Py_DECREF(conv);
         conv = descr;
     }
+    conv->metadata = ometadata;
+    Py_XINCREF(conv->metadata);
     return (PyObject *)conv;
 }
 

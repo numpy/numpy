@@ -32,3 +32,4 @@ PyUFunc_getfperr
 PyUFunc_handlefperr
 PyUFunc_ReplaceLoopBySignature
 PyUFunc_FromFuncAndDataAndSignature
+PyUFunc_SetUsesArraysAsData
