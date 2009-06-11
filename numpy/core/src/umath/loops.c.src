@@ -901,7 +901,7 @@ NPY_NO_EXPORT void
 
 /* FIXME: implement the following correctly using the metadata */
 NPY_NO_EXPORT void
-DATETIME_Tt_T_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DATETIME_Mm_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const datetime in1 = *(datetime *)ip1;
@@ -911,7 +911,7 @@ DATETIME_Tt_T_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
 }
 
 NPY_NO_EXPORT void
-DATETIME_tT_T_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DATETIME_mM_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const timedelta in1 = *(timedelta *)ip1;
@@ -921,7 +921,7 @@ DATETIME_tT_T_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
 }
 
 NPY_NO_EXPORT void
-TIMEDELTA_tt_t_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+TIMEDELTA_mm_m_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const timedelta in1 = *(timedelta *)ip1;
@@ -931,7 +931,7 @@ TIMEDELTA_tt_t_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
 }
 
 NPY_NO_EXPORT void
-DATETIME_Tt_T_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DATETIME_Mm_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const datetime in1 = *(datetime *)ip1;
@@ -941,7 +941,7 @@ DATETIME_Tt_T_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNU
 }
 
 NPY_NO_EXPORT void
-DATETIME_TT_t_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DATETIME_MM_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const datetime in1 = *(datetime *)ip1;
@@ -951,7 +951,7 @@ DATETIME_TT_t_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNU
 }
 
 NPY_NO_EXPORT void
-TIMEDELTA_tt_t_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const timedelta in1 = *(timedelta *)ip1;

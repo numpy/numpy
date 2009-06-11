@@ -1,3 +1,5 @@
+/* -*- c -*- */
+
 /*
  * This file is for the definitions of the non-c99 functions used in ufuncs.
  * All the complex ufuncs are defined here along with a smattering of real and

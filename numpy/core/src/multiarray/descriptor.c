@@ -884,7 +884,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             goto fail;
         }
 	/* check for datetime format */
-	if (_check_for_datetime(type, len)) {
+	if ((len > 2) && _check_for_datetime(type, len)) {
 	    *at = _convert_from_datetime(obj);
 	    if (*at) {
 		return PY_SUCCEED;

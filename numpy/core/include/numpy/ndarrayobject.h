@@ -129,8 +129,8 @@ enum NPY_TYPECHAR { NPY_BOOLLTR = '?',
                         NPY_STRINGLTR2 = 'a',
                         NPY_UNICODELTR = 'U',
                         NPY_VOIDLTR = 'V',
-                        NPY_DATETIMELTR = 'T',
-                        NPY_TIMEDELTALTR = 't',
+                        NPY_DATETIMELTR = 'M',
+                        NPY_TIMEDELTALTR = 'm',
                         NPY_CHARLTR = 'c',
 
                         /* No Descriptor, just a define -- this let's

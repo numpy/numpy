@@ -168,19 +168,19 @@ chartoname = {'?': 'bool',
               'F': 'cfloat',
               'D': 'cdouble',
               'G': 'clongdouble',
-              'T': 'datetime',
-              't': 'timedelta',
+              'M': 'datetime',
+              'm': 'timedelta',
               'O': 'OBJECT',
-              # M is like O, but calls a method of the object instead
+              # '.' is like 'O', but calls a method of the object instead
               # of a function
-              'M': 'OBJECT',
+              '.': 'OBJECT',
               }
 
-all = '?bBhHiIlLqQtTfdgFDGO'
+all = '?bBhHiIlLqQfdgFDGOMm'
 O = 'O'
-M = 'M'
+M = '.'
 ints = 'bBhHiIlLqQ'
-times = 'tT'
+times = 'mM'
 intsO = ints + O
 bints = '?' + ints
 bintsO = bints + O
@@ -218,9 +218,9 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
           TD(notimes_or_obj),
-          [TypeDescription('T', UsesArraysAsData, 'Tt', 'T'),
-           TypeDescription('t', UsesArraysAsData, 'tt', 't'),
-           TypeDescription('T', UsesArraysAsData, 'tT', 'T'),
+          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
+           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
+           TypeDescription('M', UsesArraysAsData, 'mM', 'M'),
           ],
           TD(O, f='PyNumber_Add'),
           ),
@@ -228,9 +228,9 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.subtract'),
           TD(notimes_or_obj),
-          [TypeDescription('T', UsesArraysAsData, 'Tt', 'T'),
-           TypeDescription('t', UsesArraysAsData, 'tt', 't'),
-           TypeDescription('T', UsesArraysAsData, 'TT', 't'),
+          [TypeDescription('M', UsesArraysAsData, 'Mt', 'M'),
+           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
+           TypeDescription('M', UsesArraysAsData, 'MM', 'm'),
           ],
           TD(O, f='PyNumber_Subtract'),
           ),
@@ -671,7 +671,7 @@ chartotype1 = {'f': 'f_f',
                'D': 'D_D',
                'G': 'G_G',
                'O': 'O_O',
-               'M': 'O_O_method'}
+               '.': 'O_O_method'}
 
 chartotype2 = {'f': 'ff_f',
                'd': 'dd_d',
@@ -680,7 +680,7 @@ chartotype2 = {'f': 'ff_f',
                'D': 'DD_D',
                'G': 'GG_G',
                'O': 'OO_O',
-               'M': 'OO_O_method'}
+               '.': 'OO_O_method'}
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
@@ -719,7 +719,7 @@ def make_arrays(funcdict):
                            (name, k, t.func_data)
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
-                elif t.type == 'M':
+                elif t.type == '.':
                     datalist.append('(void *)"%s"' % t.func_data)
                 else:
                     astr = '%s_data[%d] = (void *) %s;' % \
