@@ -6,7 +6,7 @@
 :Contact: oliphant@enthought.com
 :Date: 2009-06-09
 
-Revised from the original (third) proposal by 
+Revised only slightly from the third proposal by 
 
 :Author: Francesc Alted i Abad
 :Contact: faltet@pytables.com
@@ -57,8 +57,9 @@ lack of leap seconds).
 Time units
 ===========
 
-The 64-bit integer time can represent several different basic units as well as derived units. 
-The basic units are listed in the following table:
+The 64-bit integer time can represent several different basic units as
+well as derived units.  The basic units are listed in the following
+table:
 
 ======== ================ ======================= ==========================
       Time unit               Time span              Time span (years)
@@ -81,23 +82,26 @@ The basic units are listed in the following table:
    as      attosecond       +- 9.2 seconds          [  1969 AC,   1970 AC]
 ======== ================ ======================= ==========================
 
-A time unit is specified by a string consisting of a base-type given in the
-above table 
+A time unit is specified by a string consisting of a base-type given in
+the above table
 
-Besides these basic code units, the user can create derived units consisting of 
-rational multiples of any basic unit:  100ns, Y/4, 3M, 32s/42, etc. 
+Besides these basic code units, the user can create derived units
+consisting of rational multiples of any basic unit: 100ns, Y/4, 3M,
+32s/42, etc.
 
-Finally, a date-time data-type can be created with support for tracking sequential
-events within a basic unit:  [D]//100, [Y]//4 (notice the required brackets).  
-These ``modulo`` event units provide the following interpretation to the date-time integer:
-   * the divisor is the number of events in each period
-   * the (integer) quotient is the integer number representing the base units
-   * the remainder is the particular event in the period.  
+Finally, a date-time data-type can be created with support for tracking
+sequential events within a basic unit: [D]//100, [Y]//4 (notice the
+required brackets).  These ``modulo`` event units provide the following
+interpretation to the date-time integer: 
+   * the divisor is the number of events in each period 
+   * the (integer) quotient is the integer number representing 
+     the base units 
+   * the remainder is the particular event in the period.
 
-Module events can be combined with derived units, but brackets are
-required.  Thus [100ns]//50 which allows recording 50 events for every
-100ns so that 0 represents the first event in the first 100ns tick, 1
-represents the second event in the first 100ns tick, while 50
+Modulo event-units can be combined with any derived units, but brackets
+are required.  Thus [100ns]//50 which allows recording 50 events for
+every 100ns so that 0 represents the first event in the first 100ns
+tick, 1 represents the second event in the first 100ns tick, while 50
 represents the first event in the second 100ns tick, and 51 represents
 the second event in the second 100ns tick.
 
@@ -110,11 +114,11 @@ complicated example) 'M8[7s/9]//5'.
 
 ``datetime64``
 ==============
-
-It represents a time that is absolute (i.e. not relative).  It is
-implemented internally as an ``int64`` type.  The internal epoch is the
-POSIX epoch (see [3]_).  Like POSIX, the representation of a date
-doesn't take leap seconds into account.
+ 
+This dtype represents a time that is absolute (i.e. not relative).  It
+is implemented internally as an ``int64`` type.  The integer represents
+units from the internal POSIX epoch (see [3]_). Like POSIX, the
+representation of a date doesn't take leap seconds into account.
 
 In time unit *conversions* and time *representations* (but not in other
 time computations), the value -2**63 (0x8000000000000000) is interpreted
