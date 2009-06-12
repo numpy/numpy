@@ -6,14 +6,13 @@
 :Contact: oliphant@enthought.com
 :Date: 2009-06-09
 
-Based on the original (third) proposal by 
+Revised from the original (third) proposal by 
 
 :Author: Francesc Alted i Abad
 :Contact: faltet@pytables.com
 :Author: Ivan Vilata i Balaguer
 :Contact: ivan@selidor.net
 :Date: 2008-07-30
-
 
 
 Executive summary
@@ -24,43 +23,93 @@ one has to deal with data sets.  While Python has several modules that
 define a date/time type (like the integrated ``datetime`` [1]_ or
 ``mx.DateTime`` [2]_), NumPy has a lack of them.
 
-In this document, we are proposing the addition of date/time
-types to fill this gap.  The requirements for the proposed types are
-two-folded: 1) they have to be fast to operate with and 2) they have to
-be as compatible as possible with the existing ``datetime`` module that
-comes with Python.
+We are proposing the addition of date/time types to fill this gap.
+The requirements for the proposed types are two-fold: 1) they have
+to be fast to operate with and 2) they have to be as compatible as
+possible with the existing ``datetime`` module that comes with Python.
 
 
 Types proposed
 ==============
 
-To start with, it is virtually impossible to come up with a single
-date/time type that fills the needs of every case of use.  So, there are
-two different types: ``timedelta64`` and ``datetime64``.  The
-``timedelta64`` represents a relative time difference (i.e. between two
-events).
+It is virtually impossible to come up with a single date/time type
+that fills the needs of every use case.  As a result, we propose two
+general date-time types: 1) ``timedelta64`` -- a relative time and 2)
+``datetime64`` -- an absolute time.
+
+Each of these times are represented internally as 64-bit signed
+integers that refer to a particular unit (hour, minute, microsecond,
+etc.).  There are several pre-defined units as well as the ability to
+create rational multiples of these units.  A representation is also
+supported such that the stored date-time integer can encode both the
+number of a particular unit as well as a number of sequential events
+tracked for each unit.
 
 The ``datetime64`` represents an absolute time.  Internally it is
-represented as the number of time units between the intended
-time and the epoch (12:00am on January 1, 1970).
+represented as the number of time units between the intended time and
+the epoch (12:00am on January 1, 1970 --- POSIX time including its
+lack of leap seconds).
 
+.. Important:  The information that provides meaning to the integers stored in
+   the date/time dtypes are stored as metadata which is a new feature to be
+   added to the dtype object.
 
+Time units
+===========
 
- after pondering about different possibilities, we
-have stuck with *two* different types, namely ``datetime64`` and
-``timedelta64`` (these names are preliminary and can be changed), that
-can have different time units so as to cover different needs.
+The 64-bit integer time can represent several different basic units as well as derived units. 
+The basic units are listed in the following table:
 
-.. Important:: the time unit is conceived here as metadata that
-  *complements* a date/time dtype, *without changing the base type*.  It
-  provides information about the *meaning* of the stored numbers, not
-  about their *structure*.
+======== ================ ======================= ==========================
+      Time unit               Time span              Time span (years)
+------------------------- ----------------------- --------------------------
+  Code       Meaning         Relative Time             Absolute Time
+======== ================ ======================= ==========================
+   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AC]
+   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AC]
+   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AC]
+   B       business day     +- 3.5e16 years         [3.5e16 BC, 3.5e16 AC]
+   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AC]
+   h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AC]
+   m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AC]
+   s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AC]
+   ms      millisecond      +- 2.9e9 years          [ 2.9e6 BC,  2.9e6 AC]
+   us      microsecond      +- 2.9e6 years          [290301 BC, 294241 AC]
+   ns      nanosecond       +- 292 years            [  1678 AC,   2262 AC]
+   ps      picosecond       +- 106 days             [  1969 AC,   1970 AC]
+   fs      femtosecond      +- 2.6 hours            [  1969 AC,   1970 AC]
+   as      attosecond       +- 9.2 seconds          [  1969 AC,   1970 AC]
+======== ================ ======================= ==========================
 
-Now follows a detailed description of the proposed types.
+A time unit is specified by a string consisting of a base-type given in the
+above table 
+
+Besides these basic code units, the user can create derived units consisting of 
+rational multiples of any basic unit:  100ns, Y/4, 3M, 32s/42, etc. 
+
+Finally, a date-time data-type can be created with support for tracking sequential
+events within a basic unit:  [D]//100, [Y]//4 (notice the required brackets).  
+These ``modulo`` event units provide the following interpretation to the date-time integer:
+   * the divisor is the number of events in each period
+   * the (integer) quotient is the integer number representing the base units
+   * the remainder is the particular event in the period.  
+
+Module events can be combined with derived units, but brackets are
+required.  Thus [100ns]//50 which allows recording 50 events for every
+100ns so that 0 represents the first event in the first 100ns tick, 1
+represents the second event in the first 100ns tick, while 50
+represents the first event in the second 100ns tick, and 51 represents
+the second event in the second 100ns tick.
+
+To fully specify a date-time type, the time unit string must be
+combined with either the string for a datetime64 ('M8') or a
+timedelta64 ('m8') using brackets '[]'.  Therefore, a fully-specified
+string representing a date-time dtype is 'M8[Y]' or (for a more
+complicated example) 'M8[7s/9]//5'.
 
 
 ``datetime64``
---------------
+==============
 
 It represents a time that is absolute (i.e. not relative).  It is
 implemented internally as an ``int64`` type.  The internal epoch is the
@@ -72,39 +121,15 @@ time computations), the value -2**63 (0x8000000000000000) is interpreted
 as an invalid or unknown date, *Not a Time* or *NaT*.  See the section
 on time unit conversions for more information.
 
-Time units
-~~~~~~~~~~
-
-It accepts different time units, each of them implying a different time
-span.  The table below describes the time units supported with their
-corresponding time spans.
-
-======== ================ ==========================
-      Time unit               Time span (years)
-------------------------- --------------------------
-  Code       Meaning
-======== ================ ==========================
-   Y       year             [9.2e18 BC, 9.2e18 AC]
-   M       month            [7.6e17 BC, 7.6e17 AC]
-   W       week             [1.7e17 BC, 1.7e17 AC]
-   B       business day     [3.5e16 BC, 3.5e16 AC]
-   D       day              [2.5e16 BC, 2.5e16 AC]
-   h       hour             [1.0e15 BC, 1.0e15 AC]
-   m       minute           [1.7e13 BC, 1.7e13 AC]
-   s       second           [ 2.9e9 BC,  2.9e9 AC]
-   ms      millisecond      [ 2.9e6 BC,  2.9e6 AC]
-   us      microsecond      [290301 BC, 294241 AC]
-   ns      nanosecond       [  1678 AC,   2262 AC]
-======== ================ ==========================
-
-The value of an absolute date is thus *an integer number of units of the
-chosen time unit* passed since the internal epoch.  When working with
-business days, Saturdays and Sundays are simply ignored from the count
-(i.e. day 3 in business days is not Saturday 1970-01-03, but Monday
-1970-01-05).
+The value of an absolute date is thus *an integer number of units of
+the chosen time unit* passed since the epoch.  If the integer is a
+negative number, then the magnitude of the integer represents the
+number of units prior to the epoch.  When working with business days,
+Saturdays and Sundays are simply ignored from the count (i.e. day 3 in
+business days is not Saturday 1970-01-03, but Monday 1970-01-05).
 
 Building a ``datetime64`` dtype
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
 The proposed ways to specify the time unit in the dtype constructor are:
 
@@ -116,12 +141,12 @@ Using the short string notation::
 
   dtype('M8[us]')
 
-Note that a time unit should always be specified, as there is not a
-default.
+If a time unit is not specified, then it defaults to [us].  Thus 'M8'
+is equivalent to 'M8[us]'.
 
 
 Setting and getting values
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 The objects with this dtype can be set in a series of ways::
 
@@ -141,19 +166,19 @@ And can be get in different ways too::
                       dtype='datetime64[s]')
 
 Comparisons
-~~~~~~~~~~~
+------------
 
 The comparisons will be supported too::
 
   numpy.array(['1980'], 'M8[Y]') == numpy.array(['1979'], 'M8[Y]')
   --> [False]
 
-or by applying broadcasting::
+including applying broadcasting::
 
   numpy.array(['1979', '1980'], 'M8[Y]') == numpy.datetime64('1980', 'Y')
   --> [False, True]
 
-The next should work too::
+The following should also work::
 
   numpy.array(['1979', '1980'], 'M8[Y]') == '1980-01-01'
   --> [False, True]
@@ -162,17 +187,17 @@ because the right hand expression can be broadcasted into an array of 2
 elements of dtype 'M8[Y]'.
 
 Compatibility issues
-~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 This will be fully compatible with the ``datetime`` class of the
 ``datetime`` module of Python only when using a time unit of
-microseconds.  For other time units, the conversion process will loose
+microseconds.  For other time units, the conversion process will lose
 precision or will overflow as needed.  The conversion from/to a
 ``datetime`` object doesn't take leap seconds into account.
 
 
 ``timedelta64``
----------------
+===============
 
 It represents a time that is relative (i.e. not absolute).  It is
 implemented internally as an ``int64`` type.
@@ -182,39 +207,11 @@ time computations), the value -2**63 (0x8000000000000000) is interpreted
 as an invalid or unknown time, *Not a Time* or *NaT*.  See the section
 on time unit conversions for more information.
 
-Time units
-~~~~~~~~~~
-
-It accepts different time units, each of them implying a different time
-span.  The table below describes the time units supported with their
-corresponding time spans.
-
-======== ================ ==========================
-      Time unit               Time span
-------------------------- --------------------------
-  Code       Meaning
-======== ================ ==========================
-   Y       year             +- 9.2e18 years
-   M       month            +- 7.6e17 years
-   W       week             +- 1.7e17 years
-   B       business day     +- 3.5e16 years
-   D       day              +- 2.5e16 years
-   h       hour             +- 1.0e15 years
-   m       minute           +- 1.7e13 years
-   s       second           +- 2.9e12 years
-   ms      millisecond      +- 2.9e9 years
-   us      microsecond      +- 2.9e6 years
-   ns      nanosecond       +- 292 years
-   ps      picosecond       +- 106 days
-   fs      femtosecond      +- 2.6 hours
-   as      attosecond       +- 9.2 seconds
-======== ================ ==========================
-
-The value of a time delta is thus *an integer number of units of the
+The value of a time delta is *an integer number of units of the
 chosen time unit*.
 
 Building a ``timedelta64`` dtype
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 The proposed ways to specify the time unit in the dtype constructor are:
 
@@ -226,11 +223,11 @@ Using the short string notation::
 
   dtype('m8[us]')
 
-Note that a time unit should always be specified, as there is not a
-default.
+If a time unit is not specified, then a default of [us] is assumed.
+Thus 'm8' and 'm8[us]' are equivalent.
 
 Setting and getting values
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 The objects with this dtype can be set in a series of ways::
 
@@ -249,7 +246,7 @@ And can be get in different ways too::
   repr(t)    -->  array([12, 13, 14], dtype="timedelta64[ms]")
 
 Comparisons
-~~~~~~~~~~~
+------------
 
 The comparisons will be supported too::
 
@@ -261,7 +258,7 @@ or by applying broadcasting::
   numpy.array([12, 13, 14], 'm8[ms]') == numpy.timedelta64(13, 'ms')
   --> [False, True, False]
 
-The next should work too::
+The following should work too::
 
   numpy.array([12, 13, 14], 'm8[ms]') == '0:00:00.012'
   --> [True, False, False]
@@ -270,7 +267,7 @@ because the right hand expression can be broadcasted into an array of 3
 elements of dtype 'm8[ms]'.
 
 Compatibility issues
-~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 This will be fully compatible with the ``timedelta`` class of the
 ``datetime`` module of Python only when using a time unit of
@@ -281,7 +278,7 @@ precision or will overflow as needed.
 Examples of use
 ===============
 
-Here it is an example of use for the ``datetime64``::
+Here is an example of use for the ``datetime64``::
 
   In [5]: numpy.datetime64(42, 'us')
   Out[5]: datetime64(42, 'us')
@@ -354,7 +351,7 @@ Operating with date/time arrays
 ``datetime64`` vs ``datetime64``
 --------------------------------
 
-The only arithmetic operation allowed between absolute dates is the
+The only arithmetic operation allowed between absolute dates is
 subtraction::
 
   In [10]: numpy.ones(3, "M8[s]") - numpy.zeros(3, "M8[s]")
@@ -563,19 +560,6 @@ subsections of the "Operating with date/time arrays" section.
 Due to the peculiarities of business days, it is most probable that
 operations mixing business days with other time units will not be
 allowed.
-
-Why there is not a ``quarter`` time unit?
------------------------------------------
-
-This proposal tries to focus on the most common used set of time units
-to operate with, and the ``quarter`` can be considered more of a derived
-unit.  Besides, the use of a ``quarter`` normally requires that it can
-start at whatever month of the year, and as we are not including support
-for a time ``origin`` metadata, this is not a viable venue here.
-Finally, if we were to add the ``quarter`` then people should expect to
-find a ``biweekly``, ``semester`` or ``biyearly`` just to put some
-examples of other derived units, and we find this a bit too overwhelming
-for this proposal purposes.
 
 
 .. [1] http://docs.python.org/lib/module-datetime.html
