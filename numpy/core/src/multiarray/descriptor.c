@@ -128,6 +128,13 @@ _check_for_commastring(char *type, int len)
 static int
 _check_for_datetime(char *type, int len)
 {
+    if (len < 1) return 0;
+    if (type[1] == '8' && (type[0] == 'M' || type[0] == 'm'))
+	return 1;
+    if (len < 10) return 0;
+    if (strncmp(type, "datetime64", 10) == 0) return 1;
+    if (len < 11) return 0;
+    if (strncmp(type, "timedelta64", 11) == 0) return 1;
     return 0;
 }
 
@@ -453,9 +460,31 @@ _convert_from_list(PyObject *obj, int align)
 
 
 static PyArray_Descr *
-_convert_from_datetime(PyObject *obj, int align)
+_convert_from_datetime(PyObject *obj)
 {
-    return NULL;
+     int i, blen, len, timedelta=1;
+    long num, den, events;
+    char *baseunit;
+    char *allstr;
+    static char default_unit = "us";
+       
+    if (!PyString_Check(obj)) {
+	return NULL;
+    } 
+    
+    type = PyString_AS_STRING(obj);
+    len = PyString_GET_SIZE(obj);    
+
+    /* Determine whether datetime or timedelta */
+    if ((strncmp(type, "M8", 2) == 0) ||
+	(strncmp(type, "datetime64", 10) == 0)) 
+	timedelta = 0;
+
+    /* Determine baseunit by finding a '[ ]' */
+    
+    
+
+    return _create_datetime(baseunit, blen, num, den, events, timedelta);
 }
 
 
@@ -884,7 +913,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             goto fail;
         }
 	/* check for datetime format */
-	if ((len > 2) && _check_for_datetime(type, len)) {
+	if ((len > 1) && _check_for_datetime(type, len)) {
 	    *at = _convert_from_datetime(obj);
 	    if (*at) {
 		return PY_SUCCEED;

@@ -228,7 +228,7 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.subtract'),
           TD(notimes_or_obj),
-          [TypeDescription('M', UsesArraysAsData, 'Mt', 'M'),
+          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
            TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
            TypeDescription('M', UsesArraysAsData, 'MM', 'm'),
           ],
