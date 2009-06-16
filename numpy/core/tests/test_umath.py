@@ -87,7 +87,25 @@ class TestLogAddExp2(object):
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
             logzf = np.array(z, dtype=dt)
-            assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
+            assert_almost_equal(np.logaddexp2(logxf, logyf), logzf)
+
+    def test_inf(self) :
+        inf = np.inf
+        x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
+        y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
+        z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
+        for dt in ['f','d','g'] :
+            logxf = np.array(x, dtype=dt)
+            logyf = np.array(y, dtype=dt)
+            logzf = np.array(z, dtype=dt)
+            assert_equal(np.logaddexp2(logxf, logyf), logzf)
+
+    def test_nan(self):
+        assert np.isnan(np.logaddexp2(np.nan, np.inf))
+        assert np.isnan(np.logaddexp2(np.inf, np.nan))
+        assert np.isnan(np.logaddexp2(np.nan, 0))
+        assert np.isnan(np.logaddexp2(0, np.nan))
+        assert np.isnan(np.logaddexp2(np.nan, np.nan))
 
 class TestLog(TestCase):
     def test_log_values(self) :
@@ -129,6 +147,24 @@ class TestLogAddExp(object):
             logyf = np.array(y, dtype=dt)
             logzf = np.array(z, dtype=dt)
             assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
+
+    def test_inf(self) :
+        inf = np.inf
+        x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
+        y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
+        z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
+        for dt in ['f','d','g'] :
+            logxf = np.array(x, dtype=dt)
+            logyf = np.array(y, dtype=dt)
+            logzf = np.array(z, dtype=dt)
+            assert_equal(np.logaddexp(logxf, logyf), logzf)
+
+    def test_nan(self):
+        assert np.isnan(np.logaddexp(np.nan, np.inf))
+        assert np.isnan(np.logaddexp(np.inf, np.nan))
+        assert np.isnan(np.logaddexp(np.nan, 0))
+        assert np.isnan(np.logaddexp(0, np.nan))
+        assert np.isnan(np.logaddexp(np.nan, np.nan))
 
 class TestLog1p(TestCase):
     def test_log1p(self):

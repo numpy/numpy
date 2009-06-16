@@ -359,8 +359,12 @@ static @type@ logaddexp@c@(@type@ x, @type@ y)
     if (tmp > 0) {
         return x + npy_log1p@c@(npy_exp@c@(-tmp));
     }
-    else {
+    else if (tmp <= 0) {
         return y + npy_log1p@c@(npy_exp@c@(tmp));
+    }
+    else {
+        /* NaNs, or infinities of the same sign involved */
+        return x + y;
     }
 }
 
@@ -370,8 +374,12 @@ static @type@ logaddexp2@c@(@type@ x, @type@ y)
     if (tmp > 0) {
         return x + log2_1p@c@(npy_exp2@c@(-tmp));
     }
-    else {
+    else if (tmp <= 0) {
         return y + log2_1p@c@(npy_exp2@c@(tmp));
+    }
+    else {
+        /* NaNs, or infinities of the same sign involved */
+        return x + y;
     }
 }
 
