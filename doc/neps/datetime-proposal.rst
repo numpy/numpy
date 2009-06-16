@@ -93,9 +93,9 @@ Finally, a date-time data-type can be created with support for tracking
 sequential events within a basic unit: [D]//100, [Y]//4 (notice the
 required brackets).  These ``modulo`` event units provide the following
 interpretation to the date-time integer: 
+
    * the divisor is the number of events in each period 
-   * the (integer) quotient is the integer number representing 
-     the base units 
+   * the (integer) quotient is the integer number representing the base units 
    * the remainder is the particular event in the period.
 
 Modulo event-units can be combined with any derived units, but brackets
@@ -111,6 +111,9 @@ timedelta64 ('m8') using brackets '[]'.  Therefore, a fully-specified
 string representing a date-time dtype is 'M8[Y]' or (for a more
 complicated example) 'M8[7s/9]//5'.
 
+If a time unit is not specified, then it defaults to [us].  Thus 'M8' is
+equivalent to 'M8[us]' (except when modulo event-units are desired --
+i.e. you cannot specify 'M8[us]//5' as 'M8//5'
 
 ``datetime64``
 ==============
@@ -534,6 +537,58 @@ When converting back to ordinary days, NaT values are left untouched
 
   In[13]: print t3
   [1970-01-01  1970-01-02  NaT  NaT  1970-01-05]
+
+Necessary changes to NumPy
+==========================
+
+In order to facilitate the addition of the date-time data-types a few changes
+to NumPy were made: 
+
+Addition of metadata to dtypes
+------------------------------
+
+All data-types now have a metadata dictionary. It can be set using the
+metadata keyword during construction of the object. 
+
+Date-time data-types will place the word "__frequency__" in the meta-data 
+dictionary containing a 4-tuple with the following parameters.
+
+(basic unit string (str), 
+ number of multiples (int), 
+ number of sub-divisions (int), 
+ number of events (int)).  
+
+Simple time units like 'D' for days will thus be specified by ('D', 1, 1, 1) in 
+the "__frequency__" key of the metadata.  More complicated time units (like '[2W/5]//50') will be indicated by ('D', 2, 5, 50). 
+
+The "__frequency__" key is reserved for metadata and cannot be set with a 
+dtype constructor. 
+
+
+Ufunc interface extension
+-------------------------
+
+ufuncs that have datetime and timedelta arguments can use the Python API
+during ufunc calls (to raise errors).
+
+There is a new ufunc C-API call to set the data for a particular
+function pointer (for a particular set of data-types) to be the list of arrays 
+passed in to the ufunc. 
+
+Array Intervace Extensions
+--------------------------
+
+The array interface is extended to both handle datetime and timedelta
+typestr (including extended notation). 
+
+In addition, the typestr element of the __array_interface__ can be a tuple
+as long as the version string is 4.  The tuple is 
+('typestr', metadata dictionary). 
+
+This extension to the typestr concept extends to the descr portion of
+the __array_interface__.  Thus, the second element in the tuple of a
+list of tuples describing a data-format can itself be a tuple of
+('typestr', metadata dictionary).
 
 
 Final considerations

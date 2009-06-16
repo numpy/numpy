@@ -180,7 +180,7 @@ all = '?bBhHiIlLqQfdgFDGOMm'
 O = 'O'
 M = '.'
 ints = 'bBhHiIlLqQ'
-times = 'mM'
+times = 'Mm'
 intsO = ints + O
 bints = '?' + ints
 bintsO = bints + O
@@ -195,13 +195,13 @@ noint = inexact+O
 nointM = inexact+M
 allM = bints+times+flts+cmplxM
 nobool = all[1:]
-nobool_or_obj = all[1:-1]
+noobj = all[:-3]+all[-2:]
+nobool_or_obj = all[1:-3]+all[-2:]
 intflt = ints+flts
 intfltcmplx = ints+flts+cmplx
 nocmplx = bints+times+flts
 nocmplxO = nocmplx+O
 nocmplxM = nocmplx+M
-noobj = all[:-1]
 notimes_or_obj = bints + inexact
 
 # Find which code corresponds to int64.

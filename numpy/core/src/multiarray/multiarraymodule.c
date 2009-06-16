@@ -2702,6 +2702,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
+    s = PyString_InternFromString(NPY_METADATA_DTSTR);
+    PyDict_SetItemString(d, "METADATA_DTSTR", s);
+    Py_DECREF(s);
+
 #define ADDCONST(NAME)                          \
     s = PyInt_FromLong(NPY_##NAME);             \
     PyDict_SetItemString(d, #NAME, s);          \

@@ -85,6 +85,8 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_USERDEF=256  /* leave room for characters */
 };
 
+#define NPY_METADATA_DTSTR "__frequency__"
+
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
 
