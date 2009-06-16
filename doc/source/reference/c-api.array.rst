@@ -251,14 +251,16 @@ From other objects
 .. cfunction:: PyObject* PyArray_FromAny(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context)
 
     This is the main function used to obtain an array from any nested
-    sequence, or object that exposes the array interface, ``op``. The
-    parameters allow specification of the required *type*, the
+    sequence, or object that exposes the array interface, *op*. The
+    parameters allow specification of the required *dtype*, the
     minimum (*min_depth*) and maximum (*max_depth*) number of
     dimensions acceptable, and other *requirements* for the array. The
     *dtype* argument needs to be a :ctype:`PyArray_Descr` structure
     indicating the desired data-type (including required
     byteorder). The *dtype* argument may be NULL, indicating that any
-    data-type (and byteorder) is acceptable. If you want to use
+    data-type (and byteorder) is acceptable. Unless ``FORCECAST`` is
+    present in ``flags``, this call will generate an error if the data
+    type cannot be safely obtained from the object. If you want to use
     ``NULL`` for the *dtype* and ensure the array is notswapped then
     use :cfunc:`PyArray_CheckFromAny`. A value of 0 for either of the
     depth parameters causes the parameter to be ignored. Any of the
@@ -270,7 +272,8 @@ From other objects
     filled from *op* using the sequence protocol). The new array will
     have :cdata:`NPY_DEFAULT` as its flags member. The *context* argument
     is passed to the :obj:`__array__` method of *op* and is only used if
-    the array is constructed that way.
+    the array is constructed that way. Almost always this
+    parameter is ``NULL``.
 
     .. cvar:: NPY_C_CONTIGUOUS
 
@@ -1001,6 +1004,24 @@ Special functions for PyArray_OBJECT
 Array flags
 -----------
 
+The ``flags`` attribute of the ``PyArrayObject`` structure contains
+important information about the memory used by the array (pointed to
+by the data member) This flag information must be kept accurate or
+strange results and even segfaults may result.
+
+There are 6 (binary) flags that describe the memory area used by the
+data buffer.  These constants are defined in ``arrayobject.h`` and
+determine the bit-position of the flag.  Python exposes a nice
+attribute- based interface as well as a dictionary-like interface for
+getting (and, if appropriate, setting) these flags.
+
+Memory areas of all kinds can be pointed to by an ndarray,
+necessitating these flags.  If you get an arbitrary ``PyArrayObject``
+in C-code, you need to be aware of the flags that are set.  If you
+need to guarantee a certain kind of array (like ``NPY_CONTIGUOUS`` and
+``NPY_BEHAVED``), then pass these requirements into the
+PyArray_FromAny function.
+
 
 Basic Array Flags
 ^^^^^^^^^^^^^^^^^
@@ -1023,6 +1044,12 @@ associated with an array.
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
 
+Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN``
+contiguous and C contiguous. Both of these flags can be checked and
+are convenience flags only as whether or not an array is
+``NPY_CONTIGUOUS`` or ``NPY_FORTRAN`` can be determined by the
+``strides``, ``dimensions``, and ``itemsize`` attributes.
+
 .. cvar:: NPY_OWNDATA
 
     The data area is owned by this array.
@@ -1042,6 +1069,24 @@ associated with an array.
 
     The data area represents a (well-behaved) copy whose information
     should be transferred back to the original when this array is deleted.
+
+    This is a special flag that is set if this array represents a copy
+    made because a user required certain flags in
+    :cfunc:`PyArray_FromAny` and a copy had to be made of some other
+    array (and the user asked for this flag to be set in such a
+    situation). The base attribute then points to the "misbehaved"
+    array (which is set read_only). When the array with this flag set
+    is deallocated, it will copy its contents back to the "misbehaved"
+    array (casting if necessary) and will reset the "misbehaved" array
+    to :cdata:`NPY_WRITEABLE`. If the "misbehaved" array was not
+    :cdata:`NPY_WRITEABLE` to begin with then :cfunc:`PyArray_FromAny`
+    would have returned an error because :cdata:`NPY_UPDATEIFCOPY`
+    would not have been possible.
+
+:cfunc:`PyArray_UpdateFlags` (obj, flags) will update the
+``obj->flags`` for ``flags`` which can be any of
+:cdata:`NPY_CONTIGUOUS`, :cdata:`NPY_FORTRAN`, :cdata:`NPY_ALIGNED`,
+or :cdata:`NPY_WRITEABLE`.
 
 
 Combinations of array flags
