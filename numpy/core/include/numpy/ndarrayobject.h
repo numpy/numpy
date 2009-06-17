@@ -539,6 +539,14 @@ typedef struct {
         int flags;
 } PyArray_Chunk;
 
+
+typedef struct {
+	char base[4];
+	int num;
+	int den;
+	int events;
+} PyArray_DatetimeMetaData;
+
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /* Means c-style contiguous (last index varies the fastest). The
