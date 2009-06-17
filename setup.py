@@ -53,7 +53,7 @@ MINOR               = 4
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
-    
+
 # Return the svn version as a string, raise a ValueError otherwise
 def svn_version():
     def _minimal_ext_cmd(cmd):
@@ -76,14 +76,15 @@ def svn_version():
         return ""
 
     r = re.compile('Revision: ([0-9]+)')
-    svnver = None
+    svnver = ""
     for line in out.split('\n'):
-        m = r.match(line)
+        m = r.match(line.strip())
         if m:
             svnver = m.group(1)
 
     if not svnver:
-        raise ValueError("Error while parsing svn version ?")
+        print("Error while parsing svn version")
+
     return svnver
 
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
