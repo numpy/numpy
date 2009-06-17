@@ -114,3 +114,7 @@ precision are also available by adding the F and L suffixes respectively.
 .. cvar:: NPY_2_PI
 
     Two times the reciprocal of pi (:math:`\frac{2}{\pi}`)
+
+.. cvar:: NPY_EULER
+
+    The Euler constant (:math:`\lim_{n\rightarrow \infty}{\sum_{k=1}^n{\frac{1}{k}} - \ln n}`)
