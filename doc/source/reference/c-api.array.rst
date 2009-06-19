@@ -1949,6 +1949,8 @@ Broadcasting (multi-iterators)
 Neighborhood iterator
 ---------------------
 
+.. versionadded:: 1.4.0
+
 Neighborhood iterators are subclasses of the iterator object, and can be used
 to iter over a neighborhood of a point. For example, you may want to iterate
 over every voxel of a 3d image, and for every such voxel, iterate over an
