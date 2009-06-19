@@ -46,22 +46,44 @@ def ediff1d(ary, to_end=None, to_begin=None):
     ----------
     ary : array
         This array will be flattened before the difference is taken.
-    to_end : number, optional
-        If provided, this number will be tacked onto the end of the returned
+    to_end : array_like, optional
+        If provided, this number will be appended to the end of the returned
         differences.
-    to_begin : number, optional
-        If provided, this number will be taked onto the beginning of the
+    to_begin : array_like, optional
+        If provided, this array will be appended to the beginning of the
         returned differences.
 
     Returns
     -------
     ed : array
-        The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+        The differences. Loosely, this will be ``ary[1:] - ary[:-1]``.
+
+    See Also
+    --------
+    diff, gradient
 
     Notes
     -----
     When applied to masked arrays, this function drops the mask information
     if the `to_begin` and/or `to_end` parameters are used
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 4, 7, 0])
+    >>> np.ediff1d(x)
+    array([ 1,  2,  3, -7])
+
+    >>> np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
+    array([-99,   1,   2,   3,  -7,  88,  99])
+
+    The returned array is always 1D.
+
+    >>> y = np.array([[1, 2, 4], [1, 6, 24]])
+    >>> y
+    array([[ 1,  2,  4],
+           [ 1,  6, 24]])
+    >>> np.ediff1d(y)
+    array([ 1,  2, -3,  5, 18])
 
     """
     ary = np.asanyarray(ary).flat
@@ -168,28 +190,41 @@ def unique1d(ar1, return_index=False, return_inverse=False):
 
 def intersect1d(ar1, ar2):
     """
-    Intersection returning repeated or unique elements common to both arrays.
+    Find elements that are common to two arrays.
+
+    For speed, it is assumed the two input arrays do not have any
+    repeated elements. To find the intersection of two arrays that
+    have repeated elements, use `intersect1d_nu`.
 
     Parameters
     ----------
     ar1,ar2 : array_like
-        Input arrays.
+        Input arrays. These must be 1D and must not have repeated elements.
 
     Returns
     -------
     out : ndarray, shape(N,)
-        Sorted 1D array of common elements with repeating elements.
+        Sorted array of common elements.
 
     See Also
     --------
-    intersect1d_nu : Returns only unique common elements.
+    intersect1d_nu : Find the intersection for input arrays with
+                     repeated elements.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
 
     Examples
     --------
-    >>> np.intersect1d([1,3,3],[3,1,1])
-    array([1, 1, 3, 3])
+    >>> np.intersect1d([1, 2, 3], [2, 3, 4])
+    array([2, 3])
+    >>> np.intersect1d(['a','b','c'], ['b','c','d'])
+    array(['b', 'c'],
+          dtype='|S1')
+
+    This function fails if the input arrays have repeated elements.
+
+    >>> np.intersect1d([1, 1, 2, 3, 3, 4], [1, 4])
+    array([1, 1, 3, 4])
 
     """
     aux = np.concatenate((ar1,ar2))
@@ -198,7 +233,11 @@ def intersect1d(ar1, ar2):
 
 def intersect1d_nu(ar1, ar2):
     """
-    Intersection returning unique elements common to both arrays.
+    Find elements common to two arrays.
+
+    Returns an array of unique elements that represents the intersection
+    of the two input arrays.  Unlike `intersect1d`, the input arrays can
+    have repeated elements.
 
     Parameters
     ----------
@@ -208,17 +247,18 @@ def intersect1d_nu(ar1, ar2):
     Returns
     -------
     out : ndarray, shape(N,)
-        Sorted 1D array of common and unique elements.
+        Sorted 1D array of common, unique elements.
 
     See Also
     --------
-    intersect1d : Returns repeated or unique common elements.
+    intersect1d : Faster version of `intersect1d_nu` for 1D input arrays
+                  without repeated elements.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
 
     Examples
     --------
-    >>> np.intersect1d_nu([1,3,3],[3,1,1])
+    >>> np.intersect1d_nu([1, 3 ,3], [3, 3, 1, 1])
     array([1, 3])
 
     """
@@ -265,42 +305,48 @@ def setxor1d(ar1, ar2):
 
 def setmember1d(ar1, ar2):
     """
-    Return a boolean array set True where first element is in second array.
+    Test whether elements of one array are also present in a second array.
 
-    Boolean array is the shape of `ar1` containing True where the elements
-    of `ar1` are in `ar2` and False otherwise.
-
-    Use unique1d() to generate arrays with only unique elements to use as
-    inputs to this function.
+    Returns a boolean array the same length as `ar1` that is True where an
+    element of `ar1` is also in `ar2` and False otherwise. The input arrays
+    must not contain any repeated elements. If they do, unique arrays can
+    be created using `unique1d()` to use as inputs to this function.
 
     Parameters
     ----------
     ar1 : array_like
-        Input array.
+        Input array. It must not have any repeated elements
     ar2 : array_like
-        Input array.
+        Input array. Again, it must not have any repeated elements.
 
     Returns
     -------
     mask : ndarray, bool
         The values `ar1[mask]` are in `ar2`.
 
-
     See Also
     --------
     setmember1d_nu : Works for arrays with non-unique elements.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+    unique1d : Find unique elements in an array.
 
     Examples
     --------
-    >>> test = np.arange(5)
+    >>> test = [0, 1, 2, 3, 4, 5]
     >>> states = [0, 2]
-    >>> mask = np.setmember1d(test,states)
+    >>> mask = np.setmember1d(test, states)
     >>> mask
     array([ True, False,  True, False, False], dtype=bool)
     >>> test[mask]
     array([0, 2])
+
+    This function fails if there are repeated elements in the input arrays:
+
+    >>> test = [0, 1, 1, 2, 3, 3]
+    >>> states = [0, 2]
+    >>> np.setmember1d(test,states)
+    array([ True,  True, False,  True,  True, False], dtype=bool)   # Wrong!
 
     """
     # We need this to be a stable sort, so always use 'mergesort' here. The

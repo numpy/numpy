@@ -517,6 +517,9 @@ def issubdtype(arg1, arg2):
     arg2 : dtype_like
         dtype or string representing a typecode.
 
+    Returns
+    -------
+    out : bool
 
     See Also
     --------

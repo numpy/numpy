@@ -28,6 +28,18 @@ def fv(rate, nper, pmt, pv, when='end'):
     """
     Compute the future value.
 
+    Given:
+     * a present value, `pv`
+     * an interest `rate` compounded once per period, of which
+       there are
+     * `nper` total
+     * a (fixed) payment, `pmt`, paid either
+     * at the beginning (`when` = {'begin', 1}) or the end
+       (`when` = {'end', 0}) of each period
+
+    Return:
+       the value at the end of the `nper` periods
+
     Parameters
     ----------
     rate : scalar or array_like of shape(M, )
@@ -60,6 +72,17 @@ def fv(rate, nper, pmt, pv, when='end'):
     or, when ``rate == 0``::
 
      fv + pv + pmt * nper == 0
+
+    References
+    ----------
+    .. [WRW] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+       Open Document Format for Office Applications (OpenDocument)v1.2,
+       Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
+       Pre-Draft 12. Organization for the Advancement of Structured Information
+       Standards (OASIS). Billerica, MA, USA. [ODT Document].
+       Available:
+       http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
+       OpenDocument-formula-20090508.odt
 
     Examples
     --------
@@ -94,6 +117,19 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     """
     Compute the payment against loan principal plus interest.
 
+    Given:
+     * a present value, `pv` (e.g., an amount borrowed)
+     * a future value, `fv` (e.g., 0)
+     * an interest `rate` compounded once per period, of which
+       there are
+     * `nper` total
+     * and (optional) specification of whether payment is made
+       at the beginning (`when` = {'begin', 1}) or the end
+       (`when` = {'end', 0}) of each period
+
+    Return:
+       the (fixed) periodic payment.
+
     Parameters
     ----------
     rate : array_like
@@ -102,8 +138,8 @@ def pmt(rate, nper, pv, fv=0, when='end'):
         Number of compounding periods
     pv : array_like
         Present value
-    fv : array_like
-        Future value
+    fv : array_like (optional)
+        Future value (default = 0)
     when : {{'begin', 1}, {'end', 0}}, {string, int}
         When payments are due ('begin' (1) or 'end' (0))
 
@@ -117,7 +153,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     Notes
     -----
-    The payment ``pmt`` is computed by solving the equation::
+    The payment is computed by solving the equation::
 
      fv +
      pv*(1 + rate)**nper +
@@ -127,16 +163,37 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
       fv + pv + pmt * nper == 0
 
+    for ``pmt``.
+
+    Note that computing a monthly mortgage payment is only
+    one use for this function.  For example, pmt returns the
+    periodic deposit one must make to achieve a specified
+    future balance given an initial deposit, a fixed,
+    periodically compounded interest rate, and the total
+    number of periods.
+
+    References
+    ----------
+    .. [WRW] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+       Open Document Format for Office Applications (OpenDocument)v1.2,
+       Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
+       Pre-Draft 12. Organization for the Advancement of Structured Information
+       Standards (OASIS). Billerica, MA, USA. [ODT Document].
+       Available:
+       http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
+       OpenDocument-formula-20090508.odt
+
     Examples
     --------
-    What would the monthly payment need to be to pay off a $200,000 loan in 15
+    What is the monthly payment needed to pay off a $200,000 loan in 15
     years at an annual interest rate of 7.5%?
 
     >>> np.pmt(0.075/12, 12*15, 200000)
     -1854.0247200054619
 
-    In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained
-    today, a monthly payment of $1,854.02 would be required.
+    In order to pay-off (i.e., have a future-value of 0) the $200,000 obtained
+    today, a monthly payment of $1,854.02 would be required.  Note that this
+    example illustrates usage of `fv` having a default value of 0.
 
     """
     when = _convert_when(when)
@@ -282,6 +339,18 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     """
     Compute the present value.
 
+    Given:
+     * a future value, `fv`
+     * an interest `rate` compounded once per period, of which
+       there are
+     * `nper` total
+     * a (fixed) payment, `pmt`, paid either
+     * at the beginning (`when` = {'begin', 1}) or the end
+       (`when` = {'end', 0}) of each period
+
+    Return:
+       the value now
+
     Parameters
     ----------
     rate : array_like
@@ -302,7 +371,7 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
 
     Notes
     -----
-    The present value ``pv`` is computed by solving the equation::
+    The present value is computed by solving the equation::
 
      fv +
      pv*(1 + rate)**nper +
@@ -311,6 +380,45 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     or, when ``rate = 0``::
 
      fv + pv + pmt * nper = 0
+
+    for `pv`, which is then returned.
+
+    References
+    ----------
+    .. [WRW] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+       Open Document Format for Office Applications (OpenDocument)v1.2,
+       Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
+       Pre-Draft 12. Organization for the Advancement of Structured Information
+       Standards (OASIS). Billerica, MA, USA. [ODT Document].
+       Available:
+       http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
+       OpenDocument-formula-20090508.odt
+
+    Examples
+    --------
+    What is the present value (e.g., the initial investment)
+    of an investment that needs to total $15692.93
+    after 10 years of saving $100 every month?  Assume the
+    interest rate is 5% (annually) compounded monthly.
+
+    >>> np.pv(0.05/12, 10*12, -100, 15692.93)
+    -100.00067131625819
+
+    By convention, the negative sign represents cash flow out
+    (i.e., money not available today).  Thus, to end up with
+    $15,692.93 in 10 years saving $100 a month at 5% annual
+    interest, one's initial deposit should also be $100.
+
+    If any input is array_like, ``pv`` returns an array of equal shape.
+    Let's compare different interest rates in the example above:
+
+    >>> a = np.array((0.05, 0.04, 0.03))/12
+    >>> np.pv(a, 10*12, -100, 15692.93)
+    array([ -100.00067132,  -649.26771385, -1273.78633713])
+
+    So, to end up with the same $15692.93 under the same $100 per month
+    "savings plan," for annual interest rates of 4% and 3%, one would
+    need initial investments of $649.27 and $1273.79, respectively.
 
     """
     when = _convert_when(when)
@@ -391,23 +499,53 @@ def irr(values):
     """
     Return the Internal Rate of Return (IRR).
 
-    This is the rate of return that gives a net present value of 0.0.
+    This is the "average" periodically compounded rate of return
+    that gives a net present value of 0.0; for a more complete explanation,
+    see Notes below.
 
     Parameters
     ----------
     values : array_like, shape(N,)
-        Input cash flows per time period.  At least the first value would be
-        negative to represent the investment in the project.
+        Input cash flows per time period.  By convention, net "deposits"
+        are negative and net "withdrawals" are positive.  Thus, for example,
+        at least the first element of `values`, which represents the initial
+        investment, will typically be negative.
 
     Returns
     -------
     out : float
         Internal Rate of Return for periodic input values.
 
+    Notes
+    -----
+    The IRR is perhaps best understood through an example (illustrated
+    using np.irr in the Examples section below).  Suppose one invests
+    100 units and then makes the following withdrawals at regular
+    (fixed) intervals: 39, 59, 55, 20.  Assuming the ending value is 0,
+    one's 100 unit investment yields 173 units; however, due to the
+    combination of compounding and the periodic withdrawals, the
+    "average" rate of return is neither simply 0.73/4 nor (1.73)^0.25-1.
+    Rather, it is the solution (for :math:`r`) of the equation:
+
+    .. math:: -100 + \\frac{39}{1+r} + \\frac{59}{(1+r)^2}
+     + \\frac{55}{(1+r)^3} + \\frac{20}{(1+r)^4} = 0
+
+    In general, for `values` :math:`= [v_0, v_1, ... v_M]`,
+    irr is the solution of the equation: [G]_
+
+    .. math:: \\sum_{t=0}^M{\\frac{v_t}{(1+irr)^{t}}} = 0
+
+    References
+    ----------
+    .. [G] L. J. Gitman, "Principles of Managerial Finance, Brief," 3rd ed.,
+       Addison-Wesley, 2003, pg. 348.
+
     Examples
     --------
     >>> np.irr([-100, 39, 59, 55, 20])
     0.2809484211599611
+
+    (Compare with the Example given for numpy.lib.financial.npv)
 
     """
     res = np.roots(values[::-1])
@@ -430,8 +568,14 @@ def npv(rate, values):
     rate : scalar
         The discount rate.
     values : array_like, shape(M, )
-        The values of the time series of cash flows.  Must be the same
-        increment as the `rate`.
+        The values of the time series of cash flows.  The (fixed) time
+        interval between cash flow "events" must be the same as that
+        for which `rate` is given (i.e., if `rate` is per year, then
+        precisely a year is understood to elapse between each cash flow
+        event).  By convention, investments or "deposits" are negative,
+        income or "withdrawals" are positive; `values` must begin with
+        the initial investment, thus `values[0]` will typically be
+        negative.
 
     Returns
     -------
@@ -440,9 +584,21 @@ def npv(rate, values):
 
     Notes
     -----
-    Returns the result of:
+    Returns the result of: [G]_
 
-    .. math :: \\sum_{t=1}^M{\\frac{values_t}{(1+rate)^{t}}}
+    .. math :: \\sum_{t=0}^M{\\frac{values_t}{(1+rate)^{t}}}
+
+    References
+    ----------
+    .. [G] L. J. Gitman, "Principles of Managerial Finance, Brief," 3rd ed.,
+       Addison-Wesley, 2003, pg. 346.
+
+    Examples
+    --------
+    >>> np.npv(0.281,[-100, 39, 59, 55, 20])
+    -0.0066187288356340801
+
+    (Compare with the Example given for numpy.lib.financial.irr)
 
     """
     values = np.asarray(values)

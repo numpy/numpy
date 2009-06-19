@@ -176,7 +176,7 @@ def isneginf(x, y=None):
 _log2 = nx.log(2)
 def log2(x, y=None):
     """
-    Return the base 2 logarithm.
+    Return the base 2 logarithm of the input array, element-wise.
 
     Parameters
     ----------
@@ -188,7 +188,7 @@ def log2(x, y=None):
     Returns
     -------
     y : ndarray
-      The logarithm to the base 2 of `x` elementwise.
+      The logarithm to the base 2 of `x` element-wise.
       NaNs are returned where `x` is negative.
 
     See Also
@@ -197,7 +197,7 @@ def log2(x, y=None):
 
     Examples
     --------
-    >>> np.log2([-1,2,4])
+    >>> np.log2([-1, 2, 4])
     array([ NaN,   1.,   2.])
 
     """

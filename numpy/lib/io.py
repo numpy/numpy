@@ -126,6 +126,7 @@ def load(file, mmap_mode=None):
     ----------
     file : file-like object or string
         The file to read.  It must support ``seek()`` and ``read()`` methods.
+        If the filename extension is ``.gz``, the file is first decompressed.
     mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, then memory-map the file, using the given mode
         (see `numpy.memmap`).  The mode has no effect for pickled or
@@ -145,6 +146,11 @@ def load(file, mmap_mode=None):
     ------
     IOError
         If the input file does not exist or cannot be read.
+
+    See Also
+    --------
+    save, savez, loadtxt
+    memmap : Create a memory-map to an array stored in a file on disk.
 
     Notes
     -----
@@ -202,20 +208,20 @@ def load(file, mmap_mode=None):
 
 def save(file, arr):
     """
-    Save an array to a binary file in NumPy format.
+    Save an array to a binary file in NumPy ``.npy`` format.
 
     Parameters
     ----------
-    f : file or string
+    file : file or string
         File or filename to which the data is saved.  If the filename
         does not already have a ``.npy`` extension, it is added.
-    x : array_like
-        Array data.
+    arr : array_like
+        Array data to be saved.
 
     See Also
     --------
-    savez : Save several arrays into an .npz compressed archive
-    savetxt : Save an array to a file as plain text
+    savez : Save several arrays into a .npz compressed archive
+    savetxt, load
 
     Examples
     --------
@@ -225,7 +231,7 @@ def save(file, arr):
     >>> x = np.arange(10)
     >>> np.save(outfile, x)
 
-    >>> outfile.seek(0)
+    >>> outfile.seek(0) # only necessary in this example (with tempfile)
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -523,20 +529,20 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
 def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     """
-    Save an array to file.
+    Save an array to a text file.
 
     Parameters
     ----------
-    fname : filename or a file handle
-        If the filename ends in .gz, the file is automatically saved in
-        compressed gzip format.  The load() command understands gzipped
-        files transparently.
+    fname : filename or file handle
+        If the filename ends in ``.gz``, the file is automatically saved in
+        compressed gzip format.  `loadtxt` understands gzipped files
+        transparently.
     X : array_like
-        Data.
-    fmt : string or sequence of strings
+        Data to be saved to a text file.
+    fmt : str or sequence of strs
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
-        case delimiter is ignored.
+        case `delimiter` is ignored.
     delimiter : str
         Character separating columns.
 
@@ -588,15 +594,20 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
         ``x,X`` : unsigned hexadecimal integer
 
-    This is not an exhaustive specification.
+    This explanation of ``fmt`` is not complete, for an exhaustive
+    specification see [1]_.
 
-
+    References
+    ----------
+    .. [1] `Format Specification Mini-Language
+           <http://docs.python.org/library/string.html#
+           format-specification-mini-language>`_, Python Documentation.
 
     Examples
     --------
-    >>> savetxt('test.out', x, delimiter=',') # X is an array
-    >>> savetxt('test.out', (x,y,z)) # x,y,z equal sized 1D arrays
-    >>> savetxt('test.out', x, fmt='%1.4e') # use exponential notation
+    >>> savetxt('test.out', x, delimiter=',')   # X is an array
+    >>> savetxt('test.out', (x,y,z))   # x,y,z equal sized 1D arrays
+    >>> savetxt('test.out', x, fmt='%1.4e')   # use exponential notation
 
     """
 
@@ -712,15 +723,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
 
     Each line past the first `skiprows` ones is split at the `delimiter`
     character, and characters following the `comments` character are discarded.
-    
-
 
     Parameters
     ----------
-    fname : file or string
-        File or filename to read.  If the filename extension is `.gz` or `.bz2`,
-        the file is first decompressed.
-    dtype : data-type
+    fname : {file, string}
+        File or filename to read.  If the filename extension is `.gz` or
+        `.bz2`, the file is first decompressed.
+    dtype : dtype
         Data type of the resulting array.  If this is a flexible data-type,
         the resulting array will be 1-dimensional, and each row will be
         interpreted as an element of the array. In this case, the number
@@ -729,20 +738,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         of the dtype.
         If None, the dtypes will be determined by the contents of each
         column, individually.
-    comments : {string}, optional
+    comments : string, optional
         The character used to indicate the start of a comment.
         All the characters occurring on a line after a comment are discarded
-    delimiter : {string}, optional
+    delimiter : string, optional
         The string used to separate values.  By default, any consecutive
         whitespace act as delimiter.
-    skiprows : {int}, optional
+    skiprows : int, optional
         Numbers of lines to skip at the beginning of the file.
     converters : {None, dictionary}, optional
         A dictionary mapping column number to a function that will convert
         values in the column to a number. Converters can also be used to
         provide a default value for missing data:
         ``converters = {3: lambda s: float(s or 0)}``.
-    missing : {string}, optional
+    missing : string, optional
         A string representing a missing value, irrespective of the column where
         it appears (e.g., `'missing'` or `'unused'`).
     missing_values : {None, dictionary}, optional
@@ -757,20 +766,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         If `names` is a sequence or a single-string of comma-separated names,
         the names will be used to define the field names in a flexible dtype.
         If `names` is None, the names of the dtype fields will be used, if any.
-    excludelist : {sequence}, optional
+    excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended an underscore:
         for example, `file` would become `file_`.
-    deletechars : {string}, optional
-        A string combining invalid characters that must be deleted from the names.
+    deletechars : string, optional
+        A string combining invalid characters that must be deleted from the
+        names.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
         If True, field names are case_sensitive.
         If False or 'upper', field names are converted to upper case.
         If 'lower', field names are converted to lower case.
-    unpack : {bool}, optional
+    unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``
-    usemask : {bool}, optional
+    usemask : bool, optional
         If True, returns a masked array.
         If False, return a regular standard array.
 
@@ -779,22 +789,19 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     out : MaskedArray
         Data read from the text file.
 
-    Notes
-    --------
-    * When spaces are used as delimiters, or when no delimiter has been given
-      as input, there should not be any missing data between two fields.
-    * When the variable are named (either by a flexible dtype or with `names`,
-      there must not be any header in the file (else a :exc:ValueError exception
-      is raised).
-
-    Warnings
-    --------
-    * Individual values are not stripped of spaces by default.
-      When using a custom converter, make sure the function does remove spaces.
-
     See Also
     --------
     numpy.loadtxt : equivalent function when no data is missing.
+
+    Notes
+    -----
+    * When spaces are used as delimiters, or when no delimiter has been given
+      as input, there should not be any missing data between two fields.
+    * When the variable are named (either by a flexible dtype or with `names`,
+      there must not be any header in the file (else a :exc:ValueError
+      exception is raised).
+    * Individual values are not stripped of spaces by default.
+      When using a custom converter, make sure the function does remove spaces.
 
     """
     #
@@ -1128,20 +1135,21 @@ def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
                excludelist=None, deletechars=None, case_sensitive=True,
                usemask=False):
     """
-    Load ASCII data stored in fname and returns a standard recarray (if 
+    Load ASCII data stored in fname and returns a standard recarray (if
     `usemask=False`) or a MaskedRecords (if `usemask=True`).
-    
+
     Complete description of all the optional input parameters is available in
     the docstring of the `genfromtxt` function.
-    
+
     See Also
     --------
     numpy.genfromtxt : generic function
 
-    Warnings
-    --------
+    Notes
+    -----
     * by default, `dtype=None`, which means that the dtype of the output array
       will be determined from the data.
+
     """
     kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
                   skiprows=skiprows, converters=converters,

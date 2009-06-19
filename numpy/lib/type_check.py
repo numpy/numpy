@@ -85,8 +85,8 @@ def real(val):
     Returns
     -------
     out : ndarray
-        If `val` is real, the type of `val` is used for the output.  If `val`
-        has complex elements, the returned type is float.
+        Output array. If `val` is real, the type of `val` is used for the
+        output.  If `val` has complex elements, the returned type is float.
 
     See Also
     --------
@@ -94,13 +94,13 @@ def real(val):
 
     Examples
     --------
-    >>> a = np.array([1+2j,3+4j,5+6j])
+    >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.real
     array([ 1.,  3.,  5.])
     >>> a.real = 9
     >>> a
     array([ 9.+2.j,  9.+4.j,  9.+6.j])
-    >>> a.real = np.array([9,8,7])
+    >>> a.real = np.array([9, 8, 7])
     >>> a
     array([ 9.+2.j,  8.+4.j,  7.+6.j])
 
@@ -109,7 +109,7 @@ def real(val):
 
 def imag(val):
     """
-    Return the imaginary part of array.
+    Return the imaginary part of the elements of the array.
 
     Parameters
     ----------
@@ -118,8 +118,22 @@ def imag(val):
 
     Returns
     -------
-    out : ndarray, real or int
-        Real part of each element, same shape as `val`.
+    out : ndarray
+        Output array. If `val` is real, the type of `val` is used for the
+        output.  If `val` has complex elements, the returned type is float.
+
+    See Also
+    --------
+    real, angle, real_if_close
+
+    Examples
+    --------
+    >>> a = np.array([1+2j, 3+4j, 5+6j])
+    >>> a.imag
+    array([ 2.,  4.,  6.])
+    >>> a.imag = np.array([8, 10, 12])
+    >>> a
+    array([ 1. +8.j,  3.+10.j,  5.+12.j])
 
     """
     return asanyarray(val).imag

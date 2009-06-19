@@ -747,12 +747,19 @@ add_newdoc('numpy.core.multiarray', 'set_string_function',
 
     Parameters
     ----------
-    f : Python function
+    f : function or None
         Function to be used to pretty print arrays. The function should expect
         a single array argument and return a string of the representation of
-        the array.
-    repr : int
-        Unknown.
+        the array. If None, the function is reset to the default NumPy function
+        to print arrays.
+    repr : bool, optional
+        If True (default), the function for pretty printing (``__repr__``)
+        is set, if False the function that returns the default string
+        representation (``__str__``) is set.
+
+    See Also
+    --------
+    set_printoptions, get_printoptions
 
     Examples
     --------
@@ -765,6 +772,24 @@ add_newdoc('numpy.core.multiarray', 'set_string_function',
     HA! - What are you going to do now?
     >>> print a
     [0 1 2 3 4 5 6 7 8 9]
+
+    We can reset the function to the default:
+
+    >>> np.set_string_function(None)
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'l')
+
+    `repr` affects either pretty printing or normal string representation.
+    Note that ``__repr__`` is still affected by setting ``__str__``
+    because the width of each array element in the returned string becomes
+    equal to the length of the result of ``__str__()``.
+
+    >>> x = np.arange(4)
+    >>> np.set_string_function(lambda x:'random', repr=False)
+    >>> x.__str__()
+    'random'
+    >>> x.__repr__()
+    'array([     0,      1,      2,      3])'
 
     """)
 
@@ -973,12 +998,37 @@ add_newdoc('numpy.core.multiarray','newbuffer',
 
     """)
 
-add_newdoc('numpy.core.multiarray','getbuffer',
-    """getbuffer(obj [,offset[, size]])
+add_newdoc('numpy.core.multiarray', 'getbuffer',
+    """
+    getbuffer(obj [,offset[, size]])
 
     Create a buffer object from the given object referencing a slice of
-    length size starting at offset.  Default is the entire buffer. A
-    read-write buffer is attempted followed by a read-only buffer.
+    length size starting at offset.
+
+    Default is the entire buffer. A read-write buffer is attempted followed
+    by a read-only buffer.
+
+    Parameters
+    ----------
+    obj : object
+
+    offset : int, optional
+
+    size : int, optional
+
+    Returns
+    -------
+    buffer_obj : buffer
+
+    Examples
+    --------
+    >>> buf = np.getbuffer(np.ones(5), 1, 3)
+    >>> len(buf)
+    3
+    >>> buf[0]
+    '\\x00'
+    >>> buf
+    <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
 
     """)
 
@@ -2668,6 +2718,21 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     type : python type
         Type of the returned view, e.g. ndarray or matrix.
 
+
+    Notes
+    -----
+
+    `a.view()` is used two different ways.
+
+    `a.view(some_dtype)` or `a.view(dtype=some_dtype)` constructs a view of
+    the array's memory with a different dtype. This can cause a
+    reinterpretation of the bytes of memory.
+
+    `a.view(ndarray_subclass)`, or `a.view(type=ndarray_subclass)`, just
+    returns an instance of ndarray_subclass that looks at the same array (same
+    shape, dtype, etc.). This does not cause a reinterpretation of the memory.
+
+
     Examples
     --------
     >>> x = np.array([(1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
@@ -2675,11 +2740,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     Viewing array data using a different type and dtype:
 
     >>> y = x.view(dtype=np.int16, type=np.matrix)
-    >>> print y.dtype
-    int16
-
+    >>> y
+    matrix([[513]], dtype=int16)
     >>> print type(y)
     <class 'numpy.core.defmatrix.matrix'>
+
+    Creating a view on a structured array so it can be used in calculations
+
+    >>> x = np.array([(1, 2),(3,4)], dtype=[('a', np.int8), ('b', np.int8)])
+    >>> xv = x.view(dtype=np.int8).reshape(-1,2)
+    >>> xv
+    array([[1, 2],
+           [3, 4]], dtype=int8)
+    >>> xv.mean(0)
+    array([ 2.,  3.])
+
+    Making changes to the view changes the underlying array
+
+    >>> xv[0,1] = 20
+    >>> print x
+    [(1, 20) (3, 4)]
 
     Using a view to convert an array to a record array:
 
@@ -2704,9 +2784,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frexp',
     """
-    Return normalized fraction and exponent of 2, element-wise of input array.
+    Return normalized fraction and exponent of 2 of input array, element-wise.
 
-    Returns (`out1`, `out2`) from equation `x` = `out1` * ( 2 ** `out2` )
+    Returns (`out1`, `out2`) from equation ``x` = out1 * 2**out2``.
 
     Parameters
     ----------
@@ -2715,19 +2795,29 @@ add_newdoc('numpy.core.umath', 'frexp',
 
     Returns
     -------
-    (out1, out2) : tuple of ndarray, (float, int)
-        The `out1` ndarray is a float array with numbers between -1 and 1.
-        The `out2` array is an int array represent the exponent of 2.
+    (out1, out2) : tuple of ndarrays, (float, int)
+        `out1` is a float array with values between -1 and 1.
+        `out2` is an int array which represent the exponent of 2.
+
+    See Also
+    --------
+    ldexp : Compute ``y = x1 * 2**x2``, the inverse of `frexp`.
+
+    Notes
+    -----
+    Complex dtypes are not supported, they will raise a TypeError.
 
     Examples
     --------
-    >>> y1,y2 = np.frexp([3.4, 5.7, 1, 10, -100, 0])
+    >>> x = np.arange(9)
+    >>> y1, y2 = np.frexp(x)
     >>> y1
-    array([ 0.85   ,  0.7125 ,  0.5    ,  0.625  , -0.78125,  0.     ])
+    array([ 0.   ,  0.5  ,  0.5  ,  0.75 ,  0.5  ,  0.625,  0.75 ,  0.875,
+            0.5  ])
     >>> y2
-    array([2, 3, 1, 4, 7, 0], dtype=int32)
+    array([0, 1, 2, 2, 3, 3, 3, 3, 4])
     >>> y1 * 2**y2
-    array([   3.4,    5.7,    1. ,   10. , -100. ,    0. ])
+    array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
 
     """)
 
@@ -2764,31 +2854,97 @@ add_newdoc('numpy.core.umath', 'ldexp',
     Parameters
     ----------
     x1 : array_like
-        The significand.
+        The array of multipliers.
     x2 : array_like
-        The exponent.
+        The array of exponents.
 
     Returns
     -------
     y : array_like
-        y = x1 * 2**x2
+        The output array, the result of ``x1 * 2**x2``.
+
+    See Also
+    --------
+    frexp : Return (y1, y2) from ``x = y1 * 2**y2``, the inverse of `ldexp`.
+
+    Notes
+    -----
+    Complex dtypes are not supported, they will raise a TypeError.
+
+    `ldexp` is useful as the inverse of `frexp`, if used by itself it is
+    more clear to simply use the expression ``x1 * 2**x2``.
 
     Examples
     --------
-    >>> np.ldexp(5., 2)
-    20.
+    >>> np.ldexp(5, np.arange(4))
+    array([  5.,  10.,  20.,  40.], dtype=float32)
+
+    >>> x = np.arange(6)
+    >>> np.ldexp(*np.frexp(x))
+    array([ 0.,  1.,  2.,  3.,  4.,  5.])
 
     """)
 
-add_newdoc('numpy.core.umath','geterrobj',
-    """geterrobj()
+add_newdoc('numpy.core.umath', 'geterrobj',
+    """
+    geterrobj()
 
-    Used internally by `geterr`.
+    Return the current object that defines floating-point error handling.
+
+    The error object contains all information that defines the error handling
+    behavior in Numpy. `geterrobj` is used internally by the other
+    functions that get and set error handling behavior (`geterr`, `seterr`,
+    `geterrcall`, `seterrcall`).
 
     Returns
     -------
     errobj : list
-        Internal numpy buffer size, error mask, error callback function.
+        The error object, a list containing three elements:
+        [internal numpy buffer size, error mask, error callback function].
+
+        The error mask is a single integer that holds the treatment information
+        on all four floating point errors. If we print it in base 8, we can see
+        what treatment is set for "invalid", "under", "over", and "divide" (in
+        that order). The printed string can be interpreted with
+
+        * 0 : 'ignore'
+        * 1 : 'warn'
+        * 2 : 'raise'
+        * 3 : 'call'
+        * 4 : 'print'
+        * 5 : 'log'
+
+    See Also
+    --------
+    seterrobj, seterr, geterr, seterrcall, geterrcall
+    getbufsize, setbufsize
+
+    Notes
+    -----
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> np.geterrobj()  # first get the defaults
+    [10000, 0, None]
+
+    >>> def err_handler(type, flag):
+    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...
+    >>> old_bufsize = np.setbufsize(20000)
+    >>> old_err = np.seterr(divide='raise')
+    >>> old_handler = np.seterrcall(err_handler)
+    >>> np.geterrobj()
+    [20000, 2, <function err_handler at 0x91dcaac>]
+
+    >>> old_err = np.seterr(all='ignore')
+    >>> np.base_repr(np.geterrobj()[1], 8)
+    '0'
+    >>> old_err = np.seterr(divide='warn', over='log', under='call',
+                            invalid='print')
+    >>> np.base_repr(np.geterrobj()[1], 8)
+    '4351'
 
     """)
 
@@ -2796,16 +2952,57 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     """
     seterrobj(errobj)
 
-    Used internally by `seterr`.
+    Set the object that defines floating-point error handling.
+
+    The error object contains all information that defines the error handling
+    behavior in Numpy. `seterrobj` is used internally by the other
+    functions that set error handling behavior (`seterr`, `seterrcall`).
 
     Parameters
     ----------
     errobj : list
-        [buffer_size, error_mask, callback_func]
+        The error object, a list containing three elements:
+        [internal numpy buffer size, error mask, error callback function].
+
+        The error mask is a single integer that holds the treatment information
+        on all four floating point errors. If we print it in base 8, we can see
+        what treatment is set for "invalid", "under", "over", and "divide" (in
+        that order). The printed string can be interpreted with
+
+        * 0 : 'ignore'
+        * 1 : 'warn'
+        * 2 : 'raise'
+        * 3 : 'call'
+        * 4 : 'print'
+        * 5 : 'log'
 
     See Also
     --------
-    seterrcall
+    geterrobj, seterr, geterr, seterrcall, geterrcall
+    getbufsize, setbufsize
+
+    Notes
+    -----
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> old_errobj = np.geterrobj()  # first get the defaults
+    >>> old_errobj
+    [10000, 0, None]
+
+    >>> def err_handler(type, flag):
+    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...
+    >>> new_errobj = [20000, 12, err_handler]
+    >>> np.seterrobj(new_errobj)
+    >>> np.base_repr(12, 8)  # int for divide=4 ('print') and over=1 ('warn')
+    '14'
+    >>> np.geterr()
+    {'over': 'warn', 'divide': 'print', 'invalid': 'ignore', 'under': 'ignore'}
+    >>> np.geterrcall()
+    <function err_handler at 0xb75e9304>
 
     """)
 
@@ -2822,32 +3019,49 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
 
     Return the indices of the bins to which each value in input array belongs.
 
-    Each index returned is such that `bins[i-1]` <= `x` < `bins[i]` if `bins`
-    is monotonically increasing, or `bins[i-1]` > `x` >= `bins[i]` if `bins`
-    is monotonically decreasing. Beyond the bounds of `bins`, 0 or len(`bins`)
-    is returned as appropriate.
+    Each index ``i`` returned is such that ``bins[i-1] <= x < bins[i]`` if
+    `bins` is monotonically increasing, or ``bins[i-1] > x >= bins[i]`` if
+    `bins` is monotonically decreasing. If values in `x` are beyond the
+    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate.
 
     Parameters
     ----------
     x : array_like
-        Input array to be binned.
+        Input array to be binned. It has to be 1-dimensional.
     bins : array_like
-        Array of bins.
+        Array of bins. It has to be 1-dimensional and monotonic.
 
     Returns
     -------
-    out : ndarray
-        Output array of indices of same shape as `x`.
+    out : ndarray of ints
+        Output array of indices, of same shape as `x`.
+
+    Raises
+    ------
+    ValueError
+        If the input is not 1-dimensional, or if `bins` is not monotonic.
+    TypeError
+        If the type of the input is complex.
+
+    See Also
+    --------
+    bincount, histogram, unique
+
+    Notes
+    -----
+    If values in `x` are such that they fall outside the bin range,
+    attempting to index `bins` with the indices that `digitize` returns
+    will result in an IndexError.
 
     Examples
     --------
     >>> x = np.array([0.2, 6.4, 3.0, 1.6])
     >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
-    >>> d = np.digitize(x,bins)
-    >>> d
+    >>> inds = np.digitize(x, bins)
+    >>> inds
     array([1, 4, 3, 2])
-    >>> for n in range(len(x)):
-    ...   print bins[d[n]-1], "<=", x[n], "<", bins[d[n]]
+    >>> for n in range(x.size):
+    ...   print bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]]
     ...
     0.0 <= 0.2 < 1.0
     4.0 <= 6.4 < 10.0
@@ -2860,23 +3074,53 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     """
     bincount(x, weights=None)
 
-    Return the number of occurrences of each value in array of nonnegative
-    integers.
+    Count number of occurrences of each value in array of non-negative ints.
 
-    The output, b[i], represents the number of times that i is found in `x`.
-    If `weights` is specified, every occurrence of i at a position p
-    contributes `weights` [p] instead of 1.
+    The number of bins (of size 1) is one larger than the largest value in
+    `x`. Each bin gives the number of occurrences of its index value in `x`.
+    If `weights` is specified the input array is weighted by it, i.e. if a
+    value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
+    of ``out[n] += 1``.
 
     Parameters
     ----------
-    x : array_like, 1 dimension, nonnegative integers
-        Input array.
-    weights : array_like, same shape as `x`, optional
-        Weights.
+    x : array_like, 1 dimension, nonnegative ints
+        Input array. The length of `x` is equal to ``np.amax(x)+1``.
+    weights : array_like, optional
+        Weights, array of the same shape as `x`.
+
+    Returns
+    -------
+    out : ndarray of ints
+        The result of binning the input array.
+
+    Raises
+    ------
+    ValueError
+        If the input is not 1-dimensional, or contains elements with negative
+        values.
+    TypeError
+        If the type of the input is float or complex.
 
     See Also
     --------
     histogram, digitize, unique
+
+    Examples
+    --------
+    >>> np.bincount(np.arange(5))
+    array([1, 1, 1, 1, 1])
+    >>> np.bincount(np.array([0, 1, 1, 3, 2, 1, 7]))
+    array([1, 3, 1, 1, 0, 0, 0, 1])
+
+    >>> x = np.array([0, 1, 1, 3, 2, 1, 7, 23])
+    >>> np.bincount(x).size == np.amax(x)+1
+    True
+
+    >>> np.bincount(np.arange(5, dtype=np.float))
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: array cannot be safely cast to required type
 
     """)
 
@@ -3440,6 +3684,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     """
     Integer indicating how this dtype relates to the built-in dtypes.
 
+    Read-only.
+
     =  ========================================================================
     0  if this is a structured array type, with fields
     1  if this is a dtype compiled into numpy (such as ints, floats etc)
@@ -3642,7 +3888,7 @@ add_newdoc('numpy.lib.index_tricks', 'mgrid',
 
     Examples
     --------
-    >>> mgrid[0:5,0:5]
+    >>> np.mgrid[0:5,0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
             [2, 2, 2, 2, 2],
@@ -3653,7 +3899,7 @@ add_newdoc('numpy.lib.index_tricks', 'mgrid',
             [0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4]]])
-    >>> mgrid[-1:1:5j]
+    >>> np.mgrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
 
     """)

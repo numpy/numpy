@@ -717,9 +717,9 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Parameters
     ----------
-    x : (N,) ndarray
+    x : ndarray
         The input domain.
-    condlist : list of M (N,)-shaped boolean arrays
+    condlist : list of bool arrays
         Each boolean array corresponds to a function in `funclist`.  Wherever
         `condlist[i]` is True, `funclist[i](x)` is used as the output value.
 
@@ -727,24 +727,24 @@ def piecewise(x, condlist, funclist, *args, **kw):
         and should therefore be of the same shape as `x`.
 
         The length of `condlist` must correspond to that of `funclist`.
-        If one extra function is given, i.e. if the length of `funclist` is
-        M+1, then that extra function is the default value, used wherever
-        all conditions are false.
-    funclist : list of M or M+1 callables, f(x,*args,**kw), or values
+        If one extra function is given, i.e. if
+        ``len(funclist) - len(condlist) == 1``, then that extra function
+        is the default value, used wherever all conditions are false.
+    funclist : list of callables, f(x,*args,**kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
         condition is True.  It should take an array as input and give an array
         or a scalar value as output.  If, instead of a callable,
-        a value is provided then a constant function (``lambda x: value``) is
+        a scalar is provided then a constant function (``lambda x: scalar``) is
         assumed.
     args : tuple, optional
         Any further arguments given to `piecewise` are passed to the functions
-        upon execution, i.e., if called ``piecewise(...,...,1,'a')``, then
-        each function is called as ``f(x,1,'a')``.
-    kw : dictionary, optional
+        upon execution, i.e., if called ``piecewise(..., ..., 1, 'a')``, then
+        each function is called as ``f(x, 1, 'a')``.
+    kw : dict, optional
         Keyword arguments used in calling `piecewise` are passed to the
         functions upon execution, i.e., if called
-        ``piecewise(...,...,lambda=1)``, then each function is called as
-        ``f(x,lambda=1)``.
+        ``piecewise(..., ..., lambda=1)``, then each function is called as
+        ``f(x, lambda=1)``.
 
     Returns
     -------
@@ -753,6 +753,11 @@ def piecewise(x, condlist, funclist, *args, **kw):
         calling the functions in `funclist` on the appropriate portions of `x`,
         as defined by the boolean arrays in `condlist`.  Portions not covered
         by any condition have undefined values.
+
+
+    See Also
+    --------
+    choose, select, where
 
     Notes
     -----
@@ -773,8 +778,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
     --------
     Define the sigma function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
-    >>> x = np.arange(6) - 2.5 # x runs from -2.5 to 2.5 in steps of 1
-    >>> np.piecewise(x, [x < 0, x >= 0.5], [-1,1])
+    >>> x = np.arange(6) - 2.5
+    >>> np.piecewise(x, [x < 0, x >= 0], [-1, 1])
     array([-1., -1., -1.,  1.,  1.,  1.])
 
     Define the absolute value, which is ``-x`` for ``x <0`` and ``x`` for
@@ -836,39 +841,35 @@ def select(condlist, choicelist, default=0):
 
     Parameters
     ----------
-    condlist : list of N boolean arrays of length M
-            The conditions C_0 through C_(N-1) which determine
-            from which vector the output elements are taken.
-    choicelist : list of N arrays of length M
-            Th vectors V_0 through V_(N-1), from which the output
-            elements are chosen.
+    condlist : list of bool ndarrays
+        The list of conditions which determine from which array in `choicelist`
+        the output elements are taken. When multiple conditions are satisfied,
+        the first one encountered in `condlist` is used.
+    choicelist : list of ndarrays
+        The list of arrays from which the output elements are taken. It has
+        to be of the same length as `condlist`.
+    default : scalar, optional
+        The element inserted in `output` when all conditions evaluate to False.
 
     Returns
     -------
-    output : 1-dimensional array of length M
-            The output at position m is the m-th element of the first
-            vector V_n for which C_n[m] is non-zero.  Note that the
-            output depends on the order of conditions, since the
-            first satisfied condition is used.
+    output : ndarray
+        The output at position m is the m-th element of the array in
+        `choicelist` where the m-th element of the corresponding array in
+        `condlist` is True.
 
-    Notes
-    -----
-    Equivalent to:
-    ::
-
-                output = []
-                for m in range(M):
-                    output += [V[m] for V,C in zip(values,cond) if C[m]]
-                              or [default]
+    See Also
+    --------
+    where : Return elements from one of two arrays depending on condition.
+    take, choose, compress, diag, diagonal
 
     Examples
     --------
-    >>> t = np.arange(10)
-    >>> s = np.arange(10)*100
-    >>> condlist = [t == 4, t > 5]
-    >>> choicelist = [s, t]
+    >>> x = np.arange(10)
+    >>> condlist = [x<3, x>5]
+    >>> choicelist = [x, x**2]
     >>> np.select(condlist, choicelist)
-    array([  0,   0,   0,   0, 400,   0,   6,   7,   8,   9])
+    array([ 0,  1,  2,  0,  0,  0, 36, 49, 64, 81])
 
     """
     n = len(condlist)
@@ -960,11 +961,17 @@ def gradient(f, *varargs):
 
     Examples
     --------
-    >>> np.gradient(np.array([[1,1],[3,4]]))
-    [array([[ 2.,  3.],
-           [ 2.,  3.]]),
-     array([[ 0.,  0.],
-           [ 1.,  1.]])]
+    >>> x = np.array([1, 2, 4, 7, 11, 16], dtype=np.float)
+    >>> np.gradient(x)
+    array([ 1. ,  1.5,  2.5,  3.5,  4.5,  5. ])
+    >>> np.gradient(x, 2)
+    array([ 0.5 ,  0.75,  1.25,  1.75,  2.25,  2.5 ])
+
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
+    [array([[ 2.,  2., -1.],
+           [ 2.,  2., -1.]]),
+    array([[ 1. ,  2.5,  4. ],
+           [ 1. ,  1. ,  1. ]])]
 
     """
     N = len(f.shape)  # number of dimensions
@@ -1026,7 +1033,11 @@ def gradient(f, *varargs):
 
 def diff(a, n=1, axis=-1):
     """
-    Calculate the nth order discrete difference along given axis.
+    Calculate the n-th order discrete difference along given axis.
+
+    The first order difference is given by ``out[n] = a[n+1] - a[n]`` along
+    the given axis, higher order differences are calculated by using `diff`
+    recursively.
 
     Parameters
     ----------
@@ -1035,26 +1046,31 @@ def diff(a, n=1, axis=-1):
     n : int, optional
         The number of times values are differenced.
     axis : int, optional
-        The axis along which the difference is taken.
+        The axis along which the difference is taken, default is the last axis.
 
     Returns
     -------
     out : ndarray
-        The `n` order differences.  The shape of the output is the same as `a`
-        except along `axis` where the dimension is `n` less.
+        The `n` order differences. The shape of the output is the same as `a`
+        except along `axis` where the dimension is smaller by `n`.
+
+    See Also
+    --------
+    gradient, ediff1d
 
     Examples
     --------
-    >>> x = np.array([0,1,3,9,5,10])
+    >>> x = np.array([1, 2, 4, 7, 0])
     >>> np.diff(x)
-    array([ 1,  2,  6, -4,  5])
-    >>> np.diff(x,n=2)
-    array([  1,   4, -10,   9])
-    >>> x = np.array([[1,3,6,10],[0,5,6,8]])
+    array([ 1,  2,  3, -7])
+    >>> np.diff(x, n=2)
+    array([  1,   1, -10])
+
+    >>> x = np.array([[1, 3, 6, 10], [0, 5, 6, 8]])
     >>> np.diff(x)
     array([[2, 3, 4],
-    [5, 1, 2]])
-    >>> np.diff(x,axis=0)
+           [5, 1, 2]])
+    >>> np.diff(x, axis=0)
     array([[-1,  2,  0, -2]])
 
     """
@@ -1201,15 +1217,34 @@ def unwrap(p, discont=pi, axis=-1):
     ----------
     p : array_like
         Input array.
-    discont : float
-        Maximum discontinuity between values.
-    axis : integer
-        Axis along which unwrap will operate.
+    discont : float, optional
+        Maximum discontinuity between values, default is ``pi``.
+    axis : int, optional
+        Axis along which unwrap will operate, default is the last axis.
 
     Returns
     -------
     out : ndarray
-        Output array
+        Output array.
+
+    See Also
+    --------
+    rad2deg, deg2rad
+
+    Notes
+    -----
+    If the discontinuity in `p` is smaller than ``pi``, but larger than
+    `discont`, no unwrapping is done because taking the 2*pi complement
+    would only make the discontinuity larger.
+
+    Examples
+    --------
+    >>> phase = np.linspace(0, np.pi, num=5)
+    >>> phase[3:] += np.pi
+    >>> phase
+    array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531])
+    >>> np.unwrap(phase)
+    array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ])
 
     """
     p = asarray(p)
@@ -1365,53 +1400,64 @@ def extract(condition, arr):
 
     See Also
     --------
-    take, put, putmask
+    take, put, putmask, compress
 
     Examples
     --------
-    >>> arr = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]])
+    >>> arr = np.arange(12).reshape((3, 4))
     >>> arr
-    array([[ 1,  2,  3,  4],
-           [ 5,  6,  7,  8],
-           [ 9, 10, 11, 12]])
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11]])
     >>> condition = np.mod(arr, 3)==0
     >>> condition
-    array([[False, False,  True, False],
-           [False,  True, False, False],
-           [ True, False, False,  True]], dtype=bool)
+    array([[ True, False, False,  True],
+           [False, False,  True, False],
+           [False,  True, False, False]], dtype=bool)
     >>> np.extract(condition, arr)
-    array([ 3,  6,  9, 12])
+    array([0, 3, 6, 9])
+
 
     If `condition` is boolean:
 
     >>> arr[condition]
-    array([ 3,  6,  9, 12])
+    array([0, 3, 6, 9])
 
     """
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
 def place(arr, mask, vals):
     """
-    Changes elements of an array based on conditional and input values.
+    Change elements of an array based on conditional and input values.
 
-    Similar to ``putmask(a, mask, vals)`` but the 1D array `vals` has the
-    same number of elements as the non-zero values of `mask`. Inverse of
-    ``extract``.
+    Similar to ``np.putmask(a, mask, vals)``, the difference is that `place`
+    uses the first N elements of `vals`, where N is the number of True values
+    in `mask`, while `putmask` uses the elements where `mask` is True.
 
-    Sets `a`.flat[n] = `values`\\[n] for each n where `mask`.flat[n] is true.
+    Note that `extract` does the exact opposite of `place`.
 
     Parameters
     ----------
     a : array_like
         Array to put data into.
     mask : array_like
-        Boolean mask array.
-    values : array_like, shape(number of non-zero `mask`, )
-        Values to put into `a`.
+        Boolean mask array. Must have the same size as `a`.
+    vals : 1-D sequence
+        Values to put into `a`. Only the first N elements are used, where
+        N is the number of True values in `mask`. If `vals` is smaller
+        than N it will be repeated.
 
     See Also
     --------
-    putmask, put, take
+    putmask, put, take, extract
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> np.place(x, x>2, [44, 55])
+    >>> x
+    array([[ 0,  1,  2],
+           [44, 55, 44]])
 
     """
     return _insert(arr, mask, vals)
@@ -2840,6 +2886,25 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         If `x` is None, spacing given by `dx` is assumed. Default is 1.
     axis : int, optional
         Specify the axis.
+
+    Returns
+    -------
+    out : float
+        Definite integral as approximated by trapezoidal rule.
+
+    Notes
+    -----
+    Image [2]_ illustrates trapezoidal rule -- y-axis locations of points will
+    be taken from `y` array, by default x-axis distances between points will be
+    1.0, alternatively they can be provided with `x` array or with `dx` scalar.
+    Return value will be equal to combined area under the red lines.
+
+
+    References
+    ----------
+    .. [1] Wikipedia page: http://en.wikipedia.org/wiki/Trapezoidal_rule
+
+    .. [2] Illustration image: http://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
 
     Examples
     --------

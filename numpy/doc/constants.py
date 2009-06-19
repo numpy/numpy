@@ -64,9 +64,9 @@ add_newdoc('numpy', 'NAN',
 
     See Also
     --------
-    isnan : Shows which elements are Not a Number.
-    isfinite : Shows which elements are finite (not one of
-               Not a Number, positive infinity and negative infinity)
+    isnan: Shows which elements are Not a Number.
+
+    isfinite: Shows which elements are finite (not one of Not a Number, positive infinity and negative infinity)
 
     Notes
     -----
@@ -182,8 +182,8 @@ add_newdoc('numpy', 'NaN',
     --------
 
     isnan : Shows which elements are Not a Number.
-     isfinite : Shows which elements are finite (not one of
-               Not a Number, positive infinity and negative infinity)
+
+    isfinite : Shows which elements are finite (not one of Not a Number, positive infinity and negative infinity)
 
     Notes
     -----

@@ -1237,7 +1237,7 @@ def lstsq(a, b, rcond=-1):
 
     Notes
     -----
-    If `b` is a matrix, then all array results returned as
+    If `b` is a matrix, then all array results are returned as
     matrices.
 
     Examples

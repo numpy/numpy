@@ -362,23 +362,51 @@ def require(a, dtype=None, requirements=None):
     Parameters
     ----------
     a : array_like
-       The object to be converted to a type-and-requirement satisfying array
+       The object to be converted to a type-and-requirement-satisfying array.
     dtype : data-type
-       The required data-type (None is the default data-type -- float64)
-    requirements : list of strings
+       The required data-type, the default data-type is float64).
+    requirements : str or list of str
        The requirements list can be any of the following
 
-       * 'ENSUREARRAY' ('E')  - ensure that  a base-class ndarray
        * 'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
        * 'C_CONTIGUOUS' ('C') - ensure a C-contiguous array
        * 'ALIGNED' ('A')      - ensure a data-type aligned array
-       * 'WRITEABLE' ('W')    - ensure a writeable array
+       * 'WRITEABLE' ('W')    - ensure a writable array
        * 'OWNDATA' ('O')      - ensure an array that owns its own data
+
+    See Also
+    --------
+    asarray : Convert input to an ndarray.
+    asanyarray : Convert to an ndarray, but pass through ndarray subclasses.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    ndarray.flags : Information about the memory layout of the array.
 
     Notes
     -----
     The returned array will be guaranteed to have the listed requirements
     by making a copy if needed.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> x.flags
+      C_CONTIGUOUS : True
+      F_CONTIGUOUS : False
+      OWNDATA : False
+      WRITEABLE : True
+      ALIGNED : True
+      UPDATEIFCOPY : False
+
+    >>> y = np.require(x, dtype=np.float32, requirements=['A', 'O', 'W', 'F'])
+    >>> y.flags
+      C_CONTIGUOUS : False
+      F_CONTIGUOUS : True
+      OWNDATA : True
+      WRITEABLE : True
+      ALIGNED : True
+      UPDATEIFCOPY : False
 
     """
     if requirements is None:
@@ -582,6 +610,16 @@ def correlate(a,v,mode='valid'):
     acorrelate: Discrete correlation following the usual signal processing
                definition for complex arrays, and without assuming that
                correlate(a, b) == correlate(b, a)
+
+    Examples
+    --------
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5])
+    array([ 3.5])
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], "same")
+    array([ 2. ,  3.5,  3. ])
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], "full")
+    array([ 0.5,  2. ,  3.5,  3. ,  0. ])
+
     """
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,v,mode)
@@ -591,9 +629,9 @@ def acorrelate(a, v, mode='valid'):
     Discrete, linear correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal
-    processing texts:
+    processing texts::
 
-    z[k] = sum_n a[n] * conj(v[n+k])
+        z[k] = sum_n a[n] * conj(v[n+k])
 
     with a and v sequences being zero-padded where necessary and conj being the
     conjugate.
@@ -606,15 +644,16 @@ def acorrelate(a, v, mode='valid'):
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
 
-    Note
-    ----
-    This is the function which corresponds to matlab xcorr.
-
     See Also
     --------
     convolve : Discrete, linear convolution of two
                one-dimensional sequences.
     correlate: Deprecated function to compute correlation
+
+    Notes
+    -----
+    This is the function which corresponds to matlab xcorr.
+
     """
     mode = _mode_from_name(mode)
     return multiarray.acorrelate(a, v, mode)
@@ -1170,20 +1209,26 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     Parameters
     ----------
     arr : ndarray
-      Input array.
-    max_line_width : int
-      The maximum number of columns the string should span. Newline
-      characters splits the string appropriately after array elements.
-    precision : int
-      Floating point precision.
-    suppress_small : bool
-      Represent very small numbers as zero.
+        Input array.
+    max_line_width : int, optional
+        The maximum number of columns the string should span. Newline
+        characters split the string appropriately after array elements.
+    precision : int, optional
+        Floating point precision. Default is the current printing precision
+        (usually 8), which can be altered using `set_printoptions`.
+    suppress_small : bool, optional
+        Represent very small numbers as zero, default is False. Very small
+        is defined by `precision`, if the precision is 8 then
+        numbers smaller than 5e-9 are represented as zero.
 
     Returns
     -------
     string : str
       The string representation of an array.
 
+    See Also
+    --------
+    array_str, array2string, set_printoptions
 
     Examples
     --------
@@ -1193,6 +1238,10 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     'MaskedArray([ 0.])'
     >>> np.array_repr(np.array([], np.int32))
     'array([], dtype=int32)'
+
+    >>> x = np.array([1e-6, 4e-7, 2, 3])
+    >>> np.array_repr(x, precision=6, suppress_small=True)
+    'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
 
     """
     if arr.size > 0 or arr.shape==(0,):
@@ -1221,7 +1270,11 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
-    Return a string representation of an array.
+    Return a string representation of the data in an array.
+
+    The data in the array is returned as a single string. This function
+    is similar to `array_repr`, the difference is that `array_repr` also
+    returns information on the type of array and data type.
 
     Parameters
     ----------
@@ -1230,13 +1283,16 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     max_line_width : int, optional
         Inserts newlines if text is longer than `max_line_width`.
     precision : int, optional
-        If `a` is float, `precision` sets floating point precision.
-    suppress_small : boolean, optional
-        Represent very small numbers as zero.
+        Floating point precision. Default is the current printing precision
+        (usually 8), which can be altered using set_printoptions.
+    suppress_small : bool, optional
+        Represent very small numbers as zero, default is False. Very small is
+        defined by precision, if the precision is 8 then numbers smaller than
+        5e-9 are represented as zero.
 
     See Also
     --------
-    array2string, array_repr
+    array2string, array_repr, set_printoptions
 
     Examples
     --------
@@ -1264,8 +1320,8 @@ def indices(dimensions, dtype=int):
     ----------
     dimensions : sequence of ints
         The shape of the grid.
-    dtype : optional
-        Data_type of the result.
+    dtype : dtype, optional
+        Data type of the result.
 
     Returns
     -------
@@ -1291,7 +1347,7 @@ def indices(dimensions, dtype=int):
 
     Examples
     --------
-    >>> grid = np.indices((2,3))
+    >>> grid = np.indices((2, 3))
     >>> grid.shape
     (2,2,3)
     >>> grid[0]        # row indices
@@ -1300,6 +1356,17 @@ def indices(dimensions, dtype=int):
     >>> grid[1]        # column indices
     array([[0, 1, 2],
            [0, 1, 2]])
+
+    The indices can be used as an index into an array.
+
+    >>> x = np.arange(20).reshape(5, 4)
+    >>> row, col = np.indices((2, 3))
+    >>> x[row, col]
+    array([[0, 1, 2],
+           [4, 5, 6]])
+
+    Note that it would be more straightforward in the above example to
+    extract the required elements directly with ``x[:2, :3]``.
 
     """
     dimensions = tuple(dimensions)
@@ -1816,22 +1883,24 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Parameters
     ----------
-    all : {'ignore', 'warn', 'raise', 'call'}, optional
+    all : {'ignore', 'warn', 'raise', 'call', 'print', 'log'}, optional
         Set treatment for all types of floating-point errors at once:
 
-        - ignore: Take no action when the exception occurs
-        - warn: Print a `RuntimeWarning` (via the Python `warnings` module)
-        - raise: Raise a `FloatingPointError`
+        - ignore: Take no action when the exception occurs.
+        - warn: Print a `RuntimeWarning` (via the Python `warnings` module).
+        - raise: Raise a `FloatingPointError`.
         - call: Call a function specified using the `seterrcall` function.
+        - print: Print a warning directly to ``stdout``.
+        - log: Record error in a Log object specified by `seterrcall`.
 
         The default is not to change the current behavior.
-    divide : {'ignore', 'warn', 'raise', 'call'}, optional
+    divide : {'ignore', 'warn', 'raise', 'call', 'print', 'log'}, optional
         Treatment for division by zero.
-    over : {'ignore', 'warn', 'raise', 'call'}, optional
+    over : {'ignore', 'warn', 'raise', 'call', 'print', 'log'}, optional
         Treatment for floating-point overflow.
-    under : {'ignore', 'warn', 'raise', 'call'}, optional
+    under : {'ignore', 'warn', 'raise', 'call', 'print', 'log'}, optional
         Treatment for floating-point underflow.
-    invalid : {'ignore', 'warn', 'raise', 'call'}, optional
+    invalid : {'ignore', 'warn', 'raise', 'call', 'print', 'log'}, optional
         Treatment for invalid floating-point operation.
 
     Returns
@@ -1859,22 +1928,25 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Examples
     --------
-
-    Set mode:
-
-    >>> seterr(over='raise') # doctest: +SKIP
+    >>> np.seterr(over='raise')
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
      'under': 'ignore'}
+    >>> np.seterr(all='ignore')  # reset to default
+    {'over': 'raise', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
 
-    >>> old_settings = seterr(all='warn', over='raise') # doctest: +SKIP
-
-    >>> int16(32000) * int16(3) # doctest: +SKIP
+    >>> np.int16(32000) * np.int16(3)
+    30464
+    >>> old_settings = np.seterr(all='warn', over='raise')
+    >>> np.int16(32000) * np.int16(3)
     Traceback (most recent call last):
-          File "<stdin>", line 1, in ?
+      File "<stdin>", line 1, in <module>
     FloatingPointError: overflow encountered in short_scalars
-    >>> seterr(all='ignore') # doctest: +SKIP
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
-     'under': 'ignore'}
+
+    >>> np.seterr(all='print')
+    {'over': 'print', 'divide': 'print', 'invalid': 'print', 'under': 'print'}
+    >>> np.int16(32000) * np.int16(3)
+    Warning: overflow encountered in short_scalars
+    30464
 
     """
 
@@ -1897,11 +1969,41 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
 
 def geterr():
-    """Get the current way of handling floating-point errors.
+    """
+    Get the current way of handling floating-point errors.
 
-    Returns a dictionary with entries "divide", "over", "under", and
-    "invalid", whose values are from the strings
-    "ignore", "print", "log", "warn", "raise", and "call".
+    Returns
+    -------
+    res : dict
+        A dictionary with keys "divide", "over", "under", and "invalid",
+        whose values are from the strings "ignore", "print", "log", "warn",
+        "raise", and "call". The keys represent possible floating-point
+        exceptions, and the values define how these exceptions are handled.
+
+    See Also
+    --------
+    geterrcall, seterr, seterrcall
+
+    Notes
+    -----
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> np.geterr()  # default is all set to 'ignore'
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+    'under': 'ignore'}
+    >>> np.arange(3.) / np.arange(3.)
+    array([ NaN,   1.,   1.])
+
+    >>> oldsettings = np.seterr(all='warn', over='raise')
+    >>> np.geterr()
+    {'over': 'raise', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
+    >>> np.arange(3.) / np.arange(3.)
+    __main__:1: RuntimeWarning: invalid value encountered in divide
+    array([ NaN,   1.,   1.])
+
     """
     maskvalue = umath.geterrobj()[1]
     mask = 7
@@ -1952,13 +2054,13 @@ def seterrcall(func):
     is to set the error-handler to 'call', using `seterr`.  Then, set
     the function to call using this function.
 
-    The second is to set the error-handler to `log`, using `seterr`.
+    The second is to set the error-handler to 'log', using `seterr`.
     Floating-point errors then trigger a call to the 'write' method of
     the provided object.
 
     Parameters
     ----------
-    log_func_or_obj : callable f(err, flag) or object with write method
+    func : callable f(err, flag) or object with write method
         Function to call upon floating-point errors ('call'-mode) or
         object whose 'write' method is used to log such message ('log'-mode).
 
@@ -1971,13 +2073,17 @@ def seterrcall(func):
 
         In other words, ``flags = divide + 2*over + 4*under + 8*invalid``.
 
-        If an object is provided, it's write method should take one argument,
+        If an object is provided, its write method should take one argument,
         a string.
 
     Returns
     -------
     h : callable or log instance
         The old error handler.
+
+    See Also
+    --------
+    seterr, geterr, geterrcall
 
     Examples
     --------
@@ -2025,7 +2131,45 @@ def seterrcall(func):
     return old
 
 def geterrcall():
-    """Return the current callback function used on floating-point errors.
+    """
+    Return the current callback function used on floating-point errors.
+
+    When the error handling for a floating-point error (one of "divide",
+    "over", "under", or "invalid") is set to 'call' or 'log', the function
+    that is called or the log instance that is written to is returned by
+    `geterrcall`. This function or log instance has been set with
+    `seterrcall`.
+
+    Returns
+    -------
+    errobj : callable, log instance or None
+        The current error handler. If no handler was set through `seterrcall`,
+        ``None`` is returned.
+
+    See Also
+    --------
+    seterrcall, seterr, geterr
+
+    Notes
+    -----
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> np.geterrcall()  # we did not yet set a handler, returns None
+
+    >>> oldsettings = np.seterr(all='call')
+    >>> def err_handler(type, flag):
+    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    >>> oldhandler = np.seterrcall(err_handler)
+    >>> np.array([1,2,3])/0.0
+    Floating point error (divide by zero), with flag 1
+    array([ Inf,  Inf,  Inf])
+    >>> cur_handler = np.geterrcall()
+    >>> cur_handler is err_handler
+    True
+
     """
     return umath.geterrobj()[2]
 

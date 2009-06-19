@@ -490,6 +490,26 @@ class matrix(N.ndarray):
         return N.ndarray.prod(self, axis, dtype, out)._align(axis)
 
     def any(self, axis=None, out=None):
+        """
+        Test whether any array element along a given axis evaluates to True.
+
+        Refer to `numpy.any` for full documentation.
+
+        Parameters
+        ----------
+        axis: int, optional
+            Axis along which logical OR is performed
+        out: ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output
+
+        Returns
+        -------
+            any : bool, ndarray
+                Returns a single bool if `axis` is ``None``; otherwise,
+                returns `ndarray`
+
+        """
         return N.ndarray.any(self, axis, out)._align(axis)
 
     def all(self, axis=None, out=None):

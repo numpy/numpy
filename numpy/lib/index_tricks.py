@@ -18,14 +18,20 @@ makemat = matrix.matrix
 # contributed by Stefan van der Walt
 def unravel_index(x,dims):
     """
-    Convert a flat index into an index tuple for an array of given shape.
+    Convert a flat index to an index tuple for an array of given shape.
 
     Parameters
     ----------
     x : int
         Flattened index.
-    dims : shape tuple
-        Input shape.
+    dims : tuple of ints
+        Input shape, the shape of an array into which indexing is
+        required.
+
+    Returns
+    -------
+    idx : tuple of ints
+        Tuple of the same shape as `dims`, containing the unraveled index.
 
     Notes
     -----
@@ -34,7 +40,7 @@ def unravel_index(x,dims):
 
     Examples
     --------
-    >>> arr = np.arange(20).reshape(5,4)
+    >>> arr = np.arange(20).reshape(5, 4)
     >>> arr
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
@@ -72,21 +78,45 @@ def unravel_index(x,dims):
     return tuple(x/dim_prod % dims)
 
 def ix_(*args):
-    """ Construct an open mesh from multiple sequences.
+    """
+    Construct an open mesh from multiple sequences.
 
-    This function takes n 1-d sequences and returns n outputs with n
-    dimensions each such that the shape is 1 in all but one dimension and
-    the dimension with the non-unit shape value cycles through all n
-    dimensions.
+    This function takes N 1-D sequences and returns N outputs with N
+    dimensions each, such that the shape is 1 in all but one dimension
+    and the dimension with the non-unit shape value cycles through all
+    N dimensions.
 
-    Using ix_() one can quickly construct index arrays that will index
-    the cross product.
+    Using `ix_` one can quickly construct index arrays that will index
+    the cross product. ``a[np.ix_([1,3],[2,5])]`` returns the array
+    ``[a[1,2] a[1,5] a[3,2] a[3,5]]``.
 
-    a[ix_([1,3,7],[2,5,8])]  returns the array
+    Parameters
+    ----------
+    args : 1-D sequences
 
-    a[1,2]  a[1,5]  a[1,8]
-    a[3,2]  a[3,5]  a[3,8]
-    a[7,2]  a[7,5]  a[7,8]
+    Returns
+    -------
+    out : ndarrays
+        N arrays with N dimensions each, with N the number of input
+        sequences. Together these arrays form an open mesh.
+
+    See Also
+    --------
+    ogrid, mgrid, meshgrid
+
+    Examples
+    --------
+    >>> a = np.arange(10).reshape(2, 5)
+    >>> ixgrid = np.ix_([0,1], [2,4])
+    >>> ixgrid
+    (array([[0],
+           [1]]), array([[2, 4]]))
+    >>> print ixgrid[0].shape, ixgrid[1].shape
+    (2, 1) (1, 2)
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+
     """
     out = []
     nd = len(args)
@@ -215,7 +245,11 @@ mgrid.__doc__ = None # set in numpy.add_newdocs
 ogrid.__doc__ = None # set in numpy.add_newdocs
 
 class AxisConcatenator(object):
-    """Translates slice objects to concatenation along an axis.
+    """
+    Translates slice objects to concatenation along an axis.
+
+    For detailed documentation on usage, see `r_`.
+
     """
     def _retval(self, res):
         if self.matrix:
@@ -338,11 +372,96 @@ class AxisConcatenator(object):
 # in help(r_)
 
 class RClass(AxisConcatenator):
-    """Translates slice objects to concatenation along the first axis.
+    """
+    Translates slice objects to concatenation along the first axis.
 
-    For example:
+    This is a simple way to build up arrays quickly. There are two use cases.
+
+    1. If the index expression contains comma separated arrays, then stack
+       them along their first axis.
+    2. If the index expression contains slice notation or scalars then create
+       a 1-D array with a range indicated by the slice notation.
+
+    If slice notation is used, the syntax ``start:stop:step`` is equivalent
+    to ``np.arange(start, stop, step)`` inside of the brackets. However, if
+    ``step`` is an imaginary number (i.e. 100j) then its integer portion is
+    interpreted as a number-of-points desired and the start and stop are
+    inclusive. In other words ``start:stop:stepj`` is interpreted as
+    ``np.linspace(start, stop, step, endpoint=1)`` inside of the brackets.
+    After expansion of slice notation, all comma separated sequences are
+    concatenated together.
+
+    Optional character strings placed as the first element of the index
+    expression can be used to change the output. The strings 'r' or 'c' result
+    in matrix output. If the result is 1-D and 'r' is specified a 1 x N (row)
+    matrix is produced. If the result is 1-D and 'c' is specified, then a N x 1
+    (column) matrix is produced. If the result is 2-D then both provide the
+    same matrix result.
+
+    A string integer specifies which axis to stack multiple comma separated
+    arrays along. A string of two comma-separated integers allows indication
+    of the minimum number of dimensions to force each entry into as the
+    second integer (the axis to concatenate along is still the first integer).
+
+    A string with three comma-separated integers allows specification of the
+    axis to concatenate along, the minimum number of dimensions to force the
+    entries to, and which axis should contain the start of the arrays which
+    are less than the specified number of dimensions. In other words the third
+    integer allows you to specify where the 1's should be placed in the shape
+    of the arrays that have their shapes upgraded. By default, they are placed
+    in the front of the shape tuple. The third argument allows you to specify
+    where the start of the array should be instead. Thus, a third argument of
+    '0' would place the 1's at the end of the array shape. Negative integers
+    specify where in the new shape tuple the last dimension of upgraded arrays
+    should be placed, so the default is '-1'.
+
+    Parameters
+    ----------
+    Not a function, so takes no parameters
+
+
+    Returns
+    -------
+    A concatenated ndarray or matrix.
+
+    See Also
+    --------
+    concatenate : Join a sequence of arrays together.
+    c_ : Translates slice objects to concatenation along the second axis.
+
+    Examples
+    --------
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
     array([1, 2, 3, 0, 0, 4, 5, 6])
+    >>> np.r_[-1:1:6j, [0]*3, 5, 6]
+    array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ,  0. ,  0. ,  0. ,  5. ,  6. ])
+
+    String integers specify the axis to concatenate along or the minimum
+    number of dimensions to force entries into.
+
+    >>> np.r_['-1', a, a] # concatenate along last axis
+    array([[0, 1, 2, 0, 1, 2],
+           [3, 4, 5, 3, 4, 5]])
+    >>> np.r_['0,2', [1,2,3], [4,5,6]] # concatenate along first axis, dim>=2
+    array([[1, 2, 3],
+           [4, 5, 6]])
+
+    >>> np.r_['0,2,0', [1,2,3], [4,5,6]]
+    array([[1],
+           [2],
+           [3],
+           [4],
+           [5],
+           [6]])
+    >>> np.r_['1,2,0', [1,2,3], [4,5,6]]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
+
+    Using 'r' or 'c' as a first string argument creates a matrix.
+
+    >>> np.r_['r',[1,2,3], [4,5,6]]
+    matrix([[1, 2, 3, 4, 5, 6]])
 
     """
     def __init__(self):
@@ -351,11 +470,21 @@ class RClass(AxisConcatenator):
 r_ = RClass()
 
 class CClass(AxisConcatenator):
-    """Translates slice objects to concatenation along the second axis.
+    """
+    Translates slice objects to concatenation along the second axis.
 
-    For example:
+    This is short-hand for ``np.r_['-1,2,0', index expression]``, which is
+    useful because of its common occurrence. In particular, arrays will be
+    stacked along their last axis after being upgraded to at least 2-D with
+    1's post-pended to the shape (column vectors made out of 1-D arrays).
+
+    For detailed documentation, see `r_`.
+
+    Examples
+    --------
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
-    array([1, 2, 3, 0, 0, 4, 5, 6])
+    array([[1, 2, 3, 0, 0, 4, 5, 6]])
+
     """
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
@@ -373,9 +502,13 @@ class ndenumerate(object):
     a : ndarray
       Input array.
 
+    See Also
+    --------
+    ndindex, flatiter
+
     Examples
     --------
-    >>> a = np.array([[1,2],[3,4]])
+    >>> a = np.array([[1, 2], [3, 4]])
     >>> for index, x in np.ndenumerate(a):
     ...     print index, x
     (0, 0) 1
@@ -388,6 +521,17 @@ class ndenumerate(object):
         self.iter = asarray(arr).flat
 
     def next(self):
+        """
+        Standard iterator method, returns the index tuple and array value.
+
+        Returns
+        -------
+        coords : tuple of ints
+            The indices of the current iteration.
+        val : scalar
+            The array element of the current iteration.
+
+        """
         return self.iter.coords, self.iter.next()
 
     def __iter__(self):
@@ -399,17 +543,21 @@ class ndindex(object):
     An N-dimensional iterator object to index arrays.
 
     Given the shape of an array, an `ndindex` instance iterates over
-    the N-dimensional index of the array. At each iteration, the index of the
-    last dimension is incremented by one.
+    the N-dimensional index of the array. At each iteration a tuple
+    of indices is returned, the last dimension is iterated over first.
 
     Parameters
     ----------
-    `*args` : integers
-      The size of each dimension in the counter.
+    `*args` : ints
+      The size of each dimension of the array.
+
+    See Also
+    --------
+    ndenumerate, flatiter
 
     Examples
     --------
-    >>> for index in np.ndindex(3,2,1):
+    >>> for index in np.ndindex(3, 2, 1):
     ...     print index
     (0, 0, 0)
     (0, 1, 0)
@@ -442,9 +590,25 @@ class ndindex(object):
             self._incrementone(axis-1)
 
     def ndincr(self):
+        """
+        Increment the multi-dimensional index by one.
+
+        `ndincr` takes care of the "wrapping around" of the axes.
+        It is called by `ndindex.next` and not normally used directly.
+
+        """
         self._incrementone(self.nd-1)
 
     def next(self):
+        """
+        Standard iterator method, updates the index and returns the index tuple.
+
+        Returns
+        -------
+        val : tuple of ints
+            Returns a tuple containing the indices of the current iteration.
+
+        """
         if (self.index >= self.total):
             raise StopIteration
         val = tuple(self.ind)

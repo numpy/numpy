@@ -70,43 +70,45 @@ Functions
     operation. Each ufunc object contains pointers to 1-d loops
     implementing the basic functionality for each supported type.
 
-    :param nin:
+    .. note::
 
-        The number of inputs to this operation.
-
-    :param nout:
-
-        The number of outputs
-
-    :param ntypes:
-
-        How many different data-type "signatures" the ufunc has implemented.
+       The *func*, *data*, *types*, *name*, and *doc* arguments are not
+       copied by :cfunc:`PyUFunc_FromFuncAndData`. The caller must ensure
+       that the memory used by these arrays is not freed as long as the
+       ufunc object is alive.
 
     :param func:
-
         Must to an array of length *ntypes* containing
         :ctype:`PyUFuncGenericFunction` items. These items are pointers to
-        functions that acutally implement the underlying
-        (element-by-element) function :math:`N` times. T
-
-    :param types:
-
-        Must be of length (*nin* + *nout*) \* *ntypes*, and it
-        contains the data-types (built-in only) that the corresponding
-        function in the *func* array can deal with.
+        functions that actually implement the underlying
+        (element-by-element) function :math:`N` times.
 
     :param data:
-
         Should be ``NULL`` or a pointer to an array of size *ntypes*
         . This array may contain arbitrary extra-data to be passed to
         the corresponding 1-d loop function in the func array.
 
-    :param name:
+    :param types:
+        Must be of length (*nin* + *nout*) \* *ntypes*, and it
+        contains the data-types (built-in only) that the corresponding
+        function in the *func* array can deal with.
 
+    :param ntypes:
+        How many different data-type "signatures" the ufunc has implemented.
+
+    :param nin:
+        The number of inputs to this operation.
+
+    :param nout:
+        The number of outputs
+
+    :param identity:
+        XXX: Undocumented
+
+    :param name:
         The name for the ufunc.
 
     :param doc:
-
         Allows passing in a documentation string to be stored with the
         ufunc.  The documentation string should not contain the name
         of the function or the calling signature as that will be
@@ -114,7 +116,6 @@ Functions
         accessing the **__doc__** attribute of the ufunc.
 
     :param check_return:
-
         Unused and present for backwards compatibility of the C-API. A
         corresponding *check_return* integer does exist in the ufunc
         structure and it does get set with this value when the ufunc

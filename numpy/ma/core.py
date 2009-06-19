@@ -210,7 +210,49 @@ def minimum_fill_value(obj):
 
 def maximum_fill_value(obj):
     """
-    Calculate the default fill value suitable for taking the maximum of ``obj``.
+    Return the minimum value that can be represented by the dtype of an object.
+
+    This function is useful for calculating a fill value suitable for
+    taking the maximum of an array with a given dtype.
+
+    Parameters
+    ----------
+    obj : {ndarray, dtype}
+        An object that can be queried for it's numeric type.
+
+    Returns
+    -------
+    val : scalar
+        The minimum representable value.
+
+    Raises
+    ------
+    TypeError
+        If `obj` isn't a suitable numeric type.
+
+    See Also
+    --------
+    set_fill_value : Set the filling value of a masked array.
+    MaskedArray.fill_value : Return current fill value.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.int8()
+    >>> ma.maximum_fill_value(a)
+    -128
+    >>> a = np.int32()
+    >>> ma.maximum_fill_value(a)
+    -2147483648
+
+    An array of numeric data can also be passed.
+
+    >>> a = np.array([1, 2, 3], dtype=np.int8)
+    >>> ma.maximum_fill_value(a)
+    -128
+    >>> a = np.array([1, 2, 3], dtype=np.float32)
+    >>> ma.maximum_fill_value(a)
+    -inf
 
     """
     errmsg = "Unsuitable type for calculating maximum."
@@ -452,7 +494,7 @@ def getdata(a, subok=True):
         Input ``MaskedArray``, alternatively a ndarray or a subclass thereof.
     subok : bool
         Whether to force the output to be a `pure` ndarray (False) or to
-        return a subclass of ndarray if approriate (True, default).
+        return a subclass of ndarray if appropriate (True, default).
 
     See Also
     --------
@@ -3723,52 +3765,49 @@ class MaskedArray(ndarray):
 
     def cumsum(self, axis=None, dtype=None, out=None):
         """
-    Return the cumulative sum of the elements along the given axis.
-    The cumulative sum is calculated over the flattened array by
-    default, otherwise over the specified axis.
+        Return the cumulative sum of the elements along the given axis.
+        The cumulative sum is calculated over the flattened array by
+        default, otherwise over the specified axis.
 
-    Masked values are set to 0 internally during the computation.
-    However, their position is saved, and the result will be masked at
-    the same locations.
+        Masked values are set to 0 internally during the computation.
+        However, their position is saved, and the result will be masked at
+        the same locations.
 
-    Parameters
-    ----------
-    axis : {None, -1, int}, optional
-        Axis along which the sum is computed. The default (`axis` = None) is to
-        compute over the flattened array. `axis` may be negative, in which case
-        it counts from the   last to the first axis.
-    dtype : {None, dtype}, optional
-        Type of the returned array and of the accumulator in which the
-        elements are summed.  If `dtype` is not specified, it defaults
-        to the dtype of `a`, unless `a` has an integer dtype with a
-        precision less than that of the default platform integer.  In
-        that case, the default platform integer is used.
-    out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
+        Parameters
+        ----------
+        axis : {None, -1, int}, optional
+            Axis along which the sum is computed. The default (`axis` = None) is to
+            compute over the flattened array. `axis` may be negative, in which case
+            it counts from the   last to the first axis.
+        dtype : {None, dtype}, optional
+            Type of the returned array and of the accumulator in which the
+            elements are summed.  If `dtype` is not specified, it defaults
+            to the dtype of `a`, unless `a` has an integer dtype with a
+            precision less than that of the default platform integer.  In
+            that case, the default platform integer is used.
+        out : ndarray, optional
+            Alternative output array in which to place the result. It must
+            have the same shape and buffer length as the expected output
+            but the type will be cast if necessary.
 
-    Warnings
-    --------
-    The mask is lost if out is not a valid :class:`MaskedArray` !
+        Returns
+        -------
+        cumsum : ndarray.
+            A new array holding the result is returned unless ``out`` is
+            specified, in which case a reference to ``out`` is returned.
 
-    Returns
-    -------
-    cumsum : ndarray.
-        A new array holding the result is returned unless ``out`` is
-        specified, in which case a reference to ``out`` is returned.
+        Notes
+        -----
+        The mask is lost if `out` is not a valid :class:`MaskedArray` !
 
-    Examples
-    --------
-    >>> marr = np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0])
-    >>> print marr.cumsum()
-    [0 1 3 -- -- -- 9 16 24 33]
+        Arithmetic is modular when using integer types, and no error is
+        raised on overflow.
 
-
-    Notes
-    -----
-    Arithmetic is modular when using integer types, and no error is
-    raised on overflow.
+        Examples
+        --------
+        >>> marr = np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0])
+        >>> print marr.cumsum()
+        [0 1 3 -- -- -- 9 16 24 33]
 
         """
         result = self.filled(0).cumsum(axis=axis, dtype=dtype, out=out)
@@ -3853,46 +3892,44 @@ class MaskedArray(ndarray):
 
     def cumprod(self, axis=None, dtype=None, out=None):
         """
-    Return the cumulative product of the elements along the given axis.
-    The cumulative product is taken over the flattened array by
-    default, otherwise over the specified axis.
+        Return the cumulative product of the elements along the given axis.
+        The cumulative product is taken over the flattened array by
+        default, otherwise over the specified axis.
 
-    Masked values are set to 1 internally during the computation.
-    However, their position is saved, and the result will be masked at
-    the same locations.
+        Masked values are set to 1 internally during the computation.
+        However, their position is saved, and the result will be masked at
+        the same locations.
 
-    Parameters
-    ----------
-    axis : {None, -1, int}, optional
-        Axis along which the product is computed. The default
-        (`axis` = None) is to compute over the flattened array.
-    dtype : {None, dtype}, optional
-        Determines the type of the returned array and of the accumulator
-        where the elements are multiplied. If ``dtype`` has the value ``None`` and
-        the type of ``a`` is an integer type of precision less than the default
-        platform integer, then the default platform integer precision is
-        used.  Otherwise, the dtype is the same as that of ``a``.
-    out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
+        Parameters
+        ----------
+        axis : {None, -1, int}, optional
+            Axis along which the product is computed. The default
+            (`axis` = None) is to compute over the flattened array.
+        dtype : {None, dtype}, optional
+            Determines the type of the returned array and of the accumulator
+            where the elements are multiplied. If ``dtype`` has the value ``None``
+            and the type of ``a`` is an integer type of precision less than the
+            default platform integer, then the default platform integer precision
+            is used.  Otherwise, the dtype is the same as that of ``a``.
+        out : ndarray, optional
+            Alternative output array in which to place the result. It must
+            have the same shape and buffer length as the expected output
+            but the type will be cast if necessary.
 
-    Warnings
-    --------
-    The mask is lost if out is not a valid MaskedArray !
+        Returns
+        -------
+        cumprod : ndarray
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
 
-    Returns
-    -------
-    cumprod : ndarray
-        A new array holding the result is returned unless out is specified,
-        in which case a reference to out is returned.
+        Notes
+        -----
+        The mask is lost if `out` is not a valid MaskedArray !
 
-    Notes
-    -----
-    Arithmetic is modular when using integer types, and no error is
-    raised on overflow.
+        Arithmetic is modular when using integer types, and no error is
+        raised on overflow.
 
-    """
+        """
         result = self.filled(1).cumprod(axis=axis, dtype=dtype, out=out)
         if out is not None:
             if isinstance(out, MaskedArray):

@@ -256,15 +256,14 @@ def repeat(a, repeats, axis=None):
 
 def put(a, ind, v, mode='raise'):
     """
-    Changes specific elements of one array by replacing from another array.
+    Replaces specified elements of an array with given values.
 
-    The indexing works on the flattened target array, `put` is roughly
+    The indexing works on the flattened target array. `put` is roughly
     equivalent to:
 
     ::
 
-        for i, val in zip(ind, v):
-            x.flat[i] = val
+        a.flat[ind] = v
 
     Parameters
     ----------
@@ -292,14 +291,14 @@ def put(a, ind, v, mode='raise'):
 
     Examples
     --------
-    >>> x = np.arange(5)
-    >>> np.put(x, [0, 2], [-44, -55])
-    >>> x
+    >>> a = np.arange(5)
+    >>> np.put(a, [0, 2], [-44, -55])
+    >>> a
     array([-44,   1, -55,   3,   4])
 
-    >>> x = np.arange(5)
-    >>> np.put(x, 22, -5, mode='clip')
-    >>> x
+    >>> a = np.arange(5)
+    >>> np.put(a, 22, -5, mode='clip')
+    >>> a
     array([ 0,  1,  2,  3, -5])
 
     """
@@ -1086,10 +1085,14 @@ def compress(condition, a, axis=None, out=None):
     """
     Return selected slices of an array along given axis.
 
+    When working along a given axis, a slice along that axis is returned in
+    `output` for each index where `condition` evaluates to True. When
+    working on a 1-D array, `compress` is equivalent to `extract`.
+
     Parameters
     ----------
-    condition : array_like
-        Boolean 1-D array selecting which entries to return. If len(condition)
+    condition : 1-D array of bools
+        Array that selects which entries to return. If len(condition)
         is less than the size of `a` along the given axis, then output is
         truncated to the length of the condition array.
     a : array_like
@@ -1109,18 +1112,31 @@ def compress(condition, a, axis=None, out=None):
 
     See Also
     --------
-    ndarray.compress: Equivalent method.
+    take, choose, diag, diagonal, select
+    ndarray.compress : Equivalent method.
 
     Examples
     --------
-    >>> a = np.array([[1, 2], [3, 4]])
+    >>> a = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> a
+    array([[1, 2],
+           [3, 4],
+           [5, 6]])
     >>> np.compress([0, 1], a, axis=0)
     array([[3, 4]])
-    >>> np.compress([1], a, axis=1)
-    array([[1],
-           [3]])
-    >>> np.compress([0,1,1], a)
-    array([2, 3])
+    >>> np.compress([False, True, True], a, axis=0)
+    array([[3, 4],
+           [5, 6]])
+    >>> np.compress([False, True], a, axis=1)
+    array([[2],
+           [4],
+           [6]])
+
+    Working on the flattened array does not return slices along an axis but
+    selects elements.
+
+    >>> np.compress([False, True], a)
+    array([2])
 
     """
     try:
@@ -1306,6 +1322,8 @@ def any(a,axis=None, out=None):
     """
     Test whether any array element along a given axis evaluates to True.
 
+    Returns single boolean unless `axis` is not ``None``
+
     Parameters
     ----------
     a : array_like
@@ -1322,8 +1340,8 @@ def any(a,axis=None, out=None):
 
     Returns
     -------
-    any : ndarray, bool
-        A new boolean or array is returned unless `out` is
+    any : bool, ndarray
+        A new boolean or `ndarray` is returned unless `out` is
         specified, in which case a reference to `out` is returned.
 
     See Also
@@ -1429,12 +1447,10 @@ def cumsum (a, axis=None, dtype=None, out=None):
     Parameters
     ----------
     a : array_like
-        Input array or object that can be converted to an array.
+        Input array.
     axis : int, optional
         Axis along which the cumulative sum is computed. The default
-        (`axis` = `None`) is to compute the cumsum over the flattened
-        array. `axis` may be negative, in which case it counts from the
-        last to the first axis.
+        (None) is to compute the cumsum over the flattened array.
     dtype : dtype, optional
         Type of the returned array and of the accumulator in which the
         elements are summed.  If `dtype` is not specified, it defaults
@@ -1459,11 +1475,12 @@ def cumsum (a, axis=None, dtype=None, out=None):
 
     Examples
     --------
-    >>> a = np.array([[1,2,3],[4,5,6]])
+    >>> a = np.array([[1,2,3], [4,5,6]])
     >>> np.cumsum(a)
     array([ 1,  3,  6, 10, 15, 21])
-    >>> np.cumsum(a,dtype=float)     # specifies type of output value(s)
+    >>> np.cumsum(a, dtype=float)     # specifies type of output value(s)
     array([  1.,   3.,   6.,  10.,  15.,  21.])
+
     >>> np.cumsum(a,axis=0)      # sum over rows for each of the 3 columns
     array([[1, 2, 3],
            [5, 7, 9]])
@@ -2122,14 +2139,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
 
     Returns
     -------
-    standard_deviation : {ndarray, scalar}; see dtype parameter above.
+    standard_deviation : ndarray, see dtype parameter above.
         If `out` is None, return a new array containing the standard deviation,
         otherwise return a reference to the output array.
 
     See Also
     --------
-    numpy.var : Variance
-    numpy.mean : Average
+    var, mean
 
     Notes
     -----
@@ -2145,7 +2161,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     is the square root of the estimated variance, so even with ``ddof=1``, it
     will not be an unbiased estimate of the standard deviation per se.
 
-    Note that, for complex numbers, std takes the absolute
+    Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
 
     Examples
@@ -2153,9 +2169,9 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.std(a)
     1.1180339887498949
-    >>> np.std(a, 0)
+    >>> np.std(a, axis=0)
     array([ 1.,  1.])
-    >>> np.std(a, 1)
+    >>> np.std(a, axis=1)
     array([ 0.5,  0.5])
 
     """

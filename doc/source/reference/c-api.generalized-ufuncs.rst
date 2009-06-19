@@ -1,6 +1,6 @@
-===============================
-Generalized Universal Functions
-===============================
+==================================
+Generalized Universal Function API
+==================================
 
 There is a general need for looping over not only functions on scalars
 but also over functions on vectors (or arrays), as explained on
@@ -91,14 +91,14 @@ dimensions.  The signature is represented by a string of the
 following format:
 
 * Core dimensions of each input or output array are represented by a
-  list of dimension names in parentheses, ``(i_1,...,i_N)``; a scalar 
+  list of dimension names in parentheses, ``(i_1,...,i_N)``; a scalar
   input/output is denoted by ``()``.  Instead of ``i_1``, ``i_2``,
   etc, one can use any valid Python variable name.
 * Dimension lists for different arguments are separated by ``","``.
   Input/output arguments are separated by ``"->"``.
 * If one uses the same dimension name in multiple locations, this
   enforces the same size (or broadcastable size) of the corresponding
-  dimensions.  
+  dimensions.
 
 The formal syntax of signatures is as follows::
 
