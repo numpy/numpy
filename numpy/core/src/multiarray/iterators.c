@@ -266,27 +266,17 @@ slice_GetIndices(PySliceObject *r, intp length,
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
 
-/*NUMPY_API
- * Get Iterator.
+/*
+ * This is common initialization code between PyArrayIterObject and
+ * PyArrayNeighborhoodIterObject 
+ *
+ * Increase ao refcount
  */
-NPY_NO_EXPORT PyObject *
-PyArray_IterNew(PyObject *obj)
+static PyObject *
+array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
 {
-    PyArrayIterObject *it;
-    int i, nd;
-    PyArrayObject *ao = (PyArrayObject *)obj;
+    int nd, i;
 
-    if (!PyArray_Check(ao)) {
-        PyErr_BadInternalCall();
-        return NULL;
-    }
-
-    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-    /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
-    if (it == NULL) {
-        return NULL;
-    }
     nd = ao->nd;
     PyArray_UpdateFlags(ao, CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
@@ -310,6 +300,37 @@ PyArray_IterNew(PyObject *obj)
     }
     PyArray_ITER_RESET(it);
 
+    return (PyObject *)it;
+}
+
+static void
+array_iter_base_dealloc(PyArrayIterObject *it)
+{
+    Py_XDECREF(it->ao);
+}
+
+/*NUMPY_API
+ * Get Iterator.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_IterNew(PyObject *obj)
+{
+    PyArrayIterObject *it;
+    PyArrayObject *ao = (PyArrayObject *)obj;
+
+    if (!PyArray_Check(ao)) {
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+
+    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
+    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
+    /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
+    if (it == NULL) {
+        return NULL;
+    }
+
+    array_iter_base_init(it, ao);
     return (PyObject *)it;
 }
 
@@ -502,7 +523,7 @@ arrayiter_next(PyArrayIterObject *it)
 static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
-    Py_XDECREF(it->ao);
+    array_iter_base_dealloc(it);
     _pya_free(it);
 }
 
