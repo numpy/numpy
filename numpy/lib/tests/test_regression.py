@@ -48,6 +48,10 @@ class TestRegression(object):
         """Ticket 928."""
         assert_raises(ValueError, np.histogramdd, np.ones((1,10)), bins=2**10)
 
+    def test_ndenumerate_crash(self):
+        """Ticket 1140"""
+        # Shouldn't crash:
+        list(np.ndenumerate(np.array([[]])))
 
 if __name__ == "__main__":
     run_module_suite()

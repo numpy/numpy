@@ -1195,8 +1195,12 @@ iter_coords_get(PyArrayIterObject *self)
         int i;
         val = self->index;
         for (i = 0; i < nd; i++) {
-            self->coordinates[i] = val / self->factors[i];
-            val = val % self->factors[i];
+            if (self->factors[i] != 0) {
+                self->coordinates[i] = val / self->factors[i];
+                val = val % self->factors[i];
+            } else {
+                self->coordinates[i] = 0;
+            }
         }
     }
     return PyArray_IntTupleFromIntp(nd, self->coordinates);

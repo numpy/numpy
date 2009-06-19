@@ -1,5 +1,5 @@
 from numpy.testing import *
-from numpy import array, ones, r_, mgrid, unravel_index
+from numpy import array, ones, r_, mgrid, unravel_index, ndenumerate
 
 class TestUnravelIndex(TestCase):
     def test_basic(self):
@@ -61,6 +61,12 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[:5,:],b)
         assert_array_equal(d[5:,:],c)
 
+
+class TestNdenumerate(TestCase):
+    def test_basic(self):
+        a = array([[1,2], [3,4]])
+        assert_equal(list(ndenumerate(a)),
+                     [((0,0), 1), ((0,1), 2), ((1,0), 3), ((1,1), 4)])
 
 if __name__ == "__main__":
     run_module_suite()
