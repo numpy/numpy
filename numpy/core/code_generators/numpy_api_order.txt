@@ -174,3 +174,4 @@ PyArray_MultiIterFromObjects
 PyArray_GetEndianness
 PyArray_GetNDArrayCFeatureVersion
 PyArray_Acorrelate
+PyArray_NeighborhoodIterNew

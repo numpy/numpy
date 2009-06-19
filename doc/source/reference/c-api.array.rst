@@ -1946,6 +1946,72 @@ Broadcasting (multi-iterators)
     loop should be performed over the axis that won't require large
     stride jumps.
 
+Neighborhood iterator
+---------------------
+
+Neighborhood iterators are subclasses of the iterator object, and can be used
+to iter over a neighborhood of a point. For example, you may want to iterate
+over every voxel of a 3d image, and for every such voxel, iterate over an
+hypercube. Neighborhood iterator automatically handle boundaries, thus making
+this kind of code much easier to write than manual boundaries handling, at the
+cost of a slight overhead.
+
+.. cfunction:: PyObject* PyArray_NeighborhoodIterNew(PyArrayIterObject* iter, npy_intp bounds)
+
+    This function creates a new neighborhood iterator from an existing
+    iterator.  The neighborhood will be computed relatively to the position
+    currently pointed by *iter*.  The *bounds* argument is expected to be a (2
+    * iter->ao->nd) arrays, such as the range bound[2*i]->bounds[2*i+1] defines
+    the range where to walk for dimension i (both bounds are included in the
+    walked coordinates). The bounds should be ordered for each dimension
+    (bounds[2*i] <= bounds[2*i+1]).
+
+    - The iterator holds a reference to iter
+    - Return NULL on failure (in which case the reference count of iter is not
+      changed)
+    - iter itself can be a Neighborhood iterator: this can be useful for .e.g
+      automatic boundaries handling
+    - the object returned by this function should be safe to use as a normal
+      iterator
+    - If the position of iter is changed, any subsequent call to
+      PyArrayNeighborhoodIter_Next is undefined behavior, and
+      PyArrayNeighborhoodIter_Reset must be called.
+    - If the coordinates point to a point outside the array, the iterator
+      points to an item which contains 0 of the same type as iter. More
+      elaborate schemes (constants, mirroring, repeat) may be implemented later.
+
+    .. code-block:: c
+
+       PyArrayIterObject *iter;
+       PyArrayNeighborhoodIterObject *neigh_iter;
+       iter = PyArray_IterNew(x);
+
+       //For a 3x3 kernel
+       bounds = {-1, 1, -1, 1};
+       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(iter, bounds);
+
+       for(i = 0; i < iter->size; ++i) {
+            for (j = 0; j < neigh_iter->size; ++j) {
+                    // Walk around the item currently pointed by iter->dataptr
+                    PyArrayNeighborhoodIter_Next(neigh_iter);
+            }
+
+            // Move to the next point of iter
+            PyArrayIter_Next(iter);
+            PyArrayNeighborhoodIter_Reset(neigh_iter);
+       }
+
+.. cfunction:: int PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
+
+    Reset the iterator position to the first point of the neighborhood. This
+    should be called whenever the iter argument given at
+    PyArray_NeighborhoodIterObject is changed (see example)
+
+.. cfunction:: int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
+
+    After this call, iter->dataptr points to the next point of the
+    neighborhood. Calling this function after every point of the
+    neighborhood has been visited is undefined.
 
 Array Scalars
 -------------

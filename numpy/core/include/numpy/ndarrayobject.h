@@ -909,6 +909,57 @@ typedef struct {
 
 } PyArrayMapIterObject;
 
+typedef struct {
+    PyObject_HEAD
+
+    /* 
+     * PyArrayIterObject part: keep this in this exact order 
+     */
+    int               nd_m1;            /* number of dimensions - 1 */
+    npy_intp          index, size;
+    npy_intp          coordinates[NPY_MAXDIMS];/* N-dimensional loop */
+    npy_intp          dims_m1[NPY_MAXDIMS];    /* ao->dimensions - 1 */
+    npy_intp          strides[NPY_MAXDIMS];    /* ao->strides or fake */
+    npy_intp          backstrides[NPY_MAXDIMS];/* how far to jump back */
+    npy_intp          factors[NPY_MAXDIMS];     /* shape factors */
+    PyArrayObject     *ao;
+    char              *dataptr;        /* pointer to current item*/
+    npy_bool          contiguous;
+
+    /* 
+     * New members
+     */
+    npy_intp nd;
+
+    /* Dimensions is the dimension of the array */
+    npy_intp dimensions[NPY_MAXDIMS];
+    /* Bounds of the neighborhood to iterate over */
+    npy_intp bounds[NPY_MAXDIMS][2];
+
+    /* Neighborhood points coordinates are computed relatively to the point pointed
+     * by _internal_iter */
+    PyArrayIterObject* _internal_iter;
+    /* To keep a reference to the zero representation correponding to the dtype
+     * of the array we iterate over */
+    char* zero;
+} PyArrayNeighborhoodIterObject;
+
+/*
+ * Neighborhood iterator API
+ */
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
+
+/* Include inline implementations - functions defined there are not considered
+ * public API */
+#define _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#include "_neighborhood_iterator_imp.h"
+#undef _NPY_INCLUDE_NEIGHBORHOOD_IMP
+
 /* The default array type
  */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE

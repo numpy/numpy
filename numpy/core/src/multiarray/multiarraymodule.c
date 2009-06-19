@@ -2674,6 +2674,11 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
         return;
     }
+    PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
+        return;
+    }
+
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         return;

@@ -1731,3 +1731,116 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     0,                                           /* *tp_next */
 #endif
 };
+
+/*========================= Neighborhood iterator ======================*/
+
+/*NUMPY_API*/
+NPY_NO_EXPORT PyObject*
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds)
+{
+    int i;
+    PyArrayNeighborhoodIterObject *ret;
+
+    ret = _pya_malloc(sizeof(*ret));
+    if (ret == NULL) {
+        return NULL;
+    }
+    PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
+
+    array_iter_base_init((PyArrayIterObject*)ret, x->ao);
+    Py_INCREF(x);
+    ret->_internal_iter = x;
+
+    ret->nd = x->ao->nd;
+
+    /* Compute the neighborhood size and copy the shape */
+    ret->size = 1;
+    for (i = 0; i < ret->nd; ++i) {
+        ret->bounds[i][0] = bounds[2 * i];
+        ret->bounds[i][1] = bounds[2 * i + 1];
+        ret->size *= (bounds[2*i+1] - bounds[2*i]) + 1;
+    }
+
+    for (i = 0; i < ret->nd; ++i) {
+        ret->dimensions[i] = x->ao->dimensions[i];
+    }
+    ret->zero = PyArray_Zero(x->ao);
+
+    /*
+     * XXX: we force x iterator to be non contiguous because we need
+     * coordinates... Modifying the iterator here is not great
+     */
+    x->contiguous = 0;
+
+    PyArrayNeighborhoodIter_Reset(ret);
+
+    return (PyObject*)ret;
+}
+
+static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
+{
+    PyDataMem_FREE(iter->zero);
+    Py_DECREF(iter->_internal_iter);
+
+    array_iter_base_dealloc((PyArrayIterObject*)iter);
+    _pya_free((PyArrayObject*)iter);
+}
+
+NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
+    PyObject_HEAD_INIT(NULL)
+    0,                         /*ob_size*/
+    "numpy.neigh_internal_iter",          /*tp_name*/
+    sizeof(PyArrayNeighborhoodIterObject), /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    (destructor)neighiter_dealloc,         /*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    0,                         /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    0,                         /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+    0,                         /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    (iternextfunc)0,            /* tp_iternext */
+    0,                    /* tp_methods */
+    0,                    /* tp_members */
+    0,                    /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    (initproc)0,                                 /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
+
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
+#endif
+};
