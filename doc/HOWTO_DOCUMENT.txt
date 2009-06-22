@@ -82,7 +82,8 @@ Status
 We are busy converting existing docstrings to the new format,
 expanding them where they are lacking, as well as writing new ones for
 undocumented functions.  Volunteers are welcome to join the effort on
-our new documentation system (see the `Developer Zone
+our new documentation system (see the `Documentation Editor
+<http://docs.scipy.org/doc/>`_ and the `Developer Zone
 <http://www.scipy.org/Developer_Zone/DocMarathon2008>`_).
 
 Sections
@@ -96,7 +97,7 @@ The sections of the docstring are:
 
    ::
 
-     def add(a,b):
+     def add(a, b):
         """The sum of two numbers.
 
         """
@@ -107,7 +108,7 @@ The sections of the docstring are:
    it as the first line of the docstring::
 
      """
-     add(a,b)
+     add(a, b)
 
      The sum of two numbers.
 
@@ -147,10 +148,16 @@ The sections of the docstring are:
      over all axes).
 
    When a parameter can only assume one of a fixed set of values,
-   those values can be listed in braces ::
+   those values can be listed in braces::
 
      x : {True, False}
          Description of `x`.
+
+   When two or more input parameters have exactly the same type, shape and
+   description, they can be combined::
+
+     x1, x2 : array_like
+         Input arrays, description of `x1`, `x2`.
 
 4. **Returns**
 
@@ -203,7 +210,8 @@ The sections of the docstring are:
 
      scipy.random.norm : Random variates, PDFs, etc.
 
-   Functions may be listed without descriptions::
+   Functions may be listed without descriptions, and this is
+   preferable if the functionality is clear from the function name::
 
      See Also
      --------
@@ -286,39 +294,41 @@ The sections of the docstring are:
 
 10. **Examples**
 
-    An optional section for examples, using the `doctest
-    <http://www.python.org/doc/lib/module-doctest.html>`_ format.
-    This section is meant to illustrate usage, not to provide a
-    testing framework -- for that, use the ``tests/`` directory.
-    While optional, this section is very strongly encouraged. You can
-    run these examples by doing::
+   An optional section for examples, using the `doctest
+   <http://www.python.org/doc/lib/module-doctest.html>`_ format.
+   This section is meant to illustrate usage, not to provide a
+   testing framework -- for that, use the ``tests/`` directory.
+   While optional, this section is very strongly encouraged.
 
-      >>> import doctest
-      >>> doctest.testfile('example.py')
+   When multiple examples are provided, they should be separated by
+   blank lines. Comments explaining the examples should have blank
+   lines both above and below them::
 
-    or, using nose,
+     >>> np.add(1, 2)
+     3
 
-    ::
+     Comment explaining the second example
 
-      $ nosetests --with-doctest example.py
+     >>> np.add([1, 2], [3, 4])
+     array([4, 6])
 
-    Blank lines are used to seperate doctests.  When they occur in the
-    expected output, they should be replaced by ``<BLANKLINE>`` (see
-    `doctest options
-    <http://docs.python.org/lib/doctest-options.html>`_ for other such
-    special strings), e.g.
+   You can run most examples using::
 
-    ::
+     >>> import doctest
+     >>> doctest.testfile('example.py')
 
-      >>> print "a\n\nb"
-      a
-      <BLANKLINE>
-      b
+   or with nose::
 
-    The examples may assume that ``import numpy as np`` is executed before
-    the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
-    Additional examples may make use of *matplotlib* for plotting, but should
-    import it explicitly, e.g., ``import matplotlib.pyplot as plt``.
+     $ nosetests --with-doctest example.py
+
+   To improve readability, do not use doctest-specific markup like
+   ``<BLANKLINE>`` or ``#doctest: +SKIP``, even if this causes the
+   example to fail.
+
+   The examples may assume that ``import numpy as np`` is executed before
+   the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
+   Additional examples may make use of *matplotlib* for plotting, but should
+   import it explicitly, e.g., ``import matplotlib.pyplot as plt``.
 
 11. **Indexing tags***
 
