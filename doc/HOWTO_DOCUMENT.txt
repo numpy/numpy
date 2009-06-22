@@ -321,9 +321,8 @@ The sections of the docstring are:
 
      $ nosetests --with-doctest example.py
 
-   To improve readability, do not use doctest-specific markup like
-   ``<BLANKLINE>`` or ``#doctest: +SKIP``, even if this causes the
-   example to fail.
+   It is not necessary to use the doctest markup ``<BLANKLINE>`` to
+   indicate empty lines in the output.
 
    The examples may assume that ``import numpy as np`` is executed before
    the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
