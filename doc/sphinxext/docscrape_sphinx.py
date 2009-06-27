@@ -70,9 +70,7 @@ class SphinxDocString(NumpyDocString):
             others = []
             for param, param_type, desc in self[name]:
                 param = param.strip()
-                if not self._obj or \
-                       (hasattr(self._obj, param) and
-                        getattr(getattr(self._obj, param), '__doc__', None)):
+                if not self._obj or hasattr(self._obj, param):
                     autosum += ["   %s%s" % (prefix, param)]
                 else:
                     others.append((param, param_type, desc))

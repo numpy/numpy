@@ -479,21 +479,19 @@ class ClassDoc(NumpyDocString):
 
         NumpyDocString.__init__(self, doc)
 
+        if not self['Methods']:
+            self['Methods'] = [(name, '', '') for name in sorted(self.methods)]
+
+        if not self['Attributes']:
+            self['Attributes'] = [(name, '', '')
+                                  for name in sorted(self.properties)]
+
     @property
     def methods(self):
         return [name for name,func in inspect.getmembers(self._cls)
                 if not name.startswith('_') and callable(func)]
 
-    def __str__(self):
-        out = ''
-        out += super(ClassDoc, self).__str__()
-        out += "\n\n"
-
-        #for m in self.methods:
-        #    print "Parsing `%s`" % m
-        #    out += str(self._func_doc(getattr(self._cls,m), 'meth')) + '\n\n'
-        #    out += '.. index::\n   single: %s; %s\n\n' % (self._name, m)
-
-        return out
-
-
+    @property
+    def properties(self):
+        return [name for name,func in inspect.getmembers(self._cls)
+                if not name.startswith('_') and func is None]
