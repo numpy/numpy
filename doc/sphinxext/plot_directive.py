@@ -73,6 +73,7 @@ TODO
 """
 
 import sys, os, glob, shutil, imp, warnings, cStringIO, re, textwrap, traceback
+import sphinx
 
 import warnings
 warnings.warn("A plot_directive module is also available under "
@@ -157,7 +158,7 @@ except ImportError:
 TEMPLATE = """
 {{ source_code }}
 
-.. htmlonly::
+{{ only_html }}
 
    {% if source_code %}
    (`Source code <{{ source_link }}>`__)
@@ -188,7 +189,7 @@ TEMPLATE = """
           )
        {% endfor %}
 
-.. latexonly::
+{{ only_latex }}
 
    {% for img in images %}
    .. image:: {{ build_dir }}/{{ img.basename }}.pdf
@@ -304,11 +305,20 @@ def run(arguments, content, options, state_machine, state, lineno):
     opts = [':%s: %s' % (key, val) for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
 
+    if sphinx.__version__ >= "0.6":
+        only_html = ".. only:: html"
+        only_latex = ".. only:: latex"
+    else:
+        only_html = ".. htmlonly::"
+        only_latex = ".. latexonly::"
+
     result = format_template(
         TEMPLATE,
         dest_dir=dest_dir_link,
         build_dir=build_dir_link,
         source_link=source_link,
+        only_html=only_html,
+        only_latex=only_latex,
         options=opts,
         images=images,
         source_code=source_code)

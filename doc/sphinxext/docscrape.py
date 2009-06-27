@@ -8,7 +8,7 @@ import re
 import pydoc
 from StringIO import StringIO
 from warnings import warn
-4
+
 class Reader(object):
     """A line-based string reader.
 
@@ -386,6 +386,8 @@ class NumpyDocString(object):
         out += self._str_see_also(func_role)
         for s in ('Notes','References','Examples'):
             out += self._str_section(s)
+        for param_list in ('Attributes', 'Methods'):
+            out += self._str_param_list(param_list)
         out += self._str_index()
         return '\n'.join(out)
 
