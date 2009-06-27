@@ -93,7 +93,6 @@ class SphinxDocString(NumpyDocString):
                     out += self._str_indent(desc, n_indent)
                 out += [hdr]
             out += ['']
-            print "\n".join(out)
         return out
 
     def _str_section(self, name):
