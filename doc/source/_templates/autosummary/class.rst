@@ -6,7 +6,7 @@
       .. autosummary::
          :toctree:
       {% for item in methods %}
-         ~{{ name }}.{{ item }}
+         {{ name }}.{{ item }}
       {%- endfor %}
 {% endif %}
 {% endblock %}
@@ -17,7 +17,7 @@
       .. autosummary::
          :toctree:
       {% for item in attributes %}
-         ~{{ name }}.{{ item }}
+         {{ name }}.{{ item }}
       {%- endfor %}
 {% endif %}
 {% endblock %}
