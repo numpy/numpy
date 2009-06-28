@@ -45,6 +45,7 @@ copyright = '2008-2009, The Scipy community'
 import numpy
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
+version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 # The full version, including alpha/beta/rc tags.
 release = numpy.__version__
 print version, release

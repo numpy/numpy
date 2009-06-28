@@ -132,6 +132,10 @@ htmlhelp-build: htmlhelp build/htmlhelp/numpy.chm
 %.chm: %.hhp
 	-hhc.exe $^
 
+qthelp: generate
+	mkdir -p build/qthelp build/doctrees
+	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp
+
 latex: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex
