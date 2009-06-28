@@ -2885,16 +2885,16 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
 {
     PyArrayObject *ret;
     size_t nread = 0;
-    char *tmp;
 
     if (PyDataType_REFCHK(dtype)) {
         PyErr_SetString(PyExc_ValueError,
-                        "cannot read into object array");
+                "Cannot read into object array");
         Py_DECREF(dtype);
         return NULL;
     }
     if (dtype->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError, "0-sized elements.");
+        PyErr_SetString(PyExc_ValueError,
+                "The elements are 0-sized.");
         Py_DECREF(dtype);
         return NULL;
     }
@@ -2904,28 +2904,20 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
     else {
         if (dtype->f->scanfunc == NULL) {
             PyErr_SetString(PyExc_ValueError,
-                            "don't know how to read "       \
-                            "character files with that "    \
-                            "array type");
+                    "Unable to read character files of that array type");
             Py_DECREF(dtype);
             return NULL;
         }
-        ret = array_from_text(dtype, num, sep, &nread,
-                              fp,
-                              (next_element) fromfile_next_element,
-                              (skip_separator) fromfile_skip_separator,
-                              NULL);
+        ret = array_from_text(dtype, num, sep, &nread, fp,
+                (next_element) fromfile_next_element,
+                (skip_separator) fromfile_skip_separator, NULL);
     }
     if (((intp) nread) < num) {
-        fprintf(stderr, "%ld items requested but only %ld read\n",
-                (long) num, (long) nread);
-	/* Make sure realloc is > 0 */
-	tmp = PyDataMem_RENEW(ret->data,
-			      NPY_MAX(nread,1) * ret->descr->elsize);
-	/* FIXME: This should not raise a memory error when nread == 0
-	   We should return an empty array or at least raise an  EOF Error.
-	 */
-        if ((tmp == NULL) || (nread == 0)) {
+        /* Realloc memory for smaller number of elements */
+        const size_t nsize = NPY_MAX(nread,1)*ret->descr->elsize;
+        char *tmp;
+
+	if((tmp = PyDataMem_RENEW(ret->data, nsize)) == NULL) {
 	    Py_DECREF(ret);
 	    return PyErr_NoMemory();
 	}
