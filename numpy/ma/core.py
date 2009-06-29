@@ -4582,12 +4582,13 @@ class MaskedArray(ndarray):
         purposes.
 
         """
+        cf = 'CF'[self.flags.fnc]
         state = (1,
                  self.shape,
                  self.dtype,
                  self.flags.fnc,
-                 self._data.tostring(),
-                 getmaskarray(self).tostring(),
+                 self._data.tostring(cf),
+                 getmaskarray(self).tostring(cf),
                  self._fill_value,
                  )
         return state

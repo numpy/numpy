@@ -388,6 +388,14 @@ class TestMaskedArray(TestCase):
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled, a)
 
+    def test_pickling_keepalignment(self):
+        "Tests pickling w/ F_CONTIGUOUS arrays"
+        import cPickle
+        a = arange(10)
+        a.shape = (-1, 2)
+        b = a.T
+        test = cPickle.loads(cPickle.dumps(b))
+        assert_equal(test, b)
 
     def test_single_element_subscript(self):
         "Tests single element subscripts of Maskedarrays."
