@@ -115,13 +115,13 @@ _import_array(void)
     PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
     return -1;
   }
-#ifdef NPY_BIG_ENDIAN
+#if NPY_BYTE_ORDER ==NPY_BIG_ENDIAN
   if (st != NPY_CPU_BIG) {
     PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
         "big endian, but detected different endianness at runtime");
     return -1;
   }
-#elif defined(NPY_LITTLE_ENDIAN)
+#elif NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
   if (st != NPY_CPU_LITTLE) {
     PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as"\
         "little endian, but detected different endianness at runtime");
