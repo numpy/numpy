@@ -89,8 +89,8 @@ Platform information
     .. versionadded:: 1.3.0
 
     Portable alternatives to the ``endian.h`` macros of GNU Libc.
-    One of :cdata:`NPY_BIG_ENDIAN` :cdata:`NPY_LITTLE_ENDIAN` or
-    is defined, and :cdata:`NPY_BYTE_ORDER` is either 4321 or 1234.
+    If big endian, :cdata:`NPY_BYTE_ORDER` == :cdata:`NPY_BIG_ENDIAN`, and
+    similarly for little endian architectures.
 
     Defined in ``numpy/npy_endian.h``.
 

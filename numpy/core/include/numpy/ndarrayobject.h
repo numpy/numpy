@@ -1038,7 +1038,7 @@ typedef struct {
 #define NPY_SWAP 's'
 #define NPY_IGNORE '|'
 
-#ifdef NPY_BIG_ENDIAN
+#if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
 #define NPY_NATBYTE NPY_BIG
 #define NPY_OPPBYTE NPY_LITTLE
 #else

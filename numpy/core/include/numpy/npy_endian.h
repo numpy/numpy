@@ -9,26 +9,23 @@
 #ifdef NPY_HAVE_ENDIAN_H
     /* Use endian.h if available */
     #include <endian.h>
+
     #define NPY_BYTE_ORDER __BYTE_ORDER
-    #if (__BYTE_ORDER == __LITTLE_ENDIAN)
-        #define NPY_LITTLE_ENDIAN
-    #elif (__BYTE_ORDER == __BIG_ENDIAN)
-        #define NPY_BIG_ENDIAN
-    #else
-        #error Unknown machine endianness detected.
-    #endif
+    #define NPY_LITTLE_ENDIAN __LITTLE_ENDIAN
+    #define NPY_BIG_ENDIAN __BIG_ENDIAN
 #else
     /* Set endianness info using target CPU */
     #include "npy_cpu.h"
 
+    #define NPY_LITTLE_ENDIAN 1234
+    #define NPY_BIG_ENDIAN 4321
+
     #if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)\
             || defined(NPY_CPU_IA64)
-        #define NPY_LITTLE_ENDIAN
-        #define NPY_BYTE_ORDER 1234
+        #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
     #elif defined(NPY_CPU_PPC) || defined(NPY_CPU_SPARC)\
             || defined(NPY_CPU_S390) || defined(NPY_CPU_PARISC) || defined(NPY_CPU_PPC64)
-        #define NPY_BIG_ENDIAN
-        #define NPY_BYTE_ORDER 4321
+        #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
     #else
         #error Unknown CPU: can not set endianness
     #endif
