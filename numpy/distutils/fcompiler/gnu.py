@@ -26,6 +26,8 @@ def is_win64():
 
 if is_win64():
     _EXTRAFLAGS = ["-fno-leading-underscore"]
+else:
+    _EXTRAFLAGS = []
 
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
