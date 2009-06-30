@@ -313,7 +313,7 @@ ufunc_api = env.GenerateUfuncApi('ufunc_api',
 env.Prepend(CPPPATH = ['include', '.'])
 
 # npymath core lib
-npymath_src = env.GenerateFromTemplate(pjoin('src', 'npy_math.c.src'))
+npymath_src = env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src'))
 env.DistutilsStaticExtLibrary("npymath", npymath_src)
 env.Prepend(LIBS=["npymath"])
 env.Prepend(LIBPATH=["."])

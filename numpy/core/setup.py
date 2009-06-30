@@ -548,12 +548,13 @@ def configuration(parent_package='',top_path=None):
         return []
 
     config.add_data_files('include/numpy/*.h')
+    config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
-    deps = [join('src','_signbit.c'),
+    deps = [join('src','npymath','_signbit.c'),
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
             'include/numpy/fenv/fenv.h',
@@ -579,7 +580,7 @@ def configuration(parent_package='',top_path=None):
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
     config.add_library('npymath',
-            sources=[join('src', 'npy_math.c.src')])
+            sources=[join('src', 'npymath', 'npy_math.c.src')])
     
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
