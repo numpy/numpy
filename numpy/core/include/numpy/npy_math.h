@@ -131,6 +131,8 @@ double npy_atan2(double x, double y);
 double npy_pow(double x, double y);
 double npy_modf(double x, double* y);
 
+double npy_copysign(double x, double y);
+
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
@@ -201,6 +203,8 @@ float npy_fmodf(float x, float y);
 
 float npy_modff(float x, float* y);
 
+float npy_copysignf(float x, float y);
+
 /*
  * float C99 math functions
  */
@@ -237,6 +241,8 @@ npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
 
 npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
+
+npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 
 /*
  * Non standard functions

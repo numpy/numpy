@@ -40,6 +40,18 @@
  *        #ifdef SYMBOL_DEFINED_WEIRD_PLATFORM
  *        double exp(double);
  *        #endif
+ *
+ * Some of the code is taken from msun library in FreeBSD, with the following
+ * notice:
+ *
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
  */
 
 #include <Python.h>
@@ -190,6 +202,17 @@ static double log2(double x)
 #undef INVLOG2
 #endif
 
+#ifndef HAVE_COPYSIGN
+static inline double copysign(double x, double y)
+{
+	npy_uint32_t hx,hy;
+	GET_HIGH_WORD(hx,x);
+	GET_HIGH_WORD(hy,y);
+	SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));
+        return x;
+}
+#endif
+
 /*
  *****************************************************************************
  **                     IEEE 754 FPU HANDLING                               **
@@ -256,8 +279,8 @@ static @type@ @kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod#
- * #KIND = ATAN2,HYPOT,POW,FMOD#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
@@ -399,7 +422,7 @@ static @type@ logaddexp2@c@(@type@ x, @type@ y)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,logaddexp,logaddexp2#
+ * #kind = atan2,hypot,pow,fmod,logaddexp,logaddexp2,copysign#
  */
 @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
