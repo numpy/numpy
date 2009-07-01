@@ -877,6 +877,16 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+NPY_NO_EXPORT void
+@TYPE@_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1)= npy_copysign@c@(in1, in2);
+    }
+}
+
 /**begin repeat1
  * #kind = maximum, minimum#
  * #OP =  >=, <=#

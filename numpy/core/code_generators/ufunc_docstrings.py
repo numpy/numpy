@@ -2614,6 +2614,33 @@ add_newdoc('numpy.core.umath', 'signbit',
 
     """)
 
+add_newdoc('numpy.core.umath', 'copysign',
+    """
+    Change the sign of x to that of y  element-wise.
+
+    Parameters
+    ----------
+    x: array_like
+        Values to change the sign of.
+    y: array_like
+        The sign of y is copied to x.
+
+    Returns
+    -------
+    out : array_like
+        values of x with the sign of y
+
+    Examples
+    --------
+    >>> np.copysign(1.3, -1)
+    -1.3
+    >>> 1/np.copysign(0, 1)
+    inf
+    >>> 1/np.copysign(0, -1)
+    -inf
+
+    """)
+
 add_newdoc('numpy.core.umath', 'sin',
     """
     Trigonometric sine, element-wise.

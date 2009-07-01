@@ -582,6 +582,11 @@ defdict = {
           docstrings.get('numpy.core.umath.signbit'),
           TD(flts, out='?'),
           ),
+'copysign' :
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.copysign'),
+          TD(flts),
+          ),
 'modf' :
     Ufunc(1, 2, None,
           docstrings.get('numpy.core.umath.modf'),
