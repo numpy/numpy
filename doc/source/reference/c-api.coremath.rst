@@ -69,6 +69,12 @@ Floating point classification
     and extended precision, and return a non 0 value is x has the signbit set
     (that is the number is negative).
 
+.. cfunction:: double npy_copysign(double x, double y)
+
+    This is a function equivalent to C99 copysign: return x with the same sign
+    as y. Works for any value, including inf and nan. Single and extended
+    precisions are available with suffic f and l.
+
 Useful math constants
 ~~~~~~~~~~~~~~~~~~~~~
 

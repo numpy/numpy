@@ -549,6 +549,7 @@ single operation.
     isinf
     isnan
     signbit
+    copysign
     modf
     ldexp
     frexp
