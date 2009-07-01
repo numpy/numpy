@@ -673,6 +673,13 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
         assert np.all(np.absolute(y0.real - ym.real*re_sign) < atol), (y0, ym)
         assert np.all(np.absolute(y0.imag - ym.imag*im_sign) < atol), (y0, ym)
 
+def test_copysign():
+    assert np.copysign(1, -1) == -1
+    assert 1 / np.copysign(0, -1) < 0
+    assert 1 / np.copysign(0, 1) > 0
+    assert np.signbit(np.copysign(np.nan, -1))
+    assert not np.signbit(np.copysign(np.nan, 1))
+
 def test_pos_nan():
     """Check np.nan is a positive nan."""
     assert np.signbit(np.nan) == 0
