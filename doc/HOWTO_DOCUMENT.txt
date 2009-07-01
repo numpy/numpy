@@ -61,12 +61,12 @@ docstrings that provides for consistency, while also allowing our
 toolchain to produce well-formatted reference guides.  This document
 describes the current community consensus for such a standard.  If you
 have suggestions for improvements, post them on the `numpy-discussion
-list`_, together with the epydoc output.
+list`_.
 
 Our docstring standard uses `re-structured text (reST)
 <http://docutils.sourceforge.net/rst.html>`_ syntax and is rendered
-using tools like epydoc_ or sphinx_ (pre-processors that understand
-the particular documentation style we are using).  While a rich set of
+using Sphinx_ (a pre-processor that understands the particular
+documentation style we are using).  While a rich set of
 markup is available, we limit ourselves to a very basic subset, in
 order to provide docstrings that are easy to read on text-only
 terminals.
@@ -74,8 +74,10 @@ terminals.
 A guiding principle is that human readers of the text are given
 precedence over contorting docstrings so our tools produce nice
 output.  Rather than sacrificing the readability of the docstrings, we
-have written pre-processors to assist tools like epydoc_ and sphinx_ in
-their task.
+have written pre-processors to assist Sphinx_ in its task.
+
+The length of docstring lines should be kept to 75 characters to
+facilitate reading the docstrings in text terminals.
 
 Status
 ------
@@ -179,6 +181,9 @@ The sections of the docstring are:
      ------
      LinAlgException
          If the matrix is not numerically invertible.
+
+   This section should be used judiciously, i.e only for errors
+   that are non-obvious or have a large chance of getting raised.
 
 7. **See Also**
 
@@ -312,42 +317,21 @@ The sections of the docstring are:
      >>> np.add([1, 2], [3, 4])
      array([4, 6])
 
-   You can run most examples using::
+   You can run examples using::
 
-     >>> import doctest
-     >>> doctest.testfile('example.py')
-
-   or with nose::
-
-     $ nosetests --with-doctest example.py
+     >>> np.test(doctests=True)
 
    It is not necessary to use the doctest markup ``<BLANKLINE>`` to
-   indicate empty lines in the output.
+   indicate empty lines in the output. Note that the option to run
+   the examples through ``numpy.test`` is provided for checking if the
+   examples work, not for making the examples part of the testing framework.
 
    The examples may assume that ``import numpy as np`` is executed before
    the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
    Additional examples may make use of *matplotlib* for plotting, but should
    import it explicitly, e.g., ``import matplotlib.pyplot as plt``.
 
-11. **Indexing tags***
-
-    Each function needs to be categorised for indexing purposes.  Use
-    the ``index`` directive::
-
-      .. index::
-         :refguide: ufunc, trigonometry
-
-    To index a function as a sub-category of a class, separate index
-    entries by a colon, e.g.
-
-    ::
-
-      :refguide: ufunc, numpy:reshape, other
-
-    A `list of available categories
-    <http://www.scipy.org/Developer_Zone/ReferenceGuide>`_ is
-    available.
-
+   
 Documenting classes
 -------------------
 
@@ -355,9 +339,11 @@ Class docstring
 ```````````````
 Use the same sections as outlined above (all except ``Returns`` are
 applicable).  The constructor (``__init__``) should also be documented
-here.
+here, the **parameters** section of the docstring details the constructors
+parameters.
 
-An ``Attributes`` section may be used to describe class variables::
+An ``Attributes`` section, located below the **parameters** section,
+may be used to describe class variables::
 
   Attributes
   ----------
@@ -365,6 +351,18 @@ An ``Attributes`` section may be used to describe class variables::
       The X coordinate.
   y : float
       The Y coordinate.
+
+Attributes that are properties and have their own docstrings can be
+simply listed by name::
+
+  Attributes
+  ----------
+  real
+  imag
+  x : float
+      The X coordinate
+  y : float
+      The Y coordinate
 
 In general, it is not necessary to list class methods.  Those that are
 not part of the public API have names that start with an underscore.
@@ -392,12 +390,70 @@ becomes useful to have an additional ``Methods`` section::
 
       """
 
+If it is necessary to explain a private method (use with care!), it can
+be referred to in the **extended summary** or the **notes**. Do not
+list private methods in the Methods section.
+
 Note that `self` is *not* listed as the first parameter of methods.
 
 Method docstrings
 `````````````````
 Document these as you would any other function.  Do not include
 ``self`` in the list of parameters.
+
+Documenting class instances
+---------------------------
+Instances of classes that are part of the Numpy API (for example `np.r_`
+`np,c_`, `np.index_exp`, etc.) may require some care. To give these
+instances a useful docstring, we do the following:
+
+* Single instance: If only a single instance of a class is exposed,
+  document the class. Examples can use the instance name.
+
+* Multiple instances: If multiple instances are exposed, docstrings
+  for each instance are written and assigned to the instances'
+  ``__doc__`` attributes at run time. The class is documented as usual, and
+  the exposed instances can be mentioned in the Notes and See Also sections.
+
+Documenting constants
+---------------------
+Use the same sections as outlined for functions where applicable::
+
+   1. summary
+   2. extended summary (optional)
+   3. see also (optional)
+   4. references (optional)
+   5. examples (optional)
+
+Docstrings for constants will not be visible in text terminals
+(constants are of immutable type, so docstrings can not be assigned
+to them like for for class instances), but will appear in the
+documentation built with Sphinx.
+
+Other points to keep in mind
+----------------------------
+* Notes and Warnings : If there are points in the docstring that deserve
+  special emphasis, the reST directives for a note or warning can be used
+  in the vicinity of the context of the warning (inside a section). Syntax:
+
+  ::
+
+    .. warning:: Warning text.
+
+    .. note:: Note text.
+
+  Use these sparingly, as they do not look very good in text terminals
+  and are not often necessary. One situation in which a warning can
+  be useful is for marking a known bug that is not yet fixed.
+
+* Questions and Answers : For general questions on how to write docstrings
+  that are not answered in this document, refer to
+  `<http://docs.scipy.org/numpy/Questions+Answers/>`_.
+
+* array_like : For functions that take arguments which can have not only
+  a type `ndarray`, but also types that can be converted to an ndarray
+  (i.e. scalar types, sequence types), those arguments can be documented
+  with type `array_like`.
 
 Common reST concepts
 --------------------
@@ -421,12 +477,11 @@ followed.
 Conclusion
 ----------
 
-`An example
-<http://svn.scipy.org/svn/numpy/trunk/doc/example.py>`_ of the
+`An example <http://svn.scipy.org/svn/numpy/trunk/doc/example.py>`_ of the
 format shown here is available.  Refer to `How to Build API/Reference
 Documentation
 <http://svn.scipy.org/svn/numpy/trunk/doc/HOWTO_BUILD_DOCS.txt>`_
-on how to use epydoc_ or sphinx_ to construct a manual and web page.
+on how to use Sphinx_ to build the manual.
 
 This document itself was written in ReStructuredText, and may be converted to
 HTML using::
@@ -435,5 +490,4 @@ HTML using::
 
 .. _SciPy: http://www.scipy.org
 .. _numpy-discussion list: http://www.scipy.org/Mailing_Lists
-.. _epydoc: http://epydoc.sourceforge.net/
-.. _sphinx: http://sphinx.pocoo.org
+.. _Sphinx: http://sphinx.pocoo.org
