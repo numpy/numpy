@@ -1,0 +1,41 @@
+=========================
+NumPy 1.4.0 Release Notes
+=========================
+
+This minor includes numerous bug fixes.
+
+Highlights
+==========
+
+New features
+============
+
+New ufuncs
+~~~~~~~~~~
+
+#. copysign - return the value of the first argument with the sign copied from
+   the second argument.
+
+Internal changes
+================
+
+split multiarray and umath
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The source code of multiarray and umath has been split into separate logic
+units. This should make the source code more amenable for newcomers.
+
+Separate compilation
+~~~~~~~~~~~~~~~~~~~~
+
+By default, every file of multiarray (and umath) is merged into one for
+compilation, but if NPY_SEPARATE_COMPILATION env variable is set to a
+non-negative value, experimental individual compilation of each file is
+enabled. This makes the compile/debug cycle much faster when working on core
+numpy.
+
+Separate core math library
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New functions which have been added:
+	* npy_copysign
