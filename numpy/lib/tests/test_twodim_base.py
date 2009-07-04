@@ -3,8 +3,11 @@
 """
 
 from numpy.testing import *
-from numpy import arange, rot90, add, fliplr, flipud, zeros, ones, eye, \
-     array, diag, histogram2d, tri
+
+from numpy import ( arange, rot90, add, fliplr, flipud, zeros, ones, eye,
+                    array, diag, histogram2d, tri, mask_indices, triu_indices,
+                    triu_indices_from, tril_indices, tril_indices_from )
+
 import numpy as np
 
 def get_mat(n):
@@ -52,32 +55,32 @@ class TestEye(TestCase):
 
 class TestDiag(TestCase):
     def test_vector(self):
-        vals = (100*arange(5)).astype('l')
-        b = zeros((5,5))
+        vals = (100 * arange(5)).astype('l')
+        b = zeros((5, 5))
         for k in range(5):
-            b[k,k] = vals[k]
-        assert_equal(diag(vals),b)
-        b = zeros((7,7))
+            b[k, k] = vals[k]
+        assert_equal(diag(vals), b)
+        b = zeros((7, 7))
         c = b.copy()
         for k in range(5):
-            b[k,k+2] = vals[k]
-            c[k+2,k] = vals[k]
-        assert_equal(diag(vals,k=2), b)
-        assert_equal(diag(vals,k=-2), c)
+            b[k, k + 2] = vals[k]
+            c[k + 2, k] = vals[k]
+        assert_equal(diag(vals, k=2), b)
+        assert_equal(diag(vals, k=-2), c)
 
     def test_matrix(self):
-        vals = (100*get_mat(5)+1).astype('l')
+        vals = (100 * get_mat(5) + 1).astype('l')
         b = zeros((5,))
         for k in range(5):
             b[k] = vals[k,k]
-        assert_equal(diag(vals),b)
-        b = b*0
+        assert_equal(diag(vals), b)
+        b = b * 0
         for k in range(3):
-            b[k] = vals[k,k+2]
-        assert_equal(diag(vals,2),b[:3])
+            b[k] = vals[k, k + 2]
+        assert_equal(diag(vals, 2), b[:3])
         for k in range(3):
-            b[k] = vals[k+2,k]
-        assert_equal(diag(vals,-2),b[:3])
+            b[k] = vals[k + 2, k]
+        assert_equal(diag(vals, -2), b[:3])
 
 class TestFliplr(TestCase):
     def test_basic(self):
@@ -191,6 +194,77 @@ class TestTri(TestCase):
                      [1,1,1]])
         assert_array_equal(tri(3),out)
         assert_array_equal(tri(3,dtype=bool),out.astype(bool))
+
+
+def test_mask_indices():
+    # simple test without offset
+    iu = mask_indices(3, np.triu)
+    a = np.arange(9).reshape(3, 3)
+    yield (assert_array_equal, a[iu], array([0, 1, 2, 4, 5, 8]))
+    # Now with an offset
+    iu1 = mask_indices(3, np.triu, 1)
+    yield (assert_array_equal, a[iu1], array([1, 2, 5]))
+
+
+def test_tril_indices():
+    # indices without and with offset
+    il1 = tril_indices(4)
+    il2 = tril_indices(4, 2)
+
+    a = np.array([[1, 2, 3, 4],
+                  [5, 6, 7, 8],
+                  [9, 10, 11, 12],
+                  [13, 14, 15, 16]])
+
+    # indexing:
+    yield (assert_array_equal, a[il1],
+           array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16]) )
+
+    # And for assigning values:
+    a[il1] = -1
+    yield (assert_array_equal, a,
+    array([[-1,  2,  3,  4],
+           [-1, -1,  7,  8],
+           [-1, -1, -1, 12],
+           [-1, -1, -1, -1]]) )
+
+    # These cover almost the whole array (two diagonals right of the main one):
+    a[il2] = -10
+    yield (assert_array_equal, a,
+    array([[-10, -10, -10,   4],
+           [-10, -10, -10, -10],
+           [-10, -10, -10, -10],
+           [-10, -10, -10, -10]]) )
+
+
+def test_triu_indices():
+    iu1 = triu_indices(4)
+    iu2 = triu_indices(4, 2)
+
+    a = np.array([[1, 2, 3, 4],
+                  [5, 6, 7, 8],
+                  [9, 10, 11, 12],
+                  [13, 14, 15, 16]])
+
+    # Both for indexing:
+    yield (assert_array_equal, a[iu1],
+           array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16]) )
+
+    # And for assigning values:
+    a[iu1] = -1
+    yield (assert_array_equal, a,
+    array([[-1, -1, -1, -1],
+           [ 5, -1, -1, -1],
+           [ 9, 10, -1, -1],
+           [13, 14, 15, -1]])  )
+
+    # These cover almost the whole array (two diagonals right of the main one):
+    a[iu2] = -10
+    yield ( assert_array_equal, a,
+    array([[ -1,  -1, -10, -10],
+           [  5,  -1,  -1, -10],
+           [  9,  10,  -1,  -1],
+           [ 13,  14,  15,  -1]]) )
 
 
 if __name__ == "__main__":
