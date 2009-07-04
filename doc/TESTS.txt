@@ -198,7 +198,7 @@ but 'test_evens' is a generator that returns a series of tests, using
 .. warning::
 
    Parametric tests cannot be implemented on classes derived from
-   UnitTest.
+   TestCase.
 
 Doctests
 --------
