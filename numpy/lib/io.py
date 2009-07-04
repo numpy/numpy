@@ -300,6 +300,12 @@ def savez(file, *args, **kwds):
     The .npz file format is a zipped archive of files named after the variables
     they contain.  Each file contains one variable in .npy format.
 
+    Examples
+    --------
+    >>> x = np.random.random((3, 3))
+    >>> y = np.zeros((3, 2))
+    >>> np.savez('data', x=x, y=y)
+
     """
 
     # Import is postponed to here since zipfile depends on gzip, an optional
