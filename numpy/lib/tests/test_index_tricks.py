@@ -1,4 +1,5 @@
 from numpy.testing import *
+import numpy as np
 from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,
                     ndenumerate, fill_diagonal, diag_indices,
                     diag_indices_from )
@@ -111,6 +112,12 @@ def test_diag_indices():
 
                   [[0, 0],
                    [0, 1]]]) )
+
+def test_diag_indices_from():
+    x = np.random.random((4, 4))
+    r, c = diag_indices_from(x)
+    assert_array_equal(r, np.arange(4))
+    assert_array_equal(c, np.arange(4))
 
 
 if __name__ == "__main__":
