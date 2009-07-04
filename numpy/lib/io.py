@@ -118,6 +118,27 @@ class NpzFile(object):
         else:
             raise KeyError, "%s is not a file in the archive" % key
 
+
+    def __iter__(self):
+        return iter(self.files)
+
+    def items(self):
+        return [(f, self[f]) for f in self.files]
+
+    def iteritems(self):
+        for f in self.files:
+            yield (f, self[f])
+
+    def keys(self):
+        return self.files
+
+    def iterkeys(self):
+        return self.__iter__()
+
+    def __contains__(self, key):
+        return self.files.__contains__(key)
+
+
 def load(file, mmap_mode=None):
     """
     Load a pickled, ``.npy``, or ``.npz`` binary file.
