@@ -916,5 +916,31 @@ def test_gzip_loadtxt_from_string():
     f = gzip.GzipFile(fileobj=s, mode="r")
     assert_array_equal(np.loadtxt(f), [1, 2, 3])
 
+def test_npzfile_dict():
+    s = StringIO.StringIO()
+    x = np.zeros((3, 3))
+    y = np.zeros((3, 3))
+
+    np.savez(s, x=x, y=y)
+    s.seek(0)
+
+    z = np.load(s)
+
+    assert 'x' in z
+    assert 'y' in z
+    assert 'x' in z.keys()
+    assert 'y' in z.keys()
+
+    for f, a in z.iteritems():
+        assert f in ['x', 'y']
+        assert_equal(a.shape, (3, 3))
+
+    assert len(z.items()) == 2
+
+    for f in z:
+        assert f in ['x', 'y']
+
+    assert 'x' in list(z.iterkeys())
+
 if __name__ == "__main__":
     run_module_suite()
