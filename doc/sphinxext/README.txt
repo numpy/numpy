@@ -4,7 +4,7 @@ numpydoc -- Numpy's Sphinx extensions
 
 Numpy's documentation uses several custom extensions to Sphinx.  These
 are shipped in this ``numpydoc`` package, in case you want to make use
-of tem in third-party projects.
+of them in third-party projects.
 
 The following extensions are available:
 
@@ -14,7 +14,7 @@ The following extensions are available:
 
   - ``numpydoc.plot_directives``: Adaptation of Matplotlib's ``plot::``
     directive. Note that this implementation may still undergo severe
-    changes or be eventually deprecated.
+    changes or eventually be deprecated.
 
   - ``numpydoc.only_directives``: (DEPRECATED)
 
