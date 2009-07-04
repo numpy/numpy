@@ -535,7 +535,7 @@ def argwhere(a):
            [1, 2]])
 
     """
-    return asarray(a.nonzero()).T
+    return transpose(asarray(a).nonzero())
 
 def flatnonzero(a):
     """

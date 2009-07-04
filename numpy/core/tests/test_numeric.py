@@ -935,5 +935,17 @@ class TestAcorrelate(_TestCorrelate):
         z = np.acorrelate(y, x, 'full')
         assert_array_almost_equal(z, r_z)
 
+class TestArgwhere:
+    def test_2D(self):
+        x = np.arange(6).reshape((2, 3))
+        assert_array_equal(np.argwhere(x > 1),
+                           [[0, 2],
+                            [1, 0],
+                            [1, 1],
+                            [1, 2]])
+
+    def test_list(self):
+        assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
+
 if __name__ == "__main__":
     run_module_suite()
