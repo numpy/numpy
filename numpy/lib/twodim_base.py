@@ -592,6 +592,10 @@ def mask_indices(n,mask_func,k=0):
       The indices corresponding to the locations where mask_func(ones((n,n)),k)
       is True.
 
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
     Examples
     --------
     These are the indices that would allow you to access the upper triangular
@@ -632,6 +636,10 @@ def tril_indices(n,k=0):
 
     k : int, optional
       Diagonal offset (see tril() for details).
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -691,6 +699,10 @@ def tril_indices_from(arr,k=0):
     k : int, optional
       Diagonal offset (see tril() for details).
 
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
     """
     if not arr.ndim==2 and arr.shape[0] == arr.shape[1]:
         raise ValueError("input array must be 2-d and square")
@@ -707,6 +719,10 @@ def triu_indices(n,k=0):
 
     k : int, optional
       Diagonal offset (see triu() for details).
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -765,6 +781,10 @@ def triu_indices_from(arr,k=0):
 
     k : int, optional
       Diagonal offset (see triu() for details).
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
 
     """
     if not arr.ndim==2 and arr.shape[0] == arr.shape[1]:

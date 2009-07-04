@@ -695,6 +695,14 @@ def fill_diagonal(a, val):
       Value to be written on the diagonal, its type must be compatible with
       that of the array a.
 
+    See also
+    --------
+    diag_indices, diag_indices_from
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
     Examples
     --------
     >>> a = zeros((3,3),int)
@@ -722,10 +730,6 @@ def fill_diagonal(a, val):
            [0, 0, 0],
            [0, 0, 4]])
 
-    See also
-    --------
-    - diag_indices: indices to access diagonals given shape information.
-    - diag_indices_from: indices to access diagonals given an array.
     """
     if a.ndim < 2:
         raise ValueError("array must be at least 2-d")
@@ -761,6 +765,14 @@ def diag_indices(n, ndim=2):
     ndim : int, optional
       The number of dimensions.
 
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
+    See also
+    --------
+    diag_indices_from
+
     Examples
     --------
     Create a set of indices to access the diagonal of a (4,4) array:
@@ -792,10 +804,6 @@ def diag_indices(n, ndim=2):
            [[0, 0],
             [0, 1]]])
 
-    See also
-    --------
-    - diag_indices_from: create the indices based on the shape of an existing
-    array.
     """
     idx = arange(n)
     return (idx,) * ndim
@@ -809,6 +817,11 @@ def diag_indices_from(arr):
     Parameters
     ----------
     arr : array, at least 2-d
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
     """
 
     if not arr.ndim >= 2:
