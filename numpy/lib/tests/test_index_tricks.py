@@ -1,6 +1,7 @@
 from numpy.testing import *
 from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,
-                    fill_diagonal, diag_indices, diag_indices_from )
+                    ndenumerate, fill_diagonal, diag_indices,
+                    diag_indices_from )
 
 class TestUnravelIndex(TestCase):
     def test_basic(self):
