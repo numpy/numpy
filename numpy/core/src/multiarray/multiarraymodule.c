@@ -27,7 +27,7 @@
 
 #include "config.h"
 
-#include "global.c"
+NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #define PyAO PyArrayObject
 
