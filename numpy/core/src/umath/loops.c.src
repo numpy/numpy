@@ -1110,13 +1110,13 @@ C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const @type@ in2i = ((@type@ *)ip2)[1];
         if (fabs@c@(in2r) >= fabs@c@(in2i)) {
             const @type@ rat = in2i/in2r;
-            const @type@ scl = 1.0/(in2r + in2i*rat);
+            const @type@ scl = 1/(in2r + in2i*rat);
             ((@type@ *)op1)[0] = (in1r + in1i*rat)*scl;
             ((@type@ *)op1)[1] = (in1i - in1r*rat)*scl;
         }
         else {
             const @type@ rat = in2r/in2i;
-            const @type@ scl = 1.0/(in2i + in2r*rat);
+            const @type@ scl = 1/(in2i + in2r*rat);
             ((@type@ *)op1)[0] = (in1r*rat + in1i)*scl;
             ((@type@ *)op1)[1] = (in1i*rat - in1r)*scl;
         }
