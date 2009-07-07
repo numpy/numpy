@@ -1108,7 +1108,7 @@ C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (fabs(in2r) >= fabs(in2i)) {
+        if (fabs@c@(in2r) >= fabs@c@(in2i)) {
             const @type@ rat = in2i/in2r;
             const @type@ scl = 1.0/(in2r + in2i*rat);
             ((@type@ *)op1)[0] = (in1r + in1i*rat)*scl;
