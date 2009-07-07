@@ -272,7 +272,10 @@ for key, value in numpyconfig_sym:
 env['SUBST_DICT'] = config_dict
 
 include_dir = 'include/numpy'
-env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'), pjoin(include_dir, 'numpyconfig.h.in'))
+target = env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'),
+        pjoin(include_dir, 'numpyconfig.h.in'))
+# "Install" the header in the build directory, so that in-place build works
+env.Install(pjoin('$distutils_installdir', include_dir), target)
 
 env['CONFIG_H_GEN'] = numpyconfig_sym
 
