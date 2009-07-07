@@ -307,13 +307,18 @@ scalarmathmodule_src = env.GenerateFromTemplate(
 umath = env.GenerateUmath('__umath_generated',
                           pjoin('code_generators', 'generate_umath.py'))
 
-multiarray_api = env.GenerateMultiarrayApi('multiarray_api',
+multiarray_api = env.GenerateMultiarrayApi('include/numpy/multiarray_api',
                         [ pjoin('code_generators', 'numpy_api_order.txt')])
+generated_headers.append(multiarray_api[0])
 
-ufunc_api = env.GenerateUfuncApi('ufunc_api',
+ufunc_api = env.GenerateUfuncApi('include/numpy/ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
+generated_headers.append(ufunc_api[0])
 
-env.Prepend(CPPPATH = ['include', '.'])
+# include/numpy is added for compatibility reasons with distutils: this is
+# needed for __multiarray_api.c and __ufunc_api.c included from multiarray and
+# ufunc.
+env.Prepend(CPPPATH = ['include', '.', 'include/numpy'])
 
 # npymath core lib
 npymath_src = env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src'))
