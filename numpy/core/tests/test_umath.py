@@ -11,15 +11,27 @@ class TestDivision(TestCase):
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
     def test_division_complex(self):
-        # check that division is correct
+        # check that implementation is correct
         msg = "Complex division implementation check"
-        a = np.array([1. + 1.*1j, 1. + .5*1j, 1. + 2.*1j], dtype=np.complex128)
-        assert_almost_equal(a**2/a, a, err_msg=msg)
+        x = np.array([1. + 1.*1j, 1. + .5*1j, 1. + 2.*1j], dtype=np.complex128)
+        assert_almost_equal(x**2/x, x, err_msg=msg)
         # check overflow, underflow
         msg = "Complex division overflow/underflow check"
-        a = np.array([1.e+110, 1.e-110], dtype=np.complex128)
-        b = a**2/a
-        assert_almost_equal(b/a, [1, 1], err_msg=msg)
+        x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
+        y = x**2/x
+        assert_almost_equal(y/x, [1, 1], err_msg=msg)
+
+    def test_floor_division_complex(self):
+        # check that implementation is correct
+        msg = "Complex floor division implementation check"
+        x = np.array([.9 + 1j, -.1 + 1j, .9 + .5*1j, .9 + 2.*1j], dtype=np.complex128)
+        y = np.array([0., -1., 0., 0.], dtype=np.complex128)
+        assert_equal(np.floor_divide(x**2,x), y, err_msg=msg)
+        # check overflow, underflow
+        msg = "Complex floor division overflow/underflow check"
+        x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
+        y = np.floor_divide(x**2, x)
+        assert_equal(y, [1.e+110, 0], err_msg=msg)
 
 class TestPower(TestCase):
     def test_power_float(self):
