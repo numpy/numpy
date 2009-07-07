@@ -12,11 +12,14 @@ class TestDivision(TestCase):
 
     def test_division_complex(self):
         # check that division is correct
+        msg = "Complex division implementation check"
         a = np.array([1. + 1.*1j, 1. + .5*1j, 1. + 2.*1j], dtype=np.complex128)
-        assert_almost_equal(a**2/a, a)
+        assert_almost_equal(a**2/a, a, err_msg=msg)
         # check overflow, underflow
+        msg = "Complex division overflow/underflow check"
         a = np.array([1.e+110, 1.e-110], dtype=np.complex128)
-        assert_almost_equal(a**2/a, a)
+        b = a**2/a
+        assert_almost_equal(b/a, [1, 1], err_msg=msg)
 
 class TestPower(TestCase):
     def test_power_float(self):
