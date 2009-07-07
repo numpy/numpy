@@ -63,8 +63,10 @@ def configuration(parent_package='',top_path=None):
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
-        h_file = join(get_scons_pkg_build_dir(config.name), '__multiarray_api.h')
-        t_file = join(get_scons_pkg_build_dir(config.name), 'multiarray_api.txt')
+        h_file = join(get_scons_pkg_build_dir(config.name),
+                'include/numpy/__multiarray_api.h')
+        t_file = join(get_scons_pkg_build_dir(config.name),
+                'include/numpy/multiarray_api.txt')
         config.add_data_files((header_dir, h_file),
                               (header_dir, t_file))
 
@@ -73,8 +75,10 @@ def configuration(parent_package='',top_path=None):
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
-        h_file = join(get_scons_pkg_build_dir(config.name), '__ufunc_api.h')
-        t_file = join(get_scons_pkg_build_dir(config.name), 'ufunc_api.txt')
+        h_file = join(get_scons_pkg_build_dir(config.name),
+                'include/numpy/__ufunc_api.h')
+        t_file = join(get_scons_pkg_build_dir(config.name),
+                'include/numpy/ufunc_api.txt')
         config.add_data_files((header_dir, h_file),
                               (header_dir, t_file))
 
