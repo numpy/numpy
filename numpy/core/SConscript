@@ -262,6 +262,10 @@ write_info(env)
 #  Build
 #==========
 
+# List of headers which need to be "installed " into the build directory for
+# proper in-place build support
+generated_headers = []
+
 #---------------------------------------
 # Generate the public configuration file
 #---------------------------------------
@@ -274,8 +278,7 @@ env['SUBST_DICT'] = config_dict
 include_dir = 'include/numpy'
 target = env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'),
         pjoin(include_dir, 'numpyconfig.h.in'))
-# "Install" the header in the build directory, so that in-place build works
-env.Install(pjoin('$distutils_installdir', include_dir), target)
+generated_headers.append(target[0])
 
 env['CONFIG_H_GEN'] = numpyconfig_sym
 
@@ -403,3 +406,8 @@ if build_blasdot:
     dotblas_o = env.PythonObject('_dotblas', source = dotblas_src)
     env.Depends(dotblas_o, pjoin("blasdot", "cblas.h"))
     dotblas = env.DistutilsPythonExtension('_dotblas', dotblas_o)
+
+# "Install" the header in the build directory, so that in-place build works
+for h in generated_headers:
+    print h
+    env.Install(pjoin('$distutils_installdir', include_dir), h)
