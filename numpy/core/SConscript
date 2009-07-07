@@ -409,5 +409,4 @@ if build_blasdot:
 
 # "Install" the header in the build directory, so that in-place build works
 for h in generated_headers:
-    print h
     env.Install(pjoin('$distutils_installdir', include_dir), h)
