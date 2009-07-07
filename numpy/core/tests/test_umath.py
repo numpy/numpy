@@ -10,6 +10,14 @@ class TestDivision(TestCase):
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
+    def test_division_complex(self):
+        # check that division is correct
+        a = np.array([1. + 1.*1j, 1. + .5*1j, 1. + 2.*1j], dtype=np.complex128)
+        assert_equal(a**2/a, a)
+        # check overflow, underflow
+        a = np.array([1.e+110 + 1j, 1.e-110 + 1j], dtype=np.complex128)
+        assert_equal(a**2/a, a)
+
 class TestPower(TestCase):
     def test_power_float(self):
         x = np.array([1., 2., 3.])
@@ -42,7 +50,7 @@ class TestPower(TestCase):
         def assert_complex_equal(x, y):
             assert_array_equal(x.real, y.real)
             assert_array_equal(x.imag, y.imag)
-        
+
         for z in [complex(0, np.inf), complex(1, np.inf)]:
             z = np.array([z], dtype=np.complex_)
             assert_complex_equal(z**1, z)
