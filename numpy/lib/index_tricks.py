@@ -742,7 +742,7 @@ def fill_diagonal(a, val):
         # all dimensions equal, so we check first.
         if not alltrue(diff(a.shape)==0):
             raise ValueError("All dimensions of input must be of equal length")
-        step = cumprod((1,) + a.shape[:-1]).sum()
+        step = 1 + (cumprod(a.shape[:-1])).sum()
 
     # Write the value out into the diagonal.
     a.flat[::step] = val
