@@ -19,14 +19,14 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'ediff1d',
            'flatnotmasked_contiguous', 'flatnotmasked_edges',
            'hsplit', 'hstack',
-           'intersect1d', 'intersect1d_nu',
+           'in1d', 'intersect1d', 'intersect1d_nu',
            'mask_cols', 'mask_rowcols', 'mask_rows', 'masked_all',
            'masked_all_like', 'median', 'mr_',
            'notmasked_contiguous', 'notmasked_edges',
            'polyfit',
            'row_stack',
            'setdiff1d', 'setmember1d', 'setxor1d',
-           'unique1d', 'union1d',
+           'unique', 'unique1d', 'union1d',
            'vander', 'vstack',
            ]
 
@@ -44,6 +44,8 @@ from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
 from numpy.linalg import lstsq
+
+from numpy.lib.utils import deprecate_with_doc
 
 #...............................................................................
 def issequence(seq):
@@ -867,7 +869,7 @@ def ediff1d(arr, to_end=None, to_begin=None):
     return ed
 
 
-def unique1d(ar1, return_index=False, return_inverse=False):
+def unique(ar1, return_index=False, return_inverse=False):
     """
     Finds the unique elements of an array.
 
@@ -877,11 +879,11 @@ def unique1d(ar1, return_index=False, return_inverse=False):
 
     See Also
     --------
-    np.unique1d : equivalent function for ndarrays.
+    np.unique : equivalent function for ndarrays.
     """
-    output = np.unique1d(ar1,
-                         return_index=return_index,
-                         return_inverse=return_inverse)
+    output = np.unique(ar1,
+                       return_index=return_index,
+                       return_inverse=return_inverse)
     if isinstance(output, tuple):
         output = list(output)
         output[0] = output[0].view(MaskedArray)
@@ -891,12 +893,12 @@ def unique1d(ar1, return_index=False, return_inverse=False):
     return output
 
 
-def intersect1d(ar1, ar2):
+def intersect1d(ar1, ar2, assume_unique=False):
     """
-    Returns the repeated or unique elements belonging to the two arrays.
+    Returns the unique elements common to both arrays.
 
-    Masked values are assumed equals one to the other.
-    The output is always a masked array
+    Masked values are considered equal one to the other.
+    The output is always a masked array.
 
     See Also
     --------
@@ -907,46 +909,21 @@ def intersect1d(ar1, ar2):
     >>> x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
     >>> y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
     >>> intersect1d(x, y)
-    masked_array(data = [1 1 3 3 --],
-                 mask = [False False False False  True],
-           fill_value = 999999)
-    """
-    aux = ma.concatenate((ar1,ar2))
-    aux.sort()
-    return aux[aux[1:] == aux[:-1]]
-
-
-
-def intersect1d_nu(ar1, ar2):
-    """
-    Returns the unique elements common to both arrays.
-
-    Masked values are considered equal one to the other.
-    The output is always a masked array.
-
-    See Also
-    --------
-    intersect1d : Returns repeated or unique common elements.
-    numpy.intersect1d_nu : equivalent function for ndarrays.
-
-    Examples
-    --------
-    >>> x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
-    >>> y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
-    >>> intersect1d_nu(x, y)
     masked_array(data = [1 3 --],
                  mask = [False False  True],
            fill_value = 999999)
 
     """
-    # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
-    aux = ma.concatenate((unique1d(ar1), unique1d(ar2)))
+    if assume_unique:
+        aux = ma.concatenate((ar1, ar2))
+    else:
+        # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
+        aux = ma.concatenate((unique(ar1), unique(ar2)))
     aux.sort()
     return aux[aux[1:] == aux[:-1]]
 
 
-
-def setxor1d(ar1, ar2):
+def setxor1d(ar1, ar2, assume_unique=False):
     """
     Set exclusive-or of 1D arrays with unique elements.
 
@@ -955,6 +932,10 @@ def setxor1d(ar1, ar2):
     numpy.setxor1d : equivalent function for ndarrays
 
     """
+    if not assume_unique:
+        ar1 = unique(ar1)
+        ar2 = unique(ar2)
+
     aux = ma.concatenate((ar1, ar2))
     if aux.size == 0:
         return aux
@@ -966,16 +947,91 @@ def setxor1d(ar1, ar2):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
-
-def setmember1d(ar1, ar2):
+def in1d(ar1, ar2, assume_unique=False):
     """
-    Return a boolean array set True where first element is in second array.
+    Test whether each element of an array is also present in a second
+    array.
 
     See Also
     --------
-    numpy.setmember1d : equivalent function for ndarrays.
+    numpy.in1d : equivalent function for ndarrays
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+    """
+    if not assume_unique:
+        ar1, rev_idx = unique(ar1, return_inverse=True)
+        ar2 = unique(ar2)
+
+    ar = ma.concatenate( (ar1, ar2) )
+    # We need this to be a stable sort, so always use 'mergesort'
+    # here. The values from the first array should always come before
+    # the values from the second array.
+    order = ar.argsort(kind='mergesort')
+    sar = ar[order]
+    equal_adj = (sar[1:] == sar[:-1])
+    flag = ma.concatenate( (equal_adj, [False] ) )
+    indx = order.argsort(kind='mergesort')[:len( ar1 )]
+
+    if assume_unique:
+        return flag[indx]
+    else:
+        return flag[indx][rev_idx]
+
+
+def union1d(ar1, ar2):
+    """
+    Union of two arrays.
+
+    See also
+    --------
+    numpy.union1d : equivalent function for ndarrays.
 
     """
+    return unique(ma.concatenate((ar1, ar2)))
+
+
+def setdiff1d(ar1, ar2, assume_unique=False):
+    """
+    Set difference of 1D arrays with unique elements.
+
+    See Also
+    --------
+    numpy.setdiff1d : equivalent function for ndarrays
+
+    """
+    aux = in1d(ar1, ar2, assume_unique=assume_unique)
+    if aux.size == 0:
+        return aux
+    else:
+        return ma.asarray(ar1)[aux == 0]
+
+@deprecate_with_doc('')
+def unique1d(ar1, return_index=False, return_inverse=False):
+    """ This function is deprecated. Use ma.unique() instead. """
+    output = np.unique1d(ar1,
+                         return_index=return_index,
+                         return_inverse=return_inverse)
+    if isinstance(output, tuple):
+        output = list(output)
+        output[0] = output[0].view(MaskedArray)
+        output = tuple(output)
+    else:
+        output = output.view(MaskedArray)
+    return output
+
+@deprecate_with_doc('')
+def intersect1d_nu(ar1, ar2):
+    """ This function is deprecated. Use ma.intersect1d() instead."""
+    # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
+    aux = ma.concatenate((unique1d(ar1), unique1d(ar2)))
+    aux.sort()
+    return aux[aux[1:] == aux[:-1]]
+
+@deprecate_with_doc('')
+def setmember1d(ar1, ar2):
+    """ This function is deprecated. Use ma.in1d() instead."""
     ar1 = ma.asanyarray(ar1)
     ar2 = ma.asanyarray( ar2 )
     ar = ma.concatenate((ar1, ar2 ))
@@ -999,35 +1055,6 @@ def setmember1d(ar1, ar2):
     indx = perm.argsort(kind='mergesort')[:len( ar1 )]
     #
     return flag[indx]
-
-
-def union1d(ar1, ar2):
-    """
-    Union of 1D arrays with unique elements.
-
-    See also
-    --------
-    numpy.union1d : equivalent function for ndarrays.
-
-    """
-    return unique1d(ma.concatenate((ar1, ar2)))
-
-
-def setdiff1d(ar1, ar2):
-    """
-    Set difference of 1D arrays with unique elements.
-
-    See Also
-    --------
-    numpy.setdiff1d : equivalent function for ndarrays
-
-    """
-    aux = setmember1d(ar1,ar2)
-    if aux.size == 0:
-        return aux
-    else:
-        return ma.asarray(ar1)[aux == 0]
-
 
 
 #####--------------------------------------------------------------------------

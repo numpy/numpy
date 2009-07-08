@@ -135,12 +135,11 @@ Set operations for 1D numeric arrays based on sort() function.
 
 ================ ===================
 ediff1d          Array difference (auxiliary function).
-unique1d         Unique elements of 1D array.
+unique           Unique elements of an array.
 intersect1d      Intersection of 1D arrays with unique elements.
-intersect1d_nu   Intersection of 1D arrays with any elements.
 setxor1d         Set exclusive-or of 1D arrays with unique elements.
-setmember1d      Return an array of shape of ar1 containing 1 where
-                 the elements of ar1 are in ar2 and 0 otherwise.
+in1d             Test whether elements in a 1D array are also present in
+                 another array.
 union1d          Union of 1D arrays with unique elements.
 setdiff1d        Set difference of 1D arrays with unique elements.
 ================ ===================

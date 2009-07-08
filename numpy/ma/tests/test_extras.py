@@ -573,19 +573,19 @@ class TestPolynomial(TestCase):
 
 class TestArraySetOps(TestCase):
     #
-    def test_unique1d_onlist(self):
-        "Test unique1d on list"
+    def test_unique_onlist(self):
+        "Test unique on list"
         data = [1, 1, 1, 2, 2, 3]
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         self.failUnless(isinstance(test[0], MaskedArray))
         assert_equal(test[0], masked_array([1, 2, 3], mask=[0, 0, 0]))
         assert_equal(test[1], [0, 3, 5])
         assert_equal(test[2], [0, 0, 0, 1, 1, 2])
 
-    def test_unique1d_onmaskedarray(self):
-        "Test unique1d on masked data w/use_mask=True"
+    def test_unique_onmaskedarray(self):
+        "Test unique on masked data w/use_mask=True"
         data = masked_array([1, 1, 1, 2, 2, 3], mask=[0, 0, 1, 0, 1, 0])
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, 2, 3, -1], mask=[0, 0, 0, 1]))
         assert_equal(test[1], [0, 3, 5, 2])
         assert_equal(test[2], [0, 0, 3, 1, 3, 2])
@@ -593,26 +593,26 @@ class TestArraySetOps(TestCase):
         data.fill_value = 3
         data = masked_array([1, 1, 1, 2, 2, 3],
                        mask=[0, 0, 1, 0, 1, 0], fill_value=3)
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, 2, 3, -1], mask=[0, 0, 0, 1]))
         assert_equal(test[1], [0, 3, 5, 2])
         assert_equal(test[2], [0, 0, 3, 1, 3, 2])
 
-    def test_unique1d_allmasked(self):
+    def test_unique_allmasked(self):
         "Test all masked"
         data = masked_array([1, 1, 1], mask=True)
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1,], mask=[True]))
         assert_equal(test[1], [0])
         assert_equal(test[2], [0, 0, 0])
         #
         "Test masked"
         data = masked
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array(masked))
         assert_equal(test[1], [0])
         assert_equal(test[2], [0])
-
+    
     def test_ediff1d(self):
         "Tests mediff1d"
         x = masked_array(np.arange(5), mask=[1,0,0,0,1])
@@ -689,15 +689,6 @@ class TestArraySetOps(TestCase):
         x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
         y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
         test = intersect1d(x, y)
-        control = array([1, 1, 3, 3, -1], mask=[0, 0, 0, 0, 1])
-        assert_equal(test, control)
-
-
-    def test_intersect1d_nu(self):
-        "Test intersect1d_nu"
-        x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
-        y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
-        test = intersect1d_nu(x, y)
         control = array([1, 3, -1], mask=[0, 0, 1])
         assert_equal(test, control)
 
@@ -705,7 +696,7 @@ class TestArraySetOps(TestCase):
     def test_setxor1d(self):
         "Test setxor1d"
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
-        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, -1])
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = setxor1d(a, b)
         assert_equal(test, array([3, 4, 7]))
         #
@@ -729,25 +720,30 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], setxor1d([],[]))
 
 
-    def test_setmember1d( self ):
-        "Test setmember1d"
+    def test_in1d( self ):
+        "Test in1d"
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
-        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, -1])
-        test = setmember1d(a, b)
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
+        test = in1d(a, b)
         assert_equal(test, [True, True, True, False, True])
         #
-        assert_array_equal([], setmember1d([],[]))
+        a = array([5, 5, 2, 1, -1], mask=[0, 0, 0, 0, 1])
+        b = array([1, 5, -1], mask=[0, 0, 1])
+        test = in1d(a, b)
+        assert_equal(test, [True, True, False, True, True])
+        #
+        assert_array_equal([], in1d([],[]))
 
 
     def test_union1d( self ):
         "Test union1d"
-        a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
-        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, -1])
+        a = array([1, 2, 5, 7, 5, -1], mask=[0, 0, 0, 0, 0, 1])
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = union1d(a, b)
         control = array([1, 2, 3, 4, 5, 7, -1], mask=[0, 0, 0, 0, 0, 0, 1])
         assert_equal(test, control)
         #
-        assert_array_equal([], setmember1d([],[]))
+        assert_array_equal([], union1d([],[]))
 
 
     def test_setdiff1d( self ):
@@ -767,8 +763,6 @@ class TestArraySetOps(TestCase):
         a = np.array(['a','b','c'])
         b = np.array(['a','b','s'])
         assert_array_equal(setdiff1d(a,b), np.array(['c']))
-
-
 
 
 class TestShapeBase(TestCase):

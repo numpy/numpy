@@ -3,7 +3,7 @@ __all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
-           'unique', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
+           'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
            'histogram', 'histogramdd', 'bincount', 'digitize', 'cov',
            'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning',
@@ -28,6 +28,7 @@ from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount, interp as compiled_interp
 from arraysetops import setdiff1d
+from utils import deprecate_with_doc
 import numpy as np
 
 #end Fernando's utilities
@@ -1345,31 +1346,11 @@ import sys
 if sys.hexversion < 0x2040000:
     from sets import Set as set
 
+@deprecate_with_doc('')
 def unique(x):
     """
-    Return the sorted, unique elements of an array or sequence.
-
-    Parameters
-    ----------
-    x : ndarray or sequence
-        Input array.
-
-    Returns
-    -------
-    y : ndarray
-        The sorted, unique elements are returned in a 1-D array.
-
-    Examples
-    --------
-    >>> np.unique([1, 1, 2, 2, 3, 3])
-    array([1, 2, 3])
-    >>> a = np.array([[1, 1], [2, 3]])
-    >>> np.unique(a)
-    array([1, 2, 3])
-
-    >>> np.unique([True, True, False])
-    array([False,  True], dtype=bool)
-
+    This function is deprecated.  Use numpy.lib.arraysetops.unique()
+    instead.
     """
     try:
         tmp = x.flatten()
