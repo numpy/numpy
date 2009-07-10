@@ -187,6 +187,39 @@ typedef enum {
         NPY_RAISE=2
 } NPY_CLIPMODE;
 
+typedef enum {
+	NPY_YEAR,
+	NPY_MONTH,
+	NPY_WEEK,
+	NPY_BUSINESSDAY,
+	NPY_DAY,
+	NPY_HOUR,
+	NPY_SECOND,
+	NPY_MILLISECOND,
+	NPY_MICROSECOND,
+	NPY_NANOSECOND,
+	NPY_PICOSECOND,
+	NPY_FEMTOSECOND,
+	NPY_ATTOSECOND
+} NPY_DATETIMEUNIT;
+
+#define NPY_DATETIME_NUMUNITS (NPY_ATTOSECOND + 1)
+#define NPY_DATETIME_DEFAULTUNIT NPY_MICROSECOND
+
+#define NPY_YEARSTR "Y"
+#define NPY_MONTHSTR "M"
+#define NPY_WEEKSTR "W"
+#define NPY_BUSINESSDAYSTR "B"
+#define NPY_DAYSTR "D"
+#define NPY_HOURSTR "h"
+#define NPY_SECONDSTR "s"
+#define NPY_MILLISECONDSTR "ms"
+#define NPY_MICROSECONDSTR "us"
+#define NPY_NANOSECONDSTR "ns"
+#define NPY_PICOSECONDSTR "ps"
+#define NPY_FEMTOSECONDSTR "fs"
+#define NPY_ATTOSECONDSTR "as"
+
 
 /* This is to typedef npy_intp to the appropriate pointer size for this
  * platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h. */
@@ -541,7 +574,7 @@ typedef struct {
 
 
 typedef struct {
-	char base[4];
+        NPY_DATETIMEUNIT base;
 	int num;
 	int den;
 	int events;

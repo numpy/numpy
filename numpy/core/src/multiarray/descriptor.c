@@ -468,11 +468,88 @@ _convert_from_list(PyObject *obj, int align)
     return NULL;
 }
 
+static char *_datetime_strings[] = {
+    NPY_YEARSTR,
+    NPY_MONTHSTR,
+    NPY_WEEKSTR,
+    NPY_BUSINESSDAYSTR,
+    NPY_DAYSTR,
+    NPY_HOURSTR,
+    NPY_SECONDSTR,
+    NPY_MILLISECONDSTR,
+    NPY_MICROSECONDSTR,
+    NPY_NANOSECONDSTR,
+    NPY_PICOSECONDSTR,
+    NPY_FEMTOSECONDSTR,
+    NPY_ATTOSECONDSTR,
+};
+
+static NPY_DATETIMEUNIT
+ _unit_from_str(char *base)
+{
+    NPY_DATETIMEUNIT unit;
+
+    if (base == NULL) 
+	return NPY_DATETIME_DEFAULTUNIT;
+
+    unit = NPY_YEAR;
+    while (unit < NPY_DATETIME_NUMUNITS) {
+	if (strcmp(base, _datetime_strings[unit]) == 0) 
+	    break;
+	unit++;
+    }
+
+    if (unit == NPY_DATETIME_NUMUNITS) 
+	return NPY_DATETIME_DEFAULTUNIT;
+
+    return unit;
+}
+
+static PyObject *
+_get_datetime_tuple_from_cobj(PyObject *cobj)
+{
+    PyArray_DatetimeMetaData *dt_data;
+    PyObject *dt_tuple;
+    
+    dt_data = PyCObject_AsVoidPtr(cobj);
+    dt_tuple = PyTuple_New(4);
+    
+    PyTuple_SET_ITEM(dt_tuple, 0, 
+		     PyString_FromString(_datetime_strings[dt_data->base]));
+    PyTuple_SET_ITEM(dt_tuple, 1, 
+		     PyInt_FromLong(dt_data->num));
+    PyTuple_SET_ITEM(dt_tuple, 2, 
+		     PyInt_FromLong(dt_data->den));
+    PyTuple_SET_ITEM(dt_tuple, 3, 
+		     PyInt_FromLong(dt_data->events)); 
+
+    return dt_tuple;
+}
+
+static PyObject *
+_convert_datetime_tuple_to_cobj(PyObject *tuple)
+{
+    PyArray_DatetimeMetaData *dt_data;
+
+    dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
+
+    dt_data->base = _unit_from_str\
+	(PyString_AsString(PyTuple_GET_ITEM(tuple, 0)));
+
+    /* Assumes other objects are Python integers */
+    dt_data->num = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 1));
+    dt_data->den = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 2));
+    dt_data->events = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 3));
+
+    return PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+}
+
 static PyArray_Descr *
 _convert_from_datetime_tuple(PyObject *obj)
 {
     PyArray_Descr *new;
     PyObject *dt_tuple;
+    PyObject *dt_cobj;
     PyObject *datetime;
     static PyObject *freq_key=NULL;
 
@@ -515,8 +592,12 @@ _convert_from_datetime_tuple(PyObject *obj)
 	PyErr_SetString(PyExc_RuntimeError, "metadata is not a dictionary");
 	return NULL;
     }
-    /* Assume this sets a new reference to dt_tuple */
-    PyDict_SetItem(new->metadata, freq_key, dt_tuple);
+
+    dt_cobj = _convert_datetime_tuple_to_cobj(dt_tuple);
+
+    /* Assume this sets a new reference to dt_cobj */
+    PyDict_SetItem(new->metadata, freq_key, dt_cobj);
+    Py_DECREF(dt_cobj);
 
     return new;
 }
@@ -1251,17 +1332,20 @@ _append_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
     PyObject *res;
     int num, den, events;
     char *basestr;       
+    PyArray_DatetimeMetaData *dt_data;
            
     /* This shouldn't happen */
     if (self->metadata == NULL) return ret;
 
     tmp = PyDict_GetItemString(self->metadata, NPY_METADATA_DTSTR);
-    if (!PyArg_ParseTuple(tmp, "siii", &basestr, &num, &den, &events))
-	return NULL;
+    dt_data = PyCObject_AsVoidPtr(tmp);
+    num = dt_data->num;
+    den = dt_data->den;
+    events = dt_data->events;
+    basestr = _datetime_strings[dt_data->base];
 
     if (num == 1) {
-	tmp = PyTuple_GET_ITEM(tmp, 0);
-	Py_INCREF(tmp);
+	tmp = PyString_FromString(basestr);
     }
     else {
 	tmp = PyString_FromFormat("%d%s", num, basestr);
@@ -1662,16 +1746,45 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
         conv = descr;
     }
 
-    if ((ometadata != NULL) && (conv->metadata != NULL)) { 
-	/* Update conv->metadata with anything new in metadata 
-	   keyword, but do not over-write anything already there
-	*/
-	if (PyDict_Merge(conv->metadata, ometadata, 0) != 0) {
-	    Py_DECREF(conv);
-	    return NULL;
-	}	
+    if ((ometadata != NULL)) {
+	if ((conv->metadata != NULL)) { 
+	    /* Update conv->metadata with anything new in metadata 
+	       keyword, but do not over-write anything already there
+	    */
+	    if (PyDict_Merge(conv->metadata, ometadata, 0) != 0) {
+		Py_DECREF(conv);
+		return NULL;
+	    }	
+	}
+	else {
+	    Py_INCREF(ometadata);
+	    conv->metadata = ometadata;
+	}
     }
     return (PyObject *)conv;
+}
+
+/* Return a tuple of (cleaned metadata dictionary, 
+                      tuple with (str, num, den, events))
+*/
+static PyObject *
+_get_pickleabletype_from_metadata(PyObject *metadata)
+{
+    PyObject *newdict;
+    PyObject *newtup, *dt_tuple;
+    PyObject *cobj;
+    
+    newdict = PyDict_Copy(metadata);    
+    PyDict_DelItemString(newdict, NPY_METADATA_DTSTR);
+    newtup = PyTuple_New(2);
+    PyTuple_SET_ITEM(newtup, 0, newdict);
+
+    cobj = PyDict_GetItemString(metadata, NPY_METADATA_DTSTR);
+    dt_tuple = _get_datetime_tuple_from_cobj(cobj);
+
+    PyTuple_SET_ITEM(newtup, 1, dt_tuple);    
+
+    return newtup;  
 }
 
 
@@ -1762,8 +1875,18 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
     if (self->metadata) {
-	Py_INCREF(self->metadata);
-	PyTuple_SET_ITEM(state, 8, self->metadata);
+	if (PyDataType_ISDATETIME(self)) {
+	    PyObject *newobj;
+	    /* Handle CObject in NPY_METADATA_DTSTR key separately */
+	    /* newobj is a tuple of cleaned metadata dictionary
+	       and tuple of date_time info (str, num, den, events) */
+	    newobj = _get_pickleabletype_from_metadata(self->metadata);
+	    PyTuple_SET_ITEM(state, 8, newobj);
+	}
+	else {
+	    Py_INCREF(self->metadata);
+	    PyTuple_SET_ITEM(state, 8, self->metadata);
+	}
     }
     else {
 	PyTuple_SET_ITEM(state, 8, Py_None);
@@ -1949,7 +2072,18 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     Py_XDECREF(self->metadata);
-    self->metadata = metadata;
+    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
+	PyObject *cobj;
+	self->metadata = PyTuple_GET_ITEM(metadata, 0);
+	Py_INCREF(self->metadata);
+	cobj = _convert_datetime_tuple_to_cobj(PyTuple_GET_ITEM(metadata, 1));
+	PyDict_SetItemString(self->metadata, NPY_METADATA_DTSTR, cobj);
+	Py_DECREF(cobj);
+    }
+    else {
+	self->metadata = metadata;
+	Py_XINCREF(metadata);
+    }
 
     Py_INCREF(Py_None);
     return Py_None;

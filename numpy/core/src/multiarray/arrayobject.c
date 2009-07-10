@@ -912,7 +912,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 Py_DECREF(result);
                 result = _void_compare
                     (self,
-                     (PyArrayObject *)array_other,
+                      (PyArrayObject *)array_other,
                      cmp_op);
                 Py_DECREF(array_other);
             }
