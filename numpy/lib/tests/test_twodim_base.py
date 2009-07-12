@@ -53,6 +53,23 @@ class TestEye(TestCase):
                                           [1,0,0],
                                           [0,1,0]]))
 
+    def test_eye_bounds(self):
+        assert_equal(eye(2, 2,  1), [[0, 1], [0, 0]])
+        assert_equal(eye(2, 2, -1), [[0, 0], [1, 0]])
+        assert_equal(eye(2, 2,  2), [[0, 0], [0, 0]])
+        assert_equal(eye(2, 2, -2), [[0, 0], [0, 0]])
+        assert_equal(eye(3, 2,  2), [[0, 0], [0, 0], [0, 0]])
+        assert_equal(eye(3, 2,  1), [[0, 1], [0, 0], [0, 0]])
+        assert_equal(eye(3, 2, -1), [[0, 0], [1, 0], [0, 1]])
+        assert_equal(eye(3, 2, -2), [[0, 0], [0, 0], [1, 0]])
+        assert_equal(eye(3, 2, -3), [[0, 0], [0, 0], [0, 0]])
+
+    def test_strings(self):
+        assert_equal(eye(2, 2, dtype='S3'), [['1', ''], ['', '1']])
+
+    def test_bool(self):
+        assert_equal(eye(2, 2, dtype=bool), [[True, False], [False, True]])
+
 class TestDiag(TestCase):
     def test_vector(self):
         vals = (100 * arange(5)).astype('l')
@@ -68,8 +85,9 @@ class TestDiag(TestCase):
         assert_equal(diag(vals, k=2), b)
         assert_equal(diag(vals, k=-2), c)
 
-    def test_matrix(self):
-        vals = (100 * get_mat(5) + 1).astype('l')
+    def test_matrix(self, vals=None):
+        if vals is None:
+            vals = (100 * get_mat(5) + 1).astype('l')
         b = zeros((5,))
         for k in range(5):
             b[k] = vals[k,k]
@@ -81,6 +99,22 @@ class TestDiag(TestCase):
         for k in range(3):
             b[k] = vals[k + 2, k]
         assert_equal(diag(vals, -2), b[:3])
+
+    def test_fortran_order(self):
+        vals = array((100 * get_mat(5) + 1), order='F', dtype='l')
+        self.test_matrix(vals)
+
+    def test_diag_bounds(self):
+        A = [[1, 2], [3, 4], [5, 6]]
+        assert_equal(diag(A, k=2), [])
+        assert_equal(diag(A, k=1), [2])
+        assert_equal(diag(A, k=0), [1, 4])
+        assert_equal(diag(A, k=-1), [3, 6])
+        assert_equal(diag(A, k=-2), [5])
+        assert_equal(diag(A, k=-3), [])
+
+    def test_failure(self):
+        self.failUnlessRaises(ValueError, diag, [[[1]]])
 
 class TestFliplr(TestCase):
     def test_basic(self):
