@@ -2,7 +2,7 @@ __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
 import numeric as N
-from numeric import concatenate, isscalar, binary_repr, identity
+from numeric import concatenate, isscalar, binary_repr, identity, asanyarray
 from numerictypes import issubdtype
 
 # make translation table
@@ -115,6 +115,7 @@ def matrix_power(M,n):
            [ 0, -1]])
 
     """
+    M = asanyarray(M)
     if len(M.shape) != 2 or M.shape[0] != M.shape[1]:
         raise ValueError("input must be a square array")
     if not issubdtype(type(n),int):
