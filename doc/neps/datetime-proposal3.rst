@@ -77,6 +77,7 @@ corresponding time spans.
    s       second           [ 2.9e9 BC,  2.9e9 AC]
    ms      millisecond      [ 2.9e6 BC,  2.9e6 AC]
    us      microsecond      [290301 BC, 294241 AC]
+   c#      ticks (100ns)    [  2757 BC,  31197 AC]
    ns      nanosecond       [  1678 AC,   2262 AC]
 ======== ================ ==========================
 
@@ -97,10 +98,9 @@ Using the long string notation::
 
 Using the short string notation::
 
-  dtype('T8[us]')
+  dtype('M8[us]')
 
-Note that a time unit should always be specified, as there is not a
-default.
+The default is microseconds if no time unit is specified.  Thus, 'M8' is equivalent to 'M8[us]'
 
 
 Setting and getting values
@@ -108,7 +108,7 @@ Setting and getting values
 
 The objects with this dtype can be set in a series of ways::
 
-  t = numpy.ones(3, dtype='T8[s]')
+  t = numpy.ones(3, dtype='M8[s]')
   t[0] = 1199164176    # assign to July 30th, 2008 at 17:31:00
   t[1] = datetime.datetime(2008, 7, 30, 17, 31, 01) # with datetime module
   t[2] = '2008-07-30T17:31:02'    # with ISO 8601
@@ -128,28 +128,28 @@ Comparisons
 
 The comparisons will be supported too::
 
-  numpy.array(['1980'], 'T8[Y]') == numpy.array(['1979'], 'T8[Y]')
+  numpy.array(['1980'], 'M8[Y]') == numpy.array(['1979'], 'M8[Y]')
   --> [False]
 
 or by applying broadcasting::
 
-  numpy.array(['1979', '1980'], 'T8[Y]') == numpy.datetime64('1980', 'Y')
+  numpy.array(['1979', '1980'], 'M8[Y]') == numpy.datetime64('1980', 'Y')
   --> [False, True]
 
 The next should work too::
 
-  numpy.array(['1979', '1980'], 'T8[Y]') == '1980-01-01'
+  numpy.array(['1979', '1980'], 'M8[Y]') == '1980-01-01'
   --> [False, True]
 
 because the right hand expression can be broadcasted into an array of 2
-elements of dtype 'T8[Y]'.
+elements of dtype 'M8[Y]'.
 
 Compatibility issues
 ~~~~~~~~~~~~~~~~~~~~
 
 This will be fully compatible with the ``datetime`` class of the
 ``datetime`` module of Python only when using a time unit of
-microseconds.  For other time units, the conversion process will loose
+microseconds.  For other time units, the conversion process will lose
 precision or will overflow as needed.  The conversion from/to a
 ``datetime`` object doesn't take leap seconds into account.
 
@@ -187,6 +187,7 @@ corresponding time spans.
    s       second           +- 2.9e12 years
    ms      millisecond      +- 2.9e9 years
    us      microsecond      +- 2.9e6 years
+   c#      ticks (100ns)    +- 2.9e4 years
    ns      nanosecond       +- 292 years
    ps      picosecond       +- 106 days
    fs      femtosecond      +- 2.6 hours
@@ -207,17 +208,17 @@ Using the long string notation::
 
 Using the short string notation::
 
-  dtype('t8[us]')
+  dtype('m8[us]')
 
-Note that a time unit should always be specified, as there is not a
-default.
+The default is micro-seconds if no default is specified:  'm8' is equivalent to 'm8[us]'
+
 
 Setting and getting values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The objects with this dtype can be set in a series of ways::
 
-  t = numpy.ones(3, dtype='t8[ms]')
+  t = numpy.ones(3, dtype='m8[ms]')
   t[0] = 12    # assign to 12 ms
   t[1] = datetime.timedelta(0, 0, 13000)   # 13 ms
   t[2] = '0:00:00.014'    # 14 ms
@@ -236,21 +237,21 @@ Comparisons
 
 The comparisons will be supported too::
 
-  numpy.array([12, 13, 14], 't8[ms]') == numpy.array([12, 13, 13], 't8[ms]')
+  numpy.array([12, 13, 14], 'm8[ms]') == numpy.array([12, 13, 13], 'm8[ms]')
   --> [True, True, False]
 
 or by applying broadcasting::
 
-  numpy.array([12, 13, 14], 't8[ms]') == numpy.timedelta64(13, 'ms')
+  numpy.array([12, 13, 14], 'm8[ms]') == numpy.timedelta64(13, 'ms')
   --> [False, True, False]
 
 The next should work too::
 
-  numpy.array([12, 13, 14], 't8[ms]') == '0:00:00.012'
+  numpy.array([12, 13, 14], 'm8[ms]') == '0:00:00.012'
   --> [True, False, False]
 
 because the right hand expression can be broadcasted into an array of 3
-elements of dtype 't8[ms]'.
+elements of dtype 'm8[ms]'.
 
 Compatibility issues
 ~~~~~~~~~~~~~~~~~~~~
@@ -340,12 +341,12 @@ Operating with date/time arrays
 The only arithmetic operation allowed between absolute dates is the
 subtraction::
 
-  In [10]: numpy.ones(3, "T8[s]") - numpy.zeros(3, "T8[s]")
+  In [10]: numpy.ones(3, "M8[s]") - numpy.zeros(3, "M8[s]")
   Out[10]: array([1, 1, 1], dtype=timedelta64[s])
 
 But not other operations::
 
-  In [11]: numpy.ones(3, "T8[s]") + numpy.zeros(3, "T8[s]")
+  In [11]: numpy.ones(3, "M8[s]") + numpy.zeros(3, "M8[s]")
   TypeError: unsupported operand type(s) for +: 'numpy.ndarray' and 'numpy.ndarray'
 
 Comparisons between absolute dates are allowed.
@@ -360,12 +361,12 @@ time units can be very different, and it is not clear at all what time
 unit will be preferred for the user.  For example, this should be
 allowed::
 
-  >>> numpy.ones(3, dtype="T8[Y]") - numpy.zeros(3, dtype="T8[Y]")
+  >>> numpy.ones(3, dtype="M8[Y]") - numpy.zeros(3, dtype="M8[Y]")
   array([1, 1, 1], dtype="timedelta64[Y]")
 
 But the next should not::
 
-  >>> numpy.ones(3, dtype="T8[Y]") - numpy.zeros(3, dtype="T8[ns]")
+  >>> numpy.ones(3, dtype="M8[Y]") - numpy.zeros(3, dtype="M8[ns]")
   raise numpy.IncompatibleUnitError  # what unit to choose?
 
 
@@ -375,15 +376,15 @@ But the next should not::
 It will be possible to add and subtract relative times from absolute
 dates::
 
-  In [10]: numpy.zeros(5, "T8[Y]") + numpy.ones(5, "t8[Y]")
+  In [10]: numpy.zeros(5, "M8[Y]") + numpy.ones(5, "m8[Y]")
   Out[10]: array([1971, 1971, 1971, 1971, 1971], dtype=datetime64[Y])
 
-  In [11]: numpy.ones(5, "T8[Y]") - 2 * numpy.ones(5, "t8[Y]")
+  In [11]: numpy.ones(5, "M8[Y]") - 2 * numpy.ones(5, "m8[Y]")
   Out[11]: array([1969, 1969, 1969, 1969, 1969], dtype=datetime64[Y])
 
 But not other operations::
 
-  In [12]: numpy.ones(5, "T8[Y]") * numpy.ones(5, "t8[Y]")
+  In [12]: numpy.ones(5, "M8[Y]") * numpy.ones(5, "m8[Y]")
   TypeError: unsupported operand type(s) for *: 'numpy.ndarray' and 'numpy.ndarray'
 
 Casting rules
@@ -408,15 +409,15 @@ Finally, it will be possible to operate with relative times as if they
 were regular int64 dtypes *as long as* the result can be converted back
 into a ``timedelta64``::
 
-  In [10]: numpy.ones(3, 't8[us]')
+  In [10]: numpy.ones(3, 'm8[us]')
   Out[10]: array([1, 1, 1], dtype="timedelta64[us]")
 
-  In [11]: (numpy.ones(3, 't8[M]') + 2) ** 3
+  In [11]: (numpy.ones(3, 'm8[M]') + 2) ** 3
   Out[11]: array([27, 27, 27], dtype="timedelta64[M]")
 
 But::
 
-  In [12]: numpy.ones(5, 't8') + 1j
+  In [12]: numpy.ones(5, 'm8') + 1j
   TypeError: the result cannot be converted into a ``timedelta64``
 
 Casting rules
@@ -426,14 +427,14 @@ When combining two ``timedelta64`` dtypes with different time units the
 outcome will be the shorter of both ("keep the precision" rule).  For
 example::
 
-  In [10]: numpy.ones(3, 't8[s]') + numpy.ones(3, 't8[m]')
+  In [10]: numpy.ones(3, 'm8[s]') + numpy.ones(3, 'm8[m]')
   Out[10]: array([61, 61, 61],  dtype="timedelta64[s]")
 
 However, due to the impossibility to know the exact duration of a
 relative year or a relative month, when these time units appear in one
 of the operands, the operation will not be allowed::
 
-  In [11]: numpy.ones(3, 't8[Y]') + numpy.ones(3, 't8[D]')
+  In [11]: numpy.ones(3, 'm8[Y]') + numpy.ones(3, 'm8[D]')
   raise numpy.IncompatibleUnitError  # how to convert relative years to days?
 
 In order to being able to perform the above operation a new NumPy
@@ -451,11 +452,11 @@ days).
 
 With this, the above operation can be done as follows::
 
-  In [10]: t_years = numpy.ones(3, 't8[Y]')
+  In [10]: t_years = numpy.ones(3, 'm8[Y]')
 
   In [11]: t_days = numpy.change_timeunit(t_years, 'D', '2001-01-01')
 
-  In [12]: t_days + numpy.ones(3, 't8[D]')
+  In [12]: t_days + numpy.ones(3, 'm8[D]')
   Out[12]: array([366, 366, 366],  dtype="timedelta64[D]")
 
 
