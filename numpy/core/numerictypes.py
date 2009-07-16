@@ -656,13 +656,23 @@ def _find_common_coerce(a, b):
         thisind = __test_types.index(a.char)
     except ValueError:
         return None
+    return _can_coerce_all([a,b], start=thisind)
+
+# Find a data-type that all data-types in a list can be coerced to
+def _can_coerce_all(dtypelist, start=0):
+    N = len(dtypelist)
+    if N == 0:
+        return None
+    if N == 1:
+        return dtypelist[0]
+    thisind = start
     while thisind < __len_test_types:
         newdtype = dtype(__test_types[thisind])
-        if newdtype >= b and newdtype >= a:
+        numcoerce = len([x for x in dtypelist if newdtype >= x])
+        if numcoerce == N:
             return newdtype
         thisind += 1
     return None
-
 
 def find_common_type(array_types, scalar_types):
     """
@@ -692,16 +702,14 @@ def find_common_type(array_types, scalar_types):
     array_types = [dtype(x) for x in array_types]
     scalar_types = [dtype(x) for x in scalar_types]
 
-    if len(scalar_types) == 0:
-        if len(array_types) == 0:
-            return None
-        else:
-            return max(array_types)
-    if len(array_types) == 0:
-        return max(scalar_types)
+    maxa = _can_coerce_all(array_types)
+    maxsc = _can_coerce_all(scalar_types)
 
-    maxa = max(array_types)
-    maxsc = max(scalar_types)
+    if maxa is None:
+        return maxsc
+
+    if maxsc is None:
+        return maxa
 
     try:
         index_a = _kind_list.index(maxa.kind)
