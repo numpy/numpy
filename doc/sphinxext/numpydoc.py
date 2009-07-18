@@ -96,6 +96,59 @@ def setup(app, get_doc_object_=get_doc_object):
     app.add_config_value('numpydoc_edit_link', None, True)
     app.add_config_value('numpydoc_use_plots', None, False)
 
+    # Extra mangling directives
+    name_type = {
+        'cfunction': 'function',
+        'cmember': 'attribute',
+        'cmacro': 'function',
+        'ctype': 'class',
+        'cvar': 'object',
+        'class': 'class',
+        'function': 'function',
+        'attribute': 'attribute',
+        'method': 'function',
+        'staticmethod': 'function',
+        'classmethod': 'function',
+    }
+
+    for name, objtype in name_type.items():
+        app.add_directive('np-' + name, wrap_mangling_directive(name, objtype))
+    
+#------------------------------------------------------------------------------
+# Input-mangling directives
+#------------------------------------------------------------------------------
+from docutils.statemachine import ViewList
+
+def get_directive(name):
+    from docutils.parsers.rst.directives import directive
+    try:
+        return directive(name, None, None)[0]
+    except AttributeError:
+        return None
+              
+def wrap_mangling_directive(base_directive_name, objtype):
+    base_directive = get_directive(base_directive_name)
+
+    class directive(base_directive):
+        def run(self):
+            env = self.state.document.settings.env
+
+            name = None
+            if self.arguments:
+                m = re.match(r'^(.*\s+)?(.*?)(\(.*)?', self.arguments[0])
+                name = m.group(2).strip()
+
+            if not name:
+                name = self.arguments[0]
+
+            lines = list(self.content)
+            mangle_docstrings(env.app, objtype, name, None, None, lines)
+            self.content = ViewList(lines, self.content.parent)
+
+            return base_directive.run(self)
+
+    return directive
+
 #------------------------------------------------------------------------------
 # Monkeypatch sphinx.ext.autodoc to accept argspecless autodocs (Sphinx < 0.5)
 #------------------------------------------------------------------------------
