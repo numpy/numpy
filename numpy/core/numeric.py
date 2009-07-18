@@ -6,7 +6,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
-           'correlate', 'acorrelate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
+           'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
@@ -22,6 +22,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS']
 
 import sys
+import warnings
 import multiarray
 import umath
 from umath import *
@@ -585,7 +586,7 @@ def _mode_from_name(mode):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
 
-def correlate(a,v,mode='valid'):
+def correlate(a,v,mode='valid',old_behavior=True):
     """
     Discrete, linear correlation of two 1-dimensional sequences.
 
@@ -602,14 +603,25 @@ def correlate(a,v,mode='valid'):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
+    old_behavior : bool
+        If True, uses the old, numeric behavior (correlate(a,v) == correlate(v,
+        a), and the conjugate is not taken for complex arrays). If False, uses
+        the conventional signal processing definition (see note).
 
     See Also
     --------
     convolve : Discrete, linear convolution of two
                one-dimensional sequences.
-    acorrelate: Discrete correlation following the usual signal processing
-               definition for complex arrays, and without assuming that
-               correlate(a, b) == correlate(b, a)
+
+    Note
+    ----
+    If old_behavior is False, this function computes the correlation as
+    generally defined in signal processing texts::
+
+        z[k] = sum_n a[n] * conj(v[n+k])
+
+    with a and v sequences being zero-padded where necessary and conj being the
+    conjugate.
 
     Examples
     --------
@@ -622,42 +634,17 @@ def correlate(a,v,mode='valid'):
 
     """
     mode = _mode_from_name(mode)
-    return multiarray.correlate(a,v,mode)
-
-def acorrelate(a, v, mode='valid'):
-    """
-    Discrete, linear correlation of two 1-dimensional sequences.
-
-    This function computes the correlation as generally defined in signal
-    processing texts::
-
-        z[k] = sum_n a[n] * conj(v[n+k])
-
-    with a and v sequences being zero-padded where necessary and conj being the
-    conjugate.
-
-    Parameters
-    ----------
-    a, v : array_like
-        Input sequences.
-    mode : {'valid', 'same', 'full'}, optional
-        Refer to the `convolve` docstring.  Note that the default
-        is `valid`, unlike `convolve`, which uses `full`.
-
-    See Also
-    --------
-    convolve : Discrete, linear convolution of two
-               one-dimensional sequences.
-    correlate: Deprecated function to compute correlation
-
-    Notes
-    -----
-    This is the function which corresponds to matlab xcorr.
-
-    """
-    mode = _mode_from_name(mode)
-    return multiarray.acorrelate(a, v, mode)
-
+    if old_behavior:
+        warnings.warn("""
+The current behavior of correlate is deprecated for 1.4.0, and will be removed
+for NumPy 1.5.0.
+    
+The new behavior fits the conventional definition of correlation: inputs are
+never swapped, and the second argument is conjugated for complex arrays.""",
+            DeprecationWarning)
+        return multiarray.correlate(a,v,mode)
+    else:
+        return multiarray.correlate2(a,v,mode)
 
 def convolve(a,v,mode='full'):
     """

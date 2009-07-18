@@ -1766,6 +1766,29 @@ Array Functions
     *op1*, 2 - return all possible shifts (any overlap at all is
     accepted).
 
+    .. rubric:: Notes
+
+    This does not compute the usual correlation: if op2 is larger than op1, the
+    arguments are swapped, and the conjugate is never taken for complex arrays.
+    See PyArray_Correlate2 for the usual signal processing correlation.
+
+.. cfunction:: PyObject* PyArray_Correlate2(PyObject* op1, PyObject* op2, int mode)
+
+    Updated version of PyArray_Correlate, which uses the usual definition of
+    correlation for 1d arrays. The correlation is computed at each output point
+    by multiplying *op1* by a shifted version of *op2* and summing the result.
+    As a result of the shift, needed values outside of the defined range of
+    *op1* and *op2* are interpreted as zero. The mode determines how many
+    shifts to return: 0 - return only shifts that did not need to assume zero-
+    values; 1 - return an object that is the same size as *op1*, 2 - return all
+    possible shifts (any overlap at all is accepted).
+
+    .. rubric:: Notes
+
+    Compute z as follows::
+
+      z[k] = sum_n op1[n] * conj(op2[n+k])
+
 .. cfunction:: PyObject* PyArray_Where(PyObject* condition, PyObject* x, PyObject* y)
 
     If both ``x`` and ``y`` are ``NULL``, then return

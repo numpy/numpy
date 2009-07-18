@@ -896,19 +896,20 @@ class _TestCorrelate(TestCase):
 
     def test_float(self):
         self._setup(np.float)
-        z = np.correlate(self.x, self.y, 'full')
+        z = np.correlate(self.x, self.y, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z1)
-        z = np.correlate(self.y, self.x, 'full')
-        assert_array_almost_equal(z, self.z1)
+        z = np.correlate(self.y, self.x, 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z2)
 
     def test_object(self):
         self._setup(Decimal)
-        z = np.correlate(self.x, self.y, 'full')
+        z = np.correlate(self.x, self.y, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, self.z1)
-        z = np.correlate(self.y, self.x, 'full')
-        assert_array_almost_equal(z, self.z1)
+        z = np.correlate(self.y, self.x, 'full', old_behavior=self.old_behavior)
+        assert_array_almost_equal(z, self.z2)
 
 class TestCorrelate(_TestCorrelate):
+    old_behavior = True
     def _setup(self, dt):
         # correlate uses an unconventional definition so that correlate(a, b)
         # == correlate(b, a), so force the corresponding outputs to be the same
@@ -923,7 +924,8 @@ class TestCorrelate(_TestCorrelate):
         z = np.correlate(x, y, 'full')
         assert_array_almost_equal(z, r_z)
 
-class TestAcorrelate(_TestCorrelate):
+class TestCorrelateNew(_TestCorrelate):
+    old_behavior = False
     def test_complex(self):
         x = np.array([1, 2, 3, 4+1j], dtype=np.complex)
         y = np.array([-1, -2j, 3+1j], dtype=np.complex)
@@ -932,7 +934,7 @@ class TestAcorrelate(_TestCorrelate):
         #assert_array_almost_equal(z, r_z)
 
         r_z = r_z[::-1].conjugate()
-        z = np.acorrelate(y, x, 'full')
+        z = np.correlate(y, x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, r_z)
 
 class TestArgwhere:

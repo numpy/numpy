@@ -906,7 +906,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 }
 
 /*
- * Implementation which is common between PyArray_Correlate and PyArray_Acorrelate
+ * Implementation which is common between PyArray_Correlate and PyArray_Correlate2
  *
  * inverted is set to 1 if computed correlate(ap2, ap1), 0 otherwise
  */
@@ -1065,13 +1065,13 @@ _pyarray_revert(PyArrayObject *ret)
 }
 
 /*NUMPY_API
- * acorrelate(a1,a2,mode)
+ * correlate(a1,a2,mode)
  *
- * This function computes the usual correlation (acorrelate(a1, a2) !=
- * accorrelate(a2, a1), and conjugate the second argument for complex inputs
+ * This function computes the usual correlation (correlate(a1, a2) !=
+ * correlate(a2, a1), and conjugate the second argument for complex inputs
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Acorrelate(PyObject *op1, PyObject *op2, int mode)
+PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     int typenum;
@@ -1796,7 +1796,7 @@ static PyObject *array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
 }
 
 static PyObject*
-array_acorrelate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) 
+array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) 
 {
     PyObject *shape, *a0;
     int mode = 0;
@@ -1806,7 +1806,7 @@ array_acorrelate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                                      &a0, &shape, &mode)) {
         return NULL;
     }
-    return PyArray_Acorrelate(a0, shape, mode);
+    return PyArray_Correlate2(a0, shape, mode);
 }
 
 static PyObject *
@@ -2416,8 +2416,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"correlate",
         (PyCFunction)array_correlate,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"acorrelate",
-        (PyCFunction)array_acorrelate,
+    {"correlate2",
+        (PyCFunction)array_correlate2,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"frombuffer",
         (PyCFunction)array_frombuffer,
