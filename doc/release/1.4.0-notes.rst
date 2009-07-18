@@ -10,11 +10,45 @@ Highlights
 New features
 ============
 
+Automatic detection of forward incompatibilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, if an extension was built against a version N of NumPy, and used on
+a system with NumPy M < N, the import_array was successfull, which could cause
+crashes because the version M does not have a function in N. Starting from
+NumPy 1.4.0, this will cause a failure in import_array, so the error will be
+catched early on.
+
+New C API
+~~~~~~~~~
+
+The following C functions have been added to the C API:
+
+    #. PyArray_GetNDArrayCFeatureVersion: return the *API* version of the
+       loaded numpy.
+    #. PyArray_Correlate2 - like PyArray_Correlate, but implements the usual
+       definition of correlation. Inputs are not swapped, and conjugate is
+       taken for complex arrays.
+    #. PyArray_NeighborhoodIterNew - a new iterator to iterate over a
+       neighborhood of a point, with automatic boundaries handling.
+
 New ufuncs
 ~~~~~~~~~~
 
-#. copysign - return the value of the first argument with the sign copied from
-   the second argument.
+The following ufuncs have been added to the C API:
+
+    #. copysign - return the value of the first argument with the sign copied
+       from the second argument.
+
+Deprecations
+============
+
+The following functions are deprecated:
+
+    #. correlate: it takes a new keyword argument old_behavior. When True (the
+       default), it returns the same result as before. When False, compute the
+       conventional correlation, and take the conjugate for complex arrays. The
+       old behavior will be removed in NumPy 1.5
 
 Internal changes
 ================
@@ -23,7 +57,8 @@ split multiarray and umath
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The source code of multiarray and umath has been split into separate logic
-units. This should make the source code more amenable for newcomers.
+compilation units. This should make the source code more amenable for
+newcomers.
 
 Separate compilation
 ~~~~~~~~~~~~~~~~~~~~
@@ -38,4 +73,5 @@ Separate core math library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 New functions which have been added:
+
 	* npy_copysign
