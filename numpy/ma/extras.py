@@ -13,8 +13,9 @@ __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'average',
-           'column_stack','compress_cols','compress_rowcols', 'compress_rows',
-           'count_masked', 'corrcoef', 'cov',
+           'clump_masked', 'clump_unmasked', 'column_stack', 'compress_cols',
+           'compress_rowcols', 'compress_rows', 'count_masked', 'corrcoef',
+           'cov',
            'diagflat', 'dot','dstack',
            'ediff1d',
            'flatnotmasked_contiguous', 'flatnotmasked_edges',
@@ -30,7 +31,7 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'vander', 'vstack',
            ]
 
-from itertools import groupby
+import itertools
 import warnings
 
 import core as ma
@@ -1366,7 +1367,7 @@ def flatnotmasked_contiguous(a):
     if len(unmasked) == 0:
         return None
     result = []
-    for k, group in groupby(enumerate(unmasked), lambda (i,x):i-x):
+    for (k, group) in itertools.groupby(enumerate(unmasked), lambda (i,x):i-x):
         tmp = np.array([g[1] for g in group], int)
 #        result.append((tmp.size, tuple(tmp[[0,-1]])))
         result.append( slice(tmp[0], tmp[-1]) )
@@ -1409,6 +1410,73 @@ def notmasked_contiguous(a, axis=None):
         idx[other] = i
         result.append( flatnotmasked_contiguous(a[idx]) )
     return result
+
+
+def _ezclump(mask):
+    """
+    Finds the clumps (groups of data with the same values) for a 1D bool array.
+
+    Returns a series of slices.
+    """
+    #def clump_masked(a):
+    if mask.ndim > 1:
+        mask = mask.ravel()
+    idx = (mask[1:] - mask[:-1]).nonzero()
+    idx = idx[0] + 1
+    slices = [slice(left, right)
+              for (left, right) in zip(itertools.chain([0], idx),
+                                       itertools.chain(idx, [len(mask)]),)]
+    return slices
+
+
+def clump_unmasked(a):
+    """
+    Returns a list of slices corresponding to the unmasked clumps of a 1D array.
+
+    Examples
+    --------
+    >>> a = ma.masked_array(np.arange(10))
+    >>> a[[0, 1, 2, 6, 8, 9]] = ma.masked
+    >>> clump_unmasked(a)
+    [slice(3, 6, None), slice(7, 8, None)]
+
+    .. versionadded:: 1.4.0
+    """
+    mask = getattr(a, '_mask', nomask)
+    if mask is nomask:
+        return [slice(0, a.size)]
+    slices = _ezclump(mask)
+    if a[0] is masked:
+        result = slices[1::2]
+    else:
+        result = slices[::2]
+    return result
+
+
+def clump_masked(a):
+    """
+    Returns a list of slices corresponding to the masked clumps of a 1D array.
+
+    Examples
+    --------
+    >>> a = ma.masked_array(np.arange(10))
+    >>> a[[0, 1, 2, 6, 8, 9]] = ma.masked
+    >>> clump_masked(a)
+    [slice(0, 3, None), slice(6, 7, None), slice(8, None, None)]
+
+    .. versionadded:: 1.4.0
+    """
+    mask = ma.getmask(a)
+    if mask is nomask:
+        return []
+    slices = _ezclump(mask)
+    if len(slices):
+        if a[0] is masked:
+            slices = slices[::2]
+        else:
+            slices = slices[1::2]
+    return slices
+
 
 
 #####--------------------------------------------------------------------------

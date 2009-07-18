@@ -2513,7 +2513,10 @@ class MaskedArray(ndarray):
         self._mask = _mask
         # Finalize the mask ...........
         if self._mask is not nomask:
-            self._mask.shape = self.shape
+            try:
+                self._mask.shape = self.shape
+            except ValueError:
+                self._mask = nomask
         return
     #..................................
     def __array_wrap__(self, obj, context=None):

@@ -70,7 +70,24 @@ class TestGeneric(TestCase):
                         mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
         test = masked_all_like(control)
         assert_equal(test, control)
+
+    def test_clump_masked(self):
+        "Test clump_masked"
+        a = masked_array(np.arange(10))
+        a[[0, 1, 2, 6, 8, 9]] = masked
         #
+        test = clump_masked(a)
+        control = [slice(0, 3), slice(6, 7), slice(8, 10)]
+        assert_equal(test, control)
+
+    def test_clump_unmasked(self):
+        "Test clump_unmasked"
+        a = masked_array(np.arange(10))
+        a[[0, 1, 2, 6, 8, 9]] = masked
+        test = clump_unmasked(a)
+        control = [slice(3, 6), slice(7, 8),]
+        assert_equal(test, control)
+
 
 
 class TestAverage(TestCase):
@@ -151,8 +168,13 @@ class TestAverage(TestCase):
         a2dma = average(a2dm, axis=1)
         assert_equal(a2dma, [1.5, 4.0])
 
+
+
 class TestConcatenator(TestCase):
-    "Tests for mr_, the equivalent of r_ for masked arrays."
+    """
+    Tests for mr_, the equivalent of r_ for masked arrays.
+    """
+
     def test_1d(self):
         "Tests mr_ on 1D arrays."
         assert_array_equal(mr_[1,2,3,4,5,6],array([1,2,3,4,5,6]))
@@ -186,7 +208,10 @@ class TestConcatenator(TestCase):
 
 
 class TestNotMasked(TestCase):
-    "Tests notmasked_edges and notmasked_contiguous."
+    """
+    Tests notmasked_edges and notmasked_contiguous.
+    """
+
     def test_edges(self):
         "Tests unmasked_edges"
         data = masked_array(np.arange(25).reshape(5, 5),
@@ -222,7 +247,6 @@ class TestNotMasked(TestCase):
         assert_equal(test[1], [(0, 1, 2, 4), (4, 2, 4, 4)])
 
 
-
     def test_contiguous(self):
         "Tests notmasked_contiguous"
         a = masked_array(np.arange(24).reshape(3,8),
@@ -245,7 +269,6 @@ class TestNotMasked(TestCase):
         self.failUnless(tmp[1] is None)
         assert_equal(tmp[2][-1], slice(7,7,None))
         assert_equal(tmp[2][-2], slice(0,5,None))
-
 
 
 

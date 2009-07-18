@@ -783,6 +783,12 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(amaximum, np.maximum.outer(a,a))
 
 
+    def test_minmax_reduce(self):
+        "Test np.min/maximum.reduce on array w/ full False mask"
+        a = array([1, 2, 3], mask=[False, False, False])
+        b = np.maximum.reduce(a)
+        assert_equal(b, 3)
+
     def test_minmax_funcs_with_output(self):
         "Tests the min/max functions with explicit outputs"
         mask = np.random.rand(12).round()
@@ -1359,7 +1365,7 @@ class TestFillingValues(TestCase):
         assert_equal(test[1][0], maximum_fill_value(a['B']['BA']))
         assert_equal(test[1][1], maximum_fill_value(a['B']['BB']))
         assert_equal(test[1], maximum_fill_value(a['B']))
-    
+
 
 #------------------------------------------------------------------------------
 
