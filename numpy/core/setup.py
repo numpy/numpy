@@ -434,8 +434,6 @@ def configuration(parent_package='',top_path=None):
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
                 moredefs.append(('NPY_USE_C99_FORMATS', 1))
-            else:
-                moredefs.append(('NPY_USE_C99_FORMATS', 0))
 
             # Inline check
             inline = config_cmd.check_inline()

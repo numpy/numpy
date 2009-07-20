@@ -120,10 +120,9 @@ numpyconfig_sym.append(('NPY_NO_SMP', nosmp))
 # Check whether we can use C99 printing formats
 #----------------------------------------------
 if config.CheckDeclaration(('PRIdPTR'), includes  = '#include <inttypes.h>'):
-    usec99 = 1
+    numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', '#define NPY_USE_C99_FORMATS 1'))
 else:
-    usec99 = 0
-numpyconfig_sym.append(('USE_C99_FORMATS', usec99))
+    numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
     
 #----------------------
 # Checking the mathlib
@@ -199,7 +198,9 @@ numpyconfig_sym.append(('NPY_INLINE', inline))
 
 if ENABLE_SEPARATE_COMPILATION:
     config.Define("ENABLE_SEPARATE_COMPILATION", 1)
-    numpyconfig_sym.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
+    numpyconfig_sym.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', '#define NPY_ENABLE_SEPARATE_COMPILATION 1'))
+else:
+    numpyconfig_sym.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', ''))
 
 # Checking for visibility macro
 def visibility_define():
