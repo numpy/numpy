@@ -98,6 +98,15 @@ double npy_hypot(double x, double y)
 {
     double yx;
 
+    /* Handle the case where x or y is a NaN */
+    if (npy_isnan(x * y)) {
+        if (npy_isinf(x) | npy_isinf(y)) {
+            return NPY_INFINITY;
+        } else {
+            return NPY_NAN;
+        }
+    }
+
     x = npy_fabs(x);
     y = npy_fabs(y);
     if (x < y) {
@@ -105,8 +114,9 @@ double npy_hypot(double x, double y)
         x = y;
         y = temp;
     }
-    if (x == 0.)
+    if (x == 0.) {
         return 0.;
+    }
     else {
         yx = y/x;
         return x*npy_sqrt(1.+yx*yx);
