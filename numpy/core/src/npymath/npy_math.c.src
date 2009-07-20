@@ -309,11 +309,6 @@ static @type@ modf@c@(@type@ x, @type@ *iptr)
 /**end repeat**/
 
 /*
- * Useful constants in three precisions:
- * XXX: those should really be in the header
- */
-
-/*
  * Non standard functions
  */
 
