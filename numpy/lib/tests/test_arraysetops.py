@@ -210,7 +210,7 @@ class TestAso(TestCase):
         assert_array_equal([], union1d([],[]))
 
     def test_setdiff1d( self ):
-        a = np.array( [6, 5, 4, 7, 1, 2] )
+        a = np.array( [6, 5, 4, 7, 1, 2, 7, 4] )
         b = np.array( [2, 4, 3, 3, 2, 1, 5] )
 
         ec = np.array( [6, 7] )

@@ -771,7 +771,7 @@ class TestArraySetOps(TestCase):
 
     def test_setdiff1d( self ):
         "Test setdiff1d"
-        a = array([6, 5, 4, 7, 1, 2, 1], mask=[0, 0, 0, 0, 0, 0, 1])
+        a = array([6, 5, 4, 7, 7, 1, 2, 1], mask=[0, 0, 0, 0, 0, 0, 0, 1])
         b = array([2, 4, 3, 3, 2, 1, 5])
         test = setdiff1d(a, b)
         assert_equal(test, array([6, 7, -1], mask=[0, 0, 1]))

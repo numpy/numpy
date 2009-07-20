@@ -1002,7 +1002,10 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     numpy.setdiff1d : equivalent function for ndarrays
 
     """
-    aux = in1d(ar1, ar2, assume_unique=assume_unique)
+    if not assume_unique:
+        ar1 = unique(ar1)
+        ar2 = unique(ar2)
+    aux = in1d(ar1, ar2, assume_unique=True)
     if aux.size == 0:
         return aux
     else:
