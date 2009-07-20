@@ -73,7 +73,9 @@ Floating point classification
 
     This is a function equivalent to C99 copysign: return x with the same sign
     as y. Works for any value, including inf and nan. Single and extended
-    precisions are available with suffic f and l.
+    precisions are available with suffix f and l.
+
+    .. versionadded:: 1.4.0
 
 Useful math constants
 ~~~~~~~~~~~~~~~~~~~~~
