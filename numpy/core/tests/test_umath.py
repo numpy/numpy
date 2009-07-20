@@ -199,6 +199,25 @@ class TestExpm1(TestCase):
         assert_almost_equal(ncu.expm1(0.2), ncu.exp(0.2)-1)
         assert_almost_equal(ncu.expm1(1e-6), ncu.exp(1e-6)-1)
 
+class TestHypot(TestCase, object):
+    def test_simple(self):
+        assert_almost_equal(ncu.hypot(1, 1), ncu.sqrt(2))
+        assert_almost_equal(ncu.hypot(0, 0), 0)
+
+def assert_hypot_isnan(x, y):
+    assert np.isnan(ncu.hypot(x, y))
+
+def assert_hypot_isinf(x, y):
+    assert np.isinf(ncu.hypot(x, y))
+
+def test_hypot_special_values():
+    yield assert_hypot_isnan, np.nan, np.nan
+    yield assert_hypot_isnan, np.nan, 1
+    yield assert_hypot_isinf, np.nan, np.inf
+    yield assert_hypot_isinf, np.inf, np.nan
+    yield assert_hypot_isinf, np.inf, 0
+    yield assert_hypot_isinf, 0, np.inf
+
 class TestMaximum(TestCase):
     def test_reduce_complex(self):
         assert_equal(np.maximum.reduce([1,2j]),1)
