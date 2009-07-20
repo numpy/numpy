@@ -308,8 +308,8 @@ static @type@ modf@c@(@type@ x, @type@ *iptr)
 
 /**end repeat**/
 
-/* 
- * Useful constants in three precisions: 
+/*
+ * Useful constants in three precisions:
  * XXX: those should really be in the header
  */
 
@@ -328,12 +328,12 @@ static @type@ modf@c@(@type@ x, @type@ *iptr)
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)
 #define DEG2RAD  (NPY_PI@c@/180.0@c@)
 
-static @type@ rad2deg@c@(@type@ x) 
+static @type@ rad2deg@c@(@type@ x)
 {
     return x*RAD2DEG;
 }
 
-static @type@ deg2rad@c@(@type@ x) 
+static @type@ deg2rad@c@(@type@ x)
 {
     return x*DEG2RAD;
 }
