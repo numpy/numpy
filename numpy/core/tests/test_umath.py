@@ -218,6 +218,70 @@ def test_hypot_special_values():
     yield assert_hypot_isinf, np.inf, 0
     yield assert_hypot_isinf, 0, np.inf
 
+def test_arctan2_special_values():
+    def assert_arctan2_isnan(x, y):
+        assert np.isnan(ncu.arctan2(x, y))
+
+    def assert_arctan2_ispinf(x, y):
+        assert np.isinf(ncu.arctan2(x, y)) and ncu.arctan2(x, y) > 0
+
+    def assert_arctan2_isninf(x, y):
+        assert np.isinf(ncu.arctan2(x, y)) and ncu.arctan2(x, y) < 0
+
+    def assert_arctan2_ispzero(x, y):
+        assert ncu.arctan2(x, y) == 0 and not np.signbit(ncu.arctan2(x, y))
+
+    def assert_arctan2_isnzero(x, y):
+        assert ncu.arctan2(x, y) == 0 and np.signbit(ncu.arctan2(x, y))
+
+    # atan2(+-0, -0) returns +-pi.
+    yield assert_almost_equal,  ncu.arctan2(np.PZERO, np.NZERO), np.pi
+    yield assert_almost_equal,  ncu.arctan2(np.NZERO, np.NZERO), -np.pi
+    # atan2(+-0, +0) returns +-0.
+    yield assert_arctan2_ispzero,  np.PZERO, np.PZERO
+    yield assert_arctan2_isnzero,  np.NZERO, np.PZERO
+
+    # atan2(+-0, x) returns +-pi for x < 0.
+    yield assert_almost_equal,  ncu.arctan2(np.PZERO, -1), np.pi
+    yield assert_almost_equal,  ncu.arctan2(np.NZERO, -1), -np.pi
+
+   # atan2(+-0, x) returns +-0 for x > 0.
+    yield assert_arctan2_ispzero,  np.PZERO, 1
+    yield assert_arctan2_isnzero,  np.NZERO, 1
+
+   # atan2(y, +-0) returns +pi/2 for y > 0.
+    yield assert_almost_equal,  ncu.arctan2(1, np.PZERO), 0.5 * np.pi
+    yield assert_almost_equal,  ncu.arctan2(1, np.NZERO), 0.5 * np.pi
+
+   # atan2(y, +-0) returns -pi/2 for y < 0.
+    yield assert_almost_equal,  ncu.arctan2(-1, np.PZERO), -0.5 * np.pi
+    yield assert_almost_equal,  ncu.arctan2(-1, np.NZERO), -0.5 * np.pi
+
+   # atan2(+-y, -infinity) returns +-pi for finite y > 0.
+    yield assert_almost_equal,  ncu.arctan2(1, np.NINF),  np.pi
+    yield assert_almost_equal,  ncu.arctan2(-1, np.NINF), -np.pi
+
+   # atan2(+-y, +infinity) returns +-0 for finite y > 0.
+    yield assert_arctan2_ispzero,  1, np.inf
+    yield assert_arctan2_isnzero, -1, np.inf
+
+   # atan2(+-infinity, x) returns +-pi/2 for finite x.
+    yield assert_almost_equal, ncu.arctan2( np.inf, 1),  0.5 * np.pi
+    yield assert_almost_equal, ncu.arctan2(-np.inf, 1), -0.5 * np.pi
+
+   # atan2(+-infinity, -infinity) returns +-3*pi/4.
+    yield assert_almost_equal, ncu.arctan2( np.inf, -np.inf),  0.75 * np.pi
+    yield assert_almost_equal, ncu.arctan2(-np.inf, -np.inf), -0.75 * np.pi
+
+   # atan2(+-infinity, +infinity) returns +-pi/4.
+    yield assert_almost_equal, ncu.arctan2( np.inf, np.inf),  0.25 * np.pi
+    yield assert_almost_equal, ncu.arctan2(-np.inf, np.inf), -0.25 * np.pi
+
+   # atan2(nan, x) returns nan for any x, including inf
+    yield assert_arctan2_isnan, np.nan, np.inf
+    yield assert_arctan2_isnan, np.inf, np.nan
+    yield assert_arctan2_isnan, np.nan, np.nan
+
 class TestMaximum(TestCase):
     def test_reduce_complex(self):
         assert_equal(np.maximum.reduce([1,2j]),1)
