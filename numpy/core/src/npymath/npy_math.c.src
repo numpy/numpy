@@ -100,7 +100,7 @@ double npy_hypot(double x, double y)
 
     /* Handle the case where x or y is a NaN */
     if (npy_isnan(x * y)) {
-        if (npy_isinf(x) | npy_isinf(y)) {
+        if (npy_isinf(x) || npy_isinf(y)) {
             return NPY_INFINITY;
         } else {
             return NPY_NAN;
