@@ -68,7 +68,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-static double expm1(double x)
+double npy_expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -82,7 +82,7 @@ static double expm1(double x)
 #endif
 
 #ifndef HAVE_LOG1P
-static double log1p(double x)
+double npy_log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -94,7 +94,7 @@ static double log1p(double x)
 #endif
 
 #ifndef HAVE_HYPOT
-static double hypot(double x, double y)
+double npy_hypot(double x, double y)
 {
     double yx;
 
@@ -115,14 +115,14 @@ static double hypot(double x, double y)
 #endif
 
 #ifndef HAVE_ACOSH
-static double acosh(double x)
+double npy_acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 #endif
 
 #ifndef HAVE_ASINH
-static double asinh(double xx)
+double npy_asinh(double xx)
 {
     double x, d;
     int sign;
@@ -144,7 +144,7 @@ static double asinh(double xx)
 #endif
 
 #ifndef HAVE_ATANH
-static double atanh(double x)
+double npy_atanh(double x)
 {
     if (x > 0) {
         return -0.5*log1p(-2.0*x/(1.0 + x));
@@ -156,7 +156,7 @@ static double atanh(double x)
 #endif
 
 #ifndef HAVE_RINT
-static double rint(double x)
+double npy_rint(double x)
 {
     double y, r;
 
@@ -178,7 +178,7 @@ static double rint(double x)
 #endif
 
 #ifndef HAVE_TRUNC
-static double trunc(double x)
+double npy_trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
@@ -186,7 +186,7 @@ static double trunc(double x)
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-static double exp2(double x)
+double npy_exp2(double x)
 {
     return exp(LOG2*x);
 }
@@ -195,7 +195,7 @@ static double exp2(double x)
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-static double log2(double x)
+double npy_log2(double x)
 {
     return INVLOG2*log(x);
 }
@@ -203,7 +203,7 @@ static double log2(double x)
 #endif
 
 #ifndef HAVE_COPYSIGN
-static inline double copysign(double x, double y)
+double npy_copysign(double x, double y)
 {
 	npy_uint32_t hx,hy;
 	GET_HIGH_WORD(hx,x);
@@ -270,9 +270,9 @@ int _npy_signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@ @kind@@c@(@type@ x)
+@type@ npy_@kind@@c@(@type@ x)
 {
-    return (@type@) @kind@((double)x);
+    return (@type@) npy_@kind@((double)x);
 }
 #endif
 
@@ -286,9 +286,9 @@ static @type@ @kind@@c@(@type@ x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@ @kind@@c@(@type@ x, @type@ y)
+@type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
-    return (@type@) @kind@((double)x, (double) y);
+    return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
 /**end repeat1**/
@@ -297,10 +297,10 @@ static @type@ @kind@@c@(@type@ x, @type@ y)
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-static @type@ modf@c@(@type@ x, @type@ *iptr)
+@type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
-    double y = modf((double)x, &niptr);
+    double y = npy_modf((double)x, &niptr);
     *iptr = (@type@) niptr;
     return (@type@) y;
 }
@@ -323,17 +323,17 @@ static @type@ modf@c@(@type@ x, @type@ *iptr)
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)
 #define DEG2RAD  (NPY_PI@c@/180.0@c@)
 
-static @type@ rad2deg@c@(@type@ x)
+@type@ npy_rad2deg@c@(@type@ x)
 {
     return x*RAD2DEG;
 }
 
-static @type@ deg2rad@c@(@type@ x)
+@type@ npy_deg2rad@c@(@type@ x)
 {
     return x*DEG2RAD;
 }
 
-static @type@ log2_1p@c@(@type@ x)
+@type@ npy_log2_1p@c@(@type@ x)
 {
     @type@ u = 1 + x;
     if (u == 1) {
@@ -343,9 +343,9 @@ static @type@ log2_1p@c@(@type@ x)
     }
 }
 
-static @type@ exp2_1m@c@(@type@ x)
+@type@ npy_exp2_1m@c@(@type@ x)
 {
-    @type@ u = exp@c@(x);
+    @type@ u = npy_exp@c@(x);
     if (u == 1.0) {
         return LOGE2*x;
     } else if (u - 1 == -1) {
@@ -355,7 +355,7 @@ static @type@ exp2_1m@c@(@type@ x)
     }
 }
 
-static @type@ logaddexp@c@(@type@ x, @type@ y)
+@type@ npy_logaddexp@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
@@ -370,23 +370,20 @@ static @type@ logaddexp@c@(@type@ x, @type@ y)
     }
 }
 
-static @type@ logaddexp2@c@(@type@ x, @type@ y)
+@type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
-        return x + log2_1p@c@(npy_exp2@c@(-tmp));
+        return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
     }
     else if (tmp <= 0) {
-        return y + log2_1p@c@(npy_exp2@c@(tmp));
+        return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
     }
     else {
         /* NaNs, or infinities of the same sign involved */
         return x + y;
     }
 }
-
-#define degrees@c@ rad2deg@c@
-#define radians@c@ deg2rad@c@
 
 #undef LOGE2
 #undef LOG2E
@@ -396,38 +393,46 @@ static @type@ logaddexp2@c@(@type@ x, @type@ y)
 /**end repeat**/
 
 /*
- * Decorate all the functions: those are the public ones
+ * Decorate all the math functions which are available on the current platform
  */
 
 /**begin repeat
  * #type = npy_longdouble,double,float#
  * #c = l,,f#
+ * #C = L,,F#
  */
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2,
- *         rad2deg,deg2rad,exp2_1m#
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
+ * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
+ *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
-
+#ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@type@ x)
 {
     return @kind@@c@(x);
 }
+#endif
 
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,logaddexp,logaddexp2,copysign#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
+#ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return @kind@@c@(x, y);
 }
+#endif
 /**end repeat1**/
 
+#ifdef HAVE_MODF@C@
 @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return modf@c@(x, iptr);
 }
+#endif
 
 /**end repeat**/
