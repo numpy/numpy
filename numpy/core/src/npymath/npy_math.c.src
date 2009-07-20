@@ -70,13 +70,13 @@
 #ifndef HAVE_EXPM1
 double npy_expm1(double x)
 {
-    double u = exp(x);
+    double u = npy_exp(x);
     if (u == 1.0) {
         return x;
     } else if (u-1.0 == -1.0) {
         return -1;
     } else {
-        return (u-1.0) * x/log(u);
+        return (u-1.0) * x/npy_log(u);
     }
 }
 #endif
@@ -88,7 +88,7 @@ double npy_log1p(double x)
     if (u == 1.0) {
         return x;
     } else {
-        return log(u) * x / (u - 1);
+        return npy_log(u) * x / (u - 1);
     }
 }
 #endif
@@ -98,8 +98,8 @@ double npy_hypot(double x, double y)
 {
     double yx;
 
-    x = fabs(x);
-    y = fabs(y);
+    x = npy_fabs(x);
+    y = npy_fabs(y);
     if (x < y) {
         double temp = x;
         x = y;
@@ -109,7 +109,7 @@ double npy_hypot(double x, double y)
         return 0.;
     else {
         yx = y/x;
-        return x*sqrt(1.+yx*yx);
+        return x*npy_sqrt(1.+yx*yx);
     }
 }
 #endif
@@ -117,7 +117,7 @@ double npy_hypot(double x, double y)
 #ifndef HAVE_ACOSH
 double npy_acosh(double x)
 {
-    return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
+    return 2*npy_log(npy_sqrt((x+1.0)/2)+npy_sqrt((x-1.0)/2));
 }
 #endif
 
@@ -137,9 +137,9 @@ double npy_asinh(double xx)
     if (x > 1e8) {
         d = x;
     } else {
-        d = sqrt(x*x + 1);
+        d = npy_sqrt(x*x + 1);
     }
-    return sign*log1p(x*(1.0 + x/(d+1)));
+    return sign*npy_log1p(x*(1.0 + x/(d+1)));
 }
 #endif
 
@@ -147,10 +147,10 @@ double npy_asinh(double xx)
 double npy_atanh(double x)
 {
     if (x > 0) {
-        return -0.5*log1p(-2.0*x/(1.0 + x));
+        return -0.5*npy_log1p(-2.0*x/(1.0 + x));
     }
     else {
-        return 0.5*log1p(2.0*x/(1.0 - x));
+        return 0.5*npy_log1p(2.0*x/(1.0 - x));
     }
 }
 #endif
@@ -160,14 +160,14 @@ double npy_rint(double x)
 {
     double y, r;
 
-    y = floor(x);
+    y = npy_floor(x);
     r = x - y;
 
     if (r > 0.5) goto rndup;
 
     /* Round to nearest even */
     if (r==0.5) {
-        r = y - 2.0*floor(0.5*y);
+        r = y - 2.0*npy_floor(0.5*y);
         if (r==1.0) {
         rndup:
             y+=1.0;
@@ -180,7 +180,7 @@ double npy_rint(double x)
 #ifndef HAVE_TRUNC
 double npy_trunc(double x)
 {
-    return x < 0 ? ceil(x) : floor(x);
+    return x < 0 ? npy_ceil(x) : npy_floor(x);
 }
 #endif
 
@@ -188,7 +188,7 @@ double npy_trunc(double x)
 #define LOG2 0.69314718055994530943
 double npy_exp2(double x)
 {
-    return exp(LOG2*x);
+    return npy_exp(LOG2*x);
 }
 #undef LOG2
 #endif
@@ -197,7 +197,7 @@ double npy_exp2(double x)
 #define INVLOG2 1.4426950408889634074
 double npy_log2(double x)
 {
-    return INVLOG2*log(x);
+    return INVLOG2*npy_log(x);
 }
 #undef INVLOG2
 #endif
