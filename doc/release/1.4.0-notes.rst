@@ -40,6 +40,14 @@ The following ufuncs have been added to the C API:
     #. copysign - return the value of the first argument with the sign copied
        from the second argument.
 
+Testing
+~~~~~~~
+
+    #. deprecated decorator: this decorator may be used to avoid cluttering
+       testing output while testing DeprecationWarning is effectively raised by
+       the decorated test.
+
+
 Deprecations
 ============
 
@@ -48,7 +56,8 @@ The following functions are deprecated:
     #. correlate: it takes a new keyword argument old_behavior. When True (the
        default), it returns the same result as before. When False, compute the
        conventional correlation, and take the conjugate for complex arrays. The
-       old behavior will be removed in NumPy 1.5
+       old behavior will be removed in NumPy 1.5, and raises a
+       DeprecationWarning in 1.4.
 
 New iterators
 ~~~~~~~~~~~~~
