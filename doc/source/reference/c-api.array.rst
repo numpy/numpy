@@ -1981,15 +1981,39 @@ hypercube. Neighborhood iterator automatically handle boundaries, thus making
 this kind of code much easier to write than manual boundaries handling, at the
 cost of a slight overhead.
 
-.. cfunction:: PyObject* PyArray_NeighborhoodIterNew(PyArrayIterObject* iter, npy_intp bounds)
+.. cfunction:: PyObject* PyArray_NeighborhoodIterNew(PyArrayIterObject* iter, npy_intp bounds, int mode, PyArrayObject* fill_value)
 
     This function creates a new neighborhood iterator from an existing
     iterator.  The neighborhood will be computed relatively to the position
-    currently pointed by *iter*.  The *bounds* argument is expected to be a (2
-    * iter->ao->nd) arrays, such as the range bound[2*i]->bounds[2*i+1] defines
-    the range where to walk for dimension i (both bounds are included in the
-    walked coordinates). The bounds should be ordered for each dimension
-    (bounds[2*i] <= bounds[2*i+1]).
+    currently pointed by *iter*, the bounds define the shape of the
+    neighborhood iterator, and the mode argument the boundaries handling mode.
+
+    The *bounds* argument is expected to be a (2 * iter->ao->nd) arrays, such
+    as the range bound[2*i]->bounds[2*i+1] defines the range where to walk for
+    dimension i (both bounds are included in the walked coordinates). The
+    bounds should be ordered for each dimension (bounds[2*i] <= bounds[2*i+1]).
+
+    The mode should be one of:
+   
+    * NPY_NEIGHBORHOOD_ITER_ZERO_PADDING: zero padding. Outside bounds values
+      will be 0.
+    * NPY_NEIGHBORHOOD_ITER_ONE_PADDING: one padding, Outside bounds values
+      will be 1.
+    * NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING: constant padding. Outside bounds
+      values will be the same as the first item in fill_value.
+    * NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING: mirror padding. Outside bounds
+      values will be as if the array items were mirrored. For example, for the
+      array [1, 2, 3, 4], x[-2] will be 2, x[-2] will be 1, x[4] will be 4,
+      x[5] will be 1, etc...
+    * NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING: circular padding. Outside bounds
+      values will be as if the array was repeated. For example, for the
+      array [1, 2, 3, 4], x[-2] will be 3, x[-2] will be 4, x[4] will be 1,
+      x[5] will be 2, etc...
+
+    If the mode is constant filling (NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING),
+    fill_value should point to an array object which holds the filling value
+    (the first item will be the filling value if the array contains more than
+    one item). For other cases, fill_value may be NULL.
 
     - The iterator holds a reference to iter
     - Return NULL on failure (in which case the reference count of iter is not
@@ -2007,13 +2031,14 @@ cost of a slight overhead.
 
     .. code-block:: c
 
-       PyArrayIterObject *iter;
-       PyArrayNeighborhoodIterObject *neigh_iter;
+       PyArrayIterObject \*iter;
+       PyArrayNeighborhoodIterObject \*neigh_iter;
        iter = PyArray_IterNew(x);
 
        //For a 3x3 kernel
        bounds = {-1, 1, -1, 1};
-       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(iter, bounds);
+       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
+            iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {
             for (j = 0; j < neigh_iter->size; ++j) {
@@ -2037,6 +2062,40 @@ cost of a slight overhead.
     After this call, iter->dataptr points to the next point of the
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
+
+.. cfunction:: int PyArrayNeighborhoodIter_ResetConstant(PyArrayNeighborhoodIterObject* iter)
+
+    Same as PyArrayNeighborhoodIter_Reset, but only works for  0, 1 and
+    constant padding. This is faster than the general function as it does not
+    need to test for the mode every time. In debug mode (-DDEBUG), an assert
+    tests for mismatch with the mode of the iterator, 
+
+.. cfunction:: int PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter)
+
+    Same as PyArrayNeighborhoodIter_ResetConstant, but only works for mirror
+    padding.
+
+.. cfunction:: int PyArrayNeighborhoodIter_ResetCircular(PyArrayNeighborhoodIterObject* iter)
+
+    Same as PyArrayNeighborhoodIter_ResetConstant, but only works for circular
+    padding.
+
+.. cfunction:: int PyArrayNeighborhoodIter_NextConstant(PyArrayNeighborhoodIterObject* iter)
+
+    Same as PyArrayNeighborhoodIter_Next, but only works for  0, 1 and
+    constant padding. This is faster than the general function as it does not
+    need to test for the mode every time. In debug mode (-DDEBUG), an assert
+    tests for mismatch with the mode of the iterator, 
+
+.. cfunction:: int PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter)
+
+    Same as PyArrayNeighborhoodIter_NextConstant, but only works for mirror
+    padding.
+
+.. cfunction:: int PyArrayNeighborhoodIter_NextCircular(PyArrayNeighborhoodIterObject* iter)
+
+    Same as PyArrayNeighborhoodIter_NextConstant, but only works for circular
+    padding.
 
 Array Scalars
 -------------
