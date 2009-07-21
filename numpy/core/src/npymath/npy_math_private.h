@@ -18,6 +18,8 @@
 #ifndef _NPY_MATH_PRIVATE_H_
 #define	_NPY_MATH_PRIVATE_H_
 
+#include <numpy/npy_endian.h>
+
 /*
  * The original fdlibm code used statements like:
  *	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
@@ -47,8 +49,8 @@ typedef union
   double value;
   struct
   {
-    npy_uint32_t msw;
-    npy_uint32_t lsw;
+    npy_uint32 msw;
+    npy_uint32 lsw;
   } parts;
 } ieee_double_shape_type;
 
@@ -61,8 +63,8 @@ typedef union
   double value;
   struct
   {
-    u_int32_t lsw;
-    u_int32_t msw;
+    npy_uint32 lsw;
+    npy_uint32 msw;
   } parts;
 } ieee_double_shape_type;
 
