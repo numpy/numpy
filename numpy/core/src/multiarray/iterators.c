@@ -1768,7 +1768,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds)
     for (i = 0; i < ret->nd; ++i) {
         ret->dimensions[i] = x->ao->dimensions[i];
     }
-    ret->zero = PyArray_Zero(x->ao);
+    ret->constant = PyArray_Zero(x->ao);
 
     /*
      * XXX: we force x iterator to be non contiguous because we need
@@ -1783,7 +1783,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds)
 
 static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
 {
-    PyDataMem_FREE(iter->zero);
+    PyDataMem_FREE(iter->constant);
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);

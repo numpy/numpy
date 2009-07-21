@@ -939,9 +939,9 @@ typedef struct {
     /* Neighborhood points coordinates are computed relatively to the point pointed
      * by _internal_iter */
     PyArrayIterObject* _internal_iter;
-    /* To keep a reference to the zero representation correponding to the dtype
-     * of the array we iterate over */
-    char* zero;
+    /* To keep a reference to the representation of the constant value for
+     * constant padding */
+    char* constant;
 } PyArrayNeighborhoodIterObject;
 
 /*

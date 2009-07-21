@@ -79,7 +79,7 @@ static NPY_INLINE int _PyArrayNeighborhoodIter_IncrCoord2D(PyArrayNeighborhoodIt
 #define _INF_SET_PTR(c) \
     bd = iter->coordinates[c] + iter->_internal_iter->coordinates[c]; \
     if (bd < 0 || bd > iter->dimensions[c]) { \
-        iter->dataptr = iter->zero; \
+        iter->dataptr = iter->constant; \
         return 1; \
     } \
     offset = iter->coordinates[c] * iter->strides[c]; \
