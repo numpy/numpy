@@ -1755,6 +1755,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
     if (PyArray_ISOBJECT(ar->ao)) {
         memcpy(ret, &mode->constant, sizeof(PyObject*));
+        Py_INCREF(*(PyObject**)ret);
     } else {
         /* Non-object types */
 
@@ -1806,19 +1807,25 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
 
     if (mode == NULL) {
         ret->constant = PyArray_Zero(x->ao);
+        ret->mode = NPY_NEIGHBORHOOD_ITER_ZERO_PADDING;
     } else {
         switch (mode->mode) {
             case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
                 ret->constant = PyArray_Zero(x->ao);
+                ret->mode = mode->mode;
                 break;
             case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
                 ret->constant = PyArray_One(x->ao);
+                ret->mode = mode->mode;
                 break;
             case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+                /* New reference in returned value of _set_constant if array
+                 * object */
                 ret->constant = _set_constant(ret, mode);
                 if (ret->constant == NULL) {
                     goto clean_x;
                 }
+                ret->mode = mode->mode;
                 break;
             default:
                 PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
@@ -1844,7 +1851,12 @@ clean_x:
 }
 
 static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
-{
+{   
+    if (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
+        if (PyArray_ISOBJECT(iter->_internal_iter->ao)) {
+            Py_DECREF(*(PyObject**)iter->constant);
+        }
+    }
     PyDataMem_FREE(iter->constant);
     Py_DECREF(iter->_internal_iter);
 

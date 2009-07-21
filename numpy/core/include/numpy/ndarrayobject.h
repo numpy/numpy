@@ -955,6 +955,8 @@ typedef struct {
     /* To keep a reference to the representation of the constant value for
      * constant padding */
     char* constant;
+
+    int mode;
 } PyArrayNeighborhoodIterObject;
 
 /*
