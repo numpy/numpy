@@ -8,6 +8,8 @@ static NPY_INLINE int
 _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_SetPtr(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter);
 
 /*
  * Inline implementations
@@ -20,6 +22,20 @@ static NPY_INLINE int PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObjec
         iter->coordinates[i] = iter->bounds[i][0];
     }
     _PyArrayNeighborhoodIter_SetPtr(iter);
+
+    return 0;
+}
+
+static NPY_INLINE int PyArrayNeighborhoodIter_ResetMirror(
+                PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING);
+    for (i = 0; i < iter->nd; ++i) {
+        iter->coordinates[i] = iter->bounds[i][0];
+    }
+    _PyArrayNeighborhoodIter_SetPtrMirror(iter);
 
     return 0;
 }
@@ -113,6 +129,61 @@ static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtr2D(PyArrayNeighborhoodIterO
 }
 #undef _INF_SET_PTR
 
+#define _NPY_IS_EVEN(x) ((x) % 2 == 0)
+
+/* For an array x of dimension n, and given index i, returns j, 0 <= j < n
+ * such as x[i] = x[j], with x assumed to be mirrored. For example, for x =
+ * {1, 2, 3} (n = 3)
+ *
+ * index -5 -4 -3 -2 -1 0 1 2 3 4 5 6
+ * value  2  3  3  2  1 1 2 3 3 2 1 1
+ *
+ * _npy_pos_index_mirror(4, 3) will return 1, because x[4] = x[1]*/
+static NPY_INLINE npy_intp _npy_pos_remainder(npy_intp i, npy_intp n)
+{
+        npy_intp k, l, j;
+
+        /* Mirror i such as it is guaranteed to be positive */
+        if (i < 0) {
+                i = - i - 1;
+        }
+
+        /* compute k and l such as i = k * n + l, 0 <= l < k */
+        k = i / n;
+        l = i - k * n;
+
+        if (_NPY_IS_EVEN(k)) {
+                j = l;
+        } else {
+                j = n - 1 - l;
+        }
+        return j;
+}
+#undef _NPY_IS_EVEN
+
+#define _INF_SET_PTR_MIRROR(c) \
+    bd = iter->coordinates[c] + iter->_internal_iter->coordinates[c]; \
+    truepos = _npy_pos_remainder(bd, iter->dimensions[c]); \
+    offset = (truepos - iter->_internal_iter->coordinates[c]) * iter->strides[c]; \
+    iter->dataptr += offset;
+
+/* set the dataptr from its current coordinates */
+static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtrMirror(
+                PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+    npy_intp offset, bd, truepos;
+
+    iter->dataptr = iter->_internal_iter->dataptr;
+
+    for(i = 0; i < iter->nd; ++i) {
+        _INF_SET_PTR_MIRROR(i)
+    }
+
+    return 0;
+}
+#undef _INF_SET_PTR_MIRROR
+
 /*
  * Advance to the next neighbour
  */
@@ -128,6 +199,15 @@ static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject
 {
     _PyArrayNeighborhoodIter_IncrCoord (iter);
     _PyArrayNeighborhoodIter_SetPtr(iter);
+
+    return 0;
+}
+
+static NPY_INLINE
+int PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter)
+{
+    _PyArrayNeighborhoodIter_IncrCoord(iter);
+    _PyArrayNeighborhoodIter_SetPtrMirror(iter);
 
     return 0;
 }

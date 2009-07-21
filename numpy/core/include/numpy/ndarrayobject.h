@@ -969,6 +969,11 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
+static NPY_INLINE int
+PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter);
+
 /* Include inline implementations - functions defined there are not considered
  * public API */
 #define _NPY_INCLUDE_NEIGHBORHOOD_IMP
