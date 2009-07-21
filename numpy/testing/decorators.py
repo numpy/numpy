@@ -187,7 +187,10 @@ class WarningMessage(object):
         local_values = locals()
         for attr in self._WARNING_DETAILS:
             setattr(self, attr, local_values[attr])
-        self._category_name = category.__name__ if category else None
+        if category:
+            self._category_name = category.__name__
+        else:
+            self._category_name = None
 
     def __str__(self):
         return ("{message : %r, category : %r, filename : %r, lineno : %s, "
@@ -197,7 +200,10 @@ class WarningMessage(object):
 class WarningManager:
     def __init__(self, record=False, module=None):
         self._record = record
-        self._module = sys.modules['warnings'] if module is None else module
+        if module is None:
+            self._module = sys.modules['warnings']
+        else:
+            self._module = module
         self._entered = False
 
     def __enter__(self):
