@@ -10,6 +10,8 @@ static NPY_INLINE int
 _PyArrayNeighborhoodIter_SetPtrConstant(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrCircular(PyArrayNeighborhoodIterObject* iter);
 
 /*
  * Update to next item of the iterator
@@ -237,6 +239,17 @@ int PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter)
     return 0;
 }
 
+static NPY_INLINE
+int PyArrayNeighborhoodIter_NextCircular(PyArrayNeighborhoodIterObject* iter)
+{
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING);
+
+    _PyArrayNeighborhoodIter_IncrCoord(iter);
+    _PyArrayNeighborhoodIter_SetPtrCircular(iter);
+
+    return 0;
+}
+
 static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
 {
     _PyArrayNeighborhoodIter_IncrCoord (iter);
@@ -288,6 +301,21 @@ PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter)
         iter->coordinates[i] = iter->bounds[i][0];
     }
     _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+
+    return 0;
+}
+
+static NPY_INLINE int
+PyArrayNeighborhoodIter_ResetCircular(PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING);
+
+    for (i = 0; i < iter->nd; ++i) {
+        iter->coordinates[i] = iter->bounds[i][0];
+    }
+    _PyArrayNeighborhoodIter_SetPtrCircular(iter);
 
     return 0;
 }
