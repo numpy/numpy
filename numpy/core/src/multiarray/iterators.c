@@ -1738,9 +1738,44 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
 
 /*========================= Neighborhood iterator ======================*/
 
+static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter);
+
+static char* _set_constant(PyArrayNeighborhoodIterObject* iter, 
+        PyArrayNeighborhoodIterMode* mode)
+{
+    char *ret;
+    PyArrayIterObject *ar = iter->_internal_iter;
+    int storeflags, st;
+
+    ret = PyDataMem_NEW(ar->ao->descr->elsize);
+    if (ret == NULL) {
+        PyErr_SetNone(PyExc_MemoryError);
+        return NULL;
+    }
+
+    if (PyArray_ISOBJECT(ar->ao)) {
+        memcpy(ret, &mode->constant, sizeof(PyObject*));
+    } else {
+        /* Non-object types */
+
+        storeflags = ar->ao->flags;
+        ar->ao->flags |= BEHAVED;
+        st = ar->ao->descr->f->setitem(mode->constant, ret, ar->ao);
+        ar->ao->flags = storeflags;
+
+        if (st < 0) {
+            PyDataMem_FREE(ret);
+            return NULL;
+        }
+    }
+
+    return ret;
+}
+
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds)
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
+                PyArrayNeighborhoodIterMode* mode)
 {
     int i;
     PyArrayNeighborhoodIterObject *ret;
@@ -1768,7 +1803,28 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds)
     for (i = 0; i < ret->nd; ++i) {
         ret->dimensions[i] = x->ao->dimensions[i];
     }
-    ret->constant = PyArray_Zero(x->ao);
+
+    if (mode == NULL) {
+        ret->constant = PyArray_Zero(x->ao);
+    } else {
+        switch (mode->mode) {
+            case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
+                ret->constant = PyArray_Zero(x->ao);
+                break;
+            case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
+                ret->constant = PyArray_One(x->ao);
+                break;
+            case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+                ret->constant = _set_constant(ret, mode);
+                if (ret->constant == NULL) {
+                    goto clean_x;
+                }
+                break;
+            default:
+                PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
+                goto clean_x;
+        }
+    }
 
     /*
      * XXX: we force x iterator to be non contiguous because we need
@@ -1779,6 +1835,12 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds)
     PyArrayNeighborhoodIter_Reset(ret);
 
     return (PyObject*)ret;
+
+clean_x:
+    Py_DECREF(ret->_internal_iter);
+    array_iter_base_dealloc((PyArrayIterObject*)ret);
+    _pya_free((PyArrayObject*)ret);
+    return NULL;
 }
 
 static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)

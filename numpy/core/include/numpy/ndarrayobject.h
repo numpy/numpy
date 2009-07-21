@@ -909,6 +909,19 @@ typedef struct {
 
 } PyArrayMapIterObject;
 
+enum {
+    NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,
+    NPY_NEIGHBORHOOD_ITER_ONE_PADDING,
+    NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING,
+    NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING,
+    NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING,
+};
+
+typedef struct {
+    int mode;
+    PyObject* constant;
+} PyArrayNeighborhoodIterMode;
+
 typedef struct {
     PyObject_HEAD
 
