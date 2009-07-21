@@ -142,7 +142,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # config.h in the public namespace, so we have a clash for the common
     # functions we test. We remove every function tested by python's
     # autoconf, hoping their own test are correct
-    if sys.version_info[:2] >= (2, 6):
+    if sys.version_info[:2] >= (2, 5):
         for f in OPTIONAL_STDFUNCS_MAYBE:
             if config.check_decl(fname2def(f),
                         headers=["Python.h", "math.h"]):

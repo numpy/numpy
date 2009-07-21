@@ -90,7 +90,7 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "copysign", "hypot", "atan2", "pow"]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
-OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh"]
+OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot"]
 
 # C99 functions: float and long double versions
 C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
