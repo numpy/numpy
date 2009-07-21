@@ -240,6 +240,11 @@ def deprecated(conditional=True):
         Decorator, which, when applied to a function, causes SkipTest
         to be raised when the skip_condition was True, and the function
         to be called normally otherwise.
+
+    Notes
+    -----
+
+    .. versionadded:: 1.4.0
     """
     def deprecate_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
