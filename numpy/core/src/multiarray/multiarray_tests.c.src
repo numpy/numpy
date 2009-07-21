@@ -28,7 +28,7 @@ static int copy_@type@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
         PyArrayNeighborhoodIter_Reset(niterx);
 
         for(j = 0; j < itx->ao->nd; ++j) {
-            odims[0] = bounds[2 * j + 1] - bounds[2 * j] + 1;
+            odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
         aout = (PyArrayObject*)PyArray_SimpleNew(itx->ao->nd, odims, @typenum@);
         if (aout == NULL) {
@@ -69,7 +69,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
         PyArrayNeighborhoodIter_Reset(niterx);
 
         for(j = 0; j < itx->ao->nd; ++j) {
-            odims[0] = bounds[2 * j + 1] - bounds[2 * j] + 1;
+            odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
         aout = (PyArrayObject*)PyArray_SimpleNew(itx->ao->nd, odims, NPY_OBJECT);
         if (aout == NULL) {
@@ -95,7 +95,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     PyObject *x, *fill, *out, *b;
     PyArrayObject *ax, *afill;
     PyArrayIterObject *itx;
-    int i, typenum, imode;
+    int i, typenum, imode, st;
     npy_intp bounds[NPY_MAXDIMS*2];
     PyArrayNeighborhoodIterObject *niterx;
     PyArrayNeighborhoodIterMode mode;
@@ -167,17 +167,21 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
 
     switch (typenum) {
         case NPY_OBJECT:
-            copy_object(itx, niterx, bounds, &out);
+            st = copy_object(itx, niterx, bounds, &out);
             break;
         case NPY_INT:
-            copy_int(itx, niterx, bounds, &out);
+            st = copy_int(itx, niterx, bounds, &out);
             break;
         case NPY_DOUBLE:
-            copy_double(itx, niterx, bounds, &out);
+            st = copy_double(itx, niterx, bounds, &out);
             break;
         default:
             PyErr_SetString(PyExc_ValueError, "Type not supported");
             goto clean_niterx;
+    }
+
+    if (st) {
+        goto clean_niterx;
     }
 
     Py_DECREF(niterx);
