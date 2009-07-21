@@ -234,6 +234,11 @@ def test_arctan2_special_values():
     def assert_arctan2_isnzero(x, y):
         assert ncu.arctan2(x, y) == 0 and np.signbit(ncu.arctan2(x, y))
 
+    # atan2(1, 1) returns pi/4.
+    yield assert_almost_equal,  ncu.arctan2(1, 1), 0.25 * np.pi
+    yield assert_almost_equal,  ncu.arctan2(-1, 1), -0.25 * np.pi
+    yield assert_almost_equal,  ncu.arctan2(1, -1), 0.75 * np.pi
+
     # atan2(+-0, -0) returns +-pi.
     yield assert_almost_equal,  ncu.arctan2(np.PZERO, np.NZERO), np.pi
     yield assert_almost_equal,  ncu.arctan2(np.NZERO, np.NZERO), -np.pi
