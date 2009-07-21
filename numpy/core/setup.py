@@ -704,6 +704,9 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath_tests',
                     sources = [join('src','umath', 'umath_tests.c.src')])
 
+    config.add_extension('multiarray_tests',
+                    sources = [join('src', 'multiarray', 'multiarray_tests.c.src')])
+
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')
 
