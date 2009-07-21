@@ -1827,6 +1827,10 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
                 }
                 ret->mode = mode->mode;
                 break;
+            case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+                ret->mode = mode->mode;
+                ret->constant = NULL;
+                break;
             default:
                 PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
                 goto clean_x;
@@ -1857,7 +1861,9 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
             Py_DECREF(*(PyObject**)iter->constant);
         }
     }
-    PyDataMem_FREE(iter->constant);
+    if (iter->constant != NULL) {
+        PyDataMem_FREE(iter->constant);
+    }
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
