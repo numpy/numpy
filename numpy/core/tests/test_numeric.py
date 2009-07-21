@@ -917,12 +917,21 @@ class TestCorrelate(_TestCorrelate):
         _TestCorrelate._setup(self, dt)
         self.z2 = self.z1
 
+    @dec.deprecated()
     def test_complex(self):
         x = np.array([1, 2, 3, 4+1j], dtype=np.complex)
         y = np.array([-1, -2j, 3+1j], dtype=np.complex)
         r_z = np.array([3+1j, 6, 8-1j, 9+1j, -1-8j, -4-1j], dtype=np.complex)
         z = np.correlate(x, y, 'full')
         assert_array_almost_equal(z, r_z)
+
+    @dec.deprecated()
+    def test_float(self):
+        _TestCorrelate.test_float(self)
+
+    @dec.deprecated()
+    def test_object(self):
+        _TestCorrelate.test_object(self)
 
 class TestCorrelateNew(_TestCorrelate):
     old_behavior = False

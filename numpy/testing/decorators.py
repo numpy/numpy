@@ -9,6 +9,8 @@ setup and teardown functions and so on - see nose.tools for more
 information.
 
 """
+import warnings
+import sys
 
 def slow(t):
     """Labels a test as 'slow'.
@@ -170,3 +172,103 @@ def knownfailureif(fail_condition, msg=None):
         return nose.tools.make_decorator(f)(knownfailer)
 
     return knownfail_decorator
+
+# The following two classes are copied from python 2.6 warnings module (context
+# manager)
+class WarningMessage(object):
+
+    """Holds the result of a single showwarning() call."""
+
+    _WARNING_DETAILS = ("message", "category", "filename", "lineno", "file",
+                        "line")
+
+    def __init__(self, message, category, filename, lineno, file=None,
+                    line=None):
+        local_values = locals()
+        for attr in self._WARNING_DETAILS:
+            setattr(self, attr, local_values[attr])
+        self._category_name = category.__name__ if category else None
+
+    def __str__(self):
+        return ("{message : %r, category : %r, filename : %r, lineno : %s, "
+                    "line : %r}" % (self.message, self._category_name,
+                                    self.filename, self.lineno, self.line))
+
+class WarningManager:
+    def __init__(self, record=False, module=None):
+        self._record = record
+        self._module = sys.modules['warnings'] if module is None else module
+        self._entered = False
+
+    def __enter__(self):
+        if self._entered:
+            raise RuntimeError("Cannot enter %r twice" % self)
+        self._entered = True
+        self._filters = self._module.filters
+        self._module.filters = self._filters[:]
+        self._showwarning = self._module.showwarning
+        if self._record:
+            log = []
+            def showwarning(*args, **kwargs):
+                log.append(WarningMessage(*args, **kwargs))
+            self._module.showwarning = showwarning
+            return log
+        else:
+            return None
+
+    def __exit__(self):
+        if not self._entered:
+            raise RuntimeError("Cannot exit %r without entering first" % self)
+        self._module.filters = self._filters
+        self._module.showwarning = self._showwarning
+
+def deprecated(conditional=True):
+    """This decorator can be used to filter Deprecation Warning, to avoid
+    printing them during the test suite run, while checking that the test
+    actually raises a DeprecationWarning.
+
+    Parameters
+    ----------
+    conditional : bool or callable.
+        Flag to determine whether to mark test as deprecated or not. If the
+        condition is a callable, it is used at runtime to dynamically make the
+        decision.
+
+    Returns
+    -------
+    decorator : function
+        Decorator, which, when applied to a function, causes SkipTest
+        to be raised when the skip_condition was True, and the function
+        to be called normally otherwise.
+    """
+    def deprecate_decorator(f):
+        # Local import to avoid a hard nose dependency and only incur the
+        # import time overhead at actual test-time.
+        import nose
+        from noseclasses import KnownFailureTest
+
+        def _deprecated_imp(*args, **kwargs):
+            # Poor man's replacement for the with statement
+            ctx = WarningManager(record=True)
+            l = ctx.__enter__()
+            warnings.simplefilter('always')
+            try:
+                f(*args, **kwargs)
+                if not len(l) > 0:
+                    raise AssertionError("No warning raised when calling %s"
+                            % f.__name__)
+                if not l[0].category is DeprecationWarning:
+                    raise AssertionError("First warning for %s is not a " \
+                            "DeprecationWarning( is %s)" % (f.__name__, l[0]))
+            finally:
+                ctx.__exit__()
+
+        if callable(conditional):
+            cond = conditional()
+        else:
+            cond = conditional
+        if cond:
+            return nose.tools.make_decorator(f)(_deprecated_imp)
+        else:
+            return f
+    return deprecate_decorator
