@@ -1773,10 +1773,10 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
     return ret;
 }
 
-/*NUMPY_API*/
 /*
  * fill and x->ao should have equivalent types 
  */
+/*NUMPY_API*/
 NPY_NO_EXPORT PyObject*
 PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
                 int mode, PyArrayObject* fill)
