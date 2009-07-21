@@ -7,38 +7,9 @@
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
-_PyArrayNeighborhoodIter_SetPtr(PyArrayNeighborhoodIterObject* iter);
+_PyArrayNeighborhoodIter_SetPtrConstant(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter);
-
-/*
- * Inline implementations
- */
-static NPY_INLINE int PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
-{
-    int i;
-
-    for (i = 0; i < iter->nd; ++i) {
-        iter->coordinates[i] = iter->bounds[i][0];
-    }
-    _PyArrayNeighborhoodIter_SetPtr(iter);
-
-    return 0;
-}
-
-static NPY_INLINE int PyArrayNeighborhoodIter_ResetMirror(
-                PyArrayNeighborhoodIterObject* iter)
-{
-    int i;
-
-    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING);
-    for (i = 0; i < iter->nd; ++i) {
-        iter->coordinates[i] = iter->bounds[i][0];
-    }
-    _PyArrayNeighborhoodIter_SetPtrMirror(iter);
-
-    return 0;
-}
 
 /*
  * Update to next item of the iterator
@@ -102,10 +73,15 @@ static NPY_INLINE int _PyArrayNeighborhoodIter_IncrCoord2D(PyArrayNeighborhoodIt
     iter->dataptr += offset;
 
 /* set the dataptr from its current coordinates */
-static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtr(PyArrayNeighborhoodIterObject* iter)
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrConstant(PyArrayNeighborhoodIterObject* iter)
 {
     int i;
     npy_intp offset, bd;
+
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
 
     iter->dataptr = iter->_internal_iter->dataptr;
 
@@ -116,7 +92,8 @@ static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtr(PyArrayNeighborhoodIterObj
     return 0;
 }
 
-static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtr2D(PyArrayNeighborhoodIterObject* iter)
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrConstant2D(PyArrayNeighborhoodIterObject* iter)
 {
     npy_intp offset, bd;
 
@@ -168,8 +145,8 @@ static NPY_INLINE npy_intp _npy_pos_remainder(npy_intp i, npy_intp n)
     iter->dataptr += offset;
 
 /* set the dataptr from its current coordinates */
-static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtrMirror(
-                PyArrayNeighborhoodIterObject* iter)
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter)
 {
     int i;
     npy_intp offset, bd, truepos;
@@ -187,18 +164,29 @@ static NPY_INLINE int _PyArrayNeighborhoodIter_SetPtrMirror(
 /*
  * Advance to the next neighbour
  */
-static NPY_INLINE int PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter)
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter)
 {
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
+    assert(iter->nd == 2);
+
     _PyArrayNeighborhoodIter_IncrCoord2D(iter);
-    _PyArrayNeighborhoodIter_SetPtr2D(iter);
+    _PyArrayNeighborhoodIter_SetPtrConstant2D(iter);
 
     return 0;
 }
 
-static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
+static NPY_INLINE int
+PyArrayNeighborhoodIter_NextConstant(PyArrayNeighborhoodIterObject* iter)
 {
-    _PyArrayNeighborhoodIter_IncrCoord (iter);
-    _PyArrayNeighborhoodIter_SetPtr(iter);
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
+
+    _PyArrayNeighborhoodIter_IncrCoord(iter);
+    _PyArrayNeighborhoodIter_SetPtrConstant(iter);
 
     return 0;
 }
@@ -206,8 +194,84 @@ static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject
 static NPY_INLINE
 int PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter)
 {
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING);
+
     _PyArrayNeighborhoodIter_IncrCoord(iter);
     _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+
+    return 0;
+}
+
+static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
+{
+    _PyArrayNeighborhoodIter_IncrCoord (iter);
+    switch (iter->mode) {
+        case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrConstant(iter);
+            break;
+        case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+            break;
+    }
+
+    return 0;
+}
+
+/*
+ * Reset functions
+ */
+static NPY_INLINE int
+PyArrayNeighborhoodIter_ResetConstant(PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
+           | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
+
+    for (i = 0; i < iter->nd; ++i) {
+        iter->coordinates[i] = iter->bounds[i][0];
+    }
+    _PyArrayNeighborhoodIter_SetPtrConstant(iter);
+
+    return 0;
+}
+
+static NPY_INLINE int
+PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING);
+
+    for (i = 0; i < iter->nd; ++i) {
+        iter->coordinates[i] = iter->bounds[i][0];
+    }
+    _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+
+    return 0;
+}
+
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+
+    for (i = 0; i < iter->nd; ++i) {
+        iter->coordinates[i] = iter->bounds[i][0];
+    }
+    switch (iter->mode) {
+        case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrConstant(iter);
+            break;
+        case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+            break;
+    }
 
     return 0;
 }

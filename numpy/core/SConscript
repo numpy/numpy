@@ -306,6 +306,8 @@ umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umath_tests.c.src'))
+multiarray_tests_src = env.GenerateFromTemplate(pjoin('src', 'multiarray',
+    'multiarray_tests.c.src'))
 scalarmathmodule_src = env.GenerateFromTemplate(
                             pjoin('src', 'scalarmathmodule.c.src'))
 
@@ -366,6 +368,7 @@ if ENABLE_SEPARATE_COMPILATION:
 else:
     multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule_onefile.c')]
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
+env.DistutilsPythonExtension('multiarray_tests', source=multiarray_tests_src)
 
 #------------------
 # Build sort module

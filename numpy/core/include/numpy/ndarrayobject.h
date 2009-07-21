@@ -962,12 +962,21 @@ typedef struct {
 /*
  * Neighborhood iterator API
  */
+
+/* General: those work for any mode */
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
+
+/* Mode specific: those are faster, but have undefined behavior if the mode
+ * does not match. Sanity checks are enabled in debug mode. */
+static NPY_INLINE int
+PyArrayNeighborhoodIter_ResetConstant(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+PyArrayNeighborhoodIter_NextConstant(PyArrayNeighborhoodIterObject* iter);
 
 static NPY_INLINE int
 PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter);

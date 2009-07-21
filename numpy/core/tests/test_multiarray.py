@@ -4,6 +4,7 @@ import os
 import numpy as np
 from numpy.testing import *
 from numpy.core import *
+from numpy.core.multiarray_tests import test_neighborhood_iterator
 
 from test_print import in_foreign_locale
 
@@ -1058,6 +1059,73 @@ class TestChoose(TestCase):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2,2,3],[2,2,3]])
 
+def can_use_decimal():
+    try:
+        from decimal import Decimal
+        return True
+    except ImportError:
+        return False
+
+# TODO: test for multidimensional
+NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
+class TestNeighborhoodIter(TestCase):
+    ## Simple, 2d tests
+    #def test_simple2d(self):
+    #    # Test zero and one padding for simple data type
+    #    x = np.array([[0, 1], [2, 3]], dtype=np.float)
+    #    r = [np.array([[0, 0], [0, 0]], dtype=np.float), 
+    #         np.array([[0, 0], [0, 1]], dtype=np.float), 
+    #         np.array([[0, 0], [1, 0]], dtype=np.float), 
+    #         np.array([[0, 0], [0, 2]], dtype=np.float), 
+    #         np.array([[0, 1], [2, 3]], dtype=np.float),]
+    #    l = test_neighborhood_iterator(x, [-1, 1, -1, 1], x[0], NEIGH_MODE['zero'])
+    #    print l
+    #    #assert_array_equal(l, r)
+
+    # Simple, 1d tests
+    def _test_simple(self, dt):
+        # Test padding with constant values
+        x = np.linspace(1, 5, 5).astype(dt)
+        r = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 0]]
+        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        r = [[1, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1]]
+        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['one'])
+        assert_array_equal(l, r)
+
+        r = [[x[4], 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, x[4]]]
+        l = test_neighborhood_iterator(x, [-1, 1], x[4], NEIGH_MODE['constant'])
+        assert_array_equal(l, r)
+
+    def test_simple_float(self):
+        self._test_simple(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_simple_object(self):
+        from decimal import Decimal
+        self._test_simple(Decimal)
+
+    # Test mirror modes
+    def _test_mirror(self, dt):
+        x = np.linspace(1, 5, 5).astype(dt)
+        r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
+                [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
+        l = test_neighborhood_iterator(x, [-2, 2], x[1], NEIGH_MODE['mirror'])
+        self.failUnless([i.dtype == dt for i in l])
+        assert_array_equal(l, r)
+
+    def test_mirror(self):
+        self._test_mirror(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_mirror_object(self):
+        from decimal import Decimal
+        self._test_mirror(Decimal)
 
 if __name__ == "__main__":
     run_module_suite()
