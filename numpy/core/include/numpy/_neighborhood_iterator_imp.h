@@ -81,7 +81,7 @@ _PyArrayNeighborhoodIter_SetPtrConstant(PyArrayNeighborhoodIterObject* iter)
     int i;
     npy_intp offset, bd;
 
-    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
 
@@ -166,14 +166,13 @@ _PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter)
 /* compute l such as i = k * n + l, 0 <= l < |k| */
 static NPY_INLINE npy_intp _npy_euclidean_division(npy_intp i, npy_intp n)
 {
-        npy_intp l;
+    npy_intp l;
 
-        l = i % n;
-
-        if (l < 0) {
-                l += n;
-        }
-        return l;
+    l = i % n;
+    if (l < 0) {
+        l += n;
+    }
+    return l;
 }
 #define _INF_SET_PTR_CIRCULAR(c) \
     bd = iter->coordinates[c] + iter->_internal_iter->coordinates[c]; \
@@ -204,7 +203,7 @@ _PyArrayNeighborhoodIter_SetPtrCircular(PyArrayNeighborhoodIterObject* iter)
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter)
 {
-    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
     assert(iter->nd == 2);
@@ -218,7 +217,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter)
 static NPY_INLINE int
 PyArrayNeighborhoodIter_NextConstant(PyArrayNeighborhoodIterObject* iter)
 {
-    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
 
@@ -278,7 +277,7 @@ PyArrayNeighborhoodIter_ResetConstant(PyArrayNeighborhoodIterObject* iter)
 {
     int i;
 
-    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING) 
+    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
 
