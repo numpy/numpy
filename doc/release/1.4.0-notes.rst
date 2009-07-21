@@ -2,7 +2,7 @@
 NumPy 1.4.0 Release Notes
 =========================
 
-This minor includes numerous bug fixes.
+This minor includes numerous bug fixes as well as a few new features.
 
 Highlights
 ==========
@@ -50,11 +50,19 @@ The following functions are deprecated:
        conventional correlation, and take the conjugate for complex arrays. The
        old behavior will be removed in NumPy 1.5
 
+New iterators
+~~~~~~~~~~~~~
+
+A new neighborhood iterator has been added to the C API. It can be used to
+iterate over the items in a neighborhood of an array, and can handle boundaries
+conditions automatically. Zero and one padding are available, as well as
+arbitrary constant value, mirror and circular padding.
+
 Internal changes
 ================
 
-split multiarray and umath
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+split multiarray and umath source code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The source code of multiarray and umath has been split into separate logic
 compilation units. This should make the source code more amenable for
@@ -64,10 +72,10 @@ Separate compilation
 ~~~~~~~~~~~~~~~~~~~~
 
 By default, every file of multiarray (and umath) is merged into one for
-compilation, but if NPY_SEPARATE_COMPILATION env variable is set to a
-non-negative value, experimental individual compilation of each file is
-enabled. This makes the compile/debug cycle much faster when working on core
-numpy.
+compilation as was the case before, but if NPY_SEPARATE_COMPILATION env
+variable is set to a non-negative value, experimental individual compilation of
+each file is enabled. This makes the compile/debug cycle much faster when
+working on core numpy.
 
 Separate core math library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
