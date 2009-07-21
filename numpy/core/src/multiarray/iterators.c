@@ -1741,7 +1741,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
 static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter);
 
 static char* _set_constant(PyArrayNeighborhoodIterObject* iter, 
-        PyArrayNeighborhoodIterMode* mode)
+        PyArrayObject *fill)
 {
     char *ret;
     PyArrayIterObject *ar = iter->_internal_iter;
@@ -1754,14 +1754,14 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
     }
 
     if (PyArray_ISOBJECT(ar->ao)) {
-        memcpy(ret, &mode->constant, sizeof(PyObject*));
+        memcpy(ret, fill->data, sizeof(PyObject*));
         Py_INCREF(*(PyObject**)ret);
     } else {
         /* Non-object types */
 
         storeflags = ar->ao->flags;
         ar->ao->flags |= BEHAVED;
-        st = ar->ao->descr->f->setitem(mode->constant, ret, ar->ao);
+        st = ar->ao->descr->f->setitem((PyObject*)fill, ret, ar->ao);
         ar->ao->flags = storeflags;
 
         if (st < 0) {
@@ -1774,9 +1774,12 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 }
 
 /*NUMPY_API*/
+/*
+ * fill and x->ao should have equivalent types 
+ */
 NPY_NO_EXPORT PyObject*
 PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
-                PyArrayNeighborhoodIterMode* mode)
+                int mode, PyArrayObject* fill)
 {
     int i;
     PyArrayNeighborhoodIterObject *ret;
@@ -1805,37 +1808,33 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
         ret->dimensions[i] = x->ao->dimensions[i];
     }
 
-    if (mode == NULL) {
-        ret->constant = PyArray_Zero(x->ao);
-        ret->mode = NPY_NEIGHBORHOOD_ITER_ZERO_PADDING;
-    } else {
-        switch (mode->mode) {
-            case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
-                ret->constant = PyArray_Zero(x->ao);
-                ret->mode = mode->mode;
-                break;
-            case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
-                ret->constant = PyArray_One(x->ao);
-                ret->mode = mode->mode;
-                break;
-            case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
-                /* New reference in returned value of _set_constant if array
-                 * object */
-                ret->constant = _set_constant(ret, mode);
-                if (ret->constant == NULL) {
-                    goto clean_x;
-                }
-                ret->mode = mode->mode;
-                break;
-            case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
-            case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
-                ret->mode = mode->mode;
-                ret->constant = NULL;
-                break;
-            default:
-                PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
+    switch (mode) {
+        case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
+            ret->constant = PyArray_Zero(x->ao);
+            ret->mode = mode;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
+            ret->constant = PyArray_One(x->ao);
+            ret->mode = mode;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+            /* New reference in returned value of _set_constant if array
+             * object */
+            assert(PyArray_EquivArrTypes(x->ao, fill) == NPY_TRUE);
+            ret->constant = _set_constant(ret, fill);
+            if (ret->constant == NULL) {
                 goto clean_x;
-        }
+            }
+            ret->mode = mode;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
+            ret->mode = mode;
+            ret->constant = NULL;
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
+            goto clean_x;
     }
 
     /*

@@ -95,12 +95,11 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     PyObject *x, *fill, *out, *b;
     PyArrayObject *ax, *afill;
     PyArrayIterObject *itx;
-    int i, typenum, imode, st;
+    int i, typenum, mode, st;
     npy_intp bounds[NPY_MAXDIMS*2];
     PyArrayNeighborhoodIterObject *niterx;
-    PyArrayNeighborhoodIterMode mode;
 
-    if (!PyArg_ParseTuple(args, "OOOi", &x, &b, &fill, &imode)) {
+    if (!PyArg_ParseTuple(args, "OOOi", &x, &b, &fill, &mode)) {
         return NULL;
     }
 
@@ -148,19 +147,16 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     }
 
     /* Create the neighborhood iterator */
-    mode.mode = imode;
-    mode.constant = NULL;
     afill = NULL;
-    if (imode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
+    if (mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
 	    afill = (PyArrayObject *)PyArray_FromObject(fill, typenum, 0, 0);
 	    if (afill == NULL) {
             goto clean_itx;
         }
-        mode.constant = (PyObject*)afill;
     }
 
     niterx = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
-                    (PyArrayIterObject*)itx, bounds, &mode);
+                    (PyArrayIterObject*)itx, bounds, mode, afill);
     if (niterx == NULL) {
         goto clean_afill;
     }

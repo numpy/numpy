@@ -918,11 +918,6 @@ enum {
 };
 
 typedef struct {
-    int mode;
-    PyObject* constant;
-} PyArrayNeighborhoodIterMode;
-
-typedef struct {
     PyObject_HEAD
 
     /* 
