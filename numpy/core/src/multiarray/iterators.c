@@ -1828,6 +1828,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
                 ret->mode = mode->mode;
                 break;
             case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+            case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
                 ret->mode = mode->mode;
                 ret->constant = NULL;
                 break;

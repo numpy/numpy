@@ -161,6 +161,41 @@ _PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter)
 }
 #undef _INF_SET_PTR_MIRROR
 
+/* compute l such as i = k * n + l, 0 <= l < |k| */
+static NPY_INLINE npy_intp _npy_euclidean_division(npy_intp i, npy_intp n)
+{
+        npy_intp l;
+
+        l = i % n;
+
+        if (l < 0) {
+                l += n;
+        }
+        return l;
+}
+#define _INF_SET_PTR_CIRCULAR(c) \
+    bd = iter->coordinates[c] + iter->_internal_iter->coordinates[c]; \
+    truepos = _npy_euclidean_division(bd, iter->dimensions[c]); \
+    offset = (truepos - iter->_internal_iter->coordinates[c]) * iter->strides[c]; \
+    iter->dataptr += offset;
+
+/* set the dataptr from its current coordinates */
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrCircular(PyArrayNeighborhoodIterObject* iter)
+{
+    int i;
+    npy_intp offset, bd, truepos;
+
+    iter->dataptr = iter->_internal_iter->dataptr;
+
+    for(i = 0; i < iter->nd; ++i) {
+        _INF_SET_PTR_CIRCULAR(i)
+    }
+
+    return 0;
+}
+#undef _INF_SET_PTR_CIRCULAR
+
 /*
  * Advance to the next neighbour
  */
@@ -213,6 +248,9 @@ static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject
             break;
         case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
             _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+            break;
+        case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrCircular(iter);
             break;
     }
 
@@ -270,6 +308,9 @@ PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
             break;
         case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
             _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+            break;
+        case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrCircular(iter);
             break;
     }
 

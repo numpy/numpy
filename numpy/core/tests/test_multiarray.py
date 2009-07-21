@@ -1168,5 +1168,23 @@ class TestNeighborhoodIter(TestCase):
         from decimal import Decimal
         self._test_mirror(Decimal)
 
+    # Circular mode
+    def _test_circular(self, dt):
+        x = np.linspace(1, 5, 5).astype(dt)
+        r = np.array([[4, 5, 1, 2, 3], [5, 1, 2, 3, 4], [1, 2, 3, 4, 5],
+                [2, 3, 4, 5, 1], [3, 4, 5, 1, 2]], dtype=dt)
+        l = test_neighborhood_iterator(x, [-2, 2], x[0], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+    def test_circular(self):
+        self._test_circular(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_circular_object(self):
+        from decimal import Decimal
+        self._test_circular(Decimal)
+
 if __name__ == "__main__":
     run_module_suite()
