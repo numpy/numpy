@@ -13,6 +13,12 @@ _PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_SetPtrCircular(PyArrayNeighborhoodIterObject* iter);
 
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrConstant2D(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrMirror2D(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrCircular2D(PyArrayNeighborhoodIterObject* iter);
 /*
  * Update to next item of the iterator
  *
@@ -81,10 +87,6 @@ _PyArrayNeighborhoodIter_SetPtrConstant(PyArrayNeighborhoodIterObject* iter)
     int i;
     npy_intp offset, bd;
 
-    assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING)
-           | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
-           | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
-
     iter->dataptr = iter->_internal_iter->dataptr;
 
     for(i = 0; i < iter->nd; ++i) {
@@ -103,6 +105,26 @@ _PyArrayNeighborhoodIter_SetPtrConstant2D(PyArrayNeighborhoodIterObject* iter)
 
     _INF_SET_PTR(0)
     _INF_SET_PTR(1)
+
+    return 0;
+}
+
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtr2D(PyArrayNeighborhoodIterObject* iter)
+{
+    switch (iter->mode) {
+        case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
+        case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrConstant2D(iter);
+            break;
+        case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrMirror2D(iter);
+            break;
+        case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
+            _PyArrayNeighborhoodIter_SetPtrCircular2D(iter);
+            break;
+    }
 
     return 0;
 }
@@ -161,6 +183,19 @@ _PyArrayNeighborhoodIter_SetPtrMirror(PyArrayNeighborhoodIterObject* iter)
 
     return 0;
 }
+
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrMirror2D(PyArrayNeighborhoodIterObject* iter)
+{
+    npy_intp offset, bd, truepos;
+
+    iter->dataptr = iter->_internal_iter->dataptr;
+
+    _INF_SET_PTR_MIRROR(0)
+    _INF_SET_PTR_MIRROR(1)
+
+    return 0;
+}
 #undef _INF_SET_PTR_MIRROR
 
 /* compute l such as i = k * n + l, 0 <= l < |k| */
@@ -195,6 +230,19 @@ _PyArrayNeighborhoodIter_SetPtrCircular(PyArrayNeighborhoodIterObject* iter)
 
     return 0;
 }
+
+static NPY_INLINE int
+_PyArrayNeighborhoodIter_SetPtrCircular2D(PyArrayNeighborhoodIterObject* iter)
+{
+    npy_intp offset, bd, truepos;
+
+    iter->dataptr = iter->_internal_iter->dataptr;
+
+    _INF_SET_PTR_CIRCULAR(0)
+    _INF_SET_PTR_CIRCULAR(1)
+
+    return 0;
+}
 #undef _INF_SET_PTR_CIRCULAR
 
 /*
@@ -203,6 +251,17 @@ _PyArrayNeighborhoodIter_SetPtrCircular(PyArrayNeighborhoodIterObject* iter)
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter)
 {
+    assert(iter->nd == 2);
+
+    _PyArrayNeighborhoodIter_IncrCoord2D(iter);
+    _PyArrayNeighborhoodIter_SetPtr2D(iter);
+
+    return 0;
+}
+
+static NPY_INLINE int
+PyArrayNeighborhoodIter_NextConstant2D(PyArrayNeighborhoodIterObject* iter)
+{
     assert((iter->mode == NPY_NEIGHBORHOOD_ITER_ONE_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_ZERO_PADDING)
            | (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING));
@@ -210,6 +269,30 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter)
 
     _PyArrayNeighborhoodIter_IncrCoord2D(iter);
     _PyArrayNeighborhoodIter_SetPtrConstant2D(iter);
+
+    return 0;
+}
+
+static NPY_INLINE
+int PyArrayNeighborhoodIter_NextMirror2D(PyArrayNeighborhoodIterObject* iter)
+{
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING);
+    assert(iter->nd == 2);
+
+    _PyArrayNeighborhoodIter_IncrCoord2D(iter);
+    _PyArrayNeighborhoodIter_SetPtrMirror2D(iter);
+
+    return 0;
+}
+
+static NPY_INLINE
+int PyArrayNeighborhoodIter_NextCircular2D(PyArrayNeighborhoodIterObject* iter)
+{
+    assert(iter->mode == NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING);
+    assert(iter->nd == 2);
+
+    _PyArrayNeighborhoodIter_IncrCoord2D(iter);
+    _PyArrayNeighborhoodIter_SetPtrCircular2D(iter);
 
     return 0;
 }
