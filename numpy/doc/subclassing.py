@@ -205,9 +205,10 @@ three cases above.
   array (see below)
 * For view casting, ``ndarray.view``, when casting, does an explicit
   call to ``ndarray.__new__(MySubClass,...)``
-* For slicing - I don't know how ``ndarray.__new__`` is called.
+* For slicing, ``ndarray.__new__(MySubClass,...)`` is called from the
+  numpy C ``array_slice`` function
 
-The following code shows the call sequences:
+The following code allows us to look at the call sequences:
 
 .. testcode::
 
@@ -219,35 +220,27 @@ The following code shows the call sequences:
            return np.ndarray.__new__(cls, *args, **kwargs)
 
        def __init__(self, *args, **kwargs):
-           # in practice you probably will not need an 
-           # __init__ method for your subclass
+           # in practice you probably will not need or want an __init__
+           # method for your subclass
            print 'In __init__ with class %s' % self.__class__
 
        def __array_finalize__(self, obj):
            print 'In array_finalize with instance type %s' % type(obj)
 
-       def _rc(self, a):
-           raise NotImplementedError
 
-   print 'Explicit constructor:'
-   c = C((10,))
-   print 'View casting:'
-   a = np.arange(10)
-   cast_a = a.view(C)
-   print 'Slicing:'
-   cv = c[:1]
+Now::
 
-which gives output:
-
-.. testoutput::
-
-    Explicit constructor:
+    >>> # Explicit constructor
+    >>> c = C((10,))
     In __new__ with class <class 'C'>
     In array_finalize with instance type <type 'NoneType'>
     In __init__ with class <class 'C'>
-    View casting:
+    >>> # View casting
+    >>> a = np.arange(10)
     In array_finalize with instance type <type 'numpy.ndarray'>
-    Slicing:
+    >>> cast_a = a.view(C)
+    >>> # Slicing
+    >>> cv = c[:1]
     In array_finalize with instance type <class 'C'>
 
 The signature of ``__array_finalize__`` is::
@@ -288,21 +281,19 @@ Simple example - adding an extra attribute to ndarray
           self.info = getattr(obj, 'info', None)
           # We do not need to return anything
 
-  obj = InfoArray(shape=(3,), info='information')
-  print type(obj)
-  print obj.info
-  v = obj[1:]
-  print type(v)
-  print v.info
 
-which gives:
+Using the object looks like this:
 
-.. testoutput::
-
+  >>> obj = InfoArray(shape=(3,), info='information')
+  >>> type(obj)
   <class 'InfoArray'>
-  information
+  >>> obj.info
+  'information'
+  >>> v = obj[1:]
+  >>> type(v)
   <class 'InfoArray'>
-  information
+  >>> v.info
+  'information'
 
 This class isn't very useful, because it has the same constructor as
 the bare ndarray object, including passing in buffers and shapes and
@@ -336,47 +327,49 @@ extra attribute:
           self.info = getattr(obj, 'info', None)
           # We do not need to return anything
 
-  arr = np.arange(5)
-  obj = RealisticInfoArray(arr, info='information')
-  print type(obj)
-  print obj.info
-  v = obj[1:]
-  print type(v)
-  print v.info
 
-which gives:
+So::
 
-.. testoutput::
-
+  >>> arr = np.arange(5)
+  >>> obj = RealisticInfoArray(arr, info='information')
+  >>> type(obj)
   <class 'RealisticInfoArray'>
-  information
+  >>> obj.info
+  'information'
+  >>> v = obj[1:]
+  >>> type(v)
   <class 'RealisticInfoArray'>
-  information
+  >>> v.info
+  'information'
+
 
 ``__array_wrap__`` for ufuncs
 -----------------------------
 
 Let's say you have an instance ``obj`` of your new subclass,
 ``RealisticInfoArray``, and you pass it into a ufunc with another
-array::
+array:
+
+.. testcode::
 
   arr = np.arange(5)
   ret = np.multiply.outer(arr, obj)
 
 When a numpy ufunc is called on a subclass of ndarray, the
-__array_wrap__ method is called to transform the result into a new
-instance of the subclass. By default, __array_wrap__ will call
-__array_finalize__, and the attributes will be inherited.
+``__array_wrap__`` method is called to transform the result into a new
+instance of the subclass. By default, ``__array_wrap__`` will call
+``__array_finalize__``, and the attributes will be inherited.
 
-By defining a specific __array_wrap__ method for our subclass, we can
-tweak the output. The __array_wrap__ method requires one argument, the
-object on which the ufunc is applied, and an optional parameter
-*context*. This parameter is returned by some ufuncs as a 3-element
-tuple: (name of the ufunc, argument of the ufunc, domain of the
-ufunc). See the masked array subclass for an implementation.
+By defining a specific ``__array_wrap__`` method for our subclass, we
+can tweak the output. The ``__array_wrap__`` method requires one
+argument, the object on which the ufunc is applied, and an optional
+parameter *context*. This parameter is returned by some ufuncs as a
+3-element tuple: (name of the ufunc, argument of the ufunc, domain of
+the ufunc). See the masked array subclass for an implementation.
 
 Extra gotchas - custom __del__ methods and ndarray.base
 -------------------------------------------------------
+
 One of the problems that ndarray solves is that of memory ownership of
 ndarrays and their views.  Consider the case where we have created an
 ndarray, ``arr`` and then taken a view with ``v = arr[1:]``.  If we
