@@ -18,6 +18,7 @@ It will:
 
 import os, re, pydoc
 from docscrape_sphinx import get_doc_object, SphinxDocString
+from sphinx.util.compat import Directive
 import inspect
 
 def mangle_docstrings(app, what, name, obj, options, lines,
@@ -122,17 +123,31 @@ from docutils.statemachine import ViewList
 def get_directive(name):
     from docutils.parsers.rst import directives
     try:
+        return directives.directive(name, None, None)[0]
+    except AttributeError:
+        pass
+    try:
         # docutils 0.4
         return directives._directives[name]
     except (AttributeError, KeyError):
-        pass
-    try:
-        return directives.directive(name, None, None)[0]
-    except AttributeError:
         raise RuntimeError("No directive named '%s' found" % name)
 
 def wrap_mangling_directive(base_directive_name, objtype):
     base_directive = get_directive(base_directive_name)
+
+    if inspect.isfunction(base_directive):
+        base_func = base_directive
+        class base_directive(Directive):
+            required_arguments = base_func.arguments[0]
+            optional_arguments = base_func.arguments[1]
+            final_argument_whitespace = base_func.arguments[2]
+            option_spec = base_func.options
+            has_content = base_func.content
+            def run(self):
+                return base_func(self.name, self.arguments, self.options,
+                                 self.content, self.lineno,
+                                 self.content_offset, self.block_text,
+                                 self.state, self.state_machine)
 
     class directive(base_directive):
         def run(self):
