@@ -668,6 +668,15 @@ class TestMaskedArrayArithmetic(TestCase):
         self.failUnless(minimum(xm, xm).mask)
 
 
+    def test_masked_singleton_equality(self):
+        "Tests (in)equality on masked snigleton"
+        a = array([1, 2, 3], mask=[1, 1, 0])
+        assert((a[0] == 0) is masked)
+        assert((a[0] != 0) is masked)
+        assert_equal((a[-1] == 0), False)
+        assert_equal((a[-1] != 0), True)
+
+
     def test_arithmetic_with_masked_singleton(self):
         "Checks that there's no collapsing to masked"
         x = masked_array([1,2])
@@ -1066,6 +1075,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
+
 
 #------------------------------------------------------------------------------
 

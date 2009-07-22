@@ -3171,6 +3171,8 @@ class MaskedArray(ndarray):
     #............................................
     def __eq__(self, other):
         "Check whether other equals self elementwise"
+        if self is masked:
+            return masked
         omask = getattr(other, '_mask', nomask)
         if omask is nomask:
             check = ndarray.__eq__(self.filled(0), other).view(type(self))
@@ -3197,6 +3199,8 @@ class MaskedArray(ndarray):
     #
     def __ne__(self, other):
         "Check whether other doesn't equal self elementwise"
+        if self is masked:
+            return masked
         omask = getattr(other, '_mask', nomask)
         if omask is nomask:
             check = ndarray.__ne__(self.filled(0), other).view(type(self))
