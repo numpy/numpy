@@ -120,12 +120,17 @@ def setup(app, get_doc_object_=get_doc_object):
 from docutils.statemachine import ViewList
 
 def get_directive(name):
-    from docutils.parsers.rst.directives import directive
+    from docutils.parsers.rst import directives
     try:
-        return directive(name, None, None)[0]
+        # docutils 0.4
+        return directives._directives[name]
+    except (AttributeError, KeyError):
+        pass
+    try:
+        return directives.directive(name, None, None)[0]
     except AttributeError:
-        return None
-              
+        raise RuntimeError("No directive named '%s' found" % name)
+
 def wrap_mangling_directive(base_directive_name, objtype):
     base_directive = get_directive(base_directive_name)
 
