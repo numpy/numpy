@@ -180,25 +180,25 @@ The role of ``__array_finalize__``
 ``__array_finalize__`` is the mechanism that numpy provides to allow
 subclasses to handle the various ways that new instances get created.
 
-Renenber that subclass instances can come about in these three ways:
+Remember that subclass instances can come about in these three ways:
 
-#. explicit constructor call (``obj = MySubClass(params)``.  This will call the usual
-   sequence of ``MySubClass.__new__`` then ``MySubClass.__init__``.
+#. explicit constructor call (``obj = MySubClass(params)``).  This will
+   call the usual sequence of ``MySubClass.__new__`` then (if it exists)
+   ``MySubClass.__init__``.
 #. :ref:`view-casting`
 #. :ref:`instance-slicing`
 
 Our ``MySubClass.__new__`` method only gets called in the case of the
-explicit constructor call, so we can't rely on ``__new__`` or
-``__init__`` to deal with the view casting or slicing.  It turns out
-that ``__array_finalize__`` *does* get called for all three methods of
-object creation, so this is where our object creation housekeeping
-usually goes.
+explicit constructor call, so we can't rely on ``MySubClass.__new__`` or
+``MySubClass.__init__`` to deal with the view casting or slicing.  It
+turns out that ``MySubClass.__array_finalize__`` *does* get called for
+all three methods of object creation, so this is where our object
+creation housekeeping usually goes.
 
-``MySubClass.__array_finalize__`` is called for all of these instance
-creation paths. This is because it is called from ``ndarray.__new__``,
-when ``MySubClass`` as the first (class) argument.  The reason
-``ndarray.__new__(MySubClass,...)`` gets called is different for the
-three cases above.
+In fact ``MySubClass.__array_finalize__`` is called from
+``ndarray.__new__``, when ``MySubClass`` is the first (class) argument
+to ``ndarray.__new__``.  The reason ``ndarray.__new__(MySubClass,...)``
+gets called is different for the three cases above.
 
 * For the explicit constructor call, our subclass will need to create a
   new ndarray instance of its own class.  This will require a call to
