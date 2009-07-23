@@ -286,24 +286,40 @@ Simple example - adding an extra attribute to ndarray
       def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
             strides=None, order=None, info=None):
           # Create the ndarray instance of our type, given the usual
-          # input arguments.  This will call the standard ndarray
-          # constructor, but return an object of our type
+          # ndarray input arguments.  This will call the standard
+          # ndarray constructor, but return an object of our type.
+          # It also triggers a call to InfoArray.__array_finalize__
           obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
                            order)
-          # add the new attribute to the created instance
+          # set the new 'info' attribute to the value passed
           obj.info = info
           # Finally, we must return the newly created object:
           return obj
 
-      def __array_finalize__(self,obj):
-          # We could have reached here in 3 ways:
-          # From explicit constructor - e.g. InfoArray():
-          #    self.info set, obj is None)
+      def __array_finalize__(self, obj):
+          # ``self`` is a new object resulting from
+          # ndarray.__new__(InfoArray, ...), therefore it only has
+          # attributes that the ndarray.__new__ constructor gave it -
+          # i.e. those of a standard ndarray.
+          #
+          # We could have got to the ndarray.__new__ call in 3 ways:
+          # From an explicit constructor - e.g. InfoArray():
+          #    obj is None
+          #    (we're in the middle of the InfoArray.__new__
+          #    constructor, and self.info will be set when we return to
+          #    InfoArray.__new__)
+          if obj is None: return
           # From view casting - e.g arr.view(InfoArray):
-          #    self.info not set, obj is arr
-          #    (self.info can be set if type(arr) is InfoArray)
+          #    obj is arr
+          #    (type(obj) can be InfoArray)
           # From slicing - e.g infoarr[:3]
-          #    self.info not set, obj.info set
+          #    type(obj) is InfoArray
+          #
+          # Note that it is here, rather than in the __new__ method,
+          # that we set the default value for 'info', because this
+          # method sees all creation of default objects - with the
+          # InfoArray.__new__ constructor, but also with
+          # arr.view(InfoArray).
           self.info = getattr(obj, 'info', None)
           # We do not need to return anything
 
@@ -340,9 +356,7 @@ Slightly more realistic example - attribute added to existing array
 -------------------------------------------------------------------
 
 Here is a class that takes a standard ndarray that already exists, casts
-as our type, and adds an extra attribute.  The ``__array_finalize__``
-method is the same as InfoArray above, but the ``__new__`` method is
-different.
+as our type, and adds an extra attribute. 
 
 .. testcode::
 
@@ -359,19 +373,12 @@ different.
           # Finally, we must return the newly created object:
           return obj
 
-      def __array_finalize__(self,obj):
-          # We could have reached here in 3 ways:
-          # From explicit constructor - e.g. RealisticInfoArray():
-          #    self.info set, obj is None)
-          # From view casting - e.g arr.view(RealisticInfoArray):
-          #    self.info not set, obj is arr
-          #    (self.info can be set if type(arr) is RealisticInfoArray)
-          # From slicing - e.g infoarr[:3]
-          #    self.info not set, obj.info set
+      def __array_finalize__(self, obj):
+          # see InfoArray.__array_finalize__ for comments
+          if obj is None: return
           self.info = getattr(obj, 'info', None)
-          # We do not need to return anything
 
-
+     
 So:
 
   >>> arr = np.arange(5)
@@ -390,26 +397,86 @@ So:
 ``__array_wrap__`` for ufuncs
 -----------------------------
 
-Let's say you have an instance ``obj`` of your new subclass,
-``RealisticInfoArray``, and you pass it into a ufunc with another
-array:
+``__array_wrap__`` gets called by numpy ufuncs and other numpy
+functions, to allow a subclass to set the type of the return value
+from - for example - ufuncs.  Let's show how this works with an example.
+First we make the same subclass as above, but with a different name and
+some print statements:
 
 .. testcode::
 
-  arr = np.arange(5)
-  ret = np.multiply.outer(arr, obj)
+  import numpy as np
 
-When a numpy ufunc is called on a subclass of ndarray, the
-``__array_wrap__`` method is called to transform the result into a new
-instance of the subclass. By default, ``__array_wrap__`` will call
-``__array_finalize__``, and the attributes will be inherited.
+  class MySubClass(np.ndarray):
 
-By defining a specific ``__array_wrap__`` method for our subclass, we
-can tweak the output. The ``__array_wrap__`` method requires one
-argument, the object on which the ufunc is applied, and an optional
-parameter *context*. This parameter is returned by some ufuncs as a
-3-element tuple: (name of the ufunc, argument of the ufunc, domain of
-the ufunc). See the masked array subclass for an implementation.
+      def __new__(cls, input_array, info=None):
+          obj = np.asarray(input_array).view(cls)
+          obj.info = info
+          return obj
+
+      def __array_finalize__(self, obj):
+          print 'In __array_finalize__:'
+          print '   self is %s' % repr(self)
+          print '   obj is %s' % repr(obj)
+          if obj is None: return
+          self.info = getattr(obj, 'info', None)
+
+      def __array_wrap__(self, out_arr, context=None):
+          print 'In __array_wrap__:'
+          print '   self is %s' % repr(self)
+          print '   arr is %s' % repr(out_arr)
+          # then just call the parent
+          return np.ndarray.__array_wrap__(self, out_arr, context)
+
+We run a ufunc on an instance of our new array:        
+      
+>>> obj = MySubClass(np.arange(5), info='spam')
+In __array_finalize__:
+   self is MySubClass([0, 1, 2, 3, 4])
+   obj is array([0, 1, 2, 3, 4])
+>>> arr2 = np.arange(5)+1
+>>> ret = np.add(arr2, obj)
+In __array_wrap__:
+   self is MySubClass([0, 1, 2, 3, 4])
+   arr is array([1, 3, 5, 7, 9])
+In __array_finalize__:
+   self is MySubClass([1, 3, 5, 7, 9])
+   obj is MySubClass([0, 1, 2, 3, 4])
+>>> ret
+MySubClass([1, 3, 5, 7, 9])
+>>> ret.info
+'spam'
+
+Note that the ufunc (``np.add``) has called
+``MySubClass.__array_wrap__`` with arguments ``self`` as ``obj``, and
+``out_arr`` as the (ndarray) result of the addition.  In turn, the
+default ``__array_wrap__`` (``ndarray.__array_wrap__``) has cast the
+result to class ``MySubClass``, and called ``__array_finalize__`` -
+hence the copying of the ``info`` attribute.  But, we could do anything
+we wanted:
+
+.. testcode::
+
+  class SillySubClass(np.ndarray):
+
+      def __array_wrap__(self, arr, context=None):
+          return 'I lost your data'
+
+>>> arr1 = np.arange(5)
+>>> obj = arr1.view(SillySubClass)
+>>> arr2 = np.arange(5)
+>>> ret = np.multiply(obj, arr2)
+>>> ret
+'I lost your data'
+
+So, by defining a specific ``__array_wrap__`` method for our subclass,
+we can tweak the output from ufuncs. The ``__array_wrap__`` method
+requires ``self``, then an argument - which is the result of the ufunc,
+and an optional parameter *context*. This parameter is returned by some
+ufuncs as a 3-element tuple: (name of the ufunc, argument of the ufunc,
+domain of the ufunc). ``__array_wrap__`` should return an instance of
+its containing class.  See the masked array subclass for an
+implementation.
 
 Extra gotchas - custom ``__del__`` methods and ndarray.base
 -----------------------------------------------------------
