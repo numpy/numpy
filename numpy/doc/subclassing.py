@@ -26,11 +26,15 @@ ndarray classes can come about in three different ways.  These are:
 #. Explicit constructor call - as in ``MySubClass(params)``.  This is
    the usual route to Python instance creation.
 #. View casting - casting an existing ndarray as a given subclass
-#. Slicing an ndarray instance
+#. New from template - creating a new instance from a template
+   instance. Examples include returning slices from a subclassed array,
+   creating return types from ufuncs, and copying arrays.  See
+   :ref:`new-from-template` for more details
 
-The last two are particular features of ndarray, and the complications
-of subclassing ndarray are due to the need to support these latter two
-routes of instance creation.
+The last two are characteristics of ndarrays - in order to support
+things like array slicing.  The complications of subclassing ndarray are
+due to the mechanisms numpy has to support these latter two routes of
+instance creation.
 
 .. _view-casting:
 
@@ -51,13 +55,16 @@ ndarray of any subclass, and return a view of the array as another
 >>> type(c_arr)
 <class 'C'>
 
-.. _instance-slicing:
+.. _new-from-template
 
-Array slicing
--------------
+Creating new from template
+--------------------------
 
-New instances of an ndarray subclass can also come about by taking
-slices of subclassed arrays.  For example:
+New instances of an ndarray subclass can also come about by a very
+similar mechanism to :ref:`view-casting`, when numpy finds it needs to
+create a new instance from a template instance.  The most obvious place
+this has to happen is when you are taking slices of subclassed arrays.
+For example:
 
 >>> v = c_arr[1:]
 >>> type(v) # the view is of type 'C'
@@ -65,25 +72,42 @@ slices of subclassed arrays.  For example:
 >>> v is c_arr # but it's a new instance
 False
 
-So, when we take a view from the ndarray, we return a new ndarray, that
-points to the data in the original.  
+The slice is a *view* onto the original ``c_arr`` data.  So, when we
+take a view from the ndarray, we return a new ndarray, of the same
+class, that points to the data in the original.
+
+There are other points in the use of ndarrays where we need such views,
+such as copying arrays (``c_arr.copy()``), creating ufunc output arrays
+(see also :ref:`array-wrap`), and reducing methods (like
+``c_arr.mean()``.
+
+Relationship of view casting and new-from-template
+--------------------------------------------------
+
+These paths both use the same machinery.  We make the distinction here,
+because they result in different input to your methods.  Specifically,
+:ref:`view-casting` means you have created a new instance of your array
+type from any potential subclass of ndarray.  :ref:`new-from-template`
+means you have created a new instance of your class from a pre-existing
+instance, allowing you - for example - to copy across attributes that
+are particular to your subclass.
 
 Implications for subclassing
 ----------------------------
 
-If we subclass ndarray, we need to make sure that :ref:`view-casting` or
-:ref:`instance-slicing` of our subclassed instance returns another
-instance of our own class.  Numpy has the machinery to do this, but it
-is this view-creating machinery that makes subclassing slightly
-non-standard.
+If we subclass ndarray, we need to deal not only with explicit
+construction of our array type, but also :ref:`view-casting` or
+:ref:`new-from-template`.  Numpy has the machinery to do this, and this
+machinery that makes subclassing slightly non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
-views and slices in subclasses.
+views and new-from-template in subclasses.
 
 The first is the use of the ``ndarray.__new__`` method for the main work
 of object initialization, rather then the more usual ``__init__``
 method.  The second is the use of the ``__array_finalize__`` method to
-allow subclasses to clean up after the creation of views and slices.
+allow subclasses to clean up after the creation of views and new
+instances from templates.
 
 A brief Python primer on ``__new__`` and ``__init__``
 =====================================================
@@ -190,31 +214,27 @@ Remember that subclass instances can come about in these three ways:
    call the usual sequence of ``MySubClass.__new__`` then (if it exists)
    ``MySubClass.__init__``.
 #. :ref:`view-casting`
-#. :ref:`instance-slicing`
+#. :ref:`new-from-template`
 
 Our ``MySubClass.__new__`` method only gets called in the case of the
 explicit constructor call, so we can't rely on ``MySubClass.__new__`` or
-``MySubClass.__init__`` to deal with the view casting or slicing.  It
-turns out that ``MySubClass.__array_finalize__`` *does* get called for
-all three methods of object creation, so this is where our object
-creation housekeeping usually goes.
-
-In fact ``MySubClass.__array_finalize__`` is called from
-``ndarray.__new__``, when ``MySubClass`` is the first (class) argument
-to ``ndarray.__new__``.  The reason ``ndarray.__new__(MySubClass,...)``
-gets called is different for the three cases above.
+``MySubClass.__init__`` to deal with the view casting and
+new-from-template.  It turns out that ``MySubClass.__array_finalize__``
+*does* get called for all three methods of object creation, so this is
+where our object creation housekeeping usually goes.
 
 * For the explicit constructor call, our subclass will need to create a
   new ndarray instance of its own class.  In practice this means that
   we, the authors of the code, will need to make a call to
   ``ndarray.__new__(MySubClass,...)``, or do view casting of an existing
   array (see below)
-* For view casting, ``ndarray.view``, when casting, does an explicit
-  call to ``ndarray.__new__(MySubClass,...)``
-* For slicing, ``ndarray.__new__(MySubClass,...)`` is called from the
-  numpy C ``array_slice`` function
+* For view casting and new-from-template, the equivalent of
+  ``ndarray.__new__(MySubClass,...`` is called, at the C level.  
 
-The following code allows us to look at the call sequences:
+The arguments that ``__array_finalize__`` recieves differ for the three
+methods of instance creation above.
+
+The following code allows us to look at the call sequences and arguments:
 
 .. testcode::
 
@@ -251,7 +271,7 @@ In __init__ with class <class 'C'>
 In array_finalize:
    self type is <class 'C'>
    obj type is <type 'numpy.ndarray'>
->>> # Slicing
+>>> # Slicing (example of new-from-template)
 >>> cv = c[:1]
 In array_finalize:
    self type is <class 'C'>
@@ -263,14 +283,19 @@ The signature of ``__array_finalize__`` is::
 
 ``ndarray.__new__`` passes ``__array_finalize__`` the new object, of our
 own class (``self``) as well as the object from which the view has been
-taken (``obj``).  As you can see from the output above, ``obj`` is
-``None`` when calling from the subclass explicit constructor.  
+taken (``obj``).  As you can see from the output above, the ``self`` is
+always a newly created instance of our subclass, and the type of ``obj``
+differs for the three instance creation methods:
 
-We can use ``__array_finalize__`` to take attributes from the old object
-``obj``, and put them into the new view object, or do any other related
-processing.  Because ``__array_finalize__`` is the only method that
-always sees new instances being created, it is the sensible place to
-fill in instance defaults.
+* When called from the explicit constructor, ``obj`` is ``None``
+* When called from view casting, ``obj`` can be an instance of any
+  subclass of ndarray, including our own.
+* When called in new-from-template, ``obj`` is another instance of our
+  own subclass, that we might use to update the new ``self`` instance.
+
+Because ``__array_finalize__`` is the only method that always sees new
+instances being created, it is the sensible place to fill in instance
+defaults for new object attributes, among other tasks.
 
 This may be clearer with an example.
 
@@ -312,7 +337,7 @@ Simple example - adding an extra attribute to ndarray
           # From view casting - e.g arr.view(InfoArray):
           #    obj is arr
           #    (type(obj) can be InfoArray)
-          # From slicing - e.g infoarr[:3]
+          # From new-from-template - e.g infoarr[:3]
           #    type(obj) is InfoArray
           #
           # Note that it is here, rather than in the __new__ method,
@@ -334,7 +359,7 @@ Using the object looks like this:
   >>> obj = InfoArray(shape=(3,), info='information')
   >>> obj.info
   'information'
-  >>> v = obj[1:] # slicing
+  >>> v = obj[1:] # new-from-template - here - slicing
   >>> type(v)
   <class 'InfoArray'>
   >>> v.info
@@ -452,8 +477,9 @@ Note that the ufunc (``np.add``) has called
 ``out_arr`` as the (ndarray) result of the addition.  In turn, the
 default ``__array_wrap__`` (``ndarray.__array_wrap__``) has cast the
 result to class ``MySubClass``, and called ``__array_finalize__`` -
-hence the copying of the ``info`` attribute.  But, we could do anything
-we wanted:
+hence the copying of the ``info`` attribute.  This has all happened at the C level.
+
+But, we could do anything we wanted:
 
 .. testcode::
 
