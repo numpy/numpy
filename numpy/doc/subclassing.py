@@ -11,86 +11,105 @@ Gerard-Marchant - http://www.scipy.org/Subclasses.
 
 Introduction
 ------------
-Subclassing ndarray is relatively simple, but you will need to
-understand some behavior of ndarrays to understand some minor
-complications to subclassing.  There are examples at the bottom of the
-page, but you will probably want to read the background to understand
-why subclassing works as it does.
+
+Subclassing ndarray is relatively simple, but it has some complications
+compared to other Python objects.  On this page we explain the machinery
+that allows you to subclass ndarray, and the implications for
+implementing a subclass.
 
 ndarrays and object creation
 ============================
 
-The creation of ndarrays is complicated by the need to return views of
-ndarrays, that are also ndarrays.  Views can come about in two ways.
-First, they can be created directly with a call to the ``view`` method:
+Subclassing ndarray is complicated by the fact that new instances of
+ndarray classes can come about in three different ways.  These are:
 
-.. testcode::
+#. Explicit constructor call - as in ``MySubClass(params)``.  This is
+   the usual route to Python instance creation.
+#. View casting - casting an existing ndarray as a given subclass
+#. Slicing an ndarray instance
 
-  import numpy as np
-  # create a completely useless ndarray subclass
-  class C(np.ndarray): pass
-  # create a standard ndarray
-  arr = np.zeros((3,))
-  # take a view of it, as our useless subclass
-  c_arr = arr.view(C)
-  print type(c_arr)
+The last two are particular features of ndarray, and the complications
+of subclassing ndarray are due to the need to support these latter two
+routes of instance creation.
 
-giving the following output
+.. _view-casting:
 
-.. testoutput::
+View casting
+------------
 
-  <class 'C'>
+*View casting* is the standard ndarray mechanism by which you take an
+ndarray of any subclass, and return a view of the array as another
+(specified) subclass:
 
-Views can also come about by taking slices of subclassed arrays.  For example:
+>>> import numpy as np
+>>> # create a completely useless ndarray subclass
+>>> class C(np.ndarray): pass
+>>> # create a standard ndarray
+>>> arr = np.zeros((3,))
+>>> # take a view of it, as our useless subclass
+>>> c_arr = arr.view(C)
+>>> type(c_arr)
+<class 'C'>
 
-.. testcode::
+.. _instance-slicing:
 
-  v = c_arr[1:]
-  print type(v)
-  print v is c_arr
+Array slicing
+-------------
 
-giving:
+New instances of an ndarray subclass can also come about by taking
+slices of subclassed arrays.  For example:
 
-.. testoutput::
-
-  <class 'C'>
-  False
+>>> v = c_arr[1:]
+>>> type(v) # the view is of type 'C'
+<class 'C'>
+>>> v is c_arr # but it's a new instance
+False
 
 So, when we take a view from the ndarray, we return a new ndarray, that
-points to the data in the original.  If we subclass ndarray, we need to
-make sure that taking a view of our subclassed instance needs to return
-another instance of our own class.  Numpy has the machinery to do this,
-but it is this view-creating machinery that makes subclassing slightly
-non-standard.
+points to the data in the original.  
 
-To allow subclassing, and views of subclasses, ndarray uses the
-ndarray ``__new__`` method for the main work of object initialization,
-rather then the more usual ``__init__`` method.
+Implications for subclassing
+----------------------------
 
-``__new__`` and ``__init__``
-============================
+If we subclass ndarray, we need to make sure that taking a view cast or
+a slice of our subclassed instance returns another instance of our own
+class.  Numpy has the machinery to do this, but it is this view-creating
+machinery that makes subclassing slightly non-standard.
+
+There are two aspects to the machinery that ndarray uses to support
+views and slices in subclasses.
+
+The first is the use of the ``ndarray.__new__`` method for the main work
+of object initialization, rather then the more usual ``__init__``
+method.  The second is the use of the ``__array_finalize__`` method to
+allow subclasses to clean up after the creation of views and slices.
+
+A brief Python primer on ``__new__`` and ``__init__``
+=====================================================
 
 ``__new__`` is a standard python method, and, if present, is called
 before ``__init__`` when we create a class instance. Consider the
-following:
+following pure Python code:
 
 .. testcode::
 
   class C(object):
       def __new__(cls, *args):
+          print 'Cls in __new__:', cls
           print 'Args in __new__:', args
           return object.__new__(cls, *args)
+
       def __init__(self, *args):
+          print 'type(self) in __init__:', type(self)
           print 'Args in __init__:', args
 
-  c = C('hello')
+meaning that we get:
 
-The code gives the following output:
-
-.. testoutput::
-
-  Args in __new__: ('hello',)
-  Args in __init__: ('hello',)
+>>> c = C('hello')
+Cls in __new__: <class 'C'>
+Args in __new__: ('hello',)
+type(self) in __init__: <class 'C'>
+Args in __init__: ('hello',)
 
 When we call ``C('hello')``, the ``__new__`` method gets its own class
 as first argument, and the passed argument, which is the string
@@ -110,34 +129,25 @@ of some other class.  Consider the following:
 
 .. testcode::
 
-  class C(object):
-      def __new__(cls, *args):
-          print 'cls is:', cls
-          print 'Args in __new__:', args
-          return object.__new__(cls, *args)
-      def __init__(self, *args):
-          print 'self is :', self
-          print 'Args in __init__:', args
-
   class D(C):
       def __new__(cls, *args):
           print 'D cls is:', cls
           print 'D args in __new__:', args
           return C.__new__(C, *args)
+
       def __init__(self, *args):
-          print 'D self is :', self
-          print 'D args in __init__:', args
+          # we never get here
+          print 'In D __init__'
 
-  D('hello')
+meaning that:
 
-which gives:
-
-.. testoutput::
-
-  D cls is: <class 'D'>
-  D args in __new__: ('hello',)
-  cls is: <class 'C'>
-  Args in __new__: ('hello',)
+>>> obj = D('hello')
+D cls is: <class 'D'>
+D args in __new__: ('hello',)
+Cls in __new__: <class 'C'>
+Args in __new__: ('hello',)
+>>> type(obj)
+<class 'C'>
 
 The definition of ``C`` is the same as before, but for ``D``, the
 ``__new__`` method returns an instance of class ``C`` rather than
@@ -170,21 +180,12 @@ The role of ``__array_finalize__``
 ``__array_finalize__`` is the mechanism that numpy provides to allow
 subclasses to handle the various ways that new instances get created.
 
-We already know that new subclass instances can come about in these
-three ways:
+Renenber that subclass instances can come about in these three ways:
 
-explicit constructor call 
-   as in ``obj = MySubClass(params)``.  This will call the usual
+#. explicit constructor call (``obj = MySubClass(params)``.  This will call the usual
    sequence of ``MySubClass.__new__`` then ``MySubClass.__init__``.
-
-view casting call
-   We can create an instance of our subclass from any other type of
-   numpy array, via a view casting call, like: ``obj =
-   arr.view(MySubClass)``.
-
-instance slicing
-   by taking a slice from an instance of our own class, as in ``v_obj =
-   obj[:3]`` or similar.
+#. :ref:`view-casting`
+#. :ref:`instance-slicing`
 
 Our ``MySubClass.__new__`` method only gets called in the case of the
 explicit constructor call, so we can't rely on ``__new__`` or
@@ -228,20 +229,20 @@ The following code allows us to look at the call sequences:
            print 'In array_finalize with instance type %s' % type(obj)
 
 
-Now::
+Now:
 
-    >>> # Explicit constructor
-    >>> c = C((10,))
-    In __new__ with class <class 'C'>
-    In array_finalize with instance type <type 'NoneType'>
-    In __init__ with class <class 'C'>
-    >>> # View casting
-    >>> a = np.arange(10)
-    In array_finalize with instance type <type 'numpy.ndarray'>
-    >>> cast_a = a.view(C)
-    >>> # Slicing
-    >>> cv = c[:1]
-    In array_finalize with instance type <class 'C'>
+>>> # Explicit constructor
+>>> c = C((10,))
+In __new__ with class <class 'C'>
+In array_finalize with instance type <type 'NoneType'>
+In __init__ with class <class 'C'>
+>>> # View casting
+>>> a = np.arange(10)
+>>> cast_a = a.view(C)
+In array_finalize with instance type <type 'numpy.ndarray'>
+>>> # Slicing
+>>> cv = c[:1]
+In array_finalize with instance type <class 'C'>
 
 The signature of ``__array_finalize__`` is::
 
@@ -328,7 +329,7 @@ extra attribute:
           # We do not need to return anything
 
 
-So::
+So:
 
   >>> arr = np.arange(5)
   >>> obj = RealisticInfoArray(arr, info='information')
