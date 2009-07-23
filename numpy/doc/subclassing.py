@@ -55,7 +55,7 @@ ndarray of any subclass, and return a view of the array as another
 >>> type(c_arr)
 <class 'C'>
 
-.. _new-from-template
+.. _new-from-template:
 
 Creating new from template
 --------------------------
@@ -418,6 +418,7 @@ So:
   >>> v.info
   'information'
 
+.. _array-wrap:
 
 ``__array_wrap__`` for ufuncs
 -----------------------------
