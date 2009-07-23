@@ -471,7 +471,7 @@ we wanted:
 
 So, by defining a specific ``__array_wrap__`` method for our subclass,
 we can tweak the output from ufuncs. The ``__array_wrap__`` method
-requires ``self``, then an argument - which is the result of the ufunc,
+requires ``self``, then an argument - which is the result of the ufunc -
 and an optional parameter *context*. This parameter is returned by some
 ufuncs as a 3-element tuple: (name of the ufunc, argument of the ufunc,
 domain of the ufunc). ``__array_wrap__`` should return an instance of
@@ -516,6 +516,5 @@ the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
 ``numpy.core``.
 
-.. _Python __new__:
 
 """
