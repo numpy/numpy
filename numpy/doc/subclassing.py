@@ -71,10 +71,11 @@ points to the data in the original.
 Implications for subclassing
 ----------------------------
 
-If we subclass ndarray, we need to make sure that taking a view cast or
-a slice of our subclassed instance returns another instance of our own
-class.  Numpy has the machinery to do this, but it is this view-creating
-machinery that makes subclassing slightly non-standard.
+If we subclass ndarray, we need to make sure that :ref:`view-casting` or
+:ref:`instance-slicing` of our subclassed instance returns another
+instance of our own class.  Numpy has the machinery to do this, but it
+is this view-creating machinery that makes subclassing slightly
+non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
 views and slices in subclasses.
@@ -87,9 +88,12 @@ allow subclasses to clean up after the creation of views and slices.
 A brief Python primer on ``__new__`` and ``__init__``
 =====================================================
 
-``__new__`` is a standard python method, and, if present, is called
-before ``__init__`` when we create a class instance. Consider the
-following pure Python code:
+``__new__`` is a standard Python method, and, if present, is called
+before ``__init__`` when we create a class instance. See the `python
+__new__ documentation
+<http://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.  
+
+For example, consider the following Python code:
 
 .. testcode::
 
@@ -201,8 +205,9 @@ to ``ndarray.__new__``.  The reason ``ndarray.__new__(MySubClass,...)``
 gets called is different for the three cases above.
 
 * For the explicit constructor call, our subclass will need to create a
-  new ndarray instance of its own class.  This will require a call to
-  ``ndarray.__new__(MySubClass,...)``, or view casting of an existing
+  new ndarray instance of its own class.  In practice this means that
+  we, the authors of the code, will need to make a call to
+  ``ndarray.__new__(MySubClass,...)``, or do view casting of an existing
   array (see below)
 * For view casting, ``ndarray.view``, when casting, does an explicit
   call to ``ndarray.__new__(MySubClass,...)``
@@ -226,7 +231,9 @@ The following code allows us to look at the call sequences:
            print 'In __init__ with class %s' % self.__class__
 
        def __array_finalize__(self, obj):
-           print 'In array_finalize with instance type %s' % type(obj)
+           print 'In array_finalize:'
+           print '   self type is %s' % type(self)
+           print '   obj type is %s' % type(obj)
 
 
 Now:
@@ -234,15 +241,21 @@ Now:
 >>> # Explicit constructor
 >>> c = C((10,))
 In __new__ with class <class 'C'>
-In array_finalize with instance type <type 'NoneType'>
+In array_finalize:
+   self type is <class 'C'>
+   obj type is <type 'NoneType'>
 In __init__ with class <class 'C'>
 >>> # View casting
 >>> a = np.arange(10)
 >>> cast_a = a.view(C)
-In array_finalize with instance type <type 'numpy.ndarray'>
+In array_finalize:
+   self type is <class 'C'>
+   obj type is <type 'numpy.ndarray'>
 >>> # Slicing
 >>> cv = c[:1]
-In array_finalize with instance type <class 'C'>
+In array_finalize:
+   self type is <class 'C'>
+   obj type is <class 'C'>
 
 The signature of ``__array_finalize__`` is::
 
@@ -251,10 +264,15 @@ The signature of ``__array_finalize__`` is::
 ``ndarray.__new__`` passes ``__array_finalize__`` the new object, of our
 own class (``self``) as well as the object from which the view has been
 taken (``obj``).  As you can see from the output above, ``obj`` is
-``None`` when calling from the subclass explicit constructor.  We can
-use ``__array_finalize__`` to take attributes from the old object
+``None`` when calling from the subclass explicit constructor.  
+
+We can use ``__array_finalize__`` to take attributes from the old object
 ``obj``, and put them into the new view object, or do any other related
-processing.  This may be clearer with an example.
+processing.  Because ``__array_finalize__`` is the only method that
+always sees new instances being created, it is the sensible place to
+fill in instance defaults.
+
+This may be clearer with an example.
 
 Simple example - adding an extra attribute to ndarray
 -----------------------------------------------------
@@ -278,23 +296,39 @@ Simple example - adding an extra attribute to ndarray
           return obj
 
       def __array_finalize__(self,obj):
-          # reset the attribute from passed original object
+          # We could have reached here in 3 ways:
+          # From explicit constructor - e.g. InfoArray():
+          #    self.info set, obj is None)
+          # From view casting - e.g arr.view(InfoArray):
+          #    self.info not set, obj is arr
+          #    (self.info can be set if type(arr) is InfoArray)
+          # From slicing - e.g infoarr[:3]
+          #    self.info not set, obj.info set
           self.info = getattr(obj, 'info', None)
           # We do not need to return anything
 
 
 Using the object looks like this:
 
-  >>> obj = InfoArray(shape=(3,), info='information')
+  >>> obj = InfoArray(shape=(3,)) # explicit constructor
   >>> type(obj)
   <class 'InfoArray'>
+  >>> obj.info is None
+  True  
+  >>> obj = InfoArray(shape=(3,), info='information')
   >>> obj.info
   'information'
-  >>> v = obj[1:]
+  >>> v = obj[1:] # slicing
   >>> type(v)
   <class 'InfoArray'>
   >>> v.info
   'information'
+  >>> arr = np.arange(10) 
+  >>> cast_arr = arr.view(InfoArray) # view casting 
+  >>> type(cast_arr)
+  <class 'InfoArray'>
+  >>> cast_arr.info is None
+  True
 
 This class isn't very useful, because it has the same constructor as
 the bare ndarray object, including passing in buffers and shapes and
@@ -304,9 +338,11 @@ object.
 
 Slightly more realistic example - attribute added to existing array
 -------------------------------------------------------------------
-Here is a class (with thanks to Pierre GM for the original example),
-that takes array that already exists, casts as our type, and adds an
-extra attribute:
+
+Here is a class that takes a standard ndarray that already exists, casts
+as our type, and adds an extra attribute.  The ``__array_finalize__``
+method is the same as InfoArray above, but the ``__new__`` method is
+different.
 
 .. testcode::
 
@@ -324,7 +360,14 @@ extra attribute:
           return obj
 
       def __array_finalize__(self,obj):
-          # reset the attribute from passed original object
+          # We could have reached here in 3 ways:
+          # From explicit constructor - e.g. RealisticInfoArray():
+          #    self.info set, obj is None)
+          # From view casting - e.g arr.view(RealisticInfoArray):
+          #    self.info not set, obj is arr
+          #    (self.info can be set if type(arr) is RealisticInfoArray)
+          # From slicing - e.g infoarr[:3]
+          #    self.info not set, obj.info set
           self.info = getattr(obj, 'info', None)
           # We do not need to return anything
 
@@ -368,38 +411,35 @@ parameter *context*. This parameter is returned by some ufuncs as a
 3-element tuple: (name of the ufunc, argument of the ufunc, domain of
 the ufunc). See the masked array subclass for an implementation.
 
-Extra gotchas - custom __del__ methods and ndarray.base
--------------------------------------------------------
+Extra gotchas - custom ``__del__`` methods and ndarray.base
+-----------------------------------------------------------
 
-One of the problems that ndarray solves is that of memory ownership of
-ndarrays and their views.  Consider the case where we have created an
-ndarray, ``arr`` and then taken a view with ``v = arr[1:]``.  If we
-then do ``del v``, we need to make sure that the ``del`` does not
-delete the memory pointed to by the view, because we still need it for
-the original ``arr`` object.  Numpy therefore keeps track of where the
-data came from for a particular array or view, with the ``base`` attribute:
+One of the problems that ndarray solves is keeping track of memory
+ownership of ndarrays and their views.  Consider the case where we have
+created an ndarray, ``arr`` and have taken a slice with ``v = arr[1:]``.
+The two objects are looking at the same memory.  Numpy keeps track of
+where the data came from for a particular array or view, with the
+``base`` attribute:
 
-.. testcode::
+>>> # A normal ndarray, that owns its own data
+>>> arr = np.zeros((4,))
+>>> # In this case, base is None
+>>> arr.base is None
+True
+>>> # We take a view
+>>> v1 = arr[1:]
+>>> # base now points to the array that it derived from
+>>> v1.base is arr
+True
+>>> # Take a view of a view
+>>> v2 = v1[1:]
+>>> # base points to the view it derived from
+>>> v2.base is v1
+True
 
-  import numpy as np
-
-  # A normal ndarray, that owns its own data
-  arr = np.zeros((4,))
-  # In this case, base is None
-  assert arr.base is None
-  # We take a view
-  v1 = arr[1:]
-  # base now points to the array that it derived from
-  assert v1.base is arr
-  # Take a view of a view
-  v2 = v1[1:]
-  # base points to the view it derived from
-  assert v2.base is v1
-
-The assertions all succeed in this case.  In general, if the array
-owns its own memory, as for ``arr`` in this case, then ``arr.base``
-will be None - there are some exceptions to this - see the numpy book
-for more details.
+In general, if the array owns its own memory, as for ``arr`` in this
+case, then ``arr.base`` will be None - there are some exceptions to this
+- see the numpy book for more details.
 
 The ``base`` attribute is useful in being able to tell whether we have
 a view or the original array.  This in turn can be useful if we need
@@ -408,5 +448,7 @@ array is deleted.  For example, we may only want to do the cleanup if
 the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
 ``numpy.core``.
+
+.. _Python __new__:
 
 """
