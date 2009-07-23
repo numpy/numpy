@@ -330,10 +330,10 @@ Using the object looks like this:
   >>> cast_arr.info is None
   True
 
-This class isn't very useful, because it has the same constructor as
-the bare ndarray object, including passing in buffers and shapes and
-so on.   We would probably prefer to be able to take an already formed
-ndarray from the usual numpy calls to ``np.array`` and return an
+This class isn't very useful, because it has the same constructor as the
+bare ndarray object, including passing in buffers and shapes and so on.
+We would probably prefer the constructor to be able to take an already
+formed ndarray from the usual numpy calls to ``np.array`` and return an
 object.
 
 Slightly more realistic example - attribute added to existing array
