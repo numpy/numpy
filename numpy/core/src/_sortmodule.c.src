@@ -56,10 +56,12 @@
 
 
 /**begin repeat
- * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG,
- *         FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong,
- *         float, double, longdouble, cfloat, cdouble, clongdouble#
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
  * #lessthan = STDC_LT*14, NUMC_LT*3#
  * #lessequal = STDC_LE*14, NUMC_LE*3#
  */
@@ -587,7 +589,9 @@ static int
             for (;;) {
                 do pi += len; while (@lessthan@(pi, vp, len));
                 do pj -= len; while (@lessthan@(vp, pj, len));
-                if (pi >= pj)  break;
+                if (pi >= pj) {
+                    break;
+                }
                 @swap@(pi, pj, len);
             }
             pk = pr - len;
@@ -617,7 +621,9 @@ static int
             }
             @copy@(pj, vp, len);
         }
-        if (sptr == stack) break;
+        if (sptr == stack) {
+            break;
+        }
         pr = *(--sptr);
         pl = *(--sptr);
     }
@@ -645,8 +651,9 @@ static int
                 i = j;
                 j += j;
             }
-            else
+            else {
                 break;
+            }
         }
         @copy@(a + i*len, tmp, len);
     }
@@ -663,8 +670,9 @@ static int
                 i = j;
                 j += j;
             }
-            else
+            else {
                 break;
+            }
         }
         @copy@(a + i*len, tmp, len);
     }
@@ -693,8 +701,9 @@ static int
                 i = j;
                 j += j;
             }
-            else
+            else {
                 break;
+            }
         }
         a[i] = tmp;
     }
@@ -711,8 +720,9 @@ static int
                 i = j;
                 j += j;
             }
-            else
+            else {
                 break;
+            }
         }
         a[i] = tmp;
     }
@@ -746,7 +756,9 @@ static int
             for (;;) {
                 do ++pi; while (@lessthan@(v + (*pi)*len, vp, len));
                 do --pj; while (@lessthan@(vp, v + (*pj)*len, len));
-                if (pi >= pj)  break;
+                if (pi >= pj) {
+                    break;
+                }
                 SWAP(*pi,*pj);
             }
             pk = pr - 1;
@@ -775,7 +787,9 @@ static int
             }
             *pj = vi;
         }
-        if (sptr == stack) break;
+        if (sptr == stack) {
+            break;
+        }
         pr = *(--sptr);
         pl = *(--sptr);
     }
