@@ -27,6 +27,7 @@
 
 #include "Python.h"
 #include "numpy/noprefix.h"
+#include "numpy/npy_math.h"
 
 #define NOT_USED NPY_UNUSED(unused)
 #define PYA_QS_STACK 100
@@ -37,6 +38,9 @@
 #define STDC_LT(a,b) ((a) < (b))
 #define STDC_LE(a,b) ((a) <= (b))
 #define STDC_EQ(a,b) ((a) == (b))
+#define NANC_LT(a,b) (!((b) <= (a) || npy_isnan(a)))
+#define NANC_LE(a,b) ((a) <= (b) || npy_isnan(b))
+#define NANC_EQ(a,b) ((a) == (b) || npy_isnan(a) && npy_isnan(b))
 #define NUMC_LT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag): ((p).real < (q).real)))
 #define NUMC_LE(p,q) ((((p).real==(q).real) ? ((p).imag <= (q).imag): ((p).real <= (q).real)))
 #define NUMC_EQ(p,q) (((p).real==(q).real) && ((p).imag == (q).imag))
