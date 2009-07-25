@@ -1,28 +1,30 @@
 /* -*- c -*- */
 
-/* The purpose of this module is to add faster sort functions
-   that are type-specific.  This is done by altering the
-   function table for the builtin descriptors.
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
 
-   These sorting functions are copied almost directly from numarray
-   with a few modifications (complex comparisons compare the imaginary
-   part if the real parts are equal, for example), and the names
-   are changed.
-
-   The original sorting code is due to Charles R. Harris who wrote
-   it for numarray.
-*/
-
-/* Quick sort is usually the fastest, but the worst case scenario can
-   be slower than the merge and heap sorts.  The merge sort requires
-   extra memory and so for large arrays may not be useful.
-
-   The merge sort is *stable*, meaning that equal components
-   are unmoved from their entry versions, so it can be used to
-   implement lexigraphic sorting on multiple keys.
-
-   The heap sort is included for completeness.
-*/
+/*
+ * Quick sort is usually the fastest, but the worst case scenario can
+ * be slower than the merge and heap sorts.  The merge sort requires
+ * extra memory and so for large arrays may not be useful.
+ *
+ * The merge sort is *stable*, meaning that equal components
+ * are unmoved from their entry versions, so it can be used to
+ * implement lexigraphic sorting on multiple keys.
+ *
+ * The heap sort is included for completeness.
+ */
 
 
 #include "Python.h"
@@ -50,6 +52,95 @@
 #define UNICODE_LT(pa, pb, len) (compare_ucs4(pa, pb, len) < 0)
 #define UNICODE_LE(pa, pb, len) (compare_ucs4(pa, pb, len) <= 0)
 #define UNICODE_EQ(pa, pb, len) (compare_ucs4(pa, pb, len) == 0)
+
+
+/*
+ *****************************************************************************
+ **                        COMPARISON FUNCTIONS                             **
+ *****************************************************************************
+ */
+
+#if 0
+/**begin repeat
+ *
+ * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong#
+ */
+
+NPY_INLINE static int
+@type@_lt(@type@ *ap, @type@ *bp)
+{
+    constant @type@ a = *ap;
+    constant @type& b = *bp;
+    return a < b;
+}
+
+NPY_INLINE static int
+@type@_le(@type@ *ap, @type@ *bp)
+{
+    constant @type@ a = *ap;
+    constant @type& b = *bp;
+    return a <= b;
+}
+
+/**end repeat**/
+#endif
+
+/**begin repeat
+ * #type = float, double, longdouble#
+ */
+
+NPY_INLINE static int
+@type@_lt(@type@ *ap, @type@ *bp)
+{
+    constant @type@ a = *ap;
+    constant @type& b = *bp;
+    return a < b;
+}
+
+NPY_INLINE static int
+@type@_le(@type@ *ap, @type@ *bp)
+{
+    constant @type@ a = *ap;
+    constant @type& b = *bp;
+    return a <= b;
+}
+
+/**end repeat**/
+
+/**begin repeat
+ * #type = cfloat, cdouble, clongdouble#
+ */
+
+NPY_INLINE static int
+@type@_lt(@type@ *ap, @type@ *bp)
+{
+    constant @type@ a = *ap;
+    constant @type& b = *bp;
+    return a.real < b.real || (a.real == b.real && a.imag < b.imag);
+}
+
+NPY_INLINE static int
+@type@_le(@type@ *a, @type@ *b)
+{
+    constant @type@ a = *ap;
+    constant @type& b = *bp;
+    return a.real < b.real || (a.real == b.real && a.imag <= b.imag);
+}
+
+/**end repeat**/
+
+NPY_INLINE static int
+object_lt(@type@ *a, @type@ *b)
+{
+    return 0;
+}
+
+NPY_INLINE static int
+object_le(@type@ *a, @type@ *b)
+{
+    return 0;
+}
 
 
 /*
