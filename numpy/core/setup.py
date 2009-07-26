@@ -7,6 +7,7 @@ from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 import warnings
+import re
 
 from setup_common import *
 
@@ -603,6 +604,25 @@ def configuration(parent_package='',top_path=None):
                                   ],
                          )
 
+    def subst_vars(target, source, d):
+        """Substitute any occurence of @foo@ by d['foo'] from source file into
+        target."""
+        var = re.compile('@([a-zA-Z_]+)@')
+        fs = open(source, 'r')
+        try:
+            ft = open(target, 'w')
+            try:
+                for l in fs.readlines():
+                    m = var.search(l)
+                    if m:
+                        ft.write(l.replace('@%s@' % m.group(1), d[m.group(1)]))
+                    else:
+                        ft.write(l)
+            finally:
+                ft.close()
+        finally:
+            fs.close()
+
     # npymath needs the config.h and numpyconfig.h files to be generated, but
     # build_clib cannot handle generate_config_h and generate_numpyconfig_h
     # (don't ask). Because clib are generated before extensions, we have to
@@ -623,17 +643,8 @@ def configuration(parent_package='',top_path=None):
             if not os.path.exists(d):
                 os.makedirs(d)
             filename = os.path.join(d, 'npymath.ini')
-            a = open('numpy/core/npymath.ini.in', 'r')
-            try:
-                b = open(filename, 'w')
-                try:
-                    for l in a.readlines():
-                        b.write(l.replace('@install_dir@', npymath_install_dir))
-                finally:
-                    b.close()
-            finally:
-                a.close()
-
+            d = {'install_dir': npymath_install_dir}
+            subst_vars(filename, 'numpy/core/npymath.ini.in', d)
             return filename
 
         install_cmd = get_cmd('install')
