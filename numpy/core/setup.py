@@ -596,7 +596,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_installed_library('npymath',
             sources=[join('src', 'npymath', 'npy_math.c.src'), get_mathlib_info],
-            install_dir='numpy/core/lib')
+            install_dir='lib')
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",

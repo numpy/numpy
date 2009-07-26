@@ -1228,6 +1228,7 @@ class Configuration(object):
         if not build_info:
             build_info = {}
 
+        install_dir = os.path.join(self.package_path, install_dir)
         self._add_library(name, sources, install_dir, build_info)
         self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
 
@@ -1295,6 +1296,7 @@ class Configuration(object):
     def add_scons_installed_library(self, name, install_dir):
         """Add an scons-built installable library to distutils.
         """
+        install_dir = os.path.join(self.package_path, install_dir)
         self.installed_libraries.append(InstallableLib(name, {}, install_dir))
 
     def add_sconscript(self, sconscript, subpackage_path=None,
