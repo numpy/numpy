@@ -13,9 +13,6 @@ try:
 except NameError:
     from sets import Set as set
 
-from numpy.distutils.npy_pkg_config import get_info as get_npy_info, parse_flags, \
-        PkgNotFound
-
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -1562,10 +1559,14 @@ def get_info(pkgname):
     >>> npymath_info = get_info('npymath')
     >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
     """
+    # XXX: import here for bootstrapping reasons
     import numpy
+    from numpy.distutils.npy_pkg_config import read_config, parse_flags, \
+            PkgNotFound
+
     d = os.path.join(
             os.path.dirname(numpy.__file__), 'core', 'lib', 'npy-pkg-config')
-    pkg_info = get_npy_info(pkgname, [d])
+    pkg_info = read_config(pkgname, [d])
 
     # Translate LibraryInfo instance into a build_info dict
     info = parse_flags(pkg_info.cflags())

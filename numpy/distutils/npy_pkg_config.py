@@ -4,7 +4,7 @@ import os
 import shlex
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
-        'get_info', 'parse_flags']
+        'read_config', 'parse_flags']
 
 _VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
 
@@ -200,7 +200,7 @@ def parse_config(filename, dirs=None):
 
     return meta, vars, sections, requires
 
-def read_config(filenames, dirs=None):
+def _read_config_imp(filenames, dirs=None):
     def _read_config(f):
         meta, vars, sections, reqs = parse_config(f, dirs)
         # recursively add sections and variables of required libraries
@@ -228,11 +228,11 @@ def read_config(filenames, dirs=None):
 # be parsed many time outside LibraryInfo creation, but I doubt this will be a
 # problem in practice
 _CACHE = {}
-def get_info(pkgname, dirs=None):
+def read_config(pkgname, dirs=None):
     try:
         return _CACHE[pkgname]
     except KeyError:
-        v = read_config(pkg_to_filename(pkgname), dirs)
+        v = _read_config_imp(pkg_to_filename(pkgname), dirs)
         _CACHE[pkgname] = v
         return v
 
@@ -277,9 +277,9 @@ if __name__ == '__main__':
     import os
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
-        info = get_info(pkg_name, ['numpy/distutils', '.', d])
+        info = read_info(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
     else:
-        info = get_info(pkg_name, ['numpy/distutils', '.'])
+        info = read_info(pkg_name, ['numpy/core/lib/npy-pkg-config', '.'])
 
     if options.section:
         section = options.section
