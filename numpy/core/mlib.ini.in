@@ -5,6 +5,8 @@ Version = 1.0
 
 [default]
 Libs=@posix_mathlib@
+Cflags=
 
 [msvc]
 Libs=@msvc_mathlib@
+Cflags=
