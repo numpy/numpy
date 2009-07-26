@@ -1179,7 +1179,7 @@ class Configuration(object):
           f2py_options
           language
         """
-        self._add_library(name, sources, install_dir, build_info)
+        self._add_library(name, sources, None, build_info)
 
         dist = self.get_distribution()
         if dist is not None:
