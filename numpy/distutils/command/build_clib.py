@@ -3,6 +3,7 @@
 
 import os
 from glob import glob
+import shutil
 from distutils.command.build_clib import build_clib as old_build_clib
 from distutils.errors import DistutilsSetupError, DistutilsError, \
      DistutilsFileError
@@ -27,11 +28,15 @@ class build_clib(old_build_clib):
     user_options = old_build_clib.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
+        ('inplace', 'i', 'Build in-place'),
         ]
+
+    boolean_options = old_build_clib.boolean_options + ['inplace']
 
     def initialize_options(self):
         old_build_clib.initialize_options(self)
         self.fcompiler = None
+        self.inplace = 0
         return
 
     def have_f_sources(self):
@@ -93,6 +98,14 @@ class build_clib(old_build_clib):
                 self.fcompiler.show_customization()
 
         self.build_libraries(self.libraries)
+
+        if self.inplace:
+            for l in  self.distribution.installed_libraries:
+                libname = self.compiler.library_filename(l.name) 
+                source = os.path.join(self.build_clib, libname)
+                target =  os.path.join(l.target_dir, libname)
+                self.mkpath(l.target_dir)
+                shutil.copy(source, target)
 
     def get_source_files(self):
         self.check_library_list(self.libraries)
