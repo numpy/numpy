@@ -1539,6 +1539,22 @@ def get_numpy_include_dirs():
     # else running numpy/core/setup.py
     return include_dirs
 
+def get_npymath_info():
+    """Return a extra_info-compatible dict to link against the core npymath
+    library.
+    
+    Example
+    -------
+    >>> npymath_info = get_npymath_info()
+    >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
+    """
+    import numpy
+    p = numpy.__file__
+    info = {}
+    info["library_dirs"] = [os.path.join(os.path.dirname(p), "core", "lib")]
+    info["libraries"] = ["npymath"]
+    return info
+
 def is_bootstrapping():
     import __builtin__
     try:
