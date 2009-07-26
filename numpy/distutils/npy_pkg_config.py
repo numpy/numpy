@@ -11,7 +11,7 @@ class FormatError(IOError):
         return self.msg
 
 class LibraryInfo(object):
-    def __init__(self, name, description, version, sections, requires=None):
+    def __init__(self, name, description, version, sections, vars, requires=None):
         self.name = name
         self.description = description
         if requires:
@@ -20,19 +20,16 @@ class LibraryInfo(object):
             self.requires = []
         self.version = version
         self._sections = sections
+        self.vars = vars
             
     def sections(self):
         return self._sections.keys()
 
     def cflags(self, section="default"):
-        if not self._sections[section].has_key("cflags"):
-            return ""
-        return self._sections[section]["cflags"]
+        return self.vars.interpolate(self._sections[section]['cflags'])
 
     def libs(self, section="default"):
-        if not self._sections[section].has_key("libs"):
-            return ""
-        return self._sections[section]["libs"]
+        return self.vars.interpolate(self._sections[section]['libs'])
 
     def __str__(self):
         m = ['Name: %s' % self.name]
@@ -56,8 +53,11 @@ class VariableSet(object):
 
     def _init_parse(self):
         for k, v in self._raw_data.items():
-            self._re[k] = re.compile(r'\$\{%s\}' % k)
-            self._re_sub[k] = v
+            self._init_parse_var(k, v)
+
+    def _init_parse_var(self, name, value):
+        self._re[name] = re.compile(r'\$\{%s\}' % name)
+        self._re_sub[name] = value
 
     def interpolate(self, value):
         # Brute force: we keep interpolating until there is no '${var}' anymore
@@ -73,6 +73,17 @@ class VariableSet(object):
             value = nvalue
 
         return value
+
+    def variables(self):
+        return self._raw_data.keys()
+
+    # Emulate a dict to set/get variables values
+    def __getitem__(self, name):
+        return self._raw_data[name]
+
+    def __setitem__(self, name, value):
+        self._raw_data[name] = value
+        self._init_parse_var(name, value)
 
 def parse_meta(config):
     if not config.has_section('meta'):
@@ -109,41 +120,62 @@ def parse_sections(config):
 def pkg_to_filename(pkg_name):
     return "%s.ini" % pkg_name
 
-# TODO:
-#   - implements --cflags, --libs
-#   - implements version comparison (modversion + atleast)
-#   - implements non default section
-
-def read_config(filename):
+def parse_config(filename):
     config = SafeConfigParser()
     n = config.read(filename)
     if not len(n) >= 1:
         raise IOError("Could not find file %s" % filename)
 
-    meta_d = parse_meta(config)
-    varset = parse_variables(config)
+    # Parse meta and variables sections
+    meta = parse_meta(config)
+
+    vars = {}
+    if config.has_section('variables'):
+        for name, value in config.items("variables"):
+            vars[name] = value
 
     # Parse "normal" sections
-    secs = config.sections()
-    secs = [s for s in secs if not s in ["meta", "variables"]]
+    secs = [s for s in config.sections() if not s in ['meta', 'variables']]
+    sections = {}
 
-    r = {}
-
-    # XXX: this is a mess
-    # XXX: cache the LibraryInfo instances
+    requires = {}
     for s in secs:
         d = {}
-        if config.has_option(s, "depends"):
-            tmp = read_config(pkg_to_filename(config.get(s, "depends")))
+        if config.has_option(s, "requires"):
+            requires[s] = config.get(s, 'requires')
+            
         for name, value in config.items(s):
-            d[name] = varset.interpolate(value)
-            if config.has_option(s, "depends") and not name == "depends":
-                if s in tmp.sections():
-                    d[name] += ' %s' % getattr(tmp, name)(s)
-        r[s] = d
+            d[name] = value
+        sections[s] = d
 
-    return LibraryInfo(name=meta_d["name"], description=meta_d["description"],
-            version=meta_d["version"], sections=r)
+    return meta, vars, sections, requires
+
+def read_config(filename):
+    def _read_config(f):
+        meta, vars, sections, reqs = parse_config(f)
+        # recursively add sections and variables of required libraries
+        for rname, rvalue in reqs.items():
+            nmeta, nvars, nsections, nreqs = _read_config(pkg_to_filename(rvalue))
+
+            # Update var dict for variables not in 'top' config file
+            for k, v in nvars.items():
+                if not vars.has_key(k):
+                    vars[k] = v
+
+            # Update sec dict
+            for oname, ovalue in nsections[rname].items():
+                sections[rname][oname] += ' %s' % ovalue
+
+        return meta, vars, sections, reqs
+
+    meta, vars, sections, reqs = _read_config(filename)
+
+    return LibraryInfo(name=meta["name"], description=meta["description"],
+            version=meta["version"], sections=sections, vars=VariableSet(vars))
+
+# TODO:
+#   - Caching mechanism for LibraryInfo instances
+#   - implements version comparison (modversion + atleast)
 
 if __name__ == '__main__':
     import sys
@@ -174,6 +206,7 @@ if __name__ == '__main__':
         for f in files:
             info = read_config(f)
             print "%s\t%s - %s" % (info.name, info.name, info.description)
+
     pkg_name = args[1]
     fname = pkg_to_filename(pkg_name)
     info = read_config(fname)
