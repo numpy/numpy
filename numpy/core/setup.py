@@ -614,9 +614,9 @@ def configuration(parent_package='',top_path=None):
     config.add_installed_library('npymath',
             sources=[join('src', 'npymath', 'npy_math.c.src'), get_mathlib_info],
             install_dir='numpy/core/lib')
-    config.add_installed_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
+    config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
-    config.add_installed_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
+    config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
             subst_dict)
    
     multiarray_deps = [

@@ -1204,7 +1204,26 @@ class Configuration(object):
         self.libraries.append((name, build_info))
 
     def add_installed_library(self, name, sources, install_dir, build_info=None):
-        """Add installable library to configuration.
+        """Similar to add_library, but the corresponding library is installed.
+
+        Most C libraries are only used to build python extensions, but
+        libraries built through this method will be installed so that they can
+        be reused by third-party. install_dir is relative to the current
+        subpackage.
+
+        Example
+        -------
+        config.add_installed_library('foo', sources=['foo.c'], install_dir='lib')
+
+        If the package corresponding to config is 'fubar', this will install
+        the library in fubar/lib.
+
+        Note
+        ----
+        The best way to encode the necessary options to link against those C
+        libraries is to use a libname.ini file, and use get_info to retrieve
+        those informations (see add_npy_pkg_config method for more
+        information).
         """
         if not build_info:
             build_info = {}
@@ -1212,16 +1231,66 @@ class Configuration(object):
         self._add_library(name, sources, install_dir, build_info)
         self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
 
-    def add_installed_pkg_config(self, template, install_dir, d=None):
-        if d is None:
-            d = {}
+    def add_npy_pkg_config(self, template, install_dir, subst_dict=None):
+        """Generate a npy-pkg config file from the template, and install it in
+        given install directory, using subst_dict for variable substitution.
+
+        Parameters
+        ----------
+        template: str
+            the path of the template, relatively to the current package path
+        install_dir: str
+            where to install the npy-pkg config file, relatively to the current
+            package path
+        subst_dict: dict (None by default)
+            if given, any string of the form @key@ will be replaced by
+            subst_dict[key] in the template file when installed. The install
+            prefix is always available through the variable @prefix@, since the
+            install prefix is not easy to get reliably from setup.py.
+
+        Example
+        -------
+        config.add_npy_pkg_config('foo.ini.in', 'lib', {'foo': bar})
+
+        Assuming the foo.ini.in file has the following content:
+
+        '''
+        [meta]
+        Name=@foo@
+        Version=1.0
+        Description=dummy description
+
+        [default]
+        Cflags=-I@prefix@/include
+        Libs=
+        '''
+
+        The generated file will have the following content:
+        [meta]
+        Name=bar
+        Version=1.0
+        Description=dummy description
+
+        [default]
+        Cflags=-Iprefix_dir/include
+        Libs=
+
+        Note
+        ----
+        This works for both standard installs and in-place builds, i.e. the
+        @prefix@ refer to the source directory for in-place builds.
+        """
+        if subst_dict is None:
+            subst_dict = {}
         basename = os.path.splitext(template)[0]
         template = os.path.join(self.package_path, template)
 
         if self.installed_pkg_config.has_key(self.name):
-            self.installed_pkg_config[self.name].append((template, install_dir, d))
+            self.installed_pkg_config[self.name].append((template, install_dir,
+                subst_dict))
         else:
-            self.installed_pkg_config[self.name] = [(template, install_dir, d)]
+            self.installed_pkg_config[self.name] = [(template, install_dir,
+                subst_dict)]
 
     def add_scons_installed_library(self, name, install_dir):
         """Add an scons-built installable library to distutils.
