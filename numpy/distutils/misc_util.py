@@ -13,6 +13,8 @@ try:
 except NameError:
     from sets import Set as set
 
+from numpy.distutils.npy_pkg_config import get_info as get_npy_info, parse_flags
+
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -1534,20 +1536,23 @@ def get_numpy_include_dirs():
     # else running numpy/core/setup.py
     return include_dirs
 
-def get_npymath_info():
-    """Return a extra_info-compatible dict to link against the core npymath
-    library.
+def get_info(pkgname):
+    """Given a clib package name, returns a info dict with the necessary
+    options to use the clib.
 
     Example
     -------
-    >>> npymath_info = get_npymath_info()
-    >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
-    """
+    >>> npymath_info = get_info('npymath')
+    >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)"""
     import numpy
-    p = numpy.__file__
-    info = {}
-    info["library_dirs"] = [os.path.join(os.path.dirname(p), "core", "lib")]
-    info["libraries"] = ["npymath"]
+    d = os.path.join(
+            os.path.dirname(numpy.__file__), 'core', 'lib', 'npy-pkg-config')
+    pkg_info = get_npy_info(pkgname, [d])
+
+    # Translate LibraryInfo instance into a build_info dict
+    info = parse_flags(pkg_info.cflags())
+    for k, v in parse_flags(pkg_info.libs()).items():
+        info[k].extend(v)
     return info
 
 def is_bootstrapping():

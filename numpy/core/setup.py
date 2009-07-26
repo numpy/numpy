@@ -662,7 +662,8 @@ def configuration(parent_package='',top_path=None):
             shutil.copy(source, target)
 
     config.add_installed_library('npymath',
-            sources=[join('src', 'npymath', 'npy_math.c.src'), generate_npymath_ini],
+            sources=[join('src', 'npymath', 'npy_math.c.src'),
+                generate_npymath_ini],
             install_dir='numpy/core/lib')
    
     multiarray_deps = [
