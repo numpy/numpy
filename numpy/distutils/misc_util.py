@@ -25,6 +25,12 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
            'quote_args', 'get_build_architecture']
 
+class InstallableLib:
+    def __init__(self, name, build_info, target_dir):
+        self.name = name
+        self.build_info = build_info
+        self.target_dir = target_dir
+
 def quote_args(args):
     # don't used _nt_quote_args as it does not check if
     # args items already have quotes or not.
@@ -589,7 +595,8 @@ def get_frame(level=0):
 class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_data']
+                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_data',
+                  'installed_libraries']
     _dict_keys = ['package_dir']
     _extra_keys = ['name', 'version']
 
@@ -1190,13 +1197,30 @@ class Configuration(object):
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a library '+ name)
 
-    def add_installed_library(self, name, sources, build_info=None):
+    def add_installed_library(self, name, sources, install_dir, build_info=None):
         """Add installable library to configuration.
         """
         if not build_info:
-            self.add_library(name, sources)
-        else:
-            self.add_library(name, sources, **build_info)
+            build_info = {}
+        #    self.add_library(name, sources)
+        #else:
+        #    self.add_library(name, sources, **build_info)
+
+        build_info = copy.copy(build_info)
+        name = name #+ '__OF__' + self.name
+        build_info['sources'] = sources
+
+        # Sometimes, depends is not set up to an empty list by default, and if
+        # depends is not given to add_library, distutils barfs (#1134)
+        if not build_info.has_key('depends'):
+            build_info['depends'] = []
+
+        self._fix_paths_dict(build_info)
+
+        # Add to libraries list so that it is build with build_clib
+        self.libraries.append((name, build_info))
+        self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
+
 
     def add_sconscript(self, sconscript, subpackage_path=None,
                        standalone = False, pre_hook = None,
