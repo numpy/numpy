@@ -232,7 +232,12 @@ if __name__ == '__main__':
             print "%s\t%s - %s" % (info.name, info.name, info.description)
 
     pkg_name = args[1]
-    info = get_info(pkg_name, ['numpy/distutils', '.'])
+    import os
+    d = os.environ.get('NPY_PKG_CONFIG_PATH')
+    if d:
+        info = get_info(pkg_name, ['numpy/distutils', '.', d])
+    else:
+        info = get_info(pkg_name, ['numpy/distutils', '.'])
     
     if options.section:
         section = options.section
