@@ -68,13 +68,11 @@ def get_distutils_clibdir(cmd, pkg):
 def get_distutils_install_prefix(pkg, inplace):
     """Returns the installation path for the current package."""
     from numscons.core.utils import pkg_to_path
-    install_cmd = get_cmd('install')
-    if hasattr(install_cmd, 'install_libbase'):
-        return pjoin(install_cmd.install_libbase, pkg_to_path(pkg))
-    elif inplace == 1:
+    if inplace == 1:
         return pkg_to_path(pkg)
     else:
-        return ''
+        install_cmd = get_cmd('install').get_finalized_command('install')
+        return pjoin(install_cmd.install_libbase, pkg_to_path(pkg))
 
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""

@@ -333,7 +333,7 @@ env.DistutilsInstalledStaticExtLibrary("npymath", npymath_src, install_dir='lib'
 env.Prepend(LIBS=["npymath"])
 env.Prepend(LIBPATH=["."])
 
-subst_dict = {'@prefix@': '$distutils_install_prefix/lib',
+subst_dict = {'@prefix@': '$distutils_install_prefix',
               '@sep@': os.path.sep}
 npymath_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'npymath.ini'),
     'npymath.ini.in', SUBST_DICT=subst_dict)
