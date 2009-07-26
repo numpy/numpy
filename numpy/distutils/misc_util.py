@@ -1572,6 +1572,12 @@ def get_info(pkgname):
     info = parse_flags(pkg_info.cflags())
     for k, v in parse_flags(pkg_info.libs()).items():
         info[k].extend(v)
+
+    # add_extension extra_info argument is ANAL
+    info['define_macros'] = info['macros']
+    del info['macros']
+    del info['ignored']
+
     return info
 
 def is_bootstrapping():

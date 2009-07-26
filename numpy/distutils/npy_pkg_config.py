@@ -26,8 +26,8 @@ def parse_flags(line):
     lexer = shlex.shlex(line)
     lexer.whitespace_split = True
 
-    d = {'include_dirs': [], 'library_dirs': [], 'libs': [], 'include': [],
-            'macros': [], 'libs': [], 'ignored': []}
+    d = {'include_dirs': [], 'library_dirs': [], 'libraries': [],
+            'macros': [], 'ignored': []}
     def next_token(t):
         if t.startswith('-I'):
             if len(t) > 2:
@@ -42,7 +42,7 @@ def parse_flags(line):
                 t = lexer.get_token()
                 d['library_dirs'].append(t)
         elif t.startswith('-l'):
-            d['libs'].append(t[2:])
+            d['libraries'].append(t[2:])
         elif t.startswith('-D'):
             d['macros'].append(t[2:])
         else:
