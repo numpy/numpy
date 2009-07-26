@@ -329,9 +329,21 @@ env.Prepend(CPPPATH = ['include', '.', 'include/numpy'])
 
 # npymath core lib
 npymath_src = env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src'))
-env.DistutilsStaticExtLibrary("npymath", npymath_src)
+env.DistutilsInstalledStaticExtLibrary("npymath", npymath_src, install_dir='lib')
 env.Prepend(LIBS=["npymath"])
 env.Prepend(LIBPATH=["."])
+
+subst_dict = {'@prefix@': '$distutils_install_prefix/lib',
+              '@sep@': os.path.sep}
+npymath_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'npymath.ini'),
+    'npymath.ini.in', SUBST_DICT=subst_dict)
+
+subst_dict = {'@posix_mathlib@': " ".join(['-l%s' % l for l in mlib]),
+              '@msvc_mathlib@': " ".join(['%s.mlib' % l for l in mlib])}
+mlib_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'mlib.ini'),
+    'mlib.ini.in', SUBST_DICT=subst_dict)
+env.Install('$distutils_installdir/lib/npy-pkg-config', mlib_ini)
+env.Install('$distutils_installdir/lib/npy-pkg-config', npymath_ini)
 
 #-----------------
 # Build multiarray

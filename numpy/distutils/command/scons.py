@@ -10,7 +10,7 @@ from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_bootstrapping
+from numpy.distutils.misc_util import is_bootstrapping, get_cmd
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
@@ -64,6 +64,17 @@ def get_distutils_libdir(cmd, pkg):
 def get_distutils_clibdir(cmd, pkg):
     """Returns the path where distutils put pure C libraries."""
     return pjoin(_get_top_dir(pkg), cmd.build_temp)
+
+def get_distutils_install_prefix(pkg, inplace):
+    """Returns the installation path for the current package."""
+    from numscons.core.utils import pkg_to_path
+    install_cmd = get_cmd('install')
+    if hasattr(install_cmd, 'install_libbase'):
+        return pjoin(install_cmd.install_libbase, pkg_to_path(pkg))
+    elif inplace == 1:
+        return pkg_to_path(pkg)
+    else:
+        return ''
 
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
@@ -434,6 +445,8 @@ class scons(old_build_ext):
                              protect_path(get_distutils_libdir(self, pkg_name)))
                 cmd.append('distutils_clibdir=%s' %
                              protect_path(get_distutils_clibdir(self, pkg_name)))
+                prefix = get_distutils_install_prefix(pkg_name, self.inplace)
+                cmd.append('distutils_install_prefix=%s' % protect_path(prefix))
 
                 if not self._bypass_distutils_cc:
                     cmd.append('cc_opt=%s' % self.scons_compiler)
