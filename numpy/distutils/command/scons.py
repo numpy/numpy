@@ -45,17 +45,7 @@ def get_scons_local_path():
     from numscons import get_scons_path
     return get_scons_path()
 
-def get_distutils_libdir(cmd, pkg):
-    """Returns the path where distutils install libraries, relatively to the
-    scons build directory."""
-    from numscons import get_scons_build_dir
-    from numscons.core.utils import pkg_to_path
-    scdir = pjoin(get_scons_build_dir(), pkg_to_path(pkg))
-    n = scdir.count(os.sep)
-    return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_lib)
-
-def get_distutils_clibdir(cmd, pkg):
-    """Returns the path where distutils put pure C libraries."""
+def _get_top_dir(pkg):
     # XXX: this mess is necessary because scons is launched per package, and
     # has no knowledge outside its build dir, which is package dependent. If
     # one day numscons does not launch one process/package, this will be
@@ -64,7 +54,16 @@ def get_distutils_clibdir(cmd, pkg):
     from numscons.core.utils import pkg_to_path
     scdir = pjoin(get_scons_build_dir(), pkg_to_path(pkg))
     n = scdir.count(os.sep)
-    return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_temp)
+    return os.sep.join([os.pardir for i in range(n+1)])
+
+def get_distutils_libdir(cmd, pkg):
+    """Returns the path where distutils install libraries, relatively to the
+    scons build directory."""
+    return pjoin(_get_top_dir(pkg), cmd.build_lib)
+
+def get_distutils_clibdir(cmd, pkg):
+    """Returns the path where distutils put pure C libraries."""
+    return pjoin(_get_top_dir(pkg), cmd.build_temp)
 
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
