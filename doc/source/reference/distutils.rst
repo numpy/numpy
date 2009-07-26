@@ -229,27 +229,9 @@ misc_util
         Add the sequence of files to the beginning of the scripts list.
         Scripts will be installed under the <prefix>/bin/ directory.
 
-    .. method:: add_installed_library(name, sources, install_dir, **build_info)
+    .. automethod:: add_installed_library
 
-        Similar to add_library, but the corresponding library is installed.
-        Most C libraries are only used to build python extensions, but
-        libraries built through this method will be installed so that they can
-        be reused by third-party. install_dir is relative to the current
-        subpackage.
-
-        Example
-        -------
-        config.add_installed_library('foo', sources=['foo.c'], install_dir='lib')
-
-        If the package corresponding to config is 'fubar', this will install
-        the library in fubar/lib.
-
-        Note
-        ----
-        The best way to encode the necessary options to link against those C
-        libraries is to use a libname.ini file, and use get_info to retrieve
-        those informations (see add_npy_pkg_config method for more
-        information).
+    .. automethod:: add_npy_pkg_config
 
     .. method:: paths(*paths)
 

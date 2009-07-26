@@ -1211,15 +1211,22 @@ class Configuration(object):
         be reused by third-party. install_dir is relative to the current
         subpackage.
 
-        Example
-        -------
-        config.add_installed_library('foo', sources=['foo.c'], install_dir='lib')
+        Parameters
+        ----------
+        name: str
+            name of the installed library
+        sources: seq
+            list of source files of the library
+        install_dir: str
+            path where to install the library (relatively to the current
+            sub-package)
 
-        If the package corresponding to config is 'fubar', this will install
-        the library in fubar/lib.
+        See also
+        --------
+        add_library, add_npy_pkg_config, get_info
 
-        Note
-        ----
+        Notes
+        -----
         The best way to encode the necessary options to link against those C
         libraries is to use a libname.ini file, and use get_info to retrieve
         those informations (see add_npy_pkg_config method for more
@@ -1249,37 +1256,42 @@ class Configuration(object):
             prefix is always available through the variable @prefix@, since the
             install prefix is not easy to get reliably from setup.py.
 
-        Example
-        -------
-        config.add_npy_pkg_config('foo.ini.in', 'lib', {'foo': bar})
+        See also
+        --------
+        add_installed_library, get_info
 
-        Assuming the foo.ini.in file has the following content:
-
-        '''
-        [meta]
-        Name=@foo@
-        Version=1.0
-        Description=dummy description
-
-        [default]
-        Cflags=-I@prefix@/include
-        Libs=
-        '''
-
-        The generated file will have the following content:
-        [meta]
-        Name=bar
-        Version=1.0
-        Description=dummy description
-
-        [default]
-        Cflags=-Iprefix_dir/include
-        Libs=
-
-        Note
-        ----
+        Notes
+        -----
         This works for both standard installs and in-place builds, i.e. the
         @prefix@ refer to the source directory for in-place builds.
+
+        Examples
+        --------
+        config.add_npy_pkg_config('foo.ini.in', 'lib', {'foo': bar})
+
+        Assuming the foo.ini.in file has the following content::
+
+            [meta]
+            Name=@foo@
+            Version=1.0
+            Description=dummy description
+
+            [default]
+            Cflags=-I@prefix@/include
+            Libs=
+
+        The generated file will have the following content::
+
+            [meta]
+            Name=bar
+            Version=1.0
+            Description=dummy description
+
+            [default]
+            Cflags=-Iprefix_dir/include
+            Libs=
+
+        and will be installed as foo.ini in the 'lib' subpath.
         """
         if subst_dict is None:
             subst_dict = {}
@@ -1643,8 +1655,14 @@ def get_info(pkgname, dirs=None):
     Raise a numpy.distutils.PkgNotFound exception if the package is not
     found.
 
+    See Also
+    --------
+    add_npy_pkg_info, add_installed_library
+
     Example
     -------
+    To get the necessary informations for the npymath library from NumPy:
+
     >>> npymath_info = get_info('npymath')
     >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
     """
