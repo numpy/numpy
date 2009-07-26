@@ -1912,8 +1912,7 @@ def get_pkg_info(pkgname, dirs=None):
     --------
     add_npy_pkg_info, add_installed_library, get_info
     """
-    from numpy.distutils.npy_pkg_config import read_config, parse_flags, \
-            PkgNotFound
+    from numpy.distutils.npy_pkg_config import read_config
 
     if dirs:
         dirs.append(get_npy_pkg_dir())
@@ -1951,6 +1950,7 @@ def get_info(pkgname, dirs=None):
     >>> npymath_info = get_info('npymath')
     >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
     """
+    from numpy.distutils.npy_pkg_config import parse_flags
     pkg_info = get_pkg_info(pkgname, dirs)
 
     # Translate LibraryInfo instance into a build_info dict
