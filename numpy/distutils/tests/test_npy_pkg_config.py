@@ -39,12 +39,13 @@ class TestLibraryInfo(TestCase):
     def test_simple(self):
         fd, filename = mkstemp('foo.ini')
         try:
+            pkg = os.path.splitext(filename)[0]
             try:
                 os.write(fd, simple)
             finally:
                 os.close(fd)
 
-            out = read_config(filename)
+            out = read_config(pkg)
             self.failUnless(out.cflags() == simple_d['cflags'])
             self.failUnless(out.libs() == simple_d['libflags'])
             self.failUnless(out.name == simple_d['name'])
@@ -55,12 +56,13 @@ class TestLibraryInfo(TestCase):
     def test_simple_variable(self):
         fd, filename = mkstemp('foo.ini')
         try:
+            pkg = os.path.splitext(filename)[0]
             try:
                 os.write(fd, simple_variable)
             finally:
                 os.close(fd)
 
-            out = read_config(filename)
+            out = read_config(pkg)
             self.failUnless(out.cflags() == simple_variable_d['cflags'])
             self.failUnless(out.libs() == simple_variable_d['libflags'])
             self.failUnless(out.name == simple_variable_d['name'])
@@ -87,8 +89,8 @@ class TestParseFlags(TestCase):
     def test_simple_lflags(self):
         d = parse_flags("-L/usr/lib -lfoo -L/usr/lib -lbar")
         self.failUnless(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
-        self.failUnless(d['libs'] == ['foo', 'bar'])
+        self.failUnless(d['libraries'] == ['foo', 'bar'])
 
         d = parse_flags("-L /usr/lib -lfoo -L/usr/lib -lbar")
         self.failUnless(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
-        self.failUnless(d['libs'] == ['foo', 'bar'])
+        self.failUnless(d['libraries'] == ['foo', 'bar'])
