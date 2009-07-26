@@ -291,6 +291,23 @@ def visibility_define(config):
     else:
         return ''
 
+def mlib_pkg_content(mathlibs):
+    posix_mlib = ' -l'.join(mathlibs)
+    msvc_mlib = ' '.join(['%s.lib' for l in mathlibs])
+    ret = """
+[meta]
+Name = mlib
+Description = Math library used with this version of numpy
+Version = 1.0
+
+[default]
+Libs=%s
+
+[msvc]
+Libs=%s
+    """ % (posix_mlib, msvc_mlib)
+    return ret
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -336,6 +353,19 @@ def configuration(parent_package='',top_path=None):
             # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
+
+            # Write the mlib.ini file
+            d = os.path.join(build_dir, 'lib', 'npy-pkg-config')
+            if not os.path.exists(d):
+                os.makedirs(d)
+            filename = os.path.join(d, 'mlib.ini')
+            a = open(filename, 'w')
+            try:
+                a.write(mlib_pkg_content(mathlibs))
+            finally:
+                a.close()
+            # Install it
+            config.add_data_files(('lib/npy-pkg-config', filename))
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
