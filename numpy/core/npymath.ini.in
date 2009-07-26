@@ -5,8 +5,8 @@ Version=0.1
 
 [variables]
 prefix=@install_dir@
-libdir=${prefix}/lib
-includedir=${prefix}/include
+libdir=${prefix}@sep@lib
+includedir=${prefix}@sep@include
 
 [default]
 Libs=-L${libdir} -lnpymath

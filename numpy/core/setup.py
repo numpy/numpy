@@ -643,7 +643,7 @@ def configuration(parent_package='',top_path=None):
             if not os.path.exists(d):
                 os.makedirs(d)
             filename = os.path.join(d, 'npymath.ini')
-            d = {'install_dir': npymath_install_dir}
+            d = {'install_dir': npymath_install_dir, 'sep': os.path.sep}
             subst_vars(filename, 'numpy/core/npymath.ini.in', d)
             return filename
 
