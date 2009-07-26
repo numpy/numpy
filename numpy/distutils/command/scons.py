@@ -54,6 +54,18 @@ def get_distutils_libdir(cmd, pkg):
     n = scdir.count(os.sep)
     return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_lib)
 
+def get_distutils_clibdir(cmd, pkg):
+    """Returns the path where distutils put pure C libraries."""
+    # XXX: this mess is necessary because scons is launched per package, and
+    # has no knowledge outside its build dir, which is package dependent. If
+    # one day numscons does not launch one process/package, this will be
+    # unnecessary.
+    from numscons import get_scons_build_dir
+    from numscons.core.utils import pkg_to_path
+    scdir = pjoin(get_scons_build_dir(), pkg_to_path(pkg))
+    n = scdir.count(os.sep)
+    return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_temp)
+
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
     # Do we  need to take into account the PYTHONPATH, in a cross platform way,
@@ -422,6 +434,8 @@ class scons(old_build_ext):
                 #                                                    pdirname(sconscript))))
                 cmd.append('distutils_libdir=%s' %
                              protect_path(get_distutils_libdir(self, pkg_name)))
+                cmd.append('distutils_clibdir=%s' %
+                             protect_path(get_distutils_clibdir(self, pkg_name)))
 
                 if not self._bypass_distutils_cc:
                     cmd.append('cc_opt=%s' % self.scons_compiler)

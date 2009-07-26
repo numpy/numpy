@@ -1212,6 +1212,10 @@ class Configuration(object):
         self._add_library(name, sources, install_dir, build_info)
         self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
 
+    def add_scons_installed_library(self, name, install_dir):
+        """Add an scons-built installable library to distutils.
+        """
+        self.installed_libraries.append(InstallableLib(name, {}, install_dir))
 
     def add_sconscript(self, sconscript, subpackage_path=None,
                        standalone = False, pre_hook = None,

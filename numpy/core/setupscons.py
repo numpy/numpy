@@ -91,6 +91,7 @@ def configuration(parent_package='',top_path=None):
     config.add_sconscript('SConstruct',
                           post_hook = add_generated_files,
                           source_files = source_files)
+    config.add_scons_installed_library('npymath', 'numpy/core/lib')
 
     config.add_data_files('include/numpy/*.h')
     config.add_include_dirs('src')
