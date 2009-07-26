@@ -1,6 +1,7 @@
 import imp
 import os
 import sys
+import shutil
 from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
@@ -607,31 +608,50 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
-    def floupi(ext, build_dir):
+    def generate_npymath_ini(ext, build_dir):
+        # This function generate npymath.ini and make sure distutils install
+        # it. Also handle in-place builds.
         from numpy.distutils.misc_util import get_cmd
-        install_dir = get_cmd('install').install_libbase
-        npymath_install_dir = os.path.join(install_dir, 'numpy', 'core')
-        npymath_install_dir = os.path.abspath(npymath_install_dir)
+        def inplace_build():
+            return get_cmd('build_ext').inplace == 1
 
-        d = os.path.join(build_dir, 'numpy', 'core', 'lib', 'npy-pkg-config')
-        if not os.path.exists(d):
-            os.makedirs(d)
-        filename = os.path.join(d, 'npymath.ini')
-        a = open('numpy/core/npymath.ini.in', 'r')
-        try:
-            b = open(filename, 'w')
+        def install_npymath_ini(install_dir):
+            npymath_install_dir = os.path.join(install_dir, 'numpy', 'core')
+            npymath_install_dir = os.path.abspath(npymath_install_dir)
+
+            d = os.path.join(build_dir, 'numpy', 'core', 'lib', 'npy-pkg-config')
+            if not os.path.exists(d):
+                os.makedirs(d)
+            filename = os.path.join(d, 'npymath.ini')
+            a = open('numpy/core/npymath.ini.in', 'r')
             try:
-                for l in a.readlines():
-                    b.write(l.replace('@install_dir@', npymath_install_dir))
+                b = open(filename, 'w')
+                try:
+                    for l in a.readlines():
+                        b.write(l.replace('@install_dir@', npymath_install_dir))
+                finally:
+                    b.close()
             finally:
-                b.close()
-        finally:
-            a.close()
+                a.close()
 
-        config.add_data_files(('lib/npy-pkg-config', filename))
+            return filename
+
+        install_cmd = get_cmd('install')
+        if hasattr(install_cmd, 'install_libbase'):
+            install_dir = install_cmd.install_libbase
+            source = install_npymath_ini(install_dir)
+            config.add_data_files(('lib/npy-pkg-config', source))
+        elif inplace_build():
+            install_dir = '.'
+            source = install_npymath_ini(install_dir)
+            target = os.path.join('numpy', 'core', 'lib', 'npy-pkg-config',
+                    os.path.basename(source))
+            if  not os.path.exists(os.path.dirname(target)):
+                os.makedirs(os.path.dirname(target))
+            shutil.copy(source, target)
 
     config.add_installed_library('npymath',
-            sources=[join('src', 'npymath', 'npy_math.c.src'), floupi],
+            sources=[join('src', 'npymath', 'npy_math.c.src'), generate_npymath_ini],
             install_dir='numpy/core/lib')
    
     multiarray_deps = [
