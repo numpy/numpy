@@ -700,9 +700,15 @@ class Configuration(object):
         self.setup_name = setup_name
 
     def todict(self):
-        """Return configuration distionary suitable for passing
-        to distutils.core.setup() function.
         """
+        Return a dictionary compatible with the keyword arguments of distutils
+        setup function. 
+
+        Example
+        -------
+        >>> setup(\**config.todict()).
+        """
+
         self._optimize_data_files()
         d = {}
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
@@ -735,6 +741,7 @@ class Configuration(object):
                 raise ValueError,'Unknown option: '+key
 
     def get_distribution(self):
+        """Return the distutils distribution object for self."""
         from numpy.distutils.core import get_distribution
         return get_distribution()
 
@@ -800,7 +807,17 @@ class Configuration(object):
                        caller_level = 1):
         """Return list of subpackage configurations.
 
-        '*' in subpackage_name is handled as a wildcard.
+        Parameters
+        ----------
+        subpackage_name: str,None
+            Name of the subpackage to get the configuration. '*' in
+            subpackage_name is handled as a wildcard.
+        subpackage_path: str
+            If None, then the path is assumed to be the local path plus the
+            subpackage_name. If a setup.py file is not found in the
+            subpackage_path, then a default configuration is used.
+        parent_name: str
+            Parent name.
         """
         if subpackage_name is None:
             if subpackage_path is None:
@@ -848,8 +865,22 @@ class Configuration(object):
     def add_subpackage(self,subpackage_name,
                        subpackage_path=None,
                        standalone = False):
-        """Add subpackage to configuration.
+        """Add a sub-package to the current Configuration instance. 
+        
+        This is useful in a setup.py script for adding sub-packages to a
+        package.
+
+        Parameters
+        ----------
+        subpackage_name: str
+            name of the subpackage
+        subpackage_path: str
+            if given, the subpackage path such as the subpackage is in
+            subpackage_path / subpackage_name. If None,the subpackage is
+            assumed to be located in the local path / subpackage_name.
+        standalone: bool
         """
+
         if standalone:
             parent_name = None
         else:
@@ -876,11 +907,24 @@ class Configuration(object):
 
     def add_data_dir(self,data_path):
         """Recursively add files under data_path to data_files list.
-        Argument can be either
-        - 2-sequence (<datadir suffix>,<path to data directory>)
-        - path to data directory where python datadir suffix defaults
-          to package dir.
 
+        Recursively add files under data_path to the list of data_files to be
+        installed (and distributed). The data_path can be either a relative
+        path-name, or an absolute path-name, or a 2-tuple where the first
+        argument shows where in the install directory the data directory
+        should be installed to. 
+
+        Parameters
+        ----------
+        data_path: seq,str
+            Argument can be either
+
+                * 2-sequence (<datadir suffix>,<path to data directory>)
+                * path to data directory where python datadir suffix defaults
+                  to package dir.
+
+        Notes
+        -----
         Rules for installation paths:
           foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
           (gun, foo/bar) -> parent/gun
@@ -890,6 +934,30 @@ class Configuration(object):
           /foo/bar -> (bar, /foo/bar) -> parent/bar
           (gun, /foo/bar) -> parent/gun
           (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
+
+        Examples
+        --------
+        For example suppose the source directory contains fun/foo.dat and
+        fun/bar/car.dat::
+
+            >>> self.add_data_dir('fun')
+            >>> self.add_data_dir(('sun', 'fun'))
+            >>> self.add_data_dir(('gun', '/full/path/to/fun'))
+
+        Will install data-files to the locations::
+
+            <package install directory>/
+              fun/
+                foo.dat
+                bar/
+                  car.dat
+              sun/
+                foo.dat
+                bar/
+                  car.dat
+              gun/
+                foo.dat
+                car.dat
         """
         if is_sequence(data_path):
             d, data_path = data_path
@@ -967,24 +1035,90 @@ class Configuration(object):
 
     def add_data_files(self,*files):
         """Add data files to configuration data_files.
-        Argument(s) can be either
-        - 2-sequence (<datadir prefix>,<path to data file(s)>)
-        - paths to data files where python datadir prefix defaults
-          to package dir.
+
+        Parameters
+        ----------
+        files: sequence
+            Argument(s) can be either
+
+                * 2-sequence (<datadir prefix>,<path to data file(s)>)
+                * paths to data files where python datadir prefix defaults
+                  to package dir.
+
+        Notes
+        -----
+        The form of each element of the files sequence is very flexible
+        allowing many combinations of where to get the files from the package
+        and where they should ultimately be installed on the system. The most
+        basic usage is for an element of the files argument sequence to be a
+        simple filename. This will cause that file from the local path to be
+        installed to the installation path of the self.name package (package
+        path). The file argument can also be a relative path in which case the
+        entire relative path will be installed into the package directory.
+        Finally, the file can be an absolute path name in which case the file
+        will be found at the absolute path name but installed to the package
+        path.
+
+        This basic behavior can be augmented by passing a 2-tuple in as the
+        file argument. The first element of the tuple should specify the
+        relative path (under the package install directory) where the
+        remaining sequence of files should be installed to (it has nothing to
+        do with the file-names in the source distribution). The second element
+        of the tuple is the sequence of files that should be installed. The
+        files in this sequence can be filenames, relative paths, or absolute
+        paths. For absolute paths the file will be installed in the top-level
+        package installation directory (regardless of the first argument).
+        Filenames and relative path names will be installed in the package
+        install directory under the path name given as the first element of
+        the tuple.
 
         Rules for installation paths:
-          file.txt -> (., file.txt)-> parent/file.txt
-          foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
-          /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
-          *.txt -> parent/a.txt, parent/b.txt
-          foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
-          */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
-          (sun, file.txt) -> parent/sun/file.txt
-          (sun, bar/file.txt) -> parent/sun/file.txt
-          (sun, /foo/bar/file.txt) -> parent/sun/file.txt
-          (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
+
+          #. file.txt -> (., file.txt)-> parent/file.txt
+          #. foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
+          #. /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
+          #. *.txt -> parent/a.txt, parent/b.txt
+          #. foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
+          #. */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
+          #. (sun, file.txt) -> parent/sun/file.txt
+          #. (sun, bar/file.txt) -> parent/sun/file.txt
+          #. (sun, /foo/bar/file.txt) -> parent/sun/file.txt
+          #. (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
+
+        An additional feature is that the path to a data-file can actually be
+        a function that takes no arguments and returns the actual path(s) to
+        the data-files. This is useful when the data files are generated while
+        building the package.
+
+        Examples
+        --------
+        Add files to the list of data_files to be included with the package.
+
+            >>> self.add_data_files('foo.dat',
+                    ('fun', ['gun.dat', 'nun/pun.dat', '/tmp/sun.dat']),
+                    'bar/cat.dat',
+                    '/full/path/to/can.dat')
+
+        will install these data files to::
+
+            <package install directory>/
+             foo.dat
+             fun/
+               gun.dat
+               nun/
+                 pun.dat
+             sun.dat
+             bar/
+               car.dat
+             can.dat
+
+        where <package install directory> is the package (or sub-package)
+        directory such as '/usr/lib/python2.4/site-packages/mypackage' ('C:
+        \\Python2.4 \\Lib \\site-packages \\mypackage') or
+        '/usr/lib/python2.4/site- packages/mypackage/mysubpackage' ('C:
+        \\Python2.4 \\Lib \\site-packages \\mypackage \\mysubpackage').
         """
 
         if len(files)>1:
@@ -1054,6 +1188,10 @@ class Configuration(object):
 
     def add_include_dirs(self,*paths):
         """Add paths to configuration include directories.
+
+        Add the given sequence of paths to the beginning of the include_dirs
+        list. This list will be visible to all extension modules of the
+        current package.
         """
         include_dirs = self.paths(paths)
         dist = self.get_distribution()
@@ -1068,10 +1206,21 @@ class Configuration(object):
 
     def add_headers(self,*files):
         """Add installable headers to configuration.
-        Argument(s) can be either
-        - 2-sequence (<includedir suffix>,<path to header file(s)>)
-        - path(s) to header file(s) where python includedir suffix will default
-          to package name.
+
+        Add the given sequence of files to the beginning of the headers list.
+        By default, headers will be installed under <python-
+        include>/<self.name.replace('.','/')>/ directory. If an item of files
+        is a tuple, then its first argument specifies the actual installation
+        location relative to the <python-include> path.
+
+        Parameters
+        ----------
+        files: str, seq
+            Argument(s) can be either:
+
+                * 2-sequence (<includedir suffix>,<path to header file(s)>)
+                * path(s) to header file(s) where python includedir suffix will
+                  default to package name.
         """
         headers = []
         for path in files:
@@ -1089,6 +1238,13 @@ class Configuration(object):
 
     def paths(self,*paths,**kws):
         """Apply glob to paths and prepend local_path if needed.
+
+        Applies glob.glob(...) to each path in the sequence (if needed) and
+        pre-pends the local_path if needed. Because this is called on all
+        source lists, this allows wildcard characters to be specified in lists
+        of sources for extension modules and libraries and scripts and allows
+        path-names be relative to the source directory.
+
         """
         include_non_existing = kws.get('include_non_existing',True)
         return gpaths(paths,
@@ -1106,14 +1262,48 @@ class Configuration(object):
     def add_extension(self,name,sources,**kw):
         """Add extension to configuration.
 
-        Keywords:
-          include_dirs, define_macros, undef_macros,
-          library_dirs, libraries, runtime_library_dirs,
-          extra_objects, extra_compile_args, extra_link_args,
-          export_symbols, swig_opts, depends, language,
-          f2py_options, module_dirs
-          extra_info - dict or list of dict of keywords to be
-                       appended to keywords.
+        Create and add an Extension instance to the ext_modules list. This
+        method also takes the following optional keyword arguments that are
+        passed on to the Extension constructor.
+
+        Parameters
+        ----------
+        name: str
+            name of the extension
+        sources: seq
+            list of the sources. The list of sources may contain functions
+            (called source generators) which must take an extension instance
+            and a build directory as inputs and return a source file or list of
+            source files or None. If None is returned then no sources are
+            generated. If the Extension instance has no sources after
+            processing all source generators, then no extension module is
+            built.
+        include_dirs:
+        define_macros:
+        undef_macros:
+        library_dirs:
+        libraries:
+        runtime_library_dirs:
+        extra_objects:
+        extra_compile_args:
+        extra_link_args:
+        export_symbols:
+        swig_opts:
+        depends:
+            The depends list contains paths to files or directories that the
+            sources of the extension module depend on. If any path in the
+            depends list is newer than the extension module, then the module
+            will be rebuilt.
+        language:
+        f2py_options:
+        module_dirs:
+        extra_info: dict,list
+            dict or list of dict of keywords to be appended to keywords.
+
+        Notes
+        -----
+        The self.paths(...) method is applied to all lists that may contain
+        paths. 
         """
         ext_args = copy.copy(kw)
         ext_args['name'] = dot_join(self.name,name)
@@ -1171,13 +1361,27 @@ class Configuration(object):
     def add_library(self,name,sources,**build_info):
         """Add library to configuration.
 
-        Valid keywords for build_info:
-          depends
-          macros
-          include_dirs
-          extra_compiler_args
-          f2py_options
-          language
+        Parameters
+        ----------
+        name: str
+            name of the extension
+        sources: seq
+            list of the sources. The list of sources may contain functions
+            (called source generators) which must take an extension instance
+            and a build directory as inputs and return a source file or list of
+            source files or None. If None is returned then no sources are
+            generated. If the Extension instance has no sources after
+            processing all source generators, then no extension module is
+            built.
+        build_info: dict
+            The following keys are allowed:
+
+                * depends
+                * macros
+                * include_dirs
+                * extra_compiler_args
+                * f2py_options
+                * language
         """
         self._add_library(name, sources, None, build_info)
 
@@ -1361,6 +1565,10 @@ class Configuration(object):
 
     def add_scripts(self,*files):
         """Add scripts to configuration.
+
+        Add the sequence of files to the beginning of the scripts list.
+        Scripts will be installed under the <prefix>/bin/ directory.
+
         """
         scripts = self.paths(files)
         dist = self.get_distribution()
@@ -1408,6 +1616,9 @@ class Configuration(object):
         return s
 
     def get_config_cmd(self):
+        """
+        Returns the numpy.distutils config command instance.
+        """
         cmd = get_cmd('config')
         cmd.ensure_finalized()
         cmd.dump_source = 0
@@ -1419,14 +1630,24 @@ class Configuration(object):
         return cmd
 
     def get_build_temp_dir(self):
+        """
+        Return a path to a temporary directory where temporary files should be
+        placed.
+        """
         cmd = get_cmd('build')
         cmd.ensure_finalized()
         return cmd.build_temp
 
     def have_f77c(self):
         """Check for availability of Fortran 77 compiler.
+
         Use it inside source generating function to ensure that
         setup distribution instance has been initialized.
+
+        Notes
+        -----
+        True if a Fortran 77 compiler is available (because a simple Fortran 77
+        code was able to be compiled successfully).
         """
         simple_fortran_subroutine = '''
         subroutine simple
@@ -1438,8 +1659,14 @@ class Configuration(object):
 
     def have_f90c(self):
         """Check for availability of Fortran 90 compiler.
+
         Use it inside source generating function to ensure that
         setup distribution instance has been initialized.
+
+        Notes
+        -----
+        True if a Fortran 90 compiler is available (because a simple Fortran
+        90 code was able to be compiled successfully)
         """
         simple_fortran_subroutine = '''
         subroutine simple
@@ -1499,6 +1726,16 @@ class Configuration(object):
 
     def get_version(self, version_file=None, version_variable=None):
         """Try to get version string of a package.
+
+        Return a version string of the current package or None if the version
+        information could not be detected. 
+        
+        Notes
+        -----
+        This method scans files named
+        __version__.py, <packagename>_version.py, version.py, and
+        __svn_version__.py for string variables version, __version\__, and
+        <packagename>_version, until a version number is found.
         """
         version = getattr(self,'version',None)
         if version is not None:
@@ -1552,11 +1789,20 @@ class Configuration(object):
         return version
 
     def make_svn_version_py(self, delete=True):
-        """Generate package __svn_version__.py file from SVN revision number,
+        """Appends a data function to the data_files list that will generate
+        __svn_version__.py file to the current package directory. 
+        
+        Generate package __svn_version__.py file from SVN revision number,
         it will be removed after python exits but will be available
         when sdist, etc commands are executed.
 
+        Notes
+        -----
         If __svn_version__.py existed before, nothing is done.
+
+        This is
+        intended for working with source directories that are in an SVN
+        repository.
         """
         target = njoin(self.local_path,'__svn_version__.py')
         revision = self._get_svn_revision(self.local_path)
@@ -1588,6 +1834,10 @@ class Configuration(object):
     def make_config_py(self,name='__config__'):
         """Generate package __config__.py file containing system_info
         information used during building the package.
+
+        This file is installed to the
+        package installation directory.
+
         """
         self.py_modules.append((self.name,name,generate_config_py))
 
@@ -1599,6 +1849,9 @@ class Configuration(object):
 
     def get_info(self,*names):
         """Get resources information.
+
+        Return information (from system_info.get_info) for all of the names in
+        the argument list in a single dictionary.
         """
         from system_info import get_info, dict_append
         info_dict = {}

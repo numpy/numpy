@@ -67,227 +67,49 @@ misc_util
     files in the numpy distribution are good examples of how to use
     the :class:`Configuration` instance.
 
-    .. method:: todict()
+    .. automethod:: todict
 
-        Return a dictionary compatible with the keyword arguments of distutils
-        setup function. Thus, this method may be used as
-        setup(\**config.todict()).
+    .. automethod:: get_distribution
 
-    .. method:: get_distribution()
+    .. automethod:: get_subpackage
 
-        Return the distutils distribution object for self.
+    .. automethod:: add_subpackage
 
-    .. method:: get_subpackage(subpackage_name, subpackage_path=None)
+    .. automethod:: add_data_files
 
-        Return a Configuration instance for the sub-package given. If
-        subpackage_path is None then the path is assumed to be the local path
-        plus the subpackage_name. If a setup.py file is not found in the
-        subpackage_path, then a default configuration is used.
+    .. automethod:: add_data_dir
 
-    .. method:: add_subpackage(subpackage_name, subpackage_path=None)
+    .. automethod:: add_include_dirs
 
-        Add a sub-package to the current Configuration instance. This is
-        useful in a setup.py script for adding sub-packages to a package. The
-        sub-package is contained in subpackage_path / subpackage_name and this
-        directory may contain a setup.py script or else a default setup
-        (suitable for Python-code-only subpackages) is assumed. If the
-        subpackage_path is None, then it is assumed to be located in the local
-        path / subpackage_name.
+    .. automethod:: add_headers
 
-    .. method:: self.add_data_files(*files)
+    .. automethod:: add_extension
 
-        Add files to the list of data_files to be included with the package.
-        The form of each element of the files sequence is very flexible
-        allowing many combinations of where to get the files from the package
-        and where they should ultimately be installed on the system. The most
-        basic usage is for an element of the files argument sequence to be a
-        simple filename. This will cause that file from the local path to be
-        installed to the installation path of the self.name package (package
-        path). The file argument can also be a relative path in which case the
-        entire relative path will be installed into the package directory.
-        Finally, the file can be an absolute path name in which case the file
-        will be found at the absolute path name but installed to the package
-        path.
+    .. automethod:: add_library
 
-        This basic behavior can be augmented by passing a 2-tuple in as the
-        file argument. The first element of the tuple should specify the
-        relative path (under the package install directory) where the
-        remaining sequence of files should be installed to (it has nothing to
-        do with the file-names in the source distribution). The second element
-        of the tuple is the sequence of files that should be installed. The
-        files in this sequence can be filenames, relative paths, or absolute
-        paths. For absolute paths the file will be installed in the top-level
-        package installation directory (regardless of the first argument).
-        Filenames and relative path names will be installed in the package
-        install directory under the path name given as the first element of
-        the tuple. An example may clarify::
-
-            self.add_data_files('foo.dat',
-            ('fun', ['gun.dat', 'nun/pun.dat', '/tmp/sun.dat']),
-            'bar/cat.dat',
-            '/full/path/to/can.dat')
-
-        will install these data files to::
-
-            <package install directory>/
-             foo.dat
-             fun/
-               gun.dat
-               nun/
-                 pun.dat
-             sun.dat
-             bar/
-               car.dat
-             can.dat
-
-        where <package install directory> is the package (or sub-package)
-        directory such as '/usr/lib/python2.4/site-packages/mypackage' ('C: \\Python2.4 \\Lib \\site-packages \\mypackage') or '/usr/lib/python2.4/site-
-        packages/mypackage/mysubpackage' ('C: \\Python2.4 \\Lib \\site-packages \\mypackage \\mysubpackage').
-
-
-        An additional feature is that the path to a data-file can actually be
-        a function that takes no arguments and returns the actual path(s) to
-        the data-files. This is useful when the data files are generated while
-        building the package.
-
-    .. method:: add_data_dir(data_path)
-
-        Recursively add files under data_path to the list of data_files to be
-        installed (and distributed). The data_path can be either a relative
-        path-name, or an absolute path-name, or a 2-tuple where the first
-        argument shows where in the install directory the data directory
-        should be installed to. For example suppose the source directory
-        contains fun/foo.dat and fun/bar/car.dat::
-
-            self.add_data_dir('fun')
-            self.add_data_dir(('sun', 'fun'))
-            self.add_data_dir(('gun', '/full/path/to/fun'))
-
-        Will install data-files to the locations::
-
-            <package install directory>/
-              fun/
-                foo.dat
-                bar/
-                  car.dat
-              sun/
-                foo.dat
-                bar/
-                  car.dat
-              gun/
-                foo.dat
-                car.dat
-
-    .. method:: add_include_dirs(*paths)
-
-        Add the given sequence of paths to the beginning of the include_dirs
-        list. This list will be visible to all extension modules of the
-        current package.
-
-    .. method:: add_headers(*files)
-
-        Add the given sequence of files to the beginning of the headers list.
-        By default, headers will be installed under <python-
-        include>/<self.name.replace('.','/')>/ directory. If an item of files
-        is a tuple, then its first argument specifies the actual installation
-        location relative to the <python-include> path.
-
-    .. method:: add_extension(name, sources, **kw)
-
-        Create and add an Extension instance to the ext_modules list. The
-        first argument defines the name of the extension module that will be
-        installed under the self.name package. The second argument is a list
-        of sources. This method also takes the following optional keyword
-        arguments that are passed on to the Extension constructor:
-        include_dirs, define_macros, undef_macros, library_dirs, libraries,
-        runtime_library_dirs, extra_objects, swig_opts, depends, language,
-        f2py_options, module_dirs, and extra_info.
-
-        The self.paths(...) method is applied to all lists that may contain
-        paths. The extra_info is a dictionary or a list of dictionaries whose
-        content will be appended to the keyword arguments. The depends list
-        contains paths to files or directories that the sources of the
-        extension module depend on. If any path in the depends list is newer
-        than the extension module, then the module will be rebuilt.
-
-        The list of sources may contain functions (called source generators)
-        which must take an extension instance and a build directory as inputs
-        and return a source file or list of source files or None. If None is
-        returned then no sources are generated. If the Extension instance has
-        no sources after processing all source generators, then no extension
-        module is built.
-
-    .. method:: add_library(name, sources, **build_info)
-
-        Add a library to the list of libraries. Allowed keyword arguments are
-        depends, macros, include_dirs, extra_compiler_args, and f2py_options.
-        The name is the name of the library to be built and sources is a list
-        of sources (or source generating functions) to add to the library.
-
-    .. method:: add_scripts(*files)
-
-        Add the sequence of files to the beginning of the scripts list.
-        Scripts will be installed under the <prefix>/bin/ directory.
+    .. automethod:: add_scripts
 
     .. automethod:: add_installed_library
 
     .. automethod:: add_npy_pkg_config
 
-    .. method:: paths(*paths)
+    .. automethod:: paths
 
-        Applies glob.glob(...) to each path in the sequence (if needed) and
-        pre-pends the local_path if needed. Because this is called on all
-        source lists, this allows wildcard characters to be specified in lists
-        of sources for extension modules and libraries and scripts and allows
-        path-names be relative to the source directory.
+    .. automethod:: get_config_cmd
 
-    .. method:: get_config_cmd()
+    .. automethod:: get_build_temp_dir
 
-        Returns the numpy.distutils config command instance.
+    .. automethod:: have_f77c
 
-    .. method:: get_build_temp_dir()
+    .. automethod:: have_f90c
 
-        Return a path to a temporary directory where temporary files should be
-        placed.
+    .. automethod:: get_version
 
-    .. method:: have_f77c()
+    .. automethod:: make_svn_version_py
 
-        True if a Fortran 77 compiler is available (because a simple Fortran
-        77 code was able to be compiled successfully).
+    .. automethod:: make_config_py
 
-    .. method:: have_f90c()
-
-        True if a Fortran 90 compiler is available (because a simple Fortran
-        90 code was able to be compiled successfully)
-
-    .. method:: get_version()
-
-        Return a version string of the current package or None if the version
-        information could not be detected. This method scans files named
-        __version__.py, <packagename>_version.py, version.py, and
-        __svn_version__.py for string variables version, __version\__, and
-        <packagename>_version, until a version number is found.
-
-    .. method:: make_svn_version_py()
-
-        Appends a data function to the data_files list that will generate
-        __svn_version__.py file to the current package directory. This file
-        will be removed from the source directory when Python exits (so that
-        it can be re-generated next time the package is built). This is
-        intended for working with source directories that are in an SVN
-        repository.
-
-    .. method:: make_config_py()
-
-        Generate a package __config__.py file containing system information
-        used during the building of the package. This file is installed to the
-        package installation directory.
-
-    .. method:: get_info(*names)
-
-        Return information (from system_info.get_info) for all of the names in
-        the argument list in a single dictionary.
-
+    .. automethod:: get_info
 
 Other modules
 -------------
