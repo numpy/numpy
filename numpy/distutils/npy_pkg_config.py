@@ -1,5 +1,8 @@
 from ConfigParser import SafeConfigParser, NoOptionError
 import re
+import os
+
+__all__ = ['FormatError', 'LibraryInfo', 'VariablesSet', 'get_info']
 
 _VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
 
@@ -120,11 +123,16 @@ def parse_sections(config):
 def pkg_to_filename(pkg_name):
     return "%s.ini" % pkg_name
 
-def parse_config(filename):
+def parse_config(filename, dirs=None):
+    if dirs:
+        filenames = [os.path.join(d, filename) for d in dirs]
+    else:
+        filenames = [filename]
+
     config = SafeConfigParser()
-    n = config.read(filename)
+    n = config.read(filenames)
     if not len(n) >= 1:
-        raise IOError("Could not find file %s" % filename)
+        raise IOError("Could not find file(s) %s" % str(filenames))
 
     # Parse meta and variables sections
     meta = parse_meta(config)
@@ -150,9 +158,9 @@ def parse_config(filename):
 
     return meta, vars, sections, requires
 
-def read_config(filename):
+def read_config(filenames, dirs=None):
     def _read_config(f):
-        meta, vars, sections, reqs = parse_config(f)
+        meta, vars, sections, reqs = parse_config(f, dirs)
         # recursively add sections and variables of required libraries
         for rname, rvalue in reqs.items():
             nmeta, nvars, nsections, nreqs = _read_config(pkg_to_filename(rvalue))
@@ -168,27 +176,29 @@ def read_config(filename):
 
         return meta, vars, sections, reqs
 
-    meta, vars, sections, reqs = _read_config(filename)
+    meta, vars, sections, reqs = _read_config(filenames)
 
     return LibraryInfo(name=meta["name"], description=meta["description"],
             version=meta["version"], sections=sections, vars=VariableSet(vars))
-
-# TODO:
-#   - implements version comparison (modversion + atleast)
 
 # Trivial cache to cache LibraryInfo instances creation. To be really
 # efficient, the cache should be handled in read_config, since a same file can
 # be parsed many time outside LibraryInfo creation, but I doubt this will be a
 # problem in practice
 _CACHE = {}
-def get_info(pkgname):
+def get_info(pkgname, dirs=None):
     try:
         return _CACHE[pkgname]
     except KeyError:
-        v = read_config(pkg_to_filename(pkgname))
+        v = read_config(pkg_to_filename(pkgname), dirs)
         _CACHE[pkgname] = v
         return v
 
+# TODO:
+#   - implements version comparison (modversion + atleast)
+
+# pkg-config simple emulator - useful for debugging, and maybe later to query
+# the system
 if __name__ == '__main__':
     import sys
     from optparse import OptionParser
@@ -220,7 +230,7 @@ if __name__ == '__main__':
             print "%s\t%s - %s" % (info.name, info.name, info.description)
 
     pkg_name = args[1]
-    info = get_info(pkg_name)
+    info = get_info(pkg_name, ['numpy/distutils', '.'])
     
     if options.section:
         section = options.section
