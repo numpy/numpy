@@ -22,9 +22,28 @@ except ImportError:
 #import numpy.f2py
 from numpy.distutils import log
 from numpy.distutils.misc_util import fortran_ext_match, \
-     appendpath, is_string, is_sequence
+     appendpath, is_string, is_sequence, get_cmd
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
+
+def subst_vars(target, source, d):
+    """Substitute any occurence of @foo@ by d['foo'] from source file into
+    target."""
+    var = re.compile('@([a-zA-Z_]+)@')
+    fs = open(source, 'r')
+    try:
+        ft = open(target, 'w')
+        try:
+            for l in fs.readlines():
+                m = var.search(l)
+                if m:
+                    ft.write(l.replace('@%s@' % m.group(1), d[m.group(1)]))
+                else:
+                    ft.write(l)
+        finally:
+            ft.close()
+    finally:
+        fs.close()
 
 class build_src(build_ext.build_ext):
 
@@ -147,6 +166,7 @@ class build_src(build_ext.build_ext):
                 self.build_extension_sources(ext)
 
         self.build_data_files_sources()
+        self.build_npy_pkg_config()
 
     def build_data_files_sources(self):
         if not self.data_files:
@@ -182,6 +202,53 @@ class build_src(build_ext.build_ext):
             else:
                 raise TypeError(repr(data))
         self.data_files[:] = new_data_files
+
+
+    def _build_npy_pkg_config(self, info, gd):
+        import shutil
+        template, install_dir, subst_dict = info
+        template_dir = os.path.dirname(template)
+        for k, v in gd.items():
+            subst_dict[k] = v
+
+        if self.inplace == 1:
+            generated_dir = os.path.join(template_dir, install_dir)
+        else:
+            generated_dir = os.path.join(self.build_src, template_dir,
+                    install_dir)
+        generated = os.path.basename(os.path.splitext(template)[0])
+        generated_path = os.path.join(generated_dir, generated)
+        if not os.path.exists(generated_dir):
+            os.makedirs(generated_dir)
+
+        subst_vars(generated_path, template, subst_dict)
+
+        # Where to install relatively to install prefix
+        full_install_dir = os.path.join(template_dir, install_dir)
+        return full_install_dir, generated_path
+
+    def build_npy_pkg_config(self):
+        log.info('building npkg modules')
+
+        install_cmd = get_cmd('install')
+        build_npkg = False
+        gd = {}
+        if hasattr(install_cmd, 'install_libbase'):
+            top_prefix = install_cmd.install_libbase
+            build_npkg = True
+        elif self.inplace == 1:
+            top_prefix = '.'
+            build_npkg = True
+
+        if build_npkg:
+            for pkg, infos in self.distribution.installed_pkg_config.items():
+                pkg_path = self.distribution.package_dir[pkg]
+                prefix = os.path.join(os.path.abspath(top_prefix), pkg_path)
+                d = {'prefix': prefix}
+                for info in infos:
+                    install_dir, generated = self._build_npy_pkg_config(info, d)
+                    self.distribution.data_files.append((install_dir,
+                        [generated]))
 
     def build_py_modules_sources(self):
         if not self.py_modules:

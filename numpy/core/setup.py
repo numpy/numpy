@@ -30,25 +30,6 @@ except ImportError:
     import pickle as _pik
 import copy
 
-def subst_vars(target, source, d):
-    """Substitute any occurence of @foo@ by d['foo'] from source file into
-    target."""
-    var = re.compile('@([a-zA-Z_]+)@')
-    fs = open(source, 'r')
-    try:
-        ft = open(target, 'w')
-        try:
-            for l in fs.readlines():
-                m = var.search(l)
-                if m:
-                    ft.write(l.replace('@%s@' % m.group(1), d[m.group(1)]))
-                else:
-                    ft.write(l)
-        finally:
-            ft.close()
-    finally:
-        fs.close()
-
 class CallOnceOnly(object):
     def __init__(self):
         self._check_types = None
@@ -359,6 +340,7 @@ def configuration(parent_package='',top_path=None):
         d = os.path.dirname(target)
         if not os.path.exists(d):
             os.makedirs(d)
+
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
@@ -374,19 +356,6 @@ def configuration(parent_package='',top_path=None):
             # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
-
-            # Write the mlib.ini file
-            d = os.path.join(build_dir, 'lib', 'npy-pkg-config')
-            if not os.path.exists(d):
-                os.makedirs(d)
-            filename = os.path.join(d, 'mlib.ini')
-            a = open(filename, 'w')
-            try:
-                a.write(mlib_pkg_content(mathlibs))
-            finally:
-                a.close()
-            # Install it
-            config.add_data_files(('lib/npy-pkg-config', filename))
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
@@ -628,54 +597,27 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
-    def generate_npymath_ini(ext, build_dir):
-        # This function generate npymath.ini and make sure distutils install
-        # it. Also handle in-place builds.
-        from numpy.distutils.misc_util import get_cmd
-        def inplace_build():
-            return get_cmd('build_ext').inplace == 1
 
-        def install_npymath_ini(target, source, top_prefix):
-            top_prefix = os.path.abspath(os.path.join(top_prefix))
-            prefix = os.path.join(top_prefix, 'numpy', 'core')
-            d = {'install_dir': prefix, 'sep': os.path.sep}
+    subst_dict = dict([("sep", os.path.sep)])
+    def get_mathlib_info(*args):
+        # Another ugly hack: the mathlib info is known once build_src is run,
+        # but we cannot use add_installed_pkg_config here either, so we only
+        # updated the substition dictionary during npymath build
+        config_cmd = config.get_config_cmd()
+        mlibs = check_mathlib(config_cmd)
 
-            subst_vars(target, source, d)
-            return target
-
-        # install_dir relative to current package build directory
-        install_dir = 'lib/npy-pkg-config'
-        template = 'npymath.ini.in'
-
-        basename = os.path.splitext(template)[0]
-        pkg_path = config.local_path
-        template = os.path.join(pkg_path, template)
-
-        # where to put the generated file
-        target_dir = os.path.join(build_dir, pkg_path, install_dir)
-        if not os.path.exists(target_dir):
-            os.makedirs(target_dir)
-        generated = os.path.join(target_dir, basename)
-
-        install_cmd = get_cmd('install')
-        if hasattr(install_cmd, 'install_libbase'):
-            top_prefix = install_cmd.install_libbase
-            source = install_npymath_ini(generated, template, top_prefix)
-            config.add_data_files((install_dir, source))
-        elif inplace_build():
-            top_prefix = '.'
-            generated = install_npymath_ini(generated, template, top_prefix)
-
-            # Copy the generated file into the source tree
-            installed = os.path.join(pkg_path, install_dir, basename)
-            if  not os.path.exists(os.path.dirname(installed)):
-                os.makedirs(os.path.dirname(installed))
-            shutil.copy(generated, installed)
+        posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
+        msvc_mlib = ' '.join(['%s.lib' % l for l in mlibs])
+        subst_dict["posix_mathlib"] = posix_mlib
+        subst_dict["msvc_mathlib"] = msvc_mlib
 
     config.add_installed_library('npymath',
-            sources=[join('src', 'npymath', 'npy_math.c.src'),
-                generate_npymath_ini],
+            sources=[join('src', 'npymath', 'npy_math.c.src'), get_mathlib_info],
             install_dir='numpy/core/lib')
+    config.add_installed_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
+            subst_dict)
+    config.add_installed_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
+            subst_dict)
    
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),

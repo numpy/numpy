@@ -600,7 +600,7 @@ class Configuration(object):
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules', 'scons_data',
                   'installed_libraries']
-    _dict_keys = ['package_dir']
+    _dict_keys = ['package_dir', 'installed_pkg_config']
     _extra_keys = ['name', 'version']
 
     numpy_include_dirs = []
@@ -1214,6 +1214,17 @@ class Configuration(object):
 
         self._add_library(name, sources, install_dir, build_info)
         self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
+
+    def add_installed_pkg_config(self, template, install_dir, d=None):
+        if d is None:
+            d = {}
+        basename = os.path.splitext(template)[0]
+        template = os.path.join(self.package_path, template)
+
+        if self.installed_pkg_config.has_key(self.name):
+            self.installed_pkg_config[self.name].append((template, install_dir, d))
+        else:
+            self.installed_pkg_config[self.name] = [(template, install_dir, d)]
 
     def add_scons_installed_library(self, name, install_dir):
         """Add an scons-built installable library to distutils.
