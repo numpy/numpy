@@ -292,8 +292,8 @@ def visibility_define(config):
         return ''
 
 def mlib_pkg_content(mathlibs):
-    posix_mlib = ' -l'.join(mathlibs)
-    msvc_mlib = ' '.join(['%s.lib' for l in mathlibs])
+    posix_mlib = ' '.join(['-l%s' % l for l in mathlibs])
+    msvc_mlib = ' '.join(['%s.lib' % l for l in mathlibs])
     ret = """
 [meta]
 Name = mlib
