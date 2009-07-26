@@ -363,7 +363,7 @@ class scons(old_build_ext):
                                    "this package " % str(e))
 
             try:
-                minver = [0, 10, 1]
+                minver = [0, 10, 2]
                 # version_info was added in 0.10.0
                 from numscons import version_info
                 # Stupid me used string instead of numbers in version_info in
