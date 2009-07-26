@@ -1887,6 +1887,7 @@ def get_npy_pkg_dir():
     import numpy
     d = os.path.join(os.path.dirname(numpy.__file__),
             'core', 'lib', 'npy-pkg-config')
+    return d
 
 
 def get_info(pkgname, dirs=None):
