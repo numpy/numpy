@@ -1616,9 +1616,27 @@ def get_numpy_include_dirs():
     # else running numpy/core/setup.py
     return include_dirs
 
-def get_info(pkgname):
+def get_npy_pkg_dir():
+    """Return the path where to find the npy-pkg-config directory."""
+    # XXX: import here for bootstrapping reasons
+    import numpy
+    d = os.path.join(os.path.dirname(numpy.__file__),
+            'core', 'lib', 'npy-pkg-config')
+
+
+def get_info(pkgname, dirs=None):
     """Given a clib package name, returns a info dict with the necessary
     options to use the clib.
+
+    Parameters
+    ----------
+    pkgname: str
+        name of the package (should match the name of the .ini file, without
+        the extension, e.g. foo for the file foo.ini)
+    dirs: seq {None}
+        if given, should be a sequence of additional directories where to look
+        for npy-pkg-config files. Those directories are search prior to the
+        numpy one.
 
     Note
     ----
@@ -1630,14 +1648,14 @@ def get_info(pkgname):
     >>> npymath_info = get_info('npymath')
     >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
     """
-    # XXX: import here for bootstrapping reasons
-    import numpy
     from numpy.distutils.npy_pkg_config import read_config, parse_flags, \
             PkgNotFound
 
-    d = os.path.join(
-            os.path.dirname(numpy.__file__), 'core', 'lib', 'npy-pkg-config')
-    pkg_info = read_config(pkgname, [d])
+    if dirs:
+        dirs.append(get_npy_pkg_dir())
+    else:
+        dirs = [get_npy_pkg_dir()]
+    pkg_info = read_config(pkgname, dirs)
 
     # Translate LibraryInfo instance into a build_info dict
     info = parse_flags(pkg_info.cflags())
