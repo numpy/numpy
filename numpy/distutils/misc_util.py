@@ -1190,6 +1190,14 @@ class Configuration(object):
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a library '+ name)
 
+    def add_installed_library(self, name, sources, build_info=None):
+        """Add installable library to configuration.
+        """
+        if not build_info:
+            self.add_library(name, sources)
+        else:
+            self.add_library(name, sources, **build_info)
+
     def add_sconscript(self, sconscript, subpackage_path=None,
                        standalone = False, pre_hook = None,
                        post_hook = None, source_files = None):

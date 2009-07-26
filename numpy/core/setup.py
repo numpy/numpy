@@ -577,7 +577,7 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
-    config.add_library('npymath',
+    config.add_installed_library('npymath',
             sources=[join('src', 'npymath', 'npy_math.c.src')])
     
     multiarray_deps = [
