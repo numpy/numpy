@@ -10,6 +10,9 @@ from distutils.file_util import write_file
 
 class install(old_install):
 
+    # XXX: fix the lambda: True
+    sub_commands = old_install.sub_commands + [('install_clib', lambda x: True)]
+
     def finalize_options (self):
         old_install.finalize_options(self)
         self.install_lib = self.install_libbase
