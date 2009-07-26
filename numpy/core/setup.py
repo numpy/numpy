@@ -293,23 +293,6 @@ def visibility_define(config):
     else:
         return ''
 
-def mlib_pkg_content(mathlibs):
-    posix_mlib = ' '.join(['-l%s' % l for l in mathlibs])
-    msvc_mlib = ' '.join(['%s.lib' % l for l in mathlibs])
-    ret = """
-[meta]
-Name = mlib
-Description = Math library used with this version of numpy
-Version = 1.0
-
-[default]
-Libs=%s
-
-[msvc]
-Libs=%s
-    """ % (posix_mlib, msvc_mlib)
-    return ret
-
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
