@@ -607,9 +607,33 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
+    def floupi(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+        install_dir = get_cmd('install').install_libbase
+        npymath_install_dir = os.path.join(install_dir, 'numpy', 'core')
+        npymath_install_dir = os.path.abspath(npymath_install_dir)
+
+        d = os.path.join(build_dir, 'numpy', 'core', 'lib', 'npy-pkg-config')
+        if not os.path.exists(d):
+            os.makedirs(d)
+        filename = os.path.join(d, 'npymath.ini')
+        a = open('numpy/core/npymath.ini.in', 'r')
+        try:
+            b = open(filename, 'w')
+            try:
+                for l in a.readlines():
+                    b.write(l.replace('@install_dir@', npymath_install_dir))
+            finally:
+                b.close()
+        finally:
+            a.close()
+
+        config.add_data_files(('lib/npy-pkg-config', filename))
+
     config.add_installed_library('npymath',
-            sources=[join('src', 'npymath', 'npy_math.c.src')], install_dir='numpy/core/lib')
-    
+            sources=[join('src', 'npymath', 'npy_math.c.src'), floupi],
+            install_dir='numpy/core/lib')
+   
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),

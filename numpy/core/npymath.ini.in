@@ -4,7 +4,7 @@ Description=Portable, core math library implementing C99 standard
 Version=0.1
 
 [variables]
-prefix=/Library/Python2.5/site-packages/numpy/core
+prefix=@install_dir@
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
