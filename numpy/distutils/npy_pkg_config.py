@@ -217,6 +217,8 @@ if __name__ == '__main__':
                       help="Minimal version")
     parser.add_option("--list-all", dest="list_all", action="store_true",
                       help="Minimal version")
+    parser.add_option("--define-variable", dest="define_variable",
+                      help="Replace variable with the given value")
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -236,6 +238,16 @@ if __name__ == '__main__':
         section = options.section
     else:
         section = "default"
+
+    if options.define_variable:
+        m = re.search('([\S]+)=([\S]+)', options.define_variable)
+        if not m:
+            raise ValueError("--define-variable option should be of " \
+                             "the form --define-variable=foo=bar")
+        else:
+            name = m.group(1)
+            value = m.group(2)
+        info.vars[name] = value
 
     if options.cflags:
         print info.cflags(section)
