@@ -1179,30 +1179,16 @@ class Configuration(object):
           f2py_options
           language
         """
-        build_info = copy.copy(build_info)
-        name = name #+ '__OF__' + self.name
-        build_info['sources'] = sources
-
-        # Sometimes, depends is not set up to an empty list by default, and if
-        # depends is not given to add_library, distutils barfs (#1134)
-        if not build_info.has_key('depends'):
-            build_info['depends'] = []
-
-        self._fix_paths_dict(build_info)
-
-        self.libraries.append((name,build_info))
+        self._add_library(name, sources, install_dir, build_info)
 
         dist = self.get_distribution()
         if dist is not None:
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a library '+ name)
 
-    def add_installed_library(self, name, sources, install_dir, build_info=None):
-        """Add installable library to configuration.
-        """
-        if not build_info:
-            build_info = {}
-
+    def _add_library(self, name, sources, install_dir, build_info):
+        """Common implementation for add_library and add_installed_library. Do
+        not use directly"""
         build_info = copy.copy(build_info)
         name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
@@ -1216,6 +1202,14 @@ class Configuration(object):
 
         # Add to libraries list so that it is build with build_clib
         self.libraries.append((name, build_info))
+
+    def add_installed_library(self, name, sources, install_dir, build_info=None):
+        """Add installable library to configuration.
+        """
+        if not build_info:
+            build_info = {}
+
+        self._add_library(name, sources, install_dir, build_info)
         self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
 
 
