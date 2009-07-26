@@ -635,31 +635,42 @@ def configuration(parent_package='',top_path=None):
         def inplace_build():
             return get_cmd('build_ext').inplace == 1
 
-        def install_npymath_ini(install_dir):
-            npymath_install_dir = os.path.join(install_dir, 'numpy', 'core')
-            npymath_install_dir = os.path.abspath(npymath_install_dir)
+        def install_npymath_ini(target, source, top_prefix):
+            top_prefix = os.path.abspath(os.path.join(top_prefix))
+            prefix = os.path.join(top_prefix, 'numpy', 'core')
+            d = {'install_dir': prefix, 'sep': os.path.sep}
 
-            d = os.path.join(build_dir, 'numpy', 'core', 'lib', 'npy-pkg-config')
-            if not os.path.exists(d):
-                os.makedirs(d)
-            filename = os.path.join(d, 'npymath.ini')
-            d = {'install_dir': npymath_install_dir, 'sep': os.path.sep}
-            subst_vars(filename, 'numpy/core/npymath.ini.in', d)
-            return filename
+            subst_vars(target, source, d)
+            return target
+
+        # install_dir relative to current package build directory
+        install_dir = 'lib/npy-pkg-config'
+        template = 'npymath.ini.in'
+
+        basename = os.path.splitext(template)[0]
+        pkg_path = config.local_path
+        template = os.path.join(pkg_path, template)
+
+        # where to put the generated file
+        target_dir = os.path.join(build_dir, pkg_path, install_dir)
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        generated = os.path.join(target_dir, basename)
 
         install_cmd = get_cmd('install')
         if hasattr(install_cmd, 'install_libbase'):
-            install_dir = install_cmd.install_libbase
-            source = install_npymath_ini(install_dir)
-            config.add_data_files(('lib/npy-pkg-config', source))
+            top_prefix = install_cmd.install_libbase
+            source = install_npymath_ini(generated, template, top_prefix)
+            config.add_data_files((install_dir, source))
         elif inplace_build():
-            install_dir = '.'
-            source = install_npymath_ini(install_dir)
-            target = os.path.join('numpy', 'core', 'lib', 'npy-pkg-config',
-                    os.path.basename(source))
-            if  not os.path.exists(os.path.dirname(target)):
-                os.makedirs(os.path.dirname(target))
-            shutil.copy(source, target)
+            top_prefix = '.'
+            generated = install_npymath_ini(generated, template, top_prefix)
+
+            # Copy the generated file into the source tree
+            installed = os.path.join(pkg_path, install_dir, basename)
+            if  not os.path.exists(os.path.dirname(installed)):
+                os.makedirs(os.path.dirname(installed))
+            shutil.copy(generated, installed)
 
     config.add_installed_library('npymath',
             sources=[join('src', 'npymath', 'npy_math.c.src'),
