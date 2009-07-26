@@ -30,6 +30,25 @@ except ImportError:
     import pickle as _pik
 import copy
 
+def subst_vars(target, source, d):
+    """Substitute any occurence of @foo@ by d['foo'] from source file into
+    target."""
+    var = re.compile('@([a-zA-Z_]+)@')
+    fs = open(source, 'r')
+    try:
+        ft = open(target, 'w')
+        try:
+            for l in fs.readlines():
+                m = var.search(l)
+                if m:
+                    ft.write(l.replace('@%s@' % m.group(1), d[m.group(1)]))
+                else:
+                    ft.write(l)
+        finally:
+            ft.close()
+    finally:
+        fs.close()
+
 class CallOnceOnly(object):
     def __init__(self):
         self._check_types = None
@@ -603,25 +622,6 @@ def configuration(parent_package='',top_path=None):
                                   generate_numpy_api,
                                   ],
                          )
-
-    def subst_vars(target, source, d):
-        """Substitute any occurence of @foo@ by d['foo'] from source file into
-        target."""
-        var = re.compile('@([a-zA-Z_]+)@')
-        fs = open(source, 'r')
-        try:
-            ft = open(target, 'w')
-            try:
-                for l in fs.readlines():
-                    m = var.search(l)
-                    if m:
-                        ft.write(l.replace('@%s@' % m.group(1), d[m.group(1)]))
-                    else:
-                        ft.write(l)
-            finally:
-                ft.close()
-        finally:
-            fs.close()
 
     # npymath needs the config.h and numpyconfig.h files to be generated, but
     # build_clib cannot handle generate_config_h and generate_numpyconfig_h
