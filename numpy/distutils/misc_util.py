@@ -13,7 +13,8 @@ try:
 except NameError:
     from sets import Set as set
 
-from numpy.distutils.npy_pkg_config import get_info as get_npy_info, parse_flags
+from numpy.distutils.npy_pkg_config import get_info as get_npy_info, parse_flags, \
+        PkgNotFound
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
@@ -1540,10 +1541,16 @@ def get_info(pkgname):
     """Given a clib package name, returns a info dict with the necessary
     options to use the clib.
 
+    Note
+    ----
+    Raise a numpy.distutils.PkgNotFound exception if the package is not
+    found.
+
     Example
     -------
     >>> npymath_info = get_info('npymath')
-    >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)"""
+    >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
+    """
     import numpy
     d = os.path.join(
             os.path.dirname(numpy.__file__), 'core', 'lib', 'npy-pkg-config')

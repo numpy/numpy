@@ -7,6 +7,7 @@ import ccompiler
 import unixccompiler
 
 from info import __doc__
+from npy_pkg_config import *
 
 try:
     import __config__

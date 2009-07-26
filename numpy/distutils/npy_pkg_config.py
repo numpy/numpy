@@ -3,11 +3,19 @@ import re
 import os
 import shlex
 
-__all__ = ['FormatError', 'LibraryInfo', 'VariablesSet', 'get_info', 'parse_flags']
+__all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
+        'get_info', 'parse_flags']
 
 _VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
 
 class FormatError(IOError):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+class PkgNotFound(IOError):
     def __init__(self, msg):
         self.msg = msg
 
@@ -166,7 +174,7 @@ def parse_config(filename, dirs=None):
     config = SafeConfigParser()
     n = config.read(filenames)
     if not len(n) >= 1:
-        raise IOError("Could not find file(s) %s" % str(filenames))
+        raise PkgNotFound("Could not find file(s) %s" % str(filenames))
 
     # Parse meta and variables sections
     meta = parse_meta(config)
