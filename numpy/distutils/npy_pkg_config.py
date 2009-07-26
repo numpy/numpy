@@ -24,7 +24,7 @@ class LibraryInfo(object):
         self.version = version
         self._sections = sections
         self.vars = vars
-            
+
     def sections(self):
         return self._sections.keys()
 
@@ -151,7 +151,7 @@ def parse_config(filename, dirs=None):
         d = {}
         if config.has_option(s, "requires"):
             requires[s] = config.get(s, 'requires')
-            
+
         for name, value in config.items(s):
             d[name] = value
         sections[s] = d
@@ -238,7 +238,7 @@ if __name__ == '__main__':
         info = get_info(pkg_name, ['numpy/distutils', '.', d])
     else:
         info = get_info(pkg_name, ['numpy/distutils', '.'])
-    
+
     if options.section:
         section = options.section
     else:
