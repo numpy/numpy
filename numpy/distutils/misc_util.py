@@ -23,7 +23,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath','njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'get_build_architecture']
+           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info']
 
 class InstallableLib:
     def __init__(self, name, build_info, target_dir):
@@ -1889,6 +1889,37 @@ def get_npy_pkg_dir():
             'core', 'lib', 'npy-pkg-config')
     return d
 
+def get_pkg_info(pkgname, dirs=None):
+    """Given a clib package name, returns a info dict with the necessary
+    options to use the clib.
+
+    Parameters
+    ----------
+    pkgname: str
+        name of the package (should match the name of the .ini file, without
+        the extension, e.g. foo for the file foo.ini)
+    dirs: seq {None}
+        if given, should be a sequence of additional directories where to look
+        for npy-pkg-config files. Those directories are search prior to the
+        numpy one.
+
+    Note
+    ----
+    Raise a numpy.distutils.PkgNotFound exception if the package is not
+    found.
+
+    See Also
+    --------
+    add_npy_pkg_info, add_installed_library, get_info
+    """
+    from numpy.distutils.npy_pkg_config import read_config, parse_flags, \
+            PkgNotFound
+
+    if dirs:
+        dirs.append(get_npy_pkg_dir())
+    else:
+        dirs = [get_npy_pkg_dir()]
+    return read_config(pkgname, dirs)
 
 def get_info(pkgname, dirs=None):
     """Given a clib package name, returns a info dict with the necessary
@@ -1911,7 +1942,7 @@ def get_info(pkgname, dirs=None):
 
     See Also
     --------
-    add_npy_pkg_info, add_installed_library
+    add_npy_pkg_info, add_installed_library, get_pkg_info
 
     Example
     -------
@@ -1920,14 +1951,7 @@ def get_info(pkgname, dirs=None):
     >>> npymath_info = get_info('npymath')
     >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
     """
-    from numpy.distutils.npy_pkg_config import read_config, parse_flags, \
-            PkgNotFound
-
-    if dirs:
-        dirs.append(get_npy_pkg_dir())
-    else:
-        dirs = [get_npy_pkg_dir()]
-    pkg_info = read_config(pkgname, dirs)
+    pkg_info = get_pkg_info(pkgname, dirs)
 
     # Translate LibraryInfo instance into a build_info dict
     info = parse_flags(pkg_info.cflags())
