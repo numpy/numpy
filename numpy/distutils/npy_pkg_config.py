@@ -1,8 +1,9 @@
 from ConfigParser import SafeConfigParser, NoOptionError
 import re
 import os
+import shlex
 
-__all__ = ['FormatError', 'LibraryInfo', 'VariablesSet', 'get_info']
+__all__ = ['FormatError', 'LibraryInfo', 'VariablesSet', 'get_info', 'parse_flags']
 
 _VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
 
@@ -12,6 +13,39 @@ class FormatError(IOError):
 
     def __str__(self):
         return self.msg
+
+def parse_flags(line):
+    lexer = shlex.shlex(line)
+    lexer.whitespace_split = True
+
+    d = {'include_dirs': [], 'library_dirs': [], 'libs': [], 'include': [],
+            'macros': [], 'libs': [], 'ignored': []}
+    def next_token(t):
+        if t.startswith('-I'):
+            if len(t) > 2:
+                d['include_dirs'].append(t[2:])
+            else:
+                t = lexer.get_token()
+                d['include_dirs'].append(t)
+        elif t.startswith('-L'):
+            if len(t) > 2:
+                d['library_dirs'].append(t[2:])
+            else:
+                t = lexer.get_token()
+                d['library_dirs'].append(t)
+        elif t.startswith('-l'):
+            d['libs'].append(t[2:])
+        elif t.startswith('-D'):
+            d['macros'].append(t[2:])
+        else:
+            d['ignored'].append(t)
+        return lexer.get_token()
+
+    t = lexer.get_token()
+    while t:
+        t = next_token(t)
+
+    return d
 
 class LibraryInfo(object):
     def __init__(self, name, description, version, sections, vars, requires=None):

@@ -2,7 +2,7 @@ import os
 from tempfile import mkstemp
 
 from numpy.testing import *
-from numpy.distutils.npy_pkg_config import read_config
+from numpy.distutils.npy_pkg_config import read_config, parse_flags
 
 simple = """\
 [meta]
@@ -70,3 +70,25 @@ class TestLibraryInfo(TestCase):
             self.failUnless(out.cflags() == '-I/Users/david/include')
         finally:
             os.remove(filename)
+
+class TestParseFlags(TestCase):
+    def test_simple_cflags(self):
+        d = parse_flags("-I/usr/include")
+        self.failUnless(d['include_dirs'] == ['/usr/include'])
+
+        d = parse_flags("-I/usr/include -DFOO")
+        self.failUnless(d['include_dirs'] == ['/usr/include'])
+        self.failUnless(d['macros'] == ['FOO'])
+
+        d = parse_flags("-I /usr/include -DFOO")
+        self.failUnless(d['include_dirs'] == ['/usr/include'])
+        self.failUnless(d['macros'] == ['FOO'])
+
+    def test_simple_lflags(self):
+        d = parse_flags("-L/usr/lib -lfoo -L/usr/lib -lbar")
+        self.failUnless(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
+        self.failUnless(d['libs'] == ['foo', 'bar'])
+
+        d = parse_flags("-L /usr/lib -lfoo -L/usr/lib -lbar")
+        self.failUnless(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
+        self.failUnless(d['libs'] == ['foo', 'bar'])
