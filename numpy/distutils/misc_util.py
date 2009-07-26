@@ -1202,9 +1202,6 @@ class Configuration(object):
         """
         if not build_info:
             build_info = {}
-        #    self.add_library(name, sources)
-        #else:
-        #    self.add_library(name, sources, **build_info)
 
         build_info = copy.copy(build_info)
         name = name #+ '__OF__' + self.name
@@ -1542,7 +1539,7 @@ def get_numpy_include_dirs():
 def get_npymath_info():
     """Return a extra_info-compatible dict to link against the core npymath
     library.
-    
+
     Example
     -------
     >>> npymath_info = get_npymath_info()
