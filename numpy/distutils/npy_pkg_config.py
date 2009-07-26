@@ -1,7 +1,7 @@
 from ConfigParser import SafeConfigParser, NoOptionError
 import re
 
-VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
+_VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
 
 class FormatError(IOError):
     def __init__(self, msg):
@@ -66,7 +66,7 @@ class VariableSet(object):
             for k in self._re.keys():
                 value = self._re[k].sub(self._re_sub[k], value)
             return value
-        while VAR.search(value):
+        while _VAR.search(value):
             nvalue = _interpolate(value)
             if nvalue == value:
                 break
@@ -174,8 +174,20 @@ def read_config(filename):
             version=meta["version"], sections=sections, vars=VariableSet(vars))
 
 # TODO:
-#   - Caching mechanism for LibraryInfo instances
 #   - implements version comparison (modversion + atleast)
+
+# Trivial cache to cache LibraryInfo instances creation. To be really
+# efficient, the cache should be handled in read_config, since a same file can
+# be parsed many time outside LibraryInfo creation, but I doubt this will be a
+# problem in practice
+_CACHE = {}
+def get_info(pkgname):
+    try:
+        return _CACHE[pkgname]
+    except KeyError:
+        v = read_config(pkg_to_filename(pkgname))
+        _CACHE[pkgname] = v
+        return v
 
 if __name__ == '__main__':
     import sys
@@ -208,8 +220,7 @@ if __name__ == '__main__':
             print "%s\t%s - %s" % (info.name, info.name, info.description)
 
     pkg_name = args[1]
-    fname = pkg_to_filename(pkg_name)
-    info = read_config(fname)
+    info = get_info(pkg_name)
     
     if options.section:
         section = options.section
