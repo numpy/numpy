@@ -215,10 +215,33 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         for k in range(len(desired)):
             assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
         return
-    from numpy.core import ndarray
+    from numpy.core import ndarray, isscalar
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
+
+    try:
+        # If one of desired/actual is not finite, handle it specially here:
+        # check that both are nan if any is a nan, and test for equality
+        # otherwise
+        if not (gisfinite(desired) and gisfinite(actual)):
+            isdesnan = gisnan(desired)
+            isactnan = gisnan(actual)
+            if isdesnan or isactnan:
+                # isscalar test to check so that [np.nan] != np.nan
+                if not (isdesnan and isactnan) \
+                   or (isscalar(isdesnan) != isscalar(isactnan)):
+                    raise AssertionError(msg)
+            else:
+                if not desired == actual:
+                    raise AssertionError(msg)
+            return
+    # If TypeError or ValueError raised while using isnan and co, just handle
+    # as before
+    except TypeError:
+        pass
+    except ValueError:
+        pass
     if desired != actual :
         raise AssertionError(msg)
 

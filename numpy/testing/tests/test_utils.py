@@ -48,7 +48,7 @@ class _GenericTest(object):
         a = np.array([1, 1], dtype=np.object)
         self._test_equal(a, 1)
 
-class TestEqual(_GenericTest, unittest.TestCase):
+class TestArrayEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_equal
 
@@ -126,6 +126,24 @@ class TestEqual(_GenericTest, unittest.TestCase):
 
         self._test_not_equal(c, b)
 
+class TestEqual(TestArrayEqual):
+    def setUp(self):
+        self._assert_func = assert_equal
+
+    def test_nan_items(self):
+        self._assert_func(np.nan, np.nan)
+        self._assert_func([np.nan], [np.nan])
+        self._test_not_equal(np.nan, [np.nan])
+        self._test_not_equal(np.nan, 1)
+
+    def test_inf_items(self):
+        self._assert_func(np.inf, np.inf)
+        self._assert_func([np.inf], [np.inf])
+        self._test_not_equal(np.inf, [np.inf])
+
+    def test_non_numeric(self):
+        self._assert_func('ab', 'ab')
+        self._test_not_equal('ab', 'abb')
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
