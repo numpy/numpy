@@ -280,6 +280,24 @@ class TestMethods(TestCase):
         self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
 
     def test_sort(self):
+        # test ordering for floats and complex containing nans. It is only
+        # necessary to check the lessthan comparison, so sorts that
+        # only follow the insertion sort path are sufficient. We only
+        # test doubles and complex doubles as the logic is the same.
+
+        # check doubles
+        msg = "Test real sort order with nans"
+        a = np.array([np.nan, 1, 0])
+        b = sort(a)
+        assert_equal(b, a[::-1], msg)
+        # check complex
+        msg = "Test complex sort order with nans"
+        a = np.zeros(9, dtype=np.complex128)
+        a.real += [np.nan, np.nan,np. nan, 1, 0, 1, 1, 0, 0]
+        a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
+        b = sort(a)
+        assert_equal(b, a[::-1], msg)
+
         # all c scalar sorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
         # of sorted items must be greater than ~50 to check the actual

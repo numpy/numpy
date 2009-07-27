@@ -45,7 +45,6 @@
  *****************************************************************************
  */
 
-
 /**begin repeat
  *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
@@ -60,6 +59,7 @@ NPY_INLINE static int
 }
 /**end repeat**/
 
+
 /**begin repeat
  *
  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
@@ -68,9 +68,16 @@ NPY_INLINE static int
 NPY_INLINE static int
 @TYPE@_LT(@type@ a, @type@ b)
 {
-    return a < b;
+    return a < b || (b != b && a == a);
 }
 /**end repeat**/
+
+
+/*
+ * For inline functions SUN recommends not using a return in the then part
+ * of an if statement. It's a SUN compiler thing, so assign the return value
+ * to a variable instead.
+ */
 
 /**begin repeat
  *
@@ -80,9 +87,25 @@ NPY_INLINE static int
 NPY_INLINE static int
 @TYPE@_LT(@type@ a, @type@ b)
 {
-    return a.real < b.real || (a.real == b.real && a.imag < b.imag);
+    int ret;
+
+    if (a.real < b.real) {
+        ret = a.imag == a.imag || b.imag != b.imag;
+    }
+    else if (a.real > b.real) {
+        ret = b.imag != b.imag && a.imag == a.imag;
+    }
+    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
+        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
+    }
+    else {
+        ret = b.real != b.real;
+    }
+
+    return ret;
 }
 /**end repeat**/
+
 
 /* The PyObject functions are stubs for later use */
 NPY_INLINE static int
