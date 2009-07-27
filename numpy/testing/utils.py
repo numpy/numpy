@@ -423,6 +423,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                     '%s mismatch)' % (xnanid, ynanid),
                                     verbose=verbose, header=header,
                                     names=('x', 'y'))
+                raise AssertionError(msg)
             val = comparison(x[~xnanid], y[~ynanid])
         else:
             val = comparison(x,y)
