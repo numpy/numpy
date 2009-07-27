@@ -126,3 +126,18 @@ precision are also available by adding the F and L suffixes respectively.
 .. cvar:: NPY_EULER
 
     The Euler constant (:math:`\lim_{n\rightarrow \infty}{\sum_{k=1}^n{\frac{1}{k}} - \ln n}`)
+
+Linking against the core math library in an extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.4.0
+
+To use the core math library in your own extension, you need to add the npymath
+compile and link options to your extension in your setup.py:
+
+        >>> from numpy.distutils.misc_utils import get_info
+        >>> info = get_info('npymath')
+        >>> config.add_extension('foo', sources=['foo.c'], extra_info=**info)
+
+In other words, the usage of info is exactly the same as when using blas_info
+and co.
