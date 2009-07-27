@@ -294,8 +294,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     from numpy.core import ndarray
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
-    msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
-
+    msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
+                         header='Arrays are not almost equal')
     try:
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
