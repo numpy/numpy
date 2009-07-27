@@ -384,6 +384,20 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
                 header='Items are not equal to %d significant digits:' %
                                  significant,
                 verbose=verbose)
+    try:
+        # If one of desired/actual is not finite, handle it specially here:
+        # check that both are nan if any is a nan, and test for equality
+        # otherwise
+        if not (gisfinite(desired) and gisfinite(actual)):
+            if gisnan(desired) or gisnan(actual):
+                if not (gisnan(desired) and gisnan(actual)):
+                    raise AssertionError(msg)
+            else:
+                if not desired == actual:
+                    raise AssertionError(msg)
+            return
+    except TypeError:
+        pass
     if math.fabs(sc_desired - sc_actual) >= pow(10.,-(significant-1)) :
         raise AssertionError(msg)
 

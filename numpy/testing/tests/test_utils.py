@@ -131,6 +131,15 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_almost_equal
 
+    def test_simple(self):
+        x = np.array([1234.2222])
+        y = np.array([1234.2223])
+
+        self._assert_func(x, y, decimal=3)
+        self._assert_func(x, y, decimal=4)
+        self.failUnlessRaises(AssertionError,
+                lambda: self._assert_func(x, y, decimal=5))
+
     def test_nan(self):
         anan = np.array([np.nan])
         aone = np.array([1])
@@ -162,6 +171,53 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
 
     def test_simple_item(self):
         self._test_not_equal(1, 2)
+
+class TestApproxEqual(unittest.TestCase):
+    def setUp(self):
+        self._assert_func = assert_approx_equal
+
+    def test_simple_arrays(self):
+        x = np.array([1234.22])
+        y = np.array([1234.23])
+
+        self._assert_func(x, y, significant=5)
+        self._assert_func(x, y, significant=6)
+        self.failUnlessRaises(AssertionError,
+                lambda: self._assert_func(x, y, significant=7))
+
+    def test_simple_items(self):
+        x = 1234.22
+        y = 1234.23
+
+        self._assert_func(x, y, significant=4)
+        self._assert_func(x, y, significant=5)
+        self._assert_func(x, y, significant=6)
+        self.failUnlessRaises(AssertionError,
+                lambda: self._assert_func(x, y, significant=7))
+
+    def test_nan_array(self):
+        anan = np.array(np.nan)
+        aone = np.array(1)
+        ainf = np.array(np.inf)
+        self._assert_func(anan, anan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, aone))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, ainf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(ainf, anan))
+
+    def test_nan_items(self):
+        anan = np.array(np.nan)
+        aone = np.array(1)
+        ainf = np.array(np.inf)
+        self._assert_func(anan, anan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, aone))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, ainf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(ainf, anan))
 
 class TestRaises(unittest.TestCase):
     def setUp(self):
