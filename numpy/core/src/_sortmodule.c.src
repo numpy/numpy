@@ -568,6 +568,10 @@ static void
                 @TYPE@_COPY(pk, pj, len);
                 pj += len;
             }
+            else {
+                @copy@(pk, pj, len);
+                pj += len;
+            }
             pk += len;
         }
         @TYPE@_COPY(pk, pj, pi - pj);
