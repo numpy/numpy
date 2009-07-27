@@ -40,6 +40,28 @@ The following ufuncs have been added to the C API:
     #. copysign - return the value of the first argument with the sign copied
        from the second argument.
 
+New defines
+~~~~~~~~~~~
+
+The alpha processor is now defined and available in numpy/npy_cpu.h. The
+failed detection of the PARISC processor has been fixed. The defines are:
+
+    #. NPY_CPU_HPPA: PARISC
+    #. NPY_CPU_ALPHA: Alpha
+
+Enhancements
+~~~~~~~~~~~~
+
+    #. The sort functions now sort nans to the end.
+
+        * Real sort order is [R, nan]
+        * Complex sort order is [R + Rj, R + nanj, nan + Rj, nan + nanj]
+
+       Complex numbers with the same nan placements are sorted according to
+       the non-nan part if it exists.
+    #. Complex division has been made more resistent to overflow.
+    #. Complex floor division has been made more resistent to overflow.
+
 Testing
 ~~~~~~~
 
