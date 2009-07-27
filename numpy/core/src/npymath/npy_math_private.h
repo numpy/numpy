@@ -98,4 +98,24 @@ do {								\
   (i) = gl_u.parts.lsw;						\
 } while (0)
 
+/* Set the more significant 32 bits of a double from an int.  */
+
+#define SET_HIGH_WORD(d,v)					\
+do {								\
+  ieee_double_shape_type sh_u;					\
+  sh_u.value = (d);						\
+  sh_u.parts.msw = (v);						\
+  (d) = sh_u.value;						\
+} while (0)
+
+/* Set the less significant 32 bits of a double from an int.  */
+
+#define SET_LOW_WORD(d,v)					\
+do {								\
+  ieee_double_shape_type sl_u;					\
+  sl_u.value = (d);						\
+  sl_u.parts.lsw = (v);						\
+  (d) = sl_u.value;						\
+} while (0)
+
 #endif /* !_NPY_MATH_PRIVATE_H_ */
