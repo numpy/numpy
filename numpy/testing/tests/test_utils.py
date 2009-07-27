@@ -127,10 +127,29 @@ class TestEqual(_GenericTest, unittest.TestCase):
         self._test_not_equal(c, b)
 
 
-class TestAlmostEqual(_GenericTest, unittest.TestCase):
+class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_almost_equal
 
+class TestAlmostEqual(_GenericTest, unittest.TestCase):
+    def setUp(self):
+        self._assert_func = assert_almost_equal
+
+    def test_nan_item(self):
+        self._assert_func(np.nan, np.nan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(np.nan, 1))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(np.nan, np.inf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(np.inf, np.nan))
+
+    def test_inf_item(self):
+        self._assert_func(np.inf, np.inf)
+        self._assert_func(-np.inf, -np.inf)
+
+    def test_simple_item(self):
+        self._test_not_equal(1, 2)
 
 class TestRaises(unittest.TestCase):
     def setUp(self):

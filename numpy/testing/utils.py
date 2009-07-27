@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import operator
+import types
 from nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
@@ -22,6 +23,39 @@ def assert_(val, msg='') :
     if not val :
         raise AssertionError(msg)
 
+def gisnan(x):
+    """like isnan, but always raise an error if type not supported instead of
+    returning a TypeError object.
+
+    Notes
+    -----
+    isnan and other ufunc sometimes return a NotImplementedType object instead
+    of raising any exception. This function is a wrapper to make sure an
+    exception is always raised.
+
+    This should be removed once this problem is solved at the Ufunc level."""
+    from numpy.core import isnan
+    st = isnan(x)
+    if isinstance(st, types.NotImplementedType):
+        raise TypeError("isnan not supported for this type")
+    return st
+
+def gisfinite(x):
+    """like isfinite, but always raise an error if type not supported instead of
+    returning a TypeError object.
+
+    Notes
+    -----
+    isfinite and other ufunc sometimes return a NotImplementedType object instead
+    of raising any exception. This function is a wrapper to make sure an
+    exception is always raised.
+
+    This should be removed once this problem is solved at the Ufunc level."""
+    from numpy.core import isfinite
+    st = isfinite(x)
+    if isinstance(st, types.NotImplementedType):
+        raise TypeError("isfinite not supported for this type")
+    return st
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -261,6 +295,21 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
+
+    try:
+        # If one of desired/actual is not finite, handle it specially here:
+        # check that both are nan if any is a nan, and test for equality
+        # otherwise
+        if not (gisfinite(desired) and gisfinite(actual)):
+            if gisnan(desired) or gisnan(actual):
+                if not (gisnan(desired) and gisnan(actual)):
+                    raise AssertionError(msg)
+            else:
+                if not desired == actual:
+                    raise AssertionError(msg)
+            return
+    except TypeError:
+        pass
     if round(abs(desired - actual),decimal) != 0 :
         raise AssertionError(msg)
 
