@@ -114,7 +114,6 @@ PyObject_LT(PyObject *pa, PyObject *pb)
     return 0;
 }
 
-#define copy_string memcpy
 
 NPY_INLINE static void
 STRING_COPY(char *s1, char *s2, size_t len)
@@ -589,10 +588,6 @@ static void
             }
             else {
                 @TYPE@_COPY(pk, pj, len);
-                pj += len;
-            }
-            else {
-                @copy@(pk, pj, len);
                 pj += len;
             }
             pk += len;
