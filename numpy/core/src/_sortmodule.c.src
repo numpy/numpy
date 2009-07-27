@@ -36,8 +36,26 @@
 #define SMALL_QUICKSORT 15
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
-#define SWAP(a,b) {typeof(b) tmp = (b); (b)=(a); (a) = tmp;}
 
+/*
+ *****************************************************************************
+ **                        SWAP MACROS                                      **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT,
+ *         CDOUBLE,CLONGDOUBLE, INTP#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_float, npy_double, npy_longdouble, npy_cfloat, npy_cdouble,
+ *         npy_clongdouble, npy_intp#
+ */
+#define @TYPE@_SWAP(a,b) {@type@ tmp = (b); (b)=(a); (a) = tmp;}
+
+/**end repeat**/
 
 /*
  *****************************************************************************
@@ -217,23 +235,23 @@ static int
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (@TYPE@_LT(*pm, *pl)) SWAP(*pm, *pl);
-            if (@TYPE@_LT(*pr, *pm)) SWAP(*pr, *pm);
-            if (@TYPE@_LT(*pm, *pl)) SWAP(*pm, *pl);
+            if (@TYPE@_LT(*pm, *pl)) @TYPE@_SWAP(*pm, *pl);
+            if (@TYPE@_LT(*pr, *pm)) @TYPE@_SWAP(*pr, *pm);
+            if (@TYPE@_LT(*pm, *pl)) @TYPE@_SWAP(*pm, *pl);
             vp = *pm;
             pi = pl;
             pj = pr - 1;
-            SWAP(*pm, *pj);
+            @TYPE@_SWAP(*pm, *pj);
             for (;;) {
                 do ++pi; while (@TYPE@_LT(*pi, vp));
                 do --pj; while (@TYPE@_LT(vp, *pj));
                 if (pi >= pj) {
                     break;
                 }
-                SWAP(*pi,*pj);
+                @TYPE@_SWAP(*pi,*pj);
             }
             pk = pr - 1;
-            SWAP(*pi, *pk);
+            @TYPE@_SWAP(*pi, *pk);
             /* push largest partition on stack */
             if (pi - pl < pr - pi) {
                 *sptr++ = pi + 1;
@@ -281,23 +299,23 @@ static int
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (@TYPE@_LT(v[*pm],v[*pl])) SWAP(*pm,*pl);
-            if (@TYPE@_LT(v[*pr],v[*pm])) SWAP(*pr,*pm);
-            if (@TYPE@_LT(v[*pm],v[*pl])) SWAP(*pm,*pl);
+            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm,*pl);
+            if (@TYPE@_LT(v[*pr],v[*pm])) INTP_SWAP(*pr,*pm);
+            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm,*pl);
             vp = v[*pm];
             pi = pl;
             pj = pr - 1;
-            SWAP(*pm,*pj);
+            INTP_SWAP(*pm,*pj);
             for (;;) {
                 do ++pi; while (@TYPE@_LT(v[*pi],vp));
                 do --pj; while (@TYPE@_LT(vp,v[*pj]));
                 if (pi >= pj) {
                     break;
                 }
-                SWAP(*pi,*pj);
+                INTP_SWAP(*pi,*pj);
             }
             pk = pr - 1;
-            SWAP(*pi,*pk);
+            INTP_SWAP(*pi,*pk);
             /* push largest partition on stack */
             if (pi - pl < pr - pi) {
                 *sptr++ = pi + 1;
@@ -821,23 +839,23 @@ static int
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (@TYPE@_LT(v + (*pm)*len, v + (*pl)*len, len)) SWAP(*pm, *pl);
-            if (@TYPE@_LT(v + (*pr)*len, v + (*pm)*len, len)) SWAP(*pr, *pm);
-            if (@TYPE@_LT(v + (*pm)*len, v + (*pl)*len, len)) SWAP(*pm, *pl);
+            if (@TYPE@_LT(v + (*pm)*len, v + (*pl)*len, len)) INTP_SWAP(*pm, *pl);
+            if (@TYPE@_LT(v + (*pr)*len, v + (*pm)*len, len)) INTP_SWAP(*pr, *pm);
+            if (@TYPE@_LT(v + (*pm)*len, v + (*pl)*len, len)) INTP_SWAP(*pm, *pl);
             vp = v + (*pm)*len;
             pi = pl;
             pj = pr - 1;
-            SWAP(*pm,*pj);
+            INTP_SWAP(*pm,*pj);
             for (;;) {
                 do ++pi; while (@TYPE@_LT(v + (*pi)*len, vp, len));
                 do --pj; while (@TYPE@_LT(vp, v + (*pj)*len, len));
                 if (pi >= pj) {
                     break;
                 }
-                SWAP(*pi,*pj);
+                INTP_SWAP(*pi,*pj);
             }
             pk = pr - 1;
-            SWAP(*pi,*pk);
+            INTP_SWAP(*pi,*pk);
             /* push largest partition on stack */
             if (pi - pl < pr - pi) {
                 *sptr++ = pi + 1;
