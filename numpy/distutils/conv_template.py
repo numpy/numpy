@@ -168,13 +168,13 @@ def parse_loop_header(loophead) :
             nsub = size
         elif nsub != size :
             msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
-            raise ValueError, msg
+            raise ValueError(msg)
         names.append((name,vals))
 
     # generate list of dictionaries, one for each template iteration
     dlist = []
     if nsub is None :
-        raise ValueError, "No substitution variables found"
+        raise ValueError("No substitution variables found")
     for i in range(nsub) :
         tmp = {}
         for name,vals in names :
@@ -192,8 +192,8 @@ def parse_string(astr, env, level, line) :
         try :
             val = env[name]
         except KeyError, e :
-            msg = 'line %d: %s'%(line, e)
-            raise ValueError, msg
+            msg = 'line %d: no definition of key "%s"'%(line, name)
+            raise ValueError(msg)
         return val
 
     code = [lineno]
@@ -213,7 +213,7 @@ def parse_string(astr, env, level, line) :
                 envlist = parse_loop_header(head)
             except ValueError, e :
                 msg = "line %d: %s" % (newline, e)
-                raise ValueError, msg
+                raise ValueError(msg)
             for newenv in envlist :
                 newenv.update(env)
                 newcode = parse_string(text, newenv, newlevel, newline)
@@ -261,7 +261,7 @@ def process_file(source):
     try:
         code = process_str(''.join(lines))
     except ValueError, e:
-        raise ValueError, '"%s", %s' % (sourcefile, e)
+        raise ValueError('In "%s" loop at %s' % (sourcefile, e))
     return '#line 1 "%s"\n%s' % (sourcefile, code)
 
 
@@ -299,5 +299,5 @@ if __name__ == "__main__":
     try:
         writestr = process_str(allstr)
     except ValueError, e:
-        raise ValueError, "file %s, %s" % (file, e)
+        raise ValueError("In %s loop at %s" % (file, e))
     outfile.write(writestr)
