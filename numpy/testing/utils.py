@@ -351,6 +351,37 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     """
     from numpy.core import ndarray
+    from numpy.lib import iscomplexobj, real, imag
+
+    # Handle complex numbers: separate into real/imag to handle
+    # nan/inf/negative zero correctly
+    # XXX: catch ValueError for subclasses of ndarray where iscomplex fail
+    try:
+        usecomplex = iscomplexobj(actual) or iscomplexobj(desired)
+    except ValueError:
+        usecomplex = False
+
+    if usecomplex:
+        if iscomplexobj(actual):
+            actualr = real(actual)
+            actuali = imag(actual)
+        else:
+            actualr = actual
+            actuali = 0
+        if iscomplexobj(desired):
+            desiredr = real(desired)
+            desiredi = imag(desired)
+        else:
+            desiredr = desired
+            desiredi = 0
+        try:
+            assert_almost_equal(actualr, desiredr)
+            assert_almost_equal(actuali, desiredi)
+        except AssertionError:
+            raise AssertionError("Items are not equal:\n" \
+                    "ACTUAL: %s\n" \
+                    "DESIRED: %s\n" % (str(actual), str(desired)))
+
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose,

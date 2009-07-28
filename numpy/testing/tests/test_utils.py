@@ -206,6 +206,21 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
     def test_simple_item(self):
         self._test_not_equal(1, 2)
 
+    def test_complex_item(self):
+        self._assert_func(complex(1, 2), complex(1, 2))
+        self._assert_func(complex(1, np.nan), complex(1, np.nan))
+        self._test_not_equal(complex(1, np.nan), complex(1, 2))
+        self._test_not_equal(complex(np.nan, 1), complex(1, np.nan))
+        self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
+
+    def test_complex(self):
+        x = np.array([complex(1, 2), complex(1, np.nan)])
+        z = np.array([complex(1, 2), complex(np.nan, 1)])
+        y = np.array([complex(1, 2), complex(1, 2)])
+        self._assert_func(x, x)
+        self._test_not_equal(x, y)
+        self._test_not_equal(x, z)
+
 class TestApproxEqual(unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_approx_equal
