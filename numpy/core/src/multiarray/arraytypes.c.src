@@ -1749,42 +1749,103 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 
 /****************** compare **********************************/
 
+/**begin repeat
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG#
+ * #type = byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong#
+ */
+
+static int
+@TYPE@_compare (@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
+{
+    const @type@ a = *pa;
+    const @type@ b = *pb;
+
+    return a < b ? -1 : a == b ? 0 : 1;
+}
+
+/**end repeat**/
+
+
+/**begin repeat
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = float, double, longdouble#
+ */
+
+static int
+@TYPE@_compare(@type@ *pa, @type@ *pb)
+{
+    const @type@ a = *pa;
+    const @type@ b = *pb;
+    int ret;
+
+    if (a < b || (b != b && a == a)) {
+        ret = -1;
+    }
+    else if (a > b || (a != a && b == b)) {
+        ret = 1;
+    }
+    else {
+        ret = 0;
+    }
+    return ret;
+}
+
+
+static int
+C@TYPE@_compare(@type@ *pa, @type@ *pb)
+{
+    const @type@ ar = pa[0];
+    const @type@ ai = pa[1];
+    const @type@ br = pb[0];
+    const @type@ bi = pb[1];
+    int ret;
+
+    if (ar < br) {
+        if (ai == ai || bi != bi) {
+            ret = -1;
+        }
+        else {
+            ret = 1;
+        }
+    }
+    else if (ar > br) {
+        if (bi != bi && ai == ai) {
+            ret = -1;
+        }
+        else {
+            ret = 1;
+        }
+    }
+    else if (ar == br || (ar != ar && br != br)) {
+        if (ai < bi || (bi != bi && ai == ai)) {
+            ret = -1;
+        }
+        else if (ai > bi || (ai != ai && bi == bi)) {
+            ret = 1;
+        }
+        else {
+            ret = 0;
+        }
+    }
+    else if (ar == ar) {
+        ret = -1;
+    }
+    else {
+        ret = 1;
+    }
+
+    return ret;
+}
+/**end repeat**/
+
+
 static int
 BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *NPY_UNUSED(ap))
 {
     return (*ip1 ? (*ip2 ? 0 : 1) : (*ip2 ? -1 : 0));
 }
-
-/**begin repeat
-#fname=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-*/
-
-static int
-@fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *NPY_UNUSED(ap))
-{
-    return *ip1 < *ip2 ? -1 : *ip1 == *ip2 ? 0 : 1;
-}
-
-/**end repeat**/
-
-/* compare imaginary part first, then complex if equal imaginary  */
-/**begin repeat
-#fname=CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= float, double, longdouble#
-*/
-
-static int
-@fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *NPY_UNUSED(ap))
-{
-    if (*ip1 == *ip2) {
-        return ip1[1]<ip2[1] ? -1 : (ip1[1] == ip2[1] ? 0 : 1);
-    }
-    else {
-        return *ip1 < *ip2 ? -1 : 1;
-    }
-}
- /**end repeat**/
 
 static int
 OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))

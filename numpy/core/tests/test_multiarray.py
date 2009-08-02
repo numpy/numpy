@@ -293,7 +293,7 @@ class TestMethods(TestCase):
         # check complex
         msg = "Test complex sort order with nans"
         a = np.zeros(9, dtype=np.complex128)
-        a.real += [np.nan, np.nan,np. nan, 1, 0, 1, 1, 0, 0]
+        a.real += [np.nan, np.nan, np.nan, 1, 0, 1, 1, 0, 0]
         a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
         b = sort(a)
         assert_equal(b, a[::-1], msg)
@@ -484,6 +484,33 @@ class TestMethods(TestCase):
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
+
+    def test_searchsorted(self):
+        # test for floats and complex containing nans. The logic is the
+        # same for all float types so only test double types for now.
+        # The search sorted routines use the compare functions for the
+        # array type, so this checks if that is consistent with the sort
+        # order.
+
+        # check double
+        a = np.array([np.nan, 1, 0])
+        a = np.array([0, 1, np.nan])
+        msg = "Test real searchsorted with nans, side='l'"
+        b = a.searchsorted(a, side='l')
+        assert_equal(b, np.arange(3), msg)
+        msg = "Test real searchsorted with nans, side='r'"
+        b = a.searchsorted(a, side='r')
+        assert_equal(b, np.arange(1,4), msg)
+        # check double complex
+        a = np.zeros(9, dtype=np.complex128)
+        a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
+        a.imag += [0, 1, 0, 1, np.nan, np.nan, 0, 1, np.nan]
+        msg = "Test complex searchsorted with nans, side='l'"
+        b = a.searchsorted(a, side='l')
+        assert_equal(b, np.arange(9), msg)
+        msg = "Test complex searchsorted with nans, side='r'"
+        b = a.searchsorted(a, side='r')
+        assert_equal(b, np.arange(1,10), msg)
 
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
