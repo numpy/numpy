@@ -507,7 +507,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
             return
     except TypeError:
         pass
-    if math.fabs(sc_desired - sc_actual) >= pow(10.,-(significant-1)) :
+    if np.abs(sc_desired - sc_actual) >= np.power(10.,-(significant-1)) :
         raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
