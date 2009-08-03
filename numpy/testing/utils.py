@@ -473,15 +473,14 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     True
 
     """
-    import math
-    from numpy.core import abs
+    import numpy as np
     actual, desired = map(float, (actual, desired))
     if desired==actual:
         return
     # Normalized the numbers to be in range (-10.0,10.0)
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
-    scale = 0.5*(abs(desired) + abs(actual))
-    scale = math.pow(10,math.floor(math.log10(scale)))
+    scale = 0.5*(np.abs(desired) + np.abs(actual))
+    scale = np.power(10,np.floor(np.log10(scale)))
     try:
         sc_desired = desired/scale
     except ZeroDivisionError:
