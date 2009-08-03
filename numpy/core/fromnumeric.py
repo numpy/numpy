@@ -449,6 +449,22 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     the last axis is faster and uses less space than sorting along
     any other axis.
 
+    The sort order for complex numbers is lexicographic. If both the real
+    and imaginary parts are non-nan then the order is determined by the
+    real parts except when they are equal, in which case the order is
+    determined by the imaginary parts.
+
+    Previous to numpy 1.4.0 sorting real and complex arrays containing nan
+    values led to undefined behaviour. In numpy versions >= 1.4.0 nan
+    values are sorted to the end. The extended sort order is:
+   
+         Real: [R, nan]
+         Complex: [R + Rj, R + nanj, nan + Rj, nan + nanj]
+   
+    where R is a non-nan real value. Complex values with the same nan
+    placements are sorted according to the non-nan part if it exists.
+    Non-nan values are sorted as before.
+
     Examples
     --------
     >>> a = np.array([[1,4],[3,1]])
@@ -527,6 +543,9 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     Notes
     -----
     See `sort` for notes on the different sorting algorithms.
+
+    As of Numpy 1.4.0 argsort works with real/complex arrays containing
+    nan values. The enhanced sort order is documented in the numpy.sort.
 
     Examples
     --------
@@ -663,6 +682,9 @@ def searchsorted(a, v, side='left'):
     Notes
     -----
     Binary search is used to find the required insertion points.
+
+    As of Numpy 1.4.0 searchsorted works with real/complex arrays containing
+    nan values. The enhanced sort order is documented in the numpy.sort.
 
     Examples
     --------

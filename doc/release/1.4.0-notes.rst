@@ -59,6 +59,9 @@ Enhancements
 
        Complex numbers with the same nan placements are sorted according to
        the non-nan part if it exists.
+    #. The type comparison functions have been made consistent with the new
+       sort order of nans. Searchsorted now works with sorted arrays
+       containing nan values.
     #. Complex division has been made more resistent to overflow.
     #. Complex floor division has been made more resistent to overflow.
 
