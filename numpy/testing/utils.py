@@ -392,8 +392,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             desiredr = desired
             desiredi = 0
         try:
-            assert_almost_equal(actualr, desiredr)
-            assert_almost_equal(actuali, desiredi)
+            assert_almost_equal(actualr, desiredr, decimal=decimal)
+            assert_almost_equal(actuali, desiredi, decimal=decimal)
         except AssertionError:
             raise AssertionError("Items are not equal:\n" \
                     "ACTUAL: %s\n" \
