@@ -1,5 +1,6 @@
 import os
 from distutils.core import Command
+from distutils.ccompiler import new_compiler
 from numpy.distutils.misc_util import get_cmd
 
 class install_clib(Command):
@@ -16,7 +17,6 @@ class install_clib(Command):
 
     def run (self):
         # We need the compiler to get the library name -> filename association
-        from distutils.ccompiler import new_compiler
         compiler = new_compiler(compiler=None)
         compiler.customize(self.distribution)
 
