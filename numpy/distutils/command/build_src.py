@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import shlex
+import copy
 
 from distutils.command import build_ext
 from distutils.dep_util import newer_group, newer
@@ -144,6 +145,7 @@ class build_src(build_ext.build_ext):
                     setattr(self, c, v)
 
     def run(self):
+        log.info("build_src")
         if not (self.extensions or self.libraries):
             return
         self.build_sources()
@@ -228,9 +230,16 @@ class build_src(build_ext.build_ext):
         return full_install_dir, generated_path
 
     def build_npy_pkg_config(self):
-        log.info('building npkg modules')
+        log.info('build_src: building npy-pkg config files')
 
-        install_cmd = get_cmd('install')
+        # XXX: another ugly workaround to circumvent distutils brain damage. We
+        # need the install prefix here, but finalizing the options of the
+        # install command when only building sources cause error. Instead, we
+        # copy the install command instance, and finalize the copy so that it
+        # does not disrupt how distutils want to do things when with the
+        # original install command instance.
+        install_cmd = copy.copy(get_cmd('install'))
+        install_cmd.finalize_options()
         build_npkg = False
         gd = {}
         if hasattr(install_cmd, 'install_libbase'):
