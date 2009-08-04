@@ -16,11 +16,15 @@ class install_clib(Command):
         self.set_undefined_options('install', ('install_lib', 'install_dir'))
 
     def run (self):
-        # We need the compiler to get the library name -> filename association
-        compiler = new_compiler(compiler=None)
-        compiler.customize(self.distribution)
+        build_clib_cmd = get_cmd("build_clib")
+        build_dir = build_clib_cmd.build_clib
 
-        build_dir = get_cmd("build_clib").build_clib
+        # We need the compiler to get the library name -> filename association
+        if not build_clib_cmd.compiler:
+            compiler = new_compiler(compiler=None)
+            compiler.customize(self.distribution)
+        else:
+            compiler = build_clib.compiler
 
         for l in self.distribution.installed_libraries:
             target_dir = os.path.join(self.install_dir, l.target_dir)
