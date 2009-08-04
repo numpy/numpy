@@ -24,7 +24,7 @@ class install_clib(Command):
             compiler = new_compiler(compiler=None)
             compiler.customize(self.distribution)
         else:
-            compiler = build_clib.compiler
+            compiler = build_clib_cmd.compiler
 
         for l in self.distribution.installed_libraries:
             target_dir = os.path.join(self.install_dir, l.target_dir)
