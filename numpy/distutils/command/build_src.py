@@ -239,7 +239,8 @@ class build_src(build_ext.build_ext):
         # does not disrupt how distutils want to do things when with the
         # original install command instance.
         install_cmd = copy.copy(get_cmd('install'))
-        install_cmd.finalize_options()
+        if not install_cmd.finalized == 1:
+            install_cmd.finalize_options()
         build_npkg = False
         gd = {}
         if hasattr(install_cmd, 'install_libbase'):
