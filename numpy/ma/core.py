@@ -4909,19 +4909,31 @@ class _frommethod:
             return doc
     #
     def __call__(self, a, *args, **params):
-        if isinstance(a, MaskedArray):
-            return getattr(a, self.__name__).__call__(*args, **params)
-        #FIXME ----
-        #As x is not a MaskedArray, we transform it to a ndarray with asarray
-        #... and call the corresponding method.
-        #Except that sometimes it doesn't work (try reshape([1,2,3,4],(2,2)))
-        #we end up with a "SystemError: NULL result without error in PyObject_Call"
-        #A dirty trick is then to call the initial numpy function...
-        method = getattr(narray(a, copy=False), self.__name__)
-        try:
+        # Get the method from the array (if possible)
+        method_name = self.__name__
+        method = getattr(a, method_name, None)
+        if method is not None:
             return method(*args, **params)
-        except SystemError:
-            return getattr(np,self.__name__).__call__(a, *args, **params)
+        # Still here ? Then a is not a MaskedArray
+        method = getattr(MaskedArray, method_name, None)
+        if method is not None:
+            return method(MaskedArray(a), *args, **params)
+        # Still here ? OK, let's call the corresponding np function
+        method = getattr(np, method_name)
+        return method(a, *args, **params)
+#        if isinstance(a, MaskedArray):
+#            return getattr(a, self.__name__).__call__(*args, **params)
+#        #FIXME ----
+#        #As x is not a MaskedArray, we transform it to a ndarray with asarray
+#        #... and call the corresponding method.
+#        #Except that sometimes it doesn't work (try reshape([1,2,3,4],(2,2)))
+#        #we end up with a "SystemError: NULL result without error in PyObject_Call"
+#        #A dirty trick is then to call the initial numpy function...
+#        method = getattr(narray(a, copy=False), self.__name__)
+#        try:
+#            return method(*args, **params)
+#        except SystemError:
+#            return getattr(np,self.__name__).__call__(a, *args, **params)
 
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')

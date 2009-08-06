@@ -2339,7 +2339,7 @@ class TestMaskedArrayMethods(TestCase):
 #------------------------------------------------------------------------------
 
 
-class TestMaskArrayMathMethod(TestCase):
+class TestMaskedArrayMathMethods(TestCase):
 
     def setUp(self):
         "Base data definition."
@@ -2977,6 +2977,16 @@ class TestMaskedArrayFunctions(TestCase):
         test = flatten_mask(mask)
         control = np.array([ 0, 0, 0, 0, 0, 1], dtype=bool)
         assert_equal(test, control)
+
+
+    def test_on_ndarray(self):
+        "Test functions on ndarrays"
+        a = np.array([1, 2, 3, 4]) 
+        m = array(a, mask=False) 
+        test = anom(a)
+        assert_equal(test, m.anom()) 
+        test = reshape(a, (2, 2))
+        assert_equal(test, m.reshape(2, 2))
 
 #------------------------------------------------------------------------------
 
