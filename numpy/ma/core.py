@@ -4921,19 +4921,6 @@ class _frommethod:
         # Still here ? OK, let's call the corresponding np function
         method = getattr(np, method_name)
         return method(a, *args, **params)
-#        if isinstance(a, MaskedArray):
-#            return getattr(a, self.__name__).__call__(*args, **params)
-#        #FIXME ----
-#        #As x is not a MaskedArray, we transform it to a ndarray with asarray
-#        #... and call the corresponding method.
-#        #Except that sometimes it doesn't work (try reshape([1,2,3,4],(2,2)))
-#        #we end up with a "SystemError: NULL result without error in PyObject_Call"
-#        #A dirty trick is then to call the initial numpy function...
-#        method = getattr(narray(a, copy=False), self.__name__)
-#        try:
-#            return method(*args, **params)
-#        except SystemError:
-#            return getattr(np,self.__name__).__call__(a, *args, **params)
 
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')

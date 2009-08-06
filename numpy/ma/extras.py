@@ -413,7 +413,7 @@ def average(a, axis=None, weights=None, returned=False):
         else:
             if weights is None:
                 n = a.filled(0).sum(axis=None)
-                d = umath.add.reduce((-mask).ravel().astype(int))
+                d = float(umath.add.reduce((~mask).ravel()))
             else:
                 w = array(filled(weights, 0.0), float, mask=mask).ravel()
                 n = add.reduce(a.ravel() * w)
