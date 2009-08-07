@@ -200,11 +200,11 @@ clean_ax:
     return NULL;
 }
 
-#include "cycle.h"
+// #include "cycle.h"
 
-ticks T0, T1;
-double RES;
-double _MAX;
+// ticks T0, T1;
+// double RES;
+// double _MAX;
 
 static int 
 copy_double_double(PyArrayNeighborhoodIterObject *itx, 
@@ -213,14 +213,14 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
         PyObject **out)
 {
     npy_intp i, j, k;
-    register double *ptr;
+    double *ptr;
     npy_intp odims[NPY_MAXDIMS];
     PyArrayObject *aout;
 
     /* For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list */
     PyArrayNeighborhoodIter_Reset(itx);
-    _MAX = 1e100;
+    // _MAX = 1e100;
     for(i = 0; i < itx->size; ++i) {
         for(j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
@@ -233,24 +233,24 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
         ptr = (double*)aout->data;
 
         PyArrayNeighborhoodIter_Reset(niterx);
-        T0 = getticks();
+        // T0 = getticks();
         for(j = 0; j < niterx->size; ++j) {
             *ptr = *((double*)niterx->dataptr);
             ptr += 1;
             PyArrayNeighborhoodIter_Next(niterx);
         }
-        T1 = getticks();
-        RES = elapsed(T1, T0);
-        if (RES < _MAX) {
-            _MAX = RES;
-        }
+        // T1 = getticks();
+        // RES = elapsed(T1, T0);
+        // if (RES < _MAX) {
+        //     _MAX = RES;
+        // }
 
         Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
         PyArrayNeighborhoodIter_Next(itx);
     }
-    printf("%f - %f\n", _MAX, _MAX / niterx->size);
+    // printf("%f - %f\n", _MAX, _MAX / niterx->size);
 
     return 0;
 }
