@@ -673,7 +673,18 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_DISABLE_C_API
 #endif
 
-typedef struct {
+/***************************** 
+ * Basic iterator object
+ *****************************/
+
+/* FWD declaration */
+typedef struct PyArrayIterObject_tag PyArrayIterObject;
+
+/* type of the function which translates a set of coordinates to a pointer to
+ * the data */
+typedef char* (*npy_iter_get_dataptr_t)(PyArrayIterObject* iter, npy_intp*);
+
+struct PyArrayIterObject_tag {
         PyObject_HEAD
         int               nd_m1;            /* number of dimensions - 1 */
         npy_intp          index, size;
@@ -685,7 +696,8 @@ typedef struct {
         PyArrayObject     *ao;
         char              *dataptr;        /* pointer to current item*/
         npy_bool          contiguous;
-} PyArrayIterObject;
+        npy_iter_get_dataptr_t translate;
+} ;
 
 
 /* Iterator API */
@@ -933,6 +945,7 @@ typedef struct {
     PyArrayObject     *ao;
     char              *dataptr;        /* pointer to current item*/
     npy_bool          contiguous;
+    npy_iter_get_dataptr_t translate;
 
     /* 
      * New members
