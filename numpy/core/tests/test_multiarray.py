@@ -1231,9 +1231,10 @@ class TestNeighborhoodIter(TestCase):
         from decimal import Decimal
         self._test_circular(Decimal)
 
-class TestNeighborhoodIter2(TestCase):
-    # Simple, 2d tests
-    def test(self):
+# Test stacking neighborhood iterators
+class TestStackedNeighborhoodIter(TestCase):
+    # Simple, 1d test: stacking 2 constant-padded neigh iterators
+    def test_simple_const(self):
         dt = np.float64
         # Test zero and one padding for simple data type
         x = np.array([1, 2, 3], dtype=dt)
@@ -1244,8 +1245,65 @@ class TestNeighborhoodIter2(TestCase):
              np.array([3], dtype=dt),
              np.array([0], dtype=dt),
              np.array([0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-2, 2], [0])
-        print l, r
+        l = test_neighborhood_iterator_oob(x, [-2, 4], NEIGH_MODE['zero'],
+                [0, 0], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        r = [np.array([1, 0, 1], dtype=dt),
+             np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt),
+             np.array([3, 0, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-1, 1], NEIGH_MODE['one'])
+        assert_array_equal(l, r)
+
+    # 2nd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
+    # mirror padding
+    def test_simple_mirror(self):
+        dt = np.float64
+        # Stacking zero on top of mirror
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 1, 1], dtype=dt),
+             np.array([1, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 3], dtype=dt),
+             np.array([3, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['mirror'],
+                [-1, 1], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 0, 0], dtype=dt),
+             np.array([0, 0, 1], dtype=dt),
+             np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 0], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 2nd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt),
+             np.array([3, 0, 0], dtype=dt),
+             np.array([0, 0, 3], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [0, 2], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 3rd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 0, 0, 1, 2], dtype=dt),
+             np.array([0, 0, 1, 2, 3], dtype=dt),
+             np.array([0, 1, 2, 3, 0], dtype=dt),
+             np.array([1, 2, 3, 0, 0], dtype=dt),
+             np.array([2, 3, 0, 0, 3], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
 if __name__ == "__main__":

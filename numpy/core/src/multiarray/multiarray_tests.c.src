@@ -395,7 +395,7 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
     PyArrayNeighborhoodIter_Reset(itx);
     _MAX = 1e100;
     for(i = 0; i < itx->size; ++i) {
-    //for(i = 0; i < 1; ++i) {
+#if 0
 		npy_intp yo[10];
 		yo[0] = i;
         printf("====================\n");
@@ -423,7 +423,7 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
 
 		// yo[0] = -1;
 		// printf("(%f) \n", *((double*)niterx->translate(niterx, yo)));
-#if 0
+#endif
         for(j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
@@ -435,41 +435,21 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
         ptr = (double*)aout->data;
 
         PyArrayNeighborhoodIter_Reset(niterx);
-        printf("===================\n");
-        T0 = getticks();
+        //T0 = getticks();
         for(j = 0; j < niterx->size; ++j) {
-			npy_intp yo[10];
-			yo[0] = 0;
-            printf("-------------------\n");
-			niterx->_internal_iter->translate(niterx->_internal_iter, yo);
-            //ptr = (double*)niterx->dataptr;
-			//printf("%ld | %ld -> %p (%f) \n", niterx->coordinates[0],
-			//niterx->_internal_iter->coordinates[0],
-			//niterx->_internal_iter->translate(niterx->_internal_iter, yo),
-			//*((double*)niterx->translate(niterx, yo)));
-            //printf("%f\n", *((double*)niterx->dataptr));
             *ptr = *((double*)niterx->dataptr);
-            //*ptr = *((double*)neigh_iter_get_ptr_const(niterx));
-
-            // coord[0] = -2;
-            // ptr = niterx->_internal_iter->translate(niterx->_internal_iter, coord);
-            // printf("%f \n", *ptr);
-
-            // neigh_iter_next_fptr(niterx);
-            PyArrayNeighborhoodIter_Next(niterx);
-            // neigh_iter_incr_coord(niterx);
             ptr += 1;
+            PyArrayNeighborhoodIter_Next(niterx);
         }
-        T1 = getticks();
-        RES = elapsed(T1, T0);
-        if (RES < _MAX) {
-            _MAX = RES;
-        }
+        //T1 = getticks();
+        //RES = elapsed(T1, T0);
+        //if (RES < _MAX) {
+        //    _MAX = RES;
+        //}
 
         Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
-#endif
         PyArrayNeighborhoodIter_Next(itx);
     }
    //  printf("%f - %f\n", _MAX, _MAX / niterx->size);
