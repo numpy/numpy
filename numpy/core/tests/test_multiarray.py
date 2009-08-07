@@ -1354,5 +1354,15 @@ class TestStackedNeighborhoodIter(TestCase):
                 [-2, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
+    # 4th simple, 1d test: stacking 2 neigh iterators, but with lower iterator
+    # being strictly within the array
+    def test_simple_strict_within(self):
+        dt = np.float64
+        # Stacking zero on top of mirror
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 2, 3], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
+                [-1, 1], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
 if __name__ == "__main__":
     run_module_suite()
