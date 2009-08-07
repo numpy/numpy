@@ -1306,5 +1306,53 @@ class TestStackedNeighborhoodIter(TestCase):
                 [-2, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
+    # 3rd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
+    # circular padding
+    def test_simple_circular(self):
+        dt = np.float64
+        # Stacking zero on top of mirror
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 3, 1], dtype=dt),
+             np.array([3, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 1], dtype=dt),
+             np.array([3, 1, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['circular'],
+                [-1, 1], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([3, 0, 0], dtype=dt),
+             np.array([0, 0, 1], dtype=dt),
+             np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 0], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 2nd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt),
+             np.array([3, 0, 0], dtype=dt),
+             np.array([0, 0, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [0, 2], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 3rd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([3, 0, 0, 1, 2], dtype=dt),
+             np.array([0, 0, 1, 2, 3], dtype=dt),
+             np.array([0, 1, 2, 3, 0], dtype=dt),
+             np.array([1, 2, 3, 0, 0], dtype=dt),
+             np.array([2, 3, 0, 0, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 2], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
 if __name__ == "__main__":
     run_module_suite()

@@ -1852,47 +1852,30 @@ __npy_pos_remainder(npy_intp i, npy_intp n)
 #undef _NPY_IS_EVEN
 
 #define _INF_SET_PTR_MIRROR(c) \
-        printf("bounds: %ld - %ld\n", p->bounds[c][0], p->bounds[c][1]); \
-    bd = coordinates[c] + p->coordinates[c]; \
-    bd -= p->bounds[c][0]; \
-        printf("bd: %ld - max %ld\n", bd, p->bounds[c][1] - p->bounds[c][0]); \
-    truepos = __npy_pos_remainder(bd, niter->dimensions[c] - p->bounds[c][0]); \
-        printf("truepos: %ld \n", truepos); \
-    _coordinates[c] = (truepos + p->bounds[c][0]); \
-        printf("_cordinates: %ld \n", _coordinates[c]); \
+    lb = p->bounds[c][0]; \
+    bd = coordinates[c] + p->coordinates[c] - lb; \
+    _coordinates[c] = lb + __npy_pos_remainder(bd, p->bounds[c][1] + 1 - lb);
 
 /* set the dataptr from its current coordinates */
 static char*
 get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
 {
     int i;
-    npy_intp bd, _coordinates[NPY_MAXDIMS];
-    npy_intp truepos;
+    npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
     PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
     PyArrayIterObject *p = niter->_internal_iter;
 
-    //printf("%s\n", __func__);
     for(i = 0; i < niter->nd; ++i) {
-        // _INF_SET_PTR_MIRROR(i)
-        // printf("bounds: %ld - %ld\n", p->bounds[i][0], p->bounds[i][1]);
-        bd = coordinates[i] + p->coordinates[i];
-        bd -= p->bounds[i][0];
-        // printf("bd: %ld - max %ld\n", bd, p->bounds[i][1] - p->bounds[i][0]);
-        truepos = __npy_pos_remainder(bd, p->bounds[i][1] + 1 - p->bounds[i][0]);
-        // printf("truepos: %ld \n", truepos);
-        _coordinates[i] = (truepos + p->bounds[i][0]);
-        // printf("_cordinates: %ld \n", _coordinates[i]);
+        _INF_SET_PTR_MIRROR(i)
     }
 
-    // printf("%s: coordinates is %ld | %ld -> %ld\n", __func__, coordinates[0], p->coordinates[0], _coordinates[0]);
     return p->translate(p, _coordinates);
 }
 #undef _INF_SET_PTR_MIRROR
 
-#if 0
 /* compute l such as i = k * n + l, 0 <= l < |k| */
 static inline npy_intp
-_npy_euclidean_division(npy_intp i, npy_intp n)
+__npy_euclidean_division(npy_intp i, npy_intp n)
 {
     npy_intp l;
 
@@ -1902,29 +1885,26 @@ _npy_euclidean_division(npy_intp i, npy_intp n)
     }
     return l;
 }
-#endif
 
 #define _INF_SET_PTR_CIRCULAR(c) \
-    bd = coordinates[c] + niter->_internal_iter->coordinates[c]; \
-    truepos = _npy_euclidean_division(bd, niter->dimensions[c]); \
-    offset = (truepos - niter->_internal_iter->coordinates[c]) * niter->strides[c]; \
-    ret += offset;
+    lb = p->bounds[c][0]; \
+    bd = coordinates[c] + p->coordinates[c] - lb; \
+    _coordinates[c] = lb + _npy_euclidean_division(bd, p->bounds[c][1] + 1 - lb);
 
 static char*
-get_coordinates_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
 {
     int i;
-    npy_intp offset, bd, truepos;
-    char *ret;
+    //npy_intp offset, bd, truepos;
+    npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
     PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
-
-    ret = niter->_internal_iter->dataptr;
+    PyArrayIterObject *p = niter->_internal_iter;
 
     for(i = 0; i < niter->nd; ++i) {
         _INF_SET_PTR_CIRCULAR(i)
     }
 
-    return ret;
+    return p->translate(p, _coordinates);
 }
 #undef _INF_SET_PTR_CIRCULAR
 
@@ -1990,13 +1970,11 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
             ret->constant = NULL;
             ret->translate = &get_ptr_mirror;
             break;
-#if 0
         case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
             ret->mode = mode;
             ret->constant = NULL;
-            ret->translate = get_coordinates_circular;
+            ret->translate = &get_ptr_circular;
             break;
-#endif
         default:
             PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
             goto clean_x;

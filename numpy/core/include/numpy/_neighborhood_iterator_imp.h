@@ -371,7 +371,8 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
             iter->dataptr = iter->translate((PyArrayIterObject*)iter, iter->coordinates);
             break;
         case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
-            _PyArrayNeighborhoodIter_SetPtrCircular(iter);
+            //_PyArrayNeighborhoodIter_SetPtrCircular(iter);
+            iter->dataptr = iter->translate((PyArrayIterObject*)iter, iter->coordinates);
             break;
     }
 
