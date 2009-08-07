@@ -297,7 +297,13 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
         if (i > 0) {
             it->factors[nd-i-1] = it->factors[nd-i] * ao->dimensions[nd-i];
         }
+        it->bounds[i][0] = 0;
+        it->bounds[i][1] = ao->dimensions[i] - 1;
     }
+
+    /* Not used for basic iterator: set to NULL to cause a segfault right away
+     * if misused */
+    it->translate = NULL;
     PyArray_ITER_RESET(it);
 
     return (PyObject *)it;

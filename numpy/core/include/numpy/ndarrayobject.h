@@ -696,6 +696,8 @@ struct PyArrayIterObject_tag {
         PyArrayObject     *ao;
         char              *dataptr;        /* pointer to current item*/
         npy_bool          contiguous;
+
+        npy_intp          bounds[NPY_MAXDIMS][2];
         npy_iter_get_dataptr_t translate;
 } ;
 
@@ -945,6 +947,8 @@ typedef struct {
     PyArrayObject     *ao;
     char              *dataptr;        /* pointer to current item*/
     npy_bool          contiguous;
+
+    npy_intp          bounds[NPY_MAXDIMS][2];
     npy_iter_get_dataptr_t translate;
 
     /* 
@@ -954,8 +958,6 @@ typedef struct {
 
     /* Dimensions is the dimension of the array */
     npy_intp dimensions[NPY_MAXDIMS];
-    /* Bounds of the neighborhood to iterate over */
-    npy_intp bounds[NPY_MAXDIMS][2];
 
     /* Neighborhood points coordinates are computed relatively to the point pointed
      * by _internal_iter */
