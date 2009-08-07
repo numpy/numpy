@@ -1796,22 +1796,6 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
     return ret;
 }
 
-/* Special versions when the neighborhood is within the array */
-static char*
-get_ptr_within(PyArrayIterObject* _iter, npy_intp *coordinates)
-{
-    int i;
-    npy_intp _coordinates[NPY_MAXDIMS];
-    PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
-    PyArrayIterObject *p = niter->_internal_iter;
-
-    for(i = 0; i < niter->nd; ++i) {
-        _coordinates[i] = coordinates[i] + p->coordinates[i]; 
-    }
-
-    return p->translate(p, _coordinates);
-}
-
 #define _INF_SET_PTR(c) \
     bd = coordinates[c] + p->coordinates[c]; \
     if (bd < p->limits[c][0] || bd > p->limits[c][1]) { \
@@ -1933,7 +1917,7 @@ NPY_NO_EXPORT PyObject*
 PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
                 int mode, PyArrayObject* fill)
 {
-    int i, iswithin;
+    int i;
     PyArrayNeighborhoodIterObject *ret;
 
     ret = _pya_malloc(sizeof(*ret));
@@ -1974,13 +1958,6 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
         ret->limits_sizes[i] = (ret->limits[i][1] - ret->limits[i][0]) + 1;
     }
 
-    iswithin = 1;
-    for (i = 0; i < ret->nd; ++i) {
-        if (ret->bounds[i][0] < 0 || ret->bounds[i][1] >= ret->dimensions[i]) {
-            iswithin = 0;
-        }
-    }
-
     switch (mode) {
         case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
             ret->constant = PyArray_Zero(x->ao);
@@ -2016,12 +1993,6 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
         default:
             PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
             goto clean_x;
-    }
-
-    /* We overwrite the translate function here so that we don't have to treat
-     * both iswithin and !iswithin cases in the destructor */
-    if (iswithin) {
-        ret->translate = &get_ptr_within;
     }
 
     /*
