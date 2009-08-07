@@ -1244,7 +1244,8 @@ class TestNeighborhoodIter2(TestCase):
              np.array([3], dtype=dt),
              np.array([0], dtype=dt),
              np.array([0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x)
+        l = test_neighborhood_iterator_oob(x, [-2, 2], [0])
+        print l, r
         assert_array_equal(l, r)
 
 if __name__ == "__main__":

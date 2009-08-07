@@ -23,8 +23,22 @@ static int copy_@type@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     /* For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list */
     for(i = 0; i < itx->size; ++i) {
+        npy_intp coord[10];
         PyArrayNeighborhoodIter_Reset(niterx);
 
+#if 0
+        printf("+++++++++++++++++++++++++++++++\n");
+        coord[0] = -2;
+        printf("%f\n", *((double*)niterx->translate(niterx, coord)));
+        coord[0] = -1;
+        printf("%f\n", *((double*)niterx->translate(niterx, coord)));
+        coord[0] = 0;
+        printf("%f\n", *((double*)niterx->translate(niterx, coord)));
+        coord[0] = 1;
+        printf("%f\n", *((double*)niterx->translate(niterx, coord)));
+        coord[0] = 2;
+        printf("%f\n", *((double*)niterx->translate(niterx, coord)));
+#endif
         for(j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
@@ -199,22 +213,217 @@ clean_ax:
     return NULL;
 }
 
+/*
+ * Update to next item of the iterator
+ *
+ * Note: this simply increment the coordinates vector, last dimension
+ * incremented first , i.e, for dimension 3
+ * ...
+ * -1, -1, -1
+ * -1, -1,  0
+ * -1, -1,  1
+ *  ....
+ * -1,  0, -1
+ * -1,  0,  0
+ *  ....
+ * 0,  -1, -1
+ * 0,  -1,  0
+ *  ....
+ */
+#define _UPDATE_COORD_ITER(c) \
+    wb = iter->coordinates[c] < iter->bounds[c][1]; \
+    if (wb) { \
+        iter->coordinates[c] += 1; \
+        return 0; \
+    } \
+    else { \
+        iter->coordinates[c] = iter->bounds[c][0]; \
+    }
+
+static inline int
+neigh_iter_incr_coord(PyArrayNeighborhoodIterObject* iter)
+{
+    int i, wb;
+
+    for (i = iter->nd - 1; i >= 0; --i) {
+        _UPDATE_COORD_ITER(i)
+    }
+
+    return 0;
+}
+#undef _UPDATE_COORD_ITER
+
+#if 0
+#define _INF_SET_PTR(c) \
+    bd = niter->coordinates[c] + niter->_internal_iter->coordinates[c]; \
+    printf("%d|%d - %d|%d,\n", niter->coordinates[c], \
+            niter->_internal_iter->coordinates[c], \
+            niter->_internal_iter->bounds[c][0], \
+            niter->_internal_iter->bounds[c][1]); \
+    if (bd < niter->_internal_iter->bounds[c][0] || \
+        bd > niter->_internal_iter->bounds[c][1]) { \
+        printf("OOB\n"); \
+        return niter->constant; \
+    } \
+    coordinates[c] = bd;  \
+    printf("coord is %d\n", coordinates[c]);
+#endif
+
+#define _INF_SET_PTR(c) \
+    bd = niter->coordinates[c] + p->coordinates[c]; \
+    if (bd < p->bounds[c][0] || \
+        bd > p->bounds[c][1]) { \
+        return niter->constant; \
+    } \
+    _coordinates[c] = bd;
+
+static inline char*
+neigh_iter_get_ptr_const(PyArrayNeighborhoodIterObject* niter)
+{
+    int i;
+    npy_intp offset, bd;
+    char *ret;
+    PyArrayIterObject *p = niter->_internal_iter;
+    npy_intp _coordinates[2*NPY_MAXDIMS];
+
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR(i)
+    }
+
+    return niter->_internal_iter->translate(niter->_internal_iter, _coordinates);
+}
+
+static inline int
+neigh_iter_next_fptr(PyArrayNeighborhoodIterObject *iter)
+{
+	neigh_iter_incr_coord(iter);
+	iter->dataptr = neigh_iter_get_ptr_const(iter);
+	return 0;
+}
+
+static inline int
+neigh_iter_reset(PyArrayNeighborhoodIterObject *iter)
+{
+    npy_intp i;
+
+    for(i = 0; i < iter->nd; ++i) {
+        iter->coordinates[i] = iter->bounds[i][0];
+    }
+	iter->dataptr = neigh_iter_get_ptr_const(iter);
+	return 0;
+}
+
+//#include "cycle.h"
+
+//ticks T0, T1;
+double RES;
+double _MAX;
+
+#define _NPY_IS_EVEN(x) ((x) % 2 == 0)
+
+/* For an array x of dimension n, and given index i, returns j, 0 <= j < n
+ * such as x[i] = x[j], with x assumed to be mirrored. For example, for x =
+ * {1, 2, 3} (n = 3)
+ *
+ * index -5 -4 -3 -2 -1 0 1 2 3 4 5 6
+ * value  2  3  3  2  1 1 2 3 3 2 1 1
+ *
+ * _npy_pos_index_mirror(4, 3) will return 1, because x[4] = x[1]*/
+static inline npy_intp
+__npy_pos_remainder(npy_intp i, npy_intp n)
+{
+    npy_intp k, l, j;
+
+    /* Mirror i such as it is guaranteed to be positive */
+    if (i < 0) {
+        i = - i - 1;
+    }
+
+    /* compute k and l such as i = k * n + l, 0 <= l < k */
+    k = i / n;
+    l = i - k * n;
+
+    if (_NPY_IS_EVEN(k)) {
+        j = l;
+    } else {
+        j = n - 1 - l;
+    }
+    return j;
+}
+#undef _NPY_IS_EVEN
+
+#define _INF_SET_PTR_MIRROR(c) \
+    bd = coordinates[c] + p->coordinates[c]; \
+    bd -= p->bounds[c][0]; \
+    truepos = __npy_pos_remainder(bd, niter->dimensions[c] - p->bounds[c][0]); \
+    _coordinates[c] = (truepos - p->coordinates[c] + p->bounds[c][0]);
+
+/* set the dataptr from its current coordinates */
+static char*
+get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
+{
+    int i;
+    npy_intp bd, _coordinates[NPY_MAXDIMS];
+    npy_intp truepos;
+    PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
+    PyArrayIterObject *p = niter->_internal_iter;
+
+    printf("%s\n", __func__);
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR_MIRROR(i)
+    }
+
+    printf("%s:%s: coordinates is %ld, ptr is %f\n", __FILE__, __func__, _coordinates[0], *((double*)p->translate(p, _coordinates)));
+    return p->translate(p, _coordinates);
+}
+#undef _INF_SET_PTR_MIRROR
+
 static int 
 copy_double_double(PyArrayNeighborhoodIterObject *itx, 
         PyArrayNeighborhoodIterObject *niterx,
         npy_intp *bounds,
         PyObject **out)
 {
-    npy_intp i, j;
-    double *ptr;
+    npy_intp i, j, k;
+    register double *ptr;
     npy_intp odims[NPY_MAXDIMS];
     PyArrayObject *aout;
 
     /* For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list */
+	// itx->translate = &get_ptr_mirror;
+    PyArrayNeighborhoodIter_Reset(itx);
+    _MAX = 1e100;
     for(i = 0; i < itx->size; ++i) {
-        PyArrayNeighborhoodIter_Reset(niterx);
+    //for(i = 0; i < 1; ++i) {
+		npy_intp yo[10];
+		yo[0] = i;
+        printf("====================\n");
+		printf("(%f) \n", *((double*)itx->translate(itx, yo)));
+		// printf("(%f) \n", *((double*)itx->dataptr));
 
+        PyArrayNeighborhoodIter_Reset(niterx);
+        printf("------ begin --------------\n");
+        //T0 = getticks();
+        for(j = 0; j < niterx->size; ++j) {
+			printf("(%f) \n", *((double*)niterx->translate(niterx, niterx->coordinates)));
+			// printf("(%f) \n", *((double*)niterx->dataptr));
+            PyArrayNeighborhoodIter_Next(niterx);
+		}
+        printf("------ end -------------\n");
+
+		// yo[0] = 1;
+		// printf("(%f) \n", *((double*)itx->translate(itx, yo)));
+		// yo[0] = 2;
+		// printf("(%f) \n", *((double*)itx->translate(itx, yo)));
+		// yo[0] = 3;
+		// printf("(%f) \n", *((double*)itx->translate(itx, yo)));
+		// yo[0] = 4;
+		// printf("(%f) \n", *((double*)itx->translate(itx, yo)));
+
+		// yo[0] = -1;
+		// printf("(%f) \n", *((double*)niterx->translate(niterx, yo)));
+#if 0
         for(j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
@@ -225,17 +434,63 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
 
         ptr = (double*)aout->data;
 
+        PyArrayNeighborhoodIter_Reset(niterx);
+        printf("===================\n");
+        T0 = getticks();
         for(j = 0; j < niterx->size; ++j) {
+			npy_intp yo[10];
+			yo[0] = 0;
+            printf("-------------------\n");
+			niterx->_internal_iter->translate(niterx->_internal_iter, yo);
+            //ptr = (double*)niterx->dataptr;
+			//printf("%ld | %ld -> %p (%f) \n", niterx->coordinates[0],
+			//niterx->_internal_iter->coordinates[0],
+			//niterx->_internal_iter->translate(niterx->_internal_iter, yo),
+			//*((double*)niterx->translate(niterx, yo)));
+            //printf("%f\n", *((double*)niterx->dataptr));
             *ptr = *((double*)niterx->dataptr);
+            //*ptr = *((double*)neigh_iter_get_ptr_const(niterx));
+
+            // coord[0] = -2;
+            // ptr = niterx->_internal_iter->translate(niterx->_internal_iter, coord);
+            // printf("%f \n", *ptr);
+
+            // neigh_iter_next_fptr(niterx);
             PyArrayNeighborhoodIter_Next(niterx);
+            // neigh_iter_incr_coord(niterx);
             ptr += 1;
+        }
+        T1 = getticks();
+        RES = elapsed(T1, T0);
+        if (RES < _MAX) {
+            _MAX = RES;
         }
 
         Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
+#endif
         PyArrayNeighborhoodIter_Next(itx);
     }
+   //  printf("%f - %f\n", _MAX, _MAX / niterx->size);
+
+#if 0
+	{
+		npy_intp coord[10];
+		coord[0] = 0;
+		coord[1] = 0;
+		*ptr = *((double*)niterx->translate(niterx, coord));
+		printf("%f\n", *ptr);
+		coord[0] = 1;
+		coord[1] = 0;
+		*ptr = *((double*)niterx->translate(niterx, coord));
+		printf("%f\n", *ptr);
+		coord[0] = 2;
+		coord[1] = 0;
+		*ptr = *((double*)niterx->translate(niterx, coord));
+		printf("%f\n", *ptr);
+	}
+#endif
 
     return 0;
 }
@@ -243,14 +498,18 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
 static PyObject*
 test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
 {
-    PyObject *x, *out;
+    PyObject *x, *out, *b1, *b2;
     PyArrayObject *ax;
     PyArrayIterObject *itx;
-    int i, typenum, mode, st;
+    int i, typenum, mode1, mode2, st;
     npy_intp bounds[NPY_MAXDIMS*2];
     PyArrayNeighborhoodIterObject *niterx1, *niterx2;
 
-    if (!PyArg_ParseTuple(args, "O", &x)) {
+    if (!PyArg_ParseTuple(args, "OOiOi", &x, &b1, &mode1, &b2, &mode2)) {
+        return NULL;
+    }
+
+    if (!PySequence_Check(b1) || !PySequence_Check(b2)) {
         return NULL;
     }
 
@@ -259,6 +518,16 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     ax = (PyArrayObject*)PyArray_FromObject(x, typenum, 1, 10);
     if (ax == NULL) {
         return NULL;
+    }
+    if (PySequence_Size(b1) != 2 * ax->nd) {
+        PyErr_SetString(PyExc_ValueError,
+                "bounds sequence 1 size not compatible with x input");
+        goto clean_ax;
+    }
+    if (PySequence_Size(b2) != 2 * ax->nd) {
+        PyErr_SetString(PyExc_ValueError,
+                "bounds sequence 2 size not compatible with x input");
+        goto clean_ax;
     }
 
     out = PyList_New(0);
@@ -272,27 +541,47 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     }
 
     /* Compute boundaries for the neighborhood iterator */
-    for(i = 0; i < ax->nd; ++i) {
-        bounds[2*i] = -2;
-        bounds[2*i+1] = 1 + ax->dimensions[i];
+    for(i = 0; i < 2 * ax->nd; ++i) {
+        PyObject* bound;
+        bound = PySequence_GetItem(b1, i);
+        if (bounds == NULL) {
+            goto clean_itx;
+        }
+        if (!PyInt_Check(bound)) {
+            PyErr_SetString(PyExc_ValueError, "bound not long");
+            Py_DECREF(bound);
+            goto clean_itx;
+        }
+        bounds[i] = PyInt_AsLong(bound);
+        Py_DECREF(bound);
     }
 
     /* Create the neighborhood iterator */
     niterx1 = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)itx, bounds,
-                    NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
+                    mode1, NULL);
     if (niterx1 == NULL) {
         goto clean_out;
     }
 
-    for(i = 0; i < 2 * niterx1->nd; ++i) {
-        bounds[2*i] = 0;
-        bounds[2*i+1] = 0;
+    for(i = 0; i < 2 * ax->nd; ++i) {
+        PyObject* bound;
+        bound = PySequence_GetItem(b2, i);
+        if (bounds == NULL) {
+            goto clean_itx;
+        }
+        if (!PyInt_Check(bound)) {
+            PyErr_SetString(PyExc_ValueError, "bound not long");
+            Py_DECREF(bound);
+            goto clean_itx;
+        }
+        bounds[i] = PyInt_AsLong(bound);
+        Py_DECREF(bound);
     }
 
     niterx2 = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)niterx1, bounds,
-                    NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
+                    mode2, NULL);
     if (niterx1 == NULL) {
         goto clean_niterx1;
     }

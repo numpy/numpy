@@ -367,7 +367,8 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
             iter->dataptr = iter->translate((PyArrayIterObject*)iter, iter->coordinates);
             break;
         case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
-            _PyArrayNeighborhoodIter_SetPtrMirror(iter);
+            //_PyArrayNeighborhoodIter_SetPtrMirror(iter);
+            iter->dataptr = iter->translate((PyArrayIterObject*)iter, iter->coordinates);
             break;
         case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
             _PyArrayNeighborhoodIter_SetPtrCircular(iter);
@@ -435,14 +436,14 @@ PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
     for (i = 0; i < iter->nd; ++i) {
         iter->coordinates[i] = iter->bounds[i][0];
     }
-    iter->dataptr = _neigh_iter_get_ptr_const(iter);
+    iter->dataptr = iter->translate((PyArrayIterObject*)iter, iter->coordinates);
 
 #if 0
     switch (iter->mode) {
         case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
         case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
         case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
-            _PyArrayNeighborhoodIter_SetPtrConstant(iter);
+	    iter->dataptr = _neigh_iter_get_ptr_const(iter);
             break;
         case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
             _PyArrayNeighborhoodIter_SetPtrMirror(iter);
@@ -450,6 +451,9 @@ PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
         case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
             _PyArrayNeighborhoodIter_SetPtrCircular(iter);
             break;
+	default:
+	    printf("oups\n");
+	    exit(-1);
     }
 #endif
 
