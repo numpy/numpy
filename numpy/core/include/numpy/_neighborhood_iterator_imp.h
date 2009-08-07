@@ -332,14 +332,39 @@ int PyArrayNeighborhoodIter_NextCircular(PyArrayNeighborhoodIterObject* iter)
     return 0;
 }
 
-static NPY_INLINE int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
+#define _INF_SET_PTR(c) \
+    bd = niter->coordinates[c] + p->coordinates[c]; \
+    if (bd < p->bounds[c][0] || bd > p->bounds[c][1]) { \
+        return niter->constant; \
+    } \
+    _coordinates[c] = bd;
+
+static inline char*
+_neigh_iter_get_ptr_const(PyArrayNeighborhoodIterObject* niter)
+{
+    int i;
+    npy_intp bd;
+    PyArrayIterObject *p = niter->_internal_iter;
+    npy_intp _coordinates[NPY_MAXDIMS];
+
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR(i)
+    }
+
+    return p->translate(p, _coordinates);
+}
+#undef _INF_SET_PTR
+
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
 {
     _PyArrayNeighborhoodIter_IncrCoord (iter);
     switch (iter->mode) {
         case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
         case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
         case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
-            _PyArrayNeighborhoodIter_SetPtrConstant(iter);
+            //iter->dataptr = _neigh_iter_get_ptr_const(iter);
+            iter->dataptr = iter->translate((PyArrayIterObject*)iter, iter->coordinates);
             break;
         case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
             _PyArrayNeighborhoodIter_SetPtrMirror(iter);
@@ -410,6 +435,9 @@ PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
     for (i = 0; i < iter->nd; ++i) {
         iter->coordinates[i] = iter->bounds[i][0];
     }
+    iter->dataptr = _neigh_iter_get_ptr_const(iter);
+
+#if 0
     switch (iter->mode) {
         case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
         case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
@@ -423,6 +451,7 @@ PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
             _PyArrayNeighborhoodIter_SetPtrCircular(iter);
             break;
     }
+#endif
 
     return 0;
 }

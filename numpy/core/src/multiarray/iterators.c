@@ -1793,6 +1793,31 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
     return ret;
 }
 
+#define _INF_SET_PTR(c) \
+    bd = coordinates[c] + p->coordinates[c]; \
+    if (bd < p->bounds[c][0] || bd > p->bounds[c][1]) { \
+        return niter->constant; \
+    } \
+    _coordinates[c] = bd;
+
+/* set the dataptr from its current coordinates */
+static char*
+get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
+{
+    int i;
+    npy_intp bd, _coordinates[NPY_MAXDIMS];
+    PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
+    PyArrayIterObject *p = niter->_internal_iter;
+
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR(i)
+    }
+
+    return p->translate(p, _coordinates);
+}
+#undef _INF_SET_PTR
+
+
 /*
  * fill and x->ao should have equivalent types 
  */
@@ -1832,10 +1857,12 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
         case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
             ret->constant = PyArray_Zero(x->ao);
             ret->mode = mode;
+            ret->translate = &get_ptr_constant;
             break;
         case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
             ret->constant = PyArray_One(x->ao);
             ret->mode = mode;
+            ret->translate = &get_ptr_constant;
             break;
         case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
             /* New reference in returned value of _set_constant if array
@@ -1846,12 +1873,20 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
                 goto clean_x;
             }
             ret->mode = mode;
+            ret->translate = &get_ptr_constant;
             break;
+#if 0
         case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+            ret->mode = mode;
+            ret->constant = NULL;
+            ret->translate = get_coordinates_mirror;
+            break;
         case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
             ret->mode = mode;
             ret->constant = NULL;
+            ret->translate = get_coordinates_circular;
             break;
+#endif
         default:
             PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
             goto clean_x;
