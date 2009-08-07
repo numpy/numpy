@@ -4,7 +4,7 @@ import os
 import numpy as np
 from numpy.testing import *
 from numpy.core import *
-from numpy.core.multiarray_tests import test_neighborhood_iterator
+from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
 from test_print import in_foreign_locale
 
@@ -1230,6 +1230,22 @@ class TestNeighborhoodIter(TestCase):
     def test_circular_object(self):
         from decimal import Decimal
         self._test_circular(Decimal)
+
+class TestNeighborhoodIter2(TestCase):
+    # Simple, 2d tests
+    def test(self):
+        dt = np.float64
+        # Test zero and one padding for simple data type
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0], dtype=dt),
+             np.array([0], dtype=dt),
+             np.array([1], dtype=dt),
+             np.array([2], dtype=dt),
+             np.array([3], dtype=dt),
+             np.array([0], dtype=dt),
+             np.array([0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x)
+        assert_array_equal(l, r)
 
 if __name__ == "__main__":
     run_module_suite()
