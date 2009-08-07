@@ -266,6 +266,22 @@ slice_GetIndices(PySliceObject *r, intp length,
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
 
+/* get the dataptr from its current coordinates for simple iterator */
+static char*
+get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
+{
+    npy_intp i;
+    char *ret;
+
+    ret = iter->ao->data;
+
+    for(i = 0; i < iter->ao->nd; ++i) {
+	    ret += coordinates[i] * iter->strides[i];
+    }
+
+    return ret;
+}
+
 /*
  * This is common initialization code between PyArrayIterObject and
  * PyArrayNeighborhoodIterObject 
@@ -301,9 +317,7 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
         it->bounds[i][1] = ao->dimensions[i] - 1;
     }
 
-    /* Not used for basic iterator: set to NULL to cause a segfault right away
-     * if misused */
-    it->translate = NULL;
+    it->translate = &get_ptr_simple;
     PyArray_ITER_RESET(it);
 
     return (PyObject *)it;
