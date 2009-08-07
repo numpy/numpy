@@ -315,7 +315,9 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
         }
         it->bounds[i][0] = 0;
         it->bounds[i][1] = ao->dimensions[i] - 1;
-        it->bounds_size[i] = ao->dimensions[i];
+        it->limits[i][0] = 0;
+        it->limits[i][1] = ao->dimensions[i] - 1;
+        it->limits_sizes[i] = it->limits[i][1] - it->limits[i][0] + 1;
     }
 
     it->translate = &get_ptr_simple;
@@ -1796,7 +1798,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
 #define _INF_SET_PTR(c) \
     bd = coordinates[c] + p->coordinates[c]; \
-    if (bd < p->bounds[c][0] || bd > p->bounds[c][1]) { \
+    if (bd < p->limits[c][0] || bd > p->limits[c][1]) { \
         return niter->constant; \
     } \
     _coordinates[c] = bd;
@@ -1814,7 +1816,6 @@ get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
         _INF_SET_PTR(i)
     }
 
-    // printf("%s: coordinates is %ld, ptr is %f\n", __func__, _coordinates[0], *((double*)p->translate(p, _coordinates)));
     return p->translate(p, _coordinates);
 }
 #undef _INF_SET_PTR
@@ -1853,9 +1854,9 @@ __npy_pos_remainder(npy_intp i, npy_intp n)
 #undef _NPY_IS_EVEN
 
 #define _INF_SET_PTR_MIRROR(c) \
-    lb = p->bounds[c][0]; \
+    lb = p->limits[c][0]; \
     bd = coordinates[c] + p->coordinates[c] - lb; \
-    _coordinates[c] = lb + __npy_pos_remainder(bd, p->bounds_size[c]);
+    _coordinates[c] = lb + __npy_pos_remainder(bd, p->limits_sizes[c]);
 
 /* set the dataptr from its current coordinates */
 static char*
@@ -1888,9 +1889,9 @@ __npy_euclidean_division(npy_intp i, npy_intp n)
 }
 
 #define _INF_SET_PTR_CIRCULAR(c) \
-    lb = p->bounds[c][0]; \
+    lb = p->limits[c][0]; \
     bd = coordinates[c] + p->coordinates[c] - lb; \
-    _coordinates[c] = lb + __npy_euclidean_division(bd, p->bounds_size[c]);
+    _coordinates[c] = lb + __npy_euclidean_division(bd, p->limits_sizes[c]);
 
 static char*
 get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
@@ -1931,17 +1932,30 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
 
     ret->nd = x->ao->nd;
 
+    for (i = 0; i < ret->nd; ++i) {
+        ret->dimensions[i] = x->ao->dimensions[i];
+    }
+
     /* Compute the neighborhood size and copy the shape */
     ret->size = 1;
     for (i = 0; i < ret->nd; ++i) {
         ret->bounds[i][0] = bounds[2 * i];
         ret->bounds[i][1] = bounds[2 * i + 1];
-        ret->bounds_size[i] = (bounds[2*i+1] - bounds[2*i]) + 1;
-        ret->size *= ret->bounds_size[i];
-    }
+        ret->size *= (ret->bounds[i][1] - ret->bounds[i][0]) + 1;
 
-    for (i = 0; i < ret->nd; ++i) {
-        ret->dimensions[i] = x->ao->dimensions[i];
+        /* limits keep track of valid ranges for the neighborhood: if a bound
+         * of the neighborhood is outside the array, then limits is the same as
+         * boundaries. On the contrary, if a bound is strictly inside the
+         * array, then limits correspond to the array range. For example, for
+         * an array [1, 2, 3], if bounds are [-1, 3], limits will be [-1, 3],
+         * but if bounds are [1, 2], then limits will be [0, 2].
+         *
+         * This is used by neighborhood iterators stacked on top of this one */
+        ret->limits[i][0] = ret->bounds[i][0] < 0 ? ret->bounds[i][0] : 0;
+        ret->limits[i][1] = ret->bounds[i][1] >= ret->dimensions[i] - 1 ?
+                            ret->bounds[i][1] :
+                            ret->dimensions[i] - 1;
+        ret->limits_sizes[i] = (ret->limits[i][1] - ret->limits[i][0]) + 1;
     }
 
     switch (mode) {

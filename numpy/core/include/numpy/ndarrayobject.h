@@ -698,7 +698,8 @@ struct PyArrayIterObject_tag {
         npy_bool          contiguous;
 
         npy_intp          bounds[NPY_MAXDIMS][2];
-        npy_intp          bounds_size[NPY_MAXDIMS];
+        npy_intp          limits[NPY_MAXDIMS][2];
+        npy_intp          limits_sizes[NPY_MAXDIMS];
         npy_iter_get_dataptr_t translate;
 } ;
 
@@ -950,7 +951,8 @@ typedef struct {
     npy_bool          contiguous;
 
     npy_intp          bounds[NPY_MAXDIMS][2];
-    npy_intp          bounds_size[NPY_MAXDIMS];
+    npy_intp          limits[NPY_MAXDIMS][2];
+    npy_intp          limits_sizes[NPY_MAXDIMS];
     npy_iter_get_dataptr_t translate;
 
     /* 
