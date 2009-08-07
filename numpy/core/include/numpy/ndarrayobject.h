@@ -698,6 +698,7 @@ struct PyArrayIterObject_tag {
         npy_bool          contiguous;
 
         npy_intp          bounds[NPY_MAXDIMS][2];
+        npy_intp          bounds_size[NPY_MAXDIMS];
         npy_iter_get_dataptr_t translate;
 } ;
 
@@ -949,6 +950,7 @@ typedef struct {
     npy_bool          contiguous;
 
     npy_intp          bounds[NPY_MAXDIMS][2];
+    npy_intp          bounds_size[NPY_MAXDIMS];
     npy_iter_get_dataptr_t translate;
 
     /* 
@@ -978,25 +980,8 @@ static NPY_INLINE int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
-static NPY_INLINE int
-PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
-
-/* Mode specific: those are faster, but have undefined behavior if the mode
- * does not match. Sanity checks are enabled in debug mode. */
-static NPY_INLINE int
-PyArrayNeighborhoodIter_ResetConstant(PyArrayNeighborhoodIterObject* iter);
-static NPY_INLINE int
-PyArrayNeighborhoodIter_NextConstant(PyArrayNeighborhoodIterObject* iter);
-
-static NPY_INLINE int
-PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter);
-static NPY_INLINE int
-PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter);
-
-static NPY_INLINE int
-PyArrayNeighborhoodIter_ResetCircular(PyArrayNeighborhoodIterObject* iter);
-static NPY_INLINE int
-PyArrayNeighborhoodIter_NextCircular(PyArrayNeighborhoodIterObject* iter);
+// static NPY_INLINE int
+// PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
 /* Include inline implementations - functions defined there are not considered
  * public API */

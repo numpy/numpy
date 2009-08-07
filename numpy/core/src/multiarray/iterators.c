@@ -315,6 +315,7 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
         }
         it->bounds[i][0] = 0;
         it->bounds[i][1] = ao->dimensions[i] - 1;
+        it->bounds_size[i] = ao->dimensions[i];
     }
 
     it->translate = &get_ptr_simple;
@@ -1854,7 +1855,7 @@ __npy_pos_remainder(npy_intp i, npy_intp n)
 #define _INF_SET_PTR_MIRROR(c) \
     lb = p->bounds[c][0]; \
     bd = coordinates[c] + p->coordinates[c] - lb; \
-    _coordinates[c] = lb + __npy_pos_remainder(bd, p->bounds[c][1] + 1 - lb);
+    _coordinates[c] = lb + __npy_pos_remainder(bd, p->bounds_size[c]);
 
 /* set the dataptr from its current coordinates */
 static char*
@@ -1889,13 +1890,12 @@ __npy_euclidean_division(npy_intp i, npy_intp n)
 #define _INF_SET_PTR_CIRCULAR(c) \
     lb = p->bounds[c][0]; \
     bd = coordinates[c] + p->coordinates[c] - lb; \
-    _coordinates[c] = lb + _npy_euclidean_division(bd, p->bounds[c][1] + 1 - lb);
+    _coordinates[c] = lb + __npy_euclidean_division(bd, p->bounds_size[c]);
 
 static char*
 get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
 {
     int i;
-    //npy_intp offset, bd, truepos;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
     PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
     PyArrayIterObject *p = niter->_internal_iter;
@@ -1903,9 +1903,9 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
     for(i = 0; i < niter->nd; ++i) {
         _INF_SET_PTR_CIRCULAR(i)
     }
-
     return p->translate(p, _coordinates);
 }
+
 #undef _INF_SET_PTR_CIRCULAR
 
 /*
@@ -1936,7 +1936,8 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
     for (i = 0; i < ret->nd; ++i) {
         ret->bounds[i][0] = bounds[2 * i];
         ret->bounds[i][1] = bounds[2 * i + 1];
-        ret->size *= (bounds[2*i+1] - bounds[2*i]) + 1;
+        ret->bounds_size[i] = (bounds[2*i+1] - bounds[2*i]) + 1;
+        ret->size *= ret->bounds_size[i];
     }
 
     for (i = 0; i < ret->nd; ++i) {
