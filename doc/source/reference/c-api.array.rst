@@ -1994,7 +1994,7 @@ cost of a slight overhead.
     bounds should be ordered for each dimension (bounds[2*i] <= bounds[2*i+1]).
 
     The mode should be one of:
-   
+
     * NPY_NEIGHBORHOOD_ITER_ZERO_PADDING: zero padding. Outside bounds values
       will be 0.
     * NPY_NEIGHBORHOOD_ITER_ONE_PADDING: one padding, Outside bounds values
@@ -2025,9 +2025,6 @@ cost of a slight overhead.
     - If the position of iter is changed, any subsequent call to
       PyArrayNeighborhoodIter_Next is undefined behavior, and
       PyArrayNeighborhoodIter_Reset must be called.
-    - If the coordinates point to a point outside the array, the iterator
-      points to an item which contains 0 of the same type as iter. More
-      elaborate schemes (constants, mirroring, repeat) may be implemented later.
 
     .. code-block:: c
 
@@ -2062,40 +2059,6 @@ cost of a slight overhead.
     After this call, iter->dataptr points to the next point of the
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
-
-.. cfunction:: int PyArrayNeighborhoodIter_ResetConstant(PyArrayNeighborhoodIterObject* iter)
-
-    Same as PyArrayNeighborhoodIter_Reset, but only works for  0, 1 and
-    constant padding. This is faster than the general function as it does not
-    need to test for the mode every time. In debug mode (-DDEBUG), an assert
-    tests for mismatch with the mode of the iterator, 
-
-.. cfunction:: int PyArrayNeighborhoodIter_ResetMirror(PyArrayNeighborhoodIterObject* iter)
-
-    Same as PyArrayNeighborhoodIter_ResetConstant, but only works for mirror
-    padding.
-
-.. cfunction:: int PyArrayNeighborhoodIter_ResetCircular(PyArrayNeighborhoodIterObject* iter)
-
-    Same as PyArrayNeighborhoodIter_ResetConstant, but only works for circular
-    padding.
-
-.. cfunction:: int PyArrayNeighborhoodIter_NextConstant(PyArrayNeighborhoodIterObject* iter)
-
-    Same as PyArrayNeighborhoodIter_Next, but only works for  0, 1 and
-    constant padding. This is faster than the general function as it does not
-    need to test for the mode every time. In debug mode (-DDEBUG), an assert
-    tests for mismatch with the mode of the iterator, 
-
-.. cfunction:: int PyArrayNeighborhoodIter_NextMirror(PyArrayNeighborhoodIterObject* iter)
-
-    Same as PyArrayNeighborhoodIter_NextConstant, but only works for mirror
-    padding.
-
-.. cfunction:: int PyArrayNeighborhoodIter_NextCircular(PyArrayNeighborhoodIterObject* iter)
-
-    Same as PyArrayNeighborhoodIter_NextConstant, but only works for circular
-    padding.
 
 Array Scalars
 -------------
