@@ -378,11 +378,11 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
 
         n = np.diff(n)
 
-        if normed is False:
-            return n, bins
-        elif normed is True:
+        if normed:
             db = array(np.diff(bins), float)
             return n/(n*db).sum(), bins
+        else:
+            return n, bins
 
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
