@@ -1,0 +1,18 @@
+{% extends "sphinxdoc/layout.html" %}
+
+{% block rootrellink %}
+        <li><a href="{{ pathto('index') }}">home</a>|&nbsp;</li>
+        <li><a href="{{ pathto('search') }}">search</a>|&nbsp;</li>
+       <li><a href="{{ pathto('contents') }}">documentation </a> &raquo;</li>
+{% endblock %}
+
+{% block relbar1 %}
+<div class="top-logo-header">
+<a href="{{ pathto('index') }}"><img src="{{ pathto("_static/logo.gif", 1) }}" border="0" alt="sampledoc"/></a>
+</div>
+{{ super() }}
+{% endblock %}
+
+{# put the sidebar before the body #}
+{% block sidebar1 %}{{ sidebar() }}{% endblock %}
+{% block sidebar2 %}{% endblock %}
