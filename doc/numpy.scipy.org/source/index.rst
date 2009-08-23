@@ -25,3 +25,8 @@ More Information
 - `SciPy Home Page <http://www.scipy.org/>`_
 - `Interfacing with compiled code <http://www.scipy.org/Topical_Software#head-7153b42ac4ea517c7d99ec4f4453555b2302a1f8>`_
 - :doc:`Older python array packages </old_array_packages>`
+
+.. toctree::
+   :hidden:
+
+   old_array_packages
