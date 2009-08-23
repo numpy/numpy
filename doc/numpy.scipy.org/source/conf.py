@@ -120,7 +120,7 @@ html_title = "numpy.scipy.org"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['static']
+#html_static_path = ['static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -178,8 +178,8 @@ htmlhelp_basename = 'Scipy.org'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Scipy-org.tex', u'Scipy.org',
-   u'Scipy collaborators', 'manual'),
+  ('index', 'numpy-scipy-org.tex', u'numpy.scipy.org',
+   u'NumPy collaborators', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

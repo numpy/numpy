@@ -12,15 +12,11 @@ Getting Started
 
 - `Getting Numpy <http://www.scipy.org/Download>`_
 - `Installing NumPy and SciPy <http://www.scipy.org/Installing_SciPy>`_
+- `NumPy and SciPy documentation page <http://docs.scipy.org/doc/>`_
 - `NumPy Tutorial <http://www.scipy.org/Tentative_NumPy_Tutorial>`_
 - `NumPy for MATLAB© Users <http://www.scipy.org/NumPy_for_Matlab_Users>`_
 - `NumPy functions by category <http://www.scipy.org/Numpy_Functions_by_Category>`_
 - `NumPy Mailing List <http://www.scipy.org/Mailing_Lists>`_
-
-Documentation
--------------
-
-The full documentation for both NumPy and SciPy can be found at the `NumPy and SciPy documentation page <http://docs.scipy.org/doc/>`_
 
 More Information
 ----------------
