@@ -115,7 +115,7 @@ A brief Python primer on ``__new__`` and ``__init__``
 ``__new__`` is a standard Python method, and, if present, is called
 before ``__init__`` when we create a class instance. See the `python
 __new__ documentation
-<http://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.  
+<http://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.
 
 For example, consider the following Python code:
 
@@ -229,7 +229,7 @@ where our object creation housekeeping usually goes.
   ``ndarray.__new__(MySubClass,...)``, or do view casting of an existing
   array (see below)
 * For view casting and new-from-template, the equivalent of
-  ``ndarray.__new__(MySubClass,...`` is called, at the C level.  
+  ``ndarray.__new__(MySubClass,...`` is called, at the C level.
 
 The arguments that ``__array_finalize__`` recieves differ for the three
 methods of instance creation above.
@@ -355,7 +355,7 @@ Using the object looks like this:
   >>> type(obj)
   <class 'InfoArray'>
   >>> obj.info is None
-  True  
+  True
   >>> obj = InfoArray(shape=(3,), info='information')
   >>> obj.info
   'information'
@@ -364,8 +364,8 @@ Using the object looks like this:
   <class 'InfoArray'>
   >>> v.info
   'information'
-  >>> arr = np.arange(10) 
-  >>> cast_arr = arr.view(InfoArray) # view casting 
+  >>> arr = np.arange(10)
+  >>> cast_arr = arr.view(InfoArray) # view casting
   >>> type(cast_arr)
   <class 'InfoArray'>
   >>> cast_arr.info is None
@@ -381,7 +381,7 @@ Slightly more realistic example - attribute added to existing array
 -------------------------------------------------------------------
 
 Here is a class that takes a standard ndarray that already exists, casts
-as our type, and adds an extra attribute. 
+as our type, and adds an extra attribute.
 
 .. testcode::
 
@@ -403,7 +403,7 @@ as our type, and adds an extra attribute.
           if obj is None: return
           self.info = getattr(obj, 'info', None)
 
-     
+
 So:
 
   >>> arr = np.arange(5)
@@ -423,9 +423,9 @@ So:
 ``__array_wrap__`` for ufuncs
 -----------------------------
 
-``__array_wrap__`` gets called by numpy ufuncs and other numpy
+``__array_wrap__`` gets called at the end of numpy ufuncs and other numpy
 functions, to allow a subclass to set the type of the return value
-from - for example - ufuncs.  Let's show how this works with an example.
+and update attributes and metadata. Let's show how this works with an example.
 First we make the same subclass as above, but with a different name and
 some print statements:
 
@@ -454,8 +454,8 @@ some print statements:
           # then just call the parent
           return np.ndarray.__array_wrap__(self, out_arr, context)
 
-We run a ufunc on an instance of our new array:        
-      
+We run a ufunc on an instance of our new array:
+
 >>> obj = MySubClass(np.arange(5), info='spam')
 In __array_finalize__:
    self is MySubClass([0, 1, 2, 3, 4])
@@ -473,8 +473,9 @@ MySubClass([1, 3, 5, 7, 9])
 >>> ret.info
 'spam'
 
-Note that the ufunc (``np.add``) has called
-``MySubClass.__array_wrap__`` with arguments ``self`` as ``obj``, and
+Note that the ufunc (``np.add``) has called the ``__array_wrap__`` method of the
+input with the highest ``__array_priority__`` value, in this case
+``MySubClass.__array_wrap__``, with arguments ``self`` as ``obj``, and
 ``out_arr`` as the (ndarray) result of the addition.  In turn, the
 default ``__array_wrap__`` (``ndarray.__array_wrap__``) has cast the
 result to class ``MySubClass``, and called ``__array_finalize__`` -
@@ -504,6 +505,17 @@ ufuncs as a 3-element tuple: (name of the ufunc, argument of the ufunc,
 domain of the ufunc). ``__array_wrap__`` should return an instance of
 its containing class.  See the masked array subclass for an
 implementation.
+
+In addition to ``__array_wrap__``, which is called on the way out of the
+ufunc, there is also an ``__array_prepare__`` method which is called on
+the way into the ufunc, after the output arrays are created but before any
+computation has been performed. The default implementation does nothing
+but pass through the array. ``__array_prepare__`` should not attempt to
+access the array data or resize the array, it is intended for setting the
+output array type, updating attributes and metadata, and performing any
+checks based on the input that may be desired before computation begins.
+Like ``__array_wrap__``, ``__array_prepare__`` must return an ndarray or
+subclass thereof or raise an error.
 
 Extra gotchas - custom ``__del__`` methods and ndarray.base
 -----------------------------------------------------------

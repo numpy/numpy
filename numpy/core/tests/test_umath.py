@@ -484,6 +484,38 @@ class TestSpecialMethods(TestCase):
         a = A()
         self.failUnlessRaises(RuntimeError, ncu.maximum, a, a)
 
+    def test_default_prepare(self):
+        class with_wrap(object):
+            __array_priority__ = 10
+            def __array__(self):
+                return np.zeros(1)
+            def __array_wrap__(self, arr, context):
+                return arr
+        a = with_wrap()
+        x = ncu.minimum(a, a)
+        assert_equal(x, np.zeros(1))
+        assert_equal(type(x), np.ndarray)
+
+    def test_prepare(self):
+        class with_prepare(np.ndarray):
+            __array_priority__ = 10
+            def __array_prepare__(self, arr, context):
+                # make sure we can return a new 
+                return np.array(arr).view(type=with_prepare)
+        a = np.array(1).view(type=with_prepare)
+        x = np.add(a, a)
+        assert_equal(x, np.array(2))
+        assert_equal(type(x), with_prepare)
+
+    def test_failing_prepare(self):
+        class A(object):
+            def __array__(self):
+                return np.zeros(1)
+            def __array_prepare__(self, arr, context=None):
+                raise RuntimeError
+        a = A()
+        self.failUnlessRaises(RuntimeError, ncu.maximum, a, a)
+
     def test_array_with_context(self):
         class A(object):
             def __array__(self, dtype=None, context=None):

@@ -1645,8 +1645,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_prepare__',
+    """a.__array_prepare__(obj) -> Object of same type as ndarray object obj.
+
+    """))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
-    """a.__array_wrap__(obj) -> Object of same type as a from ndarray obj.
+    """a.__array_wrap__(obj) -> Object of same type as ndarray object a.
 
     """))
 
@@ -3943,7 +3949,7 @@ add_newdoc('numpy.lib.index_tricks', 'ogrid',
 
     """)
 
-   
+
 ##############################################################################
 #
 # Documentation for `generic` attributes and methods
@@ -3955,7 +3961,7 @@ add_newdoc('numpy.core.numerictypes', 'generic',
     """)
 
 # Attributes
-    
+
 add_newdoc('numpy.core.numerictypes', 'generic', ('T',
     """
     """))
@@ -4246,7 +4252,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('var',
 add_newdoc('numpy.core.numerictypes', 'generic', ('view',
     """
     """))
-   
+
 
 ##############################################################################
 #
