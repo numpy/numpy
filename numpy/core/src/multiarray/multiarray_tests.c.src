@@ -1,5 +1,4 @@
 #include <Python.h>
-
 #include "numpy/ndarrayobject.h"
 
 /*
@@ -20,13 +19,14 @@ static int copy_@type@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     npy_intp odims[NPY_MAXDIMS];
     PyArrayObject *aout;
 
-    /* For each point in itx, copy the current neighborhood into an array which
-     * is appended at the output list */
-    for(i = 0; i < itx->size; ++i) {
-        npy_intp coord[10];
+    /*
+     * For each point in itx, copy the current neighborhood into an array which
+     * is appended at the output list
+     */
+    for (i = 0; i < itx->size; ++i) {
         PyArrayNeighborhoodIter_Reset(niterx);
 
-        for(j = 0; j < itx->ao->nd; ++j) {
+        for (j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
         aout = (PyArrayObject*)PyArray_SimpleNew(itx->ao->nd, odims, @typenum@);
@@ -36,7 +36,7 @@ static int copy_@type@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
 
         ptr = (@type@*)aout->data;
 
-        for(j = 0; j < niterx->size; ++j) {
+        for (j = 0; j < niterx->size; ++j) {
             *ptr = *((@type@*)niterx->dataptr);
             PyArrayNeighborhoodIter_Next(niterx);
             ptr += 1;
@@ -62,12 +62,14 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     PyArray_CopySwapFunc *copyswap = itx->ao->descr->f->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
 
-    /* For each point in itx, copy the current neighborhood into an array which
-     * is appended at the output list */
-    for(i = 0; i < itx->size; ++i) {
+    /*
+     * For each point in itx, copy the current neighborhood into an array which
+     * is appended at the output list
+     */
+    for (i = 0; i < itx->size; ++i) {
         PyArrayNeighborhoodIter_Reset(niterx);
 
-        for(j = 0; j < itx->ao->nd; ++j) {
+        for (j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
         aout = (PyArrayObject*)PyArray_SimpleNew(itx->ao->nd, odims, NPY_OBJECT);
@@ -75,7 +77,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
             return -1;
         }
 
-        for(j = 0; j < niterx->size; ++j) {
+        for (j = 0; j < niterx->size; ++j) {
             copyswap(aout->data + j * itemsize, niterx->dataptr, 0, NULL);
             PyArrayNeighborhoodIter_Next(niterx);
         }
@@ -88,6 +90,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
 
     return 0;
 }
+
 static PyObject*
 test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
 {
@@ -130,7 +133,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     }
 
     /* Compute boundaries for the neighborhood iterator */
-    for(i = 0; i < 2 * ax->nd; ++i) {
+    for (i = 0; i < 2 * ax->nd; ++i) {
         PyObject* bound;
         bound = PySequence_GetItem(b, i);
         if (bounds == NULL) {
@@ -200,29 +203,24 @@ clean_ax:
     return NULL;
 }
 
-// #include "cycle.h"
-
-// ticks T0, T1;
-// double RES;
-// double _MAX;
-
-static int 
-copy_double_double(PyArrayNeighborhoodIterObject *itx, 
+static int
+copy_double_double(PyArrayNeighborhoodIterObject *itx,
         PyArrayNeighborhoodIterObject *niterx,
         npy_intp *bounds,
         PyObject **out)
 {
-    npy_intp i, j, k;
+    npy_intp i, j;
     double *ptr;
     npy_intp odims[NPY_MAXDIMS];
     PyArrayObject *aout;
 
-    /* For each point in itx, copy the current neighborhood into an array which
-     * is appended at the output list */
+    /*
+     * For each point in itx, copy the current neighborhood into an array which
+     * is appended at the output list
+     */
     PyArrayNeighborhoodIter_Reset(itx);
-    // _MAX = 1e100;
-    for(i = 0; i < itx->size; ++i) {
-        for(j = 0; j < itx->ao->nd; ++j) {
+    for (i = 0; i < itx->size; ++i) {
+        for (j = 0; j < itx->ao->nd; ++j) {
             odims[j] = bounds[2 * j + 1] - bounds[2 * j] + 1;
         }
         aout = (PyArrayObject*)PyArray_SimpleNew(itx->ao->nd, odims, NPY_DOUBLE);
@@ -233,25 +231,16 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
         ptr = (double*)aout->data;
 
         PyArrayNeighborhoodIter_Reset(niterx);
-        // T0 = getticks();
-        for(j = 0; j < niterx->size; ++j) {
+        for (j = 0; j < niterx->size; ++j) {
             *ptr = *((double*)niterx->dataptr);
             ptr += 1;
             PyArrayNeighborhoodIter_Next(niterx);
         }
-        // T1 = getticks();
-        // RES = elapsed(T1, T0);
-        // if (RES < _MAX) {
-        //     _MAX = RES;
-        // }
-
         Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
         PyArrayNeighborhoodIter_Next(itx);
     }
-    // printf("%f - %f\n", _MAX, _MAX / niterx->size);
-
     return 0;
 }
 
@@ -301,7 +290,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     }
 
     /* Compute boundaries for the neighborhood iterator */
-    for(i = 0; i < 2 * ax->nd; ++i) {
+    for (i = 0; i < 2 * ax->nd; ++i) {
         PyObject* bound;
         bound = PySequence_GetItem(b1, i);
         if (bounds == NULL) {
@@ -324,7 +313,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
         goto clean_out;
     }
 
-    for(i = 0; i < 2 * ax->nd; ++i) {
+    for (i = 0; i < 2 * ax->nd; ++i) {
         PyObject* bound;
         bound = PySequence_GetItem(b2, i);
         if (bounds == NULL) {
@@ -362,9 +351,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     Py_DECREF(niterx2);
     Py_DECREF(niterx1);
     Py_DECREF(itx);
-
     Py_DECREF(ax);
-
     return out;
 
 clean_niterx2:
@@ -392,10 +379,10 @@ initmultiarray_tests(void)
     PyObject *m;
 
     m = Py_InitModule("multiarray_tests", Multiarray_TestsMethods);
-    if (m == NULL) return;
-
+    if (m == NULL) {
+        return;
+    }
     import_array();
-
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath_tests module.");
