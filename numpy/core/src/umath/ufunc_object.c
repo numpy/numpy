@@ -3940,7 +3940,10 @@ ufunc_repr(PyUFuncObject *self)
 }
 
 
-/* -------------------------------------------------------- */
+/******************************************************************************
+ ***                          UFUNC METHODS                                 ***
+ *****************************************************************************/
+
 
 /*
  * op.outer(a,b) is equivalent to op(a[:,NewAxis,NewAxis,etc.],b)
@@ -4075,6 +4078,10 @@ static struct PyMethodDef ufunc_methods[] = {
 };
 
 
+/******************************************************************************
+ ***                           UFUNC GETSET                                 ***
+ *****************************************************************************/
+
 
 /* construct the string y1,y2,...,yn */
 static PyObject *
@@ -4113,7 +4120,8 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *self)
 {
-    /* Put docstring first or FindMethod finds it... could so some
+    /*
+     * Put docstring first or FindMethod finds it... could so some
      * introspection on name and nin + nout to automate the first part
      * of it the doc string shouldn't need the calling convention
      * construct name(x1, x2, ...,[ out1, out2, ...]) __doc__
@@ -4261,65 +4269,68 @@ static PyGetSetDef ufunc_getset[] = {
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
-NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                           /* ob_size */
-    "numpy.ufunc",                               /* tp_name */
-    sizeof(PyUFuncObject),                       /* tp_basicsize */
-    0,                                           /* tp_itemsize */
-    /* methods */
-    (destructor)ufunc_dealloc,                   /* tp_dealloc */
-    (printfunc)0,                                /* tp_print */
-    (getattrfunc)0,                              /* tp_getattr */
-    (setattrfunc)0,                              /* tp_setattr */
-    (cmpfunc)0,                                  /* tp_compare */
-    (reprfunc)ufunc_repr,                        /* tp_repr */
-    0,                                           /* tp_as_number */
-    0,                                           /* tp_as_sequence */
-    0,                                           /* tp_as_mapping */
-    (hashfunc)0,                                 /* tp_hash */
-    (ternaryfunc)ufunc_generic_call,             /* tp_call */
-    (reprfunc)ufunc_repr,                        /* tp_str */
-    0,                                           /* tp_getattro */
-    0,                                           /* tp_setattro */
-    0,                                           /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
-    NULL,                                        /* tp_doc */ /* was Ufunctype__doc__ */
-    0,                                           /* tp_traverse */
-    0,                                           /* tp_clear */
-    0,                                           /* tp_richcompare */
-    0,                                           /* tp_weaklistoffset */
-    0,                                           /* tp_iter */
-    0,                                           /* tp_iternext */
-    ufunc_methods,                               /* tp_methods */
-    0,                                           /* tp_members */
-    ufunc_getset,                                /* tp_getset */
-    0,                                           /* tp_base */
-    0,                                           /* tp_dict */
-    0,                                           /* tp_descr_get */
-    0,                                           /* tp_descr_set */
-    0,                                           /* tp_dictoffset */
-    0,                                           /* tp_init */
-    0,                                           /* tp_alloc */
-    0,                                           /* tp_new */
-    0,                                           /* tp_free */
-    0,                                           /* tp_is_gc */
-    0,                                           /* tp_bases */
-    0,                                           /* tp_mro */
-    0,                                           /* tp_cache */
-    0,                                           /* tp_subclasses */
-    0,                                           /* tp_weaklist */
-    0,                                           /* tp_del */
 
-#ifdef COUNT_ALLOCS
-    /* these must be last and never explicitly initialized */
-    0,                                           /* tp_allocs */
-    0,                                           /* tp_frees */
-    0,                                           /* tp_maxalloc */
-    0,                                           /* tp_prev */
-    0,                                           /* *tp_next */
+/******************************************************************************
+ ***                        UFUNC TYPE OBJECT                               ***
+ *****************************************************************************/
+
+NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
+#if defined(PY3K)
+    PyVarObject_HEAD_INIT(0,0)
+#else
+    PyObject_HEAD_INIT(0)
+    0,                                          /* ob_size */
 #endif
+    "numpy.ufunc",                              /* tp_name */
+    sizeof(PyUFuncObject),                      /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)ufunc_dealloc,                  /* tp_dealloc */
+    (printfunc)0,                               /* tp_print */
+    (getattrfunc)0,                             /* tp_getattr */
+    (setattrfunc)0,                             /* tp_setattr */
+#if defined(PY3K)
+    (void *)0,                                  /* tp_reserved */
+#else
+    (cmpfunc)0,                                 /* tp_compare */
+#endif
+    (reprfunc)ufunc_repr,                       /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    (hashfunc)0,                                /* tp_hash */
+    (ternaryfunc)ufunc_generic_call,            /* tp_call */
+    (reprfunc)ufunc_repr,                       /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    NULL,                                       /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    ufunc_methods,                              /* tp_methods */
+    0,                                          /* tp_members */
+    ufunc_getset,                               /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    0,                                          /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
 };
 
 /* End of code for ufunc objects */
-/* -------------------------------------------------------- */
