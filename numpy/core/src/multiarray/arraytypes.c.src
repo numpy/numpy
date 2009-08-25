@@ -162,14 +162,15 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
     PyObject *obj;
     meta = PyDataType_GetDatetimeMetaData(descr);
 
-
     if (meta->events > 1) {
-	int events;
+	int events, rem, div;
 	obj = PyTuple_New(2);
 	events = meta->events;
-	PyTuple_SET_ITEM(obj, PyInt_FromLong(val % events), 1);
+	div = val / events;
+	rem = val % events;
+	PyTuple_SET_ITEM(obj, PyInt_FromLong(rem), 1);
 	meta->events = 1; /* This resets meta->events for recursive call */
-	PyTuple_SET_ITEM(obj, PyDatetime_FromInt64(val / events, descr), 0);
+	PyTuple_SET_ITEM(obj, PyDatetime_FromInt64(div, descr), 0);
 	meta->events = events;
 	if PyErr_Ocurred() {
 	    Py_DECREF(obj);
@@ -177,22 +178,33 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
 	}
 	return obj;
     }
+
+    if (meta->base > NPY_FR_us) {
+	/* we just return the integer itself */ 
+	return PyLong_FromLongLong((longlong) val);
+    }
+    
+    /* otherwise, we construct a date-time object */
+    
+    
 }
 
 
 static PyObject *
-PyTimedelta_FromInt64(timedelta val, PyArray_Descr *)
+PyTimedelta_FromInt64(timedelta val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(meta);
 
     if (meta->events > 1) {
-	int events;
+	int events, rem, div;
 	obj = PyTuple_New(2);
 	events = meta->events;
-	PyTuple_SET_ITEM(obj, PyInt_FromLong(val % events), 1);
+	div = val / events;
+	rem = val % events;
+	PyTuple_SET_ITEM(obj, PyInt_FromLong(rem), 1);
 	meta->events = 1; /* This resets meta->events for recursive call */
-	PyTuple_SET_ITEM(obj, PyTimedelta_FromInt64(val / events, descr), 0);
+	PyTuple_SET_ITEM(obj, PyTimedelta_FromInt64(div, descr), 0);
 	meta->events = events;
 	if PyErr_Ocurred() {
 	    Py_DECREF(obj);
@@ -202,22 +214,57 @@ PyTimedelta_FromInt64(timedelta val, PyArray_Descr *)
     }
 }
 
+/* These expect:
+ 
+    * a 2-tuple if meta->events > 1  (baseobj, num-counts)
+    * an integer if NPY_DATETIMEUNIT > NPY_FR_us
+    * a datetime object 
+
+*/
 
 static datetime
-PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *)
+PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(meta);
 
+    if (meta->events > 1) {
+	datetime tmp;
+	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
+	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
+	    return -1;
+	}
+	tmp = PyDatetime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	if (PyErr_Occurred()) return -1;
+	/* FIXME: Check for overflow */
+	tmp *= meta->events;
+	tmp += MyPyLong_AsLongLong(PyTuple_GETITEM(obj, 1));
+	if (PyErr_Occurred()) return -1;
+	return tmp;
+    }        
 }
 
 
 static timedelta
-PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *)
+PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(meta);
 
+    if (meta->events > 1) {
+	timedelta tmp;
+	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
+	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
+	    return -1;
+	}
+	tmp = PyTimedelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	if (PyErr_Occurred()) return -1;
+	/* FIXME: Check for overflow */
+	tmp *= meta->events;
+	tmp += MyPyLong_AsLongLong(PyTuple_GETITEM(obj, 1));
+	if (PyErr_Occurred()) return -1;
+	return tmp;
+    }
 }
 
 
