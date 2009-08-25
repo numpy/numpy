@@ -10,6 +10,19 @@ Highlights
 New features
 ============
 
+Extended array wrapping mechanism for ufuncs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An __array_prepare__ method has been added to ndarray to provide subclasses
+greater flexibility to interact with ufuncs and ufunc-like functions. ndarray
+already provided __array_wrap__, which allowed subclasses to set the array type
+for the result and populate metadata on the way out of the ufunc (as seen in
+the implementation of MaskedArray). For some applications it is necessary to
+provide checks and populate metadata *on the way in*. __array_prepare__ is
+therefore called just after the ufunc has initialized the output array but
+before computing the results and populating it. This way, checks can be made
+and errors raised before operations which may modify data in place.
+
 Automatic detection of forward incompatibilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
