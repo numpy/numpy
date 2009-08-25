@@ -76,8 +76,8 @@ def check_api_version(apiversion, codegen_dir):
               "with checksum %s, but recorded checksum for C API version %d in " \
               "codegen_dir/cversions.txt is %s. If functions were added in the " \
               "C API, you have to update C_API_VERSION  in %s."
-        warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash, 
-                             __file__), 
+        warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
+                             __file__),
                       MismatchCAPIWarning)
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
@@ -87,10 +87,11 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 # Standard functions which may not be available and for which we have a
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "log2", "copysign", "hypot", "atan2", "pow"]
+        "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow"]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
-OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot"]
+OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
+        "copysign"]
 
 # C99 functions: float and long double versions
 C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
