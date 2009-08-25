@@ -145,15 +145,13 @@ static int
 #include "parse_datetime.c"
 /* End of contributed code. */
 
+
 /* DateTime Objects in Python only keep microsecond resolution. 
-   When converting from datetime objects in nanosecond, picosecond, femtosecond, 
-     and attosecond types return Python Longs instead. 
 
    When converting from datetime objects with an event component return a tuple: 
-     (baseunit, number of event)  where baseunit follows standard and
-                                  number of event is a Python integer   
+     (baseunit, number of event)  where baseunit follows is a datetime type and
+                                  number of events is a Python integer
  */
-
 
 static PyObject *
 PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
@@ -161,6 +159,7 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
     PyArray_DatetimeMetaData *meta;
     PyObject *obj;
     meta = PyDataType_GetDatetimeMetaData(descr);
+    longlong normalized;
 
     if (meta->events > 1) {
 	int events, rem, div;
@@ -179,12 +178,33 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
 	return obj;
     }
 
+    /* We normalize the number to a base-unit and then return either a Python Date 
+       Object or a Python DateTime Object
+       
+       FIXME? : We silently truncate if it doesn't fit, either too big (10 BC) 
+                or too small (nanoseconds)
+    */
+
+    /* Normalization */
+    
+    normalize = val;
+    normalize 
+
+	
+ 
     if (meta->base > NPY_FR_us) {
 	/* we just return the integer itself */ 
 	return PyLong_FromLongLong((longlong) val);
     }
+
+    if (meta->base < NPY_FR_D) {
+	/* return a Date object */
+	/* The number is the number of 'FR' since EPOCH */
+	
+    }
     
     /* otherwise, we construct a date-time object */
+    
     
     
 }
@@ -267,6 +287,31 @@ PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
     }
 }
 
+/* Always return DateTime Object after normalizing to basic units (or a tuple 
+            if meta->events > 1):
+
+   Problem:  DateTime does not support all the resolutions (ns) nor the dynamic 
+                range (pre 1 AD) of NumPy Date-times.   
+		
+      * getitem is not used that much --- if losing resolution hurts, stick 
+             with the array scalar versions of the date-time. 
+
+      * considered returning array scalars here just like longdouble.  
+            This has the problem of recursion in some cases (because in a few
+	    places the code expects getitem to return a Python-system object)
+ 
+      * considered returning different things depending on the resolution but 
+            this would make it hard to write generic code  --- 
+	    but do you need to write generic code on all the frequencies
+	    because they cover a wide range. 
+
+   Solution:  The use-case of actually wanting a date-time object when the resolution 
+                and dynamic range match, make it the compelling default.   When it 
+		does fails, there are alternatives for the programmer to use.
+
+   New question: Should we change (c)longdouble at this point? to return Python Float?
+              
+*/
 
 static PyObject *
 DATETIME_getitem(char *ip, PyArrayObject *ap) {
@@ -425,6 +470,9 @@ static int
 }
 
 /**end repeat**/
+
+/* These return array scalars which is different than other date-types.  
+ */
 
 static PyObject *
 LONGDOUBLE_getitem(char *ip, PyArrayObject *ap)

@@ -5,8 +5,8 @@
 /* For defaults and errors */
 #define NPY_FR_ERR  -1
 
-/* Offset for number of days between Jan 1, 1970 and Jan 1, 0001 */
-*  Assuming Gregorian calendar was always in effect 
+/* Offset for number of days between Jan 1, 1970 and Jan 1, 0001 
+*  Assuming Gregorian calendar was always in effect (proleptic Gregorian calendar)
 */
 
 #define DAYS_EPOCH 719163
