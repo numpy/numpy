@@ -612,7 +612,7 @@ def mirr(values, finance_rate, reinvest_rate):
     ----------
     values : array_like
         Cash flows (must contain at least one positive and one negative value)
-        or nan is returned.
+        or nan is returned.  The first value is considered a sunk cost at time zero.
     finance_rate : scalar
         Interest rate paid on the cash flows
     reinvest_rate : scalar
@@ -626,12 +626,16 @@ def mirr(values, finance_rate, reinvest_rate):
     """
 
     values = np.asarray(values)
+    initial = values[0]
+    values = values[1:]
+    n = values.size
     pos = values > 0
     neg = values < 0
-    if not (pos.size > 0 and neg.size > 0):
+    if not (pos.sum() > 0 and neg.sum() > 0):
         return np.nan
-
-    n = pos.size + neg.size
-    numer = -npv(reinvest_rate, values[pos])*((1+reinvest_rate)**n)
-    denom = npv(finance_rate, values[neg])*(1+finance_rate)
-    return (numer / denom)**(1.0/(n-1)) - 1
+    numer = np.abs(npv(reinvest_rate, values*pos))
+    denom = np.abs(npv(finance_rate, values*neg))
+    if initial > 0:        
+        return ((initial + numer) / denom)**(1.0/n)*(1+reinvest_rate) - 1
+    else:
+        return ((numer / (-initial + denom)))**(1.0/n)*(1+reinvest_rate) - 1
