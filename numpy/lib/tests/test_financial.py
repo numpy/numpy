@@ -38,11 +38,14 @@ class TestFinancial(TestCase):
     def test_mirr(self):
         v1 = [-4500,-800,800,800,600,600,800,800,700,3000]
         assert_almost_equal(np.mirr(v1,0.08,0.055),
-                            0.0665, 4)
+                            0.0666, 4)
 
         v2 = [-120000,39000,30000,21000,37000,46000]
         assert_almost_equal(np.mirr(v2,0.10,0.12),
                             0.1344, 4)
+       
+        v3 = [100,200,-50,300,-200]
+        assert_almost_equal(np.mirr(v3,0.05,0.06), 0.3428, 4)
 
 
 def test_unimplemented():
