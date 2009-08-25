@@ -420,7 +420,7 @@ So:
 
 .. _array-wrap:
 
-``__array_prepare__`` and ``__array_wrap__`` for ufuncs
+``__array_wrap__`` for ufuncs
 -------------------------------------------------------
 
 ``__array_wrap__`` gets called at the end of numpy ufuncs and other numpy

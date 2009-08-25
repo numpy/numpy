@@ -756,31 +756,6 @@ array_cast(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_preparearray(PyArrayObject *self, PyObject *args)
-{
-    PyObject *arr;
-    PyObject *ret;
-
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "only accepts 1 argument");
-        return NULL;
-    }
-    arr = PyTuple_GET_ITEM(args, 0);
-    if (arr == NULL) {
-        return NULL;
-    }
-    if (!PyArray_Check(arr)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "can only be called with ndarray object");
-        return NULL;
-    }
-    Py_INCREF(arr);
-    return arr;
-}
-
-
-static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
     PyObject *arr;
