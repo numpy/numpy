@@ -469,19 +469,19 @@ _convert_from_list(PyObject *obj, int align)
 }
 
 static char *_datetime_strings[] = {
-    NPY_YEARSTR,
-    NPY_MONTHSTR,
-    NPY_WEEKSTR,
-    NPY_BUSINESSDAYSTR,
-    NPY_DAYSTR,
-    NPY_HOURSTR,
-    NPY_SECONDSTR,
-    NPY_MILLISECONDSTR,
-    NPY_MICROSECONDSTR,
-    NPY_NANOSECONDSTR,
-    NPY_PICOSECONDSTR,
-    NPY_FEMTOSECONDSTR,
-    NPY_ATTOSECONDSTR,
+    NPY_STR_Y,
+    NPY_STR_M,
+    NPY_STR_W,
+    NPY_STR_B,
+    NPY_STR_D,
+    NPY_STR_h,
+    NPY_STR_s,
+    NPY_STR_ms,
+    NPY_STR_us,
+    NPY_STR_ns,
+    NPY_STR_ps,
+    NPY_STR_fs,
+    NPY_STR_as
 };
 
 static NPY_DATETIMEUNIT
@@ -492,7 +492,7 @@ static NPY_DATETIMEUNIT
     if (base == NULL) 
 	return NPY_DATETIME_DEFAULTUNIT;
 
-    unit = NPY_YEAR;
+    unit = NPY_FR_Y;
     while (unit < NPY_DATETIME_NUMUNITS) {
 	if (strcmp(base, _datetime_strings[unit]) == 0) 
 	    break;
@@ -1780,7 +1780,7 @@ _get_pickleabletype_from_metadata(PyObject *metadata)
     PyTuple_SET_ITEM(newtup, 0, newdict);
 
     cobj = PyDict_GetItemString(metadata, NPY_METADATA_DTSTR);
-    dt_tuple = _get_datetime_tuple_from_cobj(cobj);
+    dt_tuple = _get_datetime_tuple_from_descr(cobj);
 
     PyTuple_SET_ITEM(newtup, 1, dt_tuple);    
 

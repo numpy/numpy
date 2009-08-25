@@ -188,37 +188,37 @@ typedef enum {
 } NPY_CLIPMODE;
 
 typedef enum {
-	NPY_YEAR,
-	NPY_MONTH,
-	NPY_WEEK,
-	NPY_BUSINESSDAY,
-	NPY_DAY,
-	NPY_HOUR,
-	NPY_SECOND,
-	NPY_MILLISECOND,
-	NPY_MICROSECOND,
-	NPY_NANOSECOND,
-	NPY_PICOSECOND,
-	NPY_FEMTOSECOND,
-	NPY_ATTOSECOND
+	NPY_FR_Y,
+	NPY_FR_M,
+	NPY_FR_W,
+	NPY_FR_B,
+	NPY_FR_D,
+	NPY_FR_h,
+	NPY_FR_s,
+	NPY_FR_ms,
+	NPY_FR_us,
+	NPY_FR_ns,
+	NPY_FR_ps,
+	NPY_FR_fs,
+	NPY_FR_as
 } NPY_DATETIMEUNIT;
 
-#define NPY_DATETIME_NUMUNITS (NPY_ATTOSECOND + 1)
-#define NPY_DATETIME_DEFAULTUNIT NPY_MICROSECOND
+#define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
+#define NPY_DATETIME_DEFAULTUNIT NPY_FR_us
 
-#define NPY_YEARSTR "Y"
-#define NPY_MONTHSTR "M"
-#define NPY_WEEKSTR "W"
-#define NPY_BUSINESSDAYSTR "B"
-#define NPY_DAYSTR "D"
-#define NPY_HOURSTR "h"
-#define NPY_SECONDSTR "s"
-#define NPY_MILLISECONDSTR "ms"
-#define NPY_MICROSECONDSTR "us"
-#define NPY_NANOSECONDSTR "ns"
-#define NPY_PICOSECONDSTR "ps"
-#define NPY_FEMTOSECONDSTR "fs"
-#define NPY_ATTOSECONDSTR "as"
+#define NPY_STR_Y "Y"
+#define NPY_STR_M "M"
+#define NPY_STR_W "W"
+#define NPY_STR_B "B"
+#define NPY_STR_D "D"
+#define NPY_STR_h "h"
+#define NPY_STR_s "s"
+#define NPY_STR_ms "ms"
+#define NPY_STR_us "us"
+#define NPY_STR_ns "ns"
+#define NPY_STR_ps "ps"
+#define NPY_STR_fs "fs"
+#define NPY_STR_as "as"
 
 
 /* This is to typedef npy_intp to the appropriate pointer size for this
@@ -579,6 +579,8 @@ typedef struct {
 	int den;
 	int events;
 } PyArray_DatetimeMetaData;
+
+#define PyDataType_GetDatetimeMetaData(descr) ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(((PyArray_Descr *)descr)->metadata, NPY_METADATA_DTSTR))))
 
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 

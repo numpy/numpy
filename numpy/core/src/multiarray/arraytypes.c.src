@@ -76,25 +76,28 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 /**end repeat**/
 
 
+
+static char * _SEQUENCE_MESSAGE = "error setting an array element with a sequence"
+
 /****************** getitem and setitem **********************/
 
 /**begin repeat
  *
  * #TYP = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
- *        LONGLONG, ULONGLONG, FLOAT, DOUBLE, DATETIME, TIMEDELTA#
+ *        LONGLONG, ULONGLONG, FLOAT, DOUBLE#
  * #func1 = PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2,
  *          PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
- *          PyFloat_FromDouble*2, MyPyLong_FromInt64*2#
+ *          PyFloat_FromDouble*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
  *          MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong,
- *          MyPyFloat_AsDouble*2, MyPyLong_AsInt64*2#
+ *          MyPyFloat_AsDouble*2#
  * #typ = Bool, byte, ubyte, short, ushort, int, long, uint, ulong,
- *        longlong, ulonglong, float, double, datetime, timedelta#
- * #typ1 = long*7, ulong*2, longlong, ulonglong, float, double, datetime,
- *         timedelta#
+ *        longlong, ulonglong, float, double#
+ * #typ1 = long*7, ulong*2, longlong, ulonglong, float, double#
  * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
- *         LongLong, ULongLong, Float, Double, Datetime, Timedelta#
+ *         LongLong, ULongLong, Float, Double#
 */
+
 static PyObject *
 @TYP@_getitem(char *ip, PyArrayObject *ap) {
     @typ@ t1;
@@ -122,8 +125,7 @@ static int
     if (PyErr_Occurred()) {
         if (PySequence_Check(op)) {
             PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError, "setting an array" \
-                    " element with a sequence.");
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
         }
         return -1;
     }
@@ -137,6 +139,171 @@ static int
 }
 
 /**end repeat**/
+
+/* Acknowledgment:  Example code contributed by Marty Fuhr sponsored by 
+   Google Summer of Code 2009 was used to integrate and adapt the mxDateTime parser */
+#include "parse_datetime.c"
+/* End of contributed code. */
+
+/* DateTime Objects in Python only keep microsecond resolution. 
+   When converting from datetime objects in nanosecond, picosecond, femtosecond, 
+     and attosecond types return Python Longs instead. 
+
+   When converting from datetime objects with an event component return a tuple: 
+     (baseunit, number of event)  where baseunit follows standard and
+                                  number of event is a Python integer   
+ */
+
+
+static PyObject *
+PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    PyObject *obj;
+    meta = PyDataType_GetDatetimeMetaData(descr);
+
+
+    if (meta->events > 1) {
+	int events;
+	obj = PyTuple_New(2);
+	events = meta->events;
+	PyTuple_SET_ITEM(obj, PyInt_FromLong(val % events), 1);
+	meta->events = 1; /* This resets meta->events for recursive call */
+	PyTuple_SET_ITEM(obj, PyDatetime_FromInt64(val / events, descr), 0);
+	meta->events = events;
+	if PyErr_Ocurred() {
+	    Py_DECREF(obj);
+	    return NULL;
+	}
+	return obj;
+    }
+}
+
+
+static PyObject *
+PyTimedelta_FromInt64(timedelta val, PyArray_Descr *)
+{
+    PyArray_DatetimeMetaData *meta;
+    meta = PyDataType_GetDatetimeMetaData(meta);
+
+    if (meta->events > 1) {
+	int events;
+	obj = PyTuple_New(2);
+	events = meta->events;
+	PyTuple_SET_ITEM(obj, PyInt_FromLong(val % events), 1);
+	meta->events = 1; /* This resets meta->events for recursive call */
+	PyTuple_SET_ITEM(obj, PyTimedelta_FromInt64(val / events, descr), 0);
+	meta->events = events;
+	if PyErr_Ocurred() {
+	    Py_DECREF(obj);
+	    return NULL;
+	}
+	return obj;
+    }
+}
+
+
+static datetime
+PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *)
+{
+    PyArray_DatetimeMetaData *meta;
+    meta = PyDataType_GetDatetimeMetaData(meta);
+
+}
+
+
+static timedelta
+PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *)
+{
+    PyArray_DatetimeMetaData *meta;
+    meta = PyDataType_GetDatetimeMetaData(meta);
+
+}
+
+
+static PyObject *
+DATETIME_getitem(char *ip, PyArrayObject *ap) {
+    datetime t1;
+
+    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((datetime *)ip);
+        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+    }
+    else {
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+    }
+}
+
+
+static PyObject *
+TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
+    timedelta t1;
+
+    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((timedelta *)ip);
+        return PyTimedelta_FromInt64((timedelta)t1, ap->descr);
+    }
+    else {
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        return PyTimedelta_FromInt64((timedelta)t1, ap->descr);
+    }
+}
+
+
+static int
+DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    datetime temp;  /* ensures alignment */
+
+    if (PyArray_IsScalar(op, Datetime)) {
+        temp = ((PyDatetimeScalarObject *)op)->obval;
+    }
+    else {
+        temp = PyDateTime_AsInt64(op, ap->descr);
+    }
+    if (PyErr_Occurred()) {
+        if (PySequence_Check(op)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+        }
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap))
+        *((datetime *)ov)=temp;
+    else {
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
+                ap);
+    }
+    return 0;
+}
+
+
+static int
+TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    timedelta temp;  /* ensures alignment */
+
+    if (PyArray_IsScalar(op, Timedelta)) {
+        temp = ((PyTimedeltaScalarObject *)op)->obval;
+    }
+    else {
+        temp = PyTimedelta_AsInt64(op, ap->descr);
+    }
+    if (PyErr_Occurred()) {
+        if (PySequence_Check(op)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+        }
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap))
+        *((timedelta *)ov)=temp;
+    else {
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
+                ap);
+    }
+    return 0;
+}
+
 
 /**begin repeat
  *
