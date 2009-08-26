@@ -505,6 +505,66 @@ static NPY_DATETIMEUNIT
     return unit;
 }
 
+static int *_multiples_table[] = {
+    [12, 52, 365],
+    [NPY_FR_M, NPY_FR_W, NPY_FR_D],
+    [4,  30, 720],
+    [NPY_FR_W, NPY_FR_D, NPY_FR_h],
+    [5,  7,  168, 10080],
+    [NPY_FR_B, NPY_FR_D, NPY_FR_h, NPY_FR_m],
+    [24, 1440, 86400],
+    [NPY_FR_h, NPY_FR_m, NPY_FR_s],
+    [24, 1440, 86400],
+    [NPY_FR_h, NPY_FR_m, NPY_FR_s],
+    [60, 3600, -1],
+    [NPY_FR_m, NPY_FR_s, -1],
+    [60, 60000, -1],
+    [NPY_FR_s, NPY_FR_ms, -1],
+    [1000, 1000000, -1],
+    [-1, -1, -1]
+};
+
+
+/* Translate divisors into multiples of smaller units */
+static void
+_convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
+{
+    int i, num, ind;
+    int *totry;
+    NPY_DATETIMEUNIT *baseunit;
+    int q, r;
+
+    ind = ((int)meta->base - (int)NPY_FR_Y)*2;
+    totry = _multiples_table[ind];
+    baseunits = (NPY_DATETIMEUNIT *)_multiples_table[ind+1];
+    
+    num = 3;
+    if (meta->base == NPY_FR_W) num = 4;
+    else if (meta->base > NPY_FR_D) num = 2;
+
+    if (meta->base >= NPY_FR_s) {
+	ind = (int)NPY_FR_s - (int)NPY_FR_Y;
+	totry = _multiples_table[ind];
+	baseunit = _multiples_table[ind+1];
+	baseunit[0] = meta->base - 1;
+	baseunit[1] = meta->base - 2;
+	if (meta->base == NPY_DATETIME_NUMUNITS-1) num = 1;
+    }
+
+    for (i=0; i<num; i++) {
+	q = totry[1] / meta->den;
+	r = totry[1] % meta->den;
+	if (r==0) break;
+    }
+    if (i==num) {
+	PyErr_SetString(PyExc_ValueError, "Divisor is not a multiple of a lower-unit");
+    }
+    meta->unit = (NPY_DATETIMEUNIT) baseunits[i];
+    meta->den = 1;
+    meta->num = q;
+}
+
+
 static PyObject *
 _get_datetime_tuple_from_cobj(PyObject *cobj)
 {
@@ -519,7 +579,7 @@ _get_datetime_tuple_from_cobj(PyObject *cobj)
     PyTuple_SET_ITEM(dt_tuple, 1, 
 		     PyInt_FromLong(dt_data->num));
     PyTuple_SET_ITEM(dt_tuple, 2, 
-		     PyInt_FromLong(dt_data->den));
+		     PyInt_FromLong(dt_data->den)); 
     PyTuple_SET_ITEM(dt_tuple, 3, 
 		     PyInt_FromLong(dt_data->events)); 
 
@@ -540,6 +600,11 @@ _convert_datetime_tuple_to_cobj(PyObject *tuple)
     dt_data->num = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 1));
     dt_data->den = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 2));
     dt_data->events = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 3));
+
+    if (dt_data->den > 1) {
+	_convert_divisor_to_multiple(dt_data);
+	if (PyErr_Occurred()) return NULL;
+    }
 
     return PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
 }
@@ -597,7 +662,12 @@ _convert_from_datetime_tuple(PyObject *obj)
 
     /* Assume this sets a new reference to dt_cobj */
     PyDict_SetItem(new->metadata, freq_key, dt_cobj);
-    Py_DECREF(dt_cobj);
+    Py_XDECREF(dt_cobj);
+
+    if (dt_cobj == NULL) { /* Failure in conversion */
+	Py_DECREF(new);
+	return NULL;
+    }
 
     return new;
 }
@@ -1330,7 +1400,7 @@ _append_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
 {
     PyObject *tmp;
     PyObject *res;
-    int num, den, events;
+    int num, events;
     char *basestr;       
     PyArray_DatetimeMetaData *dt_data;
            
@@ -1765,7 +1835,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
 }
 
 /* Return a tuple of (cleaned metadata dictionary, 
-                      tuple with (str, num, den, events))
+                      tuple with (str, num, events))
 */
 static PyObject *
 _get_pickleabletype_from_metadata(PyObject *metadata)

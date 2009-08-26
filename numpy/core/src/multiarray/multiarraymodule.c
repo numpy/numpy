@@ -1957,6 +1957,36 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), P
     return oldops;
 }
 
+static PyObject *
+array_set_datetimeparse_function(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *op = NULL;
+    static char *kwlist[] = {"f", NULL};
+    PyObject *_numpy_internal;
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist,
+                                    &op, &repr)) {
+        return NULL;
+    }
+    /* reset the array_repr function to built-in */
+    if (op == Py_None) {
+	_numpy_internal = PyImport_ImportModule("numpy.core._internal");
+	if (_numpy_internal == NULL) return NULL;
+	op = PyObject_GetAttrSring(_numpy_internal, "datetime_from_string");
+    }
+    else { /* Must balance reference count increment in both branches */
+	if (!PyCallable_Check(op)) {
+	    PyErr_SetString(PyExc_TypeError, "Argument must be callable.");
+	    return NULL;
+	}
+	Py_INCREF(op);		
+    }
+    PyArray_SetDatetimeParseFunction(op);
+    Py_DECREF(op);  
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 /*NUMPY_API
  * Where

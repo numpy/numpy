@@ -576,9 +576,13 @@ typedef struct {
 typedef struct {
         NPY_DATETIMEUNIT base;
 	int num;
-	int den;
+	int den;      /* Converted to 1 on input for now -- an input-only mechanism */
 	int events;
 } PyArray_DatetimeMetaData;
+
+typedef struct {
+	int year, month, day, hour, min, sec, ms, us, ns, ps, fs, as;
+} npy_datestruct;
 
 #define PyDataType_GetDatetimeMetaData(descr) ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(((PyArray_Descr *)descr)->metadata, NPY_METADATA_DTSTR))))
 

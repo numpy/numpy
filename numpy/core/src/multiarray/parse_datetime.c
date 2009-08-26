@@ -5,11 +5,11 @@
 /* For defaults and errors */
 #define NPY_FR_ERR  -1
 
-/* Offset for number of days between Jan 1, 1970 and Jan 1, 0001 
+/* Offset for number of days between Dec 31, 1969 and Jan 1, 0001 
 *  Assuming Gregorian calendar was always in effect (proleptic Gregorian calendar)
 */
 
-#define DAYS_EPOCH 719163
+#define DAYS_EPOCH 719162
 
 /* Calendar Structure for Parsing Long -> Date */
 typedef struct {
@@ -17,60 +17,10 @@ typedef struct {
 } ymdstruct;
 
 typedef struct {
-    int hour, minute, second;
+    int hour, min, sec;
 } hmsstruct;
 
-typedef struct {
-    int year, month, day, hour,
-	minute, second, msecond,
-	usecond, nsecond, psecond, fsecond,
-	asecond;
-} datestruct;
 
-
-/* =============
- *  callbacks
- * ============ 
- */
-
-static PyObject *callback = NULL;
-
-static PyObject *
-set_callback(PyObject *dummy, PyObject *args)
-{
-    PyObject *result = NULL;
-    PyObject *temp;
-
-    if (PyArg_ParseTuple(args, "O:set_callback", &temp))
-	{
-	    if (!PyCallable_Check(temp))
-		{
-		    PyErr_SetString(PyExc_TypeError, "parameter must be callable");
-		    return NULL;
-		}
-	    // Reference to new callback
-	    Py_XINCREF(temp);
-	    // Dispose of previous callback
-	    Py_XDECREF(callback);
-	    // Remember new callback
-	    callback = temp;
-	    // Boilerplate to return "None"
-	    Py_INCREF(Py_None);
-	    result = Py_None;
-	}
-	
-    return result;
-}
-
-
-PyObject *DateCalc_RangeError = NULL;
-PyObject *DateCalc_Error      = NULL;
-
-// Frequency Checker
-int _check_freq(int freq)
-{
-    return freq;
-}
 /*
   ====================================================
   == Beginning of section borrowed from mx.DateTime ==
@@ -84,7 +34,6 @@ int _check_freq(int freq)
 */
 
 #define Py_AssertWithArg(x,errortype,errorstr,a1) {if (!(x)) {PyErr_Format(errortype,errorstr,a1);goto onError;}}
-#define Py_Error(errortype,errorstr) {PyErr_SetString(errortype,errorstr);goto onError;}
 
 /* Table with day offsets for each month (0-based, without and with leap) */
 static int month_offset[2][13] = {
@@ -99,16 +48,16 @@ static int days_in_month[2][12] = {
 };
 
 /* Return 1/0 iff year points to a leap year in calendar. */
-static
-int is_leapyear(register long year)
+static int 
+is_leapyear(register long year)
 {
     return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
 }
 
 
 /* Return the day of the week for the given absolute date. */
-static
-int day_of_week(register long absdate)
+static int 
+day_of_week(register long absdate)
 {
     int day_of_week;
 
@@ -122,68 +71,31 @@ int day_of_week(register long absdate)
 }
 
 /* Return the year offset, that is the absolute date of the day
-   31.12.(year-1) in the given calendar.
+   31.12.(year-1) since 31.12.1969 in the proleptic Gregorian calendar.
 */
-static
-long year_offset(register long year)
+static npy_longlong 
+year_offset(register npy_longlong year)
 {
-    year--;
-    if (year >= 0 || -1/4 == -1)
+    year-=1970;
+    if ((year+1969) >= 0 || -1/4 == -1)
 	return year*365 + year/4 - year/100 + year/400;
     else
 	return year*365 + (year-3)/4 - (year-99)/100 + (year-399)/400;
 }    
 
-/*
- * UNUSED FUNCTION
- static
- int week_from_ady(long absdate, int day, int year)
- {
- int week, dotw, day_of_year;
- dotw = day_of_week(absdate);
- day_of_year = (int)(absdate - year_offset(year) + DAYS_EPOCH);
-
- // Estimate
- week = (day_of_year - 1) - dotw + 3;
- if (week >= 0) 
- week = week / 7 + 1;
-
- // Verify 
- if (week < 0) 
- {
- // The day lies in last week of the previous year 
- if ((week > -2) || ((week == -2) && (is_leapyear(year-1))))
- week = 53;
- else
- week = 52;
- } 
- else if (week == 53) 
- {
- // Check if the week belongs to year or year + 1 
- if ((31 - day + dotw) < 3) 
- week = 1;
- }
-
- return week;
- }
-*/
-
-
-// Modified version of mxDateTime function
-// Returns absolute number of days since Jan 1, 1970
-static
-long long absdays_from_ymd(int year, int month, int day)
+/* Modified version of mxDateTime function
+ * Returns absolute number of days since Jan 1, 1970
+ * assuming a proleptic Gregorian Calendar
+ * Raises a ValueError if out of range month or day
+ * day -1 is Dec 31, 1969, day 0 is Jan 1, 1970, day 1 is Jan 2, 1970
+ */
+static npy_longlong 
+absdays_from_ymd(int year, int month, int day)
 {
 
     /* Calculate the absolute date */
     int leap;
-    long yearoffset, absdate;
-
-    /* Range check */
-    Py_AssertWithArg(year > -(INT_MAX / 366) && year < (INT_MAX / 366),
-		     DateCalc_RangeError,
-		     "year out of range: %i",
-		     year);
+    npy_longlong yearoffset, absdate;
 
     /* Is it a leap year ? */
     leap = is_leapyear(year);
@@ -191,58 +103,73 @@ long long absdays_from_ymd(int year, int month, int day)
     /* Negative month values indicate months relative to the years end */
     if (month < 0) month += 13;
     Py_AssertWithArg(month >= 1 && month <= 12,
-		     DateCalc_RangeError,
+		     PyExc_ValueError,
 		     "month out of range (1-12): %i",
 		     month);
 
     /* Negative values indicate days relative to the months end */
     if (day < 0) day += days_in_month[leap][month - 1] + 1;
     Py_AssertWithArg(day >= 1 && day <= days_in_month[leap][month - 1],
-		     DateCalc_RangeError,
+		     PyExc_ValueError,
 		     "day out of range: %i",
 		     day);
 
-    // Number of days between (year - 1) and 1970
-    // !! This is a bad implementation: if year_offset overflows a long, we lose a potential
-    //     of DAYS_EPOCH days range
-    yearoffset = year_offset(year) - DAYS_EPOCH;
+    /* Number of days between Dec 31, (year - 1) and Dec 31, 1969
+     *    (can be negative).
+     */
+    yearoffset = year_offset(year);
 
     if (PyErr_Occurred()) goto onError;
 
-    // Calculate the number of days using yearoffset
-    absdate = day + month_offset[leap][month - 1] + yearoffset;
+    /* Calculate the number of days using yearoffset */       
+    /* Jan 1, 1970 is day 0 and thus Dec. 31, 1969 is day -1 */
+    absdate = day-1 + month_offset[leap][month - 1] + yearoffset;
 
     return absdate;
 
  onError:
-    // do bad stuff
     return 0;
 
 }
 
-// Returns absolute seconds from an hour, minute, and second
-static
-long long abssecs_from_hms(int hour, int minute, int second)
+/* Returns absolute seconds from an hour, minute, and second
+ */
+static npy_longlong 
+abssecs_from_hms(int hour, int minute, int second)
 {
-    // Needs to perform checks for valid times
+    /* Needs to perform checks for valid times */
+
+    Py_AssertWithArg(hour >=0 && hour <= 23,
+		     PyExc_ValueError,
+		     "hour out of range (0-23): %i",
+		     hour);
+    
+    Py_AssertWithArg(minute >=0 && minute <= 59,
+		     PyExc_ValueError,
+		     "minute out of range (0-59): %i",
+		     minute);
+    
+    Py_AssertWithArg(second >=0 && second <= 59,
+		     PyExc_ValueError,
+		     "second out of range (0-59): %i",
+		     second);
+
     return hour * 3600 + minute * 60 + second;
 }
-static
-ymdstruct long_to_ymdstruct(long long dlong)
+
+static ymdstruct 
+days_to_ymdstruct(npy_datetime dlong)
 {
     ymdstruct ymd;
     register long year;
-    long long yearoffset;
+    npy_longlong yearoffset;
     int leap, dayoffset;
     int month = 1, day = 1;
     int *monthoffset;
-    dlong += DAYS_EPOCH;
 
     /* Approximate year */
-    year = 1970 + dlong / 365.25;
+    year = 1970 + dlong / 365.2425;
     
-    if (dlong > 0) year++;
-
     /* Apply corrections to reach the correct year */
     while (1) {
 	/* Calculate the year offset */
@@ -268,13 +195,11 @@ ymdstruct long_to_ymdstruct(long long dlong)
 
     /* Now iterate to find the month */
     monthoffset = month_offset[leap];
-    {
-	for (month = 1; month < 13; month++) {
-	    if (monthoffset[month] >= dayoffset)
-		break;
-	}
-	day = dayoffset - month_offset[leap][month-1];
+    for (month = 1; month < 13; month++) {
+	if (monthoffset[month] >= dayoffset)
+	    break;
     }
+    day = dayoffset - month_offset[leap][month-1];
 	
     ymd.year  = year;
     ymd.month = month;
@@ -283,25 +208,23 @@ ymdstruct long_to_ymdstruct(long long dlong)
     return ymd;
 }
 
-/* Sets the time part of the DateTime object. */
-static
-hmsstruct long_to_hmsstruct(long long dlong)
+/* Converts an integer number of seconds in a day to hours minutes seconds.  
+   It assumes seconds is between 0 and 86399.
+ */
+
+static hmsstruct 
+seconds_to_hmsstruct(npy_longlong dlong)
 {
     int hour, minute, second;
     hmsstruct hms;
 
-    // Make dlong within a one day period
-    dlong = dlong % 86400;
-
-    if (dlong < 0)
-	dlong = 86400 + dlong;
     hour   = dlong / 3600;
     minute = (dlong % 3600) / 60;
     second = dlong - (hour*3600 + minute*60);
 
     hms.hour   = hour;
-    hms.minute = minute;
-    hms.second = second;
+    hms.min = minute;
+    hms.sec = second;
 
     return hms;
 }
@@ -313,14 +236,15 @@ hmsstruct long_to_hmsstruct(long long dlong)
   ====================================================
 */
 
-//==================================================
+/*==================================================
 // Parsing datetime/datestring to long
 // =================================================
 
 // Takes a datetime object and a string as frequency
 // Returns the number of (frequency) since Jan 1, 1970
+*/
 static 
-long long datetime_to_long(PyObject* datetime, int frequency)
+npy_longlong datetime_to_long(PyObject* datetime, int frequency)
 {
     int year = 0, month = 0, day = 0, hour = 0, 
 	minute = 0, second = 0, microsecond = 0;
@@ -335,10 +259,10 @@ long long datetime_to_long(PyObject* datetime, int frequency)
     microsecond = PyDateTime_DATE_GET_MICROSECOND(datetime);
 	
     // The return value
-    long long result = 0;
+    npy_longlong result = 0;
 
     // The absolute number of days since 1970
-    long long absdays = absdays_from_ymd(year, month, day);
+    npy_longlong absdays = absdays_from_ymd(year, month, day);
 
     // These calculations depend on the frequency
 
@@ -422,11 +346,11 @@ long long datetime_to_long(PyObject* datetime, int frequency)
 //  to datetime_to_long
 // Returns the number of (frequency) since Jan 1, 1970
 static
-long long datestring_to_long(PyObject *string, int frequency)
+npy_longlong datestring_to_long(PyObject *string, int frequency)
 {
     // Send to datetime_to_long
     PyObject *datetime = NULL;
-    long long result = 0;
+    npy_longlong result = 0;
 
     // Make the string into a tuple for the callback function
     PyObject *string_arg = PyTuple_New(1);
@@ -533,176 +457,202 @@ date_to_long(PyObject *self, PyObject *args)
 
     return result;
 }
+
+/*
 //==================================================
 // Parsing long to datetime/datestring
 // =================================================
 
-// Takes a long long value and a frequency
+// Takes a npy_longlong value and a frequency
 // Returns a datestruct formatted with the correct calendar values
-static 
-datestruct long_to_datestruct(long long dlong, int frequency)
+*/
+static void 
+datetime_to_datestruct(npy_datetime val, NPY_DATETIME_UNIT fr, npy_datestruct *result)
 {
     int year = 1970, month = 1, day = 1, 
-	hour = 0, minute = 0, second = 0,
-	msecond = 0, usecond = 0, nsecond = 0,
-	psecond = 0, fsecond = 0, asecond = 0;
+	hour = 0, min = 0, sec = 0,
+	ms = 0, us = 0, ns = 0,
+	ps = 0, fs = 0, as = 0;
 
-    datestruct result;
+    ymdstruct ymd;
+    hmsstruct hms;
+
+    /* Note that what looks like val / N and val % N for positive numbers maps to
+       [val + (N-1)] / N and [N-1 + (val+1) % N] for negative numbers (with the 2nd 
+       value, the remainder, being positive in both cases).
+    */
 
     if (frequency == NPY_FR_Y) {
-	year = 1970 + dlong;
-    } else if (frequency == NPY_FR_M) {
-	if (dlong >= 0) {
-	    year  = 1970 + dlong / 12;
-	    month = dlong % 12 + 1;
-	} else {
-	    year  = 1969 + (dlong + 1) / 12;
-	    month = 12 + (dlong + 1)% 12;
+	year = 1970 + val;
+    } 
+    else if (frequency == NPY_FR_M) {
+	if (val >= 0) {
+	    year  = 1970 + val / 12;
+	    month = val % 12 + 1;
+	} 
+	else {
+	    year  = 1969 + (val + 1) / 12;
+	    month = 12 + (val + 1)% 12;
 	}
-    } else if (frequency == NPY_FR_W) {
-	ymdstruct ymd;
-	ymd = long_to_ymdstruct((dlong * 7) - 4);
+    } 
+    else if (frequency == NPY_FR_W) {
+	/* A week is the same as 7 days */
+	ymd = days_to_ymdstruct(val * 7);
 	year  = ymd.year;
 	month = ymd.month;
 	day   = ymd.day;
-    } else if (frequency == NPY_FR_B) {
-	ymdstruct ymd;
-	long long absdays;
-	if (dlong >= 0) {
-	    // Special Case
-	    if (dlong < 3)
-		absdays = dlong + (dlong / 2) * 2;
-	    else
-		absdays = 7 * ((dlong + 3) / 5) + ((dlong + 3) % 5) - 3;
-	} else {
-	    // Special Case
-	    if (dlong > -7)
-		absdays = dlong + (dlong / 4) * 2;
-	    else
-		absdays = 7 * ((dlong - 1) / 5) + ((dlong - 1) % 5) + 1;
+    } 
+    else if (frequency == NPY_FR_B) { /* Number of business days since Thursday, 1-1-70 */
+	npy_longlong absdays;
+	/* A buisness day is M T W Th F (i.e. all but Sat and Sun.) */
+	/* Convert the business day to the number of actual days.
+	   
+	  Must convert [0,1,2,3,4,5,6,7,...] to 
+	                   [0,1,4,5,6,7,8,11,...]
+	  and  [...,-9,-8,-7,-6,-5,-4,-3,-2,-1,0] to 
+                  [...,-13,-10,-9,-8,-7,-6,-3,-2,-1,0]
+	 */	
+ 	if (val >= 0) {
+	    absdays = 7 * ((val + 3) / 5) + ((val + 3) % 5) - 3;
+	} 
+	else { /* Recall how C computes / and % with negative numbers */
+	    absdays = 7 * ((val - 1) / 5) + ((val - 1) % 5) + 1;
 	}
-	ymd = long_to_ymdstruct(absdays);
+	ymd = days_to_ymdstruct(absdays);
 	year  = ymd.year;
 	month = ymd.month;
 	day   = ymd.day;
-    } else if (frequency == NPY_FR_D) {
-	ymdstruct ymd = long_to_ymdstruct(dlong);
+    } 
+    else if (frequency == NPY_FR_D) {
+	ymd = days_to_ymdstruct(val);
 	year  = ymd.year;
 	month = ymd.month;
 	day   = ymd.day;	
-    } else if (frequency == NPY_FR_h) {
-	ymdstruct ymd;	
-	if (dlong >= 0) {
-	    ymd  = long_to_ymdstruct(dlong / 24);
-	    hour  = dlong % 24;
-	} else {
-	    ymd  = long_to_ymdstruct((dlong - 23) / 24);
-	    hour = 24 + (dlong + 1) % 24 - 1;
+    } 
+    else if (frequency == NPY_FR_h) {
+	if (val >= 0) {
+	    ymd  = days_to_ymdstruct(val / 24);
+	    hour  = val % 24;
+	} 
+	else {
+	    ymd  = days_to_ymdstruct((val - 23) / 24);
+	    hour = 23 + (val + 1) % 24;
 	}
 	year  = ymd.year;
 	month = ymd.month;
 	day   = ymd.day;
-    } else if (frequency == NPY_FR_m) {
-	ymdstruct ymd;
-	hmsstruct hms;
-	if (dlong >= 0) {
-	    ymd = long_to_ymdstruct(dlong / 1440);
-	} else {
-	    ymd = long_to_ymdstruct((dlong - 1439) / 1440);
+    } 
+    else if (frequency == NPY_FR_m) {
+	if (val >= 0) {
+	    ymd = days_to_ymdstruct(val / 1440);
+	    min = val % 1440;
 	}
-	hms = long_to_hmsstruct(dlong * 60);
+	else {
+	    ymd = days_to_ymdstruct((val - 1439) / 1440);
+	    min = 1439 + (val + 1) % 1440;
+	}
+	hms = seconds_to_hmsstruct(min * 60);
 	year   = ymd.year;
 	month  = ymd.month;
 	day    = ymd.day;
 	hour   = hms.hour;
-	minute = hms.minute;
-    } else if (frequency == NPY_FR_s) {
-	ymdstruct ymd;
+	min = hms.min;
+    } 
+    else if (frequency == NPY_FR_s) {
 	hmsstruct hms;
-	if (dlong >= 0) {
-	    ymd = long_to_ymdstruct(dlong / 86400);
-	} else {
-	    ymd = long_to_ymdstruct((dlong - 86399) / 86400);
+	if (val >= 0) {
+	    ymd = days_to_ymdstruct(val / 86400);
+	    sec = val % 86400;
+	} 
+	else {
+	    ymd = days_to_ymdstruct((val - 86399) / 86400);
+	    sec = 86399 + (val + 1) % 86400;
 	}
-	hms = long_to_hmsstruct(dlong);
+	hms = secondss_to_hmsstruct(val);
 	year   = ymd.year;
 	month  = ymd.month;
 	day    = ymd.day;
 	hour   = hms.hour;
-	minute = hms.minute;
-	second = hms.second;
-    } else if (frequency == NPY_FR_ms) {
-	ymdstruct ymd;
-	hmsstruct hms;
-	if (dlong >= 0) {
-	    ymd = long_to_ymdstruct(dlong / 86400000LL);
-	    hms = long_to_hmsstruct(dlong / 1000);
-	    msecond = dlong % 1000;
-	} else {
-	    ymd = long_to_ymdstruct((dlong - 86399999LL) / 86400000LL);
-	    hms = long_to_hmsstruct((dlong - 999LL) / 1000);
-	    msecond = (1000 + dlong % 1000) % 1000;
-	}
-	year    = ymd.year;
-	month   = ymd.month;
-	day     = ymd.day;
-	hour    = hms.hour;
-	minute  = hms.minute;
-	second  = hms.second;
-    } else if (frequency == NPY_FR_us) {
-	ymdstruct ymd;
-	hmsstruct hms;
-	if (dlong >= 0) {
-	    ymd = long_to_ymdstruct(dlong / 86400000000LL);
-	    hms = long_to_hmsstruct(dlong / 1000000LL);
-	    msecond = (dlong / 1000) % 1000;
-	    usecond = dlong % 1000LL;
-	} else {
-	    ymd = long_to_ymdstruct((dlong - 86399999999LL) / 86400000000LL);
-	    hms = long_to_hmsstruct((dlong - 999999LL) / 1000000LL);
-	    usecond = ((1000000LL + (dlong % 1000000)) % 1000000);
-	    msecond = usecond / 1000;
-	    usecond = usecond % 1000;
-	}
-	year    = ymd.year;
-	month   = ymd.month;
-	day     = ymd.day;
-	hour    = hms.hour;
-	minute  = hms.minute;
-	second  = hms.second;
+	min = hms.min;
+	sec = hms.sec;
     }
-    // Starting from here, we need extra units (ns, ps, fs, as)
-    //  for correct precision: datetime doesn't include beyond microsecond
+    else if (frequency == NPY_FR_ms) {
+	if (val >= 0) {
+	    ymd = days_to_ymdstruct(val / 86400000);
+	    ms  = val % 86400000
+	} 
+	else {
+	    ymd = days_to_ymdstruct((val - 86399999) / 86400000);
+	    ms  = 86399999 + (val + 1) % 86399999;
+	}
+	hms = seconds_to_hmsstruct(msec / 1000);
+	msec = msec % 1000;
+	year    = ymd.year;
+	month   = ymd.month;
+	day     = ymd.day;
+	hour    = hms.hour;
+	min     = hms.min;
+	sec     = hms.sec;
+    }
+    else if (frequency == NPY_FR_us) {
+	if (val >= 0) {
+	    ymd = days_to_ymdstruct(val / 86400000000LL);
+	    hms = seconds_to_hmsstruct(val / 1000000LL);
+	    msec = (val / 1000) % 1000;
+	    usec = val % 1000LL;
+	} 
+	else {
+	    ymd = days_to_ymdstruct((val - 86399999999LL) / 86400000000LL);
+	    hms = seconds_to_hmsstruct((val - 999999LL) / 1000000LL);
+	    usec = ((1000000LL + (val % 1000000)) % 1000000);
+	    msec = usec / 1000;
+	    usec = usec % 1000;
+	}
+	year    = ymd.year;
+	month   = ymd.month;
+	day     = ymd.day;
+	hour    = hms.hour;
+	min  = hms.min;
+	sec  = hms.sec;
+    }
     else if (frequency == NPY_FR_ns) {
 	PyErr_SetString(PyExc_NotImplementedError, "not implemented yet");
-    } else if (frequency == NPY_FR_ps) {
+    } 
+    else if (frequency == NPY_FR_ps) {
 	PyErr_SetString(PyExc_NotImplementedError, "not implemented yet");
-    } else if (frequency == NPY_FR_fs) {
+    } 
+    else if (frequency == NPY_FR_fs) {
 	PyErr_SetString(PyExc_NotImplementedError, "not implemented yet");
-    } else if (frequency == NPY_FR_as) {
+    }
+    else if (frequency == NPY_FR_as) {
 	PyErr_SetString(PyExc_NotImplementedError, "not implemented yet");
-    } else {
-	// Throw some Not Valid Frequency error here
+    } 
+    else {
+	PyErr_SetString(PyExc_ValueError, "invalid internal frequency");
     }
 	
     result.year    = year;
     result.month   = month;
     result.day     = day;
     result.hour    = hour;
-    result.minute  = minute;
-    result.second  = second;
-    result.msecond = msecond;
-    result.usecond = usecond;
-    result.nsecond = nsecond;
-    result.psecond = psecond;
-    result.fsecond = fsecond;
-    result.asecond = asecond;
+    result.min     = min;
+    result.sec     = sec;
+    result.ms    = ms;
+    result.us    = us;
+    result.ns    = ns;
+    result.ps    = ps;
+    result.fs     = fs;
+    result.as = as;
 
     return result;
 }
 
+
+
+/*
 // Takes a long and a frequency
 // Returns a Python DateTime Object
+*/
 static PyObject *
 long_to_datetime(PyObject *self, PyObject *args)
 {
@@ -710,7 +660,7 @@ long_to_datetime(PyObject *self, PyObject *args)
     PyObject *freq_arg = NULL;	  // frequency as string
     PyObject *result   = NULL;	  // long result
 
-    long long dlong = 0;          // Stores the long_arg
+    npy_longlong val = 0;          // Stores the long_arg
     int freq = NPY_FR_ERR;			  // freq_arg is a PyObject to be parsed to freq
     datestruct dstruct;		      // To store date values
 
@@ -763,7 +713,7 @@ long_to_datetime(PyObject *self, PyObject *args)
 	    dstruct = long_to_datestruct(dlong, freq);
 	    // Create the PyDateTime Object as result
 	    result = PyDateTime_FromDateAndTime(dstruct.year, dstruct.month,
-						dstruct.day, dstruct.hour, dstruct.minute, dstruct.second,
+						dstruct.day, dstruct.hour, dstruct.min, dstruct.second,
 						dstruct.msecond * 1000 + dstruct.usecond);
 	}
     else
@@ -788,7 +738,7 @@ long_to_datestring(PyObject *self, PyObject *args)
     PyObject *freq_arg = NULL;	  // frequency as string
     PyObject *result   = NULL;	  // string result
 
-    long long dlong = 0;          // Stores the long_arg
+    npy_longlong dlong = 0;          // Stores the long_arg
     int freq = NPY_FR_ERR;			  // freq_arg is a PyObject to be parsed to freq
     datestruct dstruct;		      // To store date values
 
@@ -867,7 +817,7 @@ long_to_datestring(PyObject *self, PyObject *args)
 		char month[2];
 		char day[2];
 		char hour[2];
-		char minute[2];
+		char min[2];
 		char second[2];
 				
 		sprintf(year,   "%04d", dstruct.year);
@@ -960,17 +910,17 @@ long_to_datestring(PyObject *self, PyObject *args)
 
 
 // *************** From Day *************** //
-static long long as_freq_D2Y(long long dlong)
+static npy_longlong as_freq_D2Y(npy_longlong dlong)
 {
-    ymdstruct ymd = long_to_ymdstruct(dlong);
+    ymdstruct ymd = days_to_ymdstruct(dlong);
     return ymd.year - 1970;
 }
-static long long as_freq_D2M(long long dlong)
+static npy_longlong as_freq_D2M(npy_longlong dlong)
 {
-    ymdstruct ymd = long_to_ymdstruct(dlong);
+    ymdstruct ymd = days_to_ymdstruct(dlong);
     return ymd.month + (ymd.year - 1970) * 12 - 1;
 }
-static long long as_freq_D2W(long long dlong)
+static npy_longlong as_freq_D2W(npy_longlong dlong)
 {
     // convert to the previous Sunday
     int dotw = day_of_week(dlong);
@@ -979,7 +929,7 @@ static long long as_freq_D2W(long long dlong)
     else
 	return (dlong + 4) / 7;
 }
-static long long as_freq_D2B(long long dlong)
+static npy_longlong as_freq_D2B(npy_longlong dlong)
 {
     int dotw = day_of_week(dlong);
     // Pre epoch
@@ -1009,41 +959,41 @@ static long long as_freq_D2B(long long dlong)
 	    return dotw - 4 - (dotw / 6);
     }
 }
-static long long as_freq_D2h(long long dlong)
+static npy_longlong as_freq_D2h(npy_longlong dlong)
 {
     return dlong * 24LL;
 }
-static long long as_freq_D2m(long long dlong)
+static npy_longlong as_freq_D2m(npy_longlong dlong)
 {
     return dlong * 1440LL;
 }
-static long long as_freq_D2s(long long dlong)
+static npy_longlong as_freq_D2s(npy_longlong dlong)
 {
     return dlong * 86400LL;
 }
-static long long as_freq_D2ms(long long dlong)
+static npy_longlong as_freq_D2ms(npy_longlong dlong)
 {
     return dlong * 86400000LL;
 }
-static long long as_freq_D2us(long long dlong)
+static npy_longlong as_freq_D2us(npy_longlong dlong)
 {
     return dlong * 86400000000LL;
 }
-static long long as_freq_D2ns(long long dlong)
+static npy_longlong as_freq_D2ns(npy_longlong dlong)
 {
     return dlong * 86400000000000LL;
 }
-static long long as_freq_D2ps(long long dlong)
+static npy_longlong as_freq_D2ps(npy_longlong dlong)
 {
     return dlong * 86400000000000000LL;
 }
-static long long as_freq_D2fs(long long dlong)
+static npy_longlong as_freq_D2fs(npy_longlong dlong)
 {
     return 0;
     // should throw an error...
     //return dlong * 86400000000000000000LL;
 }
-static long long as_freq_D2as(long long dlong)
+static npy_longlong as_freq_D2as(npy_longlong dlong)
 {
     return 0;
     // should throw an error...
@@ -1051,58 +1001,58 @@ static long long as_freq_D2as(long long dlong)
 }
 
 // *************** From Year *************** //
-static long long as_freq_Y2D(long long dlong)
+static npy_longlong as_freq_Y2D(npy_longlong dlong)
 {
-    long long absdays = absdays_from_ymd(1970 + dlong, 1, 1);
+    npy_longlong absdays = absdays_from_ymd(1970 + dlong, 1, 1);
     return absdays;
 }
-static long long as_freq_Y2M(long long dlong)
+static npy_longlong as_freq_Y2M(npy_longlong dlong)
 {
     return dlong * 12;
 }
-static long long as_freq_Y2W(long long dlong)
+static npy_longlong as_freq_Y2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_Y2D(dlong));
 }
-static long long as_freq_Y2B(long long dlong)
+static npy_longlong as_freq_Y2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_Y2D(dlong));
 }
-static long long as_freq_Y2h(long long dlong)
+static npy_longlong as_freq_Y2h(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 24;
 }
-static long long as_freq_Y2m(long long dlong)
+static npy_longlong as_freq_Y2m(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 1440;
 }
-static long long as_freq_Y2s(long long dlong)
+static npy_longlong as_freq_Y2s(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 86400;
 }
-static long long as_freq_Y2ms(long long dlong)
+static npy_longlong as_freq_Y2ms(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 86400000LL;
 }
-static long long as_freq_Y2us(long long dlong)
+static npy_longlong as_freq_Y2us(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 86400000000LL;
 }
-static long long as_freq_Y2ns(long long dlong)
+static npy_longlong as_freq_Y2ns(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 86400000000000LL;
 }
-static long long as_freq_Y2ps(long long dlong)
+static npy_longlong as_freq_Y2ps(npy_longlong dlong)
 {
     return as_freq_Y2D(dlong) * 86400000000000000LL;
 }
-static long long as_freq_Y2fs(long long dlong)
+static npy_longlong as_freq_Y2fs(npy_longlong dlong)
 {
     return 0;
     // should return an error
     // return as_freq_Y2D(dlong) * 86400000000000000000LL;
 }
-static long long as_freq_Y2as(long long dlong)
+static npy_longlong as_freq_Y2as(npy_longlong dlong)
 {
     return 0;
     // should return an error
@@ -1111,9 +1061,9 @@ static long long as_freq_Y2as(long long dlong)
 
 // *************** From Month *************** //
 // Taken from TimeSeries
-static long long as_freq_M2D(long long dlong)
+static npy_longlong as_freq_M2D(npy_longlong dlong)
 {
-    long long absdays;
+    npy_longlong absdays;
     long y;
     long m;
 
@@ -1130,113 +1080,113 @@ static long long as_freq_M2D(long long dlong)
 	return absdays;
     }
 }
-static long long as_freq_M2Y(long long dlong)
+static npy_longlong as_freq_M2Y(npy_longlong dlong)
 {
     if (dlong < 0)
 	return (dlong + 1) / 12 - 1;
     return dlong / 12;
 }
-static long long as_freq_M2W(long long dlong)
+static npy_longlong as_freq_M2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_M2D(dlong));
 }
-static long long as_freq_M2B(long long dlong)
+static npy_longlong as_freq_M2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_M2D(dlong));
 }
-static long long as_freq_M2h(long long dlong)
+static npy_longlong as_freq_M2h(npy_longlong dlong)
 {
     return as_freq_D2h(as_freq_M2D(dlong));
 }
-static long long as_freq_M2m(long long dlong)
+static npy_longlong as_freq_M2m(npy_longlong dlong)
 {
     return as_freq_D2m(as_freq_M2D(dlong));
 }
-static long long as_freq_M2s(long long dlong)
+static npy_longlong as_freq_M2s(npy_longlong dlong)
 {
     return as_freq_D2s(as_freq_M2D(dlong));
 }
-static long long as_freq_M2ms(long long dlong)
+static npy_longlong as_freq_M2ms(npy_longlong dlong)
 {
     return as_freq_D2ms(as_freq_M2D(dlong));
 }
-static long long as_freq_M2us(long long dlong)
+static npy_longlong as_freq_M2us(npy_longlong dlong)
 {
     return as_freq_D2us(as_freq_M2D(dlong));
 }
-static long long as_freq_M2ns(long long dlong)
+static npy_longlong as_freq_M2ns(npy_longlong dlong)
 {
     return as_freq_D2ns(as_freq_M2D(dlong));
 }
-static long long as_freq_M2ps(long long dlong)
+static npy_longlong as_freq_M2ps(npy_longlong dlong)
 {
     return as_freq_D2ps(as_freq_M2D(dlong));
 }
-static long long as_freq_M2fs(long long dlong)
+static npy_longlong as_freq_M2fs(npy_longlong dlong)
 {
     return as_freq_D2fs(as_freq_M2D(dlong));
 }
-static long long as_freq_M2as(long long dlong)
+static npy_longlong as_freq_M2as(npy_longlong dlong)
 {
     return as_freq_D2as(as_freq_M2D(dlong));
 }
 
 // *************** From Week *************** //
-static long long as_freq_W2D(long long dlong)
+static npy_longlong as_freq_W2D(npy_longlong dlong)
 {
     return (dlong * 7) - 4;
 }
-static long long as_freq_W2Y(long long dlong)
+static npy_longlong as_freq_W2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_W2D(dlong));
 }
-static long long as_freq_W2M(long long dlong)
+static npy_longlong as_freq_W2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_W2D(dlong));
 }
-static long long as_freq_W2B(long long dlong)
+static npy_longlong as_freq_W2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_W2D(dlong));
 }
-static long long as_freq_W2h(long long dlong)
+static npy_longlong as_freq_W2h(npy_longlong dlong)
 {
     return as_freq_D2h(as_freq_W2D(dlong));
 }
-static long long as_freq_W2m(long long dlong)
+static npy_longlong as_freq_W2m(npy_longlong dlong)
 {
     return as_freq_D2m(as_freq_W2D(dlong));
 }
-static long long as_freq_W2s(long long dlong)
+static npy_longlong as_freq_W2s(npy_longlong dlong)
 {
     return as_freq_D2s(as_freq_W2D(dlong));
 }
-static long long as_freq_W2ms(long long dlong)
+static npy_longlong as_freq_W2ms(npy_longlong dlong)
 {
     return as_freq_D2ms(as_freq_W2D(dlong));
 }
-static long long as_freq_W2us(long long dlong)
+static npy_longlong as_freq_W2us(npy_longlong dlong)
 {
     return as_freq_D2us(as_freq_W2D(dlong));
 }
-static long long as_freq_W2ns(long long dlong)
+static npy_longlong as_freq_W2ns(npy_longlong dlong)
 {
     return as_freq_D2ns(as_freq_W2D(dlong));
 }
-static long long as_freq_W2ps(long long dlong)
+static npy_longlong as_freq_W2ps(npy_longlong dlong)
 {
     return as_freq_D2ps(as_freq_W2D(dlong));
 }
-static long long as_freq_W2fs(long long dlong)
+static npy_longlong as_freq_W2fs(npy_longlong dlong)
 {
     return as_freq_D2fs(as_freq_W2D(dlong));
 }
-static long long as_freq_W2as(long long dlong)
+static npy_longlong as_freq_W2as(npy_longlong dlong)
 {
     return as_freq_D2as(as_freq_W2D(dlong));
 }
 
 // *************** From Business Day *************** //
-static long long as_freq_B2D(long long dlong)
+static npy_longlong as_freq_B2D(npy_longlong dlong)
 {
     if (dlong < 0) {
 	// Special Case
@@ -1252,108 +1202,108 @@ static long long as_freq_B2D(long long dlong)
 	    return 7 * ((dlong + 3) / 5) + ((dlong + 3) % 5) - 3;
     }
 }
-static long long as_freq_B2Y(long long dlong)
+static npy_longlong as_freq_B2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_B2D(dlong));
 }
-static long long as_freq_B2M(long long dlong)
+static npy_longlong as_freq_B2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_B2D(dlong));
 }
-static long long as_freq_B2W(long long dlong)
+static npy_longlong as_freq_B2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_B2D(dlong));
 }
-static long long as_freq_B2h(long long dlong)
+static npy_longlong as_freq_B2h(npy_longlong dlong)
 {
     return as_freq_D2h(as_freq_B2D(dlong));
 }
-static long long as_freq_B2m(long long dlong)
+static npy_longlong as_freq_B2m(npy_longlong dlong)
 {
     return as_freq_D2m(as_freq_B2D(dlong));
 }
-static long long as_freq_B2s(long long dlong)
+static npy_longlong as_freq_B2s(npy_longlong dlong)
 {
     return as_freq_D2s(as_freq_B2D(dlong));
 }
-static long long as_freq_B2ms(long long dlong)
+static npy_longlong as_freq_B2ms(npy_longlong dlong)
 {
     return as_freq_D2ms(as_freq_B2D(dlong));
 }
-static long long as_freq_B2us(long long dlong)
+static npy_longlong as_freq_B2us(npy_longlong dlong)
 {
     return as_freq_D2us(as_freq_B2D(dlong));
 }
-static long long as_freq_B2ns(long long dlong)
+static npy_longlong as_freq_B2ns(npy_longlong dlong)
 {
     return as_freq_D2ns(as_freq_B2D(dlong));
 }
-static long long as_freq_B2ps(long long dlong)
+static npy_longlong as_freq_B2ps(npy_longlong dlong)
 {
     return as_freq_D2ps(as_freq_B2D(dlong));
 }
-static long long as_freq_B2fs(long long dlong)
+static npy_longlong as_freq_B2fs(npy_longlong dlong)
 {
     return as_freq_D2fs(as_freq_B2D(dlong));
 }
-static long long as_freq_B2as(long long dlong)
+static npy_longlong as_freq_B2as(npy_longlong dlong)
 {
     return as_freq_D2as(as_freq_B2D(dlong));
 }
 
 // *************** From Hour *************** //
-static long long as_freq_h2D(long long dlong)
+static npy_longlong as_freq_h2D(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 24 - 1;
     return dlong / 24;
 }
-static long long as_freq_h2Y(long long dlong)
+static npy_longlong as_freq_h2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_h2D(dlong));
 }
-static long long as_freq_h2M(long long dlong)
+static npy_longlong as_freq_h2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_h2D(dlong));
 }
-static long long as_freq_h2W(long long dlong)
+static npy_longlong as_freq_h2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_h2D(dlong));
 }
-static long long as_freq_h2B(long long dlong)
+static npy_longlong as_freq_h2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_h2D(dlong));
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_h2m(long long dlong)
+static npy_longlong as_freq_h2m(npy_longlong dlong)
 {
     return dlong * 60;
 }
-static long long as_freq_h2s(long long dlong)
+static npy_longlong as_freq_h2s(npy_longlong dlong)
 {
     return dlong * 3600;
 }
-static long long as_freq_h2ms(long long dlong)
+static npy_longlong as_freq_h2ms(npy_longlong dlong)
 {
     return dlong * 3600000;
 }
-static long long as_freq_h2us(long long dlong)
+static npy_longlong as_freq_h2us(npy_longlong dlong)
 {
     return dlong * 3600000000LL;
 }
-static long long as_freq_h2ns(long long dlong)
+static npy_longlong as_freq_h2ns(npy_longlong dlong)
 {
     return dlong * 3600000000000LL;
 }
-static long long as_freq_h2ps(long long dlong)
+static npy_longlong as_freq_h2ps(npy_longlong dlong)
 {
     return dlong * 3600000000000000LL;
 }
-static long long as_freq_h2fs(long long dlong)
+static npy_longlong as_freq_h2fs(npy_longlong dlong)
 {
     return dlong * 3600000000000000000LL;
 }
-static long long as_freq_h2as(long long dlong)
+static npy_longlong as_freq_h2as(npy_longlong dlong)
 {
     return 0;
     // should return an error...	
@@ -1361,60 +1311,60 @@ static long long as_freq_h2as(long long dlong)
 }
 
 // *************** From Minute *************** //
-static long long as_freq_m2D(long long dlong)
+static npy_longlong as_freq_m2D(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 1440 - 1;
     return dlong / 1440;
 }
-static long long as_freq_m2Y(long long dlong)
+static npy_longlong as_freq_m2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_m2D(dlong));
 }
-static long long as_freq_m2M(long long dlong)
+static npy_longlong as_freq_m2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_m2D(dlong));
 }
-static long long as_freq_m2W(long long dlong)
+static npy_longlong as_freq_m2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_m2D(dlong));
 }
-static long long as_freq_m2B(long long dlong)
+static npy_longlong as_freq_m2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_m2D(dlong));
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_m2h(long long dlong)
+static npy_longlong as_freq_m2h(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 60 - 1;
     return dlong / 60;
 }
-static long long as_freq_m2s(long long dlong)
+static npy_longlong as_freq_m2s(npy_longlong dlong)
 {
     return dlong * 60;
 }
-static long long as_freq_m2ms(long long dlong)
+static npy_longlong as_freq_m2ms(npy_longlong dlong)
 {
     return dlong * 60000;
 }
-static long long as_freq_m2us(long long dlong)
+static npy_longlong as_freq_m2us(npy_longlong dlong)
 {
     return dlong * 60000000LL;
 }
-static long long as_freq_m2ns(long long dlong)
+static npy_longlong as_freq_m2ns(npy_longlong dlong)
 {
     return dlong * 60000000000LL;
 }
-static long long as_freq_m2ps(long long dlong)
+static npy_longlong as_freq_m2ps(npy_longlong dlong)
 {
     return dlong * 60000000000000LL;
 }
-static long long as_freq_m2fs(long long dlong)
+static npy_longlong as_freq_m2fs(npy_longlong dlong)
 {
     return dlong * 60000000000000000LL;
 }
-static long long as_freq_m2as(long long dlong)
+static npy_longlong as_freq_m2as(npy_longlong dlong)
 {
     return 0;
     // should return an error...
@@ -1422,172 +1372,172 @@ static long long as_freq_m2as(long long dlong)
 }
 
 // *************** From Second *************** //
-static long long as_freq_s2D(long long dlong)
+static npy_longlong as_freq_s2D(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 86400 - 1;
     return dlong / 86400;
 }
-static long long as_freq_s2Y(long long dlong)
+static npy_longlong as_freq_s2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_s2D(dlong));
 }
-static long long as_freq_s2M(long long dlong)
+static npy_longlong as_freq_s2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_s2D(dlong));
 }
-static long long as_freq_s2W(long long dlong)
+static npy_longlong as_freq_s2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_s2D(dlong));
 }
-static long long as_freq_s2B(long long dlong)
+static npy_longlong as_freq_s2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_s2D(dlong));
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_s2h(long long dlong)
+static npy_longlong as_freq_s2h(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 3600 - 1;
     return dlong / 3600;
 }
-static long long as_freq_s2m(long long dlong)
+static npy_longlong as_freq_s2m(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 60 - 1;
     return dlong / 60;
 }
-static long long as_freq_s2ms(long long dlong)
+static npy_longlong as_freq_s2ms(npy_longlong dlong)
 {
     return dlong * 1000;
 }
-static long long as_freq_s2us(long long dlong)
+static npy_longlong as_freq_s2us(npy_longlong dlong)
 {
     return dlong * 1000000;
 }
-static long long as_freq_s2ns(long long dlong)
+static npy_longlong as_freq_s2ns(npy_longlong dlong)
 {
     return dlong * 1000000000LL;
 }
-static long long as_freq_s2ps(long long dlong)
+static npy_longlong as_freq_s2ps(npy_longlong dlong)
 {
     return dlong * 1000000000000LL;
 }
-static long long as_freq_s2fs(long long dlong)
+static npy_longlong as_freq_s2fs(npy_longlong dlong)
 {
     return dlong * 1000000000000000LL;
 }
-static long long as_freq_s2as(long long dlong)
+static npy_longlong as_freq_s2as(npy_longlong dlong)
 {
     return dlong * 1000000000000000000LL;
 }
 
 // *************** From Millisecond *************** //
-static long long as_freq_ms2D(long long dlong)
+static npy_longlong as_freq_ms2D(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 86400000 - 1;
     return dlong / 86400000;
 }
-static long long as_freq_ms2Y(long long dlong)
+static npy_longlong as_freq_ms2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_ms2D(dlong));
 }
-static long long as_freq_ms2M(long long dlong)
+static npy_longlong as_freq_ms2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_ms2D(dlong));
 }
-static long long as_freq_ms2W(long long dlong)
+static npy_longlong as_freq_ms2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_ms2D(dlong));
 }
-static long long as_freq_ms2B(long long dlong)
+static npy_longlong as_freq_ms2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_ms2D(dlong));
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_ms2h(long long dlong)
+static npy_longlong as_freq_ms2h(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 3600000 - 1;
     return dlong / 3600000;
 }
-static long long as_freq_ms2m(long long dlong)
+static npy_longlong as_freq_ms2m(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 60000 - 1;
     return dlong / 60000;
 }
-static long long as_freq_ms2s(long long dlong)
+static npy_longlong as_freq_ms2s(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 1000 - 1;
     return dlong / 1000;
 }
-static long long as_freq_ms2us(long long dlong)
+static npy_longlong as_freq_ms2us(npy_longlong dlong)
 {
     return dlong * 1000;
 }
-static long long as_freq_ms2ns(long long dlong)
+static npy_longlong as_freq_ms2ns(npy_longlong dlong)
 {
     return dlong * 1000000;
 }
-static long long as_freq_ms2ps(long long dlong)
+static npy_longlong as_freq_ms2ps(npy_longlong dlong)
 {
     return dlong * 1000000000LL;
 }
-static long long as_freq_ms2fs(long long dlong)
+static npy_longlong as_freq_ms2fs(npy_longlong dlong)
 {
     return dlong * 1000000000000LL;
 }
-static long long as_freq_ms2as(long long dlong)
+static npy_longlong as_freq_ms2as(npy_longlong dlong)
 {
     return dlong * 1000000000000000LL;
 }
 
 // *************** From Microsecond *************** //
-static long long as_freq_us2D(long long dlong)
+static npy_longlong as_freq_us2D(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 86400000000LL - 1;
     return dlong / 86400000000LL;
 }
-static long long as_freq_us2Y(long long dlong)
+static npy_longlong as_freq_us2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_us2D(dlong));
 }
-static long long as_freq_us2M(long long dlong)
+static npy_longlong as_freq_us2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_us2D(dlong));
 }
-static long long as_freq_us2W(long long dlong)
+static npy_longlong as_freq_us2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_us2D(dlong));
 }
-static long long as_freq_us2B(long long dlong)
+static npy_longlong as_freq_us2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_us2D(dlong));
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_us2h(long long dlong)
+static npy_longlong as_freq_us2h(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 3600000000LL - 1;
     return dlong / 3600000000LL;
 }
-static long long as_freq_us2m(long long dlong)
+static npy_longlong as_freq_us2m(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 60000000LL - 1;
     return dlong / 60000000LL;
 }
-static long long as_freq_us2s(long long dlong)
+static npy_longlong as_freq_us2s(npy_longlong dlong)
 {
     if (dlong < 0)
 	return dlong / 1000000LL - 1;
     return dlong / 1000000LL;
 }
-static long long as_freq_us2ms(long long dlong)
+static npy_longlong as_freq_us2ms(npy_longlong dlong)
 {
     // We're losing precision on XX:XX:XX.xx1 times for some reason
     //  can't find a fix, so here's a cheap hack...
@@ -1595,19 +1545,19 @@ static long long as_freq_us2ms(long long dlong)
 	return dlong / 1000LL - 1;
     return dlong / 1000LL;
 }
-static long long as_freq_us2ns(long long dlong)
+static npy_longlong as_freq_us2ns(npy_longlong dlong)
 {
     return dlong * 1000000LL;
 }
-static long long as_freq_us2ps(long long dlong)
+static npy_longlong as_freq_us2ps(npy_longlong dlong)
 {
     return dlong * 1000000000LL;
 }
-static long long as_freq_us2fs(long long dlong)
+static npy_longlong as_freq_us2fs(npy_longlong dlong)
 {
     return dlong * 1000000000000LL;
 }
-static long long as_freq_us2as(long long dlong)
+static npy_longlong as_freq_us2as(npy_longlong dlong)
 {
     return dlong * 1000000000000000LL;
 }
@@ -1617,231 +1567,231 @@ static long long as_freq_us2as(long long dlong)
 // *********************************************** //
 // *************** From Nanosecond *************** //
 // *********************************************** //
-static long long as_freq_ns2D(long long dlong)
+static npy_longlong as_freq_ns2D(npy_longlong dlong)
 {
     return as_freq_s2D(dlong) * 1000000000LL;
 }
-static long long as_freq_ns2Y(long long dlong)
+static npy_longlong as_freq_ns2Y(npy_longlong dlong)
 {
     return as_freq_D2Y(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2M(long long dlong)
+static npy_longlong as_freq_ns2M(npy_longlong dlong)
 {
     return as_freq_D2M(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2W(long long dlong)
+static npy_longlong as_freq_ns2W(npy_longlong dlong)
 {
     return as_freq_D2W(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2B(long long dlong)
+static npy_longlong as_freq_ns2B(npy_longlong dlong)
 {
     return as_freq_D2B(as_freq_ns2D(dlong));
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_ns2h(long long dlong)
+static npy_longlong as_freq_ns2h(npy_longlong dlong)
 {
     return as_freq_D2h(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2m(long long dlong)
+static npy_longlong as_freq_ns2m(npy_longlong dlong)
 {
     return as_freq_D2m(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2s(long long dlong)
+static npy_longlong as_freq_ns2s(npy_longlong dlong)
 {
     return as_freq_D2s(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2ms(long long dlong)
+static npy_longlong as_freq_ns2ms(npy_longlong dlong)
 {
     return as_freq_D2ms(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2us(long long dlong)
+static npy_longlong as_freq_ns2us(npy_longlong dlong)
 {
     return as_freq_D2us(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2ps(long long dlong)
+static npy_longlong as_freq_ns2ps(npy_longlong dlong)
 {
     return as_freq_D2ps(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2fs(long long dlong)
+static npy_longlong as_freq_ns2fs(npy_longlong dlong)
 {
     return as_freq_D2fs(as_freq_ns2D(dlong));
 }
-static long long as_freq_ns2as(long long dlong)
+static npy_longlong as_freq_ns2as(npy_longlong dlong)
 {
     return as_freq_D2as(as_freq_ns2D(dlong));
 }
 
 // *************** From Picosecond *************** //
-static long long as_freq_ps2Y(long long dlong)
+static npy_longlong as_freq_ps2Y(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2M(long long dlong)
+static npy_longlong as_freq_ps2M(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2W(long long dlong)
+static npy_longlong as_freq_ps2W(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2B(long long dlong)
+static npy_longlong as_freq_ps2B(npy_longlong dlong)
 {
     return dlong;
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_ps2h(long long dlong)
+static npy_longlong as_freq_ps2h(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2m(long long dlong)
+static npy_longlong as_freq_ps2m(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2s(long long dlong)
+static npy_longlong as_freq_ps2s(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2ms(long long dlong)
+static npy_longlong as_freq_ps2ms(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2us(long long dlong)
+static npy_longlong as_freq_ps2us(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2ns(long long dlong)
+static npy_longlong as_freq_ps2ns(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2D(long long dlong)
+static npy_longlong as_freq_ps2D(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2fs(long long dlong)
+static npy_longlong as_freq_ps2fs(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_ps2as(long long dlong)
+static npy_longlong as_freq_ps2as(npy_longlong dlong)
 {
     return dlong;
 }
 
 // *************** From Femtosecond *************** //
-static long long as_freq_fs2Y(long long dlong)
+static npy_longlong as_freq_fs2Y(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2M(long long dlong)
+static npy_longlong as_freq_fs2M(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2W(long long dlong)
+static npy_longlong as_freq_fs2W(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2B(long long dlong)
+static npy_longlong as_freq_fs2B(npy_longlong dlong)
 {
     return dlong;
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_fs2h(long long dlong)
+static npy_longlong as_freq_fs2h(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2m(long long dlong)
+static npy_longlong as_freq_fs2m(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2s(long long dlong)
+static npy_longlong as_freq_fs2s(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2ms(long long dlong)
+static npy_longlong as_freq_fs2ms(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2us(long long dlong)
+static npy_longlong as_freq_fs2us(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2ns(long long dlong)
+static npy_longlong as_freq_fs2ns(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2ps(long long dlong)
+static npy_longlong as_freq_fs2ps(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2D(long long dlong)
+static npy_longlong as_freq_fs2D(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_fs2as(long long dlong)
+static npy_longlong as_freq_fs2as(npy_longlong dlong)
 {
     return dlong;
 }
 
 // *************** From Attosecond *************** //
-static long long as_freq_as2Y(long long dlong)
+static npy_longlong as_freq_as2Y(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2M(long long dlong)
+static npy_longlong as_freq_as2M(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2W(long long dlong)
+static npy_longlong as_freq_as2W(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2B(long long dlong)
+static npy_longlong as_freq_as2B(npy_longlong dlong)
 {
     return dlong;
 }
 // these are easier to think about with a simple calculation
-static long long as_freq_as2h(long long dlong)
+static npy_longlong as_freq_as2h(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2m(long long dlong)
+static npy_longlong as_freq_as2m(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2s(long long dlong)
+static npy_longlong as_freq_as2s(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2ms(long long dlong)
+static npy_longlong as_freq_as2ms(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2us(long long dlong)
+static npy_longlong as_freq_as2us(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2ns(long long dlong)
+static npy_longlong as_freq_as2ns(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2ps(long long dlong)
+static npy_longlong as_freq_as2ps(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2fs(long long dlong)
+static npy_longlong as_freq_as2fs(npy_longlong dlong)
 {
     return dlong;
 }
-static long long as_freq_as2D(long long dlong)
+static npy_longlong as_freq_as2D(npy_longlong dlong)
 {
     return dlong;
 }
 
-static long long NO_FUNC(long long empty)
+static npy_longlong NO_FUNC(npy_longlong empty)
 { return empty; }
 
 // Convert (dlong, ifreq) to a new date based on ofreq
 // Returns the long value to represent the date with the ofreq
-static long long (*get_conversion_ftn(int ifreq, int ofreq)) (long long)
+static npy_longlong (*get_conversion_ftn(int ifreq, int ofreq)) (npy_longlong)
 {
     if (ifreq == ofreq)
 	return &NO_FUNC;// Error out
@@ -2099,14 +2049,14 @@ static long long (*get_conversion_ftn(int ifreq, int ofreq)) (long long)
 }
 
 // Uses get_conversion_ftn to find which function to return
-static long long as_freq_to_long(long long dlong, int ifreq, int ofreq)
+static npy_longlong as_freq_to_long(npy_longlong dlong, int ifreq, int ofreq)
 {
     // Needs more error checking, but it works for now
     if (ifreq == ofreq)
 	return -1;// Error out
 
     // grab conversion function based on ifreq and ofreq
-    long long (*conversion_ftn)(long long) = get_conversion_ftn(ifreq, ofreq);
+    npy_longlong (*conversion_ftn)(npy_longlong) = get_conversion_ftn(ifreq, ofreq);
     // return conversion function ran with dlong
     return (*conversion_ftn)(dlong);
 }
@@ -2123,7 +2073,7 @@ convert_freq(PyObject *self, PyObject *args)
     PyObject *ofreq_arg = NULL;	  // out frequency as string
     PyObject *result   = NULL;	  // long result
 
-    long long dlong = 0;          // Stores the main_arg
+    npy_longlong dlong = 0;          // Stores the main_arg
     int ifreq = NPY_FR_ERR;			  // freq_arg is a PyObject to be parsed to freq
     int ofreq = NPY_FR_ERR;			  // freq_arg is a PyObject to be parsed to freq
 
@@ -2155,7 +2105,7 @@ convert_freq(PyObject *self, PyObject *args)
     if (PyLong_Check(main_arg))
 	{
 	    // XXX PyINCREF here?
-	    // Convert main_arg to a long long
+	    // Convert main_arg to a npy_longlong
 	    dlong = PyLong_AsLongLong(main_arg);
 	
 	    // All the basic tests are out of the way, now we need to figure out 
@@ -2171,14 +2121,14 @@ convert_freq(PyObject *self, PyObject *args)
 	    // We shouldn't just use as_freq_to_long because that checks
 	    //  each ifreq and ofreq. We'll always be using the same ifreq
 	    //  and ofreq, so we just need that one function...
-	    long long (*conversion_ftn)(long long) = get_conversion_ftn(ifreq, ofreq);
+	    npy_longlong (*conversion_ftn)(npy_longlong) = get_conversion_ftn(ifreq, ofreq);
 	    // Iterate through main_arg
 	    Py_ssize_t idx;
 	    for (idx = 0; idx < PyList_Size(main_arg); idx++)
 		{
 		    // extract correct value of main arg
-		    long long dlong = PyLong_AsLongLong(PyList_GetItem(main_arg, idx));
-		    long long resultant_dlong = (*conversion_ftn)(dlong);
+		    npy_longlong dlong = PyLong_AsLongLong(PyList_GetItem(main_arg, idx));
+		    npy_longlong resultant_dlong = (*conversion_ftn)(dlong);
 		    // put calculated dlong into result
 		    PyList_Append(result,
 				  PyLong_FromLongLong(resultant_dlong));
@@ -2204,7 +2154,7 @@ convert_freq(PyObject *self, PyObject *args)
 // Takes a datetime timedelta object and a string as frequency
 // Returns the number of (frequency) since Jan 1, 1970
 static 
-long long timedelta_to_long(PyObject* timedelta, int frequency)
+npy_longlong timedelta_to_long(PyObject* timedelta, int frequency)
 {
     int year = 0, month = 0, day = 0, hour = 0, 
 	minute = 0, second = 0, microsecond = 0;
@@ -2219,10 +2169,10 @@ long long timedelta_to_long(PyObject* timedelta, int frequency)
     microsecond = PyDateTime_DATE_GET_MICROSECOND(timedelta);
 	
     // The return value
-    long long result = 0;
+    npy_longlong result = 0;
 
     // The absolute number of days since 1970
-    long long absdays = absdays_from_ymd(year, month, day);
+    npy_longlong absdays = absdays_from_ymd(year, month, day);
 
     // These calculations depend on the frequency
 
@@ -2282,7 +2232,7 @@ long long timedelta_to_long(PyObject* timedelta, int frequency)
     return result;
 }
 
-static char* timedelta_to_cstring(long long tlong, int freq)
+static char* timedelta_to_cstring(npy_longlong tlong, int freq)
 {
     char result[64];
     switch (freq)
@@ -2340,7 +2290,7 @@ static char* timedelta_to_cstring(long long tlong, int freq)
 		// 8760 hours in 365 days
 		if (tlong > 8759)
 		    {
-			long long years = as_freq_h2Y(tlong);
+			npy_longlong years = as_freq_h2Y(tlong);
 			sprintf(result, "%lli Years, %lli Days %lli:00:00",
 				years, (tlong / 24) % 365, tlong % 24);
 			break;
@@ -2361,15 +2311,15 @@ static char* timedelta_to_cstring(long long tlong, int freq)
 		// 525600 minutes in 365 days
 		if (tlong > 525600)
 		    {
-			long long years = as_freq_m2Y(tlong);
-			long long days  = as_freq_m2D(tlong % 525600);
+			npy_longlong years = as_freq_m2Y(tlong);
+			npy_longlong days  = as_freq_m2D(tlong % 525600);
 			sprintf(result, "%lli Years, %lli Days, %lli:%lli:00",
 				years, days, (tlong / 60) % 24, tlong % 60);
 			break;
 		    }
 		else if (tlong > 1440)
 		    {
-			long long days = as_freq_m2D(tlong % 525600);
+			npy_longlong days = as_freq_m2D(tlong % 525600);
 			sprintf(result, "%lli Days, %lli:%lli:00",
 				days, (tlong / 60) % 24, tlong % 60);
 			break;
@@ -2451,7 +2401,7 @@ dt_timedelta_to_long(PyObject *self, PyObject *args)
 }
 // TimeDelta TimeDelta -> long is also simple.
 // TimeDelta TimeDelta -> String is less simple.
-//  Takes a long long value for timedelta and 
+//  Takes a npy_longlong value for timedelta and 
 //   a frequency as it's frequency
 //  Returns a string formatted:
 //  X Years, Y Days xx:xx:xx.xxxxxx
@@ -2461,7 +2411,7 @@ timedelta_to_string(PyObject *self, PyObject *args)
     PyObject *long_arg = NULL;
     PyObject *freq_arg = NULL;
 	
-    long long tlong = 0;
+    npy_longlong tlong = 0;
     int freq = NPY_FR_ERR;
 
     // Parse out long_arg & freq_arg
@@ -2496,8 +2446,8 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
     PyObject *long_arg2 = NULL;
     PyObject *freq_arg2 = NULL;
 	
-    long long tlong1 = 0;
-    long long tlong2 = 0;
+    npy_longlong tlong1 = 0;
+    npy_longlong tlong2 = 0;
     int freq1 = NPY_FR_ERR;
     int freq2 = NPY_FR_ERR;
 
@@ -2527,7 +2477,7 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
 	    //  change freq2 to freq1
 	    else if (freq1 < freq2)
 		{
-		    long long (* conversion_ftn) (long long) = 
+		    npy_longlong (* conversion_ftn) (npy_longlong) = 
 			get_conversion_ftn(freq2, freq1);
 		    return PyLong_FromLongLong(conversion_ftn(tlong2) + tlong1);
 		}
@@ -2535,7 +2485,7 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
 	    //  change freq1 to freq2
 	    else
 		{
-		    long long (* conversion_ftn) (long long) = 
+		    npy_longlong (* conversion_ftn) (npy_longlong) = 
 			get_conversion_ftn(freq1, freq2);
 		    return PyLong_FromLongLong(conversion_ftn(tlong1) + tlong2);
 		}
@@ -2543,9 +2493,9 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
     // List + TimeDelta
     else if (PyList_Check(long_arg1) && PyLong_Check(long_arg2))
 	{
-	    long long tlong_scalar = PyLong_AsLongLong(long_arg2);
+	    npy_longlong tlong_scalar = PyLong_AsLongLong(long_arg2);
 	    PyObject* result = PyList_New(0);
-	    long long (*conversion_ftn) (long long) = NULL;
+	    npy_longlong (*conversion_ftn) (npy_longlong) = NULL;
 	    int smaller_arg = 0; // which argument is more precise?
 
 	    // Freq1 is more precise than freq2
@@ -2570,9 +2520,9 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
 	    for (idx = 0; idx < PyList_Size(long_arg1); idx++)
 		{
 		    // extract correct value of main arg
-		    long long tlong_member = 
+		    npy_longlong tlong_member = 
 			PyLong_AsLongLong(PyList_GetItem(long_arg1, idx));
-		    long long tlong_result;
+		    npy_longlong tlong_result;
 		    if (conversion_ftn)
 			{
 			    if (smaller_arg)
@@ -2600,7 +2550,7 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
 		}
 
 	    PyObject* result = PyList_New(0);
-	    long long (*conversion_ftn)(long long) = NULL;
+	    npy_longlong (*conversion_ftn)(npy_longlong) = NULL;
 	    int smaller_arg = 0; // which argument is smaller?
 
 	    // Freq1 is more precise than freq2
@@ -2623,11 +2573,11 @@ timedelta_plus_timedelta(PyObject *self, PyObject *args)
 	    for (idx = 0; idx < PyList_Size(long_arg1); idx++)
 		{
 		    // extract correct value of main arg
-		    long long tlong_member1 = PyLong_AsLongLong(
+		    npy_longlong tlong_member1 = PyLong_AsLongLong(
 								PyList_GetItem(long_arg1, idx));
-		    long long tlong_member2 = PyLong_AsLongLong(
+		    npy_longlong tlong_member2 = PyLong_AsLongLong(
 								PyList_GetItem(long_arg2, idx));
-		    long long tlong_result;
+		    npy_longlong tlong_result;
 		    if (conversion_ftn)
 			{
 			    // if the second is smaller
@@ -2667,8 +2617,8 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
     PyObject *long_arg2 = NULL;
     PyObject *freq_arg2 = NULL;
 	
-    long long tlong1 = 0;
-    long long tlong2 = 0;
+    npy_longlong tlong1 = 0;
+    npy_longlong tlong2 = 0;
     int freq1 = NPY_FR_ERR;
     int freq2 = NPY_FR_ERR;
 
@@ -2698,7 +2648,7 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
 	    //  change freq2 to freq1
 	    else if (freq1 < freq2)
 		{
-		    long long (* conversion_ftn) (long long) = 
+		    npy_longlong (* conversion_ftn) (npy_longlong) = 
 			get_conversion_ftn(freq2, freq1);
 		    return PyLong_FromLongLong(-conversion_ftn(tlong2) + tlong1);
 		}
@@ -2706,7 +2656,7 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
 	    //  change freq1 to freq2
 	    else
 		{
-		    long long (* conversion_ftn) (long long) = 
+		    npy_longlong (* conversion_ftn) (npy_longlong) = 
 			get_conversion_ftn(freq1, freq2);
 		    return PyLong_FromLongLong(conversion_ftn(tlong1) - tlong2);
 		}
@@ -2714,9 +2664,9 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
     // List + TimeDelta
     else if (PyList_Check(long_arg1) && PyLong_Check(long_arg2))
 	{
-	    long long tlong_scalar = PyLong_AsLongLong(long_arg2);
+	    npy_longlong tlong_scalar = PyLong_AsLongLong(long_arg2);
 	    PyObject* result = PyList_New(0);
-	    long long (*conversion_ftn) (long long) = NULL;
+	    npy_longlong (*conversion_ftn) (npy_longlong) = NULL;
 	    int smaller_arg = 0; // which argument is more precise?
 
 	    // Freq1 is more precise than freq2
@@ -2741,9 +2691,9 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
 	    for (idx = 0; idx < PyList_Size(long_arg1); idx++)
 		{
 		    // extract correct value of main arg
-		    long long tlong_member = 
+		    npy_longlong tlong_member = 
 			PyLong_AsLongLong(PyList_GetItem(long_arg1, idx));
-		    long long tlong_result;
+		    npy_longlong tlong_result;
 		    if (conversion_ftn)
 			{
 			    if (smaller_arg)
@@ -2771,7 +2721,7 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
 		}
 
 	    PyObject* result = PyList_New(0);
-	    long long (*conversion_ftn)(long long) = NULL;
+	    npy_longlong (*conversion_ftn)(npy_longlong) = NULL;
 	    int smaller_arg = 0; // which argument is smaller?
 
 	    // Freq1 is more precise than freq2
@@ -2794,11 +2744,11 @@ timedelta_minus_timedelta(PyObject *self, PyObject *args)
 	    for (idx = 0; idx < PyList_Size(long_arg1); idx++)
 		{
 		    // extract correct value of main arg
-		    long long tlong_member1 = PyLong_AsLongLong(
+		    npy_longlong tlong_member1 = PyLong_AsLongLong(
 								PyList_GetItem(long_arg1, idx));
-		    long long tlong_member2 = PyLong_AsLongLong(
+		    npy_longlong tlong_member2 = PyLong_AsLongLong(
 								PyList_GetItem(long_arg2, idx));
-		    long long tlong_result;
+		    npy_longlong tlong_result;
 		    if (conversion_ftn)
 			{
 			    // if the second is smaller
@@ -2854,7 +2804,7 @@ convert_freq_ufunc(char **args, npy_intp *dimensions, \
     //	freq = _unit_from_str(*freq_char);
     // error out
 	
-    long long (*conversion_ftn)(long long) = NULL;
+    npy_longlong (*conversion_ftn)(npy_longlong) = NULL;
 
     // Pull out freqs from extra OR
     //  grab freqs depending on dtype
@@ -2866,7 +2816,7 @@ convert_freq_ufunc(char **args, npy_intp *dimensions, \
     for (idx = 0; idx < n; idx++)
 	{
 	    // Perform operation
-	    *((long long *)output) = conversion_ftn(*((long long *)input));
+	    *((npy_longlong *)output) = conversion_ftn(*((npy_longlong *)input));
 
 	    // Iterate over data
 	    input  += insteps;
@@ -2896,52 +2846,6 @@ static char cf_signatures[]=\
  *  with each type deserving a different function
  */
 
-//==================================================
-// Module
-//==================================================
 
-// Tell Python what methods we can run from this module
-static PyMethodDef methods[] = {
-    {"set_callback", (PyCFunction)set_callback, 
-     METH_VARARGS, ""},
-    {"date_to_long", date_to_long,
-     METH_VARARGS, ""},
-    {"long_to_datetime", long_to_datetime,
-     METH_VARARGS, ""},
-    {"long_to_datestring", long_to_datestring,
-     METH_VARARGS, ""},
-    {"convert_freq", (PyCFunction)convert_freq,
-     METH_VARARGS, ""},
-    {"dt_timedelta_to_long", (PyCFunction)dt_timedelta_to_long,
-     METH_VARARGS, ""},
-    {"timedelta_to_string", (PyCFunction)timedelta_to_string,
-     METH_VARARGS, ""},
-    {"timedelta_plus_timedelta", (PyCFunction)timedelta_plus_timedelta,
-     METH_VARARGS, ""},
-    {"timedelta_minus_timedelta", (PyCFunction)timedelta_minus_timedelta,
-     METH_VARARGS, ""},
-    {NULL, NULL}
-};
 
-PyMODINIT_FUNC
-initparsedates(void)
-{
-    PyObject *cf_test, *dict, *module;
-    module = Py_InitModule("parsedates", methods);
-    import_array();
-    import_ufunc();
 
-    // Can't set this until import_ufunc()
-    cf_data[0] = PyUFunc_d_d;
-    cf_test = PyUFunc_FromFuncAndData(cf_functions,
-				      cf_data, cf_signatures, 1, 1, 1,
-				      PyUFunc_One, "cf_test",
-				      "some description", 0);
-
-    dict = PyModule_GetDict(module);
-    PyDict_SetItemString(dict, "cf_test", cf_test);
-    Py_DECREF(cf_test);
-
-    if (module == NULL)
-	return;
-}

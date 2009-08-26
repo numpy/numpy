@@ -153,13 +153,22 @@ static int
                                   number of events is a Python integer
  */
 
+/* Return a Python Datetime Object from a number representing the number of
+   units since the epoch (Jan 1, 1970).  
+*/
+NPY_NO_EXPORT PyObject *
+PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIME_UNIT base)
+{
+} 
+
+
 static PyObject *
 PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     PyObject *obj;
     meta = PyDataType_GetDatetimeMetaData(descr);
-    longlong normalized;
+    datetime normalized;
 
     if (meta->events > 1) {
 	int events, rem, div;
@@ -178,35 +187,18 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
 	return obj;
     }
 
-    /* We normalize the number to a base-unit and then return either a Python Date 
-       Object or a Python DateTime Object
-       
-       FIXME? : We silently truncate if it doesn't fit, either too big (10 BC) 
-                or too small (nanoseconds)
+    /* We normalize the number to a base-unit and then return a
+       Python Datetime Object
+
+       FIXME? : We silently truncate if it doesn't fit, either too wide (e.g. 10 BC) 
+                or too narrow (nanoseconds)
     */
 
-    /* Normalization */
-    
-    normalize = val;
-    normalize 
+    /* Normalization and then conversion to Datetime */
 
-	
- 
-    if (meta->base > NPY_FR_us) {
-	/* we just return the integer itself */ 
-	return PyLong_FromLongLong((longlong) val);
-    }
-
-    if (meta->base < NPY_FR_D) {
-	/* return a Date object */
-	/* The number is the number of 'FR' since EPOCH */
-	
-    }
-    
-    /* otherwise, we construct a date-time object */
-    
-    
-    
+    /* FIXME? : Check for Overflow... */
+    normalized = val * meta->num;
+    return PyDatetime_FromNormalized(normalized, meta->base);
 }
 
 
