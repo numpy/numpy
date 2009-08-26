@@ -1083,16 +1083,15 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape", "dtype", "buffer",
-                             "offset", "strides",
+    static char *kwlist[] = {"shape", "dtype", "buffer", "offset", "strides",
                              "order", NULL};
-    PyArray_Descr *descr=NULL;
+    PyArray_Descr *descr = NULL;
     int itemsize;
     PyArray_Dims dims = {NULL, 0};
     PyArray_Dims strides = {NULL, 0};
     PyArray_Chunk buffer;
-    longlong offset=0;
-    NPY_ORDER order=PyArray_CORDER;
+    longlong offset = 0;
+    NPY_ORDER order = PyArray_CORDER;
     int fortran = 0;
     PyArrayObject *ret;
 
@@ -1252,73 +1251,65 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
-    0,                                           /* ob_size */
-    "numpy.ndarray",                             /* tp_name */
-    sizeof(PyArrayObject),                       /* tp_basicsize */
-    0,                                           /* tp_itemsize */
+    0,                                          /* ob_size */
+#endif
+    "numpy.ndarray",                            /* tp_name */
+    sizeof(PyArrayObject),                      /* tp_basicsize */
+    0,                                          /* tp_itemsize */
     /* methods */
-    (destructor)array_dealloc,                   /* tp_dealloc */
-    (printfunc)NULL,                             /* tp_print */
-    0,                                           /* tp_getattr */
-    0,                                           /* tp_setattr */
-    (cmpfunc)0,                                  /* tp_compare */
-    (reprfunc)array_repr,                        /* tp_repr */
-    &array_as_number,                            /* tp_as_number */
-    &array_as_sequence,                          /* tp_as_sequence */
-    &array_as_mapping,                           /* tp_as_mapping */
-    (hashfunc)0,                                 /* tp_hash */
-    (ternaryfunc)0,                              /* tp_call */
-    (reprfunc)array_str,                         /* tp_str */
-    (getattrofunc)0,                             /* tp_getattro */
-    (setattrofunc)0,                             /* tp_setattro */
-    &array_as_buffer,                            /* tp_as_buffer */
+    (destructor)array_dealloc,                  /* tp_dealloc */
+    (printfunc)NULL,                            /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    (reprfunc)array_repr,                       /* tp_repr */
+    &array_as_number,                           /* tp_as_number */
+    &array_as_sequence,                         /* tp_as_sequence */
+    &array_as_mapping,                          /* tp_as_mapping */
+    (hashfunc)0,                                /* tp_hash */
+    (ternaryfunc)0,                             /* tp_call */
+    (reprfunc)array_str,                        /* tp_str */
+    (getattrofunc)0,                            /* tp_getattro */
+    (setattrofunc)0,                            /* tp_setattro */
+    &array_as_buffer,                           /* tp_as_buffer */
     (Py_TPFLAGS_DEFAULT
      | Py_TPFLAGS_BASETYPE
-     | Py_TPFLAGS_CHECKTYPES),                   /* tp_flags */
-    /*Documentation string */
-    0,                                           /* tp_doc */
+     | Py_TPFLAGS_CHECKTYPES),                  /* tp_flags */
+    0,                                          /* tp_doc */
 
-    (traverseproc)0,                             /* tp_traverse */
-    (inquiry)0,                                  /* tp_clear */
-    (richcmpfunc)array_richcompare,              /* tp_richcompare */
-    offsetof(PyArrayObject, weakreflist),        /* tp_weaklistoffset */
-
-    /* Iterator support (use standard) */
-
-    (getiterfunc)array_iter,                     /* tp_iter */
-    (iternextfunc)0,                             /* tp_iternext */
-
-    /* Sub-classing (new-style object) support */
-
-    array_methods,                               /* tp_methods */
-    0,                                           /* tp_members */
-    array_getsetlist,                            /* tp_getset */
-    0,                                           /* tp_base */
-    0,                                           /* tp_dict */
-    0,                                           /* tp_descr_get */
-    0,                                           /* tp_descr_set */
-    0,                                           /* tp_dictoffset */
-    (initproc)0,                                 /* tp_init */
-    array_alloc,                                 /* tp_alloc */
-    (newfunc)array_new,                          /* tp_new */
-    0,                                           /* tp_free */
-    0,                                           /* tp_is_gc */
-    0,                                           /* tp_bases */
-    0,                                           /* tp_mro */
-    0,                                           /* tp_cache */
-    0,                                           /* tp_subclasses */
-    0,                                           /* tp_weaklist */
-    0,                                           /* tp_del */
-
-#ifdef COUNT_ALLOCS
-    /* these must be last and never explicitly initialized */
-    0,                                           /* tp_allocs */
-    0,                                           /* tp_frees */
-    0,                                           /* tp_maxalloc */
-    0,                                           /* tp_prev */
-    0,                                           /* *tp_next */
-#endif
+    (traverseproc)0,                            /* tp_traverse */
+    (inquiry)0,                                 /* tp_clear */
+    (richcmpfunc)array_richcompare,             /* tp_richcompare */
+    offsetof(PyArrayObject, weakreflist),       /* tp_weaklistoffset */
+    (getiterfunc)array_iter,                    /* tp_iter */
+    (iternextfunc)0,                            /* tp_iternext */
+    array_methods,                              /* tp_methods */
+    0,                                          /* tp_members */
+    array_getsetlist,                           /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)0,                                /* tp_init */
+    array_alloc,                                /* tp_alloc */
+    (newfunc)array_new,                         /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
 };
 
 

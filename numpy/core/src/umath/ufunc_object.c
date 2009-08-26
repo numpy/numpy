@@ -4275,10 +4275,10 @@ static PyGetSetDef ufunc_getset[] = {
  *****************************************************************************/
 
 NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
-#if defined(PY3K)
-    PyVarObject_HEAD_INIT(0,0)
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
 #else
-    PyObject_HEAD_INIT(0)
+    PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
     "numpy.ufunc",                              /* tp_name */
@@ -4286,26 +4286,26 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)ufunc_dealloc,                  /* tp_dealloc */
-    (printfunc)0,                               /* tp_print */
-    (getattrfunc)0,                             /* tp_getattr */
-    (setattrfunc)0,                             /* tp_setattr */
-#if defined(PY3K)
-    (void *)0,                                  /* tp_reserved */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
 #else
-    (cmpfunc)0,                                 /* tp_compare */
+    0,                                          /* tp_compare */
 #endif
     (reprfunc)ufunc_repr,                       /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
-    (hashfunc)0,                                /* tp_hash */
+    0,                                          /* tp_hash */
     (ternaryfunc)ufunc_generic_call,            /* tp_call */
     (reprfunc)ufunc_repr,                       /* tp_str */
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    NULL,                                       /* tp_doc */
+    0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */

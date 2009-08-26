@@ -22,9 +22,9 @@
 static PyObject *
 array_subscript_simple(PyArrayObject *self, PyObject *op);
 
-/*************************************************************************
- ****************   Implement Mapping Protocol ***************************
- *************************************************************************/
+/******************************************************************************
+ ***                    IMPLEMENT MAPPING PROTOCOL                          ***
+ *****************************************************************************/
 
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self)
@@ -1612,63 +1612,62 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * slice syntax.
  */
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
-    0,                                           /* ob_size */
-    "numpy.mapiter",                             /* tp_name */
-    sizeof(PyArrayIterObject),                   /* tp_basicsize */
-    0,                                           /* tp_itemsize */
-    /* methods */
-    (destructor)arraymapiter_dealloc,            /* tp_dealloc */
-    0,                                           /* tp_print */
-    0,                                           /* tp_getattr */
-    0,                                           /* tp_setattr */
-    0,                                           /* tp_compare */
-    0,                                           /* tp_repr */
-    0,                                           /* tp_as_number */
-    0,                                           /* tp_as_sequence */
-    0,                                           /* tp_as_mapping */
-    0,                                           /* tp_hash */
-    0,                                           /* tp_call */
-    0,                                           /* tp_str */
-    0,                                           /* tp_getattro */
-    0,                                           /* tp_setattro */
-    0,                                           /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
-    0,                                           /* tp_doc */
-    (traverseproc)0,                             /* tp_traverse */
-    0,                                           /* tp_clear */
-    0,                                           /* tp_richcompare */
-    0,                                           /* tp_weaklistoffset */
-    0,                                           /* tp_iter */
-    (iternextfunc)0,                             /* tp_iternext */
-    0,                                           /* tp_methods */
-    0,                                           /* tp_members */
-    0,                                           /* tp_getset */
-    0,                                           /* tp_base */
-    0,                                           /* tp_dict */
-    0,                                           /* tp_descr_get */
-    0,                                           /* tp_descr_set */
-    0,                                           /* tp_dictoffset */
-    (initproc)0,                                 /* tp_init */
-    0,                                           /* tp_alloc */
-    0,                                           /* tp_new */
-    0,                                           /* tp_free */
-    0,                                           /* tp_is_gc */
-    0,                                           /* tp_bases */
-    0,                                           /* tp_mro */
-    0,                                           /* tp_cache */
-    0,                                           /* tp_subclasses */
-    0,                                           /* tp_weaklist */
-    0,   				         /* tp_del */
-
-#ifdef COUNT_ALLOCS
-    /* these must be last and never explicitly initialized */
-    0,                                           /* tp_allocs */
-    0,                                           /* tp_frees */
-    0,                                           /* tp_maxalloc */
-    0,                                           /* tp_prev */
-    0,                                           /* *tp_next */
+    0,                                          /* ob_size */
 #endif
+    "numpy.mapiter",                            /* tp_name */
+    sizeof(PyArrayIterObject),                  /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)arraymapiter_dealloc,           /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    0,                                          /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,   				        /* tp_del */
 };
 
 /** END of Subscript Iterator **/
