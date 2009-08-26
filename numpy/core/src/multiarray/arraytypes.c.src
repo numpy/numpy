@@ -154,11 +154,16 @@ static int
  */
 
 /* Return a Python Datetime Object from a number representing the number of
-   units since the epoch (Jan 1, 1970).  
+   units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
 */
 NPY_NO_EXPORT PyObject *
 PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIME_UNIT base)
 {
+    npy_datestruct ydate;
+
+    /* We just truncate the unused variables and don't wory about overflow */
+    _datetime_to_datestruct(val, base, &ydate);
+    
 } 
 
 
