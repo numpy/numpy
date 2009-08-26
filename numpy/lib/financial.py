@@ -625,17 +625,17 @@ def mirr(values, finance_rate, reinvest_rate):
 
     """
 
-    values = np.asarray(values)
+    values = np.asarray(values, dtype=np.double)
     initial = values[0]
     values = values[1:]
     n = values.size
     pos = values > 0
     neg = values < 0
-    if not (pos.sum() > 0 and neg.sum() > 0):
+    if not (pos.any() and neg.any()):
         return np.nan
     numer = np.abs(npv(reinvest_rate, values*pos))
     denom = np.abs(npv(finance_rate, values*neg))
-    if initial > 0:        
-        return ((initial + numer) / denom)**(1.0/n)*(1+reinvest_rate) - 1
+    if initial > 0:
+        return ((initial + numer) / denom)**(1.0/n)*(1 + reinvest_rate) - 1
     else:
-        return ((numer / (-initial + denom)))**(1.0/n)*(1+reinvest_rate) - 1
+        return ((numer / (-initial + denom)))**(1.0/n)*(1 + reinvest_rate) - 1

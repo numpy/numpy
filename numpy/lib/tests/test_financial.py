@@ -43,7 +43,7 @@ class TestFinancial(TestCase):
         v2 = [-120000,39000,30000,21000,37000,46000]
         assert_almost_equal(np.mirr(v2,0.10,0.12),
                             0.1344, 4)
-       
+
         v3 = [100,200,-50,300,-200]
         assert_almost_equal(np.mirr(v3,0.05,0.06), 0.3428, 4)
 
