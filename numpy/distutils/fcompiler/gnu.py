@@ -25,7 +25,8 @@ def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
 
 if is_win64():
-    _EXTRAFLAGS = ["-fno-leading-underscore"]
+    #_EXTRAFLAGS = ["-fno-leading-underscore"]
+    _EXTRAFLAGS = []
 else:
     _EXTRAFLAGS = []
 
