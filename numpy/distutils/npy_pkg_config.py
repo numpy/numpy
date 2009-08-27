@@ -182,7 +182,7 @@ def parse_config(filename, dirs=None):
     vars = {}
     if config.has_section('variables'):
         for name, value in config.items("variables"):
-            vars[name] = value
+            vars[name] = value.replace("\\", "\\\\")
 
     # Parse "normal" sections
     secs = [s for s in config.sections() if not s in ['meta', 'variables']]
