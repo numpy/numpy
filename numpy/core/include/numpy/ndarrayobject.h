@@ -581,8 +581,15 @@ typedef struct {
 } PyArray_DatetimeMetaData;
 
 typedef struct {
-	int year, month, day, hour, min, sec, ms, us, ns, ps, fs, as;
-} npy_datestruct;
+	npy_longlong year;
+	int month, day, hour, min, sec, us, ps, as;
+} npy_datetimestruct;
+
+typedef struct {
+	npy_longlong day;
+	int sec, us, ps, as;
+} npy_timedeltastruct;
+
 
 #define PyDataType_GetDatetimeMetaData(descr) ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(((PyArray_Descr *)descr)->metadata, NPY_METADATA_DTSTR))))
 

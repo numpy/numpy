@@ -505,23 +505,22 @@ static NPY_DATETIMEUNIT
     return unit;
 }
 
-static int *_multiples_table[] = {
-    [12, 52, 365],
-    [NPY_FR_M, NPY_FR_W, NPY_FR_D],
-    [4,  30, 720],
-    [NPY_FR_W, NPY_FR_D, NPY_FR_h],
-    [5,  7,  168, 10080],
-    [NPY_FR_B, NPY_FR_D, NPY_FR_h, NPY_FR_m],
-    [24, 1440, 86400],
-    [NPY_FR_h, NPY_FR_m, NPY_FR_s],
-    [24, 1440, 86400],
-    [NPY_FR_h, NPY_FR_m, NPY_FR_s],
-    [60, 3600, -1],
-    [NPY_FR_m, NPY_FR_s, -1],
-    [60, 60000, -1],
-    [NPY_FR_s, NPY_FR_ms, -1],
-    [1000, 1000000, -1],
-    [-1, -1, -1]
+static int _multiples_table[16][4] = {
+    {12, 52, 365},                            /* NPY_FR_Y */
+    {NPY_FR_M, NPY_FR_W, NPY_FR_D},
+    {4,  30, 720},                            /* NPY_FR_M */
+    {NPY_FR_W, NPY_FR_D, NPY_FR_h},
+    {5,  7,  168, 10080},                     /* NPY_FR_W */
+    {NPY_FR_B, NPY_FR_D, NPY_FR_h, NPY_FR_m},
+    {24, 1440, 86400},                        /* NPY_FR_B */
+    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
+    {24, 1440, 86400},                        /* NPY_FR_D */
+    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
+    {60, 3600},                               /* NPY_FR_h */
+    {NPY_FR_m, NPY_FR_s},
+    {60, 60000},                              /* NPY_FR_m */
+    {NPY_FR_s, NPY_FR_ms},
+    {1000, 1000000},                          /* >=NPY_FR_s */
 };
 
 

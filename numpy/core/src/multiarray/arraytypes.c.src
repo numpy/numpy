@@ -153,30 +153,56 @@ static int
                                   number of events is a Python integer
  */
 
+
 /* Return a Python Datetime Object from a number representing the number of
    units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
 */
-NPY_NO_EXPORT PyObject *
+
+static PyObject *
 PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIME_UNIT base)
 {
-    npy_datestruct ydate;
+    npy_datetimestruct ydate;
+
+    /* Must be here to use PyDateTime_FromDateAndTime */
+    PyDateTime_IMPORT;
 
     /* We just truncate the unused variables and don't wory about overflow */
-    _datetime_to_datestruct(val, base, &ydate);
-    
+    PyArray_DateTimeToDatetimeStruct(val, base, &ydate);
+
+    /* FIXME?: We discard ydate.ns, ydate.ps, ydate.fs, and ydate.as */
+    return PyDateTime_FromDateAndTime(ydate.year, ydate.month, ydate.day, 
+				      ydate.hour, ydate.min, ydate.sec, 
+				      ydate.us);  
 } 
+
+/* We also can lose precision and range here.  Ignored.
+   Don't use this function if you care.
+ */
+
+static PyObject *
+PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIME_UNIT base)
+{
+    npy_timedeltastruct td;
+
+    PyDateTime_IMPORT;
+   
+    PyArray_TimedeltatoTimedeltaStruct(val, base, &td);
+
+    /* We discard td.ps and td.as */
+ 
+    return PyDelta_FromDSU(td.day, td.sec, td.ms);
+}
 
 
 static PyObject *
 PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
-    PyObject *obj;
     meta = PyDataType_GetDatetimeMetaData(descr);
-    datetime normalized;
 
     if (meta->events > 1) {
 	int events, rem, div;
+	PyObject *obj;
 	obj = PyTuple_New(2);
 	events = meta->events;
 	div = val / events;
@@ -202,8 +228,7 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
     /* Normalization and then conversion to Datetime */
 
     /* FIXME? : Check for Overflow... */
-    normalized = val * meta->num;
-    return PyDatetime_FromNormalized(normalized, meta->base);
+    return PyDatetime_FromNormalized(val*meta->num, meta->base);
 }
 
 
@@ -211,10 +236,11 @@ static PyObject *
 PyTimedelta_FromInt64(timedelta val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
-    meta = PyDataType_GetDatetimeMetaData(meta);
+    meta = PyDataType_GetDatetimeMetaData(descr);
 
     if (meta->events > 1) {
 	int events, rem, div;
+	PyObject *obj;
 	obj = PyTuple_New(2);
 	events = meta->events;
 	div = val / events;
@@ -229,21 +255,87 @@ PyTimedelta_FromInt64(timedelta val, PyArray_Descr *descr)
 	}
 	return obj;
     }
+    
+    /* FIXME? : Check for Overflow */
+    return PyTimeDelta_FromNormalized(val*meta->num, meta->base);
 }
+
+
+
+static npy_datetime
+PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIME_UNIT base)
+{
+    npy_datetimestruct ydate;  
+
+    /* Must be here to use PyDateTime_FromDateAndTime */
+    PyDateTime_IMPORT;
+
+    if (!PyDateTime_Check(obj) && !PyDate_Check(obj)) {
+	PyErr_SetString(PyExc_ValueError, "Must be a datetime.date or datetime.datetime object");
+	return -1;
+    }
+    
+    ydate.year = PyDateTime_GET_YEAR(obj);
+    ydate.month = PyDateTime_GET_MONTH(obj);
+    ydate.day = PyDateTime_GET_DAY(obj);
+
+    if (PyDateTime_Check(obj)) {
+	ydate.hour = PyDateTime_GET_HOUR(obj);
+	ydate.min = PyDateTime_GET_MINUTE(obj);
+	ydate.sec = PyDateTime_GET_SECOND(obj);
+	ydate.us = PyDateTime_GET_MICROSECOND(obj);
+    }
+    else {
+	ydate.hour = 0;
+	ydate.min = 0;
+	ydate.sec = 0;
+	ydate.us = 0;
+    }
+
+    ydate.ps = 0;
+    ydate.as = 0;
+       
+    /* We just truncate the unused variables and don't wory about overflow */
+    return PyArray_DateTimeStructToDatetime(&ydate, base);
+} 
+
+static npy_timedelta
+PyTimeDelta_AsNormalized(Pyobject *obj, NPY_DATETIME_UNIT base)
+{
+    npy_timedeltastruct td;
+
+    PyDateTime_IMPORT;
+
+    if (!PyDelta_Check(obj)) {
+	PyErr_SetString(PyExc_ValueError, "Must be a datetime.timedelta object");
+	return -1;
+    }
+
+    td.day = ((PyDateTime_Delta *)obj)->days;
+    td.sec = ((PyDateTime_Delta *)obj)->seconds;
+    td.us  = ((PyDateTime_Delta *)obj)->microseconds;
+    td.ps  = 0;
+    td.as  = 0;
+   
+    return PyArray_TimedeltaStructToTimedelta(base, &td);
+}
+
 
 /* These expect:
  
     * a 2-tuple if meta->events > 1  (baseobj, num-counts)
-    * an integer if NPY_DATETIMEUNIT > NPY_FR_us
-    * a datetime object 
+    * where baseobj is a datetime object or a timedelta object
+    * respectively.
 
 */
 
-static datetime
+static npy_datetime
 PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
-    meta = PyDataType_GetDatetimeMetaData(meta);
+    npy_datetime res;
+
+    meta = PyDataType_GetDatetimeMetaData(descr);
 
     if (meta->events > 1) {
 	datetime tmp;
@@ -258,7 +350,10 @@ PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 	tmp += MyPyLong_AsLongLong(PyTuple_GETITEM(obj, 1));
 	if (PyErr_Occurred()) return -1;
 	return tmp;
-    }        
+    }  
+
+    res = PyDatetime_AsNormalized(obj, meta->base);
+    return res / meta->num;
 }
 
 
@@ -266,7 +361,7 @@ static timedelta
 PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
-    meta = PyDataType_GetDatetimeMetaData(meta);
+    meta = PyDataType_GetDatetimeMetaData(descr);
 
     if (meta->events > 1) {
 	timedelta tmp;
@@ -282,7 +377,11 @@ PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 	if (PyErr_Occurred()) return -1;
 	return tmp;
     }
+
+    res = PyTimedelta_AsNormalized(obj, meta->base);
+    return res / meta->num;
 }
+
 
 /* Always return DateTime Object after normalizing to basic units (or a tuple 
             if meta->events > 1):
