@@ -3,6 +3,7 @@ import os
 import sys
 import warnings
 import platform
+from subprocess import Popen, PIPE, STDOUT
 
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
@@ -331,7 +332,9 @@ def _can_target(cmd, arch):
     architecture."""
     newcmd = cmd[:]
     newcmd.extend(["-arch", arch, "-v"])
-    st, out = exec_command(" ".join(newcmd))
+    p = Popen(newcmd, stderr=STDOUT, stdout=PIPE)
+    st = p.communicate()
+    out = p.stdout
     if st == 0:
         for line in out.splitlines():
             m = re.search(_R_ARCHS[arch], line)
