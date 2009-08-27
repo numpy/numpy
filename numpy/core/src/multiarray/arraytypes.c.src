@@ -77,7 +77,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 
 
 
-static char * _SEQUENCE_MESSAGE = "error setting an array element with a sequence"
+static char * _SEQUENCE_MESSAGE = "error setting an array element with a sequence";
 
 /****************** getitem and setitem **********************/
 
@@ -159,7 +159,7 @@ static int
 */
 
 static PyObject *
-PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIME_UNIT base)
+PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
 {
     npy_datetimestruct ydate;
 
@@ -167,7 +167,7 @@ PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIME_UNIT base)
     PyDateTime_IMPORT;
 
     /* We just truncate the unused variables and don't wory about overflow */
-    PyArray_DateTimeToDatetimeStruct(val, base, &ydate);
+    PyArray_DatetimeToDatetimeStruct(val, base, &ydate);
 
     /* FIXME?: We discard ydate.ns, ydate.ps, ydate.fs, and ydate.as */
     return PyDateTime_FromDateAndTime(ydate.year, ydate.month, ydate.day, 
@@ -180,22 +180,22 @@ PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIME_UNIT base)
  */
 
 static PyObject *
-PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIME_UNIT base)
+PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
 {
     npy_timedeltastruct td;
 
     PyDateTime_IMPORT;
    
-    PyArray_TimedeltatoTimedeltaStruct(val, base, &td);
+    PyArray_TimedeltaToTimedeltaStruct(val, base, &td);
 
     /* We discard td.ps and td.as */
  
-    return PyDelta_FromDSU(td.day, td.sec, td.ms);
+    return PyDelta_FromDSU(td.day, td.sec, td.us);
 }
 
 
 static PyObject *
-PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
+PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(descr);
@@ -207,11 +207,11 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
 	events = meta->events;
 	div = val / events;
 	rem = val % events;
-	PyTuple_SET_ITEM(obj, PyInt_FromLong(rem), 1);
+	PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
 	meta->events = 1; /* This resets meta->events for recursive call */
-	PyTuple_SET_ITEM(obj, PyDatetime_FromInt64(div, descr), 0);
+	PyTuple_SET_ITEM(obj, 0, PyDateTime_FromInt64(div, descr));
 	meta->events = events;
-	if PyErr_Ocurred() {
+	if (PyErr_Occurred()) {
 	    Py_DECREF(obj);
 	    return NULL;
 	}
@@ -228,12 +228,12 @@ PyDatetime_FromInt64(datetime val, PyArray_Descr *descr)
     /* Normalization and then conversion to Datetime */
 
     /* FIXME? : Check for Overflow... */
-    return PyDatetime_FromNormalized(val*meta->num, meta->base);
+    return PyDateTime_FromNormalized(val*meta->num, meta->base);
 }
 
 
 static PyObject *
-PyTimedelta_FromInt64(timedelta val, PyArray_Descr *descr)
+PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(descr);
@@ -245,11 +245,11 @@ PyTimedelta_FromInt64(timedelta val, PyArray_Descr *descr)
 	events = meta->events;
 	div = val / events;
 	rem = val % events;
-	PyTuple_SET_ITEM(obj, PyInt_FromLong(rem), 1);
+	PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
 	meta->events = 1; /* This resets meta->events for recursive call */
-	PyTuple_SET_ITEM(obj, PyTimedelta_FromInt64(div, descr), 0);
+	PyTuple_SET_ITEM(obj, 0, PyTimeDelta_FromInt64(div, descr));
 	meta->events = events;
-	if PyErr_Ocurred() {
+	if (PyErr_Occurred()) {
 	    Py_DECREF(obj);
 	    return NULL;
 	}
@@ -263,7 +263,7 @@ PyTimedelta_FromInt64(timedelta val, PyArray_Descr *descr)
 
 
 static npy_datetime
-PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIME_UNIT base)
+PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 {
     npy_datetimestruct ydate;  
 
@@ -280,10 +280,10 @@ PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIME_UNIT base)
     ydate.day = PyDateTime_GET_DAY(obj);
 
     if (PyDateTime_Check(obj)) {
-	ydate.hour = PyDateTime_GET_HOUR(obj);
-	ydate.min = PyDateTime_GET_MINUTE(obj);
-	ydate.sec = PyDateTime_GET_SECOND(obj);
-	ydate.us = PyDateTime_GET_MICROSECOND(obj);
+	ydate.hour = PyDateTime_DATE_GET_HOUR(obj);
+	ydate.min = PyDateTime_DATE_GET_MINUTE(obj);
+	ydate.sec = PyDateTime_DATE_GET_SECOND(obj);
+	ydate.us = PyDateTime_DATE_GET_MICROSECOND(obj);
     }
     else {
 	ydate.hour = 0;
@@ -296,11 +296,11 @@ PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIME_UNIT base)
     ydate.as = 0;
        
     /* We just truncate the unused variables and don't wory about overflow */
-    return PyArray_DateTimeStructToDatetime(&ydate, base);
+    return PyArray_DatetimeStructToDatetime(base, &ydate);
 } 
 
 static npy_timedelta
-PyTimeDelta_AsNormalized(Pyobject *obj, NPY_DATETIME_UNIT base)
+PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 {
     npy_timedeltastruct td;
 
@@ -330,7 +330,7 @@ PyTimeDelta_AsNormalized(Pyobject *obj, NPY_DATETIME_UNIT base)
 */
 
 static npy_datetime
-PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *descr)
+PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     npy_datetime res;
@@ -343,24 +343,25 @@ PyDatetime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
 	    return -1;
 	}
-	tmp = PyDatetime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
 	if (PyErr_Occurred()) return -1;
 	/* FIXME: Check for overflow */
 	tmp *= meta->events;
-	tmp += MyPyLong_AsLongLong(PyTuple_GETITEM(obj, 1));
+	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
 	if (PyErr_Occurred()) return -1;
 	return tmp;
     }  
 
-    res = PyDatetime_AsNormalized(obj, meta->base);
+    res = PyDateTime_AsNormalized(obj, meta->base);
     return res / meta->num;
 }
 
 
 static timedelta
-PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
+PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
+    npy_timedelta res;
     meta = PyDataType_GetDatetimeMetaData(descr);
 
     if (meta->events > 1) {
@@ -369,16 +370,16 @@ PyTimedelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
 	    return -1;
 	}
-	tmp = PyTimedelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	tmp = PyTimeDelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
 	if (PyErr_Occurred()) return -1;
 	/* FIXME: Check for overflow */
 	tmp *= meta->events;
-	tmp += MyPyLong_AsLongLong(PyTuple_GETITEM(obj, 1));
+	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
 	if (PyErr_Occurred()) return -1;
 	return tmp;
     }
 
-    res = PyTimedelta_AsNormalized(obj, meta->base);
+    res = PyTimeDelta_AsNormalized(obj, meta->base);
     return res / meta->num;
 }
 
@@ -430,11 +431,11 @@ TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
 
     if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
         t1 = *((timedelta *)ip);
-        return PyTimedelta_FromInt64((timedelta)t1, ap->descr);
+        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
     }
     else {
         ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
-        return PyTimedelta_FromInt64((timedelta)t1, ap->descr);
+        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
     }
 }
 
@@ -474,7 +475,7 @@ TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         temp = ((PyTimedeltaScalarObject *)op)->obval;
     }
     else {
-        temp = PyTimedelta_AsInt64(op, ap->descr);
+        temp = PyTimeDelta_AsInt64(op, ap->descr);
     }
     if (PyErr_Occurred()) {
         if (PySequence_Check(op)) {

@@ -535,7 +535,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
 
     ind = ((int)meta->base - (int)NPY_FR_Y)*2;
     totry = _multiples_table[ind];
-    baseunits = (NPY_DATETIMEUNIT *)_multiples_table[ind+1];
+    baseunit = (NPY_DATETIMEUNIT *)_multiples_table[ind+1];
     
     num = 3;
     if (meta->base == NPY_FR_W) num = 4;
@@ -544,7 +544,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
     if (meta->base >= NPY_FR_s) {
 	ind = (int)NPY_FR_s - (int)NPY_FR_Y;
 	totry = _multiples_table[ind];
-	baseunit = _multiples_table[ind+1];
+	baseunit = (NPY_DATETIMEUNIT *)_multiples_table[ind+1];
 	baseunit[0] = meta->base - 1;
 	baseunit[1] = meta->base - 2;
 	if (meta->base == NPY_DATETIME_NUMUNITS-1) num = 1;
@@ -558,7 +558,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
     if (i==num) {
 	PyErr_SetString(PyExc_ValueError, "Divisor is not a multiple of a lower-unit");
     }
-    meta->unit = (NPY_DATETIMEUNIT) baseunits[i];
+    meta->base = (NPY_DATETIMEUNIT) baseunit[i];
     meta->den = 1;
     meta->num = q;
 }
@@ -1399,7 +1399,7 @@ _append_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
 {
     PyObject *tmp;
     PyObject *res;
-    int num, events;
+    int num, den, events;
     char *basestr;       
     PyArray_DatetimeMetaData *dt_data;
            
@@ -1849,7 +1849,7 @@ _get_pickleabletype_from_metadata(PyObject *metadata)
     PyTuple_SET_ITEM(newtup, 0, newdict);
 
     cobj = PyDict_GetItemString(metadata, NPY_METADATA_DTSTR);
-    dt_tuple = _get_datetime_tuple_from_descr(cobj);
+    dt_tuple = _get_datetime_tuple_from_cobj(cobj);
 
     PyTuple_SET_ITEM(newtup, 1, dt_tuple);    
 

@@ -1965,14 +1965,14 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
     PyObject *_numpy_internal;
 
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist,
-                                    &op, &repr)) {
+                                    &op)) {
         return NULL;
     }
     /* reset the array_repr function to built-in */
     if (op == Py_None) {
 	_numpy_internal = PyImport_ImportModule("numpy.core._internal");
 	if (_numpy_internal == NULL) return NULL;
-	op = PyObject_GetAttrSring(_numpy_internal, "datetime_from_string");
+	op = PyObject_GetAttrString(_numpy_internal, "datetime_from_string");
     }
     else { /* Must balance reference count increment in both branches */
 	if (!PyCallable_Check(op)) {
@@ -2397,10 +2397,12 @@ static struct PyMethodDef array_module_methods[] = {
     {"set_numeric_ops",
         (PyCFunction)array_set_ops_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
+    {"set_datetimeparse_function", 
+        (PyCFunction)array_set_datetimeparse_function,
+        METH_VARARGS|METH_KEYWORDS, NULL},
     {"set_typeDict",
         (PyCFunction)array_set_typeDict,
         METH_VARARGS, NULL},
-
     {"array",
         (PyCFunction)_array_fromobject,
         METH_VARARGS|METH_KEYWORDS, NULL},

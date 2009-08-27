@@ -194,6 +194,7 @@ typedef enum {
 	NPY_FR_B,
 	NPY_FR_D,
 	NPY_FR_h,
+	NPY_FR_m,
 	NPY_FR_s,
 	NPY_FR_ms,
 	NPY_FR_us,

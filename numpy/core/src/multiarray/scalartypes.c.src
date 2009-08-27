@@ -2332,7 +2332,7 @@ static long
     }
     return x;
 }
-#else if SIZEOF_LONGLONG==SIZEOF_DATETIME
+#elif SIZEOF_LONGLONG==SIZEOF_DATETIME
 static long
 @lname@_arrtype_hash(PyObject *obj)
 {
