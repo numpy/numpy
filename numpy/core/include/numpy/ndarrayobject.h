@@ -592,7 +592,7 @@ typedef struct {
 } npy_timedeltastruct;
 
 
-#define PyDataType_GetDatetimeMetaData(descr) ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(((PyArray_Descr *)descr)->metadata, NPY_METADATA_DTSTR))))
+#define PyDataType_GetDatetimeMetaData(descr) (descr->metadata == NULL ? NULL : ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString((descr->metadata, NPY_METADATA_DTSTR))))))
 
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 

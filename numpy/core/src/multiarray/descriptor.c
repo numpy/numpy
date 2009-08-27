@@ -521,11 +521,12 @@ static int _multiples_table[16][4] = {
     {60, 60000},                              /* NPY_FR_m */
     {NPY_FR_s, NPY_FR_ms},
     {1000, 1000000},                          /* >=NPY_FR_s */
+    {0, 0}
 };
 
 
 /* Translate divisors into multiples of smaller units */
-static void
+static int
 _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
 {
     int i, num, ind;
@@ -542,7 +543,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
     else if (meta->base > NPY_FR_D) num = 2;
 
     if (meta->base >= NPY_FR_s) {
-	ind = (int)NPY_FR_s - (int)NPY_FR_Y;
+	ind = ((int)NPY_FR_s - (int)NPY_FR_Y)*2;
 	totry = _multiples_table[ind];
 	baseunit = (NPY_DATETIMEUNIT *)_multiples_table[ind+1];
 	baseunit[0] = meta->base - 1;
@@ -551,16 +552,19 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
     }
 
     for (i=0; i<num; i++) {
-	q = totry[1] / meta->den;
-	r = totry[1] % meta->den;
+	q = totry[i] / meta->den;
+	r = totry[i] % meta->den;
 	if (r==0) break;
     }
     if (i==num) {
-	PyErr_SetString(PyExc_ValueError, "Divisor is not a multiple of a lower-unit");
+	PyErr_Format(PyExc_ValueError, "divisor (%d) is not a multiple of a lower-unit", meta->den);
+	return -1;
     }
     meta->base = (NPY_DATETIMEUNIT) baseunit[i];
     meta->den = 1;
     meta->num = q;
+
+    return 0;
 }
 
 
@@ -601,8 +605,7 @@ _convert_datetime_tuple_to_cobj(PyObject *tuple)
     dt_data->events = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 3));
 
     if (dt_data->den > 1) {
-	_convert_divisor_to_multiple(dt_data);
-	if (PyErr_Occurred()) return NULL;
+	if (_convert_divisor_to_multiple(dt_data) < 0) return NULL;
     }
 
     return PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
@@ -658,15 +661,14 @@ _convert_from_datetime_tuple(PyObject *obj)
     }
 
     dt_cobj = _convert_datetime_tuple_to_cobj(dt_tuple);
-
-    /* Assume this sets a new reference to dt_cobj */
-    PyDict_SetItem(new->metadata, freq_key, dt_cobj);
-    Py_XDECREF(dt_cobj);
-
     if (dt_cobj == NULL) { /* Failure in conversion */
 	Py_DECREF(new);
 	return NULL;
     }
+
+    /* Assume this sets a new reference to dt_cobj */
+    PyDict_SetItem(new->metadata, freq_key, dt_cobj);
+    Py_DECREF(dt_cobj);
 
     return new;
 }

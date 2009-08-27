@@ -158,7 +158,7 @@ static int
    units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
 */
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
 {
     npy_datetimestruct ydate;
@@ -179,7 +179,7 @@ PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
    Don't use this function if you care.
  */
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
 {
     npy_timedeltastruct td;
@@ -194,11 +194,15 @@ PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
 }
 
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return NULL;
+    }
 
     if (meta->events > 1) {
 	int events, rem, div;
@@ -232,11 +236,15 @@ PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
 }
 
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return NULL;
+    }
 
     if (meta->events > 1) {
 	int events, rem, div;
@@ -262,7 +270,7 @@ PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
 
 
 
-static npy_datetime
+NPY_NO_EXPORT npy_datetime
 PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 {
     npy_datetimestruct ydate;  
@@ -299,7 +307,7 @@ PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
     return PyArray_DatetimeStructToDatetime(base, &ydate);
 } 
 
-static npy_timedelta
+NPY_NO_EXPORT npy_timedelta
 PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 {
     npy_timedeltastruct td;
@@ -329,13 +337,18 @@ PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 
 */
 
-static npy_datetime
+NPY_NO_EXPORT npy_datetime
 PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     npy_datetime res;
 
     meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return NULL;
+    }
+
 
     if (meta->events > 1) {
 	datetime tmp;
@@ -357,12 +370,16 @@ PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 }
 
 
-static timedelta
+NPY_NO_EXPORT timedelta
 PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
     npy_timedelta res;
     meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return NULL;
+    }
 
     if (meta->events > 1) {
 	timedelta tmp;
