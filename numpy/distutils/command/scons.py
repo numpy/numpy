@@ -392,7 +392,6 @@ class scons(old_build_ext):
             # nothing to do, just leave it here.
             return
 
-        print "is bootstrapping ? %s" % is_bootstrapping()
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
