@@ -88,3 +88,110 @@ NPY_NO_EXPORT PyTypeObject Foo_Type = {
     0,                                          /* tp_del */
     0                                           /* tp_version_tag (2.6) */
 };
+
+checklist of types having tp_compare but no tp_richcompare
+
+1) multiarray/flagsobject.c
+
+PyNumberMethods
+---------------
+
+Types with tp_as_number defined
+
+1) multiarray/arrayobject.c
+
+The PyNumberMethods struct has changed enough that it looks easiest to just
+have an alternate version. Note that np_divide, np_long, np_oct, np_hex, and
+np_inplace_divide have gone away. The slot np_int is what np_long used to be,
+tp_divide is now tp_floor_divide, and np_inplace_divide is now
+np_inplace_floor_divide. We will also have to make sure the *_true_divide
+variants are defined. This should also be done for python < 3.x, but that
+introduces a requirement for the Py_TPFLAGS_HAVE_CLASS in the type flag.
+
+/*
+ * Number implementations must check *both* arguments for proper type and
+ * implement the necessary conversions in the slot functions themselves.
+*/
+PyNumberMethods foo_number_methods = {
+    (binaryfunc)0,                              /* nb_add */
+    (binaryfunc)0,                              /* nb_subtract */
+    (binaryfunc)0,                              /* nb_multiply */
+    (binaryfunc)0,                              /* nb_remainder */
+    (binaryfunc)0,                              /* nb_divmod */
+    (ternaryfunc)0,                             /* nb_power */
+    (unaryfunc)0,                               /* nb_negative */
+    (unaryfunc)0,                               /* nb_positive */
+    (unaryfunc)0,                               /* nb_absolute */
+    (inquiry)0,                                 /* nb_bool, nee nb_nonzero */
+    (unaryfunc)0,                               /* nb_invert */
+    (binaryfunc)0,                              /* nb_lshift */
+    (binaryfunc)0,                              /* nb_rshift */
+    (binaryfunc)0,                              /* nb_and */
+    (binaryfunc)0,                              /* nb_xor */
+    (binaryfunc)0,                              /* nb_or */
+    (unaryfunc)0,                               /* nb_int */
+    (void *)0,                                  /* nb_reserved, nee nb_long */
+    (unaryfunc)0,                               /* nb_float */
+    (binaryfunc)0,                              /* nb_inplace_add */
+    (binaryfunc)0,                              /* nb_inplace_subtract */
+    (binaryfunc)0,                              /* nb_inplace_multiply */
+    (binaryfunc)0,                              /* nb_inplace_remainder */
+    (ternaryfunc)0,                             /* nb_inplace_power */
+    (binaryfunc)0,                              /* nb_inplace_lshift */
+    (binaryfunc)0,                              /* nb_inplace_rshift */
+    (binaryfunc)0,                              /* nb_inplace_and */
+    (binaryfunc)0,                              /* nb_inplace_xor */
+    (binaryfunc)0,                              /* nb_inplace_or */
+    (binaryfunc)0,                              /* nb_floor_divide */
+    (binaryfunc)0,                              /* nb_true_divide */
+    (binaryfunc)0,                              /* nb_inplace_floor_divide */
+    (binaryfunc)0,                              /* nb_inplace_true_divide */
+    (unaryfunc)0                                /* nb_index */
+};
+
+PySequenceMethods
+-----------------
+
+Types with tp_as_sequence defined
+
+1) multiarray/descriptor.c
+2) multiarray/scalartypes.c.src
+3) multiarray/arrayobject.c
+
+PySequenceMethods in py3k are binary compatible with py2k, but some of the
+slots have gone away. I suspect this means some functions need redefining so
+the semantics of the slots needs to be checked.
+
+PySequenceMethods foo_sequence_methods = {
+    (lenfunc)0,                                 /* sq_length */
+    (binaryfunc)0,                              /* sq_concat */
+    (ssizeargfunc)0,                            /* sq_repeat */
+    (ssizeargfunc)0,                            /* sq_item */
+    (void *)0,                                  /* nee sq_slice */
+    (ssizeobjargproc)0,                         /* sq_ass_item */
+    (void *)0,                                  /* nee sq_ass_slice */
+    (objobjproc)0,                              /* sq_contains */
+    (binaryfunc)0,                              /* sq_inplace_concat */
+    (ssizeargfunc)0                             /* sq_inplace_repeat */
+};
+
+PyMappingMethods
+----------------
+
+Types with tp_as_mapping defined
+
+1) multiarray/descriptor.c
+2) multiarray/iterators.c
+3) multiarray/scalartypes.c.src
+4) multiarray/flagsobject.c
+5) multiarray/arrayobject.c
+
+PyMappingMethods in py3k look to be the same as in py2k. The semantics
+of the slots needs to be checked.
+
+PyMappingMethods foo_mapping_methods = {
+	(lenfunc)0,                             /* mp_length */
+	(binaryfunc)0,                          /* mp_subscript */
+	(objobjargproc)0                        /* mp_ass_subscript */
+};
+
