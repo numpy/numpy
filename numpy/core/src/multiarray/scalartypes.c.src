@@ -32,9 +32,9 @@ NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
 
 /**begin repeat
  * #name = number, integer, signedinteger, unsignedinteger, inexact,
- *         floating, complexfloating, flexible, character#
+ *         floating, complexfloating, flexible, character, timeinteger#
  * #NAME = Number, Integer, SignedInteger, UnsignedInteger, Inexact,
- *         Floating, ComplexFloating, Flexible, Character#
+ *         Floating, ComplexFloating, Flexible, Character, TimeInteger#
  */
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
@@ -3015,7 +3015,7 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
-     *        Floating, ComplexFloating, Flexible, Character#
+     *        Floating, ComplexFloating, Flexible, Character, TimeInteger#
      */
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
     /**end repeat**/

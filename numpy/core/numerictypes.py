@@ -32,10 +32,13 @@ Exported symbols include:
     int_, uint,
     longlong, ulonglong,
 
+
     single, csingle,
     float_, complex_,
     longfloat, clongfloat,
 
+    datetime, timedelta,  (these inherit from timeinteger which inherits from signedinteger)
+    
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -86,7 +89,6 @@ import types as _types
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
-
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -626,27 +628,25 @@ typecodes = {'Character':'c',
              'Complex':'FDG',
              'AllInteger':'bBhHiIlLqQpP',
              'AllFloat':'fdgFDG',
-             'Datetime': 'Tt',
-             'All':'?bhilqpBHILQPfdgFDGSUVOTt'}
+             'Datetime': 'Mm',
+             'All':'?bhilqpBHILQPfdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
 typeNA = sctypeNA
-
-# FIXME: Decide how T and t need to be integrated here.
 
 # b -> boolean
 # u -> unsigned integer
 # i -> signed integer
 # f -> floating point
 # c -> complex
-# T -> datetime
-# t -> timedelta
+# M -> datetime
+# m -> timedelta
 # S -> string
 # U -> Unicode string
 # V -> record
 # O -> Python object
-_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O']
+_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
 
 __test_types = typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
 __len_test_types = len(__test_types)

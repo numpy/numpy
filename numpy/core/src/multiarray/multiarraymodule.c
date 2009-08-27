@@ -2585,8 +2585,10 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 #else
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
-    SINGLE_INHERIT(Datetime, SignedInteger);
-    SINGLE_INHERIT(Timedelta, SignedInteger);
+
+    SINGLE_INHERIT(TimeInteger, SignedInteger);
+    SINGLE_INHERIT(Datetime, TimeInteger);
+    SINGLE_INHERIT(Timedelta, TimeInteger);
 
     /*
        fprintf(stderr,

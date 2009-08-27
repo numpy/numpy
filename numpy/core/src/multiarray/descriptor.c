@@ -1327,8 +1327,9 @@ PyArray_DescrNew(PyArray_Descr *base)
         Py_INCREF(new->subarray->shape);
         Py_INCREF(new->subarray->base);
     }
-    Py_XINCREF(new->typeobj);
+    Py_XINCREF(new->typeobj);    
     Py_XINCREF(new->metadata);
+
     return new;
 }
 

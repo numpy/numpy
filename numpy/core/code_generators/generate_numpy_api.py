@@ -2,7 +2,7 @@ import os
 import genapi
 
 types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
-         'Inexact',
+         'Inexact', 'TimeInteger',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',

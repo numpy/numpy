@@ -198,6 +198,7 @@ NPY_NO_EXPORT PyObject *
 PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *meta;
+
     meta = PyDataType_GetDatetimeMetaData(descr);
     if (meta == NULL) {
 	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
@@ -346,7 +347,7 @@ PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
     meta = PyDataType_GetDatetimeMetaData(descr);
     if (meta == NULL) {
 	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
-	return NULL;
+	return -1;
     }
 
 
@@ -378,7 +379,7 @@ PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
     meta = PyDataType_GetDatetimeMetaData(descr);
     if (meta == NULL) {
 	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
-	return NULL;
+	return -1;
     }
 
     if (meta->events > 1) {
@@ -2965,6 +2966,25 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
 
 /**end repeat**/
 
+static void
+_init_datetime_descr(PyArray_Descr *descr) 
+{
+    PyArray_DatetimeMetaData *dt_data;
+    PyObject *cobj;
+
+    dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
+    dt_data->base = NPY_FR_us;
+    dt_data->num = 1;
+    dt_data->den = 1;
+    dt_data->events = 1;
+    
+    cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+    descr->metadata = PyDict_New();
+    PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);
+    Py_DECREF(cobj);
+    
+}
+
 #define _MAX_LETTER 128
 static char _letter_to_num[_MAX_LETTER];
 
@@ -3045,6 +3065,14 @@ PyArray_DescrFromType(int type)
     else {
         Py_INCREF(ret);
     }
+
+    /* Make sure dtype metadata is initialized for DATETIME */
+    if (PyTypeNum_ISDATETIME(type)) {
+	if (ret->metadata == NULL) {
+	    _init_datetime_descr(ret);
+	}
+    }
+    
     return ret;
 }
 
@@ -3176,6 +3204,7 @@ set_typeinfo(PyObject *dict)
     SETTYPE(Integer);
     SETTYPE(Inexact);
     SETTYPE(SignedInteger);
+    SETTYPE(TimeInteger);
     SETTYPE(UnsignedInteger);
     SETTYPE(Floating);
     SETTYPE(ComplexFloating);
