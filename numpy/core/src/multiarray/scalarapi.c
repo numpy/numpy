@@ -11,7 +11,7 @@
 
 #include "config.h"
 
-#include "common.h"
+#include "ctors.h"
 #include "descriptor.h"
 #include "scalartypes.h"
 
@@ -60,6 +60,8 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         CASE(CDOUBLE, CDouble);
         CASE(CLONGDOUBLE, CLongDouble);
         CASE(OBJECT, Object);
+        CASE(DATETIME, Datetime);
+        CASE(TIMEDELTA, Timedelta);
 #undef CASE
         case NPY_STRING:
             return (void *)PyString_AS_STRING(scalar);
@@ -87,6 +89,10 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 _IFCASE(Int);
                 _IFCASE(Long);
                 _IFCASE(LongLong);
+		if _CHK(TimeInteger) {
+		    _IFCASE(Datetime);
+		    _IFCASE(Timedelta);
+		}
             }
             else {
                 /* Unsigned Integer */
@@ -603,6 +609,16 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     }
     if (obj == NULL) {
         return NULL;
+    }
+    if PyTypeNum_ISDATETIME(type_num) {
+	/* We need to copy the resolution information over to the scalar */
+	/* Get the void * from the metadata dictionary */
+	PyObject *cobj; 
+	PyArray_DatetimeMetaData *dt_data;
+	cobj = PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR);
+	dt_data = PyCObject_AsVoidPtr(cobj);
+	memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
+	       sizeof(PyArray_DatetimeMetaData));	
     }
     if PyTypeNum_ISFLEXIBLE(type_num) {
             if (type_num == PyArray_STRING) {

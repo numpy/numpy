@@ -510,6 +510,10 @@ PyArray_CanCastSafely(int fromtype, int totype)
     if (totype == PyArray_BOOL) {
         return 0;
     }
+    if (fromtype == PyArray_DATETIME || fromtype == PyArray_TIMEDELTA ||
+            totype == PyArray_DATETIME || totype == PyArray_TIMEDELTA) {
+        return 0;
+    }
     if (totype == PyArray_OBJECT || totype == PyArray_VOID) {
         return 1;
     }

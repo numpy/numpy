@@ -67,6 +67,9 @@ typedef struct {
 
 #define UFUNC_ERR_DEFAULT  0      /* Error mode that avoids look-up (no checking) */
 
+#define UFUNC_OBJ_ISOBJECT      1
+#define UFUNC_OBJ_NEEDS_API     2
+
    /* Default user error mode */
 #define UFUNC_ERR_DEFAULT2                               \
         (UFUNC_ERR_PRINT << UFUNC_SHIFT_DIVIDEBYZERO) +  \
@@ -132,7 +135,8 @@ typedef struct {
 	*/
 	npy_intp steps[NPY_MAXARGS];
 
-        int obj;  /* This loop uses object arrays */
+        int obj;  /* This loop uses object arrays or needs the Python API */
+                  /* Flags: UFUNC_OBJ_ISOBJECT, UFUNC_OBJ_NEEDS_API */
         int notimplemented; /* The loop caused notimplemented */
         int objfunc; /* This loop calls object functions
                         (an inner-loop function with argument types */
@@ -193,8 +197,8 @@ typedef struct {
 
 
 #if NPY_ALLOW_THREADS
-#define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj)) _save = PyEval_SaveThread();} while (0)
-#define NPY_LOOP_END_THREADS   do {if (!(loop->obj)) PyEval_RestoreThread(_save);} while (0)
+#define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0)
+#define NPY_LOOP_END_THREADS   do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) PyEval_RestoreThread(_save);} while (0)
 #else
 #define NPY_LOOP_BEGIN_THREADS
 #define NPY_LOOP_END_THREADS
@@ -232,7 +236,7 @@ typedef struct _loop1d_info {
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
 #define UFUNC_CHECK_ERROR(arg)                                          \
-	do {if (((arg)->obj && PyErr_Occurred()) ||                         \
+	do {if ((((arg)->obj & UFUNC_OBJ_NEEDS_API) && PyErr_Occurred()) ||                         \
             ((arg)->errormask &&                                        \
              PyUFunc_checkfperr((arg)->errormask,                       \
                                 (arg)->errobj,                          \

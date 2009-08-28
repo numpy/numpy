@@ -417,6 +417,116 @@ _unaligned_strided_byte_move(char *dst, intp outstrides, char *src,
 
 }
 
+NPY_NO_EXPORT void
+_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
+                             intp instrides, intp N, int elsize)
+{
+    intp i;
+    char *tout = dst;
+    char *tin = src;
+
+#define _COPY_N_SIZE(size)                      \
+    for(i=0; i<N; i++) {                       \
+        memcpy(tout, tin, size);                \
+        tin += instrides;                       \
+        tout += outstrides;                     \
+    }                                           \
+    return
+
+    switch(elsize) {
+    case 8:
+        _COPY_N_SIZE(8);
+    case 4:
+        _COPY_N_SIZE(4);
+    case 1:
+        _COPY_N_SIZE(1);
+    case 2:
+        _COPY_N_SIZE(2);
+    case 16:
+        _COPY_N_SIZE(16);
+    default:
+        _COPY_N_SIZE(elsize);
+    }
+#undef _COPY_N_SIZE
+
+}
+
+NPY_NO_EXPORT void
+_strided_byte_swap(void *p, intp stride, intp n, int size)
+{
+    char *a, *b, c = 0;
+    int j, m;
+
+    switch(size) {
+    case 1: /* no byteswap necessary */
+        break;
+    case 4:
+        for (a = (char*)p; n > 0; n--, a += stride - 1) {
+            b = a + 3;
+            c = *a; *a++ = *b; *b-- = c;
+            c = *a; *a = *b; *b   = c;
+        }
+        break;
+    case 8:
+        for (a = (char*)p; n > 0; n--, a += stride - 3) {
+            b = a + 7;
+            c = *a; *a++ = *b; *b-- = c;
+            c = *a; *a++ = *b; *b-- = c;
+            c = *a; *a++ = *b; *b-- = c;
+            c = *a; *a = *b; *b   = c;
+        }
+        break;
+    case 2:
+        for (a = (char*)p; n > 0; n--, a += stride) {
+            b = a + 1;
+            c = *a; *a = *b; *b = c;
+        }
+        break;
+    default:
+        m = size/2;
+        for (a = (char *)p; n > 0; n--, a += stride - m) {
+            b = a + (size - 1);
+            for (j = 0; j < m; j++) {
+                c=*a; *a++ = *b; *b-- = c;
+            }
+        }
+        break;
+    }
+}
+
+NPY_NO_EXPORT void
+byte_swap_vector(void *p, intp n, int size)
+{
+    _strided_byte_swap(p, (intp) size, n, size);
+    return;
+}
+
+/* If numitems > 1, then dst must be contiguous */
+NPY_NO_EXPORT void
+copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
+              intp srcstrides, int swap)
+{
+    intp i;
+    char *s1 = (char *)src;
+    char *d1 = (char *)dst;
+
+
+    if ((numitems == 1) || (itemsize == srcstrides)) {
+        memcpy(d1, s1, itemsize*numitems);
+    }
+    else {
+        for (i = 0; i < numitems; i++) {
+            memcpy(d1, s1, itemsize);
+            d1 += itemsize;
+            s1 += srcstrides;
+        }
+    }
+
+    if (swap) {
+        byte_swap_vector(d1, numitems, itemsize);
+    }
+}
+
 static int
 _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 {
@@ -1432,23 +1542,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     Py_DECREF(self);
     return NULL;
 }
-
-/*
- * This is the main array creation routine.
- *
- * Flags argument has multiple related meanings
- * depending on data and strides:
- *
- * If data is given, then flags is flags associated with data.
- * If strides is not given, then a contiguous strides array will be created
- * and the CONTIGUOUS bit will be set.  If the flags argument
- * has the FORTRAN bit set, then a FORTRAN-style strides array will be
- * created (and of course the FORTRAN flag bit will be set).
- *
- * If data is not given but created here, then flags will be DEFAULT
- * and a non-zero flags argument can be used to indicate a FORTRAN style
- * array is desired.
- */
 
 /*NUMPY_API
  * Generic new array creation routine.
@@ -3233,6 +3326,23 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
     }
     return (PyObject *)ret;
 }
+
+/*
+ * This is the main array creation routine.
+ *
+ * Flags argument has multiple related meanings
+ * depending on data and strides:
+ *
+ * If data is given, then flags is flags associated with data.
+ * If strides is not given, then a contiguous strides array will be created
+ * and the CONTIGUOUS bit will be set.  If the flags argument
+ * has the FORTRAN bit set, then a FORTRAN-style strides array will be
+ * created (and of course the FORTRAN flag bit will be set).
+ *
+ * If data is not given but created here, then flags will be DEFAULT
+ * and a non-zero flags argument can be used to indicate a FORTRAN style
+ * array is desired.
+ */
 
 NPY_NO_EXPORT size_t
 _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,

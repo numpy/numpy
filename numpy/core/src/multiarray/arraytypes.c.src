@@ -76,6 +76,9 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 /**end repeat**/
 
 
+
+static char * _SEQUENCE_MESSAGE = "error setting an array element with a sequence";
+
 /****************** getitem and setitem **********************/
 
 /**begin repeat
@@ -94,6 +97,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
  *         LongLong, ULongLong, Float, Double#
 */
+
 static PyObject *
 @TYP@_getitem(char *ip, PyArrayObject *ap) {
     @typ@ t1;
@@ -121,8 +125,7 @@ static int
     if (PyErr_Occurred()) {
         if (PySequence_Check(op)) {
             PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError, "setting an array" \
-                    " element with a sequence.");
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
         }
         return -1;
     }
@@ -136,6 +139,378 @@ static int
 }
 
 /**end repeat**/
+
+/* Acknowledgment:  Example code contributed by Marty Fuhr sponsored by 
+   Google Summer of Code 2009 was used to integrate and adapt the mxDateTime parser */
+/* #include "datetime.c" --- now included in multiarray_onefile */
+/* End of contributed code. */
+
+
+/* DateTime Objects in Python only keep microsecond resolution. 
+
+   When converting from datetime objects with an event component return a tuple: 
+     (baseunit, number of event)  where baseunit follows is a datetime type and
+                                  number of events is a Python integer
+ */
+
+
+/* Return a Python Datetime Object from a number representing the number of
+   units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
+*/
+
+NPY_NO_EXPORT PyObject *
+PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
+{
+    npy_datetimestruct ydate;
+
+    /* Must be here to use PyDateTime_FromDateAndTime */
+    PyDateTime_IMPORT;
+
+    /* We just truncate the unused variables and don't wory about overflow */
+    PyArray_DatetimeToDatetimeStruct(val, base, &ydate);
+
+    /* FIXME?: We discard ydate.ns, ydate.ps, ydate.fs, and ydate.as */
+    return PyDateTime_FromDateAndTime(ydate.year, ydate.month, ydate.day, 
+				      ydate.hour, ydate.min, ydate.sec, 
+				      ydate.us);  
+} 
+
+/* We also can lose precision and range here.  Ignored.
+   Don't use this function if you care.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
+{
+    npy_timedeltastruct td;
+
+    PyDateTime_IMPORT;
+   
+    PyArray_TimedeltaToTimedeltaStruct(val, base, &td);
+
+    /* We discard td.ps and td.as */
+ 
+    return PyDelta_FromDSU(td.day, td.sec, td.us);
+}
+
+
+NPY_NO_EXPORT PyObject *
+PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return NULL;
+    }
+
+    if (meta->events > 1) {
+	int events, rem, div;
+	PyObject *obj;
+	obj = PyTuple_New(2);
+	events = meta->events;
+	div = val / events;
+	rem = val % events;
+	PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
+	meta->events = 1; /* This resets meta->events for recursive call */
+	PyTuple_SET_ITEM(obj, 0, PyDateTime_FromInt64(div, descr));
+	meta->events = events;
+	if (PyErr_Occurred()) {
+	    Py_DECREF(obj);
+	    return NULL;
+	}
+	return obj;
+    }
+
+    /* We normalize the number to a base-unit and then return a
+       Python Datetime Object
+
+       FIXME? : We silently truncate if it doesn't fit, either too wide (e.g. 10 BC) 
+                or too narrow (nanoseconds)
+    */
+
+    /* Normalization and then conversion to Datetime */
+
+    /* FIXME? : Check for Overflow... */
+    return PyDateTime_FromNormalized(val*meta->num, meta->base);
+}
+
+
+NPY_NO_EXPORT PyObject *
+PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return NULL;
+    }
+
+    if (meta->events > 1) {
+	int events, rem, div;
+	PyObject *obj;
+	obj = PyTuple_New(2);
+	events = meta->events;
+	div = val / events;
+	rem = val % events;
+	PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
+	meta->events = 1; /* This resets meta->events for recursive call */
+	PyTuple_SET_ITEM(obj, 0, PyTimeDelta_FromInt64(div, descr));
+	meta->events = events;
+	if (PyErr_Occurred()) {
+	    Py_DECREF(obj);
+	    return NULL;
+	}
+	return obj;
+    }
+    
+    /* FIXME? : Check for Overflow */
+    return PyTimeDelta_FromNormalized(val*meta->num, meta->base);
+}
+
+
+
+NPY_NO_EXPORT npy_datetime
+PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
+{
+    npy_datetimestruct ydate;  
+
+    /* Must be here to use PyDateTime_FromDateAndTime */
+    PyDateTime_IMPORT;
+
+    if (!PyDateTime_Check(obj) && !PyDate_Check(obj)) {
+	PyErr_SetString(PyExc_ValueError, "Must be a datetime.date or datetime.datetime object");
+	return -1;
+    }
+    
+    ydate.year = PyDateTime_GET_YEAR(obj);
+    ydate.month = PyDateTime_GET_MONTH(obj);
+    ydate.day = PyDateTime_GET_DAY(obj);
+
+    if (PyDateTime_Check(obj)) {
+	ydate.hour = PyDateTime_DATE_GET_HOUR(obj);
+	ydate.min = PyDateTime_DATE_GET_MINUTE(obj);
+	ydate.sec = PyDateTime_DATE_GET_SECOND(obj);
+	ydate.us = PyDateTime_DATE_GET_MICROSECOND(obj);
+    }
+    else {
+	ydate.hour = 0;
+	ydate.min = 0;
+	ydate.sec = 0;
+	ydate.us = 0;
+    }
+
+    ydate.ps = 0;
+    ydate.as = 0;
+       
+    /* We just truncate the unused variables and don't wory about overflow */
+    return PyArray_DatetimeStructToDatetime(base, &ydate);
+} 
+
+NPY_NO_EXPORT npy_timedelta
+PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
+{
+    npy_timedeltastruct td;
+
+    PyDateTime_IMPORT;
+
+    if (!PyDelta_Check(obj)) {
+	PyErr_SetString(PyExc_ValueError, "Must be a datetime.timedelta object");
+	return -1;
+    }
+
+    td.day = ((PyDateTime_Delta *)obj)->days;
+    td.sec = ((PyDateTime_Delta *)obj)->seconds;
+    td.us  = ((PyDateTime_Delta *)obj)->microseconds;
+    td.ps  = 0;
+    td.as  = 0;
+   
+    return PyArray_TimedeltaStructToTimedelta(base, &td);
+}
+
+
+/* These expect:
+ 
+    * a 2-tuple if meta->events > 1  (baseobj, num-counts)
+    * where baseobj is a datetime object or a timedelta object
+    * respectively.
+
+*/
+
+NPY_NO_EXPORT npy_datetime
+PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    npy_datetime res;
+
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return -1;
+    }
+
+
+    if (meta->events > 1) {
+	datetime tmp;
+	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
+	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
+	    return -1;
+	}
+	tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	if (PyErr_Occurred()) return -1;
+	/* FIXME: Check for overflow */
+	tmp *= meta->events;
+	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
+	if (PyErr_Occurred()) return -1;
+	return tmp;
+    }  
+
+    res = PyDateTime_AsNormalized(obj, meta->base);
+    return res / meta->num;
+}
+
+
+NPY_NO_EXPORT timedelta
+PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    npy_timedelta res;
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
+	return -1;
+    }
+
+    if (meta->events > 1) {
+	timedelta tmp;
+	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
+	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
+	    return -1;
+	}
+	tmp = PyTimeDelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	if (PyErr_Occurred()) return -1;
+	/* FIXME: Check for overflow */
+	tmp *= meta->events;
+	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
+	if (PyErr_Occurred()) return -1;
+	return tmp;
+    }
+
+    res = PyTimeDelta_AsNormalized(obj, meta->base);
+    return res / meta->num;
+}
+
+
+/* Always return DateTime Object after normalizing to basic units (or a tuple 
+            if meta->events > 1):
+
+   Problem:  DateTime does not support all the resolutions (ns) nor the dynamic 
+                range (pre 1 AD) of NumPy Date-times.   
+		
+      * getitem is not used that much --- if losing resolution hurts, stick 
+             with the array scalar versions of the date-time. 
+
+      * considered returning array scalars here just like longdouble.  
+            This has the problem of recursion in some cases (because in a few
+	    places the code expects getitem to return a Python-system object)
+ 
+      * considered returning different things depending on the resolution but 
+            this would make it hard to write generic code  --- 
+	    but do you need to write generic code on all the frequencies
+	    because they cover a wide range. 
+
+   Solution:  The use-case of actually wanting a date-time object when the resolution 
+                and dynamic range match, make it the compelling default.   When it 
+		does fails, there are alternatives for the programmer to use.
+
+   New question: Should we change (c)longdouble at this point? to return Python Float?
+              
+*/
+
+static PyObject *
+DATETIME_getitem(char *ip, PyArrayObject *ap) {
+    datetime t1;
+
+    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((datetime *)ip);
+        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+    }
+    else {
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+    }
+}
+
+
+static PyObject *
+TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
+    timedelta t1;
+
+    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((timedelta *)ip);
+        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
+    }
+    else {
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
+    }
+}
+
+
+static int
+DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    datetime temp;  /* ensures alignment */
+
+    if (PyArray_IsScalar(op, Datetime)) {
+        temp = ((PyDatetimeScalarObject *)op)->obval;
+    }
+    else {
+        temp = PyDateTime_AsInt64(op, ap->descr);
+    }
+    if (PyErr_Occurred()) {
+        if (PySequence_Check(op)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+        }
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap))
+        *((datetime *)ov)=temp;
+    else {
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
+                ap);
+    }
+    return 0;
+}
+
+
+static int
+TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    timedelta temp;  /* ensures alignment */
+
+    if (PyArray_IsScalar(op, Timedelta)) {
+        temp = ((PyTimedeltaScalarObject *)op)->obval;
+    }
+    else {
+        temp = PyTimeDelta_AsInt64(op, ap->descr);
+    }
+    if (PyErr_Occurred()) {
+        if (PySequence_Check(op)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+        }
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap))
+        *((timedelta *)ov)=temp;
+    else {
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
+                ap);
+    }
+    return 0;
+}
+
 
 /**begin repeat
  *
@@ -210,6 +585,9 @@ static int
 }
 
 /**end repeat**/
+
+/* These return array scalars which is different than other date-types.  
+ */
 
 static PyObject *
 LONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
@@ -684,17 +1062,21 @@ fail:
 /**begin repeat
  *
  * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *           TIMEDELTA#
  * #totype = byte, ubyte, short, ushort, int, uint, long, ulong,
- *           longlong, ulonglong, float, double, longdouble#
+ *           longlong, ulonglong, float, double, longdouble, datetime,
+ *           timedelta#
 */
 
 /**begin repeat1
  *
  * #FROMTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *             TIMEDELTA#
  * #fromtype = byte, ubyte, short, ushort, int, uint, long, ulong,
- *             longlong, ulonglong, float, double, longdouble#
+ *             longlong, ulonglong, float, double, longdouble, datetime,
+ *             timedelta#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
@@ -728,9 +1110,11 @@ static void
 /**begin repeat
  *
  * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *             TIMEDELTA#
  * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *             longlong, ulonglong, float, double, longdouble#
+ *             longlong, ulonglong, float, double, longdouble, datetime,
+ *             timedelta#
 */
 static void
 @FROMTYPE@_to_BOOL(@fromtype@ *ip, Bool *op, intp n,
@@ -761,9 +1145,11 @@ static void
 
 /**begin repeat
  * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *           TIMEDELTA#
  * #totype = byte, ubyte, short, ushort, int, uint, long, ulong,
- *           longlong, ulonglong, float, double, longdouble#
+ *           longlong, ulonglong, float, double, longdouble, datetime,
+ *           timedelta#
 */
 static void
 BOOL_to_@TOTYPE@(Bool *ip, @totype@ *op, intp n,
@@ -783,9 +1169,11 @@ BOOL_to_@TOTYPE@(Bool *ip, @totype@ *op, intp n,
 
 /**begin repeat1
  * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *             TIMEDELTA#
  * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *             longlong, ulonglong, float, double, longdouble#
+ *             longlong, ulonglong, float, double, longdouble, datetime,
+ *             timedelta#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
@@ -827,11 +1215,13 @@ static void
  *
  * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
- *             CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT#
+ *             CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT,
+ *             DATETIME, TIMEDELTA#
  * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *             longlong, ulonglong, float, double, longdouble,
- *             cfloat, cdouble, clongdouble, char, char, char, PyObject *#
- * #skip = 1*17, aip->descr->elsize*3, 1#
+ *             cfloat, cdouble, clongdouble, char, char, char, PyObject *,
+ *             datetime, timedelta#
+ * #skip = 1*17, aip->descr->elsize*3, 1*3#
  */
 static void
 @FROMTYPE@_to_OBJECT(@fromtype@ *ip, PyObject **op, intp n, PyArrayObject *aip,
@@ -863,6 +1253,8 @@ static void
 #define _NPY_UNUSEDCFLOAT  NPY_UNUSED
 #define _NPY_UNUSEDCDOUBLE  NPY_UNUSED
 #define _NPY_UNUSEDCLONGDOUBLE  NPY_UNUSED
+#define _NPY_UNUSEDDATETIME  NPY_UNUSED
+#define _NPY_UNUSEDTIMEDELTA  NPY_UNUSED
 #define _NPY_UNUSEDSTRING
 #define _NPY_UNUSEDVOID
 #define _NPY_UNUSEDUNICODE
@@ -871,11 +1263,13 @@ static void
  *
  * #TOTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
- *           CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID#
+ *           CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, DATETIME,
+ *           TIMEDELTA#
  * #totype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *           longlong, ulonglong, float, double, longdouble,
- *           cfloat, cdouble, clongdouble, char, char, char#
- * #skip = 1*17, aip->descr->elsize*3#
+ *           cfloat, cdouble, clongdouble, char, char, char, datetime,
+ *           timedelta#
+ * #skip = 1*17, aip->descr->elsize*3, 1*2#
  */
 static void
 OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, intp n,
@@ -898,13 +1292,13 @@ OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, intp n,
 
 /**begin repeat
  *
- * #from = STRING*20, UNICODE*20, VOID*20#
- * #fromtyp = char*60#
- * #to = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID)*3#
- * #totyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char)*3#
- * #oskip = (1*17,aop->descr->elsize*3)*3#
- * #convert = 1*17, 0*3, 1*17, 0*3, 0*20#
- * #convstr = (Int*9, Long*2, Float*3, Complex*3, Tuple*3)*3#
+ * #from = STRING*22, UNICODE*22, VOID*22#
+ * #fromtyp = char*66#
+ * #to = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, DATETIME, TIMEDELTA)*3#
+ * #totyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char, datetime, timedelta)*3#
+ * #oskip = (1*17,aop->descr->elsize*3,1*2)*3#
+ * #convert = 1*17, 0*3, 1*2, 1*17, 0*3, 1*2, 0*22#
+ * #convstr = (Int*9, Long*2, Float*3, Complex*3, Tuple*3, Long*2)*3#
 */
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
@@ -940,10 +1334,10 @@ static void
 
 /**begin repeat
  *
- * #to = STRING*17, UNICODE*17, VOID*17#
- * #totyp = char*17, char*17, char*17#
- * #from = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
- * #fromtyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble)*3#
+ * #to = STRING*19, UNICODE*19, VOID*19#
+ * #totyp = char*19, char*19, char*19#
+ * #from = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA)*3#
+ * #fromtyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, datetime, timedelta)*3#
  */
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
@@ -1032,7 +1426,8 @@ BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSE
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID#
+ * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID,
+ *          DATETIME, TIMEDELTA#
  */
 #define @fname@_scan NULL
 /**end repeat**/
@@ -1040,10 +1435,12 @@ BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSE
 /****************** fromstr *************************************/
 
 /**begin repeat
- * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG#
- * #type = byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
- * #func = (l, ul)*5#
- * #btype = (long, ulong)*5#
+ * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG,
+ *          ULONGLONG, DATETIME, TIMEDELTA#
+ * #type = byte, ubyte, short, ushort, int, uint, long, ulong, longlong,
+ *         ulonglong, datetime, timedelta#
+ * #func = (l, ul)*5, l, l#
+ * #btype = (long, ulong)*5, long, long#
  */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
@@ -1085,9 +1482,12 @@ static int
 
 /**begin repeat
  *
- * #fname = SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
- * #fsize = SHORT, SHORT, INT, INT, LONG, LONG, LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
- * #type = short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+ * #fname = SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT,
+ *          DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+ * #fsize = SHORT, SHORT, INT, INT, LONG, LONG, LONGLONG, LONGLONG, FLOAT,
+ *          DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+ * #type = short, ushort, int, uint, long, ulong, longlong, ulonglong, float,
+ *         double, longdouble, datetime, timedelta#
  */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride,
@@ -1572,8 +1972,8 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 /****************** nonzero **********************************/
 
 /**begin repeat
-#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,DATETIME,TIMEDELTA#
+#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static Bool
 @fname@_nonzero (@type@ *ip, PyArrayObject *ap)
@@ -1766,9 +2166,9 @@ BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *NPY_UNUSED(ap))
 
 /**begin repeat
  * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG#
+ *         LONGLONG, ULONGLONG, DATETIME, TIMEDELTA#
  * #type = byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong#
+ *         longlong, ulonglong, datetime, timedelta#
  */
 
 static int
@@ -2019,9 +2419,9 @@ finish:
 
 /**begin repeat
 
-#fname= BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
-#incr= ip++*14, ip+=2*3#
+#fname= BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, datetime, timedelta#
+#incr= ip++*14, ip+=2*3, ip++*2#
 */
 
 static int
@@ -2109,9 +2509,9 @@ BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 }
 
 /**begin repeat
-#name=BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#type= byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-#out= long, ulong, long, ulong, long, ulong, long, ulong, longlong, ulonglong, float, double, longdouble#
+#name=BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+#type= byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
+#out= long, ulong, long, ulong, long, ulong, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static void
 @name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
@@ -2209,8 +2609,8 @@ finish:
 }
 
 /**begin repeat
-#NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
+#NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,DATETIME,TIMEDELTA#
+#typ=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,datetime,timedelta#
 */
 static void
 @NAME@_fill(@typ@ *buffer, intp length, void *NPY_UNUSED(ignored))
@@ -2275,8 +2675,8 @@ static void
 /**end repeat**/
 
 /**begin repeat
-#NAME=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+#NAME=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,DATETIME,TIMEDELTA#
+#typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble,datetime,timedelta#
 */
 static void
 @NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *NPY_UNUSED(ignored))
@@ -2297,8 +2697,8 @@ static void
  *************************/
 
 /**begin repeat
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#name=BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static void
 @name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
@@ -2396,8 +2796,8 @@ static void
  *************************/
 
 /**begin repeat
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble, datetime, timedelta#
 */
 static void
 @name@_fastputmask(@type@ *in, Bool *mask, intp ni, @type@ *vals, intp nv)
@@ -2433,8 +2833,8 @@ static void
  *************************/
 
 /**begin repeat
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble, datetime, timedelta#
 */
 static int
 @name@_fasttake(@type@ *dest, @type@ *src, intp *indarray,
@@ -2550,7 +2950,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
+        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
+        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA
     },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
@@ -2598,13 +3000,13 @@ static PyArray_Descr @from@_Descr = {
 
 /**begin repeat
 
-#from= BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT#
-#num= 1*14,2*3,1#
-#fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *#
-#NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
-#kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT#
-#endian= |*3, =*14, |#
-#isobject= 0*17,NPY_OBJECT_DTYPE_FLAGS#
+#from= BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,DATETIME,TIMEDELTA#
+#num= 1*14,2*3,1*3#
+#fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *, datetime, timedelta#
+#NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object, Datetime, Timedelta#
+#kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT, DATETIME, TIMEDELTA#
+#endian= |*3, =*14, |, =*2#
+#isobject= 0*17,NPY_OBJECT_DTYPE_FLAGS,0*2#
 */
 
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
@@ -2629,7 +3031,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
+        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
+        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA
     },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
@@ -2675,6 +3079,25 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
 
 /**end repeat**/
 
+static void
+_init_datetime_descr(PyArray_Descr *descr) 
+{
+    PyArray_DatetimeMetaData *dt_data;
+    PyObject *cobj;
+
+    dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
+    dt_data->base = NPY_FR_us;
+    dt_data->num = 1;
+    dt_data->den = 1;
+    dt_data->events = 1;
+    
+    cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+    descr->metadata = PyDict_New();
+    PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);
+    Py_DECREF(cobj);
+    
+}
+
 #define _MAX_LETTER 128
 static char _letter_to_num[_MAX_LETTER];
 
@@ -2700,6 +3123,8 @@ static PyArray_Descr *_builtin_descrs[] = {
     &STRING_Descr,
     &UNICODE_Descr,
     &VOID_Descr,
+    &DATETIME_Descr,
+    &TIMEDELTA_Descr,
 };
 
 /*NUMPY_API
@@ -2753,6 +3178,14 @@ PyArray_DescrFromType(int type)
     else {
         Py_INCREF(ret);
     }
+
+    /* Make sure dtype metadata is initialized for DATETIME */
+    if (PyTypeNum_ISDATETIME(type)) {
+	if (ret->metadata == NULL) {
+	    _init_datetime_descr(ret);
+	}
+    }
+    
     return ret;
 }
 
@@ -2768,14 +3201,14 @@ set_typeinfo(PyObject *dict)
     }
 
 /**begin repeat
-#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,INTP,UINTP,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,INTP,UINTP,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID,DATETIME,TIMEDELTA#
 */
     _letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
 /**end repeat**/
     _letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
 
 /**begin repeat
-#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID,DATETIME,TIMEDELTA#
 */
     @name@_Descr.fields = Py_None;
 /**end repeat**/
@@ -2857,6 +3290,22 @@ set_typeinfo(PyObject *dict)
                 (PyObject *)\
                 &PyVoidArrType_Type));
     Py_DECREF(s);
+    PyDict_SetItemString(infodict, "DATETIME",
+            s=Py_BuildValue("ciiiNNO", PyArray_DATETIMELTR,
+                PyArray_DATETIME,
+                sizeof(npy_datetime)*CHAR_BIT,
+                _ALIGN(npy_datetime),
+                MyPyLong_FromInt64(MAX_DATETIME), MyPyLong_FromInt64(MIN_DATETIME),
+                (PyObject *)&PyDatetimeArrType_Type));
+    Py_DECREF(s);
+    PyDict_SetItemString(infodict, "TIMEDELTA",
+            s=Py_BuildValue("ciiiNNO", PyArray_TIMEDELTALTR,
+                PyArray_TIMEDELTA,
+                sizeof(npy_timedelta)*CHAR_BIT,
+                _ALIGN(npy_timedelta),
+                MyPyLong_FromInt64(MAX_TIMEDELTA), MyPyLong_FromInt64(MIN_TIMEDELTA),
+                (PyObject *)&PyTimedeltaArrType_Type));
+    Py_DECREF(s);
 
 #define SETTYPE(name)                           \
     Py_INCREF(&Py##name##ArrType_Type);     \
@@ -2868,6 +3317,7 @@ set_typeinfo(PyObject *dict)
     SETTYPE(Integer);
     SETTYPE(Inexact);
     SETTYPE(SignedInteger);
+    SETTYPE(TimeInteger);
     SETTYPE(UnsignedInteger);
     SETTYPE(Floating);
     SETTYPE(ComplexFloating);

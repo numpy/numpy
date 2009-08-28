@@ -7,11 +7,15 @@
 
 #include "common.c"
 
+#include "scalartypes.c"
+#include "scalarapi.c"
+
+#include "datetime.c"
 #include "arraytypes.c"
 
 #include "hashdescr.c"
 #include "numpyos.c"
-#include "scalarapi.c"
+
 #include "descriptor.c"
 #include "flagsobject.c"
 #include "ctors.c"
@@ -31,7 +35,6 @@
 #include "conversion_utils.c"
 #include "buffer.c"
 
-#include "scalartypes.c"
 
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.c"

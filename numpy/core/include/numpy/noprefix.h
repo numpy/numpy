@@ -54,9 +54,13 @@ compatibility measure*/
 #define Complex256  npy_complex256
 #define intp        npy_intp
 #define uintp       npy_uintp
+#define datetime    npy_datetime
+#define timedelta   npy_timedelta
 
 #define SIZEOF_INTP NPY_SIZEOF_INTP
 #define SIZEOF_UINTP NPY_SIZEOF_UINTP
+#define SIZEOF_DATETIME NPY_SIZEOF_DATETIME
+#define SIZEOF_TIMEDELTA NPY_SIZEOF_TIMEDELTA
 
 #define LONGLONG_FMT NPY_LONGLONG_FMT
 #define ULONGLONG_FMT NPY_ULONGLONG_FMT
@@ -97,6 +101,10 @@ compatibility measure*/
 #define MAX_LONGLONG NPY_MAX_LONGLONG
 #define MIN_LONGLONG NPY_MIN_LONGLONG
 #define MAX_ULONGLONG NPY_MAX_ULONGLONG
+#define MIN_DATETIME NPY_MIN_DATETIME
+#define MAX_DATETIME NPY_MAX_DATETIME
+#define MIN_TIMEDELTA NPY_MIN_TIMEDELTA
+#define MAX_TIMEDELTA NPY_MAX_TIMEDELTA
 
 #define SIZEOF_LONGDOUBLE NPY_SIZEOF_LONGDOUBLE
 #define SIZEOF_LONGLONG   NPY_SIZEOF_LONGLONG
@@ -109,6 +117,8 @@ compatibility measure*/
 #define BITSOF_FLOAT      NPY_BITSOF_FLOAT
 #define BITSOF_DOUBLE     NPY_BITSOF_DOUBLE
 #define BITSOF_LONGDOUBLE NPY_BITSOF_LONGDOUBLE
+#define BITSOF_DATETIME   NPY_BITSOF_DATETIME
+#define BITSOF_TIMEDELTA   NPY_BITSOF_TIMEDELTA
 
 #define PyArray_UCS4 npy_ucs4
 #define _pya_malloc PyArray_malloc

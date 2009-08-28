@@ -78,11 +78,14 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_OBJECT=17,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
+                    NPY_DATETIME, NPY_TIMEDELTA,
                     NPY_NTYPES,
                     NPY_NOTYPE,
                     NPY_CHAR,      /* special flag */
                     NPY_USERDEF=256  /* leave room for characters */
 };
+
+#define NPY_METADATA_DTSTR "__frequency__"
 
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
@@ -128,6 +131,8 @@ enum NPY_TYPECHAR { NPY_BOOLLTR = '?',
                         NPY_STRINGLTR2 = 'a',
                         NPY_UNICODELTR = 'U',
                         NPY_VOIDLTR = 'V',
+                        NPY_DATETIMELTR = 'M',
+                        NPY_TIMEDELTALTR = 'm',
                         NPY_CHARLTR = 'c',
 
                         /* No Descriptor, just a define -- this let's
@@ -181,6 +186,40 @@ typedef enum {
         NPY_WRAP=1,
         NPY_RAISE=2
 } NPY_CLIPMODE;
+
+typedef enum {
+	NPY_FR_Y,
+	NPY_FR_M,
+	NPY_FR_W,
+	NPY_FR_B,
+	NPY_FR_D,
+	NPY_FR_h,
+	NPY_FR_m,
+	NPY_FR_s,
+	NPY_FR_ms,
+	NPY_FR_us,
+	NPY_FR_ns,
+	NPY_FR_ps,
+	NPY_FR_fs,
+	NPY_FR_as
+} NPY_DATETIMEUNIT;
+
+#define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
+#define NPY_DATETIME_DEFAULTUNIT NPY_FR_us
+
+#define NPY_STR_Y "Y"
+#define NPY_STR_M "M"
+#define NPY_STR_W "W"
+#define NPY_STR_B "B"
+#define NPY_STR_D "D"
+#define NPY_STR_h "h"
+#define NPY_STR_s "s"
+#define NPY_STR_ms "ms"
+#define NPY_STR_us "us"
+#define NPY_STR_ns "ns"
+#define NPY_STR_ps "ps"
+#define NPY_STR_fs "fs"
+#define NPY_STR_as "as"
 
 
 /* This is to typedef npy_intp to the appropriate pointer size for this
@@ -478,6 +517,8 @@ typedef struct _PyArray_Descr {
 
         PyArray_ArrFuncs *f;     /* a table of functions specific for each
                                     basic data descriptor */
+
+        PyObject *metadata;     /* Metadata about this dtype */
 } PyArray_Descr;
 
 typedef struct _arr_descr {
@@ -531,6 +572,27 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
+
+
+typedef struct {
+        NPY_DATETIMEUNIT base;
+	int num;
+	int den;      /* Converted to 1 on input for now -- an input-only mechanism */
+	int events;
+} PyArray_DatetimeMetaData;
+
+typedef struct {
+	npy_longlong year;
+	int month, day, hour, min, sec, us, ps, as;
+} npy_datetimestruct;
+
+typedef struct {
+	npy_longlong day;
+	int sec, us, ps, as;
+} npy_timedeltastruct;
+
+
+#define PyDataType_GetDatetimeMetaData(descr) ((descr->metadata == NULL) ? NULL : ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
 
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
@@ -1071,6 +1133,9 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 #define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
                                     ((type) <=NPY_VOID))
 
+#define PyTypeNum_ISDATETIME(type) (((type) >=NPY_DATETIME) &&  \
+                                    ((type) <=NPY_TIMEDELTA))
+
 #define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
                                    ((type) < NPY_USERDEF+     \
                                     NPY_NUMUSERTYPES))
@@ -1091,6 +1156,7 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 #define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
@@ -1106,6 +1172,7 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
 #define PyArray_ISPYTHON(obj) PyTypeNum_ISPYTHON(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
+#define PyArray_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyArray_TYPE(obj))
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))

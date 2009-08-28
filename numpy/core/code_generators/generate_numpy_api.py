@@ -2,12 +2,12 @@ import os
 import genapi
 
 types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
-         'Inexact',
+         'Inexact', 'TimeInteger', 
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
          'CFloat', 'CDouble', 'CLongDouble', 'Object', 'String', 'Unicode',
-         'Void']
+         'Void', 'Datetime', 'Timedelta']
 
 h_template = r"""
 #ifdef _MULTIARRAYMODULE
@@ -123,7 +123,7 @@ _import_array(void)
   }
 #elif NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
   if (st != NPY_CPU_LITTLE) {
-    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as"\
+    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
         "little endian, but detected different endianness at runtime");
     return -1;
   }

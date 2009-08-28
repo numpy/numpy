@@ -1,5 +1,9 @@
-import re, textwrap
-import sys, os
+import os
+import re
+import struct
+import sys
+import textwrap
+
 sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
 sys.path.pop(0)
@@ -8,16 +12,25 @@ Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
 None_ = "PyUFunc_None"
 
+# Sentinel value to specify that the loop for the given TypeDescription uses the
+# pointer to arrays as its func_data.
+UsesArraysAsData = object()
+
+
 class TypeDescription(object):
-    """Type signature for a ufunc
+    """Type signature for a ufunc.
 
     Attributes
     ----------
-
-    type: character representing the type
-    func_data:
-    in_:
-    out:
+    type : str
+        Character representing the nominal type.
+    func_data : str or None or UsesArraysAsData, optional
+        The string representing the expression to insert into the data array, if
+        any.
+    in_ : str or None, optional
+        The typecode(s) of the inputs.
+    out : str or None, optional
+        The typecode(s) of the outputs.
     """
     def __init__(self, type, f=None, in_=None, out=None):
         self.type = type
@@ -94,6 +107,39 @@ class Ufunc(object):
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
 
+# String-handling utilities to avoid locale-dependence.
+
+import string
+UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+
+def english_upper(s):
+    """ Apply English case rules to convert ASCII strings to all upper case.
+
+    This is an internal utility function to replace calls to str.upper() such
+    that we can avoid changing behavior with changing locales. In particular,
+    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
+    both lowercase and uppercase. Thus, "i".upper() != "I" in a "tr" locale.
+
+    Parameters
+    ----------
+    s : str
+
+    Returns
+    -------
+    uppered : str
+
+    Examples
+    --------
+    >>> from numpy.lib.utils import english_upper
+    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
+    >>> english_upper('')
+    ''
+    """
+    uppered = s.translate(UPPER_TABLE)
+    return uppered
+
+
 #each entry in defdict is a Ufunc object.
 
 #name: [string of chars for which it is defined,
@@ -122,16 +168,19 @@ chartoname = {'?': 'bool',
               'F': 'cfloat',
               'D': 'cdouble',
               'G': 'clongdouble',
+              'M': 'datetime',
+              'm': 'timedelta',
               'O': 'OBJECT',
-              # M is like O, but calls a method of the object instead
+              # '.' is like 'O', but calls a method of the object instead
               # of a function
-              'M': 'OBJECT',
+              '.': 'OBJECT',
               }
 
-all = '?bBhHiIlLqQfdgFDGO'
+all = '?bBhHiIlLqQfdgFDGOMm'
 O = 'O'
-M = 'M'
+M = '.'
 ints = 'bBhHiIlLqQ'
+times = 'Mm'
 intsO = ints + O
 bints = '?' + ints
 bintsO = bints + O
@@ -144,33 +193,51 @@ cmplxM = cmplx + M
 inexact = flts + cmplx
 noint = inexact+O
 nointM = inexact+M
-allM = bints+flts+cmplxM
+allM = bints+times+flts+cmplxM
 nobool = all[1:]
-nobool_or_obj = all[1:-1]
+noobj = all[:-3]+all[-2:]
+nobool_or_obj = all[1:-3]+all[-2:]
 intflt = ints+flts
-intfltcmplx = nobool_or_obj
-nocmplx = bints+flts
+intfltcmplx = ints+flts+cmplx
+nocmplx = bints+times+flts
 nocmplxO = nocmplx+O
 nocmplxM = nocmplx+M
-noobj = all[:-1]
+notimes_or_obj = bints + inexact
+
+# Find which code corresponds to int64.
+int64 = ''
+uint64 = ''
+for code in 'bhilq':
+    if struct.calcsize(code) == 8:
+        int64 = code
+        uint64 = english_upper(code)
+        break
 
 defdict = {
 'add' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
-          TD(noobj),
+          TD(notimes_or_obj),
+          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
+           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
+           TypeDescription('M', UsesArraysAsData, 'mM', 'M'),
+          ],
           TD(O, f='PyNumber_Add'),
           ),
 'subtract' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.subtract'),
-          TD(noobj),
+          TD(notimes_or_obj),
+          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
+           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
+           TypeDescription('M', UsesArraysAsData, 'MM', 'm'),
+          ],
           TD(O, f='PyNumber_Subtract'),
           ),
 'multiply' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.multiply'),
-          TD(noobj),
+          TD(notimes_or_obj),
           TD(O, f='PyNumber_Multiply'),
           ),
 'divide' :
@@ -196,7 +263,7 @@ defdict = {
 'conjugate' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.conjugate'),
-          TD(nobool_or_obj),
+          TD(ints+flts+cmplx),
           TD(M, f='conjugate'),
           ),
 'fmod' :
@@ -209,13 +276,13 @@ defdict = {
 'square' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.square'),
-          TD(nobool_or_obj),
+          TD(ints+inexact),
           TD(O, f='Py_square'),
           ),
 'reciprocal' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.reciprocal'),
-          TD(nobool_or_obj),
+          TD(ints+inexact),
           TD(O, f='Py_reciprocal'),
           ),
 'ones_like' :
@@ -234,14 +301,14 @@ defdict = {
 'absolute' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
-          TD(nocmplx),
+          TD(bints+flts+times),
           TD(cmplx, out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
 'negative' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
-          TD(nocmplx),
+          TD(bints+flts+times),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
@@ -338,6 +405,7 @@ defdict = {
           docstrings.get('numpy.core.umath.logaddexp2'),
           TD(flts, f="logaddexp2")
           ),
+# FIXME: decide if the times should have the bitwise operations.
 'bitwise_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.bitwise_and'),
@@ -608,7 +676,7 @@ chartotype1 = {'f': 'f_f',
                'D': 'D_D',
                'G': 'G_G',
                'O': 'O_O',
-               'M': 'O_O_method'}
+               '.': 'O_O_method'}
 
 chartotype2 = {'f': 'ff_f',
                'd': 'dd_d',
@@ -617,44 +685,11 @@ chartotype2 = {'f': 'ff_f',
                'D': 'DD_D',
                'G': 'GG_G',
                'O': 'OO_O',
-               'M': 'OO_O_method'}
+               '.': 'OO_O_method'}
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
 # 3) add function.
-
-# String-handling utilities to avoid locale-dependence.
-
-import string
-UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
-
-def english_upper(s):
-    """ Apply English case rules to convert ASCII strings to all upper case.
-
-    This is an internal utility function to replace calls to str.upper() such
-    that we can avoid changing behavior with changing locales. In particular,
-    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
-    both lowercase and uppercase. Thus, "i".upper() != "I" in a "tr" locale.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    uppered : str
-
-    Examples
-    --------
-    >>> from numpy.lib.utils import english_upper
-    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
-    >>> english_upper('')
-    ''
-    """
-    uppered = s.translate(UPPER_TABLE)
-    return uppered
-
 
 def make_arrays(funcdict):
     # functions array contains an entry for every type implemented
@@ -679,7 +714,7 @@ def make_arrays(funcdict):
             thedict = chartotype1  # one input and one output
 
         for t in uf.type_descriptions:
-            if t.func_data is not None:
+            if t.func_data not in (None, UsesArraysAsData):
                 funclist.append('NULL')
                 astr = '%s_functions[%d] = PyUFunc_%s;' % \
                        (name, k, thedict[t.type])
@@ -689,7 +724,7 @@ def make_arrays(funcdict):
                            (name, k, t.func_data)
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
-                elif t.type == 'M':
+                elif t.type == '.':
                     datalist.append('(void *)"%s"' % t.func_data)
                 else:
                     astr = '%s_data[%d] = (void *) %s;' % \
@@ -698,8 +733,13 @@ def make_arrays(funcdict):
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
                 sub += 1
+            elif t.func_data is UsesArraysAsData:
+                tname = english_upper(chartoname[t.type])
+                datalist.append('(void *)NULL')
+                funclist.append('%s_%s_%s_%s' % (tname, t.in_, t.out, name))
+                code2list.append('PyUFunc_SetUsesArraysAsData(%s_data, %s);' % (name, k))
             else:
-                datalist.append('(void *)NULL');
+                datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
                 funclist.append('%s_%s' % (tname, name))
 

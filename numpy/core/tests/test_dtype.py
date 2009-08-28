@@ -81,5 +81,23 @@ class TestMonsterType(TestCase):
             ('yi', np.dtype((a, (3, 2))))])
         self.failUnless(hash(c) == hash(d))
 
+class TestMetadata(TestCase):
+    def test_no_metadata(self):
+        d = np.dtype(int)
+        self.assertEqual(d.metadata, None)
+
+    def test_metadata_takes_dict(self):
+        d = np.dtype(int, metadata={'datum': 1})
+        self.assertEqual(d.metadata, {'datum': 1})
+
+    def test_metadata_rejects_nondict(self):
+        self.assertRaises(TypeError, np.dtype, int, metadata='datum')
+        self.assertRaises(TypeError, np.dtype, int, metadata=1)
+        self.assertRaises(TypeError, np.dtype, int, metadata=None)
+
+    def test_nested_metadata(self):
+        d = np.dtype([('a', np.dtype(int, metadata={'datum': 1}))])
+        self.assertEqual(d['a'].metadata, {'datum': 1})
+
 if __name__ == "__main__":
     run_module_suite()

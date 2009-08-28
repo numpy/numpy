@@ -3,6 +3,7 @@
 
 import re
 import sys
+from _mx_datetime_parser import *
 
 if (sys.byteorder == 'little'):
     _nbo = '<'
@@ -77,11 +78,18 @@ def _usefields(adict, align):
 #  a simple typestring
 
 def _array_descr(descriptor):
+    from multiarray import METADATA_DTSTR
     fields = descriptor.fields
     if fields is None:
         subdtype = descriptor.subdtype
         if subdtype is None:
-            return descriptor.str
+            if descriptor.metadata is None:
+                return descriptor.str
+            else:
+                new = descriptor.metadata.copy()
+                # Eliminate any key related to internal implementation
+                _ = new.pop(METADATA_DTSTR, None)
+                return (descriptor.str, new)
         else:
             return (_array_descr(subdtype[0]), subdtype[1])
 
@@ -155,6 +163,34 @@ def _split(input):
         raise SyntaxError, hold
 
     return newlist
+
+format_datetime = re.compile(r"""(?P<typecode>M8|m8|datetime64|timedelta64)
+                                 ([[]
+                                   ((?P<num>\d+)?
+                                   (?P<baseunit>Y|M|W|B|D|h|m|s|ms|us|ns|ps|fs|as)
+                                   (/(?P<den>\d+))?
+                                  []])
+                                 (//(?P<events>\d+))?)?""", re.X)
+# Return (baseunit, num, den, events), datetime
+#  from date-time string
+def _datetimestring(astr):
+    res = format_datetime.match(astr)
+    if res is None:
+        raise ValueError, "Incorrect date-time string."
+    typecode = res.group('typecode')
+    datetime = (typecode == 'M8' or typecode == 'datetime64')
+    defaults = ['us', 1, 1, 1]
+    names = ['baseunit', 'num', 'den', 'events']
+    func = [str, int, int, int]
+    dt_tuple = []
+    for i, name in enumerate(names):
+        value = res.group(name)
+        if value:
+            dt_tuple.append(func[i](value))
+        else:
+            dt_tuple.append(defaults[i])
+
+    return tuple(dt_tuple), datetime
 
 format_re = re.compile(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*)')
 

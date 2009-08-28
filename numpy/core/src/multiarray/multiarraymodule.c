@@ -1957,6 +1957,36 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), P
     return oldops;
 }
 
+static PyObject *
+array_set_datetimeparse_function(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *op = NULL;
+    static char *kwlist[] = {"f", NULL};
+    PyObject *_numpy_internal;
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist,
+                                    &op)) {
+        return NULL;
+    }
+    /* reset the array_repr function to built-in */
+    if (op == Py_None) {
+	_numpy_internal = PyImport_ImportModule("numpy.core._internal");
+	if (_numpy_internal == NULL) return NULL;
+	op = PyObject_GetAttrString(_numpy_internal, "datetime_from_string");
+    }
+    else { /* Must balance reference count increment in both branches */
+	if (!PyCallable_Check(op)) {
+	    PyErr_SetString(PyExc_TypeError, "Argument must be callable.");
+	    return NULL;
+	}
+	Py_INCREF(op);		
+    }
+    PyArray_SetDatetimeParseFunction(op);
+    Py_DECREF(op);  
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 /*NUMPY_API
  * Where
@@ -2367,10 +2397,12 @@ static struct PyMethodDef array_module_methods[] = {
     {"set_numeric_ops",
         (PyCFunction)array_set_ops_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
+    {"set_datetimeparse_function", 
+        (PyCFunction)array_set_datetimeparse_function,
+        METH_VARARGS|METH_KEYWORDS, NULL},
     {"set_typeDict",
         (PyCFunction)array_set_typeDict,
         METH_VARARGS, NULL},
-
     {"array",
         (PyCFunction)_array_fromobject,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -2554,6 +2586,10 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
+    SINGLE_INHERIT(TimeInteger, SignedInteger);
+    SINGLE_INHERIT(Datetime, TimeInteger);
+    SINGLE_INHERIT(Timedelta, TimeInteger);
+
     /*
        fprintf(stderr,
         "tp_free = %p, PyObject_Del = %p, int_tp_free = %p, base.tp_free = %p\n",
@@ -2692,14 +2728,21 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyErr_Occurred()) {
         goto err;
     }
+    
     /*
      * PyExc_Exception should catch all the standard errors that are
-     * now raised instead of the string exception "multiarray.error".
+     * now raised instead of the string exception "multiarray.error"
+
      * This is for backward compatibility with existing code.
      */
     PyDict_SetItemString (d, "error", PyExc_Exception);
-    s = PyString_FromString("3.0");
+
+    s = PyString_FromString("3.1");
     PyDict_SetItemString(d, "__version__", s);
+    Py_DECREF(s);
+
+    s = PyString_InternFromString(NPY_METADATA_DTSTR);
+    PyDict_SetItemString(d, "METADATA_DTSTR", s);
     Py_DECREF(s);
 
 #define ADDCONST(NAME)                          \

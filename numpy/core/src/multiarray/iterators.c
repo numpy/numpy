@@ -1910,10 +1910,12 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
 /*
  * fill and x->ao should have equivalent types 
  */
-/*NUMPY_API*/
+/*NUMPY_API
+ * A Neighborhood Iterator object.
+*/
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
-                int mode, PyArrayObject* fill)
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds, 
+			    int mode, PyArrayObject* fill)
 {
     int i;
     PyArrayNeighborhoodIterObject *ret;

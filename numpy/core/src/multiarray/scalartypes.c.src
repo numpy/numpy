@@ -32,9 +32,9 @@ NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
 
 /**begin repeat
  * #name = number, integer, signedinteger, unsignedinteger, inexact,
- *         floating, complexfloating, flexible, character#
+ *         floating, complexfloating, flexible, character, timeinteger#
  * #NAME = Number, Integer, SignedInteger, UnsignedInteger, Inexact,
- *         Floating, ComplexFloating, Flexible, Character#
+ *         Floating, ComplexFloating, Flexible, Character, TimeInteger#
  */
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 #if defined(NPY_PY3K)
@@ -1908,12 +1908,12 @@ object_arrtype_dealloc(PyObject *v)
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble,
- *         string, unicode, object#
+ *         string, unicode, object, datetime, timedelta#
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
  *         ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE,
- *         STRING, UNICODE, OBJECT#
- * #work = 0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
- * #default = 0*16,1*2,2#
+ *         STRING, UNICODE, OBJECT, DATETIME, TIMEDELTA#
+ * #work = 0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0,0,0#
+ * #default = 0*16,1*2,2,0*2#
  */
 
 #define _NPY_UNUSED2_1
@@ -2312,7 +2312,50 @@ ulonglong_arrtype_hash(PyObject *obj)
     }
     return x;
 }
+
 #endif
+
+
+/**begin repeat
+ * #lname=datetime, timedelta#
+ * #name=Datetime,Timedelta#
+ */
+#if SIZEOF_LONG==SIZEOF_DATETIME
+static long
+@lname@_arrtype_hash(PyObject *obj)
+{
+    long x = (long)(((Py@name@ScalarObject *)obj)->obval);
+    if (x == -1) {
+        x = -2;
+    }
+    return x;
+}
+#elif SIZEOF_LONGLONG==SIZEOF_DATETIME
+static long
+@lname@_arrtype_hash(PyObject *obj)
+{
+    long y;
+    longlong x = (((Py@name@ScalarObject *)obj)->obval);
+
+    if ((x <= LONG_MAX)) {
+        y = (long) x;
+    }
+    else {
+        union Mask {
+            long hashvals[2];
+            longlong v;
+        } both;
+
+        both.v = x;
+        y = both.hashvals[0] + (1000003)*both.hashvals[1];
+    }
+    if (y == -1) {
+        y = -2;
+    }
+    return y;
+}
+#endif
+/**end repeat**/
 
 
 
@@ -2729,9 +2772,10 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 
 /**begin repeat
  * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
- *         ULongLong, Float, Double, LongDouble#
- * #name = int*5, uint*5, float*3#
- * #CNAME = (CHAR, SHORT, INT, LONG, LONGLONG)*2, FLOAT, DOUBLE, LONGDOUBLE#
+ *         ULongLong, Float, Double, LongDouble, Datetime, Timedelta#
+ * #name = int*5, uint*5, float*3, datetime, timedelta#
+ * #CNAME = (CHAR, SHORT, INT, LONG, LONGLONG)*2, FLOAT, DOUBLE, LONGDOUBLE,
+ *          DATETIME, TIMEDELTA#
  */
 #if BITSOF_@CNAME@ == 8
 #define _THIS_SIZE "8"
@@ -2969,7 +3013,7 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
-     *        Floating, ComplexFloating, Flexible, Character#
+     *        Floating, ComplexFloating, Flexible, Character, TimeInteger#
      */
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
     /**end repeat**/
@@ -2977,10 +3021,10 @@ initialize_numeric_types(void)
     /**begin repeat
      * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint,
      *         ulong, ulonglong, float, double, longdouble, cfloat, cdouble,
-     *         clongdouble, string, unicode, void, object#
+     *         clongdouble, string, unicode, void, object, datetime, timedelta#
      * #NAME = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt,
      *         ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble,
-     *         CLongDouble, String, Unicode, Void, Object#
+     *         CLongDouble, String, Unicode, Void, Object, Datetime, Timedelta#
      */
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
     Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
@@ -2989,9 +3033,11 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
-     *         float, longdouble, cfloat, clongdouble, void, object#
+     *         float, longdouble, cfloat, clongdouble, void, object, datetime,
+     *         timedelta#
      * #NAME = Bool, Byte, Short, UByte, UShort, UInt, ULong, ULongLong,
-     *         Float, LongDouble, CFloat, CLongDouble, Void, Object#
+     *         Float, LongDouble, CFloat, CLongDouble, Void, Object, Datetime,
+     *         Timedelta#
      */
     Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
     /**end repeat**/
@@ -3069,7 +3115,9 @@ static PyTypeObject *typeobjects[] = {
     &PyObjectArrType_Type,
     &PyStringArrType_Type,
     &PyUnicodeArrType_Type,
-    &PyVoidArrType_Type
+    &PyVoidArrType_Type,
+    &PyDatetimeArrType_Type,
+    &PyTimedeltaArrType_Type
 };
 
 NPY_NO_EXPORT int
