@@ -18,6 +18,7 @@ It will:
 
 import os, re, pydoc
 from docscrape_sphinx import get_doc_object, SphinxDocString
+from sphinx.util.compat import Directive
 import inspect
 
 def mangle_docstrings(app, what, name, obj, options, lines,
@@ -25,29 +26,29 @@ def mangle_docstrings(app, what, name, obj, options, lines,
 
     if what == 'module':
         # Strip top title
-        title_re = re.compile(r'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
+        title_re = re.compile(ur'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
                               re.I|re.S)
-        lines[:] = title_re.sub('', "\n".join(lines)).split("\n")
+        lines[:] = title_re.sub(u'', u"\n".join(lines)).split(u"\n")
     else:
-        doc = get_doc_object(obj, what, "\n".join(lines))
+        doc = get_doc_object(obj, what, u"\n".join(lines))
         doc.use_plots = app.config.numpydoc_use_plots
-        lines[:] = str(doc).split("\n")
+        lines[:] = unicode(doc).split(u"\n")
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
            obj.__name__:
         if hasattr(obj, '__module__'):
-            v = dict(full_name="%s.%s" % (obj.__module__, obj.__name__))
+            v = dict(full_name=u"%s.%s" % (obj.__module__, obj.__name__))
         else:
             v = dict(full_name=obj.__name__)
-        lines += ['', '.. htmlonly::', '']
-        lines += ['    %s' % x for x in
+        lines += [u'', u'.. htmlonly::', '']
+        lines += [u'    %s' % x for x in
                   (app.config.numpydoc_edit_link % v).split("\n")]
 
     # replace reference numbers so that there are no duplicates
     references = []
     for line in lines:
         line = line.strip()
-        m = re.match(r'^.. \[([a-z0-9_.-])\]', line, re.I)
+        m = re.match(ur'^.. \[([a-z0-9_.-])\]', line, re.I)
         if m:
             references.append(m.group(1))
 
@@ -56,14 +57,14 @@ def mangle_docstrings(app, what, name, obj, options, lines,
     if references:
         for i, line in enumerate(lines):
             for r in references:
-                if re.match(r'^\d+$', r):
-                    new_r = "R%d" % (reference_offset[0] + int(r))
+                if re.match(ur'^\d+$', r):
+                    new_r = u"R%d" % (reference_offset[0] + int(r))
                 else:
-                    new_r = "%s%d" % (r, reference_offset[0])
-                lines[i] = lines[i].replace('[%s]_' % r,
-                                            '[%s]_' % new_r)
-                lines[i] = lines[i].replace('.. [%s]' % r,
-                                            '.. [%s]' % new_r)
+                    new_r = u"%s%d" % (r, reference_offset[0])
+                lines[i] = lines[i].replace(u'[%s]_' % r,
+                                            u'[%s]_' % new_r)
+                lines[i] = lines[i].replace(u'.. [%s]' % r,
+                                            u'.. [%s]' % new_r)
 
     reference_offset[0] += len(references)
 
@@ -78,8 +79,8 @@ def mangle_signature(app, what, name, obj, options, sig, retann):
 
     doc = SphinxDocString(pydoc.getdoc(obj))
     if doc['Signature']:
-        sig = re.sub("^[^(]*", "", doc['Signature'])
-        return sig, ''
+        sig = re.sub(u"^[^(]*", u"", doc['Signature'])
+        return sig, u''
 
 def initialize(app):
     try:
@@ -95,6 +96,78 @@ def setup(app, get_doc_object_=get_doc_object):
     app.connect('builder-inited', initialize)
     app.add_config_value('numpydoc_edit_link', None, True)
     app.add_config_value('numpydoc_use_plots', None, False)
+
+    # Extra mangling directives
+    name_type = {
+        'cfunction': 'function',
+        'cmember': 'attribute',
+        'cmacro': 'function',
+        'ctype': 'class',
+        'cvar': 'object',
+        'class': 'class',
+        'function': 'function',
+        'attribute': 'attribute',
+        'method': 'function',
+        'staticmethod': 'function',
+        'classmethod': 'function',
+    }
+
+    for name, objtype in name_type.items():
+        app.add_directive('np-' + name, wrap_mangling_directive(name, objtype))
+    
+#------------------------------------------------------------------------------
+# Input-mangling directives
+#------------------------------------------------------------------------------
+from docutils.statemachine import ViewList
+
+def get_directive(name):
+    from docutils.parsers.rst import directives
+    try:
+        return directives.directive(name, None, None)[0]
+    except AttributeError:
+        pass
+    try:
+        # docutils 0.4
+        return directives._directives[name]
+    except (AttributeError, KeyError):
+        raise RuntimeError("No directive named '%s' found" % name)
+
+def wrap_mangling_directive(base_directive_name, objtype):
+    base_directive = get_directive(base_directive_name)
+
+    if inspect.isfunction(base_directive):
+        base_func = base_directive
+        class base_directive(Directive):
+            required_arguments = base_func.arguments[0]
+            optional_arguments = base_func.arguments[1]
+            final_argument_whitespace = base_func.arguments[2]
+            option_spec = base_func.options
+            has_content = base_func.content
+            def run(self):
+                return base_func(self.name, self.arguments, self.options,
+                                 self.content, self.lineno,
+                                 self.content_offset, self.block_text,
+                                 self.state, self.state_machine)
+
+    class directive(base_directive):
+        def run(self):
+            env = self.state.document.settings.env
+
+            name = None
+            if self.arguments:
+                m = re.match(r'^(.*\s+)?(.*?)(\(.*)?', self.arguments[0])
+                name = m.group(2).strip()
+
+            if not name:
+                name = self.arguments[0]
+
+            lines = list(self.content)
+            mangle_docstrings(env.app, objtype, name, None, None, lines)
+            self.content = ViewList(lines, self.content.parent)
+
+            return base_directive.run(self)
+
+    return directive
 
 #------------------------------------------------------------------------------
 # Monkeypatch sphinx.ext.autodoc to accept argspecless autodocs (Sphinx < 0.5)

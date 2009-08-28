@@ -115,18 +115,23 @@ class NoseTester(object):
             If None, extract calling module path
             Default is None
         '''
+        package_name = None
         if package is None:
             f = sys._getframe(1)
-            package = f.f_locals.get('__file__', None)
-            assert package is not None
-            package = os.path.dirname(package)
+            package_path = f.f_locals.get('__file__', None)
+            assert package_path is not None
+            package_path = os.path.dirname(package_path)
+            package_name = f.f_locals.get('__name__', None)
         elif isinstance(package, type(os)):
-            package = os.path.dirname(package.__file__)
-        self.package_path = package
+            package_path = os.path.dirname(package.__file__)
+            package_name = getattr(package, '__name__', None)
+        self.package_path = package_path
 
         # find the package name under test; this name is used to limit coverage
         # reporting (if enabled)
-        self.package_name = get_package_name(package)
+        if package_name is None:
+            package_name = get_package_name(package_path)
+        self.package_name = package_name
 
     def _test_argv(self, label, verbose, extra_argv):
         ''' Generate argv for nosetest command

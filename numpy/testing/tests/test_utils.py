@@ -48,7 +48,7 @@ class _GenericTest(object):
         a = np.array([1, 1], dtype=np.object)
         self._test_equal(a, 1)
 
-class TestEqual(_GenericTest, unittest.TestCase):
+class TestArrayEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_equal
 
@@ -126,11 +126,148 @@ class TestEqual(_GenericTest, unittest.TestCase):
 
         self._test_not_equal(c, b)
 
+class TestEqual(TestArrayEqual):
+    def setUp(self):
+        self._assert_func = assert_equal
 
-class TestAlmostEqual(_GenericTest, unittest.TestCase):
+    def test_nan_items(self):
+        self._assert_func(np.nan, np.nan)
+        self._assert_func([np.nan], [np.nan])
+        self._test_not_equal(np.nan, [np.nan])
+        self._test_not_equal(np.nan, 1)
+
+    def test_inf_items(self):
+        self._assert_func(np.inf, np.inf)
+        self._assert_func([np.inf], [np.inf])
+        self._test_not_equal(np.inf, [np.inf])
+
+    def test_non_numeric(self):
+        self._assert_func('ab', 'ab')
+        self._test_not_equal('ab', 'abb')
+
+    def test_complex_item(self):
+        self._assert_func(complex(1, 2), complex(1, 2))
+        self._assert_func(complex(1, np.nan), complex(1, np.nan))
+        self._test_not_equal(complex(1, np.nan), complex(1, 2))
+        self._test_not_equal(complex(np.nan, 1), complex(1, np.nan))
+        self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
+
+    def test_negative_zero(self):
+        self._test_not_equal(np.PZERO, np.NZERO)
+
+    def test_complex(self):
+        x = np.array([complex(1, 2), complex(1, np.nan)])
+        y = np.array([complex(1, 2), complex(1, 2)])
+        self._assert_func(x, x)
+        self._test_not_equal(x, y)
+
+class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_almost_equal
 
+    def test_simple(self):
+        x = np.array([1234.2222])
+        y = np.array([1234.2223])
+
+        self._assert_func(x, y, decimal=3)
+        self._assert_func(x, y, decimal=4)
+        self.failUnlessRaises(AssertionError,
+                lambda: self._assert_func(x, y, decimal=5))
+
+    def test_nan(self):
+        anan = np.array([np.nan])
+        aone = np.array([1])
+        ainf = np.array([np.inf])
+        self._assert_func(anan, anan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, aone))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, ainf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(ainf, anan))
+
+class TestAlmostEqual(_GenericTest, unittest.TestCase):
+    def setUp(self):
+        self._assert_func = assert_almost_equal
+
+    def test_nan_item(self):
+        self._assert_func(np.nan, np.nan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(np.nan, 1))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(np.nan, np.inf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(np.inf, np.nan))
+
+    def test_inf_item(self):
+        self._assert_func(np.inf, np.inf)
+        self._assert_func(-np.inf, -np.inf)
+
+    def test_simple_item(self):
+        self._test_not_equal(1, 2)
+
+    def test_complex_item(self):
+        self._assert_func(complex(1, 2), complex(1, 2))
+        self._assert_func(complex(1, np.nan), complex(1, np.nan))
+        self._assert_func(complex(np.inf, np.nan), complex(np.inf, np.nan))
+        self._test_not_equal(complex(1, np.nan), complex(1, 2))
+        self._test_not_equal(complex(np.nan, 1), complex(1, np.nan))
+        self._test_not_equal(complex(np.nan, np.inf), complex(np.nan, 2))
+
+    def test_complex(self):
+        x = np.array([complex(1, 2), complex(1, np.nan)])
+        z = np.array([complex(1, 2), complex(np.nan, 1)])
+        y = np.array([complex(1, 2), complex(1, 2)])
+        self._assert_func(x, x)
+        self._test_not_equal(x, y)
+        self._test_not_equal(x, z)
+
+class TestApproxEqual(unittest.TestCase):
+    def setUp(self):
+        self._assert_func = assert_approx_equal
+
+    def test_simple_arrays(self):
+        x = np.array([1234.22])
+        y = np.array([1234.23])
+
+        self._assert_func(x, y, significant=5)
+        self._assert_func(x, y, significant=6)
+        self.failUnlessRaises(AssertionError,
+                lambda: self._assert_func(x, y, significant=7))
+
+    def test_simple_items(self):
+        x = 1234.22
+        y = 1234.23
+
+        self._assert_func(x, y, significant=4)
+        self._assert_func(x, y, significant=5)
+        self._assert_func(x, y, significant=6)
+        self.failUnlessRaises(AssertionError,
+                lambda: self._assert_func(x, y, significant=7))
+
+    def test_nan_array(self):
+        anan = np.array(np.nan)
+        aone = np.array(1)
+        ainf = np.array(np.inf)
+        self._assert_func(anan, anan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, aone))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, ainf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(ainf, anan))
+
+    def test_nan_items(self):
+        anan = np.array(np.nan)
+        aone = np.array(1)
+        ainf = np.array(np.inf)
+        self._assert_func(anan, anan)
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, aone))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(anan, ainf))
+        self.failUnlessRaises(AssertionError,
+                lambda : self._assert_func(ainf, anan))
 
 class TestRaises(unittest.TestCase):
     def setUp(self):

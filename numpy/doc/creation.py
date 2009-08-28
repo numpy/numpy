@@ -76,7 +76,7 @@ generally will not do for arbitrary start, stop, and step values.
 
 indices() will create a set of arrays (stacked as a one-higher dimensioned
 array), one per dimension with each representing variation in that dimension.
-An examples illustrates much better than a verbal description: ::
+An example illustrates much better than a verbal description: ::
 
  >>> np.indices((3,3))
  array([[[0, 0, 0], [1, 1, 1], [2, 2, 2]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])

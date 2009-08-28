@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import operator
+import types
 from nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
@@ -22,6 +23,56 @@ def assert_(val, msg='') :
     if not val :
         raise AssertionError(msg)
 
+def gisnan(x):
+    """like isnan, but always raise an error if type not supported instead of
+    returning a TypeError object.
+
+    Notes
+    -----
+    isnan and other ufunc sometimes return a NotImplementedType object instead
+    of raising any exception. This function is a wrapper to make sure an
+    exception is always raised.
+
+    This should be removed once this problem is solved at the Ufunc level."""
+    from numpy.core import isnan
+    st = isnan(x)
+    if isinstance(st, types.NotImplementedType):
+        raise TypeError("isnan not supported for this type")
+    return st
+
+def gisfinite(x):
+    """like isfinite, but always raise an error if type not supported instead of
+    returning a TypeError object.
+
+    Notes
+    -----
+    isfinite and other ufunc sometimes return a NotImplementedType object instead
+    of raising any exception. This function is a wrapper to make sure an
+    exception is always raised.
+
+    This should be removed once this problem is solved at the Ufunc level."""
+    from numpy.core import isfinite
+    st = isfinite(x)
+    if isinstance(st, types.NotImplementedType):
+        raise TypeError("isfinite not supported for this type")
+    return st
+
+def gisinf(x):
+    """like isinf, but always raise an error if type not supported instead of
+    returning a TypeError object.
+
+    Notes
+    -----
+    isinf and other ufunc sometimes return a NotImplementedType object instead
+    of raising any exception. This function is a wrapper to make sure an
+    exception is always raised.
+
+    This should be removed once this problem is solved at the Ufunc level."""
+    from numpy.core import isinf
+    st = isinf(x)
+    if isinstance(st, types.NotImplementedType):
+        raise TypeError("isinf not supported for this type")
+    return st
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -181,10 +232,69 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         for k in range(len(desired)):
             assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
         return
-    from numpy.core import ndarray
+    from numpy.core import ndarray, isscalar, signbit
+    from numpy.lib import iscomplexobj, real, imag
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
+
+    # Handle complex numbers: separate into real/imag to handle
+    # nan/inf/negative zero correctly
+    # XXX: catch ValueError for subclasses of ndarray where iscomplex fail
+    try:
+        usecomplex = iscomplexobj(actual) or iscomplexobj(desired)
+    except ValueError:
+        usecomplex = False
+
+    if usecomplex:
+        if iscomplexobj(actual):
+            actualr = real(actual)
+            actuali = imag(actual)
+        else:
+            actualr = actual
+            actuali = 0
+        if iscomplexobj(desired):
+            desiredr = real(desired)
+            desiredi = imag(desired)
+        else:
+            desiredr = desired
+            desiredi = 0
+        try:
+            assert_equal(actualr, desiredr)
+            assert_equal(actuali, desiredi)
+        except AssertionError:
+            raise AssertionError("Items are not equal:\n" \
+                    "ACTUAL: %s\n" \
+                    "DESIRED: %s\n" % (str(actual), str(desired)))
+
+    # Inf/nan/negative zero handling
+    try:
+        # isscalar test to check cases such as [np.nan] != np.nan
+        if isscalar(desired) != isscalar(actual):
+            raise AssertionError(msg)
+
+        # If one of desired/actual is not finite, handle it specially here:
+        # check that both are nan if any is a nan, and test for equality
+        # otherwise
+        if not (gisfinite(desired) and gisfinite(actual)):
+            isdesnan = gisnan(desired)
+            isactnan = gisnan(actual)
+            if isdesnan or isactnan:
+                if not (isdesnan and isactnan):
+                    raise AssertionError(msg)
+            else:
+                if not desired == actual:
+                    raise AssertionError(msg)
+            return
+        elif desired == 0 and actual == 0:
+            if not signbit(desired) == signbit(actual):
+                raise AssertionError(msg)
+    # If TypeError or ValueError raised while using isnan and co, just handle
+    # as before
+    except TypeError:
+        pass
+    except ValueError:
+        pass
     if desired != actual :
         raise AssertionError(msg)
 
@@ -258,9 +368,55 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     """
     from numpy.core import ndarray
+    from numpy.lib import iscomplexobj, real, imag
+
+    # Handle complex numbers: separate into real/imag to handle
+    # nan/inf/negative zero correctly
+    # XXX: catch ValueError for subclasses of ndarray where iscomplex fail
+    try:
+        usecomplex = iscomplexobj(actual) or iscomplexobj(desired)
+    except ValueError:
+        usecomplex = False
+
+    if usecomplex:
+        if iscomplexobj(actual):
+            actualr = real(actual)
+            actuali = imag(actual)
+        else:
+            actualr = actual
+            actuali = 0
+        if iscomplexobj(desired):
+            desiredr = real(desired)
+            desiredi = imag(desired)
+        else:
+            desiredr = desired
+            desiredi = 0
+        try:
+            assert_almost_equal(actualr, desiredr, decimal=decimal)
+            assert_almost_equal(actuali, desiredi, decimal=decimal)
+        except AssertionError:
+            raise AssertionError("Items are not equal:\n" \
+                    "ACTUAL: %s\n" \
+                    "DESIRED: %s\n" % (str(actual), str(desired)))
+
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
-    msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
+    msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
+                         header='Arrays are not almost equal')
+    try:
+        # If one of desired/actual is not finite, handle it specially here:
+        # check that both are nan if any is a nan, and test for equality
+        # otherwise
+        if not (gisfinite(desired) and gisfinite(actual)):
+            if gisnan(desired) or gisnan(actual):
+                if not (gisnan(desired) and gisnan(actual)):
+                    raise AssertionError(msg)
+            else:
+                if not desired == actual:
+                    raise AssertionError(msg)
+            return
+    except TypeError:
+        pass
     if round(abs(desired - actual),decimal) != 0 :
         raise AssertionError(msg)
 
@@ -317,12 +473,14 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     True
 
     """
-    import math
+    import numpy as np
     actual, desired = map(float, (actual, desired))
     if desired==actual:
         return
     # Normalized the numbers to be in range (-10.0,10.0)
-    scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
+    # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
+    scale = 0.5*(np.abs(desired) + np.abs(actual))
+    scale = np.power(10,np.floor(np.log10(scale)))
     try:
         sc_desired = desired/scale
     except ZeroDivisionError:
@@ -335,7 +493,21 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
                 header='Items are not equal to %d significant digits:' %
                                  significant,
                 verbose=verbose)
-    if math.fabs(sc_desired - sc_actual) >= pow(10.,-(significant-1)) :
+    try:
+        # If one of desired/actual is not finite, handle it specially here:
+        # check that both are nan if any is a nan, and test for equality
+        # otherwise
+        if not (gisfinite(desired) and gisfinite(actual)):
+            if gisnan(desired) or gisnan(actual):
+                if not (gisnan(desired) and gisnan(actual)):
+                    raise AssertionError(msg)
+            else:
+                if not desired == actual:
+                    raise AssertionError(msg)
+            return
+    except TypeError:
+        pass
+    if np.abs(sc_desired - sc_actual) >= np.power(10.,-(significant-1)) :
         raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
@@ -374,6 +546,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                     '%s mismatch)' % (xnanid, ynanid),
                                     verbose=verbose, header=header,
                                     names=('x', 'y'))
+                raise AssertionError(msg)
+            # If only one item, it was a nan, so just return
+            if x.size == y.size == 1:
+                return
             val = comparison(x[~xnanid], y[~ynanid])
         else:
             val = comparison(x,y)
@@ -526,9 +702,22 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      y: array([ 1.     ,  2.33333,  5.     ])
 
     """
-    from numpy.core import around, number, float_
+    from numpy.core import around, number, float_, any
     from numpy.lib import issubdtype
     def compare(x, y):
+        try:
+            if any(gisinf(x)) or any( gisinf(y)):
+                xinfid = gisinf(x)
+                yinfid = gisinf(y)
+                if not xinfid == yinfid:
+                    return False
+                # if one item, x and y is +- inf
+                if x.size == y.size == 1:
+                    return x == y
+                x = x[~xinfid]
+                y = y[~yinfid]
+        except TypeError:
+            pass
         z = abs(x-y)
         if not issubdtype(z.dtype, number):
             z = z.astype(float_) # handle object arrays

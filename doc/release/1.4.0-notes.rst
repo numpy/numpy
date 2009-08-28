@@ -1,0 +1,132 @@
+=========================
+NumPy 1.4.0 Release Notes
+=========================
+
+This minor includes numerous bug fixes as well as a few new features.
+
+Highlights
+==========
+
+New features
+============
+
+Extended array wrapping mechanism for ufuncs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An __array_prepare__ method has been added to ndarray to provide subclasses
+greater flexibility to interact with ufuncs and ufunc-like functions. ndarray
+already provided __array_wrap__, which allowed subclasses to set the array type
+for the result and populate metadata on the way out of the ufunc (as seen in
+the implementation of MaskedArray). For some applications it is necessary to
+provide checks and populate metadata *on the way in*. __array_prepare__ is
+therefore called just after the ufunc has initialized the output array but
+before computing the results and populating it. This way, checks can be made
+and errors raised before operations which may modify data in place.
+
+Automatic detection of forward incompatibilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, if an extension was built against a version N of NumPy, and used on
+a system with NumPy M < N, the import_array was successfull, which could cause
+crashes because the version M does not have a function in N. Starting from
+NumPy 1.4.0, this will cause a failure in import_array, so the error will be
+catched early on.
+
+New C API
+~~~~~~~~~
+
+The following C functions have been added to the C API:
+
+    #. PyArray_GetNDArrayCFeatureVersion: return the *API* version of the
+       loaded numpy.
+    #. PyArray_Correlate2 - like PyArray_Correlate, but implements the usual
+       definition of correlation. Inputs are not swapped, and conjugate is
+       taken for complex arrays.
+    #. PyArray_NeighborhoodIterNew - a new iterator to iterate over a
+       neighborhood of a point, with automatic boundaries handling.
+
+New ufuncs
+~~~~~~~~~~
+
+The following ufuncs have been added to the C API:
+
+    #. copysign - return the value of the first argument with the sign copied
+       from the second argument.
+
+New defines
+~~~~~~~~~~~
+
+The alpha processor is now defined and available in numpy/npy_cpu.h. The
+failed detection of the PARISC processor has been fixed. The defines are:
+
+    #. NPY_CPU_HPPA: PARISC
+    #. NPY_CPU_ALPHA: Alpha
+
+Enhancements
+~~~~~~~~~~~~
+
+    #. The sort functions now sort nans to the end.
+
+        * Real sort order is [R, nan]
+        * Complex sort order is [R + Rj, R + nanj, nan + Rj, nan + nanj]
+
+       Complex numbers with the same nan placements are sorted according to
+       the non-nan part if it exists.
+    #. The type comparison functions have been made consistent with the new
+       sort order of nans. Searchsorted now works with sorted arrays
+       containing nan values.
+    #. Complex division has been made more resistent to overflow.
+    #. Complex floor division has been made more resistent to overflow.
+
+Testing
+~~~~~~~
+
+    #. deprecated decorator: this decorator may be used to avoid cluttering
+       testing output while testing DeprecationWarning is effectively raised by
+       the decorated test.
+
+
+Deprecations
+============
+
+The following functions are deprecated:
+
+    #. correlate: it takes a new keyword argument old_behavior. When True (the
+       default), it returns the same result as before. When False, compute the
+       conventional correlation, and take the conjugate for complex arrays. The
+       old behavior will be removed in NumPy 1.5, and raises a
+       DeprecationWarning in 1.4.
+
+New iterators
+~~~~~~~~~~~~~
+
+A new neighborhood iterator has been added to the C API. It can be used to
+iterate over the items in a neighborhood of an array, and can handle boundaries
+conditions automatically. Zero and one padding are available, as well as
+arbitrary constant value, mirror and circular padding.
+
+Internal changes
+================
+
+split multiarray and umath source code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The source code of multiarray and umath has been split into separate logic
+compilation units. This should make the source code more amenable for
+newcomers.
+
+Separate compilation
+~~~~~~~~~~~~~~~~~~~~
+
+By default, every file of multiarray (and umath) is merged into one for
+compilation as was the case before, but if NPY_SEPARATE_COMPILATION env
+variable is set to a non-negative value, experimental individual compilation of
+each file is enabled. This makes the compile/debug cycle much faster when
+working on core numpy.
+
+Separate core math library
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New functions which have been added:
+
+	* npy_copysign

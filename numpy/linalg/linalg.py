@@ -30,7 +30,7 @@ class LinAlgError(Exception):
 
 def _makearray(a):
     new = asarray(a)
-    wrap = getattr(a, "__array_wrap__", new.__array_wrap__)
+    wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
     return new, wrap
 
 def isComplexType(t):
@@ -1237,7 +1237,7 @@ def lstsq(a, b, rcond=-1):
 
     Notes
     -----
-    If `b` is a matrix, then all array results returned as
+    If `b` is a matrix, then all array results are returned as
     matrices.
 
     Examples

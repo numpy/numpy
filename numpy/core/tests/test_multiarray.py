@@ -4,6 +4,7 @@ import os
 import numpy as np
 from numpy.testing import *
 from numpy.core import *
+from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
 from test_print import in_foreign_locale
 
@@ -279,6 +280,24 @@ class TestMethods(TestCase):
         self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
 
     def test_sort(self):
+        # test ordering for floats and complex containing nans. It is only
+        # necessary to check the lessthan comparison, so sorts that
+        # only follow the insertion sort path are sufficient. We only
+        # test doubles and complex doubles as the logic is the same.
+
+        # check doubles
+        msg = "Test real sort order with nans"
+        a = np.array([np.nan, 1, 0])
+        b = sort(a)
+        assert_equal(b, a[::-1], msg)
+        # check complex
+        msg = "Test complex sort order with nans"
+        a = np.zeros(9, dtype=np.complex128)
+        a.real += [np.nan, np.nan, np.nan, 1, 0, 1, 1, 0, 0]
+        a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
+        b = sort(a)
+        assert_equal(b, a[::-1], msg)
+
         # all c scalar sorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
         # of sorted items must be greater than ~50 to check the actual
@@ -465,6 +484,33 @@ class TestMethods(TestCase):
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
+
+    def test_searchsorted(self):
+        # test for floats and complex containing nans. The logic is the
+        # same for all float types so only test double types for now.
+        # The search sorted routines use the compare functions for the
+        # array type, so this checks if that is consistent with the sort
+        # order.
+
+        # check double
+        a = np.array([np.nan, 1, 0])
+        a = np.array([0, 1, np.nan])
+        msg = "Test real searchsorted with nans, side='l'"
+        b = a.searchsorted(a, side='l')
+        assert_equal(b, np.arange(3), msg)
+        msg = "Test real searchsorted with nans, side='r'"
+        b = a.searchsorted(a, side='r')
+        assert_equal(b, np.arange(1,4), msg)
+        # check double complex
+        a = np.zeros(9, dtype=np.complex128)
+        a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
+        a.imag += [0, 1, 0, 1, np.nan, np.nan, 0, 1, np.nan]
+        msg = "Test complex searchsorted with nans, side='l'"
+        b = a.searchsorted(a, side='l')
+        assert_equal(b, np.arange(9), msg)
+        msg = "Test complex searchsorted with nans, side='r'"
+        b = a.searchsorted(a, side='r')
+        assert_equal(b, np.arange(1,10), msg)
 
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
@@ -1058,6 +1104,282 @@ class TestChoose(TestCase):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2,2,3],[2,2,3]])
 
+def can_use_decimal():
+    try:
+        from decimal import Decimal
+        return True
+    except ImportError:
+        return False
 
+# TODO: test for multidimensional
+NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
+class TestNeighborhoodIter(TestCase):
+    # Simple, 2d tests
+    def _test_simple2d(self, dt):
+        # Test zero and one padding for simple data type
+        x = np.array([[0, 1], [2, 3]], dtype=dt)
+        r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt), 
+             np.array([[0, 0, 0], [0, 1, 0]], dtype=dt), 
+             np.array([[0, 0, 1], [0, 2, 3]], dtype=dt), 
+             np.array([[0, 1, 0], [2, 3, 0]], dtype=dt)]
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt), 
+             np.array([[1, 1, 1], [0, 1, 1]], dtype=dt), 
+             np.array([[1, 0, 1], [1, 2, 3]], dtype=dt), 
+             np.array([[0, 1, 1], [2, 3, 1]], dtype=dt)]
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['one'])
+        assert_array_equal(l, r)
+
+        r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt), 
+             np.array([[4, 4, 4], [0, 1, 4]], dtype=dt), 
+             np.array([[4, 0, 1], [4, 2, 3]], dtype=dt), 
+             np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
+        assert_array_equal(l, r)
+
+    def test_simple2d(self):
+        self._test_simple2d(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_simple2d_object(self):
+        from decimal import Decimal
+        self._test_simple2d(Decimal)
+
+    def _test_mirror2d(self, dt):
+        x = np.array([[0, 1], [2, 3]], dtype=dt)
+        r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt), 
+             np.array([[0, 1, 1], [0, 1, 1]], dtype=dt), 
+             np.array([[0, 0, 1], [2, 2, 3]], dtype=dt), 
+             np.array([[0, 1, 1], [2, 3, 3]], dtype=dt)]
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+    def test_mirror2d(self):
+        self._test_mirror2d(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_mirror2d_object(self):
+        from decimal import Decimal
+        self._test_mirror2d(Decimal)
+
+    # Simple, 1d tests
+    def _test_simple(self, dt):
+        # Test padding with constant values
+        x = np.linspace(1, 5, 5).astype(dt)
+        r = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 0]]
+        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        r = [[1, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1]]
+        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['one'])
+        assert_array_equal(l, r)
+
+        r = [[x[4], 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, x[4]]]
+        l = test_neighborhood_iterator(x, [-1, 1], x[4], NEIGH_MODE['constant'])
+        assert_array_equal(l, r)
+
+    def test_simple_float(self):
+        self._test_simple(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_simple_object(self):
+        from decimal import Decimal
+        self._test_simple(Decimal)
+
+    # Test mirror modes
+    def _test_mirror(self, dt):
+        x = np.linspace(1, 5, 5).astype(dt)
+        r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
+                [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
+        l = test_neighborhood_iterator(x, [-2, 2], x[1], NEIGH_MODE['mirror'])
+        self.failUnless([i.dtype == dt for i in l])
+        assert_array_equal(l, r)
+
+    def test_mirror(self):
+        self._test_mirror(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_mirror_object(self):
+        from decimal import Decimal
+        self._test_mirror(Decimal)
+
+    # Circular mode
+    def _test_circular(self, dt):
+        x = np.linspace(1, 5, 5).astype(dt)
+        r = np.array([[4, 5, 1, 2, 3], [5, 1, 2, 3, 4], [1, 2, 3, 4, 5],
+                [2, 3, 4, 5, 1], [3, 4, 5, 1, 2]], dtype=dt)
+        l = test_neighborhood_iterator(x, [-2, 2], x[0], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+    def test_circular(self):
+        self._test_circular(np.float)
+
+    @dec.skipif(not can_use_decimal(),
+            "Skip neighborhood iterator tests for decimal objects " \
+            "(decimal module not available")
+    def test_circular_object(self):
+        from decimal import Decimal
+        self._test_circular(Decimal)
+
+# Test stacking neighborhood iterators
+class TestStackedNeighborhoodIter(TestCase):
+    # Simple, 1d test: stacking 2 constant-padded neigh iterators
+    def test_simple_const(self):
+        dt = np.float64
+        # Test zero and one padding for simple data type
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0], dtype=dt),
+             np.array([0], dtype=dt),
+             np.array([1], dtype=dt),
+             np.array([2], dtype=dt),
+             np.array([3], dtype=dt),
+             np.array([0], dtype=dt),
+             np.array([0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-2, 4], NEIGH_MODE['zero'],
+                [0, 0], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        r = [np.array([1, 0, 1], dtype=dt),
+             np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt),
+             np.array([3, 0, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-1, 1], NEIGH_MODE['one'])
+        assert_array_equal(l, r)
+
+    # 2nd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
+    # mirror padding
+    def test_simple_mirror(self):
+        dt = np.float64
+        # Stacking zero on top of mirror
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 1, 1], dtype=dt),
+             np.array([1, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 3], dtype=dt),
+             np.array([3, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['mirror'],
+                [-1, 1], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 0, 0], dtype=dt),
+             np.array([0, 0, 1], dtype=dt),
+             np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 0], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 2nd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt),
+             np.array([3, 0, 0], dtype=dt),
+             np.array([0, 0, 3], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [0, 2], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 3rd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 0, 0, 1, 2], dtype=dt),
+             np.array([0, 0, 1, 2, 3], dtype=dt),
+             np.array([0, 1, 2, 3, 0], dtype=dt),
+             np.array([1, 2, 3, 0, 0], dtype=dt),
+             np.array([2, 3, 0, 0, 3], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 2], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+    # 3rd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
+    # circular padding
+    def test_simple_circular(self):
+        dt = np.float64
+        # Stacking zero on top of mirror
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 3, 1], dtype=dt),
+             np.array([3, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 1], dtype=dt),
+             np.array([3, 1, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['circular'],
+                [-1, 1], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([3, 0, 0], dtype=dt),
+             np.array([0, 0, 1], dtype=dt),
+             np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 0], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 2nd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([0, 1, 2], dtype=dt),
+             np.array([1, 2, 3], dtype=dt),
+             np.array([2, 3, 0], dtype=dt),
+             np.array([3, 0, 0], dtype=dt),
+             np.array([0, 0, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [0, 2], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero: 3rd
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([3, 0, 0, 1, 2], dtype=dt),
+             np.array([0, 0, 1, 2, 3], dtype=dt),
+             np.array([0, 1, 2, 3, 0], dtype=dt),
+             np.array([1, 2, 3, 0, 0], dtype=dt),
+             np.array([2, 3, 0, 0, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
+                [-2, 2], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
+
+    # 4th simple, 1d test: stacking 2 neigh iterators, but with lower iterator
+    # being strictly within the array
+    def test_simple_strict_within(self):
+        dt = np.float64
+        # Stacking zero on top of zero, first neighborhood strictly inside the
+        # array
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 2, 3, 0], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
+                [-1, 2], NEIGH_MODE['zero'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero, first neighborhood strictly inside the
+        # array
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 2, 3, 3], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
+                [-1, 2], NEIGH_MODE['mirror'])
+        assert_array_equal(l, r)
+
+        # Stacking mirror on top of zero, first neighborhood strictly inside the
+        # array
+        x = np.array([1, 2, 3], dtype=dt)
+        r = [np.array([1, 2, 3, 1], dtype=dt)]
+        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
+                [-1, 2], NEIGH_MODE['circular'])
+        assert_array_equal(l, r)
 if __name__ == "__main__":
     run_module_suite()

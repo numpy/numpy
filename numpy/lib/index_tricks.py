@@ -3,29 +3,38 @@ __all__ = ['unravel_index',
            'ogrid',
            'r_', 'c_', 's_',
            'index_exp', 'ix_',
-           'ndenumerate','ndindex']
+           'ndenumerate','ndindex',
+           'fill_diagonal','diag_indices','diag_indices_from']
 
 import sys
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, ScalarType, array
+from numpy.core.numeric import ( asarray, ScalarType, array, alltrue, cumprod,
+                                 arange )
 from numpy.core.numerictypes import find_common_type
 import math
 
 import function_base
 import numpy.core.defmatrix as matrix
+from function_base import diff
 makemat = matrix.matrix
 
 # contributed by Stefan van der Walt
 def unravel_index(x,dims):
     """
-    Convert a flat index into an index tuple for an array of given shape.
+    Convert a flat index to an index tuple for an array of given shape.
 
     Parameters
     ----------
     x : int
         Flattened index.
-    dims : shape tuple
-        Input shape.
+    dims : tuple of ints
+        Input shape, the shape of an array into which indexing is
+        required.
+
+    Returns
+    -------
+    idx : tuple of ints
+        Tuple of the same shape as `dims`, containing the unraveled index.
 
     Notes
     -----
@@ -34,7 +43,7 @@ def unravel_index(x,dims):
 
     Examples
     --------
-    >>> arr = np.arange(20).reshape(5,4)
+    >>> arr = np.arange(20).reshape(5, 4)
     >>> arr
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
@@ -72,21 +81,45 @@ def unravel_index(x,dims):
     return tuple(x/dim_prod % dims)
 
 def ix_(*args):
-    """ Construct an open mesh from multiple sequences.
+    """
+    Construct an open mesh from multiple sequences.
 
-    This function takes n 1-d sequences and returns n outputs with n
-    dimensions each such that the shape is 1 in all but one dimension and
-    the dimension with the non-unit shape value cycles through all n
-    dimensions.
+    This function takes N 1-D sequences and returns N outputs with N
+    dimensions each, such that the shape is 1 in all but one dimension
+    and the dimension with the non-unit shape value cycles through all
+    N dimensions.
 
-    Using ix_() one can quickly construct index arrays that will index
-    the cross product.
+    Using `ix_` one can quickly construct index arrays that will index
+    the cross product. ``a[np.ix_([1,3],[2,5])]`` returns the array
+    ``[a[1,2] a[1,5] a[3,2] a[3,5]]``.
 
-    a[ix_([1,3,7],[2,5,8])]  returns the array
+    Parameters
+    ----------
+    args : 1-D sequences
 
-    a[1,2]  a[1,5]  a[1,8]
-    a[3,2]  a[3,5]  a[3,8]
-    a[7,2]  a[7,5]  a[7,8]
+    Returns
+    -------
+    out : ndarrays
+        N arrays with N dimensions each, with N the number of input
+        sequences. Together these arrays form an open mesh.
+
+    See Also
+    --------
+    ogrid, mgrid, meshgrid
+
+    Examples
+    --------
+    >>> a = np.arange(10).reshape(2, 5)
+    >>> ixgrid = np.ix_([0,1], [2,4])
+    >>> ixgrid
+    (array([[0],
+           [1]]), array([[2, 4]]))
+    >>> print ixgrid[0].shape, ixgrid[1].shape
+    (2, 1) (1, 2)
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+
     """
     out = []
     nd = len(args)
@@ -215,7 +248,11 @@ mgrid.__doc__ = None # set in numpy.add_newdocs
 ogrid.__doc__ = None # set in numpy.add_newdocs
 
 class AxisConcatenator(object):
-    """Translates slice objects to concatenation along an axis.
+    """
+    Translates slice objects to concatenation along an axis.
+
+    For detailed documentation on usage, see `r_`.
+
     """
     def _retval(self, res):
         if self.matrix:
@@ -338,11 +375,96 @@ class AxisConcatenator(object):
 # in help(r_)
 
 class RClass(AxisConcatenator):
-    """Translates slice objects to concatenation along the first axis.
+    """
+    Translates slice objects to concatenation along the first axis.
 
-    For example:
+    This is a simple way to build up arrays quickly. There are two use cases.
+
+    1. If the index expression contains comma separated arrays, then stack
+       them along their first axis.
+    2. If the index expression contains slice notation or scalars then create
+       a 1-D array with a range indicated by the slice notation.
+
+    If slice notation is used, the syntax ``start:stop:step`` is equivalent
+    to ``np.arange(start, stop, step)`` inside of the brackets. However, if
+    ``step`` is an imaginary number (i.e. 100j) then its integer portion is
+    interpreted as a number-of-points desired and the start and stop are
+    inclusive. In other words ``start:stop:stepj`` is interpreted as
+    ``np.linspace(start, stop, step, endpoint=1)`` inside of the brackets.
+    After expansion of slice notation, all comma separated sequences are
+    concatenated together.
+
+    Optional character strings placed as the first element of the index
+    expression can be used to change the output. The strings 'r' or 'c' result
+    in matrix output. If the result is 1-D and 'r' is specified a 1 x N (row)
+    matrix is produced. If the result is 1-D and 'c' is specified, then a N x 1
+    (column) matrix is produced. If the result is 2-D then both provide the
+    same matrix result.
+
+    A string integer specifies which axis to stack multiple comma separated
+    arrays along. A string of two comma-separated integers allows indication
+    of the minimum number of dimensions to force each entry into as the
+    second integer (the axis to concatenate along is still the first integer).
+
+    A string with three comma-separated integers allows specification of the
+    axis to concatenate along, the minimum number of dimensions to force the
+    entries to, and which axis should contain the start of the arrays which
+    are less than the specified number of dimensions. In other words the third
+    integer allows you to specify where the 1's should be placed in the shape
+    of the arrays that have their shapes upgraded. By default, they are placed
+    in the front of the shape tuple. The third argument allows you to specify
+    where the start of the array should be instead. Thus, a third argument of
+    '0' would place the 1's at the end of the array shape. Negative integers
+    specify where in the new shape tuple the last dimension of upgraded arrays
+    should be placed, so the default is '-1'.
+
+    Parameters
+    ----------
+    Not a function, so takes no parameters
+
+
+    Returns
+    -------
+    A concatenated ndarray or matrix.
+
+    See Also
+    --------
+    concatenate : Join a sequence of arrays together.
+    c_ : Translates slice objects to concatenation along the second axis.
+
+    Examples
+    --------
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
     array([1, 2, 3, 0, 0, 4, 5, 6])
+    >>> np.r_[-1:1:6j, [0]*3, 5, 6]
+    array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ,  0. ,  0. ,  0. ,  5. ,  6. ])
+
+    String integers specify the axis to concatenate along or the minimum
+    number of dimensions to force entries into.
+
+    >>> np.r_['-1', a, a] # concatenate along last axis
+    array([[0, 1, 2, 0, 1, 2],
+           [3, 4, 5, 3, 4, 5]])
+    >>> np.r_['0,2', [1,2,3], [4,5,6]] # concatenate along first axis, dim>=2
+    array([[1, 2, 3],
+           [4, 5, 6]])
+
+    >>> np.r_['0,2,0', [1,2,3], [4,5,6]]
+    array([[1],
+           [2],
+           [3],
+           [4],
+           [5],
+           [6]])
+    >>> np.r_['1,2,0', [1,2,3], [4,5,6]]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
+
+    Using 'r' or 'c' as a first string argument creates a matrix.
+
+    >>> np.r_['r',[1,2,3], [4,5,6]]
+    matrix([[1, 2, 3, 4, 5, 6]])
 
     """
     def __init__(self):
@@ -351,11 +473,21 @@ class RClass(AxisConcatenator):
 r_ = RClass()
 
 class CClass(AxisConcatenator):
-    """Translates slice objects to concatenation along the second axis.
+    """
+    Translates slice objects to concatenation along the second axis.
 
-    For example:
+    This is short-hand for ``np.r_['-1,2,0', index expression]``, which is
+    useful because of its common occurrence. In particular, arrays will be
+    stacked along their last axis after being upgraded to at least 2-D with
+    1's post-pended to the shape (column vectors made out of 1-D arrays).
+
+    For detailed documentation, see `r_`.
+
+    Examples
+    --------
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
-    array([1, 2, 3, 0, 0, 4, 5, 6])
+    array([[1, 2, 3, 0, 0, 4, 5, 6]])
+
     """
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
@@ -373,9 +505,13 @@ class ndenumerate(object):
     a : ndarray
       Input array.
 
+    See Also
+    --------
+    ndindex, flatiter
+
     Examples
     --------
-    >>> a = np.array([[1,2],[3,4]])
+    >>> a = np.array([[1, 2], [3, 4]])
     >>> for index, x in np.ndenumerate(a):
     ...     print index, x
     (0, 0) 1
@@ -388,6 +524,17 @@ class ndenumerate(object):
         self.iter = asarray(arr).flat
 
     def next(self):
+        """
+        Standard iterator method, returns the index tuple and array value.
+
+        Returns
+        -------
+        coords : tuple of ints
+            The indices of the current iteration.
+        val : scalar
+            The array element of the current iteration.
+
+        """
         return self.iter.coords, self.iter.next()
 
     def __iter__(self):
@@ -399,17 +546,21 @@ class ndindex(object):
     An N-dimensional iterator object to index arrays.
 
     Given the shape of an array, an `ndindex` instance iterates over
-    the N-dimensional index of the array. At each iteration, the index of the
-    last dimension is incremented by one.
+    the N-dimensional index of the array. At each iteration a tuple
+    of indices is returned, the last dimension is iterated over first.
 
     Parameters
     ----------
-    `*args` : integers
-      The size of each dimension in the counter.
+    `*args` : ints
+      The size of each dimension of the array.
+
+    See Also
+    --------
+    ndenumerate, flatiter
 
     Examples
     --------
-    >>> for index in np.ndindex(3,2,1):
+    >>> for index in np.ndindex(3, 2, 1):
     ...     print index
     (0, 0, 0)
     (0, 1, 0)
@@ -442,9 +593,25 @@ class ndindex(object):
             self._incrementone(axis-1)
 
     def ndincr(self):
+        """
+        Increment the multi-dimensional index by one.
+
+        `ndincr` takes care of the "wrapping around" of the axes.
+        It is called by `ndindex.next` and not normally used directly.
+
+        """
         self._incrementone(self.nd-1)
 
     def next(self):
+        """
+        Standard iterator method, updates the index and returns the index tuple.
+
+        Returns
+        -------
+        val : tuple of ints
+            Returns a tuple containing the indices of the current iteration.
+
+        """
         if (self.index >= self.total):
             raise StopIteration
         val = tuple(self.ind)
@@ -501,3 +668,167 @@ index_exp = IndexExpression(maketuple=True)
 s_ = IndexExpression(maketuple=False)
 
 # End contribution from Konrad.
+
+
+# The following functions complement those in twodim_base, but are
+# applicable to N-dimensions.
+
+def fill_diagonal(a, val):
+    """Fill the main diagonal of the given array of any dimensionality.
+
+    For an array with ndim > 2, the diagonal is the list of locations with
+    indices a[i,i,...,i], all identical.
+
+    This function modifies the input array in-place, it does not return a
+    value.
+
+    This functionality can be obtained via diag_indices(), but internally this
+    version uses a much faster implementation that never constructs the indices
+    and uses simple slicing.
+
+    Parameters
+    ----------
+    a : array, at least 2-dimensional.
+      Array whose diagonal is to be filled, it gets modified in-place.
+
+    val : scalar
+      Value to be written on the diagonal, its type must be compatible with
+      that of the array a.
+
+    See also
+    --------
+    diag_indices, diag_indices_from
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
+    Examples
+    --------
+    >>> a = zeros((3,3),int)
+    >>> fill_diagonal(a,5)
+    >>> a
+    array([[5, 0, 0],
+           [0, 5, 0],
+           [0, 0, 5]])
+
+    The same function can operate on a 4-d array:
+    >>> a = zeros((3,3,3,3),int)
+    >>> fill_diagonal(a,4)
+
+    We only show a few blocks for clarity:
+    >>> a[0,0]
+    array([[4, 0, 0],
+           [0, 0, 0],
+           [0, 0, 0]])
+    >>> a[1,1]
+    array([[0, 0, 0],
+           [0, 4, 0],
+           [0, 0, 0]])
+    >>> a[2,2]
+    array([[0, 0, 0],
+           [0, 0, 0],
+           [0, 0, 4]])
+
+    """
+    if a.ndim < 2:
+        raise ValueError("array must be at least 2-d")
+    if a.ndim == 2:
+        # Explicit, fast formula for the common case.  For 2-d arrays, we
+        # accept rectangular ones.
+        step = a.shape[1] + 1
+    else:
+        # For more than d=2, the strided formula is only valid for arrays with
+        # all dimensions equal, so we check first.
+        if not alltrue(diff(a.shape)==0):
+            raise ValueError("All dimensions of input must be of equal length")
+        step = 1 + (cumprod(a.shape[:-1])).sum()
+
+    # Write the value out into the diagonal.
+    a.flat[::step] = val
+
+
+def diag_indices(n, ndim=2):
+    """Return the indices to access the main diagonal of an array.
+
+    This returns a tuple of indices that can be used to access the main
+    diagonal of an array with ndim (>=2) dimensions and shape (n,n,...,n).  For
+    ndim=2 this is the usual diagonal, for ndim>2 this is the set of indices
+    to access A[i,i,...,i] for i=[0..n-1].
+
+    Parameters
+    ----------
+    n : int
+      The size, along each dimension, of the arrays for which the returned
+      indices can be used.
+
+    ndim : int, optional
+      The number of dimensions.
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
+    See also
+    --------
+    diag_indices_from
+
+    Examples
+    --------
+    Create a set of indices to access the diagonal of a (4,4) array:
+    >>> di = diag_indices(4)
+
+    >>> a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]])
+    >>> a
+    array([[ 1,  2,  3,  4],
+           [ 5,  6,  7,  8],
+           [ 9, 10, 11, 12],
+           [13, 14, 15, 16]])
+    >>> a[di] = 100
+    >>> a
+    array([[100,   2,   3,   4],
+           [  5, 100,   7,   8],
+           [  9,  10, 100,  12],
+           [ 13,  14,  15, 100]])
+
+    Now, we create indices to manipulate a 3-d array:
+    >>> d3 = diag_indices(2,3)
+
+    And use it to set the diagonal of a zeros array to 1:
+    >>> a = zeros((2,2,2),int)
+    >>> a[d3] = 1
+    >>> a
+    array([[[1, 0],
+            [0, 0]],
+
+           [[0, 0],
+            [0, 1]]])
+
+    """
+    idx = arange(n)
+    return (idx,) * ndim
+
+
+def diag_indices_from(arr):
+    """Return the indices to access the main diagonal of an n-dimensional array.
+
+    See diag_indices() for full details.
+
+    Parameters
+    ----------
+    arr : array, at least 2-d
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
+    """
+
+    if not arr.ndim >= 2:
+        raise ValueError("input array must be at least 2-d")
+    # For more than d=2, the strided formula is only valid for arrays with
+    # all dimensions equal, so we check first.
+    if not alltrue(diff(arr.shape) == 0):
+        raise ValueError("All dimensions of input must be of equal length")
+
+    return diag_indices(arr.shape[0], arr.ndim)

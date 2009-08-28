@@ -917,6 +917,18 @@ PyArrayMultiIter_Type
        to be broadcast together. On return, the iterators are adjusted for
        broadcasting.
 
+PyArrayNeighborhoodIter_Type
+----------------------------
+
+.. cvar:: PyArrayNeighborhoodIter_Type
+
+   This is an iterator object that makes it easy to loop over an N-dimensional
+   neighborhood.
+
+.. ctype:: PyArrayNeighborhoodIterObject
+
+   The C-structure corresponding to an object of :cdata:`PyArrayNeighborhoodIter_Type` is
+   the :ctype:`PyArrayNeighborhoodIterObject`.
 
 PyArrayFlags_Type
 -----------------

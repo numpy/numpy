@@ -1,5 +1,6 @@
 from numpy.testing import *
 from numpy.core import *
+from numpy.core.defmatrix import matrix_power
 import numpy as np
 
 class TestCtor(TestCase):
@@ -358,6 +359,15 @@ class TestNewScalarIndexing(TestCase):
         assert_array_equal(x[:,[1,0]],x[:,::-1])
         assert_array_equal(x[[2,1,0],:],x[::-1,:])
 
+class TestPower(TestCase):
+    def test_returntype(self):
+        a = array([[0,1],[0,0]])
+        assert type(matrix_power(a, 2)) is ndarray
+        a = mat(a)
+        assert type(matrix_power(a, 2)) is matrix
+
+    def test_list(self):
+        assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])
 
 if __name__ == "__main__":
     run_module_suite()

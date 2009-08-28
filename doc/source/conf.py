@@ -18,12 +18,13 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'only_directives', 'plot_directive']
+              'plot_directive']
 
 if sphinx.__version__ >= "0.7":
     extensions.append('sphinx.ext.autosummary')
 else:
     extensions.append('autosummary')
+    extensions.append('only_directives')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -44,6 +45,7 @@ copyright = '2008-2009, The Scipy community'
 import numpy
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
+version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 # The full version, including alpha/beta/rc tags.
 release = numpy.__version__
 print version, release
@@ -250,6 +252,9 @@ np.random.seed(0)
 plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
+import math
+phi = (math.sqrt(5) + 1)/2
+
 import matplotlib
 matplotlib.rcParams.update({
     'font.size': 8,
@@ -258,7 +263,7 @@ matplotlib.rcParams.update({
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     'legend.fontsize': 8,
-    'figure.figsize': (3.236068, 2),
+    'figure.figsize': (3*phi, 3),
     'figure.subplot.bottom': 0.2,
     'figure.subplot.left': 0.2,
     'figure.subplot.right': 0.9,

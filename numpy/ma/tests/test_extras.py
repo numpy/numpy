@@ -70,26 +70,43 @@ class TestGeneric(TestCase):
                         mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
         test = masked_all_like(control)
         assert_equal(test, control)
+
+    def test_clump_masked(self):
+        "Test clump_masked"
+        a = masked_array(np.arange(10))
+        a[[0, 1, 2, 6, 8, 9]] = masked
         #
+        test = clump_masked(a)
+        control = [slice(0, 3), slice(6, 7), slice(8, 10)]
+        assert_equal(test, control)
+
+    def test_clump_unmasked(self):
+        "Test clump_unmasked"
+        a = masked_array(np.arange(10))
+        a[[0, 1, 2, 6, 8, 9]] = masked
+        test = clump_unmasked(a)
+        control = [slice(3, 6), slice(7, 8),]
+        assert_equal(test, control)
+
 
 
 class TestAverage(TestCase):
     "Several tests of average. Why so many ? Good point..."
     def test_testAverage1(self):
         "Test of average."
-        ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
-        assert_equal(2.0, average(ott,axis=0))
+        ott = array([0.,1.,2.,3.], mask=[True, False, False, False])
+        assert_equal(2.0, average(ott, axis=0))
         assert_equal(2.0, average(ott, weights=[1., 1., 2., 1.]))
-        result, wts = average(ott, weights=[1.,1.,2.,1.], returned=1)
+        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=1)
         assert_equal(2.0, result)
         self.failUnless(wts == 4.0)
         ott[:] = masked
-        assert_equal(average(ott,axis=0).mask, [True])
-        ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
-        ott = ott.reshape(2,2)
+        assert_equal(average(ott, axis=0).mask, [True])
+        ott = array([0., 1., 2., 3.], mask=[True, False, False, False])
+        ott = ott.reshape(2, 2)
         ott[:,1] = masked
-        assert_equal(average(ott,axis=0), [2.0, 0.0])
-        assert_equal(average(ott,axis=1).mask[0], [True])
+        assert_equal(average(ott, axis=0), [2.0, 0.0])
+        assert_equal(average(ott, axis=1).mask[0], [True])
         assert_equal([2.,0.], average(ott, axis=0))
         result, wts = average(ott, axis=0, returned=1)
         assert_equal(wts, [1., 0.])
@@ -105,43 +122,44 @@ class TestAverage(TestCase):
         assert_equal(average(y, None), np.add.reduce(np.arange(6))*3./12.)
         assert_equal(average(y, axis=0), np.arange(6) * 3./2.)
         assert_equal(average(y, axis=1),
-                     [average(x,axis=0), average(x,axis=0) * 2.0])
+                     [average(x, axis=0), average(x, axis=0) * 2.0])
         assert_equal(average(y, None, weights=w2), 20./6.)
         assert_equal(average(y, axis=0, weights=w2),
                      [0.,1.,2.,3.,4.,10.])
         assert_equal(average(y, axis=1),
-                     [average(x,axis=0), average(x,axis=0) * 2.0])
+                     [average(x, axis=0), average(x, axis=0) * 2.0])
         m1 = zeros(6)
-        m2 = [0,0,1,1,0,0]
-        m3 = [[0,0,1,1,0,0],[0,1,1,1,1,0]]
+        m2 = [0, 0, 1, 1, 0, 0]
+        m3 = [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0]]
         m4 = ones(6)
         m5 = [0, 1, 1, 1, 1, 1]
-        assert_equal(average(masked_array(x, m1),axis=0), 2.5)
-        assert_equal(average(masked_array(x, m2),axis=0), 2.5)
-        assert_equal(average(masked_array(x, m4),axis=0).mask, [True])
-        assert_equal(average(masked_array(x, m5),axis=0), 0.0)
-        assert_equal(count(average(masked_array(x, m4),axis=0)), 0)
+        assert_equal(average(masked_array(x, m1), axis=0), 2.5)
+        assert_equal(average(masked_array(x, m2), axis=0), 2.5)
+        assert_equal(average(masked_array(x, m4), axis=0).mask, [True])
+        assert_equal(average(masked_array(x, m5), axis=0), 0.0)
+        assert_equal(count(average(masked_array(x, m4), axis=0)), 0)
         z = masked_array(y, m3)
         assert_equal(average(z, None), 20./6.)
         assert_equal(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5])
         assert_equal(average(z, axis=1), [2.5, 5.0])
-        assert_equal(average(z,axis=0, weights=w2), [0.,1., 99., 99., 4.0, 10.0])
+        assert_equal(average(z,axis=0, weights=w2),
+                     [0.,1., 99., 99., 4.0, 10.0])
 
     def test_testAverage3(self):
         "Yet more tests of average!"
         a = arange(6)
         b = arange(6) * 3
-        r1, w1 = average([[a,b],[b,a]], axis=1, returned=1)
+        r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
         assert_equal(shape(r1) , shape(w1))
         assert_equal(r1.shape , w1.shape)
-        r2, w2 = average(ones((2,2,3)), axis=0, weights=[3,1], returned=1)
+        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=1)
         assert_equal(shape(w2) , shape(r2))
-        r2, w2 = average(ones((2,2,3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), returned=1)
         assert_equal(shape(w2) , shape(r2))
-        r2, w2 = average(ones((2,2,3)), weights=ones((2,2,3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=1)
         assert_equal(shape(w2), shape(r2))
-        a2d = array([[1,2],[0,4]], float)
-        a2dm = masked_array(a2d, [[0,0],[1,0]])
+        a2d = array([[1, 2], [0, 4]], float)
+        a2dm = masked_array(a2d, [[False, False],[True, False]])
         a2da = average(a2d, axis=0)
         assert_equal(a2da, [0.5, 3.0])
         a2dma = average(a2dm, axis=0)
@@ -151,8 +169,19 @@ class TestAverage(TestCase):
         a2dma = average(a2dm, axis=1)
         assert_equal(a2dma, [1.5, 4.0])
 
+    def test_onintegers_with_mask(self):
+        "Test average on integers with mask"
+        a = average(array([1, 2]))
+        assert_equal(a, 1.5)
+        a = average(array([1, 2, 3, 4], mask=[False, False, True, True]))
+        assert_equal(a, 1.5)
+
+
 class TestConcatenator(TestCase):
-    "Tests for mr_, the equivalent of r_ for masked arrays."
+    """
+    Tests for mr_, the equivalent of r_ for masked arrays.
+    """
+
     def test_1d(self):
         "Tests mr_ on 1D arrays."
         assert_array_equal(mr_[1,2,3,4,5,6],array([1,2,3,4,5,6]))
@@ -186,7 +215,10 @@ class TestConcatenator(TestCase):
 
 
 class TestNotMasked(TestCase):
-    "Tests notmasked_edges and notmasked_contiguous."
+    """
+    Tests notmasked_edges and notmasked_contiguous.
+    """
+
     def test_edges(self):
         "Tests unmasked_edges"
         data = masked_array(np.arange(25).reshape(5, 5),
@@ -222,7 +254,6 @@ class TestNotMasked(TestCase):
         assert_equal(test[1], [(0, 1, 2, 4), (4, 2, 4, 4)])
 
 
-
     def test_contiguous(self):
         "Tests notmasked_contiguous"
         a = masked_array(np.arange(24).reshape(3,8),
@@ -245,7 +276,6 @@ class TestNotMasked(TestCase):
         self.failUnless(tmp[1] is None)
         assert_equal(tmp[2][-1], slice(7,7,None))
         assert_equal(tmp[2][-2], slice(0,5,None))
-
 
 
 
@@ -573,19 +603,19 @@ class TestPolynomial(TestCase):
 
 class TestArraySetOps(TestCase):
     #
-    def test_unique1d_onlist(self):
-        "Test unique1d on list"
+    def test_unique_onlist(self):
+        "Test unique on list"
         data = [1, 1, 1, 2, 2, 3]
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         self.failUnless(isinstance(test[0], MaskedArray))
         assert_equal(test[0], masked_array([1, 2, 3], mask=[0, 0, 0]))
         assert_equal(test[1], [0, 3, 5])
         assert_equal(test[2], [0, 0, 0, 1, 1, 2])
 
-    def test_unique1d_onmaskedarray(self):
-        "Test unique1d on masked data w/use_mask=True"
+    def test_unique_onmaskedarray(self):
+        "Test unique on masked data w/use_mask=True"
         data = masked_array([1, 1, 1, 2, 2, 3], mask=[0, 0, 1, 0, 1, 0])
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, 2, 3, -1], mask=[0, 0, 0, 1]))
         assert_equal(test[1], [0, 3, 5, 2])
         assert_equal(test[2], [0, 0, 3, 1, 3, 2])
@@ -593,26 +623,26 @@ class TestArraySetOps(TestCase):
         data.fill_value = 3
         data = masked_array([1, 1, 1, 2, 2, 3],
                        mask=[0, 0, 1, 0, 1, 0], fill_value=3)
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1, 2, 3, -1], mask=[0, 0, 0, 1]))
         assert_equal(test[1], [0, 3, 5, 2])
         assert_equal(test[2], [0, 0, 3, 1, 3, 2])
 
-    def test_unique1d_allmasked(self):
+    def test_unique_allmasked(self):
         "Test all masked"
         data = masked_array([1, 1, 1], mask=True)
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array([1,], mask=[True]))
         assert_equal(test[1], [0])
         assert_equal(test[2], [0, 0, 0])
         #
         "Test masked"
         data = masked
-        test = unique1d(data, return_index=True, return_inverse=True)
+        test = unique(data, return_index=True, return_inverse=True)
         assert_equal(test[0], masked_array(masked))
         assert_equal(test[1], [0])
         assert_equal(test[2], [0])
-
+    
     def test_ediff1d(self):
         "Tests mediff1d"
         x = masked_array(np.arange(5), mask=[1,0,0,0,1])
@@ -689,15 +719,6 @@ class TestArraySetOps(TestCase):
         x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
         y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
         test = intersect1d(x, y)
-        control = array([1, 1, 3, 3, -1], mask=[0, 0, 0, 0, 1])
-        assert_equal(test, control)
-
-
-    def test_intersect1d_nu(self):
-        "Test intersect1d_nu"
-        x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
-        y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
-        test = intersect1d_nu(x, y)
         control = array([1, 3, -1], mask=[0, 0, 1])
         assert_equal(test, control)
 
@@ -705,7 +726,7 @@ class TestArraySetOps(TestCase):
     def test_setxor1d(self):
         "Test setxor1d"
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
-        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, -1])
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = setxor1d(a, b)
         assert_equal(test, array([3, 4, 7]))
         #
@@ -729,30 +750,35 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], setxor1d([],[]))
 
 
-    def test_setmember1d( self ):
-        "Test setmember1d"
+    def test_in1d( self ):
+        "Test in1d"
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
-        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, -1])
-        test = setmember1d(a, b)
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
+        test = in1d(a, b)
         assert_equal(test, [True, True, True, False, True])
         #
-        assert_array_equal([], setmember1d([],[]))
+        a = array([5, 5, 2, 1, -1], mask=[0, 0, 0, 0, 1])
+        b = array([1, 5, -1], mask=[0, 0, 1])
+        test = in1d(a, b)
+        assert_equal(test, [True, True, False, True, True])
+        #
+        assert_array_equal([], in1d([],[]))
 
 
     def test_union1d( self ):
         "Test union1d"
-        a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
-        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, -1])
+        a = array([1, 2, 5, 7, 5, -1], mask=[0, 0, 0, 0, 0, 1])
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
         test = union1d(a, b)
         control = array([1, 2, 3, 4, 5, 7, -1], mask=[0, 0, 0, 0, 0, 0, 1])
         assert_equal(test, control)
         #
-        assert_array_equal([], setmember1d([],[]))
+        assert_array_equal([], union1d([],[]))
 
 
     def test_setdiff1d( self ):
         "Test setdiff1d"
-        a = array([6, 5, 4, 7, 1, 2, 1], mask=[0, 0, 0, 0, 0, 0, 1])
+        a = array([6, 5, 4, 7, 7, 1, 2, 1], mask=[0, 0, 0, 0, 0, 0, 0, 1])
         b = array([2, 4, 3, 3, 2, 1, 5])
         test = setdiff1d(a, b)
         assert_equal(test, array([6, 7, -1], mask=[0, 0, 1]))
@@ -767,8 +793,6 @@ class TestArraySetOps(TestCase):
         a = np.array(['a','b','c'])
         b = np.array(['a','b','s'])
         assert_array_equal(setdiff1d(a,b), np.array(['c']))
-
-
 
 
 class TestShapeBase(TestCase):

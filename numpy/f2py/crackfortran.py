@@ -1942,9 +1942,9 @@ def _kind_func(string):
     if string[0] in "'\"":
         string = string[1:-1]
     if real16pattern.match(string):
-        return 16
-    elif real8pattern.match(string):
         return 8
+    elif real8pattern.match(string):
+        return 4
     return 'kind('+string+')'
 
 def _selected_int_kind_func(r):

@@ -735,7 +735,18 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_DISABLE_C_API
 #endif
 
-typedef struct {
+/***************************** 
+ * Basic iterator object
+ *****************************/
+
+/* FWD declaration */
+typedef struct PyArrayIterObject_tag PyArrayIterObject;
+
+/* type of the function which translates a set of coordinates to a pointer to
+ * the data */
+typedef char* (*npy_iter_get_dataptr_t)(PyArrayIterObject* iter, npy_intp*);
+
+struct PyArrayIterObject_tag {
         PyObject_HEAD
         int               nd_m1;            /* number of dimensions - 1 */
         npy_intp          index, size;
@@ -747,7 +758,12 @@ typedef struct {
         PyArrayObject     *ao;
         char              *dataptr;        /* pointer to current item*/
         npy_bool          contiguous;
-} PyArrayIterObject;
+
+        npy_intp          bounds[NPY_MAXDIMS][2];
+        npy_intp          limits[NPY_MAXDIMS][2];
+        npy_intp          limits_sizes[NPY_MAXDIMS];
+        npy_iter_get_dataptr_t translate;
+} ;
 
 
 /* Iterator API */
@@ -971,6 +987,72 @@ typedef struct {
 
 } PyArrayMapIterObject;
 
+enum {
+    NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,
+    NPY_NEIGHBORHOOD_ITER_ONE_PADDING,
+    NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING,
+    NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING,
+    NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING,
+};
+
+typedef struct {
+    PyObject_HEAD
+
+    /* 
+     * PyArrayIterObject part: keep this in this exact order 
+     */
+    int               nd_m1;            /* number of dimensions - 1 */
+    npy_intp          index, size;
+    npy_intp          coordinates[NPY_MAXDIMS];/* N-dimensional loop */
+    npy_intp          dims_m1[NPY_MAXDIMS];    /* ao->dimensions - 1 */
+    npy_intp          strides[NPY_MAXDIMS];    /* ao->strides or fake */
+    npy_intp          backstrides[NPY_MAXDIMS];/* how far to jump back */
+    npy_intp          factors[NPY_MAXDIMS];     /* shape factors */
+    PyArrayObject     *ao;
+    char              *dataptr;        /* pointer to current item*/
+    npy_bool          contiguous;
+
+    npy_intp          bounds[NPY_MAXDIMS][2];
+    npy_intp          limits[NPY_MAXDIMS][2];
+    npy_intp          limits_sizes[NPY_MAXDIMS];
+    npy_iter_get_dataptr_t translate;
+
+    /* 
+     * New members
+     */
+    npy_intp nd;
+
+    /* Dimensions is the dimension of the array */
+    npy_intp dimensions[NPY_MAXDIMS];
+
+    /* Neighborhood points coordinates are computed relatively to the point pointed
+     * by _internal_iter */
+    PyArrayIterObject* _internal_iter;
+    /* To keep a reference to the representation of the constant value for
+     * constant padding */
+    char* constant;
+
+    int mode;
+} PyArrayNeighborhoodIterObject;
+
+/*
+ * Neighborhood iterator API
+ */
+
+/* General: those work for any mode */
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
+// static NPY_INLINE int
+// PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
+
+/* Include inline implementations - functions defined there are not considered
+ * public API */
+#define _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#include "_neighborhood_iterator_imp.h"
+#undef _NPY_INCLUDE_NEIGHBORHOOD_IMP
+
 /* The default array type
  */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
@@ -1112,7 +1194,7 @@ typedef struct {
 #define NPY_SWAP 's'
 #define NPY_IGNORE '|'
 
-#ifdef NPY_BIG_ENDIAN
+#if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
 #define NPY_NATBYTE NPY_BIG
 #define NPY_OPPBYTE NPY_LITTLE
 #else

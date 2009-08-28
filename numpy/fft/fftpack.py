@@ -141,7 +141,6 @@ def fft(a, n=None, axis=-1):
              1.14383329e-17 +1.22460635e-16j,
              -1.64863782e-15 +1.77635684e-15j])
 
-
     >>> from numpy.fft import fft, fftfreq
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(256)
@@ -590,7 +589,6 @@ def fftn(a, s=None, axes=None):
             [ 0.+0.j,  0.+0.j,  0.+0.j]],
            [[-2.+0.j, -2.+0.j, -2.+0.j],
             [ 0.+0.j,  0.+0.j,  0.+0.j]]])
-
 
     >>> from numpy import meshgrid, pi, arange, sin, cos, log, abs
     >>> from numpy.fft import fftn, fftshift

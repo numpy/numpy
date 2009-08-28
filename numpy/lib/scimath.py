@@ -166,7 +166,8 @@ def _fix_real_abs_gt_1(x):
     return x
 
 def sqrt(x):
-    """Return the square root of x.
+    """
+    Return the square root of x.
 
     Parameters
     ----------
@@ -174,24 +175,7 @@ def sqrt(x):
 
     Returns
     -------
-    array_like output.
-
-    Examples
-    --------
-
-    For real, non-negative inputs this works just like numpy.sqrt():
-    >>> np.lib.scimath.sqrt(1)
-    1.0
-
-    >>> np.lib.scimath.sqrt([1,4])
-    array([ 1.,  2.])
-
-    But it automatically handles negative inputs:
-    >>> np.lib.scimath.sqrt(-1)
-    (0.0+1.0j)
-
-    >>> np.lib.scimath.sqrt([-1,4])
-    array([ 0.+1.j,  2.+0.j])
+    out : array_like
 
     Notes
     -----
@@ -208,12 +192,33 @@ def sqrt(x):
     number, it is defined by using the following branch cut: x = r e^(i t) with
     r > 0 and -pi < t <= pi. The principal square root is then
     sqrt(r) e^(i t/2).
+
+    Examples
+    --------
+
+    For real, non-negative inputs this works just like numpy.sqrt():
+
+    >>> np.lib.scimath.sqrt(1)
+    1.0
+
+    >>> np.lib.scimath.sqrt([1,4])
+    array([ 1.,  2.])
+
+    But it automatically handles negative inputs:
+
+    >>> np.lib.scimath.sqrt(-1)
+    (0.0+1.0j)
+
+    >>> np.lib.scimath.sqrt([-1,4])
+    array([ 0.+1.j,  2.+0.j])
+
     """
     x = _fix_real_lt_zero(x)
     return nx.sqrt(x)
 
 def log(x):
-    """Return the natural logarithm of x.
+    """
+    Return the natural logarithm of x.
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
@@ -224,7 +229,7 @@ def log(x):
 
     Returns
     -------
-    array_like
+    out : array_like
 
     Examples
     --------
@@ -237,12 +242,14 @@ def log(x):
 
     >>> np.lib.scimath.log(-math.exp(1)) == (1+1j*math.pi)
     True
+
     """
     x = _fix_real_lt_zero(x)
     return nx.log(x)
 
 def log10(x):
-    """Return the base 10 logarithm of x.
+    """
+    Return the base 10 logarithm of x.
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
@@ -253,12 +260,13 @@ def log10(x):
 
     Returns
     -------
-    array_like
+    out : array_like
 
     Examples
     --------
 
     (We set the printing precision so the example can be auto-tested)
+
     >>> np.set_printoptions(precision=4)
 
     >>> np.lib.scimath.log10([10**1,10**2])
@@ -267,12 +275,14 @@ def log10(x):
 
     >>> np.lib.scimath.log10([-10**1,-10**2,10**2])
     array([ 1.+1.3644j,  2.+1.3644j,  2.+0.j    ])
+
     """
     x = _fix_real_lt_zero(x)
     return nx.log10(x)
 
 def logn(n, x):
-    """Take log base n of x.
+    """
+    Take log base n of x.
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
@@ -283,12 +293,13 @@ def logn(n, x):
 
     Returns
     -------
-    array_like
+    out : array_like
 
     Examples
     --------
 
     (We set the printing precision so the example can be auto-tested)
+
     >>> np.set_printoptions(precision=4)
 
     >>> np.lib.scimath.logn(2,[4,8])
@@ -296,13 +307,15 @@ def logn(n, x):
 
     >>> np.lib.scimath.logn(2,[-4,-8,8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
+
     """
     x = _fix_real_lt_zero(x)
     n = _fix_real_lt_zero(n)
     return nx.log(x)/nx.log(n)
 
 def log2(x):
-    """ Take log base 2 of x.
+    """
+    Take log base 2 of x.
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
@@ -313,12 +326,13 @@ def log2(x):
 
     Returns
     -------
-    array_like
+    out : array_like
 
     Examples
     --------
 
     (We set the printing precision so the example can be auto-tested)
+
     >>> np.set_printoptions(precision=4)
 
     >>> np.lib.scimath.log2([4,8])
@@ -326,12 +340,14 @@ def log2(x):
 
     >>> np.lib.scimath.log2([-4,-8,8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
+
     """
     x = _fix_real_lt_zero(x)
     return nx.log2(x)
 
 def power(x, p):
-    """Return x**p.
+    """
+    Return x**p.
 
     If x contains negative values, it is converted to the complex domain.
 
@@ -344,11 +360,12 @@ def power(x, p):
 
     Returns
     -------
-    array_like
+    out : array_like
 
     Examples
     --------
     (We set the printing precision so the example can be auto-tested)
+
     >>> np.set_printoptions(precision=4)
 
     >>> np.lib.scimath.power([2,4],2)
@@ -359,6 +376,7 @@ def power(x, p):
 
     >>> np.lib.scimath.power([-2,4],2)
     array([  4.+0.j,  16.+0.j])
+
     """
     x = _fix_real_lt_zero(x)
     p = _fix_int_lt_zero(p)
@@ -393,7 +411,8 @@ def arccos(x):
     return nx.arccos(x)
 
 def arcsin(x):
-    """Compute the inverse sine of x.
+    """
+    Compute the inverse sine of x.
 
     For real x with abs(x)<=1, this returns the principal value.
 
@@ -410,6 +429,7 @@ def arcsin(x):
     Examples
     --------
     (We set the printing precision so the example can be auto-tested)
+
     >>> np.set_printoptions(precision=4)
 
     >>> np.lib.scimath.arcsin(0)
@@ -417,12 +437,14 @@ def arcsin(x):
 
     >>> np.lib.scimath.arcsin([0,1])
     array([ 0.    ,  1.5708])
+
     """
     x = _fix_real_abs_gt_1(x)
     return nx.arcsin(x)
 
 def arctanh(x):
-    """Compute the inverse hyperbolic tangent of x.
+    """
+    Compute the inverse hyperbolic tangent of x.
 
     For real x with abs(x)<=1, this returns the principal value.
 
@@ -434,7 +456,7 @@ def arctanh(x):
 
     Returns
     -------
-    array_like
+    out : array_like
 
     Examples
     --------
@@ -446,6 +468,7 @@ def arctanh(x):
 
     >>> np.lib.scimath.arctanh([0,2])
     array([ 0.0000+0.j    ,  0.5493-1.5708j])
+
     """
     x = _fix_real_abs_gt_1(x)
     return nx.arctanh(x)

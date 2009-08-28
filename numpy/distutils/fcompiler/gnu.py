@@ -2,6 +2,8 @@ import re
 import os
 import sys
 import warnings
+import platform
+from subprocess import Popen, PIPE, STDOUT
 
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
@@ -18,6 +20,16 @@ _R_ARCHS = {"ppc": r"^Target: (powerpc-.*)$",
     "i686": r"^Target: (i686-.*)$",
     "x86_64": r"^Target: (i686-.*)$",
     "ppc64": r"^Target: (powerpc-.*)$",}
+
+# XXX: handle cross compilation
+def is_win64():
+    return sys.platform == "win32" and platform.architecture()[0] == "64bit"
+
+if is_win64():
+    #_EXTRAFLAGS = ["-fno-leading-underscore"]
+    _EXTRAFLAGS = []
+else:
+    _EXTRAFLAGS = []
 
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
@@ -220,10 +232,10 @@ class Gnu95FCompiler(GnuFCompiler):
     executables = {
         'version_cmd'  : ["<F90>", "--version"],
         'compiler_f77' : [None, "-Wall", "-ffixed-form",
-                          "-fno-second-underscore"],
-        'compiler_f90' : [None, "-Wall", "-fno-second-underscore"],
+		"-fno-second-underscore"] + _EXTRAFLAGS,
+        'compiler_f90' : [None, "-Wall", "-fno-second-underscore"] + _EXTRAFLAGS,
         'compiler_fix' : [None, "-Wall", "-ffixed-form",
-                          "-fno-second-underscore"],
+                          "-fno-second-underscore"] + _EXTRAFLAGS,
         'linker_so'    : ["<F90>", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
@@ -291,6 +303,13 @@ class Gnu95FCompiler(GnuFCompiler):
                     i = opt.index("gcc")
                     opt.insert(i+1, "mingwex")
                     opt.insert(i+1, "mingw32")
+	# XXX: fix this mess, does not work for mingw
+	if is_win64():
+            c_compiler = self.c_compiler
+            if c_compiler and c_compiler.compiler_type == "msvc":
+	        return []
+	    else:
+		raise NotImplementedError("Only MS compiler supported with gfortran on win64")
         return opt
 
     def get_target(self):
@@ -303,12 +322,19 @@ class Gnu95FCompiler(GnuFCompiler):
                 return m.group(1)
         return ""
 
+    def get_flags_opt(self):
+	if is_win64():
+	    return ['-O0']
+        else:
+	    return GnuFCompiler.get_flags_opt(self)
 def _can_target(cmd, arch):
     """Return true is the command supports the -arch flag for the given
     architecture."""
     newcmd = cmd[:]
     newcmd.extend(["-arch", arch, "-v"])
-    st, out = exec_command(" ".join(newcmd))
+    p = Popen(newcmd, stderr=STDOUT, stdout=PIPE)
+    st = p.communicate()
+    out = p.stdout
     if st == 0:
         for line in out.splitlines():
             m = re.search(_R_ARCHS[arch], line)

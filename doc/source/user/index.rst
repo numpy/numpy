@@ -19,9 +19,9 @@ and classes, see :ref:`reference`.
 .. toctree::
    :maxdepth: 2
 
+   install
    howtofind
    basics
    performance
    misc
    c-info
-

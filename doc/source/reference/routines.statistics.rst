@@ -35,6 +35,7 @@ Correlating
    :toctree: generated/
 
    corrcoef
+   acorrelate
    correlate
    cov
 

@@ -1,11 +1,13 @@
 import imp
 import os
 import sys
+import shutil
 from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 import warnings
+import re
 
 from setup_common import *
 
@@ -142,7 +144,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # config.h in the public namespace, so we have a clash for the common
     # functions we test. We remove every function tested by python's
     # autoconf, hoping their own test are correct
-    if sys.version_info[:2] >= (2, 6):
+    if sys.version_info[:2] >= (2, 5):
         for f in OPTIONAL_STDFUNCS_MAYBE:
             if config.check_decl(fname2def(f),
                         headers=["Python.h", "math.h"]):
@@ -321,6 +323,7 @@ def configuration(parent_package='',top_path=None):
         d = os.path.dirname(target)
         if not os.path.exists(d):
             os.makedirs(d)
+
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
@@ -434,8 +437,6 @@ def configuration(parent_package='',top_path=None):
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
                 moredefs.append(('NPY_USE_C99_FORMATS', 1))
-            else:
-                moredefs.append(('NPY_USE_C99_FORMATS', 0))
 
             # Inline check
             inline = config_cmd.check_inline()
@@ -548,12 +549,13 @@ def configuration(parent_package='',top_path=None):
         return []
 
     config.add_data_files('include/numpy/*.h')
+    config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
-    deps = [join('src','_signbit.c'),
+    deps = [join('src','npymath','_signbit.c'),
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
             'include/numpy/fenv/fenv.h',
@@ -578,10 +580,28 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
-    config.add_library('npymath',
-            sources=[join('src', 'npy_math.c.src')],
-            depends=[])
-    
+
+    subst_dict = dict([("sep", os.path.sep)])
+    def get_mathlib_info(*args):
+        # Another ugly hack: the mathlib info is known once build_src is run,
+        # but we cannot use add_installed_pkg_config here either, so we only
+        # updated the substition dictionary during npymath build
+        config_cmd = config.get_config_cmd()
+        mlibs = check_mathlib(config_cmd)
+
+        posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
+        msvc_mlib = ' '.join(['%s.lib' % l for l in mlibs])
+        subst_dict["posix_mathlib"] = posix_mlib
+        subst_dict["msvc_mathlib"] = msvc_mlib
+
+    config.add_installed_library('npymath',
+            sources=[join('src', 'npymath', 'npy_math.c.src'), get_mathlib_info],
+            install_dir='lib')
+    config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
+            subst_dict)
+    config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
+            subst_dict)
+   
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
@@ -705,6 +725,9 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('umath_tests',
                     sources = [join('src','umath', 'umath_tests.c.src')])
+
+    config.add_extension('multiarray_tests',
+                    sources = [join('src', 'multiarray', 'multiarray_tests.c.src')])
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')

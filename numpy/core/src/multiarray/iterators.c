@@ -266,27 +266,33 @@ slice_GetIndices(PySliceObject *r, intp length,
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
 
-/*NUMPY_API
- * Get Iterator.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_IterNew(PyObject *obj)
+/* get the dataptr from its current coordinates for simple iterator */
+static char*
+get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
 {
-    PyArrayIterObject *it;
-    int i, nd;
-    PyArrayObject *ao = (PyArrayObject *)obj;
+    npy_intp i;
+    char *ret;
 
-    if (!PyArray_Check(ao)) {
-        PyErr_BadInternalCall();
-        return NULL;
+    ret = iter->ao->data;
+
+    for(i = 0; i < iter->ao->nd; ++i) {
+	    ret += coordinates[i] * iter->strides[i];
     }
 
-    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-    /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
-    if (it == NULL) {
-        return NULL;
-    }
+    return ret;
+}
+
+/*
+ * This is common initialization code between PyArrayIterObject and
+ * PyArrayNeighborhoodIterObject 
+ *
+ * Increase ao refcount
+ */
+static PyObject *
+array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
+{
+    int nd, i;
+
     nd = ao->nd;
     PyArray_UpdateFlags(ao, CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
@@ -307,9 +313,47 @@ PyArray_IterNew(PyObject *obj)
         if (i > 0) {
             it->factors[nd-i-1] = it->factors[nd-i] * ao->dimensions[nd-i];
         }
+        it->bounds[i][0] = 0;
+        it->bounds[i][1] = ao->dimensions[i] - 1;
+        it->limits[i][0] = 0;
+        it->limits[i][1] = ao->dimensions[i] - 1;
+        it->limits_sizes[i] = it->limits[i][1] - it->limits[i][0] + 1;
     }
+
+    it->translate = &get_ptr_simple;
     PyArray_ITER_RESET(it);
 
+    return (PyObject *)it;
+}
+
+static void
+array_iter_base_dealloc(PyArrayIterObject *it)
+{
+    Py_XDECREF(it->ao);
+}
+
+/*NUMPY_API
+ * Get Iterator.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_IterNew(PyObject *obj)
+{
+    PyArrayIterObject *it;
+    PyArrayObject *ao = (PyArrayObject *)obj;
+
+    if (!PyArray_Check(ao)) {
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+
+    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
+    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
+    /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
+    if (it == NULL) {
+        return NULL;
+    }
+
+    array_iter_base_init(it, ao);
     return (PyObject *)it;
 }
 
@@ -502,7 +546,7 @@ arrayiter_next(PyArrayIterObject *it)
 static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
-    Py_XDECREF(it->ao);
+    array_iter_base_dealloc(it);
     _pya_free(it);
 }
 
@@ -1174,8 +1218,12 @@ iter_coords_get(PyArrayIterObject *self)
         int i;
         val = self->index;
         for (i = 0; i < nd; i++) {
-            self->coordinates[i] = val / self->factors[i];
-            val = val % self->factors[i];
+            if (self->factors[i] != 0) {
+                self->coordinates[i] = val / self->factors[i];
+                val = val % self->factors[i];
+            } else {
+                self->coordinates[i] = 0;
+            }
         }
     }
     return PyArray_IntTupleFromIntp(nd, self->coordinates);
@@ -1189,63 +1237,62 @@ static PyGetSetDef iter_getsets[] = {
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
-    0,                                           /* ob_size */
-    "numpy.flatiter",                            /* tp_name */
-    sizeof(PyArrayIterObject),                   /* tp_basicsize */
-    0,                                           /* tp_itemsize */
-    /* methods */
-    (destructor)arrayiter_dealloc,               /* tp_dealloc */
-    0,                                           /* tp_print */
-    0,                                           /* tp_getattr */
-    0,                                           /* tp_setattr */
-    0,                                           /* tp_compare */
-    0,                                           /* tp_repr */
-    0,                                           /* tp_as_number */
-    0,                                           /* tp_as_sequence */
-    &iter_as_mapping,                            /* tp_as_mapping */
-    0,                                           /* tp_hash */
-    0,                                           /* tp_call */
-    0,                                           /* tp_str */
-    0,                                           /* tp_getattro */
-    0,                                           /* tp_setattro */
-    0,                                           /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
-    0,                                           /* tp_doc */
-    0,                                           /* tp_traverse */
-    0,                                           /* tp_clear */
-    (richcmpfunc)iter_richcompare,               /* tp_richcompare */
-    0,                                           /* tp_weaklistoffset */
-    0,                                           /* tp_iter */
-    (iternextfunc)arrayiter_next,                /* tp_iternext */
-    iter_methods,                                /* tp_methods */
-    iter_members,                                /* tp_members */
-    iter_getsets,                                /* tp_getset */
-    0,                                           /* tp_base */
-    0,                                           /* tp_dict */
-    0,                                           /* tp_descr_get */
-    0,                                           /* tp_descr_set */
-    0,   				         /* tp_dictoffset */
-    0,   				         /* tp_init */
-    0,   				         /* tp_alloc */
-    0,   				         /* tp_new */
-    0,   				         /* tp_free */
-    0,   				         /* tp_is_gc */
-    0,   				         /* tp_bases */
-    0,   				         /* tp_mro */
-    0,   				         /* tp_cache */
-    0,   				         /* tp_subclasses */
-    0,   				         /* tp_weaklist */
-    0,   				         /* tp_del */
-#ifdef COUNT_ALLOCS
-    /* these must be last and never explicitly initialized */
-    0,                                           /* tp_allocs */
-    0,                                           /* tp_frees */
-    0,                                           /* tp_maxalloc */
-    0,                                           /* tp_prev */
-    0,                                           /* *tp_next */
+    0,                                          /* ob_size */
 #endif
-
+    "numpy.flatiter",                           /* tp_name */
+    sizeof(PyArrayIterObject),                  /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)arrayiter_dealloc,              /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    &iter_as_mapping,                           /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    (richcmpfunc)iter_richcompare,              /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    (iternextfunc)arrayiter_next,               /* tp_iternext */
+    iter_methods,                               /* tp_methods */
+    iter_members,                               /* tp_members */
+    iter_getsets,                               /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,   				        /* tp_dictoffset */
+    0,   				        /* tp_init */
+    0,   				        /* tp_alloc */
+    0,   				        /* tp_new */
+    0,   				        /* tp_free */
+    0,   				        /* tp_is_gc */
+    0,   				        /* tp_bases */
+    0,   				        /* tp_mro */
+    0,   				        /* tp_cache */
+    0,   				        /* tp_subclasses */
+    0,   				        /* tp_weaklist */
+    0,   				        /* tp_del */
 };
 
 /** END of Array Iterator **/
@@ -1652,61 +1699,387 @@ static PyMethodDef arraymultiter_methods[] = {
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
-    0,                                           /* ob_size */
-    "numpy.broadcast",                           /* tp_name */
-    sizeof(PyArrayMultiIterObject),              /* tp_basicsize */
-    0,                                           /* tp_itemsize */
-    /* methods */
-    (destructor)arraymultiter_dealloc,           /* tp_dealloc */
-    0,                                           /* tp_print */
-    0,                                           /* tp_getattr */
-    0,                                           /* tp_setattr */
-    0,                                           /* tp_compare */
-    0,                                           /* tp_repr */
-    0,                                           /* tp_as_number */
-    0,                                           /* tp_as_sequence */
-    0,                                           /* tp_as_mapping */
-    0,                                           /* tp_hash */
-    0,                                           /* tp_call */
-    0,                                           /* tp_str */
-    0,                                           /* tp_getattro */
-    0,                                           /* tp_setattro */
-    0,                                           /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
-    0,                                           /* tp_doc */
-    0,                                           /* tp_traverse */
-    0,                                           /* tp_clear */
-    0,                                           /* tp_richcompare */
-    0,                                           /* tp_weaklistoffset */
-    0,                                           /* tp_iter */
-    (iternextfunc)arraymultiter_next,            /* tp_iternext */
-    arraymultiter_methods,                       /* tp_methods */
-    arraymultiter_members,                       /* tp_members */
-    arraymultiter_getsetlist,                    /* tp_getset */
-    0,                                           /* tp_base */
-    0,                                           /* tp_dict */
-    0,                                           /* tp_descr_get */
-    0,                                           /* tp_descr_set */
-    0,                                           /* tp_dictoffset */
-    (initproc)0,                                 /* tp_init */
-    0,                                           /* tp_alloc */
-    arraymultiter_new,                           /* tp_new */
-    0,                                           /* tp_free */
-    0,                                           /* tp_is_gc */
-    0,                                           /* tp_bases */
-    0,                                           /* tp_mro */
-    0,                                           /* tp_cache */
-    0,                                           /* tp_subclasses */
-    0,                                           /* tp_weaklist */
-    0,                                           /* tp_del */
-
-#ifdef COUNT_ALLOCS
-    /* these must be last and never explicitly initialized */
-    0,                                           /* tp_allocs */
-    0,                                           /* tp_frees */
-    0,                                           /* tp_maxalloc */
-    0,                                           /* tp_prev */
-    0,                                           /* *tp_next */
+    0,                                          /* ob_size */
 #endif
+    "numpy.broadcast",                          /* tp_name */
+    sizeof(PyArrayMultiIterObject),             /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)arraymultiter_dealloc,          /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    (iternextfunc)arraymultiter_next,           /* tp_iternext */
+    arraymultiter_methods,                      /* tp_methods */
+    arraymultiter_members,                      /* tp_members */
+    arraymultiter_getsetlist,                   /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)0,                                /* tp_init */
+    0,                                          /* tp_alloc */
+    arraymultiter_new,                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+};
+
+/*========================= Neighborhood iterator ======================*/
+
+static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter);
+
+static char* _set_constant(PyArrayNeighborhoodIterObject* iter, 
+        PyArrayObject *fill)
+{
+    char *ret;
+    PyArrayIterObject *ar = iter->_internal_iter;
+    int storeflags, st;
+
+    ret = PyDataMem_NEW(ar->ao->descr->elsize);
+    if (ret == NULL) {
+        PyErr_SetNone(PyExc_MemoryError);
+        return NULL;
+    }
+
+    if (PyArray_ISOBJECT(ar->ao)) {
+        memcpy(ret, fill->data, sizeof(PyObject*));
+        Py_INCREF(*(PyObject**)ret);
+    } else {
+        /* Non-object types */
+
+        storeflags = ar->ao->flags;
+        ar->ao->flags |= BEHAVED;
+        st = ar->ao->descr->f->setitem((PyObject*)fill, ret, ar->ao);
+        ar->ao->flags = storeflags;
+
+        if (st < 0) {
+            PyDataMem_FREE(ret);
+            return NULL;
+        }
+    }
+
+    return ret;
+}
+
+#define _INF_SET_PTR(c) \
+    bd = coordinates[c] + p->coordinates[c]; \
+    if (bd < p->limits[c][0] || bd > p->limits[c][1]) { \
+        return niter->constant; \
+    } \
+    _coordinates[c] = bd;
+
+/* set the dataptr from its current coordinates */
+static char*
+get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
+{
+    int i;
+    npy_intp bd, _coordinates[NPY_MAXDIMS];
+    PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
+    PyArrayIterObject *p = niter->_internal_iter;
+
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR(i)
+    }
+
+    return p->translate(p, _coordinates);
+}
+#undef _INF_SET_PTR
+
+#define _NPY_IS_EVEN(x) ((x) % 2 == 0)
+
+/* For an array x of dimension n, and given index i, returns j, 0 <= j < n
+ * such as x[i] = x[j], with x assumed to be mirrored. For example, for x =
+ * {1, 2, 3} (n = 3)
+ *
+ * index -5 -4 -3 -2 -1 0 1 2 3 4 5 6
+ * value  2  3  3  2  1 1 2 3 3 2 1 1
+ *
+ * _npy_pos_index_mirror(4, 3) will return 1, because x[4] = x[1]*/
+static inline npy_intp
+__npy_pos_remainder(npy_intp i, npy_intp n)
+{
+    npy_intp k, l, j;
+
+    /* Mirror i such as it is guaranteed to be positive */
+    if (i < 0) {
+        i = - i - 1;
+    }
+
+    /* compute k and l such as i = k * n + l, 0 <= l < k */
+    k = i / n;
+    l = i - k * n;
+
+    if (_NPY_IS_EVEN(k)) {
+        j = l;
+    } else {
+        j = n - 1 - l;
+    }
+    return j;
+}
+#undef _NPY_IS_EVEN
+
+#define _INF_SET_PTR_MIRROR(c) \
+    lb = p->limits[c][0]; \
+    bd = coordinates[c] + p->coordinates[c] - lb; \
+    _coordinates[c] = lb + __npy_pos_remainder(bd, p->limits_sizes[c]);
+
+/* set the dataptr from its current coordinates */
+static char*
+get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
+{
+    int i;
+    npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
+    PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
+    PyArrayIterObject *p = niter->_internal_iter;
+
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR_MIRROR(i)
+    }
+
+    return p->translate(p, _coordinates);
+}
+#undef _INF_SET_PTR_MIRROR
+
+/* compute l such as i = k * n + l, 0 <= l < |k| */
+static inline npy_intp
+__npy_euclidean_division(npy_intp i, npy_intp n)
+{
+    npy_intp l;
+
+    l = i % n;
+    if (l < 0) {
+        l += n;
+    }
+    return l;
+}
+
+#define _INF_SET_PTR_CIRCULAR(c) \
+    lb = p->limits[c][0]; \
+    bd = coordinates[c] + p->coordinates[c] - lb; \
+    _coordinates[c] = lb + __npy_euclidean_division(bd, p->limits_sizes[c]);
+
+static char*
+get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
+{
+    int i;
+    npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
+    PyArrayNeighborhoodIterObject *niter = (PyArrayNeighborhoodIterObject*)_iter;
+    PyArrayIterObject *p = niter->_internal_iter;
+
+    for(i = 0; i < niter->nd; ++i) {
+        _INF_SET_PTR_CIRCULAR(i)
+    }
+    return p->translate(p, _coordinates);
+}
+
+#undef _INF_SET_PTR_CIRCULAR
+
+/*
+ * fill and x->ao should have equivalent types 
+ */
+/*NUMPY_API*/
+NPY_NO_EXPORT PyObject*
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
+                int mode, PyArrayObject* fill)
+{
+    int i;
+    PyArrayNeighborhoodIterObject *ret;
+
+    ret = _pya_malloc(sizeof(*ret));
+    if (ret == NULL) {
+        return NULL;
+    }
+    PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
+
+    array_iter_base_init((PyArrayIterObject*)ret, x->ao);
+    Py_INCREF(x);
+    ret->_internal_iter = x;
+
+    ret->nd = x->ao->nd;
+
+    for (i = 0; i < ret->nd; ++i) {
+        ret->dimensions[i] = x->ao->dimensions[i];
+    }
+
+    /* Compute the neighborhood size and copy the shape */
+    ret->size = 1;
+    for (i = 0; i < ret->nd; ++i) {
+        ret->bounds[i][0] = bounds[2 * i];
+        ret->bounds[i][1] = bounds[2 * i + 1];
+        ret->size *= (ret->bounds[i][1] - ret->bounds[i][0]) + 1;
+
+        /* limits keep track of valid ranges for the neighborhood: if a bound
+         * of the neighborhood is outside the array, then limits is the same as
+         * boundaries. On the contrary, if a bound is strictly inside the
+         * array, then limits correspond to the array range. For example, for
+         * an array [1, 2, 3], if bounds are [-1, 3], limits will be [-1, 3],
+         * but if bounds are [1, 2], then limits will be [0, 2].
+         *
+         * This is used by neighborhood iterators stacked on top of this one */
+        ret->limits[i][0] = ret->bounds[i][0] < 0 ? ret->bounds[i][0] : 0;
+        ret->limits[i][1] = ret->bounds[i][1] >= ret->dimensions[i] - 1 ?
+                            ret->bounds[i][1] :
+                            ret->dimensions[i] - 1;
+        ret->limits_sizes[i] = (ret->limits[i][1] - ret->limits[i][0]) + 1;
+    }
+
+    switch (mode) {
+        case NPY_NEIGHBORHOOD_ITER_ZERO_PADDING:
+            ret->constant = PyArray_Zero(x->ao);
+            ret->mode = mode;
+            ret->translate = &get_ptr_constant;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_ONE_PADDING:
+            ret->constant = PyArray_One(x->ao);
+            ret->mode = mode;
+            ret->translate = &get_ptr_constant;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING:
+            /* New reference in returned value of _set_constant if array
+             * object */
+            assert(PyArray_EquivArrTypes(x->ao, fill) == NPY_TRUE);
+            ret->constant = _set_constant(ret, fill);
+            if (ret->constant == NULL) {
+                goto clean_x;
+            }
+            ret->mode = mode;
+            ret->translate = &get_ptr_constant;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING:
+            ret->mode = mode;
+            ret->constant = NULL;
+            ret->translate = &get_ptr_mirror;
+            break;
+        case NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING:
+            ret->mode = mode;
+            ret->constant = NULL;
+            ret->translate = &get_ptr_circular;
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError, "Unsupported padding mode");
+            goto clean_x;
+    }
+
+    /*
+     * XXX: we force x iterator to be non contiguous because we need
+     * coordinates... Modifying the iterator here is not great
+     */
+    x->contiguous = 0;
+
+    PyArrayNeighborhoodIter_Reset(ret);
+
+    return (PyObject*)ret;
+
+clean_x:
+    Py_DECREF(ret->_internal_iter);
+    array_iter_base_dealloc((PyArrayIterObject*)ret);
+    _pya_free((PyArrayObject*)ret);
+    return NULL;
+}
+
+static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
+{
+    if (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
+        if (PyArray_ISOBJECT(iter->_internal_iter->ao)) {
+            Py_DECREF(*(PyObject**)iter->constant);
+        }
+    }
+    if (iter->constant != NULL) {
+        PyDataMem_FREE(iter->constant);
+    }
+    Py_DECREF(iter->_internal_iter);
+
+    array_iter_base_dealloc((PyArrayIterObject*)iter);
+    _pya_free((PyArrayObject*)iter);
+}
+
+NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                          /* ob_size */
+#endif
+    "numpy.neigh_internal_iter",                /* tp_name*/
+    sizeof(PyArrayNeighborhoodIterObject),      /* tp_basicsize*/
+    0,                                          /* tp_itemsize*/
+    (destructor)neighiter_dealloc,              /* tp_dealloc*/
+    0,                        		        /* tp_print*/
+    0,                        		        /* tp_getattr*/
+    0,                        		        /* tp_setattr*/
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr*/
+    0,                                          /* tp_as_number*/
+    0,                                          /* tp_as_sequence*/
+    0,                                          /* tp_as_mapping*/
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call*/
+    0,                                          /* tp_str*/
+    0,                                          /* tp_getattro*/
+    0,                                          /* tp_setattro*/
+    0,                                          /* tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags*/
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    (iternextfunc)0,                            /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)0,                                /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
 };

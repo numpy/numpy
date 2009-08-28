@@ -120,10 +120,9 @@ numpyconfig_sym.append(('NPY_NO_SMP', nosmp))
 # Check whether we can use C99 printing formats
 #----------------------------------------------
 if config.CheckDeclaration(('PRIdPTR'), includes  = '#include <inttypes.h>'):
-    usec99 = 1
+    numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', '#define NPY_USE_C99_FORMATS 1'))
 else:
-    usec99 = 0
-numpyconfig_sym.append(('USE_C99_FORMATS', usec99))
+    numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
     
 #----------------------
 # Checking the mathlib
@@ -187,9 +186,10 @@ for f in ["isnan", "isinf", "signbit", "isfinite"]:
 """
     st = config.CheckDeclaration(f, includes=includes)
     if st:
-	numpyconfig_sym.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), 
-		'#define NPY_HAVE_DECL_%s' % f.upper()))
-        
+        numpyconfig_sym.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(),
+            '#define NPY_HAVE_DECL_%s' % f.upper()))
+    else:
+        numpyconfig_sym.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), ''))
 
 inline = config.CheckInline()
 config.Define('inline', inline)
@@ -198,7 +198,9 @@ numpyconfig_sym.append(('NPY_INLINE', inline))
 
 if ENABLE_SEPARATE_COMPILATION:
     config.Define("ENABLE_SEPARATE_COMPILATION", 1)
-    numpyconfig_sym.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
+    numpyconfig_sym.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', '#define NPY_ENABLE_SEPARATE_COMPILATION 1'))
+else:
+    numpyconfig_sym.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', ''))
 
 # Checking for visibility macro
 def visibility_define():
@@ -262,6 +264,10 @@ write_info(env)
 #  Build
 #==========
 
+# List of headers which need to be "installed " into the build directory for
+# proper in-place build support
+generated_headers = []
+
 #---------------------------------------
 # Generate the public configuration file
 #---------------------------------------
@@ -272,7 +278,9 @@ for key, value in numpyconfig_sym:
 env['SUBST_DICT'] = config_dict
 
 include_dir = 'include/numpy'
-env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'), pjoin(include_dir, 'numpyconfig.h.in'))
+target = env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'),
+        pjoin(include_dir, 'numpyconfig.h.in'))
+generated_headers.append(target[0])
 
 env['CONFIG_H_GEN'] = numpyconfig_sym
 
@@ -298,25 +306,44 @@ umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umath_tests.c.src'))
+multiarray_tests_src = env.GenerateFromTemplate(pjoin('src', 'multiarray',
+    'multiarray_tests.c.src'))
 scalarmathmodule_src = env.GenerateFromTemplate(
                             pjoin('src', 'scalarmathmodule.c.src'))
 
 umath = env.GenerateUmath('__umath_generated',
                           pjoin('code_generators', 'generate_umath.py'))
 
-multiarray_api = env.GenerateMultiarrayApi('multiarray_api',
+multiarray_api = env.GenerateMultiarrayApi('include/numpy/multiarray_api',
                         [ pjoin('code_generators', 'numpy_api_order.txt')])
+generated_headers.append(multiarray_api[0])
 
-ufunc_api = env.GenerateUfuncApi('ufunc_api',
+ufunc_api = env.GenerateUfuncApi('include/numpy/ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
+generated_headers.append(ufunc_api[0])
 
-env.Prepend(CPPPATH = ['include', '.'])
+# include/numpy is added for compatibility reasons with distutils: this is
+# needed for __multiarray_api.c and __ufunc_api.c included from multiarray and
+# ufunc.
+env.Prepend(CPPPATH = ['include', '.', 'include/numpy'])
 
 # npymath core lib
-npymath_src = env.GenerateFromTemplate(pjoin('src', 'npy_math.c.src'))
-env.DistutilsStaticExtLibrary("npymath", npymath_src)
+npymath_src = env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src'))
+env.DistutilsInstalledStaticExtLibrary("npymath", npymath_src, install_dir='lib')
 env.Prepend(LIBS=["npymath"])
 env.Prepend(LIBPATH=["."])
+
+subst_dict = {'@prefix@': '$distutils_install_prefix',
+              '@sep@': repr(os.path.sep)}
+npymath_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'npymath.ini'),
+    'npymath.ini.in', SUBST_DICT=subst_dict)
+
+subst_dict = {'@posix_mathlib@': " ".join(['-l%s' % l for l in mlib]),
+              '@msvc_mathlib@': " ".join(['%s.mlib' % l for l in mlib])}
+mlib_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'mlib.ini'),
+    'mlib.ini.in', SUBST_DICT=subst_dict)
+env.Install('$distutils_installdir/lib/npy-pkg-config', mlib_ini)
+env.Install('$distutils_installdir/lib/npy-pkg-config', npymath_ini)
 
 #-----------------
 # Build multiarray
@@ -353,6 +380,7 @@ if ENABLE_SEPARATE_COMPILATION:
 else:
     multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule_onefile.c')]
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
+env.DistutilsPythonExtension('multiarray_tests', source=multiarray_tests_src)
 
 #------------------
 # Build sort module
@@ -395,3 +423,7 @@ if build_blasdot:
     dotblas_o = env.PythonObject('_dotblas', source = dotblas_src)
     env.Depends(dotblas_o, pjoin("blasdot", "cblas.h"))
     dotblas = env.DistutilsPythonExtension('_dotblas', dotblas_o)
+
+# "Install" the header in the build directory, so that in-place build works
+for h in generated_headers:
+    env.Install(pjoin('$distutils_installdir', include_dir), h)

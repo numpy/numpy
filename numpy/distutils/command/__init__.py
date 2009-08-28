@@ -7,7 +7,7 @@ __revision__ = "$Id: __init__.py,v 1.3 2005/05/16 11:08:49 pearu Exp $"
 
 distutils_all = [  'build_py',
                    'clean',
-                   'install_lib',
+                   'install_clib',
                    'install_scripts',
                    'bdist',
                    'bdist_dumb',
@@ -26,6 +26,7 @@ __all__ = ['build',
            'install',
            'install_data',
            'install_headers',
+           'install_lib',
            'bdist_rpm',
            'sdist',
           ] + distutils_all

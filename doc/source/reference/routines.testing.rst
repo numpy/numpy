@@ -29,6 +29,7 @@ Decorators
 .. autosummary::
    :toctree: generated/
 
+   decorators.deprecated
    decorators.knownfailureif
    decorators.setastest
    decorators.skipif

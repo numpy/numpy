@@ -251,14 +251,16 @@ From other objects
 .. cfunction:: PyObject* PyArray_FromAny(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context)
 
     This is the main function used to obtain an array from any nested
-    sequence, or object that exposes the array interface, ``op``. The
-    parameters allow specification of the required *type*, the
+    sequence, or object that exposes the array interface, *op*. The
+    parameters allow specification of the required *dtype*, the
     minimum (*min_depth*) and maximum (*max_depth*) number of
     dimensions acceptable, and other *requirements* for the array. The
     *dtype* argument needs to be a :ctype:`PyArray_Descr` structure
     indicating the desired data-type (including required
     byteorder). The *dtype* argument may be NULL, indicating that any
-    data-type (and byteorder) is acceptable. If you want to use
+    data-type (and byteorder) is acceptable. Unless ``FORCECAST`` is
+    present in ``flags``, this call will generate an error if the data
+    type cannot be safely obtained from the object. If you want to use
     ``NULL`` for the *dtype* and ensure the array is notswapped then
     use :cfunc:`PyArray_CheckFromAny`. A value of 0 for either of the
     depth parameters causes the parameter to be ignored. Any of the
@@ -270,7 +272,8 @@ From other objects
     filled from *op* using the sequence protocol). The new array will
     have :cdata:`NPY_DEFAULT` as its flags member. The *context* argument
     is passed to the :obj:`__array__` method of *op* and is only used if
-    the array is constructed that way.
+    the array is constructed that way. Almost always this
+    parameter is ``NULL``.
 
     .. cvar:: NPY_C_CONTIGUOUS
 
@@ -1001,6 +1004,24 @@ Special functions for PyArray_OBJECT
 Array flags
 -----------
 
+The ``flags`` attribute of the ``PyArrayObject`` structure contains
+important information about the memory used by the array (pointed to
+by the data member) This flag information must be kept accurate or
+strange results and even segfaults may result.
+
+There are 6 (binary) flags that describe the memory area used by the
+data buffer.  These constants are defined in ``arrayobject.h`` and
+determine the bit-position of the flag.  Python exposes a nice
+attribute- based interface as well as a dictionary-like interface for
+getting (and, if appropriate, setting) these flags.
+
+Memory areas of all kinds can be pointed to by an ndarray,
+necessitating these flags.  If you get an arbitrary ``PyArrayObject``
+in C-code, you need to be aware of the flags that are set.  If you
+need to guarantee a certain kind of array (like ``NPY_CONTIGUOUS`` and
+``NPY_BEHAVED``), then pass these requirements into the
+PyArray_FromAny function.
+
 
 Basic Array Flags
 ^^^^^^^^^^^^^^^^^
@@ -1023,6 +1044,12 @@ associated with an array.
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
 
+Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN``
+contiguous and C contiguous. Both of these flags can be checked and
+are convenience flags only as whether or not an array is
+``NPY_CONTIGUOUS`` or ``NPY_FORTRAN`` can be determined by the
+``strides``, ``dimensions``, and ``itemsize`` attributes.
+
 .. cvar:: NPY_OWNDATA
 
     The data area is owned by this array.
@@ -1042,6 +1069,24 @@ associated with an array.
 
     The data area represents a (well-behaved) copy whose information
     should be transferred back to the original when this array is deleted.
+
+    This is a special flag that is set if this array represents a copy
+    made because a user required certain flags in
+    :cfunc:`PyArray_FromAny` and a copy had to be made of some other
+    array (and the user asked for this flag to be set in such a
+    situation). The base attribute then points to the "misbehaved"
+    array (which is set read_only). When the array with this flag set
+    is deallocated, it will copy its contents back to the "misbehaved"
+    array (casting if necessary) and will reset the "misbehaved" array
+    to :cdata:`NPY_WRITEABLE`. If the "misbehaved" array was not
+    :cdata:`NPY_WRITEABLE` to begin with then :cfunc:`PyArray_FromAny`
+    would have returned an error because :cdata:`NPY_UPDATEIFCOPY`
+    would not have been possible.
+
+:cfunc:`PyArray_UpdateFlags` (obj, flags) will update the
+``obj->flags`` for ``flags`` which can be any of
+:cdata:`NPY_CONTIGUOUS`, :cdata:`NPY_FORTRAN`, :cdata:`NPY_ALIGNED`,
+or :cdata:`NPY_WRITEABLE`.
 
 
 Combinations of array flags
@@ -1721,6 +1766,29 @@ Array Functions
     *op1*, 2 - return all possible shifts (any overlap at all is
     accepted).
 
+    .. rubric:: Notes
+
+    This does not compute the usual correlation: if op2 is larger than op1, the
+    arguments are swapped, and the conjugate is never taken for complex arrays.
+    See PyArray_Correlate2 for the usual signal processing correlation.
+
+.. cfunction:: PyObject* PyArray_Correlate2(PyObject* op1, PyObject* op2, int mode)
+
+    Updated version of PyArray_Correlate, which uses the usual definition of
+    correlation for 1d arrays. The correlation is computed at each output point
+    by multiplying *op1* by a shifted version of *op2* and summing the result.
+    As a result of the shift, needed values outside of the defined range of
+    *op1* and *op2* are interpreted as zero. The mode determines how many
+    shifts to return: 0 - return only shifts that did not need to assume zero-
+    values; 1 - return an object that is the same size as *op1*, 2 - return all
+    possible shifts (any overlap at all is accepted).
+
+    .. rubric:: Notes
+
+    Compute z as follows::
+
+      z[k] = sum_n op1[n] * conj(op2[n+k])
+
 .. cfunction:: PyObject* PyArray_Where(PyObject* condition, PyObject* x, PyObject* y)
 
     If both ``x`` and ``y`` are ``NULL``, then return
@@ -1901,6 +1969,96 @@ Broadcasting (multi-iterators)
     loop should be performed over the axis that won't require large
     stride jumps.
 
+Neighborhood iterator
+---------------------
+
+.. versionadded:: 1.4.0
+
+Neighborhood iterators are subclasses of the iterator object, and can be used
+to iter over a neighborhood of a point. For example, you may want to iterate
+over every voxel of a 3d image, and for every such voxel, iterate over an
+hypercube. Neighborhood iterator automatically handle boundaries, thus making
+this kind of code much easier to write than manual boundaries handling, at the
+cost of a slight overhead.
+
+.. cfunction:: PyObject* PyArray_NeighborhoodIterNew(PyArrayIterObject* iter, npy_intp bounds, int mode, PyArrayObject* fill_value)
+
+    This function creates a new neighborhood iterator from an existing
+    iterator.  The neighborhood will be computed relatively to the position
+    currently pointed by *iter*, the bounds define the shape of the
+    neighborhood iterator, and the mode argument the boundaries handling mode.
+
+    The *bounds* argument is expected to be a (2 * iter->ao->nd) arrays, such
+    as the range bound[2*i]->bounds[2*i+1] defines the range where to walk for
+    dimension i (both bounds are included in the walked coordinates). The
+    bounds should be ordered for each dimension (bounds[2*i] <= bounds[2*i+1]).
+
+    The mode should be one of:
+
+    * NPY_NEIGHBORHOOD_ITER_ZERO_PADDING: zero padding. Outside bounds values
+      will be 0.
+    * NPY_NEIGHBORHOOD_ITER_ONE_PADDING: one padding, Outside bounds values
+      will be 1.
+    * NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING: constant padding. Outside bounds
+      values will be the same as the first item in fill_value.
+    * NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING: mirror padding. Outside bounds
+      values will be as if the array items were mirrored. For example, for the
+      array [1, 2, 3, 4], x[-2] will be 2, x[-2] will be 1, x[4] will be 4,
+      x[5] will be 1, etc...
+    * NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING: circular padding. Outside bounds
+      values will be as if the array was repeated. For example, for the
+      array [1, 2, 3, 4], x[-2] will be 3, x[-2] will be 4, x[4] will be 1,
+      x[5] will be 2, etc...
+
+    If the mode is constant filling (NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING),
+    fill_value should point to an array object which holds the filling value
+    (the first item will be the filling value if the array contains more than
+    one item). For other cases, fill_value may be NULL.
+
+    - The iterator holds a reference to iter
+    - Return NULL on failure (in which case the reference count of iter is not
+      changed)
+    - iter itself can be a Neighborhood iterator: this can be useful for .e.g
+      automatic boundaries handling
+    - the object returned by this function should be safe to use as a normal
+      iterator
+    - If the position of iter is changed, any subsequent call to
+      PyArrayNeighborhoodIter_Next is undefined behavior, and
+      PyArrayNeighborhoodIter_Reset must be called.
+
+    .. code-block:: c
+
+       PyArrayIterObject \*iter;
+       PyArrayNeighborhoodIterObject \*neigh_iter;
+       iter = PyArray_IterNew(x);
+
+       //For a 3x3 kernel
+       bounds = {-1, 1, -1, 1};
+       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
+            iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
+
+       for(i = 0; i < iter->size; ++i) {
+            for (j = 0; j < neigh_iter->size; ++j) {
+                    // Walk around the item currently pointed by iter->dataptr
+                    PyArrayNeighborhoodIter_Next(neigh_iter);
+            }
+
+            // Move to the next point of iter
+            PyArrayIter_Next(iter);
+            PyArrayNeighborhoodIter_Reset(neigh_iter);
+       }
+
+.. cfunction:: int PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
+
+    Reset the iterator position to the first point of the neighborhood. This
+    should be called whenever the iter argument given at
+    PyArray_NeighborhoodIterObject is changed (see example)
+
+.. cfunction:: int PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
+
+    After this call, iter->dataptr points to the next point of the
+    neighborhood. Calling this function after every point of the
+    neighborhood has been visited is undefined.
 
 Array Scalars
 -------------

@@ -8,7 +8,12 @@
  *              NPY_CPU_SPARC
  *              NPY_CPU_S390
  *              NPY_CPU_IA64
- *              NPY_CPU_PARISC
+ *              NPY_CPU_HPPA
+ *              NPY_CPU_ALPHA
+ *              NPY_CPU_ARMEL
+ *              NPY_CPU_ARMEB
+ *              NPY_CPU_SH_LE
+ *              NPY_CPU_SH_BE
  */
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
@@ -42,9 +47,18 @@
     #define NPY_CPU_S390
 #elif defined(__ia64)
     #define NPY_CPU_IA64
-#elif defined(__parisc__)
-    /* XXX: Not sure about this one... */
-    #define NPY_CPU_PARISC
+#elif defined(__hppa__)
+    #define NPY_CPU_HPPA
+#elif defined(__alpha__)
+    #define NPY_CPU_ALPHA
+#elif defined(__arm__) && defined(__ARMEL__)
+    #define NPY_CPU_ARMEL
+#elif defined(__arm__) && defined(__ARMEB__)
+    #define NPY_CPU_ARMEB
+#elif defined(__sh__) && defined(__LITTLE_ENDIAN__)
+    #define NPY_CPU_SH_LE
+#elif defined(__sh__) && defined(__BIG_ENDIAN__)
+    #define NPY_CPU_SH_BE
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)

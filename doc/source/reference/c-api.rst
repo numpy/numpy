@@ -45,4 +45,5 @@ code.
    c-api.dtype
    c-api.array
    c-api.ufunc
+   c-api.generalized-ufuncs
    c-api.coremath

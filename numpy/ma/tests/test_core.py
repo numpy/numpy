@@ -388,6 +388,14 @@ class TestMaskedArray(TestCase):
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled, a)
 
+    def test_pickling_keepalignment(self):
+        "Tests pickling w/ F_CONTIGUOUS arrays"
+        import cPickle
+        a = arange(10)
+        a.shape = (-1, 2)
+        b = a.T
+        test = cPickle.loads(cPickle.dumps(b))
+        assert_equal(test, b)
 
     def test_single_element_subscript(self):
         "Tests single element subscripts of Maskedarrays."
@@ -660,6 +668,15 @@ class TestMaskedArrayArithmetic(TestCase):
         self.failUnless(minimum(xm, xm).mask)
 
 
+    def test_masked_singleton_equality(self):
+        "Tests (in)equality on masked snigleton"
+        a = array([1, 2, 3], mask=[1, 1, 0])
+        assert((a[0] == 0) is masked)
+        assert((a[0] != 0) is masked)
+        assert_equal((a[-1] == 0), False)
+        assert_equal((a[-1] != 0), True)
+
+
     def test_arithmetic_with_masked_singleton(self):
         "Checks that there's no collapsing to masked"
         x = masked_array([1,2])
@@ -774,6 +791,12 @@ class TestMaskedArrayArithmetic(TestCase):
         self.failUnless(isinstance(amaximum, MaskedArray))
         assert_equal(amaximum, np.maximum.outer(a,a))
 
+
+    def test_minmax_reduce(self):
+        "Test np.min/maximum.reduce on array w/ full False mask"
+        a = array([1, 2, 3], mask=[False, False, False])
+        b = np.maximum.reduce(a)
+        assert_equal(b, 3)
 
     def test_minmax_funcs_with_output(self):
         "Tests the min/max functions with explicit outputs"
@@ -1052,6 +1075,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
+
 
 #------------------------------------------------------------------------------
 
@@ -1351,7 +1375,7 @@ class TestFillingValues(TestCase):
         assert_equal(test[1][0], maximum_fill_value(a['B']['BA']))
         assert_equal(test[1][1], maximum_fill_value(a['B']['BB']))
         assert_equal(test[1], maximum_fill_value(a['B']))
-    
+
 
 #------------------------------------------------------------------------------
 
@@ -2315,7 +2339,7 @@ class TestMaskedArrayMethods(TestCase):
 #------------------------------------------------------------------------------
 
 
-class TestMaskArrayMathMethod(TestCase):
+class TestMaskedArrayMathMethods(TestCase):
 
     def setUp(self):
         "Base data definition."
@@ -2953,6 +2977,16 @@ class TestMaskedArrayFunctions(TestCase):
         test = flatten_mask(mask)
         control = np.array([ 0, 0, 0, 0, 0, 1], dtype=bool)
         assert_equal(test, control)
+
+
+    def test_on_ndarray(self):
+        "Test functions on ndarrays"
+        a = np.array([1, 2, 3, 4]) 
+        m = array(a, mask=False) 
+        test = anom(a)
+        assert_equal(test, m.anom()) 
+        test = reshape(a, (2, 2))
+        assert_equal(test, m.reshape(2, 2))
 
 #------------------------------------------------------------------------------
 

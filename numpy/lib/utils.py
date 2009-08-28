@@ -81,12 +81,34 @@ else:
         return func
 
 def deprecate(func, oldname=None, newname=None):
-    """Deprecate old functions.
+    """
+    Deprecate old functions.
+
     Issues a DeprecationWarning, adds warning to oldname's docstring,
     rebinds oldname.__name__ and returns new function object.
 
-    Example:
-    oldfunc = deprecate(newfunc, 'oldfunc', 'newfunc')
+    Parameters
+    ----------
+    func : function
+
+    oldname : string
+
+    newname : string
+
+    Returns
+    -------
+    old_func : function
+
+    Examples
+    --------
+    Note that olduint returns a value after printing Deprecation Warning.
+
+    >>> olduint = np.deprecate(np.uint)
+    >>> olduint(6)
+    /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
+    DeprecationWarning: uint32 is deprecated
+      warnings.warn(str1, DeprecationWarning)
+    6
 
     """
 
@@ -186,13 +208,28 @@ def byte_bounds(a):
 
 
 def may_share_memory(a, b):
-    """Determine if two arrays can share memory
+    """
+    Determine if two arrays can share memory
 
     The memory-bounds of a and b are computed.  If they overlap then
     this function returns True.  Otherwise, it returns False.
 
     A return of True does not necessarily mean that the two arrays
     share any element.  It just means that they *might*.
+
+    Parameters
+    ----------
+    a, b : ndarray
+
+    Returns
+    -------
+    out : bool
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+
     """
     a_low, a_high = byte_bounds(a)
     b_low, b_high = byte_bounds(b)
@@ -349,24 +386,46 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 
     Parameters
     ----------
-    object : optional
-        Input object to get information about.
+    object : object or str, optional
+        Input object or name to get information about. If `object` is a
+        numpy object, its docstring is given. If it is a string, available
+        modules are searched for matching objects.
+        If None, information about `info` itself is returned.
     maxwidth : int, optional
         Printing width.
-    output : file like object open for writing, optional
-        Write into file like object.
-    toplevel : string, optional
+    output : file like object, optional
+        File like object that the output is written to, default is ``stdout``.
+        The object has to be opened in 'w' or 'a' mode.
+    toplevel : str, optional
         Start search at this level.
+
+    See Also
+    --------
+    source, lookfor
+
+    Notes
+    -----
+    When used interactively with an object, ``np.info(obj)`` is equivalent to
+    ``help(obj)`` on the Python prompt or ``obj?`` on the IPython prompt.
 
     Examples
     --------
     >>> np.info(np.polyval) # doctest: +SKIP
-
        polyval(p, x)
-
-         Evaluate the polymnomial p at x.
-
+         Evaluate the polynomial p at x.
          ...
+
+    When using a string for `object` it is possible to get multiple results.
+
+    >>> np.info('fft') # doctest: +SKIP
+         *** Found in numpy ***
+    Core FFT routines
+    ...
+         *** Found in numpy.fft ***
+     fft(a, n=None, axis=-1)
+    ...
+         *** Repeat reference found in numpy.fft.fftpack ***
+         *** Total of 3 references found. ***
 
     """
     global _namedict, _dictlist
@@ -512,14 +571,38 @@ def source(object, output=sys.stdout):
     """
     Print or write to a file the source code for a Numpy object.
 
+    The source code is only returned for objects written in Python. Many
+    functions and classes are defined in C and will therefore not return
+    useful information.
+
     Parameters
     ----------
     object : numpy object
-        Input object.
+        Input object. This can be any object (function, class, module, ...).
     output : file object, optional
         If `output` not supplied then source code is printed to screen
         (sys.stdout).  File object must be created with either write 'w' or
         append 'a' modes.
+
+    See Also
+    --------
+    lookfor, info
+
+    Examples
+    --------
+    >>> np.source(np.interp)
+    In file: /usr/lib/python2.6/dist-packages/numpy/lib/function_base.py
+    def interp(x, xp, fp, left=None, right=None):
+        \"\"\".... (full docstring printed)\"\"\"
+        if isinstance(x, (float, int, number)):
+            return compiled_interp([x], xp, fp, left, right).item()
+        else:
+            return compiled_interp(x, xp, fp, left, right)
+
+    The source code is only returned for objects written in Python.
+
+    >>> np.source(np.array)
+    Not available for this object.
 
     """
     # Local import to speed up numpy's import time.
@@ -544,28 +627,41 @@ def lookfor(what, module=None, import_modules=True, regenerate=False):
     Do a keyword search on docstrings.
 
     A list of of objects that matched the search is displayed,
-    sorted by relevance.
+    sorted by relevance. All given keywords need to be found in the
+    docstring for it to be returned as a result, but the order does
+    not matter.
 
     Parameters
     ----------
     what : str
         String containing words to look for.
-    module : str, module
-        Module whose docstrings to go through.
-    import_modules : bool
+    module : str, optional
+        Name of module whose docstrings to go through.
+    import_modules : bool, optional
         Whether to import sub-modules in packages.
-        Will import only modules in ``__all__``.
-    regenerate : bool
-        Whether to re-generate the docstring cache.
+        Will import only modules in ``__all__``. Default is True.
+    regenerate : bool, optional
+        Whether to re-generate the docstring cache. Default is False.
+
+    See Also
+    --------
+    source, info
+
+    Notes
+    -----
+    Relevance is determined only roughly, by checking if the keywords occur
+    in the function name, at the start of a docstring, etc.
 
     Examples
     --------
-
     >>> np.lookfor('binary representation')
     Search results for 'binary representation'
     ------------------------------------------
     numpy.binary_repr
         Return the binary representation of the input number as a string.
+    numpy.base_repr
+        Return a string representation of a number in the given base system.
+    ...
 
     """
     import pydoc

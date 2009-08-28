@@ -338,13 +338,13 @@ class TestEmptyField(TestCase):
 
 class TestCommonType(TestCase):
     def test_scalar_loses1(self):
-        res = np.find_common_type(['f4','f4','i4'],['f8'])
+        res = np.find_common_type(['f4','f4','i2'],['f8'])
         assert(res == 'f4')
     def test_scalar_loses2(self):
         res = np.find_common_type(['f4','f4'],['i8'])
         assert(res == 'f4')
     def test_scalar_wins(self):
-        res = np.find_common_type(['f4','f4','i4'],['c8'])
+        res = np.find_common_type(['f4','f4','i2'],['c8'])
         assert(res == 'c8')
     def test_scalar_wins2(self):
         res = np.find_common_type(['u4','i4','i4'],['f4'])

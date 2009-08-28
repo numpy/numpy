@@ -2,7 +2,7 @@ __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
 import numeric as N
-from numeric import concatenate, isscalar, binary_repr, identity
+from numeric import concatenate, isscalar, binary_repr, identity, asanyarray
 from numerictypes import issubdtype
 
 # make translation table
@@ -115,6 +115,7 @@ def matrix_power(M,n):
            [ 0, -1]])
 
     """
+    M = asanyarray(M)
     if len(M.shape) != 2 or M.shape[0] != M.shape[1]:
         raise ValueError("input must be a square array")
     if not issubdtype(type(n),int):
@@ -490,6 +491,26 @@ class matrix(N.ndarray):
         return N.ndarray.prod(self, axis, dtype, out)._align(axis)
 
     def any(self, axis=None, out=None):
+        """
+        Test whether any array element along a given axis evaluates to True.
+
+        Refer to `numpy.any` for full documentation.
+
+        Parameters
+        ----------
+        axis: int, optional
+            Axis along which logical OR is performed
+        out: ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output
+
+        Returns
+        -------
+            any : bool, ndarray
+                Returns a single bool if `axis` is ``None``; otherwise,
+                returns `ndarray`
+
+        """
         return N.ndarray.any(self, axis, out)._align(axis)
 
     def all(self, axis=None, out=None):

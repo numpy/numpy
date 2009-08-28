@@ -166,6 +166,35 @@ int main()
 
         return self.try_compile(body, headers, include_dirs)
 
+    def check_type(self, type_name, headers=None, include_dirs=None,
+            library_dirs=None):
+        """Check type availability. Return True if the type can be compiled,
+        False otherwise"""
+        self._check_compiler()
+
+        # First check the type can be compiled
+        body = r"""
+int main() {
+  if ((%(name)s *) 0)
+    return 0;
+  if (sizeof (%(name)s))
+    return 0;
+}
+""" % {'name': type_name}
+
+        st = False
+        try:
+            try:
+                self._compile(body % {'type': type_name},
+                        headers, include_dirs, 'c')
+                st = True
+            except distutils.errors.CompileError, e:
+                st = False
+        finally:
+            self._clean()
+
+        return st
+
     def check_type_size(self, type_name, headers=None, include_dirs=None, library_dirs=None, expected=None):
         """Check size of a given type."""
         self._check_compiler()

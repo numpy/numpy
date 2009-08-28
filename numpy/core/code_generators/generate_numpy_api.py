@@ -28,6 +28,7 @@ extern NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
+extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #else
@@ -39,6 +40,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
+NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
 NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #endif
@@ -113,13 +115,13 @@ _import_array(void)
     PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
     return -1;
   }
-#ifdef NPY_BIG_ENDIAN
+#if NPY_BYTE_ORDER ==NPY_BIG_ENDIAN
   if (st != NPY_CPU_BIG) {
     PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
         "big endian, but detected different endianness at runtime");
     return -1;
   }
-#elif defined(NPY_LITTLE_ENDIAN)
+#elif NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
   if (st != NPY_CPU_LITTLE) {
     PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
         "little endian, but detected different endianness at runtime");

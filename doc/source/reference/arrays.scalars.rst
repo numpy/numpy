@@ -204,8 +204,6 @@ elements the data type consists of.)
    :mod:`struct` module.
 
 
-.. note:: XXX: what to put in the type docstrings, and where to put them?
-
 Attributes
 ==========
 
@@ -235,7 +233,6 @@ attribute. Otherwise, they share the same attributes as arrays:
    generic.__array_priority__
    generic.__array_wrap__
 
-.. note:: XXX: import the documentation into the docstrings?
 
 Indexing
 ========
@@ -273,7 +270,6 @@ The exceptions to the above rules are given below:
    generic.__setstate__
    generic.setflags
 
-.. note:: XXX: import the documentation into the docstrings?
 
 Defining new types
 ==================

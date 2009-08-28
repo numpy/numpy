@@ -8,16 +8,15 @@ Making proper sets
 .. autosummary::
    :toctree: generated/
 
-   unique1d
+   unique
 
 Boolean operations
 ------------------
 .. autosummary::
    :toctree: generated/
 
+   in1d
    intersect1d
-   intersect1d_nu
    setdiff1d
-   setmember1d
    setxor1d
    union1d

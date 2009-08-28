@@ -10,7 +10,7 @@ from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_bootstrapping
+from numpy.distutils.misc_util import is_bootstrapping, get_cmd
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
@@ -45,14 +45,34 @@ def get_scons_local_path():
     from numscons import get_scons_path
     return get_scons_path()
 
-def get_distutils_libdir(cmd, pkg):
-    """Returns the path where distutils install libraries, relatively to the
-    scons build directory."""
+def _get_top_dir(pkg):
+    # XXX: this mess is necessary because scons is launched per package, and
+    # has no knowledge outside its build dir, which is package dependent. If
+    # one day numscons does not launch one process/package, this will be
+    # unnecessary.
     from numscons import get_scons_build_dir
     from numscons.core.utils import pkg_to_path
     scdir = pjoin(get_scons_build_dir(), pkg_to_path(pkg))
     n = scdir.count(os.sep)
-    return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_lib)
+    return os.sep.join([os.pardir for i in range(n+1)])
+
+def get_distutils_libdir(cmd, pkg):
+    """Returns the path where distutils install libraries, relatively to the
+    scons build directory."""
+    return pjoin(_get_top_dir(pkg), cmd.build_lib)
+
+def get_distutils_clibdir(cmd, pkg):
+    """Returns the path where distutils put pure C libraries."""
+    return pjoin(_get_top_dir(pkg), cmd.build_temp)
+
+def get_distutils_install_prefix(pkg, inplace):
+    """Returns the installation path for the current package."""
+    from numscons.core.utils import pkg_to_path
+    if inplace == 1:
+        return pkg_to_path(pkg)
+    else:
+        install_cmd = get_cmd('install').get_finalized_command('install')
+        return pjoin(install_cmd.install_libbase, pkg_to_path(pkg))
 
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
@@ -352,28 +372,26 @@ class scons(old_build_ext):
                                    "this package " % str(e))
 
             try:
-                minver = "0.9.3"
-                try:
-                    # version_info was added in 0.10.0
-                    from numscons import version_info
-                except ImportError:
-                    from numscons import get_version
-                    if get_version() < minver:
-                        raise ValueError()
+                minver = [0, 10, 2]
+                # version_info was added in 0.10.0
+                from numscons import version_info
+                # Stupid me used string instead of numbers in version_info in
+                # dev versions of 0.10.0
+                if isinstance(version_info[0], str):
+                    raise ValueError("Numscons %s or above expected " \
+                                     "(detected 0.10.0)" % str(minver))
+                if version_info[:3] < minver:
+                    raise ValueError("Numscons %s or above expected (got %s) "
+                                     % (str(minver), str(version_info)))
             except ImportError:
                 raise RuntimeError("You need numscons >= %s to build numpy "\
                                    "with numscons (imported numscons path " \
                                    "is %s)." % (minver, numscons.__file__))
-            except ValueError:
-                raise RuntimeError("You need numscons >= %s to build numpy "\
-                                   "with numscons (detected %s )" \
-                                   % (minver, get_version()))
 
         else:
             # nothing to do, just leave it here.
             return
 
-        print "is bootstrapping ? %s" % is_bootstrapping()
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
@@ -422,6 +440,10 @@ class scons(old_build_ext):
                 #                                                    pdirname(sconscript))))
                 cmd.append('distutils_libdir=%s' %
                              protect_path(get_distutils_libdir(self, pkg_name)))
+                cmd.append('distutils_clibdir=%s' %
+                             protect_path(get_distutils_clibdir(self, pkg_name)))
+                prefix = get_distutils_install_prefix(pkg_name, self.inplace)
+                cmd.append('distutils_install_prefix=%s' % protect_path(prefix))
 
                 if not self._bypass_distutils_cc:
                     cmd.append('cc_opt=%s' % self.scons_compiler)

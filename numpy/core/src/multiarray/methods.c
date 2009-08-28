@@ -767,6 +767,49 @@ array_wraparray(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     arr = PyTuple_GET_ITEM(args, 0);
+    if (arr == NULL) {
+        return NULL;
+    }
+    if (!PyArray_Check(arr)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "can only be called with ndarray object");
+        return NULL;
+    }
+
+    if (self->ob_type != arr->ob_type){
+        Py_INCREF(PyArray_DESCR(arr));
+        ret = PyArray_NewFromDescr(self->ob_type,
+                                   PyArray_DESCR(arr),
+                                   PyArray_NDIM(arr),
+                                   PyArray_DIMS(arr),
+                                   PyArray_STRIDES(arr), PyArray_DATA(arr),
+                                   PyArray_FLAGS(arr), (PyObject *)self);
+        if (ret == NULL) {
+            return NULL;
+        }
+        Py_INCREF(arr);
+        PyArray_BASE(ret) = arr;
+        return ret;
+    } else {
+        /*The type was set in __array_prepare__*/
+        Py_INCREF(arr);
+        return arr;
+    }
+}
+
+
+static PyObject *
+array_preparearray(PyArrayObject *self, PyObject *args)
+{
+    PyObject *arr;
+    PyObject *ret;
+
+    if (PyTuple_Size(args) < 1) {
+        PyErr_SetString(PyExc_TypeError,
+                        "only accepts 1 argument");
+        return NULL;
+    }
+    arr = PyTuple_GET_ITEM(args, 0);
     if (!PyArray_Check(arr)) {
         PyErr_SetString(PyExc_TypeError,
                         "can only be called with ndarray object");
@@ -2030,6 +2073,8 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
     {"__array__", (PyCFunction)array_getarray,
+         METH_VARARGS, NULL},
+    {"__array_prepare__", (PyCFunction)array_preparearray,
          METH_VARARGS, NULL},
     {"__array_wrap__", (PyCFunction)array_wraparray,
          METH_VARARGS, NULL},

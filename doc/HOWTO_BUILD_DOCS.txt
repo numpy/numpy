@@ -2,70 +2,97 @@
 Building the NumPy API and reference docs
 =========================================
 
-Using Sphinx_
--------------
-`Download <https://code.launchpad.net/~stefanv/scipy/numpy-refguide>`_
-the builder.  Follow the instructions in ``README.txt``.
+We currently use Sphinx_ for generating the API and reference
+documentation for Numpy.  You will need Sphinx 0.5 or newer. Sphinx's
+current development version also works as of now (2009-06-24), and
+using it is recommended though not required.
+
+If you only want to get the documentation, note that pre-built
+versions can be found at
+
+    http://docs.scipy.org/
+
+in several different formats.
+
+.. _Sphinx: http://sphinx.pocoo.org
 
 
-Using Epydoc_
--------------
+Instructions
+------------
 
-Currently, we recommend that you build epydoc from the trunk::
+Since large parts of the main documentation are stored in
+docstrings, you will need to first build Numpy, and install it so
+that the correct version is imported by
 
-  svn co https://epydoc.svn.sf.net/svnroot/epydoc/trunk/epydoc epydoc
-  cd epydoc/src
-  sudo python setup.py install
+    >>> import numpy
 
-The appearance of some elements can be changed in the epydoc.css
-style sheet.
+Note that you can eg. install Numpy to a temporary location and set
+the PYTHONPATH environment variable appropriately. Also note that if
+you have a system Numpy installed via Python eggs, you will also need
+to use ``setupegg.py`` to install the temporary Numpy.
 
-Emphasized text appearance can be controlled by the definition of the <em>
-tag. For instance, to make them bold, insert::
+After Numpy is installed, write::
 
-  em     {font-weight: bold;}
+    make html
 
-The variables' types are in a span of class rst-classifier, hence can be
-changed by inserting something like::
+in this ``doc/`` directory. If all goes well, this will generate a
+``build/html`` subdirectory containing the built documentation. Note
+that building the documentation on Windows is currently not actively
+supported, though it should be possible. (See Sphinx_ documentation
+for more information.)
 
-  span.rst-classifier     {font-weight: normal;}
+To build the PDF documentation, do instead::
 
-The first line of the signature should **not** copy the signature unless
-the function is written in C, in which case it is mandatory.  If the function
-signature is generic (uses ``*args`` or ``**kwds``), then a function signature
-may be included.
+   make latex
+   make -C build/latex all-pdf
 
-Use optional in the "type" field for parameters that are non-keyword
-optional for C-functions.
+You will need to have Latex installed for this.
 
-Epydoc depends on Docutils for reStructuredText parsing.  You can
-download Docutils from the `Docutils sourceforge
-page. <http://docutils.sourceforge.net/>`_.  The version in SVN is
-broken, so use 0.4 or the patched version from Debian.  You may also
-be able to use a package manager like yum to install it::
+In addition to the above, you can also do::
 
-  $ sudo yum install python-docutils
+   make dist
 
-
-Example
--------
-Here is a short example module,
-`plain text <http://svn.scipy.org/svn/numpy/trunk/doc/example.py>`_
-or
-`rendered <http://www.scipy.org/doc/example>`_ in HTML.
-
-To try this yourself, simply download the example.py::
-
-  svn co http://svn.scipy.org/svn/numpy/trunk/doc/example.py .
-
-Then, run epydoc::
-
-  $ epydoc --docformat=restructuredtext example.py
-
-The output is placed in ``./html``, and may be viewed by loading the
-``index.html`` file into your browser.
+which will rebuild Numpy, install it to a temporary location, and
+build the documentation in all formats. This will most likely again
+only work on Unix platforms.
 
 
+Sphinx extensions
+-----------------
 
-.. _epydoc: http://epydoc.sourceforge.net/
-.. _sphinx: http://sphinx.pocoo.org
+Numpy's documentation uses several custom extensions to Sphinx.  These
+are shipped in the ``sphinxext/`` directory, and are automatically
+enabled when building Numpy's documentation.
+
+However, if you want to make use of these extensions in third-party
+projects, they are available on PyPi_ as the numpydoc_ package, and
+can be installed with::
+
+    easy_install numpydoc
+
+In addition, you will need to add::
+
+    extensions = ['numpydoc']
+
+to ``conf.py`` in your Sphinx documentation.
+
+The following extensions are available:
+
+  - ``numpydoc``: support for Numpy docstring format in Sphinx.
+
+  - ``numpydoc.only_directives``: (DEPRECATED)
+
+  - ``numpydoc.plot_directives``: Adaptation of Matplotlib's ``plot::``
+    directive. Note that this implementation may still undergo severe
+    changes or be eventually deprecated.
+
+  - ``numpydoc.autosummary``: (DEPRECATED) An ``autosummary::`` directive.
+    Available in Sphinx 0.6.2 and (to-be) 1.0 as ``sphinx.ext.autosummary``,
+    and it the Sphinx 1.0 version is recommended over that included in
+    Numpydoc.
+
+  - ``numpydoc.traitsdoc``: For gathering documentation about Traits attributes.
+
+
+.. _PyPi: http://python.org/pypi
+.. _numpydoc: http://python.org/pypi/numpydoc

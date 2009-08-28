@@ -40,6 +40,18 @@
  *        #ifdef SYMBOL_DEFINED_WEIRD_PLATFORM
  *        double exp(double);
  *        #endif
+ *
+ * Some of the code is taken from msun library in FreeBSD, with the following
+ * notice:
+ *
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
  */
 
 #include <Python.h>
@@ -47,6 +59,8 @@
 
 #include "config.h"
 #include "numpy/npy_math.h"
+
+#include "npy_math_private.h"
 
 /*
  *****************************************************************************
@@ -56,61 +70,158 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-static double expm1(double x)
+double npy_expm1(double x)
 {
-    double u = exp(x);
+    double u = npy_exp(x);
     if (u == 1.0) {
         return x;
     } else if (u-1.0 == -1.0) {
         return -1;
     } else {
-        return (u-1.0) * x/log(u);
+        return (u-1.0) * x/npy_log(u);
     }
 }
 #endif
 
 #ifndef HAVE_LOG1P
-static double log1p(double x)
+double npy_log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
         return x;
     } else {
-        return log(u) * x / (u - 1);
+        return npy_log(u) * x / (u - 1);
     }
 }
 #endif
 
+/* Taken from FreeBSD mlib, adapted for numpy 
+ *
+ * XXX: we could be a bit faster by reusing high/low words for inf/nan
+ * classification instead of calling npy_isinf/npy_isnan: we should have some
+ * macros for this, though, instead of doing it manually
+ */
+#ifndef HAVE_ATAN2
+/* XXX: we should have this in npy_math.h */
+#define NPY_DBL_EPSILON 1.2246467991473531772E-16
+double npy_atan2(double y, double x)
+{
+    npy_int32 k, m, iy, ix, hx, hy;
+    npy_uint32 lx,ly;
+    double z;
+
+    EXTRACT_WORDS(hx, lx, x);
+    ix = hx & 0x7fffffff;
+    EXTRACT_WORDS(hy, ly, y);
+    iy = hy & 0x7fffffff;
+
+    /* if x or y is nan, return nan */
+    if (npy_isnan(x * y)) {
+        return x + y;
+    }
+
+    if (x == 1.0) {
+        return npy_atan(y);
+    }
+
+    m = 2 * npy_signbit(x) + npy_signbit(y);
+    if (y == 0.0) {
+        switch(m) {
+        case 0: 
+        case 1: return  y;  /* atan(+-0,+anything)=+-0 */
+        case 2: return  NPY_PI;/* atan(+0,-anything) = pi */
+        case 3: return -NPY_PI;/* atan(-0,-anything) =-pi */
+        }
+    }
+
+    if (x == 0.0) {
+        return y > 0 ? NPY_PI_2 : -NPY_PI_2;
+    }
+
+    if (npy_isinf(x)) {
+        if (npy_isinf(y)) {
+            switch(m) {
+                case 0: return  NPY_PI_4;/* atan(+INF,+INF) */
+                case 1: return -NPY_PI_4;/* atan(-INF,+INF) */
+                case 2: return  3.0*NPY_PI_4;/*atan(+INF,-INF)*/
+                case 3: return -3.0*NPY_PI_4;/*atan(-INF,-INF)*/
+            }
+        } else {
+            switch(m) {
+                case 0: return  NPY_PZERO;  /* atan(+...,+INF) */
+                case 1: return  NPY_NZERO;  /* atan(-...,+INF) */
+                case 2: return  NPY_PI;  /* atan(+...,-INF) */
+                case 3: return -NPY_PI;  /* atan(-...,-INF) */
+            }
+        }
+    }
+
+    if (npy_isinf(y)) {
+        return y > 0 ? NPY_PI_2 : -NPY_PI_2;
+    }
+
+    /* compute y/x */
+    k = (iy - ix)>>20;
+    if(k > 60) {            /* |y/x| >  2**60 */
+        z = NPY_PI_2 + 0.5 * NPY_DBL_EPSILON;
+        m &= 1;
+    } else if(hx < 0 && k < -60) {
+        z = 0.0;    /* 0 > |y|/x > -2**-60 */
+    } else {
+        z = npy_atan(npy_fabs(y/x));        /* safe to do y/x */
+    }
+
+    switch (m) {
+        case 0: return  z  ;    /* atan(+,+) */
+        case 1: return -z  ;    /* atan(-,+) */
+        case 2: return  NPY_PI - (z - NPY_DBL_EPSILON);/* atan(+,-) */
+        default: /* case 3 */
+            return  (z - NPY_DBL_EPSILON) - NPY_PI;/* atan(-,-) */
+    }
+}
+
+#endif
+
 #ifndef HAVE_HYPOT
-static double hypot(double x, double y)
+double npy_hypot(double x, double y)
 {
     double yx;
 
-    x = fabs(x);
-    y = fabs(y);
+    /* Handle the case where x or y is a NaN */
+    if (npy_isnan(x * y)) {
+        if (npy_isinf(x) || npy_isinf(y)) {
+            return NPY_INFINITY;
+        } else {
+            return NPY_NAN;
+        }
+    }
+
+    x = npy_fabs(x);
+    y = npy_fabs(y);
     if (x < y) {
         double temp = x;
         x = y;
         y = temp;
     }
-    if (x == 0.)
+    if (x == 0.) {
         return 0.;
+    }
     else {
         yx = y/x;
-        return x*sqrt(1.+yx*yx);
+        return x*npy_sqrt(1.+yx*yx);
     }
 }
 #endif
 
 #ifndef HAVE_ACOSH
-static double acosh(double x)
+double npy_acosh(double x)
 {
-    return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
+    return 2*npy_log(npy_sqrt((x+1.0)/2)+npy_sqrt((x-1.0)/2));
 }
 #endif
 
 #ifndef HAVE_ASINH
-static double asinh(double xx)
+double npy_asinh(double xx)
 {
     double x, d;
     int sign;
@@ -125,37 +236,37 @@ static double asinh(double xx)
     if (x > 1e8) {
         d = x;
     } else {
-        d = sqrt(x*x + 1);
+        d = npy_sqrt(x*x + 1);
     }
-    return sign*log1p(x*(1.0 + x/(d+1)));
+    return sign*npy_log1p(x*(1.0 + x/(d+1)));
 }
 #endif
 
 #ifndef HAVE_ATANH
-static double atanh(double x)
+double npy_atanh(double x)
 {
     if (x > 0) {
-        return -0.5*log1p(-2.0*x/(1.0 + x));
+        return -0.5*npy_log1p(-2.0*x/(1.0 + x));
     }
     else {
-        return 0.5*log1p(2.0*x/(1.0 - x));
+        return 0.5*npy_log1p(2.0*x/(1.0 - x));
     }
 }
 #endif
 
 #ifndef HAVE_RINT
-static double rint(double x)
+double npy_rint(double x)
 {
     double y, r;
 
-    y = floor(x);
+    y = npy_floor(x);
     r = x - y;
 
     if (r > 0.5) goto rndup;
 
     /* Round to nearest even */
     if (r==0.5) {
-        r = y - 2.0*floor(0.5*y);
+        r = y - 2.0*npy_floor(0.5*y);
         if (r==1.0) {
         rndup:
             y+=1.0;
@@ -166,28 +277,39 @@ static double rint(double x)
 #endif
 
 #ifndef HAVE_TRUNC
-static double trunc(double x)
+double npy_trunc(double x)
 {
-    return x < 0 ? ceil(x) : floor(x);
+    return x < 0 ? npy_ceil(x) : npy_floor(x);
 }
 #endif
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-static double exp2(double x)
+double npy_exp2(double x)
 {
-    return exp(LOG2*x);
+    return npy_exp(LOG2*x);
 }
 #undef LOG2
 #endif
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-static double log2(double x)
+double npy_log2(double x)
 {
-    return INVLOG2*log(x);
+    return INVLOG2*npy_log(x);
 }
 #undef INVLOG2
+#endif
+
+#ifndef HAVE_COPYSIGN
+double npy_copysign(double x, double y)
+{
+	npy_uint32 hx,hy;
+	GET_HIGH_WORD(hx,x);
+	GET_HIGH_WORD(hy,y);
+	SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));
+        return x;
+}
 #endif
 
 /*
@@ -247,25 +369,25 @@ int _npy_signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@ @kind@@c@(@type@ x)
+@type@ npy_@kind@@c@(@type@ x)
 {
-    return (@type@) @kind@((double)x);
+    return (@type@) npy_@kind@((double)x);
 }
 #endif
 
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod#
- * #KIND = ATAN2,HYPOT,POW,FMOD#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@ @kind@@c@(@type@ x, @type@ y)
+@type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
-    return (@type@) @kind@((double)x, (double) y);
+    return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
 /**end repeat1**/
@@ -274,36 +396,15 @@ static @type@ @kind@@c@(@type@ x, @type@ y)
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-static @type@ modf@c@(@type@ x, @type@ *iptr)
+@type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
-    double y = modf((double)x, &niptr);
+    double y = npy_modf((double)x, &niptr);
     *iptr = (@type@) niptr;
     return (@type@) y;
 }
 #endif
 
-/**end repeat**/
-
-/* 
- * Useful constants in three precisions: 
- * XXX: those should really be in the header
- */
-
-/**begin repeat
- * #c = f, ,l#
- * #C = F, ,L#
- */
-#define NPY_E@c@        2.7182818284590452353602874713526625@C@ /* e */
-#define NPY_LOG2E@c@    1.4426950408889634073599246810018921@C@ /* log_2 e */
-#define NPY_LOG10E@c@   0.4342944819032518276511289189166051@C@ /* log_10 e */
-#define NPY_LOGE2@c@    0.6931471805599453094172321214581766@C@ /* log_e 2 */
-#define NPY_LOGE10@c@   2.3025850929940456840179914546843642@C@ /* log_e 10 */
-#define NPY_PI@c@       3.1415926535897932384626433832795029@C@ /* pi */
-#define NPY_PI_2@c@     1.5707963267948966192313216916397514@C@ /* pi/2 */
-#define NPY_PI_4@c@     0.7853981633974483096156608458198757@C@ /* pi/4 */
-#define NPY_1_PI@c@     0.3183098861837906715377675267450287@C@ /* 1/pi */
-#define NPY_2_PI@c@     0.6366197723675813430755350534900574@C@ /* 2/pi */
 /**end repeat**/
 
 /*
@@ -321,17 +422,17 @@ static @type@ modf@c@(@type@ x, @type@ *iptr)
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)
 #define DEG2RAD  (NPY_PI@c@/180.0@c@)
 
-static @type@ rad2deg@c@(@type@ x) 
+@type@ npy_rad2deg@c@(@type@ x)
 {
     return x*RAD2DEG;
 }
 
-static @type@ deg2rad@c@(@type@ x) 
+@type@ npy_deg2rad@c@(@type@ x)
 {
     return x*DEG2RAD;
 }
 
-static @type@ log2_1p@c@(@type@ x)
+@type@ npy_log2_1p@c@(@type@ x)
 {
     @type@ u = 1 + x;
     if (u == 1) {
@@ -341,9 +442,9 @@ static @type@ log2_1p@c@(@type@ x)
     }
 }
 
-static @type@ exp2_1m@c@(@type@ x)
+@type@ npy_exp2_1m@c@(@type@ x)
 {
-    @type@ u = exp@c@(x);
+    @type@ u = npy_exp@c@(x);
     if (u == 1.0) {
         return LOGE2*x;
     } else if (u - 1 == -1) {
@@ -353,30 +454,35 @@ static @type@ exp2_1m@c@(@type@ x)
     }
 }
 
-static @type@ logaddexp@c@(@type@ x, @type@ y)
+@type@ npy_logaddexp@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
         return x + npy_log1p@c@(npy_exp@c@(-tmp));
     }
-    else {
+    else if (tmp <= 0) {
         return y + npy_log1p@c@(npy_exp@c@(tmp));
+    }
+    else {
+        /* NaNs, or infinities of the same sign involved */
+        return x + y;
     }
 }
 
-static @type@ logaddexp2@c@(@type@ x, @type@ y)
+@type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
-        return x + log2_1p@c@(npy_exp2@c@(-tmp));
+        return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
+    }
+    else if (tmp <= 0) {
+        return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
     }
     else {
-        return y + log2_1p@c@(npy_exp2@c@(tmp));
+        /* NaNs, or infinities of the same sign involved */
+        return x + y;
     }
 }
-
-#define degrees@c@ rad2deg@c@
-#define radians@c@ deg2rad@c@
 
 #undef LOGE2
 #undef LOG2E
@@ -386,38 +492,46 @@ static @type@ logaddexp2@c@(@type@ x, @type@ y)
 /**end repeat**/
 
 /*
- * Decorate all the functions: those are the public ones
+ * Decorate all the math functions which are available on the current platform
  */
 
 /**begin repeat
  * #type = npy_longdouble,double,float#
  * #c = l,,f#
+ * #C = L,,F#
  */
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2,
- *         rad2deg,deg2rad,exp2_1m#
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
+ * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
+ *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
-
+#ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@type@ x)
 {
     return @kind@@c@(x);
 }
+#endif
 
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,logaddexp,logaddexp2#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
+#ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return @kind@@c@(x, y);
 }
+#endif
 /**end repeat1**/
 
+#ifdef HAVE_MODF@C@
 @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return modf@c@(x, iptr);
 }
+#endif
 
 /**end repeat**/

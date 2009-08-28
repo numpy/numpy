@@ -9,14 +9,14 @@ The N-dimensional array (:class:`ndarray`)
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions
 and items in an array is defined by its :attr:`shape <ndarray.shape>`,
-which is a :class:`tuple` of *N* integers that specify the sizes of
+which is a :class:`tuple` of *N* positive integers that specify the sizes of
 each dimension. The type of items in the array is specified by a
 separate :ref:`data-type object (dtype) <arrays.dtypes>`, one of which
 is associated with each ndarray.
 
-As with other container objects in Python, the contents of a
+As with other container objects in Python, the contents of an
 :class:`ndarray` can be accessed and modified by :ref:`indexing or
-slicing <arrays.indexing>` the array (using for example *N* integers),
+slicing <arrays.indexing>` the array (using, for example, *N* integers),
 and via the methods and attributes of the :class:`ndarray`.
 
 .. index:: view, base
@@ -42,15 +42,19 @@ objects implementing the :class:`buffer` or :ref:`array
    >>> x.dtype
    dtype('int32')
 
-   The array can be indexed using a Python container-like syntax:
+   The array can be indexed using Python container-like syntax:
 
-   >>> x[1,2]
+   >>> x[1,2] # i.e., the element of x in the *second* row, *third* column
    6
 
    For example :ref:`slicing <arrays.indexing>` can produce views of the array:
 
    >>> y = x[:,1]
-   >>> y[0] = 9
+   >>> y
+   array([2, 5])
+   >>> y[0] = 9 # this also changes the corresponding element in x
+   >>> y
+   array([9, 5])
    >>> x
    array([[1, 9, 3],
           [4, 5, 6]])
@@ -95,7 +99,7 @@ the bytes are interpreted is defined by the :ref:`data-type object
 .. index:: C-order, Fortran-order, row-major, column-major, stride, offset
 
 A segment of memory is inherently 1-dimensional, and there are many
-different schemes of arranging the items of an *N*-dimensional array to
+different schemes for arranging the items of an *N*-dimensional array in
 a 1-dimensional block. Numpy is flexible, and :class:`ndarray` objects
 can accommodate any *strided indexing scheme*. In a strided scheme,
 the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})` corresponds
@@ -105,10 +109,10 @@ to the offset (in bytes)
 
 from the beginning of the memory block associated with the
 array. Here, :math:`s_k` are integers which specify the :obj:`strides
-<ndarray.strides>` of the array. The :term:`column-major` order (used
-for example in the Fortran language and in *Matlab*) and
-:term:`row-major` order (used in C) are special cases of the strided
-scheme, and correspond to the strides:
+<ndarray.strides>` of the array. The :term:`column-major` order (used,
+for example, in the Fortran language and in *Matlab*) and
+:term:`row-major` order (used in C) schemes are just specific kinds of
+strided scheme, and correspond to the strides:
 
 .. math::
 
@@ -116,12 +120,12 @@ scheme, and correspond to the strides:
 
 .. index:: single-segment, contiguous, non-contiguous
 
-Both the C and Fortran orders are :term:`contiguous`, *i.e.*
+Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 :term:`single-segment`, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
 
 Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major`
-(C) order, unless otherwise specified, but for example :ref:`basic
+(C) order, unless otherwise specified, but, for example, :ref:`basic
 array slicing <arrays.indexing>` often produces :term:`views <view>`
 in a different scheme.
 
@@ -227,7 +231,8 @@ Array methods
 
 An :class:`ndarray` object has many methods which operate on or with
 the array in some fashion, typically returning an array result. These
-methods are explained below.
+methods are briefly explained below. (Each method's doc string has a
+more complete description.)
 
 For the following methods there are also corresponding functions in
 :mod:`numpy`: :func:`all`, :func:`any`, :func:`argmax`,
@@ -433,7 +438,7 @@ Arithmetic:
 .. note::
 
    - Any third argument to :func:`pow()` is silently ignored,
-     as the underlying :func:`ufunc <power>` only takes two arguments.
+     as the underlying :func:`ufunc <power>` takes only two arguments.
 
    - The three division operators are all defined; :obj:`div` is active
      by default, :obj:`truediv` is active when
@@ -472,7 +477,7 @@ Arithmetic, in-place:
    the array.  Therefore, for mixed precision calculations, ``A {op}=
    B`` can be different than ``A = A {op} B``. For example, suppose
    ``a = ones((3,3))``. Then, ``a += 3j`` is different than ``a = a +
-   3j``: While they both perform the same computation, ``a += 3``
+   3j``: while they both perform the same computation, ``a += 3``
    casts the result to fit back in ``a``, whereas ``a = a + 3j``
    re-binds the name ``a`` to the result.
 

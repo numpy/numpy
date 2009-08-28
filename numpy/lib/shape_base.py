@@ -892,6 +892,19 @@ def dsplit(ary,indices_or_sections):
         raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'
     return split(ary,indices_or_sections,2)
 
+def get_array_prepare(*args):
+    """Find the wrapper for the array with the highest priority.
+
+    In case of ties, leftmost wins. If no wrapper is found, return None
+    """
+    wrappers = [(getattr(x, '__array_priority__', 0), -i,
+                 x.__array_prepare__) for i, x in enumerate(args)
+                                   if hasattr(x, '__array_prepare__')]
+    wrappers.sort()
+    if wrappers:
+        return wrappers[-1][-1]
+    return None
+
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
 
@@ -975,7 +988,6 @@ def kron(a,b):
     True
 
     """
-    wrapper = get_array_wrap(a, b)
     b = asanyarray(b)
     a = array(a,copy=False,subok=True,ndmin=b.ndim)
     ndb, nda = b.ndim, a.ndim
@@ -998,6 +1010,10 @@ def kron(a,b):
     axis = nd-1
     for _ in xrange(nd):
         result = concatenate(result, axis=axis)
+    wrapper = get_array_prepare(a, b)
+    if wrapper is not None:
+        result = wrapper(result)
+    wrapper = get_array_wrap(a, b)
     if wrapper is not None:
         result = wrapper(result)
     return result
@@ -1006,6 +1022,19 @@ def kron(a,b):
 def tile(A, reps):
     """
     Construct an array by repeating A the number of times given by reps.
+
+    If `reps` has length ``d``, the result will have dimension of
+    ``max(d, A.ndim)``.
+
+    If ``A.ndim < d``, `A` is promoted to be d-dimensional by prepending new
+    axes. So a shape (3,) array is promoted to (1, 3) for 2-D replication,
+    or shape (1, 1, 3) for 3-D replication. If this is not the desired
+    behavior, promote `A` to d-dimensions manually before calling this
+    function.
+
+    If ``A.ndim > d``, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
+    Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
+    (1, 1, 2, 2).
 
     Parameters
     ----------
@@ -1017,24 +1046,11 @@ def tile(A, reps):
     Returns
     -------
     c : ndarray
-        The output array.
+        The tiled output array.
 
     See Also
     --------
-    repeat
-
-    Notes
-    -----
-    If `reps` has length d, the result will have dimension of max(d, `A`.ndim).
-
-    If `A`.ndim < d, `A` is promoted to be d-dimensional by prepending new
-    axes. So a shape (3,) array is promoted to (1,3) for 2-D replication,
-    or shape (1,1,3) for 3-D replication. If this is not the desired behavior,
-    promote `A` to d-dimensions manually before calling this function.
-
-    If `A`.ndim > d, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
-    Thus for an `A` of shape (2,3,4,5), a `reps` of (2,2) is treated as
-    (1,1,2,2).
+    repeat : Repeat elements of an array.
 
     Examples
     --------
@@ -1046,7 +1062,6 @@ def tile(A, reps):
            [0, 1, 2, 0, 1, 2]])
     >>> np.tile(a, (2, 1, 2))
     array([[[0, 1, 2, 0, 1, 2]],
-    <BLANKLINE>
            [[0, 1, 2, 0, 1, 2]]])
 
     >>> b = np.array([[1, 2], [3, 4]])
