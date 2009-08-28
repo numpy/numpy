@@ -87,7 +87,8 @@ def _array_descr(descriptor):
                 return descriptor.str
             else:
                 new = descriptor.metadata.copy()
-                del new[METADATA_DTSTR]
+                # Eliminate any key related to internal implementation
+                _ = new.pop(METADATA_DTSTR, None)
                 return (descriptor.str, new)
         else:
             return (_array_descr(subdtype[0]), subdtype[1])

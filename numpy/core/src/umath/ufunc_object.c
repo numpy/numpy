@@ -1118,11 +1118,10 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     }
 
     /* We don't do strings */
-/*    if (flexible && !object) {
-        loop->notimplemented = 1;
-        return nargs;
+    if (flexible && !object) {
+	loop->notimplemented = 1;
+	return nargs;
     }
-*/
 
     /*
      * If everything is a scalar, or scalars mixed with arrays of
@@ -3309,6 +3308,9 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
              * PyErr_SetString(PyExc_TypeError,"");
              * return NULL;
              */
+	    /* This is expected by at least the ndarray rich_comparisons
+	       to allow for additional handling for strings. 
+	     */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
         }

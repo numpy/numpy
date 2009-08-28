@@ -1789,6 +1789,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
     PyArray_Descr *descr, *conv;
     Bool align = FALSE;
     Bool copy = FALSE;
+    Bool copied = FALSE;
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!",
@@ -1816,10 +1817,25 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
         descr = PyArray_DescrNew(conv);
         Py_DECREF(conv);
         conv = descr;
+	copied = TRUE;
     }
 
     if ((ometadata != NULL)) {
-	if ((conv->metadata != NULL)) { 
+	/* We need to be sure to make a new copy of the data-type and any
+	   underlying dictionary */
+	if (!copied) {
+	    descr = PyArray_DescrNew(conv);
+	    Py_DECREF(conv);
+	    conv = descr;
+	}	
+	if ((conv->metadata != NULL)) {    
+	    /* Make a copy of the metadata before merging with ometadata 
+	       so that this data-type descriptor has it's own copy 
+	    */
+	    odescr = conv->metadata; /* Save a reference */
+	    conv->metadata = PyDict_Copy(odescr);
+	    Py_DECREF(odescr); /* Decrement the old reference */
+	    
 	    /* Update conv->metadata with anything new in metadata 
 	       keyword, but do not over-write anything already there
 	    */
@@ -1829,8 +1845,8 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
 	    }	
 	}
 	else {
-	    Py_INCREF(ometadata);
-	    conv->metadata = ometadata;
+	    /* Make a copy of the input dictionary */
+	    conv->metadata = PyDict_Copy(ometadata);
 	}
     }
     return (PyObject *)conv;
@@ -2032,6 +2048,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 		    &alignment, &dtypeflags, &metadata)) {
             return NULL;
         }	
+	break;
     case 8:
         if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
                     &subarray, &names, &fields, &elsize,
@@ -2144,7 +2161,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     Py_XDECREF(self->metadata);
-    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
+    if (PyDataType_ISDATETIME(self) && (metadata != Py_None) && (metadata != NULL)) {
 	PyObject *cobj;
 	self->metadata = PyTuple_GET_ITEM(metadata, 0);
 	Py_INCREF(self->metadata);
@@ -2153,6 +2170,10 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 	Py_DECREF(cobj);
     }
     else {
+	/* We have a borrowed reference to metadata so no need
+	   to alter reference count 
+	*/
+	if (metadata == Py_None) metadata = NULL;
 	self->metadata = metadata;
 	Py_XINCREF(metadata);
     }
