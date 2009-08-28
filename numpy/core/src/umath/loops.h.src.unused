@@ -1,3 +1,5 @@
+/* -*- c -*- */
+
 /*
  * vim:syntax=c
  */
@@ -10,16 +12,14 @@
 
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or#
- * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ *         logical_and, logical_or, logical_xor, add, bitwise_or, 
+ *         bitwise_xor, bitwise_and, fmax, fmin, invert, multiply, negative, 
+ *	   subtract#
  **/
 
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 /**end repeat**/
-
-NPY_NO_EXPORT void
-BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat
  * #kind = maximum, minimum#
@@ -378,6 +378,24 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 #undef CLT
 #undef CEQ
 #undef CNE
+
+/*
+ *****************************************************************************
+ **                            DATETIME LOOPS                               **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal, fmax, 
+ *	   absolute, fmin, logical_and, logical_not, logical_or, logical_xor,
+ *         maximum, minimum, negative, ones_like, sign#
+ */
+NPY_NO_EXPORT void
+DATETIME_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+TIMEDELTA_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
 
 /*
  *****************************************************************************
