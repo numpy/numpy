@@ -17,21 +17,25 @@
 
 NPY_NO_EXPORT NumericOps n_ops; /* NB: static objects initialized to zero */
 
-/* Dictionary can contain any of the numeric operations, by name.
-   Those not present will not be changed
-*/
+/*
+ * Dictionary can contain any of the numeric operations, by name.
+ * Those not present will not be changed
+ */
 
-#define SET(op)   temp=PyDict_GetItemString(dict, #op); \
-    if (temp != NULL) {                                 \
-        if (!(PyCallable_Check(temp))) return -1;       \
-        Py_XDECREF(n_ops.op);                           \
-        n_ops.op = temp;                                \
+/* FIXME - macro contains a return */
+#define SET(op)   temp = PyDict_GetItemString(dict, #op); \
+    if (temp != NULL) {                                   \
+        if (!(PyCallable_Check(temp))) {                  \
+            return -1;                                    \
+        }                                                 \
+        Py_XDECREF(n_ops.op);                             \
+        n_ops.op = temp;                                  \
     }
 
 
 /*NUMPY_API
-  Set internal structure with number functions that all arrays will use
-*/
+ *Set internal structure with number functions that all arrays will use
+ */
 NPY_NO_EXPORT int
 PyArray_SetNumericOps(PyObject *dict)
 {
@@ -73,6 +77,7 @@ PyArray_SetNumericOps(PyObject *dict)
     return 0;
 }
 
+/* FIXME - macro contains goto */
 #define GET(op) if (n_ops.op &&                                         \
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
