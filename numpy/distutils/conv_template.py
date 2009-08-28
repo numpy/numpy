@@ -17,6 +17,15 @@ i.e.
  */
 /**end repeat1**/
 
+When using nested loops, you can optionally exlude particular
+combinations of the variables using (inside the comment portion of the inner loop):
+
+ :exclude: var1=value1, var2=value2, ...
+
+This will exlude the pattern where var1 is value1 and var2 is value2 when
+the result is being generated.
+  
+
 In the main body each replace will use one entry from the list of named replacements
 
  Note that all #..# forms in a block must have the same number of
@@ -144,12 +153,18 @@ def parse_values(astr):
 
 stripast = re.compile(r"\n\s*\*?")
 named_re = re.compile(r"#\s*(\w*)\s*=([^#]*)#")
+exclude_vars_re = re.compile(r"(\w*)=(\w*)")
+exclude_re = re.compile(":exclude:")
 def parse_loop_header(loophead) :
     """Find all named replacements in the header
 
     Returns a list of dictionaries, one for each loop iteration,
     where each key is a name to be substituted and the corresponding
     value is the replacement string.
+
+    Also return a list of exclusions.  The exclusions are dictionaries
+     of key value pairs. There can be more than one exclusion.
+     [{'var1':'value1', 'var2', 'value2'[,...]}, ...]
 
     """
     # Strip out '\n' and leading '*', if any, in continuation lines.
@@ -170,6 +185,18 @@ def parse_loop_header(loophead) :
             msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
             raise ValueError(msg)
         names.append((name,vals))
+
+
+    # Find any exclude variables
+    excludes = []
+    
+    for obj in exclude_re.finditer(loophead):
+        span = obj.span()
+        # find next newline
+        endline = loophead.find('\n', span[1])
+        substr = loophead[span[1]:endline]
+        ex_names = exclude_vars_re.findall(substr)
+        excludes.append(dict(ex_names))        
 
     # generate list of dictionaries, one for each template iteration
     dlist = []
