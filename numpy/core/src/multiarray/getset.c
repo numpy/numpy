@@ -601,6 +601,10 @@ _get_part(PyArrayObject *self, int imag)
     return ret;
 }
 
+/* For Object arrays, we need to get and set the
+   real part of each element. 
+ */
+
 static PyObject *
 array_real_get(PyArrayObject *self)
 {
@@ -644,6 +648,11 @@ array_real_set(PyArrayObject *self, PyObject *val)
     Py_DECREF(new);
     return rint;
 }
+
+/* For Object arrays we need to get 
+   and set the imaginary part of 
+   each element
+*/
 
 static PyObject *
 array_imag_get(PyArrayObject *self)

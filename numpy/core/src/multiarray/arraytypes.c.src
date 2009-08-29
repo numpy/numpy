@@ -354,14 +354,19 @@ PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
 
     if (meta->events > 1) {
 	datetime tmp;
+	int events;
 	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
 	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
 	    return -1;
 	}
+	/* Alter the dictionary and call again (not thread safe) */
+	events = meta->events;
+	meta->events = 1;
 	tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	meta->events = events;
 	if (PyErr_Occurred()) return -1;
 	/* FIXME: Check for overflow */
-	tmp *= meta->events;
+	tmp *= events;
 	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
 	if (PyErr_Occurred()) return -1;
 	return tmp;
@@ -385,14 +390,19 @@ PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 
     if (meta->events > 1) {
 	timedelta tmp;
+	int events;
 	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
 	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
 	    return -1;
 	}
+	/* Alter the dictionary and call again (not thread safe) */
+	events = meta->events;
+	meta->events = 1;
 	tmp = PyTimeDelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+	meta->events = events;
 	if (PyErr_Occurred()) return -1;
 	/* FIXME: Check for overflow */
-	tmp *= meta->events;
+	tmp *= events;
 	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
 	if (PyErr_Occurred()) return -1;
 	return tmp;
@@ -458,6 +468,17 @@ TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
     }
 }
 
+/* FIXME:  This needs to take
+ *  1) Integers and Longs (anything that can be converted to an Int)
+ *  2) Strings (ISO-style dates)
+ *  3) Datetime Scalars (that it converts based
+ *       on scalar dtype.
+ *  4) Datetime and Date objects
+ *
+ *    Plus a tuple for meta->events > 1
+ *
+ *   3 is partially implemented, 4 is implemented
+ */
 
 static int
 DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
@@ -485,6 +506,13 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     return 0;
 }
 
+/* FIXME: This needs to take
+ *    1) Integers and Longs (anything that can be converted to an Int)
+ *    2) Timedelta scalar objects (with resolution conversion)
+ *    3) Python Timedelta objects
+ *    
+ *    Plus a tuple for meta->events > 1
+ */
 
 static int
 TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
