@@ -255,7 +255,7 @@ defdict = {
 'true_divide' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.true_divide'),
-          TD('bBhH', out='f'),
+          TD('bBhH', out='d'),
           TD('iIlLqQ', out='d'),
           TD(flts+cmplx),
           TD(O, f='PyNumber_TrueDivide'),

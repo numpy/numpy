@@ -643,15 +643,9 @@ NPY_NO_EXPORT void
 @S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        if (in2 == 0) {
-            generate_divbyzero_error();
-            *((@ftype@ *)op1) = 0;
-        }
-        else {
-            *((@ftype@ *)op1) = (@ftype@)in1 / (@ftype@)in2;
-        }
+        const double in1 = (double)(*(@s@@type@ *)ip1);
+        const double in2 = (double)(*(@s@@type@ *)ip2);
+        *((double *)op1) = in1/in2;
     }
 }
 
