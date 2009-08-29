@@ -7,12 +7,13 @@ import os
 import sys
 
 def get_package_name(filepath):
-    # find the package name given a path name that's part of the package
+    """Given a path where a package is installed, determine its name"""
+
     fullpath = filepath[:]
     pkg_name = []
-    while 'site-packages' in filepath:
+    while 'site-packages' in filepath or 'dist-packages' in filepath:
         filepath, p2 = os.path.split(filepath)
-        if p2 == 'site-packages':
+        if p2 in ('site-packages', 'dist-packages'):
             break
         pkg_name.append(p2)
 
@@ -25,6 +26,11 @@ def get_package_name(filepath):
 
     # otherwise, reverse to get correct order and return
     pkg_name.reverse()
+
+    # don't include the outer egg directory
+    if pkg_name[0].endswith('.egg'):
+        pkg_name.pop(0)
+
     return '.'.join(pkg_name)
 
 def import_nose():
@@ -125,6 +131,9 @@ class NoseTester(object):
         elif isinstance(package, type(os)):
             package_path = os.path.dirname(package.__file__)
             package_name = getattr(package, '__name__', None)
+        else:
+            package_path = str(package)
+
         self.package_path = package_path
 
         # find the package name under test; this name is used to limit coverage
