@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os.path
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -6,7 +7,8 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('command')
     config.add_subpackage('fcompiler')
     config.add_data_dir('tests')
-    config.add_data_files('site.cfg')
+    if os.path.exists("site.cfg"):
+        config.add_data_files('site.cfg')
     config.make_config_py()
     return config
 
