@@ -22,8 +22,7 @@ def configuration(parent_package='',top_path=None):
     # List of files to register to numpy.distutils
     dot_blas_src = [join('blasdot', '_dotblas.c'),
                     join('blasdot', 'cblas.h')]
-    api_definition = [join('code_generators', 'array_api_order.txt'),
-                      join('code_generators', 'multiarray_api_order.txt'),
+    api_definition = [join('code_generators', 'numpy_api_order.txt'),
                       join('code_generators', 'ufunc_api_order.txt')]
     core_src = [join('src', basename(i)) for i in glob.glob(join(local_dir,
                                                                 'src',
