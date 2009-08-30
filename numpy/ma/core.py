@@ -5309,7 +5309,7 @@ def where (condition, x=None, y=None):
     elif y is masked:
         ndtype = xv.dtype
     else:
-        ndtype = np.max([xv.dtype, yv.dtype])
+        ndtype = np.find_common_type([xv.dtype, yv.dtype], [])
     # Construct an empty array and fill it
     d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
     _data = d._data

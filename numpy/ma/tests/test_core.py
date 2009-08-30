@@ -2787,6 +2787,14 @@ class TestMaskedArrayFunctions(TestCase):
         z = where(c, 1, masked)
         assert_equal(z, [99, 1, 1, 99, 99])
 
+    def test_where_type(self):
+        "Test the type conservation with where"
+        x = np.arange(4, dtype=np.int32)
+        y = np.arange(4, dtype=np.float32) * 2.2
+        test = where(x > 1.5, y, x).dtype
+        control = np.find_common_type([np.int32, np.float32], [])
+        assert_equal(test, control)
+
 
     def test_choose(self):
         "Test choose"
