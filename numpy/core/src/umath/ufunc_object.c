@@ -1486,13 +1486,14 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     for (i = 0; i < loop->ufunc->nout; i++) {
         int j = loop->ufunc->nin+i;
         PyObject *wrap;
+        PyObject *res;
         wrap = wraparr[i];
         if (wrap != NULL) {
             if (wrap == Py_None) {
                 Py_DECREF(wrap);
                 continue;
             }
-            PyObject *res = PyObject_CallFunction(wrap, "O(OOi)",
+            res = PyObject_CallFunction(wrap, "O(OOi)",
                         mps[j], loop->ufunc, args, i);
             Py_DECREF(wrap);
             if ((res == NULL) || (res == Py_None)) {
