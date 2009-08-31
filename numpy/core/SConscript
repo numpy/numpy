@@ -352,6 +352,7 @@ if ENABLE_SEPARATE_COMPILATION:
     multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
         pjoin('src', 'multiarray', 'hashdescr.c'),
         pjoin('src', 'multiarray', 'arrayobject.c'),
+        pjoin('src', 'multiarray', 'datetime.c'),
         pjoin('src', 'multiarray', 'numpyos.c'),
         pjoin('src', 'multiarray', 'flagsobject.c'),
         pjoin('src', 'multiarray', 'descriptor.c'),

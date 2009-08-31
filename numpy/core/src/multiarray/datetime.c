@@ -1,5 +1,9 @@
 
+#include <Python.h>
 #include <datetime.h>
+
+#include <numpy/ndarrayobject.h>
+
 #include <time.h>
 
 /* For defaults and errors */
