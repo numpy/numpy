@@ -1,8 +1,21 @@
 /* -*- c -*- */
-
 /*
  * vim:syntax=c
  */
+
+#ifndef _NPY_UMATH_LOOPS_H_
+#define _NPY_UMATH_LOOPS_H_
+
+#define BOOL_invert BOOL_logical_not
+#define BOOL_negative BOOL_logical_not
+#define BOOL_add BOOL_logical_or
+#define BOOL_bitwise_and BOOL_logical_and
+#define BOOL_bitwise_or BOOL_logical_or
+#define BOOL_bitwise_xor BOOL_logical_xor
+#define BOOL_multiply BOOL_logical_and
+#define BOOL_subtract BOOL_logical_xor
+#define BOOL_fmax BOOL_maximum
+#define BOOL_fmin BOOL_minimum
 
 /*
  *****************************************************************************
@@ -388,7 +401,9 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal, fmax, 
  *	   absolute, fmin, logical_and, logical_not, logical_or, logical_xor,
- *         maximum, minimum, negative, ones_like, sign#
+ *     maximum, minimum, negative, ones_like, sign,
+ *	   Mm_M_add, mm_m_add, mM_M_add,
+ *     Mm_M_subtract, mm_m_subtract, mM_M_subtract,MM_m_subtract#
  */
 NPY_NO_EXPORT void
 DATETIME_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -420,4 +435,4 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
  *****************************************************************************
  */
 
-
+#endif
