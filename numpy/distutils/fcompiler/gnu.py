@@ -333,10 +333,9 @@ def _can_target(cmd, arch):
     newcmd = cmd[:]
     newcmd.extend(["-arch", arch, "-v"])
     p = Popen(newcmd, stderr=STDOUT, stdout=PIPE)
-    st = p.communicate()
-    out = p.stdout
-    if st == 0:
-        for line in out.splitlines():
+    stdout, stderr = p.communicate()
+    if p.returncode == 0:
+        for line in stdout.splitlines():
             m = re.search(_R_ARCHS[arch], line)
             if m:
                 return True
