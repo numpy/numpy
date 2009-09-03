@@ -1293,5 +1293,12 @@ class TestRegression(TestCase):
         assert_raises(IndexError, dt.__getitem__, 1)
         assert_raises(ValueError, dt.__getitem__, 0.0)
 
+    def test_lexsort_buffer_length(self):
+        """Ticket #1217, don't segfault."""
+        a = np.ones(100, dtype=np.int8)
+        b = np.ones(100, dtype=np.int32)
+        i = np.lexsort((a[::-1], b))
+        assert_equal(i, np.arange(100, dtype=np.int))
+
 if __name__ == "__main__":
     run_module_suite()
