@@ -59,6 +59,10 @@
     #define NPY_CPU_SH_LE
 #elif defined(__sh__) && defined(__BIG_ENDIAN__)
     #define NPY_CPU_SH_BE
+#elif defined(__MIPSEL__)
+    #define NPY_CPU_MIPSEL
+#elif defined(__MIPSEB__)
+    #define NPY_CPU_MIPSEB
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)

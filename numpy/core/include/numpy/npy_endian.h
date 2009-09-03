@@ -25,7 +25,8 @@
             || defined(NPY_CPU_IA64)    \
             || defined(NPY_CPU_ALPHA)   \
             || defined(NPY_CPU_ARMEL)   \
-            || defined(NPY_CPU_SH_LE)
+            || defined(NPY_CPU_SH_LE)   \
+            || defined(NPY_CPU_MIPSEL)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
     #elif defined(NPY_CPU_PPC)          \
             || defined(NPY_CPU_SPARC)   \
@@ -33,7 +34,8 @@
             || defined(NPY_CPU_HPPA)    \
             || defined(NPY_CPU_PPC64)   \
             || defined(NPY_CPU_ARMEB)   \
-            || defined(NPY_CPU_SH_BE)
+            || defined(NPY_CPU_SH_BE)   \
+            || defined(NPY_CPU_MIPSEB)
         #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
     #else
         #error Unknown CPU: can not set endianness
