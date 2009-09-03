@@ -1155,7 +1155,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     PyArrayIterObject *rit = NULL;
     int n;
     int nd;
-    int needcopy=0, i,j;
+    int needcopy = 0, i,j;
     intp N, size;
     int elsize;
     int maxelsize;
@@ -1165,7 +1165,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     NPY_BEGIN_THREADS_DEF;
 
     if (!PySequence_Check(sort_keys)
-           || ((n=PySequence_Size(sort_keys)) <= 0)) {
+           || ((n = PySequence_Size(sort_keys)) <= 0)) {
         PyErr_SetString(PyExc_TypeError,
                 "need sequence of keys with len > 0 in lexsort");
         return NULL;
@@ -1210,8 +1210,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             && PyDataType_FLAGCHK(mps[i]->descr, NPY_NEEDS_PYAPI)) {
             object = 1;
         }
-        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis
-            ((PyObject *)mps[i], &axis);
+        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
+                (PyObject *)mps[i], &axis);
         if (its[i] == NULL) {
             goto fail;
         }
@@ -1220,6 +1220,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     /* Now we can check the axis */
     nd = mps[0]->nd;
     if ((nd == 0) || (PyArray_SIZE(mps[0]) == 1)) {
+        /* single element case */
         ret = (PyArrayObject *)PyArray_New(&PyArray_Type, mps[0]->nd,
                                            mps[0]->dimensions,
                                            PyArray_INTP,
@@ -1235,7 +1236,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         axis += nd;
     }
     if ((axis < 0) || (axis >= nd)) {
-        PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis);
+        PyErr_Format(PyExc_ValueError,
+                "axis(=%d) out of bounds", axis);
         goto fail;
     }
 
@@ -1256,11 +1258,12 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     }
     size = rit->size;
     N = mps[0]->dimensions[axis];
-    rstride = PyArray_STRIDE(ret,axis);
+    rstride = PyArray_STRIDE(ret, axis);
     maxelsize = mps[0]->descr->elsize;
     needcopy = (rstride != sizeof(intp));
-    for (j = 0; j < n && !needcopy; j++) {
-        needcopy = PyArray_ISBYTESWAPPED(mps[j])
+    for (j = 0; j < n; j++) {
+        needcopy = needcopy
+            || PyArray_ISBYTESWAPPED(mps[j])
             || !(mps[j]->flags & ALIGNED)
             || (mps[j]->strides[axis] != (intp)mps[j]->descr->elsize);
         if (mps[j]->descr->elsize > maxelsize) {
