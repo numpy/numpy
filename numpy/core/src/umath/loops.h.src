@@ -399,9 +399,9 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
  */
 
 /**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal, fmax, 
- *	   absolute, fmin, logical_and, logical_not, logical_or, logical_xor,
- *     maximum, minimum, negative, ones_like, sign#
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal, fmax,
+ *      absolute, fmin, logical_and, logical_not, logical_or, logical_xor, maximum,
+ *      minimum, negative, ones_like, sign#
  */
 NPY_NO_EXPORT void
 DATETIME_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
