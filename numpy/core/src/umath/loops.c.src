@@ -802,9 +802,6 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
  * #ftype = double, double#
  */
 
-#define @TYPE@_fmax @TYPE@_maximum
-#define @TYPE@_fmin @TYPE@_minimum
-
 NPY_NO_EXPORT void
 @TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
