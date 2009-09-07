@@ -2331,181 +2331,150 @@ CLONGDOUBLE_fmin(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
  *****************************************************************************
  */
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_not_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_not_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_greater(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_greater(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_greater_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_greater_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_less(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_less(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_less_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_less_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_fmax(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_fmax(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_fmin(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_fmin(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_logical_and(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_logical_and(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_logical_or(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_logical_or(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_maximum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_maximum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_minimum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_minimum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+#line 406
 NPY_NO_EXPORT void
 DATETIME_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 408
+
 NPY_NO_EXPORT void
 DATETIME_Mm_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-TIMEDELTA_Mm_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-#line 408
-NPY_NO_EXPORT void
-DATETIME_mm_m_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_mm_m_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-#line 408
-NPY_NO_EXPORT void
 DATETIME_mM_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-TIMEDELTA_mM_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-#line 408
 NPY_NO_EXPORT void
 DATETIME_Mm_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-TIMEDELTA_Mm_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-#line 408
-NPY_NO_EXPORT void
-DATETIME_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-#line 408
-NPY_NO_EXPORT void
-DATETIME_mM_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_mM_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-#line 408
-NPY_NO_EXPORT void
 DATETIME_MM_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-TIMEDELTA_MM_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+TIMEDELTA_mm_m_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 /*
  *****************************************************************************
@@ -2513,27 +2482,27 @@ TIMEDELTA_MM_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UN
  *****************************************************************************
  */
 
-#line 425
+#line 441
 NPY_NO_EXPORT void
 OBJECT_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 425
+#line 441
 NPY_NO_EXPORT void
 OBJECT_not_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 425
+#line 441
 NPY_NO_EXPORT void
 OBJECT_greater(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 425
+#line 441
 NPY_NO_EXPORT void
 OBJECT_greater_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 425
+#line 441
 NPY_NO_EXPORT void
 OBJECT_less(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 425
+#line 441
 NPY_NO_EXPORT void
 OBJECT_less_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
