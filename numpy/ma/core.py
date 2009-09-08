@@ -2037,11 +2037,14 @@ def masked_invalid(a, copy=True):
 
     """
     a = np.array(a, copy=copy, subok=True)
-    condition = ~(np.isfinite(a))
-    if hasattr(a, '_mask'):
-        condition = mask_or(condition, a._mask)
+    mask = getattr(a, '_mask', None)
+    if mask is not None:
+        condition = ~(np.isfinite(getdata(a)))
+        if mask is not nomask:
+            condition |= mask
         cls = type(a)
     else:
+        condition = ~(np.isfinite(a))
         cls = MaskedArray
     result = a.view(cls)
     result._mask = condition
