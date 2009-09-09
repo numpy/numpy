@@ -228,9 +228,12 @@ def get_cxx_tool_path(compiler):
 def protect_path(path):
     """Convert path (given as a string) to something the shell will have no
     problem to understand (space, etc... problems)."""
-    # XXX: to this correctly, this is totally bogus for now (does not check for
-    # already quoted path, for example).
-    return '"' + path + '"'
+    if path:
+        # XXX: to this correctly, this is totally bogus for now (does not check for
+        # already quoted path, for example).
+        return '"' + path + '"'
+    else:
+        return '""'
 
 def parse_package_list(pkglist):
     return pkglist.split(",")
