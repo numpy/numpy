@@ -6,8 +6,8 @@ from distutils.errors import DistutilsPlatformError
 from distutils.errors import DistutilsExecError, DistutilsSetupError
 
 from numpy.distutils.command.build_ext import build_ext as old_build_ext
-from numpy.distutils.ccompiler import CCompiler
-from numpy.distutils.fcompiler import FCompiler
+from numpy.distutils.ccompiler import CCompiler, new_compiler
+from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_bootstrapping, get_cmd
@@ -317,7 +317,6 @@ class scons(old_build_ext):
             compiler_type = self.compiler
             if compiler_type == 'msvc':
                 self._bypass_distutils_cc = True
-            from numpy.distutils.ccompiler import new_compiler
             try:
                 distutils_compiler = new_compiler(compiler=compiler_type,
                                           verbose=self.verbose,
@@ -334,10 +333,11 @@ class scons(old_build_ext):
                     raise e
                 else:
                     self.scons_compiler = compiler_type
+            except Exception, e:
+	        print type(e)
 
             # We do the same for the fortran compiler ...
             fcompiler_type = self.fcompiler
-            from numpy.distutils.fcompiler import new_fcompiler
             self.fcompiler = new_fcompiler(compiler = fcompiler_type,
                                            verbose = self.verbose,
                                            dry_run = self.dry_run,
