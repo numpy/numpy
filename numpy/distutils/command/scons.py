@@ -250,6 +250,33 @@ def select_packages(sconspkg, pkglist):
         raise ValueError(msg)
     return common
 
+def check_numscons(minver=(0, 10, 2)):
+    """Check that we can use numscons.
+
+    minver is a 3 integers tuple which defines the min version."""
+    try:
+        import numscons
+    except ImportError, e:
+        raise RuntimeError("importing numscons failed (error was %s), using " \
+                           "scons within distutils is not possible without "
+                           "this package " % str(e))
+
+    try:
+        # version_info was added in 0.10.0
+        from numscons import version_info
+        # Stupid me used string instead of numbers in version_info in
+        # dev versions of 0.10.0
+        if isinstance(version_info[0], str):
+            raise ValueError("Numscons %s or above expected " \
+                             "(detected 0.10.0)" % str(minver))
+        if version_info[:3] < minver:
+            raise ValueError("Numscons %s or above expected (got %s) "
+                             % (str(minver), str(version_info)))
+    except ImportError:
+        raise RuntimeError("You need numscons >= %s to build numpy "\
+                           "with numscons (imported numscons path " \
+                           "is %s)." % (minver, numscons.__file__))
+
 # XXX: this is a giantic mess. Refactor this at some point.
 class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
@@ -365,34 +392,11 @@ class scons(old_build_ext):
                 self.package_list = parse_package_list(self.package_list)
 
     def run(self):
-        if len(self.sconscripts) > 0:
-            try:
-                import numscons
-            except ImportError, e:
-                raise RuntimeError("importing numscons failed (error was %s), using " \
-                                   "scons within distutils is not possible without "
-                                   "this package " % str(e))
-
-            try:
-                minver = [0, 10, 2]
-                # version_info was added in 0.10.0
-                from numscons import version_info
-                # Stupid me used string instead of numbers in version_info in
-                # dev versions of 0.10.0
-                if isinstance(version_info[0], str):
-                    raise ValueError("Numscons %s or above expected " \
-                                     "(detected 0.10.0)" % str(minver))
-                if version_info[:3] < minver:
-                    raise ValueError("Numscons %s or above expected (got %s) "
-                                     % (str(minver), str(version_info)))
-            except ImportError:
-                raise RuntimeError("You need numscons >= %s to build numpy "\
-                                   "with numscons (imported numscons path " \
-                                   "is %s)." % (minver, numscons.__file__))
-
-        else:
+        if len(self.sconscripts) < 1:
             # nothing to do, just leave it here.
             return
+
+        check_numscons(minver=(0, 10, 2))
 
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
@@ -488,3 +492,4 @@ the output it."""
                     raise DistutilsExecError(msg)
             if post_hook:
                 post_hook(**{'pkg_name': pkg_name, 'scons_cmd' : self})
+
