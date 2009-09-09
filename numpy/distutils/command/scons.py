@@ -287,6 +287,50 @@ class scons(old_build_ext):
         # Only critical things
         self.log_level = 50
 
+    def _init_ccompiler(self, compiler_type):
+        # XXX: The logic to bypass distutils is ... not so logic.
+        if compiler_type == 'msvc':
+            self._bypass_distutils_cc = True
+        try:
+            distutils_compiler = new_compiler(compiler=compiler_type,
+                          verbose=self.verbose,
+                          dry_run=self.dry_run,
+                          force=self.force)
+            distutils_compiler.customize(self.distribution)
+            # This initialization seems necessary, sometimes, for find_executable to work...
+            if hasattr(distutils_compiler, 'initialize'):
+                distutils_compiler.initialize()
+            self.scons_compiler = dist2sconscc(distutils_compiler)
+            self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
+        except DistutilsPlatformError, e:
+            if not self._bypass_distutils_cc:
+                raise e
+            else:
+                self.scons_compiler = compiler_type
+
+    def _init_fcompiler(self, compiler_type):
+        self.fcompiler = new_fcompiler(compiler = compiler_type,
+                                       verbose = self.verbose,
+                                       dry_run = self.dry_run,
+                                       force = self.force)
+
+        if self.fcompiler is not None:
+            self.fcompiler.customize(self.distribution)
+
+    def _init_cxxcompiler(self, compiler_type):
+        cxxcompiler = new_compiler(compiler = compiler_type,
+                                   verbose = self.verbose,
+                                   dry_run = self.dry_run,
+                                   force = self.force)
+        if cxxcompiler is not None:
+            cxxcompiler.customize(self.distribution, need_cxx = 1)
+            cxxcompiler.customize_cmd(self)
+            self.cxxcompiler = cxxcompiler.cxx_compiler()
+            try:
+                get_cxx_tool_path(self.cxxcompiler)
+            except DistutilsSetupError:
+                self.cxxcompiler = None
+
     def finalize_options(self):
         old_build_ext.finalize_options(self)
         if self.distribution.has_scons_scripts():
@@ -313,51 +357,9 @@ class scons(old_build_ext):
             # full path, and add the path to the env['PATH'] variable in env
             # instance (this is done in numpy.distutils.scons module).
 
-            # XXX: The logic to bypass distutils is ... not so logic.
-            compiler_type = self.compiler
-            if compiler_type == 'msvc':
-                self._bypass_distutils_cc = True
-            try:
-                distutils_compiler = new_compiler(compiler=compiler_type,
-                                          verbose=self.verbose,
-                                          dry_run=self.dry_run,
-                                          force=self.force)
-                distutils_compiler.customize(self.distribution)
-                # This initialization seems necessary, sometimes, for find_executable to work...
-                if hasattr(distutils_compiler, 'initialize'):
-                    distutils_compiler.initialize()
-                self.scons_compiler = dist2sconscc(distutils_compiler)
-                self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
-            except DistutilsPlatformError, e:
-                if not self._bypass_distutils_cc:
-                    raise e
-                else:
-                    self.scons_compiler = compiler_type
-            except Exception, e:
-	        print type(e)
-
-            # We do the same for the fortran compiler ...
-            fcompiler_type = self.fcompiler
-            self.fcompiler = new_fcompiler(compiler = fcompiler_type,
-                                           verbose = self.verbose,
-                                           dry_run = self.dry_run,
-                                           force = self.force)
-            if self.fcompiler is not None:
-                self.fcompiler.customize(self.distribution)
-
-            # And the C++ compiler
-            cxxcompiler = new_compiler(compiler = compiler_type,
-                                       verbose = self.verbose,
-                                       dry_run = self.dry_run,
-                                       force = self.force)
-            if cxxcompiler is not None:
-                cxxcompiler.customize(self.distribution, need_cxx = 1)
-                cxxcompiler.customize_cmd(self)
-                self.cxxcompiler = cxxcompiler.cxx_compiler()
-                try:
-                    get_cxx_tool_path(self.cxxcompiler)
-                except DistutilsSetupError:
-                    self.cxxcompiler = None
+            self._init_ccompiler(self.compiler)
+            self._init_fcompiler(self.fcompiler)
+            self._init_cxxcompiler(self.compiler)
 
             if self.package_list:
                 self.package_list = parse_package_list(self.package_list)
