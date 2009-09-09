@@ -502,12 +502,12 @@ class scons(old_build_ext):
                 if self.scons_fcompiler:
                     cmd.append('f77_opt=%s' % self.scons_fcompiler)
 		    if self.scons_fcompiler_path:
-                        cmd.append('f77_opt_path=%s' % protect_path(self.scons_fcompiler_path))
+                        cmd.append('f77_opt_path=%s' % self.scons_fcompiler_path)
 
                 if self.scons_cxxcompiler:
                     cmd.append('cxx_opt=%s' % self.scons_cxxcompiler)
 		    if self.scons_cxxcompiler_path:
-                        cmd.append('cxx_opt_path=%s' % protect_path(self.scons_cxxcompiler_path))
+                        cmd.append('cxx_opt_path=%s' % self.scons_cxxcompiler_path)
 
                 cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
                 cmd.append('bypass=%s' % self.bypass)
