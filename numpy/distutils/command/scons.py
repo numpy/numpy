@@ -258,7 +258,7 @@ def select_packages(sconspkg, pkglist):
         raise ValueError(msg)
     return common
 
-def check_numscons(minver=(0, 10, 2)):
+def check_numscons(minver):
     """Check that we can use numscons.
 
     minver is a 3 integers tuple which defines the min version."""
@@ -437,7 +437,7 @@ class scons(old_build_ext):
             # nothing to do, just leave it here.
             return
 
-        check_numscons(minver=(0, 10, 2))
+        check_numscons(minver=(0, 11, 0))
 
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
