@@ -293,6 +293,7 @@ class scons(old_build_ext):
     description = "Scons builder"
     user_options = [('jobs=', 'j', "specify number of worker threads when executing scons"),
                     ('inplace', 'i', 'If specified, build in place.'),
+                    ('bypass', 'b', 'Bypass distutils compiler detection (experimental).'),
                     ('scons-tool-path=', None, 'specify additional path '\
                                                '(absolute) to look for scons tools'),
                     ('silent=', None, 'specify whether scons output should less verbose'\
@@ -335,6 +336,7 @@ class scons(old_build_ext):
 
         self.package_list = None
         self.inplace = 0
+        self.bypass = 0
 
         # Only critical things
         self.log_level = 50
@@ -410,17 +412,22 @@ class scons(old_build_ext):
         # f2py does not pass compiler information to scons command, and the
         # compilation setup below can crash in some situation.
         if len(self.sconscripts) > 0:
-            # Try to get the same compiler than the ones used by distutils: this is
-            # non trivial because distutils and scons have totally different
-            # conventions on this one (distutils uses PATH from user's environment,
-            # whereas scons uses standard locations). The way we do it is once we
-            # got the c compiler used, we use numpy.distutils function to get the
-            # full path, and add the path to the env['PATH'] variable in env
-            # instance (this is done in numpy.distutils.scons module).
+            if self.bypass:
+                self.scons_compiler = self.compiler
+                self.scons_fcompiler = self.fcompiler
+                self.scons_cxxcompiler = self.cxxcompiler
+            else:
+                # Try to get the same compiler than the ones used by distutils: this is
+                # non trivial because distutils and scons have totally different
+                # conventions on this one (distutils uses PATH from user's environment,
+                # whereas scons uses standard locations). The way we do it is once we
+                # got the c compiler used, we use numpy.distutils function to get the
+                # full path, and add the path to the env['PATH'] variable in env
+                # instance (this is done in numpy.distutils.scons module).
 
-            self._init_ccompiler(self.compiler)
-            self._init_fcompiler(self.fcompiler)
-            self._init_cxxcompiler(self.cxxcompiler)
+                self._init_ccompiler(self.compiler)
+                self._init_fcompiler(self.fcompiler)
+                self._init_cxxcompiler(self.cxxcompiler)
 
         if self.package_list:
             self.package_list = parse_package_list(self.package_list)
