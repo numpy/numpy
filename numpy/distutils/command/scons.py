@@ -299,10 +299,21 @@ class scons(old_build_ext):
                     ('package-list=', None, 
                      'If specified, only run scons on the given '\
                      'packages (example: --package-list=scipy.cluster). If empty, '\
-                     'no package is built')]
+                     'no package is built'),
+                    ('fcompiler=', None,
+                     "specify the Fortran compiler type"),
+                    ('compiler=', None,
+                     "specify the C compiler type"),
+                    ('cxxcompiler=', None,
+                     "specify the C++ compiler type (same as C by default)"),
+                    ]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
+        self.compiler = None
+        self.cxxcompiler = None
+        self.fcompiler = None
+
         self.jobs = None
         self.silent = 0
         self.scons_tool_path = ''
@@ -388,6 +399,9 @@ class scons(old_build_ext):
             self.post_hooks = []
             self.pkg_names = []
 
+        if not self.cxxcompiler:
+            self.cxxcompiler = self.compiler
+
         # To avoid trouble, just don't do anything if no sconscripts are used.
         # This is  useful when for example f2py uses numpy.distutils, because
         # f2py does not pass compiler information to scons command, and the
@@ -403,7 +417,7 @@ class scons(old_build_ext):
 
             self._init_ccompiler(self.compiler)
             self._init_fcompiler(self.fcompiler)
-            self._init_cxxcompiler(self.compiler)
+            self._init_cxxcompiler(self.cxxcompiler)
 
         if self.package_list:
             self.package_list = parse_package_list(self.package_list)
