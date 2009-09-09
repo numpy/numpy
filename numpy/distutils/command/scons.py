@@ -1,4 +1,5 @@
 import os
+import sys
 import os.path
 from os.path import join as pjoin, dirname as pdirname
 
@@ -11,7 +12,13 @@ from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_bootstrapping, get_cmd
+from numpy.distutils.misc_util import get_numpy_include_dirs as _incdir
 
+# A few notes:
+#   - numscons is not mandatory to build numpy, so we cannot import it here.
+#   Any numscons import has to happen once we check numscons is available and
+#   is required for the build (call through setupscons.py or native numscons
+#   build).
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
 
@@ -82,14 +89,12 @@ def get_python_exec_invoc():
     # than the caller ? This may not be necessary, since os.system is said to
     # take into accound os.environ. This actually also works for my way of
     # using "local python", using the alias facility of bash.
-    import sys
     return sys.executable
 
 def get_numpy_include_dirs(sconscript_path):
     """Return include dirs for numpy.
 
     The paths are relatively to the setup.py script path."""
-    from numpy.distutils.misc_util import get_numpy_include_dirs as _incdir
     from numscons import get_scons_build_dir
     scdir = pjoin(get_scons_build_dir(), pdirname(sconscript_path))
     n = scdir.count(os.sep)
@@ -269,9 +274,11 @@ def check_numscons(minver=(0, 10, 2)):
         if isinstance(version_info[0], str):
             raise ValueError("Numscons %s or above expected " \
                              "(detected 0.10.0)" % str(minver))
+        # Stupid me used list instead of tuple in numscons
+        version_info = tuple(version_info)
         if version_info[:3] < minver:
             raise ValueError("Numscons %s or above expected (got %s) "
-                             % (str(minver), str(version_info)))
+                             % (str(minver), str(version_info[:3])))
     except ImportError:
         raise RuntimeError("You need numscons >= %s to build numpy "\
                            "with numscons (imported numscons path " \
