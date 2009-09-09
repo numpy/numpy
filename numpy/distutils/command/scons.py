@@ -310,9 +310,14 @@ class scons(old_build_ext):
         # is to be used in desperate cases (like incompatible visual studio
         # version).
         self._bypass_distutils_cc = False
+
+        # scons compilers
         self.scons_compiler = None
         self.scons_compiler_path = None
         self.scons_fcompiler = None
+        self.scons_fcompiler_path = None
+        self.scons_cxxcompiler = None
+        self.scons_cxxcompiler_path = None
 
         self.package_list = None
         self.inplace = 0
@@ -349,6 +354,8 @@ class scons(old_build_ext):
 
         if self.fcompiler is not None:
             self.fcompiler.customize(self.distribution)
+            self.scons_fcompiler = dist2sconsfc(self.fcompiler)
+            self.scons_fcompiler_path = protect_path(get_f77_tool_path(self.fcompiler))
 
     def _init_cxxcompiler(self, compiler_type):
         cxxcompiler = new_compiler(compiler = compiler_type,
@@ -363,6 +370,10 @@ class scons(old_build_ext):
                 get_cxx_tool_path(self.cxxcompiler)
             except DistutilsSetupError:
                 self.cxxcompiler = None
+
+            if self.cxxcompiler:
+                self.scons_cxxcompiler = dist2sconscxx(self.cxxcompiler)
+                self.scons_cxxcompiler_path = protect_path(get_cxx_tool_path(self.cxxcompiler))
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
@@ -394,8 +405,8 @@ class scons(old_build_ext):
             self._init_fcompiler(self.fcompiler)
             self._init_cxxcompiler(self.compiler)
 
-            if self.package_list:
-                self.package_list = parse_package_list(self.package_list)
+        if self.package_list:
+            self.package_list = parse_package_list(self.package_list)
 
     def run(self):
         if len(self.sconscripts) < 1:
@@ -463,14 +474,13 @@ class scons(old_build_ext):
                 else:
                     cmd.append('cc_opt=%s' % self.scons_compiler)
 
+                if self.scons_fcompiler:
+                    cmd.append('f77_opt=%s' % self.scons_fcompiler)
+                    cmd.append('f77_opt_path=%s' % protect_path(self.scons_fcompiler_path))
 
-                if self.fcompiler:
-                    cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
-                    cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
-
-                if self.cxxcompiler:
-                    cmd.append('cxx_opt=%s' % dist2sconscxx(self.cxxcompiler))
-                    cmd.append('cxx_opt_path=%s' % protect_path(get_cxx_tool_path(self.cxxcompiler)))
+                if self.scons_cxxcompiler:
+                    cmd.append('cxx_opt=%s' % self.scons_cxxcompiler)
+                    cmd.append('cxx_opt_path=%s' % protect_path(self.scons_cxxcompiler_path))
 
                 cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
                 if self.silent:
