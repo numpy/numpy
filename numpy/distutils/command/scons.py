@@ -510,6 +510,7 @@ class scons(old_build_ext):
                         cmd.append('cxx_opt_path=%s' % protect_path(self.scons_cxxcompiler_path))
 
                 cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
+                cmd.append('bypass=%s' % self.bypass)
                 if self.silent:
                     if int(self.silent) == 2:
                         cmd.append('-Q')
