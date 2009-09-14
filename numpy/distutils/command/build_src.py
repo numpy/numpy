@@ -12,11 +12,12 @@ from distutils.dep_util import newer_group, newer
 from distutils.util import get_platform
 from distutils.errors import DistutilsError, DistutilsSetupError
 
-try:
-    import Pyrex.Compiler.Main
-    have_pyrex = True
-except ImportError:
-    have_pyrex = False
+def have_pyrex():
+    try:
+        import Pyrex.Compiler.Main
+        return True
+    except ImportError:
+        return False
 
 # this import can't be done here, as it uses numpy stuff only available
 # after it's installed
@@ -462,14 +463,15 @@ class build_src(build_ext.build_ext):
         return new_sources
 
     def generate_a_pyrex_source(self, base, ext_name, source, extension):
-        if self.inplace or not have_pyrex:
+        if self.inplace or not have_pyrex():
             target_dir = os.path.dirname(base)
         else:
             target_dir = appendpath(self.build_src, os.path.dirname(base))
         target_file = os.path.join(target_dir, ext_name + '.c')
         depends = [source] + extension.depends
         if self.force or newer_group(depends, target_file, 'newer'):
-            if have_pyrex:
+            if have_pyrex():
+                import Pyrex.Compiler.Main
                 log.info("pyrexc:> %s" % (target_file))
                 self.mkpath(target_dir)
                 options = Pyrex.Compiler.Main.CompilationOptions(
