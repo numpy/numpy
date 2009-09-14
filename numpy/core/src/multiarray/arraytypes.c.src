@@ -19,6 +19,12 @@
 
 #include "numpyos.h"
 
+/*
+ *****************************************************************************
+ **                        PYTHON TYPES TO C TYPES                          **
+ *****************************************************************************
+ */
+
 static double
 MyPyFloat_AsDouble(PyObject *obj)
 {
@@ -77,519 +83,124 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 /**end repeat**/
 
 
+/*
+ *****************************************************************************
+ **                         GETITEM AND SETITEM                             **
+ *****************************************************************************
+ */
+
 
 static char * _SEQUENCE_MESSAGE = "error setting an array element with a sequence";
 
-/****************** getitem and setitem **********************/
-
 /**begin repeat
  *
- * #TYP = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
- *        LONGLONG, ULONGLONG, FLOAT, DOUBLE#
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
+ *         LONGLONG, ULONGLONG, FLOAT, DOUBLE#
  * #func1 = PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2,
  *          PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
  *          PyFloat_FromDouble*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
  *          MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong,
  *          MyPyFloat_AsDouble*2#
- * #typ = Bool, byte, ubyte, short, ushort, int, long, uint, ulong,
- *        longlong, ulonglong, float, double#
- * #typ1 = long*7, ulong*2, longlong, ulonglong, float, double#
+ * #type = Bool, byte, ubyte, short, ushort, int, long, uint, ulong,
+ *         longlong, ulonglong, float, double#
+ * #type1 = long*7, ulong*2, longlong, ulonglong, float, double#
  * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
  *         LongLong, ULongLong, Float, Double#
 */
-
 static PyObject *
-@TYP@_getitem(char *ip, PyArrayObject *ap) {
-    @typ@ t1;
+@TYPE@_getitem(char *ip, PyArrayObject *ap) {
+    @type@ t1;
 
-    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        t1 = *((@typ@ *)ip);
-        return @func1@((@typ1@)t1);
+    if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((@type@ *)ip);
+        return @func1@((@type1@)t1);
     }
     else {
         ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
-        return @func1@((@typ1@)t1);
+        return @func1@((@type1@)t1);
     }
 }
 
 static int
-@TYP@_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
-    @typ@ temp;  /* ensures alignment */
+@TYPE@_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    @type@ temp;  /* ensures alignment */
 
     if (PyArray_IsScalar(op, @kind@)) {
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     else {
-        temp = (@typ@)@func2@(op);
+        temp = (@type@)@func2@(op);
     }
     if (PyErr_Occurred()) {
         if (PySequence_Check(op)) {
             PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+            PyErr_SetString(PyExc_ValueError,
+                    "setting an array element with a sequence.");
         }
         return -1;
     }
     if (ap == NULL || PyArray_ISBEHAVED(ap))
-        *((@typ@ *)ov)=temp;
+        *((@type@ *)ov)=temp;
     else {
-        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
-                ap);
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
     }
     return 0;
 }
 
 /**end repeat**/
 
-/* Acknowledgment:  Example code contributed by Marty Fuhr sponsored by 
-   Google Summer of Code 2009 was used to integrate and adapt the mxDateTime parser */
-/* #include "datetime.c" --- now included in multiarray_onefile */
-/* End of contributed code. */
-
-
-/* DateTime Objects in Python only keep microsecond resolution. 
-
-   When converting from datetime objects with an event component return a tuple: 
-     (baseunit, number of event)  where baseunit follows is a datetime type and
-                                  number of events is a Python integer
- */
-
-
-/* Return a Python Datetime Object from a number representing the number of
-   units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
-*/
-
-NPY_NO_EXPORT PyObject *
-PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
-{
-    npy_datetimestruct ydate;
-
-    /* Must be here to use PyDateTime_FromDateAndTime */
-    PyDateTime_IMPORT;
-
-    /* We just truncate the unused variables and don't wory about overflow */
-    PyArray_DatetimeToDatetimeStruct(val, base, &ydate);
-
-    /* FIXME?: We discard ydate.ns, ydate.ps, ydate.fs, and ydate.as */
-    return PyDateTime_FromDateAndTime(ydate.year, ydate.month, ydate.day, 
-				      ydate.hour, ydate.min, ydate.sec, 
-				      ydate.us);  
-} 
-
-/* We also can lose precision and range here.  Ignored.
-   Don't use this function if you care.
- */
-
-NPY_NO_EXPORT PyObject *
-PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
-{
-    npy_timedeltastruct td;
-
-    PyDateTime_IMPORT;
-   
-    PyArray_TimedeltaToTimedeltaStruct(val, base, &td);
-
-    /* We discard td.ps and td.as */
- 
-    return PyDelta_FromDSU(td.day, td.sec, td.us);
-}
-
-
-NPY_NO_EXPORT PyObject *
-PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
-	return NULL;
-    }
-
-    if (meta->events > 1) {
-	int events, rem, div;
-	PyObject *obj;
-	obj = PyTuple_New(2);
-	events = meta->events;
-	div = val / events;
-	rem = val % events;
-	PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
-	meta->events = 1; /* This resets meta->events for recursive call */
-	PyTuple_SET_ITEM(obj, 0, PyDateTime_FromInt64(div, descr));
-	meta->events = events;
-	if (PyErr_Occurred()) {
-	    Py_DECREF(obj);
-	    return NULL;
-	}
-	return obj;
-    }
-
-    /* We normalize the number to a base-unit and then return a
-       Python Datetime Object
-
-       FIXME? : We silently truncate if it doesn't fit, either too wide (e.g. 10 BC) 
-                or too narrow (nanoseconds)
-    */
-
-    /* Normalization and then conversion to Datetime */
-
-    /* FIXME? : Check for Overflow... */
-    return PyDateTime_FromNormalized(val*meta->num, meta->base);
-}
-
-
-NPY_NO_EXPORT PyObject *
-PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
-	return NULL;
-    }
-
-    if (meta->events > 1) {
-	int events, rem, div;
-	PyObject *obj;
-	obj = PyTuple_New(2);
-	events = meta->events;
-	div = val / events;
-	rem = val % events;
-	PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
-	meta->events = 1; /* This resets meta->events for recursive call */
-	PyTuple_SET_ITEM(obj, 0, PyTimeDelta_FromInt64(div, descr));
-	meta->events = events;
-	if (PyErr_Occurred()) {
-	    Py_DECREF(obj);
-	    return NULL;
-	}
-	return obj;
-    }
-    
-    /* FIXME? : Check for Overflow */
-    return PyTimeDelta_FromNormalized(val*meta->num, meta->base);
-}
-
-
-
-NPY_NO_EXPORT npy_datetime
-PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
-{
-    npy_datetimestruct ydate;  
-
-    /* Must be here to use PyDateTime_FromDateAndTime */
-    PyDateTime_IMPORT;
-
-    if (!PyDateTime_Check(obj) && !PyDate_Check(obj)) {
-	PyErr_SetString(PyExc_ValueError, "Must be a datetime.date or datetime.datetime object");
-	return -1;
-    }
-    
-    ydate.year = PyDateTime_GET_YEAR(obj);
-    ydate.month = PyDateTime_GET_MONTH(obj);
-    ydate.day = PyDateTime_GET_DAY(obj);
-
-    if (PyDateTime_Check(obj)) {
-	ydate.hour = PyDateTime_DATE_GET_HOUR(obj);
-	ydate.min = PyDateTime_DATE_GET_MINUTE(obj);
-	ydate.sec = PyDateTime_DATE_GET_SECOND(obj);
-	ydate.us = PyDateTime_DATE_GET_MICROSECOND(obj);
-    }
-    else {
-	ydate.hour = 0;
-	ydate.min = 0;
-	ydate.sec = 0;
-	ydate.us = 0;
-    }
-
-    ydate.ps = 0;
-    ydate.as = 0;
-       
-    /* We just truncate the unused variables and don't wory about overflow */
-    return PyArray_DatetimeStructToDatetime(base, &ydate);
-} 
-
-NPY_NO_EXPORT npy_timedelta
-PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
-{
-    npy_timedeltastruct td;
-
-    PyDateTime_IMPORT;
-
-    if (!PyDelta_Check(obj)) {
-	PyErr_SetString(PyExc_ValueError, "Must be a datetime.timedelta object");
-	return -1;
-    }
-
-    td.day = ((PyDateTime_Delta *)obj)->days;
-    td.sec = ((PyDateTime_Delta *)obj)->seconds;
-    td.us  = ((PyDateTime_Delta *)obj)->microseconds;
-    td.ps  = 0;
-    td.as  = 0;
-   
-    return PyArray_TimedeltaStructToTimedelta(base, &td);
-}
-
-
-/* These expect:
- 
-    * a 2-tuple if meta->events > 1  (baseobj, num-counts)
-    * where baseobj is a datetime object or a timedelta object
-    * respectively.
-
-*/
-
-NPY_NO_EXPORT npy_datetime
-PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-    npy_datetime res;
-
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
-	return -1;
-    }
-
-
-    if (meta->events > 1) {
-	datetime tmp;
-	int events;
-	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
-	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
-	    return -1;
-	}
-	/* Alter the dictionary and call again (not thread safe) */
-	events = meta->events;
-	meta->events = 1;
-	tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
-	meta->events = events;
-	if (PyErr_Occurred()) return -1;
-	/* FIXME: Check for overflow */
-	tmp *= events;
-	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
-	if (PyErr_Occurred()) return -1;
-	return tmp;
-    }  
-
-    res = PyDateTime_AsNormalized(obj, meta->base);
-    return res / meta->num;
-}
-
-
-NPY_NO_EXPORT timedelta
-PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-    npy_timedelta res;
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-	PyErr_SetString(PyExc_RuntimeError, "metadata not set for descriptor");
-	return -1;
-    }
-
-    if (meta->events > 1) {
-	timedelta tmp;
-	int events;
-	if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
-	    PyErr_SetString(PyExc_ValueError, "need a 2-tuple on setting if events > 1");
-	    return -1;
-	}
-	/* Alter the dictionary and call again (not thread safe) */
-	events = meta->events;
-	meta->events = 1;
-	tmp = PyTimeDelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
-	meta->events = events;
-	if (PyErr_Occurred()) return -1;
-	/* FIXME: Check for overflow */
-	tmp *= events;
-	tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
-	if (PyErr_Occurred()) return -1;
-	return tmp;
-    }
-
-    res = PyTimeDelta_AsNormalized(obj, meta->base);
-    return res / meta->num;
-}
-
-
-/* Always return DateTime Object after normalizing to basic units (or a tuple 
-            if meta->events > 1):
-
-   Problem:  DateTime does not support all the resolutions (ns) nor the dynamic 
-                range (pre 1 AD) of NumPy Date-times.   
-		
-      * getitem is not used that much --- if losing resolution hurts, stick 
-             with the array scalar versions of the date-time. 
-
-      * considered returning array scalars here just like longdouble.  
-            This has the problem of recursion in some cases (because in a few
-	    places the code expects getitem to return a Python-system object)
- 
-      * considered returning different things depending on the resolution but 
-            this would make it hard to write generic code  --- 
-	    but do you need to write generic code on all the frequencies
-	    because they cover a wide range. 
-
-   Solution:  The use-case of actually wanting a date-time object when the resolution 
-                and dynamic range match, make it the compelling default.   When it 
-		does fails, there are alternatives for the programmer to use.
-
-   New question: Should we change (c)longdouble at this point? to return Python Float?
-              
-*/
-
-static PyObject *
-DATETIME_getitem(char *ip, PyArrayObject *ap) {
-    datetime t1;
-
-    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        t1 = *((datetime *)ip);
-        return PyDateTime_FromInt64((datetime)t1, ap->descr);
-    }
-    else {
-        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
-        return PyDateTime_FromInt64((datetime)t1, ap->descr);
-    }
-}
-
-
-static PyObject *
-TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
-    timedelta t1;
-
-    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        t1 = *((timedelta *)ip);
-        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
-    }
-    else {
-        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
-        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
-    }
-}
-
-/* FIXME:  This needs to take
- *  1) Integers and Longs (anything that can be converted to an Int)
- *  2) Strings (ISO-style dates)
- *  3) Datetime Scalars (that it converts based
- *       on scalar dtype.
- *  4) Datetime and Date objects
- *
- *    Plus a tuple for meta->events > 1
- *
- *   3 is partially implemented, 4 is implemented
- */
-
-static int
-DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
-    datetime temp;  /* ensures alignment */
-
-    if (PyArray_IsScalar(op, Datetime)) {
-        temp = ((PyDatetimeScalarObject *)op)->obval;
-    }
-    else {
-        temp = PyDateTime_AsInt64(op, ap->descr);
-    }
-    if (PyErr_Occurred()) {
-        if (PySequence_Check(op)) {
-            PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
-        }
-        return -1;
-    }
-    if (ap == NULL || PyArray_ISBEHAVED(ap))
-        *((datetime *)ov)=temp;
-    else {
-        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
-                ap);
-    }
-    return 0;
-}
-
-/* FIXME: This needs to take
- *    1) Integers and Longs (anything that can be converted to an Int)
- *    2) Timedelta scalar objects (with resolution conversion)
- *    3) Python Timedelta objects
- *    
- *    Plus a tuple for meta->events > 1
- */
-
-static int
-TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
-    timedelta temp;  /* ensures alignment */
-
-    if (PyArray_IsScalar(op, Timedelta)) {
-        temp = ((PyTimedeltaScalarObject *)op)->obval;
-    }
-    else {
-        temp = PyTimeDelta_AsInt64(op, ap->descr);
-    }
-    if (PyErr_Occurred()) {
-        if (PySequence_Check(op)) {
-            PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
-        }
-        return -1;
-    }
-    if (ap == NULL || PyArray_ISBEHAVED(ap))
-        *((timedelta *)ov)=temp;
-    else {
-        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
-                ap);
-    }
-    return 0;
-}
-
-
 /**begin repeat
  *
- * #TYP = CFLOAT, CDOUBLE#
- * #typ = float, double#
+ * #TYPE = CFLOAT, CDOUBLE#
+ * #type = float, double#
  */
 static PyObject *
-@TYP@_getitem(char *ip, PyArrayObject *ap) {
-    @typ@ t1, t2;
+@TYPE@_getitem(char *ip, PyArrayObject *ap) {
+    @type@ t1, t2;
 
-    if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        return PyComplex_FromDoubles((double)((@typ@ *)ip)[0],
-                (double)((@typ@ *)ip)[1]);
+    if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        return PyComplex_FromDoubles((double)((@type@ *)ip)[0],
+                (double)((@type@ *)ip)[1]);
     }
     else {
-        int size = sizeof(@typ@);
+        int size = sizeof(@type@);
         Bool swap = !PyArray_ISNOTSWAPPED(ap);
         copy_and_swap(&t1, ip, size, 1, 0, swap);
-        copy_and_swap(&t2, ip+size, size, 1, 0, swap);
+        copy_and_swap(&t2, ip + size, size, 1, 0, swap);
         return PyComplex_FromDoubles((double)t1, (double)t2);
     }
 }
 
 /**end repeat**/
 
+
+
 /**begin repeat
  *
- * #TYP = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #typ = float, double, longdouble#
+ * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #type = float, double, longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
  */
 static int
-@TYP@_setitem(PyObject *op, char *ov, PyArrayObject *ap)
+@TYPE@_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
     Py_complex oop;
     PyObject *op2;
-    c@typ@ temp;
+    c@type@ temp;
     int rsize;
 
     if (!(PyArray_IsScalar(op, @kind@))) {
         if (PyArray_Check(op) && (PyArray_NDIM(op) == 0)) {
             op2 = ((PyArrayObject *)op)->descr->f->getitem
-                  (((PyArrayObject *)op)->data,
-                   (PyArrayObject *)op);
+                  (((PyArrayObject *)op)->data, (PyArrayObject *)op);
         }
         else {
             op2 = op; Py_INCREF(op);
         }
         if (op2 == Py_None) {
-            oop.real = oop.imag = NPY_NAN;
+            oop.real = NPY_NAN;
+            oop.imag = NPY_NAN;
         }
         else {
             oop = PyComplex_AsCComplex (op2);
@@ -598,24 +209,25 @@ static int
         if (PyErr_Occurred()) {
             return -1;
         }
-        temp.real = (@typ@) oop.real;
-        temp.imag = (@typ@) oop.imag;
+        temp.real = (@type@) oop.real;
+        temp.imag = (@type@) oop.imag;
     }
     else {
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     memcpy(ov, &temp, ap->descr->elsize);
     if (!PyArray_ISNOTSWAPPED(ap)) {
-        byte_swap_vector(ov, 2, sizeof(@typ@));
+        byte_swap_vector(ov, 2, sizeof(@type@));
     }
-    rsize = sizeof(@typ@);
+    rsize = sizeof(@type@);
     copy_and_swap(ov, &temp, rsize, 2, rsize, !PyArray_ISNOTSWAPPED(ap));
     return 0;
 }
 
 /**end repeat**/
 
-/* These return array scalars which is different than other date-types.  
+/*
+ * These return array scalars which are different than other date-types.
  */
 
 static PyObject *
@@ -626,7 +238,8 @@ LONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
 
 static int
 LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
-    longdouble temp;  /* ensures alignment */
+    /* ensure alignment */
+    longdouble temp;
 
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
@@ -638,7 +251,7 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         return -1;
     }
     if (ap == NULL || PyArray_ISBEHAVED(ap)) {
-        *((longdouble *)ov)=temp;
+        *((longdouble *)ov) = temp;
     }
     else {
         copy_and_swap(ov, &temp, ap->descr->elsize, 1, 0,
@@ -754,8 +367,7 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         buffer = ov;
     }
     datalen = PyUCS2Buffer_AsUCS4(ptr, (PyArray_UCS4 *)buffer,
-            datalen >> 1,
-            ap->descr->elsize >> 2);
+            datalen >> 1, ap->descr->elsize >> 2);
     datalen <<= 2;
     if (!PyArray_ISALIGNED(ap)) {
         memcpy(ov, buffer, datalen);
@@ -799,8 +411,8 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     Py_ssize_t len;
     PyObject *temp = NULL;
 
-    if (!PyString_Check(op) && !PyUnicode_Check(op) &&
-            PySequence_Check(op) && PySequence_Size(op) > 0) {
+    if (!PyString_Check(op) && !PyUnicode_Check(op)
+            && PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
@@ -864,7 +476,7 @@ OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         Py_XDECREF(*obj);
         memcpy(ov, &op, sizeof(PyObject *));
     }
-    return PyErr_Occurred() ? -1:0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 /* VOID */
@@ -948,8 +560,7 @@ finish:
     if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
             || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
         PyErr_SetString(PyExc_ValueError,
-                "tried to get void-array with object"
-                " members as buffer.");
+                "tried to get void-array with object members as buffer.");
         return NULL;
     }
     itemsize = ap->descr->elsize;
@@ -971,7 +582,6 @@ finish:
 fail:
     return NULL;
 }
-
 
 
 NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
@@ -999,8 +609,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         n = PyTuple_GET_SIZE(names);
         if (PyTuple_GET_SIZE(op) != n) {
             PyErr_SetString(PyExc_ValueError,
-                    "size of tuple must match "\
-                    "number of fields.");
+                    "size of tuple must match number of fields.");
             return -1;
         }
         savedflags = ap->flags;
@@ -1063,8 +672,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
                 || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
             PyErr_SetString(PyExc_ValueError,
-                    "tried to set void-array with object"
-                    " members using buffer.");
+                    "Setting void-array with object members using buffer.");
             return -1;
         }
         res = PyObject_AsReadBuffer(op, &buffer, &buflen);
@@ -1073,7 +681,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         }
         memcpy(ip, buffer, NPY_MIN(buflen, itemsize));
         if (itemsize > buflen) {
-            memset(ip+buflen, 0, (itemsize-buflen));
+            memset(ip + buflen, 0, itemsize - buflen);
         }
     }
     return 0;
@@ -1082,8 +690,434 @@ fail:
     return -1;
 }
 
+/*
+ * Acknowledgment:  Example code contributed by Marty Fuhr sponsored by
+ * Google Summer of Code 2009 was used to integrate and adapt the mxDateTime
+ * parser
+ */
 
-/****************** XXX_to_YYY *******************************/
+/* #include "datetime.c" --- now included in multiarray_onefile */
+
+
+/* DateTime Objects in Python only keep microsecond resolution.
+ *
+ * When converting from datetime objects with an event component return a
+ * tuple: * (baseunit, number of event)  where baseunit follows is a datetime
+ * type and number of events is a Python integer
+ */
+
+
+/*
+ * Return a Python Datetime Object from a number representing the number of
+ * units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
+{
+    npy_datetimestruct ydate;
+
+    /* Must be here to use PyDateTime_FromDateAndTime */
+    PyDateTime_IMPORT;
+
+    /* We just truncate the unused variables and don't wory about overflow */
+    PyArray_DatetimeToDatetimeStruct(val, base, &ydate);
+
+    /* FIXME?: We discard ydate.ns, ydate.ps, ydate.fs, and ydate.as */
+    return PyDateTime_FromDateAndTime(ydate.year, ydate.month, ydate.day,
+                                      ydate.hour, ydate.min, ydate.sec,
+                                      ydate.us);
+}
+
+/*
+ * We also can lose precision and range here.  Ignored.
+ * Don't use this function if you care.
+ */
+
+NPY_NO_EXPORT PyObject *
+PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
+{
+    npy_timedeltastruct td;
+
+    PyDateTime_IMPORT;
+    PyArray_TimedeltaToTimedeltaStruct(val, base, &td);
+
+    /* We discard td.ps and td.as */
+    return PyDelta_FromDSU(td.day, td.sec, td.us);
+}
+
+
+NPY_NO_EXPORT PyObject *
+PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "metadata not set for descriptor");
+        return NULL;
+    }
+
+    if (meta->events > 1) {
+        int events, rem, div;
+        PyObject *obj;
+
+        obj = PyTuple_New(2);
+        events = meta->events;
+        div = val/events;
+        rem = val % events;
+        PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
+        /* This resets meta->events for recursive call */
+        meta->events = 1;
+        PyTuple_SET_ITEM(obj, 0, PyDateTime_FromInt64(div, descr));
+        meta->events = events;
+        if (PyErr_Occurred()) {
+            Py_DECREF(obj);
+            return NULL;
+        }
+        return obj;
+    }
+
+    /*
+     * We normalize the number to a base-unit and then return a
+     * Python Datetime Object
+     *
+     * FIXME? : We silently truncate if it doesn't fit, either too
+     *  wide (e.g. 10 BC) or too narrow (nanoseconds)
+     */
+
+    /* Normalization and then conversion to Datetime */
+    /* FIXME? : Check for Overflow... */
+    return PyDateTime_FromNormalized(val*meta->num, meta->base);
+}
+
+
+NPY_NO_EXPORT PyObject *
+PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "metadata not set for descriptor");
+        return NULL;
+    }
+
+    if (meta->events > 1) {
+        int events, rem, div;
+        PyObject *obj;
+
+        obj = PyTuple_New(2);
+        events = meta->events;
+        div = val/events;
+        rem = val % events;
+        PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
+        /* This resets meta->events for recursive call */
+        meta->events = 1;
+        PyTuple_SET_ITEM(obj, 0, PyTimeDelta_FromInt64(div, descr));
+        meta->events = events;
+        if (PyErr_Occurred()) {
+            Py_DECREF(obj);
+            return NULL;
+        }
+        return obj;
+    }
+
+    /* FIXME? : Check for Overflow */
+    return PyTimeDelta_FromNormalized(val*meta->num, meta->base);
+}
+
+
+
+NPY_NO_EXPORT npy_datetime
+PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
+{
+    npy_datetimestruct ydate;
+
+    /* Must be here to use PyDateTime_FromDateAndTime */
+    PyDateTime_IMPORT;
+
+    if (!PyDateTime_Check(obj) && !PyDate_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Must be a datetime.date or datetime.datetime object");
+        return -1;
+    }
+
+    ydate.year = PyDateTime_GET_YEAR(obj);
+    ydate.month = PyDateTime_GET_MONTH(obj);
+    ydate.day = PyDateTime_GET_DAY(obj);
+
+    if (PyDateTime_Check(obj)) {
+        ydate.hour = PyDateTime_DATE_GET_HOUR(obj);
+        ydate.min = PyDateTime_DATE_GET_MINUTE(obj);
+        ydate.sec = PyDateTime_DATE_GET_SECOND(obj);
+        ydate.us = PyDateTime_DATE_GET_MICROSECOND(obj);
+    }
+    else {
+        ydate.hour = 0;
+        ydate.min = 0;
+        ydate.sec = 0;
+        ydate.us = 0;
+    }
+
+    ydate.ps = 0;
+    ydate.as = 0;
+
+    /* We just truncate the unused variables and don't wory about overflow */
+    return PyArray_DatetimeStructToDatetime(base, &ydate);
+}
+
+NPY_NO_EXPORT npy_timedelta
+PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
+{
+    npy_timedeltastruct td;
+
+    PyDateTime_IMPORT;
+
+    if (!PyDelta_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Must be a datetime.timedelta object");
+        return -1;
+    }
+
+    td.day = ((PyDateTime_Delta *)obj)->days;
+    td.sec = ((PyDateTime_Delta *)obj)->seconds;
+    td.us  = ((PyDateTime_Delta *)obj)->microseconds;
+    td.ps  = 0;
+    td.as  = 0;
+
+    return PyArray_TimedeltaStructToTimedelta(base, &td);
+}
+
+
+/*
+ * These expect a 2-tuple if meta->events > 1  (baseobj, num-counts)
+ * where baseobj is a datetime object or a timedelta object respectively.
+ *
+ */
+
+NPY_NO_EXPORT npy_datetime
+PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    npy_datetime res;
+
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "metadata not set for descriptor");
+        return -1;
+    }
+
+
+    if (meta->events > 1) {
+        datetime tmp;
+        int events;
+
+        if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
+            PyErr_SetString(PyExc_ValueError,
+                    "need a 2-tuple on setting if events > 1");
+            return -1;
+        }
+        /* Alter the dictionary and call again (not thread safe) */
+        events = meta->events;
+        meta->events = 1;
+        tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+        meta->events = events;
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        /* FIXME: Check for overflow */
+        tmp *= events;
+        tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return tmp;
+    }
+
+    res = PyDateTime_AsNormalized(obj, meta->base);
+    return res/meta->num;
+}
+
+
+NPY_NO_EXPORT timedelta
+PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
+{
+    PyArray_DatetimeMetaData *meta;
+    npy_timedelta res;
+
+    meta = PyDataType_GetDatetimeMetaData(descr);
+    if (meta == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "metadata not set for descriptor");
+        return -1;
+    }
+
+    if (meta->events > 1) {
+        timedelta tmp;
+        int events;
+
+        if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
+            PyErr_SetString(PyExc_ValueError,
+                    "need a 2-tuple on setting if events > 1");
+            return -1;
+        }
+        /* Alter the dictionary and call again (not thread safe) */
+        events = meta->events;
+        meta->events = 1;
+        tmp = PyTimeDelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
+        meta->events = events;
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        /* FIXME: Check for overflow */
+        tmp *= events;
+        tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return tmp;
+    }
+
+    res = PyTimeDelta_AsNormalized(obj, meta->base);
+    return res / meta->num;
+}
+
+
+/*
+ * Always return DateTime Object after normalizing to basic units (or a tuple
+ * if meta->events > 1):
+ *
+ *  Problem:  DateTime does not support all the resolutions (ns) nor the
+ *  dynamic range (pre 1 AD) of NumPy Date-times.
+ *
+ * getitem is not used that much --- if losing resolution hurts, stick
+ * with the array scalar versions of the date-time.
+ *
+ * considered returning array scalars here just like longdouble. This has the
+ * problem of recursion in some cases (because in a few places the code
+ * expects getitem to return a Python-system object)
+ *
+ * considered returning different things depending on the resolution but this
+ * would make it hard to write generic code  --- but do you need to write
+ * generic code on all the frequencies because they cover a wide range.
+ *
+ * Solution:  The use-case of actually wanting a date-time object when the
+ * resolution and dynamic range match, make it the compelling default. When it
+ * does fails, there are alternatives for the programmer to use.
+ *
+ * New question: Should we change (c)longdouble at this point? to return Python Float?
+ */
+
+static PyObject *
+DATETIME_getitem(char *ip, PyArrayObject *ap) {
+    datetime t1;
+
+    if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((datetime *)ip);
+        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+    }
+    else {
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+    }
+}
+
+
+static PyObject *
+TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
+    timedelta t1;
+
+    if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
+        t1 = *((timedelta *)ip);
+        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
+    }
+    else {
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
+    }
+}
+
+/* FIXME:
+ *  This needs to take
+ *      1) Integers and Longs (anything that can be converted to an Int)
+ *      2) Strings (ISO-style dates)
+ *      3) Datetime Scalars (that it converts based on scalar dtype.
+ *      4) Datetime and Date objects
+ *  Plus a tuple for meta->events > 1
+ *
+ *      3) is partially implemented, 4) is implemented
+ */
+
+static int
+DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    /* ensure alignment */
+    datetime temp;
+
+    if (PyArray_IsScalar(op, Datetime)) {
+        temp = ((PyDatetimeScalarObject *)op)->obval;
+    }
+    else {
+        temp = PyDateTime_AsInt64(op, ap->descr);
+    }
+    if (PyErr_Occurred()) {
+        if (PySequence_Check(op)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+        }
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap))
+        *((datetime *)ov)=temp;
+    else {
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
+    }
+    return 0;
+}
+
+/* FIXME: This needs to take
+ *    1) Integers and Longs (anything that can be converted to an Int)
+ *    2) Timedelta scalar objects (with resolution conversion)
+ *    3) Python Timedelta objects
+ *
+ *    Plus a tuple for meta->events > 1
+ */
+
+static int
+TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
+    /* ensure alignment */
+    timedelta temp;
+
+    if (PyArray_IsScalar(op, Timedelta)) {
+        temp = ((PyTimedeltaScalarObject *)op)->obval;
+    }
+    else {
+        temp = PyTimeDelta_AsInt64(op, ap->descr);
+    }
+    if (PyErr_Occurred()) {
+        if (PySequence_Check(op)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
+        }
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap))
+        *((timedelta *)ov)=temp;
+    else {
+        ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
+    }
+    return 0;
+}
+
+
+/*
+ *****************************************************************************
+ **                       TYPE TO TYPE CONVERSIONS                          **
+ *****************************************************************************
+ */
+
 
 /* Assumes contiguous, and aligned, from and to */
 
