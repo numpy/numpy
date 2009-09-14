@@ -291,26 +291,26 @@ def check_numscons(minver):
 class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
-    user_options = [('jobs=', 'j', "specify number of worker threads when executing scons"),
-                    ('inplace', 'i', 'If specified, build in place.'),
-                    ('bypass', 'b', 'Bypass distutils compiler detection (experimental).'),
-                    ('scons-tool-path=', None, 'specify additional path '\
-                                               '(absolute) to look for scons tools'),
-                    ('silent=', None, 'specify whether scons output should less verbose'\
-                                      '(1), silent (2), super silent (3) or not (0, default)'),
-                    ('log-level=', None, 'specify log level for numscons. Any value valid '\
-                                         'for the logging python module is valid'),
-                    ('package-list=', None, 
-                     'If specified, only run scons on the given '\
-                     'packages (example: --package-list=scipy.cluster). If empty, '\
-                     'no package is built'),
-                    ('fcompiler=', None,
-                     "specify the Fortran compiler type"),
-                    ('compiler=', None,
-                     "specify the C compiler type"),
-                    ('cxxcompiler=', None,
-                     "specify the C++ compiler type (same as C by default)"),
-                    ]
+    user_options = [
+        ('jobs=', 'j', "specify number of worker threads when executing" \
+                       "scons"),
+        ('inplace', 'i', 'If specified, build in place.'),
+        ('bypass', 'b', 'Bypass distutils compiler detection (experimental).'),
+        ('scons-tool-path=', None, 'specify additional path '\
+        '(absolute) to look for scons tools'),
+        ('silent=', None, 'specify whether scons output should less verbose'\
+        '(1), silent (2), super silent (3) or not (0, default)'),
+        ('log-level=', None, 'specify log level for numscons. Any value ' \
+                             'valid for the logging python module is valid'),
+        ('package-list=', None,
+         'If specified, only run scons on the given '\
+         'packages (example: --package-list=scipy.cluster). If empty, '\
+         'no package is built'),
+        ('fcompiler=', None, "specify the Fortran compiler type"),
+        ('compiler=', None, "specify the C compiler type"),
+        ('cxxcompiler=', None,
+         "specify the C++ compiler type (same as C by default)"),
+         ]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
