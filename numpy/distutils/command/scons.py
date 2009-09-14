@@ -462,19 +462,19 @@ class scons(old_build_ext):
         if not self._bypass_distutils_cc:
             cmd.append('cc_opt=%s' % self.scons_compiler)
         if self.scons_compiler_path:
-                cmd.append('cc_opt_path=%s' % self.scons_compiler_path)
+            cmd.append('cc_opt_path=%s' % self.scons_compiler_path)
         else:
             cmd.append('cc_opt=%s' % self.scons_compiler)
 
         if self.scons_fcompiler:
             cmd.append('f77_opt=%s' % self.scons_fcompiler)
         if self.scons_fcompiler_path:
-                cmd.append('f77_opt_path=%s' % self.scons_fcompiler_path)
+            cmd.append('f77_opt_path=%s' % self.scons_fcompiler_path)
 
         if self.scons_cxxcompiler:
             cmd.append('cxx_opt=%s' % self.scons_cxxcompiler)
         if self.scons_cxxcompiler_path:
-                cmd.append('cxx_opt_path=%s' % self.scons_cxxcompiler_path)
+            cmd.append('cxx_opt_path=%s' % self.scons_cxxcompiler_path)
 
         cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
         cmd.append('bypass=%s' % self.bypass)
