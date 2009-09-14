@@ -70,7 +70,7 @@ def get_distutils_libdir(cmd, pkg):
 
 def get_distutils_clibdir(cmd, pkg):
     """Returns the path where distutils put pure C libraries."""
-    return pjoin(_get_top_dir(pkg), cmd.build_temp)
+    return pjoin(_get_top_dir(pkg), cmd.build_clib)
 
 def get_distutils_install_prefix(pkg, inplace):
     """Returns the installation path for the current package."""
@@ -326,6 +326,8 @@ class scons(old_build_ext):
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
+        self.build_clib = None
+
         self.compiler = None
         self.cxxcompiler = None
         self.fcompiler = None
@@ -419,6 +421,10 @@ class scons(old_build_ext):
             self.pre_hooks = self.distribution.get_scons_pre_hooks()
             self.post_hooks = self.distribution.get_scons_post_hooks()
             self.pkg_names = self.distribution.get_scons_parent_names()
+            # This crap is needed to get the build_clib
+            # directory
+            build_clib_cmd = get_cmd("build_clib").get_finalized_command("build_clib")
+            self.build_clib = build_clib_cmd.build_clib
         else:
             self.sconscripts = []
             self.pre_hooks = []
