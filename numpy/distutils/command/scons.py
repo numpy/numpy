@@ -291,6 +291,18 @@ def check_numscons(minver):
 class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
+
+    library_options = [
+        ('with-perflib=', None,
+         'Specify which performance library to use for BLAS/LAPACK/etc...' \
+         'Examples: mkl/atlas/sunper/accelerate'),
+        ('with-mkl-lib=', None, 'TODO'),
+        ('with-mkl-include=', None, 'TODO'),
+        ('with-mkl-libraries=', None, 'TODO'),
+        ('with-atlas-lib=', None, 'TODO'),
+        ('with-atlas-include=', None, 'TODO'),
+        ('with-atlas-libraries=', None, 'TODO')
+        ]
     user_options = [
         ('jobs=', 'j', "specify number of worker threads when executing" \
                        "scons"),
@@ -310,7 +322,7 @@ class scons(old_build_ext):
         ('compiler=', None, "specify the C compiler type"),
         ('cxxcompiler=', None,
          "specify the C++ compiler type (same as C by default)"),
-         ]
+         ] + library_options
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
@@ -340,6 +352,15 @@ class scons(old_build_ext):
 
         # Only critical things
         self.log_level = 50
+
+        # library options
+        self.with_perflib = []
+        self.with_mkl_lib = []
+        self.with_mkl_include = []
+        self.with_mkl_libraries = []
+        self.with_atlas_lib = []
+        self.with_atlas_include = []
+        self.with_atlas_libraries = []
 
     def _init_ccompiler(self, compiler_type):
         # XXX: The logic to bypass distutils is ... not so logic.
