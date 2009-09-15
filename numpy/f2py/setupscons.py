@@ -80,8 +80,6 @@ main()
 
     config.add_scripts(generate_f2py_py)
 
-    log.info('F2PY Version %s', config.get_version())
-
     return config
 
 if __name__ == "__main__":
