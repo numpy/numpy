@@ -6,7 +6,12 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 """
 import sys, os, re
-import md5
+try:
+    import hashlib
+    md5new = hashlib.md5
+except ImportError:
+    import md5
+    md5new = md5.new
 import textwrap
 
 from os.path import join
@@ -94,7 +99,7 @@ class Function(object):
         return '\n'.join(lines)
 
     def api_hash(self):
-        m = md5.new()
+        m = md5new()
         m.update(remove_whitespace(self.return_type))
         m.update('\000')
         m.update(self.name)
@@ -311,7 +316,7 @@ def fullapi_hash(files):
             return sorted(d.items(), key=lambda (x, y): (y, x))
         a.extend([i[0] for i in sorted_by_values(order)])
 
-    return md5.new(''.join(a)).hexdigest()
+    return md5new(''.join(a)).hexdigest()
 
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
@@ -336,7 +341,7 @@ def main():
     tagname = sys.argv[1]
     order_file = sys.argv[2]
     functions = get_api_functions(tagname, order_file)
-    m = md5.new(tagname)
+    m = md5new(tagname)
     for func in functions:
         print func
         ah = func.api_hash()
