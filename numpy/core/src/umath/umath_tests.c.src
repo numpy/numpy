@@ -64,7 +64,7 @@ char *inner1d_signature = "(i),(i)->()";
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
 static void
-@TYPE@_inner1d(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_inner1d(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_3
     intp di = dimensions[0];
@@ -99,7 +99,7 @@ char *innerwt_signature = "(i),(i),(i)->()";
  */
 
 static void
-@TYPE@_innerwt(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_innerwt(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_4
     intp di = dimensions[0];
@@ -135,7 +135,7 @@ char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
 
 
 static void
-@TYPE@_matrix_multiply(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_matrix_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /* no BLAS is available */
     INIT_OUTER_LOOP_3
@@ -241,7 +241,7 @@ addUfuncs(PyObject *dictionary) {
 
 
 static PyObject *
-UMath_Tests_test_signature(PyObject *dummy, PyObject *args)
+UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int nin, nout;
     PyObject *signature;

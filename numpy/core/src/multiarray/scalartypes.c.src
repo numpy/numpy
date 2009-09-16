@@ -93,6 +93,9 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 /**end repeat**/
 
@@ -1797,6 +1800,10 @@ static PyBufferProcs gentype_as_buffer = {
     NULL,                                        /* bf_getwritebuffer*/
     gentype_getsegcount,                         /* bf_getsegcount*/
     gentype_getcharbuf,                          /* bf_getcharbuffer*/
+#if PY_VERSION_HEX >= 0x02060000
+    NULL,
+    NULL,
+#endif
 };
 
 
@@ -1860,6 +1867,9 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 
 static void
@@ -2593,6 +2603,10 @@ static PyBufferProcs object_arrtype_as_buffer = {
     (writebufferproc)object_arrtype_getwritebuf,
     (segcountproc)object_arrtype_getsegcount,
     (charbufferproc)object_arrtype_getcharbuf,
+#if PY_VERSION_HEX >= 0x02060000
+    (getbufferproc)0,
+    (releasebufferproc)0,
+#endif
 #else
     (getreadbufferproc)object_arrtype_getreadbuf,
     (getwritebufferproc)object_arrtype_getwritebuf,
@@ -2663,6 +2677,9 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 
 static PyObject *
@@ -2767,6 +2784,9 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 /**end repeat**/
 
@@ -2850,6 +2870,9 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 
 #undef _THIS_SIZE
@@ -2949,6 +2972,9 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 #undef _THIS_SIZE1
 #undef _THIS_SIZE2

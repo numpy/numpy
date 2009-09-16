@@ -4314,7 +4314,7 @@ static PyGetSetDef ufunc_getset[] = {
         NULL, "identity value", NULL},
     {"signature",
         (getter)ufunc_get_signature,
-        NULL, "signature"},
+        NULL, "signature", NULL},
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
@@ -4380,6 +4380,9 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 
 /* End of code for ufunc objects */

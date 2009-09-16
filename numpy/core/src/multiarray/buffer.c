@@ -75,6 +75,10 @@ NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
     (writebufferproc)array_getwritebuf,     /*bf_getwritebuffer*/
     (segcountproc)array_getsegcount,        /*bf_getsegcount*/
     (charbufferproc)array_getcharbuf,       /*bf_getcharbuffer*/
+#if PY_VERSION_HEX >= 0x02060000
+    (getbufferproc)0,
+    (releasebufferproc)0,
+#endif
 #else
     (getreadbufferproc)array_getreadbuf,    /*bf_getreadbuffer*/
     (getwritebufferproc)array_getwritebuf,  /*bf_getwritebuffer*/
