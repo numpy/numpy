@@ -815,7 +815,7 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     lameth(zpotrf),
     lameth(zgeqrf),
     lameth(zungqr),
-    { NULL,NULL,0}
+    { NULL,NULL,0, NULL}
 };
 
 static char lapack_lite_module_documentation[] = "";

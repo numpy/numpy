@@ -298,7 +298,7 @@ static struct PyMethodDef fftpack_methods[] = {
     {"rfftf",	fftpack_rfftf,	1,	fftpack_rfftf__doc__},
     {"rfftb",	fftpack_rfftb,	1,	fftpack_rfftb__doc__},
     {"rffti",	fftpack_rffti,	1,	fftpack_rffti__doc__},
-    {NULL,		NULL}		/* sentinel */
+    {NULL,		NULL, 0, NULL}		/* sentinel */
 };
 
 
