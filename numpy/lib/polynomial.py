@@ -10,8 +10,7 @@ import re
 import warnings
 import numpy.core.numeric as NX
 
-from numpy.core import isscalar, abs
-from numpy.lib.getlimits import finfo
+from numpy.core import isscalar, abs, finfo
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex

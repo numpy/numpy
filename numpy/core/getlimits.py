@@ -4,10 +4,9 @@
 __all__ = ['finfo','iinfo']
 
 from machar import MachAr
-import numpy.core.numeric as numeric
-import numpy.core.numerictypes as ntypes
-from numpy.core.numeric import array
-import numpy as np
+import numeric
+import numerictypes as ntypes
+from numeric import array
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
@@ -89,10 +88,10 @@ class finfo(object):
 
     def __new__(cls, dtype):
         try:
-            dtype = np.dtype(dtype)
+            dtype = numeric.dtype(dtype)
         except TypeError:
             # In case a float instance was given
-            dtype = np.dtype(type(dtype))
+            dtype = numeric.dtype(type(dtype))
 
         obj = cls._finfo_cache.get(dtype,None)
         if obj is not None:
@@ -121,7 +120,7 @@ class finfo(object):
         return obj
 
     def _init(self, dtype):
-        self.dtype = np.dtype(dtype)
+        self.dtype = numeric.dtype(dtype)
         if dtype is ntypes.double:
             itype = ntypes.int64
             fmt = '%24.16e'
@@ -228,9 +227,9 @@ class iinfo:
 
     def __init__(self, int_type):
         try:
-            self.dtype = np.dtype(int_type)
+            self.dtype = numeric.dtype(int_type)
         except TypeError:
-            self.dtype = np.dtype(type(int_type))
+            self.dtype = numeric.dtype(type(int_type))
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)

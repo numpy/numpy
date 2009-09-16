@@ -4,7 +4,7 @@
 from numpy.testing import *
 import numpy.lib
 reload(numpy.lib)
-from numpy.lib.getlimits import finfo, iinfo
+from numpy.core import finfo, iinfo
 from numpy import single,double,longdouble
 import numpy as np
 

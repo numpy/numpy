@@ -1,6 +1,6 @@
 from numpy.testing import *
 
-from numpy.lib.machar import MachAr
+from numpy.core.machar import MachAr
 import numpy.core.numerictypes as ntypes
 from numpy import seterr, array
 

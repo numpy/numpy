@@ -275,7 +275,7 @@ def isrealobj(x):
 #-----------------------------------------------------------------------------
 
 def _getmaxmin(t):
-    import getlimits
+    from numpy.core import getlimits
     f = getlimits.finfo(t)
     return f.max, f.min
 
@@ -400,7 +400,7 @@ def real_if_close(a,tol=100):
     if not issubclass(a.dtype.type, _nx.complexfloating):
         return a
     if tol > 1:
-        import getlimits
+        from numpy.core import getlimits
         f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
     if _nx.allclose(a.imag, 0, atol=tol):
