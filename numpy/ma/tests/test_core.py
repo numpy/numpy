@@ -3199,6 +3199,10 @@ class TestMaskedView(TestCase):
         self.failUnless(isinstance(test, np.matrix))
         self.failUnless(not isinstance(test, MaskedArray))
 
+def test_masked_array():
+    a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
+    assert_equal(np.argwhere(a), [[1], [3]])
+
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":

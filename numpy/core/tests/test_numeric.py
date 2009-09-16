@@ -954,9 +954,5 @@ class TestArgwhere:
     def test_list(self):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
 
-    def test_masked_array(self):
-        a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
-        assert_equal(np.argwhere(a), [[1], [3]])
-
 if __name__ == "__main__":
     run_module_suite()
