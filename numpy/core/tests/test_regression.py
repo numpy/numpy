@@ -41,11 +41,6 @@ class TestRegression(TestCase):
         f.close()
         assert_array_equal(a,b)
 
-    def test_masked_array_create(self,level=rlevel):
-        """Ticket #17"""
-        x = np.ma.masked_array([0,1,2,3,0,4,5,6],mask=[0,0,0,1,1,1,0,0])
-        assert_array_equal(np.ma.nonzero(x),[[1,2,6,7]])
-
     def test_poly1d(self,level=rlevel):
         """Ticket #28"""
         assert_equal(np.poly1d([1]) - np.poly1d([1,0]),
@@ -106,18 +101,6 @@ class TestRegression(TestCase):
         """Ticket #60"""
         x = np.bool_(1)
 
-    def test_masked_array(self,level=rlevel):
-        """Ticket #61"""
-        x = np.ma.array(1,mask=[1])
-
-    def test_mem_masked_where(self,level=rlevel):
-        """Ticket #62"""
-        from numpy.ma import masked_where, MaskType
-        a = np.zeros((1,1))
-        b = np.zeros(a.shape, MaskType)
-        c = masked_where(b,a)
-        a-c
-
     def test_indexing1(self,level=rlevel):
         """Ticket #64"""
         descr = [('x', [('y', [('z', 'c16', (2,)),]),]),]
@@ -136,11 +119,6 @@ class TestRegression(TestCase):
         """Ticket #67"""
         x = np.array([1+2j])
         assert_almost_equal(x**(-1), [1/(1+2j)])
-
-    def test_kron_matrix(self,level=rlevel):
-        """Ticket #71"""
-        x = np.matrix('[1 0; 1 0]')
-        assert_equal(type(np.kron(x,x)),type(x))
 
     def test_scalar_compare(self,level=rlevel):
         """Ticket #72"""
@@ -385,14 +363,6 @@ class TestRegression(TestCase):
         import pickle
         pickle.dumps(np.float)
 
-    def test_masked_array_multiply(self,level=rlevel):
-        """Ticket #254"""
-        a = np.ma.zeros((4,1))
-        a[2,0] = np.ma.masked
-        b = np.zeros((4,2))
-        a*b
-        b*a
-
     def test_swap_real(self, level=rlevel):
         """Ticket #265"""
         assert_equal(np.arange(4,dtype='>c8').imag.max(),0.0)
@@ -403,10 +373,6 @@ class TestRegression(TestCase):
     def test_object_array_from_list(self, level=rlevel):
         """Ticket #270"""
         a = np.array([1,'A',None])
-
-    def test_masked_array_repeat(self, level=rlevel):
-        """Ticket #271"""
-        np.ma.array([1],mask=False).repeat(10)
 
     def test_multiple_assign(self, level=rlevel):
         """Ticket #273"""
