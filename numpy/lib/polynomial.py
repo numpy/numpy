@@ -10,9 +10,8 @@ import re
 import warnings
 import numpy.core.numeric as NX
 
-from numpy.core import isscalar, abs, finfo
+from numpy.core import isscalar, abs, finfo, atleast_1d, hstack
 from numpy.lib.twodim_base import diag, vander
-from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
 from numpy.lib.type_check import iscomplex, real, imag
 from numpy.linalg import eigvals, lstsq

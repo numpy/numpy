@@ -14,7 +14,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-           'assert_']
+           'assert_', 'assert_valid_refcount']
 
 verbose = 0
 
@@ -947,3 +947,18 @@ def measure(code_str,times=1,label=None):
         exec code in globs,locs
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
+
+def assert_valid_refcount(op):
+    import numpy as np
+    a = np.arange(100 * 100)
+    b = np.arange(100*100).reshape(100, 100)
+    c = b
+
+    i = 1
+
+    rc = sys.getrefcount(i)
+    for j in range(15):
+        d = op(b,c)
+
+    assert(sys.getrefcount(i) >= rc)
+

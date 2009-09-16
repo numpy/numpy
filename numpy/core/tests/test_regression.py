@@ -8,19 +8,6 @@ import numpy as np
 
 rlevel = 1
 
-def assert_valid_refcount(op):
-    a = np.arange(100 * 100)
-    b = np.arange(100*100).reshape(100, 100)
-    c = b
-
-    i = 1
-
-    rc = sys.getrefcount(i)
-    for j in range(15):
-        d = op(b,c)
-
-    assert(sys.getrefcount(i) >= rc)
-
 class TestRegression(TestCase):
     def test_invalid_round(self,level=rlevel):
         """Ticket #3"""
@@ -40,11 +27,6 @@ class TestRegression(TestCase):
         b = pickle.load(f)
         f.close()
         assert_array_equal(a,b)
-
-    def test_poly1d(self,level=rlevel):
-        """Ticket #28"""
-        assert_equal(np.poly1d([1]) - np.poly1d([1,0]),
-                     np.poly1d([-1,1]))
 
     def test_typeNA(self,level=rlevel):
         """Ticket #31"""
@@ -137,35 +119,15 @@ class TestRegression(TestCase):
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
         ua2 = ua.newbyteorder()
 
-    def test_matrix_std_argmax(self,level=rlevel):
-        """Ticket #83"""
-        x = np.asmatrix(np.random.uniform(0,1,(3,3)))
-        self.assertEqual(x.std().shape, ())
-        self.assertEqual(x.argmax().shape, ())
-
     def test_object_array_fill(self,level=rlevel):
         """Ticket #86"""
         x = np.zeros(1, 'O')
         x.fill([])
 
-    def test_cov_parameters(self,level=rlevel):
-        """Ticket #91"""
-        x = np.random.random((3,3))
-        y = x.copy()
-        np.cov(x,rowvar=1)
-        np.cov(y,rowvar=0)
-        assert_array_equal(x,y)
-
     def test_mem_dtype_align(self,level=rlevel):
         """Ticket #93"""
         self.failUnlessRaises(TypeError,np.dtype,
                               {'names':['a'],'formats':['foo']},align=1)
-
-    def test_mem_digitize(self,level=rlevel):
-        """Ticket #95"""
-        for i in range(100):
-            np.digitize([1,2,3,4],[1,3])
-            np.digitize([0,1,2,3,4],[1,3])
 
     def test_intp(self,level=rlevel):
         """Ticket #99"""
@@ -216,15 +178,6 @@ class TestRegression(TestCase):
         a = np.random.normal(0,1,(4,5,6,7,8))
         for i in xrange(a.ndim):
             aargmax = a.argmax(i)
-
-    def test_matrix_properties(self,level=rlevel):
-        """Ticket #125"""
-        a = np.matrix([1.0],dtype=float)
-        assert(type(a.real) is np.matrix)
-        assert(type(a.imag) is np.matrix)
-        c,d = np.matrix([0.0]).nonzero()
-        assert(type(c) is np.matrix)
-        assert(type(d) is np.matrix)
 
     def test_mem_divmod(self,level=rlevel):
         """Ticket #126"""
@@ -321,10 +274,6 @@ class TestRegression(TestCase):
         def index_tmp(): tmp[np.array(10)]
         self.failUnlessRaises(IndexError, index_tmp)
 
-    def test_unique_zero_sized(self,level=rlevel):
-        """Ticket #205"""
-        assert_array_equal([], np.unique(np.array([])))
-
     def test_chararray_rstrip(self,level=rlevel):
         """Ticket #222"""
         x = np.chararray((1,),5)
@@ -381,11 +330,6 @@ class TestRegression(TestCase):
 
     def test_empty_array_type(self, level=rlevel):
         assert_equal(np.array([]).dtype, np.zeros(0).dtype)
-
-    def test_void_coercion(self, level=rlevel):
-        dt = np.dtype([('a','f4'),('b','i4')])
-        x = np.zeros((1,),dt)
-        assert(np.r_[x,x].dtype == dt)
 
     def test_void_copyswap(self, level=rlevel):
         dt = np.dtype([('one', '<i4'),('two', '<i4')])
@@ -468,12 +412,6 @@ class TestRegression(TestCase):
         assert_equal(np.array(x,dtype=np.float32,ndmin=2).ndim,2)
         assert_equal(np.array(x,dtype=np.float64,ndmin=2).ndim,2)
 
-    def test_mem_vectorise(self, level=rlevel):
-        """Ticket #325"""
-        vt = np.vectorize(lambda *args: args)
-        vt(np.zeros((1,2,1)), np.zeros((2,1,1)), np.zeros((1,1,2)))
-        vt(np.zeros((1,2,1)), np.zeros((2,1,1)), np.zeros((1,1,2)), np.zeros((2,2)))
-
     def test_mem_axis_minimization(self, level=rlevel):
         """Ticket #327"""
         data = np.arange(5)
@@ -490,11 +428,6 @@ class TestRegression(TestCase):
     def test_dtype_posttuple(self, level=rlevel):
         """Ticket #335"""
         np.dtype([('col1', '()i4')])
-
-    def test_mgrid_single_element(self, level=rlevel):
-        """Ticket #339"""
-        assert_array_equal(np.mgrid[0:0:1j],[0])
-        assert_array_equal(np.mgrid[0:0],[])
 
     def test_numeric_carray_compare(self, level=rlevel):
         """Ticket #341"""
@@ -552,17 +485,6 @@ class TestRegression(TestCase):
         np.random.shuffle(b)
         assert_equal(np.sort(b, axis=0),a)
 
-    def test_refcount_vectorize(self, level=rlevel):
-        """Ticket #378"""
-        def p(x,y): return 123
-        v = np.vectorize(p)
-        assert_valid_refcount(v)
-
-    def test_poly1d_nan_roots(self, level=rlevel):
-        """Ticket #396"""
-        p = np.poly1d([np.nan,np.nan,1], r=0)
-        self.failUnlessRaises(np.linalg.LinAlgError,getattr,p,"r")
-
     def test_refcount_vdot(self, level=rlevel):
         """Changeset #3443"""
         assert_valid_refcount(np.vdot)
@@ -582,10 +504,6 @@ class TestRegression(TestCase):
         assert_array_equal(np.divide.accumulate(todivide),
             np.array([2., 4., 16.]))
 
-    def test_mem_polymul(self, level=rlevel):
-        """Ticket #448"""
-        np.polymul([],[1.])
-
     def test_convolve_empty(self, level=rlevel):
         """Convolve should raise an error for empty input array."""
         self.failUnlessRaises(ValueError,np.convolve,[],[1])
@@ -601,18 +519,6 @@ class TestRegression(TestCase):
         """Changeset 3557"""
         assert_equal(np.array("a\x00\x0b\x0c\x00").item(),
                      'a\x00\x0b\x0c')
-
-    def test_mem_string_concat(self, level=rlevel):
-        """Ticket #469"""
-        x = np.array([])
-        np.append(x,'asdasd\tasdasd')
-
-    def test_matrix_multiply_by_1d_vector(self, level=rlevel) :
-        """Ticket #473"""
-        def mul() :
-            np.mat(np.eye(2))*np.ones(2)
-
-        self.failUnlessRaises(ValueError,mul)
 
     def test_junk_in_string_fields_of_recarray(self, level=rlevel):
         """Ticket #483"""
@@ -666,25 +572,6 @@ class TestRegression(TestCase):
         a = np.arange(3, dtype='>f')
         assert a[a.argmax()] == a.max()
 
-    def test_numeric_random(self, level=rlevel):
-        """Ticket #552"""
-        from numpy.oldnumeric.random_array import randint
-        randint(0,50,[2,3])
-
-    def test_poly_div(self, level=rlevel):
-        """Ticket #553"""
-        u = np.poly1d([1,2,3])
-        v = np.poly1d([1,2,3,4,5])
-        q,r = np.polydiv(u,v)
-        assert_equal(q*v + r, u)
-
-    def test_poly_eq(self, level=rlevel):
-        """Ticket #554"""
-        x = np.poly1d([1,2,3])
-        y = np.poly1d([3,4])
-        assert x != y
-        assert x == x
-
     def test_rand_seed(self, level=rlevel):
         """Ticket #555"""
         for l in np.arange(4):
@@ -695,10 +582,6 @@ class TestRegression(TestCase):
         a = np.zeros(5,dtype=float)
         b = np.array(a,dtype=float)
         del a, b
-
-    def test_mem_insert(self, level=rlevel):
-        """Ticket #572"""
-        np.lib.place(1,1,1)
 
     def test_mem_on_invalid_dtype(self):
         "Ticket #583"
@@ -770,17 +653,6 @@ class TestRegression(TestCase):
         x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
         y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
         assert_array_equal(np.sort(x, kind="q"), y)
-
-    def test_hist_bins_as_list(self, level=rlevel):
-        """Ticket #632"""
-        import warnings
-        warnings.simplefilter('ignore', Warning)
-        try:
-            hist,edges = np.histogram([1,2,3,4],[1,2],  new=False)
-            assert_array_equal(hist,[1,3])
-            assert_array_equal(edges,[1,2])
-        finally:
-            warnings.resetwarnings()
 
     def test_copy_detection_zero_dim(self, level=rlevel):
         """Ticket #658"""
@@ -987,10 +859,6 @@ class TestRegression(TestCase):
         x.fill(1)
         assert_equal(x, np.array([1], dtype=dtype))
 
-    def test_asfarray_none(self, level=rlevel):
-        """Test for changeset r5065"""
-        assert_array_equal(np.array([np.nan]), np.asfarray([None]))
-
     def test_dot_alignment_sse2(self, level=rlevel):
         """Test for ticket #551, changeset r5140"""
         x = np.zeros((30,40))
@@ -1107,23 +975,6 @@ class TestRegression(TestCase):
         b = a.tolist()
         assert( a[0].tolist() == b[0])
         assert( a[1].tolist() == b[1])
-
-    def test_large_fancy_indexing(self, level=rlevel):
-        # Large enough to fail on 64-bit.
-        nbits = np.dtype(np.intp).itemsize * 8
-        thesize = int((2**nbits)**(1.0/5.0)+1)
-        def dp():
-            n = 3
-            a = np.ones((n,)*5)
-            i = np.random.randint(0,n,size=thesize)
-            a[np.ix_(i,i,i,i,i)] = 0
-        def dp2():
-            n = 3
-            a = np.ones((n,)*5)
-            i = np.random.randint(0,n,size=thesize)
-            g = a[np.ix_(i,i,i,i,i)]
-        self.failUnlessRaises(ValueError, dp)
-        self.failUnlessRaises(ValueError, dp2)
 
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')

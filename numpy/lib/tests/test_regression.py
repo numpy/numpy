@@ -1,8 +1,81 @@
 from numpy.testing import *
 import numpy as np
 
+rlevel = 1
 
-class TestRegression(object):
+class TestRegression(TestCase):
+    def test_poly1d(self,level=rlevel):
+        """Ticket #28"""
+        assert_equal(np.poly1d([1]) - np.poly1d([1,0]),
+                     np.poly1d([-1,1]))
+
+    def test_cov_parameters(self,level=rlevel):
+        """Ticket #91"""
+        x = np.random.random((3,3))
+        y = x.copy()
+        np.cov(x,rowvar=1)
+        np.cov(y,rowvar=0)
+        assert_array_equal(x,y)
+
+    def test_mem_digitize(self,level=rlevel):
+        """Ticket #95"""
+        for i in range(100):
+            np.digitize([1,2,3,4],[1,3])
+            np.digitize([0,1,2,3,4],[1,3])
+
+    def test_unique_zero_sized(self,level=rlevel):
+        """Ticket #205"""
+        assert_array_equal([], np.unique(np.array([])))
+
+    def test_mem_vectorise(self, level=rlevel):
+        """Ticket #325"""
+        vt = np.vectorize(lambda *args: args)
+        vt(np.zeros((1,2,1)), np.zeros((2,1,1)), np.zeros((1,1,2)))
+        vt(np.zeros((1,2,1)), np.zeros((2,1,1)), np.zeros((1,1,2)), np.zeros((2,2)))
+
+    def test_mgrid_single_element(self, level=rlevel):
+        """Ticket #339"""
+        assert_array_equal(np.mgrid[0:0:1j],[0])
+        assert_array_equal(np.mgrid[0:0],[])
+
+    def test_refcount_vectorize(self, level=rlevel):
+        """Ticket #378"""
+        def p(x,y): return 123
+        v = np.vectorize(p)
+        assert_valid_refcount(v)
+
+    def test_poly1d_nan_roots(self, level=rlevel):
+        """Ticket #396"""
+        p = np.poly1d([np.nan,np.nan,1], r=0)
+        self.failUnlessRaises(np.linalg.LinAlgError,getattr,p,"r")
+
+    def test_mem_polymul(self, level=rlevel):
+        """Ticket #448"""
+        np.polymul([],[1.])
+
+    def test_mem_string_concat(self, level=rlevel):
+        """Ticket #469"""
+        x = np.array([])
+        np.append(x,'asdasd\tasdasd')
+
+    def test_poly_div(self, level=rlevel):
+        """Ticket #553"""
+        u = np.poly1d([1,2,3])
+        v = np.poly1d([1,2,3,4,5])
+        q,r = np.polydiv(u,v)
+        assert_equal(q*v + r, u)
+
+    def test_poly_eq(self, level=rlevel):
+        """Ticket #554"""
+        x = np.poly1d([1,2,3])
+        y = np.poly1d([3,4])
+        assert x != y
+        assert x == x
+
+    def test_mem_insert(self, level=rlevel):
+        """Ticket #572"""
+        np.lib.place(1,1,1)
+
     def test_polyfit_build(self):
         """Ticket #628"""
         ref = [-1.06123820e-06, 5.70886914e-04, -1.13822012e-01,
@@ -24,14 +97,16 @@ class TestRegression(object):
         tested = np.polyfit(x, y, 4)
         assert_array_almost_equal(ref, tested)
 
-    def test_polyint_type(self) :
-        """Ticket #944"""
-        msg = "Wrong type, should be complex"
-        x = np.ones(3, dtype=np.complex)
-        assert_(np.polyint(x).dtype == np.complex, msg)
-        msg = "Wrong type, should be float"
-        x = np.ones(3, dtype=np.int)
-        assert_(np.polyint(x).dtype == np.float, msg)
+    def test_hist_bins_as_list(self, level=rlevel):
+        """Ticket #632"""
+        import warnings
+        warnings.simplefilter('ignore', Warning)
+        try:
+            hist,edges = np.histogram([1,2,3,4],[1,2],  new=False)
+            assert_array_equal(hist,[1,3])
+            assert_array_equal(edges,[1,2])
+        finally:
+            warnings.resetwarnings()
 
     def test_polydiv_type(self) :
         """Make polydiv work for complex types"""
@@ -48,10 +123,45 @@ class TestRegression(object):
         """Ticket 928."""
         assert_raises(ValueError, np.histogramdd, np.ones((1,10)), bins=2**10)
 
+    def test_polyint_type(self) :
+        """Ticket #944"""
+        msg = "Wrong type, should be complex"
+        x = np.ones(3, dtype=np.complex)
+        assert_(np.polyint(x).dtype == np.complex, msg)
+        msg = "Wrong type, should be float"
+        x = np.ones(3, dtype=np.int)
+        assert_(np.polyint(x).dtype == np.float, msg)
+
     def test_ndenumerate_crash(self):
         """Ticket 1140"""
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
+
+    def test_asfarray_none(self, level=rlevel):
+        """Test for changeset r5065"""
+        assert_array_equal(np.array([np.nan]), np.asfarray([None]))
+
+    def test_large_fancy_indexing(self, level=rlevel):
+        # Large enough to fail on 64-bit.
+        nbits = np.dtype(np.intp).itemsize * 8
+        thesize = int((2**nbits)**(1.0/5.0)+1)
+        def dp():
+            n = 3
+            a = np.ones((n,)*5)
+            i = np.random.randint(0,n,size=thesize)
+            a[np.ix_(i,i,i,i,i)] = 0
+        def dp2():
+            n = 3
+            a = np.ones((n,)*5)
+            i = np.random.randint(0,n,size=thesize)
+            g = a[np.ix_(i,i,i,i,i)]
+        self.failUnlessRaises(ValueError, dp)
+        self.failUnlessRaises(ValueError, dp2)
+
+    def test_void_coercion(self, level=rlevel):
+        dt = np.dtype([('a','f4'),('b','i4')])
+        x = np.zeros((1,),dt)
+        assert(np.r_[x,x].dtype == dt)
 
 if __name__ == "__main__":
     run_module_suite()
