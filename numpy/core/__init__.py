@@ -16,6 +16,7 @@ from records import *
 from memmap import *
 from defchararray import *
 import scalarmath
+from function_base import *
 del nt
 
 from fromnumeric import amax as max, amin as min, \
@@ -27,6 +28,7 @@ __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
 __all__ += rec.__all__
 __all__ += char.__all__
+__all__ += function_base.__all__
 
 
 from numpy.testing import Tester

@@ -24,6 +24,11 @@ class TestGrid(TestCase):
         assert_almost_equal(b[-1],b[0]+19*0.1,11)
         assert_almost_equal(a[1]-a[0],2.0/9.0,11)
 
+    def test_linspace_equivalence(self):
+        y,st = np.linspace(2,10,retstep=1)
+        assert_almost_equal(st,8/49.0)
+        assert_array_almost_equal(y,mgrid[2:10:50j],13)
+
     def test_nd(self):
         c = mgrid[-1:1:10j,-2:2:10j]
         d = mgrid[-1:1:0.1,-2:2:0.2]
