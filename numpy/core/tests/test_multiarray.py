@@ -1002,13 +1002,13 @@ class TestFromBuffer(TestCase):
 
 class TestResize(TestCase):
     def test_basic(self):
-        x = np.eye(3)
+        x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         x.resize((5,5))
-        assert_array_equal(x.flat[:9],np.eye(3).flat)
+        assert_array_equal(x.flat[:9],np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
         assert_array_equal(x[9:].flat,0)
 
     def test_check_reference(self):
-        x = np.eye(3)
+        x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
         self.failUnlessRaises(ValueError,x.resize,(5,1))
 
