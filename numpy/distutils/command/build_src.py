@@ -244,11 +244,11 @@ class build_src(build_ext.build_ext):
             install_cmd.finalize_options()
         build_npkg = False
         gd = {}
-        if hasattr(install_cmd, 'install_libbase'):
-            top_prefix = install_cmd.install_libbase
-            build_npkg = True
-        elif self.inplace == 1:
+        if self.inplace == 1:
             top_prefix = '.'
+            build_npkg = True
+        elif hasattr(install_cmd, 'install_libbase'):
+            top_prefix = install_cmd.install_libbase
             build_npkg = True
 
         if build_npkg:
