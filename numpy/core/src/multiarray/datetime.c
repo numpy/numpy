@@ -6,6 +6,8 @@
 
 #include <time.h>
 
+#include "_datetime.h"
+
 /* For defaults and errors */
 #define NPY_FR_ERR  -1
 

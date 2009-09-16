@@ -16,6 +16,7 @@
 #include "ctors.h"
 #include "usertypes.h"
 #include "config.h"
+#include "_datetime.h"
 
 #include "numpyos.h"
 
