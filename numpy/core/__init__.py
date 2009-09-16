@@ -10,7 +10,6 @@ multiarray.set_typeDict(nt.sctypeDict)
 import _sort
 from numeric import *
 from fromnumeric import *
-from defmatrix import *
 import defchararray as char
 import records as rec
 from records import *
@@ -26,7 +25,6 @@ from numeric import absolute as abs
 __all__ = ['char','rec','memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
-__all__ += defmatrix.__all__
 __all__ += rec.__all__
 __all__ += char.__all__
 

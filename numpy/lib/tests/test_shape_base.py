@@ -1,6 +1,7 @@
 from numpy.testing import *
 from numpy.lib import *
 from numpy.core import *
+from numpy import matrix, asmatrix
 
 class TestApplyAlongAxis(TestCase):
     def test_simple(self):

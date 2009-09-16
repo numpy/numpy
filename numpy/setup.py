@@ -14,6 +14,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('linalg')
     config.add_subpackage('random')
     config.add_subpackage('ma')
+    config.add_subpackage('matrx')
     config.add_subpackage('doc')
     config.add_data_dir('doc')
     config.add_data_dir('tests')

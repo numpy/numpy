@@ -1,9 +1,9 @@
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
-import numeric as N
-from numeric import concatenate, isscalar, binary_repr, identity, asanyarray
-from numerictypes import issubdtype
+import numpy.core.numeric as N
+from numpy.core.numeric import concatenate, isscalar, binary_repr, identity, asanyarray
+from numpy.core.numerictypes import issubdtype
 
 # make translation table
 _table = [None]*256

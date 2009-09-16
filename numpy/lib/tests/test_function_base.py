@@ -4,6 +4,7 @@ from numpy.testing import *
 import numpy.lib
 from numpy.lib import *
 from numpy.core import *
+from numpy import matrix, asmatrix
 
 class TestAny(TestCase):
     def test_basic(self):

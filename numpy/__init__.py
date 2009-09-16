@@ -145,6 +145,8 @@ else:
     import random
     import ctypeslib
     import ma
+    import matrx as _mat
+    from matrx import *
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
@@ -155,5 +157,6 @@ else:
     __all__.extend(['__version__', 'pkgload', 'PackageLoader',
                'show_config'])
     __all__.extend(core.__all__)
+    __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
