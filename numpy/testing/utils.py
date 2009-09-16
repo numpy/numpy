@@ -702,11 +702,12 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      y: array([ 1.     ,  2.33333,  5.     ])
 
     """
-    from numpy.core import around, number, float_, any
-    from numpy.lib import issubdtype
+    from numpy.core import around, number, float_
+    from numpy.core.numerictypes import issubdtype
+    from numpy.core.fromnumeric import any as npany
     def compare(x, y):
         try:
-            if any(gisinf(x)) or any( gisinf(y)):
+            if npany(gisinf(x)) or npany( gisinf(y)):
                 xinfid = gisinf(x)
                 yinfid = gisinf(y)
                 if not xinfid == yinfid:

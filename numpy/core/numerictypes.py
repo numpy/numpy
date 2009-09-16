@@ -81,7 +81,8 @@ Exported symbols include:
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
-           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type']
+           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
+           'issubdtype']
 
 from numpy.core.multiarray import typeinfo, ndarray, array, empty, dtype
 import types as _types
