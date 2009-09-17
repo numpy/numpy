@@ -307,6 +307,7 @@ class scons(old_build_ext):
         ('jobs=', 'j', "specify number of worker threads when executing" \
                        "scons"),
         ('inplace', 'i', 'If specified, build in place.'),
+        ('import-env', 'e', 'If specified, import user environment into scons env["ENV"].'),
         ('bypass', 'b', 'Bypass distutils compiler detection (experimental).'),
         ('scons-tool-path=', None, 'specify additional path '\
         '(absolute) to look for scons tools'),
@@ -334,6 +335,7 @@ class scons(old_build_ext):
 
         self.jobs = None
         self.silent = 0
+        self.import_env = 0
         self.scons_tool_path = ''
         # If true, we bypass distutils to find the c compiler altogether. This
         # is to be used in desperate cases (like incompatible visual studio
@@ -505,6 +507,7 @@ class scons(old_build_ext):
 
         cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
         cmd.append('bypass=%s' % self.bypass)
+        cmd.append('import_env=%s' % self.import_env)
         if self.silent:
             if int(self.silent) == 2:
                 cmd.append('-Q')
