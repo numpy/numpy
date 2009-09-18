@@ -1,8 +1,8 @@
 from numpy.testing import *
 from numpy.core import *
 from numpy import matrix, asmatrix, bmat
-from numpy.matrx.defmatrix import matrix_power
-from numpy.matrx import mat
+from numpy.matrixlib.defmatrix import matrix_power
+from numpy.matrixlib import mat
 import numpy as np
 
 class TestCtor(TestCase):

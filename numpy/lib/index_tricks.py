@@ -14,7 +14,7 @@ from numpy.core.numerictypes import find_common_type
 import math
 
 import function_base
-import numpy.matrx as matrix
+import numpy.matrixlib as matrix
 from function_base import diff
 makemat = matrix.matrix
 

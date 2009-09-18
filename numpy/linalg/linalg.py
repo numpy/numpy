@@ -20,7 +20,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         isfinite, size
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
-from numpy.matrx.defmatrix import matrix_power
+from numpy.matrixlib.defmatrix import matrix_power
 
 fortran_int = intc
 

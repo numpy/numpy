@@ -145,8 +145,8 @@ else:
     import random
     import ctypeslib
     import ma
-    import matrx as _mat
-    from matrx import *
+    import matrixlib as _mat
+    from matrixlib import *
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
