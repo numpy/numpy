@@ -59,9 +59,10 @@ def svn_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
-        path = os.environ.get('PATH')
-        if path is not None:
-            env['PATH'] = path
+        for k in ['SYSTEMROOT', 'PATH']:
+            v = os.environ.get(k)
+            if v is not None:
+                env[k] = v
         # LANGUAGE is used on win32
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
