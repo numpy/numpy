@@ -55,6 +55,9 @@ def parse_flags(line):
 
     return d
 
+def _escape_backslash(val):
+    return val.replace('\\', '\\\\')
+
 class LibraryInfo(object):
     def __init__(self, name, description, version, sections, vars, requires=None):
         self.name = name
@@ -71,10 +74,12 @@ class LibraryInfo(object):
         return self._sections.keys()
 
     def cflags(self, section="default"):
-        return self.vars.interpolate(self._sections[section]['cflags'])
+        val = self.vars.interpolate(self._sections[section]['cflags'])
+        return _escape_backslash(val)
 
     def libs(self, section="default"):
-        return self.vars.interpolate(self._sections[section]['libs'])
+        val = self.vars.interpolate(self._sections[section]['libs'])
+        return _escape_backslash(val)
 
     def __str__(self):
         m = ['Name: %s' % self.name]
@@ -182,7 +187,7 @@ def parse_config(filename, dirs=None):
     vars = {}
     if config.has_section('variables'):
         for name, value in config.items("variables"):
-            vars[name] = value.replace("\\", "\\\\")
+            vars[name] = _escape_backslash(value)
 
     # Parse "normal" sections
     secs = [s for s in config.sections() if not s in ['meta', 'variables']]
