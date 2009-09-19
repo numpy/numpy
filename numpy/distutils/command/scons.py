@@ -323,11 +323,15 @@ class scons(old_build_ext):
         ('compiler=', None, "specify the C compiler type"),
         ('cxxcompiler=', None,
          "specify the C++ compiler type (same as C by default)"),
+        ('debug', 'g',
+         "compile/link with debugging information"),
          ] + library_options
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.build_clib = None
+
+        self.debug = 0
 
         self.compiler = None
         self.cxxcompiler = None
@@ -494,6 +498,8 @@ class scons(old_build_ext):
             cmd.append('cc_opt_path=%s' % self.scons_compiler_path)
         else:
             cmd.append('cc_opt=%s' % self.scons_compiler)
+
+        cmd.append('debug=%s' % self.debug)
 
         if self.scons_fcompiler:
             cmd.append('f77_opt=%s' % self.scons_fcompiler)
