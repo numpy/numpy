@@ -399,7 +399,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
                     "ACTUAL: %s\n" \
                     "DESIRED: %s\n" % (str(actual), str(desired)))
 
-    if isinstance(actual, ndarray) or isinstance(desired, ndarray):
+    if isinstance(actual, (ndarray, tuple, list)) \
+            or isinstance(desired, (ndarray, tuple, list)):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
                          header='Arrays are not almost equal')
