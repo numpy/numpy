@@ -22,6 +22,11 @@ try:
     ENABLE_SEPARATE_COMPILATION = True
 except KeyError:
     ENABLE_SEPARATE_COMPILATION = False
+try:
+    os.environ['NPY_BYPASS_SINGLE_EXTENDED']
+    BYPASS_SINGLE_EXTENDED = True
+except KeyError:
+    BYPASS_SINGLE_EXTENDED = False
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = env["PYEXTCPPPATH"])
@@ -171,8 +176,9 @@ for f in OPTIONAL_STDFUNCS_MAYBE:
 check_funcs(OPTIONAL_STDFUNCS)
 
 # C99 functions: float and long double versions
-check_funcs(C99_FUNCS_SINGLE)
-check_funcs(C99_FUNCS_EXTENDED)
+if not BYPASS_SINGLE_EXTENDED:
+    check_funcs(C99_FUNCS_SINGLE)
+    check_funcs(C99_FUNCS_EXTENDED)
 
 # Normally, isnan and isinf are macro (C99), but some platforms only have
 # func, or both func and macro version. Check for macro only, and define
