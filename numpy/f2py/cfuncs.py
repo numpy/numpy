@@ -230,8 +230,12 @@ cppmacros['PRINTPYOBJERR']="""\
 \tfprintf(stderr,\"\\n\");
 """
 cppmacros['MINMAX']="""\
+#ifndef max
 #define max(a,b) ((a > b) ? (a) : (b))
+#endif
+#ifndef min
 #define min(a,b) ((a < b) ? (a) : (b))
+#endif
 #ifndef MAX
 #define MAX(a,b) ((a > b) ? (a) : (b))
 #endif
