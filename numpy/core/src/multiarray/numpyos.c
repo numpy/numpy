@@ -9,7 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 /*
  * From the C99 standard, section 7.19.6: The exponent always contains at least

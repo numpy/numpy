@@ -7,7 +7,7 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 #include "number.h"
 

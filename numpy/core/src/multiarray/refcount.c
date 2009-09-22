@@ -12,7 +12,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);

@@ -9,7 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 /* Functions only needed on narrow builds of Python
    for converting back and forth between the NumPy Unicode data-type

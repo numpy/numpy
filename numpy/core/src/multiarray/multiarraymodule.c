@@ -25,7 +25,7 @@
 
 #include "numpy/npy_math.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 

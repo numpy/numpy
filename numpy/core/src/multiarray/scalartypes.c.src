@@ -12,7 +12,7 @@
 #include "numpy/arrayscalars.h"
 
 
-#include "config.h"
+#include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
 #include "usertypes.h"

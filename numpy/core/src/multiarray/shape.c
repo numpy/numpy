@@ -9,7 +9,7 @@
 
 #include "numpy/npy_math.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 #include "ctors.h"
 

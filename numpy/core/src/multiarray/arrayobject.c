@@ -30,7 +30,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 #include "common.h"
 

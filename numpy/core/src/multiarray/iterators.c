@@ -7,7 +7,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "config.h"
+#include "npy_config.h"
 
 #include "arrayobject.h"
 #include "iterators.h"
