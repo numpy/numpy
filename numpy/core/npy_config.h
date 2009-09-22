@@ -3,4 +3,10 @@
 
 #include "config.h"
 
+/* Disable broken MS math functions */
+#ifdef _MSC_VER
+#undef HAVE_ATAN2
+#undef HAVE_HYPOT
+#endif
+
 #endif
