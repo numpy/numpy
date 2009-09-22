@@ -2678,9 +2678,10 @@ PyMODINIT_FUNC initmultiarray(void) {
         goto err;
     }
 
-#ifdef MS_WIN64
+#if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
-        "Windows 64 bits support is experimental, and only available for \n" \
+	"Numpy built with MINGW-W64 on Windows 64 bits is experimental, " \
+	"and only available for \n" \
         "testing. You are advised not to use it for production. \n\n" \
         "CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS",
         1);
