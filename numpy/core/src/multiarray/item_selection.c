@@ -206,7 +206,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
     PyArrayObject  *indices, *values;
-    int i, chunk, ni, max_item, nv, tmp;
+    intp i, chunk, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
 
@@ -384,7 +384,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
     PyArray_FastPutmaskFunc *func;
     PyArrayObject  *mask, *values;
-    int i, chunk, ni, max_item, nv, tmp;
+    intp i, chunk, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
 

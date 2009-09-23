@@ -287,7 +287,7 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
     int simple;
     int same;
     PyArray_VectorUnaryFunc *castfunc = NULL;
-    int mpsize = PyArray_SIZE(mp);
+    intp mpsize = PyArray_SIZE(mp);
     int iswap, oswap;
     NPY_BEGIN_THREADS_DEF;
 

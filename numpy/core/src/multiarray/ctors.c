@@ -532,7 +532,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 {
     char *aligned = NULL;
     char *sptr;
-    int numcopies, nbytes;
+    intp numcopies, nbytes;
     void (*myfunc)(char *, intp, char *, intp, intp, int);
     int retval = -1;
     NPY_BEGIN_THREADS_DEF;
