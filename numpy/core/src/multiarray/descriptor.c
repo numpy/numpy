@@ -757,10 +757,10 @@ _convert_from_commastring(PyObject *obj, int align)
 static int
 _is_tuple_of_integers(PyObject *obj) 
 {
-    int i, n;
+    int i;
 
     if (!PyTuple_Check(obj)) return 0;
-    if (i=0; i<PyTuple_GET_SIZE(obj); i++) {
+    for (i=0; i<PyTuple_GET_SIZE(obj); i++) {
 	if (!PyArray_IsIntegerScalar(PyTuple_GET_ITEM(obj, i))) {
 	    return 0;
 	}
