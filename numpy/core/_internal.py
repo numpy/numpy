@@ -3,7 +3,7 @@
 
 import re
 import sys
-from _mx_datetime_parser import *
+#from _mx_datetime_parser import *
 
 if (sys.byteorder == 'little'):
     _nbo = '<'
