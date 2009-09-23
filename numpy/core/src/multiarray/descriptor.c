@@ -755,15 +755,17 @@ _convert_from_commastring(PyObject *obj, int align)
 }
 
 static int
-_is_tuple_of_integers(PyObject *obj) 
+_is_tuple_of_integers(PyObject *obj)
 {
     int i;
 
-    if (!PyTuple_Check(obj)) return 0;
-    for (i=0; i<PyTuple_GET_SIZE(obj); i++) {
-	if (!PyArray_IsIntegerScalar(PyTuple_GET_ITEM(obj, i))) {
-	    return 0;
-	}
+    if (!PyTuple_Check(obj)) {
+        return 0;
+    }
+    for (i = 0; i < PyTuple_GET_SIZE(obj); i++) {
+        if (!PyArray_IsIntegerScalar(PyTuple_GET_ITEM(obj, i))) {
+            return 0;
+        }
     }
     return 1;
 }
@@ -790,9 +792,9 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     PyArray_Descr *conv;
 
     *errflag = 0;
-    if (PyArray_IsScalar(newobj, Integer) || 
-	_is_tuple_of_integers(newobj) ||
-	!PyArray_DescrConverter(newobj, &conv)) {
+    if (PyArray_IsScalar(newobj, Integer)
+            || _is_tuple_of_integers(newobj)
+            || !PyArray_DescrConverter(newobj, &conv)) {
         return NULL;
     }
     *errflag = 1;
@@ -802,8 +804,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     }
     if (new->elsize && new->elsize != conv->elsize) {
         PyErr_SetString(PyExc_ValueError,
-                        "mismatch in size of old "\
-                        "and new data-descriptor");
+                "mismatch in size of old and new data-descriptor");
         goto fail;
     }
     new->elsize = conv->elsize;

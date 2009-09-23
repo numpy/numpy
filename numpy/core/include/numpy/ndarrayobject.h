@@ -1293,9 +1293,9 @@ typedef struct {
 #define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) ||           \
                                      PyArray_CheckScalar(obj))
 
-#define PyArray_IsIntegerScalar(obj) (PyInt_Check(obj) ||                     \
-				      PyLong_Check(obj) ||		      \
-				      PyArray_IsScalar((obj), Integer))
+#define PyArray_IsIntegerScalar(obj) (PyInt_Check(obj)                        \
+              || PyLong_Check(obj)                                            \
+              || PyArray_IsScalar((obj), Integer))
 
 
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ?                   \
