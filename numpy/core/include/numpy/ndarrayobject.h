@@ -1044,8 +1044,10 @@ static NPY_INLINE int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
-// static NPY_INLINE int
-// PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
+#if 0
+static NPY_INLINE int
+PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
+#endif
 
 /* Include inline implementations - functions defined there are not considered
  * public API */
