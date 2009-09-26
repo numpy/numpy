@@ -27,7 +27,7 @@ on the initial data::
   [[1 2]
    [3 4]]
   >>> print type(x._data)
-  <class 'numpy.core.defmatrix.matrix'>
+  <class 'numpy.matrixlib.defmatrix.matrix'>
 
 
 In practice, ``_data`` is implemented as a property, not as an attribute.
@@ -45,7 +45,7 @@ The function ``filled(a)`` returns an array of the same type as ``a._data``::
   >>> x = masked_array(numpy.matrix([[1,2],[3,4]]),mask=[[0,0],[0,1]])
   >>> y = filled(x)
   >>> print type(y)
-  <class 'numpy.core.defmatrix.matrix'>
+  <class 'numpy.matrixlib.defmatrix.matrix'>
   >>> print y
   matrix([[     1,      2],
           [     3, 999999]])

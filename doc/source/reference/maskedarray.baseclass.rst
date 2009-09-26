@@ -131,7 +131,7 @@ Attributes and properties of masked arrays
 
       >>> x =  ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 0], [1, 0]])
       >>> x.baseclass
-      <class 'numpy.core.defmatrix.matrix'>
+      <class 'numpy.matrixlib.defmatrix.matrix'>
 
 
 .. attribute:: MaskedArray.sharedmask

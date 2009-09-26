@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.core.defmatrix import matrix, asmatrix
+from numpy.matrixlib.defmatrix import matrix, asmatrix
 # need * as we're copying the numpy namespace
 from numpy import *
 

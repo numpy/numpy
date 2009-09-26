@@ -2749,7 +2749,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     >>> y
     matrix([[513]], dtype=int16)
     >>> print type(y)
-    <class 'numpy.core.defmatrix.matrix'>
+    <class 'numpy.matrixlib.defmatrix.matrix'>
 
     Creating a view on a structured array so it can be used in calculations
 
