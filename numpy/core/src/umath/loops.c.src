@@ -22,6 +22,10 @@
  *****************************************************************************
  */
 
+#define IS_BINARY_REDUCE ((args[0] == args[2])\
+        && (steps[0] == steps[2])\
+        && (steps[0] == 0))
+
 #define OUTPUT_LOOP\
     char *op1 = args[1];\
     intp os1 = steps[1];\
@@ -49,6 +53,14 @@
     intp n = dimensions[0];\
     intp i;\
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
+
+#define BINARY_REDUCE_LOOP(TYPE)\
+    char *iop1 = args[0], *ip2 = args[1]; \
+    intp is2 = steps[1]; \
+    intp n = dimensions[0]; \
+    intp i; \
+    TYPE io1 = *(TYPE *)iop1; \
+    for(i = 0; i < n; i++, ip2 += is2)
 
 #define BINARY_LOOP_TWO_OUT\
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
@@ -433,9 +445,8 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
  */
 
 /**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or#
- * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP =  ==, !=, >, >=, <, <=#
  **/
 
 NPY_NO_EXPORT void
@@ -448,6 +459,37 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     }
 }
 /**end repeat**/
+
+
+/**begin repeat
+ * #kind = logical_and, logical_or#
+ * #OP =  &&, ||#
+ * #SC =  ==, !=#
+ **/
+
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    if(IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(Bool) {
+            const Bool in2 = *(Bool *)ip2;
+            io1 = io1 @OP@ in2;
+            if (io1 @SC@ 0) {
+                break;
+            }
+        }
+        *((Bool *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const Bool in1 = *(Bool *)ip1;
+            const Bool in2 = *(Bool *)ip2;
+            *((Bool *)op1) = in1 @OP@ in2;
+        }
+    }
+}
+/**end repeat**/
+
 
 NPY_NO_EXPORT void
 BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
@@ -590,10 +632,18 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((@s@@type@ *)op1) = in1 @OP@ in2;
+    if(IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@s@@type@) {
+            io1 @OP@= *(@s@@type@ *)ip2;
+        }
+        *((@s@@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @s@@type@ in1 = *(@s@@type@ *)ip1;
+            const @s@@type@ in2 = *(@s@@type@ *)ip2;
+            *((@s@@type@ *)op1) = in1 @OP@ in2;
+        }
     }
 }
 /**end repeat2**/
@@ -978,12 +1028,22 @@ TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UN
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = in1 @OP@ in2;
+    if(IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            io1 @OP@= *(@type@ *)ip2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((@type@ *)op1) = in1 @OP@ in2;
+        }
     }
 }
+/**end repeat1**/
+
 /**end repeat1**/
 
 /**begin repeat1
