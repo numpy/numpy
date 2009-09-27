@@ -247,7 +247,7 @@ def bitname(obj):
         base = 'object'
         bits = 0
 
-    bytes = bits / 8
+    bytes = bits // 8
 
     if char != '' and bytes != 0:
         char = "%s%d" % (char, bytes)
@@ -287,7 +287,7 @@ def _add_aliases():
                 allTypes[myname] = typeobj
                 sctypeDict[myname] = typeobj
                 if base == 'complex':
-                    na_name = '%s%d' % (english_capitalize(base), bit/2)
+                    na_name = '%s%d' % (english_capitalize(base), bit//2)
                 elif base == 'bool':
                     na_name = english_capitalize(base)
                     sctypeDict[na_name] = typeobj
@@ -317,8 +317,8 @@ def _add_integer_aliases():
     for ctype in _ctypes:
         val = typeinfo[ctype]
         bits = val[2]
-        charname = 'i%d' % (bits/8,)
-        ucharname = 'u%d' % (bits/8,)
+        charname = 'i%d' % (bits//8,)
+        ucharname = 'u%d' % (bits//8,)
         intname = 'int%d' % bits
         UIntname = 'UInt%d' % bits
         Intname = 'Int%d' % bits
@@ -562,7 +562,7 @@ def _construct_lookups():
         if not isinstance(val, tuple):
             continue
         obj = val[-1]
-        nbytes[obj] = val[2] / 8
+        nbytes[obj] = val[2] // 8
         _alignment[obj] = val[3]
         if (len(val) > 5):
             _maxvals[obj] = val[4]
