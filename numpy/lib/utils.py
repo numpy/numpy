@@ -293,7 +293,7 @@ def who(vardict=None):
                 namestr = name
                 original=1
             shapestr = " x ".join(map(str, var.shape))
-            bytestr = str(var.itemsize*product(var.shape))
+            bytestr = str(var.nbytes)
             sta.append([namestr, shapestr, bytestr, var.dtype.name,
                         original])
 
