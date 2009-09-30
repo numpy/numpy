@@ -163,5 +163,18 @@ class TestRegression(TestCase):
         x = np.zeros((1,),dt)
         assert(np.r_[x,x].dtype == dt)
 
+    def test_who_with_0dim_array(self, level=rlevel) :
+        """ticket #1243"""
+        import os, sys
+
+        sys.stdout = open(os.devnull, 'w')
+        try :
+            tmp = np.who({'foo' : np.array(1)})
+            sys.stdout = sys.__stdout__
+        except :
+            sys.stdout = sys.__stdout__
+            raise AssertionError("ticket #1243")
+
+
 if __name__ == "__main__":
     run_module_suite()
