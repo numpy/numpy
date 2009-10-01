@@ -427,6 +427,7 @@ class scons(old_build_ext):
         self.pre_hooks = []
         self.post_hooks = []
         self.pkg_names = []
+        self.pkg_paths = []
 
         if self.distribution.has_scons_scripts():
             for i in self.distribution.scons_data:
@@ -434,6 +435,7 @@ class scons(old_build_ext):
                 self.pre_hooks.append(i.pre_hook)
                 self.post_hooks.append(i.post_hook)
                 self.pkg_names.append(i.parent_name)
+                self.pkg_paths.append(i.pkg_path)
             # This crap is needed to get the build_clib
             # directory
             build_clib_cmd = get_cmd("build_clib").get_finalized_command("build_clib")
@@ -467,7 +469,7 @@ class scons(old_build_ext):
         if self.package_list:
             self.package_list = parse_package_list(self.package_list)
 
-    def _call_scons(self, scons_exec, sconscript, pkg_name, bootstrapping):
+    def _call_scons(self, scons_exec, sconscript, pkg_name, pkg_path, bootstrapping):
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
@@ -483,6 +485,7 @@ class scons(old_build_ext):
             cmd.append("inplace=1")
         cmd.append('scons_tool_path="%s"' % self.scons_tool_path)
         cmd.append('src_dir="%s"' % pdirname(sconscript))
+        cmd.append('pkg_path="%s"' % pkg_path)
         cmd.append('pkg_name="%s"' % pkg_name)
         cmd.append('log_level=%s' % self.log_level)
         #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
@@ -553,11 +556,13 @@ the output it."""
             pre_hooks = [self.pre_hooks[i] for i in id]
             post_hooks = [self.post_hooks[i] for i in id]
             pkg_names = [self.pkg_names[i] for i in id]
+            pkg_paths = [self.pkg_names[i] for i in id]
         else:
             sconscripts = self.sconscripts
             pre_hooks = self.pre_hooks
             post_hooks = self.post_hooks
             pkg_names = self.pkg_names
+            pkg_paths = self.pkg_paths
 
         if is_bootstrapping():
             bootstrapping = 1
@@ -567,14 +572,14 @@ the output it."""
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
 
-        for sconscript, pre_hook, post_hook, pkg_name in zip(sconscripts,
+        for sconscript, pre_hook, post_hook, pkg_name, pkg_path in zip(sconscripts,
                                                    pre_hooks, post_hooks,
-                                                   pkg_names):
+                                                   pkg_names, pkg_paths):
             if pre_hook:
                 pre_hook()
 
             if sconscript:
-                self._call_scons(scons_exec, sconscript, pkg_name, bootstrapping)
+                self._call_scons(scons_exec, sconscript, pkg_name, pkg_path, bootstrapping)
 
             if post_hook:
                 post_hook(**{'pkg_name': pkg_name, 'scons_cmd' : self})

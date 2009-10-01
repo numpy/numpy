@@ -592,12 +592,19 @@ def get_frame(level=0):
 
 class SconsInfo(object):
     def __init__(self, scons_path, parent_name, pre_hook,
-            post_hook, source_files):
+            post_hook, source_files, pkg_path):
         self.scons_path = scons_path
         self.parent_name = parent_name
         self.pre_hook = pre_hook
         self.post_hook = post_hook
         self.source_files = source_files
+        if pkg_path:
+            self.pkg_path = pkg_path
+        else:
+            if scons_path:
+                self.pkg_path = os.path.dirname(scons_path)
+            else:
+                self.pkg_path = ''
 
 ######################
 
@@ -1526,7 +1533,7 @@ class Configuration(object):
 
     def add_sconscript(self, sconscript, subpackage_path=None,
                        standalone = False, pre_hook = None,
-                       post_hook = None, source_files = None):
+                       post_hook = None, source_files = None, package_path=None):
         """Add a sconscript to configuration.
 
         pre_hook and post hook should be sequences of callable, which will be
@@ -1553,7 +1560,7 @@ class Configuration(object):
 
         scons_info = SconsInfo(fullsconsname, parent_name,
                                pre_hook, post_hook,
-                               full_source_files)
+                               full_source_files, package_path)
         if dist is not None:
             dist.scons_data.append(scons_info)
             self.warn('distutils distribution has been initialized,'\
