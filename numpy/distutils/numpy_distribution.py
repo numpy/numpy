@@ -15,18 +15,3 @@ class NumpyDistribution(Distribution):
 
     def has_scons_scripts(self):
         return bool(self.scons_data)
-
-    def get_scons_scripts(self):
-        return [i[0] for i in self.scons_data]
-
-    def get_scons_pre_hooks(self):
-        return [i[1] for i in self.scons_data]
-
-    def get_scons_post_hooks(self):
-        return [i[2] for i in self.scons_data]
-
-    def get_scons_sources(self):
-        return [i[3] for i in self.scons_data]
-
-    def get_scons_parent_names(self):
-        return [i[4] for i in self.scons_data]

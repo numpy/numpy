@@ -590,6 +590,15 @@ def get_frame(level=0):
             frame = frame.f_back
         return frame
 
+class SconsInfo(object):
+    def __init__(self, scons_path, parent_name, pre_hook,
+            post_hook, source_files):
+        self.scons_path = scons_path
+        self.parent_name = parent_name
+        self.pre_hook = pre_hook
+        self.post_hook = post_hook
+        self.source_files = source_files
+
 ######################
 
 class Configuration(object):
@@ -1542,23 +1551,18 @@ class Configuration(object):
         if source_files:
             full_source_files.extend([self.paths(i)[0] for i in source_files])
 
+        scons_info = SconsInfo(fullsconsname, parent_name,
+                               pre_hook, post_hook,
+                               full_source_files)
         if dist is not None:
-            dist.scons_data.append((fullsconsname,
-                                    pre_hook,
-                                    post_hook,
-                                    full_source_files,
-                                    parent_name))
+            dist.scons_data.append(scons_info)
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
             # XXX: we add a fake extension, to correctly initialize some
             # options in distutils command.
             dist.add_extension('', sources = [])
         else:
-            self.scons_data.append((fullsconsname,
-                                    pre_hook,
-                                    post_hook,
-                                    full_source_files,
-                                    parent_name))
+            self.scons_data.append(scons_info)
             # XXX: we add a fake extension, to correctly initialize some
             # options in distutils command.
             self.add_extension('', sources = [])

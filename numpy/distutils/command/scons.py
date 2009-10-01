@@ -422,20 +422,22 @@ class scons(old_build_ext):
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
+
+        self.sconscripts = []
+        self.pre_hooks = []
+        self.post_hooks = []
+        self.pkg_names = []
+
         if self.distribution.has_scons_scripts():
-            self.sconscripts = self.distribution.get_scons_scripts()
-            self.pre_hooks = self.distribution.get_scons_pre_hooks()
-            self.post_hooks = self.distribution.get_scons_post_hooks()
-            self.pkg_names = self.distribution.get_scons_parent_names()
+            for i in self.distribution.scons_data:
+                self.sconscripts.append(i.scons_path)
+                self.pre_hooks.append(i.pre_hook)
+                self.post_hooks.append(i.post_hook)
+                self.pkg_names.append(i.parent_name)
             # This crap is needed to get the build_clib
             # directory
             build_clib_cmd = get_cmd("build_clib").get_finalized_command("build_clib")
             self.build_clib = build_clib_cmd.build_clib
-        else:
-            self.sconscripts = []
-            self.pre_hooks = []
-            self.post_hooks = []
-            self.pkg_names = []
 
         if not self.cxxcompiler:
             self.cxxcompiler = self.compiler
