@@ -378,6 +378,8 @@ register ufuncs for user-defined data-types.
         ...
 
 
+.. _user.user-defined-data-types:
+
 User-defined data-types
 =======================
 

@@ -93,7 +93,7 @@ the source code).
 Copies vs. in-place operation
 -----------------------------
 Most of the functions in `numpy` return a copy of the array argument
-(e.g., `sort`).  In-place versions of these functions are often
+(e.g., `np.sort`).  In-place versions of these functions are often
 available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
 Exceptions to this rule are documented.
 
