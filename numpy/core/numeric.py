@@ -197,8 +197,8 @@ def asarray(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('FORTRAN') memory
-        representation.  Defaults to 'C'.
+        Whether to use row-major ('C') or column-major ('F' for FORTRAN)
+        memory representation.  Defaults to 'C'.
 
     Returns
     -------
@@ -231,6 +231,16 @@ def asarray(a, dtype=None, order=None):
 
     >>> a = np.array([1, 2])
     >>> np.asarray(a) is a
+    True
+
+    Contrary to `asanyarray`, ndarray subclasses are not passed through:
+
+    >>> issubclass(np.matrix, np.ndarray)
+    True
+    >>> a = np.matrix([[1, 2]])
+    >>> np.asarray(a) is a
+    False
+    >>> np.asanyarray(a) is a
     True
 
     """
@@ -618,16 +628,19 @@ def correlate(a,v,mode='valid',old_behavior=True):
     --------
     convolve : Discrete, linear convolution of two
                one-dimensional sequences.
+    acorrelate : Discrete correlation following the usual signal processing
+               definition for complex arrays, and without assuming that
+               ``correlate(a, b) == correlate(b, a)``.
 
-    Note
-    ----
-    If old_behavior is False, this function computes the correlation as
+    Notes
+    -----
+    If `old_behavior` is False, this function computes the correlation as
     generally defined in signal processing texts::
 
         z[k] = sum_n a[n] * conj(v[n+k])
 
-    with a and v sequences being zero-padded where necessary and conj being the
-    conjugate.
+    with a and v sequences being zero-padded where necessary and conj being
+    the conjugate.
 
     Examples
     --------
@@ -747,10 +760,11 @@ def convolve(a,v,mode='full'):
 
 def outer(a,b):
     """
-    Returns the outer product of two vectors.
+    Compute the outer product of two vectors.
 
-    Given two vectors, ``[a0, a1, ..., aM]`` and ``[b0, b1, ..., bN]``,
-    the outer product becomes::
+    Given two vectors, ``a = [a0, a1, ..., aM]`` and
+    ``b = [b0, b1, ..., bN]``,
+    the outer product [1]_ is::
 
       [[a0*b0  a0*b1 ... a0*bN ]
        [a1*b0    .
@@ -759,25 +773,50 @@ def outer(a,b):
 
     Parameters
     ----------
-    a : array_like, shaped (M,)
-        First input vector.  If either of the input vectors are not
-        1-dimensional, they are flattened.
-    b : array_like, shaped (N,)
-        Second input vector.
+    a, b : array_like, shape (M,), (N,)
+        First and second input vectors.  Inputs are flattened if they
+        are not already 1-dimensional.
 
     Returns
     -------
-    out : ndarray, shaped (M, N)
+    out : ndarray, shape (M, N)
         ``out[i, j] = a[i] * b[j]``
 
-    Notes
-    -----
-    The outer product of vectors is a special case of the Kronecker product.
+    References
+    ----------
+    .. [1] : G. H. Golub and C. F. van Loan, *Matrix Computations*, 3rd
+             ed., Baltimore, MD, Johns Hopkins University Press, 1996,
+             pg. 8.
 
     Examples
     --------
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    Make a (*very* coarse) grid for computing a Mandelbrot set:
 
+    >>> rl = np.outer(np.ones((5,)), np.linspace(-2, 2, 5))
+    >>> rl
+    array([[-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.],
+           [-2., -1.,  0.,  1.,  2.]])
+    >>> im = np.outer(1j*np.linspace(2, -2, 5), np.ones((5,)))
+    >>> im
+    array([[ 0.+2.j,  0.+2.j,  0.+2.j,  0.+2.j,  0.+2.j],
+           [ 0.+1.j,  0.+1.j,  0.+1.j,  0.+1.j,  0.+1.j],
+           [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
+           [ 0.-1.j,  0.-1.j,  0.-1.j,  0.-1.j,  0.-1.j],
+           [ 0.-2.j,  0.-2.j,  0.-2.j,  0.-2.j,  0.-2.j]])
+    >>> grid = rl + im
+    >>> grid
+    array([[-2.+2.j, -1.+2.j,  0.+2.j,  1.+2.j,  2.+2.j],
+           [-2.+1.j, -1.+1.j,  0.+1.j,  1.+1.j,  2.+1.j],
+           [-2.+0.j, -1.+0.j,  0.+0.j,  1.+0.j,  2.+0.j],
+           [-2.-1.j, -1.-1.j,  0.-1.j,  1.-1.j,  2.-1.j],
+           [-2.-2.j, -1.-2.j,  0.-2.j,  1.-2.j,  2.-2.j]])
+
+    An example using a "vector" of letters:
+
+    >>> x = np.array(['a', 'b', 'c'], dtype=object)
     >>> np.outer(x, [1, 2, 3])
     array([[a, aa, aaa],
            [b, bb, bbb],
@@ -806,39 +845,46 @@ except ImportError:
 
 def tensordot(a, b, axes=2):
     """
-    Returns the tensor dot product for (ndim >= 1) arrays along an axes.
+    Compute tensor dot product along specified axes for arrays >= 1-D.
 
-    The first element of the sequence determines the axis or axes
-    in `a` to sum over, and the second element in `axes` argument sequence
-    determines the axis or axes in `b` to sum over.
+    Given two tensors (arrays of dimension greater than or equal to one),
+    ``a`` and ``b``, and an array_like object containing two array_like
+    objects, ``(a_axes, b_axes)``, sum the products of ``a``'s and ``b``'s
+    elements (components) over the axes specified by ``a_axes`` and
+    ``b_axes``. The third argument can be a single non-negative
+    integer_like scalar, ``N``; if it is such, then the last ``N``
+    dimensions of ``a`` and the first ``N`` dimensions of ``b`` are summed
+    over.
 
     Parameters
     ----------
-    a : array_like
-        Input array.
-    b : array_like
-        Input array.
-    axes : shape tuple
-        Axes to be summed over.
+    a, b : array_like, len(shape) >= 1
+        Tensors to "dot".
+
+    axes : variable type
+
+    * integer_like scalar
+      Number of axes to sum over (applies to both arrays); or
+
+    * array_like, shape = (2,), both elements array_like
+      Axes to be summed over, first sequence applying to ``a``, second
+      to ``b``.
 
     See Also
     --------
-    dot
+    numpy.dot
 
     Notes
     -----
-    r_{xxx, yyy} = \\sum_k a_{xxx,k} b_{k,yyy}
-
-    When there is more than one axis to sum over, the corresponding
-    arguments to axes should be sequences of the same length with the first
-    axis to sum over given first in both sequences, the second axis second,
-    and so forth.
-
-    If the `axes` argument is an integer, N, then the last N dimensions of `a`
-    and first N dimensions of `b` are summed over.
+    When there is more than one axis to sum over - and they are not the last
+    (first) axes of ``a`` (``b``) - the argument ``axes`` should consist of
+    two sequences of the same length, with the first axis to sum over given
+    first in both sequences, the second axis second, and so forth.
 
     Examples
     --------
+    A "traditional" example:
+
     >>> a = np.arange(60.).reshape(3,4,5)
     >>> b = np.arange(24.).reshape(4,3,2)
     >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
@@ -850,14 +896,62 @@ def tensordot(a, b, axes=2):
            [ 4664.,  5018.],
            [ 4796.,  5162.],
            [ 4928.,  5306.]])
-
     >>> # A slower but equivalent way of computing the same...
-    >>> c = np.zeros((5,2))
+    >>> d = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
     ...     for k in range(3):
     ...       for n in range(4):
-    ...         c[i,j] += a[k,n,i] * b[n,k,j]
+    ...         d[i,j] += a[k,n,i] * b[n,k,j]
+    >>> c == d
+    array([[ True,  True],
+           [ True,  True],
+           [ True,  True],
+           [ True,  True],
+           [ True,  True]], dtype=bool)
+
+    An extended example taking advantage of the overloading of + and \\*:
+
+    >>> a = np.array(range(1, 9))
+    >>> a.shape = (2, 2, 2)
+    >>> A = np.array(('a', 'b', 'c', 'd'), dtype=object)
+    >>> A.shape = (2, 2)
+    >>> a; A
+    array([[[1, 2],
+            [3, 4]],
+           [[5, 6],
+            [7, 8]]])
+    array([[a, b],
+           [c, d]], dtype=object)
+
+    >>> np.tensordot(a, A) # third argument default is 2
+    array([abbcccdddd, aaaaabbbbbbcccccccdddddddd], dtype=object)
+
+    >>> np.tensordot(a, A, 1)
+    array([[[acc, bdd],
+            [aaacccc, bbbdddd]],
+           [[aaaaacccccc, bbbbbdddddd],
+            [aaaaaaacccccccc, bbbbbbbdddddddd]]], dtype=object)
+
+    >>> np.tensordot(a, A, 0) # "Left for reader" (result too long to incl.)
+
+    >>> np.tensordot(a, A, (0, 1))
+    array([[[abbbbb, cddddd],
+            [aabbbbbb, ccdddddd]],
+           [[aaabbbbbbb, cccddddddd],
+            [aaaabbbbbbbb, ccccdddddddd]]], dtype=object)
+
+    >>> np.tensordot(a, A, (2, 1))
+    array([[[abb, cdd],
+            [aaabbbb, cccdddd]],
+           [[aaaaabbbbbb, cccccdddddd],
+            [aaaaaaabbbbbbbb, cccccccdddddddd]]], dtype=object)
+
+    >>> np.tensordot(a, A, ((0, 1), (0, 1)))
+    array([abbbcccccddddddd, aabbbbccccccdddddddd], dtype=object)
+
+    >>> np.tensordot(a, A, ((2, 1), (1, 0)))
+    array([acccbbdddd, aaaaacccccccbbbbbbdddddddd], dtype=object)
 
     """
     try:
@@ -1384,19 +1478,26 @@ def fromfunction(function, shape, **kwargs):
 
     Parameters
     ----------
-    fn : callable
+    function : callable
         The function is called with N parameters, each of which
         represents the coordinates of the array varying along a
         specific axis.  For example, if `shape` were ``(2, 2)``, then
         the parameters would be two arrays, ``[[0, 0], [1, 1]]`` and
-        ``[[0, 1], [0, 1]]``.  `fn` must be capable of operating on
+        ``[[0, 1], [0, 1]]``.  `function` must be capable of operating on
         arrays, and should return a scalar value.
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
-        the coordinate arrays passed to `fn`.
+        the coordinate arrays passed to `function`.
     dtype : data-type, optional
-        Data-type of the coordinate arrays passed to `fn`.  By default,
-        `dtype` is float.
+        Data-type of the coordinate arrays passed to `function`.
+        By default, `dtype` is float.
+
+    Returns
+    -------
+    out : any
+        The result of the call to `function` is passed back directly.
+        Therefore the type and shape of `out` is completely determined by
+        `function`.
 
     See Also
     --------
@@ -1404,7 +1505,7 @@ def fromfunction(function, shape, **kwargs):
 
     Notes
     -----
-    Keywords other than `shape` and `dtype` are passed to the function.
+    Keywords other than `shape` and `dtype` are passed to `function`.
 
     Examples
     --------
@@ -1611,8 +1712,18 @@ _cload = load
 _file = file
 
 def load(file):
-    """Wrapper around cPickle.load which accepts either a file-like object or
+    """
+    Wrapper around cPickle.load which accepts either a file-like object or
     a filename.
+
+    Note that the NumPy binary format is not based on pickle/cPickle anymore.
+    For details on the preferred way of loading and saving files, see `load`
+    and `save`.
+
+    See Also
+    --------
+    load, save
+
     """
     if isinstance(file, type("")):
         file = _file(file,"rb")
@@ -1737,6 +1848,10 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     True.
 
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+
+    The above equation is not symmetric in `a` and `b`, so that
+    `allclose(a, b)` might be different from `allclose(b, a)` in
+    some rare cases.
 
     Examples
     --------
@@ -1897,7 +2012,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     See also
     --------
-    seterrcall : set a callback function for the 'call' mode.
+    seterrcall : Set a callback function for the 'call' mode.
     geterr, geterrcall
 
     Notes
@@ -1934,6 +2049,14 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.int16(32000) * np.int16(3)
     Warning: overflow encountered in short_scalars
     30464
+
+    Calling `seterr` with no arguments resets treatment for all floating-point
+    errors to the defaults.
+
+    >>> old_settings = np.seterr()
+    >>> np.geterr()
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+    'under': 'ignore'}
 
     """
 
@@ -2065,7 +2188,7 @@ def seterrcall(func):
 
     Returns
     -------
-    h : callable or log instance
+    h : callable, log instance or None
         The old error handler.
 
     See Also
@@ -2077,13 +2200,13 @@ def seterrcall(func):
     Callback upon error:
 
     >>> def err_handler(type, flag):
-        print "Floating point error (%s), with flag %s" % (type, flag)
+            print "Floating point error (%s), with flag %s" % (type, flag)
     ...
 
     >>> saved_handler = np.seterrcall(err_handler)
     >>> save_err = np.seterr(all='call')
 
-    >>> np.array([1,2,3])/0.0
+    >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
     array([ Inf,  Inf,  Inf])
 
@@ -2101,7 +2224,7 @@ def seterrcall(func):
     >>> saved_handler = np.seterrcall(log)
     >>> save_err = np.seterr(all='log')
 
-    >>> np.array([1,2,3])/0.0
+    >>> np.array([1, 2, 3]) / 0.0
     LOG: Warning: divide by zero encountered in divide
 
     >>> np.seterrcall(saved_handler)
@@ -2150,9 +2273,10 @@ def geterrcall():
     >>> def err_handler(type, flag):
     ...     print "Floating point error (%s), with flag %s" % (type, flag)
     >>> oldhandler = np.seterrcall(err_handler)
-    >>> np.array([1,2,3])/0.0
+    >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
     array([ Inf,  Inf,  Inf])
+
     >>> cur_handler = np.geterrcall()
     >>> cur_handler is err_handler
     True
@@ -2165,29 +2289,64 @@ class _unspecified(object):
 _Unspecified = _unspecified()
 
 class errstate(object):
-    """with errstate(**state): --> operations in following block use given state.
+    """
+    errstate(**kwargs)
 
-    # Set error handling to known state.
-    >>> _ = np.seterr(invalid='raise', divide='raise', over='raise',
-    ...               under='ignore')
+    Context manager for floating-point error handling.
 
-    >>> a = -np.arange(3)
-    >>> with np.errstate(invalid='ignore'): # doctest: +SKIP
-    ...     print np.sqrt(a)                # with statement requires Python 2.5
-    [ 0.     -1.#IND -1.#IND]
-    >>> print np.sqrt(a.astype(complex))
-    [ 0.+0.j          0.+1.j          0.+1.41421356j]
-    >>> print np.sqrt(a)
+    Using an instance of `errstate` as a context manager allows statements in
+    that context to execute with a known error handling behavior. Upon entering
+    the context the error handling is set with `seterr` and `seterrcall`, and
+    upon exiting it is reset to what it was before.
+
+    Parameters
+    ----------
+    kwargs : {divide, over, under, invalid}
+        Keyword arguments. The valid keywords are the possible floating-point
+        exceptions. Each keyword should have a string value that defines the
+        treatment for the particular error. Possible values are
+        {'ignore', 'warn', 'raise', 'call', 'print', 'log'}.
+
+    See Also
+    --------
+    seterr, geterr, seterrcall, geterrcall
+
+    Notes
+    -----
+    The ``with`` statement was introduced in Python 2.5, and can only be used
+    there by importing it: ``from __future__ import with_statement``. In
+    earlier Python versions the ``with`` statement is not available.
+
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> from __future__ import with_statement  # use 'with' in Python 2.5
+    >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
+
+    >>> np.arange(3) / 0.
+    array([ NaN,  Inf,  Inf])
+    >>> with np.errstate(divide='warn'):
+    ...     np.arange(3) / 0.
+    ...
+    __main__:2: RuntimeWarning: divide by zero encountered in divide
+    array([ NaN,  Inf,  Inf])
+
+    >>> np.sqrt(-1)
+    nan
+    >>> with np.errstate(invalid='raise'):
+    ...     np.sqrt(-1)
+    ...
     Traceback (most recent call last):
-     ...
+      File "<stdin>", line 2, in <module>
     FloatingPointError: invalid value encountered in sqrt
-    >>> with np.errstate(divide='ignore'):  # doctest: +SKIP
-    ...     print a/0
-    [0 0 0]
-    >>> print a/0
-    Traceback (most recent call last):
-        ...
-    FloatingPointError: divide by zero encountered in divide
+
+    Outside the context the error handling behavior has not changed:
+
+    >>> np.geterr()
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+    'under': 'ignore'}
 
     """
     # Note that we don't want to run the above doctests because they will fail

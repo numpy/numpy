@@ -49,9 +49,9 @@ class memmap(ndarray):
 
         Default is 'r+'.
     offset : integer, optional
-        In the file, array data starts at this offset.  `offset` should be
-        a multiple of the byte-size of `dtype`.  Requires `shape=None`.
-        The default is 0.
+        In the file, array data starts at this offset. Since `offset` is
+        measured in bytes, it should be a multiple of the byte-size of
+        `dtype`. Requires `shape=None`. The default is 0.
     shape : tuple, optional
         The desired shape of the array. By default, the returned array will be
         1-D with the number of elements determined by file size and data-type.
@@ -75,10 +75,7 @@ class memmap(ndarray):
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
 
-    Notes
-    -----
-
-    Memory-mapped arrays use the the Python memory-map object which
+    Memory-mapped arrays use the Python memory-map object which
     (prior to Python 2.5) does not allow files to be larger than a
     certain size depending on the platform. This size is always < 2GB
     even on 64-bit systems.
@@ -128,13 +125,6 @@ class memmap(ndarray):
     >>> fpr = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
     >>> fpr.flags.writeable
     False
-
-    Cannot assign to read-only, obviously:
-
-    >>> fpr[0, 3] = 56
-    Traceback (most recent call last):
-        ...
-    RuntimeError: array is not writeable
 
     Copy-on-write memmap:
 
@@ -245,7 +235,24 @@ class memmap(ndarray):
             self._mmap = None
 
     def flush(self):
-        """Flush any changes in the array to the file on disk."""
+        """
+        Write any changes in the array to the file on disk.
+
+        For further information, see `memmap`.
+
+        Parameters
+        ----------
+        None
+
+        See Also
+        --------
+        memmap
+
+        Examples
+        --------
+        Awaiting one...
+
+        """
         if self._mmap is not None:
             self._mmap.flush()
 

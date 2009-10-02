@@ -51,7 +51,6 @@ class MachAr(object):
     ngrd : int
         Number of 'guard digits' used when truncating the product
         of two mantissas to fit the representation.
-
     epsilon : float
         Same as `eps`.
     tiny : float
@@ -61,7 +60,30 @@ class MachAr(object):
     precision : float
         ``- int(-log10(eps))``
     resolution : float
-        `` - 10**(-precision)``
+        ``- 10**(-precision)``
+
+    Parameters
+    ----------
+    float_conv : function, optional
+        Function that converts an integer or integer array to a float
+        or float array. Default is `float`.
+    int_conv : function, optional
+        Function that converts a float or float array to an integer or
+        integer array. Default is `int`.
+    float_to_float : function, optional
+        Function that converts a float array to float. Default is `float`.
+        Note that this does not seem to do anything useful in the current
+        implementation.
+    float_to_str : function, optional
+        Function that converts a single float to a string. Default is
+        ``lambda v:'%24.16e' %v``.
+    title : str, optional
+        Title that is printed in the string representation of `MachAr`.
+
+    See Also
+    --------
+    finfo : Machine limits for floating point types.
+    iinfo : Machine limits for integer types.
 
     References
     ----------

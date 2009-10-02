@@ -1,3 +1,14 @@
+"""
+Module for character arrays.
+
+.. note::
+   The chararray module exists for backwards compatibility with Numarray,
+   it is not recommended for new development. If one needs arrays of
+   strings, use arrays of `dtype` object.
+
+The preferred alias for `defchararray` is `numpy.char`.
+
+"""
 import sys
 from numerictypes import string_, unicode_, integer, object_
 from numeric import ndarray, broadcast, empty, compare_chararrays
@@ -20,14 +31,62 @@ class chararray(ndarray):
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
               strides=None, order=None)
 
-    A character array of string or unicode type.
+    An array of fixed size (perhaps unicode) strings.
 
-    The array items will be `itemsize` characters long.
+    .. note::
+       The chararray module exists for backwards compatibility with Numarray,
+       it is not recommended for new development. If one needs arrays of
+       strings, use arrays of `dtype` object.
 
-    Create the array using buffer (with offset and strides) if it is
-    not None. If buffer is None, then construct a new array with strides
-    in Fortran order if len(shape) >=2 and order is 'Fortran' (otherwise
-    the strides will be in 'C' order).
+    Create the array, using `buffer` (with `offset` and `strides`) if it is
+    not ``None``. If `buffer` is ``None``, then construct a new array with
+    `strides` in "C order," unless both ``len(shape) >= 2`` and
+    ``order='Fortran'``, in which case `strides` is in "Fortran order."
+
+    Parameters
+    ----------
+    shape : tuple
+        Shape of the array.
+
+    itemsize : int_like, > 0, optional
+        Length of each array element, in number of characters. Default is 1.
+
+    unicode : {True, False}, optional
+        Are the array elements of unicode-type (``True``) or string-type
+        (``False``, the default).
+
+    buffer : integer, > 0, optional
+        Memory address of the start of the array data.  If ``None`` (the
+        default), a new array is created.
+
+    offset : integer, >= 0, optional
+        Fixed stride displacement from the beginning of an axis? Default is
+        0.
+
+    strides : array_like(?), optional
+        Strides for the array (see `numpy.ndarray.strides` for full
+        description), default is ``None``.
+
+    order : {'C', 'F'}, optional
+        The order in which the array data is stored in memory: 'C' -> "row
+        major" order (the default), 'F' -> "column major" (Fortran) order
+
+    Examples
+    --------
+    >>> charar = np.chararray((3, 3))
+    >>> charar[:,:] = 'abc'
+    >>> charar
+    chararray([['a', 'a', 'a'],
+           ['a', 'a', 'a'],
+           ['a', 'a', 'a']],
+          dtype='|S1')
+    >>> charar = np.chararray(charar.shape, itemsize=5)
+    >>> charar[:,:] = 'abc'
+    >>> charar
+    chararray([['abc', 'abc', 'abc'],
+           ['abc', 'abc', 'abc'],
+           ['abc', 'abc', 'abc']],
+          dtype='|S5')
 
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
@@ -144,6 +203,23 @@ class chararray(ndarray):
         return NotImplemented
 
     def argsort(self, axis=-1, kind='quicksort', order=None):
+        """
+        Return the indices that sort the array lexicographically.
+
+        For full documentation see `numpy.argsort`, for which this method is
+        in fact merely a "thin wrapper."
+
+        Examples
+        --------
+        >>> c = np.array(['a1b c', '1b ca', 'b ca1', 'Ca1b'], 'S5')
+        >>> c = c.view(np.chararray); c
+        chararray(['a1b c', '1b ca', 'b ca1', 'Ca1b'],
+              dtype='|S5')
+        >>> c[c.argsort()]
+        chararray(['1b ca', 'Ca1b', 'a1b c', 'b ca1'],
+              dtype='|S5')
+
+        """
         return self.__array__().argsort(axis, kind, order)
 
     def _generalmethod(self, name, myiter):
@@ -184,6 +260,33 @@ class chararray(ndarray):
         return result
 
     def capitalize(self):
+        """
+        Capitalize the first character of each array element.
+
+        For each element of `self`, if the first character is a letter
+        possessing both "upper-case" and "lower-case" forms, and it is
+        presently in lower-case, change it to upper-case; otherwise, leave
+        it untouched.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : chararray
+            `self` with each element "title-cased."
+
+        Examples
+        --------
+        >>> c = np.array(['a1b2','1b2a','b2a1','2a1b'],'S4').view(np.chararray); c
+        chararray(['a1b2', '1b2a', 'b2a1', '2a1b'],
+              dtype='|S4')
+        >>> c.capitalize()
+        chararray(['A1b2', '1b2a', 'B2a1', '2a1b'],
+              dtype='|S4')
+
+        """
         return self._samemethod('capitalize')
 
     if sys.version[:3] >= '2.4':
@@ -208,15 +311,161 @@ class chararray(ndarray):
             return self._generalmethod('center', broadcast(self, width))
 
     def count(self, sub, start=None, end=None):
+        """
+        Return the number of occurrences of a sub-string in each array element.
+
+        Parameters
+        ----------
+        sub : string
+            The sub-string to count.
+        start : int, optional
+            The string index at which to start counting in each element.
+        end : int, optional
+            The string index at which to end counting in each element.
+
+        Returns
+        -------
+        ret : ndarray of ints
+            Array whose elements are the number of occurrences of `sub` in each
+            element of `self`.
+
+        Examples
+        --------
+        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
+        >>> c
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+        >>> c.count('A')
+        array([3, 1, 1])
+        >>> c.count('aA')
+        array([3, 1, 0])
+        >>> c.count('A', start=1, end=4)
+        array([2, 1, 1])
+        >>> c.count('A', start=1, end=3)
+        array([1, 0, 0])
+
+        """
         return self._typedmethod('count', broadcast(self, sub, start, end), int)
 
     def decode(self,encoding=None,errors=None):
+        """
+        Return elements decoded according to the value of `encoding`.
+
+        Parameters
+        ----------
+        encoding : string, optional
+            The encoding to use; for a list of acceptable values, see the
+            Python docstring for the package 'encodings'
+        error : Python exception object?, optional
+            The exception to raise if decoding fails?
+
+        Returns
+        -------
+        ret : chararray
+            A view of `self`, suitably decoded.
+
+        See Also
+        --------
+        encode
+        encodings
+            (package)
+
+        Examples
+        --------
+        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
+        >>> c
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+        >>> c = c.encode(encoding='cp037'); c
+        chararray(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
+               '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
+              dtype='|S7')
+        >>> c.decode(encoding='cp037')
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+
+        """
         return self._generalmethod('decode', broadcast(self, encoding, errors))
 
     def encode(self,encoding=None,errors=None):
+        """
+        Return elements encoded according to the value of `encoding`.
+
+        Parameters
+        ----------
+        encoding : string, optional
+            The encoding to use; for a list of acceptable values, see the
+            Python docstring for `encodings`.
+        error : Python exception object, optional
+            The exception to raise if encoding fails.
+
+        Returns
+        -------
+        ret : chararray
+            A view of `self`, suitably encoded.
+
+        See Also
+        --------
+        decode
+
+        Examples
+        --------
+        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
+        >>> c
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+        >>> c.encode(encoding='cp037')
+        chararray(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
+               '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
+              dtype='|S7')
+
+        """
         return self._generalmethod('encode', broadcast(self, encoding, errors))
 
     def endswith(self, suffix, start=None, end=None):
+        """
+        Check whether elements end with specified suffix
+
+        Given an array of strings, return a new bool array of same shape with
+        the result of comparing suffix against each element; each element
+        of bool array is ``True`` if element ends with specified suffix and
+        ``False`` otherwise.
+
+        Parameters
+        ----------
+        suffix : string
+            Compare each element in array to this.
+        start : int, optional
+            For each element, start searching from this position.
+        end : int, optional
+            For each element, stop comparing at this position.
+
+        Returns
+        -------
+        endswith : ndarray
+            Output array of bools
+
+        See Also
+        --------
+        count
+        find
+        index
+        startswith
+
+        Examples
+        --------
+        >>> s = chararray(3, itemsize=3)
+        >>> s[0] = 'foo'
+        >>> s[1] = 'bar'
+        >>> s
+        chararray(['foo', 'bar'],
+              dtype='|S3')
+        >>> s.endswith('ar')
+        array([False,  True], dtype=bool)
+        >>> s.endswith('a', start=1, end=2)
+        array([False,  True], dtype=bool)
+
+        """
         return self._typedmethod('endswith', broadcast(self, suffix, start, end), bool)
 
     def expandtabs(self, tabsize=None):
@@ -261,9 +510,76 @@ class chararray(ndarray):
         return self._generalmethod('join', broadcast(self, seq))
 
     def lower(self):
+        """
+        Assure that every character of each array element is lower-case.
+
+        For each character possessing both "upper-case" and "lower-case" forms,
+        if it is in upper-case, change it to lower; otherwise, leave it unchanged.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : chararray
+            `self` with all capital letters changed to lower-case.
+
+        Examples
+        --------
+        >>> c = np.array(['A1B C', '1BCA', 'BCA1']).view(np.chararray); c
+        chararray(['A1B C', '1BCA', 'BCA1'],
+              dtype='|S5')
+        >>> c.lower()
+        chararray(['a1b c', '1bca', 'bca1'],
+              dtype='|S5')
+
+        """
         return self._samemethod('lower')
 
     def lstrip(self, chars):
+        """
+        Remove leading characters from each element.
+
+        Returns a view of ``self`` with `chars` stripped from the start of
+        each element.  Note: **No Default** - `chars` must be specified (but if
+        it is explicitly ``None`` or the empty string '', leading whitespace is
+        removed).
+
+        Parameters
+        ----------
+        chars : string_like or None
+            Character(s) to strip; whitespace stripped if `chars` == ``None``
+            or `chars` == ''.
+
+        Returns
+        -------
+        ret : chararray
+            View of ``self``, each element suitably stripped.
+
+        Raises
+        ------
+        TypeError: lstrip() takes exactly 2 arguments (1 given)
+            If `chars` is not supplied.
+
+        Examples
+        --------
+        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
+        >>> c
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+        >>> c.lstrip('a') # 'a' unstripped from c[1] because whitespace leading
+        chararray(['AaAaA', '  aA', 'bBABba'],
+              dtype='|S6')
+        >>> c.lstrip('A') # leaves c unchanged
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+        >>> (c.lstrip(' ') == c.lstrip('')).all()
+        True
+        >>> (c.lstrip(' ') == c.lstrip(None)).all()
+        True
+
+        """
         return self._generalmethod('lstrip', broadcast(self, chars))
 
     def replace(self, old, new, count=None):
@@ -276,6 +592,35 @@ class chararray(ndarray):
         return self._typedmethod('rindex', broadcast(self, sub, start, end), int)
 
     def rstrip(self, chars=None):
+        """
+        Remove trailing characters.
+
+        Returns a view of ``self`` with `chars` stripped from the end of each
+        element.
+
+        Parameters
+        ----------
+        chars : string_like, optional, default=None
+            Character(s) to remove.
+
+        Returns
+        -------
+        ret : chararray
+            View of ``self``, each element suitably stripped.
+
+        Examples
+        --------
+        >>> c = np.array(['aAaAaA', 'abBABba'], dtype='S7').view(np.chararray); c
+        chararray(['aAaAaA', 'abBABba'],
+              dtype='|S7')
+        >>> c.rstrip('a')
+        chararray(['aAaAaA', 'abBABb'],
+              dtype='|S6')
+        >>> c.rstrip('A')
+        chararray(['aAaAa', 'abBABba'],
+              dtype='|S7')
+
+        """
         return self._generalmethod('rstrip', broadcast(self, chars))
 
     def split(self, sep=None, maxsplit=None):
@@ -288,12 +633,95 @@ class chararray(ndarray):
         return self._typedmethod('startswith', broadcast(self, prefix, start, end), bool)
 
     def strip(self, chars=None):
+        """
+        Remove leading and trailing characters, whitespace by default.
+
+        Returns a view of ``self`` with `chars` stripped from the start and end of
+        each element; by default leading and trailing whitespace is removed.
+
+        Parameters
+        ----------
+        chars : string_like, optional, default=None
+            Character(s) to strip; whitespace by default.
+
+        Returns
+        -------
+        ret : chararray
+            View of ``self``, each element suitably stripped.
+
+        Examples
+        --------
+        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
+        >>> c
+        chararray(['aAaAaA', '  aA', 'abBABba'],
+              dtype='|S7')
+        >>> c.strip()
+        chararray(['aAaAaA', 'aA', 'abBABba'],
+              dtype='|S7')
+        >>> c.strip('a') # 'a' unstripped from c[1] because whitespace leads
+        chararray(['AaAaA', '  aA', 'bBABb'],
+              dtype='|S6')
+        >>> c.strip('A') # 'A' unstripped from c[1] because (unprinted) ws trails
+        chararray(['aAaAa', '  aA', 'abBABba'],
+              dtype='|S7')
+
+        """
         return self._generalmethod('strip', broadcast(self, chars))
 
     def swapcase(self):
+        """
+        Switch upper-case letters to lower-case, and vice-versa.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : chararray
+            `self` with all lower-case letters capitalized and all upper-case
+            changed to lower case.
+
+        Examples
+        --------
+        >>> c=np.array(['a1B c','1b Ca','b Ca1','cA1b'],'S5').view(np.chararray);c
+        chararray(['a1B c', '1b Ca', 'b Ca1', 'cA1b'],
+              dtype='|S5')
+        >>> c.swapcase()
+        chararray(['A1b C', '1B cA', 'B cA1', 'Ca1B'],
+              dtype='|S5')
+
+        """
         return self._samemethod('swapcase')
 
     def title(self):
+        """
+        Capitalize the first character of each array element.
+
+        For each element of `self`, if the first character is a letter
+        possessing both "upper-case" and "lower-case" forms, and it is
+        presently in lower-case, change it to upper-case; otherwise, leave
+        it untouched.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : chararray
+            `self` with
+
+        Examples
+        --------
+        >>> c=np.array(['a1b c','1b ca','b ca1','ca1b'],'S5').view(np.chararray);c
+        chararray(['a1b c', '1b ca', 'b ca1', 'ca1b'],
+              dtype='|S5')
+        >>> c.title()
+        chararray(['A1B C', '1B Ca', 'B Ca1', 'Ca1B'],
+              dtype='|S5')
+
+        """
         return self._samemethod('title')
 
     def translate(self, table, deletechars=None):
@@ -303,6 +731,31 @@ class chararray(ndarray):
             return self._generalmethod('translate', broadcast(self, table, deletechars))
 
     def upper(self):
+        """
+        Capitalize every character of each array element.
+
+        For each character possessing both "upper-case" and "lower-case" forms,
+        if it is in lower-case, change it to upper; otherwise, leave it unchanged.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : chararray
+            `self` with all characters capitalized.
+
+        Examples
+        --------
+        >>> c = np.array(['a1b c', '1bca', 'bca1']).view(np.chararray); c
+        chararray(['a1b c', '1bca', 'bca1'],
+              dtype='|S5')
+        >>> c.upper()
+        chararray(['A1B C', '1BCA', 'BCA1'],
+              dtype='|S5')
+
+        """
         return self._samemethod('upper')
 
     def zfill(self, width):

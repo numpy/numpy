@@ -79,34 +79,63 @@ def find_duplicate(list):
     return dup
 
 class format_parser:
-    """Class to convert formats, names, titles description to a dtype
+    """
+    Class to convert formats, names, titles description to a dtype.
 
     After constructing the format_parser object, the dtype attribute is
-      the converted data-type.
+    the converted data-type:
+    ``dtype = format_parser(formats, names, titles).dtype``
 
-    dtype = format_parser(formats, names, titles).dtype
+    Attributes
+    ----------
+    dtype : dtype
+        The converted data-type.
 
     Parameters
     ----------
-    formats : string or list
-        comma-separated format descriptions --- 'f8, i4, a5'
-        list of format description strings --- ['f8', 'i4', 'a5']
-    names : string or (list or tuple of strings)
-        comma-separated field names --- 'col1, col2, col3'
-        list or tuple of field names
+    formats : str or list of str
+        The format description, either specified as a string with
+        comma-separated format descriptions in the form ``'f8, i4, a5'``, or
+        a list of format description strings  in the form
+        ``['f8', 'i4', 'a5']``.
+    names : str or list/tuple of str
+        The field names, either specified as a comma-separated string in the
+        form ``'col1, col2, col3'``, or as a list or tuple of strings in the
+        form ``['col1', 'col2', 'col3']``.
+        An empty list can be used, in that case default field names
+        ('f0', 'f1', ...) are used.
     titles : sequence
-        sequence of title strings or unicode
-    aligned : bool
-        align the fields by padding as the C-compiler would
-    byteorder :
+        Sequence of title strings. An empty list can be used to leave titles
+        out.
+    aligned : bool, optional
+        If True, align the fields by padding as the C-compiler would.
+        Default is False.
+    byteorder : str, optional
         If specified, all the fields will be changed to the
-        provided byteorder.  Otherwise, the default byteorder is
-        used.
+        provided byte-order.  Otherwise, the default byte-order is
+        used. For all available string specifiers, see `dtype.newbyteorder`.
 
-    Returns
-    -------
-    object
-        A Python object whose dtype attribute is a data-type.
+    See Also
+    --------
+    dtype, typename, sctype2char
+
+    Examples
+    --------
+    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    ...                  ['T1', 'T2', 'T3']).dtype
+    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'),
+           (('T3', 'col3'), '|S5')]
+
+    `names` and/or `titles` can be empty lists. If `titles` is an empty list,
+    titles will simply not appear. If `names` is empty, default field names
+    will be used.
+
+    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    ...                  []).dtype
+    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '|S5')])
+    >>> np.format_parser(['f8', 'i4', 'a5'], [], []).dtype
+    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', '|S5')])
+
     """
     def __init__(self, formats, names, titles, aligned=False, byteorder=None):
         self._parseFormats(formats, aligned)

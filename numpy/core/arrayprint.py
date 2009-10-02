@@ -125,9 +125,11 @@ def get_printoptions():
           - nanstr : string
           - infstr : string
 
+        For a full description of these options, see `set_printoptions`.
+
     See Also
     --------
-    set_printoptions : parameter descriptions
+    set_printoptions, set_string_function
 
     """
     d = dict(precision=_float_output_precision,

@@ -112,7 +112,7 @@ def reshape(a, newshape, order='C'):
     ----------
     a : array_like
         Array to be reshaped.
-    newshape : {tuple, int}
+    newshape : int or tuple of ints
         The new shape should be compatible with the original shape. If
         an integer, then the result will be a 1-D array of that length.
         One shape dimension can be -1. In this case, the value is inferred
@@ -187,6 +187,7 @@ def choose(a, choices, out=None, mode='raise'):
     See Also
     --------
     ndarray.choose : equivalent method
+    numpy.doc.ufuncs : Section "Output arguments"
 
     Examples
     --------
@@ -457,10 +458,10 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     Previous to numpy 1.4.0 sorting real and complex arrays containing nan
     values led to undefined behaviour. In numpy versions >= 1.4.0 nan
     values are sorted to the end. The extended sort order is:
-   
-         Real: [R, nan]
-         Complex: [R + Rj, R + nanj, nan + Rj, nan + nanj]
-   
+
+      * Real: [R, nan]
+      * Complex: [R + Rj, R + nanj, nan + Rj, nan + nanj]
+
     where R is a non-nan real value. Complex values with the same nan
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
@@ -544,8 +545,8 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     -----
     See `sort` for notes on the different sorting algorithms.
 
-    As of Numpy 1.4.0 argsort works with real/complex arrays containing
-    nan values. The enhanced sort order is documented in the numpy.sort.
+    As of NumPy 1.4.0 `argsort` works with real/complex arrays containing
+    nan values. The enhanced sort order is documented in `sort`.
 
     Examples
     --------
@@ -605,25 +606,40 @@ def argmax(a, axis=None):
 
     Returns
     -------
-    index_array : ndarray, int
-        Array of indices into the array.  It has the same shape as `a`,
-        except with `axis` removed.
+    index_array : ndarray of ints
+        Array of indices into the array. It has the same shape as `a.shape`
+        with the dimension along `axis` removed.
 
     See Also
     --------
-    argmin : Indices of the minimum values along an axis.
+    ndarray.argmax, argmin
     amax : The maximum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
+
+    Notes
+    -----
+    In case of multiple occurrences of the maximum values, the indices
+    corresponding to the first occurrence are returned.
 
     Examples
     --------
     >>> a = np.arange(6).reshape(2,3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5]])
     >>> np.argmax(a)
     5
     >>> np.argmax(a, axis=0)
     array([1, 1, 1])
     >>> np.argmax(a, axis=1)
     array([2, 2])
+
+    >>> b = np.arange(6)
+    >>> b[1] = 5
+    >>> b
+    array([0, 5, 2, 3, 4, 5])
+    >>> np.argmax(b) # Only the first occurrence is returned.
+    1
 
     """
     try:
@@ -683,8 +699,8 @@ def searchsorted(a, v, side='left'):
     -----
     Binary search is used to find the required insertion points.
 
-    As of Numpy 1.4.0 searchsorted works with real/complex arrays containing
-    nan values. The enhanced sort order is documented in the numpy.sort.
+    As of Numpy 1.4.0 `searchsorted` works with real/complex arrays containing
+    `nan` values. The enhanced sort order is documented in `sort`.
 
     Examples
     --------
@@ -723,8 +739,9 @@ def resize(a, new_shape):
     Returns
     -------
     reshaped_array : ndarray
-        The new array is formed from the data in the old array, repeated if
-        necessary to fill out the required number of elements.
+        The new array is formed from the data in the old array, repeated
+        if necessary to fill out the required number of elements. The data
+        are repeated in the order that the data are stored in memory.
 
     See Also
     --------
@@ -1069,27 +1086,27 @@ def shape(a):
 
     Returns
     -------
-    shape : tuple
-        The elements of the tuple give the lengths of the corresponding array
-        dimensions.
+    shape : tuple of ints
+        The elements of the shape tuple give the lengths of the
+        corresponding array dimensions.
 
     See Also
     --------
-    alen,
-    ndarray.shape : array method
+    alen
+    ndarray.shape : Equivalent array method.
 
     Examples
     --------
     >>> np.shape(np.eye(3))
     (3, 3)
-    >>> np.shape([[1,2]])
+    >>> np.shape([[1, 2]])
     (1, 2)
     >>> np.shape([0])
     (1,)
     >>> np.shape(0)
     ()
 
-    >>> a = np.array([(1,2),(3,4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
     >>> np.shape(a)
     (2,)
     >>> a.shape
@@ -1136,6 +1153,7 @@ def compress(condition, a, axis=None, out=None):
     --------
     take, choose, diag, diagonal, select
     ndarray.compress : Equivalent method.
+    numpy.doc.ufuncs : Section "Output arguments"
 
     Examples
     --------
@@ -1198,6 +1216,10 @@ def clip(a, a_min, a_max, out=None):
         < `a_min` are replaced with `a_min`, and those > `a_max`
         with `a_max`.
 
+    See Also
+    --------
+    numpy.doc.ufuncs : Section "Output arguments"
+
     Examples
     --------
     >>> a = np.arange(10)
@@ -1222,7 +1244,7 @@ def clip(a, a_min, a_max, out=None):
 
 def sum(a, axis=None, dtype=None, out=None):
     """
-    Return the sum of array elements over a given axis.
+    Sum of array elements over a given axis.
 
     Parameters
     ----------
@@ -1241,7 +1263,8 @@ def sum(a, axis=None, dtype=None, out=None):
         Array into which the output is placed.  By default, a new array is
         created.  If `out` is given, it must be of the appropriate shape
         (the shape of `a` with `axis` removed, i.e.,
-        ``numpy.delete(a.shape, axis)``).  Its type is preserved.
+        ``numpy.delete(a.shape, axis)``).  Its type is preserved. See
+        `doc.ufuncs` (Section "Output arguments") for more details.
 
     Returns
     -------
@@ -1253,7 +1276,13 @@ def sum(a, axis=None, dtype=None, out=None):
 
     See Also
     --------
-    ndarray.sum : equivalent method
+    ndarray.sum : Equivalent method.
+
+    cumsum : Cumulative sum of array elements.
+
+    trapz : Integration of array values using the composite trapezoidal rule.
+
+    mean, average
 
     Notes
     -----
@@ -1264,10 +1293,12 @@ def sum(a, axis=None, dtype=None, out=None):
     --------
     >>> np.sum([0.5, 1.5])
     2.0
-    >>> np.sum([0.5, 1.5], dtype=np.int32)
+    >>> np.sum([0.5, 0.7, 0.2, 1.5], dtype=np.int32)
     1
     >>> np.sum([[0, 1], [0, 5]])
     6
+    >>> np.sum([[0, 1], [0, 5]], axis=0)
+    array([0, 6])
     >>> np.sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
 
@@ -1420,14 +1451,15 @@ def all(a,axis=None, out=None):
     a : array_like
         Input array or object that can be converted to an array.
     axis : int, optional
-        Axis along which an logical AND is performed.
+        Axis along which a logical AND is performed.
         The default (`axis` = `None`) is to perform a logical AND
         over a flattened input array. `axis` may be negative, in which
         case it counts from the last to the first axis.
     out : ndarray, optional
         Alternative output array in which to place the result.
         It must have the same shape as the expected output and
-        the type is preserved.
+        the type is preserved. See `doc.ufuncs` (Section "Output
+        arguments") for more details.
 
     Returns
     -------
@@ -1438,6 +1470,8 @@ def all(a,axis=None, out=None):
     See Also
     --------
     ndarray.all : equivalent method
+
+    any : Test whether any array element along a given axis evaluates to True.
 
     Notes
     -----
@@ -1491,13 +1525,23 @@ def cumsum (a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
+        but the type will be cast if necessary. See `doc.ufuncs`
+        (Section "Output arguments") for more details.
 
     Returns
     -------
-    cumsum : ndarray.
+    cumsum_along_axis : ndarray.
         A new array holding the result is returned unless `out` is
-        specified, in which case a reference to `out` is returned.
+        specified, in which case a reference to `out` is returned. The
+        result has the same size as `a`, and the same shape as `a` if
+        `axis` is not None or `a` is a 1-d array.
+
+
+    See Also
+    --------
+    sum : Sum array elements.
+
+    trapz : Integration of array values using the composite trapezoidal rule.
 
     Notes
     -----
@@ -1507,6 +1551,9 @@ def cumsum (a, axis=None, dtype=None, out=None):
     Examples
     --------
     >>> a = np.array([[1,2,3], [4,5,6]])
+    >>> a
+    array([[1, 2, 3],
+           [4, 5, 6]])
     >>> np.cumsum(a)
     array([ 1,  3,  6, 10, 15, 21])
     >>> np.cumsum(a, dtype=float)     # specifies type of output value(s)
@@ -1602,6 +1649,7 @@ def amax(a, axis=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
+        See `doc.ufuncs` (Section "Output arguments") for more details.
 
     Returns
     -------
@@ -1611,8 +1659,9 @@ def amax(a, axis=None, out=None):
 
     See Also
     --------
-    nanmax: nan values are ignored instead of being propagated
-    fmax: same behavior as the C99 fmax function
+    nanmax : nan values are ignored instead of being propagated
+    fmax : same behavior as the C99 fmax function
+    argmax : Indices of the maximum values.
 
     Notes
     -----
@@ -1626,10 +1675,19 @@ def amax(a, axis=None, out=None):
     >>> a
     array([[0, 1],
            [2, 3]])
+    >>> np.amax(a)
+    3
     >>> np.amax(a, axis=0)
     array([2, 3])
     >>> np.amax(a, axis=1)
     array([1, 3])
+
+    >>> b = np.arange(5, dtype=np.float)
+    >>> b[2] = np.NaN
+    >>> np.amax(b)
+    nan
+    >>> np.nanmax(b)
+    4.0
 
     """
     try:
@@ -1652,6 +1710,7 @@ def amin(a, axis=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
+        See `doc.ufuncs` (Section "Output arguments") for more details.
 
     Returns
     -------
@@ -1663,6 +1722,9 @@ def amin(a, axis=None, out=None):
     --------
     nanmin: nan values are ignored instead of being propagated
     fmin: same behavior as the C99 fmin function
+    argmin: Return the indices of the minimum values.
+
+    amax, nanmax, fmax
 
     Notes
     -----
@@ -1682,6 +1744,13 @@ def amin(a, axis=None, out=None):
     array([0, 1])
     >>> np.amin(a, axis=1)         # Minima along the second axis
     array([0, 2])
+
+    >>> b = np.arange(5, dtype=np.float)
+    >>> b[2] = np.NaN
+    >>> np.amin(b)
+    nan
+    >>> np.nanmin(b)
+    0.0
 
     """
     try:
@@ -1755,6 +1824,7 @@ def prod(a, axis=None, dtype=None, out=None):
     See Also
     --------
     ndarray.prod : equivalent method
+    numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
     -----
@@ -1831,6 +1901,10 @@ def cumprod(a, axis=None, dtype=None, out=None):
     cumprod : ndarray
         A new array holding the result is returned unless `out` is
         specified, in which case a reference to out is returned.
+
+    See Also
+    --------
+    numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
     -----
@@ -2013,7 +2087,8 @@ def around(a, decimals=0, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the output
-        values will be cast if necessary.
+        values will be cast if necessary. See `doc.ufuncs` (Section
+        "Output arguments") for details.
 
     Returns
     -------
@@ -2028,6 +2103,9 @@ def around(a, decimals=0, out=None):
     See Also
     --------
     ndarray.round : equivalent method
+
+    ceil, fix, floor, rint, trunc
+
 
     Notes
     -----
@@ -2048,9 +2126,13 @@ def around(a, decimals=0, out=None):
 
     Examples
     --------
-    >>> np.around([.5, 1.5, 2.5, 3.5, 4.5])
+    >>> np.around([0.37, 1.64])
+    array([ 0.,  2.])
+    >>> np.around([0.37, 1.64], decimals=1)
+    array([ 0.4,  1.6])
+    >>> np.around([.5, 1.5, 2.5, 3.5, 4.5]) # rounds to nearest even value
     array([ 0.,  2.,  2.,  4.,  4.])
-    >>> np.around([1,2,3,11], decimals=1)
+    >>> np.around([1,2,3,11], decimals=1) # ndarray of ints is returned
     array([ 1,  2,  3, 11])
     >>> np.around([1,2,3,11], decimals=-1)
     array([ 0,  0,  0, 10])
@@ -2105,11 +2187,11 @@ def mean(a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type will be cast if
-        necessary.
+        necessary. See `doc.ufuncs` for details.
 
     Returns
     -------
-    mean : ndarray, see dtype parameter above
+    m : ndarray, see dtype parameter above
         If `out=None`, returns a new array containing the mean values,
         otherwise a reference to the output array is returned.
 
@@ -2122,15 +2204,34 @@ def mean(a, axis=None, dtype=None, out=None):
     The arithmetic mean is the sum of the elements along the axis divided
     by the number of elements.
 
+    Note that for floating-point input, the mean is computed using the same
+    precision the input has. Depending on the input data, this can cause
+    the results to be inaccurate, especially for float32 (see example below).
+    Specifying a higher-accuracy accumulator using the `dtype` keyword can
+    alleviate this issue.
+
     Examples
     --------
-    >>> a = np.array([[1,2],[3,4]])
+    >>> a = np.array([[1, 2], [3, 4]])
     >>> np.mean(a)
     2.5
-    >>> np.mean(a,0)
+    >>> np.mean(a, axis=0)
     array([ 2.,  3.])
-    >>> np.mean(a,1)
+    >>> np.mean(a, axis=1)
     array([ 1.5,  3.5])
+
+    In single precision, `mean` can be inaccurate:
+
+    >>> a = np.zeros((2, 512*512), dtype=np.float32)
+    >>> a[0, :] = 1.0
+    >>> a[1, :] = 0.1
+    >>> np.mean(a)
+    0.546875
+
+    Computing the mean in float64 is more accurate:
+
+    >>> np.mean(a, dtype=np.float64)
+    0.55000000074505806
 
     """
     try:
@@ -2177,6 +2278,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     See Also
     --------
     var, mean
+    numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
     -----
@@ -2195,6 +2297,12 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
 
+    For floating-point input, the *std* is computed using the same
+    precision the input has. Depending on the input data, this can cause
+    the results to be inaccurate, especially for float32 (see example below).
+    Specifying a higher-accuracy accumulator using the `dtype` keyword can
+    alleviate this issue.
+
     Examples
     --------
     >>> a = np.array([[1, 2], [3, 4]])
@@ -2204,6 +2312,19 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     array([ 1.,  1.])
     >>> np.std(a, axis=1)
     array([ 0.5,  0.5])
+
+    In single precision, std() can be inaccurate:
+
+    >>> a = np.zeros((2,512*512), dtype=np.float32)
+    >>> a[0,:] = 1.0
+    >>> a[1,:] = 0.1
+    >>> np.std(a)
+    0.45172946707416706
+
+    Computing the standard deviation in float64 is more accurate:
+
+    >>> np.std(a, dtype=np.float64)
+    0.44999999925552653
 
     """
     try:
@@ -2252,6 +2373,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     --------
     std : Standard deviation
     mean : Average
+    numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
     -----
@@ -2268,6 +2390,12 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.
 
+    For floating-point input, the variance is computed using the same
+    precision the input has. Depending on the input data, this can cause
+    the results to be inaccurate, especially for float32 (see example below).
+    Specifying a higher-accuracy accumulator using the `dtype` keyword can
+    alleviate this issue.
+
     Examples
     --------
     >>> a = np.array([[1,2],[3,4]])
@@ -2277,6 +2405,21 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     array([ 1.,  1.])
     >>> np.var(a,1)
     array([ 0.25,  0.25])
+
+    In single precision, var() can be inaccurate:
+
+    >>> a = np.zeros((2,512*512), dtype=np.float32)
+    >>> a[0,:] = 1.0
+    >>> a[1,:] = 0.1
+    >>> np.var(a)
+    0.20405951142311096
+
+    Computing the standard deviation in float64 is more accurate:
+
+    >>> np.var(a, dtype=np.float64)
+    0.20249999932997387
+    >>> ((1-0.55)**2 + (0.1-0.55)**2)/2
+    0.20250000000000001
 
     """
     try:

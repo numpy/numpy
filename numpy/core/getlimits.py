@@ -47,7 +47,7 @@ class finfo(object):
         The smallest representable number, typically ``-max``.
     minexp : int
         The most negative power of the base (2) consistent with there being
-        no leading 0s in the mantissa.
+        no leading 0's in the mantissa.
     negep : int
         The exponent that yields ``epsneg``.
     nexp : int
@@ -70,14 +70,12 @@ class finfo(object):
 
     See Also
     --------
-    numpy.lib.machar.MachAr :
-        The implementation of the tests that produce this information.
-    iinfo :
-        The equivalent for integer data types.
+    MachAr : The implementation of the tests that produce this information.
+    iinfo : The equivalent for integer data types.
 
     Notes
     -----
-    For developers of numpy: do not instantiate this at the module level. The
+    For developers of NumPy: do not instantiate this at the module level. The
     initial calculation of these parameters is expensive and negatively impacts
     import times. These objects are cached, so calling ``finfo()`` repeatedly
     inside your functions is not a problem.
