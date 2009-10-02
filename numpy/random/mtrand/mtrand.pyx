@@ -520,25 +520,33 @@ cdef class RandomState:
     """
     RandomState(seed=None)
 
-    Container for the Mersenne Twister PRNG.
+    Container for the Mersenne Twister pseudo-random number generator.
 
     `RandomState` exposes a number of methods for generating random numbers
     drawn from a variety of probability distributions. In addition to the
     distribution-specific arguments, each method takes a keyword argument
     `size` that defaults to ``None``. If `size` is ``None``, then a single
     value is generated and returned. If `size` is an integer, then a 1-D
-    numpy array filled with generated values is returned. If size is a tuple,
-    then a numpy array with that shape is filled and returned.
+    array filled with generated values is returned. If `size` is a tuple,
+    then an array with that shape is filled and returned.
 
     Parameters
     ----------
-    seed : array_like, int, optional
-        Random seed initializing the PRNG.
+    seed : int or array_like, optional
+        Random seed initializing the pseudo-random number generator.
         Can be an integer, an array (or other sequence) of integers of
-        any length, or ``None``.
+        any length, or ``None`` (the default).
         If `seed` is ``None``, then `RandomState` will try to read data from
         ``/dev/urandom`` (or the Windows analogue) if available or seed from
         the clock otherwise.
+
+    Notes
+    -----
+    The Python stdlib module "random" also contains a Mersenne Twister
+    pseudo-random number generator with a number of methods that are similar
+    to the ones available in `RandomState`. `RandomState`, besides being
+    NumPy-aware, has the advantage that it provides a much larger number
+    of probability distributions to choose from.
 
     """
     cdef rk_state *internal_state
@@ -559,10 +567,17 @@ cdef class RandomState:
 
         Seed the generator.
 
-        seed can be an integer, an array (or other sequence) of integers of any
-        length, or None. If seed is None, then RandomState will try to read data
-        from /dev/urandom (or the Windows analogue) if available or seed from
-        the clock otherwise.
+        This method is called when `RandomState` is initialized. It can be
+        called again to re-seed the generator. For details, see `RandomState`.
+
+        Parameters
+        ----------
+        seed : int or array_like, optional
+            Seed for `RandomState`.
+
+        See Also
+        --------
+        RandomState
 
         """
         cdef rk_error errcode
@@ -585,20 +600,28 @@ cdef class RandomState:
 
         Return a tuple representing the internal state of the generator.
 
+        For more details, see `set_state`.
+
         Returns
         -------
-        out : tuple(string, list of 624 integers, int, int, float)
+        out : tuple(str, ndarray of 624 uints, int, int, float)
             The returned tuple has the following items:
 
-            1. the string 'MT19937'
-            2. a list of 624 integer keys
-            3. an integer pos
-            4. an integer has_gauss
-            5. and a float cached_gaussian
+            1. the string 'MT19937'.
+            2. a 1-D array of 624 unsigned integer keys.
+            3. an integer ``pos``.
+            4. an integer ``has_gauss``.
+            5. a float ``cached_gaussian``.
 
         See Also
         --------
         set_state
+
+        Notes
+        -----
+        `set_state` and `get_state` are not needed to work with any of the
+        random distributions in NumPy. If the internal state is manually altered,
+        the user should know exactly what he/she is doing.
 
         """
         cdef ndarray state "arrayObject_state"
@@ -612,18 +635,21 @@ cdef class RandomState:
         """
         set_state(state)
 
-        Set the state from a tuple.
+        Set the internal state of the generator from a tuple.
+
+        For use if one has reason to manually (re-)set the internal state of the
+        "Mersenne Twister"[1]_ pseudo-random number generating algorithm.
 
         Parameters
         ----------
-        state : tuple(string, list of 624 ints, int, int, float)
-            The `state` tuple is made up of
+        state : tuple(str, ndarray of 624 uints, int, int, float)
+            The `state` tuple has the following items:
 
-            1. the string 'MT19937'
-            2. a list of 624 integer keys
-            3. an integer pos
-            4. an integer has_gauss
-            5. and a float for the cached_gaussian
+            1. the string 'MT19937', specifying the Mersenne Twister algorithm.
+            2. a 1-D array of 624 unsigned integers ``keys``.
+            3. an integer ``pos``.
+            4. an integer ``has_gauss``.
+            5. a float ``cached_gaussian``.
 
         Returns
         -------
@@ -636,10 +662,20 @@ cdef class RandomState:
 
         Notes
         -----
-        For backwards compatibility, the following form is also accepted
-        although it is missing some information about the cached Gaussian value.
+        `set_state` and `get_state` are not needed to work with any of the
+        random distributions in NumPy. If the internal state is manually altered,
+        the user should know exactly what he/she is doing.
 
-        state = ('MT19937', int key[624], int pos)
+        For backwards compatibility, the form (str, array of 624 uints, int) is
+        also accepted although it is missing some information about the cached
+        Gaussian value: ``state = ('MT19937', keys, pos)``.
+
+        References
+        ----------
+        .. [1] M. Matsumoto and T. Nishimura, "Mersenne Twister: A
+           623-dimensionally equidistributed uniform pseudorandom number
+           generator," *ACM Trans. on Modeling and Computer Simulation*,
+           Vol. 8, No. 1, pp. 3-30, Jan. 1998.
 
         """
         cdef ndarray obj "arrayObject_obj"
@@ -682,15 +718,39 @@ cdef class RandomState:
 
         Return random floats in the half-open interval [0.0, 1.0).
 
+        Results are from the "continuous uniform" distribution over the
+        stated interval.  To sample :math:`Unif[a, b), b > a` multiply
+        the output of `random_sample` by `(b-a)` and add `a`::
+
+          (b - a) * random_sample() + a
+
         Parameters
         ----------
-        size : shape tuple, optional
-            Defines the shape of the returned array of random floats.
+        size : int or tuple of ints, optional
+            Defines the shape of the returned array of random floats. If None
+            (the default), returns a single float.
 
         Returns
         -------
-        out : ndarray, floats
-            Array of random of floats with shape of `size`.
+        out : float or ndarray of floats
+            Array of random floats of shape `size` (unless ``size=None``, in which
+            case a single float is returned).
+
+        Examples
+        --------
+        >>> np.random.random_sample()
+        0.47108547995356098
+        >>> type(np.random.random_sample())
+        <type 'float'>
+        >>> np.random.random_sample((5,))
+        array([ 0.30220482,  0.86820401,  0.1654503 ,  0.11659149,  0.54323428])
+
+        Three-by-two array of random numbers from [-5, 0):
+
+        >>> 5 * np.random.random_sample((3, 2)) - 5
+        array([[-3.99149989, -0.52338984],
+               [-2.99091858, -0.79479508],
+               [-1.23204345, -1.75224494]])
 
         """
         return cont0_array(self.internal_state, rk_double, size)
@@ -727,9 +787,50 @@ cdef class RandomState:
         """
         randint(low, high=None, size=None)
 
-        Return random integers x such that low <= x < high.
+        Return random integers from `low` (inclusive) to `high` (exclusive).
 
-        If high is None, then 0 <= x < low.
+        Return random integers from the "discrete uniform" distribution in the
+        "half-open" interval [`low`, `high`). If `high` is None (the default),
+        then results are from [0, `low`).
+
+        Parameters
+        ----------
+        low : int
+            Lowest (signed) integer to be drawn from the distribution (unless
+            ``high=None``, in which case this parameter is the *highest* such
+            integer).
+        high : int, optional
+            If provided, one above the largest (signed) integer to be drawn
+            from the distribution (see above for behavior if ``high=None``).
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single int is
+            returned.
+
+        Returns
+        -------
+        out : int or ndarray of ints
+            `size`-shaped array of random integers from the appropriate
+            distribution, or a single such random int if `size` not provided.
+
+        See Also
+        --------
+        random.random_integers : similar to `randint`, only for the closed
+            interval [`low`, `high`], and 1 is the lowest value if `high` is
+            omitted. In particular, this other one is the one to use to generate
+            uniformly distributed discrete non-integers.
+
+        Examples
+        --------
+        >>> np.random.randint(2, size=10)
+        array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])
+        >>> np.random.randint(1, size=10)
+        array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        Generate a 2 x 4 array of ints between 0 and 4, inclusive:
+
+        >>> np.random.randint(5, size=(2, 4))
+        array([[4, 0, 2, 1],
+               [3, 2, 2, 0]])
 
         """
         cdef long lo, hi, diff
@@ -920,14 +1021,53 @@ cdef class RandomState:
 
     def randn(self, *args):
         """
-        randn(d0, d1, ..., dn)
+        randn([d1, ..., dn])
 
-        Returns zero-mean, unit-variance Gaussian random numbers in an
-        array of shape (d0, d1, ..., dn).
+        Return a sample (or samples) from the "standard normal" distribution.
 
-        Note:  This is a convenience function. If you want an
-                    interface that takes a tuple as the first argument
-                    use numpy.random.standard_normal(shape_tuple).
+        If positive, int_like or int-convertible arguments are provided,
+        `randn` generates an array of shape ``(d1, ..., dn)``, filled
+        with random floats sampled from a univariate "normal" (Gaussian)
+        distribution of mean 0 and variance 1 (if any of the :math:`d_i` are
+        floats, they are first converted to integers by truncation). A single
+        float randomly sampled from the distribution is returned if no
+        argument is provided.
+
+        This is a convenience function.  If you want an interface that takes a
+        tuple as the first argument, use `numpy.random.standard_normal` instead.
+
+        Parameters
+        ----------
+        d1, ..., dn : `n` ints, optional
+            The dimensions of the returned array, should be all positive.
+
+        Returns
+        -------
+        Z : ndarray or float
+            A ``(d1, ..., dn)``-shaped array of floating-point samples from
+            the standard normal distribution, or a single such float if
+            no parameters were supplied.
+
+        See Also
+        --------
+        random.standard_normal : Similar, but takes a tuple as its argument.
+
+        Notes
+        -----
+        For random samples from :math:`N(\\mu, \\sigma^2)`, use:
+
+        ``sigma * np.random.randn(...) + mu``
+
+        Examples
+        --------
+        >>> np.random.randn()
+        2.1923875335537315 #random
+
+        Two-by-four array of samples from N(3, 6.25):
+
+        >>> 2.5 * np.random.randn(2, 4) + 3
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],  #random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]]) #random
 
         """
         if len(args) == 0:
@@ -939,9 +1079,72 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Return random integers x such that low <= x <= high.
+        Return random integers between `low` and `high`, inclusive.
 
-        If high is None, then 1 <= x <= low.
+        Return random integers from the "discrete uniform" distribution in the
+        closed interval [`low`, `high`].  If `high` is None (the default),
+        then results are from [1, `low`].
+
+        Parameters
+        ----------
+        low : int
+            Lowest (signed) integer to be drawn from the distribution (unless
+            ``high=None``, in which case this parameter is the *highest* such
+            integer).
+        high : int, optional
+            If provided, the largest (signed) integer to be drawn from the
+            distribution (see above for behavior if ``high=None``).
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single int is returned.
+
+        Returns
+        -------
+        out : int or ndarray of ints
+            `size`-shaped array of random integers from the appropriate
+            distribution, or a single such random int if `size` not provided.
+
+        See Also
+        --------
+        random.randint : Similar to `random_integers`, only for the half-open
+            interval [`low`, `high`), and 0 is the lowest value if `high` is
+            omitted.
+
+        Notes
+        -----
+        To sample from N evenly spaced floating-point numbers between a and b,
+        use::
+
+          a + (b - a) * (np.random.random_integers(N) - 1) / (N - 1.)
+
+        Examples
+        --------
+        >>> np.random.random_integers(5)
+        4
+        >>> type(np.random.random_integers(5))
+        <type 'int'>
+        >>> np.random.random_integers(5, size=(3.,2.))
+        array([[5, 4],
+               [3, 3],
+               [4, 5]])
+
+        Choose five random numbers from the set of five evenly-spaced
+        numbers between 0 and 2.5, inclusive (*i.e.*, from the set
+        :math:`{0, 5/8, 10/8, 15/8, 20/8}`):
+
+        >>> 2.5 * (np.random.random_integers(5, size=(5,)) - 1) / 4.
+        array([ 0.625,  1.25 ,  0.625,  0.625,  2.5  ])
+
+        Roll two six sided dice 1000 times and sum the results:
+
+        >>> d1 = np.random.random_integers(1, 6, 1000)
+        >>> d2 = np.random.random_integers(1, 6, 1000)
+        >>> dsums = d1 + d2
+
+        Display results as a histogram:
+
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, ignored = plt.hist(dsums, 11, normed=True)
+        >>> plt.show()
 
         """
         if high is None:
@@ -958,15 +1161,26 @@ cdef class RandomState:
 
         Parameters
         ----------
-        size : int, shape tuple, optional
-            Returns the number of samples required to satisfy the `size` parameter.
-            If not given or 'None' indicates to return one sample.
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single value is
+            returned.
 
         Returns
         -------
-        out : float, ndarray
-            Samples the Standard Normal distribution with a shape satisfying the
-            `size` parameter.
+        out : float or ndarray
+            Drawn samples.
+
+        Examples
+        --------
+        >>> s = np.random.standard_normal(8000)
+        >>> s
+        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311, #random
+               -0.38672696, -0.4685006 ])                               #random
+        >>> s.shape
+        (8000,)
+        >>> s = np.random.standard_normal(size=(3, 4, 2))
+        >>> s.shape
+        (3, 4, 2)
 
         """
         return cont0_array(self.internal_state, rk_gauss, size)
@@ -1188,7 +1402,26 @@ cdef class RandomState:
         """
         standard_exponential(size=None)
 
-        Standard exponential distribution (scale=1).
+        Draw samples from the standard exponential distribution.
+
+        `standard_exponential` is identical to the exponential distribution
+        with a scale parameter of 1.
+
+        Parameters
+        ----------
+        size : int or tuple of ints
+            Shape of the output.
+
+        Returns
+        -------
+        out : float or ndarray
+            Drawn samples.
+
+        Examples
+        --------
+        Output a 3x8000 array:
+
+        >>> n = np.random.standard_exponential((3, 8000))
 
         """
         return cont0_array(self.internal_state, rk_standard_exponential, size)
@@ -1197,7 +1430,67 @@ cdef class RandomState:
         """
         standard_gamma(shape, size=None)
 
-        Standard Gamma distribution.
+        Draw samples from a Standard Gamma distribution.
+
+        Samples are drawn from a Gamma distribution with specified parameters,
+        shape (sometimes designated "k") and scale=1.
+
+        Parameters
+        ----------
+        shape : float
+            Parameter, should be > 0.
+        size : int or tuple of ints
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            The drawn samples.
+
+        See Also
+        --------
+        scipy.stats.distributions.gamma : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Gamma distribution is
+
+        .. math:: p(x) = x^{k-1}\\frac{e^{-x/\\theta}}{\\theta^k\\Gamma(k)},
+
+        where :math:`k` is the shape and :math:`\\theta` the scale,
+        and :math:`\\Gamma` is the Gamma function.
+
+        The Gamma distribution is often used to model the times to failure of
+        electronic components, and arises naturally in processes for which the
+        waiting times between Poisson distributed events are relevant.
+
+        References
+        ----------
+        .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
+               Wolfram Web Resource.
+               http://mathworld.wolfram.com/GammaDistribution.html
+        .. [2] Wikipedia, "Gamma-distribution",
+               http://en.wikipedia.org/wiki/Gamma-distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> shape, scale = 2., 1. # mean and width
+        >>> s = np.random.standard_gamma(shape, 1000000)
+
+        Display the histogram of the samples, along with
+        the probability density function:
+
+        >>> import matplotlib.pyplot as plt
+        >>> import scipy.special as sps
+        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/ \\
+        ...                       (sps.gamma(shape) * scale**shape))
+        >>> plt.plot(bins, y, linewidth=2, color='r')
+        >>> plt.show()
 
         """
         cdef ndarray oshape
@@ -1413,7 +1706,64 @@ cdef class RandomState:
         """
         noncentral_f(dfnum, dfden, nonc, size=None)
 
-        Noncentral F distribution.
+        Draw samples from the noncentral F distribution.
+
+        Samples are drawn from an F distribution with specified parameters,
+        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of
+        freedom in denominator), where both parameters > 1.
+        `nonc` is the non-centrality parameter.
+
+        Parameters
+        ----------
+        dfnum : int
+            Parameter, should be > 1.
+        dfden : int
+            Parameter, should be > 1.
+        nonc : float
+            Parameter, should be >= 0.
+        size : int or tuple of ints
+            Output shape. If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : scalar or ndarray
+            Drawn samples.
+
+        Notes
+        -----
+        When calculating the power of an experiment (power = probability of
+        rejecting the null hypothesis when a specific alternative is true) the
+        non-central F statistic becomes important.  When the null hypothesis is
+        true, the F statistic follows a central F distribution. When the null
+        hypothesis is not true, then it follows a non-central F statistic.
+
+        References
+        ----------
+        Weisstein, Eric W. "Noncentral F-Distribution." From MathWorld--A Wolfram
+        Web Resource.  http://mathworld.wolfram.com/NoncentralF-Distribution.html
+
+        Wikipedia, "Noncentral F distribution",
+        http://en.wikipedia.org/wiki/Noncentral_F-distribution
+
+        Examples
+        --------
+        In a study, testing for a specific alternative to the null hypothesis
+        requires use of the Noncentral F distribution. We need to calculate the
+        area in the tail of the distribution that exceeds the value of the F
+        distribution for the null hypothesis.  We'll plot the two probability
+        distributions for comparison.
+
+        >>> dfnum = 3 # between group deg of freedom
+        >>> dfden = 20 # within groups degrees of freedom
+        >>> nonc = 3.0
+        >>> nc_vals = np.random.noncentral_f(dfnum, dfden, nonc, 1000000)
+        >>> NF = np.histogram(nc_vals, bins=50, normed=True)
+        >>> c_vals = np.random.f(dfnum, dfden, 1000000)
+        >>> F = np.histogram(c_vals, bins=50, normed=True)
+        >>> plt.plot(F[1][1:], F[0])
+        >>> plt.plot(NF[1][1:], NF[0])
+        >>> plt.show()
 
         """
         cdef ndarray odfnum, odfden, ononc
@@ -1539,11 +1889,61 @@ cdef class RandomState:
         Parameters
         ----------
         df : int
-            Degrees of freedom.
+            Degrees of freedom, should be >= 1.
         nonc : float
-            Non-centrality.
-        size : tuple of ints
+            Non-centrality, should be > 0.
+        size : int or tuple of ints
             Shape of the output.
+
+        Notes
+        -----
+        The probability density function for the noncentral Chi-square distribution
+        is
+
+        .. math:: P(x;df,nonc) = \\sum^{\\infty}_{i=0}
+                               \\frac{e^{-nonc/2}(nonc/2)^{i}}{i!}P_{Y_{df+2i}}(x),
+
+        where :math:`Y_{q}` is the Chi-square with q degrees of freedom.
+
+        In Delhi (2007), it is noted that the noncentral chi-square is useful in
+        bombing and coverage problems, the probability of killing the point target
+        given by the noncentral chi-squared distribution.
+
+        References
+        ----------
+        .. [1] Delhi, M.S. Holla, "On a noncentral chi-square distribution in the
+               analysis of weapon systems effectiveness", Metrika, Volume 15,
+               Number 1 / December, 1970.
+        .. [2] Wikipedia, "Noncentral chi-square distribution"
+               http://en.wikipedia.org/wiki/Noncentral_chi-square_distribution
+
+        Examples
+        --------
+        Draw values from the distribution and plot the histogram
+
+        >>> import matplotlib.pyplot as plt
+        >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
+        ...                   bins=200, normed=True)
+        >>> plt.show()
+
+        Draw values from a noncentral chisquare with very small noncentrality,
+        and compare to a chisquare.
+
+        >>> plt.figure()
+        >>> values = plt.hist(np.random.noncentral_chisquare(3, .0000001, 100000),
+        ...                   bins=np.arange(0., 25, .1), normed=True)
+        >>> values2 = plt.hist(np.random.chisquare(3, 100000),
+        ...                    bins=np.arange(0., 25, .1), normed=True)
+        >>> plt.plot(values[1][0:-1], values[0]-values2[0], 'ob')
+        >>> plt.show()
+
+        Demonstrate how large values of non-centrality lead to a more symmetric
+        distribution.
+
+        >>> plt.figure()
+        >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
+        ...                   bins=200, normed=True)
+        >>> plt.show()
 
         """
         cdef ndarray odf, ononc
@@ -1573,7 +1973,59 @@ cdef class RandomState:
         """
         standard_cauchy(size=None)
 
-        Standard Cauchy with mode=0.
+        Standard Cauchy distribution with mode = 0.
+
+        Also known as the Lorentz distribution.
+
+        Parameters
+        ----------
+        size : int or tuple of ints
+            Shape of the output.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            The drawn samples.
+
+        Notes
+        -----
+        The probability density function for the full Cauchy distribution is
+
+        .. math:: P(x; x_0, \\gamma) = \\frac{1}{\\pi \\gamma \\bigl[ 1+
+                  (\\frac{x-x_0}{\\gamma})^2 \\bigr] }
+
+        and the Standard Cauchy distribution just sets :math:`x_0=0` and
+        :math:`\\gamma=1`
+
+        The Cauchy distribution arises in the solution to the driven harmonic
+        oscillator problem, and also describes spectral line broadening. It
+        also describes the distribution of values at which a line tilted at
+        a random angle will cut the x axis.
+
+        When studying hypothesis tests that assume normality, seeing how the
+        tests perform on data from a Cauchy distribution is a good indicator of
+        their sensitivity to a heavy-tailed distribution, since the Cauchy looks
+        very much like a Gaussian distribution, but with heavier tails.
+
+        References
+        ----------
+        ..[1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
+              Distribution",
+              http://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
+        ..[2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
+              Wolfram Web Resource.
+              http://mathworld.wolfram.com/CauchyDistribution.html
+        ..[3] Wikipedia, "Cauchy distribution"
+              http://en.wikipedia.org/wiki/Cauchy_distribution
+
+        Examples
+        --------
+        Draw samples and plot the distribution:
+
+        >>> s = np.random.standard_cauchy(1000000)
+        >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
+        >>> plt.hist(s, bins=100)
+        >>> plt.show()
 
         """
         return cont0_array(self.internal_state, rk_standard_cauchy, size)
@@ -1583,6 +2035,84 @@ cdef class RandomState:
         standard_t(df, size=None)
 
         Standard Student's t distribution with df degrees of freedom.
+
+        A special case of the hyperbolic distribution.
+        As `df` gets large, the result resembles that of the standard normal
+        distribution (`standard_normal`).
+
+        Parameters
+        ----------
+        df : int
+            Degrees of freedom, should be > 0.
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single value is
+            returned.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            Drawn samples.
+
+        Notes
+        -----
+        The probability density function for the t distribution is
+
+        .. math:: P(x, df) = \\frac{\\Gamma(\\frac{df+1}{2})}{\\sqrt{\\pi df}
+                  \\Gamma(\\frac{df}{2})}\\Bigl( 1+\\frac{x^2}{df} \\Bigr)^{-(df+1)/2}
+
+        The t test is based on an assumption that the data come from a Normal
+        distribution. The t test provides a way to test whether the sample mean
+        (that is the mean calculated from the data) is a good estimate of the true
+        mean.
+
+        The derivation of the t-distribution was forst published in 1908 by William
+        Gisset while working for the Guinness Brewery in Dublin. Due to proprietary
+        issues, he had to publish under a pseudonym, and so he used the name
+        Student.
+
+        References
+        ----------
+        .. [1] Dalgaard, Peter, "Introductory Statistics With R",
+               Springer, 2002.
+        .. [2] Wikipedia, "Student's t-distribution"
+               http://en.wikipedia.org/wiki/Student's_t-distribution
+
+        Examples
+        --------
+        From Dalgaard page 83 [1]_, suppose the daily energy intake for 11
+        women in Kj is:
+
+        >>> intake = np.array([5260., 5470, 5640, 6180, 6390, 6515, 6805, 7515, \\
+        ...                    7515, 8230, 8770])
+
+        Does their energy intake deviate systematically from the recommended
+        value of 7725 kJ?
+
+        We have 10 degrees of freedom, so is the sample mean within 95% of the
+        recommended value?
+
+        >>> s = np.random.standard_t(10, size=100000)
+        >>> np.mean(intake)
+        6753.636363636364
+        >>> intake.std(ddof=1)
+        1142.1232221373727
+
+        Calculate the t statistic, setting the ddof parameter to the unbiased
+        value so the divisor in the standard deviation will be degrees of
+        freedom, N-1.
+
+        >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
+        >>> import matplotlib.pyplot as plt
+        >>> h = plt.hist(s, bins=100, normed=True)
+
+        For a one-sided t-test, how far out in the distribution does the t
+        statistic appear?
+
+        >>> >>> np.sum(s<t) / float(len(s))
+        0.0090699999999999999  #random
+
+        So the p-value is about 0.009, which says the null hypothesis has a
+        probability of about 99% of being true.
 
         """
         cdef ndarray odf
@@ -1998,15 +2528,13 @@ cdef class RandomState:
         """
         laplace(loc=0.0, scale=1.0, size=None)
 
-        Laplace or double exponential distribution.
-
-        It has the probability density function
-
-        .. math:: f(x; \\mu, \\lambda) = \\frac{1}{2\\lambda}
-                                       \\exp\\left(-\\frac{|x - \\mu|}{\\lambda}\\right).
+        Draw samples from the Laplace or double exponential distribution with
+        specified location (or mean) and scale (decay).
 
         The Laplace distribution is similar to the Gaussian/normal distribution,
-        but is sharper at the peak and has fatter tails.
+        but is sharper at the peak and has fatter tails. It represents the
+        difference between two independent, identically distributed exponential
+        random variables.
 
         Parameters
         ----------
@@ -2014,6 +2542,59 @@ cdef class RandomState:
             The position, :math:`\\mu`, of the distribution peak.
         scale : float
             :math:`\\lambda`, the exponential decay.
+
+        Notes
+        -----
+        It has the probability density function
+
+        .. math:: f(x; \\mu, \\lambda) = \\frac{1}{2\\lambda}
+                                       \\exp\\left(-\\frac{|x - \\mu|}{\\lambda}\\right).
+
+        The first law of Laplace, from 1774, states that the frequency of an error
+        can be expressed as an exponential function of the absolute magnitude of
+        the error, which leads to the Laplace distribution. For many problems in
+        Economics and Health sciences, this distribution seems to model the data
+        better than the standard Gaussian distribution
+
+
+        References
+        ----------
+        .. [1] Abramowitz, M. and Stegun, I. A. (Eds.). Handbook of Mathematical
+               Functions with Formulas, Graphs, and Mathematical Tables, 9th
+               printing.  New York: Dover, 1972.
+
+        .. [2] The Laplace distribution and generalizations
+               By Samuel Kotz, Tomasz J. Kozubowski, Krzysztof Podgorski,
+               Birkhauser, 2001.
+
+        .. [3] Weisstein, Eric W. "Laplace Distribution."
+               From MathWorld--A Wolfram Web Resource.
+               http://mathworld.wolfram.com/LaplaceDistribution.html
+
+        .. [4] Wikipedia, "Laplace distribution",
+               http://en.wikipedia.org/wiki/Laplace_distribution
+
+        Examples
+        --------
+        Draw samples from the distribution
+
+        >>> loc, scale = 0., 1.
+        >>> s = np.random.laplace(loc, scale, 1000)
+
+        Display the histogram of the samples, along with
+        the probability density function:
+
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> x = np.arange(-8., 8., .01)
+        >>> pdf = np.exp(-abs(x-loc/scale))/(2.*scale)
+        >>> plt.plot(x, pdf)
+
+        Plot Gaussian for comparison:
+
+        >>> g = (1/(scale * np.sqrt(2 * np.pi)) * 
+        ...      np.exp( - (x - loc)**2 / (2 * scale**2) ))
+        >>> plt.plot(x,g)
 
         """
         cdef ndarray oloc, oscale
@@ -2322,7 +2903,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='center')
+        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='mid')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
         >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
@@ -2380,7 +2961,55 @@ cdef class RandomState:
         """
         rayleigh(scale=1.0, size=None)
 
-        Rayleigh distribution.
+        Draw samples from a Rayleigh distribution.
+
+        The :math:`\\chi` and Weibull distributions are generalizations of the
+        Rayleigh.
+
+        Parameters
+        ----------
+        scale : scalar
+            Scale, also equals the mode. Should be >= 0.
+        size : int or tuple of ints, optional
+            Shape of the output. Default is None, in which case a single
+            value is returned.
+
+        Notes
+        -----
+        The probability density function for the Rayleigh distribution is
+
+        .. math:: P(x;scale) = \\frac{x}{scale^2}e^{\\frac{-x^2}{2 \\cdotp scale^2}}
+
+        The Rayleigh distribution arises if the wind speed and wind direction are
+        both gaussian variables, then the vector wind velocity forms a Rayleigh
+        distribution. The Rayleigh distribution is used to model the expected
+        output from wind turbines.
+
+        References
+        ----------
+        ..[1] Brighton Webs Ltd., Rayleigh Distribution,
+              http://www.brighton-webs.co.uk/distributions/rayleigh.asp
+        ..[2] Wikipedia, "Rayleigh distribution"
+              http://en.wikipedia.org/wiki/Rayleigh_distribution
+
+        Examples
+        --------
+        Draw values from the distribution and plot the histogram
+
+        >>> values = hist(np.random.rayleigh(3, 100000), bins=200, normed=True)
+
+        Wave heights tend to follow a Rayleigh distribution. If the mean wave
+        height is 1 meter, what fraction of waves are likely to be larger than 3
+        meters?
+
+        >>> meanvalue = 1
+        >>> modevalue = np.sqrt(2 / np.pi) * meanvalue
+        >>> s = np.random.rayleigh(modevalue, 1000000)
+
+        The percentage of waves larger than 3 meters is:
+
+        >>> 100.*sum(s>3)/1000000.
+        0.087300000000000003
 
         """
         cdef ndarray oscale
@@ -2404,7 +3033,63 @@ cdef class RandomState:
         """
         wald(mean, scale, size=None)
 
-        Wald (inverse Gaussian) distribution.
+        Draw samples from a Wald, or Inverse Gaussian, distribution.
+
+        As the scale approaches infinity, the distribution becomes more like a
+        Gaussian.
+
+        Some references claim that the Wald is an Inverse Gaussian with mean=1, but
+        this is by no means universal.
+
+        The Inverse Gaussian distribution was first studied in relationship to
+        Brownian motion. In 1956 M.C.K. Tweedie used the name Inverse Gaussian
+        because there is an inverse relationship between the time to cover a unit
+        distance and distance covered in unit time.
+
+        Parameters
+        ----------
+        mean : scalar
+            Distribution mean, should be > 0.
+        scale : scalar
+            Scale parameter, should be >= 0.
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single value is
+            returned.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            Drawn sample, all greater than zero.
+
+        Notes
+        -----
+        The probability density function for the Wald distribution is
+
+        .. math:: P(x;mean,scale) = \\sqrt{\\frac{scale}{2\\pi x^3}}e^
+                                    \\frac{-scale(x-mean)^2}{2\\cdotp mean^2x}
+
+        As noted above the Inverse Gaussian distribution first arise from attempts
+        to model Brownian Motion. It is also a competitor to the Weibull for use in
+        reliability modeling and modeling stock returns and interest rate
+        processes.
+
+        References
+        ----------
+        ..[1] Brighton Webs Ltd., Wald Distribution,
+              http://www.brighton-webs.co.uk/distributions/wald.asp
+        ..[2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
+              Distribution: Theory : Methodology, and Applications", CRC Press,
+              1988.
+        ..[3] Wikipedia, "Wald distribution"
+              http://en.wikipedia.org/wiki/Wald_distribution
+
+        Examples
+        --------
+        Draw values from the distribution and plot the histogram:
+
+        >>> import matplotlib.pyplot as plt
+        >>> h = plt.hist(np.random.wald(3, 2, 100000), bins=200, normed=True)
+        >>> plt.show()
 
         """
         cdef ndarray omean, oscale
@@ -2434,8 +3119,57 @@ cdef class RandomState:
         """
         triangular(left, mode, right, size=None)
 
-        Triangular distribution starting at left, peaking at mode, and
-        ending at right (left <= mode <= right).
+        Draw samples from the triangular distribution.
+
+        The triangular distribution is a continuous probability distribution with
+        lower limit left, peak at mode, and upper limit right. Unlike the other
+        distributions, these parameters directly define the shape of the pdf.
+
+        Parameters
+        ----------
+        left : scalar
+            Lower limit.
+        mode : scalar
+            The value where the peak of the distribution occurs.
+            The value should fulfill the condition ``left <= mode <= right``.
+        right : scalar
+            Upper limit, should be larger than `left`.
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single value is
+            returned.
+
+        Returns
+        -------
+        samples : ndarray or scalar
+            The returned samples all lie in the interval [left, right].
+
+        Notes
+        -----
+        The probability density function for the Triangular distribution is
+
+        .. math:: P(x;l, m, r) = \\begin{cases}
+                  \\frac{2(x-l)}{(r-l)(m-l)}& \\text{for $l \\leq x \\leq m$},\\\\
+                  \\frac{2(m-x)}{(r-l)(r-m)}& \\text{for $m \\leq x \\leq r$},\\\\
+                  0& \\text{otherwise}.
+                  \\end{cases}
+
+        The triangular distribution is often used in ill-defined problems where the
+        underlying distribution is not known, but some knowledge of the limits and
+        mode exists. Often it is used in simulations.
+
+        References
+        ----------
+        ..[1] Wikipedia, "Triangular distribution"
+              http://en.wikipedia.org/wiki/Triangular_distribution
+
+        Examples
+        --------
+        Draw values from the distribution and plot the histogram:
+
+        >>> import matplotlib.pyplot as plt
+        >>> h = plt.hist(np.random.triangular(-3, 0, 8, 100000), bins=200,
+        ...              normed=True)
+        >>> plt.show()
 
         """
         cdef ndarray oleft, omode, oright
@@ -2581,7 +3315,65 @@ cdef class RandomState:
         """
         negative_binomial(n, p, size=None)
 
-        Negative Binomial distribution.
+        Draw samples from a negative_binomial distribution.
+
+        Samples are drawn from a negative_Binomial distribution with specified
+        parameters, `n` trials and `p` probability of success where `n` is an
+        integer > 0 and `p` is in the interval [0, 1].
+
+        Parameters
+        ----------
+        n : int
+            Parameter, > 0.
+        p : float
+            Parameter, >= 0 and <=1.
+        size : int or tuple of ints
+            Output shape. If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : int or ndarray of ints
+            Drawn samples.
+
+        Notes
+        -----
+        The probability density for the Negative Binomial distribution is
+
+        .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
+
+        where :math:`n-1` is the number of successes, :math:`p` is the probability
+        of success, and :math:`N+n-1` is the number of trials.
+
+        The negative binomial distribution gives the probability of n-1 successes
+        and N failures in N+n-1 trials, and success on the (N+n)th trial.
+
+        If one throws a die repeatedly until the third time a "1" appears, then the
+        probability distribution of the number of non-"1"s that appear before the
+        third "1" is a negative binomial distribution.
+
+        References
+        ----------
+        .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
+               MathWorld--A Wolfram Web Resource.
+               http://mathworld.wolfram.com/NegativeBinomialDistribution.html
+        .. [2] Wikipedia, "Negative binomial distribution",
+               http://en.wikipedia.org/wiki/Negative_binomial_distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        A real world example. A company drills wild-cat oil exploration wells, each
+        with an estimated probability of success of 0.1.  What is the probability
+        of having one success for each successive well, that is what is the
+        probability of a single success after drilling 5 wells, after 6 wells,
+        etc.?
+
+        >>> s = np.random.negative_binomial(1, 0.1, 100000)
+        >>> for i in range(1, 11):
+        ...    probability = sum(s<i) / 100000.
+        ...    print i, "wells drilled, probability of one success =", probability
 
         """
         cdef ndarray on
@@ -2618,7 +3410,48 @@ cdef class RandomState:
         """
         poisson(lam=1.0, size=None)
 
-        Poisson distribution.
+        Draw samples from a Poisson distribution.
+
+        The Poisson distribution is the limit of the Binomial
+        distribution for large N.
+
+        Parameters
+        ----------
+        lam : float
+            Expectation of interval, should be >= 0.
+        size : int or tuple of ints, optional
+            Output shape. If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Notes
+        -----
+        The Poisson distribution
+
+        .. math:: f(k; \\lambda)=\\frac{\\lambda^k e^{-\\lambda}}{k!}
+
+        For events with an expected separation :math:`\\lambda` the Poisson
+        distribution :math:`f(k; \\lambda)` describes the probability of
+        :math:`k` events occurring within the observed interval :math:`\\lambda`.
+
+        References
+        ----------
+        .. [1] Weisstein, Eric W. "Poisson Distribution." From MathWorld--A Wolfram
+               Web Resource. http://mathworld.wolfram.com/PoissonDistribution.html
+        .. [2] Wikipedia, "Poisson distribution",
+           http://en.wikipedia.org/wiki/Poisson_distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> import numpy as np
+        >>> s = np.random.poisson(5, 10000)
+
+        Display histogram of the sample:
+
+        >>> import matplotlib.pyplot as plt
+        >>> count, bins, ignored = plt.hist(s, 14, normed=True)
+        >>> plt.show()
 
         """
         cdef ndarray olam
@@ -2982,8 +3815,8 @@ cdef class RandomState:
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*log(1-p))
-        >>> plt.plot(bins, logseries(bins, a)*count.max()/\\
-            logseries(bins, a).max(),'r')
+        >>> plt.plot(bins, logseries(bins, a)*count.max()/
+                     logseries(bins, a).max(), 'r')
         >>> plt.show()
 
         """
