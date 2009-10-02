@@ -1386,11 +1386,9 @@ Shape Manipulation
     (unless refcheck is 0) not be referenced by any other array. A
     reference to the new array is returned. The fortran argument can
     be :cdata:`NPY_ANYORDER`, :cdata:`NPY_CORDER`, or
-    :cdata:`NPY_FORTRANORDER`. This argument is used if the number of
-    dimension is (or is being resized to be) greater than 2. It
-    currently has no effect. Eventually it could be used to determine
-    how the resize operation should view the data when constructing a
-    differently-dimensioned array.
+    :cdata:`NPY_FORTRANORDER`. It currently has no effect. Eventually
+    it could be used to determine how the resize operation should view
+    the data when constructing a differently-dimensioned array.
 
 .. cfunction:: PyObject* PyArray_Transpose(PyArrayObject* self, PyArray_Dims* permute)
 
@@ -2457,7 +2455,7 @@ ABI incompatibility is automatically detected in every numpy's version. API
 incompatibility detection was added in numpy 1.4.0. If you want to supported
 many different numpy versions with one extension binary, you have to build your
 extension with the lowest NPY_FEATURE_VERSION as possible.
-      
+
 .. cfunction:: unsigned int PyArray_GetNDArrayCVersion(void)
 
     This just returns the value :cdata:`NPY_VERSION`. :cdata:`NPY_VERSION`

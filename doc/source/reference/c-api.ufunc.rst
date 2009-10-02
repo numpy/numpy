@@ -106,7 +106,13 @@ Functions
         XXX: Undocumented
 
     :param name:
-        The name for the ufunc.
+        The name for the ufunc.  Specifying a name of 'add' or
+        'multiply' enables a special behavior for  integer-typed
+        reductions when no dtype is given.  If the input type is an
+        integer (or boolean) data type smaller than the size of the int_
+        data type, it will be internally upcast to the int_ (or uint)
+        data type.
+
 
     :param doc:
         Allows passing in a documentation string to be stored with the

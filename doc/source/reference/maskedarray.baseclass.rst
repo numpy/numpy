@@ -1,4 +1,3 @@
-
 .. currentmodule:: numpy.ma
 
 
@@ -50,7 +49,7 @@ The :class:`MaskedArray` class
 
 .. class:: MaskedArray
 
-   A subclass of :class:`~numpy.ndarray` designed to manipulate numerical array with missing data.
+   A subclass of :class:`~numpy.ndarray` designed to manipulate numerical arrays with missing data.
 
 
 
@@ -107,7 +106,7 @@ Attributes and properties of masked arrays
 
    Returns the value used to fill the invalid entries of a masked array.
    The value is either a scalar (if the masked array has no named fields),
-   or a 0d-ndarray with the same :attr:`dtype` as the masked array if it has
+   or a 0-D ndarray with the same :attr:`dtype` as the masked array if it has
    named fields.
 
    The default filling value depends on the datatype of the array:
@@ -225,9 +224,9 @@ replaced with ``n`` integers which will be interpreted as an n-tuple.
 Item selection and manipulation
 -------------------------------
 
-For array methods that take an *axis* keyword, it defaults to
-:const:`None`. If axis is *None*, then the array is treated as a 1-D
-array. Any other value for *axis* represents the dimension along which
+For array methods that take an *axis* keyword, it defaults to `None`.
+If axis is *None*, then the array is treated as a 1-D array.
+Any other value for *axis* represents the dimension along which
 the operation should proceed.
 
 .. autosummary::
@@ -461,4 +460,3 @@ Counting the missing elements
    :toctree: generated/
 
    MaskedArray.count
-

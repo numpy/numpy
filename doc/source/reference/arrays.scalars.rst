@@ -41,7 +41,7 @@ of the flexible itemsize array types (:class:`string`,
    pointer for the platform. All the number types can be obtained
    using bit-width names as well.
 
-.. [#] However, array scalars are immutable, so that none of the array
+.. [#] However, array scalars are immutable, so none of the array
        scalar attributes are settable.
 
 .. _arrays.scalars.character-codes:
@@ -91,7 +91,7 @@ Python Boolean scalar.
 
 .. tip:: The default data type in Numpy is :class:`float_`.
 
-In the tables below, ``platform?`` means that the type may not
+In the tables below, ``platform?`` means that the type may not be
 available on all platforms. Compatibility with different C or Python
 types is indicated: two types are compatible if their data is of the
 same size and interpreted in the same way.
@@ -144,7 +144,7 @@ Floating-point numbers:
 :class:`longfloat`   compatible: C long float       ``'g'``
 :class:`float32`     32 bits
 :class:`float64`     64 bits
-:class:`float96`     92 bits, platform?
+:class:`float96`     96 bits, platform?
 :class:`float128`    128 bits, platform?
 ===================  =============================  ===============
 
@@ -171,7 +171,7 @@ Any Python object:
 .. note::
 
    The data actually stored in :term:`object arrays <object array>`
-   (*i.e.* arrays having dtype :class:`object_`) are references to
+   (*i.e.*, arrays having dtype :class:`object_`) are references to
    Python objects, not the objects themselves. Hence, object arrays
    behave more like usual Python :class:`lists <list>`, in the sense
    that their contents need not be of the same Python type.

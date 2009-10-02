@@ -36,6 +36,7 @@ From existing data
    fromfile
    fromfunction
    fromiter
+   fromstring
    loadtxt
 
 .. _routines.array-creation.rec:

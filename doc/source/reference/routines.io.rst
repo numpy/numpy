@@ -19,6 +19,7 @@ Text files
 
    loadtxt
    savetxt
+   genfromtxt
    fromregex
    fromstring
    ndarray.tofile

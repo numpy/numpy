@@ -227,6 +227,11 @@ Character arrays (:mod:`numpy.char`)
 .. index::
    single: character arrays
 
+.. note::
+   The chararray module exists for backwards compatibility with Numarray,
+   it is not recommended for new development. If one needs arrays of
+   strings, use arrays of `dtype` object.
+
 These are enhanced arrays of either :class:`string` type or
 :class:`unicode_` type.  These arrays inherit from the
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,
