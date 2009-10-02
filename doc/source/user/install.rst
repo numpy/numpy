@@ -117,8 +117,8 @@ almost always a very bad idea.
 Building with ATLAS support
 ---------------------------
 
-Ubuntu 8.10 (Intrepid)
-~~~~~~~~~~~~~~~~~~~~~~
+Ubuntu 8.10 (Intrepid) and 9.04 (Jaunty)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can install the necessary packages for optimized ATLAS with this command:
 
@@ -130,9 +130,12 @@ for SSE2:
 
     sudo apt-get install libatlas3gf-sse2
 
-*NOTE*: if you build your own atlas, Intrepid changed its default fortran
-compiler to gfortran. So you should rebuild everything from scratch, including
-lapack, to use it on Intrepid.
+This package is not available on amd64 platforms.
+
+*NOTE*: Ubuntu changed its default fortran compiler from g77 in Hardy to
+gfortran in Intrepid. If you are building ATLAS from source and are upgrading
+from Hardy to Intrepid or later versions, you should rebuild everything from
+scratch, including lapack.
 
 Ubuntu 8.04 and lower
 ~~~~~~~~~~~~~~~~~~~~~
