@@ -215,7 +215,7 @@ add_newdoc('numpy.core', 'broadcast', ('iters',
 
     See Also
     --------
-    `numpy.flatiter`
+    numpy.flatiter
 
     Examples
     --------
@@ -1601,7 +1601,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
 
     See Also
     --------
-    `numpy.ctypeslib`
+    numpy.ctypeslib
 
     Notes
     -----
@@ -1700,7 +1700,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
 
     See Also
     --------
-    `numpy.dtype`
+    numpy.dtype
 
     Examples
     --------
