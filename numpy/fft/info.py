@@ -88,24 +88,24 @@ represented by a complex exponential
 :math:`a_m = \\exp\\{2\\pi i\\,f m\\Delta t\\}`, where :math:`\\Delta t`
 is the sampling interval.
 
-The values in the result follow so-called "standard" order: If `A =
-fft(a, n)`, then `A[0]` contains the zero-frequency term (the mean of the
-signal), which is always purely real for real inputs. Then `A[1:n/2]`
-contains the positive-frequency terms, and `A[n/2+1:]` contains the
+The values in the result follow so-called "standard" order: If ``A =
+fft(a, n)``, then ``A[0]`` contains the zero-frequency term (the mean of
+the signal), which is always purely real for real inputs. Then ``A[1:n/2]``
+contains the positive-frequency terms, and ``A[n/2+1:]`` contains the
 negative-frequency terms, in order of decreasingly negative frequency.
-For an even number of input points, `A[n/2]` represents both positive and
+For an even number of input points, ``A[n/2]`` represents both positive and
 negative Nyquist frequency, and is also purely real for real input.  For
-an odd number of input points, `A[(n-1)/2]` contains the largest positive
-frequency, while `A[(n+1)/2]` contains the largest negative frequency.
-The routine `np.fft.fftfreq(A)` returns an array giving the frequencies
+an odd number of input points, ``A[(n-1)/2]`` contains the largest positive
+frequency, while ``A[(n+1)/2]`` contains the largest negative frequency.
+The routine ``np.fft.fftfreq(A)`` returns an array giving the frequencies
 of corresponding elements in the output.  The routine
-`np.fft.fftshift(A)` shifts transforms and their frequencies to put the
-zero-frequency components in the middle, and `np.fft.ifftshift(A)` undoes
+``np.fft.fftshift(A)`` shifts transforms and their frequencies to put the
+zero-frequency components in the middle, and ``np.fft.ifftshift(A)`` undoes
 that shift.
 
-When the input `a` is a time-domain signal and `A = fft(a)`, `np.abs(A)`
-is its amplitude spectrum and `np.abs(A)**2` is its power spectrum.
-The phase spectrum is obtained by `np.angle(A)`.
+When the input `a` is a time-domain signal and ``A = fft(a)``, ``np.abs(A)``
+is its amplitude spectrum and ``np.abs(A)**2`` is its power spectrum.
+The phase spectrum is obtained by ``np.angle(A)``.
 
 The inverse DFT is defined as
 
@@ -127,13 +127,13 @@ is not already available from the positive frequency components.
 The family of `rfft` functions is
 designed to operate on real inputs, and exploits this symmetry by
 computing only the positive frequency components, up to and including the
-Nyquist frequency.  Thus, `n` input points produce `n/2+1` complex
+Nyquist frequency.  Thus, ``n`` input points produce ``n/2+1`` complex
 output points.  The inverses of this family assumes the same symmetry of
-its input, and for an output of `n` points uses `n/2+1` input points.
+its input, and for an output of ``n`` points uses ``n/2+1`` input points.
 
 Correspondingly, when the spectrum is purely real, the signal is
 Hermitian.  The `hfft` family of functions exploits this symmetry by
-using `n/2+1` complex points in the input (time) domain for `n` real
+using ``n/2+1`` complex points in the input (time) domain for ``n`` real
 points in the frequency domain.
 
 In higher dimensions, FFTs are used, e.g., for image analysis and
@@ -154,6 +154,7 @@ in higher dimensions also extend in the same way.
 
 References
 ^^^^^^^^^^
+
 .. [CT] Cooley, James W., and John W. Tukey, 1965, "An algorithm for the
         machine calculation of complex Fourier series," *Math. Comput.*
         19: 297-301.
