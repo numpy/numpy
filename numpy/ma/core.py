@@ -154,7 +154,42 @@ if 'float128' in ntypes.typeDict:
 
 def default_fill_value(obj):
     """
-    Calculate the default fill value for the argument object.
+    Return the default fill value for the argument object.
+
+    The default filling value depends on the datatype of the input
+    array or the type of the input scalar:
+
+       ========  ========
+       datatype  default
+       ========  ========
+       bool      True
+       int       999999
+       float     1.e20
+       complex   1.e20+0j
+       object    '?'
+       string    'N/A'
+       ========  ========
+
+
+    Parameters
+    ----------
+    obj : ndarray, dtype or scalar
+        The array data-type or scalar for which the default fill value
+        is returned.
+
+    Returns
+    -------
+    fill_value : scalar
+        The default fill value.
+
+    Examples
+    --------
+    >>> np.ma.default_fill_value(1)
+    999999
+    >>> np.ma.default_fill_value(np.array([1.1, 2., np.pi]))
+    1e+20
+    >>>  np.ma.default_fill_value(np.dtype(complex))
+    (1e+20+0j)
 
     """
     if hasattr(obj,'dtype'):
@@ -2213,7 +2248,52 @@ class _arraymethod(object):
 #..........................................................
 
 class MaskedIterator(object):
-    "Define an interator."
+    """
+    Flat iterator object to iterate over masked arrays.
+
+    A `MaskedIterator` iterator is returned by ``x.flat`` for any masked array
+    `x`. It allows iterating over the array as if it were a 1-D array,
+    either in a for-loop or by calling its `next` method.
+
+    Iteration is done in C-contiguous style, with the last index varying the
+    fastest. The iterator can also be indexed using basic slicing or
+    advanced indexing.
+
+    See Also
+    --------
+    MaskedArray.flat : Return a flat iterator over an array.
+    MaskedArray.flatten : Returns a flattened copy of an array.
+
+    Notes
+    -----
+    `MaskedIterator` is not exported by the `ma` module. Instead of
+    instantiating a `MaskedIterator` directly, use `MaskedArray.flat`.
+
+    Examples
+    --------
+    >>> x = np.ma.array(arange(6).reshape(2, 3))
+    >>> fl = x.flat
+    >>> type(fl)
+    <class 'numpy.ma.core.MaskedIterator'>
+    >>> for item in fl:
+    ...     print item
+    ...
+    0
+    1
+    2
+    3
+    4
+    5
+
+    Extracting more than a single element b indexing the `MaskedIterator`
+    returns a masked array:
+
+    >>> fl[2:4]
+    masked_array(data = [2 3],
+                 mask = False,
+           fill_value = 999999)
+
+    """
     def __init__(self, ma):
         self.ma = ma
         self.dataiter = ma._data.flat
@@ -3952,12 +4032,51 @@ class MaskedArray(ndarray):
 
     def mean(self, axis=None, dtype=None, out=None):
         """
-    Returns the average of the array elements along given axis.
-    Refer to `numpy.mean` for full documentation.
+        Returns the average of the array elements.
 
-    See Also
-    --------
-    numpy.mean : equivalent function'
+        Masked entries are ignored.
+        The average is taken over the flattened array by default, otherwise over
+        the specified axis. Refer to `numpy.mean` for the full documentation.
+
+        Parameters
+        ----------
+        a : array_like
+            Array containing numbers whose mean is desired. If `a` is not an
+            array, a conversion is attempted.
+        axis : int, optional
+            Axis along which the means are computed. The default is to compute
+            the mean of the flattened array.
+        dtype : dtype, optional
+            Type to use in computing the mean. For integer inputs, the default
+            is float64; for floating point, inputs it is the same as the input
+            dtype.
+        out : ndarray, optional
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+        Returns
+        -------
+        mean : ndarray, see dtype parameter above
+            If `out=None`, returns a new array containing the mean values,
+            otherwise a reference to the output array is returned.
+
+        See Also
+        --------
+        numpy.ma.mean : Equivalent function.
+        numpy.mean : Equivalent function on non-masked arrays.
+        numpy.ma.average: Weighted average.
+
+        Examples
+        --------
+        >>> a = np.ma.array([1,2,3], mask=[False, False, True])
+        >>> a
+        masked_array(data = [1 2 --],
+                     mask = [False False  True],
+               fill_value = 999999)
+        >>> a.mean()
+        1.5
+
         """
         if self._mask is nomask:
             result = super(MaskedArray, self).mean(axis=axis, dtype=dtype)
@@ -3977,18 +4096,35 @@ class MaskedArray(ndarray):
 
     def anom(self, axis=None, dtype=None):
         """
-    Return the anomalies (deviations from the average) along the given axis.
+        Compute the anomalies (deviations from the arithmetic mean)
+        along the given axis.
 
-    Parameters
-    ----------
-    axis : int, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
-    dtype : {dtype}, optional
-        Datatype for the intermediary computation.
-        If not given, the current dtype is used instead.
+        Returns an array of anomalies, with the same shape as the input and
+        where the arithmetic mean is computed along the given axis.
 
-    """
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which the anomalies are taken.
+            The default is to use the mean of the flattened array as reference.
+        dtype : dtype, optional
+            Type to use in computing the variance. For arrays of integer type
+             the default is float32; for arrays of float types it is the same as
+             the array type.
+
+        See Also
+        --------
+        mean : Compute the mean of the array.
+
+        Examples
+        --------
+        >>> a = np.ma.array([1,2,3])
+        >>> a.anom()
+        masked_array(data = [-1.  0.  1.],
+                     mask = False,
+               fill_value = 1e+20)
+
+        """
         m = self.mean(axis, dtype)
         if not axis:
             return (self - m)

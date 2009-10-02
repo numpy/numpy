@@ -40,24 +40,41 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     Parameters
     ----------
-    ary : array
-        This array will be flattened before the difference is taken.
-    to_end : number, optional
-        If provided, this number will be tacked onto the end of the returned
-        differences.
-    to_begin : number, optional
-        If provided, this number will be tacked onto the beginning of the
-        returned differences.
+    ary : array_like
+        If necessary, will be flattened before the differences are taken.
+    to_end : array_like, optional
+        Number(s) to append at the end of the returned differences.
+    to_begin : array_like, optional
+        Number(s) to prepend at the beginning of the returned differences.
 
     Returns
     -------
-    ed : array
-        The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+    ed : ndarray
+        The differences. Loosely, this is ``ary.flat[1:] - ary.flat[:-1]``.
+
+    See Also
+    --------
+    diff, gradient
 
     Notes
     -----
     When applied to masked arrays, this function drops the mask information
-    if the `to_begin` and/or `to_end` parameters are used
+    if the `to_begin` and/or `to_end` parameters are used.
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 4, 7, 0])
+    >>> np.ediff1d(x)
+    array([ 1,  2,  3, -7])
+
+    >>> np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
+    array([-99,   1,   2,   3,  -7,  88,  99])
+
+    The returned array is always 1D.
+
+    >>> y = [[1, 2, 4], [1, 6, 24]]
+    >>> np.ediff1d(y)
+    array([ 1,  2, -3,  5, 18])
 
     """
     ary = np.asanyarray(ary).flat

@@ -632,15 +632,27 @@ def mask_indices(n,mask_func,k=0):
 
 
 def tril_indices(n,k=0):
-    """Return the indices for the lower-triangle of an (n,n) array.
+    """
+    Return the indices for the lower-triangle of an (n, n) array.
 
     Parameters
     ----------
     n : int
       Sets the size of the arrays for which the returned indices will be valid.
-
     k : int, optional
-      Diagonal offset (see tril() for details).
+      Diagonal offset (see `tril` for details).
+
+    Returns
+    -------
+    inds : tuple of arrays
+        The indices for the triangle. The returned tuple contains two arrays,
+        each with the indices along one dimension of the array.
+
+    See also
+    --------
+    triu_indices : similar function, for upper-triangular.
+    mask_indices : generic function accepting an arbitrary mask function.
+    tril, triu
 
     Notes
     -----
@@ -648,45 +660,45 @@ def tril_indices(n,k=0):
 
     Examples
     --------
-    Commpute two different sets of indices to access 4x4 arrays, one for the
+    Compute two different sets of indices to access 4x4 arrays, one for the
     lower triangular part starting at the main diagonal, and one starting two
     diagonals further right:
-    
-    >>> il1 = tril_indices(4)
-    >>> il2 = tril_indices(4,2)
+
+    >>> il1 = np.tril_indices(4)
+    >>> il2 = np.tril_indices(4, 2)
 
     Here is how they can be used with a sample array:
-    >>> a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]])
+
+    >>> a = np.arange(16).reshape(4, 4)
     >>> a
-    array([[ 1,  2,  3,  4],
-           [ 5,  6,  7,  8],
-           [ 9, 10, 11, 12],
-           [13, 14, 15, 16]])
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
 
     Both for indexing:
+
     >>> a[il1]
-    array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16])
+    array([ 0,  4,  5,  8,  9, 10, 12, 13, 14, 15])
 
     And for assigning values:
+
     >>> a[il1] = -1
     >>> a
-    array([[-1,  2,  3,  4],
-           [-1, -1,  7,  8],
-           [-1, -1, -1, 12],
+    array([[-1,  1,  2,  3],
+           [-1, -1,  6,  7],
+           [-1, -1, -1, 11],
            [-1, -1, -1, -1]])
 
     These cover almost the whole array (two diagonals right of the main one):
-    >>> a[il2] = -10 
+
+    >>> a[il2] = -10
     >>> a
-    array([[-10, -10, -10,   4],
+    array([[-10, -10, -10,   3],
            [-10, -10, -10, -10],
            [-10, -10, -10, -10],
            [-10, -10, -10, -10]])
 
-    See also
-    --------
-    - triu_indices : similar function, for upper-triangular.
-    - mask_indices : generic function accepting an arbitrary mask function.
     """
     return mask_indices(n,tril,k)
 
@@ -715,15 +727,27 @@ def tril_indices_from(arr,k=0):
 
     
 def triu_indices(n,k=0):
-    """Return the indices for the upper-triangle of an (n,n) array.
+    """
+    Return the indices for the upper-triangle of an (n, n) array.
 
     Parameters
     ----------
     n : int
       Sets the size of the arrays for which the returned indices will be valid.
-
     k : int, optional
-      Diagonal offset (see triu() for details).
+      Diagonal offset (see `triu` for details).
+
+    Returns
+    -------
+    inds : tuple of arrays
+        The indices for the triangle. The returned tuple contains two arrays,
+        each with the indices along one dimension of the array.
+
+    See also
+    --------
+    tril_indices : similar function, for lower-triangular.
+    mask_indices : generic function accepting an arbitrary mask function.
+    triu, tril
 
     Notes
     -----
@@ -731,45 +755,46 @@ def triu_indices(n,k=0):
 
     Examples
     --------
-    Commpute two different sets of indices to access 4x4 arrays, one for the
-    lower triangular part starting at the main diagonal, and one starting two
+    Compute two different sets of indices to access 4x4 arrays, one for the
+    upper triangular part starting at the main diagonal, and one starting two
     diagonals further right:
 
-    >>> iu1 = triu_indices(4)
-    >>> iu2 = triu_indices(4,2)
+    >>> iu1 = np.triu_indices(4)
+    >>> iu2 = np.triu_indices(4, 2)
 
     Here is how they can be used with a sample array:
-    >>> a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]])
+
+    >>> a = np.arange(16).reshape(4, 4)
     >>> a
-    array([[ 1,  2,  3,  4],
-           [ 5,  6,  7,  8],
-           [ 9, 10, 11, 12],
-           [13, 14, 15, 16]])
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
 
     Both for indexing:
-    >>> a[il1]
-    array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16])
 
-    And for assigning values:       
-    >>> a[iu] = -1
+    >>> a[iu1]
+    array([ 0,  1,  2,  3,  5,  6,  7, 10, 11, 15])
+
+    And for assigning values:
+
+    >>> a[iu1] = -1
     >>> a
     array([[-1, -1, -1, -1],
-           [ 5, -1, -1, -1],
-           [ 9, 10, -1, -1],
-           [13, 14, 15, -1]])
+           [ 4, -1, -1, -1],
+           [ 8,  9, -1, -1],
+           [12, 13, 14, -1]])
 
-    These cover almost the whole array (two diagonals right of the main one):
+    These cover only a small part of the whole array (two diagonals right
+    of the main one):
+
     >>> a[iu2] = -10
     >>> a
     array([[ -1,  -1, -10, -10],
-           [  5,  -1,  -1, -10],
-           [  9,  10,  -1,  -1],
-           [ 13,  14,  15,  -1]])
+           [  4,  -1,  -1, -10],
+           [  8,   9,  -1,  -1],
+           [ 12,  13,  14,  -1]])
 
-    See also
-    --------
-    - tril_indices : similar function, for lower-triangular.
-    - mask_indices : generic function accepting an arbitrary mask function.
     """
     return mask_indices(n,triu,k)
 

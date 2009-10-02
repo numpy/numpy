@@ -1031,6 +1031,9 @@ def angle(z, deg=0):
     See Also
     --------
     arctan2
+    absolute
+
+
 
     Examples
     --------

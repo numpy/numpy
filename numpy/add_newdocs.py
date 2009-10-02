@@ -18,6 +18,45 @@ from lib import add_newdoc
 
 add_newdoc('numpy.core', 'flatiter',
     """
+    Flat iterator object to iterate over arrays.
+
+    A `flatiter` iterator is returned by ``x.flat`` for any array `x`.
+    It allows iterating over the array as if it were a 1-D array,
+    either in a for-loop or by calling its `next` method.
+
+    Iteration is done in C-contiguous style, with the last index varying the
+    fastest. The iterator can also be indexed using basic slicing or
+    advanced indexing.
+
+    See Also
+    --------
+    ndarray.flat : Return a flat iterator over an array.
+    ndarray.flatten : Returns a flattened copy of an array.
+
+    Notes
+    -----
+    A `flatiter` iterator can not be constructed directly from Python code
+    by calling the `flatiter` constructor.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> fl = x.flat
+    >>> type(fl)
+    <type 'numpy.flatiter'>
+    >>> for item in fl:
+    ...     print item
+    ...
+    0
+    1
+    2
+    3
+    4
+    5
+
+    >>> fl[2:4]
+    array([2, 3])
+
     """)
 
 # flatiter attributes
@@ -228,11 +267,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
     """
     empty(shape, dtype=float, order='C')
 
-    Return a new array of given shape and type, without initialising entries.
+    Return a new array of given shape and type, without initializing entries.
 
     Parameters
     ----------
-    shape : {tuple of int, int}
+    shape : int or tuple of int
         Shape of the empty array
     dtype : data-type, optional
         Desired output data-type.
@@ -242,7 +281,7 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
     See Also
     --------
-    empty_like, zeros
+    empty_like, zeros, ones
 
     Notes
     -----

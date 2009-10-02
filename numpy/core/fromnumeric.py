@@ -1351,14 +1351,15 @@ def any(a,axis=None, out=None):
     a : array_like
         Input array or object that can be converted to an array.
     axis : int, optional
-        Axis along which an logical OR is performed.
+        Axis along which a logical OR is performed.
         The default (`axis` = `None`) is to perform a logical OR
         over a flattened input array. `axis` may be negative, in which
         case it counts from the last to the first axis.
     out : ndarray, optional
         Alternative output array in which to place the result.
         It must have the same shape as the expected output and
-        the type is preserved.
+        the type is preserved. See `doc.ufuncs` (Section
+        "Output arguments") for details.
 
     Returns
     -------
@@ -1369,6 +1370,9 @@ def any(a,axis=None, out=None):
     See Also
     --------
     ndarray.any : equivalent method
+
+    all : Test whether all array elements along a given axis evaluate
+        to True.
 
     Notes
     -----
@@ -1391,8 +1395,13 @@ def any(a,axis=None, out=None):
 
     >>> o=np.array([False])
     >>> z=np.any([-1, 4, 5], out=o)
-    >>> id(z), id(o), z
-    (28224368, 28224368, array([ True], dtype=bool))
+    >>> z, o
+    (array([ True], dtype=bool), array([ True], dtype=bool))
+    >>> # Check now that z is a reference to o
+    >>> z is o
+    True
+    >>> id(z), id(o) # identity of z and o
+    (191614240, 191614240)
 
     """
     try:
@@ -1693,12 +1702,12 @@ def alen(a):
 
     Returns
     -------
-    alen : int
+    l : int
        Length of the first dimension of `a`.
 
     See Also
     --------
-    shape
+    shape, size
 
     Examples
     --------

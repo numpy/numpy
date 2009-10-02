@@ -48,14 +48,14 @@ ufunc = type(sin)
 # originally from Fernando Perez's IPython
 def zeros_like(a):
     """
-    Returns an array of zeros with the same shape and type as a given array.
+    Return an array of zeros with the same shape and type as a given array.
 
     Equivalent to ``a.copy().fill(0)``.
 
     Parameters
     ----------
     a : array_like
-        The shape and data-type of `a` defines the parameters of
+        The shape and data-type of `a` define the parameters of
         the returned array.
 
     Returns
@@ -65,11 +65,11 @@ def zeros_like(a):
 
     See Also
     --------
-    numpy.ones_like : Return an array of ones with shape and type of input.
-    numpy.empty_like : Return an empty array with shape and type of input.
-    numpy.zeros : Return a new array setting values to zero.
-    numpy.ones : Return a new array setting values to one.
-    numpy.empty : Return a new uninitialized array.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
 
     Examples
     --------
@@ -81,6 +81,12 @@ def zeros_like(a):
     >>> np.zeros_like(x)
     array([[0, 0, 0],
            [0, 0, 0]])
+
+    >>> y = np.arange(3, dtype=np.float)
+    >>> y
+    array([ 0.,  1.,  2.])
+    >>> np.zeros_like(y)
+    array([ 0.,  0.,  0.])
 
     """
     if isinstance(a, ndarray):

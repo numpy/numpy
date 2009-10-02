@@ -157,12 +157,19 @@ add_newdoc('numpy.core.umath', 'arccosh',
     x : array_like
         Input array.
     out : ndarray, optional
-        Array of the same shape as `x`.
+        Array of the same shape as `x`, to store results in.
+        See `doc.ufuncs` (Section "Output arguments") for details.
+
 
     Returns
     -------
-    out : ndarray
-        Array of the same shape and dtype as `x`.
+    y : ndarray
+        Array of the same shape as `x`.
+
+    See Also
+    --------
+
+    cosh, arcsinh, sinh, arctanh, tanh
 
     Notes
     -----
@@ -189,6 +196,8 @@ add_newdoc('numpy.core.umath', 'arccosh',
     --------
     >>> np.arccosh([np.e, 10.0])
     array([ 1.65745445,  2.99322285])
+    >>> np.arccosh(1)
+    0.0
 
     """)
 
