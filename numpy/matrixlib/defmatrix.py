@@ -74,45 +74,73 @@ def asmatrix(data, dtype=None):
 
 def matrix_power(M,n):
     """
-    Raise a square matrix to the (integer) power n.
+    Raise a square matrix to the (integer) power `n`.
 
-    For positive integers n, the power is computed by repeated matrix
-    squarings and matrix multiplications. If n=0, the identity matrix
-    of the same type as M is returned. If n<0, the inverse is computed
-    and raised to the exponent.
+    For positive integers `n`, the power is computed by repeated matrix
+    squarings and matrix multiplications. If ``n == 0``, the identity matrix
+    of the same shape as M is returned. If ``n < 0``, the inverse
+    is computed and then raised to the ``abs(n)``.
 
     Parameters
     ----------
-    M : array_like
-        Must be a square array (that is, of dimension two and with
-        equal sizes).
-    n : integer
-        The exponent can be any integer or long integer, positive
-        negative or zero.
+    M : ndarray or matrix object
+        Matrix to be "powered."  Must be square, i.e. ``M.shape == (m, m)``,
+        with `m` a positive integer.
+    n : int
+        The exponent can be any integer or long integer, positive,
+        negative, or zero.
 
     Returns
     -------
-    M to the power n
-        The return value is a an array the same shape and size as M;
-        if the exponent was positive or zero then the type of the
-        elements is the same as those of M. If the exponent was negative
-        the elements are floating-point.
+    M**n : ndarray or matrix object
+        The return value is the same shape and type as `M`;
+        if the exponent is positive or zero then the type of the
+        elements is the same as those of `M`. If the exponent is
+        negative the elements are floating-point.
 
     Raises
     ------
-    LinAlgException
-        If the matrix is not numerically invertible, an exception is raised.
+    LinAlgError
+        If the matrix is not numerically invertible.
 
     See Also
     --------
-    The matrix() class provides an equivalent function as the exponentiation
-    operator.
+    matrix
+        Provides an equivalent function as the exponentiation operator
+        (``**``, not ``^``).
 
     Examples
     --------
-    >>> np.linalg.matrix_power(np.array([[0,1],[-1,0]]),10)
-    array([[-1,  0],
-           [ 0, -1]])
+    >>> from numpy import linalg as LA
+    >>> i = np.array([[0, 1], [-1, 0]]) # matrix equiv. of the imaginary unit
+    >>> LA.matrix_power(i, 3) # should = -i
+    array([[ 0, -1],
+           [ 1,  0]])
+    >>> LA.matrix_power(np.matrix(i), 3) # matrix arg returns matrix
+    matrix([[ 0, -1],
+            [ 1,  0]])
+    >>> LA.matrix_power(i, 0)
+    array([[1, 0],
+           [0, 1]])
+    >>> LA.matrix_power(i, -3) # should = 1/(-i) = i, but w/ f.p. elements
+    array([[ 0.,  1.],
+           [-1.,  0.]])
+
+    Somewhat more sophisticated example
+
+    >>> q = np.zeros((4, 4))
+    >>> q[0:2, 0:2] = -i
+    >>> q[2:4, 2:4] = i
+    >>> q # one of the three quarternion units not equal to 1
+    array([[ 0., -1.,  0.,  0.],
+           [ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.],
+           [ 0.,  0., -1.,  0.]])
+    >>> LA.matrix_power(q, 2) # = -np.eye(4)
+    array([[-1.,  0.,  0.,  0.],
+           [ 0., -1.,  0.,  0.],
+           [ 0.,  0., -1.,  0.],
+           [ 0.,  0.,  0., -1.]])
 
     """
     M = asanyarray(M)
@@ -339,155 +367,195 @@ class matrix(N.ndarray):
     # Necessary because base-class tolist expects dimension
     #  reduction by x[0]
     def tolist(self):
+        """
+        Return the matrix as a (possibly nested) list.
+
+        See `ndarray.tolist` for full documentation.
+
+        See Also
+        --------
+        ndarray.tolist
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.tolist()
+        [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]
+
+        """
         return self.__array__().tolist()
 
     # To preserve orientation of result...
     def sum(self, axis=None, dtype=None, out=None):
-        """Sum the matrix over the given axis.  If the axis is None, sum
-        over all dimensions.  This preserves the orientation of the
-        result as a row or column.
+        """
+        Returns the sum of the matrix elements, along the given axis.
+
+        Refer to `numpy.sum` for full documentation.
+
+        See Also
+        --------
+        numpy.sum
+
+        Notes
+        -----
+        This is the same as `ndarray.sum`, except that where an `ndarray` would
+        be returned, a `matrix` object is returned instead.
+
+        Examples
+        --------
+        >>> x = np.matrix([[1, 2], [4, 3]])
+        >>> x.sum()
+        10
+        >>> x.sum(axis=1)
+        matrix([[3],
+                [7]])
+        >>> x.sum(axis=1, dtype='float')
+        matrix([[ 3.],
+                [ 7.]])
+        >>> out = np.zeros((1, 2), dtype='float')
+        >>> x.sum(axis=1, dtype='float', out=out)
+        matrix([[ 3.],
+                [ 7.]])
+
         """
         return N.ndarray.sum(self, axis, dtype, out)._align(axis)
 
     def mean(self, axis=None, dtype=None, out=None):
-        """Compute the mean along the specified axis.
+        """
+        Returns the average of the matrix elements along the given axis.
 
-        Returns the average of the array elements.  The average is taken over
-        the flattened array by default, otherwise over the specified axis.
+        Refer to `numpy.mean` for full documentation.
 
-        Parameters
-        ----------
-        axis : integer
-            Axis along which the means are computed. The default is
-            to compute the standard deviation of the flattened array.
-
-        dtype : type
-            Type to use in computing the means. For arrays of integer type
-            the default is float32, for arrays of float types it is the
-            same as the array type.
-
-        out : ndarray
-            Alternative output array in which to place the result. It must
-            have the same shape as the expected output but the type will be
-            cast if necessary.
-
-        Returns
-        -------
-        mean : The return type varies, see above.
-            A new array holding the result is returned unless out is
-            specified, in which case a reference to out is returned.
-
-        SeeAlso
-        -------
-        var : variance
-        std : standard deviation
+        See Also
+        --------
+        numpy.mean
 
         Notes
         -----
-        The mean is the sum of the elements along the axis divided by the
-        number of elements.
+        Same as `ndarray.mean` except that, where that returns an `ndarray`,
+        this returns a `matrix` object.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3, 4)))
+        >>> x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.mean()
+        5.5
+        >>> x.mean(0)
+        matrix([[ 4.,  5.,  6.,  7.]])
+        >>> x.mean(1)
+        matrix([[ 1.5],
+                [ 5.5],
+                [ 9.5]])
+
         """
         return N.ndarray.mean(self, axis, dtype, out)._align(axis)
 
     def std(self, axis=None, dtype=None, out=None, ddof=0):
-        """Compute the standard deviation along the specified axis.
+        """
+        Return the standard deviation of the array elements along the given axis.
 
-        Returns the standard deviation of the array elements, a measure of the
-        spread of a distribution. The standard deviation is computed for the
-        flattened array by default, otherwise over the specified axis.
+        Refer to `numpy.std` for full documentation.
 
-        Parameters
-        ----------
-        axis : integer
-            Axis along which the standard deviation is computed. The
-            default is to compute the standard deviation of the flattened
-            array.
-        dtype : type
-            Type to use in computing the standard deviation. For arrays of
-            integer type the default is float32, for arrays of float types
-            it is the same as the array type.
-        out : ndarray
-            Alternative output array in which to place the result. It must
-            have the same shape as the expected output but the type will be
-            cast if necessary.
-        ddof : {0, integer}
-            Means Delta Degrees of Freedom.  The divisor used in calculations
-            is N-ddof.
-
-        Returns
-        -------
-        standard deviation : The return type varies, see above.
-            A new array holding the result is returned unless out is
-            specified, in which case a reference to out is returned.
-
-        SeeAlso
-        -------
-        var : variance
-        mean : average
+        See Also
+        --------
+        numpy.std
 
         Notes
         -----
-        The standard deviation is the square root of the
-        average of the squared deviations from the mean, i.e. var =
-        sqrt(mean(abs(x - x.mean())**2)).  The computed standard
-        deviation is computed by dividing by the number of elements,
-        N-ddof. The option ddof defaults to zero, that is, a biased
-        estimate. Note that for complex numbers std takes the absolute
-        value before squaring, so that the result is always real
-        and nonnegative.
+        This is the same as `ndarray.std`, except that where an `ndarray` would
+        be returned, a `matrix` object is returned instead.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3, 4)))
+        >>> x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.std()
+        3.4520525295346629
+        >>> x.std(0)
+        matrix([[ 3.26598632,  3.26598632,  3.26598632,  3.26598632]])
+        >>> x.std(1)
+        matrix([[ 1.11803399],
+                [ 1.11803399],
+                [ 1.11803399]])
 
         """
         return N.ndarray.std(self, axis, dtype, out, ddof)._align(axis)
 
     def var(self, axis=None, dtype=None, out=None, ddof=0):
-        """Compute the variance along the specified axis.
+        """
+        Returns the variance of the matrix elements, along the given axis.
 
-        Returns the variance of the array elements, a measure of the spread of
-        a distribution.  The variance is computed for the flattened array by
-        default, otherwise over the specified axis.
+        Refer to `numpy.var` for full documentation.
 
-        Parameters
-        ----------
-        axis : integer
-            Axis along which the variance is computed. The default is to
-            compute the variance of the flattened array.
-        dtype : data-type
-            Type to use in computing the variance. For arrays of integer
-            type the default is float32, for arrays of float types it is
-            the same as the array type.
-        out : ndarray
-            Alternative output array in which to place the result. It must
-            have the same shape as the expected output but the type will be
-            cast if necessary.
-        ddof : {0, integer}
-            Means Delta Degrees of Freedom.  The divisor used in calculations
-            is N-ddof.
-
-        Returns
-        -------
-        variance : depends, see above
-            A new array holding the result is returned unless out is
-            specified, in which case a reference to out is returned.
-
-        SeeAlso
-        -------
-        std : standard deviation
-        mean : average
+        See Also
+        --------
+        numpy.var
 
         Notes
         -----
+        This is the same as `ndarray.var`, except that where an `ndarray` would
+        be returned, a `matrix` object is returned instead.
 
-        The variance is the average of the squared deviations from the
-        mean, i.e.  var = mean(abs(x - x.mean())**2).  The mean is
-        computed by dividing by N-ddof, where N is the number of elements.
-        The argument ddof defaults to zero; for an unbiased estimate
-        supply ddof=1. Note that for complex numbers the absolute value
-        is taken before squaring, so that the result is always real
-        and nonnegative.
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3, 4)))
+        >>> x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.var()
+        11.916666666666666
+        >>> x.var(0)
+        matrix([[ 10.66666667,  10.66666667,  10.66666667,  10.66666667]])
+        >>> x.var(1)
+        matrix([[ 1.25],
+                [ 1.25],
+                [ 1.25]])
+
         """
         return N.ndarray.var(self, axis, dtype, out, ddof)._align(axis)
 
     def prod(self, axis=None, dtype=None, out=None):
+        """
+        Return the product of the array elements over the given axis.
+
+        Refer to `prod` for full documentation.
+
+        See Also
+        --------
+        prod, ndarray.prod
+
+        Notes
+        -----
+        Same as `ndarray.prod`, except, where that returns an `ndarray`, this
+        returns a `matrix` object instead.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.prod()
+        0
+        >>> x.prod(0)
+        matrix([[  0,  45, 120, 231]])
+        >>> x.prod(1)
+        matrix([[   0],
+                [ 840],
+                [7920]])
+
+        """
         return N.ndarray.prod(self, axis, dtype, out)._align(axis)
 
     def any(self, axis=None, out=None):
@@ -514,24 +582,255 @@ class matrix(N.ndarray):
         return N.ndarray.any(self, axis, out)._align(axis)
 
     def all(self, axis=None, out=None):
+        """
+        Test whether all matrix elements along a given axis evaluate to True.
+
+        Parameters
+        ----------
+        See `numpy.all` for complete descriptions
+
+        See Also
+        --------
+        numpy.all
+
+        Notes
+        -----
+        This is the same as `ndarray.all`, but it returns a `matrix` object.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> y = x[0]; y
+        matrix([[0, 1, 2, 3]])
+        >>> (x == y)
+        matrix([[ True,  True,  True,  True],
+                [False, False, False, False],
+                [False, False, False, False]], dtype=bool)
+        >>> (x == y).all()
+        False
+        >>> (x == y).all(0)
+        matrix([[False, False, False, False]], dtype=bool)
+        >>> (x == y).all(1)
+        matrix([[ True],
+                [False],
+                [False]], dtype=bool)
+
+        """
         return N.ndarray.all(self, axis, out)._align(axis)
 
     def max(self, axis=None, out=None):
+        """
+        Return the maximum value along an axis.
+
+        Parameters
+        ----------
+        See `amax` for complete descriptions
+
+        See Also
+        --------
+        amax, ndarray.max
+
+        Notes
+        -----
+        This is the same as `ndarray.max`, but returns a `matrix` object
+        where `ndarray.max` would return an ndarray.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.max()
+        11
+        >>> x.max(0)
+        matrix([[8, 9, 10, 11]])
+        >>> x.argmax(1)
+        matrix([[3],
+                [7],
+                [11]])
+
+        """
         return N.ndarray.max(self, axis, out)._align(axis)
 
     def argmax(self, axis=None, out=None):
+        """
+        Indices of the maximum values along an axis.
+
+        Parameters
+        ----------
+        See `numpy.argmax` for complete descriptions
+
+        See Also
+        --------
+        numpy.argmax
+
+        Notes
+        -----
+        This is the same as `ndarray.argmax`, but returns a `matrix` object
+        where `ndarray.argmax` would return an `ndarray`.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.argmax()
+        11
+        >>> x.argmax(0)
+        matrix([[2, 2, 2, 2]])
+        >>> x.argmax(1)
+        matrix([[3],
+                [3],
+                [3]])
+
+        """
         return N.ndarray.argmax(self, axis, out)._align(axis)
 
     def min(self, axis=None, out=None):
+        """
+        Return the minimum value along an axis.
+
+        Parameters
+        ----------
+        See `amin` for complete descriptions.
+
+        See Also
+        --------
+        amin, ndarray.min
+
+        Notes
+        -----
+        This is the same as `ndarray.min`, but returns a `matrix` object
+        where `ndarray.min` would return an ndarray.
+
+        Examples
+        --------
+        >>> x = -np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[  0,  -1,  -2,  -3],
+                [ -4,  -5,  -6,  -7],
+                [ -8,  -9, -10, -11]])
+        >>> x.min()
+        -11
+        >>> x.min(0)
+        matrix([[ -8,  -9, -10, -11]])
+        >>> x.min(1)
+        matrix([[ -3],
+                [ -7],
+                [-11]])
+
+        """
         return N.ndarray.min(self, axis, out)._align(axis)
 
     def argmin(self, axis=None, out=None):
+        """
+        Return the indices of the minimum values along an axis.
+
+        Parameters
+        ----------
+        See `numpy.argmin` for complete descriptions.
+
+        See Also
+        --------
+        numpy.argmin
+
+        Notes
+        -----
+        This is the same as `ndarray.argmin`, but returns a `matrix` object
+        where `ndarray.argmin` would return an `ndarray`.
+
+        Examples
+        --------
+        >>> x = -np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[  0,  -1,  -2,  -3],
+                [ -4,  -5,  -6,  -7],
+                [ -8,  -9, -10, -11]])
+        >>> x.argmin()
+        11
+        >>> x.argmin(0)
+        matrix([[2, 2, 2, 2]])
+        >>> x.argmin(1)
+        matrix([[3],
+                [3],
+                [3]])
+
+        """
         return N.ndarray.argmin(self, axis, out)._align(axis)
 
     def ptp(self, axis=None, out=None):
+        """
+        Peak-to-peak (maximum - minimum) value along the given axis.
+
+        Refer to `numpy.ptp` for full documentation.
+
+        See Also
+        --------
+        numpy.ptp
+
+        Notes
+        -----
+        Same as `ndarray.ptp`, except, where that would return an `ndarray` object,
+        this returns a `matrix` object.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.ptp()
+        11
+        >>> x.ptp(0)
+        matrix([[8, 8, 8, 8]])
+        >>> x.ptp(1)
+        matrix([[3],
+                [3],
+                [3]])
+
+        """
         return N.ndarray.ptp(self, axis, out)._align(axis)
 
     def getI(self):
+        """
+        Returns the (multiplicative) inverse of invertible `self`.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : matrix object
+            If `self` is non-singular, `ret` is such that ``ret * self`` ==
+            ``self * ret`` == ``np.matrix(np.eye(self[0,:].size)`` all return
+            ``True``.
+
+        Raises
+        ------
+        numpy.linalg.linalg.LinAlgError: Singular matrix
+            If `self` is singular.
+
+        See Also
+        --------
+        linalg.inv
+
+        Examples
+        --------
+        >>> m = np.matrix('[1, 2; 3, 4]'); m
+        matrix([[1, 2],
+                [3, 4]])
+        >>> m.getI()
+        matrix([[-2. ,  1. ],
+                [ 1.5, -0.5]])
+        >>> m.getI() * m
+        matrix([[ 1.,  0.],
+                [ 0.,  1.]])
+
+        """
         M,N = self.shape
         if M == N:
             from numpy.dual import inv as func
@@ -540,16 +839,79 @@ class matrix(N.ndarray):
         return asmatrix(func(self))
 
     def getA(self):
+        """
+        Return `self` as an `ndarray` object.
+
+        Equivalent to ``np.asarray(self)``.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : ndarray
+            `self` as an `ndarray`
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.getA()
+        array([[ 0,  1,  2,  3],
+               [ 4,  5,  6,  7],
+               [ 8,  9, 10, 11]])
+
+        """
         return self.__array__()
 
     def getA1(self):
+        """
+        Return `self` as a flattened `ndarray`.
+
+        Equivalent to ``np.asarray(x).ravel()``
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : ndarray
+            `self`, 1-D, as an `ndarray`
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> x.getA1()
+        array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+
+        """
         return self.__array__().ravel()
 
     def getT(self):
         """
-        m.T
+        Returns the transpose of the matrix.
 
-        Returns the transpose of m.
+        Does *not* conjugate!  For the complex conjugate transpose, use `getH`.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : matrix object
+            The (non-conjugated) transpose of the matrix.
+
+        See Also
+        --------
+        transpose, getH
 
         Examples
         --------
@@ -557,18 +919,42 @@ class matrix(N.ndarray):
         >>> m
         matrix([[1, 2],
                 [3, 4]])
-        >>> m.T
+        >>> m.getT()
         matrix([[1, 3],
                 [2, 4]])
-
-        See Also
-        --------
-        transpose
 
         """
         return self.transpose()
 
     def getH(self):
+        """
+        Returns the (complex) conjugate transpose of `self`.
+
+        Equivalent to ``np.transpose(self)`` if `self` is real-valued.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : matrix object
+            complex conjugate transpose of `self`
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4)))
+        >>> z = x - 1j*x; z
+        matrix([[  0. +0.j,   1. -1.j,   2. -2.j,   3. -3.j],
+                [  4. -4.j,   5. -5.j,   6. -6.j,   7. -7.j],
+                [  8. -8.j,   9. -9.j,  10.-10.j,  11.-11.j]])
+        >>> z.getH()
+        matrix([[  0. +0.j,   4. +4.j,   8. +8.j],
+                [  1. +1.j,   5. +5.j,   9. +9.j],
+                [  2. +2.j,   6. +6.j,  10.+10.j],
+                [  3. +3.j,   7. +7.j,  11.+11.j]])
+
+        """
         if issubclass(self.dtype.type, N.complexfloating):
             return self.transpose().conjugate()
         else:
