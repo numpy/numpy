@@ -19,7 +19,15 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
 verbose = 0
 
 def assert_(val, msg='') :
-    """Assert that works in release mode."""
+    """
+    Assert that works in release mode.
+
+    The Python built-in ``assert`` does not work when executing code in
+    optimized mode (the ``-O`` flag) - no byte-code is generated for it.
+
+    For documentation on usage, refer to the Python documentation.
+
+    """
     if not val :
         raise AssertionError(msg)
 
@@ -299,6 +307,33 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         raise AssertionError(msg)
 
 def print_assert_equal(test_string,actual,desired):
+    """
+    Test if two objects are equal, and print an error message if test fails.
+
+    The test is performed with ``actual == desired``.
+
+    Parameters
+    ----------
+    test_string : str
+        The message supplied to AssertionError.
+    actual : object
+        The object to test for equality against `desired`.
+    desired : object
+        The expected result.
+
+    Examples
+    --------
+    >>> np.testing.print_assert_equal('Test XYZ of func xyz', [0, 1], [0, 1])
+    >>> np.testing.print_assert_equal('Test XYZ of func xyz', [0, 1], [0, 2])
+    Traceback (most recent call last):
+    ...
+    AssertionError: Test XYZ of func xyz failed
+    ACTUAL:
+    [0, 1]
+    DESIRED:
+    [0, 2]
+
+    """
     import pprint
     try:
         assert(actual == desired)
@@ -800,6 +835,31 @@ def runstring(astr, dict):
     exec astr in dict
 
 def assert_string_equal(actual, desired):
+    """
+    Test if two strings are equal.
+
+    If the given strings are equal, `assert_string_equal` does nothing.
+    If they are not equal, an AssertionError is raised, and the diff
+    between the strings is shown.
+
+    Parameters
+    ----------
+    actual : str
+        The string to test for equality against the expected string.
+    desired : str
+        The expected string.
+
+    Examples
+    --------
+    >>> np.testing.assert_string_equal('abc', 'abc')
+    >>> np.testing.assert_string_equal('abc', 'abcd')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ...
+    AssertionError: Differences in strings:
+    - abc+ abcd?    +
+
+    """
     # delay import of difflib to reduce startup time
     import difflib
 
@@ -841,9 +901,27 @@ def assert_string_equal(actual, desired):
 
 
 def rundocs(filename=None, raise_on_error=True):
-    """Run doc string tests found in file.
+    """
+    Run doctests found in the given file.
 
-    By default raises AssertionError on failure.
+    By default `rundocs` raises an AssertionError on failure.
+
+    Parameters
+    ----------
+    filename : str
+        The path to the file for which the doctests are run.
+    raise_on_error : bool
+        Whether to raise an AssertionError when a doctest fails. Default is
+        True.
+
+    Notes
+    -----
+    The doctests can be run by the user/developer by adding the ``doctests``
+    argument to the ``test()`` call. For example, to run all tests (including
+    doctests) for `numpy.lib`::
+
+      >>> np.lib.test(doctests=True)
+
     """
     import doctest, imp
     if filename is None:
@@ -893,20 +971,28 @@ def assert_raises(*args,**kwargs):
     return nose.tools.assert_raises(*args,**kwargs)
 
 def decorate_methods(cls, decorator, testmatch=None):
-    ''' Apply decorator to all methods in class matching testmatch
+    """
+    Apply a decorator to all methods in a class matching a regular expression.
+
+    The given decorator is applied to all public methods of `cls` that are
+    matched by the regular expression `testmatch`
+    (``testmatch.search(methodname)``). Methods that are private, i.e. start
+    with an underscore, are ignored.
 
     Parameters
     ----------
     cls : class
-        Class to decorate methods for
+        Class whose methods to decorate.
     decorator : function
         Decorator to apply to methods
-    testmatch : compiled regexp or string to compile to regexp
-        Decorators are applied if testmatch.search(methodname)
-        is not None.  Default value is
-        re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
-        (the default for nose)
-    '''
+    testmatch : compiled regexp or str, optional
+        The regular expression. Default value is None, in which case the
+        nose default (``re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)``)
+        is used.
+        If `testmatch` is a string, it is compiled to a regular expression
+        first.
+
+    """
     if testmatch is None:
         testmatch = re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
     else:
@@ -932,8 +1018,37 @@ def decorate_methods(cls, decorator, testmatch=None):
 
 
 def measure(code_str,times=1,label=None):
-    """ Return elapsed time for executing code_str in the
-    namespace of the caller for given times.
+    """
+    Return elapsed time for executing code in the namespace of the caller.
+
+    The supplied code string is compiled with the Python builtin ``compile``.
+    The precision of the timing is 10 milli-seconds. If the code will execute
+    fast on this timescale, it can be executed many times to get reasonable
+    timing accuracy.
+
+    Parameters
+    ----------
+    code_str : str
+        The code to be timed.
+    times : int, optional
+        The number of times the code is executed. Default is 1. The code is
+        only compiled once.
+    label : str, optional
+        A label to identify `code_str` with. This is passed into ``compile``
+        as the second argument (for run-time error messages).
+
+    Returns
+    -------
+    elapsed : float
+        Total elapsed time in seconds for executing `code_str` `times` times.
+
+    Examples
+    --------
+    >>> etime = np.testing.measure('for i in range(1000): np.sqrt(i**2)',
+    ...                            times=times)
+    >>> print "Time for a single execution : ", etime / times, "s"
+    Time for a single execution :  0.005 s
+
     """
     frame = sys._getframe(1)
     locs,globs = frame.f_locals,frame.f_globals
