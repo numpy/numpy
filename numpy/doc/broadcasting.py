@@ -13,8 +13,9 @@ efficient algorithm implementations. There are, however, cases where
 broadcasting is a bad idea because it leads to inefficient use of memory
 that slows computation.
 
-NumPy operations are usually done element-by-element, which requires two
-arrays to have exactly the same shape::
+NumPy operations are usually done on pairs of arrays on an
+element-by-element basis.  In the simplest case, the two arrays must
+have exactly the same shape, as in the following example:
 
   >>> a = np.array([1.0, 2.0, 3.0])
   >>> b = np.array([2.0, 2.0, 2.0])
@@ -38,9 +39,9 @@ only conceptual.  NumPy is smart enough to use the original scalar value
 without actually making copies, so that broadcasting operations are as
 memory and computationally efficient as possible.
 
-The second example is more effective than the first, since here broadcasting
-moves less memory around during the multiplication (``b`` is a scalar,
-not an array).
+The code in the second example is more efficient than that in the first
+because broadcasting moves less memory around during the multiplication
+(``b`` is a scalar rather than an array).
 
 General Broadcasting Rules
 ==========================
@@ -107,7 +108,7 @@ Here are examples of shapes that do not broadcast::
   B      (1d array):  4 # trailing dimensions do not match
 
   A      (2d array):      2 x 1
-  B      (3d array):  8 x 4 x 3 # second from last dimensions mismatch
+  B      (3d array):  8 x 4 x 3 # second from last dimensions mismatched
 
 An example of broadcasting in practice::
 

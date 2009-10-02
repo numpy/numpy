@@ -24,10 +24,9 @@ position we get the second record: ::
  >>> x[1]
  (2,3.,"World")
 
-The interesting aspect is that we can reference the different fields of the
-array simply by indexing the array with the string representing the name of
-the field. In this case the fields have received the default names of 'f0', 'f1'
-and 'f2'.
+Conveniently, one can access any field of the array by indexing using the
+string that names that field. In this case the fields have received the
+default names 'f0', 'f1' and 'f2'.
 
  >>> y = x['f1']
  >>> y
@@ -40,11 +39,11 @@ and 'f2'.
        dtype=[('f0', '>i4'), ('f1', '>f4'), ('f2', '|S10')])
 
 In these examples, y is a simple float array consisting of the 2nd field
-in the record. But it is not a copy of the data in the structured array,
-instead it is a view. It shares exactly the same data. Thus when we updated
-this array by doubling its values, the structured array shows the
-corresponding values as doubled as well. Likewise, if one changes the record,
-the field view changes: ::
+in the record. But, rather than being a copy of the data in the structured
+array, it is a view, i.e., it shares exactly the same memory locations.
+Thus, when we updated this array by doubling its values, the structured
+array shows the corresponding values as doubled as well. Likewise, if one
+changes the record, the field view also changes: ::
 
  >>> x[1] = (-1,-1.,"Master")
  >>> x
@@ -56,19 +55,19 @@ the field view changes: ::
 Defining Structured Arrays
 ==========================
 
-The definition of a structured array is all done through the dtype object.
-There are a **lot** of different ways one can define the fields of a
-record. Some of variants are there to provide backward compatibility with
-Numeric or numarray, or another module, and should not be used except for
-such purposes. These will be so noted. One defines records by specifying
-the structure by 4 general ways, using an argument (as supplied to a dtype
-function keyword or a dtype object constructor itself) in the form of a:
-1) string, 2) tuple, 3) list, or 4) dictionary. Each of these will be briefly
-described.
+One defines a structured array through the dtype object.  There are
+**several** alternative ways to define the fields of a record.  Some of
+these variants provide backward compatibility with Numeric, numarray, or
+another module, and should not be used except for such purposes. These
+will be so noted. One specifies record structure in
+one of four alternative ways, using an argument (as supplied to a dtype
+function keyword or a dtype object constructor itself).  This
+argument must be one of the following: 1) string, 2) tuple, 3) list, or
+4) dictionary.  Each of these is briefly described below.
 
 1) String argument (as used in the above examples).
-In this case, the constructor is expecting a comma
-separated list of type specifiers, optionally with extra shape information.
+In this case, the constructor expects a comma-separated list of type
+specifiers, optionally with extra shape information.
 The type specifiers can take 4 different forms: ::
 
   a) b1, i1, i2, i4, i8, u1, u2, u4, u8, f4, f8, c8, c16, a<n>
