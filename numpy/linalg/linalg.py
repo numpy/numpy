@@ -26,6 +26,32 @@ fortran_int = intc
 
 # Error object
 class LinAlgError(Exception):
+    """
+    Generic Python-exception-derived object raised by linalg functions.
+
+    General purpose exception class, derived from Python's exception.Exception
+    class, programmatically raised in linalg functions when a Linear
+    Algebra-related condition would prevent further correct execution of the
+    function.
+
+    Parameters
+    ----------
+    None
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> LA.inv(np.zeros((2,2)))
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "...linalg.py", line 350,
+        in inv return wrap(solve(a, identity(a.shape[0], dtype=a.dtype)))
+      File "...linalg.py", line 249,
+        in solve
+        raise LinAlgError, 'Singular matrix'
+    numpy.linalg.linalg.LinAlgError: Singular matrix
+
+    """
     pass
 
 def _makearray(a):
@@ -127,32 +153,44 @@ def _assertNonEmpty(*arrays):
 
 def tensorsolve(a, b, axes=None):
     """
-    Solve the tensor equation a x = b for x
+    Solve the tensor equation ``a x = b`` for x.
 
-    It is assumed that all indices of x are summed over in the product,
-    together with the rightmost indices of a, similarly as in
-    tensordot(a, x, axes=len(b.shape)).
+    It is assumed that all indices of `x` are summed over in the product,
+    together with the rightmost indices of `a`, as is done in, for example,
+    ``tensordot(a, x, axes=len(b.shape))``.
 
     Parameters
     ----------
-    a : array_like, shape b.shape+Q
-        Coefficient tensor. Shape Q of the rightmost indices of a must
-        be such that a is 'square', ie., prod(Q) == prod(b.shape).
-    b : array_like, any shape
-        Right-hand tensor.
-    axes : tuple of integers
-        Axes in a to reorder to the right, before inversion.
+    a : array_like
+        Coefficient tensor, of shape ``b.shape + Q``. `Q`, a tuple, equals
+        the shape of that sub-tensor of `a` consisting of the appropriate
+        number of its rightmost indices, and must be such that
+       ``prod(Q) == prod(b.shape)`` (in which sense `a` is said to be
+       'square').
+    b : array_like
+        Right-hand tensor, which can be of any shape.
+    axes : tuple of ints, optional
+        Axes in `a` to reorder to the right, before inversion.
         If None (default), no reordering is done.
 
     Returns
     -------
-    x : array, shape Q
+    x : ndarray, shape Q
+
+    Raises
+    ------
+    LinAlgError
+        If `a` is singular or not 'square' (in the above sense).
+
+    See Also
+    --------
+    tensordot, tensorinv
 
     Examples
     --------
     >>> a = np.eye(2*3*4)
-    >>> a.shape = (2*3,4,  2,3,4)
-    >>> b = np.random.randn(2*3,4)
+    >>> a.shape = (2*3, 4, 2, 3, 4)
+    >>> b = np.random.randn(2*3, 4)
     >>> x = np.linalg.tensorsolve(a, b)
     >>> x.shape
     (2, 3, 4)
@@ -184,18 +222,21 @@ def tensorsolve(a, b, axes=None):
 
 def solve(a, b):
     """
-    Solve the equation ``a x = b`` for ``x``.
+    Solve a linear matrix equation, or system of linear scalar equations.
+
+    Computes the "exact" solution, `x`, of the well-determined, i.e., full
+    rank, linear matrix equation `ax = b`.
 
     Parameters
     ----------
     a : array_like, shape (M, M)
-        Input equation coefficients.
+        Coefficient matrix.
     b : array_like, shape (M,)
-        Equation target values.
+        Ordinate or "dependent variable" values.
 
     Returns
     -------
-    x : array, shape (M,)
+    x : ndarray, shape (M,)
 
     Raises
     ------
@@ -204,15 +245,25 @@ def solve(a, b):
 
     Notes
     -----
-
-    ``linalg.solve`` is a wrapper to the LAPACK http://www.netlib.org/lapack
-    routines `dgesv`_ and `zgesv`_.  The solution to the system of linear
-    equations is computed using an LU decomposition with partial pivoting and
+    `solve` is a wrapper for the LAPACK routines `dgesv`_ and
+    `zgesv`_, the former being used if `a` is real-valued, the latter if
+    it is complex-valued.  The solution to the system of linear equations
+    is computed using an LU decomposition [1]_ with partial pivoting and
     row interchanges.
 
     .. _dgesv: http://www.netlib.org/lapack/double/dgesv.f
 
     .. _zgesv: http://www.netlib.org/lapack/complex16/zgesv.f
+
+    `a` must be square and of full-rank, i.e., all rows (or, equivalently,
+    columns) must be linearly independent; if either is not true, use
+    `lstsq` for the least-squares best "solution" of the
+    system/equation.
+
+    References
+    ----------
+    .. [1] G. Strang, *Linear Algebra and Its Applications*, 2nd Ed., Orlando,
+           FL, Academic Press, Inc., 1980, pg. 22.
 
     Examples
     --------
@@ -260,43 +311,49 @@ def solve(a, b):
 
 def tensorinv(a, ind=2):
     """
-    Find the 'inverse' of a N-d array
+    Compute the 'inverse' of an N-dimensional array.
 
-    The result is an inverse corresponding to the operation
-    tensordot(a, b, ind), ie.,
-
-        x == tensordot(tensordot(tensorinv(a), a, ind), x, ind)
-          == tensordot(tensordot(a, tensorinv(a), ind), x, ind)
-
-    for all x (up to floating-point accuracy).
+    The result is an inverse for `a` relative to the tensordot operation
+    ``tensordot(a, b, ind)``, i. e., up to floating-point accuracy,
+    ``tensordot(tensorinv(a), a, ind)`` is the "identity" tensor for the
+    tensordot operation.
 
     Parameters
     ----------
     a : array_like
-        Tensor to 'invert'. Its shape must 'square', ie.,
-        prod(a.shape[:ind]) == prod(a.shape[ind:])
-    ind : integer > 0
-        How many of the first indices are involved in the inverse sum.
+        Tensor to 'invert'. Its shape must be 'square', i. e.,
+        ``prod(a.shape[:ind]) == prod(a.shape[ind:])``.
+    ind : int, optional
+        Number of first indices that are involved in the inverse sum.
+        Must be a positive integer, default is 2.
 
     Returns
     -------
-    b : array, shape a.shape[:ind]+a.shape[ind:]
+    b : ndarray
+        `a`'s tensordot inverse, shape ``a.shape[:ind] + a.shape[ind:]``.
 
-    Raises LinAlgError if a is singular or not square
+    Raises
+    ------
+    LinAlgError
+        If `a` is singular or not 'square' (in the above sense).
+
+    See Also
+    --------
+    tensordot, tensorsolve
 
     Examples
     --------
     >>> a = np.eye(4*6)
-    >>> a.shape = (4,6,8,3)
+    >>> a.shape = (4, 6, 8, 3)
     >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
-    >>> b = np.random.randn(4,6)
+    >>> b = np.random.randn(4, 6)
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
     >>> a = np.eye(4*6)
-    >>> a.shape = (24,8,3)
+    >>> a.shape = (24, 8, 3)
     >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
@@ -323,17 +380,20 @@ def tensorinv(a, ind=2):
 
 def inv(a):
     """
-    Compute the inverse of a matrix.
+    Compute the (multiplicative) inverse of a matrix.
+
+    Given a square matrix `a`, return the matrix `ainv` satisfying
+    ``dot(a, ainv) = dot(ainv, a) = eye(a.shape[0])``.
 
     Parameters
     ----------
     a : array_like, shape (M, M)
-        Matrix to be inverted
+        Matrix to be inverted.
 
     Returns
     -------
-    ainv : ndarray, shape (M, M)
-        Inverse of the matrix `a`
+    ainv : ndarray or matrix, shape (M, M)
+        (Multiplicative) inverse of the matrix `a`.
 
     Raises
     ------
@@ -342,13 +402,20 @@ def inv(a):
 
     Examples
     --------
+    >>> from numpy import linalg as LA
     >>> a = np.array([[1., 2.], [3., 4.]])
-    >>> np.linalg.inv(a)
-    array([[-2. ,  1. ],
-           [ 1.5, -0.5]])
-    >>> np.dot(a, np.linalg.inv(a))
-    array([[ 1.,  0.],
-           [ 0.,  1.]])
+    >>> ainv = LA.inv(a)
+    >>> np.allclose(np.dot(a, ainv), np.eye(2))
+    True
+    >>> np.allclose(np.dot(ainv, a), np.eye(2))
+    True
+
+    If a is a matrix object, then the return value is a matrix as well:
+
+    >>> ainv = LA.inv(np.matrix(a))
+    >>> ainv
+    matrix([[-2. ,  1. ],
+            [ 1.5, -0.5]])
 
     """
     a, wrap = _makearray(a)
@@ -447,55 +514,95 @@ def cholesky(a):
 
 def qr(a, mode='full'):
     """
-    Compute QR decomposition of a matrix.
+    Compute the qr factorization of a matrix.
 
-    Calculate the decomposition :math:`A = Q R` where Q is orthonormal
-    and R upper triangular.
+    Factor the matrix `a` as `qr`, where `q` is orthonormal
+    (:math:`dot( q_{:,i}, q_{:,j}) = \\delta_{ij}`, the Kronecker delta) and
+    `r` is upper-triangular.
 
     Parameters
     ----------
     a : array_like, shape (M, N)
-        Matrix to be decomposed
+        Matrix to be factored.
     mode : {'full', 'r', 'economic'}
-        Determines what information is to be returned. 'full' is the default.
-        Economic mode is slightly faster if only R is needed.
+        Specifies the information to be returned. 'full' is the default.
+        mode='r' returns a "true" `r`, while 'economic' returns a "polluted"
+        `r` (albeit slightly faster; see Returns below).
 
     Returns
     -------
     mode = 'full'
-    Q : double or complex array, shape (M, K)
-    R : double or complex array, shape (K, N)
-        Size K = min(M, N)
+           q : double or complex array, shape (M, K)
+
+           r : double or complex array, shape (K, N)
+
+    Size K = min(M, N)
 
     mode = 'r'
-    R : double or complex array, shape (K, N)
+           r : double or complex array, shape (K, N)
 
     mode = 'economic'
-    A2 : double or complex array, shape (M, N)
-        The diagonal and the upper triangle of A2 contains R,
-        while the rest of the matrix is undefined.
+           a2 : double or complex array, shape (M, N)
 
-    If a is a matrix, so are all the return values.
+                The diagonal and the upper triangle of a2 contains r,
+                while the rest of the matrix is undefined.
 
-    Raises LinAlgError if decomposition fails
+    If `a` is a matrix, so are all the return values.
+
+    Raises
+    ------
+    LinAlgError : if factoring fails
 
     Notes
     -----
     This is an interface to the LAPACK routines dgeqrf, zgeqrf,
     dorgqr, and zungqr.
 
+    For more information on the qr factorization, see for example:
+    http://en.wikipedia.org/wiki/QR_factorization
+
+
     Examples
     --------
     >>> a = np.random.randn(9, 6)
     >>> q, r = np.linalg.qr(a)
-    >>> np.allclose(a, np.dot(q, r))
+    >>> np.allclose(a, np.dot(q, r)) # a does equal qr
     True
     >>> r2 = np.linalg.qr(a, mode='r')
     >>> r3 = np.linalg.qr(a, mode='economic')
-    >>> np.allclose(r, r2)
+    >>> np.allclose(r, r2) # mode='r' returns the same r as mode='full'
     True
+    >>> # But only triu parts are guaranteed equal when mode='economic'
     >>> np.allclose(r, np.triu(r3[:6,:6], k=0))
     True
+
+    Example illustrating a common use of `qr`: solving of least squares
+    problems
+
+    What are the least-squares-best `m` and `y0` in ``y = y0 + mx`` for
+    the following data: {(0,1), (1,0), (1,2), (2,1)}. (Graph the points
+    and you'll see that it should be y0 = 0, m = 1.)  The answer is provided
+    by solving the over-determined matrix equation ``Ax = b``, where:
+
+      A = array([[0, 1], [1, 1], [1, 1], [2, 1]])
+
+      x = array([[y0], [m]])  b = array([[1], [0], [2], [1]])
+
+    If A = qr such that q is orthonormal (which is always possible via
+    Gram-Schmidt), then ``x = inv(r) * (q.T) * b``.  (In numpy practice,
+    however, we simply use `lstsq`.)
+
+    >>> A = np.array([[0, 1], [1, 1], [1, 1], [2, 1]])
+    >>> A
+    array([[0, 1],
+           [1, 1],
+           [1, 1],
+           [2, 1]])
+    >>> b = np.array([1, 0, 2, 1])
+    >>> q, r = LA.qr(A)
+    >>> p = np.dot(q.T, b)
+    >>> np.dot(LA.inv(r), p)
+    array([  1.1e-16,   1.0e+00])
 
     """
     a, wrap = _makearray(a)
@@ -577,11 +684,13 @@ def eigvals(a):
     """
     Compute the eigenvalues of a general matrix.
 
+    Main difference between `eigvals` and `eig`: the eigenvectors aren't
+    returned.
+
     Parameters
     ----------
     a : array_like, shape (M, M)
-        A complex or real matrix whose eigenvalues and eigenvectors
-        will be computed.
+        A complex- or real-valued matrix whose eigenvalues will be computed.
 
     Returns
     -------
@@ -598,19 +707,39 @@ def eigvals(a):
     See Also
     --------
     eig : eigenvalues and right eigenvectors of general arrays
-    eigvalsh : eigenvalues of symmetric or Hemitiean arrays.
-    eigh : eigenvalues and eigenvectors of symmetric/Hermitean arrays.
+    eigvalsh : eigenvalues of symmetric or Hermitian arrays.
+    eigh : eigenvalues and eigenvectors of symmetric/Hermitian arrays.
 
     Notes
     -----
     This is a simple interface to the LAPACK routines dgeev and zgeev
-    that sets the flags to return only the eigenvalues of general real
-    and complex arrays respectively.
+    that sets those routines' flags to return only the eigenvalues of
+    general real and complex arrays, respectively.
 
-    The number w is an eigenvalue of a if there exists a vector v
-    satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
-    the characteristic equation det(a - w[i]*I) = 0, where det is the
-    determinant and I is the identity matrix.
+    Examples
+    --------
+    Illustration, using the fact that the eigenvalues of a diagonal matrix
+    are its diagonal elements, that multiplying a matrix on the left
+    by an orthogonal matrix, `Q`, and on the right by `Q.T` (the transpose
+    of `Q`), preserves the eigenvalues of the "middle" matrix.  In other words,
+    if `Q` is orthogonal, then ``Q * A * Q.T`` has the same eigenvalues as
+    ``A``:
+
+    >>> from numpy import linalg as LA
+    >>> x = np.random.random()
+    >>> Q = np.array([[np.cos(x), -np.sin(x)], [np.sin(x), np.cos(x)]])
+    >>> LA.norm(Q[0, :]), LA.norm(Q[1, :]), np.dot(Q[0, :],Q[1, :])
+    (1.0, 1.0, 0.0)
+
+    Now multiply a diagonal matrix by Q on one side and by Q.T on the other:
+
+    >>> D = np.diag((-1,1))
+    >>> LA.eigvals(D)
+    array([-1.,  1.])
+    >>> A = np.dot(Q, D)
+    >>> A = np.dot(A, Q.T)
+    >>> LA.eigvals(A)
+    array([ 1., -1.])
 
     """
     a, wrap = _makearray(a)
@@ -659,23 +788,24 @@ def eigvals(a):
 
 def eigvalsh(a, UPLO='L'):
     """
-    Compute the eigenvalues of a Hermitean or real symmetric matrix.
+    Compute the eigenvalues of a Hermitian or real symmetric matrix.
+
+    Main difference from eigh: the eigenvectors are not computed.
 
     Parameters
     ----------
     a : array_like, shape (M, M)
-        A complex or real matrix whose eigenvalues and eigenvectors
-        will be computed.
+        A complex- or real-valued matrix whose eigenvalues are to be
+        computed.
     UPLO : {'L', 'U'}, optional
-        Specifies whether the calculation is done with data from the
-        lower triangular part of `a` ('L', default) or the upper triangular
-        part ('U').
+        Specifies whether the calculation is done with the lower triangular
+        part of `a` ('L', default) or the upper triangular part ('U').
 
     Returns
     -------
     w : ndarray, shape (M,)
-        The eigenvalues, each repeated according to its multiplicity.
-        They are not necessarily ordered.
+        The eigenvalues, not necessarily ordered, each repeated according to
+        its multiplicity.
 
     Raises
     ------
@@ -684,20 +814,23 @@ def eigvalsh(a, UPLO='L'):
 
     See Also
     --------
-    eigh : eigenvalues and eigenvectors of symmetric/Hermitean arrays.
+    eigh : eigenvalues and eigenvectors of symmetric/Hermitian arrays.
     eigvals : eigenvalues of general real or complex arrays.
-    eig : eigenvalues and eigenvectors of general real or complex arrays.
+    eig : eigenvalues and right eigenvectors of general real or complex
+          arrays.
 
     Notes
     -----
-    This is a simple interface to the LAPACK routines dsyevd and
-    zheevd that sets the flags to return only the eigenvalues of real
-    symmetric and complex Hermetian arrays respectively.
+    This is a simple interface to the LAPACK routines dsyevd and zheevd
+    that sets those routines' flags to return only the eigenvalues of
+    real symmetric and complex Hermitian arrays, respectively.
 
-    The number w is an eigenvalue of a if there exists a vector v
-    satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
-    the characteristic equation det(a - w[i]*I) = 0, where det is the
-    determinant and I is the identity matrix.
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.array([[1, -2j], [2j, 5]])
+    >>> LA.eigvalsh(a)
+    array([ 0.17157288+0.j,  5.82842712+0.j])
 
     """
     a, wrap = _makearray(a)
@@ -750,22 +883,25 @@ def _convertarray(a):
 
 def eig(a):
     """
-    Compute eigenvalues and right eigenvectors of an array.
+    Compute the eigenvalues and right eigenvectors of a square array.
 
     Parameters
     ----------
     a : array_like, shape (M, M)
-        A complex or real 2-D array.
+        A square array of real or complex elements.
 
     Returns
     -------
     w : ndarray, shape (M,)
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered, nor are they
-        necessarily real for real matrices.
+        necessarily real for real arrays (though for real arrays
+        complex-valued eigenvalues should occur in conjugate pairs).
+
     v : ndarray, shape (M, M)
-        The normalized eigenvector corresponding to the eigenvalue ``w[i]`` is
-        the column ``v[:,i]``.
+        The normalized (unit "length") eigenvectors, such that the
+        column ``v[:,i]`` is the eigenvector corresponding to the
+        eigenvalue ``w[i]``.
 
     Raises
     ------
@@ -774,31 +910,83 @@ def eig(a):
 
     See Also
     --------
-    eigvalsh : eigenvalues of symmetric or Hemitiean arrays.
-    eig : eigenvalues and right eigenvectors for non-symmetric arrays
-    eigvals : eigenvalues of non-symmetric array.
+    eigvalsh : eigenvalues of a symmetric or Hermitian (conjugate symmetric)
+       array.
+
+    eigvals : eigenvalues of a non-symmetric array.
 
     Notes
     -----
     This is a simple interface to the LAPACK routines dgeev and zgeev
-    that compute the eigenvalues and eigenvectors of general real and
-    complex arrays respectively.
+    which compute the eigenvalues and eigenvectors of, respectively,
+    general real- and complex-valued square arrays.
 
-    The number `w` is an eigenvalue of a if there exists a vector `v`
-    satisfying the equation ``dot(a,v) = w*v``. Alternately, if `w` is
-    a root of the characteristic equation ``det(a - w[i]*I) = 0``, where
-    `det` is the determinant and `I` is the identity matrix. The arrays
-    `a`, `w`, and `v` satisfy the equation ``dot(a,v[i]) = w[i]*v[:,i]``.
+    The number `w` is an eigenvalue of `a` if there exists a vector
+    `v` such that ``dot(a,v) = w * v``. Thus, the arrays `a`, `w`, and
+    `v` satisfy the equations ``dot(a[i,:], v[i]) = w[i] * v[:,i]``
+    for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
-    of the columns may be dependent, although roundoff error may
+    of the columns may be linearly dependent, although round-off error may
     obscure that fact. If the eigenvalues are all different, then theoretically
-    the eigenvectors are independent. Likewise, the matrix of eigenvectors
-    is unitary if the matrix `a` is normal, i.e., if
-    ``dot(a, a.H) = dot(a.H, a)``.
+    the eigenvectors are linearly independent. Likewise, the (complex-valued)
+    matrix of eigenvectors `v` is unitary if the matrix `a` is normal, i.e.,
+    if ``dot(a, a.H) = dot(a.H, a)``, where `a.H` denotes the conjugate
+    transpose of `a`.
 
-    The left and right eigenvectors are not necessarily the (Hermitian)
-    transposes of each other.
+    Finally, it is emphasized that `v` consists of the *right* (as in
+    right-hand side) eigenvectors of `a`.  A vector `y` satisfying
+    ``dot(y.T, a) = z * y.T`` for some number `z` is called a *left*
+    eigenvector of `a`, and, in general, the left and right eigenvectors
+    of a matrix are not necessarily the (perhaps conjugate) transposes
+    of each other.
+
+    References
+    ----------
+    G. Strang, *Linear Algebra and Its Applications*, 2nd Ed., Orlando, FL,
+    Academic Press, Inc., 1980, Various pp.
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+
+    (Almost) trivial example with real e-values and e-vectors.
+
+    >>> w, v = LA.eig(np.diag((1, 2, 3)))
+    >>> w; v
+    array([ 1.,  2.,  3.])
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+
+    Real matrix possessing complex e-values and e-vectors; note that the
+    e-values are complex conjugates of each other.
+
+    >>> w, v = LA.eig(np.array([[1, -1], [1, 1]]))
+    >>> w; v
+    array([ 1. + 1.j,  1. - 1.j])
+    array([[ 0.70710678+0.j        ,  0.70710678+0.j        ],
+           [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]])
+
+    Complex-valued matrix with real e-values (but complex-valued e-vectors);
+    note that a.conj().T = a, i.e., a is Hermitian.
+
+    >>> a = np.array([[1, 1j], [-1j, 1]])
+    >>> w, v = LA.eig(a)
+    >>> w; v
+    array([  2.00000000e+00+0.j,   5.98651912e-36+0.j]) # i.e., {2, 0}
+    array([[ 0.00000000+0.70710678j,  0.70710678+0.j        ],
+           [ 0.70710678+0.j        ,  0.00000000+0.70710678j]])
+
+    Be careful about round-off error!
+
+    >>> a = np.array([[1 + 1e-9, 0], [0, 1 - 1e-9]])
+    >>> # Theor. e-values are 1 +/- 1e-9
+    >>> w, v = LA.eig(a)
+    >>> w; v
+    array([ 1.,  1.])
+    array([[ 1.,  0.],
+           [ 0.,  1.]])
 
     """
     a, wrap = _makearray(a)
@@ -857,24 +1045,27 @@ def eig(a):
 
 def eigh(a, UPLO='L'):
     """
-    Eigenvalues and eigenvectors of a Hermitian or real symmetric matrix.
+    Return the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+
+    Returns two objects, a 1-D array containing the eigenvalues of `a`, and
+    a 2-D square array or matrix (depending on the input type) of the
+    corresponding eigenvectors (in columns).
 
     Parameters
     ----------
     a : array_like, shape (M, M)
-        A complex Hermitian or symmetric real matrix.
+        A complex Hermitian or real symmetric matrix.
     UPLO : {'L', 'U'}, optional
-        Specifies whether the calculation is done with data from the
-        lower triangular part of `a` ('L', default) or the upper triangular
-        part ('U').
+        Specifies whether the calculation is done with the lower triangular
+        part of `a` ('L', default) or the upper triangular part ('U').
 
     Returns
     -------
     w : ndarray, shape (M,)
-        The eigenvalues. The eigenvalues are not necessarily ordered.
-    v : ndarray, shape (M, M)
-        The normalized eigenvector corresponding to the eigenvalue w[i] is
-        the column v[:,i].
+        The eigenvalues, not necessarily ordered.
+    v : ndarray, or matrix object if `a` is, shape (M, M)
+        The column ``v[:, i]`` is the normalized eigenvector corresponding
+        to the eigenvalue ``w[i]``.
 
     Raises
     ------
@@ -883,23 +1074,53 @@ def eigh(a, UPLO='L'):
 
     See Also
     --------
-    eigvalsh : eigenvalues of symmetric or Hemitiean arrays.
-    eig : eigenvalues and right eigenvectors for non-symmetric arrays
-    eigvals : eigenvalues of non-symmetric array.
+    eigvalsh : eigenvalues of symmetric or Hermitian arrays.
+    eig : eigenvalues and right eigenvectors for non-symmetric arrays.
+    eigvals : eigenvalues of non-symmetric arrays.
 
     Notes
     -----
-    A simple interface to the LAPACK routines dsyevd and zheevd that compute
-    the eigenvalues and eigenvectors of real symmetric and complex Hermitian
-    arrays respectively.
+    This is a simple interface to the LAPACK routines dsyevd and zheevd,
+    which compute the eigenvalues and eigenvectors of real symmetric and
+    complex Hermitian arrays, respectively.
 
-    The number w is an eigenvalue of a if there exists a vector v
-    satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
-    the characteristic equation det(a - w[i]*I) = 0, where det is the
-    determinant and I is the identity matrix. The eigenvalues of real
-    symmetric or complex Hermitean matrices are always real. The array v
-    of eigenvectors is unitary and a, w, and v satisfy the equation
-    dot(a,v[i]) = w[i]*v[:,i].
+    The eigenvalues of real symmetric or complex Hermitian matrices are
+    always real. [1]_ The array `v` of (column) eigenvectors is unitary
+    and `a`, `w`, and `v` satisfy the equations
+    ``dot(a, v[:, i]) = w[i] * v[:, i]``.
+
+    References
+    ----------
+    .. [1] G. Strang, *Linear Algebra and Its Applications*, 2nd Ed., Orlando,
+           FL, Academic Press, Inc., 1980, pg. 222.
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.array([[1, -2j], [2j, 5]])
+    >>> a
+    array([[ 1.+0.j,  0.-2.j],
+           [ 0.+2.j,  5.+0.j]])
+    >>> w, v = LA.eigh(a)
+    >>> w; v
+    array([ 0.17157288,  5.82842712])
+    array([[-0.92387953+0.j        , -0.38268343+0.j        ],
+           [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
+
+    >>> np.dot(a, v[:, 0]) - w[0] * v[:, 0] # verify 1st e-val/vec pair
+    array([2.77555756e-17 + 0.j, 0. + 1.38777878e-16j])
+    >>> np.dot(a, v[:, 1]) - w[1] * v[:, 1] # verify 2nd e-val/vec pair
+    array([ 0.+0.j,  0.+0.j])
+
+    >>> A = np.matrix(a) # what happens if input is a matrix object
+    >>> A
+    matrix([[ 1.+0.j,  0.-2.j],
+            [ 0.+2.j,  5.+0.j]])
+    >>> w, v = LA.eigh(A)
+    >>> w; v
+    array([ 0.17157288,  5.82842712])
+    matrix([[-0.92387953+0.j        , -0.38268343+0.j        ],
+            [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     """
     a, wrap = _makearray(a)
@@ -949,31 +1170,34 @@ def svd(a, full_matrices=1, compute_uv=1):
     """
     Singular Value Decomposition.
 
-    Factorizes the matrix `a` into two unitary matrices, ``U`` and ``Vh``,
-    and a 1-dimensional array of singular values, ``s`` (real, non-negative),
-    such that ``a == U S Vh``, where ``S`` is the diagonal
-    matrix ``np.diag(s)``.
+    Factors the matrix `a` into ``u * np.diag(s) * v.H``, where `u` and `v`
+    are unitary (i.e., ``u.H = inv(u)`` and similarly for `v`), ``.H`` is the
+    conjugate transpose operator (which is the ordinary transpose for
+    real-valued matrices), and `s` is a 1-D array of `a`'s singular values.
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
-        Matrix to decompose
-    full_matrices : boolean, optional
-        If True (default), ``U`` and ``Vh`` are shaped
-        ``(M,M)`` and ``(N,N)``.  Otherwise, the shapes are
-        ``(M,K)`` and ``(K,N)``, where ``K = min(M,N)``.
-    compute_uv : boolean
-        Whether to compute ``U`` and ``Vh`` in addition to ``s``.
+    a : array_like
+        Matrix of shape ``(M, N)`` to decompose.
+    full_matrices : bool, optional
+        If True (default), ``u`` and ``v.H`` have the shapes
+        ``(M, M)`` and ``(N, N)``, respectively.  Otherwise, the shapes
+        are ``(M, K)`` and ``(K, N)``, resp., where ``K = min(M, N)``.
+    compute_uv : bool, optional
+        Whether or not to compute ``u`` and ``v.H`` in addition to ``s``.
         True by default.
 
     Returns
     -------
-    U : ndarray, shape (M, M) or (M, K) depending on `full_matrices`
-        Unitary matrix.
-    s :  ndarray, shape (K,) where ``K = min(M, N)``
+    u : ndarray
+        Unitary matrix. The shape of `U` is ``(M, M)`` or ``(M, K)``
+        depending on value of `full_matrices`.
+    s : ndarray
         The singular values, sorted so that ``s[i] >= s[i+1]``.
-    Vh : ndarray, shape (N,N) or (K,N) depending on `full_matrices`
-        Unitary matrix.
+        `S` is a 1-D array of length ``min(M, N)``
+    v.H : ndarray
+        Unitary matrix of shape ``(N, N)`` or ``(K, N)``, depending
+        on `full_matrices`.
 
     Raises
     ------
@@ -982,7 +1206,7 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     Notes
     -----
-    If `a` is a matrix (in contrast to an ndarray), then so are all
+    If `a` is a matrix object (as opposed to an `ndarray`), then so are all
     the return values.
 
     Examples
@@ -1066,21 +1290,21 @@ def cond(x, p=None):
     """
     Compute the condition number of a matrix.
 
-    The condition number of `x` is the norm of `x` times the norm
-    of the inverse of `x`.  The norm can be the usual L2
-    (root-of-sum-of-squares) norm or a number of other matrix norms.
+    This function is capable of returning the condition number using
+    one of seven different norms, depending on the value of `p` (see
+    Parameters below).
 
     Parameters
     ----------
     x : array_like, shape (M, N)
         The matrix whose condition number is sought.
-    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
         Order of the norm:
 
         =====  ============================
         p      norm for matrices
         =====  ============================
-        None   2-norm, computed directly using the SVD
+        None   2-norm, computed directly using the ``SVD``
         'fro'  Frobenius norm
         inf    max(sum(abs(x), axis=1))
         -inf   min(sum(abs(x), axis=1))
@@ -1090,10 +1314,55 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
+        inf means the numpy.inf object, and the Frobenius norm is
+        the root-of-sum-of-squares norm.
+
     Returns
     -------
-    c : float
+    c : {float, inf}
         The condition number of the matrix. May be infinite.
+
+    See Also
+    --------
+    numpy.linalg.linalg.norm
+
+    Notes
+    -----
+    The condition number of `x` is defined as the norm of `x` times the
+    norm of the inverse of `x` [1]_; the norm can be the usual L2-norm
+    (root-of-sum-of-squares) or one of a number of other matrix norms.
+
+    References
+    ----------
+    .. [1] G. Strang, *Linear Algebra and Its Applications*, Orlando, FL,
+           Academic Press, Inc., 1980, pg. 285.
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.array([[1, 0, -1], [0, 1, 0], [1, 0, 1]])
+    >>> a
+    array([[ 1,  0, -1],
+           [ 0,  1,  0],
+           [ 1,  0,  1]])
+    >>> LA.cond(a)
+    1.4142135623730951
+    >>> LA.cond(a, 'fro')
+    3.1622776601683795
+    >>> LA.cond(a, np.inf)
+    2.0
+    >>> LA.cond(a, -np.inf)
+    1.0
+    >>> LA.cond(a, 1)
+    2.0
+    >>> LA.cond(a, -1)
+    1.0
+    >>> LA.cond(a, 2)
+    1.4142135623730951
+    >>> LA.cond(a, -2)
+    0.70710678118654746
+    >>> min(LA.svd(a, compute_uv=0))*min(LA.svd(LA.inv(a), compute_uv=0))
+    0.70710678118654746
 
     """
     x = asarray(x) # in case we have a matrix
@@ -1111,31 +1380,55 @@ def pinv(a, rcond=1e-15 ):
 
     Calculate the generalized inverse of a matrix using its
     singular-value decomposition (SVD) and including all
-    `large` singular values.
+    *large* singular values.
 
     Parameters
     ----------
-    a : array_like (M, N)
+    a : array_like, shape (M, N)
       Matrix to be pseudo-inverted.
     rcond : float
-      Cutoff for `small` singular values.
-      Singular values smaller than rcond*largest_singular_value are
-      considered zero.
+      Cutoff for small singular values.
+      Singular values smaller (in modulus) than
+      `rcond` * largest_singular_value (again, in modulus)
+      are set to zero.
 
     Returns
     -------
-    B : ndarray (N, M)
-      The pseudo-inverse of `a`. If `a` is an np.matrix instance, then so
+    B : ndarray, shape (N, M)
+      The pseudo-inverse of `a`. If `a` is a `matrix` instance, then so
       is `B`.
-
 
     Raises
     ------
     LinAlgError
-      In case SVD computation does not converge.
+      If the SVD computation does not converge.
+
+    Notes
+    -----
+    The pseudo-inverse of a matrix A, denoted :math:`A^+`, is
+    defined as: "the matrix that 'solves' [the least-squares problem]
+    :math:`Ax = b`," i.e., if :math:`\\bar{x}` is said solution, then
+    :math:`A^+` is that matrix such that :math:`\\bar{x} = A^+b`.
+
+    It can be shown that if :math:`Q_1 \\Sigma Q_2^T = A` is the singular
+    value decomposition of A, then
+    :math:`A^+ = Q_2 \\Sigma^+ Q_1^T`, where :math:`Q_{1,2}` are
+    orthogonal matrices, :math:`\\Sigma` is a diagonal matrix consisting
+    of A's so-called singular values, (followed, typically, by
+    zeros), and then :math:`\\Sigma^+` is simply the diagonal matrix
+    consisting of the reciprocals of A's singular values
+    (again, followed by zeros). [1]_
+
+    References
+    ----------
+    .. [1] G. Strang, *Linear Algebra and Its Applications*, 2nd Ed., Orlando,
+           FL, Academic Press, Inc., 1980, pp. 139-142.
 
     Examples
     --------
+    The following example checks that ``a * a+ * a == a`` and
+    ``a+ * a * a+ == a+``:
+
     >>> a = np.random.randn(9, 6)
     >>> B = np.linalg.pinv(a)
     >>> np.allclose(a, np.dot(a, np.dot(B, a)))
@@ -1214,37 +1507,42 @@ def det(a):
 
 def lstsq(a, b, rcond=-1):
     """
-    Return the least-squares solution to an equation.
+    Return the least-squares solution to a linear matrix equation.
 
     Solves the equation `a x = b` by computing a vector `x` that minimizes
-    the norm `|| b - a x ||`.
+    the norm `|| b - a x ||`.  The equation may be under-, well-, or over-
+    determined (i.e., the number of linearly independent rows of `a` can be
+    less than, equal to, or greater than its number of linearly independent
+    columns).  If `a` is square and of full rank, then `x` (but for round-off
+    error) is the "exact" solution of the equation.
 
     Parameters
     ----------
     a : array_like, shape (M, N)
-        Input equation coefficients.
+        "Coefficient" matrix.
     b : array_like, shape (M,) or (M, K)
-        Equation target values.  If `b` is two-dimensional, the least
-        squares solution is calculated for each of the `K` target sets.
+        Ordinate or "dependent variable" values. If `b` is two-dimensional,
+        the least-squares solution is calculated for each of the `K` columns
+        of `b`.
     rcond : float, optional
-        Cutoff for ``small`` singular values of `a`.
-        Singular values smaller than `rcond` times the largest singular
-        value are  considered zero.
+        Cut-off ratio for small singular values of `a`.
+        Singular values are set to zero if they are smaller than `rcond`
+        times the largest singular value of `a`.
 
     Returns
     -------
-    x : ndarray, shape(N,) or (N, K)
-         Least squares solution.  The shape of `x` depends on the shape of
-         `b`.
-    residues : ndarray, shape(), (1,), or (K,)
-        Sums of residues; squared Euclidian norm for each column in
-        `b - a x`.
+    x : ndarray, shape (N,) or (N, K)
+        Least-squares solution.  The shape of `x` depends on the shape of
+        `b`.
+    residues : ndarray, shape (), (1,), or (K,)
+        Sums of residues; squared Euclidean norm for each column in
+        ``b - a*x``.
         If the rank of `a` is < N or > M, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
         Otherwise the shape is (K,).
-    rank : integer
+    rank : int
         Rank of matrix `a`.
-    s : ndarray, shape(min(M,N),)
+    s : ndarray, shape (min(M,N),)
         Singular values of `a`.
 
     Raises
@@ -1254,8 +1552,7 @@ def lstsq(a, b, rcond=-1):
 
     Notes
     -----
-    If `b` is a matrix, then all array results are returned as
-    matrices.
+    If `b` is a matrix, then all array results are returned as matrices.
 
     Examples
     --------
@@ -1265,7 +1562,7 @@ def lstsq(a, b, rcond=-1):
     >>> y = np.array([-1, 0.2, 0.9, 2.1])
 
     By examining the coefficients, we see that the line should have a
-    gradient of roughly 1 and cuts the y-axis at more-or-less -1.
+    gradient of roughly 1 and cut the y-axis at, more or less, -1.
 
     We can rewrite the line equation as ``y = Ap``, where ``A = [[x 1]]``
     and ``p = [[m], [c]]``.  Now use `lstsq` to solve for `p`:
@@ -1358,22 +1655,27 @@ def norm(x, ord=None):
     """
     Matrix or vector norm.
 
+    This function is able to return one of seven different matrix norms,
+    or one of an infinite number of vector norms (described below), depending
+    on the value of the ``ord`` parameter.
+
     Parameters
     ----------
     x : array_like, shape (M,) or (M, N)
         Input array.
-    ord : {2, int, inf, -inf, 'fro'}
-        Order of the norm (see table under ``Notes``).
+    ord : {non-zero int, inf, -inf, 'fro'}, optional
+        Order of the norm (see table under ``Notes``). inf means numpy's
+        `inf` object.
 
     Returns
     -------
     n : float
-        Norm of the matrix or vector
+        Norm of the matrix or vector.
 
     Notes
     -----
-    For values ord < 0, the result is, strictly speaking, not a
-    mathematical 'norm', but it may still be useful for numerical
+    For values of ``ord < 0``, the result is, strictly speaking, not a
+    mathematical 'norm', but it may still be useful for various numerical
     purposes.
 
     The following norms can be calculated:
@@ -1391,6 +1693,64 @@ def norm(x, ord=None):
     -2     smallest singular value       as below
     other  --                            sum(abs(x)**ord)**(1./ord)
     =====  ============================  ==========================
+
+    The Frobenius norm is given by [1]_:
+
+        :math:`||A||_F = [\\sum_{i,j} abs(a_{i,j})^2]^{1/2}`
+
+    References
+    ----------
+    .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*,
+           Baltimore, MD, Johns Hopkins University Press, 1985, pg. 15
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) - 4
+    >>> a
+    array([-4, -3, -2, -1,  0,  1,  2,  3,  4])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[-4, -3, -2],
+           [-1,  0,  1],
+           [ 2,  3,  4]])
+
+    >>> LA.norm(a)
+    7.745966692414834
+    >>> LA.norm(b)
+    7.745966692414834
+    >>> LA.norm(b, 'fro')
+    7.745966692414834
+    >>> LA.norm(a, np.inf)
+    4
+    >>> LA.norm(b, np.inf)
+    9
+    >>> LA.norm(a, -np.inf)
+    0
+    >>> LA.norm(b, -np.inf)
+    2
+
+    >>> LA.norm(a, 1)
+    20
+    >>> LA.norm(b, 1)
+    7
+    >>> LA.norm(a, -1)
+    -4.6566128774142013e-010
+    >>> LA.norm(b, -1)
+    6
+    >>> LA.norm(a, 2)
+    7.745966692414834
+    >>> LA.norm(b, 2)
+    7.3484692283495345
+
+    >>> LA.norm(a, -2)
+    nan
+    >>> LA.norm(b, -2)
+    1.8570331885190563e-016
+    >>> LA.norm(a, 3)
+    5.8480354764257312
+    >>> LA.norm(a, -3)
+    nan
 
     """
     x = asarray(x)
