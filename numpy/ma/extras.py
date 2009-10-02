@@ -1,10 +1,12 @@
-"""Masked arrays add-ons.
+"""
+Masked arrays add-ons.
 
-A collection of utilities for maskedarray
+A collection of utilities for `numpy.ma`.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 :version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
+
 """
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __version__ = '1.0'
@@ -59,7 +61,6 @@ def count_masked(arr, axis=None):
     """
     Count the number of masked elements along the given axis.
 
-
     Parameters
     ----------
     arr : array_like
@@ -73,6 +74,10 @@ def count_masked(arr, axis=None):
     count : int, ndarray
         The total number of masked elements (axis=None) or the number
         of masked elements along each slice of the given axis.
+
+    See Also
+    --------
+    MaskedArray.count : Count non-masked elements.
 
     Examples
     --------
@@ -216,14 +221,44 @@ def masked_all_like(arr):
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
 class _fromnxfunction:
-    """Defines a wrapper to adapt numpy functions to masked arrays."""
+    """
+    Defines a wrapper to adapt NumPy functions to masked arrays.
+
+
+    An instance of `_fromnxfunction` can be called with the same parameters
+    as the wrapped NumPy function. The docstring of `newfunc` is adapted from
+    the wrapped function as well, see `getdoc`.
+
+    Parameters
+    ----------
+    funcname : str
+        The name of the function to be adapted. The function should be
+        in the NumPy namespace (i.e. ``np.funcname``).
+
+    """
 
     def __init__(self, funcname):
         self.__name__ = funcname
         self.__doc__ = self.getdoc()
 
     def getdoc(self):
-        "Retrieves the __doc__ string from the function."
+        """
+        Retrieve the docstring and signature from the function.
+
+        The ``__doc__`` attribute of the function is used as the docstring for
+        the new masked array version of the function. A note on application
+        of the function to the mask is appended.
+
+        .. warning::
+          If the function docstring already contained a Notes section, the
+          new docstring will have two Notes sections instead of appending a note
+          to the existing section.
+
+        Parameters
+        ----------
+        None
+
+        """
         npfunc = getattr(np, self.__name__, None)
         doc = getattr(npfunc, '__doc__', None)
         if doc:
@@ -378,21 +413,51 @@ apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 def average(a, axis=None, weights=None, returned=False):
     """
-    Average the array over the given axis.
+    Return the weighted average of array over the given axis.
 
     Parameters
     ----------
-    axis : {None,int}, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
-    weights : {None, sequence}, optional
-        Sequence of weights.
-        The weights must have the shape of a, or be 1D with length
-        the size of a along the given axis.
-        If no weights are given, weights are assumed to be 1.
-    returned : {False, True}, optional
-        Flag indicating whether a tuple (result, sum of weights/counts)
+    a : array_like
+        Data to be averaged.
+        Masked entries are not taken into account in the computation.
+    axis : int, optional
+        Axis along which the variance is computed. The default is to compute
+        the variance of the flattened array.
+    weights : array_like, optional
+        The importance that each element has in the computation of the average.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If ``weights=None``, then all data in `a` are assumed to have a
+        weight equal to one.
+    returned : bool, optional
+        Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
+        Default is False.
+
+    Returns
+    -------
+    average, [sum_of_weights] : (tuple of) scalar or MaskedArray
+        The average along the specified axis. When returned is `True`,
+        return a tuple with the average as the first element and the sum
+        of the weights as the second element. The return type is `np.float64`
+        if `a` is of integer type, otherwise it is of the same type as `a`.
+        If returned, `sum_of_weights` is of the same type as `average`.
+
+    Examples
+    --------
+    >>> a = np.ma.array([1., 2., 3., 4.], mask=[False, False, True, True])
+    >>> np.ma.average(a, weights=[3, 1, 0, 0])
+    1.25
+
+    >>> x = np.ma.arange(6.).reshape(3, 2)
+    >>> print x
+    [[ 0.  1.]
+     [ 2.  3.]
+     [ 4.  5.]]
+    >>> avg, sumweights = np.ma.average(x, axis=0, weights=[1, 2, 3],
+    ...                                 returned=True)
+    >>> print avg
+    [2.66666666667 3.66666666667]
 
     """
     a = asarray(a)
@@ -498,30 +563,30 @@ def median(a, axis=None, out=None, overwrite_input=False):
     Parameters
     ----------
     a : array_like
-        Input array or object that can be converted to an array
+        Input array or object that can be converted to an array.
     axis : int, optional
-        Axis along which the medians are computed. The default (axis=None) is
+        Axis along which the medians are computed. The default (None) is
         to compute the median along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
-    overwrite_input : {False, True}, optional
+    overwrite_input : bool, optional
         If True, then allow use of memory of input array (a) for
         calculations. The input array will be modified by the call to
         median. This will save memory when you do not need to preserve
         the contents of the input array. Treat the input as undefined,
         but it will probably be fully or partially sorted. Default is
-        False. Note that, if overwrite_input is true, and the input
-        is not already an ndarray, an error will be raised.
+        False. Note that, if `overwrite_input` is True, and the input
+        is not already an `ndarray`, an error will be raised.
 
     Returns
     -------
-    median : ndarray.
+    median : ndarray
         A new array holding the result is returned unless out is
         specified, in which case a reference to out is returned.
-        Return datatype is float64 for ints and floats smaller than
-        float64, or the input datatype otherwise.
+        Return data-type is `float64` for integers and floats smaller than
+        `float64`, or the input data-type, otherwise.
 
     See Also
     --------
@@ -529,9 +594,24 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
     Notes
     -----
-    Given a vector V with N non masked values, the median of V is the middle
-    value of a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd, or
-    {Vs[N/2 - 1] + Vs[N/2]}/2. when N is even.
+    Given a vector ``V`` with ``N`` non masked values, the median of ``V``
+    is the middle value of a sorted copy of ``V`` (``Vs``) - i.e.
+    ``Vs[(N-1)/2]``, when ``N`` is odd, or ``{Vs[N/2 - 1] + Vs[N/2]}/2``
+    when ``N`` is even.
+
+    Examples
+    --------
+    >>> x = np.ma.array(np.arange(8), mask=[0]*4 + [1]*4)
+    >>> np.ma.extras.median(x)
+    1.5
+
+    >>> x = np.ma.array(np.arange(10).reshape(2, 5), mask=[0]*6 + [1]*4)
+    >>> np.ma.extras.median(x)
+    2.5
+    >>> np.ma.extras.median(x, axis=-1, overwrite_input=True)
+    masked_array(data = [ 2.  5.],
+                 mask = False,
+           fill_value = 1e+20)
 
     """
     def _median1D(data):
@@ -566,24 +646,49 @@ def median(a, axis=None, out=None, overwrite_input=False):
 #..............................................................................
 def compress_rowcols(x, axis=None):
     """
-    Suppress the rows and/or columns of a 2D array that contain
+    Suppress the rows and/or columns of a 2-D array that contain
     masked values.
 
     The suppression behavior is selected with the `axis` parameter.
 
-        - If axis is None, rows and columns are suppressed.
-        - If axis is 0, only rows are suppressed.
-        - If axis is 1 or -1, only columns are suppressed.
+    - If axis is None, both rows and columns are suppressed.
+    - If axis is 0, only rows are suppressed.
+    - If axis is 1 or -1, only columns are suppressed.
 
     Parameters
     ----------
     axis : int, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
+        Axis along which to perform the operation. Default is None.
 
     Returns
     -------
-    compressed_array : an ndarray.
+    compressed_array : ndarray
+        The compressed array.
+
+    Examples
+    --------
+    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+    ...                                                   [1, 0, 0],
+    ...                                                   [0, 0, 0]])
+    >>> x
+    masked_array(data =
+     [[-- 1 2]
+     [-- 4 5]
+     [6 7 8]],
+                 mask =
+     [[ True False False]
+     [ True False False]
+     [False False False]],
+           fill_value = 999999)
+
+    >>> np.ma.extras.compress_rowcols(x)
+    array([[7, 8]])
+    >>> np.ma.extras.compress_rowcols(x, 0)
+    array([[6, 7, 8]])
+    >>> np.ma.extras.compress_rowcols(x, 1)
+    array([[1, 2],
+           [4, 5],
+           [7, 8]])
 
     """
     x = asarray(x)
@@ -609,14 +714,28 @@ def compress_rowcols(x, axis=None):
 
 def compress_rows(a):
     """
-    Suppress whole rows of a 2D array that contain masked values.
+    Suppress whole rows of a 2-D array that contain masked values.
+
+    This is equivalent to ``np.ma.extras.compress_rowcols(a, 0)``, see
+    `extras.compress_rowcols` for details.
+
+    See Also
+    --------
+    extras.compress_rowcols
 
     """
     return compress_rowcols(a, 0)
 
 def compress_cols(a):
     """
-    Suppress whole columns of a 2D array that contain masked values.
+    Suppress whole columns of a 2-D array that contain masked values.
+
+    This is equivalent to ``np.ma.extras.compress_rowcols(a, 1)``, see
+    `extras.compress_rowcols` for details.
+
+    See Also
+    --------
+    extras.compress_rowcols
 
     """
     return compress_rowcols(a, 1)
@@ -804,21 +923,48 @@ def mask_cols(a, axis=None):
 
 def dot(a,b, strict=False):
     """
-    Return the dot product of two 2D masked arrays a and b.
+    Return the dot product of two arrays.
 
-    Like the generic numpy equivalent, the product sum is over the last
-    dimension of a and the second-to-last dimension of b.  If strict is True,
-    masked values are propagated: if a masked value appears in a row or column,
-    the whole row or column is considered masked.
+    .. note::
+      Works only with 2-D arrays at the moment.
+
+    This function is the equivalent of `numpy.dot` that takes masked values
+    into account, see `numpy.dot` for details.
 
     Parameters
     ----------
-    strict : {boolean}
-        Whether masked data are propagated (True) or set to 0 for the computation.
+    a, b : ndarray
+        Inputs arrays.
+    strict : bool, optional
+        Whether masked data are propagated (True) or set to 0 (False) for the
+        computation. Default is False.
+        Propagating the mask means that if a masked value appears in a row or
+        column, the whole row or column is considered masked.
 
-    Notes
-    -----
-    The first argument is not conjugated.
+    See Also
+    --------
+    numpy.dot : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> a = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[1, 0, 0], [0, 0, 0]])
+    >>> b = ma.array([[1, 2], [3, 4], [5, 6]], mask=[[1, 0], [0, 0], [0, 0]])
+    >>> np.ma.dot(a, b)
+    masked_array(data =
+     [[21 26]
+     [45 64]],
+                 mask =
+     [[False False]
+     [False False]],
+           fill_value = 999999)
+    >>> np.ma.dot(a, b, strict=True)
+    masked_array(data =
+     [[-- --]
+     [-- 64]],
+                 mask =
+     [[ True  True]
+     [ True False]],
+           fill_value = 999999)
 
     """
     #!!!: Works only with 2D arrays. There should be a way to get it to run with higher dimension
@@ -839,19 +985,15 @@ def dot(a,b, strict=False):
 
 def ediff1d(arr, to_end=None, to_begin=None):
     """
-    Computes the differences between consecutive elements of an array.
+    Compute the differences between consecutive elements of an array.
 
     This function is the equivalent of `numpy.ediff1d` that takes masked
-    values into account.
+    values into account, see `numpy.ediff1d` for details.
 
     See Also
     --------
-    numpy.eddif1d : equivalent function for ndarrays.
+    numpy.ediff1d : Equivalent function for ndarrays.
 
-    Returns
-    -------
-    output : MaskedArray
-    
     """
     arr = ma.asanyarray(arr).flat
     ed = arr[1:] - arr[:-1]
@@ -874,13 +1016,13 @@ def unique(ar1, return_index=False, return_inverse=False):
     """
     Finds the unique elements of an array.
 
-    Masked values are considered the same element (masked).
-
-    The output array is always a MaskedArray.
+    Masked values are considered the same element (masked). The output array
+    is always a masked array. See `numpy.unique` for more details.
 
     See Also
     --------
-    np.unique : equivalent function for ndarrays.
+    numpy.unique : Equivalent function for ndarrays.
+
     """
     output = np.unique(ar1,
                        return_index=return_index,
@@ -901,9 +1043,11 @@ def intersect1d(ar1, ar2, assume_unique=False):
     Masked values are considered equal one to the other.
     The output is always a masked array.
 
+    See `numpy.intersect1d` for more details.
+
     See Also
     --------
-    numpy.intersect1d : equivalent function for ndarrays.
+    numpy.intersect1d : Equivalent function for ndarrays.
 
     Examples
     --------
@@ -926,11 +1070,13 @@ def intersect1d(ar1, ar2, assume_unique=False):
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """
-    Set exclusive-or of 1D arrays with unique elements.
+    Set exclusive-or of 1-D arrays with unique elements.
+
+    The output is always a masked array. See `numpy.setxor1d` for more details.
 
     See Also
     --------
-    numpy.setxor1d : equivalent function for ndarrays
+    numpy.setxor1d : Equivalent function for ndarrays.
 
     """
     if not assume_unique:
@@ -953,13 +1099,16 @@ def in1d(ar1, ar2, assume_unique=False):
     Test whether each element of an array is also present in a second
     array.
 
+    The output is always a masked array. See `numpy.in1d` for more details.
+
     See Also
     --------
-    numpy.in1d : equivalent function for ndarrays
+    numpy.in1d : Equivalent function for ndarrays.
 
     Notes
     -----
     .. versionadded:: 1.4.0
+
     """
     if not assume_unique:
         ar1, rev_idx = unique(ar1, return_inverse=True)
@@ -985,9 +1134,11 @@ def union1d(ar1, ar2):
     """
     Union of two arrays.
 
+    The output is always a masked array. See `numpy.union1d` for more details.
+
     See also
     --------
-    numpy.union1d : equivalent function for ndarrays.
+    numpy.union1d : Equivalent function for ndarrays.
 
     """
     return unique(ma.concatenate((ar1, ar2)))
@@ -997,9 +1148,20 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     """
     Set difference of 1D arrays with unique elements.
 
+    The output is always a masked array. See `numpy.setdiff1d` for more
+    details.
+
     See Also
     --------
-    numpy.setdiff1d : equivalent function for ndarrays
+    numpy.setdiff1d : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> x = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
+    >>> np.ma.extras.setdiff1d(x, [1, 2])
+    masked_array(data = [3 --],
+                 mask = [False  True],
+           fill_value = 999999)
 
     """
     if not assume_unique:
@@ -1113,45 +1275,48 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
 
 def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
     """
-    Estimates the covariance matrix.
+    Estimate the covariance matrix.
 
-    Normalization is by (N-1) where N is the number of observations (unbiased
-    estimate).  If bias is True then normalization is by N.
+    Except for the handling of missing data this function does the same as
+    `numpy.cov`. For more details and examples, see `numpy.cov`.
 
-    By default, masked values are recognized as such. If x and y have the same
-    shape, a common mask is allocated: if x[i,j] is masked, then y[i,j] will
-    also be masked.
+    By default, masked values are recognized as such. If `x` and `y` have the
+    same shape, a common mask is allocated: if ``x[i,j]`` is masked, then
+    ``y[i,j]`` will also be masked.
     Setting `allow_masked` to False will raise an exception if values are
     missing in either of the input arrays.
 
     Parameters
     ----------
     x : array_like
-        Input data.
-        If x is a 1D array, returns the variance.
-        If x is a 2D array, returns the covariance matrix.
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `x` represents a variable, and each column a single
+        observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
-        Optional set of variables.
-    rowvar : {False, True} optional
-        If rowvar is true, then each row is a variable with observations in
-        columns.
-        If rowvar is False, each column is a variable and the observations are
-        in the rows.
-    bias : {False, True} optional
-        Whether to use a biased (True) or unbiased (False) estimate of the
-        covariance.
-        If bias is True, then the normalization is by N, the number of
-        observations.
-        Otherwise, the normalization is by (N-1).
-    allow_masked : {True, False} optional
+        An additional set of variables and observations. `y` has the same
+        form as `x`.
+    rowvar : bool, optional
+        If `rowvar` is True (default), then each row represents a
+        variable, with observations in the columns. Otherwise, the relationship
+        is transposed: each column represents a variable, while the rows
+        contain observations.
+    bias : bool, optional
+        Default normalization (False) is by ``(N-1)``, where ``N`` is the
+        number of observations given (unbiased estimate). If `bias` is True,
+        then normalization is by ``N``.
+    allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
-        in x, the corresponding value is masked in y.
-        If False, raises a ValueError exception when some values are missing.
+        in `x`, the corresponding value is masked in `y`.
+        If False, raises a `ValueError` exception when some values are missing.
 
     Raises
     ------
     ValueError:
-        Raised if some values are missing and allow_masked is False.
+        Raised if some values are missing and `allow_masked` is False.
+
+    See Also
+    --------
+    numpy.cov
 
     """
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
@@ -1166,36 +1331,38 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
 
 def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
     """
-    The correlation coefficients formed from the array x, where the
-    rows are the observations, and the columns are variables.
+    Return correlation coefficients of the input array.
 
-    corrcoef(x,y) where x and y are 1d arrays is the same as
-    corrcoef(transpose([x,y]))
+    Except for the handling of missing data this function does the same as
+    `numpy.corrcoef`. For more details and examples, see `numpy.corrcoef`.
 
     Parameters
     ----------
-    x : ndarray
-        Input data. If x is a 1D array, returns the variance.
-        If x is a 2D array, returns the covariance matrix.
-    y : {None, ndarray} optional
-        Optional set of variables.
-    rowvar : {False, True} optional
-        If True, then each row is a variable with observations in columns.
-        If False, each column is a variable and the observations are in the rows.
-    bias : {False, True} optional
-        Whether to use a biased (True) or unbiased (False) estimate of the
-        covariance.
-        If True, then the normalization is by N, the number of non-missing
-        observations.
-        Otherwise, the normalization is by (N-1).
-    allow_masked : {True, False} optional
+    x : array_like
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `x` represents a variable, and each column a single
+        observation of all those variables. Also see `rowvar` below.
+    y : array_like, optional
+        An additional set of variables and observations. `y` has the same
+        shape as `x`.
+    rowvar : bool, optional
+        If `rowvar` is True (default), then each row represents a
+        variable, with observations in the columns. Otherwise, the relationship
+        is transposed: each column represents a variable, while the rows
+        contain observations.
+    bias : bool, optional
+        Default normalization (False) is by ``(N-1)``, where ``N`` is the
+        number of observations given (unbiased estimate). If `bias` is 1,
+        then normalization is by ``N``.
+    allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
-        in x, the corresponding value is masked in y.
+        in `x`, the corresponding value is masked in `y`.
         If False, raises an exception.
 
     See Also
     --------
-    cov
+    numpy.corrcoef : Equivalent function in top-level NumPy module.
+    cov : Estimate the covariance matrix.
 
     """
     # Get the data
@@ -1239,6 +1406,12 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
 class MAxisConcatenator(AxisConcatenator):
     """
     Translate slice objects to concatenation along an axis.
+
+    For documentation on usage, see `mr_class`.
+
+    See Also
+    --------
+    mr_class
 
     """
 
