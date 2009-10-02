@@ -180,8 +180,8 @@ def pmt(rate, nper, pv, fv=0, when='end'):
        Pre-Draft 12. Organization for the Advancement of Structured Information
        Standards (OASIS). Billerica, MA, USA. [ODT Document].
        Available:
-       http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
-       OpenDocument-formula-20090508.odt
+       http://www.oasis-open.org/committees/documents.php
+       ?wg_abbrev=office-formulaOpenDocument-formula-20090508.odt
 
     Examples
     --------
@@ -469,13 +469,22 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
 
     Notes
     -----
-    The rate of interest ``rate`` is computed by solving the equation::
+    The rate of interest is computed by iteratively solving the
+    (non-linear) equation::
 
      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) = 0
 
-    or, if ``rate = 0``::
+    for ``rate``.
 
-     fv + pv + pmt * nper = 0
+    References
+    ----------
+    Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May). Open Document
+    Format for Office Applications (OpenDocument)v1.2, Part 2: Recalculated
+    Formula (OpenFormula) Format - Annotated Version, Pre-Draft 12.
+    Organization for the Advancement of Structured Information Standards
+    (OASIS). Billerica, MA, USA. [ODT Document]. Available:
+    http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
+    OpenDocument-formula-20090508.odt
 
     """
     when = _convert_when(when)

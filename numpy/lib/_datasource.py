@@ -15,7 +15,7 @@ DataSource files can originate locally or remotely:
 DataSource files can also be compressed or uncompressed.  Currently only gzip
 and bz2 are supported.
 
-Example:
+Example::
 
     >>> # Create a DataSource, use os.curdir (default) for local storage.
     >>> ds = datasource.DataSource()
@@ -43,6 +43,28 @@ from shutil import rmtree
 
 # TODO: .zip support, .tar support?
 class _FileOpeners(object):
+    """
+    Container for different methods to open (un-)compressed files.
+
+    `_FileOpeners` contains a dictionary that holds one method for each
+    supported file format. Attribute lookup is implemented in such a way that
+    an instance of `_FileOpeners` itself can be indexed with the keys of that
+    dictionary. Currently uncompressed files as well as files
+    compressed with ``gzip`` or ``bz2`` compression are supported.
+
+    Notes
+    -----
+    `_file_openers`, an instance of `_FileOpeners`, is made available for
+    use in the `_datasource` module.
+
+    Examples
+    --------
+    >>> np.lib._datasource._file_openers.keys()
+    [None, '.bz2', '.gz']
+    >>> np.lib._datasource._file_openers['.gz'] is gzip.open
+    True
+
+    """
     def __init__(self):
         self._loaded = False
         self._file_openers = {None: open}
@@ -62,6 +84,21 @@ class _FileOpeners(object):
         self._loaded = True
 
     def keys(self):
+        """
+        Return the keys of currently supported file openers.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        keys : list
+            The keys are None for uncompressed files and the file extension
+            strings (i.e. ``'.gz'``, ``'.bz2'``) for supported compression
+            methods.
+
+        """
         self._load()
         return self._file_openers.keys()
     def __getitem__(self, key):
@@ -71,23 +108,34 @@ class _FileOpeners(object):
 _file_openers = _FileOpeners()
 
 def open(path, mode='r', destpath=os.curdir):
-    """Open ``path`` with ``mode`` and return the file object.
+    """
+    Open `path` with `mode` and return the file object.
 
-    If ``path`` is an URL, it will be downloaded, stored in the DataSource
-    directory and opened from there.
+    If ``path`` is an URL, it will be downloaded, stored in the `DataSource`
+    `destpath` directory and opened from there.
 
-    *Parameters*:
+    Parameters
+    ----------
+    path : str
+        Local file path or URL to open.
+    mode : str, optional
+        Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
+        append. Available modes depend on the type of object specified by path.
+        Default is 'r'.
+    destpath : str, optional
+        Path to the directory where the source file gets downloaded to for use.
+        If `destpath` is None, a temporary directory will be created. The
+        default path is the current directory.
 
-        path : {string}
+    Returns
+    -------
+    out : file object
+        The opened file.
 
-        mode : {string}, optional
-
-        destpath : {string}, optional
-            Destination directory where URLs will be downloaded and stored.
-
-    *Returns*:
-
-        file object
+    Notes
+    -----
+    This is a convenience function that instantiates a `DataSource` and
+    returns the file object from ``DataSource.open(path)``.
 
     """
 
@@ -96,49 +144,52 @@ def open(path, mode='r', destpath=os.curdir):
 
 
 class DataSource (object):
-    """A generic data source file (file, http, ftp, ...).
+    """
+    DataSource(destpath='.')
 
-    DataSources could be local files or remote files/URLs.  The files may
-    also be compressed or uncompressed.  DataSource hides some of the low-level
+    A generic data source file (file, http, ftp, ...).
+
+    DataSources can be local files or remote files/URLs.  The files may
+    also be compressed or uncompressed. DataSource hides some of the low-level
     details of downloading the file, allowing you to simply pass in a valid
     file path (or URL) and obtain a file object.
 
-    *Methods*:
+    Parameters
+    ----------
+    destpath : str or None, optional
+        Path to the directory where the source file gets downloaded to for use.
+        If `destpath` is None, a temporary directory will be created.
+        The default path is the current directory.
 
-        - exists : test if the file exists locally or remotely
-        - abspath : get absolute path of the file in the DataSource directory
-        - open : open the file
+    Notes
+    -----
+    URLs require a scheme string (``http://``) to be used, without it they
+    will fail::
 
-    *Example URL DataSource*::
+        >>> repos = DataSource()
+        >>> repos.exists('www.google.com/index.html')
+        False
+        >>> repos.exists('http://www.google.com/index.html')
+        True
 
-        # Initialize DataSource with a local directory, default is os.curdir.
-        ds = DataSource('/home/guido')
+    Temporary directories are deleted when the DataSource is deleted.
 
-        # Open remote file.
-        # File will be downloaded and opened from here:
-        #     /home/guido/site/xyz.txt
-        ds.open('http://fake.xyz.web/site/xyz.txt')
+    Examples
+    --------
 
-    *Example using DataSource for temporary files*::
+    ::
 
-        # Initialize DataSource with 'None' for the local directory.
-        ds = DataSource(None)
+        >>> ds = DataSource('/home/guido')
+        >>> urlname = 'http://www.google.com/index.html'
+        >>> gfile = ds.open('http://www.google.com/index.html')  # open remote file
+        >>> ds.abspath(urlname)
+        '/home/guido/www.google.com/site/index.html'
 
-        # Open local file.
-        # Opened file exists in a temporary directory like:
-        #     /tmp/tmpUnhcvM/foobar.txt
-        # Temporary directories are deleted when the DataSource is deleted.
-        ds.open('/home/guido/foobar.txt')
-
-    *Notes*:
-        BUG : URLs require a scheme string ('http://') to be used.
-              www.google.com will fail.
-
-              >>> repos.exists('www.google.com/index.html')
-              False
-
-              >>> repos.exists('http://www.google.com/index.html')
-              True
+        >>> ds = DataSource(None)  # use with temporary file
+        >>> ds.open('/home/guido/foobar.txt')
+        <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
+        >>> ds.abspath('/home/guido/foobar.txt')
+        '/tmp/tmpy4pgsP/home/guido/foobar.txt'
 
     """
 
@@ -278,25 +329,23 @@ class DataSource (object):
         """
         Return absolute path of file in the DataSource directory.
 
-        If `path` is an URL, the ``abspath`` will be either the location
+        If `path` is an URL, then `abspath` will return either the location
         the file exists locally or the location it would exist when opened
-        using the ``open`` method.
-
-        The functionality is idential to os.path.abspath.
+        using the `open` method.
 
         Parameters
         ----------
-        path : string
+        path : str
             Can be a local file or a remote URL.
 
         Returns
         -------
-        out : string
-            Complete path, rooted in the DataSource destination directory.
+        out : str
+            Complete path, including the `DataSource` destination directory.
 
-        See Also
-        --------
-        open
+        Notes
+        -----
+        The functionality is based on `os.path.abspath`.
 
         """
         # We do this here to reduce the 'import numpy' initial import time.
@@ -340,14 +389,13 @@ class DataSource (object):
         Test if `path` exists as (and in this order):
 
         - a local file.
-        - a remote URL that have been downloaded and stored locally in the
-          DataSource directory.
-        - a remote URL that has not been downloaded, but is valid and
-          accessible.
+        - a remote URL that has been downloaded and stored locally in the
+          `DataSource` directory.
+        - a remote URL that has not been downloaded, but is valid and accessible.
 
         Parameters
         ----------
-        path : string
+        path : str
             Can be a local file or a remote URL.
 
         Returns
@@ -355,16 +403,12 @@ class DataSource (object):
         out : bool
             True if `path` exists.
 
-        See Also
-        --------
-        abspath
-
         Notes
         -----
-        When `path` is an URL, ``exist`` will return True if it's either stored
-        locally in the DataSource directory, or is a valid remote URL.  DataSource
-        does not discriminate between to two, the file is accessible if it exists
-        in either location.
+        When `path` is an URL, `exists` will return True if it's either stored
+        locally in the `DataSource` directory, or is a valid remote URL.
+        `DataSource` does not discriminate between the two, the file is accessible
+        if it exists in either location.
 
         """
         # We import this here because importing urllib2 is slow and
@@ -394,17 +438,17 @@ class DataSource (object):
         """
         Open and return file-like object.
 
-        If ``path`` is an URL, it will be downloaded, stored in the DataSource
+        If `path` is an URL, it will be downloaded, stored in the `DataSource`
         directory and opened from there.
 
         Parameters
         ----------
-        path : string
-            Local file path or URL to open
+        path : str
+            Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing, 'a' to
             append. Available modes depend on the type of object specified by
-            `path`.
+            `path`. Default is 'r'.
 
         Returns
         -------
@@ -435,30 +479,39 @@ class DataSource (object):
 
 class Repository (DataSource):
     """
-    A data Repository where multiple DataSource's share a base URL/directory.
+    Repository(baseurl, destpath='.')
 
-    Repository extends DataSource by prepending a base URL (or directory) to
-    all the files it handles. Use a Repository when you will be working with
-    multiple files from one base URL.  Initialize the Respository with the
+    A data repository where multiple DataSource's share a base URL/directory.
+
+    `Repository` extends `DataSource` by prepending a base URL (or directory)
+    to all the files it handles. Use `Repository` when you will be working
+    with multiple files from one base URL.  Initialize `Repository` with the
     base URL, then refer to each file by its filename only.
 
-    *Methods*:
+    Parameters
+    ----------
+    baseurl : str
+        Path to the local directory or remote location that contains the
+        data files.
+    destpath : str or None, optional
+        Path to the directory where the source file gets downloaded to for use.
+        If `destpath` is None, a temporary directory will be created.
+        The default path is the current directory.
 
-        - exists : test if the file exists locally or remotely
-        - abspath : get absolute path of the file in the DataSource directory
-        - open : open the file
+    Examples
+    --------
+    To analyze all files in the repository, do something like this
+    (note: this is not self-contained code)::
 
-    *Toy example*::
+        >>> repos = np.lib._datasource.Repository('/home/user/data/dir/')
+        >>> for filename in filelist:
+        ...     fp = repos.open(filename)
+        ...     fp.analyze()
+        ...     fp.close()
 
-        # Analyze all files in the repository.
-        repos = Repository('/home/user/data/dir/')
-        for filename in filelist:
-            fp = repos.open(filename)
-            fp.analyze()
-            fp.close()
+    Similarly you could use a URL for a repository::
 
-        # Similarly you could use a URL for a repository.
-        repos = Repository('http://www.xyz.edu/data')
+        >>> repos = np.lib._datasource.Repository('http://www.xyz.edu/data')
 
     """
 
@@ -487,25 +540,20 @@ class Repository (DataSource):
         """
         Return absolute path of file in the Repository directory.
 
-        If `path` is an URL, the ``abspath`` will be either the location
+        If `path` is an URL, then `abspath` will return either the location
         the file exists locally or the location it would exist when opened
-        using the ``open`` method.
-
-        The functionality is idential to os.path.abspath.
+        using the `open` method.
 
         Parameters
         ----------
-        path : string
-            Can be a local file or a remote URL.
+        path : str
+            Can be a local file or a remote URL. This may, but does not have
+            to, include the `baseurl` with which the `Repository` was initialized.
 
         Returns
         -------
-        out : string
-            Complete path, rooted in the DataSource destination directory.
-
-        See Also
-        --------
-        open
+        out : str
+            Complete path, including the `DataSource` destination directory.
 
         """
         return DataSource.abspath(self, self._fullpath(path))
@@ -517,31 +565,28 @@ class Repository (DataSource):
         Test if `path` exists as (and in this order):
 
         - a local file.
-        - a remote URL that have been downloaded and stored locally in the
-          DataSource directory.
+        - a remote URL that has been downloaded and stored locally in the
+          `DataSource` directory.
         - a remote URL that has not been downloaded, but is valid and
           accessible.
 
         Parameters
         ----------
-        path : string
-            Can be a local file or a remote URL.
+        path : str
+            Can be a local file or a remote URL. This may, but does not have
+            to, include the `baseurl` with which the `Repository` was initialized.
 
         Returns
         -------
         out : bool
             True if `path` exists.
 
-        See Also
-        --------
-        abspath
-
         Notes
         -----
-        When `path` is an URL, ``exist`` will return True if it's either stored
-        locally in the DataSource directory, or is a valid remote URL.  DataSource
-        does not discriminate between to two, the file is accessible if it exists
-        in either location.
+        When `path` is an URL, `exists` will return True if it's either stored
+        locally in the `DataSource` directory, or is a valid remote URL.
+        `DataSource` does not discriminate between the two, the file is accessible
+        if it exists in either location.
 
         """
         return DataSource.exists(self, self._fullpath(path))
@@ -555,12 +600,13 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : string
-            Local file path or URL to open
+        path : str
+            Local file path or URL to open. This may, but does not have to,
+            include the `baseurl` with which the `Repository` was initialized.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing, 'a' to
             append. Available modes depend on the type of object specified by
-            `path`.
+            `path`. Default is 'r'.
 
         Returns
         -------

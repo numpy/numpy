@@ -2,57 +2,136 @@
 Define a simple format for saving numpy arrays to disk with the full
 information about them.
 
-WARNING: Due to limitations in the interpretation of structured dtypes, dtypes
-with fields with empty names will have the names replaced by 'f0', 'f1', etc.
-Such arrays will not round-trip through the format entirely accurately. The
-data is intact; only the field names will differ. We are working on a fix for
-this.  This fix will not require a change in the file format. The arrays with
-such structures can still be saved and restored, and the correct dtype may be
-restored by using the `loadedarray.view(correct_dtype)` method.
+The ``.npy`` format is the standard binary file format in NumPy for
+persisting a *single* arbitrary NumPy array on disk. The format stores all
+of the shape and dtype information necessary to reconstruct the array
+correctly even on another machine with a different architecture.
+The format is designed to be as simple as possible while achieving
+its limited goals.
+
+The ``.npz`` format is the standard format for persisting *multiple* NumPy
+arrays on disk. A ``.npz`` file is a zip file containing multiple ``.npy``
+files, one for each array.
+
+Capabilities
+------------
+
+- Can represent all NumPy arrays including nested record arrays and
+  object arrays.
+
+- Represents the data in its native binary form.
+
+- Supports Fortran-contiguous arrays directly.
+
+- Stores all of the necessary information to reconstruct the array
+  including shape and dtype on a machine of a different
+  architecture.  Both little-endian and big-endian arrays are
+  supported, and a file with little-endian numbers will yield
+  a little-endian array on any machine reading the file. The
+  types are described in terms of their actual sizes. For example,
+  if a machine with a 64-bit C "long int" writes out an array with
+  "long ints", a reading machine with 32-bit C "long ints" will yield
+  an array with 64-bit integers.
+
+- Is straightforward to reverse engineer. Datasets often live longer than
+  the programs that created them. A competent developer should be
+  able create a solution in his preferred programming language to
+  read most ``.npy`` files that he has been given without much
+  documentation.
+
+- Allows memory-mapping of the data. See `open_memmep`.
+
+- Can be read from a filelike stream object instead of an actual file.
+
+- Stores object arrays, i.e. arrays containing elements that are arbitrary
+  Python objects. Files with object arrays are not to be mmapable, but
+  can be read and written to disk.
+
+Limitations
+-----------
+
+- Arbitrary subclasses of numpy.ndarray are not completely preserved.
+  Subclasses will be accepted for writing, but only the array data will
+  be written out. A regular numpy.ndarray object will be created
+  upon reading the file.
+
+.. warning::
+
+  Due to limitations in the interpretation of structured dtypes, dtypes
+  with fields with empty names will have the names replaced by 'f0', 'f1',
+  etc. Such arrays will not round-trip through the format entirely
+  accurately. The data is intact; only the field names will differ. We are
+  working on a fix for this. This fix will not require a change in the
+  file format. The arrays with such structures can still be saved and
+  restored, and the correct dtype may be restored by using the
+  ``loadedarray.view(correct_dtype)`` method.
+
+File extensions
+---------------
+
+We recommend using the ``.npy`` and ``.npz`` extensions for files saved
+in this format. This is by no means a requirement; applications may wish
+to use these file formats but use an extension specific to the
+application. In the absence of an obvious alternative, however,
+we suggest using ``.npy`` and ``.npz``.
+
+Version numbering
+-----------------
+
+The version numbering of these formats is independent of NumPy version
+numbering. If the format is upgraded, the code in `numpy.io` will still
+be able to read and write Version 1.0 files.
 
 Format Version 1.0
 ------------------
 
-The first 6 bytes are a magic string: exactly "\\\\x93NUMPY".
+The first 6 bytes are a magic string: exactly ``\\x93NUMPY``.
 
 The next 1 byte is an unsigned byte: the major version number of the file
-format, e.g. \\\\x01.
+format, e.g. ``\\x01``.
 
 The next 1 byte is an unsigned byte: the minor version number of the file
-format, e.g. \\\\x00. Note: the version of the file format is not tied to the
-version of the numpy package.
+format, e.g. ``\\x00``. Note: the version of the file format is not tied
+to the version of the numpy package.
 
-The next 2 bytes form a little-endian unsigned short int: the length of the
-header data HEADER_LEN.
+The next 2 bytes form a little-endian unsigned short int: the length of
+the header data HEADER_LEN.
 
-The next HEADER_LEN bytes form the header data describing the array's format.
-It is an ASCII string which contains a Python literal expression of a
-dictionary. It is terminated by a newline ('\\\\n') and padded with spaces
-('\\\\x20') to make the total length of the magic string + 4 + HEADER_LEN be
-evenly divisible by 16 for alignment purposes.
+The next HEADER_LEN bytes form the header data describing the array's
+format. It is an ASCII string which contains a Python literal expression
+of a dictionary. It is terminated by a newline (``\\n``) and padded with
+spaces (``\\x20``) to make the total length of
+``magic string + 4 + HEADER_LEN`` be evenly divisible by 16 for alignment
+purposes.
 
 The dictionary contains three keys:
 
     "descr" : dtype.descr
-        An object that can be passed as an argument to the numpy.dtype()
-        constructor to create the array's dtype.
+      An object that can be passed as an argument to the `numpy.dtype`
+      constructor to create the array's dtype.
     "fortran_order" : bool
-        Whether the array data is Fortran-contiguous or not. Since
-        Fortran-contiguous arrays are a common form of non-C-contiguity, we
-        allow them to be written directly to disk for efficiency.
+      Whether the array data is Fortran-contiguous or not. Since
+      Fortran-contiguous arrays are a common form of non-C-contiguity,
+      we allow them to be written directly to disk for efficiency.
     "shape" : tuple of int
-        The shape of the array.
+      The shape of the array.
 
-For repeatability and readability, the dictionary keys are sorted in alphabetic
-order. This is for convenience only. A writer SHOULD implement this if
-possible. A reader MUST NOT depend on this.
+For repeatability and readability, the dictionary keys are sorted in
+alphabetic order. This is for convenience only. A writer SHOULD implement
+this if possible. A reader MUST NOT depend on this.
 
-Following the header comes the array data. If the dtype contains Python objects
-(i.e. dtype.hasobject is True), then the data is a Python pickle of the array.
-Otherwise the data is the contiguous (either C- or Fortran-, depending on
-fortran_order) bytes of the array. Consumers can figure out the number of bytes
-by multiplying the number of elements given by the shape (noting that shape=()
-means there is 1 element) by dtype.itemsize.
+Following the header comes the array data. If the dtype contains Python
+objects (i.e. ``dtype.hasobject is True``), then the data is a Python
+pickle of the array. Otherwise the data is the contiguous (either C-
+or Fortran-, depending on ``fortran_order``) bytes of the array.
+Consumers can figure out the number of bytes by multiplying the number
+of elements given by the shape (noting that ``shape=()`` means there is
+1 element) by ``dtype.itemsize``.
+
+Notes
+-----
+The ``.npy`` format, including reasons for creating it and a comparison of
+alternatives, is described fully in the "npy-format" NEP.
 
 """
 

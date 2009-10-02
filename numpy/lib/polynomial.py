@@ -17,54 +17,99 @@ from numpy.lib.type_check import iscomplex, real, imag
 from numpy.linalg import eigvals, lstsq
 
 class RankWarning(UserWarning):
-    """Issued by polyfit when Vandermonde matrix is rank deficient.
+    """
+    Issued by `polyfit` when the Vandermonde matrix is rank deficient.
+
+    For more information, a way to suppress the warning, and an example of
+    `RankWarning` being issued, see `polyfit`.
+
     """
     pass
 
 def poly(seq_of_zeros):
     """
-    Return polynomial coefficients given a sequence of roots.
+    Find the coefficients of a polynomial with the given sequence of roots.
 
-    Calculate the coefficients of a polynomial given the zeros
-    of the polynomial.
-
-    If a square matrix is given, then the coefficients for
-    characteristic equation of the matrix, defined by
-    :math:`\\mathrm{det}(\\mathbf{A} - \\lambda \\mathbf{I})`,
-    are returned.
+    Returns the coefficients of the polynomial whose leading coefficient
+    is one for the given sequence of zeros (multiple roots must be included
+    in the sequence as many times as their multiplicity; see Examples).
+    A square matrix (or array, which will be treated as a matrix) can also
+    be given, in which case the coefficients of the characteristic polynomial
+    of the matrix are returned.
 
     Parameters
     ----------
-    seq_of_zeros : ndarray
-        A sequence of polynomial roots or a square matrix.
+    seq_of_zeros : array_like, shape (N,) or (N, N)
+        A sequence of polynomial roots, or a square array or matrix object.
 
     Returns
     -------
-    coefs : ndarray
-        A sequence of polynomial coefficients representing the polynomial
+    c : ndarray
+        1D array of polynomial coefficients from highest to lowest degree:
 
-        :math:`\\mathrm{coefs}[0] x^{n-1} + \\mathrm{coefs}[1] x^{n-2} +
-                      ... + \\mathrm{coefs}[2] x + \\mathrm{coefs}[n]`
+        ``c[0] * x**(N) + c[1] * x**(N-1) + ... + c[N-1] * x + c[N]``
+        where c[0] always equals 1.
+
+    Raises
+    ------
+    ValueError
+        If input is the wrong shape (the input must be a 1-D or square
+        2-D array).
 
     See Also
     --------
-    numpy.poly1d : A one-dimensional polynomial class.
-    numpy.roots : Return the roots of the polynomial coefficients in p
-    numpy.polyfit : Least squares polynomial fit
+    polyval : Evaluate a polynomial at a point.
+    roots : Return the roots of a polynomial.
+    polyfit : Least squares polynomial fit.
+    poly1d : A one-dimensional polynomial class.
+
+    Notes
+    -----
+    Specifying the roots of a polynomial still leaves one degree of
+    freedom, typically represented by an undetermined leading
+    coefficient. [1]_ In the case of this function, that coefficient -
+    the first one in the returned array - is always taken as one. (If
+    for some reason you have one other point, the only automatic way
+    presently to leverage that information is to use ``polyfit``.)
+
+    The characteristic polynomial, :math:`p_a(t)`, of an `n`-by-`n`
+    matrix **A** is given by
+
+        :math:`p_a(t) = \\mathrm{det}(t\\, \\mathbf{I} - \\mathbf{A})`,
+
+    where **I** is the `n`-by-`n` identity matrix. [2]_
+
+    References
+    ----------
+    .. [1] M. Sullivan and M. Sullivan, III, "Algebra and Trignometry,
+       Enhanced With Graphing Utilities," Prentice-Hall, pg. 318, 1996.
+
+    .. [2] G. Strang, "Linear Algebra and Its Applications, 2nd Edition,"
+       Academic Press, pg. 182, 1980.
 
     Examples
     --------
-    Given a sequence of polynomial zeros,
+    Given a sequence of a polynomial's zeros:
 
-    >>> b = np.roots([1, 3, 1, 5, 6])
-    >>> np.poly(b)
-    array([ 1.,  3.,  1.,  5.,  6.])
+    >>> np.poly((0, 0, 0)) # Multiple root example
+    array([1, 0, 0, 0]) # i.e., z**3 + 0*z**2 + 0*z + 0
+    >>> np.poly((-1./2, 0, 1./2))
+    array([ 1.  ,  0.  , -0.25,  0.  ]) # z**3 - z/4
+    >>> np.poly((np.random.random(1.)[0], 0, np.random.random(1.)[0]))
+    array([ 1.        , -0.77086955,  0.08618131,  0.        ])
 
-    Given a square matrix,
+    Given a square array object:
 
-    >>> P = np.array([[19, 3], [-2, 26]])
+    >>> P = np.array([[0, 1./3], [-1./2, 0]])
     >>> np.poly(P)
-    array([   1.,  -45.,  500.])
+    array([ 1.        ,  0.        ,  0.16666667])
+
+    Or a square matrix object:
+
+    >>> np.poly(np.matrix(P))
+    array([ 1.        ,  0.        ,  0.16666667])
+
+    Note how in all cases the leading coefficient is always 1.
 
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)
@@ -118,12 +163,32 @@ def roots(p):
     ValueError:
         When `p` cannot be converted to a rank-1 array.
 
+    See also
+    --------
+
+    poly : Find the coefficients of a polynomial with
+         a given sequence of roots.
+    polyval : Evaluate a polynomial at a point.
+    polyfit : Least squares polynomial fit.
+    poly1d : A one-dimensional polynomial class.
+
+    Notes
+    -----
+
+    The algorithm relies on computing the eigenvalues of the
+    companion matrix [1]_.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Companion matrix",
+           http://en.wikipedia.org/wiki/Companion_matrix
+
     Examples
     --------
 
     >>> coeff = [3.2, 2, 1]
-    >>> print np.roots(coeff)
-    [-0.3125+0.46351241j -0.3125-0.46351241j]
+    >>> np.roots(coeff)
+    array([-0.3125+0.46351241j, -0.3125-0.46351241j])
 
     """
     # If input is scalar, this makes it an array
@@ -503,29 +568,32 @@ def polyval(p, x):
     """
     Evaluate a polynomial at specific values.
 
-    If p is of length N, this function returns the value:
+    If `p` is of length N, this function returns the value:
 
-        p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
+        ``p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]``
 
-    If x is a sequence then p(x) will be returned for all elements of x.
-    If x is another polynomial then the composite polynomial p(x) will
-    be returned.
+    If `x` is a sequence, then `p(x)` is returned for each element of `x`.
+    If `x` is another polynomial then the composite polynomial `p(x(t))`
+    is returned.
 
     Parameters
     ----------
-    p : {array_like, poly1d}
-       1D array of polynomial coefficients from highest degree to zero or an
+    p : array_like or poly1d object
+       1D array of polynomial coefficients (including coefficients equal
+       to zero) from highest degree to the constant term, or an
        instance of poly1d.
-    x : {array_like, poly1d}
-       A number, a 1D array of numbers, or an instance of poly1d.
+    x : array_like or poly1d object
+       A number, a 1D array of numbers, or an instance of poly1d, "at"
+       which to evaluate `p`.
 
     Returns
     -------
-    values : {ndarray, poly1d}
-       If either p or x is an instance of poly1d, then an instance of poly1d
-       is returned, otherwise a 1D array is returned. In the case where x is
-       a poly1d, the result is the composition of the two polynomials, i.e.,
-       substitution is used.
+    values : ndarray or poly1d
+       If `x` is a poly1d instance, the result is the composition of the two
+       polynomials, i.e., `x` is "substituted" in `p` and the simplified
+       result is returned. In addition, the type of `x` - array_like or
+       poly1d - governs the type of the output: `x` array_like => `values`
+       array_like, `x` a poly1d object => `values` is also.
 
     See Also
     --------
@@ -533,15 +601,26 @@ def polyval(p, x):
 
     Notes
     -----
-    Horner's method is used to evaluate the polynomial. Even so, for
-    polynomials of high degree the values may be inaccurate due to
+    Horner's scheme [1]_ is used to evaluate the polynomial. Even so,
+    for polynomials of high degree the values may be inaccurate due to
     rounding errors. Use carefully.
 
+    References
+    ----------
+    .. [1] I. N. Bronshtein, K. A. Semendyayev, and K. A. Hirsch (Eng.
+       trans. Ed.), *Handbook of Mathematics*, New York, Van Nostrand
+       Reinhold Co., 1985, pg. 720.
 
     Examples
     --------
     >>> np.polyval([3,0,1], 5)  # 3 * 5**2 + 0 * 5**1 + 1
     76
+    >>> np.polyval([3,0,1], np.poly1d(5))
+    poly1d([ 76.])
+    >>> np.polyval(np.poly1d([3,0,1]), 5)
+    76
+    >>> np.polyval(np.poly1d([3,0,1]), np.poly1d(5))
+    poly1d([ 76.])
 
     """
     p = NX.asarray(p)
@@ -556,26 +635,46 @@ def polyval(p, x):
 
 def polyadd(a1, a2):
     """
-    Returns sum of two polynomials.
+    Find the sum of two polynomials.
 
-    Returns sum of polynomials; `a1` + `a2`.  Input polynomials are
-    represented as an array_like sequence of terms or a poly1d object.
+    Returns the polynomial resulting from the sum of two input polynomials.
+    Each input must be either a poly1d object or a 1D sequence of polynomial
+    coefficients, from highest to lowest degree.
 
     Parameters
     ----------
-    a1 : {array_like, poly1d}
-        Polynomial as sequence of terms.
-    a2 : {array_like, poly1d}
-        Polynomial as sequence of terms.
+    a1, a2 : array_like or poly1d object
+        Input polynomials.
 
     Returns
     -------
-    out : {ndarray, poly1d}
-        Array representing the polynomial terms.
+    out : ndarray or poly1d object
+        The sum of the inputs. If either input is a poly1d object, then the
+        output is also a poly1d object. Otherwise, it is a 1D array of
+        polynomial coefficients from highest to lowest degree.
 
     See Also
     --------
-    polyval, polydiv, polymul, polyadd
+    poly1d : A one-dimensional polynomial class.
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polysub, polyval
+
+    Examples
+    --------
+    >>> np.polyadd([1, 2], [9, 5, 4])
+    array([9, 6, 6])
+
+    Using poly1d objects:
+
+    >>> p1 = np.poly1d([1, 2])
+    >>> p2 = np.poly1d([9, 5, 4])
+    >>> print p1
+    1 x + 2
+    >>> print p2
+       2
+    9 x + 5 x + 4
+    >>> print np.polyadd(p1, p2)
+       2
+    9 x + 6 x + 6
 
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
@@ -596,22 +695,21 @@ def polyadd(a1, a2):
 
 def polysub(a1, a2):
     """
-    Returns difference from subtraction of two polynomials input as sequences.
+    Difference (subtraction) of two polynomials.
 
-    Returns difference of polynomials; `a1` - `a2`.  Input polynomials are
-    represented as an array_like sequence of terms or a poly1d object.
+    Given two polynomials `a1` and `a2`, returns ``a1 - a2``.
+    `a1` and `a2` can be either array_like sequences of the polynomials'
+    coefficients (including coefficients equal to zero), or `poly1d` objects.
 
     Parameters
     ----------
-    a1 : {array_like, poly1d}
-        Minuend polynomial as sequence of terms.
-    a2 : {array_like, poly1d}
-        Subtrahend polynomial as sequence of terms.
+    a1, a2 : array_like or poly1d
+        Minuend and subtrahend polynomials, respectively.
 
     Returns
     -------
-    out : {ndarray, poly1d}
-        Array representing the polynomial terms.
+    out : ndarray or poly1d
+        Array or `poly1d` object of the difference polynomial's coefficients.
 
     See Also
     --------
@@ -644,27 +742,49 @@ def polysub(a1, a2):
 
 def polymul(a1, a2):
     """
-    Returns product of two polynomials represented as sequences.
+    Find the product of two polynomials.
 
-    The input arrays specify the polynomial terms in turn with a length equal
-    to the polynomial degree plus 1.
+    Finds the polynomial resulting from the multiplication of the two input
+    polynomials. Each input must be either a poly1d object or a 1D sequence
+    of polynomial coefficients, from highest to lowest degree.
 
     Parameters
     ----------
-    a1 : {array_like, poly1d}
-        First multiplier polynomial.
-    a2 : {array_like, poly1d}
-        Second multiplier polynomial.
+    a1, a2 : array_like or poly1d object
+        Input polynomials.
 
     Returns
     -------
-    out : {ndarray, poly1d}
-        Product of inputs.
+    out : ndarray or poly1d object
+        The polynomial resulting from the multiplication of the inputs. If
+        either inputs is a poly1d object, then the output is also a poly1d
+        object. Otherwise, it is a 1D array of polynomial coefficients from
+        highest to lowest degree.
 
     See Also
     --------
+    poly1d : A one-dimensional polynomial class.
     poly, polyadd, polyder, polydiv, polyfit, polyint, polysub,
     polyval
+
+    Examples
+    --------
+    >>> np.polymul([1, 2, 3], [9, 5, 1])
+    array([ 9, 23, 38, 17,  3])
+
+    Using poly1d objects:
+
+    >>> p1 = np.poly1d([1, 2, 3])
+    >>> p2 = np.poly1d([9, 5, 1])
+    >>> print p1
+       2
+    1 x + 2 x + 3
+    >>> print p2
+       2
+    9 x + 5 x + 1
+    >>> print np.polymul(p1, p2)
+       4      3      2
+    9 x + 23 x + 38 x + 17 x + 3
 
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
@@ -678,27 +798,36 @@ def polydiv(u, v):
     """
     Returns the quotient and remainder of polynomial division.
 
-    The input arrays specify the polynomial terms in turn with a length equal
-    to the polynomial degree plus 1.
+    The input arrays are the coefficients (including any coefficients
+    equal to zero) of the "numerator" (dividend) and "denominator"
+    (divisor) polynomials, respectively.
 
     Parameters
     ----------
-    u : {array_like, poly1d}
-        Dividend polynomial.
-    v : {array_like, poly1d}
-        Divisor polynomial.
+    u : array_like or poly1d
+        Dividend polynomial's coefficients.
+
+    v : array_like or poly1d
+        Divisor polynomial's coefficients.
 
     Returns
     -------
     q : ndarray
-        Polynomial terms of quotient.
+        Coefficients, including those equal to zero, of the quotient.
     r : ndarray
-        Remainder of polynomial division.
+        Coefficients, including those equal to zero, of the remainder.
 
     See Also
     --------
     poly, polyadd, polyder, polydiv, polyfit, polyint, polymul, polysub,
     polyval
+
+    Notes
+    -----
+    Both `u` and `v` must be 0-d or 1-d (ndim = 0 or 1), but `u.ndim` need
+    not equal `v.ndim`. In other words, all four possible combinations -
+    ``u.ndim = v.ndim = 0``, ``u.ndim = v.ndim = 1``,
+    ``u.ndim = 1, v.ndim = 0``, and ``u.ndim = 0, v.ndim = 1`` - work.
 
     Examples
     --------
@@ -762,15 +891,25 @@ class poly1d(object):
     """
     A one-dimensional polynomial class.
 
+    A convenience class, used to encapsulate "natural" operations on
+    polynomials so that said operations may take on their customary
+    form in code (see Examples).
+
     Parameters
     ----------
     c_or_r : array_like
-        Polynomial coefficients, in decreasing powers.  For example,
-        ``(1, 2, 3)`` implies :math:`x^2 + 2x + 3`.  If `r` is set
-        to True, these coefficients specify the polynomial roots
-        (values where the polynomial evaluate to 0) instead.
+        The polynomial's coefficients, in decreasing powers, or if
+        the value of the second parameter is True, the polynomial's
+        roots (values where the polynomial evaluates to 0).  For example,
+        ``poly1d([1, 2, 3])`` returns an object that represents
+        :math:`x^2 + 2x + 3`, whereas ``poly1d([1, 2, 3], True)`` returns
+        one that represents :math:`(x-1)(x-2)(x-3) = x^3 - 6x^2 + 11x -6`.
     r : bool, optional
-        If True, `c_or_r` gives the polynomial roots.  Default is False.
+        If True, `c_or_r` specifies the polynomial's roots; the default
+        is False.
+    variable : str, optional
+        Changes the variable used when printing `p` from `x` to `variable`
+        (see Examples).
 
     Examples
     --------
@@ -781,7 +920,7 @@ class poly1d(object):
        2
     1 x + 2 x + 3
 
-    Evaluate the polynomial:
+    Evaluate the polynomial at :math:`x = 0.5`:
 
     >>> p(0.5)
     4.25
@@ -790,6 +929,8 @@ class poly1d(object):
 
     >>> p.r
     array([-1.+1.41421356j, -1.-1.41421356j])
+    >>> p(p.r)
+    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j]) # i.e., (0, 0)
 
     Show the coefficients:
 
@@ -807,7 +948,7 @@ class poly1d(object):
     >>> p[1]
     2
 
-    Polynomials can be added, substracted, multplied and divided
+    Polynomials can be added, subtracted, multiplied, and divided
     (returns quotient and remainder):
 
     >>> p * p

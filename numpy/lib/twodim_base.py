@@ -221,7 +221,9 @@ def diag(v, k=0):
         If `v` is a 1-D array, return a 2-D array with `v` on the `k`-th
         diagonal.
     k : int, optional
-        Diagonal in question. The default is 0.
+        Diagonal in question. The default is 0. Use `k>0` for diagonals
+        above the main diagonal, and `k<0` for diagonals below the main
+        diagonal.
 
     Returns
     -------
@@ -233,6 +235,8 @@ def diag(v, k=0):
     diagonal : Return specified diagonals.
     diagflat : Create a 2-D array with the flattened input as a diagonal.
     trace : Sum along diagonals.
+    triu : Upper triangle of an array.
+    tril : Lower triange of an array.
 
     Examples
     --------
@@ -244,6 +248,10 @@ def diag(v, k=0):
 
     >>> np.diag(x)
     array([0, 4, 8])
+    >>> np.diag(x, k=1)
+    array([1, 5])
+    >>> np.diag(x, k=-1)
+    array([3, 7])
 
     >>> np.diag(np.diag(x))
     array([[0, 0, 0],
@@ -441,20 +449,28 @@ def vander(x, N=None):
 
     The columns of the output matrix are decreasing powers of the input
     vector.  Specifically, the i-th output column is the input vector to
-    the power of ``N - i - 1``.
+    the power of ``N - i - 1``. Such a matrix with a geometric progression
+    in each row is named Van Der Monde, or Vandermonde matrix, from
+    Alexandre-Theophile Vandermonde.
 
     Parameters
     ----------
     x : array_like
-        Input array.
+        1-D input array.
     N : int, optional
-        Order of (number of columns in) the output.
+        Order of (number of columns in) the output. If `N` is not specified,
+        a square array is returned (``N = len(x)``).
 
     Returns
     -------
     out : ndarray
         Van der Monde matrix of order `N`.  The first column is ``x^(N-1)``,
         the second ``x^(N-2)`` and so forth.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Vandermonde matrix",
+           http://en.wikipedia.org/wiki/Vandermonde_matrix
 
     Examples
     --------
@@ -472,6 +488,21 @@ def vander(x, N=None):
            [ 9,  3,  1],
            [25,  5,  1]])
 
+    >>> x = np.array([1, 2, 3, 5])
+    >>> np.vander(x)
+    array([[  1,   1,   1,   1],
+           [  8,   4,   2,   1],
+           [ 27,   9,   3,   1],
+           [125,  25,   5,   1]])
+
+    The determinant of a square Vandermonde matrix is the product
+    of the differences between the values of the input vector:
+
+    >>> np.linalg.det(np.vander(x))
+    48.000000000000043
+    >>> (5-3)*(5-2)*(5-1)*(3-2)*(3-1)*(2-1)
+    48
+
     """
     x = asarray(x)
     if N is None: N=len(x)
@@ -483,46 +514,46 @@ def vander(x, N=None):
 
 def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
     """
-    Compute the bidimensional histogram of two data samples.
+    Compute the bi-dimensional histogram of two data samples.
 
     Parameters
     ----------
     x : array_like, shape(N,)
-      A sequence of values to be histogrammed along the first dimension.
+        A sequence of values to be histogrammed along the first dimension.
     y : array_like, shape(M,)
-      A sequence of values to be histogrammed along the second dimension.
-    bins : int or [int, int] or array-like or [array, array], optional
-      The bin specification:
+        A sequence of values to be histogrammed along the second dimension.
+    bins : int or [int, int] or array_like or [array, array], optional
+        The bin specification:
 
-        * the number of bins for the two dimensions (nx=ny=bins),
-        * the number of bins in each dimension (nx, ny = bins),
-        * the bin edges for the two dimensions (x_edges=y_edges=bins),
-        * the bin edges in each dimension (x_edges, y_edges = bins).
+          * If int, the number of bins for the two dimensions (nx=ny=bins).
+          * If [int, int], the number of bins in each dimension (nx, ny = bins).
+          * If array_like, the bin edges for the two dimensions (x_edges=y_edges=bins).
+          * If [array, array], the bin edges in each dimension (x_edges, y_edges = bins).
 
     range : array_like, shape(2,2), optional
-      The leftmost and rightmost edges of the bins along each dimension
-      (if not specified explicitly in the `bins` parameters):
-      [[xmin, xmax], [ymin, ymax]]. All values outside of this range will be
-      considered outliers and not tallied in the histogram.
-    normed : boolean, optional
-      If False, returns the number of samples in each bin. If True, returns
-      the bin density, ie, the bin count divided by the bin area.
-    weights : array-like, shape(N,), optional
-      An array of values `w_i` weighing each sample `(x_i, y_i)`. Weights are
-      normalized to 1 if normed is True. If normed is False, the values of the
-      returned histogram are equal to the sum of the weights belonging to the
-      samples falling into each bin.
+        The leftmost and rightmost edges of the bins along each dimension
+        (if not specified explicitly in the `bins` parameters):
+        ``[[xmin, xmax], [ymin, ymax]]``. All values outside of this range
+        will be considered outliers and not tallied in the histogram.
+    normed : bool, optional
+        If False, returns the number of samples in each bin. If True, returns
+        the bin density, i.e. the bin count divided by the bin area.
+    weights : array_like, shape(N,), optional
+        An array of values ``w_i`` weighing each sample ``(x_i, y_i)``. Weights
+        are normalized to 1 if `normed` is True. If `normed` is False, the
+        values of the returned histogram are equal to the sum of the weights
+        belonging to the samples falling into each bin.
 
     Returns
     -------
     H : ndarray, shape(nx, ny)
-      The bidimensional histogram of samples x and y. Values in x are
-      histogrammed along the first dimension and values in y are histogrammed
-      along the second dimension.
+        The bi-dimensional histogram of samples `x` and `y`. Values in `x`
+        are histogrammed along the first dimension and values in `y` are
+        histogrammed along the second dimension.
     xedges : ndarray, shape(nx,)
-      The bin edges along the first dimension.
+        The bin edges along the first dimension.
     yedges : ndarray, shape(ny,)
-      The bin edges along the second dimension.
+        The bin edges along the second dimension.
 
     See Also
     --------
@@ -531,27 +562,35 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
 
     Notes
     -----
-    When normed is True, then the returned histogram is the sample density,
+    When `normed` is True, then the returned histogram is the sample density,
     defined such that:
 
-      .. math::
-        \\sum_{i=0}^{nx-1} \\sum_{j=0}^{ny-1} H_{i,j} \\Delta x_i \\Delta y_j = 1
+    .. math::
+      \\sum_{i=0}^{nx-1} \\sum_{j=0}^{ny-1} H_{i,j} \\Delta x_i \\Delta y_j = 1
 
-    where :math:`H` is the histogram array and :math:`\\Delta x_i \\Delta y_i`
-    the area of bin :math:`{i,j}`.
+    where `H` is the histogram array and :math:`\\Delta x_i \\Delta y_i`
+    the area of bin `{i,j}`.
 
-    Please note that the histogram does not follow the cartesian convention
+    Please note that the histogram does not follow the Cartesian convention
     where `x` values are on the abcissa and `y` values on the ordinate axis.
     Rather, `x` is histogrammed along the first dimension of the array
     (vertical), and `y` along the second dimension of the array (horizontal).
-    This ensures compatibility with `histogrammdd`.
+    This ensures compatibility with `histogramdd`.
 
     Examples
     --------
-    >>> x,y = np.random.randn(2,100)
-    >>> H, xedges, yedges = np.histogram2d(x, y, bins = (5, 8))
+    >>> x, y = np.random.randn(2, 100)
+    >>> H, xedges, yedges = np.histogram2d(x, y, bins=(5, 8))
     >>> H.shape, xedges.shape, yedges.shape
     ((5,8), (6,), (9,))
+
+    We can now use the Matplotlib to visualize this 2-dimensional histogram:
+
+    >>> extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+    >>> import matplotlib.pyplot as plt
+    >>> plt.imshow(H, extent=extent)
+    <matplotlib.image.AxesImage object at ...>
+    >>> plt.show()
 
     """
     from numpy import histogramdd
@@ -569,33 +608,37 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
 
     
 def mask_indices(n,mask_func,k=0):
-    """Return the indices to access (n,n) arrays, given a masking function.
+    """
+    Return the indices to access (n, n) arrays, given a masking function.
 
-    Assume mask_func() is a function that, for a square array a of size (n,n)
-    with a possible offset argument k, when called as mask_func(a,k) returns a
-    new array with zeros in certain locations (functions like triu() or tril()
-    do precisely this).  Then this function returns the indices where the
-    non-zero values would be located.
+    Assume `mask_func` is a function that, for a square array a of size
+    ``(n, n)`` with a possible offset argument `k`, when called as
+    ``mask_func(a, k)`` returns a new array with zeros in certain locations
+    (functions like `triu` or `tril` do precisely this). Then this function
+    returns the indices where the non-zero values would be located.
 
     Parameters
     ----------
     n : int
-      The returned indices will be valid to access arrays of shape (n,n).
-
+        The returned indices will be valid to access arrays of shape (n, n).
     mask_func : callable
-      A function whose api is similar to that of numpy.tri{u,l}.  That is,
-      mask_func(x,k) returns a boolean array, shaped like x.  k is an optional
-      argument to the function.
-
+        A function whose call signature is similar to that of `triu`, `tril`.
+        That is, ``mask_func(x, k)`` returns a boolean array, shaped like `x`.
+        `k` is an optional argument to the function.
     k : scalar
-      An optional argument which is passed through to mask_func().  Functions
-      like tri{u,l} take a second argument that is interpreted as an offset.
+        An optional argument which is passed through to `mask_func`. Functions
+        like `triu`, `tril` take a second argument that is interpreted as an
+        offset.
 
     Returns
     -------
-    indices : an n-tuple of index arrays.
-      The indices corresponding to the locations where mask_func(ones((n,n)),k)
-      is True.
+    indices : tuple of arrays.
+        The `n` arrays of indices corresponding to the locations where
+        ``mask_func(np.ones((n, n)), k)`` is True.
+
+    See Also
+    --------
+    triu, tril, triu_indices, tril_indices
 
     Notes
     -----
@@ -605,27 +648,30 @@ def mask_indices(n,mask_func,k=0):
     --------
     These are the indices that would allow you to access the upper triangular
     part of any 3x3 array:
-    >>> iu = mask_indices(3,np.triu)
+
+    >>> iu = np.mask_indices(3, np.triu)
 
     For example, if `a` is a 3x3 array:
-    >>> a = np.arange(9).reshape(3,3)
+
+    >>> a = np.arange(9).reshape(3, 3)
     >>> a
     array([[0, 1, 2],
            [3, 4, 5],
            [6, 7, 8]])
-
-    Then:
     >>> a[iu]
     array([0, 1, 2, 4, 5, 8])
 
     An offset can be passed also to the masking function.  This gets us the
     indices starting on the first diagonal right of the main one:
-    >>> iu1 = mask_indices(3,np.triu,1)
+
+    >>> iu1 = np.mask_indices(3, np.triu, 1)
 
     with which we now extract only three elements:
+
     >>> a[iu1]
     array([1, 2, 5])
-    """ 
+
+    """
     m = ones((n,n),int)
     a = mask_func(m,k)
     return where(a != 0)
@@ -704,17 +750,21 @@ def tril_indices(n,k=0):
 
 
 def tril_indices_from(arr,k=0):
-    """Return the indices for the lower-triangle of an (n,n) array.
+    """
+    Return the indices for the lower-triangle of an (n, n) array.
 
-    See tril_indices() for full details.
-    
+    See `tril_indices` for full details.
+
     Parameters
     ----------
     n : int
       Sets the size of the arrays for which the returned indices will be valid.
-
     k : int, optional
-      Diagonal offset (see tril() for details).
+      Diagonal offset (see `tril` for details).
+
+    See Also
+    --------
+    tril_indices, tril
 
     Notes
     -----
@@ -800,17 +850,21 @@ def triu_indices(n,k=0):
 
 
 def triu_indices_from(arr,k=0):
-    """Return the indices for the lower-triangle of an (n,n) array.
+    """
+    Return the indices for the lower-triangle of an (n, n) array.
 
-    See triu_indices() for full details.
-    
+    See `triu_indices` for full details.
+
     Parameters
     ----------
     n : int
       Sets the size of the arrays for which the returned indices will be valid.
-
     k : int, optional
-      Diagonal offset (see triu() for details).
+      Diagonal offset (see `triu` for details).
+
+    See Also
+    --------
+    triu_indices, triu
 
     Notes
     -----

@@ -96,32 +96,37 @@ def unique(ar, return_index=False, return_inverse=False):
     """
     Find the unique elements of an array.
 
+    Returns the sorted unique elements of an array. There are two optional
+    outputs in addition to the unique elements: the indices of the input array
+    that give the unique values, and the indices of the unique array that
+    reconstruct the input array.
+
     Parameters
     ----------
     ar : array_like
-        This array will be flattened if it is not already 1-D.
+        Input array. This will be flattened if it is not already 1-D.
     return_index : bool, optional
-        If True, also return the indices against `ar1` that result in the
-        unique array.
+        If True, also return the indices of `ar` that result in the unique
+        array.
     return_inverse : bool, optional
-        If True, also return the indices against the unique array that
-        result in `ar`.
+        If True, also return the indices of the unique array that can be used
+        to reconstruct `ar`.
 
     Returns
     -------
     unique : ndarray
-        The unique values.
+        The sorted unique values.
     unique_indices : ndarray, optional
-        The indices of the unique values. Only provided if `return_index` is
-        True.
+        The indices of the unique values in the (flattened) original array.
+        Only provided if `return_index` is True.
     unique_inverse : ndarray, optional
-        The indices to reconstruct the original array. Only provided if
-        `return_inverse` is True.
+        The indices to reconstruct the (flattened) original array from the
+        unique array. Only provided if `return_inverse` is True.
 
     See Also
     --------
-    numpy.lib.arraysetops : Module with a number of other functions
-                            for performing set operations on arrays.
+    numpy.lib.arraysetops : Module with a number of other functions for
+                            performing set operations on arrays.
 
     Examples
     --------
@@ -131,17 +136,29 @@ def unique(ar, return_index=False, return_inverse=False):
     >>> np.unique(a)
     array([1, 2, 3])
 
-    Reconstruct the input from unique values:
+    Return the indices of the original array that give the unique values:
 
-    >>> np.unique([1,2,6,4,2,3,2], return_index=True)
-    >>> x = [1,2,6,4,2,3,2]
-    >>> u, i = np.unique(x, return_inverse=True)
+    >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
+    >>> u, indices = np.unique(a, return_index=True)
+    >>> u
+    array(['a', 'b', 'c'],
+           dtype='|S1')
+    >>> indices
+    array([0, 1, 3])
+    >>> a[indices]
+    array(['a', 'b', 'c'],
+           dtype='|S1')
+
+    Reconstruct the input array from the unique values:
+
+    >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
+    >>> u, indices = np.unique(a, return_inverse=True)
     >>> u
     array([1, 2, 3, 4, 6])
-    >>> i
+    >>> indices
     array([0, 1, 4, 3, 1, 2, 1])
-    >>> [u[p] for p in i]
-    [1, 2, 6, 4, 2, 3, 2]
+    >>> u[indices]
+    array([1, 2, 6, 4, 2, 3, 2])
 
     """
     try:
@@ -183,7 +200,9 @@ def unique(ar, return_index=False, return_inverse=False):
 
 def intersect1d(ar1, ar2, assume_unique=False):
     """
-    Intersection returning unique elements common to both arrays.
+    Find the intersection of two arrays.
+
+    Return the sorted, unique values that are in both of the input arrays.
 
     Parameters
     ----------
@@ -195,7 +214,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
 
     Returns
     -------
-    out : ndarray, shape(N,)
+    out : ndarray
         Sorted 1D array of common and unique elements.
 
     See Also
@@ -205,7 +224,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
 
     Examples
     --------
-    >>> np.intersect1d([1,3,3], [3,1,1])
+    >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
     array([1, 3])
 
     """
@@ -219,7 +238,10 @@ def intersect1d(ar1, ar2, assume_unique=False):
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """
-    Set exclusive-or of two 1D arrays.
+    Find the set exclusive-or of two arrays.
+
+    Return the sorted, unique values that are in only one (not both) of the
+    input arrays.
 
     Parameters
     ----------
@@ -232,12 +254,15 @@ def setxor1d(ar1, ar2, assume_unique=False):
     Returns
     -------
     xor : ndarray
-        The values that are only in one, but not both, of the input arrays.
+        Sorted 1D array of unique values that are in only one of the input
+        arrays.
 
-    See Also
+    Examples
     --------
-    numpy.lib.arraysetops : Module with a number of other functions for
-                            performing set operations on arrays.
+    >>> a = np.array([1, 2, 3, 2, 4])
+    >>> b = np.array([2, 3, 5, 7, 5])
+    >>> np.setxor1d(a,b)
+    array([1, 4, 5, 7])
 
     """
     if not assume_unique:
@@ -257,22 +282,24 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
 def in1d(ar1, ar2, assume_unique=False):
     """
-    Test whether each element of an array is also present in a second array.
+    Test whether each element of a 1D array is also present in a second array.
 
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise.
 
     Parameters
     ----------
-    ar1, ar2 : array_like
-        Input arrays.
-    assume_unique : bool
+    ar1 : array_like, shape (M,)
+        Input array.
+    ar2 : array_like
+        The values against which to test each value of `ar1`.
+    assume_unique : bool, optional
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
 
     Returns
     -------
-    mask : ndarray, bool
+    mask : ndarray of bools, shape(M,)
         The values `ar1[mask]` are in `ar2`.
 
     See Also
@@ -282,17 +309,21 @@ def in1d(ar1, ar2, assume_unique=False):
 
     Notes
     -----
+    `in1d` can be considered as an element-wise function version of the
+    python keyword `in`, for 1D sequences. ``in1d(a, b)`` is roughly
+    equivalent to ``np.array([item in b for item in a])``.
+
     .. versionadded:: 1.4.0
 
     Examples
     --------
-    >>> test = np.arange(5)
+    >>> test = np.array([0, 1, 2, 5, 0])
     >>> states = [0, 2]
-    >>> mask = np.setmember1d(test, states)
+    >>> mask = np.in1d(test, states)
     >>> mask
-    array([ True, False,  True, False, False], dtype=bool)
+    array([ True, False,  True, False,  True], dtype=bool)
     >>> test[mask]
-    array([0, 2])
+    array([0, 2, 0])
 
     """
     if not assume_unique:
@@ -316,31 +347,39 @@ def in1d(ar1, ar2, assume_unique=False):
 
 def union1d(ar1, ar2):
     """
-    Union of two 1D arrays.
+    Find the union of two arrays.
+
+    Return the unique, sorted array of values that are in either of the two
+    input arrays.
 
     Parameters
     ----------
-    ar1 : array_like, shape(M,)
-        Input array.
-    ar2 : array_like, shape(N,)
-        Input array.
+    ar1, ar2 : array_like
+        Input arrays. They are flattened if they are not already 1D.
 
     Returns
     -------
     union : ndarray
-        Unique union of input arrays.
+        Unique, sorted union of the input arrays.
 
-    See also
+    See Also
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
+    Examples
+    --------
+    >>> np.union1d([-1, 0, 1], [-2, 0, 2])
+    array([-2, -1,  0,  1,  2])
 
     """
     return unique( np.concatenate( (ar1, ar2) ) )
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
-    Set difference of two 1D arrays.
+    Find the set difference of two arrays.
+
+    Return the sorted, unique values in `ar1` that are not in `ar2`.
 
     Parameters
     ----------
@@ -355,12 +394,19 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Returns
     -------
     difference : ndarray
-        The values in ar1 that are not in ar2.
+        Sorted 1D array of values in `ar1` that are not in `ar2`.
 
     See Also
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
+    Examples
+    --------
+    >>> a = np.array([1, 2, 3, 2, 4, 1])
+    >>> b = np.array([3, 4, 5, 6])
+    >>> np.setdiff1d(a, b)
+    array([1, 2])
 
     """
     if not assume_unique:

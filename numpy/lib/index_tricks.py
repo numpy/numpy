@@ -91,7 +91,7 @@ def ix_(*args):
 
     Using `ix_` one can quickly construct index arrays that will index
     the cross product. ``a[np.ix_([1,3],[2,5])]`` returns the array
-    ``[a[1,2] a[1,5] a[3,2] a[3,5]]``.
+    ``[[a[1,2] a[1,5]], [a[3,2] a[3,5]]]``.
 
     Parameters
     ----------
@@ -99,7 +99,7 @@ def ix_(*args):
 
     Returns
     -------
-    out : ndarrays
+    out : tuple of ndarrays
         N arrays with N dimensions each, with N the number of input
         sequences. Together these arrays form an open mesh.
 
@@ -110,12 +110,15 @@ def ix_(*args):
     Examples
     --------
     >>> a = np.arange(10).reshape(2, 5)
+    >>> a
+    array([[0, 1, 2, 3, 4],
+           [5, 6, 7, 8, 9]])
     >>> ixgrid = np.ix_([0,1], [2,4])
     >>> ixgrid
     (array([[0],
            [1]]), array([[2, 4]]))
-    >>> print ixgrid[0].shape, ixgrid[1].shape
-    (2, 1) (1, 2)
+    >>> ixgrid[0].shape, ixgrid[1].shape
+    ((2, 1), (1, 2))
     >>> a[ixgrid]
     array([[2, 4],
            [7, 9]])
@@ -140,7 +143,7 @@ class nd_grid(object):
     """
     Construct a multi-dimensional "meshgrid".
 
-    grid = nd_grid() creates an instance which will return a mesh-grid
+    ``grid = nd_grid()`` creates an instance which will return a mesh-grid
     when indexed.  The dimension and number of the output arrays are equal
     to the number of indexing dimensions.  If the step length is not a
     complex number, then the stop is not inclusive.
@@ -150,9 +153,25 @@ class nd_grid(object):
     number of points to create between the start and stop values, where
     the stop value **is inclusive**.
 
-    If instantiated with an argument of sparse=True, the mesh-grid is
+    If instantiated with an argument of ``sparse=True``, the mesh-grid is
     open (or not fleshed out) so that only one-dimension of each returned
-    argument is greater than 1
+    argument is greater than 1.
+
+    Parameters
+    ----------
+    sparse : bool, optional
+        Whether the grid is sparse or not. Default is False.
+
+    Notes
+    -----
+    Two instances of `nd_grid` are made available in the NumPy namespace,
+    `mgrid` and `ogrid`::
+
+        mgrid = nd_grid(sparse=False)
+        ogrid = nd_grid(sparse=True)
+
+    Users should use these pre-defined instances instead of using `nd_grid`
+    directly.
 
     Examples
     --------
@@ -170,6 +189,7 @@ class nd_grid(object):
             [0, 1, 2, 3, 4]]])
     >>> mgrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
+
     >>> ogrid = np.lib.index_tricks.nd_grid(sparse=True)
     >>> ogrid[0:5,0:5]
     [array([[0],
@@ -640,11 +660,44 @@ class IndexExpression(object):
     """
     A nicer way to build up index tuples for arrays.
 
+    .. note::
+       Use one of the two predefined instances `index_exp` or `s_`
+       rather than directly using `IndexExpression`.
+
     For any index combination, including slicing and axis insertion,
-    'a[indices]' is the same as 'a[index_exp[indices]]' for any
-    array 'a'. However, 'index_exp[indices]' can be used anywhere
+    ``a[indices]`` is the same as ``a[np.index_exp[indices]]`` for any
+    array `a`. However, ``np.index_exp[indices]`` can be used anywhere
     in Python code and returns a tuple of slice objects that can be
     used in the construction of complex index expressions.
+
+    Parameters
+    ----------
+    maketuple : bool
+        If True, always returns a tuple.
+
+    See Also
+    --------
+    index_exp : Predefined instance that always returns a tuple:
+       `index_exp = IndexExpression(maketuple=True)`.
+    s_ : Predefined instance without tuple conversion:
+       `s_ = IndexExpression(maketuple=False)`.
+
+    Notes
+    -----
+    You can do all this with `slice()` plus a few special objects,
+    but there's a lot to remember and this version is simpler because
+    it uses the standard array indexing syntax.
+
+    Examples
+    --------
+    >>> np.s_[2::2]
+    slice(2, None, 2)
+    >>> np.index_exp[2::2]
+    (slice(2, None, 2),)
+
+    >>> np.array([0, 1, 2, 3, 4])[np.s_[2::2]]
+    array([2, 4])
+
     """
     maxint = sys.maxint
     def __init__(self, maketuple):
@@ -674,21 +727,16 @@ s_ = IndexExpression(maketuple=False)
 # applicable to N-dimensions.
 
 def fill_diagonal(a, val):
-    """Fill the main diagonal of the given array of any dimensionality.
+    """
+    Fill the main diagonal of the given array of any dimensionality.
 
-    For an array with ndim > 2, the diagonal is the list of locations with
-    indices a[i,i,...,i], all identical.
-
-    This function modifies the input array in-place, it does not return a
-    value.
-
-    This functionality can be obtained via diag_indices(), but internally this
-    version uses a much faster implementation that never constructs the indices
-    and uses simple slicing.
+    For an array `a` with ``a.ndim > 2``, the diagonal is the list of
+    locations with indices ``a[i, i, ..., i]`` all identical. This function
+    modifies the input array in-place, it does not return a value.
 
     Parameters
     ----------
-    a : array, at least 2-dimensional.
+    a : array, at least 2-D.
       Array whose diagonal is to be filled, it gets modified in-place.
 
     val : scalar
@@ -703,29 +751,35 @@ def fill_diagonal(a, val):
     -----
     .. versionadded:: 1.4.0
 
+    This functionality can be obtained via `diag_indices`, but internally
+    this version uses a much faster implementation that never constructs the
+    indices and uses simple slicing.
+
     Examples
     --------
-    >>> a = zeros((3,3),int)
-    >>> fill_diagonal(a,5)
+    >>> a = zeros((3, 3), int)
+    >>> fill_diagonal(a, 5)
     >>> a
     array([[5, 0, 0],
            [0, 5, 0],
            [0, 0, 5]])
 
-    The same function can operate on a 4-d array:
-    >>> a = zeros((3,3,3,3),int)
-    >>> fill_diagonal(a,4)
+    The same function can operate on a 4-D array:
+
+    >>> a = zeros((3, 3, 3, 3), int)
+    >>> fill_diagonal(a, 4)
 
     We only show a few blocks for clarity:
-    >>> a[0,0]
+
+    >>> a[0, 0]
     array([[4, 0, 0],
            [0, 0, 0],
            [0, 0, 0]])
-    >>> a[1,1]
+    >>> a[1, 1]
     array([[0, 0, 0],
            [0, 4, 0],
            [0, 0, 0]])
-    >>> a[2,2]
+    >>> a[2, 2]
     array([[0, 0, 0],
            [0, 0, 0],
            [0, 0, 4]])
@@ -749,12 +803,14 @@ def fill_diagonal(a, val):
 
 
 def diag_indices(n, ndim=2):
-    """Return the indices to access the main diagonal of an array.
+    """
+    Return the indices to access the main diagonal of an array.
 
     This returns a tuple of indices that can be used to access the main
-    diagonal of an array with ndim (>=2) dimensions and shape (n,n,...,n).  For
-    ndim=2 this is the usual diagonal, for ndim>2 this is the set of indices
-    to access A[i,i,...,i] for i=[0..n-1].
+    diagonal of an array `a` with ``a.ndim >= 2`` dimensions and shape
+    (n, n, ..., n). For ``a.ndim = 2`` this is the usual diagonal, for
+    ``a.ndim > 2`` this is the set of indices to access ``a[i, i, ..., i]``
+    for ``i = [0..n-1]``.
 
     Parameters
     ----------
@@ -765,42 +821,47 @@ def diag_indices(n, ndim=2):
     ndim : int, optional
       The number of dimensions.
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     See also
     --------
     diag_indices_from
 
+    Notes
+    -----
+    .. versionadded:: 1.4.0
+
     Examples
     --------
-    Create a set of indices to access the diagonal of a (4,4) array:
-    >>> di = diag_indices(4)
+    Create a set of indices to access the diagonal of a (4, 4) array:
 
-    >>> a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]])
+    >>> di = np.diag_indices(4)
+    >>> di
+    (array([0, 1, 2, 3]), array([0, 1, 2, 3]))
+    >>> a = np.arange(16).reshape(4, 4)
     >>> a
-    array([[ 1,  2,  3,  4],
-           [ 5,  6,  7,  8],
-           [ 9, 10, 11, 12],
-           [13, 14, 15, 16]])
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
     >>> a[di] = 100
     >>> a
-    array([[100,   2,   3,   4],
-           [  5, 100,   7,   8],
-           [  9,  10, 100,  12],
-           [ 13,  14,  15, 100]])
+    array([[100,   1,   2,   3],
+           [  4, 100,   6,   7],
+           [  8,   9, 100,  11],
+           [ 12,  13,  14, 100]])
 
-    Now, we create indices to manipulate a 3-d array:
-    >>> d3 = diag_indices(2,3)
+    Now, we create indices to manipulate a 3-D array:
 
-    And use it to set the diagonal of a zeros array to 1:
-    >>> a = zeros((2,2,2),int)
+    >>> d3 = np.diag_indices(2, 3)
+    >>> d3
+    (array([0, 1]), array([0, 1]), array([0, 1]))
+
+    And use it to set the diagonal of an array of zeros to 1:
+
+    >>> a = np.zeros((2, 2, 2), dtype=np.int)
     >>> a[d3] = 1
     >>> a
     array([[[1, 0],
             [0, 0]],
-
            [[0, 0],
             [0, 1]]])
 
@@ -810,13 +871,18 @@ def diag_indices(n, ndim=2):
 
 
 def diag_indices_from(arr):
-    """Return the indices to access the main diagonal of an n-dimensional array.
+    """
+    Return the indices to access the main diagonal of an n-dimensional array.
 
-    See diag_indices() for full details.
+    See `diag_indices` for full details.
 
     Parameters
     ----------
-    arr : array, at least 2-d
+    arr : array, at least 2-D
+
+    See Also
+    --------
+    diag_indices
 
     Notes
     -----

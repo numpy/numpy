@@ -45,7 +45,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     Parameters
     ----------
     a : array_like
-        Input data.
+        Input data. The histogram is computed over the flattened array.
     bins : int or sequence of scalars, optional
         If `bins` is an int, it defines the number of equal-width
         bins in the given range (10, by default). If `bins` is a sequence,
@@ -62,8 +62,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
         in each bin.  If True, the result is the value of the
         probability *density* function at the bin, normalized such that
         the *integral* over the range is 1. Note that the sum of the
-        histogram values will often not be equal to 1; it is not a
-        probability *mass* function.
+        histogram values will not be equal to 1 unless bins of unity
+        width are chosen; it is not a probability *mass* function.
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in `a`
         only contributes its associated weight towards the bin count
@@ -91,7 +91,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
 
     See Also
     --------
-    histogramdd
+    histogramdd, bincount, searchsorted
 
     Notes
     -----
@@ -106,8 +106,22 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
 
     Examples
     --------
-    >>> np.histogram([1,2,1], bins=[0,1,2,3])
+    >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
+    >>> np.histogram(np.arange(4), bins=np.arange(5), normed=True)
+    (array([ 0.25,  0.25,  0.25,  0.25]), array([0, 1, 2, 3, 4]))
+    >>> np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3])
+    (array([1, 4, 1]), array([0, 1, 2, 3]))
+    ]), array([0, 1, 2, 3]))
+
+    >>> a = np.arange(5)
+    >>> hist, bin_edges = np.histogram(a, normed=True)
+    >>> hist
+    array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
+    >>> hist.sum()
+    2.4999999999999996
+    >>> np.sum(hist*np.diff(bin_edges))
+    1.0
 
     """
     # Old behavior
@@ -401,26 +415,29 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 def average(a, axis=None, weights=None, returned=False):
     """
-    Return the weighted average of array over the specified axis.
+    Compute the weighted average along the specified axis.
 
     Parameters
     ----------
     a : array_like
-        Data to be averaged.
+        Array containing data to be averaged. If `a` is not an array, a
+        conversion is attempted.
     axis : int, optional
-        Axis along which to average `a`. If `None`, averaging is done over the
-        entire array irrespective of its shape.
+        Axis along which to average `a`. If `None`, averaging is done over
+        the flattened array.
     weights : array_like, optional
-        The importance that each datum has in the computation of the average.
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the average according to its associated weight.
         The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
     returned : bool, optional
         Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
-        is returned, otherwise only the average is returned.  Note that
-        if `weights=None`, `sum_of_weights` is equivalent to the number of
+        is returned, otherwise only the average is returned.
+        If `weights=None`, `sum_of_weights` is equivalent to the number of
         elements over which the average is taken.
+
 
     Returns
     -------
@@ -442,6 +459,8 @@ def average(a, axis=None, weights=None, returned=False):
 
     See Also
     --------
+    mean
+
     ma.average : average for masked arrays
 
     Examples
@@ -453,6 +472,18 @@ def average(a, axis=None, weights=None, returned=False):
     2.5
     >>> np.average(range(1,11), weights=range(10,0,-1))
     4.0
+
+    >>> data = np.arange(6).reshape((3,2))
+    >>> data
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> np.average(data, axis=1, weights=[1./4, 3./4])
+    array([ 0.75,  2.75,  4.75])
+    >>> np.average(data, weights=[1./4, 3./4])
+    Traceback (most recent call last):
+    ...
+    TypeError: Axis must be specified when shapes of a and weights differ.
 
     """
     if not isinstance(a, np.matrix) :
@@ -1464,12 +1495,35 @@ def nanmin(a, axis=None):
 
 def nanargmin(a, axis=None):
     """
-    Return indices of the minimum values along an axis, ignoring NaNs.
+    Return indices of the minimum values over an axis, ignoring NaNs.
 
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : int, optional
+        Axis along which to operate.  By default flattened input is used.
+
+    Returns
+    -------
+    index_array : ndarray
+        An array of indices or a single index value.
 
     See Also
     --------
-    nanargmax : corresponding function for maxima; see for details.
+    argmin, nanargmax
+
+    Examples
+    --------
+    >>> a = np.array([[np.nan, 4], [2, 3]])
+    >>> np.argmin(a)
+    0
+    >>> np.nanargmin(a)
+    2
+    >>> np.nanargmin(a, axis=0)
+    array([1, 1])
+    >>> np.nanargmin(a, axis=1)
+    array([1, 0])
 
     """
     return _nanop(np.argmin, np.inf, a, axis)
@@ -1560,26 +1614,43 @@ def nanargmax(a, axis=None):
     >>> np.nanargmax(a)
     1
     >>> np.nanargmax(a, axis=0)
-    array([1, 1])
-    >>> np.nanargmax(a, axis=1)
     array([1, 0])
+    >>> np.nanargmax(a, axis=1)
+    array([1, 1])
 
     """
     return _nanop(np.argmax, -np.inf, a, axis)
 
 def disp(mesg, device=None, linefeed=True):
     """
-    Display a message on a device
+    Display a message on a device.
 
     Parameters
     ----------
-    mesg : string
+    mesg : str
         Message to display.
-    device : device object with 'write' method
-        Device to write message.  If None, defaults to ``sys.stdout`` which is
-        very similar to ``print``.
+    device : object
+        Device to write message. If None, defaults to ``sys.stdout`` which is
+        very similar to ``print``. `device` needs to have ``write()`` and
+        ``flush()`` methods.
     linefeed : bool, optional
-        Option whether to print a line feed or not.  Defaults to True.
+        Option whether to print a line feed or not. Defaults to True.
+
+    Raises
+    ------
+    AttributeError
+        If `device` does not have a ``write()`` or ``flush()`` method.
+
+    Examples
+    --------
+    Besides ``sys.stdout``, a file-like object can also be used as it has
+    both required methods:
+
+    >>> from StringIO import StringIO
+    >>> buf = StringIO()
+    >>> np.disp('"Display" in a file', device=buf)
+    >>> buf.getvalue()
+    '"Display" in a file\\n'
 
     """
     if device is None:
@@ -1872,6 +1943,30 @@ def corrcoef(x, y=None, rowvar=1, bias=0):
     .. math:: P_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} * C_{jj} } }
 
     The values of P are between -1 and 1.
+
+    Parameters
+    ----------
+    m : array_like
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `m` represents a variable, and each column a single
+        observation of all those variables. Also see `rowvar` below.
+    y : array_like, optional
+        An additional set of variables and observations. `y` has the same
+        shape as `m`.
+    rowvar : int, optional
+        If `rowvar` is non-zero (default), then each row represents a
+        variable, with observations in the columns. Otherwise, the relationship
+        is transposed: each column represents a variable, while the rows
+        contain observations.
+    bias : int, optional
+        Default normalization is by ``(N-1)``, where ``N`` is the number of
+        observations given (unbiased estimate). If `bias` is 1, then
+        normalization is by ``N``.
+
+    Returns
+    -------
+    out : ndarray
+        The correlation coefficient matrix of the variables.
 
     See Also
     --------
@@ -2219,19 +2314,17 @@ def hamming(M):
 
     Examples
     --------
-    >>> from numpy import hamming
-    >>> hamming(12)
+    >>> np.hamming(12)
     array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594,
             0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
             0.15302337,  0.08      ])
 
     Plot the window and the frequency response:
 
-    >>> from numpy import clip, log10, array, hamming, linspace
     >>> from scipy.fftpack import fft, fftshift
     >>> import matplotlib.pyplot as plt
 
-    >>> window = hamming(51)
+    >>> window = np.hamming(51)
     >>> plt.plot(window)
     >>> plt.title("Hamming window")
     >>> plt.ylabel("Amplitude")
@@ -2240,10 +2333,10 @@ def hamming(M):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / 25.5
-    >>> mag = abs(fftshift(A))
-    >>> freq = linspace(-0.5,0.5,len(A))
-    >>> response = 20*log10(mag)
-    >>> response = clip(response,-100,100)
+    >>> mag = np.abs(fftshift(A))
+    >>> freq = np.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * np.log10(mag)
+    >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     >>> plt.title("Frequency response of Hamming window")
     >>> plt.ylabel("Magnitude [dB]")
@@ -2341,7 +2434,9 @@ def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
 
-    Usually denoted :math:`I_0`.
+    Usually denoted :math:`I_0`.  This function does broadcast, but will *not*
+    "up-cast" int dtype arguments unless accompanied by at least one float or
+    complex dtype argument (see Raises below).
 
     Parameters
     ----------
@@ -2350,19 +2445,36 @@ def i0(x):
 
     Returns
     -------
-    out : ndarray, shape z.shape, dtype z.dtype
-        The modified Bessel function evaluated at the elements of `x`.
+    out : ndarray, shape = x.shape, dtype = x.dtype
+        The modified Bessel function evaluated at each of the elements of `x`.
+
+    Raises
+    ------
+    TypeError: array cannot be safely cast to required type
+        If argument consists exclusively of int dtypes.
 
     See Also
     --------
     scipy.special.iv, scipy.special.ive
 
+    Notes
+    -----
+    We use the algorithm published by Clenshaw [1]_ and referenced by
+    Abramowitz and Stegun [2]_, for which the function domain is partitioned
+    into the two intervals [0,8] and (8,inf), and Chebyshev polynomial
+    expansions are employed in each interval. Relative error on the domain
+    [0,30] using IEEE arithmetic is documented [3]_ as having a peak of 5.8e-16
+    with an rms of 1.4e-16 (n = 30000).
+
     References
     ----------
-    .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 374. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Bessel function",
-           http://en.wikipedia.org/wiki/Bessel_function
+    .. [1] C. W. Clenshaw, "Chebyshev series for mathematical functions," in
+           *National Physical Laboratory Mathematical Tables*, vol. 5, London:
+           Her Majesty's Stationery Office, 1962.
+    .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
+           Functions*, 10th printing, New York: Dover, 1964, pp. 379.
+           http://www.math.sfu.ca/~cbm/aands/page_379.htm
+    .. [3] http://kobesearch.cpan.org/htdocs/Math-Cephes/Math/Cephes.html
 
     Examples
     --------
@@ -2722,6 +2834,10 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     out : float
         Definite integral as approximated by trapezoidal rule.
 
+    See Also
+    --------
+    sum, cumsum
+
     Notes
     -----
     Image [2]_ illustrates trapezoidal rule -- y-axis locations of points will
@@ -2734,14 +2850,25 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     ----------
     .. [1] Wikipedia page: http://en.wikipedia.org/wiki/Trapezoidal_rule
 
-    .. [2] Illustration image: http://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
+    .. [2] Illustration image:
+           http://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
 
     Examples
     --------
     >>> np.trapz([1,2,3])
-    >>> 4.0
-    >>> np.trapz([1,2,3], [4,6,8])
-    >>> 8.0
+    4.0
+    >>> np.trapz([1,2,3], x=[4,6,8])
+    8.0
+    >>> np.trapz([1,2,3], dx=2)
+    8.0
+    >>> a = np.arange(6).reshape(2, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.trapz(a, axis=0)
+    array([ 1.5,  2.5,  3.5])
+    >>> np.trapz(a, axis=1)
+    array([ 2.,  8.])
 
     """
     y = asarray(y)
@@ -2985,8 +3112,9 @@ def insert(arr, obj, values, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : int, slice, or array of ints
-        Insert `values` before `obj` indices.
+    obj : int, slice or sequence of ints
+        Object that defines the index or indices before which `values` is
+        inserted.
     values : array_like
         Values to insert into `arr`. If the type of `values` is different
         from that of `arr`, `values` is converted to the type of `arr`.
@@ -3029,8 +3157,14 @@ def insert(arr, obj, values, axis=None):
     >>> np.insert(b, slice(2, 4), [5, 6])
     array([1, 1, 5, 2, 6, 2, 3, 3])
 
-    >>> np.insert(b, [2, 2], [7.13, False])
+    >>> np.insert(b, [2, 2], [7.13, False]) # type casting
     array([1, 1, 7, 0, 2, 2, 3, 3])
+
+    >>> x = np.arange(8).reshape(2, 4)
+    >>> idx = (1, 3)
+    >>> np.insert(x, idx, 999, axis=1)
+    array([[  0, 999,   1,   2, 999,   3],
+           [  4, 999,   5,   6, 999,   7]])
 
     """
     wrap = None
@@ -3140,6 +3274,10 @@ def append(arr, values, axis=None):
     array([[1, 2, 3],
            [4, 5, 6],
            [7, 8, 9]])
+    >>> np.append([[1, 2, 3], [4, 5, 6]], [7, 8, 9], axis=0)
+    Traceback (most recent call last):
+    ...
+    ValueError: arrays must have same number of dimension
 
     """
     arr = asanyarray(arr)

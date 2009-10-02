@@ -13,19 +13,47 @@ from ufunclike import isneginf, isposinf
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
 def mintypecode(typechars,typeset='GDFgdf',default='d'):
-    """ Return a minimum data type character from typeset that
-    handles all typechars given
+    """
+    Return the character for the minimum-size type to which given types can
+    be safely cast.
 
-    The returned type character must be the smallest size such that
-    an array of the returned type can handle the data from an array of
-    type t for each t in typechars (or if typechars is an array,
-    then its dtype.char).
+    The returned type character must represent the smallest size dtype such
+    that an array of the returned type can handle the data from an array of
+    all types in `typechars` (or if `typechars` is an array, then its
+    dtype.char).
 
-    If the typechars does not intersect with the typeset, then default
-    is returned.
+    Parameters
+    ----------
+    typechars : list of str or array_like
+        If a list of strings, each string should represent a dtype.
+        If array_like, the character representation of the array dtype is used.
+    typeset : str or list of str, optional
+        The set of characters that the returned character is chosen from.
+        The default set is 'GDFgdf'.
+    default : str, optional
+        The default character, this is returned if none of the characters in
+        `typechars` matches a character in `typeset`.
 
-    If t in typechars is not a string then t=asarray(t).dtype.char is
-    applied.
+    Returns
+    -------
+    typechar : str
+        The character representing the minimum-size type that was found.
+
+    See Also
+    --------
+    dtype, sctype2char, maximum_sctype
+
+    Examples
+    --------
+    >>> np.mintypecode(['d', 'f', 'S'])
+    'd'
+    >>> x = np.array([1.1, 2-3.j])
+    >>> np.mintypecode(x)
+    'D'
+
+    >>> np.mintypecode('abceh', default='G')
+    'G'
+
     """
     typecodes = [(type(t) is type('') and t) or asarray(t).dtype.char\
                  for t in typechars]
@@ -152,14 +180,14 @@ def iscomplex(x):
 
     Returns
     -------
-    out : ndarray, bool
+    out : ndarray of bools
         Output array.
 
     See Also
     --------
-    isreal: Returns a bool array, where True if input element is real.
-    iscomplexobj: Return True if x is a complex type or an array of complex
-                  numbers.
+    isreal
+    iscomplexobj : Return True if x is a complex type or an array of complex
+                   numbers.
 
     Examples
     --------
@@ -177,8 +205,8 @@ def isreal(x):
     """
     Returns a bool array, where True if input element is real.
 
-    If the input value has a complex type but with complex part zero, the
-    return value is True.
+    If element has complex type with zero complex part, the return value
+    for that element is True.
 
     Parameters
     ----------
@@ -192,14 +220,13 @@ def isreal(x):
 
     See Also
     --------
-    iscomplex: Return a bool array, where True if input element is complex
-               (non-zero imaginary part).
-    isrealobj: Return True if x is not a complex type.
+    iscomplex
+    isrealobj : Return True if x is not a complex type.
 
     Examples
     --------
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
-    >>> array([False,  True,  True,  True,  True, False], dtype=bool)
+    array([False,  True,  True,  True,  True, False], dtype=bool)
 
     """
     return imag(x) == 0
@@ -520,14 +547,19 @@ array_precision = {_nx.single : 0,
                    _nx.clongdouble : 2}
 def common_type(*arrays):
     """
-    Return the inexact scalar type which is most common in a list of arrays.
+    Return a scalar type which is common to the input arrays.
 
-    The return type will always be an inexact scalar type, even if all the
-    arrays are integer arrays
+    The return type will always be an inexact (i.e. floating point) scalar
+    type, even if all the arrays are integer arrays. If one of the inputs is
+    an integer array, the minimum precision type that is returned is a
+    64-bit floating point dtype.
+
+    All input arrays can be safely cast to the returned dtype without loss
+    of information.
 
     Parameters
     ----------
-    array1, array2, ... : ndarray
+    array1, array2, ... : ndarrays
         Input arrays.
 
     Returns
@@ -537,12 +569,16 @@ def common_type(*arrays):
 
     See Also
     --------
-    dtype
+    dtype, mintypecode
 
     Examples
     --------
-    >>> np.common_type(np.arange(4), np.array([45,6]), np.array([45.0, 6.0]))
+    >>> np.common_type(np.arange(2, dtype=np.float32))
+    <type 'numpy.float32'>
+    >>> np.common_type(np.arange(2, dtype=np.float32), np.arange(2))
     <type 'numpy.float64'>
+    >>> np.common_type(np.arange(4), np.array([45, 6.j]), np.array([45.0]))
+    <type 'numpy.complex128'>
 
     """
     is_complex = False

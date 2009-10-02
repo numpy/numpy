@@ -218,29 +218,44 @@ def sqrt(x):
 
 def log(x):
     """
-    Return the natural logarithm of x.
+    Compute the natural logarithm of `x`.
 
-    If x contains negative inputs, the answer is computed and returned in the
-    complex domain.
+    Return the "principal value" (for a description of this, see `numpy.log`)
+    of :math:`log_e(x)`. For real `x > 0`, this is a real number (``log(0)``
+    returns ``-inf`` and ``log(np.inf)`` returns ``inf``). Otherwise, the
+    complex principle value is returned.
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
+       The value(s) whose log is (are) required.
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+       The log of the `x` value(s). If `x` was a scalar, so is `out`,
+       otherwise an array object is returned.
+
+    See Also
+    --------
+    numpy.log
+
+    Notes
+    -----
+    For a log() that returns ``NAN`` when real `x < 0`, use `numpy.log`
+    (note, however, that otherwise `numpy.log` and this `log` are identical,
+    i.e., both return ``-inf`` for `x = 0`, ``inf`` for `x = inf`, and,
+    notably, the complex principle value if ``x.imag != 0``).
 
     Examples
     --------
-    >>> import math
-    >>> np.lib.scimath.log(math.exp(1))
+    >>> np.emath.log(np.exp(1))
     1.0
 
-    Negative arguments are correctly handled (recall that for negative
-    arguments, the identity exp(log(z))==z does not hold anymore):
+    Negative arguments are handled "correctly" (recall that `exp(log(x)) == x`
+    does *not* hold for real `x < 0`):
 
-    >>> np.lib.scimath.log(-math.exp(1)) == (1+1j*math.pi)
+    >>> np.emath.log(-np.exp(1)) == (1 + np.pi * 1j)
     True
 
     """
@@ -249,18 +264,34 @@ def log(x):
 
 def log10(x):
     """
-    Return the base 10 logarithm of x.
+    Compute the logarithm base 10 of `x`.
 
-    If x contains negative inputs, the answer is computed and returned in the
-    complex domain.
+    Return the "principal value" (for a description of this, see
+    `numpy.log10`) of :math:`log_{10}(x)`. For real `x > 0`, this
+    is a real number (``log10(0)`` returns ``-inf`` and ``log10(np.inf)``
+    returns ``inf``). Otherwise, the complex principle value is returned.
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
+       The value(s) whose log base 10 is (are) required.
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+       The log base 10 of the `x` value(s). If `x` was a scalar, so is `out`,
+       otherwise an array object is returned.
+
+    See Also
+    --------
+    numpy.log10
+
+    Notes
+    -----
+    For a log10() that returns ``NAN`` when real `x < 0`, use `numpy.log10`
+    (note, however, that otherwise `numpy.log10` and this `log10` are
+    identical, i.e., both return ``-inf`` for `x = 0`, ``inf`` for `x = inf`,
+    and, notably, the complex principle value if ``x.imag != 0``).
 
     Examples
     --------
@@ -269,11 +300,10 @@ def log10(x):
 
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.log10([10**1,10**2])
-    array([ 1.,  2.])
+    >>> np.emath.log10(10**1)
+    1.0
 
-
-    >>> np.lib.scimath.log10([-10**1,-10**2,10**2])
+    >>> np.emath.log10([-10**1, -10**2, 10**2])
     array([ 1.+1.3644j,  2.+1.3644j,  2.+0.j    ])
 
     """
@@ -315,18 +345,34 @@ def logn(n, x):
 
 def log2(x):
     """
-    Take log base 2 of x.
+    Compute the logarithm base 2 of `x`.
 
-    If x contains negative inputs, the answer is computed and returned in the
-    complex domain.
+    Return the "principal value" (for a description of this, see
+    `numpy.log2`) of :math:`log_2(x)`. For real `x > 0`, this is
+    a real number (``log2(0)`` returns ``-inf`` and ``log2(np.inf)`` returns
+    ``inf``). Otherwise, the complex principle value is returned.
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
+       The value(s) whose log base 2 is (are) required.
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+       The log base 2 of the `x` value(s). If `x` was a scalar, so is `out`,
+       otherwise an array object is returned.
+
+    See Also
+    --------
+    numpy.log2
+
+    Notes
+    -----
+    For a log2() that returns ``NAN`` when real `x < 0`, use `numpy.log2`
+    (note, however, that otherwise `numpy.log2` and this `log2` are
+    identical, i.e., both return ``-inf`` for `x = 0`, ``inf`` for `x = inf`,
+    and, notably, the complex principle value if ``x.imag != 0``).
 
     Examples
     --------
@@ -335,10 +381,10 @@ def log2(x):
 
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.log2([4,8])
-    array([ 2.,  3.])
+    >>> np.emath.log2(8)
+    3.0
 
-    >>> np.lib.scimath.log2([-4,-8,8])
+    >>> np.emath.log2([-4, -8, 8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
 
     """
@@ -383,29 +429,44 @@ def power(x, p):
     return nx.power(x, p)
 
 def arccos(x):
-    """Compute the inverse cosine of x.
+    """
+    Compute the inverse cosine of x.
 
-    For real x with abs(x)<=1, this returns the principal value.
-
-    If abs(x)>1, the complex arccos() is computed.
+    Return the "principal value" (for a description of this, see
+    `numpy.arccos`) of the inverse cosine of `x`. For real `x` such that
+    `abs(x) <= 1`, this is a real number in the closed interval
+    :math:`[0, \\pi]`.  Otherwise, the complex principle value is returned.
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
+       The value(s) whose arccos is (are) required.
 
     Returns
     -------
-    array_like
+    out : ndarray or scalar
+       The inverse cosine(s) of the `x` value(s). If `x` was a scalar, so
+       is `out`, otherwise an array object is returned.
+
+    See Also
+    --------
+    numpy.arccos
+
+    Notes
+    -----
+    For an arccos() that returns ``NAN`` when real `x` is not in the
+    interval ``[-1,1]``, use `numpy.arccos`.
 
     Examples
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.arccos(1)
+    >>> np.emath.arccos(1) # a scalar is returned
     0.0
 
-    >>> np.lib.scimath.arccos([1,2])
+    >>> np.emath.arccos([1,2])
     array([ 0.-0.j   ,  0.+1.317j])
+
     """
     x = _fix_real_abs_gt_1(x)
     return nx.arccos(x)
@@ -414,28 +475,40 @@ def arcsin(x):
     """
     Compute the inverse sine of x.
 
-    For real x with abs(x)<=1, this returns the principal value.
-
-    If abs(x)>1, the complex arcsin() is computed.
+    Return the "principal value" (for a description of this, see
+    `numpy.arcsin`) of the inverse sine of `x`. For real `x` such that
+    `abs(x) <= 1`, this is a real number in the closed interval
+    :math:`[-\\pi/2, \\pi/2]`.  Otherwise, the complex principle value is
+    returned.
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
+       The value(s) whose arcsin is (are) required.
 
     Returns
     -------
-    array_like
+    out : ndarray or scalar
+       The inverse sine(s) of the `x` value(s). If `x` was a scalar, so
+       is `out`, otherwise an array object is returned.
+
+    See Also
+    --------
+    numpy.arcsin
+
+    Notes
+    -----
+    For an arcsin() that returns ``NAN`` when real `x` is not in the
+    interval ``[-1,1]``, use `numpy.arcsin`.
 
     Examples
     --------
-    (We set the printing precision so the example can be auto-tested)
-
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.arcsin(0)
+    >>> np.emath.arcsin(0)
     0.0
 
-    >>> np.lib.scimath.arcsin([0,1])
+    >>> np.emath.arcsin([0,1])
     array([ 0.    ,  1.5708])
 
     """
@@ -444,30 +517,46 @@ def arcsin(x):
 
 def arctanh(x):
     """
-    Compute the inverse hyperbolic tangent of x.
+    Compute the inverse hyperbolic tangent of `x`.
 
-    For real x with abs(x)<=1, this returns the principal value.
-
-    If abs(x)>1, the complex arctanh() is computed.
+    Return the "principal value" (for a description of this, see
+    `numpy.arctanh`) of `arctanh(x)`. For real `x` such that
+    `abs(x) < 1`, this is a real number.  If `abs(x) > 1`, or if `x` is
+    complex, the result is complex. Finally, `x = 1` returns``inf`` and
+    `x=-1` returns ``-inf``.
 
     Parameters
     ----------
-    x : array_like
+    x : array_like or scalar
+       The value(s) whose arctanh is (are) required.
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+       The inverse hyperbolic tangent(s) of the `x` value(s). If `x` was
+       a scalar so is `out`, otherwise an array object is returned.
+
+
+    See Also
+    --------
+    numpy.arctanh
+
+    Notes
+    -----
+    For an arctanh() that returns ``NAN`` when real `x` is not in the
+    interval ``(-1,1)``, use `numpy.arctanh` (this latter, however, does
+    return +/-inf for `x = +/-1`).
 
     Examples
     --------
-    (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.arctanh(0)
-    0.0
+    >>> np.emath.arctanh(np.matrix(np.eye(2))) # Note: an array is returned
+    array([[ Inf,   0.],
+           [  0.,  Inf]])
 
-    >>> np.lib.scimath.arctanh([0,2])
-    array([ 0.0000+0.j    ,  0.5493-1.5708j])
+    >>> np.emath.arctanh([1j])
+    array([ 0.+0.7854j])
 
     """
     x = _fix_real_abs_gt_1(x)

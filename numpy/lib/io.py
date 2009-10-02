@@ -57,8 +57,27 @@ def seek_gzip_factory(f):
     return f
 
 class BagObj(object):
-    """A simple class that converts attribute lookups to
-    getitems on the class passed in.
+    """
+    BagObj(obj)
+
+    Convert attribute lookups to getitems on the object passed in.
+
+    Parameters
+    ----------
+    obj : class instance
+        Object on which attribute lookup is performed.
+
+    Examples
+    --------
+    >>> class BagDemo(object):
+    ...     def __getitem__(self, key):
+    ...         return key
+    ...
+    >>> demo_obj = BagDemo()
+    >>> bagobj = np.lib.io.BagObj(demo_obj)
+    >>> bagobj.some_item
+    'some_item'
+
     """
     def __init__(self, obj):
         self._obj = obj
@@ -69,14 +88,57 @@ class BagObj(object):
             raise AttributeError, key
 
 class NpzFile(object):
-    """A dictionary-like object with lazy-loading of files in the zipped
+    """
+    NpzFile(fid)
+
+    A dictionary-like object with lazy-loading of files in the zipped
     archive provided on construction.
 
-    The arrays and file strings are lazily loaded on either
-    getitem access using obj['key'] or attribute lookup using obj.f.key
+    `NpzFile` is used to load files in the NumPy ``.npz`` data archive
+    format. It assumes that files in the archive have a ".npy" extension,
+    other files are ignored.
 
-    A list of all files (without .npy) extensions can be obtained
-    with .files and the ZipFile object itself using .zip
+    The arrays and file strings are lazily loaded on either
+    getitem access using ``obj['key']`` or attribute lookup using
+    ``obj.f.key``. A list of all files (without ".npy" extensions) can
+    be obtained with ``obj.files`` and the ZipFile object itself using
+    ``obj.zip``.
+
+    Attributes
+    ----------
+    files : list of str
+        List of all files in the archive with a ".npy" extension.
+    zip : ZipFile instance
+        The ZipFile object initialized with the zipped archive.
+    f : BagObj instance
+        An object on which attribute can be performed as an alternative
+        to getitem access on the `NpzFile` instance itself.
+
+    Parameters
+    ----------
+    fid : file or str
+        The zipped archive to open. This is either a file-like object
+        or a string containing the path to the archive.
+
+    Examples
+    --------
+    >>> from tempfile import TemporaryFile
+    >>> outfile = TemporaryFile()
+    >>> x = np.arange(10)
+    >>> y = np.sin(x)
+    >>> np.savez(outfile, x=x, y=y)
+    >>> outfile.seek(0)
+
+    >>> npz = np.load(outfile)
+    >>> isinstance(npz, np.lib.io.NpzFile)
+    True
+    >>> npz.files
+    ['y', 'x']
+    >>> npz['x']  # getitem access
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> npz.f.x  # attribute lookup
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
     """
     def __init__(self, fid):
         # Import is postponed to here since zipfile depends on gzip, an optional
@@ -123,16 +185,23 @@ class NpzFile(object):
         return iter(self.files)
 
     def items(self):
+        """
+        Return a list of tuples, with each tuple (filename, array in file).
+
+        """
         return [(f, self[f]) for f in self.files]
 
     def iteritems(self):
+        """Generator that returns tuples (filename, array in file)."""
         for f in self.files:
             yield (f, self[f])
 
     def keys(self):
+        """Return files in the archive with a ".npy" extension."""
         return self.files
 
     def iterkeys(self):
+        """Return an iterator over the files in the archive."""
         return self.__iter__()
 
     def __contains__(self, key):
@@ -241,8 +310,12 @@ def save(file, arr):
 
     See Also
     --------
-    savez : Save several arrays into a .npz compressed archive
+    savez : Save several arrays into a ``.npz`` compressed archive
     savetxt, load
+
+    Notes
+    -----
+    For a description of the ``.npy`` format, see `format`.
 
     Examples
     --------
@@ -269,7 +342,7 @@ def save(file, arr):
 
 def savez(file, *args, **kwds):
     """
-    Save several arrays into a single, compressed file with extension ".npz"
+    Save several arrays into a single, compressed file in ``.npz`` format.
 
     If keyword arguments are given, the names for variables assigned to the
     keywords are the keyword names (not the variable names in the caller).
@@ -278,33 +351,57 @@ def savez(file, *args, **kwds):
 
     Parameters
     ----------
-    file : Either the filename (string) or an open file (file-like object)
+    file : str or file
+        Either the file name (string) or an open file (file-like object)
         If file is a string, it names the output file.  ".npz" will be appended
-        if it is not already there.
+        to the file name if it is not already there.
     args : Arguments
         Any function arguments other than the file name are variables to save.
-        Since it is not possible for Python to know their names outside the
-        savez function, they will be saved with names "arr_0", "arr_1", and so
-        on.  These arguments can be any expression.
+        Since it is not possible for Python to know their names outside
+        `savez`, they will be saved with names "arr_0", "arr_1", and so on.
+        These arguments can be any expression.
     kwds : Keyword arguments
         All keyword=value pairs cause the value to be saved with the name of
         the keyword.
 
     See Also
     --------
-    save : Save a single array to a binary file in NumPy format
-    savetxt : Save an array to a file as plain text
+    save : Save a single array to a binary file in NumPy format.
+    savetxt : Save an array to a file as plain text.
 
     Notes
     -----
-    The .npz file format is a zipped archive of files named after the variables
-    they contain.  Each file contains one variable in .npy format.
+    The ``.npz`` file format is a zipped archive of files named after the
+    variables they contain.  Each file contains one variable in ``.npy``
+    format. For a description of the ``.npy`` format, see `format`.
 
     Examples
     --------
-    >>> x = np.random.random((3, 3))
-    >>> y = np.zeros((3, 2))
-    >>> np.savez('data', x=x, y=y)
+    >>> from tempfile import TemporaryFile
+    >>> outfile = TemporaryFile()
+    >>> x = np.arange(10)
+    >>> y = np.sin(x)
+
+    Using `savez` with \\*args, the arrays are saved with default names.
+
+    >>> np.savez(outfile, x, y)
+    >>> outfile.seek(0)  # only necessary in this example (with tempfile)
+    >>> npz = np.load(outfile)
+    >>> npz.files
+    ['arr_1', 'arr_0']
+    >>> npz['arr_0']
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    Using `savez` with \\*\\*kwds, the arrays are saved with the keyword names.
+
+    >>> outfile = TemporaryFile()
+    >>> np.savez(outfile, x=x, y=y)
+    >>> outfile.seek(0)
+    >>> npz = np.load(outfile)
+    >>> npz.files
+    ['y', 'x']
+    >>> npz['x']
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
 
@@ -373,33 +470,33 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     Parameters
     ----------
-    fname : file or string
+    fname : file or str
         File or filename to read.  If the filename extension is ``.gz`` or
         ``.bz2``, the file is first decompressed.
-    dtype : data-type
+    dtype : dtype, optional
         Data type of the resulting array.  If this is a record data-type,
         the resulting array will be 1-dimensional, and each row will be
         interpreted as an element of the array.   In this case, the number
         of columns used must match the number of fields in the data-type.
-    comments : string, optional
+    comments : str, optional
         The character used to indicate the start of a comment.
-    delimiter : string, optional
+    delimiter : str, optional
         The string used to separate values.  By default, this is any
         whitespace.
-    converters : {}
+    converters : dict, optional
         A dictionary mapping column number to a function that will convert
         that column to a float.  E.g., if column 0 is a date string:
         ``converters = {0: datestr2num}``. Converters can also be used to
         provide a default value for missing data:
         ``converters = {3: lambda s: float(s or 0)}``.
-    skiprows : int
+    skiprows : int, optional
         Skip the first `skiprows` lines.
-    usecols : sequence
+    usecols : sequence, optional
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
-    unpack : bool
+    unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``
+        unpacked using ``x, y, z = loadtxt(...)``. Default is False.
 
     Returns
     -------
@@ -408,6 +505,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     See Also
     --------
+    load, fromstring, fromregex
     scipy.io.loadmat : reads Matlab(R) data files
 
     Examples
@@ -425,7 +523,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
           dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
 
     >>> c = StringIO("1,0,2\\n3,0,4")
-    >>> x,y = np.loadtxt(c, delimiter=',', usecols=(0,2), unpack=True)
+    >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([ 1.,  3.])
     >>> y
@@ -575,8 +673,8 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     See Also
     --------
-    save : Save an array to a binary file in NumPy format
-    savez : Save several arrays into an .npz compressed archive
+    save : Save an array to a binary file in NumPy ``.npy`` format
+    savez : Save several arrays into a ``.npz`` compressed archive
 
     Notes
     -----
@@ -686,10 +784,11 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 import re
 def fromregex(file, regexp, dtype):
     """
-    Construct an array from a text file, using regular-expressions parsing.
+    Construct an array from a text file, using regular expression parsing.
 
-    Array is constructed from all matches of the regular expression
-    in the file. Groups in the regular expression are converted to fields.
+    The returned array is always a structured array, and is constructed from
+    all matches of the regular expression in the file. Groups in the regular
+    expression are converted to fields of the structured array.
 
     Parameters
     ----------
@@ -698,18 +797,44 @@ def fromregex(file, regexp, dtype):
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
-    dtype : dtype or dtype list
-        Dtype for the structured array
+    dtype : dtype or list of dtypes
+        Dtype for the structured array.
+
+    Returns
+    -------
+    output : ndarray
+        The output array, containing the part of the content of `file` that
+        was matched by `regexp`. `output` is always a structured array.
+
+    Raises
+    ------
+    TypeError
+        When `dtype` is not a valid dtype for a structured array.
+
+    See Also
+    --------
+    fromstring, loadtxt
+
+    Notes
+    -----
+    Dtypes for structured arrays can be specified in several forms, but all
+    forms specify at least the data type and field name. For details see
+    `doc.structured_arrays`.
 
     Examples
     --------
     >>> f = open('test.dat', 'w')
     >>> f.write("1312 foo\\n1534  bar\\n444   qux")
     >>> f.close()
-    >>> np.fromregex('test.dat', r"(\\d+)\\s+(...)",
-    ...              [('num', np.int64), ('key', 'S3')])
+
+    >>> regexp = r"(\\d+)\\s+(...)"  # match [digits, whitespace, anything]
+    >>> output = np.fromregex('test.dat', regexp,
+                              [('num', np.int64), ('key', 'S3')])
+    >>> output
     array([(1312L, 'foo'), (1534L, 'bar'), (444L, 'qux')],
           dtype=[('num', '<i8'), ('key', '|S3')])
+    >>> output['num']
+    array([1312, 1534,  444], dtype=int64)
 
     """
     if not hasattr(file, "read"):
@@ -746,18 +871,18 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
                names=None, excludelist=None, deletechars=None,
                case_sensitive=True, unpack=None, usemask=False, loose=True):
     """
-    Load data from a text file.
+    Load data from a text file, with missing values handled as specified.
 
-    Each line past the first `skiprows` ones is split at the `delimiter`
+    Each line past the first `skiprows` lines is split at the `delimiter`
     character, and characters following the `comments` character are discarded.
 
     Parameters
     ----------
-    fname : {file, string}
+    fname : file or str
         File or filename to read.  If the filename extension is `.gz` or
         `.bz2`, the file is first decompressed.
-    dtype : dtype
-        Data type of the resulting array.  If this is a flexible data-type,
+    dtype : dtype, optional
+        Data type of the resulting array.  If this is a structured data type,
         the resulting array will be 1-dimensional, and each row will be
         interpreted as an element of the array. In this case, the number
         of columns used must match the number of fields in the data-type,
@@ -765,56 +890,58 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         of the dtype.
         If None, the dtypes will be determined by the contents of each
         column, individually.
-    comments : string, optional
+    comments : str, optional
         The character used to indicate the start of a comment.
         All the characters occurring on a line after a comment are discarded
-    delimiter : string, optional
+    delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
-        whitespace act as delimiter.
+        whitespaces act as delimiter.  An integer or sequence of integers
+        can also be provided as width(s) of each field.
     skiprows : int, optional
         Numbers of lines to skip at the beginning of the file.
-    converters : {None, dictionary}, optional
+    converters : dict or None, optional
         A dictionary mapping column number to a function that will convert
         values in the column to a number. Converters can also be used to
         provide a default value for missing data:
         ``converters = {3: lambda s: float(s or 0)}``.
-    missing : string, optional
+    missing : str, optional
         A string representing a missing value, irrespective of the column where
         it appears (e.g., `'missing'` or `'unused'`).
-    missing_values : {None, dictionary}, optional
+    missing_values : dict or None, optional
         A dictionary mapping a column number to a string indicating whether the
         corresponding field should be masked.
-    usecols : {None, sequence}, optional
+    usecols : sequence or None, optional
         Which columns to read, with 0 being the first.  For example,
-        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
-    names : {None, True, string, sequence}, optional
+        ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
+    names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first valid line
         after the first `skiprows` lines.
         If `names` is a sequence or a single-string of comma-separated names,
-        the names will be used to define the field names in a flexible dtype.
+        the names will be used to define the field names in a structured dtype.
         If `names` is None, the names of the dtype fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended an underscore:
         for example, `file` would become `file_`.
-    deletechars : string, optional
+    deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
-        If True, field names are case_sensitive.
+        If True, field names are case sensitive.
         If False or 'upper', field names are converted to upper case.
         If 'lower', field names are converted to lower case.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``
     usemask : bool, optional
-        If True, returns a masked array.
-        If False, return a regular standard array.
+        If True, return a masked array.
+        If False, return a regular array.
 
     Returns
     -------
-    out : MaskedArray
-        Data read from the text file.
+    out : ndarray
+        Data read from the text file. If `usemask` is True, this is a
+        masked array.
 
     See Also
     --------
@@ -824,11 +951,52 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When the variable are named (either by a flexible dtype or with `names`,
-      there must not be any header in the file (else a :exc:ValueError
+    * When the variables are named (either by a flexible dtype or with `names`,
+      there must not be any header in the file (else a ValueError
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
+
+    Examples
+    ---------
+    >>> from StringIO import StringIO
+    >>> import numpy as np
+
+    Comma delimited file with mixed dtype
+
+    >>> s = StringIO("1,1.3,abcde")
+    >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
+        ('mystring','S5')], delimiter=",")
+    >>> data
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+
+    Using dtype = None
+
+    >>> s.seek(0) # needed for StringIO example only
+    >>> data = np.genfromtxt(s, dtype=None,
+        names = ['myint','myfloat','mystring'], delimiter=",")
+    >>> data
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+
+    Specifying dtype and names
+
+    >>> s.seek(0)
+    >>> data = np.genfromtxt(s, dtype="i8,f8,S5",
+        names=['myint','myfloat','mystring'], delimiter=",")
+    >>> data
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+
+    An example with fixed-width columns
+
+    >>> s = StringIO("11.3abcde")
+    >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
+            delimiter=[1,3,5])
+    >>> data
+    array((1, 1.3, 'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
 
     """
     #
@@ -1114,15 +1282,15 @@ def ndfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
              usecols=None, unpack=None, names=None,
              excludelist=None, deletechars=None, case_sensitive=True,):
     """
-    Load ASCII data stored in fname and returns a ndarray.
-    
+    Load ASCII data stored in a file and return it as a single array.
+
     Complete description of all the optional input parameters is available in
     the docstring of the `genfromtxt` function.
-    
+
     See Also
     --------
     numpy.genfromtxt : generic function.
-    
+
     """
     kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
                   skiprows=skiprows, converters=converters,
@@ -1137,14 +1305,14 @@ def mafromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
               usecols=None, unpack=None, names=None,
               excludelist=None, deletechars=None, case_sensitive=True,):
     """
-    Load ASCII data stored in fname and returns a MaskedArray.
-    
-    Complete description of all the optional input parameters is available in
-    the docstring of the `genfromtxt` function.
-    
+    Load ASCII data stored in a text file and return a masked array.
+
+    For a complete description of all the input parameters, see `genfromtxt`.
+
     See Also
     --------
-    numpy.genfromtxt : generic function.
+    numpy.genfromtxt : generic function to load ASCII data.
+
     """
     kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
                   skiprows=skiprows, converters=converters,
@@ -1162,8 +1330,10 @@ def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
                excludelist=None, deletechars=None, case_sensitive=True,
                usemask=False):
     """
-    Load ASCII data stored in fname and returns a standard recarray (if
-    `usemask=False`) or a MaskedRecords (if `usemask=True`).
+    Load ASCII data from a file and return it in a record array.
+
+    If ``usemask=False`` a standard `recarray` is returned,
+    if ``usemask=True`` a MaskedRecords array is returned.
 
     Complete description of all the optional input parameters is available in
     the docstring of the `genfromtxt` function.
@@ -1174,8 +1344,8 @@ def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
 
     Notes
     -----
-    * by default, `dtype=None`, which means that the dtype of the output array
-      will be determined from the data.
+    By default, `dtype` is None, which means that the data-type of the output
+    array will be determined from the data.
 
     """
     kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
@@ -1199,15 +1369,18 @@ def recfromcsv(fname, dtype=None, comments='#', skiprows=0,
                excludelist=None, deletechars=None, case_sensitive='lower',
                usemask=False):
     """
-    Load ASCII data stored in comma-separated file and returns a recarray (if 
-    `usemask=False`) or a MaskedRecords (if `usemask=True`).
-    
-    Complete description of all the optional input parameters is available in
-    the docstring of the `genfromtxt` function.
-    
+    Load ASCII data stored in a comma-separated file.
+
+    The returned array is a record array (if ``usemask=False``, see
+    `recarray`) or a masked record array (if ``usemask=True``,
+    see `ma.mrecords.MaskedRecords`).
+
+    For a complete description of all the input parameters, see `genfromtxt`.
+
     See Also
     --------
-    numpy.genfromtxt : generic function
+    numpy.genfromtxt : generic function to load ASCII data.
+
     """
     kwargs = dict(dtype=dtype, comments=comments, delimiter=",", 
                   skiprows=skiprows, converters=converters,

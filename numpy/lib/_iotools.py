@@ -1,7 +1,4 @@
-"""
-A collection of functions designed to help I/O with ascii file.
-
-"""
+"""A collection of functions designed to help I/O with ascii files."""
 __docformat__ = "restructuredtext en"
 
 import numpy as np
@@ -56,7 +53,23 @@ def _to_filehandle(fname, flag='r', return_opened=False):
 
 def has_nested_fields(ndtype):
     """
-    Returns whether one or several fields of a structured array are nested.
+    Returns whether one or several fields of a dtype are nested.
+
+    Parameters
+    ----------
+    ndtype : dtype
+        Data-type of a structured array.
+
+    Raises
+    ------
+    AttributeError : If `ndtype` does not have a `names` attribute.
+
+    Examples
+    --------
+    >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float)])
+    >>> np.lib._iotools.has_nested_fields(dt)
+    False
+
     """
     for name in ndtype.names or ():
         if ndtype[name].names:
@@ -66,8 +79,8 @@ def has_nested_fields(ndtype):
 
 def flatten_dtype(ndtype, flatten_base=False):
     """
-    Unpack a structured data-type by collapsing nested fields and/or fields with
-    a shape.
+    Unpack a structured data-type by collapsing nested fields and/or fields
+    with a shape.
 
     Note that the field names are lost.
 
@@ -81,13 +94,14 @@ def flatten_dtype(ndtype, flatten_base=False):
     Examples
     --------
     >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
-   ...                 ('block', int, (2, 3))])
-    >>> flatten_dtype(dt)
-     [dtype('|S4'), dtype('float64'), dtype('float64'), dtype(('int32',(2, 3)))]
-    >>> flatten_dtype(dt, flatten_base=True)
+    ...                ('block', int, (2, 3))])
+    >>> np.lib._iotools.flatten_dtype(dt)
+    [dtype('|S4'), dtype('float64'), dtype('float64'), dtype('int32')]
+    >>> np.lib._iotools.flatten_dtype(dt, flatten_base=True)
     [dtype('|S4'), dtype('float64'), dtype('float64'), dtype('int32'),
      dtype('int32'), dtype('int32'), dtype('int32'), dtype('int32'),
      dtype('int32')]
+
     """
     names = ndtype.names
     if names is None:
@@ -106,21 +120,38 @@ def flatten_dtype(ndtype, flatten_base=False):
 
 class LineSplitter:
     """
-    Defines a function to split a string at a given delimiter or at given places.
-    
+    Object to split a string at a given delimiter or at given places.
+
     Parameters
     ----------
-    comment : {'#', string}
-        Character used to mark the beginning of a comment.
-    delimiter : var, optional
+    delimiter : str, int, or sequence of ints, optional
         If a string, character used to delimit consecutive fields.
         If an integer or a sequence of integers, width(s) of each field.
-    autostrip : boolean, optional
-        Whether to strip each individual fields
+    comment : str, optional
+        Character used to mark the beginning of a comment. Default is '#'.
+    autostrip : bool, optional
+        Whether to strip each individual field. Default is True.
+
     """
 
     def autostrip(self, method):
-        "Wrapper to strip each member of the output of `method`."
+        """
+        Wrapper to strip each member of the output of `method`.
+
+        Parameters
+        ----------
+        method : function
+            Function that takes a single argument and returns a sequence of
+            strings.
+
+        Returns
+        -------
+        wrapped : function
+            The result of wrapping `method`. `wrapped` takes a single input
+            argument and returns a list of strings that are stripped of
+            white-space.
+
+        """
         return lambda input: [_.strip() for _ in method(input)]
     #
     def __init__(self, delimiter=None, comments='#', autostrip=True):
@@ -173,33 +204,52 @@ class LineSplitter:
 
 class NameValidator:
     """
-    Validates a list of strings to use as field names.
+    Object to validate a list of strings to use as field names.
+
     The strings are stripped of any non alphanumeric character, and spaces
-    are replaced by `_`. If the optional input parameter `case_sensitive`
-    is False, the strings are set to upper case.
+    are replaced by '_'. During instantiation, the user can define a list of
+    names to exclude, as well as a list of invalid characters. Names in the
+    exclusion list are appended a '_' character.
 
-    During instantiation, the user can define a list of names to exclude, as 
-    well as a list of invalid characters. Names in the exclusion list
-    are appended a '_' character.
-
-    Once an instance has been created, it can be called with a list of names
+    Once an instance has been created, it can be called with a list of names,
     and a list of valid names will be created.
-    The `__call__` method accepts an optional keyword, `default`, that sets
-    the default name in case of ambiguity. By default, `default = 'f'`, so
-    that names will default to `f0`, `f1`
+    The `__call__` method accepts an optional keyword "default" that sets
+    the default name in case of ambiguity. By default this is 'f', so
+    that names will default to `f0`, `f1`, etc.
 
     Parameters
     ----------
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
-        ['return','file','print']. Excluded names are appended an underscore:
-        for example, `file` would become `file_`.
-    deletechars : string, optional
-        A string combining invalid characters that must be deleted from the names.
+        ['return', 'file', 'print']. Excluded names are appended an underscore:
+        for example, `file` becomes `file_` if supplied.
+    deletechars : str, optional
+        A string combining invalid characters that must be deleted from the
+        names.
     casesensitive : {True, False, 'upper', 'lower'}, optional
-        If True, field names are case_sensitive.
-        If False or 'upper', field names are converted to upper case.
-        If 'lower', field names are converted to lower case.
+        * If True, field names are case-sensitive.
+        * If False or 'upper', field names are converted to upper case.
+        * If 'lower', field names are converted to lower case.
+
+        The default value is True.
+
+    Notes
+    -----
+    Calling an instance of `NameValidator` is the same as calling its method
+    `validate`.
+
+    Examples
+    --------
+    >>> validator = np.lib._iotools.NameValidator()
+    >>> validator(['file', 'field2', 'with space', 'CaSe'])
+    ['file_', 'field2', 'with_space', 'CaSe']
+
+    >>> validator = np.lib._iotools.NameValidator(excludelist=['excl'],
+                                                  deletechars='q',
+                                                  case_sensitive='False')
+    >>> validator(['excl', 'field2', 'no_q', 'with space', 'CaSe'])
+    ['excl_', 'field2', 'no_', 'with_space', 'case']
+
     """
     #
     defaultexcludelist = ['return','file','print']
@@ -229,6 +279,28 @@ class NameValidator:
             self.case_converter = lambda x: x
     #
     def validate(self, names, default='f'):
+        """
+        Validate a list of strings to use as field names for a structured array.
+
+        Parameters
+        ----------
+        names : list of str
+            The strings that are to be validated.
+        default : str, optional
+            The default field name, used if validating a given string reduces its
+            length to zero.
+
+        Returns
+        -------
+        validatednames : list of str
+            The list of validated field names.
+
+        Notes
+        -----
+        A `NameValidator` instance can be called directly, which is the same as
+        calling `validate`. For examples, see `NameValidator`.
+
+        """
         #
         if names is None:
             return
@@ -265,11 +337,29 @@ class NameValidator:
 def str2bool(value):
     """
     Tries to transform a string supposed to represent a boolean to a boolean.
-    
+
+    Parameters
+    ----------
+    value : str
+        The string that is transformed to a boolean.
+
+    Returns
+    -------
+    boolval : bool
+        The boolean representation of `value`.
+
     Raises
     ------
     ValueError
         If the string is not 'True' or 'False' (case independent)
+
+    Examples
+    --------
+    >>> np.lib._iotools.str2bool('TRUE')
+    True
+    >>> np.lib._iotools.str2bool('false')
+    False
+
     """
     value = value.upper()
     if value == 'TRUE':
@@ -286,43 +376,45 @@ class StringConverter:
     Factory class for function transforming a string into another object (int,
     float).
 
-    After initialization, an instance can be called to transform a string 
+    After initialization, an instance can be called to transform a string
     into another object. If the string is recognized as representing a missing
     value, a default value is returned.
-
-    Parameters
-    ----------
-    dtype_or_func : {None, dtype, function}, optional
-        Input data type, used to define a basic function and a default value
-        for missing data. For example, when `dtype` is float, the :attr:`func`
-        attribute is set to ``float`` and the default value to `np.nan`.
-        Alternatively, function used to convert a string to another object.
-        In that later case, it is recommended to give an associated default
-        value as input.
-    default : {None, var}, optional
-        Value to return by default, that is, when the string to be converted
-        is flagged as missing.
-    missing_values : {sequence}, optional
-        Sequence of strings indicating a missing value.
-    locked : {boolean}, optional
-        Whether the StringConverter should be locked to prevent automatic 
-        upgrade or not.
 
     Attributes
     ----------
     func : function
-        Function used for the conversion
-    default : var
+        Function used for the conversion.
+    default : any
         Default value to return when the input corresponds to a missing value.
     type : type
         Type of the output.
-    _status : integer
+    _status : int
         Integer representing the order of the conversion.
     _mapper : sequence of tuples
-        Sequence of tuples (dtype, function, default value) to evaluate in order.
-    _locked : boolean
-        Whether the StringConverter is locked, thereby preventing automatic any
-        upgrade or not.
+        Sequence of tuples (dtype, function, default value) to evaluate in
+        order.
+    _locked : bool
+        Holds `locked` parameter.
+
+    Parameters
+    ----------
+    dtype_or_func : {None, dtype, function}, optional
+        If a `dtype`, specifies the input data type, used to define a basic
+        function and a default value for missing data. For example, when
+        `dtype` is float, the `func` attribute is set to `float` and the
+        default value to `np.nan`.
+        If a function, this function is used to convert a string to another
+        object. In this case, it is recommended to give an associated default
+        value as input.
+    default : any, optional
+        Value to return by default, that is, when the string to be converted
+        is flagged as missing. If not given, `StringConverter` tries to supply
+        a reasonable default value.
+    missing_values : sequence of str, optional
+        Sequence of strings indicating a missing value.
+    locked : bool, optional
+        Whether the StringConverter should be locked to prevent automatic
+        upgrade or not. Default is False.
 
     """
     #
@@ -457,10 +549,24 @@ class StringConverter:
     #
     def upgrade(self, value):
         """
-    Tries to find the best converter for `value`, by testing different
-    converters in order.
-    The order in which the converters are tested is read from the
-    :attr:`_status` attribute of the instance.
+        Try to find the best converter for a given string, and return the result.
+
+        The supplied string `value` is converted by testing different
+        converters in order. First the `func` method of the `StringConverter`
+        instance is tried, if this fails other available converters are tried.
+        The order in which these other converters are tried is determined by the
+        `_status` attribute of the instance.
+
+        Parameters
+        ----------
+        value : str
+            The string to convert.
+
+        Returns
+        -------
+        out : any
+            The result of converting `value` with the appropriate converter.
+
         """
         self._checked = True
         try:
@@ -480,18 +586,28 @@ class StringConverter:
     #
     def update(self, func, default=None, missing_values='', locked=False):
         """
-    Sets the :attr:`func` and :attr:`default` attributes directly.
+        Set StringConverter attributes directly.
 
-    Parameters
-    ----------
-    func : function
-        Conversion function.
-    default : {var}, optional
-        Default value to return when a missing value is encountered.
-    missing_values : {var}, optional
-        Sequence of strings representing missing values.
-    locked : {False, True}, optional
-        Whether the status should be locked to prevent automatic upgrade.
+        Parameters
+        ----------
+        func : function
+            Conversion function.
+        default : any, optional
+            Value to return by default, that is, when the string to be converted
+            is flagged as missing. If not given, `StringConverter` tries to supply
+            a reasonable default value.
+        missing_values : sequence of str, optional
+            Sequence of strings indicating a missing value.
+        locked : bool, optional
+            Whether the StringConverter should be locked to prevent automatic
+            upgrade or not. Default is False.
+
+        Notes
+        -----
+        `update` takes the same parameters as the constructor of `StringConverter`,
+        except that `func` does not accept a `dtype` whereas `dtype_or_func` in
+        the constructor does.
+
         """
         self.func = func
         self._locked = locked

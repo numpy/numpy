@@ -14,9 +14,9 @@ __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
 
 def get_include():
     """
-    Return the directory that contains the numpy \\*.h header files.
+    Return the directory that contains the NumPy \\*.h header files.
 
-    Extension modules that need to compile against numpy should use this
+    Extension modules that need to compile against NumPy should use this
     function to locate the appropriate include directory.
 
     Notes
@@ -48,9 +48,24 @@ def get_numarray_include(type=None):
     Extension modules that need to compile against numarray should use this
     function to locate the appropriate include directory.
 
+    Parameters
+    ----------
+    type : any, optional
+        If `type` is not None, the location of the NumPy headers is returned
+        as well.
+
+    Returns
+    -------
+    dirs : str or list of str
+        If `type` is None, `dirs` is a string containing the path to the
+        numarray headers.
+        If `type` is not None, `dirs` is a list of strings with first the
+        path(s) to the numarray headers, followed by the path to the NumPy
+        headers.
+
     Notes
     -----
-    When using ``distutils``, for example in ``setup.py``.
+    Useful when using ``distutils``, for example in ``setup.py``.
     ::
 
         import numpy as np
@@ -84,24 +99,30 @@ def deprecate(func, oldname=None, newname=None):
     """
     Deprecate old functions.
 
-    Issues a DeprecationWarning, adds warning to oldname's docstring,
-    rebinds oldname.__name__ and returns new function object.
+    Issues a DeprecationWarning, adds warning to `oldname`'s docstring,
+    rebinds ``oldname.__name__`` and returns the new function object.
 
     Parameters
     ----------
     func : function
-
-    oldname : string
-
-    newname : string
+        The function to be deprecated.
+    oldname : str, optional
+        The name of the function to be deprecated. Default is None, in which
+        case the name of `func` is used.
+    newname : str, optional
+        The new name for the function. Default is None, in which case
+        the deprecation message is that `oldname` is deprecated. If given,
+        the deprecation message is that `oldname` is deprecated and `newname`
+        should be used instead.
 
     Returns
     -------
     old_func : function
+        The deprecated function.
 
     Examples
     --------
-    Note that olduint returns a value after printing Deprecation Warning.
+    Note that ``olduint`` returns a value after printing Deprecation Warning:
 
     >>> olduint = np.deprecate(np.uint)
     >>> olduint(6)
@@ -126,7 +147,7 @@ def deprecate(func, oldname=None, newname=None):
         depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
 
     def newfunc(*args,**kwds):
-        """Use get_include, get_numpy_include is DEPRECATED."""
+        """arrayrange is DEPRECATED!! -- use `arange` instead."""
         warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
 
@@ -184,7 +205,20 @@ def byte_bounds(a):
     (low, high) : tuple of 2 integers
         The first integer is the first byte of the array, the second integer is
         just past the last byte of the array.  If `a` is not contiguous it
-        would not use every byte between the (`low`, `high`) values.
+        will not use every byte between the (`low`, `high`) values.
+
+    Examples
+    --------
+    >>> I = np.eye(2, dtype='f'); I.dtype
+    dtype('float32')
+    >>> low, high = np.byte_bounds(I)
+    >>> high - low == I.size*I.itemsize
+    True
+    >>> I = np.eye(2, dtype='G'); I.dtype
+    dtype('complex192')
+    >>> low, high = np.byte_bounds(I)
+    >>> high - low == I.size*I.itemsize
+    True
 
     """
     ai = a.__array_interface__
@@ -267,7 +301,17 @@ def who(vardict=None):
 
     Examples
     --------
-    >>> d = {'x': arange(2.0), 'y': arange(3.0), 'txt': 'Some str', 'idx': 5}
+    >>> a = np.arange(10)
+    >>> b = np.ones(20)
+    >>> np.who()
+    Name            Shape            Bytes            Type
+    ===========================================================
+    a               10               40               int32
+    b               20               160              float64
+    Upper bound on total bytes  =       200
+
+    >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
+    ... 'idx':5}
     >>> np.whos(d)
     Name            Shape            Bytes            Type
     ===========================================================
@@ -844,6 +888,19 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
 #   * raise SyntaxError instead of a custom exception.
 
 class SafeEval(object):
+    """
+    Object to evaluate constant string expressions.
+
+    This includes strings with lists, dicts and tuples using the abstract
+    syntax tree created by ``compiler.parse``.
+
+    For an example of usage, see `safe_eval`.
+
+    See Also
+    --------
+    safe_eval
+
+    """
 
     def visit(self, node, **kw):
         cls = node.__class__
@@ -895,10 +952,12 @@ def safe_eval(source):
     Parameters
     ----------
     source : str
+        The string to evaluate.
 
     Returns
     -------
     obj : object
+       The result of evaluating `source`.
 
     Raises
     ------
@@ -908,25 +967,22 @@ def safe_eval(source):
 
     Examples
     --------
-    >>> from numpy.lib.utils import safe_eval
-    >>> safe_eval('1')
+    >>> np.safe_eval('1')
     1
-    >>> safe_eval('[1, 2, 3]')
+    >>> np.safe_eval('[1, 2, 3]')
     [1, 2, 3]
-    >>> safe_eval('{"foo": ("bar", 10.0)}')
+    >>> np.safe_eval('{"foo": ("bar", 10.0)}')
     {'foo': ('bar', 10.0)}
-    >>> safe_eval('import os')
+
+    >>> np.safe_eval('import os')
     Traceback (most recent call last):
       ...
     SyntaxError: invalid syntax
+
     >>> safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
     SyntaxError: Unsupported source construct: compiler.ast.CallFunc
-    >>> safe_eval('dict')
-    Traceback (most recent call last):
-      ...
-    SyntaxError: Unknown name: dict
 
     """
     # Local import to speed up numpy's import time.
