@@ -62,21 +62,53 @@ add_newdoc('numpy.core', 'flatiter',
 # flatiter attributes
 
 add_newdoc('numpy.core', 'flatiter', ('base',
-    """documentation needed
+    """
+    A reference to the array that is iterated over.
+
+    Examples
+    --------
+    >>> x = np.arange(5)
+    >>> fl = x.flat
+    >>> fl.base is x
+    True
 
     """))
 
 
 
 add_newdoc('numpy.core', 'flatiter', ('coords',
-    """An N-d tuple of current coordinates.
+    """
+    An N-dimensional tuple of current coordinates.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> fl = x.flat
+    >>> fl.coords
+    (0, 0)
+    >>> fl.next()
+    0
+    >>> fl.coords
+    (0, 1)
 
     """))
 
 
 
 add_newdoc('numpy.core', 'flatiter', ('index',
-    """documentation needed
+    """
+    Current flat index into the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> fl = x.flat
+    >>> fl.index
+    0
+    >>> fl.next()
+    0
+    >>> fl.index
+    1
 
     """))
 
@@ -89,7 +121,20 @@ add_newdoc('numpy.core', 'flatiter', ('__array__',
 
 
 add_newdoc('numpy.core', 'flatiter', ('copy',
-    """copy() Get a copy of the iterator as a 1-d array
+    """
+    copy()
+
+    Get a copy of the iterator as a 1-D array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> fl = x.flat
+    >>> fl.copy()
+    array([0, 1, 2, 3, 4, 5])
 
     """))
 
@@ -144,32 +189,98 @@ add_newdoc('numpy.core', 'broadcast',
 # attributes
 
 add_newdoc('numpy.core', 'broadcast', ('index',
-    """current index in broadcasted result
+    """
+    current index in broadcasted result
+
+    Examples
+    --------
+    >>> x = np.array([[1], [2], [3]])
+    >>> y = np.array([4, 5, 6])
+    >>> b = np.broadcast(x, y)
+    >>> b.index
+    0
+    >>> b.next(), b.next(), b.next()
+    ((1, 4), (1, 5), (1, 6))
+    >>> b.index
+    3
 
     """))
 
 add_newdoc('numpy.core', 'broadcast', ('iters',
-    """tuple of individual iterators
+    """
+    tuple of iterators along ``self``'s "components."
+
+    Returns a tuple of `numpy.flatiter` objects, one for each "component"
+    of ``self``.
+
+    See Also
+    --------
+    `numpy.flatiter`
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([[4], [5], [6]])
+    >>> b = np.broadcast(x, y)
+    >>> row, col = b.iters
+    >>> row.next(), col.next()
+    (1, 4)
 
     """))
 
 add_newdoc('numpy.core', 'broadcast', ('nd',
-    """number of dimensions of broadcasted result
+    """
+    Number of dimensions of broadcasted result.
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([[4], [5], [6]])
+    >>> b = np.broadcast(x, y)
+    >>> b.nd
+    2
 
     """))
 
 add_newdoc('numpy.core', 'broadcast', ('numiter',
-    """number of iterators
+    """
+    Number of iterators possessed by the broadcasted result.
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([[4], [5], [6]])
+    >>> b = np.broadcast(x, y)
+    >>> b.numiter
+    2
 
     """))
 
 add_newdoc('numpy.core', 'broadcast', ('shape',
-    """shape of broadcasted result
+    """
+    Shape of broadcasted result.
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([[4], [5], [6]])
+    >>> b = np.broadcast(x, y)
+    >>> b.shape
+    (3, 3)
 
     """))
 
 add_newdoc('numpy.core', 'broadcast', ('size',
-    """total size of broadcasted result
+    """
+    Total size of broadcasted result.
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([[4], [5], [6]])
+    >>> b = np.broadcast(x, y)
+    >>> b.size
+    9
 
     """))
 
@@ -303,15 +414,17 @@ add_newdoc('numpy.core.multiarray', 'empty',
     """)
 
 
-add_newdoc('numpy.core.multiarray','scalar',
-    """scalar(dtype,obj)
+add_newdoc('numpy.core.multiarray', 'scalar',
+    """
+    scalar(dtype, obj)
 
-    Return a new scalar array of the given type initialized with
-    obj. Mainly for pickle support.  The dtype must be a valid data-type
-    descriptor.  If dtype corresponds to an OBJECT descriptor, then obj
-    can be any object, otherwise obj must be a string. If obj is not given
-    it will be interpreted as None for object type and zeros for all other
-    types.
+    Return a new scalar array of the given type initialized with obj.
+
+    This function is meant mainly for pickle support. `dtype` must be a
+    valid data-type descriptor. If `dtype` corresponds to an object
+    descriptor, then `obj` can be any object, otherwise `obj` must be a
+    string. If `obj` is not given, it will be interpreted as None for object
+    type and as zeros for all other types.
 
     """)
 
@@ -323,7 +436,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     Parameters
     ----------
-    shape : {tuple of ints, int}
+    shape : int or sequence of ints
         Shape of the new array, e.g., ``(2, 3)`` or ``2``.
     dtype : data-type, optional
         The desired data-type for the array, e.g., `numpy.int8`.  Default is
@@ -339,11 +452,11 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     See Also
     --------
-    numpy.zeros_like : Return an array of zeros with shape and type of input.
-    numpy.ones_like : Return an array of ones with shape and type of input.
-    numpy.empty_like : Return an empty array with shape and type of input.
-    numpy.ones : Return a new array setting values to one.
-    numpy.empty : Return a new uninitialized array.
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
 
     Examples
     --------
@@ -362,7 +475,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     array([[ 0.,  0.],
            [ 0.,  0.]])
 
-    >>> np.zeros((2,), dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> np.zeros((2,), dtype=[('x', 'i4'), ('y', 'i4')]) # custom dtype
     array([(0, 0), (0, 0)],
           dtype=[('x', '<i4'), ('y', '<i4')])
 
@@ -380,8 +493,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     """
     fromstring(string, dtype=float, count=-1, sep='')
 
-    Return a new 1d array initialized from raw binary or text data in
-    string.
+    Return a new 1-D array initialized from raw binary or text data in string.
 
     Parameters
     ----------
@@ -591,7 +703,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
 
     Parameters
     ----------
-    a1, a2, ... : sequence of ndarrays
+    a1, a2, ... : sequence of array_like
         The arrays must have the same shape, except in the dimension
         corresponding to `axis` (the first, by default).
     axis : int, optional
@@ -604,6 +716,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
 
     See Also
     --------
+    ma.concatenate : Concatenate function that preserves input masks.
     array_split : Split an array into multiple sub-arrays of equal or
                   near-equal size.
     split : Split array into a list of multiple sub-arrays of equal size.
@@ -613,6 +726,14 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     hstack : Stack arrays in sequence horizontally (column wise)
     vstack : Stack arrays in sequence vertically (row wise)
     dstack : Stack arrays in sequence depth wise (along third dimension)
+
+    Notes
+    -----
+    When one or more of the arrays to be concatenated is a MaskedArray,
+    this function will return a MaskedArray object instead of an ndarray,
+    but the input masks are *not* preserved. In cases where a MaskedArray
+    is expected as input, use the ma.concatenate function from the masked
+    array module instead.
 
     Examples
     --------
@@ -625,6 +746,26 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     >>> np.concatenate((a, b.T), axis=1)
     array([[1, 2, 5],
            [3, 4, 6]])
+
+    This function will not preserve masking of MaskedArray inputs.
+
+    >>> a = np.ma.arange(3)
+    >>> a[1] = np.ma.masked
+    >>> b = np.arange(2, 5)
+    >>> a
+    masked_array(data = [0 -- 2],
+                 mask = [False  True False],
+           fill_value = 999999)
+    >>> b
+    array([2, 3, 4])
+    >>> np.concatenate([a, b])
+    masked_array(data = [0 1 2 2 3 4],
+                 mask = False,
+           fill_value = 999999)
+    >>> np.ma.concatenate([a, b])
+    masked_array(data = [0 -- 2 2 3 4],
+                 mask = [False  True False False False False],
+           fill_value = 999999)
 
     """)
 
@@ -857,8 +998,10 @@ add_newdoc('numpy.core.multiarray', 'set_numeric_ops',
 
     A function replacing an operator cannot make use of that operator.
     For example, when replacing add, you may not use ``+``.  Instead,
-    directly call ufuncs:
+    directly call ufuncs.
 
+    Examples
+    --------
     >>> def add_mod5(x, y):
     ...     return np.add(x, y) % 5
     ...
@@ -887,14 +1030,15 @@ add_newdoc('numpy.core.multiarray', 'where',
     condition : array_like, bool
         When True, yield `x`, otherwise yield `y`.
     x, y : array_like, optional
-        Values from which to choose.
+        Values from which to choose. `x` and `y` need to have the same
+        shape as `condition`.
 
     Returns
     -------
     out : ndarray or tuple of ndarrays
-        If both `x` and `y` are specified, the output array, shaped like
-        `condition`, contains elements of `x` where `condition` is True,
-        and elements from `y` elsewhere.
+        If both `x` and `y` are specified, the output array contains
+        elements of `x` where `condition` is True, and elements from
+        `y` elsewhere.
 
         If only `condition` is given, return the tuple
         ``condition.nonzero()``, the indices where `condition` is True.
@@ -912,6 +1056,15 @@ add_newdoc('numpy.core.multiarray', 'where',
 
     Examples
     --------
+    >>> np.where([[True, False], [True, True]],
+    ...          [[1, 2], [3, 4]],
+    ...          [[9, 8], [7, 6]])
+    array([[1, 8],
+           [3, 4]])
+
+    >>> np.where([[0, 1], [1, 0]])
+    (array([0, 1]), array([1, 0]))
+
     >>> x = np.arange(9.).reshape(3, 3)
     >>> np.where( x > 5 )
     (array([2, 2, 2]), array([0, 1, 2]))
@@ -921,15 +1074,6 @@ add_newdoc('numpy.core.multiarray', 'where',
     array([[ 0.,  1.,  2.],
            [ 3.,  4., -1.],
            [-1., -1., -1.]])
-
-    >>> np.where([[True, False], [True, True]],
-    ...          [[1, 2], [3, 4]],
-    ...          [[9, 8], [7, 6]])
-    array([[1, 8],
-           [3, 4]])
-
-    >>> np.where([[0, 1], [1, 0]])
-    (array([0, 1]), array([1, 0]))
 
     """)
 
@@ -1012,21 +1156,37 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
 add_newdoc('numpy.core.multiarray', 'can_cast',
     """
-    can_cast(from=d1, to=d2)
+    can_cast(fromtype, totype)
 
     Returns True if cast between data types can occur without losing precision.
 
     Parameters
     ----------
-    from: data type code
-        Data type code to cast from.
-    to: data type code
-        Data type code to cast to.
+    fromtype : dtype or dtype specifier
+        Data type to cast from.
+    totype : dtype or dtype specifier
+        Data type to cast to.
 
     Returns
     -------
     out : bool
         True if cast can occur without losing precision.
+
+    Examples
+    --------
+    >>> np.can_cast(np.int32, np.int64)
+    True
+    >>> np.can_cast(np.float64, np.complex)
+    True
+    >>> np.can_cast(np.complex, np.float)
+    False
+
+    >>> np.can_cast('i8', 'f8')
+    True
+    >>> np.can_cast('i8', 'f4')
+    False
+    >>> np.can_cast('i4', 'S4')
+    True
 
     """)
 
@@ -1252,67 +1412,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
             strides=None, order=None)
 
     An array object represents a multidimensional, homogeneous array
-    of fixed-size items.  An associated data-type object
-    describes the format of each element in the array (its byte-order,
-    how many bytes it occupies in memory, whether it is an integer or
-    a floating point number, etc.).
+    of fixed-size items.  An associated data-type object describes the
+    format of each element in the array (its byte-order, how many bytes it
+    occupies in memory, whether it is an integer, a floating point number,
+    or something else, etc.)
 
-    Arrays should be constructed using `array`, `zeros` or `empty` (refer to
-    the ``See Also`` section below).  The parameters given here describe
-    a low-level method for instantiating an array (`ndarray(...)`).
+    Arrays should be constructed using `array`, `zeros` or `empty` (refer
+    to the See Also section below).  The parameters given here refer to
+    a low-level method (`ndarray(...)`) for instantiating an array.
 
     For more information, refer to the `numpy` module and examine the
     the methods and attributes of an array.
 
-    Attributes
-    ----------
-    T : ndarray
-        Transponent of the array.
-    data : buffer
-        Array data in memory.
-    dtype : data type
-        Data type, describing the format of the elements in the array.
-    flags : dict
-        Dictionary containing information related to memory use, e.g.,
-        'C_CONTIGUOUS', 'OWNDATA', 'WRITEABLE', and others.
-    flat : ndarray
-        Return flattened version of the array as an iterator.  The iterator
-        allows assignments, e.g., ``x.flat = 3``.
-    imag : ndarray
-        Imaginary part of the array.
-    real : ndarray
-        Real part of the array.
-    size : int
-        Number of elements in the array.
-    itemsize : int
-        The size of each element in memory (in bytes).
-    nbytes : int
-        The total number of bytes required to store the array data,
-        i.e., ``itemsize * size``.
-    ndim : int
-        The number of dimensions that the array has.
-    shape : tuple of ints
-        Shape of the array.
-    strides : tuple of ints
-        The step-size required to move from one element to the next in memory.
-        For example, a contiguous ``(3, 4)`` array of type ``int16`` in C-order
-        has strides ``(8, 2)``.  This implies that to move from element to
-        element in memory requires jumps of 2 bytes.  To move from row-to-row,
-        one needs to jump 6 bytes at a time (``2 * 4``).
-    ctypes : ctypes object
-        Class containing properties of the array needed for interaction
-        with ctypes.
-    base : ndarray
-        If the array is a view on another array, that array is
-        its `base` (unless that array is also a view).  The `base` array
-        is where the array data is ultimately stored.
-
     Parameters
     ----------
+    (for the __new__ method; see Notes below)
+
     shape : tuple of ints
         Shape of created array.
-    dtype : data type, optional
-        Any object that can be interpreted a numpy data type.
+    dtype : data-type, optional
+        Any object that can be interpreted as a numpy data type.
     buffer : object exposing buffer interface, optional
         Used to fill the array with data.
     offset : int, optional
@@ -1322,29 +1441,76 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     order : {'C', 'F'}, optional
         Row-major or column-major order.
 
+    Attributes
+    ----------
+    T : ndarray
+        Transpose of the array.
+    data : buffer
+        The array's elements, in memory.
+    dtype : dtype object
+        Describes the format of the elements in the array.
+    flags : dict
+        Dictionary containing information related to memory use, e.g.,
+        'C_CONTIGUOUS', 'OWNDATA', 'WRITEABLE', etc.
+    flat : numpy.flatiter object
+        Flattened version of the array as an iterator.  The iterator
+        allows assignments, e.g., ``x.flat = 3`` (See `ndarray.flat` for
+        assignment examples; TODO).
+    imag : ndarray
+        Imaginary part of the array.
+    real : ndarray
+        Real part of the array.
+    size : int
+        Number of elements in the array.
+    itemsize : int
+        The memory use of each array element in bytes.
+    nbytes : int
+        The total number of bytes required to store the array data,
+        i.e., ``itemsize * size``.
+    ndim : int
+        The array's number of dimensions.
+    shape : tuple of ints
+        Shape of the array.
+    strides : tuple of ints
+        The step-size required to move from one element to the next in
+        memory. For example, a contiguous ``(3, 4)`` array of type
+        ``int16`` in C-order has strides ``(8, 2)``.  This implies that
+        to move from element to element in memory requires jumps of 2 bytes.
+        To move from row-to-row, one needs to jump 8 bytes at a time
+        (``2 * 4``).
+    ctypes : ctypes object
+        Class containing properties of the array needed for interaction
+        with ctypes.
+    base : ndarray
+        If the array is a view into another array, that array is its `base`
+        (unless that array is also a view).  The `base` array is where the
+        array data is actually stored.
+
     See Also
     --------
     array : Construct an array.
-    zeros : Create an array and fill its allocated memory with zeros.
-    empty : Create an array, but leave its allocated memory unchanged.
-    dtype : Create a data type.
+    zeros : Create an array, each element of which is zero.
+    empty : Create an array, but leave its allocated memory unchanged (i.e.,
+            it contains "garbage").
+    dtype : Create a data-type.
 
     Notes
     -----
-    There are two modes of creating an array using __new__:
+    There are two modes of creating an array using ``__new__``:
 
     1. If `buffer` is None, then only `shape`, `dtype`, and `order`
        are used.
-    2. If `buffer` is an object exporting the buffer interface, then
+    2. If `buffer` is an object exposing the buffer interface, then
        all keywords are interpreted.
 
-    No __init__ method is needed because the array is fully initialized
-    after the __new__ method.
+    No ``__init__`` method is needed because the array is fully initialized
+    after the ``__new__`` method.
 
     Examples
     --------
     These examples illustrate the low-level `ndarray` constructor.  Refer
-    to the `See Also` section for easier ways of constructing an ndarray.
+    to the `See Also` section above for easier ways of constructing an
+    ndarray.
 
     First mode, `buffer` is None:
 
@@ -1398,14 +1564,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
 
     Examples
     --------
-
-    Base of an array owning its memory is None:
+    The base of an array that owns its memory is None:
 
     >>> x = np.array([1,2,3,4])
     >>> x.base is None
     True
 
-    Slicing creates a view, and the memory is shared with x:
+    Slicing creates a view, whose memory is shared with x:
 
     >>> y = x[2:]
     >>> y.base is x
@@ -1415,19 +1580,137 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
-    """A ctypes interface object.
+    """
+    An object to simplify the interaction of the array with the ctypes
+    module.
+
+    This attribute creates an object that makes it easier to use arrays
+    when calling shared libraries with the ctypes module. The returned
+    object has, among others, data, shape, and strides attributes (see
+    Notes below) which themselves return ctypes objects that can be used
+    as arguments to a shared library.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    c : Python object
+        Possessing attributes data, shape, strides, etc.
+
+    See Also
+    --------
+    `numpy.ctypeslib`
+
+    Notes
+    -----
+    Below are the public attributes of this object which were documented
+    in "Guide to NumPy" (we have omitted undocumented public attributes,
+    as well as documented private attributes):
+
+    * data: A pointer to the memory area of the array as a Python integer.
+      This memory area may contain data that is not aligned, or not in correct
+      byte-order. The memory area may not even be writeable. The array
+      flags and data-type of this array should be respected when passing this
+      attribute to arbitrary C-code to avoid trouble that can include Python
+      crashing. User Beware! The value of this attribute is exactly the same
+      as self._array_interface_['data'][0].
+
+    * shape (c_intp*self.ndim): A ctypes array of length self.ndim where
+      the basetype is the C-integer corresponding to dtype('p') on this
+      platform. This base-type could be c_int, c_long, or c_longlong
+      depending on the platform. The c_intp type is defined accordingly in
+      numpy.ctypeslib. The ctypes array contains the shape of the underlying
+      array.
+
+    * strides (c_intp*self.ndim): A ctypes array of length self.ndim where
+      the basetype is the same as for the shape attribute. This ctypes array
+      contains the strides information from the underlying array. This strides
+      information is important for showing how many bytes must be jumped to
+      get to the next element in the array.
+
+    * data_as(obj): Return the data pointer cast to a particular c-types object.
+      For example, calling self._as_parameter_ is equivalent to
+      self.data_as(ctypes.c_void_p). Perhaps you want to use the data as a
+      pointer to a ctypes array of floating-point data:
+      self.data_as(ctypes.POINTER(ctypes.c_double)).
+
+    * shape_as(obj): Return the shape tuple as an array of some other c-types
+      type. For example: self.shape_as(ctypes.c_short).
+
+    * strides_as(obj): Return the strides tuple as an array of some other
+      c-types type. For example: self.strides_as(ctypes.c_longlong).
+
+    Be careful using the ctypes attribute - especially on temporary
+    arrays or arrays constructed on the fly. For example, calling
+    (a+b).ctypes.data_as(ctypes.c_void_p) returns a pointer to memory
+    that is invalid because the array created as (a+b) is deallocated
+    before the next Python statement. You can avoid this problem using
+    either c=a+b or ct=(a+b).ctypes. In the latter case, ct will hold
+    a reference to the array until ct is deleted or re-assigned.
+
+    If the ctypes module is not available, then the ctypes attribute
+    of array objects still returns something useful, but ctypes objects
+    are not returned and errors may be raised instead. In particular,
+    the object will still have the as parameter attribute which will
+    return an integer equal to the data attribute.
+
+    Examples
+    --------
+    >>> import ctypes
+    >>> x
+    array([[0, 1],
+           [2, 3]])
+    >>> x.ctypes.data
+    30439712
+    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
+    <ctypes.LP_c_long object at 0x01F01300>
+    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_long)).contents
+    c_long(0)
+    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong)).contents
+    c_longlong(4294967296L)
+    >>> x.ctypes.shape
+    <numpy.core._internal.c_long_Array_2 object at 0x01FFD580>
+    >>> x.ctypes.shape_as(ctypes.c_long)
+    <numpy.core._internal.c_long_Array_2 object at 0x01FCE620>
+    >>> x.ctypes.strides
+    <numpy.core._internal.c_long_Array_2 object at 0x01FCE620>
+    >>> x.ctypes.strides_as(ctypes.c_longlong)
+    <numpy.core._internal.c_longlong_Array_2 object at 0x01F01300>
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('data',
-    """Buffer object pointing to the start of the data.
-
-    """))
+    """Python buffer object pointing to the start of the array's data."""))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
-    """Data-type for the array.
+    """
+    Data-type of the array's elements.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    d : numpy dtype object
+
+    See Also
+    --------
+    `numpy.dtype`
+
+    Examples
+    --------
+    >>> x
+    array([[0, 1],
+           [2, 3]])
+    >>> x.dtype
+    dtype('int32')
+    >>> type(x.dtype)
+    <type 'numpy.dtype'>
 
     """))
 
@@ -1449,7 +1732,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('imag',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('itemsize',
     """
-    Length of one element in bytes.
+    Length of one array element in bytes.
 
     Examples
     --------
@@ -1476,7 +1759,16 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
     OWNDATA (O)
         The array owns the memory it uses or borrows it from another object.
     WRITEABLE (W)
-        The data area can be written to.
+        The data area can be written to.  Setting this to False locks
+        the data, making it read-only.  A view (slice, etc.) inherits WRITEABLE
+        from its base array at creation time, but a view of a writeable
+        array may be subsequently locked while the base array remains writeable.
+        (The opposite is not true, in that a view of a locked array may not
+        be made writeable.  However, currently, locking a base object does not
+        lock any views that already reference it, so under that circumstance it
+        is possible to alter the contents of a locked array via a previously
+        created writeable view onto it.)  Attempting to change a non-writeable
+        array raises a RuntimeError exception.
     ALIGNED (A)
         The data and strides are aligned appropriately for the hardware.
     UPDATEIFCOPY (U)
@@ -1497,12 +1789,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
 
     Notes
     -----
-    The `flags` object can be also accessed dictionary-like, and using
-    lowercased attribute names. Short flag names are only supported in
-    dictionary access.
+    The `flags` object can be accessed dictionary-like (as in ``a.flags['WRITEABLE']``),
+    or by using lowercased attribute names (as in ``a.flags.writeable``). Short flag
+    names are only supported in dictionary access.
 
     Only the UPDATEIFCOPY, WRITEABLE, and ALIGNED flags can be changed by
-    the user, via assigning to ``flags['FLAGNAME']`` or `ndarray.setflags`.
+    the user, via direct assignment to the attribute or dictionary entry,
+    or by calling `ndarray.setflags`.
+
     The array flags cannot be set arbitrarily:
 
     - UPDATEIFCOPY can only be set ``False``.
@@ -1516,13 +1810,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('flat',
     """
-    A 1-D flat iterator over the array.
+    A 1-D iterator over the array.
 
-    This is a `flatiter` instance, which acts similarly to a Python iterator.
+    This is a `numpy.flatiter` instance, which acts similarly to, but is not
+    a subclass of, Python's built-in iterator object.
 
     See Also
     --------
     flatten : Return a copy of the array collapsed into one dimension.
+
     flatiter
 
     Examples
@@ -1539,16 +1835,29 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flat',
            [3, 6]])
     >>> x.T.flat[3]
     5
-
     >>> type(x.flat)
     <type 'numpy.flatiter'>
+
+    An assignment example:
+
+    >>> x.flat = 3; x
+    array([[3, 3, 3],
+           [3, 3, 3]])
+    >>> x.flat[[1,4]] = 1; x
+    array([[3, 1, 3],
+           [3, 1, 3]])
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('nbytes',
     """
-    Number of bytes in the array.
+    Total bytes consumed by the elements of the array.
+
+    Notes
+    -----
+    Does not include memory consumed by non-element attributes of the
+    array object.
 
     Examples
     --------
@@ -1567,11 +1876,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ndim',
 
     Examples
     --------
-
-    >>> x = np.array([1,2,3])
+    >>> x = np.array([1, 2, 3])
     >>> x.ndim
     1
-    >>> y = np.zeros((2,3,4))
+    >>> y = np.zeros((2, 3, 4))
     >>> y.ndim
     3
 
@@ -1601,17 +1909,28 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
 
+    Notes
+    -----
+    May be used to "reshape" the array, as long as this would not
+    require a change in the total number of elements
+
     Examples
     --------
-    >>> x = np.array([1,2,3,4])
+    >>> x = np.array([1, 2, 3, 4])
     >>> x.shape
     (4,)
-    >>> y = np.zeros((4,5,6))
+    >>> y = np.zeros((2, 3, 4))
     >>> y.shape
-    (4, 5, 6)
-    >>> y.shape = (2, 5, 2, 3, 2)
-    >>> y.shape
-    (2, 5, 2, 3, 2)
+    (2, 3, 4)
+    >>> y.shape = (3, 8)
+    >>> y
+    array([[ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]])
+    >>> y.shape = (3, 6)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: total size of new array must be unchanged
 
     """))
 
@@ -1620,10 +1939,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     """
     Number of elements in the array.
 
+    Equivalent to ``np.prod(a.shape)``, i.e., the product of the array's
+    dimensions.
+
     Examples
     --------
-    >>> x = np.zeros((3,5,2), dtype=np.complex128)
+    >>> x = np.zeros((3, 5, 2), dtype=np.complex128)
     >>> x.size
+    30
+    >>> np.prod(x.shape)
     30
 
     """))
@@ -1631,15 +1955,50 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
     """
-    Tuple of bytes to step in each dimension.
+    Tuple of bytes to step in each dimension when traversing an array.
 
     The byte offset of element ``(i[0], i[1], ..., i[n])`` in an array `a`
     is::
 
         offset = sum(np.array(i) * a.strides)
 
+    Notes
+    -----
+    Imagine an array of 32-bit integers (each 4 bytes)::
+
+      x = np.array([[0, 1, 2, 3, 4],
+                    [5, 6, 7, 8, 9]], dtype=np.int32)
+
+    This array is stored in memory as 40 bytes, one after the other
+    (known as a contiguous block of memory).  The strides of an array tell
+    us how many bytes we have to skip in memory to move to the next position
+    along a certain axis.  For example, we have to skip 4 bytes (1 value) to
+    move to the next column, but 20 bytes (5 values) to get to the same
+    position in the next row.  As such, the strides for the array `x` will be
+    ``(20, 4)``.
+
+    See Also
+    --------
+    numpy.lib.stride_tricks.as_strided
+
     Examples
     --------
+    >>> y = np.reshape(np.arange(2*3*4), (2,3,4))
+    >>> y
+    array([[[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7],
+            [ 8,  9, 10, 11]],
+           [[12, 13, 14, 15],
+            [16, 17, 18, 19],
+            [20, 21, 22, 23]]])
+    >>> y.strides
+    (48, 16, 4)
+    >>> y[1,1,1]
+    17
+    >>> offset=sum(y.strides * np.array((1,1,1)))
+    >>> offset/y.itemsize
+    17
+
     >>> x = np.reshape(np.arange(5*6*7*8), (5,6,7,8)).transpose(2,3,1,0)
     >>> x.strides
     (32, 4, 224, 1344)
@@ -1655,14 +2014,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
     """
-    Same as self.transpose() except self is returned for self.ndim < 2.
+    Same as self.transpose(), except that self is returned if
+    self.ndim < 2.
 
     Examples
     --------
     >>> x = np.array([[1.,2.],[3.,4.]])
+    >>> x
+    array([[ 1.,  2.],
+           [ 3.,  4.]])
     >>> x.T
     array([[ 1.,  3.],
            [ 2.,  4.]])
+    >>> x = np.array([1.,2.,3.,4.])
+    >>> x
+    array([ 1.,  2.,  3.,  4.])
+    >>> x.T
+    array([ 1.,  2.,  3.,  4.])
 
     """))
 
@@ -1765,7 +2133,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
     a.any(axis=None, out=None)
 
-    Check if any of the elements of `a` are true.
+    Returns True if any of the elements of `a` evaluate to True.
 
     Refer to `numpy.any` for full documentation.
 
@@ -1780,31 +2148,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmax',
     """
     a.argmax(axis=None, out=None)
 
-    Return indices of the maximum values along the given axis of `a`.
+    Return indices of the maximum values along the given axis.
 
-    Parameters
-    ----------
-    axis : int, optional
-        Axis along which to operate.  By default flattened input is used.
-    out : ndarray, optional
-        Alternative output array in which to place the result.  Must
-        be of the same shape and buffer length as the expected output.
+    Refer to `numpy.argmax` for full documentation.
 
-    Returns
-    -------
-    index_array : ndarray
-        An array of indices or single index value, or a reference to `out`
-        if it was specified.
-
-    Examples
+    See Also
     --------
-    >>> a = np.arange(6).reshape(2,3)
-    >>> a.argmax()
-    5
-    >>> a.argmax(0)
-    array([1, 1, 1])
-    >>> a.argmax(1)
-    array([2, 2])
+    numpy.argmax : equivalent function
 
     """))
 
@@ -1815,7 +2165,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
 
     Return indices of the minimum values along the given axis of `a`.
 
-    Refer to `numpy.ndarray.argmax` for detailed documentation.
+    Refer to `numpy.argmin` for detailed documentation.
+
+    See Also
+    --------
+    numpy.argmin : equivalent function
 
     """))
 
@@ -1944,17 +2298,47 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('compress',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('conj',
-    """a.conj()
+    """
+    a.conj()
 
-    Return an array with all complex-valued elements conjugated.
+    Complex-conjugate all elements.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    conj : ndarray
+        A new array of the same size and shape as `a` each of whose
+        elements are the complex-conjugates of the positionally
+        respective elements of `a`.
+
+    Examples
+    --------
+    >>> x = np.eye(2) + 1j * np.eye(2)
+    >>> x
+    array([[ 1.+1.j,  0.+0.j],
+           [ 0.+0.j,  1.+1.j]])
+    >>> y = x.conj()
+    >>> y
+    array([[ 1.-1.j,  0.+0.j],
+           [ 0.+0.j,  1.-1.j]])
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
-    """a.conjugate()
+    """
+    a.conjugate()
 
-    Return an array with all complex-valued elements conjugated.
+    Return the complex conjugate, element-wise.
+
+    Refer to `numpy.conjugate` for full documentation.
+
+    See Also
+    --------
+    numpy.conjugate : equivalent function
 
     """))
 
@@ -2055,10 +2439,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
-    """a.dumps()
+    """
+    a.dumps()
 
     Returns the pickle of the array as a string.
     pickle.loads or numpy.loads will convert the string back to an array.
+
+    Parameters
+    ----------
+    None
 
     """))
 
@@ -2071,8 +2460,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
 
     Parameters
     ----------
-    a : ndarray
-        Input array
     value : scalar
         All elements of `a` will be assigned this value.
 
@@ -2124,20 +2511,116 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
-    """a.getfield(dtype, offset)
+    """
+    a.getfield(dtype, offset)
 
-    Returns a field of the given array as a certain type. A field is a view of
-    the array data with each itemsize determined by the given type and the
-    offset into the current array.
+    Returns a field of the given array as a certain type.
+
+    A field is a view of the array data with each itemsize determined
+    by the given type and the offset into the current array, i.e. from
+    ``offset * dtype.itemsize`` to ``(offset+1) * dtype.itemsize``.
+
+    Parameters
+    ----------
+    dtype : str
+        String denoting the data type of the field.
+    offset : int
+        Number of `dtype.itemsize`'s to skip before beginning the element view.
+
+    Examples
+    --------
+    >>> x = np.diag([1.+1.j]*2)
+    >>> x
+    array([[ 1.+1.j,  0.+0.j],
+           [ 0.+0.j,  1.+1.j]])
+    >>> x.dtype
+    dtype('complex128')
+
+    >>> x.getfield('complex64', 0) # Note how this != x
+    array([[ 0.+1.875j,  0.+0.j   ],
+           [ 0.+0.j   ,  0.+1.875j]], dtype=complex64)
+
+    >>> x.getfield('complex64',1) # Note how different this is than x
+    array([[ 0. +5.87173204e-39j,  0. +0.00000000e+00j],
+           [ 0. +0.00000000e+00j,  0. +5.87173204e-39j]], dtype=complex64)
+
+    >>> x.getfield('complex128', 0) # == x
+    array([[ 1.+1.j,  0.+0.j],
+           [ 0.+0.j,  1.+1.j]])
+
+    If the argument dtype is the same as x.dtype, then offset != 0 raises
+    a ValueError:
+
+    >>> x.getfield('complex128', 1)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: Need 0 <= offset <= 0 for requested type but received offset = 1
+
+    >>> x.getfield('float64', 0)
+    array([[ 1.,  0.],
+           [ 0.,  1.]])
+
+    >>> x.getfield('float64', 1)
+    array([[  1.77658241e-307,   0.00000000e+000],
+           [  0.00000000e+000,   1.77658241e-307]])
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('item',
-    """a.item()
+    """
+    a.item(*args)
 
-    Copy the first element of array to a standard Python scalar and return
-    it. The array must be of size one.
+    Copy an element of an array to a standard Python scalar and return it.
+
+    Parameters
+    ----------
+    \\*args : Arguments (variable number and type)
+
+        * none: in this case, the method only works for arrays
+          with one element (`a.size == 1`), which element is
+          copied into a standard Python scalar object and returned.
+
+        * int_type: this argument is interpreted as a flat index into
+          the array, specifying which element to copy and return.
+
+        * tuple of int_types: functions as does a single int_type argument,
+          except that the argument is interpreted as an nd-index into the
+          array.
+
+    Returns
+    -------
+    z : Standard Python scalar object
+        A copy of the specified element of the array as a suitable
+        Python scalar
+
+    Notes
+    -----
+    When the data type of `a` is longdouble or clongdouble, item() returns
+    a scalar array object because there is no available Python scalar that
+    would not lose information. Void arrays return a buffer object for item(),
+    unless fields are defined, in which case a tuple is returned.
+
+    `item` is very similar to a[args], except, instead of an array scalar,
+    a standard Python scalar is returned. This can be useful for speeding up
+    access to elements of the array and doing arithmetic on elements of the
+    array using Python's optimized math.
+
+    Examples
+    --------
+    >>> x = np.random.randint(9, size=(3, 3))
+    >>> x
+    array([[3, 1, 7],
+           [2, 8, 3],
+           [8, 5, 3]])
+    >>> x.item(3)
+    2
+    >>> x.item(7)
+    5
+    >>> x.item((0, 1))
+    1
+    >>> x.item((2, 2))
+    3
 
     """))
 
@@ -2387,14 +2870,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
 
     Parameters
     ----------
-    a : ndarray
-        Input array.
-    new_shape : {tuple, int}
+    new_shape : tuple of ints, or `n` ints
         Shape of resized array.
     refcheck : bool, optional
-        If False, memory referencing will not be checked. Default is True.
-    order : bool, optional
-        <needs an explanation>. Default if False.
+        If False, reference count will not be checked. Default is True.
+    order : bool, do not use.
+        A SystemError is raised when this parameter is specified.
 
     Returns
     -------
@@ -2403,33 +2884,85 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
     Raises
     ------
     ValueError
-        If `a` does not own its own data, or references or views to it exist.
+        If `a` does not own its own data or references or views to it exist,
+        and the data memory must be changed.
+
+    SystemError
+        If the `order` keyword argument is specified. This behaviour is a
+        bug in NumPy.
+
+    See Also
+    --------
+    resize : Return a new array with the specified shape.
+
+    Notes
+    -----
+    This reallocates space for the data area if necessary.
+
+    Only contiguous arrays (data elements consecutive in memory) can be
+    resized.
+
+    The purpose of the reference count check is to make sure you
+    do not use this array as a buffer for another Python object and then
+    reallocate the memory. However, reference counts can increase in
+    other ways so if you are sure that you have not shared the memory
+    for this array with another Python object, then you may safely set
+    `refcheck` to False.
 
     Examples
     --------
-    Shrinking an array: array is flattened in C-order, resized, and reshaped:
+    Shrinking an array: array is flattened (in the order that the data are
+    stored in memory), resized, and reshaped:
 
-    >>> a = np.array([[0,1],[2,3]])
-    >>> a.resize((2,1))
+    >>> a = np.array([[0, 1], [2, 3]])
+    >>> print a.flags
+    C_CONTIGUOUS : True
+    F_CONTIGUOUS : False
+    OWNDATA : True
+    WRITEABLE : True
+    ALIGNED : True
+    UPDATEIFCOPY : False
+    >>> a.resize((2, 1))
     >>> a
     array([[0],
            [1]])
 
+    >>> a = np.array([[0, 1], [2, 3]], order='F')
+    >>> print a.flags
+    C_CONTIGUOUS : False
+    F_CONTIGUOUS : True
+    OWNDATA : True
+    WRITEABLE : True
+    ALIGNED : True
+    UPDATEIFCOPY : False
+    >>> a.resize((2, 1))
+    >>> a
+    array([[0],
+           [2]])
+
     Enlarging an array: as above, but missing entries are filled with zeros:
 
-    >>> b = np.array([[0,1],[2,3]])
-    >>> b.resize((2,3))
+    >>> b = np.array([[0, 1], [2, 3]])
+    >>> b.resize(2, 3) # new_shape parameter doesn't have to be a tuple
     >>> b
     array([[0, 1, 2],
            [3, 0, 0]])
 
-    Referencing an array prevents resizing:
+    Referencing an array prevents resizing...
 
     >>> c = a
-    >>> a.resize((1,1))
+    >>> a.resize((1, 1))
     Traceback (most recent call last):
     ...
     ValueError: cannot resize an array that has been referenced ...
+
+    Unless `refcheck` is False:
+
+    >>> a.resize((1, 1), refcheck=False)
+    >>> a
+    array([[0]])
+    >>> c
+    array([[0]])
 
     """))
 
@@ -2465,14 +2998,124 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('setfield',
-    """m.setfield(value, dtype, offset) -> None.
-    places val into field of the given array defined by the data type and offset.
+    """
+    a.setfield(val, dtype, offset=0)
+
+    Put a value into a specified place in a field defined by a data-type.
+
+    Place `val` into `a`'s field defined by `dtype` and beginning `offset`
+    bytes into the field.
+
+    Parameters
+    ----------
+    val : object
+        Value to be placed in field.
+    dtype : dtype object
+        Data-type of the field in which to place `val`.
+    offset : int, optional
+        The number of bytes into the field at which to place `val`.
+
+    Returns
+    -------
+    None
+
+    See Also
+    --------
+    getfield
+
+    Examples
+    --------
+    >>> x = np.eye(3)
+    >>> x.getfield(np.float64)
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+    >>> x.setfield(3, np.int32)
+    >>> x.getfield(np.int32)
+    array([[3, 3, 3],
+           [3, 3, 3],
+           [3, 3, 3]])
+    >>> x
+    array([[  1.00000000e+000,   1.48219694e-323,   1.48219694e-323],
+           [  1.48219694e-323,   1.00000000e+000,   1.48219694e-323],
+           [  1.48219694e-323,   1.48219694e-323,   1.00000000e+000]])
+    >>> x.setfield(np.eye(3), np.int32)
+    >>> x
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
-    """a.setflags(write=None, align=None, uic=None)
+    """
+    a.setflags(write=None, align=None, uic=None)
+
+    Set array flags WRITEABLE, ALIGNED, and UPDATEIFCOPY, respectively.
+
+    These Boolean-valued flags affect how numpy interprets the memory
+    area used by `a` (see Notes below). The ALIGNED flag can only
+    be set to True if the data is actually aligned according to the type.
+    The UPDATEIFCOPY flag can never be set to True. The flag WRITEABLE
+    can only be set to True if the array owns its own memory, or the
+    ultimate owner of the memory exposes a writeable buffer interface,
+    or is a string. (The exception for string is made so that unpickling
+    can be done without copying memory.)
+
+    Parameters
+    ----------
+    write : bool, optional
+        Describes whether or not `a` can be written to.
+    align : bool, optional
+        Describes whether or not `a` is aligned properly for its type.
+    uic : bool, optional
+        Describes whether or not `a` is a copy of another "base" array.
+
+    Notes
+    -----
+    Array flags provide information about how the memory area used
+    for the array is to be interpreted. There are 6 Boolean flags
+    in use, only three of which can be changed by the user:
+    UPDATEIFCOPY, WRITEABLE, and ALIGNED.
+
+    WRITEABLE (W) the data area can be written to;
+
+    ALIGNED (A) the data and strides are aligned appropriately for the hardware
+    (as determined by the compiler);
+
+    UPDATEIFCOPY (U) this array is a copy of some other array (referenced
+    by .base). When this array is deallocated, the base array will be
+    updated with the contents of this array.
+
+    All flags can be accessed using their first (upper case) letter as well
+    as the full name.
+
+    Examples
+    --------
+    >>> y
+    array([[3, 1, 7],
+           [2, 0, 0],
+           [8, 5, 9]])
+    >>> y.flags
+      C_CONTIGUOUS : True
+      F_CONTIGUOUS : False
+      OWNDATA : True
+      WRITEABLE : True
+      ALIGNED : True
+      UPDATEIFCOPY : False
+    >>> y.setflags(write=0, align=0)
+    >>> y.flags
+      C_CONTIGUOUS : True
+      F_CONTIGUOUS : False
+      OWNDATA : True
+      WRITEABLE : False
+      ALIGNED : False
+      UPDATEIFCOPY : False
+    >>> y.setflags(uic=1)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: cannot set UPDATEIFCOPY flag to True
 
     """))
 
@@ -2609,30 +3252,33 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     """
     a.tofile(fid, sep="", format="%s")
 
-    Write array to a file as text or binary.
+    Write array to a file as text or binary (default).
 
-    Data is always written in 'C' order, independently of the order of `a`.
-    The data produced by this method can be recovered by using the function
+    Data is always written in 'C' order, independent of the order of `a`.
+    The data produced by this method can be recovered using the function
     fromfile().
-
-    This is a convenience function for quick storage of array data.
-    Information on endianess and precision is lost, so this method is not a
-    good choice for files intended to archive data or transport data between
-    machines with different endianess. Some of these problems can be overcome
-    by outputting the data as text files at the expense of speed and file size.
 
     Parameters
     ----------
-    fid : file or string
-        An open file object or a string containing a filename.
-    sep : string
+    fid : file or str
+        An open file object, or a string containing a filename.
+    sep : str
         Separator between array items for text output.
-        If "" (empty), a binary file is written, equivalently to
-        file.write(a.tostring()).
-    format : string
+        If "" (empty), a binary file is written, equivalent to
+        ``file.write(a.tostring())``.
+    format : str
         Format string for text file output.
-        Each entry in the array is formatted to text by converting it to the
-        closest Python type, and using "format" % item.
+        Each entry in the array is formatted to text by first converting
+        it to the closest Python type, and then using "format" % item.
+
+    Notes
+    -----
+    This is a convenience function for quick storage of array data.
+    Information on endianness and precision is lost, so this method is not a
+    good choice for files intended to archive data or transport data between
+    machines with different endianness. Some of these problems can be overcome
+    by outputting the data as text files, at the expense of speed and file
+    size.
 
     """))
 
@@ -2641,7 +3287,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """
     a.tolist()
 
-    Return the array as a possibly nested list.
+    Return the array as a (possibly nested) list.
 
     Return a copy of the array data as a (nested) Python list.
     Data items are converted to the nearest compatible Python type.
@@ -2674,15 +3320,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
-    """a.tostring(order='C')
+    """
+    a.tostring(order='C')
 
     Construct a Python string containing the raw data bytes in the array.
 
+    Constructs a Python string showing a copy of the raw contents of
+    data memory. The string can be produced in either 'C' or 'Fortran',
+    or 'Any' order (the default is 'C'-order). 'Any' order means C-order
+    unless the F_CONTIGUOUS flag in the array is set, in which case it
+    means 'Fortran' order.
+
     Parameters
     ----------
-    order : {'C', 'F', None}
+    order : {'C', 'F', None}, optional
         Order of the data for multidimensional arrays:
         C, Fortran, or the same as for the original array.
+
+    Returns
+    -------
+    s : str
+        A Python string exhibiting a copy of `a`'s raw data.
+
+    Examples
+    --------
+    >>> x = np.array([[0, 1], [2, 3]])
+    >>> x.tostring()
+    '\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    >>> x.tostring('C') == x.tostring()
+    True
+    >>> x.tostring('F')
+    '\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
 
     """))
 
@@ -2706,29 +3374,50 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
     """
     a.transpose(*axes)
 
-    Returns a view of 'a' with axes transposed. If no axes are given,
-    or None is passed, switches the order of the axes. For a 2-d
-    array, this is the usual matrix transpose. If axes are given,
-    they describe how the axes are permuted.
+    Returns a view of the array with axes transposed.
+
+    For a 1-D array, this has no effect. (To change between column and
+    row vectors, first cast the 1-D array into a matrix object.)
+    For a 2-D array, this is the usual matrix transpose.
+    For an n-D array, if axes are given, their order indicates how the
+    axes are permuted (see Examples). If axes are not provided and
+    ``a.shape = (i[0], i[1], ... i[n-2], i[n-1])``, then
+    ``a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0])``.
+
+    Parameters
+    ----------
+    axes : None, tuple of ints, or `n` ints
+
+     * None or no argument: reverses the order of the axes.
+
+     * tuple of ints: `i` in the `j`-th place in the tuple means `a`'s
+       `i`-th axis becomes `a.transpose()`'s `j`-th axis.
+
+     * `n` ints: same as an n-tuple of the same ints (this form is
+       intended simply as a "convenience" alternative to the tuple form)
+
+    Returns
+    -------
+    out : ndarray
+        View of `a`, with axes suitably permuted.
 
     See Also
     --------
-    ndarray.T : array property returning the array transposed
-
+    ndarray.T : Array property returning the array transposed.
 
     Examples
     --------
-    >>> a = np.array([[1,2],[3,4]])
+    >>> a = np.array([[1, 2], [3, 4]])
     >>> a
     array([[1, 2],
            [3, 4]])
     >>> a.transpose()
     array([[1, 3],
            [2, 4]])
-    >>> a.transpose((1,0))
+    >>> a.transpose((1, 0))
     array([[1, 3],
            [2, 4]])
-    >>> a.transpose(1,0)
+    >>> a.transpose(1, 0)
     array([[1, 3],
            [2, 4]])
 
@@ -2870,11 +3559,14 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     """
     frompyfunc(func, nin, nout)
 
-    Takes an arbitrary Python function and returns a ufunc.
+    Takes an arbitrary Python function and returns a Numpy ufunc.
+
+    Can be used, for example, to add broadcasting to a built-in Python
+    function (see Examples section).
 
     Parameters
     ----------
-    func : Python function
+    func : Python function object
         An arbitrary Python function.
     nin : int
         The number of input arguments.
@@ -2884,11 +3576,22 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     Returns
     -------
     out : ufunc
-        Returns a Numpy universal function (``ufunc`` object).
+        Returns a Numpy universal function (``ufunc``) object.
 
     Notes
     -----
     The returned ufunc always returns PyObject arrays.
+
+    Examples
+    --------
+    Use frompyfunc to add broadcasting to the Python function ``oct``:
+
+    >>> oct_array = np.frompyfunc(oct, 1, 1)
+    >>> oct_array(np.array((10, 30, 100)))
+    array([012, 036, 0144], dtype=object)
+    >>> np.array((oct(10), oct(30), oct(100))) # for comparison
+    array(['012', '036', '0144'],
+          dtype='|S4')
 
     """)
 
@@ -2948,9 +3651,10 @@ add_newdoc('numpy.core.umath', 'geterrobj',
         [internal numpy buffer size, error mask, error callback function].
 
         The error mask is a single integer that holds the treatment information
-        on all four floating point errors. If we print it in base 8, we can see
-        what treatment is set for "invalid", "under", "over", and "divide" (in
-        that order). The printed string can be interpreted with
+        on all four floating point errors. The information for each error type
+        is contained in three bits of the integer. If we print it in base 8, we
+        can see what treatment is set for "invalid", "under", "over", and
+        "divide" (in that order). The printed string can be interpreted with
 
         * 0 : 'ignore'
         * 1 : 'warn'
@@ -3010,9 +3714,10 @@ add_newdoc('numpy.core.umath', 'seterrobj',
         [internal numpy buffer size, error mask, error callback function].
 
         The error mask is a single integer that holds the treatment information
-        on all four floating point errors. If we print it in base 8, we can see
-        what treatment is set for "invalid", "under", "over", and "divide" (in
-        that order). The printed string can be interpreted with
+        on all four floating point errors. The information for each error type
+        is contained in three bits of the integer. If we print it in base 8, we
+        can see what treatment is set for "invalid", "under", "over", and
+        "divide" (in that order). The printed string can be interpreted with
 
         * 0 : 'ignore'
         * 1 : 'warn'
@@ -3046,8 +3751,8 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     '14'
     >>> np.geterr()
     {'over': 'warn', 'divide': 'print', 'invalid': 'ignore', 'under': 'ignore'}
-    >>> np.geterrcall()
-    <function err_handler at 0xb75e9304>
+    >>> np.geterrcall() is err_handler
+    True
 
     """)
 
@@ -3130,7 +3835,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     Parameters
     ----------
     x : array_like, 1 dimension, nonnegative ints
-        Input array. The length of `x` is equal to ``np.amax(x)+1``.
+        Input array.
     weights : array_like, optional
         Weights, array of the same shape as `x`.
 
@@ -3138,6 +3843,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     -------
     out : ndarray of ints
         The result of binning the input array.
+        The length of `out` is equal to ``np.amax(x)+1``.
 
     Raises
     ------
@@ -3166,6 +3872,14 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: array cannot be safely cast to required type
+
+    A possible use of ``bincount`` is to perform sums over
+    variable-size chunks of an array, using the ``weights`` keyword.
+
+    >>> w = np.array([0.3, 0.5, 0.2, 0.7, 1., -0.6]) # weights
+    >>> x = np.array([0, 1, 1, 2, 2, 2])
+    >>> np.bincount(x,  weights=w)
+    array([ 0.3,  0.7,  1.1])
 
     """)
 
@@ -3340,71 +4054,175 @@ add_newdoc('numpy.core', 'ufunc',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(array, axis=0, dtype=None, out=None)
+    reduce(a, axis=0, dtype=None, out=None)
 
-    Reduce applies the operator to all elements of the array.
+    Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
+    Let :math:`a.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
+    :math:`ufunc.reduce(a, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
+    the result of iterating `j` over :math:`range(N_i)`, cumulatively applying
+    ufunc to each :math:`a[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
     For a one-dimensional array, reduce produces results equivalent to:
     ::
 
-     r = op.identity
+     r = op.identity # op = ufunc
      for i in xrange(len(A)):
-       r = op(r,A[i])
+       r = op(r, A[i])
      return r
 
     For example, add.reduce() is equivalent to sum().
 
     Parameters
     ----------
-    array : array_like
+    a : array_like
         The array to act on.
-    axis : integer, optional
+    axis : int, optional
         The axis along which to apply the reduction.
-    dtype : data-type-code, optional
+    dtype : data-type code, optional
         The type used to represent the intermediate results. Defaults
-        to the data type of the output array if this is provided, or
-        the data type of the input array if no output array is provided.
-    out : array_like, optional
-        A location into which the result is stored. If not provided a
+        to the data-type of the output array if this is provided, or
+        the data-type of the input array if no output array is provided.
+    out : ndarray, optional
+        A location into which the result is stored. If not provided, a
         freshly-allocated array is returned.
 
     Returns
     -------
     r : ndarray
-        The reduced values. If out was supplied, r is equal to out.
+        The reduced array. If `out` was supplied, `r` is a reference to it.
 
     Examples
     --------
     >>> np.multiply.reduce([2,3,5])
     30
 
+    A multi-dimensional array example:
+
+    >>> X = np.arange(8).reshape((2,2,2))
+    >>> X
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.add.reduce(X, 0)
+    array([[ 4,  6],
+           [ 8, 10]])
+    >>> np.add.reduce(X) # confirm: default axis value is 0
+    array([[ 4,  6],
+           [ 8, 10]])
+    >>> np.add.reduce(X, 1)
+    array([[ 2,  4],
+           [10, 12]])
+    >>> np.add.reduce(X, 2)
+    array([[ 1,  5],
+           [ 9, 13]])
+
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',
     """
-    accumulate(array, axis=None, dtype=None, out=None)
+    accumulate(array, axis=0, dtype=None, out=None)
 
     Accumulate the result of applying the operator to all elements.
 
-    For a one-dimensional array, accumulate produces results equivalent to:
-    ::
+    For a one-dimensional array, accumulate produces results equivalent to::
 
-     r = np.empty(len(A))
-     t = op.identity
-     for i in xrange(len(A)):
-        t = op(t,A[i])
-        r[i] = t
-     return r
+      r = np.empty(len(A))
+      t = op.identity        # op = the ufunc being applied to A's  elements
+      for i in xrange(len(A)):
+          t = op(t, A[i])
+          r[i] = t
+      return r
 
-    For example, add.accumulate() is equivalent to cumsum().
+    For example, add.accumulate() is equivalent to np.cumsum().
+
+    For a multi-dimensional array, accumulate is applied along only one
+    axis (axis zero by default; see Examples below) so repeated use is
+    necessary if one wants to accumulate over multiple axes.
 
     Parameters
     ----------
     array : array_like
         The array to act on.
     axis : int, optional
-        The axis along which to apply the accumulation.
-    dtype : data-type-code, optional
+        The axis along which to apply the accumulation; default is zero.
+    dtype : data-type code, optional
+        The data-type used to represent the intermediate results. Defaults
+        to the data-type of the output array if such is provided, or the
+        the data-type of the input array if no output array is provided.
+    out : ndarray, optional
+        A location into which the result is stored. If not provided a
+        freshly-allocated array is returned.
+
+    Returns
+    -------
+    r : ndarray
+        The accumulated values. If `out` was supplied, `r` is a reference to
+        `out`.
+
+    Examples
+    --------
+    1-D array examples:
+
+    >>> np.add.accumulate([2, 3, 5])
+    array([ 2,  5, 10])
+    >>> np.multiply.accumulate([2, 3, 5])
+    array([ 2,  6, 30])
+
+    2-D array examples:
+
+    >>> I = np.eye(2)
+    >>> I
+    array([[ 1.,  0.],
+           [ 0.,  1.]])
+
+    Accumulate along axis 0 (rows), down columns:
+
+    >>> np.add.accumulate(I, 0)
+    array([[ 1.,  0.],
+           [ 1.,  1.]])
+    >>> np.add.accumulate(I) # no axis specified = axis zero
+    array([[ 1.,  0.],
+           [ 1.,  1.]])
+
+    Accumulate along axis 1 (columns), through rows:
+
+    >>> np.add.accumulate(I, 1)
+    array([[ 1.,  1.],
+           [ 0.,  1.]])
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('reduceat',
+    """
+    reduceat(a, indices, axis=0, dtype=None, out=None)
+
+    Performs a (local) reduce with specified slices over a single axis.
+
+    For i in ``range(len(indices))``, `reduceat` computes
+    ``ufunc.reduce(a[indices[i]:indices[i+1]])``, which becomes the i-th
+    generalized "row" parallel to `axis` in the final result (i.e., in a
+    2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
+    `axis = 1`, it becomes the i-th column).  There are two exceptions to this:
+
+      * when ``i = len(indices) - 1`` (so for the last index),
+        ``indices[i+1] = a.shape[axis]``.
+      * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
+        simply ``a[indices[i]]``.
+
+    The shape of the output depends on the size of `indices`, and may be
+    larger than `a` (this happens if ``len(indices) > a.shape[axis]``).
+
+    Parameters
+    ----------
+    a : array_like
+        The array to act on.
+    indices : array_like
+        Paired indices, comma separated (not colon), specifying slices to
+        reduce.
+    axis : int, optional
+        The axis along which to apply the reduceat.
+    dtype : data-type code, optional
         The type used to represent the intermediate results. Defaults
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
@@ -3415,58 +4233,21 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
     Returns
     -------
     r : ndarray
-        The accumulated values. If `out` was supplied, `r` is equal to
+        The reduced values. If `out` was supplied, `r` is a reference to
         `out`.
 
-    Examples
-    --------
-    >>> np.multiply.accumulate([2,3,5])
-    array([2,6,30])
+    Notes
+    -----
+    A descriptive example:
 
-    """))
+    If `a` is 1-D, the function `ufunc.accumulate(a)` is the same as
+    ``ufunc.reduceat(a, indices)[::2]`` where `indices` is
+    ``range(len(array) - 1)`` with a zero placed
+    in every other element:
+    ``indices = zeros(2 * len(a) - 1)``, ``indices[1::2] = range(1, len(a))``.
 
-add_newdoc('numpy.core', 'ufunc', ('reduceat',
-    """
-    reduceat(self, array, indices, axis=None, dtype=None, out=None)
-
-    Reduceat performs a reduce with specified slices over an axis.
-
-    Computes op.reduce(`array[indices[i]:indices[i+1]]`)
-    for i=0..end with an implicit `indices[i+1]` = len(`array`)
-    assumed when i = end - 1.
-
-    If `indices[i]` >= `indices[i + 1]`
-    then the result is `array[indices[i]]` for that value.
-
-    The function op.accumulate(`array`) is the same as
-    op.reduceat(`array`, `indices`)[::2]
-    where `indices` is range(len(`array`)-1) with a zero placed
-    in every other sample:
-    `indices` = zeros(len(`array`)*2 - 1)
-    `indices[1::2]` = range(1, len(`array`))
-
-    The output shape is based on the size of `indices`.
-
-    Parameters
-    ----------
-    array : array_like
-        The array to act on.
-    indices : array_like
-        Paired indices specifying slices to reduce.
-    axis : int, optional
-        The axis along which to apply the reduceat.
-    dtype : data-type-code, optional
-        The type used to represent the intermediate results. Defaults
-        to the data type of the output array if this is provided, or
-        the data type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
-
-    Returns
-    -------
-    r : array
-        The reduced values. If `out` was supplied, `r` is equal to `out`.
+    Don't be fooled by this attribute's name: `reduceat(a)` is not
+    necessarily smaller than `a`.
 
     Examples
     --------
@@ -3475,46 +4256,103 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     >>> np.add.reduceat(np.arange(8),[0,4, 1,5, 2,6, 3,7])[::2]
     array([ 6, 10, 14, 18])
 
+    A 2-D example:
+
+    >>> x = np.linspace(0, 15, 16).reshape(4,4)
+    >>> x
+    array([[  0.,   1.,   2.,   3.],
+           [  4.,   5.,   6.,   7.],
+           [  8.,   9.,  10.,  11.],
+           [ 12.,  13.,  14.,  15.]])
+
+    ::
+
+     # reduce such that the result has the following five rows:
+     # [row1 + row2 + row3]
+     # [row4]
+     # [row2]
+     # [row3]
+     # [row1 + row2 + row3 + row4]
+
+    >>> np.add.reduceat(x, [0, 3, 1, 2, 0])
+    array([[ 12.,  15.,  18.,  21.],
+           [ 12.,  13.,  14.,  15.],
+           [  4.,   5.,   6.,   7.],
+           [  8.,   9.,  10.,  11.],
+           [ 24.,  28.,  32.,  36.]])
+
+    ::
+
+     # reduce such that result has the following two columns:
+     # [col1 * col2 * col3, col4]
+
+    >>> np.multiply.reduceat(x, [0, 3], 1)
+    array([[    0.,     3.],
+           [  120.,     7.],
+           [  720.,    11.],
+           [ 2184.,    15.]])
+
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
     """
-    outer(A,B)
+    outer(A, B)
 
-    Compute the result of applying op to all pairs (a,b)
+    Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
 
-    op.outer(A,B) is equivalent to
-    op(A[:,:,...,:,newaxis,...,newaxis]*B[newaxis,...,newaxis,:,...,:])
-    where A has B.ndim new axes appended and B has A.ndim new axes prepended.
+    Let ``M = A.ndim``, ``N = B.ndim``. Then the result, `C`, of
+    ``op.outer(A, B)`` is an array of dimension M + N such that:
 
-    For A and B one-dimensional, this is equivalent to
-    ::
+    .. math:: C[i_0, ..., i_{M-1}, j_0, ..., j_{N-1}] =
+       op(A[i_0, ..., i_{M-1}], B[j_0, ..., j_{N-1}])
 
-     r = empty(len(A),len(B))
-     for i in xrange(len(A)):
-         for j in xrange(len(B)):
-             r[i,j] = A[i]*B[j]
+    For `A` and `B` one-dimensional, this is equivalent to::
 
-    If A and B are higher-dimensional, the result has dimension A.ndim+B.ndim
+      r = empty(len(A),len(B))
+      for i in xrange(len(A)):
+          for j in xrange(len(B)):
+              r[i,j] = op(A[i], B[j]) # op = ufunc in question
 
     Parameters
     ----------
     A : array_like
-        First term
+        First array
     B : array_like
-        Second term
+        Second array
 
     Returns
     -------
     r : ndarray
         Output array
 
+    See Also
+    --------
+    numpy.outer
+
     Examples
     --------
-    >>> np.multiply.outer([1,2,3],[4,5,6])
+    >>> np.multiply.outer([1, 2, 3], [4, 5, 6])
     array([[ 4,  5,  6],
            [ 8, 10, 12],
            [12, 15, 18]])
+
+    A multi-dimensional example:
+
+    >>> A = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> A.shape
+    (2, 3)
+    >>> B = np.array([[1, 2, 3, 4]])
+    >>> B.shape
+    (1, 4)
+    >>> C = np.multiply.outer(A, B)
+    >>> C.shape; C
+    (2, 3, 1, 4)
+    array([[[[ 1,  2,  3,  4]],
+            [[ 2,  4,  6,  8]],
+            [[ 3,  6,  9, 12]]],
+           [[[ 4,  8, 12, 16]],
+            [[ 5, 10, 15, 20]],
+            [[ 6, 12, 18, 24]]]])
 
     """))
 
@@ -3681,22 +4519,29 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
     """
-    Dictionary showing any named fields defined for this data type, or None.
+    Dictionary of named fields defined for this data type, or ``None``.
 
     The dictionary is indexed by keys that are the names of the fields.
     Each entry in the dictionary is a tuple fully describing the field::
 
       (dtype, offset[, title])
 
-    If present, the optional title can be any object (if it is string
+    If present, the optional title can be any object (if it is a string
     or unicode then it will also be a key in the fields dictionary,
-    otherwise it's meta-data). Notice also, that the first two elements
-    of the tuple can be passed directly as arguments to the `ndarray.getfield`
-    and `ndarray.setfield` methods.
+    otherwise it's meta-data). Notice also that the first two elements
+    of the tuple can be passed directly as arguments to the ``ndarray.getfield``
+    and ``ndarray.setfield`` methods.
 
     See Also
     --------
     ndarray.getfield, ndarray.setfield
+
+    Examples
+    --------
+
+    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    >>> print dt.fields
+    {'grades': (dtype(('float64',(2,))), 16), 'name': (dtype('|S16'), 0)}
 
     """))
 
@@ -3736,8 +4581,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     1  if this is a dtype compiled into numpy (such as ints, floats etc)
     2  if the dtype is for a user-defined numpy type
        A user-defined type uses the numpy C-API machinery to extend
-       numpy to handle a new array type.  See the Guide to Numpy for
-       details.
+       numpy to handle a new array type. See
+       :ref:`user.user-defined-data-types` in the Numpy manual.
     =  ========================================================================
 
     Examples
@@ -3788,7 +4633,15 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('names',
     """
     Ordered list of field names, or ``None`` if there are no fields.
 
-    The names are ordered according to increasing byte offset.
+    The names are ordered according to increasing byte offset. This can be
+    used, for example, to walk through all of the named fields in offset order.
+
+    Examples
+    --------
+
+    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    >>> dt.names
+    ('name', 'grades')
 
     """))
 
@@ -4300,25 +5153,38 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 ##############################################################################
 
 add_newdoc('numpy.core.numerictypes', 'bool_',
-    """Boolean. Character code ``?``.""")
+    """Numpy's Boolean type.  Character code: ``?``.  Alias: bool8""")
 
 add_newdoc('numpy.core.numerictypes', 'complex64',
     """
+    Complex number type composed of two 32 bit floats. Character code: 'F'.
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'complex128',
     """
+    Complex number type composed of two 64 bit floats. Character code: 'D'.
+    Python complex compatible.
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'complex256',
     """
+    Complex number type composed of two 128-bit floats. Character code: 'G'.
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'float32',
-    """32-bit floating-point number. Character code ``f``.""")
+    """
+    32-bit floating-point number. Character code 'f'. C float compatible.
+
+    """)
 
 add_newdoc('numpy.core.numerictypes', 'float64',
-    """64-bit floating-point number. Character code ``d``.""")
+    """
+    64-bit floating-point number. Character code 'd'. Python float compatible.
+
+    """)
 
 add_newdoc('numpy.core.numerictypes', 'float96',
     """
@@ -4326,20 +5192,22 @@ add_newdoc('numpy.core.numerictypes', 'float96',
 
 add_newdoc('numpy.core.numerictypes', 'float128',
     """
+    128-bit floating-point number. Character code: 'g'. C long float
+    compatible.
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'int8',
-    """8-bit integer. Character code ``b``.""")
+    """8-bit integer. Character code ``b``. C char compatible.""")
 
 add_newdoc('numpy.core.numerictypes', 'int16',
-    """16-bit integer. Character code ``h``.""")
+    """16-bit integer. Character code ``h``. C short compatible.""")
 
 add_newdoc('numpy.core.numerictypes', 'int32',
-    """32-bit integer. Character code ``i4``.""")
+    """32-bit integer. Character code 'i'. C int compatible.""")
 
 add_newdoc('numpy.core.numerictypes', 'int64',
-    """64-bit integer. Character code ``i8``.""")
+    """64-bit integer. Character code 'l'. Python int compatible.""")
 
 add_newdoc('numpy.core.numerictypes', 'object_',
-    """
-    """)
+    """Any Python object.  Character code: 'O'.""")
