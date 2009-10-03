@@ -13,5 +13,6 @@ Numpy basics
    basics.creation
    basics.indexing
    basics.broadcasting
+   basics.byteswapping
    basics.rec
    basics.subclassing
