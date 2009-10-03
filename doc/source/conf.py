@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
+              'sphinx.ext.doctest',
               'plot_directive']
 
 if sphinx.__version__ >= "0.7":
