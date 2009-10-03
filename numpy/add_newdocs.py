@@ -4048,6 +4048,160 @@ add_newdoc('numpy.core', 'ufunc',
 
 ##############################################################################
 #
+# ufunc attributes
+#
+##############################################################################
+
+add_newdoc('numpy.core', 'ufunc', ('identity',
+    """
+    The identity value.
+    
+    Data attribute containing the identity element for the ufunc, if it has one.
+    If it does not, the attribute value is None.
+    
+    Examples
+    --------
+    >>> np.add.identity
+    0
+    >>> np.multiply.identity
+    1
+    >>> np.power.identity
+    1
+    >>> print np.exp.identity
+    None
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('nargs',
+    """
+    The number of arguments.
+    
+    Data attribute containing the number of arguments the ufunc takes, including
+    optional ones.
+    
+    Notes
+    -----
+    Typically this value will be one more than what you might expect because all
+    ufuncs take  the optional "out" argument.
+    
+    Examples
+    --------
+    >>> np.add.nargs
+    3
+    >>> np.multiply.nargs
+    3
+    >>> np.power.nargs
+    3
+    >>> np.exp.nargs
+    2
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('nin',
+    """
+    The number of inputs.
+    
+    Data attribute containing the number of arguments the ufunc treats as input.
+    
+    Examples
+    --------
+    >>> np.add.nin
+    2
+    >>> np.multiply.nin
+    2
+    >>> np.power.nin
+    2
+    >>> np.exp.nin
+    1
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('nout',
+    """
+    The number of outputs.
+    
+    Data attribute containing the number of arguments the ufunc treats as output.
+    
+    Notes
+    -----
+    Since all ufuncs can take output arguments, this will always be (at least) 1.
+    
+    Examples
+    --------
+    >>> np.add.nout
+    1
+    >>> np.multiply.nout
+    1
+    >>> np.power.nout
+    1
+    >>> np.exp.nout
+    1
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('ntypes',
+    """
+    The number of types.
+    
+    The number of numerical NumPy types - of which there are 18 total - on which
+    the ufunc can operate.
+    
+    See Also
+    --------
+    numpy.ufunc.types
+    
+    Examples
+    --------
+    >>> np.add.ntypes
+    18
+    >>> np.multiply.ntypes
+    18
+    >>> np.power.ntypes
+    17
+    >>> np.exp.ntypes
+    7
+    >>> np.remainder.ntypes
+    14
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('types',
+    """
+    Returns a list with types grouped input->output.
+
+    Data attribute listing the data-type "Domain-Range" groupings the ufunc can
+    deliver. The data-types are given using the character codes.
+
+    See Also
+    --------
+    numpy.ufunc.ntypes
+
+    Examples
+    --------
+    >>> np.add.types
+    ['??->?', 'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l',
+    'LL->L', 'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D',
+    'GG->G', 'OO->O']
+
+    >>> np.multiply.types
+    ['??->?', 'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l',
+    'LL->L', 'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D',
+    'GG->G', 'OO->O']
+
+    >>> np.power.types
+    ['bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l', 'LL->L',
+    'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D', 'GG->G',
+    'OO->O']
+
+    >>> np.exp.types
+    ['f->f', 'd->d', 'g->g', 'F->F', 'D->D', 'G->G', 'O->O']
+
+    >>> np.remainder.types
+    ['bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l', 'LL->L',
+    'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'OO->O']
+
+    """))
+
+
+##############################################################################
+#
 # ufunc methods
 #
 ##############################################################################

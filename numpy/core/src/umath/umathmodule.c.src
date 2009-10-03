@@ -43,12 +43,6 @@
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
-static char
-doc_frompyfunc[] = "frompyfunc(func, nin, nout) take an arbitrary python\n"   \
-                   "function that takes nin objects as input and returns\n"   \
-                   "nout objects and return a universal function (ufunc).\n"  \
-                   "This ufunc always returns PyObject arrays\n";
-
 static PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
     /* Keywords are ignored for now */
@@ -240,7 +234,7 @@ InitOtherOperators(PyObject *dictionary) {
 
 static struct PyMethodDef methods[] = {
     {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
-     METH_VARARGS | METH_KEYWORDS, doc_frompyfunc},
+     METH_VARARGS | METH_KEYWORDS, NULL},
     {"seterrobj", (PyCFunction) ufunc_seterr,
      METH_VARARGS, NULL},
     {"geterrobj", (PyCFunction) ufunc_geterr,
