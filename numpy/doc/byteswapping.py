@@ -7,7 +7,7 @@
 Introduction to byte ordering and ndarrays
 ==========================================
 
-``ndarrays`` are objects that provide a python array interface to data
+The ``ndarray`` is an object that provide a python array interface to data
 in memory.
 
 It often happens that the memory that you want to view with an array is
