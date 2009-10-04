@@ -33,7 +33,7 @@ The bytes I have loaded from the file would have these contents:
 
 >>> big_end_str = chr(0) + chr(1) + chr(3) + chr(2)
 >>> big_end_str
-'\x00\x01\x03\x02'
+'\\x00\\x01\\x03\\x02'
 
 We might want to use an ``ndarray`` to access these integers.  In that
 case, we can create an array around this memory, and tell numpy that
