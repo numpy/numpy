@@ -199,7 +199,6 @@ for f in ["isnan", "isinf", "signbit", "isfinite"]:
 
 inline = config.CheckInline()
 config.Define('inline', inline)
-numpyconfig_sym.append(('NPY_INLINE', inline))
 
 
 if ENABLE_SEPARATE_COMPILATION:

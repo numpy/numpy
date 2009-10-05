@@ -4,6 +4,14 @@
 /* This is auto-generated */
 #include "numpyconfig.h"
 
+#if defined(_MSC_VER)
+        #define NPY_INLINE __inline
+#elif defined(__GNUC__)
+        #define NPY_INLINE inline
+#else
+        #define NPY_INLINE
+#endif
+
 /* enums for detected endianness */
 enum {
 	NPY_CPU_UNKNOWN_ENDIAN,

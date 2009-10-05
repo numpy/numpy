@@ -438,9 +438,6 @@ def configuration(parent_package='',top_path=None):
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
                 moredefs.append(('NPY_USE_C99_FORMATS', 1))
 
-            # Inline check
-            inline = config_cmd.check_inline()
-
             # visibility check
             hidden_visibility = visibility_define(config_cmd)
             moredefs.append(('NPY_VISIBILITY_HIDDEN', hidden_visibility))
@@ -456,9 +453,6 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
-
-            # define NPY_INLINE to recognized keyword
-            target_f.write('#define NPY_INLINE %s\n' % inline)
 
             # Define __STDC_FORMAT_MACROS
             target_f.write("""
