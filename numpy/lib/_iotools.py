@@ -614,6 +614,13 @@ class StringConverter:
         # Don't reset the default to None if we can avoid it
         if default is not None:
             self.default = default
+            self.type = self._getsubdtype(default)
+        else:
+            try:
+                tester = func('0')
+            except (TypeError, ValueError):
+                tester = None
+            self.type = self._getsubdtype(tester)
         # Add the missing values to the existing set
         if missing_values is not None:
             if _is_string_like(missing_values):
@@ -623,10 +630,3 @@ class StringConverter:
                     self.missing_values.add(val)
         else:
             self.missing_values = []
-        # Update the type
-        try:
-            tester = func('0')
-        except ValueError:
-            tester = None
-        self.type = self._getsubdtype(tester)
-

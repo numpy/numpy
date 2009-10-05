@@ -825,6 +825,44 @@ M   33  21.99
         assert_equal(test, control)
 
 
+    def test_invalid_raise(self):
+        "Test invalid raise"
+        data = ["1, 1, 1, 1, 1"] * 50
+        for i in range(5):
+            data[10 * i] = "2, 2, 2, 2 2"
+        data.insert(0, "a, b, c, d, e")
+        mdata = StringIO.StringIO("\n".join(data))
+        #
+        mtest = np.ndfromtxt(mdata, delimiter=",", names=True, dtype=None,)
+        assert_equal(len(mtest), 45)
+        assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
+        #
+        mdata.seek(0)
+        assert_raises(ValueError, np.ndfromtxt, mdata,
+                      delimiter=",", names=True, invalid_raise=True)
+
+    def test_invalid_raise_with_usecols(self):
+        "Test invalid_raise with usecols"
+        data = ["1, 1, 1, 1, 1"] * 50
+        for i in range(5):
+            data[10 * i] = "2, 2, 2, 2 2"
+        data.insert(0, "a, b, c, d, e")
+        mdata = StringIO.StringIO("\n".join(data))
+        #
+        mtest = np.ndfromtxt(mdata, delimiter=",", names=True, dtype=None,
+                             usecols=(0, 4))
+        assert_equal(len(mtest), 45)
+        assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
+        #
+        mdata.seek(0)
+        mtest = np.ndfromtxt(mdata, delimiter=",", names=True, dtype=None,
+                             usecols=(0, 1))
+        assert_equal(len(mtest), 50)
+        control = np.ones(50, dtype=[(_, int) for _ in 'ab'])
+        control[[10 * _ for _ in range(5)]] = (2, 2)
+        assert_equal(mtest, control)
+
+
     def test_recfromtxt(self):
         #
         data = StringIO.StringIO('A,B\n0,1\n2,3')
