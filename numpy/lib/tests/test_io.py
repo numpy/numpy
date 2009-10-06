@@ -11,6 +11,8 @@ from tempfile import mkstemp, NamedTemporaryFile
 import sys, time
 from datetime import datetime
 
+from numpy.lib._iotools import ConverterError, ConverterLockError
+
 
 MAJVER, MINVER = sys.version_info[:2]
 
@@ -624,6 +626,19 @@ M   33  21.99
         assert_equal(test, [33, 66])
 
 
+    def test_invalid_converter(self):
+        strip_rand = lambda x : float(('r' in x.lower() and x.split()[-1]) or
+                                      (not 'r' in x.lower() and x.strip() or 0.0))
+        strip_per = lambda x : float(('%' in x.lower() and x.split()[0]) or
+                                     (not '%' in x.lower() and x.strip() or 0.0))
+        s = StringIO.StringIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n" \
+                              "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
+                              "D02N03,10/10/2004,R 1,,7,145.55")
+        kwargs = dict(converters={2 : strip_per, 3 : strip_rand}, delimiter=",",
+                      dtype=None)
+        assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
+
+
     def test_dtype_with_converters(self):
         dstr = "2009; 23; 46"
         test = np.ndfromtxt(StringIO.StringIO(dstr,),
@@ -861,6 +876,16 @@ M   33  21.99
         control = np.ones(50, dtype=[(_, int) for _ in 'ab'])
         control[[10 * _ for _ in range(5)]] = (2, 2)
         assert_equal(mtest, control)
+
+
+    def test_inconsistent_dtype(self):
+        data = ["1, 1, 1, 1, -1.1"] * 50
+        mdata = StringIO.StringIO("\n".join(data))
+
+        converters = {4: lambda x:np.sqrt(float(x))}
+        kwargs = dict(delimiter=",", converters=converters,
+                      dtype=[(_, int) for _ in 'abcde'],)
+        assert_raises(TypeError, np.genfromtxt, mdata, **kwargs)
 
 
     def test_recfromtxt(self):

@@ -370,6 +370,12 @@ def str2bool(value):
         raise ValueError("Invalid boolean")
 
 
+class ConverterError(Exception):
+    pass
+
+class ConverterLockError(ConverterError):
+    pass
+
 
 class StringConverter:
     """
@@ -574,16 +580,39 @@ class StringConverter:
         except ValueError:
             # Raise an exception if we locked the converter...
             if self._locked:
-                raise ValueError("Converter is locked and cannot be upgraded")
+                errmsg = "Converter is locked and cannot be upgraded"
+                raise ConverterLockError(errmsg)
             _statusmax = len(self._mapper)
             # Complains if we try to upgrade by the maximum
             if self._status == _statusmax:
-                raise ValueError("Could not find a valid conversion function")
+                errmsg = "Could not find a valid conversion function"
+                raise ConverterError(errmsg)
             elif self._status < _statusmax - 1:
                 self._status += 1
             (self.type, self.func, self.default) = self._mapper[self._status]
             self.upgrade(value)
-    #
+
+    def iterupgrade(self, value):
+        self._checked = True
+        if not hasattr(value, '__iter__'):
+            value = (value,)
+        _strict_call = self._strict_call
+        try:
+            map(_strict_call, value)
+        except ValueError:
+            # Raise an exception if we locked the converter...
+            if self._locked:
+                errmsg = "Converter is locked and cannot be upgraded"
+                raise ConverterLockError(errmsg)
+            _statusmax = len(self._mapper)
+            # Complains if we try to upgrade by the maximum
+            if self._status == _statusmax:
+                raise ConverterError("Could not find a valid conversion function")
+            elif self._status < _statusmax - 1:
+                self._status += 1
+            (self.type, self.func, self.default) = self._mapper[self._status]
+            self.iterupgrade(value)
+
     def update(self, func, default=None, missing_values='', locked=False):
         """
         Set StringConverter attributes directly.
@@ -617,7 +646,7 @@ class StringConverter:
             self.type = self._getsubdtype(default)
         else:
             try:
-                tester = func('0')
+                tester = func('1')
             except (TypeError, ValueError):
                 tester = None
             self.type = self._getsubdtype(tester)

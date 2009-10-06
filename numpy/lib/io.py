@@ -12,12 +12,14 @@ import cStringIO
 import os
 import itertools
 import warnings
+from operator import itemgetter
 
 from cPickle import load as _cload, loads
 from _datasource import DataSource
 from _compiled_base import packbits, unpackbits
 
 from _iotools import LineSplitter, NameValidator, StringConverter, \
+                     ConverterError, ConverterLockError, \
                      _is_string_like, has_nested_fields, flatten_dtype
 
 _file = file
@@ -1176,15 +1178,28 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         elif nbvalues != nbcols:
             append_to_invalid((i, nbvalues))
             continue
-        # Check whether we need to update the converter
-        if dtype is None:
-            for (converter, item) in zip(converters, values):
-                converter.upgrade(item)
         # Store the values
         append_to_rows(tuple(values))
         if usemask:
             append_to_masks(tuple([val.strip() in mss
                             for (val, mss) in zip(values, missing)]))
+
+    # Upgrade the converters (if needed)
+    if dtype is None:
+        for (i, converter) in enumerate(converters):
+            current_column = map(itemgetter(i), rows)
+            try:
+                converter.iterupgrade(current_column)
+            except ConverterLockError:
+                errmsg = "Converter #%i is locked and cannot be upgraded: " % i
+                current_column = itertools.imap(itemgetter(i), rows)
+                for (j, value) in enumerate(current_column):
+                    try:
+                        converter.upgrade(value)
+                    except (ConverterError, ValueError):
+                        errmsg += "(occurred line #%i for value '%s')"
+                        errmsg %= (j + 1 + skiprows, value)
+                        raise ConverterError(errmsg)
 
     # Check that we don't have invalid values
     if len(invalid) > 0:
@@ -1202,14 +1217,19 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
 
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
+#    if loose:
+#        conversionfuncs = [conv._loose_call for conv in converters]
+#    else:
+#        conversionfuncs = [conv._strict_call for conv in converters]
+#    for (i, vals) in enumerate(rows):
+#        rows[i] = tuple([convert(val)
+#                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        conversionfuncs = [conv._loose_call for conv in converters]
+        rows = zip(*(map(converter._loose_call, map(itemgetter(i), rows))
+                     for (i, converter) in enumerate(converters)))
     else:
-        conversionfuncs = [conv._strict_call for conv in converters]
-    for (i, vals) in enumerate(rows):
-        rows[i] = tuple([convert(val)
-                         for (convert, val) in zip(conversionfuncs, vals)])
-
+        rows = zip(*(map(converter._strict_call, map(itemgetter(i), rows))
+                     for (i, converter) in enumerate(converters)))
     # Reset the dtype
     data = rows
     if dtype is None:
