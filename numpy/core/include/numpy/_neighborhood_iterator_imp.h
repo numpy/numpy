@@ -37,7 +37,7 @@ _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter)
 {
-    int i, wb;
+    npy_intp i, wb;
 
     for (i = iter->nd - 1; i >= 0; --i) {
         _UPDATE_COORD_ITER(i)
@@ -52,7 +52,7 @@ _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter)
 static NPY_INLINE int
 _PyArrayNeighborhoodIter_IncrCoord2D(PyArrayNeighborhoodIterObject* iter)
 {
-    int wb;
+    npy_intp wb;
 
     _UPDATE_COORD_ITER(1)
     _UPDATE_COORD_ITER(0)
@@ -79,7 +79,7 @@ PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
 static NPY_INLINE int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
 {
-    int i;
+    npy_intp i;
 
     for (i = 0; i < iter->nd; ++i) {
         iter->coordinates[i] = iter->bounds[i][0];
