@@ -1,19 +1,13 @@
 import os
 import genapi
 
-# new_types are types added later on, for which the offset in the API function
-# pointer array should be different (to avoid breaking the ABI).
-new_types = ['TimeInteger', 'Datetime', 'Timedelta']
-
-old_types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
-         'Inexact',
+types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
+         'Inexact', 'TimeInteger', 
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
          'CFloat', 'CDouble', 'CLongDouble', 'Object', 'String', 'Unicode',
-         'Void']
-
-types = old_types + new_types
+         'Void', 'Datetime', 'Timedelta']
 
 h_template = r"""
 #ifdef _MULTIARRAYMODULE
@@ -192,23 +186,6 @@ def generate_api(output_dir, force=False):
 
     return targets
 
-def generate_type_decl(offset, types, init_list, module_list, extension_list):
-    for k, atype in enumerate(types):
-        num = offset + k
-        astr = "        (void *) &Py%sArrType_Type," % types[k]
-        init_list.append(astr)
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-    extern NPY_NO_EXPORT PyTypeObject Py%(type)sArrType_Type;
-#else
-    NPY_NO_EXPORT PyTypeObject Py%(type)sArrType_Type;
-#endif
-""" % {'type': types[k]}
-        module_list.append(astr)
-        astr = "#define Py%sArrType_Type (*(PyTypeObject *)PyArray_API[%d])" % \
-               (types[k], num)
-        extension_list.append(astr)
-
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
@@ -225,7 +202,21 @@ def do_generate_api(targets, sources):
     init_list = []
 
     # setup types
-    generate_type_decl(fixed, types, init_list, module_list, extension_list)
+    for k, atype in enumerate(types):
+        num = fixed + k
+        astr = "        (void *) &Py%sArrType_Type," % types[k]
+        init_list.append(astr)
+        astr = """\
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+    extern NPY_NO_EXPORT PyTypeObject Py%(type)sArrType_Type;
+#else
+    NPY_NO_EXPORT PyTypeObject Py%(type)sArrType_Type;
+#endif
+""" % {'type': types[k]}
+        module_list.append(astr)
+        astr = "#define Py%sArrType_Type (*(PyTypeObject *)PyArray_API[%d])" % \
+               (types[k], num)
+        extension_list.append(astr)
 
     # set up object API
     genapi.add_api_list(numtypes, 'PyArray_API', numpyapi_list,
