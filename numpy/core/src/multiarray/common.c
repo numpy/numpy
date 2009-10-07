@@ -507,6 +507,13 @@ _IsAligned(PyArrayObject *ap)
     int i, alignment, aligned = 1;
     intp ptr;
 
+    /* The special casing for STRING and VOID types was removed
+     * in accordance with http://projects.scipy.org/numpy/ticket/1227
+     * It used to be that IsAligned always returned True for these
+     * types, which is indeed the case when they are created using
+     * PyArray_DescrConverter(), but not necessarily when using
+     * PyArray_DescrAlignConverter(). */
+
     alignment = ap->descr->alignment;
     if (alignment == 1) {
         return 1;
