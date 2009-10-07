@@ -506,11 +506,7 @@ _IsAligned(PyArrayObject *ap)
 {
     int i, alignment, aligned = 1;
     intp ptr;
-    int type = ap->descr->type_num;
 
-    if ((type == PyArray_STRING) || (type == PyArray_VOID)) {
-        return 1;
-    }
     alignment = ap->descr->alignment;
     if (alignment == 1) {
         return 1;
