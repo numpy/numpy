@@ -218,18 +218,23 @@ def do_generate_api(targets, sources):
 
     # API fixes for __arrayobject_api.h
     fixed = 10
-    numtypes = len(types) + fixed
+    numtypes = len(old_types) + fixed
 
     module_list = []
     extension_list = []
     init_list = []
 
-    # setup types
-    generate_type_decl(fixed, types, init_list, module_list, extension_list)
+    # setup old types
+    generate_type_decl(fixed, old_types, init_list, module_list, extension_list)
 
     # set up object API
-    genapi.add_api_list(numtypes, 'PyArray_API', numpyapi_list,
+    num = genapi.add_api_list(numtypes, 'PyArray_API', numpyapi_list,
                         module_list, extension_list, init_list)
+
+    # setup old types
+    newtypes_offset = 215
+    assert newtypes_offset == num + 1
+    generate_type_decl(newtypes_offset, new_types, init_list, module_list, extension_list)
 
     # Write to header
     fid = open(header_file, 'w')
