@@ -1,13 +1,19 @@
 import os
 import genapi
 
-types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
-         'Inexact', 'TimeInteger', 
+# new_types are types added later on, for which the offset in the API function
+# pointer array should be different (to avoid breaking the ABI).
+new_types = ['TimeInteger', 'Datetime', 'Timedelta']
+
+old_types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
+         'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
          'CFloat', 'CDouble', 'CLongDouble', 'Object', 'String', 'Unicode',
-         'Void', 'Datetime', 'Timedelta']
+         'Void']
+
+types = old_types + new_types
 
 h_template = r"""
 #ifdef _MULTIARRAYMODULE
