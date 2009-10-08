@@ -69,16 +69,7 @@ static void **PyArray_API=NULL;
 #endif
 #endif
 
-#define PyArray_GetNDArrayCVersion (*(unsigned int (*)(void)) PyArray_API[0])
-#define PyBigArray_Type (*(PyTypeObject *)PyArray_API[1])
-#define PyArray_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[3])
-#define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[4])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[5])
-#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[6])
-#define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])
-#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
-#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
+%s
 
 %s
 
@@ -216,6 +207,19 @@ def do_generate_api(targets, sources):
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API', sources[0])
 
+    beg_api = """\
+#define PyArray_GetNDArrayCVersion (*(unsigned int (*)(void)) PyArray_API[0])
+#define PyBigArray_Type (*(PyTypeObject *)PyArray_API[1])
+#define PyArray_Type (*(PyTypeObject *)PyArray_API[2])
+#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[4])
+#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[5])
+#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[6])
+#define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])
+#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
+#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
+    """
+
     # API fixes for __arrayobject_api.h
     fixed = 10
     numtypes = len(old_types) + fixed
@@ -238,7 +242,7 @@ def do_generate_api(targets, sources):
 
     # Write to header
     fid = open(header_file, 'w')
-    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
+    s = h_template % ('\n'.join(module_list), beg_api, '\n'.join(extension_list))
     fid.write(s)
     fid.close()
 
