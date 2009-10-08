@@ -1107,7 +1107,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
             return PyErr_NoMemory();
         }
         else {
-            descr->f->copyswap(newmem, data, 1);
+            descr->f->copyswap(newmem, data, 1, NULL);
         }
         new = PyArray_Scalar(newmem, descr, NULL);
         _pya_free(newmem);
