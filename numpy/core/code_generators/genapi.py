@@ -247,62 +247,6 @@ def find_functions(filename, tag='API'):
     fo.close()
     return functions
 
-def read_order(order_file):
-    """
-    Read the order of the API functions from a file.
-
-    Comments can be put on lines starting with #
-    """
-    fo = open(order_file, 'r')
-    order = {}
-    i = 0
-    for line in fo:
-        line = line.strip()
-        if not line.startswith('#'):
-            order[line] = i
-            i += 1
-    fo.close()
-    return order
-
-def get_api_functions(tagname, order_file):
-    if not os.path.exists(order_file):
-        order_file = file_in_this_dir(order_file)
-    order = read_order(order_file)
-    functions = []
-    for f in API_FILES:
-        functions.extend(find_functions(f, tagname))
-    dfunctions = []
-    for func in functions:
-        o = order[func.name]
-        dfunctions.append( (o, func) )
-    dfunctions.sort()
-    return [a[1] for a in dfunctions]
-
-def generate_api_func(func, index, api_name):
-    # Declaration used internally by numpy
-    intern_decl = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
-           (func.return_type, func.name, func.argtypes_string())
-    # Declaration used by extensions
-    extern_decl = "#define %s \\\n        (*(%s (*)(%s)) \\\n"\
-           "         %s[%d])" % (func.name,func.return_type,
-                                 func.argtypes_string(), api_name, index)
-    init_decl = "        (void *) %s," % func.name
-    return intern_decl, extern_decl, init_decl
-
-def add_api_list(offset, APIname, api_list,
-                 module_list, extension_list, init_list):
-    """Add the API function declarations to the appropiate lists for use in
-    the headers.
-    """
-    for k, func in enumerate(api_list):
-        num = offset + k
-        intern_decl, extern_decl, init_decl = generate_api_func(func, num,
-                                                                APIname)
-        module_list.append(intern_decl)
-        extension_list.append(extern_decl)
-        init_list.append(init_decl)
-    return num
-
 def should_rebuild(targets, source_files):
     from distutils.dep_util import newer_group
     for t in targets:
