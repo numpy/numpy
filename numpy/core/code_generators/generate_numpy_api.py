@@ -200,6 +200,17 @@ def generate_type_decl(offset, types, init_list, module_list, extension_list):
                (types[k], num)
         extension_list.append(astr)
 
+class Type:
+    def __init__(self, name, index, ptr_cast):
+        self.index = index
+        self.name = name
+        self.ptr_cast = ptr_cast
+
+    def decl_str(self):
+        return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
+                                                        self.ptr_cast,
+                                                        self.index)
+
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
@@ -218,14 +229,20 @@ def do_generate_api(targets, sources):
 #define %s (*(%s (*)(%s)) PyArray_API[0])
 """ % (first_func.name, first_func.return_type, first_func.argtypes_string())
 
+    first_types = [
+            Type('PyBigArray_Type', 1, 'PyTypeObject'),
+            Type('PyArray_Type', 2, 'PyTypeObject'),
+            Type('PyArrayDescr_Type', 3, 'PyTypeObject'),
+            Type('PyArrayFlags_Type', 4, 'PyTypeObject'),
+            Type('PyArrayIter_Type', 5, 'PyTypeObject'),
+            Type('PyArrayMultiIter_Type', 6, 'PyTypeObject')]
+
+    for t in first_types:
+        beg_api += "%s\n" % t.decl_str()
+
+    beg_api += "#define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])\n"
+
     beg_api += """\
-#define PyBigArray_Type (*(PyTypeObject *)PyArray_API[1])
-#define PyArray_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[3])
-#define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[4])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[5])
-#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[6])
-#define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])
 #define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
 #define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
     """
