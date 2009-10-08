@@ -2,6 +2,9 @@ import os
 import genapi
 import genapi2
 
+from genapi2 import \
+        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
+
 import numpy_api
 
 h_template = r"""
@@ -141,116 +144,6 @@ def generate_api(output_dir, force=False):
         do_generate_api(targets, sources)
 
     return targets
-
-# Those *Api classes instances know how to output strings for the generated code
-class TypeApi:
-    def __init__(self, name, index, ptr_cast):
-        self.index = index
-        self.name = name
-        self.ptr_cast = ptr_cast
-
-    def define_from_array_api_string(self):
-        return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
-                                                        self.ptr_cast,
-                                                        self.index)
-
-    def array_api_define(self):
-        return "        (void *) &%s" % self.name
-
-    def internal_define(self):
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-    extern NPY_NO_EXPORT PyTypeObject %(type)s;
-#else
-    NPY_NO_EXPORT PyTypeObject %(type)s;
-#endif
-""" % {'type': self.name}
-        return astr
-
-class GlobalVarApi:
-    def __init__(self, name, index, type):
-        self.name = name
-        self.index = index
-        self.type = type
-
-    def define_from_array_api_string(self):
-        return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
-                                                        self.type,
-                                                        self.index)
-
-    def array_api_define(self):
-        return "        (%s *) &%s" % (self.type, self.name)
-
-    def internal_define(self):
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-    extern NPY_NO_EXPORT %(type)s %(name)s;
-#else
-    NPY_NO_EXPORT %(type)s %(name)s;
-#endif
-""" % {'type': self.type, 'name': self.name}
-        return astr
-
-# Dummy to be able to consistently use *Api instances for all items in the
-# array api
-class BoolValuesApi:
-    def __init__(self, name, index):
-        self.name = name
-        self.index = index
-        self.type = 'PyBoolScalarObject'
-
-    def define_from_array_api_string(self):
-        return "#define %s ((%s *)PyArray_API[%d])" % (self.name,
-                                                        self.type,
-                                                        self.index)
-
-    def array_api_define(self):
-        return "        (void *) &%s" % self.name
-
-    def internal_define(self):
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
-#else
-NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
-#endif
-"""
-        return astr
-
-def _repl(str):
-    return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
-
-class FunctionApi:
-    def __init__(self, name, index, return_type, args):
-        self.name = name
-        self.index = index
-        self.return_type = return_type
-        self.args = args
-
-    def _argtypes_string(self):
-        if not self.args:
-            return 'void'
-        argstr = ', '.join([_repl(a[0]) for a in self.args])
-        return argstr
-
-    def define_from_array_api_string(self):
-        define = """\
-#define %s \\\n        (*(%s (*)(%s)) \\
-         PyArray_API[%d])""" % (self.name,
-                                self.return_type,
-                                self._argtypes_string(),
-                                self.index)
-        return define
-
-    def array_api_define(self):
-        return "        (void *) %s" % self.name
-
-    def internal_define(self):
-        astr = """\
-NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
-                                           self.name,
-                                           self._argtypes_string())
-        return astr
 
 def do_generate_api(targets, sources):
     header_file = targets[0]
