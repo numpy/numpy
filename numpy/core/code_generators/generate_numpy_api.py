@@ -221,6 +221,8 @@ def do_generate_api(targets, sources):
     doc_file = targets[2]
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API', sources[0])
+    multiarray_funcs = numpy_api.multiarray_funcs_api
+    ordered_funcs_api = order_dict(multiarray_funcs)
 
     # XXX: pop up the first function as it is used only here, not for the .c
     # file nor doc (for now). This is a temporary hack to generate file as
@@ -229,6 +231,8 @@ def do_generate_api(targets, sources):
     # explains why we generate it by hand (to generate the exact same string as
     # before)
     first_func = numpyapi_list.pop(0)
+    _first_func = ordered_funcs_api.pop(0)
+    assert first_func.name == _first_func[0]
     beg_api = """\
 #define %s (*(%s (*)(%s)) PyArray_API[0])
 """ % (first_func.name, first_func.return_type, first_func.argtypes_string())
@@ -286,8 +290,15 @@ def do_generate_api(targets, sources):
         extension_list.append(astr)
 
     # set up object API
-    num = genapi.add_api_list(numtypes, 'PyArray_API', numpyapi_list,
-                        module_list, extension_list, init_list)
+    for name, index in ordered_funcs_api:
+        func = numpyapi_list.pop(0)
+        assert func.name == name, "%s vs %s" % (func.name, name)
+        intern_decl, extern_decl, init_decl = genapi.generate_api_func(func,
+                                                                index,
+                                                                'PyArray_API')
+        module_list.append(intern_decl)
+        extension_list.append(extern_decl)
+        init_list.append(init_decl)
 
     # setup old types
     for name in new_types:
