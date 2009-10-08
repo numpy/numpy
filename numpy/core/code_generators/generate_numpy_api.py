@@ -4,21 +4,6 @@ import genapi2
 
 import numpy_api
 
-# new_types are types added later on, for which the offset in the API function
-# pointer array should be different (to avoid breaking the ABI).
-new_types = ['PyTimeIntegerArrType_Type', 'PyDatetimeArrType_Type',
-             'PyTimedeltaArrType_Type']
-
-old_types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
-         'Inexact',
-         'Floating', 'ComplexFloating', 'Flexible', 'Character',
-         'Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
-         'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
-         'CFloat', 'CDouble', 'CLongDouble', 'Object', 'String', 'Unicode',
-         'Void']
-
-types = old_types + new_types
-
 h_template = r"""
 #ifdef _MULTIARRAYMODULE
 
@@ -267,17 +252,6 @@ NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
                                            self._argtypes_string())
         return astr
 
-def generate_api_func(func, index, api_name):
-    # Declaration used internally by numpy
-    intern_decl = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
-           (func.return_type, func.name, func.argtypes_string())
-    # Declaration used by extensions
-    extern_decl = "#define %s \\\n        (*(%s (*)(%s)) \\\n"\
-           "         %s[%d])" % (func.name,func.return_type,
-                                 func.argtypes_string(), api_name, index)
-    init_decl = "        (void *) %s," % func.name
-    return intern_decl, extern_decl, init_decl
-
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
@@ -323,89 +297,6 @@ def do_generate_api(targets, sources):
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
         module_list.append(api_item.internal_define())
-
-    # XXX: pop up the first function as it is used only here, not for the .c
-    # file nor doc (for now). This is a temporary hack to generate file as
-    # similar as before for easier comparison and should be removed once we
-    # have a consistent way to generate every item of the API. This also
-    # explains why we generate it by hand (to generate the exact same string as
-    # before)
-    first_func = numpyapi_list.pop(0)
-    _first_func = ordered_funcs_api.pop(0)
-    assert first_func.name == _first_func[0]
-    beg_api = """\
-#define %s (*(%s (*)(%s)) PyArray_API[0])
-""" % (first_func.name, first_func.return_type, first_func.argtypes_string())
-
-    # Handle original types
-    multiarray_types = numpy_api.multiarray_types_api
-    ordered_types_api = genapi2.order_dict(multiarray_types)
-
-    first_types = []
-    for i in range(6):
-        name, index = ordered_types_api.pop(0)
-        first_types.append(TypeApi(name, index, 'PyTypeObject'))
-
-    for t in first_types:
-        beg_api += "%s\n" % t.define_from_array_api_string()
-
-    # Handle global vars
-    multiarray_globals = numpy_api.multiarray_global_vars
-    ordered_global_api = genapi2.order_dict(multiarray_globals)
-    name, index = ordered_global_api.pop(0)
-    type = numpy_api.multiarray_global_vars_types[name]
-    g0 = GlobalVarApi(name, index, type)
-    beg_api += "%s\n" % g0.define_from_array_api_string()
-
-    # Handle bool type
-    name, index = ordered_types_api.pop(0)
-    tp = TypeApi(name, index, 'PyTypeObject')
-    beg_api += "%s\n" % tp.define_from_array_api_string()
-
-    # Handle bool values
-    ordered_bool_values = genapi2.order_dict(
-            numpy_api.multiarray_scalar_bool_values)
-    name, index = ordered_bool_values.pop(0)
-    # XXX: this is a special case, check that no other variables are in there
-    assert len(ordered_bool_values) == 0
-    # XXX: not really a type object...
-    tp = BoolValuesApi(name, index)
-    beg_api += "%s\n" % tp.define_from_array_api_string()
-
-    # API fixes for __arrayobject_api.h
-    fixed = 10
-    numtypes = len(old_types) + fixed
-
-    # setup old types
-    for t in range(fixed, numtypes):
-        name, index = ordered_types_api.pop(0)
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-    extern NPY_NO_EXPORT PyTypeObject %(type)s;
-#else
-    NPY_NO_EXPORT PyTypeObject %(type)s;
-#endif
-""" % {'type': name}
-
-    # set up object API
-    print len(ordered_funcs_api), len(numpyapi_list)
-    for name, index in ordered_funcs_api:
-        func = numpyapi_list.pop(0)
-        assert func.name == name, "%s vs %s" % (func.name, name)
-        intern_decl, extern_decl, init_decl = generate_api_func(func,
-                                                                index,
-                                                                'PyArray_API')
-
-    # setup old types
-    for name in new_types:
-        index = numpy_api.multiarray_types_api[name]
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-    extern NPY_NO_EXPORT PyTypeObject %(type)s;
-#else
-    NPY_NO_EXPORT PyTypeObject %(type)s;
-#endif
-""" % {'type': name}
 
     # Write to header
     fid = open(header_file, 'w')
