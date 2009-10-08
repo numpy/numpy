@@ -1825,7 +1825,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
 }
 
-/*
+/*NUMPY_API
  * Included at the very first so not auto-grabbed and thus not
  * labeled.
  */

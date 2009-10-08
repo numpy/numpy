@@ -1,6 +1,7 @@
 # The functions in the numpy C API. They are defined
 # here so that the order is set. Append new functions
 # to the end of the list.
+PyArray_GetNDArrayCVersion
 PyArray_SetNumericOps
 PyArray_GetNumericOps
 PyArray_INCREF

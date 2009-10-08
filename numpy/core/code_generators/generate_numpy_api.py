@@ -207,8 +207,18 @@ def do_generate_api(targets, sources):
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API', sources[0])
 
+    # XXX: pop up the first function as it is used only here, not for the .c
+    # file nor doc (for now). This is a temporary hack to generate file as
+    # similar as before for easier comparison and should be removed once we
+    # have a consistent way to generate every item of the API. This also
+    # explains why we generate it by hand (to generate the exact same string as
+    # before)
+    first_func = numpyapi_list.pop(0)
     beg_api = """\
-#define PyArray_GetNDArrayCVersion (*(unsigned int (*)(void)) PyArray_API[0])
+#define %s (*(%s (*)(%s)) PyArray_API[0])
+""" % (first_func.name, first_func.return_type, first_func.argtypes_string())
+
+    beg_api += """\
 #define PyBigArray_Type (*(PyTypeObject *)PyArray_API[1])
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[2])
 #define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[3])
