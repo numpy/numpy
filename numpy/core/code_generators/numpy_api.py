@@ -1,5 +1,8 @@
-multiarray_misc_api = {
+multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,
+}
+
+multiarray_scalar_bool_values = {
     '_PyArrayScalar_BoolValues':    9
 }
 
