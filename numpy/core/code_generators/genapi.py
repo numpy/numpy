@@ -293,6 +293,7 @@ def add_api_list(offset, APIname, api_list,
         extension_list.append(astr)
         astr = "        (void *) %s," % func.name
         init_list.append(astr)
+    return num
 
 def should_rebuild(targets, source_files):
     from distutils.dep_util import newer_group
