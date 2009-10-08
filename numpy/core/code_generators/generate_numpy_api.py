@@ -259,15 +259,34 @@ def do_generate_api(targets, sources):
     init_list = []
 
     # Check multiarray api indexes
-    multiarray_api_dict = genapi2.merge_api_dicts((numpy_api.multiarray_funcs_api,
+    multiarray_api_index = genapi2.merge_api_dicts((numpy_api.multiarray_funcs_api,
         numpy_api.multiarray_global_vars, numpy_api.multiarray_scalar_bool_values,
         numpy_api.multiarray_types_api))
-    genapi2.check_api_dict(multiarray_api_dict)
+    genapi2.check_api_dict(multiarray_api_index)
 
     multiarray_funcs = numpy_api.multiarray_funcs_api
     numpyapi_list = genapi2.get_api_functions('NUMPY_API',
                                               multiarray_funcs)
     ordered_funcs_api = genapi2.order_dict(multiarray_funcs)
+
+    # Create dict name -> *Api instance
+    multiarray_api_dict = {}
+    for f in numpyapi_list:
+        name = f.name
+        index = multiarray_funcs[name]
+        multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type, f.args)
+
+    for name, index in numpy_api.multiarray_global_vars.items():
+        type = numpy_api.multiarray_global_vars_types[name]
+        multiarray_api_dict[name] = GlobalVarApi(name, index, type)
+
+    for name, index in numpy_api.multiarray_scalar_bool_values.items():
+        multiarray_api_dict[name] = BoolValuesApi(name, index)
+
+    for name, index in numpy_api.multiarray_types_api.items():
+        multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject')
+
+    assert len(multiarray_api_dict) == len(multiarray_api_index)
 
     # XXX: pop up the first function as it is used only here, not for the .c
     # file nor doc (for now). This is a temporary hack to generate file as
