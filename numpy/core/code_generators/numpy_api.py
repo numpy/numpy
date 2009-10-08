@@ -236,10 +236,10 @@ multiarray_funcs_api = {
     'PyArray_Correlate2':                   212,
     'PyArray_NeighborhoodIterNew':          213,
     'PyArray_SetDatetimeParseFunction':     214,
-#    'PyArray_DatetimeToDatetimeStruct':     215,
-#    'PyArray_TimedeltaToTimedeltaStruct':   216,
-#    'PyArray_DatetimeStructToDatetime':     217,
-#    'PyArray_TimedeltaStructToTimedelt':    218,
+    'PyArray_DatetimeToDatetimeStruct':     218,
+    'PyArray_TimedeltaToTimedeltaStruct':   219,
+    'PyArray_DatetimeStructToDatetime':     220,
+    'PyArray_TimedeltaStructToTimedelta':   221,
 }
 
 ufunc_api = {
