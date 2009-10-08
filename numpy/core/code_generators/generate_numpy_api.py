@@ -185,23 +185,6 @@ def generate_api(output_dir, force=False):
 
     return targets
 
-def generate_type_decl(offset, types, init_list, module_list, extension_list):
-    for k, atype in enumerate(types):
-        num = offset + k
-        astr = "        (void *) &Py%sArrType_Type," % types[k]
-        init_list.append(astr)
-        astr = """\
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-    extern NPY_NO_EXPORT PyTypeObject Py%(type)sArrType_Type;
-#else
-    NPY_NO_EXPORT PyTypeObject Py%(type)sArrType_Type;
-#endif
-""" % {'type': types[k]}
-        module_list.append(astr)
-        astr = "#define Py%sArrType_Type (*(PyTypeObject *)PyArray_API[%d])" % \
-               (types[k], num)
-        extension_list.append(astr)
-
 class Type:
     def __init__(self, name, index, ptr_cast):
         self.index = index
@@ -286,7 +269,20 @@ def do_generate_api(targets, sources):
     init_list = []
 
     # setup old types
-    generate_type_decl(fixed, old_types, init_list, module_list, extension_list)
+    for t in range(fixed, numtypes):
+        name, index = ordered_types_api.pop(0)
+        init_list.append("""        (void *) &%s,""" % name)
+        astr = """\
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+    extern NPY_NO_EXPORT PyTypeObject %(type)s;
+#else
+    NPY_NO_EXPORT PyTypeObject %(type)s;
+#endif
+""" % {'type': name}
+        module_list.append(astr)
+        astr = "#define %s (*(PyTypeObject *)PyArray_API[%d])" % \
+               (name, index)
+        extension_list.append(astr)
 
     # set up object API
     num = genapi.add_api_list(numtypes, 'PyArray_API', numpyapi_list,
