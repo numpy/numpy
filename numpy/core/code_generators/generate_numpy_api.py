@@ -5,7 +5,8 @@ import numpy_api
 
 # new_types are types added later on, for which the offset in the API function
 # pointer array should be different (to avoid breaking the ABI).
-new_types = ['TimeInteger', 'Datetime', 'Timedelta']
+new_types = ['PyTimeIntegerArrType_Type', 'PyDatetimeArrType_Type',
+             'PyTimedeltaArrType_Type']
 
 old_types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
          'Inexact',
@@ -289,9 +290,20 @@ def do_generate_api(targets, sources):
                         module_list, extension_list, init_list)
 
     # setup old types
-    newtypes_offset = 215
-    assert newtypes_offset == num + 1
-    generate_type_decl(newtypes_offset, new_types, init_list, module_list, extension_list)
+    for name in new_types:
+        index = numpy_api.multiarray_types_api[name]
+        init_list.append("""        (void *) &%s,""" % name)
+        astr = """\
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+    extern NPY_NO_EXPORT PyTypeObject %(type)s;
+#else
+    NPY_NO_EXPORT PyTypeObject %(type)s;
+#endif
+""" % {'type': name}
+        module_list.append(astr)
+        astr = "#define %s (*(PyTypeObject *)PyArray_API[%d])" % \
+               (name, index)
+        extension_list.append(astr)
 
     # Write to header
     fid = open(header_file, 'w')
