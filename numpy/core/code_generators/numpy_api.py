@@ -1,3 +1,17 @@
+"""Here we define the exported functions, types, etc... which need to be
+exported through a global C pointer.
+
+Each dictionary contains name -> index pair.
+
+Whenever you change one index, you break the ABI (and the ABI version number
+should be incremented). Whenever you add an item to one of the dict, the API
+needs to be updated.
+
+When adding a function, make sure to use the next integer not used as an index
+(in case you use an existing index or jump, the build will stop and raise an
+exception, so it should hopefully not get unnoticed).
+"""
+
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,
 }
