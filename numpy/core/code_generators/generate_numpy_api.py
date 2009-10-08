@@ -183,7 +183,7 @@ class Type:
         self.name = name
         self.ptr_cast = ptr_cast
 
-    def decl_str(self):
+    def define_from_array_api_string(self):
         return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
                                                         self.ptr_cast,
                                                         self.index)
@@ -194,7 +194,7 @@ class GlobalVar:
         self.index = index
         self.type = type
 
-    def decl_str(self):
+    def define_from_array_api_string(self):
         return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
                                                         self.type,
                                                         self.index)
@@ -243,7 +243,7 @@ def do_generate_api(targets, sources):
         first_types.append(Type(name, index, 'PyTypeObject'))
 
     for t in first_types:
-        beg_api += "%s\n" % t.decl_str()
+        beg_api += "%s\n" % t.define_from_array_api_string()
         init_list.append("""        (void *) &%s,""" % t.name)
 
     # Handle global vars
@@ -252,12 +252,13 @@ def do_generate_api(targets, sources):
     name, index = ordered_global_api.pop(0)
     type = numpy_api.multiarray_global_vars_types[name]
     g0 = GlobalVar(name, index, type)
-    beg_api += "%s\n" % g0.decl_str()
+    beg_api += "%s\n" % g0.define_from_array_api_string()
     init_list.append("""        (%s *) &%s,""" % (type, name))
 
     # Handle bool type
     name, index = ordered_types_api.pop(0)
-    beg_api += "%s\n" % Type(name, index, 'PyTypeObject').decl_str()
+    tp = Type(name, index, 'PyTypeObject')
+    beg_api += "%s\n" % tp.define_from_array_api_string()
     init_list.append("""        (void *) &%s,""" % "PyBoolArrType_Type")
 
     # Handle bool values
