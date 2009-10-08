@@ -1,10 +1,14 @@
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <datetime.h>
 
+#include <time.h>
+
+#define _MULTIARRAYMODULE
+#define NPY_NO_PREFIX
 #include <numpy/ndarrayobject.h>
 
-#include <time.h>
+#include "npy_config.h"
 
 #include "_datetime.h"
 
