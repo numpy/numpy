@@ -27,31 +27,13 @@ typedef struct {
         npy_bool obval;
 } PyBoolScalarObject;
 
-NPY_NO_EXPORT unsigned int PyArray_GetNDArrayCVersion (void);
-
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
-extern NPY_NO_EXPORT int NPY_NUMUSERTYPES;
-extern NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
-extern NPY_NO_EXPORT PyTypeObject PyArray_Type;
-extern NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type;
-extern NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
-extern NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
-extern NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
-extern NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #else
-NPY_NO_EXPORT int NPY_NUMUSERTYPES;
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
-NPY_NO_EXPORT PyTypeObject PyArray_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type;
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
-NPY_NO_EXPORT PyTypeObject PyBoolArrType_Type;
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #endif
 
@@ -190,6 +172,16 @@ class TypeApi:
     def array_api_define(self):
         return "        (void *) &%s" % self.name
 
+    def internal_define(self):
+        astr = """\
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+    extern NPY_NO_EXPORT PyTypeObject %(type)s;
+#else
+    NPY_NO_EXPORT PyTypeObject %(type)s;
+#endif
+""" % {'type': self.name}
+        return astr
+
 class GlobalVarApi:
     def __init__(self, name, index, type):
         self.name = name
@@ -203,6 +195,16 @@ class GlobalVarApi:
 
     def array_api_define(self):
         return "        (%s *) &%s" % (self.type, self.name)
+
+    def internal_define(self):
+        astr = """\
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+    extern NPY_NO_EXPORT %(type)s %(name)s;
+#else
+    NPY_NO_EXPORT %(type)s %(name)s;
+#endif
+""" % {'type': self.type, 'name': self.name}
+        return astr
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
@@ -219,6 +221,16 @@ class BoolValuesApi:
 
     def array_api_define(self):
         return "        (void *) &%s" % self.name
+
+    def internal_define(self):
+        astr = """\
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
+#else
+NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
+#endif
+"""
+        return astr
 
 def _repl(str):
     return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
@@ -247,6 +259,13 @@ class FunctionApi:
 
     def array_api_define(self):
         return "        (void *) %s" % self.name
+
+    def internal_define(self):
+        astr = """\
+NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
+                                           self.name,
+                                           self._argtypes_string())
+        return astr
 
 def generate_api_func(func, index, api_name):
     # Declaration used internally by numpy
@@ -303,6 +322,7 @@ def do_generate_api(targets, sources):
         api_item = multiarray_api_dict[name]
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
+        module_list.append(api_item.internal_define())
 
     # XXX: pop up the first function as it is used only here, not for the .c
     # file nor doc (for now). This is a temporary hack to generate file as
@@ -366,7 +386,6 @@ def do_generate_api(targets, sources):
     NPY_NO_EXPORT PyTypeObject %(type)s;
 #endif
 """ % {'type': name}
-        module_list.append(astr)
 
     # set up object API
     print len(ordered_funcs_api), len(numpyapi_list)
@@ -376,7 +395,6 @@ def do_generate_api(targets, sources):
         intern_decl, extern_decl, init_decl = generate_api_func(func,
                                                                 index,
                                                                 'PyArray_API')
-        module_list.append(intern_decl)
 
     # setup old types
     for name in new_types:
@@ -388,7 +406,6 @@ def do_generate_api(targets, sources):
     NPY_NO_EXPORT PyTypeObject %(type)s;
 #endif
 """ % {'type': name}
-        module_list.append(astr)
 
     # Write to header
     fid = open(header_file, 'w')
