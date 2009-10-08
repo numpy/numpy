@@ -1,6 +1,8 @@
 import os
 import genapi
 
+import numpy_api
+
 # new_types are types added later on, for which the offset in the API function
 # pointer array should be different (to avoid breaking the ABI).
 new_types = ['TimeInteger', 'Datetime', 'Timedelta']
@@ -211,6 +213,13 @@ class Type:
                                                         self.ptr_cast,
                                                         self.index)
 
+def order_dict(d):
+    """Order dict by its values."""
+    o = d.items()
+    def cmp(x, y):
+        return x[1] - y[1]
+    return sorted(o, cmp=cmp)
+
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
@@ -229,13 +238,14 @@ def do_generate_api(targets, sources):
 #define %s (*(%s (*)(%s)) PyArray_API[0])
 """ % (first_func.name, first_func.return_type, first_func.argtypes_string())
 
-    first_types = [
-            Type('PyBigArray_Type', 1, 'PyTypeObject'),
-            Type('PyArray_Type', 2, 'PyTypeObject'),
-            Type('PyArrayDescr_Type', 3, 'PyTypeObject'),
-            Type('PyArrayFlags_Type', 4, 'PyTypeObject'),
-            Type('PyArrayIter_Type', 5, 'PyTypeObject'),
-            Type('PyArrayMultiIter_Type', 6, 'PyTypeObject')]
+    # Handle original types
+    multiarray_types = numpy_api.multiarray_types_api
+    ordered_types_api = order_dict(multiarray_types)
+
+    first_types = []
+    for i in range(6):
+        name, index = ordered_types_api.pop(0)
+        first_types.append(Type(name, index, 'PyTypeObject'))
 
     for t in first_types:
         beg_api += "%s\n" % t.decl_str()
