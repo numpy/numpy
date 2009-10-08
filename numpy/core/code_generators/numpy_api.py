@@ -294,3 +294,15 @@ ufunc_funcs_api = {
     'PyUFunc_FromFuncAndDataAndSignature':      31,
     'PyUFunc_SetUsesArraysAsData':              32,
 }
+
+# List of all the dicts which define the C API
+full_api = (
+        multiarray_global_vars,
+        multiarray_global_vars_types,
+        multiarray_scalar_bool_values,
+        multiarray_types_api,
+        multiarray_funcs_api,
+        ufunc_funcs_api,
+        ufunc_types_api
+)
+
