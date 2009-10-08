@@ -277,6 +277,17 @@ def get_api_functions(tagname, order_file):
     dfunctions.sort()
     return [a[1] for a in dfunctions]
 
+def generate_api_func(func, index, api_name):
+    # Declaration used internally by numpy
+    intern_decl = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
+           (func.return_type, func.name, func.argtypes_string())
+    # Declaration used by extensions
+    extern_decl = "#define %s \\\n        (*(%s (*)(%s)) \\\n"\
+           "         %s[%d])" % (func.name,func.return_type,
+                                 func.argtypes_string(), api_name, index)
+    init_decl = "        (void *) %s," % func.name
+    return intern_decl, extern_decl, init_decl
+
 def add_api_list(offset, APIname, api_list,
                  module_list, extension_list, init_list):
     """Add the API function declarations to the appropiate lists for use in
@@ -284,15 +295,11 @@ def add_api_list(offset, APIname, api_list,
     """
     for k, func in enumerate(api_list):
         num = offset + k
-        astr = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
-               (func.return_type, func.name, func.argtypes_string())
-        module_list.append(astr)
-        astr = "#define %s \\\n        (*(%s (*)(%s)) \\\n"\
-               "         %s[%d])" % (func.name,func.return_type,
-                                     func.argtypes_string(), APIname, num)
-        extension_list.append(astr)
-        astr = "        (void *) %s," % func.name
-        init_list.append(astr)
+        intern_decl, extern_decl, init_decl = generate_api_func(func, num,
+                                                                APIname)
+        module_list.append(intern_decl)
+        extension_list.append(extern_decl)
+        init_list.append(init_decl)
     return num
 
 def should_rebuild(targets, source_files):
