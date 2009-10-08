@@ -199,6 +199,17 @@ class GlobalVar:
                                                         self.type,
                                                         self.index)
 
+def generate_api_func(func, index, api_name):
+    # Declaration used internally by numpy
+    intern_decl = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
+           (func.return_type, func.name, func.argtypes_string())
+    # Declaration used by extensions
+    extern_decl = "#define %s \\\n        (*(%s (*)(%s)) \\\n"\
+           "         %s[%d])" % (func.name,func.return_type,
+                                 func.argtypes_string(), api_name, index)
+    init_decl = "        (void *) %s," % func.name
+    return intern_decl, extern_decl, init_decl
+
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
@@ -292,7 +303,7 @@ def do_generate_api(targets, sources):
     for name, index in ordered_funcs_api:
         func = numpyapi_list.pop(0)
         assert func.name == name, "%s vs %s" % (func.name, name)
-        intern_decl, extern_decl, init_decl = genapi.generate_api_func(func,
+        intern_decl, extern_decl, init_decl = generate_api_func(func,
                                                                 index,
                                                                 'PyArray_API')
         module_list.append(intern_decl)
