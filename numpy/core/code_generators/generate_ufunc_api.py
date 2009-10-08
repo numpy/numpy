@@ -1,10 +1,9 @@
 import os
 import genapi
-import genapi2
 
 import numpy_api
 
-from genapi2 import \
+from genapi import \
         TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
 
 h_template = r"""
@@ -98,12 +97,12 @@ def do_generate_api(targets, sources):
     c_file = targets[1]
     doc_file = targets[2]
 
-    ufunc_api_index = genapi2.merge_api_dicts((
+    ufunc_api_index = genapi.merge_api_dicts((
             numpy_api.ufunc_funcs_api,
             numpy_api.ufunc_types_api))
-    genapi2.check_api_dict(ufunc_api_index)
+    genapi.check_api_dict(ufunc_api_index)
 
-    ufunc_api_list = genapi2.get_api_functions('UFUNC_API', numpy_api.ufunc_funcs_api)
+    ufunc_api_list = genapi.get_api_functions('UFUNC_API', numpy_api.ufunc_funcs_api)
 
     # Create dict name -> *Api instance
     ufunc_api_dict = {}
@@ -122,7 +121,7 @@ def do_generate_api(targets, sources):
     extension_list = []
     init_list = []
 
-    for name, index in genapi2.order_dict(ufunc_api_index):
+    for name, index in genapi.order_dict(ufunc_api_index):
         api_item = ufunc_api_dict[name]
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())

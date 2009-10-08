@@ -1,8 +1,7 @@
 import os
 import genapi
-import genapi2
 
-from genapi2 import \
+from genapi import \
         TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
 
 import numpy_api
@@ -165,12 +164,12 @@ def do_generate_api(targets, sources):
     init_list = []
 
     # Check multiarray api indexes
-    multiarray_api_index = genapi2.merge_api_dicts(multiarray_api)
-    genapi2.check_api_dict(multiarray_api_index)
+    multiarray_api_index = genapi.merge_api_dicts(multiarray_api)
+    genapi.check_api_dict(multiarray_api_index)
 
-    numpyapi_list = genapi2.get_api_functions('NUMPY_API',
+    numpyapi_list = genapi.get_api_functions('NUMPY_API',
                                               multiarray_funcs)
-    ordered_funcs_api = genapi2.order_dict(multiarray_funcs)
+    ordered_funcs_api = genapi.order_dict(multiarray_funcs)
 
     # Create dict name -> *Api instance
     api_name = 'PyArray_API'
@@ -194,7 +193,7 @@ def do_generate_api(targets, sources):
     assert len(multiarray_api_dict) == len(multiarray_api_index)
 
     extension_list = []
-    for name, index in genapi2.order_dict(multiarray_api_index):
+    for name, index in genapi.order_dict(multiarray_api_index):
         api_item = multiarray_api_dict[name]
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
