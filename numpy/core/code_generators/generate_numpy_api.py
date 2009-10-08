@@ -213,6 +213,17 @@ class Type:
                                                         self.ptr_cast,
                                                         self.index)
 
+class GlobalVar:
+    def __init__(self, name, index, type):
+        self.name = name
+        self.index = index
+        self.type = type
+
+    def decl_str(self):
+        return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
+                                                        self.type,
+                                                        self.index)
+
 def order_dict(d):
     """Order dict by its values."""
     o = d.items()
@@ -250,10 +261,19 @@ def do_generate_api(targets, sources):
     for t in first_types:
         beg_api += "%s\n" % t.decl_str()
 
-    beg_api += "#define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])\n"
+    # Handle global vars
+    multiarray_globals = numpy_api.multiarray_global_vars
+    ordered_global_api = order_dict(multiarray_globals)
+    name, index = ordered_global_api.pop(0)
+    g0 = GlobalVar(name, index, numpy_api.multiarray_global_vars_types[name])
+    beg_api += "%s\n" % g0.decl_str()
 
+    # Handle bool type
+    name, index = ordered_types_api.pop(0)
+    beg_api += "%s\n" % Type(name, index, 'PyTypeObject').decl_str()
+
+    # Handle bool values
     beg_api += """\
-#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
 #define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
     """
 

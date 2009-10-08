@@ -2,6 +2,10 @@ multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,
 }
 
+multiarray_global_vars_types = {
+    'NPY_NUMUSERTYPES':             'int',
+}
+
 multiarray_scalar_bool_values = {
     '_PyArrayScalar_BoolValues':    9
 }
