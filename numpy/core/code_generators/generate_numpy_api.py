@@ -187,6 +187,9 @@ class TypeApi:
                                                         self.ptr_cast,
                                                         self.index)
 
+    def array_api_define(self):
+        return "        (void *) &%s" % self.name
+
 class GlobalVarApi:
     def __init__(self, name, index, type):
         self.name = name
@@ -197,6 +200,9 @@ class GlobalVarApi:
         return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
                                                         self.type,
                                                         self.index)
+
+    def array_api_define(self):
+        return "        (%s *) &%s" % (self.type, self.name)
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
@@ -210,6 +216,9 @@ class BoolValuesApi:
         return "#define %s ((%s *)PyArray_API[%d])" % (self.name,
                                                         self.type,
                                                         self.index)
+
+    def array_api_define(self):
+        return "        (void *) &%s" % self.name
 
 def _repl(str):
     return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
@@ -235,6 +244,9 @@ class FunctionApi:
                                 self._argtypes_string(),
                                 self.index)
         return define
+
+    def array_api_define(self):
+        return "        (void *) %s" % self.name
 
 def generate_api_func(func, index, api_name):
     # Declaration used internally by numpy
@@ -290,6 +302,7 @@ def do_generate_api(targets, sources):
     for name, index in genapi2.order_dict(multiarray_api_index):
         api_item = multiarray_api_dict[name]
         extension_list.append(api_item.define_from_array_api_string())
+        init_list.append(api_item.array_api_define())
 
     # XXX: pop up the first function as it is used only here, not for the .c
     # file nor doc (for now). This is a temporary hack to generate file as
@@ -303,7 +316,6 @@ def do_generate_api(targets, sources):
     beg_api = """\
 #define %s (*(%s (*)(%s)) PyArray_API[0])
 """ % (first_func.name, first_func.return_type, first_func.argtypes_string())
-    init_list.append("""        (void *) %s,""" % first_func.name)
 
     # Handle original types
     multiarray_types = numpy_api.multiarray_types_api
@@ -316,7 +328,6 @@ def do_generate_api(targets, sources):
 
     for t in first_types:
         beg_api += "%s\n" % t.define_from_array_api_string()
-        init_list.append("""        (void *) &%s,""" % t.name)
 
     # Handle global vars
     multiarray_globals = numpy_api.multiarray_global_vars
@@ -325,13 +336,11 @@ def do_generate_api(targets, sources):
     type = numpy_api.multiarray_global_vars_types[name]
     g0 = GlobalVarApi(name, index, type)
     beg_api += "%s\n" % g0.define_from_array_api_string()
-    init_list.append("""        (%s *) &%s,""" % (type, name))
 
     # Handle bool type
     name, index = ordered_types_api.pop(0)
     tp = TypeApi(name, index, 'PyTypeObject')
     beg_api += "%s\n" % tp.define_from_array_api_string()
-    init_list.append("""        (void *) &%s,""" % "PyBoolArrType_Type")
 
     # Handle bool values
     ordered_bool_values = genapi2.order_dict(
@@ -342,7 +351,6 @@ def do_generate_api(targets, sources):
     # XXX: not really a type object...
     tp = BoolValuesApi(name, index)
     beg_api += "%s\n" % tp.define_from_array_api_string()
-    init_list.append("""        (void *) &%s,""" % tp.name)
 
     # API fixes for __arrayobject_api.h
     fixed = 10
@@ -351,7 +359,6 @@ def do_generate_api(targets, sources):
     # setup old types
     for t in range(fixed, numtypes):
         name, index = ordered_types_api.pop(0)
-        init_list.append("""        (void *) &%s,""" % name)
         astr = """\
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
     extern NPY_NO_EXPORT PyTypeObject %(type)s;
@@ -370,12 +377,10 @@ def do_generate_api(targets, sources):
                                                                 index,
                                                                 'PyArray_API')
         module_list.append(intern_decl)
-        init_list.append(init_decl)
 
     # setup old types
     for name in new_types:
         index = numpy_api.multiarray_types_api[name]
-        init_list.append("""        (void *) &%s,""" % name)
         astr = """\
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
     extern NPY_NO_EXPORT PyTypeObject %(type)s;
@@ -393,7 +398,7 @@ def do_generate_api(targets, sources):
 
     # Write to c-code
     fid = open(c_file, 'w')
-    s = c_template % '\n'.join(init_list)
+    s = c_template % ',\n'.join(init_list)
     fid.write(s)
     fid.close()
 
