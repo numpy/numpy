@@ -1,9 +1,9 @@
-numpy_misc_api = {
+multiarray_misc_api = {
     'NPY_NUMUSERTYPES':             7,
     '_PyArrayScalar_BoolValues':    9
 }
 
-numpy_types_api = {
+multiarray_types_api = {
     'PyBigArray_Type':                  1,
     'PyArray_Type':                     2,
     'PyArrayDescr_Type':                3,
@@ -52,7 +52,7 @@ numpy_types_api = {
 #define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
 #define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
 
-numpy_funcs_api = {
+multiarray_funcs_api = {
     'PyArray_GetNDArrayCVersion':           0,
     'PyArray_SetNumericOps':                40,
     'PyArray_GetNumericOps':                41,
