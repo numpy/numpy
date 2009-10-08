@@ -313,17 +313,18 @@ def should_rebuild(targets, source_files):
         return True
     return False
 
-def fullapi_hash(files):
-    """Given a list of .txt files defining the numpy C API, compute a checksum
-    of the list of functions (as a string)."""
+def fullapi_hash(api_dicts):
+    """Given a list of api dicts defining the numpy C API, compute a checksum
+    of the list of items in the API (as a string)."""
     a = []
-    for f in files:
-        order = read_order(f)
+    for d in api_dicts:
         def sorted_by_values(d):
             """Sort a dictionary by its values. Assume the dictionary items is of
             the form func_name -> order"""
             return sorted(d.items(), key=lambda (x, y): (y, x))
-        a.extend([i[0] for i in sorted_by_values(order)])
+        for name, index in sorted_by_values(d):
+            a.extend(name)
+            a.extend(str(index))
 
     return md5new(''.join(a)).hexdigest()
 

@@ -53,7 +53,8 @@ def get_api_versions(apiversion, codegen_dir):
     sys.path.insert(0, codegen_dir)
     try:
         m = __import__('genapi')
-        curapi_hash = m.fullapi_hash(api_files)
+        numpy_api = __import__('numpy_api')
+        curapi_hash = m.fullapi_hash(numpy_api.full_api)
         apis_hash = m.get_versions_hash()
     finally:
         del sys.path[0]
