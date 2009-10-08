@@ -75,8 +75,6 @@ static void **PyArray_API=NULL;
 
 %s
 
-%s
-
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static int
 _import_array(void)
@@ -288,6 +286,11 @@ def do_generate_api(targets, sources):
 
     assert len(multiarray_api_dict) == len(multiarray_api_index)
 
+    extension_list = []
+    for name, index in genapi2.order_dict(multiarray_api_index):
+        api_item = multiarray_api_dict[name]
+        extension_list.append(api_item.define_from_array_api_string())
+
     # XXX: pop up the first function as it is used only here, not for the .c
     # file nor doc (for now). This is a temporary hack to generate file as
     # similar as before for easier comparison and should be removed once we
@@ -357,9 +360,6 @@ def do_generate_api(targets, sources):
 #endif
 """ % {'type': name}
         module_list.append(astr)
-        astr = "#define %s (*(PyTypeObject *)PyArray_API[%d])" % \
-               (name, index)
-        extension_list.append(astr)
 
     # set up object API
     print len(ordered_funcs_api), len(numpyapi_list)
@@ -370,7 +370,6 @@ def do_generate_api(targets, sources):
                                                                 index,
                                                                 'PyArray_API')
         module_list.append(intern_decl)
-        extension_list.append(extern_decl)
         init_list.append(init_decl)
 
     # setup old types
@@ -385,13 +384,10 @@ def do_generate_api(targets, sources):
 #endif
 """ % {'type': name}
         module_list.append(astr)
-        astr = "#define %s (*(PyTypeObject *)PyArray_API[%d])" % \
-               (name, index)
-        extension_list.append(astr)
 
     # Write to header
     fid = open(header_file, 'w')
-    s = h_template % ('\n'.join(module_list), beg_api, '\n'.join(extension_list))
+    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
     fid.write(s)
     fid.close()
 
