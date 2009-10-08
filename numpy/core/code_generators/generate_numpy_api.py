@@ -136,9 +136,10 @@ def generate_api(output_dir, force=False):
     c_file = os.path.join(output_dir, '__%s.c' % basename)
     d_file = os.path.join(output_dir, '%s.txt' % basename)
     targets = (h_file, c_file, d_file)
-    sources = ['numpy_api_order.txt']
 
-    if (not force and not genapi.should_rebuild(targets, sources + [__file__])):
+    sources = numpy_api.multiarray_api
+
+    if (not force and not genapi.should_rebuild(targets, [numpy_api.__file__, __file__])):
         return targets
     else:
         do_generate_api(targets, sources)
@@ -150,17 +151,23 @@ def do_generate_api(targets, sources):
     c_file = targets[1]
     doc_file = targets[2]
 
+    global_vars = sources[0]
+    global_vars_types = sources[1]
+    scalar_bool_values = sources[2]
+    types_api = sources[3]
+    multiarray_funcs = sources[4]
+
+    # Remove global_vars_type: not a api dict
+    multiarray_api = sources[:1] + sources[2:]
+
     module_list = []
     extension_list = []
     init_list = []
 
     # Check multiarray api indexes
-    multiarray_api_index = genapi2.merge_api_dicts((numpy_api.multiarray_funcs_api,
-        numpy_api.multiarray_global_vars, numpy_api.multiarray_scalar_bool_values,
-        numpy_api.multiarray_types_api))
+    multiarray_api_index = genapi2.merge_api_dicts(multiarray_api)
     genapi2.check_api_dict(multiarray_api_index)
 
-    multiarray_funcs = numpy_api.multiarray_funcs_api
     numpyapi_list = genapi2.get_api_functions('NUMPY_API',
                                               multiarray_funcs)
     ordered_funcs_api = genapi2.order_dict(multiarray_funcs)
@@ -174,14 +181,14 @@ def do_generate_api(targets, sources):
         multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type,
                                                   f.args, api_name)
 
-    for name, index in numpy_api.multiarray_global_vars.items():
-        type = numpy_api.multiarray_global_vars_types[name]
+    for name, index in global_vars.items():
+        type = global_vars_types[name]
         multiarray_api_dict[name] = GlobalVarApi(name, index, type, api_name)
 
-    for name, index in numpy_api.multiarray_scalar_bool_values.items():
+    for name, index in scalar_bool_values.items():
         multiarray_api_dict[name] = BoolValuesApi(name, index, api_name)
 
-    for name, index in numpy_api.multiarray_types_api.items():
+    for name, index in types_api.items():
         multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
     assert len(multiarray_api_dict) == len(multiarray_api_index)

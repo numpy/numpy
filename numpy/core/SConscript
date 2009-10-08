@@ -10,11 +10,17 @@ from numscons import GetNumpyEnvironment
 from numscons import CheckCBLAS
 from numscons import write_info
 
+from code_generators.numpy_api import \
+    multiarray_api as multiarray_api_dict, \
+    ufunc_api as ufunc_api_dict
+    
 from setup_common import *
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal, CheckInline
 from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
                           umath_bld, CheckGCC4, check_api_version
+
+import SCons
 
 # Set to True to enable multiple file compilations (experimental)
 try:
@@ -320,11 +326,11 @@ umath = env.GenerateUmath('__umath_generated',
                           pjoin('code_generators', 'generate_umath.py'))
 
 multiarray_api = env.GenerateMultiarrayApi('include/numpy/multiarray_api',
-                        [ pjoin('code_generators', 'numpy_api_order.txt')])
+                        [SCons.Node.Python.Value(d) for d in multiarray_api_dict])
 generated_headers.append(multiarray_api[0])
 
 ufunc_api = env.GenerateUfuncApi('include/numpy/ufunc_api',
-                    pjoin('code_generators', 'ufunc_api_order.txt'))
+                        [SCons.Node.Python.Value(d) for d in ufunc_api_dict])
 generated_headers.append(ufunc_api[0])
 
 # include/numpy is added for compatibility reasons with distutils: this is

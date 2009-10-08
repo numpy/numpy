@@ -555,7 +555,6 @@ def configuration(parent_package='',top_path=None):
             'include/numpy/fenv/fenv.c',
             'include/numpy/fenv/fenv.h',
             join(codegen_dir,'genapi.py'),
-            join(codegen_dir,'*.txt')
             ]
 
     # Don't install fenv unless we need them.

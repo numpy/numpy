@@ -37,12 +37,12 @@ def split_ext(string):
 #------------------------------------
 def do_generate_numpy_api(target, source, env):
     nowrap_do_generate_numpy_api([str(i) for i in target],
-                                 [str(i) for i in source])
+                                 [s.value for s in source])
     return 0
 
 def do_generate_ufunc_api(target, source, env):
     nowrap_do_generate_ufunc_api([str(i) for i in target],
-                                 [str(i) for i in source])
+                                 [s.value for s in source])
     return 0
 
 def generate_api_emitter(target, source, env):
