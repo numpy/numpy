@@ -177,7 +177,8 @@ def generate_api(output_dir, force=False):
 
     return targets
 
-class Type:
+# Those *Api classes instances know how to output strings for the generated code
+class TypeApi:
     def __init__(self, name, index, ptr_cast):
         self.index = index
         self.name = name
@@ -188,7 +189,7 @@ class Type:
                                                         self.ptr_cast,
                                                         self.index)
 
-class GlobalVar:
+class GlobalVarApi:
     def __init__(self, name, index, type):
         self.name = name
         self.index = index
@@ -251,7 +252,7 @@ def do_generate_api(targets, sources):
     first_types = []
     for i in range(6):
         name, index = ordered_types_api.pop(0)
-        first_types.append(Type(name, index, 'PyTypeObject'))
+        first_types.append(TypeApi(name, index, 'PyTypeObject'))
 
     for t in first_types:
         beg_api += "%s\n" % t.define_from_array_api_string()
@@ -262,13 +263,13 @@ def do_generate_api(targets, sources):
     ordered_global_api = genapi2.order_dict(multiarray_globals)
     name, index = ordered_global_api.pop(0)
     type = numpy_api.multiarray_global_vars_types[name]
-    g0 = GlobalVar(name, index, type)
+    g0 = GlobalVarApi(name, index, type)
     beg_api += "%s\n" % g0.define_from_array_api_string()
     init_list.append("""        (%s *) &%s,""" % (type, name))
 
     # Handle bool type
     name, index = ordered_types_api.pop(0)
-    tp = Type(name, index, 'PyTypeObject')
+    tp = TypeApi(name, index, 'PyTypeObject')
     beg_api += "%s\n" % tp.define_from_array_api_string()
     init_list.append("""        (void *) &%s,""" % "PyBoolArrType_Type")
 
