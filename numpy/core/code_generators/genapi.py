@@ -73,12 +73,6 @@ class Function(object):
         else:
             return typename + ' ' + name
 
-    def argtypes_string(self):
-        if not self.args:
-            return 'void'
-        argstr = ', '.join([_repl(a[0]) for a in self.args])
-        return argstr
-
     def __str__(self):
         argstr = ', '.join([self._format_arg(a) for a in self.args])
         if self.doc:
@@ -430,6 +424,7 @@ def get_api_functions(tagname, api_dict):
         dfunctions.append( (o, func) )
     dfunctions.sort()
     return [a[1] for a in dfunctions]
+
 def fullapi_hash(api_dicts):
     """Given a list of api dicts defining the numpy C API, compute a checksum
     of the list of items in the API (as a string)."""
