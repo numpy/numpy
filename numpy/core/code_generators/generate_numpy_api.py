@@ -1,5 +1,6 @@
 import os
 import genapi
+import genapi2
 
 import numpy_api
 
@@ -208,21 +209,21 @@ class GlobalVar:
                                                         self.type,
                                                         self.index)
 
-def order_dict(d):
-    """Order dict by its values."""
-    o = d.items()
-    def cmp(x, y):
-        return x[1] - y[1]
-    return sorted(o, cmp=cmp)
-
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
     doc_file = targets[2]
 
-    numpyapi_list = genapi.get_api_functions('NUMPY_API', sources[0])
+    # Check multiarray api indexes
+    multiarray_api_dict = genapi2.merge_api_dicts((numpy_api.multiarray_funcs_api,
+        numpy_api.multiarray_global_vars, numpy_api.multiarray_scalar_bool_values,
+        numpy_api.multiarray_types_api))
+    genapi2.check_api_dict(multiarray_api_dict)
+
     multiarray_funcs = numpy_api.multiarray_funcs_api
-    ordered_funcs_api = order_dict(multiarray_funcs)
+    numpyapi_list = genapi2.get_api_functions('NUMPY_API',
+                                              multiarray_funcs)
+    ordered_funcs_api = genapi2.order_dict(multiarray_funcs)
 
     # XXX: pop up the first function as it is used only here, not for the .c
     # file nor doc (for now). This is a temporary hack to generate file as
@@ -239,7 +240,7 @@ def do_generate_api(targets, sources):
 
     # Handle original types
     multiarray_types = numpy_api.multiarray_types_api
-    ordered_types_api = order_dict(multiarray_types)
+    ordered_types_api = genapi2.order_dict(multiarray_types)
 
     first_types = []
     for i in range(6):
@@ -251,7 +252,7 @@ def do_generate_api(targets, sources):
 
     # Handle global vars
     multiarray_globals = numpy_api.multiarray_global_vars
-    ordered_global_api = order_dict(multiarray_globals)
+    ordered_global_api = genapi2.order_dict(multiarray_globals)
     name, index = ordered_global_api.pop(0)
     g0 = GlobalVar(name, index, numpy_api.multiarray_global_vars_types[name])
     beg_api += "%s\n" % g0.decl_str()
@@ -290,6 +291,7 @@ def do_generate_api(targets, sources):
         extension_list.append(astr)
 
     # set up object API
+    print len(ordered_funcs_api), len(numpyapi_list)
     for name, index in ordered_funcs_api:
         func = numpyapi_list.pop(0)
         assert func.name == name, "%s vs %s" % (func.name, name)
