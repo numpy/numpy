@@ -200,6 +200,19 @@ class GlobalVarApi:
                                                         self.type,
                                                         self.index)
 
+# Dummy to be able to consistently use *Api instances for all items in the
+# array api
+class BoolValuesApi:
+    def __init__(self, name, index):
+        self.name = name
+        self.index = index
+        self.type = 'PyBoolScalarObject'
+
+    def define_from_array_api_string(self):
+        return "#define %s ((%s *)PyArray_API[%d])" % (self.name,
+                                                        self.type,
+                                                        self.index)
+
 def generate_api_func(func, index, api_name):
     # Declaration used internally by numpy
     intern_decl = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
@@ -274,10 +287,15 @@ def do_generate_api(targets, sources):
     init_list.append("""        (void *) &%s,""" % "PyBoolArrType_Type")
 
     # Handle bool values
-    beg_api += """\
-#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
-    """
-    init_list.append("""        (void *) &%s,""" % "_PyArrayScalar_BoolValues")
+    ordered_bool_values = genapi2.order_dict(
+            numpy_api.multiarray_scalar_bool_values)
+    name, index = ordered_bool_values.pop(0)
+    # XXX: this is a special case, check that no other variables are in there
+    assert len(ordered_bool_values) == 0
+    # XXX: not really a type object...
+    tp = BoolValuesApi(name, index)
+    beg_api += "%s\n" % tp.define_from_array_api_string()
+    init_list.append("""        (void *) &%s,""" % tp.name)
 
     # API fixes for __arrayobject_api.h
     fixed = 10
