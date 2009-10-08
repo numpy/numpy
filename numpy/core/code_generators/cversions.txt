@@ -1,3 +1,5 @@
+# hash below were defined from numpy_api_order.txt and ufunc_api_order.txt
 0x00000001 = 603580d224763e58c5e7147f804dc0f5
 0x00000002 = 8ecb29306758515ae69749c803a75da1
 0x00000003 = bf22c0d05b31625d2a7015988d61ce5a
+# Starting from here, the hash is defined from numpy_api.full_api dict
