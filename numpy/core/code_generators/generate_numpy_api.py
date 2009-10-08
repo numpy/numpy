@@ -151,16 +151,6 @@ c_template = r"""
 */
 
 void *PyArray_API[] = {
-        (void *) PyArray_GetNDArrayCVersion,
-        (void *) &PyBigArray_Type,
-        (void *) &PyArray_Type,
-        (void *) &PyArrayDescr_Type,
-        (void *) &PyArrayFlags_Type,
-        (void *) &PyArrayIter_Type,
-        (void *) &PyArrayMultiIter_Type,
-        (int *) &NPY_NUMUSERTYPES,
-        (void *) &PyBoolArrType_Type,
-        (void *) &_PyArrayScalar_BoolValues,
 %s
 };
 """
@@ -214,6 +204,10 @@ def do_generate_api(targets, sources):
     c_file = targets[1]
     doc_file = targets[2]
 
+    module_list = []
+    extension_list = []
+    init_list = []
+
     # Check multiarray api indexes
     multiarray_api_dict = genapi2.merge_api_dicts((numpy_api.multiarray_funcs_api,
         numpy_api.multiarray_global_vars, numpy_api.multiarray_scalar_bool_values,
@@ -237,6 +231,7 @@ def do_generate_api(targets, sources):
     beg_api = """\
 #define %s (*(%s (*)(%s)) PyArray_API[0])
 """ % (first_func.name, first_func.return_type, first_func.argtypes_string())
+    init_list.append("""        (void *) %s,""" % first_func.name)
 
     # Handle original types
     multiarray_types = numpy_api.multiarray_types_api
@@ -249,30 +244,31 @@ def do_generate_api(targets, sources):
 
     for t in first_types:
         beg_api += "%s\n" % t.decl_str()
+        init_list.append("""        (void *) &%s,""" % t.name)
 
     # Handle global vars
     multiarray_globals = numpy_api.multiarray_global_vars
     ordered_global_api = genapi2.order_dict(multiarray_globals)
     name, index = ordered_global_api.pop(0)
-    g0 = GlobalVar(name, index, numpy_api.multiarray_global_vars_types[name])
+    type = numpy_api.multiarray_global_vars_types[name]
+    g0 = GlobalVar(name, index, type)
     beg_api += "%s\n" % g0.decl_str()
+    init_list.append("""        (%s *) &%s,""" % (type, name))
 
     # Handle bool type
     name, index = ordered_types_api.pop(0)
     beg_api += "%s\n" % Type(name, index, 'PyTypeObject').decl_str()
+    init_list.append("""        (void *) &%s,""" % "PyBoolArrType_Type")
 
     # Handle bool values
     beg_api += """\
 #define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
     """
+    init_list.append("""        (void *) &%s,""" % "_PyArrayScalar_BoolValues")
 
     # API fixes for __arrayobject_api.h
     fixed = 10
     numtypes = len(old_types) + fixed
-
-    module_list = []
-    extension_list = []
-    init_list = []
 
     # setup old types
     for t in range(fixed, numtypes):
