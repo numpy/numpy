@@ -213,6 +213,31 @@ class BoolValuesApi:
                                                         self.type,
                                                         self.index)
 
+def _repl(str):
+    return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
+
+class FunctionApi:
+    def __init__(self, name, index, return_type, args):
+        self.name = name
+        self.index = index
+        self.return_type = return_type
+        self.args = args
+
+    def _argtypes_string(self):
+        if not self.args:
+            return 'void'
+        argstr = ', '.join([_repl(a[0]) for a in self.args])
+        return argstr
+
+    def define_from_array_api_string(self):
+        define = """\
+#define %s \\\n        (*(%s (*)(%s)) \\
+         PyArray_API[%d])""" % (self.name,
+                                self.return_type,
+                                self._argtypes_string(),
+                                self.index)
+        return define
+
 def generate_api_func(func, index, api_name):
     # Declaration used internally by numpy
     intern_decl = "NPY_NO_EXPORT %s %s \\\n       (%s);" % \
