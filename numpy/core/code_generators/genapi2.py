@@ -7,15 +7,17 @@ from genapi import API_FILES, find_functions
 
 # Those *Api classes instances know how to output strings for the generated code
 class TypeApi:
-    def __init__(self, name, index, ptr_cast):
+    def __init__(self, name, index, ptr_cast, api_name):
         self.index = index
         self.name = name
         self.ptr_cast = ptr_cast
+        self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
-                                                        self.ptr_cast,
-                                                        self.index)
+        return "#define %s (*(%s *)%s[%d])" % (self.name,
+                                               self.ptr_cast,
+                                               self.api_name,
+                                               self.index)
 
     def array_api_define(self):
         return "        (void *) &%s" % self.name
@@ -31,14 +33,16 @@ class TypeApi:
         return astr
 
 class GlobalVarApi:
-    def __init__(self, name, index, type):
+    def __init__(self, name, index, type, api_name):
         self.name = name
         self.index = index
         self.type = type
+        self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)PyArray_API[%d])" % (self.name,
+        return "#define %s (*(%s *)%s[%d])" % (self.name,
                                                         self.type,
+                                                        self.api_name,
                                                         self.index)
 
     def array_api_define(self):
@@ -57,15 +61,17 @@ class GlobalVarApi:
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
 class BoolValuesApi:
-    def __init__(self, name, index):
+    def __init__(self, name, index, api_name):
         self.name = name
         self.index = index
         self.type = 'PyBoolScalarObject'
+        self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s ((%s *)PyArray_API[%d])" % (self.name,
-                                                        self.type,
-                                                        self.index)
+        return "#define %s ((%s *)%s[%d])" % (self.name,
+                                              self.type,
+                                              self.api_name,
+                                              self.index)
 
     def array_api_define(self):
         return "        (void *) &%s" % self.name
@@ -84,11 +90,12 @@ def _repl(str):
     return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
 
 class FunctionApi:
-    def __init__(self, name, index, return_type, args):
+    def __init__(self, name, index, return_type, args, api_name):
         self.name = name
         self.index = index
         self.return_type = return_type
         self.args = args
+        self.api_name = api_name
 
     def _argtypes_string(self):
         if not self.args:
@@ -99,9 +106,10 @@ class FunctionApi:
     def define_from_array_api_string(self):
         define = """\
 #define %s \\\n        (*(%s (*)(%s)) \\
-         PyArray_API[%d])""" % (self.name,
+         %s[%d])""" % (self.name,
                                 self.return_type,
                                 self._argtypes_string(),
+                                self.api_name,
                                 self.index)
         return define
 

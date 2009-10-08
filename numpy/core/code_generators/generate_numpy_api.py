@@ -166,21 +166,23 @@ def do_generate_api(targets, sources):
     ordered_funcs_api = genapi2.order_dict(multiarray_funcs)
 
     # Create dict name -> *Api instance
+    api_name = 'PyArray_API'
     multiarray_api_dict = {}
     for f in numpyapi_list:
         name = f.name
         index = multiarray_funcs[name]
-        multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type, f.args)
+        multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type,
+                                                  f.args, api_name)
 
     for name, index in numpy_api.multiarray_global_vars.items():
         type = numpy_api.multiarray_global_vars_types[name]
-        multiarray_api_dict[name] = GlobalVarApi(name, index, type)
+        multiarray_api_dict[name] = GlobalVarApi(name, index, type, api_name)
 
     for name, index in numpy_api.multiarray_scalar_bool_values.items():
-        multiarray_api_dict[name] = BoolValuesApi(name, index)
+        multiarray_api_dict[name] = BoolValuesApi(name, index, api_name)
 
     for name, index in numpy_api.multiarray_types_api.items():
-        multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject')
+        multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
     assert len(multiarray_api_dict) == len(multiarray_api_index)
 
