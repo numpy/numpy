@@ -1963,7 +1963,9 @@ def masked_equal(x, value, copy=True):
     # c = umath.equal(d, value)
     # m = mask_or(c, getmask(x))
     # return array(d, mask=m, copy=copy)
-    return masked_where(equal(x, value), x, copy=copy)
+    output = masked_where(equal(x, value), x, copy=copy)
+    output.fill_value = value
+    return output
 
 
 def masked_inside(x, v1, v2, copy=True):

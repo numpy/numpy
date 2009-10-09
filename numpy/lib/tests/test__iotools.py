@@ -3,7 +3,7 @@ import StringIO
 
 import numpy as np
 from numpy.lib._iotools import LineSplitter, NameValidator, StringConverter,\
-                               has_nested_fields
+                               has_nested_fields, easy_dtype
 from numpy.testing import *
 
 class TestLineSplitter(TestCase):
@@ -90,6 +90,35 @@ class TestNameValidator(TestCase):
         validator = NameValidator(excludelist = ['dates', 'data', 'mask'])
         test = validator.validate(names)
         assert_equal(test, ['dates_', 'data_', 'Other_Data', 'mask_'])
+    #
+    def test_missing_names(self):
+        "Test validate missing names"
+        namelist = ('a', 'b', 'c')
+        validator = NameValidator()
+        assert_equal(validator(namelist), ['a', 'b', 'c'])
+        namelist = ('', 'b', 'c')
+        assert_equal(validator(namelist), ['f0', 'b', 'c'])
+        namelist = ('a', 'b', '')
+        assert_equal(validator(namelist), ['a', 'b', 'f0'])
+        namelist = ('', 'f0', '')
+        assert_equal(validator(namelist), ['f1', 'f0', 'f2'])
+    #
+    def test_validate_nb_names(self):
+        "Test validate nb names"
+        namelist = ('a', 'b', 'c')
+        validator = NameValidator()
+        assert_equal(validator(namelist, nbfields=1), ('a', ))
+        assert_equal(validator(namelist, nbfields=5, defaultfmt="g%i"),
+                     ['a', 'b', 'c', 'g0', 'g1'])
+    #
+    def test_validate_wo_names(self):
+        "Test validate no names"
+        namelist = None
+        validator = NameValidator()
+        assert(validator(namelist) is None)
+        assert_equal(validator(namelist, nbfields=3), ['f0', 'f1', 'f2'])
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -164,4 +193,60 @@ class TestMiscFunctions(TestCase):
         assert_equal(has_nested_fields(ndtype), False)
         ndtype = np.dtype([('A', int), ('B', [('BA', float), ('BB', '|S1')])])
         assert_equal(has_nested_fields(ndtype), True)
+
+    def test_easy_dtype(self):
+        "Test ndtype on dtypes"
+        # Simple case
+        ndtype = float
+        assert_equal(easy_dtype(ndtype), np.dtype(float))
+        # As string w/o names
+        ndtype = "i4, f8"
+        assert_equal(easy_dtype(ndtype),
+                     np.dtype([('f0', "i4"), ('f1', "f8")]))
+        # As string w/o names but different default format
+        assert_equal(easy_dtype(ndtype, defaultfmt="field_%03i"),
+                     np.dtype([('field_000', "i4"), ('field_001', "f8")]))
+        # As string w/ names
+        ndtype = "i4, f8"
+        assert_equal(easy_dtype(ndtype, names="a, b"),
+                     np.dtype([('a', "i4"), ('b', "f8")]))
+        # As string w/ names (too many)
+        ndtype = "i4, f8"
+        assert_equal(easy_dtype(ndtype, names="a, b, c"),
+                     np.dtype([('a', "i4"), ('b', "f8")]))
+        # As string w/ names (not enough)
+        ndtype = "i4, f8"
+        assert_equal(easy_dtype(ndtype, names=", b"),
+                     np.dtype([('f0', "i4"), ('b', "f8")]))
+        # ... (with different default format)
+        assert_equal(easy_dtype(ndtype, names="a", defaultfmt="f%02i"),
+                     np.dtype([('a', "i4"), ('f00', "f8")]))
+        # As list of tuples w/o names
+        ndtype = [('A', int), ('B', float)]
+        assert_equal(easy_dtype(ndtype), np.dtype([('A', int), ('B', float)]))
+		# As list of tuples w/ names
+        assert_equal(easy_dtype(ndtype, names="a,b"),
+                     np.dtype([('a', int), ('b', float)]))
+		# As list of tuples w/ not enough names
+        assert_equal(easy_dtype(ndtype, names="a"),
+                     np.dtype([('a', int), ('f0', float)]))
+		# As list of tuples w/ too many names
+        assert_equal(easy_dtype(ndtype, names="a,b,c"),
+                     np.dtype([('a', int), ('b', float)]))
+		# As list of types w/o names
+        ndtype = (int, float, float)
+        assert_equal(easy_dtype(ndtype),
+                     np.dtype([('f0', int), ('f1', float), ('f2', float)]))
+		# As list of types w names
+        ndtype = (int, float, float)
+        assert_equal(easy_dtype(ndtype, names="a, b, c"),
+                     np.dtype([('a', int), ('b', float), ('c', float)]))
+        # As simple dtype w/ names
+        ndtype = np.dtype(float)
+        assert_equal(easy_dtype(ndtype, names="a, b, c"),
+                     np.dtype([(_, float) for _ in ('a', 'b', 'c')]))
+        # As simple dtype w/o names (but multiple fields)
+        ndtype = np.dtype(float)
+        assert_equal(easy_dtype(ndtype, names=['', '', ''], defaultfmt="f%02i"),
+                     np.dtype([(_, float) for _ in ('f00', 'f01', 'f02')]))
 

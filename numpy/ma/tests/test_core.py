@@ -2591,6 +2591,12 @@ class TestMaskedArrayFunctions(TestCase):
         assert_equal(mx, x)
         assert_equal(mx._mask, [1,1,0])
 
+    def test_masked_equal_fill_value(self):
+        x = [1, 2, 3]
+        mx = masked_equal(x, 3)
+        assert_equal(mx._mask, [0, 0, 1])
+        assert_equal(mx.fill_value, 3)
+
     def test_masked_where_condition(self):
         "Tests masking functions."
         x = array([1.,2.,3.,4.,5.])

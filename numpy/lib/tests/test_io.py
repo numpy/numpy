@@ -763,8 +763,8 @@ M   33  21.99
 
     def test_withmissing(self):
         data = StringIO.StringIO('A,B\n0,1\n2,N/A')
-        test = np.mafromtxt(data, dtype=None, delimiter=',', missing='N/A',
-                            names=True)
+        kwargs = dict(delimiter=",", missing="N/A", names=True)
+        test = np.mafromtxt(data, dtype=None, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', np.int), ('B', np.int)])
@@ -772,9 +772,10 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
         #
         data.seek(0)
-        test = np.mafromtxt(data, delimiter=',', missing='N/A', names=True)
+        test = np.mafromtxt(data, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
-                           mask=[[False, False], [False, True]],)
+                           mask=[(False, False), (False, True)],
+                           dtype=[('A', np.float), ('B', np.float)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
 
@@ -848,13 +849,14 @@ M   33  21.99
         data.insert(0, "a, b, c, d, e")
         mdata = StringIO.StringIO("\n".join(data))
         #
-        mtest = np.ndfromtxt(mdata, delimiter=",", names=True, dtype=None,)
+        kwargs = dict(delimiter=",", dtype=None, names=True)
+        mtest = np.ndfromtxt(mdata, invalid_raise=False, **kwargs)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
         mdata.seek(0)
         assert_raises(ValueError, np.ndfromtxt, mdata,
-                      delimiter=",", names=True, invalid_raise=True)
+                      delimiter=",", names=True)
 
     def test_invalid_raise_with_usecols(self):
         "Test invalid_raise with usecols"
@@ -863,15 +865,15 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = StringIO.StringIO("\n".join(data))
+        kwargs = dict(delimiter=",", dtype=None, names=True,
+                      invalid_raise=False)
         #
-        mtest = np.ndfromtxt(mdata, delimiter=",", names=True, dtype=None,
-                             usecols=(0, 4))
+        mtest = np.ndfromtxt(mdata, usecols=(0, 4), **kwargs)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
         mdata.seek(0)
-        mtest = np.ndfromtxt(mdata, delimiter=",", names=True, dtype=None,
-                             usecols=(0, 1))
+        mtest = np.ndfromtxt(mdata, usecols=(0, 1), **kwargs)
         assert_equal(len(mtest), 50)
         control = np.ones(50, dtype=[(_, int) for _ in 'ab'])
         control[[10 * _ for _ in range(5)]] = (2, 2)
@@ -879,6 +881,7 @@ M   33  21.99
 
 
     def test_inconsistent_dtype(self):
+        "Test inconsistent dtype"
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = StringIO.StringIO("\n".join(data))
 
@@ -886,6 +889,64 @@ M   33  21.99
         kwargs = dict(delimiter=",", converters=converters,
                       dtype=[(_, int) for _ in 'abcde'],)
         assert_raises(TypeError, np.genfromtxt, mdata, **kwargs)
+
+
+    def test_default_field_format(self):
+        "Test default format"
+        data = "0, 1, 2.3\n4, 5, 6.7"
+        mtest = np.ndfromtxt(StringIO.StringIO(data),
+                             delimiter=",", dtype=None, defaultfmt="f%02i")
+        ctrl = np.array([(0, 1, 2.3), (4, 5, 6.7)],
+                        dtype=[("f00", int), ("f01", int), ("f02", float)])
+        assert_equal(mtest, ctrl)
+
+    def test_single_dtype_wo_names(self):
+        "Test single dtype w/o names"
+        data = "0, 1, 2.3\n4, 5, 6.7"
+        mtest = np.ndfromtxt(StringIO.StringIO(data),
+                             delimiter=",", dtype=float, defaultfmt="f%02i")
+        ctrl = np.array([[0., 1., 2.3], [4., 5., 6.7]], dtype=float)
+        assert_equal(mtest, ctrl)
+
+    def test_single_dtype_w_explicit_names(self):
+        "Test single dtype w explicit names"
+        data = "0, 1, 2.3\n4, 5, 6.7"
+        mtest = np.ndfromtxt(StringIO.StringIO(data),
+                             delimiter=",", dtype=float, names="a, b, c")
+        ctrl = np.array([(0., 1., 2.3), (4., 5., 6.7)],
+                        dtype=[(_, float) for _ in "abc"])
+        assert_equal(mtest, ctrl)
+
+    def test_single_dtype_w_implicit_names(self):
+        "Test single dtype w implicit names"
+        data = "a, b, c\n0, 1, 2.3\n4, 5, 6.7"
+        mtest = np.ndfromtxt(StringIO.StringIO(data),
+                             delimiter=",", dtype=float, names=True)
+        ctrl = np.array([(0., 1., 2.3), (4., 5., 6.7)],
+                        dtype=[(_, float) for _ in "abc"])
+        assert_equal(mtest, ctrl)
+
+    def test_easy_structured_dtype(self):
+        "Test easy structured dtype"
+        data = "0, 1, 2.3\n4, 5, 6.7"
+        mtest = np.ndfromtxt(StringIO.StringIO(data), delimiter=",",
+                             dtype=(int, float, float), defaultfmt="f_%02i")
+        ctrl = np.array([(0, 1., 2.3), (4, 5., 6.7)],
+                        dtype=[("f_00", int), ("f_01", float), ("f_02", float)])
+        assert_equal(mtest, ctrl)
+
+    def test_autostrip(self):
+        "Test autostrip"
+        data = "01/01/2003  , 1.3,   abcde"
+        kwargs = dict(delimiter=",", dtype=None)
+        mtest = np.ndfromtxt(StringIO.StringIO(data), **kwargs)
+        ctrl = np.array([('01/01/2003  ', 1.3, '   abcde')],
+                        dtype=[('f0', '|S12'), ('f1', float), ('f2', '|S8')])
+        assert_equal(mtest, ctrl)
+        mtest = np.ndfromtxt(StringIO.StringIO(data), autostrip=True, **kwargs)
+        ctrl = np.array([('01/01/2003', 1.3, 'abcde')],
+                        dtype=[('f0', '|S10'), ('f1', float), ('f2', '|S5')])
+        assert_equal(mtest, ctrl)
 
 
     def test_recfromtxt(self):

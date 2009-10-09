@@ -19,8 +19,9 @@ from _datasource import DataSource
 from _compiled_base import packbits, unpackbits
 
 from _iotools import LineSplitter, NameValidator, StringConverter, \
-                     ConverterError, ConverterLockError, \
-                     _is_string_like, has_nested_fields, flatten_dtype
+                     ConverterError, ConverterLockError, ConversionWarning, \
+                     _is_string_like, has_nested_fields, flatten_dtype, \
+                     easy_dtype
 
 _file = file
 _string_like = _is_string_like
@@ -872,8 +873,8 @@ def fromregex(file, regexp, dtype):
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
                converters=None, missing='', missing_values=None, usecols=None,
                names=None, excludelist=None, deletechars=None, autostrip=False,
-               case_sensitive=True, unpack=None, usemask=False, loose=True,
-               invalid_raise=False):
+               case_sensitive=True, defaultfmt="f%i", unpack=None,
+               usemask=False, loose=True, invalid_raise=True):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -930,6 +931,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
+    defaultfmt : str, optional
+        A format used to define default field names, such as "f%i" or "f_%02i".
     autostrip : bool, optional
         Whether to automatically strip white spaces from the variables.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
@@ -945,7 +948,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     invalid_raise : bool, optional
         If True, an exception is raised if an inconsistency is detected in the
         number of columns.
-        If False, a warning is emitted but the incriminating lines are skipped.
+        If False, a warning is emitted and the offending lines are skipped.
 
     Returns
     -------
@@ -1063,9 +1066,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     nbcols = len(usecols or first_values)
 
     # Check the names and overwrite the dtype.names if needed
-    if dtype is not None:
-        dtype = np.dtype(dtype)
-    dtypenames = getattr(dtype, 'names', None)
     if names is True:
         names = validate_names([_.strip() for _ in first_values])
         first_line = ''
@@ -1073,10 +1073,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
         names = validate_names(names)
-    elif dtypenames:
-        dtype.names = validate_names(dtypenames)
-    if names and dtypenames:
-        dtype.names = names
+    # Get the dtype
+    if dtype is not None:
+        dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
 
     # If usecols is a list of names, convert to a list of indices
     if usecols:
@@ -1213,7 +1212,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
             raise ValueError(errmsg)
         # Issue a warning ?
         else:
-            warnings.warn(errmsg)
+            warnings.warn(errmsg, ConversionWarning)
 
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
@@ -1234,26 +1233,28 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     data = rows
     if dtype is None:
         # Get the dtypes from the types of the converters
-        coldtypes = [conv.type for conv in converters]
+        column_types = [conv.type for conv in converters]
         # Find the columns with strings...
-        strcolidx = [i for (i, v) in enumerate(coldtypes)
+        strcolidx = [i for (i, v) in enumerate(column_types)
                      if v in (type('S'), np.string_)]
         # ... and take the largest number of chars.
         for i in strcolidx:
-            coldtypes[i] = "|S%i" % max(len(row[i]) for row in data)
+            column_types[i] = "|S%i" % max(len(row[i]) for row in data)
         #
         if names is None:
             # If the dtype is uniform, don't define names, else use ''
             base = set([c.type for c in converters if c._checked])
-
             if len(base) == 1:
                 (ddtype, mdtype) = (list(base)[0], np.bool)
             else:
-                ddtype = [('', dt) for dt in coldtypes]
-                mdtype = [('', np.bool) for dt in coldtypes]
+                ddtype = [(defaultfmt % i, dt)
+                          for (i, dt) in enumerate(column_types)]
+                if usemask:
+                    mdtype = [(defaultfmt % i, np.bool)
+                              for (i, dt) in enumerate(column_types)]
         else:
-            ddtype = zip(names, coldtypes)
-            mdtype = zip(names, [np.bool] * len(coldtypes))
+            ddtype = zip(names, column_types)
+            mdtype = zip(names, [np.bool] * len(column_types))
         output = np.array(data, dtype=ddtype)
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)
@@ -1331,11 +1332,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     return output.squeeze()
 
 
-def ndfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
-              converters=None, missing='', missing_values=None, usecols=None,
-              names=None, excludelist=None, deletechars=None, autostrip=False,
-              case_sensitive=True, unpack=None, loose=True,
-              invalid_raise=False):
+
+def ndfromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a file and return it as a single array.
 
@@ -1347,21 +1345,11 @@ def ndfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     numpy.genfromtxt : generic function.
 
     """
-    kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
-                  skiprows=skiprows, converters=converters,
-                  missing=missing, missing_values=missing_values,
-                  usecols=usecols, unpack=unpack, names=names, 
-                  excludelist=excludelist, deletechars=deletechars,
-                  case_sensitive=case_sensitive, usemask=False,
-                  autostrip=autostrip, loose=loose, invalid_raise=invalid_raise)
+    kwargs['usemask'] = False
     return genfromtxt(fname, **kwargs)
 
 
-def mafromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
-              converters=None, missing='', missing_values=None, usecols=None,
-              names=None, excludelist=None, deletechars=None, autostrip=False,
-              case_sensitive=True, unpack=None, loose=True,
-              invalid_raise=False):
+def mafromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a text file and return a masked array.
 
@@ -1372,22 +1360,11 @@ def mafromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     numpy.genfromtxt : generic function to load ASCII data.
 
     """
-    kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
-                  skiprows=skiprows, converters=converters,
-                  missing=missing, missing_values=missing_values,
-                  usecols=usecols, unpack=unpack, names=names, 
-                  excludelist=excludelist, deletechars=deletechars,
-                  case_sensitive=case_sensitive, autostrip=autostrip,
-                  loose=loose, invalid_raise=invalid_raise,
-                  usemask=True)
+    kwargs['usemask'] = True
     return genfromtxt(fname, **kwargs)
 
 
-def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
-               converters=None, missing='', missing_values=None,
-               usecols=None, unpack=None, names=None, autostrip=False,
-               excludelist=None, deletechars=None, case_sensitive=True,
-               loose=True, invalid_raise=False, usemask=False):
+def recfromtxt(fname, **kwargs):
     """
     Load ASCII data from a file and return it in a record array.
 
@@ -1407,13 +1384,8 @@ def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
     array will be determined from the data.
 
     """
-    kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
-                  skiprows=skiprows, converters=converters,
-                  missing=missing, missing_values=missing_values,
-                  usecols=usecols, unpack=unpack, names=names, 
-                  excludelist=excludelist, deletechars=deletechars,
-                  case_sensitive=case_sensitive, usemask=usemask,
-                  loose=loose, autostrip=autostrip, invalid_raise=invalid_raise)
+    kwargs.update(dtype=kwargs.get('dtype', None))
+    usemask = kwargs.get('usemask', False)
     output = genfromtxt(fname, **kwargs)
     if usemask:
         from numpy.ma.mrecords import MaskedRecords
@@ -1423,12 +1395,7 @@ def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
     return output
 
 
-def recfromcsv(fname, dtype=None, comments='#', skiprows=0,
-               converters=None, missing='', missing_values=None,
-               usecols=None, unpack=None, names=True,
-               excludelist=None, deletechars=None, case_sensitive='lower',
-               loose=True, autostrip=False, invalid_raise=False,
-               usemask=False):
+def recfromcsv(fname, **kwargs):
     """
     Load ASCII data stored in a comma-separated file.
 
@@ -1443,13 +1410,15 @@ def recfromcsv(fname, dtype=None, comments='#', skiprows=0,
     numpy.genfromtxt : generic function to load ASCII data.
 
     """
-    kwargs = dict(dtype=dtype, comments=comments, delimiter=",", 
-                  skiprows=skiprows, converters=converters,
-                  missing=missing, missing_values=missing_values,
-                  usecols=usecols, unpack=unpack, names=names, 
-                  excludelist=excludelist, deletechars=deletechars,
-                  case_sensitive=case_sensitive, usemask=usemask,
-                  loose=loose, autostrip=autostrip, invalid_raise=invalid_raise)
+    case_sensitive = kwargs.get('case_sensitive', "lower") or "lower"
+    names = kwargs.get('names', True)
+    if names is None:
+        names = True
+    kwargs.update(dtype=kwargs.get('update', None),
+                  delimiter=kwargs.get('delimiter', ",") or ",",
+                  names=names,
+                  case_sensitive=case_sensitive)
+    usemask = kwargs.get("usemask", False)
     output = genfromtxt(fname, **kwargs)
     if usemask:
         from numpy.ma.mrecords import MaskedRecords
