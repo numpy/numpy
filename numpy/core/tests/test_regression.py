@@ -4,6 +4,7 @@ import sys
 import gc
 from os import path
 from numpy.testing import *
+from numpy.testing.utils import _assert_valid_refcount
 import numpy as np
 
 rlevel = 1
@@ -487,7 +488,7 @@ class TestRegression(TestCase):
 
     def test_refcount_vdot(self, level=rlevel):
         """Changeset #3443"""
-        assert_valid_refcount(np.vdot)
+        _assert_valid_refcount(np.vdot)
 
     def test_startswith(self, level=rlevel):
         ca = np.char.array(['Hi','There'])

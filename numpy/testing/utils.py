@@ -14,7 +14,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-           'assert_', 'assert_valid_refcount']
+           'assert_']
 
 verbose = 0
 
@@ -1064,7 +1064,11 @@ def measure(code_str,times=1,label=None):
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
 
-def assert_valid_refcount(op):
+def _assert_valid_refcount(op):
+    """
+    Check that ufuncs don't mishandle refcount of object `1`.
+    Used in a few regression tests.
+    """
     import numpy as np
     a = np.arange(100 * 100)
     b = np.arange(100*100).reshape(100, 100)

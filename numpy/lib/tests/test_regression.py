@@ -1,4 +1,5 @@
 from numpy.testing import *
+from numpy.testing.utils import _assert_valid_refcount
 import numpy as np
 
 rlevel = 1
@@ -42,7 +43,7 @@ class TestRegression(TestCase):
         """Ticket #378"""
         def p(x,y): return 123
         v = np.vectorize(p)
-        assert_valid_refcount(v)
+        _assert_valid_refcount(v)
 
     def test_poly1d_nan_roots(self, level=rlevel):
         """Ticket #396"""
