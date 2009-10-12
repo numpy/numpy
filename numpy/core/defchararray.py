@@ -1611,7 +1611,7 @@ class chararray(ndarray):
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
-       arrays of type object_, string_ or unicode_ and use the free
+       arrays of type string_ or unicode_ and use the free
        functions in :mod:`numpy.char <numpy.core.defchararray>` for
        fast vectorized string operations instead.
 
@@ -2351,9 +2351,9 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
-       arrays of type object_, string_ or unicode_ and use the free
-       functions in :mod:`numpy.char <numpy.core.defchararray>` for
-       fast vectorized string operations instead.
+       arrays of type string_ or unicode_ and use the free functions
+       in :mod:`numpy.char <numpy.core.defchararray>` for fast
+       vectorized string operations instead.
 
     Versus a regular Numpy array of type `string_` or `unicode_`, this
     class adds the following functionality:
