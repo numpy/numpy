@@ -66,6 +66,7 @@ Creating character arrays (:mod:`numpy.char`)
    :toctree: generated/
 
    core.defchararray.array
+   core.defchararray.asarray
 
 Numerical ranges
 ----------------

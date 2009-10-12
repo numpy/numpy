@@ -228,11 +228,12 @@ Character arrays (:mod:`numpy.char`)
    single: character arrays
 
 .. note::
-   The chararray module exists for backwards compatibility with Numarray,
-   it is not recommended for new development. If one needs arrays of
-   strings, use arrays of `dtype` object.
+   The chararray module exists for backwards compatibility with
+   Numarray, it is not recommended for new development. If one needs
+   arrays of strings, use arrays of `dtype` `object_`, `string_` or
+   `unicode_`.
 
-These are enhanced arrays of either :class:`string` type or
+These are enhanced arrays of either :class:`string_` type or
 :class:`unicode_` type.  These arrays inherit from the
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,
 and ``%`` on a (broadcasting) element-by-element basis.  These
@@ -244,7 +245,7 @@ to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of string or unicode
 data-type. However, a chararray can also be created using the
 :meth:`numpy.chararray` constructor, or via the
-:func:`numpy.char.array` function:
+:func:`numpy.char.array <core.defchararray.array>` function:
 
 .. autosummary::
    :toctree: generated/

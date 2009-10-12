@@ -1,75 +1,1672 @@
 """
-Module for character arrays.
+This module contains a set of functions for vectorized string
+operations and methods.
 
 .. note::
-   The chararray module exists for backwards compatibility with Numarray,
-   it is not recommended for new development. If one needs arrays of
-   strings, use arrays of `dtype` object.
+   The chararray module exists for backwards compatibility with
+   Numarray, it is not recommended for new development. If one needs
+   arrays of strings, use arrays of `dtype` `object_`, `string_` or
+   `unicode_`.
+
+Methods will only be available if the corresponding str method is
+available in your version of Python.
 
 The preferred alias for `defchararray` is `numpy.char`.
-
 """
+
 import sys
-from numerictypes import string_, unicode_, integer, object_
-from numeric import ndarray, broadcast, empty, compare_chararrays
+from numerictypes import string_, unicode_, integer, object_, bool_, character
+from numeric import ndarray, compare_chararrays
 from numeric import array as narray
+from numpy.core.multiarray import _vec_string
+import numpy
 
 __all__ = ['chararray']
 
 _globalvar = 0
 _unicode = unicode
+_len = len
 
-# special sub-class for character arrays (string_ and unicode_)
-# This adds + and * operations and methods of str and unicode types
-#  which operate on an element-by-element basis
+def _use_unicode(*args):
+    """
+    Helper function for determining the output type of some string
+    operations.
 
-# It also strips white-space on element retrieval and on
-#   comparisons
+    For an operation on two ndarrays, if at least one is unicode, the
+    result should be unicode.
+    """
+    for x in args:
+        if (isinstance(x, _unicode)
+            or issubclass(numpy.asarray(x).dtype.type, unicode_)):
+            return unicode_
+    return string_
+
+def _to_string_or_unicode_array(result):
+    """
+    Helper function to cast a result back into a string or unicode array
+    if an object array must be used as an intermediary.
+    """
+    return numpy.asarray(result.tolist())
+
+def _clean_args(*args):
+    """
+    Helper function for delegating arguments to Python string
+    functions.
+
+    Many of the Python string operations that have optional arguments
+    do not use 'None' to indicate a default value.  In these cases,
+    we need to remove all `None` arguments, and those following them.
+    """
+    newargs = []
+    for chk in args:
+        if chk is None:
+            break
+        newargs.append(chk)
+    return newargs
+
+def _get_num_chars(a):
+    """
+    Helper function that returns the number of characters per field in
+    a string or unicode array.  This is to abstract out the fact that
+    for a unicode array this is itemsize / 4.
+    """
+    if issubclass(a.dtype.type, unicode_):
+        return a.itemsize / 4
+    return a.itemsize
+
+
+def equal(x1, x2):
+    """
+    Return (x1 == x2) element-wise.
+
+    Unlike `numpy.equal`, this comparison is performed by first
+    stripping whitespace characters from the end of the string.  This
+    behavior is provided for backward-compatibility with numarray.
+
+    Parameters
+    ----------
+    x1, x2 : array_like of string_ or unicode_
+        Input arrays of the same shape.
+
+    Returns
+    -------
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    not_equal, greater_equal, less_equal, greater, less
+    """
+    return compare_chararrays(x1, x2, '==', True)
+
+def not_equal(x1, x2):
+    """
+    Return (x1 != x2) element-wise.
+
+    Unlike `numpy.not_equal`, this comparison is performed by first
+    stripping whitespace characters from the end of the string.  This
+    behavior is provided for backward-compatibility with numarray.
+
+    Parameters
+    ----------
+    x1, x2 : array_like of string_ or unicode_
+        Input arrays of the same shape.
+
+    Returns
+    -------
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    equal, greater_equal, less_equal, greater, less
+    """
+    return compare_chararrays(x1, x2, '!=', True)
+
+def greater_equal(x1, x2):
+    """
+    Return (x1 >= x2) element-wise.
+
+    Unlike `numpy.greater_equal`, this comparison is performed by
+    first stripping whitespace characters from the end of the string.
+    This behavior is provided for backward-compatibility with
+    numarray.
+
+    Parameters
+    ----------
+    x1, x2 : array_like of string_ or unicode_
+        Input arrays of the same shape.
+
+    Returns
+    -------
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    equal, not_equal, less_equal, greater, less
+    """
+    return compare_chararrays(x1, x2, '>=', True)
+
+def less_equal(x1, x2):
+    """
+    Return (x1 <= x2) element-wise.
+
+    Unlike `numpy.less_equal`, this comparison is performed by first
+    stripping whitespace characters from the end of the string.  This
+    behavior is provided for backward-compatibility with numarray.
+
+    Parameters
+    ----------
+    x1, x2 : array_like of string_ or unicode_
+        Input arrays of the same shape.
+
+    Returns
+    -------
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    equal, not_equal, greater_equal, greater, less
+    """
+    return compare_chararrays(x1, x2, '<=', True)
+
+def greater(x1, x2):
+    """
+    Return (x1 > x2) element-wise.
+
+    Unlike `numpy.greater`, this comparison is performed by first
+    stripping whitespace characters from the end of the string.  This
+    behavior is provided for backward-compatibility with numarray.
+
+    Parameters
+    ----------
+    x1, x2 : array_like of string_ or unicode_
+        Input arrays of the same shape.
+
+    Returns
+    -------
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    equal, not_equal, greater_equal, less_equal, less
+    """
+    return compare_chararrays(x1, x2, '>', True)
+
+def less(x1, x2):
+    """
+    Return (x1 < x2) element-wise.
+
+    Unlike `numpy.greater`, this comparison is performed by first
+    stripping whitespace characters from the end of the string.  This
+    behavior is provided for backward-compatibility with numarray.
+
+    Parameters
+    ----------
+    x1, x2 : array_like of string_ or unicode_
+        Input arrays of the same shape.
+
+    Returns
+    -------
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    equal, not_equal, greater_equal, less_equal, greater
+    """
+    return compare_chararrays(x1, x2, '<', True)
+
+def str_len(a):
+    """
+    Return len(a) element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of integers
+
+    See also
+    --------
+    __builtin__.len
+    """
+    return _vec_string(a, integer, '__len__')
+
+def add(x1, x2):
+    """
+    Return (x1 + x2), that is string concatenation, element-wise for a
+    pair of array_likes of string_ or unicode_.
+
+    Parameters
+    ----------
+    x1 : array_like of string_ or unicode_
+    x2 : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of string_ or unicode_, depending on input types
+    """
+    arr1 = numpy.asarray(x1)
+    arr2 = numpy.asarray(x2)
+    out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
+    dtype = _use_unicode(arr1, arr2)
+    return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
+
+def multiply(a, i):
+    """
+    Return (a * i), that is string multiple concatenation,
+    element-wise.
+
+    Values in `i` of less than 0 are treated as 0 (which yields an
+    empty string).
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    i : array_like of integers
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input types
+    """
+    a_arr = numpy.asarray(a)
+    i_arr = numpy.asarray(i)
+    if not issubclass(i_arr.dtype.type, integer):
+        raise ValueError, "Can only multiply by integers"
+    out_size = _get_num_chars(a_arr) * max(long(i_arr.max()), 0)
+    return _vec_string(
+        a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
+
+def mod(a, values):
+    """
+    Return (a % i), that is pre-Python 2.6 string formatting
+    (iterpolation), element-wise for a pair of array_likes of string_
+    or unicode_.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    values : array_like of values
+       These values will be element-wise interpolated into the string.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of string_ or unicode_, depending on input types
+
+    See also
+    --------
+    str.__mod__
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(a, object_, '__mod__', (values,)))
+
+def capitalize(a):
+    """
+    Return a copy of `a` with only the first character of each element
+    capitalized.
+
+    Calls `str.capitalize` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of string_ or unicode_, depending on input types
+
+    See also
+    --------
+    str.capitalize
+
+    Examples
+    --------
+    >>> c = np.array(['a1b2','1b2a','b2a1','2a1b'],'S4'); c
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'],
+        dtype='|S4')
+    >>> np.char.capitalize(c)
+    array(['A1b2', '1b2a', 'B2a1', '2a1b'],
+        dtype='|S4')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'capitalize')
+
+if sys.version_info >= (2, 4):
+    def center(a, width, fillchar=' '):
+        """
+        Return a copy of `a` with its elements centered in a string of
+        length `width`.
+
+        Calls `str.center` element-wise.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        width : int
+            The length of the resulting strings
+        fillchar : str or unicode, optional
+            The padding character to use (default is space).
+
+        Returns
+        -------
+        out : ndarray
+            Output array of string_ or unicode_, depending on input types
+
+        See also
+        --------
+        str.center
+        """
+        a_arr = numpy.asarray(a)
+        width_arr = numpy.asarray(width)
+        size = long(numpy.max(width_arr.flat))
+        return _vec_string(
+            a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
+else:
+    def center(a, width):
+        """
+        Return an array with the elements of `a` centered in a string
+        of length width.
+
+        Calls `str.center` element-wise.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        width : int
+            The length of the resulting strings
+
+        Returns
+        -------
+        out : ndarray, str or unicode
+            Output array of string_ or unicode_, depending on input types
+
+        See also
+        --------
+        str.center
+        """
+        a_arr = numpy.asarray(a)
+        width_arr = numpy.asarray(width)
+        size = long(numpy.max(width_arr.flat))
+        return _vec_string(
+            a_arr, (a_arr.dtype.type, size), 'center', (width_arr,))
+
+def count(a, sub, start=0, end=None):
+    """
+    Returns an array with the number of non-overlapping occurrences of
+    substring `sub` in the range [`start`, `end`].
+
+    Calls `str.count` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    sub : str or unicode
+       The substring to search for
+    start, end : int, optional
+       Optional arguments `start` and `end` are interpreted as slice
+       notation to specify the range in which to count.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of integers.
+
+    See also
+    --------
+    str.count
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c
+    array(['aAaAaA', '  aA', 'abBABba'],
+        dtype='|S7')
+    >>> np.char.count(c, 'A')
+    array([3, 1, 1])
+    >>> np.char.count(c, 'aA')
+    array([3, 1, 0])
+    >>> np.char.count(c, 'A', start=1, end=4)
+    array([2, 1, 1])
+    >>> np.char.count(c, 'A', start=1, end=3)
+    array([1, 0, 0])
+    """
+    return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
+
+def decode(a, encoding=None, errors=None):
+    """
+    Calls `str.decode` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    encoding : str, optional
+       The name of an encoding
+    errors : str, optional
+       Specifies how to handle encoding errors
+
+    Returns
+    -------
+    out : ndarray
+
+    Notes
+    -----
+    The type of the result will depend on the encoding specified.
+
+    See also
+    --------
+    str.decode
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c
+    array(['aAaAaA', '  aA', 'abBABba'],
+        dtype='|S7')
+    >>> np.char.encode(c, encoding='cp037')
+    array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
+        '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
+        dtype='|S7')
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
+
+def encode(a, encoding=None, errors=None):
+    """
+    Calls `str.encode` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    encoding : str, optional
+       The name of an encoding
+    errors : str, optional
+       Specifies how to handle encoding errors
+
+    Returns
+    -------
+    out : ndarray
+
+    Notes
+    -----
+    The type of the result will depend on the encoding specified.
+
+    See also
+    --------
+    str.encode
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
+
+def endswith(a, suffix, start=0, end=None):
+    """
+    Returns a boolean array which is `True` where the string element
+    in `a` ends with `suffix`, otherwise `False`.
+
+    Calls `str.endswith` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string or unicode
+    suffix : str
+    start, end : int, optional
+        With optional `start`, test beginning at that position. With
+        optional `end`, stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Outputs an array of booleans.
+
+    See also
+    --------
+    str.endswith
+
+    Examples
+    --------
+    >>> s = np.array(['foo', 'bar'])
+    >>> s[0] = 'foo'
+    >>> s[1] = 'bar'
+    >>> s
+    array(['foo', 'bar'],
+        dtype='|S3')
+    >>> np.charendswith(s, 'ar')
+    array([False,  True], dtype=bool)
+    >>> s.endswith(s, 'a', start=1, end=2)
+    array([False,  True], dtype=bool)
+    """
+    return _vec_string(
+        a, bool_, 'endswith', [suffix, start] + _clean_args(end))
+
+def expandtabs(a, tabsize=8):
+    """
+    Return a copy of each string element where all tab characters are
+    replaced by one or more spaces.
+
+    Calls `str.expandtabs` element-wise.
+
+    Return a copy of each string element where all tab characters are
+    replaced by one or more spaces, depending on the current column
+    and the given `tabsize`. The column number is reset to zero after
+    each newline occurring in the string. If `tabsize` is not given, a
+    tab size of 8 characters is assumed. This doesn’t understand other
+    non-printing characters or escape sequences.
+
+    Parameters
+    ----------
+    a : array_like of string or unicode
+    tabsize : int, optional
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.expandtabs
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(a, object_, 'expandtabs', (tabsize,)))
+
+def find(a, sub, start=0, end=None):
+    """
+    For each element, return the lowest index in the string where
+    substring `sub` is found.
+
+    Calls `str.find` element-wise.
+
+    For each element, return the lowest index in the string where
+    substring `sub` is found, such that `sub` is contained in the
+    range [`start`, `end`].
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    sub : str or unicode
+    start, end : int, optional
+        Optional arguments `start` and `end` are interpreted as in
+        slice notation.
+
+    Returns
+    -------
+    out : {ndarray, integer}
+        Output array of integers.  Returns -1 if `sub` is not found.
+
+    See also
+    --------
+    str.find
+    """
+    return _vec_string(
+        a, integer, 'find', [sub, start] + _clean_args(end))
+
+if sys.version_info >= (2.6):
+    def format(a, *args, **kwargs):
+        # _vec_string doesn't support kwargs at present
+        raise NotImplementedError
+
+def index(a, sub, start=0, end=None):
+    """
+    Like `find`, but raises `ValueError` when the substring is not found.
+
+    Calls `str.index` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    sub : str or unicode
+    start, end : int, optional
+
+    Returns
+    -------
+    out : ndarray
+        Output array of integers.  Returns -1 if `sub` is not found.
+
+    See also
+    --------
+    find, str.find
+    """
+    return _vec_string(
+        a, integer, 'index', [sub, start] + _clean_args(end))
+
+def isalnum(a):
+    """
+    Returns true for each element if all characters in the string are
+    alphanumeric and there is at least one character, false otherwise.
+
+    Calls `str.isalnum` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.isalnum
+    """
+    return _vec_string(a, bool_, 'isalnum')
+
+def isalpha(a):
+    """
+    Returns true for each element if all characters in the string are
+    alphabetic and there is at least one character, false otherwise.
+
+    Calls `str.isalpha` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of booleans
+
+    See also
+    --------
+    str.isalpha
+    """
+    return _vec_string(a, bool_, 'isalpha')
+
+def isdigit(a):
+    """
+    Returns true for each element if all characters in the string are
+    digits and there is at least one character, false otherwise.
+
+    Calls `str.isdigit` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of booleans
+
+    See also
+    --------
+    str.isdigit
+    """
+    return _vec_string(a, bool_, 'isdigit')
+
+def islower(a):
+    """
+    Returns true for each element if all cased characters in the
+    string are lowercase and there is at least one cased character,
+    false otherwise.
+
+    Calls `str.islower` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of booleans
+
+    See also
+    --------
+    str.islower
+    """
+    return _vec_string(a, bool_, 'islower')
+
+def isspace(a):
+    """
+    Returns true for each element if there are only whitespace
+    characters in the string and there is at least one character,
+    false otherwise.
+
+    Calls `str.isspace` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of booleans
+
+    See also
+    --------
+    str.isspace
+    """
+    return _vec_string(a, bool_, 'isspace')
+
+def istitle(a):
+    """
+    Returns true for each element if the element is a titlecased
+    string and there is at least one character, false otherwise.
+
+    Call `str.istitle` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of booleans
+
+    See also
+    --------
+    str.istitle
+    """
+    return _vec_string(a, bool_, 'istitle')
+
+def isupper(a):
+    """
+    Returns true for each element if all cased characters in the
+    string are uppercase and there is at least one character, false
+    otherwise.
+
+    Call `str.isupper` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of booleans
+
+    See also
+    --------
+    str.isupper
+    """
+    return _vec_string(a, bool_, 'isupper')
+
+def join(sep, seq):
+    """
+    Return a string which is the concatenation of the strings in the
+    sequence `seq`.
+
+    Calls `str.join` element-wise.
+
+    Parameters
+    ----------
+    sep : array_like of string_ or unicode_
+    seq : array_like of string_ or unicode_
+
+    Returns
+    -------
+    out : ndarray
+        Output array of string_ or unicode_, depending on input types
+
+    See also
+    --------
+    str.join
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(sep, object_, 'join', (seq,)))
+
+if sys.version_info >= (2, 4):
+    def ljust(a, width, fillchar=' '):
+        """
+        Return an array with the elements of `a` left-justified in a
+        string of length `width`.
+
+        Calls `str.ljust` element-wise.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        width : int
+            The length of the resulting strings
+        fillchar : str or unicode, optional
+            The character to use for padding
+
+        Returns
+        -------
+        out : ndarray
+            Output array of str or unicode, depending on input type
+
+        See also
+        --------
+        str.ljust
+        """
+        a_arr = numpy.asarray(a)
+        width_arr = numpy.asarray(width)
+        size = long(numpy.max(width_arr.flat))
+        return _vec_string(
+            a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
+else:
+    def ljust(a, width):
+        """
+        Return an array with the elements of `a` left-justified in a
+        string of length `width`.
+
+        Calls `str.ljust` element-wise.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        width : int
+            The length of the resulting strings
+
+        Returns
+        -------
+        out : ndarray
+            Output array of str or unicode, depending on input type
+
+        See also
+        --------
+        str.ljust
+        """
+        a_arr = numpy.asarray(a)
+        width_arr = numpy.asarray(width)
+        size = long(numpy.max(width_arr.flat))
+        return _vec_string(
+            a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr,))
+
+def lower(a):
+    """
+    Return an array with the elements of `a` converted to lowercase.
+
+    Call `str.lower` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+
+    Returns
+    -------
+    out : ndarray, str or unicode
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.lower
+
+    Examples
+    --------
+    >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
+    array(['A1B C', '1BCA', 'BCA1'],
+          dtype='|S5')
+    >>> np.char.lower(c)
+    array(['a1b c', '1bca', 'bca1'],
+          dtype='|S5')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'lower')
+
+def lstrip(a, chars=None):
+    """
+    For each element in `a`, return a copy with the leading characters
+    removed.
+
+    Calls `str.lstrip` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    chars : str or unicode, optional
+       The `chars` argument is a string specifying the set of
+       characters to be removed. If omitted or None, the `chars`
+       argument defaults to removing whitespace. The `chars` argument
+       is not a prefix; rather, all combinations of its values are
+       stripped.
+
+    Returns
+    -------
+    out : ndarray, str or unicode
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.lstrip
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c
+    array(['aAaAaA', '  aA', 'abBABba'],
+        dtype='|S7')
+    >>> np.char.lstrip(c, 'a') # 'a' unstripped from c[1] because whitespace leading
+    array(['AaAaA', '  aA', 'bBABba'],
+        dtype='|S6')
+    >>> np.char.lstrip(c, 'A') # leaves c unchanged
+    array(['aAaAaA', '  aA', 'abBABba'],
+        dtype='|S7')
+    >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
+    True
+    >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
+    True
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'lstrip', (chars,))
+
+if sys.version_info >= (2, 5):
+    def partition(a, sep):
+        """
+        Partition each element in `a` around `sep`.
+
+        Calls `str.partition` element-wise.
+
+        For each element in `a`, split the element as the first
+        occurrence of `sep`, and return 3 strings containing the part
+        before the separator, the separator itself, and the part after
+        the separator. If the separator is not found, return 3 strings
+        containing the string itself, followed by two empty strings.
+
+        Parameters
+        ----------
+        a : array-like of str or unicode
+        sep : str or unicode
+
+        Returns
+        -------
+        out : ndarray
+            Output array of string or unicode, depending on input
+            type.  The output array will have an extra dimension with
+            3 elements per input element.
+
+        See also
+        --------
+        str.partition
+        """
+        return _to_string_or_unicode_array(
+            _vec_string(a, object_, 'partition', (sep,)))
+
+def replace(a, old, new, count=None):
+    """
+    For each element in `a`, return a copy of the string with all
+    occurrences of substring `old` replaced by `new`.
+
+    Calls `str.replace` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    old, new : str or unicode
+    count : int, optional
+        If the optional argument `count` is given, only the first
+        `count` occurrences are replaced.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.replace
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(
+            a, object_, 'replace', [old, new] +_clean_args(count)))
+
+def rfind(a, sub, start=0, end=None):
+    """
+    For each element in `a`, return the highest index in the string
+    where substring `sub` is found, such that `sub` is contained
+    within [`start`, `end`].
+
+    Calls `str.rfind` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    sub : str or unicode
+    start, end : int, optional
+        Optional arguments `start` and `end` are interpreted as in
+        slice notation.
+
+    Returns
+    -------
+    out : ndarray
+       Output array of integers.  Return -1 on failure.
+
+    See also
+    --------
+    str.rfind
+    """
+    return _vec_string(
+        a, integer, 'rfind', [sub, start] + _clean_args(end))
+
+def rindex(a, sub, start=0, end=None):
+    """
+    Like `rfind`, but raises `ValueError` when the substring `sub` is
+    not found.
+
+    Calls `str.rindex` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    sub : str or unicode
+    start, end : int, optional
+
+    Returns
+    -------
+    out : ndarray
+       Output array of integers.
+
+    See also
+    --------
+    rfind, str.rindex
+    """
+    return _vec_string(
+        a, integer, 'rindex', [sub, start] + _clean_args(end))
+
+if sys.version_info >= (2, 4):
+    def rjust(a, width, fillchar=' '):
+        """
+        Return an array with the elements of `a` right-justified in a
+        string of length `width`.
+
+        Calls `str.rjust` element-wise.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        width : int
+            The length of the resulting strings
+        fillchar : str or unicode, optional
+            The character to use for padding
+
+        Returns
+        -------
+        out : ndarray
+            Output array of str or unicode, depending on input type
+
+        See also
+        --------
+        str.rjust
+        """
+        a_arr = numpy.asarray(a)
+        width_arr = numpy.asarray(width)
+        size = long(numpy.max(width_arr.flat))
+        return _vec_string(
+            a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
+else:
+    def rjust(a, width):
+        """
+        Return an array with the elements of `a` right-justified in a
+        string of length `width`.
+
+        Calls `str.rjust` element-wise.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        width : int
+            The length of the resulting strings
+
+        Returns
+        -------
+        out : ndarray
+            Output array of str or unicode, depending on input type
+
+        See also
+        --------
+        str.rjust
+        """
+        a_arr = numpy.asarray(a)
+        width_arr = numpy.asarray(width)
+        size = long(numpy.max(width_arr.flat))
+        return _vec_string(
+            a_arr, (a_arr.dtype.type, size), 'rjust', (width,))
+
+if sys.version_info >= (2, 5):
+    def rpartition(a, sep):
+        """
+        Partition each element in `a` around `sep`.
+
+        Calls `str.rpartition` element-wise.
+
+        For each element in `a`, split the element as the last
+        occurrence of `sep`, and return 3 strings containing the part
+        before the separator, the separator itself, and the part after
+        the separator. If the separator is not found, return 3 strings
+        containing the string itself, followed by two empty strings.
+
+        Parameters
+        ----------
+        a : array-like of str or unicode
+        sep : str or unicode
+
+        Returns
+        -------
+        out : ndarray
+            Output array of string or unicode, depending on input
+            type.  The output array will have an extra dimension with
+            3 elements per input element.
+
+        See also
+        --------
+        str.rpartition
+        """
+        return _to_string_or_unicode_array(
+            _vec_string(a, object_, 'rpartition', (sep,)))
+
+if sys.version_info >= (2, 4):
+    def rsplit(a, sep=None, maxsplit=None):
+        """
+        For each element in `a`, return a list of the words in the
+        string, using `sep` as the delimiter string.
+
+        Calls `str.rsplit` element-wise.
+
+        Except for splitting from the right, `rsplit`
+        behaves like `split`.
+
+        Parameters
+        ----------
+        a : array_like of string_ or unicode_
+        sep : str or unicode, optional
+            If `sep` is not specified or `None`, any whitespace string
+            is a separator.
+        maxsplit : int, optional
+            If `maxsplit` is given, at most `maxsplit` splits are done,
+            the rightmost ones.
+
+        Returns
+        -------
+        out : ndarray
+           Array of list objects
+
+        See also
+        --------
+        str.rsplit, split
+        """
+        # This will return an array of lists of different sizes, so we
+        # leave it as an object array
+        return _vec_string(
+            a, object_, 'rsplit', [sep] + _clean_args(maxsplit))
+
+def rstrip(a, chars=None):
+    """
+    For each element in `a`, return a copy with the trailing
+    characters removed.
+
+    Calls `str.rstrip` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    chars : str or unicode, optional
+       The `chars` argument is a string specifying the set of
+       characters to be removed. If omitted or None, the `chars`
+       argument defaults to removing whitespace. The `chars` argument
+       is not a suffix; rather, all combinations of its values are
+       stripped.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.rstrip
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', 'abBABba'], dtype='S7'); c
+    array(['aAaAaA', 'abBABba'],
+        dtype='|S7')
+    >>> np.char.rstrip(c, 'a')
+    array(['aAaAaA', 'abBABb'],
+        dtype='|S6')
+    >>> np.char.rstrip(c, 'A')
+    array(['aAaAa', 'abBABba'],
+        dtype='|S7')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
+
+def split(a, sep=None, maxsplit=None):
+    """
+    For each element in `a`, return a list of the words in the
+    string, using `sep` as the delimiter string.
+
+    Calls `str.rsplit` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    sep : str or unicode, optional
+       If `sep` is not specified or `None`, any whitespace string is a
+       separator.
+    maxsplit : int, optional
+        If `maxsplit` is given, at most `maxsplit` splits are done.
+
+    Returns
+    -------
+    out : ndarray
+        Array of list objects
+
+    See also
+    --------
+    str.split, rsplit
+    """
+    # This will return an array of lists of different sizes, so we
+    # leave it as an object array
+    return _vec_string(
+        a, object_, 'split', [sep] + _clean_args(maxsplit))
+
+def splitlines(a, keepends=None):
+    """
+    For each element in `a`, return a list of the lines in the
+    element, breaking at line boundaries.
+
+    Calls `str.splitlines` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string_ or unicode_
+    keepends : bool, optional
+        Line breaks are not included in the resulting list unless
+        keepends is given and true.
+
+    Returns
+    -------
+    out : ndarray
+        Array of list objects
+
+    See also
+    --------
+    str.splitlines
+    """
+    return _vec_string(
+        a, object_, 'splitlines', _clean_args(keepends))
+
+def startswith(a, prefix, start=0, end=None):
+    """
+    Returns a boolean array which is `True` where the string element
+    in `a` starts with `prefix`, otherwise `False`.
+
+    Calls `str.startswith` element-wise.
+
+    Parameters
+    ----------
+    a : array_like of string or unicode
+    suffix : str
+    start, end : int, optional
+    end : int, optional
+        With optional `start`, test beginning at that position. With
+        optional `end`, stop comparing at that position.
+
+    Returns
+    -------
+    out : ndarray
+        Array of booleans
+
+    See also
+    --------
+    str.startswith
+    """
+    return _vec_string(
+        a, bool_, 'startswith', [prefix, start] + _clean_args(end))
+
+def strip(a, chars=None):
+    """
+    For each element in `a`, return a copy with the leading and
+    trailing characters removed.
+
+    Calls `str.rstrip` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    chars : str or unicode, optional
+       The `chars` argument is a string specifying the set of
+       characters to be removed. If omitted or None, the `chars`
+       argument defaults to removing whitespace. The `chars` argument
+       is not a prefix or suffix; rather, all combinations of its
+       values are stripped.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.strip
+
+    Examples
+    --------
+    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c
+    array(['aAaAaA', '  aA', 'abBABba'],
+        dtype='|S7')
+    >>> np.char.strip(c)
+    array(['aAaAaA', 'aA', 'abBABba'],
+        dtype='|S7')
+    >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because whitespace leads
+    array(['AaAaA', '  aA', 'bBABb'],
+        dtype='|S6')
+    >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because (unprinted) ws trails
+    array(['aAaAa', '  aA', 'abBABba'],
+        dtype='|S7')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'strip', _clean_args(chars))
+
+def swapcase(a):
+    """
+    For each element in `a`, return a copy of the string with
+    uppercase characters converted to lowercase and vice versa.
+
+    Calls `str.swapcase` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.swapcase
+
+    Examples
+    --------
+    >>> c=np.array(['a1B c','1b Ca','b Ca1','cA1b'],'S5'); c
+    array(['a1B c', '1b Ca', 'b Ca1', 'cA1b'],
+        dtype='|S5')
+    >>> np.char.swapcase(c)
+    array(['A1b C', '1B cA', 'B cA1', 'Ca1B'],
+        dtype='|S5')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'swapcase')
+
+def title(a):
+    """
+    For each element in `a`, return a titlecased version of the
+    string: words start with uppercase characters, all remaining cased
+    characters are lowercase.
+
+    Calls `str.title` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.title
+
+    Examples
+    --------
+    >>> c=np.array(['a1b c','1b ca','b ca1','ca1b'],'S5'); c
+    array(['a1b c', '1b ca', 'b ca1', 'ca1b'],
+        dtype='|S5')
+    >>> np.char.title(c)
+    chararray(['A1B C', '1B Ca', 'B Ca1', 'Ca1B'],
+        dtype='|S5')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'title')
+
+def translate(a, table, deletechars=None):
+    """
+    For each element in `a`, return a copy of the string where all
+    characters occurring in the optional argument `deletechars` are
+    removed, and the remaining characters have been mapped through the
+    given translation table.
+
+    Calls `str.translate` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    table : str of length 256
+    deletechars : str
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.translate
+    """
+    a_arr = numpy.asarray(a)
+    if issubclass(a_arr.dtype.type, unicode_):
+        return _vec_string(
+            a_arr, a_arr.dtype, 'translate', (table,))
+    else:
+        return _vec_string(
+            a_arr, a_arr.dtype, 'translate', [table] + _clean_args(deletechars))
+
+def upper(a):
+    """
+    Return an array with the elements of `a` converted to uppercase.
+
+    Calls `str.upper` element-wise.
+
+    For 8-bit strings, this method is locale-dependent.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.upper
+
+    Examples
+    --------
+    >>> c = np.array(['a1b c', '1bca', 'bca1']); c
+    array(['a1b c', '1bca', 'bca1'],
+        dtype='|S5')
+    >>> numpy.char.upper(c)
+    array(['A1B C', '1BCA', 'BCA1'],
+        dtype='|S5')
+    """
+    a_arr = numpy.asarray(a)
+    return _vec_string(a_arr, a_arr.dtype, 'upper')
+
+def zfill(a, width):
+    """
+    Return the numeric string left-filled with zeros in a string of
+    length `width`.
+
+    Calls `str.zfill` element-wise.
+
+    Parameters
+    ----------
+    a : array-like of str or unicode
+    width : int
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    See also
+    --------
+    str.zfill
+    """
+    a_arr = numpy.asarray(a)
+    width_arr = numpy.asarray(width)
+    size = long(numpy.max(width_arr.flat))
+    return _vec_string(
+        a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
+
+def isnumeric(a):
+    """
+    For each element in `a`, return True if there are only numeric
+    characters in the element.
+
+    Calls `unicode.isnumeric` element-wise.
+
+    Numeric characters include digit characters, and all characters
+    that have the Unicode numeric value property, e.g. ``U+2155,
+    VULGAR FRACTION ONE FIFTH``.
+
+    Parameters
+    ----------
+    a : array-like of unicode
+
+    Returns
+    -------
+    out : ndarray
+        Array of booleans
+
+    See also
+    --------
+    unicode.isnumeric
+    """
+    if _use_unicode(a) != unicode_:
+        raise TypeError, "isnumeric is only available for Unicode strings and arrays"
+    return _vec_string(a, bool_, 'isnumeric')
+
+def isdecimal(a):
+    """
+    For each element in `a`, return True if there are only decimal
+    characters in the element.
+
+    Calls `unicode.isdecimal` element-wise.
+
+    Decimal characters include digit characters, and all characters
+    that that can be used to form decimal-radix numbers,
+    e.g. ``U+0660, ARABIC-INDIC DIGIT ZERO``.
+
+    Parameters
+    ----------
+    a : array-like of unicode
+
+    Returns
+    -------
+    out : ndarray
+        Array of booleans
+
+    See also
+    --------
+    unicode.isdecimal
+    """
+    if _use_unicode(a) != unicode_:
+        raise TypeError, "isnumeric is only available for Unicode strings and arrays"
+    return _vec_string(a, bool_, 'isdecimal')
+
 
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
               strides=None, order=None)
 
-    An array of fixed size (perhaps unicode) strings.
+    Provides a convenient view on arrays of string and unicode values.
 
     .. note::
-       The chararray module exists for backwards compatibility with Numarray,
-       it is not recommended for new development. If one needs arrays of
-       strings, use arrays of `dtype` object.
+       This class is provided for numarray backward-compatibility.
+       New code (not concerned with numarray compatibility) should use
+       arrays of type object_, string_ or unicode_ and use the free
+       functions in :mod:`numpy.char <numpy.core.defchararray>` for
+       fast vectorized string operations instead.
 
-    Create the array, using `buffer` (with `offset` and `strides`) if it is
-    not ``None``. If `buffer` is ``None``, then construct a new array with
-    `strides` in "C order," unless both ``len(shape) >= 2`` and
-    ``order='Fortran'``, in which case `strides` is in "Fortran order."
+    Versus a regular Numpy array of type 'string_' or 'unicode_', this
+    class adds the following functionality:
+
+
+      1) values automatically have whitespace removed from the end
+         when indexed
+
+      2) comparison operators automatically remove whitespace from the
+         end when comparing values
+
+      3) vectorized string operations are provided as methods
+         (e.g. `.endswith`) and infix operators (e.g. +, *, %)
+
+    chararrays should be created using `numpy.char.array
+    <numpy.core.defchararray.array>` or `numpy.char.asarray
+    <numpy.core.defchararray.asarray>`, rather than this constructor
+    directly.
+
+    Create the array, using `buffer` (with `offset` and `strides`) if
+    it is not ``None``. If `buffer` is ``None``, then construct a new
+    array with `strides` in "C order," unless both ``len(shape) >= 2``
+    and ``order='Fortran'``, in which case `strides` is in "Fortran
+    order."
 
     Parameters
     ----------
     shape : tuple
-        Shape of the array.
+       Shape of the array.
 
     itemsize : int_like, > 0, optional
-        Length of each array element, in number of characters. Default is 1.
+       Length of each array element, in number of characters. Default is 1.
 
     unicode : {True, False}, optional
-        Are the array elements of unicode-type (``True``) or string-type
-        (``False``, the default).
+       Are the array elements of unicode-type (``True``) or string-type
+       (``False``, the default).
 
     buffer : integer, > 0, optional
-        Memory address of the start of the array data.  If ``None`` (the
-        default), a new array is created.
+       Memory address of the start of the array data.  If ``None``
+       (the default), a new array is created.
 
     offset : integer, >= 0, optional
-        Fixed stride displacement from the beginning of an axis? Default is
-        0.
+       Fixed stride displacement from the beginning of an axis?
+       Default is 0.
 
     strides : array_like(?), optional
-        Strides for the array (see `numpy.ndarray.strides` for full
-        description), default is ``None``.
+       Strides for the array (see `numpy.ndarray.strides` for full
+       description), default is ``None``.
 
     order : {'C', 'F'}, optional
-        The order in which the array data is stored in memory: 'C' -> "row
-        major" order (the default), 'F' -> "column major" (Fortran) order
+       The order in which the array data is stored in memory: 'C' ->
+       "row major" order (the default), 'F' -> "column major"
+       (Fortran) order.
 
     Examples
     --------
@@ -87,7 +1684,6 @@ class chararray(ndarray):
            ['abc', 'abc', 'abc'],
            ['abc', 'abc', 'abc']],
           dtype='|S5')
-
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
@@ -97,6 +1693,11 @@ class chararray(ndarray):
             dtype = unicode_
         else:
             dtype = string_
+
+        # force itemsize to be a Python long, since using Numpy integer
+        # types results in itemsize.itemsize being used as the size of
+        # strings in the new array.
+        itemsize = long(itemsize)
 
         _globalvar = 1
         if buffer is None:
@@ -117,87 +1718,134 @@ class chararray(ndarray):
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
-        if isinstance(val, (string_, unicode_)):
+        if issubclass(val.dtype.type, character):
             temp = val.rstrip()
-            if len(temp) == 0:
+            if _len(temp) == 0:
                 val = ''
             else:
                 val = temp
         return val
 
+    # IMPLEMENTATION NOTE: Most of the methods of this class are
+    # direct delegations to the free functions in this module.
+    # However, those that return an array of strings should instead
+    # return a chararray, so some extra wrapping is required.
+
     def __eq__(self, other):
-        return compare_chararrays(self, other, '==', True)
+        """
+        Return (self == other) element-wise.
+
+        See also
+        --------
+        equal
+        """
+        return equal(self, other)
 
     def __ne__(self, other):
-        return compare_chararrays(self, other, '!=', True)
+        """
+        Return (self != other) element-wise.
+
+        See also
+        --------
+        not_equal
+        """
+        return not_equal(self, other)
 
     def __ge__(self, other):
-        return compare_chararrays(self, other, '>=', True)
+        """
+        Return (self >= other) element-wise.
+
+        See also
+        --------
+        greater_equal
+        """
+        return greater_equal(self, other)
 
     def __le__(self, other):
-        return compare_chararrays(self, other, '<=', True)
+        """
+        Return (self <= other) element-wise.
+
+        See also
+        --------
+        less_equal
+        """
+        return less_equal(self, other)
 
     def __gt__(self, other):
-        return compare_chararrays(self, other, '>', True)
+        """
+        Return (self > other) element-wise.
+
+        See also
+        --------
+        greater
+        """
+        return greater(self, other)
 
     def __lt__(self, other):
-        return compare_chararrays(self, other, '<', True)
+        """
+        Return (self < other) element-wise.
+
+        See also
+        --------
+        less
+        """
+        return less(self, other)
 
     def __add__(self, other):
-        b = broadcast(self, other)
-        arr = b.iters[1].base
-        outitem = self.itemsize + arr.itemsize
-        result = chararray(b.shape, outitem, self.dtype is unicode_)
-        res = result.flat
-        for k, val in enumerate(b):
-            res[k] = (val[0] + val[1])
-        return result
+        """
+        Return (self + other), that is string concatenation,
+        element-wise for a pair of array_likes of string_ or unicode_.
+
+        See also
+        --------
+        add
+        """
+        return asarray(add(self, other))
 
     def __radd__(self, other):
-        b = broadcast(other, self)
-        outitem = b.iters[0].base.itemsize + \
-                  b.iters[1].base.itemsize
-        result = chararray(b.shape, outitem, self.dtype is unicode_)
-        res = result.flat
-        for k, val in enumerate(b):
-            res[k] = (val[0] + val[1])
-        return result
+        """
+        Return (other + self), that is string concatenation,
+        element-wise for a pair of array_likes of string_ or unicode_.
 
-    def __mul__(self, other):
-        b = broadcast(self, other)
-        arr = b.iters[1].base
-        if not issubclass(arr.dtype.type, integer):
-            raise ValueError, "Can only multiply by integers"
-        outitem = b.iters[0].base.itemsize * arr.max()
-        result = chararray(b.shape, outitem, self.dtype is unicode_)
-        res = result.flat
-        for k, val in enumerate(b):
-            res[k] = val[0]*val[1]
-        return result
+        See also
+        --------
+        add
+        """
+        return asarray(add(numpy.asarray(other), self))
 
-    def __rmul__(self, other):
-        b = broadcast(self, other)
-        arr = b.iters[1].base
-        if not issubclass(arr.dtype.type, integer):
-            raise ValueError, "Can only multiply by integers"
-        outitem = b.iters[0].base.itemsize * arr.max()
-        result = chararray(b.shape, outitem, self.dtype is unicode_)
-        res = result.flat
-        for k, val in enumerate(b):
-            res[k] = val[0]*val[1]
-        return result
+    def __mul__(self, i):
+        """
+        Return (self * i), that is string multiple concatenation,
+        element-wise.
 
-    def __mod__(self, other):
-        b = broadcast(self, other)
-        res = [None]*b.size
-        maxsize = -1
-        for k,val in enumerate(b):
-            newval = val[0] % val[1]
-            maxsize = max(len(newval), maxsize)
-            res[k] = newval
-        newarr = chararray(b.shape, maxsize, self.dtype is unicode_)
-        newarr[:] = res
-        return newarr
+        See also
+        --------
+        multiply
+        """
+        return asarray(multiply(self, i))
+
+    def __rmul__(self, i):
+        """
+        Return (self * i), that is string multiple concatenation,
+        element-wise.
+
+        See also
+        --------
+        multiply
+        """
+        return asarray(multiply(self, i))
+
+    def __mod__(self, i):
+        """
+        Return (self % i), that is pre-Python 2.6 string formatting
+        (iterpolation), element-wise for a pair of array_likes of string_
+        or unicode_.
+
+        See also
+        --------
+        mod
+        """
+        return asarray(mod(self, i))
 
     def __rmod__(self, other):
         return NotImplemented
@@ -221,587 +1869,659 @@ class chararray(ndarray):
 
         """
         return self.__array__().argsort(axis, kind, order)
-
-    def _generalmethod(self, name, myiter):
-        res = [None]*myiter.size
-        maxsize = -1
-        for k, val in enumerate(myiter):
-            newval = []
-            for chk in val[1:]:
-                if not chk or (chk.dtype is object_ and chk.item() is None):
-                    break
-                newval.append(chk)
-            newitem = getattr(val[0],name)(*newval)
-            maxsize = max(len(newitem), maxsize)
-            res[k] = newitem
-        newarr = chararray(myiter.shape, maxsize, self.dtype is unicode_)
-        newarr[:] = res
-        return newarr
-
-    def _typedmethod(self, name, myiter, dtype):
-        result = empty(myiter.shape, dtype=dtype)
-        res = result.flat
-        for k, val in enumerate(myiter):
-            newval = []
-            for chk in val[1:]:
-                if not chk or (chk.dtype is object_ and chk.item() is None):
-                    break
-                newval.append(chk)
-            this_str = val[0].rstrip('\x00')
-            newitem = getattr(this_str,name)(*newval)
-            res[k] = newitem
-        return result
-
-    def _samemethod(self, name):
-        result = self.copy()
-        res = result.flat
-        for k, val in enumerate(self.flat):
-            res[k] = getattr(val, name)()
-        return result
+    argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):
         """
-        Capitalize the first character of each array element.
+        Return a copy of `self` with only the first character of each element
+        capitalized.
 
-        For each element of `self`, if the first character is a letter
-        possessing both "upper-case" and "lower-case" forms, and it is
-        presently in lower-case, change it to upper-case; otherwise, leave
-        it untouched.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        ret : chararray
-            `self` with each element "title-cased."
-
-        Examples
+        See also
         --------
-        >>> c = np.array(['a1b2','1b2a','b2a1','2a1b'],'S4').view(np.chararray); c
-        chararray(['a1b2', '1b2a', 'b2a1', '2a1b'],
-              dtype='|S4')
-        >>> c.capitalize()
-        chararray(['A1b2', '1b2a', 'B2a1', '2a1b'],
-              dtype='|S4')
-
+        capitalize
         """
-        return self._samemethod('capitalize')
+        return asarray(capitalize(self))
 
-    if sys.version[:3] >= '2.4':
+    if sys.version_info >= (2, 4):
         def center(self, width, fillchar=' '):
-            return self._generalmethod('center',
-                                       broadcast(self, width, fillchar))
-        def ljust(self, width, fillchar=' '):
-            return self._generalmethod('ljust',
-                                       broadcast(self, width, fillchar))
-        def rjust(self, width, fillchar=' '):
-            return self._generalmethod('rjust',
-                                       broadcast(self, width, fillchar))
-        def rsplit(self, sep=None, maxsplit=None):
-            return self._typedmethod('rsplit', broadcast(self, sep, maxsplit),
-                                     object)
+            """
+            Return a copy of `self` with its elements centered in a
+            string of length `width`.
+
+            See also
+            --------
+            center
+            """
+            return asarray(center(self, width, fillchar))
     else:
-        def ljust(self, width):
-            return self._generalmethod('ljust', broadcast(self, width))
-        def rjust(self, width):
-            return self._generalmethod('rjust', broadcast(self, width))
         def center(self, width):
-            return self._generalmethod('center', broadcast(self, width))
+            """
+            Return a copy of `self` with its elements centered in a
+            string of length `width`.
 
-    def count(self, sub, start=None, end=None):
+            See also
+            --------
+            center
+            """
+            return asarray(center(self, width))
+
+    def count(self, sub, start=0, end=None):
         """
-        Return the number of occurrences of a sub-string in each array element.
+        Returns an array with the number of non-overlapping occurrences of
+        substring `sub` in the range [`start`, `end`].
 
-        Parameters
-        ----------
-        sub : string
-            The sub-string to count.
-        start : int, optional
-            The string index at which to start counting in each element.
-        end : int, optional
-            The string index at which to end counting in each element.
-
-        Returns
-        -------
-        ret : ndarray of ints
-            Array whose elements are the number of occurrences of `sub` in each
-            element of `self`.
-
-        Examples
-        --------
-        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
-        >>> c
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-        >>> c.count('A')
-        array([3, 1, 1])
-        >>> c.count('aA')
-        array([3, 1, 0])
-        >>> c.count('A', start=1, end=4)
-        array([2, 1, 1])
-        >>> c.count('A', start=1, end=3)
-        array([1, 0, 0])
-
-        """
-        return self._typedmethod('count', broadcast(self, sub, start, end), int)
-
-    def decode(self,encoding=None,errors=None):
-        """
-        Return elements decoded according to the value of `encoding`.
-
-        Parameters
-        ----------
-        encoding : string, optional
-            The encoding to use; for a list of acceptable values, see the
-            Python docstring for the package 'encodings'
-        error : Python exception object?, optional
-            The exception to raise if decoding fails?
-
-        Returns
-        -------
-        ret : chararray
-            A view of `self`, suitably decoded.
-
-        See Also
-        --------
-        encode
-        encodings
-            (package)
-
-        Examples
-        --------
-        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
-        >>> c
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-        >>> c = c.encode(encoding='cp037'); c
-        chararray(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
-               '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
-              dtype='|S7')
-        >>> c.decode(encoding='cp037')
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-
-        """
-        return self._generalmethod('decode', broadcast(self, encoding, errors))
-
-    def encode(self,encoding=None,errors=None):
-        """
-        Return elements encoded according to the value of `encoding`.
-
-        Parameters
-        ----------
-        encoding : string, optional
-            The encoding to use; for a list of acceptable values, see the
-            Python docstring for `encodings`.
-        error : Python exception object, optional
-            The exception to raise if encoding fails.
-
-        Returns
-        -------
-        ret : chararray
-            A view of `self`, suitably encoded.
-
-        See Also
-        --------
-        decode
-
-        Examples
-        --------
-        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
-        >>> c
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-        >>> c.encode(encoding='cp037')
-        chararray(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
-               '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
-              dtype='|S7')
-
-        """
-        return self._generalmethod('encode', broadcast(self, encoding, errors))
-
-    def endswith(self, suffix, start=None, end=None):
-        """
-        Check whether elements end with specified suffix
-
-        Given an array of strings, return a new bool array of same shape with
-        the result of comparing suffix against each element; each element
-        of bool array is ``True`` if element ends with specified suffix and
-        ``False`` otherwise.
-
-        Parameters
-        ----------
-        suffix : string
-            Compare each element in array to this.
-        start : int, optional
-            For each element, start searching from this position.
-        end : int, optional
-            For each element, stop comparing at this position.
-
-        Returns
-        -------
-        endswith : ndarray
-            Output array of bools
-
-        See Also
+        See also
         --------
         count
-        find
-        index
-        startswith
-
-        Examples
-        --------
-        >>> s = chararray(3, itemsize=3)
-        >>> s[0] = 'foo'
-        >>> s[1] = 'bar'
-        >>> s
-        chararray(['foo', 'bar'],
-              dtype='|S3')
-        >>> s.endswith('ar')
-        array([False,  True], dtype=bool)
-        >>> s.endswith('a', start=1, end=2)
-        array([False,  True], dtype=bool)
-
         """
-        return self._typedmethod('endswith', broadcast(self, suffix, start, end), bool)
+        return count(self, sub, start, end)
 
-    def expandtabs(self, tabsize=None):
-        return self._generalmethod('endswith', broadcast(self, tabsize))
 
-    def find(self, sub, start=None, end=None):
-        return self._typedmethod('find', broadcast(self, sub, start, end), int)
+    def decode(self, encoding=None, errors=None):
+        """
+        Calls `str.decode` element-wise.
 
-    def index(self, sub, start=None, end=None):
-        return self._typedmethod('index', broadcast(self, sub, start, end), int)
+        See also
+        --------
+        decode
+        """
+        return decode(self, encoding, errors)
 
-    def _ismethod(self, name):
-        result = empty(self.shape, dtype=bool)
-        res = result.flat
-        for k, val in enumerate(self.flat):
-            item = val.rstrip('\x00')
-            res[k] = getattr(item, name)()
-        return result
+    def encode(self, encoding=None, errors=None):
+        """
+        Calls `str.encode` element-wise.
+
+        See also
+        --------
+        encode
+        """
+        return encode(self, encoding, errors)
+
+    def endswith(self, suffix, start=0, end=None):
+        """
+        Returns a boolean array which is `True` where the string element
+        in `self` ends with `suffix`, otherwise `False`.
+
+        See also
+        --------
+        endswith
+        """
+        return endswith(self, suffix, start, end)
+
+    def expandtabs(self, tabsize=8):
+        """
+        Return a copy of each string element where all tab characters are
+        replaced by one or more spaces.
+
+        See also
+        --------
+        expandtabs
+        """
+        return asarray(expandtabs(self, tabsize))
+
+    def find(self, sub, start=0, end=None):
+        """
+        For each element, return the lowest index in the string where
+        substring `sub` is found.
+
+        See also
+        --------
+        find
+        """
+        return find(self, sub, start, end)
+
+    def index(self, sub, start=0, end=None):
+        """
+        Like `find`, but raises `ValueError` when the substring is not found.
+
+        See also
+        --------
+        index
+        """
+        return index(self, sub, start, end)
 
     def isalnum(self):
-        return self._ismethod('isalnum')
+        """
+        Returns true for each element if all characters in the string
+        are alphanumeric and there is at least one character, false
+        otherwise.
+
+        See also
+        --------
+        isalnum
+        """
+        return isalnum(self)
 
     def isalpha(self):
-        return self._ismethod('isalpha')
+        """
+        Returns true for each element if all characters in the string
+        are alphabetic and there is at least one character, false
+        otherwise.
+
+        See also
+        --------
+        isalpha
+        """
+        return isalpha(self)
 
     def isdigit(self):
-        return self._ismethod('isdigit')
+        """
+        Returns true for each element if all characters in the string are
+        digits and there is at least one character, false otherwise.
+
+        See also
+        --------
+        isdigit
+        """
+        return isdigit(self)
 
     def islower(self):
-        return self._ismethod('islower')
+        """
+        Returns true for each element if all cased characters in the
+        string are lowercase and there is at least one cased character,
+        false otherwise.
+
+        See also
+        --------
+        islower
+        """
+        return islower(self)
 
     def isspace(self):
-        return self._ismethod('isspace')
+        """
+        Returns true for each element if there are only whitespace
+        characters in the string and there is at least one character,
+        false otherwise.
+
+        See also
+        --------
+        isspace
+        """
+        return isspace(self)
 
     def istitle(self):
-        return self._ismethod('istitle')
+        """
+        Returns true for each element if the element is a titlecased
+        string and there is at least one character, false otherwise.
+
+        See also
+        --------
+        istitle
+        """
+        return istitle(self)
 
     def isupper(self):
-        return self._ismethod('isupper')
+        """
+        Returns true for each element if all cased characters in the
+        string are uppercase and there is at least one character, false
+        otherwise.
+
+        See also
+        --------
+        isupper
+        """
+        return isupper(self)
 
     def join(self, seq):
-        return self._generalmethod('join', broadcast(self, seq))
+        """
+        Return a string which is the concatenation of the strings in the
+        sequence `seq`.
+
+        See also
+        --------
+        join
+        """
+        return join(self, seq)
+
+    if sys.version_info >= (2, 4):
+        def ljust(self, width, fillchar=' '):
+            """
+            Return an array with the elements of `self` left-justified in a
+            string of length `width`.
+
+            See also
+            --------
+            ljust
+            """
+            return asarray(ljust(self, width, fillchar))
+    else:
+        def ljust(self, width):
+            """
+            Return an array with the elements of `self` left-justified in a
+            string of length `width`.
+
+            See also
+            --------
+            ljust
+            """
+            return asarray(ljust(self, width))
 
     def lower(self):
         """
-        Assure that every character of each array element is lower-case.
-
-        For each character possessing both "upper-case" and "lower-case" forms,
-        if it is in upper-case, change it to lower; otherwise, leave it unchanged.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        ret : chararray
-            `self` with all capital letters changed to lower-case.
-
-        Examples
+        Return an array with the elements of `self` converted to
+        lowercase.
+        See also
         --------
-        >>> c = np.array(['A1B C', '1BCA', 'BCA1']).view(np.chararray); c
-        chararray(['A1B C', '1BCA', 'BCA1'],
-              dtype='|S5')
-        >>> c.lower()
-        chararray(['a1b c', '1bca', 'bca1'],
-              dtype='|S5')
-
+        lower
         """
-        return self._samemethod('lower')
+        return asarray(lower(self))
 
-    def lstrip(self, chars):
+    def lstrip(self, chars=None):
         """
-        Remove leading characters from each element.
+        For each element in `self`, return a copy with the leading characters
+        removed.
 
-        Returns a view of ``self`` with `chars` stripped from the start of
-        each element.  Note: **No Default** - `chars` must be specified (but if
-        it is explicitly ``None`` or the empty string '', leading whitespace is
-        removed).
-
-        Parameters
-        ----------
-        chars : string_like or None
-            Character(s) to strip; whitespace stripped if `chars` == ``None``
-            or `chars` == ''.
-
-        Returns
-        -------
-        ret : chararray
-            View of ``self``, each element suitably stripped.
-
-        Raises
-        ------
-        TypeError: lstrip() takes exactly 2 arguments (1 given)
-            If `chars` is not supplied.
-
-        Examples
+        See also
         --------
-        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
-        >>> c
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-        >>> c.lstrip('a') # 'a' unstripped from c[1] because whitespace leading
-        chararray(['AaAaA', '  aA', 'bBABba'],
-              dtype='|S6')
-        >>> c.lstrip('A') # leaves c unchanged
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-        >>> (c.lstrip(' ') == c.lstrip('')).all()
-        True
-        >>> (c.lstrip(' ') == c.lstrip(None)).all()
-        True
-
+        lstrip
         """
-        return self._generalmethod('lstrip', broadcast(self, chars))
+        return asarray(lstrip(self, chars))
+
+    if sys.version_info >= (2, 5):
+        def partition(self, sep):
+            """
+            Partition each element in `self` around `sep`.
+
+            See also
+            --------
+            partition
+            """
+            return asarray(partition(self, sep))
 
     def replace(self, old, new, count=None):
-        return self._generalmethod('replace', broadcast(self, old, new, count))
+        """
+        For each element in `self`, return a copy of the string with all
+        occurrences of substring `old` replaced by `new`.
 
-    def rfind(self, sub, start=None, end=None):
-        return self._typedmethod('rfind', broadcast(self, sub, start, end), int)
+        See also
+        --------
+        replace
+        """
+        return asarray(replace(self, old, new, count))
 
-    def rindex(self, sub, start=None, end=None):
-        return self._typedmethod('rindex', broadcast(self, sub, start, end), int)
+    def rfind(self, sub, start=0, end=None):
+        """
+        For each element in `self`, return the highest index in the string
+        where substring `sub` is found, such that `sub` is contained
+        within [`start`, `end`].
+
+        See also
+        --------
+        rfind
+        """
+        return rfind(self, sub, start, end)
+
+    def rindex(self, sub, start=0, end=None):
+        """
+        Like `rfind`, but raises `ValueError` when the substring `sub` is
+        not found.
+
+        See also
+        --------
+        rindex
+        """
+        return rindex(self, sub, start, end)
+
+    if sys.version_info >= (2, 4):
+        def rjust(self, width, fillchar=' '):
+            """
+            Return an array with the elements of `self`
+            right-justified in a string of length `width`.
+
+            See also
+            --------
+            rjust
+            """
+            return asarray(rjust(self, width, fillchar))
+    else:
+        def rjust(self, width):
+            """
+            Return an array with the elements of `self`
+            right-justified in a string of length `width`.
+
+            See also
+            --------
+            rjust
+            """
+            return asarray(rjust(self, width))
+
+    if sys.version_info >= (2, 5):
+        def rpartition(self, sep):
+            """
+            Partition each element in `self` around `sep`.
+
+            See also
+            --------
+            rpartition
+            """
+            return asarray(rpartition(self, sep))
+
+    if sys.version_info >= (2, 4):
+        def rsplit(self, sep=None, maxsplit=None):
+            """
+            For each element in `self`, return a list of the words in
+            the string, using `sep` as the delimiter string.
+
+            See also
+            --------
+            rsplit
+            """
+            return rsplit(self, sep, maxsplit)
 
     def rstrip(self, chars=None):
         """
-        Remove trailing characters.
+        For each element in `self`, return a copy with the trailing
+        characters removed.
 
-        Returns a view of ``self`` with `chars` stripped from the end of each
-        element.
-
-        Parameters
-        ----------
-        chars : string_like, optional, default=None
-            Character(s) to remove.
-
-        Returns
-        -------
-        ret : chararray
-            View of ``self``, each element suitably stripped.
-
-        Examples
+        See also
         --------
-        >>> c = np.array(['aAaAaA', 'abBABba'], dtype='S7').view(np.chararray); c
-        chararray(['aAaAaA', 'abBABba'],
-              dtype='|S7')
-        >>> c.rstrip('a')
-        chararray(['aAaAaA', 'abBABb'],
-              dtype='|S6')
-        >>> c.rstrip('A')
-        chararray(['aAaAa', 'abBABba'],
-              dtype='|S7')
-
+        rstrip
         """
-        return self._generalmethod('rstrip', broadcast(self, chars))
+        return asarray(rstrip(self, chars))
 
     def split(self, sep=None, maxsplit=None):
-        return self._typedmethod('split', broadcast(self, sep, maxsplit), object)
+        """
+        For each element in `self`, return a list of the words in the
+        string, using `sep` as the delimiter string.
+
+        See also
+        --------
+        split
+        """
+        return split(self, sep, maxsplit)
 
     def splitlines(self, keepends=None):
-        return self._typedmethod('splitlines', broadcast(self, keepends), object)
+        """
+        For each element in `self`, return a list of the lines in the
+        element, breaking at line boundaries.
 
-    def startswith(self, prefix, start=None, end=None):
-        return self._typedmethod('startswith', broadcast(self, prefix, start, end), bool)
+        See also
+        --------
+        splitlines
+        """
+        return splitlines(self, keepends)
+
+    def startswith(self, prefix, start=0, end=None):
+        """
+        Returns a boolean array which is `True` where the string element
+        in `self` starts with `prefix`, otherwise `False`.
+
+        See also
+        --------
+        startswith
+        """
+        return startswith(self, prefix, start, end)
 
     def strip(self, chars=None):
         """
-        Remove leading and trailing characters, whitespace by default.
+        For each element in `self`, return a copy with the leading and
+        trailing characters removed.
 
-        Returns a view of ``self`` with `chars` stripped from the start and end of
-        each element; by default leading and trailing whitespace is removed.
-
-        Parameters
-        ----------
-        chars : string_like, optional, default=None
-            Character(s) to strip; whitespace by default.
-
-        Returns
-        -------
-        ret : chararray
-            View of ``self``, each element suitably stripped.
-
-        Examples
+        See also
         --------
-        >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba']).view(np.chararray)
-        >>> c
-        chararray(['aAaAaA', '  aA', 'abBABba'],
-              dtype='|S7')
-        >>> c.strip()
-        chararray(['aAaAaA', 'aA', 'abBABba'],
-              dtype='|S7')
-        >>> c.strip('a') # 'a' unstripped from c[1] because whitespace leads
-        chararray(['AaAaA', '  aA', 'bBABb'],
-              dtype='|S6')
-        >>> c.strip('A') # 'A' unstripped from c[1] because (unprinted) ws trails
-        chararray(['aAaAa', '  aA', 'abBABba'],
-              dtype='|S7')
-
+        strip
         """
-        return self._generalmethod('strip', broadcast(self, chars))
+        return asarray(strip(self, chars))
 
     def swapcase(self):
         """
-        Switch upper-case letters to lower-case, and vice-versa.
+        For each element in `self`, return a copy of the string with
+        uppercase characters converted to lowercase and vice versa.
 
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        ret : chararray
-            `self` with all lower-case letters capitalized and all upper-case
-            changed to lower case.
-
-        Examples
+        See also
         --------
-        >>> c=np.array(['a1B c','1b Ca','b Ca1','cA1b'],'S5').view(np.chararray);c
-        chararray(['a1B c', '1b Ca', 'b Ca1', 'cA1b'],
-              dtype='|S5')
-        >>> c.swapcase()
-        chararray(['A1b C', '1B cA', 'B cA1', 'Ca1B'],
-              dtype='|S5')
-
+        swapcase
         """
-        return self._samemethod('swapcase')
+        return asarray(swapcase(self))
 
     def title(self):
         """
-        Capitalize the first character of each array element.
+        For each element in `self`, return a titlecased version of the
+        string: words start with uppercase characters, all remaining cased
+        characters are lowercase.
 
-        For each element of `self`, if the first character is a letter
-        possessing both "upper-case" and "lower-case" forms, and it is
-        presently in lower-case, change it to upper-case; otherwise, leave
-        it untouched.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        ret : chararray
-            `self` with
-
-        Examples
+        See also
         --------
-        >>> c=np.array(['a1b c','1b ca','b ca1','ca1b'],'S5').view(np.chararray);c
-        chararray(['a1b c', '1b ca', 'b ca1', 'ca1b'],
-              dtype='|S5')
-        >>> c.title()
-        chararray(['A1B C', '1B Ca', 'B Ca1', 'Ca1B'],
-              dtype='|S5')
-
+        title
         """
-        return self._samemethod('title')
+        return asarray(title(self))
 
     def translate(self, table, deletechars=None):
-        if self.dtype is unicode_:
-            return self._generalmethod('translate', broadcast(self, table))
-        else:
-            return self._generalmethod('translate', broadcast(self, table, deletechars))
+        """
+        For each element in `self`, return a copy of the string where
+        all characters occurring in the optional argument
+        `deletechars` are removed, and the remaining characters have
+        been mapped through the given translation table.
+
+        See also
+        --------
+        translate
+        """
+        return asarray(translate(self, table, deletechars))
 
     def upper(self):
         """
-        Capitalize every character of each array element.
+        Return an array with the elements of `self` converted to
+        uppercase.
 
-        For each character possessing both "upper-case" and "lower-case" forms,
-        if it is in lower-case, change it to upper; otherwise, leave it unchanged.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        ret : chararray
-            `self` with all characters capitalized.
-
-        Examples
+        See also
         --------
-        >>> c = np.array(['a1b c', '1bca', 'bca1']).view(np.chararray); c
-        chararray(['a1b c', '1bca', 'bca1'],
-              dtype='|S5')
-        >>> c.upper()
-        chararray(['A1B C', '1BCA', 'BCA1'],
-              dtype='|S5')
-
+        upper
         """
-        return self._samemethod('upper')
+        return asarray(upper(self))
 
     def zfill(self, width):
-        return self._generalmethod('zfill', broadcast(self, width))
+        """
+        Return the numeric string left-filled with zeros in a string of
+        length `width`.
+
+        See also
+        --------
+        zfill
+        """
+        return asarray(zfill(self, width))
+
+    def isnumeric(self):
+        """
+        For each element in `self`, return True if there are only
+        numeric characters in the element.
+
+        See also
+        --------
+        isnumeric
+        """
+        return isnumeric(self)
+
+    def isdecimal(self):
+        """
+        For each element in `self`, return True if there are only
+        decimal characters in the element.
+
+        See also
+        --------
+        isdecimal
+        """
+        return isdecimal(self)
 
 
-def array(obj, itemsize=None, copy=True, unicode=False, order=None):
+def array(obj, itemsize=None, copy=True, unicode=None, order=None):
+    """
+    Create a `chararray`.
 
-    if isinstance(obj, chararray):
+    .. note::
+       This class is provided for numarray backward-compatibility.
+       New code (not concerned with numarray compatibility) should use
+       arrays of type object_, string_ or unicode_ and use the free
+       functions in :mod:`numpy.char <numpy.core.defchararray>` for
+       fast vectorized string operations instead.
+
+    Versus a regular Numpy array of type `string_` or `unicode_`, this
+    class adds the following functionality:
+
+      1) values automatically have whitespace removed from the end
+         when indexed
+
+      2) comparison operators automatically remove whitespace from the
+         end when comparing values
+
+      3) vectorized string operations are provided as methods
+         (e.g. `str.endswith`) and infix operators (e.g. +, *, %)
+
+    Parameters
+    ----------
+    obj : array of str or unicode-like
+
+    itemsize : int, optional
+        `itemsize` is the number of characters per scalar in the
+        resulting array.  If `itemsize` is None, and `obj` is an
+        object array or a Python list, the `itemsize` will be
+        automatically determined.  If `itemsize` is provided and `obj`
+        is of type `str` or `unicode`, then the `obj` string will be
+        chunked into `itemsize` pieces.
+
+    copy : bool, optional
+        If true (default), then the object is copied.  Otherwise, a copy
+        will only be made if __array__ returns a copy, if obj is a
+        nested sequence, or if a copy is needed to satisfy any of the other
+        requirements (`itemsize`, `unicode`, `order`, etc.).
+
+    unicode : bool, optional
+        When true, the resulting `chararray` can contain Unicode
+        characters, when false only 8-bit characters.  If `unicode` is
+        `None` and `obj` is one of the following:
+
+          - a `chararray`,
+          - an ndarray of type `string_` or `unicode_`
+          - a Python str or unicode object,
+
+        then the unicode setting of the output array will be
+        automatically determined.
+
+    order : {'C', 'F', 'A'}, optional
+        Specify the order of the array.  If order is 'C' (default), then the
+        array will be in C-contiguous order (last-index varies the
+        fastest).  If order is 'F', then the returned array
+        will be in Fortran-contiguous order (first-index varies the
+        fastest).  If order is 'A', then the returned array may
+        be in any order (either C-, Fortran-contiguous, or even
+        discontiguous).
+    """
+    if isinstance(obj, (str, _unicode)):
+        if unicode is None:
+            if isinstance(obj, _unicode):
+                unicode = True
+            else:
+                unicode = False
+        if itemsize is None:
+            itemsize = _len(obj)
+        shape = _len(obj) / itemsize
+        return chararray(shape, itemsize=itemsize, unicode=unicode,
+                         buffer=obj, order=order)
+
+    if isinstance(obj, (list, tuple)):
+        obj = numpy.asarray(obj)
+
+    if isinstance(obj, ndarray) and issubclass(obj.dtype.type, character):
+        # If we just have a vanilla chararray, create a chararray
+        # view around it.
+        if not isinstance(obj, chararray):
+            obj = obj.view(chararray)
+
         if itemsize is None:
             itemsize = obj.itemsize
-        if copy or (itemsize != obj.itemsize) \
-           or (not unicode and obj.dtype == unicode_) \
-           or (unicode and obj.dtype == string_):
-            return obj.astype("%s%d" % (obj.dtype.char, itemsize))
+            # itemsize is in 8-bit chars, so for Unicode, we need
+            # to divide by the size of a single Unicode character,
+            # which for Numpy is always 4
+            if issubclass(obj.dtype.type, unicode_):
+                itemsize /= 4
+
+        if unicode is None:
+            if issubclass(obj.dtype.type, unicode_):
+                unicode = True
+            else:
+                unicode = False
+
+        if unicode:
+            dtype = unicode_
         else:
-            return obj
+            dtype = string_
 
-    if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string_]):
-        new = obj.view(chararray)
-        if unicode and obj.dtype == string_:
-            return new.astype((unicode_, obj.itemsize))
-        elif obj.dtype == unicode_:
-            return new.astype((string_, obj.itemsize))
+        if order is not None:
+            obj = numpy.asarray(obj, order=order)
+        if (copy
+            or (itemsize != obj.itemsize)
+            or (not unicode and isinstance(obj, unicode_))
+            or (unicode and isinstance(obj, string_))):
+            obj = obj.astype((dtype, long(itemsize)))
+        return obj
 
-        if copy: return new.copy()
-        else: return new
-
-    if unicode: dtype = "U"
-    else: dtype = "S"
-
-    if itemsize is not None:
-        dtype += str(itemsize)
-
-    if isinstance(obj, (str, _unicode)):
+    if isinstance(obj, ndarray) and issubclass(obj.dtype.type, object):
         if itemsize is None:
-            itemsize = len(obj)
-        shape = len(obj) / itemsize
-        return chararray(shape, itemsize=itemsize, unicode=unicode,
-                         buffer=obj)
+            # Since no itemsize was specified, convert the input array to
+            # a list so the ndarray constructor will automatically
+            # determine the itemsize for us.
+            obj = obj.tolist()
+            # Fall through to the default case
 
-    # default
-    val = narray(obj, dtype=dtype, order=order, subok=1)
+    if unicode:
+        dtype = unicode_
+    else:
+        dtype = string_
 
+    if itemsize is None:
+        val = narray(obj, dtype=dtype, order=order, subok=True)
+    else:
+        val = narray(obj, dtype=(dtype, itemsize), order=order, subok=True)
     return val.view(chararray)
 
-def asarray(obj, itemsize=None, unicode=False, order=None):
+
+def asarray(obj, itemsize=None, unicode=None, order=None):
+    """
+    Convert the input to a `chararray`, copying the data only if
+    necessary.
+
+    Versus a regular Numpy array of type `string_` or `unicode_`, this
+    class adds the following functionality:
+
+      1) values automatically have whitespace removed from the end
+         when indexed
+
+      2) comparison operators automatically remove whitespace from the
+         end when comparing values
+
+      3) vectorized string operations are provided as methods
+         (e.g. `str.endswith`) and infix operators (e.g. +, *, %)
+
+    Parameters
+    ----------
+    obj : array of str or unicode-like
+
+    itemsize : int, optional
+        `itemsize` is the number of characters per scalar in the
+        resulting array.  If `itemsize` is None, and `obj` is an
+        object array or a Python list, the `itemsize` will be
+        automatically determined.  If `itemsize` is provided and `obj`
+        is of type `str` or `unicode`, then the `obj` string will be
+        chunked into `itemsize` pieces.
+
+    unicode : bool, optional
+        When true, the resulting `chararray` can contain Unicode
+        characters, when false only 8-bit characters.  If `unicode` is
+        `None` and `obj` is one of the following:
+
+          - a `chararray`,
+          - an ndarray of type `string_` or 'unicode_`
+          - a Python str or unicode object,
+
+        then the unicode setting of the output array will be
+        automatically determined.
+
+    order : {'C', 'F'}, optional
+        Specify the order of the array.  If order is 'C' (default), then the
+        array will be in C-contiguous order (last-index varies the
+        fastest).  If order is 'F', then the returned array
+        will be in Fortran-contiguous order (first-index varies the
+        fastest).
+    """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)

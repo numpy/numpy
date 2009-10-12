@@ -34,3 +34,4 @@ Routines
    routines.numarray
    routines.oldnumeric
    routines.ctypeslib
+   routines.char

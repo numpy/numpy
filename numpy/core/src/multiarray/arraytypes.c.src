@@ -1333,7 +1333,7 @@ static void
  *           longlong, ulonglong, float, double, longdouble,
  *           cfloat, cdouble, clongdouble, char, char, char, datetime,
  *           timedelta#
- * #skip = 1*17, aip->descr->elsize*3, 1*2#
+ * #skip = 1*17, aop->descr->elsize*3, 1*2#
  */
 static void
 OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, intp n,
@@ -1389,7 +1389,10 @@ static void
                 return;
             }
         }
-        @to@_setitem(temp,(char *)op, aop);
+        if (@to@_setitem(temp,(char *)op, aop)) {
+            Py_DECREF(temp);
+            return;
+        }
         Py_DECREF(temp);
     }
 }
@@ -1417,7 +1420,10 @@ static void
             Py_INCREF(Py_False);
             temp = Py_False;
         }
-        @to@_setitem(temp,(char *)op, aop);
+        if (@to@_setitem(temp,(char *)op, aop)) {
+            Py_DECREF(temp);
+            return;
+        }
         Py_DECREF(temp);
     }
 }
@@ -3146,7 +3152,7 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
 /**end repeat**/
 
 static void
-_init_datetime_descr(PyArray_Descr *descr) 
+_init_datetime_descr(PyArray_Descr *descr)
 {
     PyArray_DatetimeMetaData *dt_data;
     PyObject *cobj;
@@ -3156,12 +3162,12 @@ _init_datetime_descr(PyArray_Descr *descr)
     dt_data->num = 1;
     dt_data->den = 1;
     dt_data->events = 1;
-    
+
     cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
     descr->metadata = PyDict_New();
     PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);
     Py_DECREF(cobj);
-    
+
 }
 
 #define _MAX_LETTER 128
@@ -3251,7 +3257,7 @@ PyArray_DescrFromType(int type)
 	    _init_datetime_descr(ret);
 	}
     }
-    
+
     return ret;
 }
 

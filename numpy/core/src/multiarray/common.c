@@ -8,7 +8,7 @@
 #include "npy_config.h"
 
 #include "usertypes.h"
- 
+
 #include "common.h"
 
 /*
@@ -65,6 +65,10 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
         if (outtype->type_num == PyArray_UNICODE &&
             mintype->type_num == PyArray_STRING) {
             testsize = MAX(chksize, 4*minsize);
+        }
+        else if (chktype->type_num == PyArray_STRING &&
+                 mintype->type_num == PyArray_UNICODE) {
+            testsize = MAX(chksize*4, minsize);
         }
         else {
             testsize = MAX(chksize, minsize);

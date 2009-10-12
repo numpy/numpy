@@ -1118,5 +1118,37 @@ class TestRegression(TestCase):
         i = np.lexsort((a[::-1], b))
         assert_equal(i, np.arange(100, dtype=np.int))
 
+    def test_object_array_to_fixed_string(self):
+        """Ticket #1235."""
+        a = np.array(['abcdefgh', 'ijklmnop'], dtype=np.object_)
+        b = np.array(a, dtype=(np.string_, 8))
+        assert_equal(a, b)
+        c = np.array(a, dtype=(np.string_, 5))
+        assert_equal(c, np.array(['abcde', 'ijklm']))
+        d = np.array(a, dtype=(np.string_, 12))
+        assert_equal(a, d)
+        e = np.empty((2, ), dtype=(np.string_, 8))
+        e[:] = a[:]
+        assert_equal(a, e)
+
+    def test_unicode_to_string_cast(self):
+        """Ticket #1240."""
+        a = np.array([[u'abc', u'\u03a3'], [u'asdf', u'erw']], dtype='U')
+        def fail():
+            b = np.array(a, 'S4')
+        self.failUnlessRaises(UnicodeEncodeError, fail)
+
+    def test_mixed_string_unicode_array_creation(self):
+        a = np.array(['1234', u'123'])
+        assert a.itemsize == 16
+        a = np.array([u'123', '1234'])
+        assert a.itemsize == 16
+        a = np.array(['1234', u'123', '12345'])
+        assert a.itemsize == 20
+        a = np.array([u'123', '1234', u'12345'])
+        assert a.itemsize == 20
+        a = np.array([u'123', '1234', u'1234'])
+        assert a.itemsize == 16
+
 if __name__ == "__main__":
     run_module_suite()

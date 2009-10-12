@@ -1796,7 +1796,7 @@ static PyObject *array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
 }
 
 static PyObject*
-array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) 
+array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *shape, *a0;
     int mode = 0;
@@ -1979,10 +1979,10 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
 	    PyErr_SetString(PyExc_TypeError, "Argument must be callable.");
 	    return NULL;
 	}
-	Py_INCREF(op);		
+	Py_INCREF(op);
     }
     PyArray_SetDatetimeParseFunction(op);
-    Py_DECREF(op);  
+    Py_DECREF(op);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -2316,6 +2316,221 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     return NULL;
 }
 
+static PyObject *
+_vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
+                      PyObject* method, PyObject* args)
+{
+    PyObject* broadcast_args[NPY_MAXARGS];
+    PyArrayMultiIterObject* in_iter = NULL;
+    PyArrayObject* result = NULL;
+    PyArrayIterObject* out_iter = NULL;
+    PyObject* args_tuple = NULL;
+    Py_ssize_t i, n, nargs;
+
+    nargs = PySequence_Size(args) + 1;
+    if (nargs == -1 || nargs > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError, "len(args) must be < %d", NPY_MAXARGS - 1);
+        goto err;
+    }
+
+    broadcast_args[0] = (PyObject*)char_array;
+    for (i = 1; i < nargs; i++) {
+        PyObject* item = PySequence_GetItem(args, i-1);
+        if (item == NULL) {
+            goto err;
+        }
+        broadcast_args[i] = item;
+        Py_DECREF(item);
+    }
+    in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects
+        (broadcast_args, nargs, 0);
+    if (in_iter == NULL) {
+        goto err;
+    }
+    n = in_iter->numiter;
+
+    result = (PyArrayObject*)PyArray_SimpleNewFromDescr
+        (in_iter->nd, in_iter->dimensions, type);
+    if (result == NULL) {
+        goto err;
+    }
+
+    out_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)result);
+    if (out_iter == NULL) {
+        goto err;
+    }
+
+    args_tuple = PyTuple_New(n);
+    if (args_tuple == NULL) {
+        goto err;
+    }
+
+    while (PyArray_MultiIter_NOTDONE(in_iter)) {
+        for (i = 0; i < n; i++) {
+            PyArrayIterObject* it = in_iter->iters[i];
+            PyObject* arg = PyArray_ToScalar(PyArray_ITER_DATA(it), it->ao);
+            if (arg == NULL) {
+                goto err;
+            }
+            PyTuple_SetItem(args_tuple, i, arg); /* Steals ref to arg */
+        }
+
+        PyObject* item_result = PyObject_CallObject(method, args_tuple);
+        if (item_result == NULL) {
+            goto err;
+        }
+
+        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+            Py_DECREF(item_result);
+            PyErr_SetString(
+                PyExc_TypeError,
+                "result array type does not match underlying function");
+            goto err;
+        }
+        Py_DECREF(item_result);
+
+        PyArray_MultiIter_NEXT(in_iter);
+        PyArray_ITER_NEXT(out_iter);
+    }
+
+    Py_DECREF(in_iter);
+    Py_DECREF(out_iter);
+    Py_DECREF(args_tuple);
+
+    return (PyObject*)result;
+
+ err:
+    Py_XDECREF(in_iter);
+    Py_XDECREF(out_iter);
+    Py_XDECREF(args_tuple);
+    Py_XDECREF(result);
+
+    return 0;
+}
+
+static PyObject *
+_vec_string_no_args(PyArrayObject* char_array,
+                                   PyArray_Descr* type, PyObject* method)
+{
+    /* This is a faster version of _vec_string_args to use when there
+       are no additional arguments to the string method.  This doesn't
+       require a broadcast iterator (and broadcast iterators don't work
+       with 1 argument anyway). */
+    PyArrayIterObject* in_iter = NULL;
+    PyArrayObject* result = NULL;
+    PyArrayIterObject* out_iter = NULL;
+
+    in_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)char_array);
+    if (in_iter == NULL) {
+        goto err;
+    }
+
+    result = (PyArrayObject*)PyArray_SimpleNewFromDescr
+        (PyArray_NDIM(char_array), PyArray_DIMS(char_array), type);
+    if (result == NULL) {
+        goto err;
+    }
+
+    out_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)result);
+    if (out_iter == NULL) {
+        goto err;
+    }
+
+    while (PyArray_ITER_NOTDONE(in_iter)) {
+        PyObject* item = PyArray_ToScalar(in_iter->dataptr, in_iter->ao);
+        if (item == NULL) {
+            goto err;
+        }
+
+        PyObject* item_result = PyObject_CallFunctionObjArgs(method, item, NULL);
+        Py_DECREF(item);
+        if (item_result == NULL) {
+            goto err;
+        }
+
+        if (PyArray_SETITEM(result, PyArray_ITER_DATA(out_iter), item_result)) {
+            Py_DECREF(item_result);
+            PyErr_SetString(
+                PyExc_TypeError,
+                "result array type does not match underlying function");
+            goto err;
+        }
+        Py_DECREF(item_result);
+
+        PyArray_ITER_NEXT(in_iter);
+        PyArray_ITER_NEXT(out_iter);
+    }
+
+    Py_DECREF(in_iter);
+    Py_DECREF(out_iter);
+
+    return (PyObject*)result;
+
+ err:
+    Py_XDECREF(in_iter);
+    Py_XDECREF(out_iter);
+    Py_XDECREF(result);
+
+    return 0;
+}
+
+static PyObject *
+_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyArrayObject* char_array = NULL;
+    PyArray_Descr *type = NULL;
+    PyObject* method_name;
+    PyObject* args_seq = NULL;
+
+    PyObject* method = NULL;
+    PyObject* result = NULL;
+
+    if (!PyArg_ParseTuple(args, "O&O&O|O",
+                          PyArray_Converter,
+                          &char_array,
+                          PyArray_DescrConverter,
+                          &type,
+                          &method_name,
+                          &args_seq)) {
+        goto err;
+    }
+
+    if (PyArray_TYPE(char_array) == NPY_STRING) {
+        method = PyObject_GetAttr((PyObject *)&PyString_Type, method_name);
+    } else if (PyArray_TYPE(char_array) == NPY_UNICODE) {
+        method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
+    } else {
+        PyErr_SetString(PyExc_TypeError, "string operation on non-string array");
+        goto err;
+    }
+    if (method == NULL) {
+        goto err;
+    }
+
+    if (args_seq == NULL ||
+        (PySequence_Check(args_seq) && PySequence_Size(args_seq) == 0)) {
+        result = _vec_string_no_args(char_array, type, method);
+    } else if (PySequence_Check(args_seq)) {
+        result = _vec_string_with_args(char_array, type, method, args_seq);
+    } else {
+        PyErr_SetString(PyExc_TypeError, "'args' must be a sequence of arguments");
+        goto err;
+    }
+    if (result == NULL) {
+        goto err;
+    }
+
+    Py_DECREF(char_array);
+    Py_DECREF(method);
+
+    return (PyObject*)result;
+
+ err:
+    Py_XDECREF(char_array);
+    Py_XDECREF(method);
+
+    return 0;
+}
 
 #ifndef __NPY_PRIVATE_NO_SIGNAL
 
@@ -2397,7 +2612,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"set_numeric_ops",
         (PyCFunction)array_set_ops_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
-    {"set_datetimeparse_function", 
+    {"set_datetimeparse_function",
         (PyCFunction)array_set_datetimeparse_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"set_typeDict",
@@ -2474,6 +2689,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"compare_chararrays",
         (PyCFunction)compare_chararrays,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_vec_string",
+        (PyCFunction)_vec_string,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"test_interrupt",
         (PyCFunction)test_interrupt,
@@ -2729,7 +2947,7 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyErr_Occurred()) {
         goto err;
     }
-    
+
     /*
      * PyExc_Exception should catch all the standard errors that are
      * now raised instead of the string exception "multiarray.error"
