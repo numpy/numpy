@@ -870,11 +870,12 @@ def fromregex(file, regexp, dtype):
 
 
 
-def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
-               converters=None, missing='', missing_values=None, usecols=None,
-               names=None, excludelist=None, deletechars=None, autostrip=False,
-               case_sensitive=True, defaultfmt="f%i", unpack=None,
-               usemask=False, loose=True, invalid_raise=True):
+def genfromtxt(fname, dtype=float, comments='#', delimiter=None, 
+               skiprows=0, skip_header=0, skip_footer=0, converters=None,
+               missing='', missing_values=None, filling_values=None,
+               usecols=None, names=None, excludelist=None, deletechars=None,
+               autostrip=False, case_sensitive=True, defaultfmt="f%i",
+               unpack=None, usemask=False, loose=True, invalid_raise=True):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1021,13 +1022,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         errmsg = "The input argument 'converter' should be a valid dictionary "\
             "(got '%s' instead)"
         raise TypeError(errmsg % type(user_converters))
-    # Check the input dictionary of missing values
-    user_missing_values = missing_values or {}
-    if not isinstance(user_missing_values, dict):
-        errmsg = "The input argument 'missing_values' should be a valid "\
-            "dictionary (got '%s' instead)"
-        raise TypeError(errmsg % type(missing_values))
-    defmissing = [_.strip() for _ in missing.split(',')] + ['']
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     if isinstance(fname, basestring):
@@ -1043,18 +1037,26 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
                                    deletechars=deletechars,
                                    case_sensitive=case_sensitive)
 
-    # Get the first valid lines after the first skiprows ones
-    for i in xrange(skiprows):
+    # Get the first valid lines after the first skiprows ones ..
+    if skiprows:
+        warnings.warn("The use of `skiprows` is deprecated.\n"\
+                      "Please use `skip_header` instead.",
+                      DeprecationWarning)
+        skip_header = skiprows
+    # Skip the first `skip_header` rows
+    for i in xrange(skip_header):
         fhd.readline()
+    # Keep on until we find the first valid values
     first_values = None
     while not first_values:
         first_line = fhd.readline()
         if first_line == '':
             raise IOError('End-of-file reached before encountering data.')
         if names is True:
-            first_values = first_line.strip().split(delimiter)
-        else:
-            first_values = split_line(first_line)
+            if comments in first_line:
+                first_line = ''.join(first_line.split(comments)[1])
+        first_values = split_line(first_line)
+    # Should we take the first values as names ?
     if names is True:
         fval = first_values[0].strip()
         if fval in comments:
@@ -1073,6 +1075,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
         names = validate_names(names)
+    if names is not None:
+        names = list(names)
     # Get the dtype
     if dtype is not None:
         dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
@@ -1083,48 +1087,114 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
             if _is_string_like(current):
                 usecols[i] = names.index(current)
 
-    # If user_missing_values has names as keys, transform them to indices
-    missing = {}
-    for (key, val) in user_missing_values.iteritems():
-        # If val is a list, flatten it. In any case, add missing &'' to the list
-        if isinstance(val, (list, tuple)):
-            val = [str(_) for _ in val]
-        else:
-            val = [str(val), ]
-        val.extend(defmissing)
-        if _is_string_like(key):
-            try:
-                missing[names.index(key)] = val
-            except ValueError:
-                pass
-        else:
-            missing[key] = val
+    # Process the missing values ...............................
+    # Rename missing_values for convenience
+    user_missing_values = missing_values or ()
 
+    # Define the list of missing_values (one column: one list)
+    missing_values = [list(['']) for _ in range(nbcols)]
 
-    # Initialize the default converters
+    # We have a dictionary: process it field by field
+    if isinstance(user_missing_values, dict):
+         # Loop on the items
+        for (key, val) in user_missing_values.items():
+            # Make sure the key is an index
+            if _is_string_like(key):
+                key = names.index(key)
+            # Redefine the key as needed if it's a column number
+            if usecols:
+                try:
+                    key = usecols.index(key)
+                except ValueError:
+                    pass
+            # Transform the value as a list of string
+            if isinstance(val, (list, tuple)):
+                val = [str(_) for _ in val]
+            else:
+                val = [str(val),]
+            # Add the value(s) to the current list of missing
+            if key is None:
+                # None acts as default
+                for miss in missing_values:
+                    miss.extend(val)
+            else:
+                missing_values[key].extend(val)
+    # We have a sequence : each item matches a column
+    elif isinstance(user_missing_values, (list, tuple)):
+        for (value, entry) in zip(user_missing_values, missing_values):
+            value = str(value)
+            if value not in entry:
+                entry.append(value)
+    # We have a string : apply it to all entries
+    elif isinstance(user_missing_values, basestring):
+        user_value = user_missing_values.split(",")
+        for entry in missing_values:
+            entry.extend(user_value)
+    # We have something else: apply it to all entries
+    else:
+        for entry in missing_values:
+            entry.extend([str(user_missing_values)])
+
+    # Process the deprecated `missing`
+    if missing != '':
+        warnings.warn("The use of `missing` is deprecated.\n"\
+                      "Please use `missing_values` instead.",
+                      DeprecationWarning)
+        values = [str(_) for _ in missing.split(",")]
+        for entry in missing_values:
+            entry.extend(values)
+
+    # Process the filling_values ...............................
+    # Rename the input for convenience
+    user_filling_values = filling_values or []
+    # Define the default
+    filling_values = [None] * nbcols
+    # We have a dictionary : update each entry individually
+    if isinstance(user_filling_values, dict):
+        for (key, val) in user_filling_values.items():
+            # Make sure the key is an index
+            if _is_string_like(key):
+                key = names.index(key)
+            # Redefine the key if it's a column number and usecols is defined
+            if usecols:
+                try:
+                    key = usecols.index(key)
+                except ValueError:
+                    pass
+            # Add the value to the list
+            filling_values[key] = val
+    # We have a sequence : update on a one-to-one basis
+    elif isinstance(user_filling_values, (list, tuple)):
+        n = len(user_filling_values)
+        if (n <= nbcols):
+            filling_values[:n] = user_filling_values
+        else:
+            filling_values = user_filling_values[:nbcols]
+    # We have something else : use it for all entries
+    else:
+        filling_values = [user_filling_values] * nbcols
+
+    # Initialize the converters ................................
     if dtype is None:
         # Note: we can't use a [...]*nbcols, as we would have 3 times the same
         # ... converter, instead of 3 different converters.
-        converters = [StringConverter(None,
-                                      missing_values=missing.get(_, defmissing))
-                      for _ in range(nbcols)]
+        converters = [StringConverter(None, missing_values=miss, default=fill)
+                      for (miss, fill) in zip(missing_values, filling_values)]
     else:
         dtype_flat = flatten_dtype(dtype, flatten_base=True)
         # Initialize the converters
         if len(dtype_flat) > 1:
             # Flexible type : get a converter from each dtype
-            converters = [StringConverter(dt,
-                                          missing_values=missing.get(i, defmissing),
-                                          locked=True)
-                          for (i, dt) in enumerate(dtype_flat)]
+            zipit = zip(dtype_flat, missing_values, filling_values)
+            converters = [StringConverter(dt, locked=True,
+                                          missing_values=miss, default=fill)
+                           for (dt, miss, fill) in zipit]
         else:
             # Set to a default converter (but w/ different missing values)
-            converters = [StringConverter(dtype,
-                                          missing_values=missing.get(_, defmissing),
-                                          locked=True)
-                          for _ in range(nbcols)]
-    missing = [_.missing_values for _ in converters]
-
+            zipit = zip(missing_values, filling_values)
+            converters = [StringConverter(dtype, locked=True,
+                                          missing_values=miss, default=fill)
+                          for (miss, fill) in zipit]
     # Update the converters to use the user-defined ones
     uc_update = []
     for (i, conv) in user_converters.items():
@@ -1137,12 +1207,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
             except ValueError:
                 # Unused converter specified
                 continue
-        converters[i].update(conv, default=None,
-                             missing_values=missing[i],
-                             locked=True)
+        converters[i].update(conv, locked=True,
+                             default=filling_values[i],
+                             missing_values=missing_values[i],)
         uc_update.append((i, conv))
     # Make sure we have the corrected keys in user_converters...
     user_converters.update(uc_update)
+
+    miss_chars = [_.missing_values for _ in converters]
 
     # Reset the names to match the usecols
     if (not first_line) and usecols:
@@ -1180,8 +1252,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         # Store the values
         append_to_rows(tuple(values))
         if usemask:
-            append_to_masks(tuple([val.strip() in mss
-                            for (val, mss) in zip(values, missing)]))
+            append_to_masks(tuple([v.strip() in m
+                                   for (v, m) in zip(values, missing_values)]))
 
     # Upgrade the converters (if needed)
     if dtype is None:
@@ -1197,7 +1269,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
                         errmsg += "(occurred line #%i for value '%s')"
-                        errmsg %= (j + 1 + skiprows, value)
+                        errmsg %= (j + 1 + skip_header, value)
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values
@@ -1271,7 +1343,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
             if 'O' in (_.char for _ in dtype_flat):
                 if has_nested_fields(dtype):
                     errmsg = "Nested fields involving objects "\
-                        "are not supported..."
+                             "are not supported..."
                     raise NotImplementedError(errmsg)
                 else:
                     output = np.array(data, dtype=dtype)

@@ -557,6 +557,7 @@ class StringConverter:
         self._callingfunction = self._strict_call
         self.type = ttype
         self._checked = False
+        self._initial_default = default
     #
     def _loose_call(self, value):
         try:
@@ -608,12 +609,18 @@ class StringConverter:
                 raise ConverterLockError(errmsg)
             _statusmax = len(self._mapper)
             # Complains if we try to upgrade by the maximum
-            if self._status == _statusmax:
+            _status = self._status
+            if _status == _statusmax:
                 errmsg = "Could not find a valid conversion function"
                 raise ConverterError(errmsg)
-            elif self._status < _statusmax - 1:
-                self._status += 1
-            (self.type, self.func, self.default) = self._mapper[self._status]
+            elif _status < _statusmax - 1:
+                _status += 1
+            (self.type, self.func, default) = self._mapper[_status]
+            self._status = _status
+            if self._initial_default is not None:
+                self.default = self._initial_default
+            else:
+                self.default = default
             self.upgrade(value)
 
     def iterupgrade(self, value):
@@ -630,11 +637,17 @@ class StringConverter:
                 raise ConverterLockError(errmsg)
             _statusmax = len(self._mapper)
             # Complains if we try to upgrade by the maximum
-            if self._status == _statusmax:
+            _status = self._status
+            if _status == _statusmax:
                 raise ConverterError("Could not find a valid conversion function")
-            elif self._status < _statusmax - 1:
-                self._status += 1
-            (self.type, self.func, self.default) = self._mapper[self._status]
+            elif _status < _statusmax - 1:
+                _status += 1
+            (self.type, self.func, default) = self._mapper[_status]
+            if self._initial_default is not None:
+                self.default = self._initial_default
+            else:
+                self.default = default
+            self._status = _status
             self.iterupgrade(value)
 
     def update(self, func, default=None, missing_values='', locked=False):
