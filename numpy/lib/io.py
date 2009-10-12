@@ -905,6 +905,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         can also be provided as width(s) of each field.
     skiprows : int, optional
         Numbers of lines to skip at the beginning of the file.
+        The use of skiprows is deprecated: use `skip_header` instead.
+    skip_header : int, optional
+        Numbers of lines to skip at the beginning of the file.
     converters : dict or None, optional
         A dictionary mapping column number to a function that will convert
         values in the column to a number. Converters can also be used to
@@ -913,6 +916,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     missing : str, optional
         A string representing a missing value, irrespective of the column where
         it appears (e.g., `'missing'` or `'unused'`).
+        The use of `missing` is deprecated, use `missing_values` instead.
     missing_values : dict or None, optional
         A dictionary mapping a column number to a string indicating whether the
         corresponding field should be masked.
@@ -1255,6 +1259,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             append_to_masks(tuple([v.strip() in m
                                    for (v, m) in zip(values, missing_values)]))
 
+    # Strip the last skip_footer data
+    if skip_footer > 0:
+        rows = rows[:-skip_footer]
+        if usemask:
+            masks = masks[:-skip_footer]
+
     # Upgrade the converters (if needed)
     if dtype is None:
         for (i, converter) in enumerate(converters):
@@ -1274,17 +1284,25 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Check that we don't have invalid values
     if len(invalid) > 0:
+        nbrows = len(rows)
         # Construct the error message
         template = "    Line #%%i (got %%i columns instead of %i)" % nbcols
-        errmsg = [template % (i + skiprows + 1, nb) for (i, nb) in invalid]
-        errmsg.insert(0, "Some errors were detected !")
-        errmsg = "\n".join(errmsg)
-        # Raise an exception ?
-        if invalid_raise:
-            raise ValueError(errmsg)
-        # Issue a warning ?
+        if skip_footer > 0:
+            nbrows -= skip_footer
+            errmsg = [template % (i + skip_header + 1, nb)
+                      for (i, nb) in invalid if i < nbrows]
         else:
-            warnings.warn(errmsg, ConversionWarning)
+            errmsg = [template % (i + skip_header + 1, nb)
+                      for (i, nb) in invalid]
+        if len(errmsg):
+            errmsg.insert(0, "Some errors were detected !")
+            errmsg = "\n".join(errmsg)
+            # Raise an exception ?
+            if invalid_raise:
+                raise ValueError(errmsg)
+            # Issue a warning ?
+            else:
+                warnings.warn(errmsg, ConversionWarning)
 
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...

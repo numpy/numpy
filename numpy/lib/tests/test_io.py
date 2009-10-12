@@ -486,14 +486,26 @@ class TestFromTxt(TestCase):
     def test_skiprows(self):
         "Test row skipping"
         control = np.array([1, 2, 3, 5], int)
+        kwargs = dict(dtype=int, delimiter=',')
         #
         data = StringIO.StringIO('comment\n1,2,3,5\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',', skiprows=1)
+        test = np.ndfromtxt(data, skip_header=1, **kwargs)
         assert_equal(test, control)
         #
         data = StringIO.StringIO('# comment\n1,2,3,5\n')
-        test = np.loadtxt(data, dtype=int, delimiter=',', skiprows=1)
+        test = np.loadtxt(data, skiprows=1, **kwargs)
         assert_equal(test, control)
+
+    def test_skip_footer(self):
+        data = ["# %i" % i for i in range(1, 6)]
+        data.append("A, B, C")
+        data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
+        data[-1] = "99,99"
+        kwargs = dict(delimiter=",", names=True, skip_header=5, skip_footer=10)
+        test = np.genfromtxt(StringIO.StringIO("\n".join(data)), **kwargs)
+        ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(40)],
+                        dtype=[(_, float) for _ in "ABC"])
+        assert_equal(test, ctrl)
 
     def test_header(self):
         "Test retrieving a header"
