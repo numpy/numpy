@@ -85,6 +85,11 @@ Testing
        testing output while testing DeprecationWarning is effectively raised by
        the decorated test.
 
+Improvements
+============
+
+    #. numpy import is noticeably faster (from 20 to 30 % depending on the
+    platform and computer)
 
 Deprecations
 ============
