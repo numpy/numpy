@@ -138,6 +138,7 @@ else:
 
     import core
     from core import *
+    import compat
     import lib
     from lib import *
     import linalg

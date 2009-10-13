@@ -96,7 +96,7 @@ from numpy import array as narray
 
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
-from numpy.lib.inspect import getargspec, formatargspec
+from numpy.compat import getargspec, formatargspec
 from numpy import expand_dims as n_expand_dims
 import warnings
 

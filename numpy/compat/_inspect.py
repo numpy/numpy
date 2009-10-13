@@ -1,5 +1,7 @@
 import types
 
+__all__ = ['getarspec', 'formatargspec']
+
 # ----------------------------------------------------------- type-checking
 def ismethod(object):
     """Return true if the object is an instance method.

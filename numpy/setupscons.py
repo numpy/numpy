@@ -20,6 +20,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('random')
     config.add_subpackage('ma')
     config.add_subpackage('matrixlib')
+    config.add_subpackage('compat')
     config.add_data_dir('doc')
     config.add_data_dir('tests')
 
