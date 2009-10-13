@@ -561,7 +561,7 @@ def expandtabs(a, tabsize=8):
     replaced by one or more spaces, depending on the current column
     and the given `tabsize`. The column number is reset to zero after
     each newline occurring in the string. If `tabsize` is not given, a
-    tab size of 8 characters is assumed. This doesn’t understand other
+    tab size of 8 characters is assumed. This doesn't understand other
     non-printing characters or escape sequences.
 
     Parameters
