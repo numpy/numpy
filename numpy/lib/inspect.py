@@ -814,3 +814,17 @@ def stack(context=1):
 def trace(context=1):
     """Return a list of records for the stack below the current exception."""
     return getinnerframes(sys.exc_info()[2], context)
+
+if __name__ == '__main__':
+    import inspect
+    def foo(x, y, z=None):
+        return None
+
+    print inspect.getargs(foo.func_code)
+    print getargs(foo.func_code)
+
+    print inspect.getargspec(foo)
+    print getargspec(foo)
+
+    print inspect.formatargspec(*inspect.getargspec(foo))
+    print formatargspec(*getargspec(foo))
