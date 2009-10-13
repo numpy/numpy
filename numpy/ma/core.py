@@ -96,6 +96,7 @@ from numpy import array as narray
 
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
+from numpy.lib.inspect import getargspec, formatargspec
 from numpy import expand_dims as n_expand_dims
 import warnings
 
@@ -128,9 +129,8 @@ def get_object_signature(obj):
     """
     Get the signature from obj
     """
-    import inspect
     try:
-        sig = inspect.formatargspec(*inspect.getargspec(obj))
+        sig = formatargspec(*getargspec(obj))
     except TypeError, errmsg:
         msg = "Unable to retrieve the signature of %s '%s'\n"\
               "(Initial error message: %s)"
