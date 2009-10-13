@@ -136,7 +136,7 @@ def joinseq(seq):
     if len(seq) == 1:
         return '(' + seq[0] + ',)'
     else:
-        return '(' + string.join(seq, ', ') + ')'
+        return '(' + ', '.join(seq) + ')'
 
 def strseq(object, convert, join=joinseq):
     """Recursively walk a sequence, stringifying each element."""
@@ -169,7 +169,7 @@ def formatargspec(args, varargs=None, varkw=None, defaults=None,
         specs.append(formatvarargs(varargs))
     if varkw is not None:
         specs.append(formatvarkw(varkw))
-    return '(' + string.join(specs, ', ') + ')'
+    return '(' + ', '.join(specs) + ')'
 
 def formatargvalues(args, varargs, varkw, locals,
                     formatarg=str,
