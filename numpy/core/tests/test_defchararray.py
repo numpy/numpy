@@ -557,7 +557,7 @@ class TestOperations(TestCase):
                 self.fail("chararray can only be multiplied by integers")
 
     def test_mod(self):
-        # From Alan McIntyre's bug #856
+        """Ticket #856"""
         F = np.array([['%d', '%f'],['%s','%r']]).view(np.chararray)
         C = np.array([[3,7],[19,1]])
         FC = np.array([['3', '7.000000'],

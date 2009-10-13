@@ -21,7 +21,17 @@ from numeric import array as narray
 from numpy.core.multiarray import _vec_string
 import numpy
 
-__all__ = ['chararray']
+__all__ = ['chararray',
+           'equal', 'not_equal', 'greater_equal', 'less_equal', 'greater', 'less',
+           'str_len', 'add', 'multiply', 'mod', 'capitalize', 'center', 'count',
+           'decode', 'encode', 'endswith', 'expandtabs', 'find', 'format',
+           'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
+           'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip',
+           'partition', 'replace', 'rfind', 'rindex', 'rjust', 'rpartition',
+           'rsplit', 'rstrip', 'split', 'splitlines', 'startswith', 'strip',
+           'swapcase', 'title', 'translate', 'upper', 'zfill',
+           'isnumeric', 'isdecimal',
+           'array', 'asarray']
 
 _globalvar = 0
 _unicode = unicode
