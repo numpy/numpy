@@ -126,24 +126,25 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
  * buffers[1] is the source
  */
 static void
-_strided_buffered_cast(char *dptr, intp dstride, int delsize, int dswap,
+_strided_buffered_cast(char *dptr, intp dstride, intp delsize, int dswap,
                        PyArray_CopySwapNFunc *dcopyfunc,
-                       char *sptr, intp sstride, int selsize, int sswap,
+                       char *sptr, intp sstride, intp selsize, int sswap,
                        PyArray_CopySwapNFunc *scopyfunc,
                        intp N, char **buffers, int bufsize,
                        PyArray_VectorUnaryFunc *castfunc,
                        PyArrayObject *dest, PyArrayObject *src)
 {
     int i;
+
     if (N <= bufsize) {
         /*
          * 1. copy input to buffer and swap
          * 2. cast input to output
          * 3. swap output if necessary and copy from output buffer
          */
-        scopyfunc(buffers[1], selsize, sptr, sstride, N, sswap, src);
+        scopyfunc((void *)buffers[1], selsize, sptr, sstride, N, sswap, src);
         castfunc(buffers[1], buffers[0], N, src, dest);
-        dcopyfunc(dptr, dstride, buffers[0], delsize, N, dswap, dest);
+        dcopyfunc(dptr, dstride, (void *)buffers[0], delsize, N, dswap, dest);
         return;
     }
 

@@ -1714,6 +1714,7 @@ class chararray(ndarray):
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    order=order)
         else:
+            print shape, dtype, itemsize
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
@@ -2422,9 +2423,40 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 unicode = True
             else:
                 unicode = False
+
         if itemsize is None:
             itemsize = _len(obj)
         shape = _len(obj) / itemsize
+
+        if unicode:
+            if sys.maxunicode == 0xffff:
+                # On a narrow Python build, the buffer for Unicode
+                # strings is UCS2, which doesn't match the buffer for
+                # Numpy Unicode types, which is ALWAYS UCS4.
+                # Therefore, we need to convert the buffer.  On Python
+                # 2.6 and later, we can use the utf_32 codec.  Earlier
+                # versions don't have that codec, so we convert to a
+                # numerical array that matches the input buffer, and
+                # then use Numpy to convert it to UCS4.  All of this
+                # should happen in native endianness.
+                if sys.hexversion >= 0x2060000:
+                    obj = obj.encode('utf_32')
+                else:
+                    if isinstance(obj, str):
+                        ascii = numpy.frombuffer(obj, 'u1')
+                        ucs4 = numpy.array(ascii, 'u4')
+                        obj = ucs4.data
+                    else:
+                        ucs2 = numpy.frombuffer(obj, 'u2')
+                        ucs4 = numpy.array(ucs2, 'u4')
+                        obj = ucs4.data
+            else:
+                obj = unicode(obj)
+        else:
+            # Let the default Unicode -> string encoding (if any) take
+            # precedence.
+            obj = str(obj)
+
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)
 
