@@ -107,14 +107,14 @@ PyArray_OverflowMultiplyList(intp *l1, int n)
     for (i = 0; i < n; i++) {
         intp dim = l1[i];
 
-	if (dim == 0) {
+        if (dim == 0) {
             return 0;
         }
-	if (dim > imax) {
-	    return -1;
+        if (dim > imax) {
+            return -1;
         }
         imax /= dim;
-	prod *= dim;
+        prod *= dim;
     }
     return prod;
 }
@@ -1970,16 +1970,16 @@ array_set_datetimeparse_function(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
     }
     /* reset the array_repr function to built-in */
     if (op == Py_None) {
-	_numpy_internal = PyImport_ImportModule("numpy.core._internal");
-	if (_numpy_internal == NULL) return NULL;
-	op = PyObject_GetAttrString(_numpy_internal, "datetime_from_string");
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
+        op = PyObject_GetAttrString(_numpy_internal, "datetime_from_string");
     }
     else { /* Must balance reference count increment in both branches */
-	if (!PyCallable_Check(op)) {
-	    PyErr_SetString(PyExc_TypeError, "Argument must be callable.");
-	    return NULL;
-	}
-	Py_INCREF(op);
+        if (!PyCallable_Check(op)) {
+            PyErr_SetString(PyExc_TypeError, "Argument must be callable.");
+            return NULL;
+        }
+        Py_INCREF(op);
     }
     PyArray_SetDatetimeParseFunction(op);
     Py_DECREF(op);
@@ -2366,6 +2366,8 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     }
 
     while (PyArray_MultiIter_NOTDONE(in_iter)) {
+        PyObject* item_result;
+
         for (i = 0; i < n; i++) {
             PyArrayIterObject* it = in_iter->iters[i];
             PyObject* arg = PyArray_ToScalar(PyArray_ITER_DATA(it), it->ao);
@@ -2375,7 +2377,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
             PyTuple_SetItem(args_tuple, i, arg); /* Steals ref to arg */
         }
 
-        PyObject* item_result = PyObject_CallObject(method, args_tuple);
+        item_result = PyObject_CallObject(method, args_tuple);
         if (item_result == NULL) {
             goto err;
         }
@@ -2437,12 +2439,13 @@ _vec_string_no_args(PyArrayObject* char_array,
     }
 
     while (PyArray_ITER_NOTDONE(in_iter)) {
+        PyObject* item_result;
         PyObject* item = PyArray_ToScalar(in_iter->dataptr, in_iter->ao);
         if (item == NULL) {
             goto err;
         }
 
-        PyObject* item_result = PyObject_CallFunctionObjArgs(method, item, NULL);
+        item_result = PyObject_CallFunctionObjArgs(method, item, NULL);
         Py_DECREF(item);
         if (item_result == NULL) {
             goto err;
@@ -2898,8 +2901,8 @@ PyMODINIT_FUNC initmultiarray(void) {
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
-	"Numpy built with MINGW-W64 on Windows 64 bits is experimental, " \
-	"and only available for \n" \
+        "Numpy built with MINGW-W64 on Windows 64 bits is experimental, " \
+        "and only available for \n" \
         "testing. You are advised not to use it for production. \n\n" \
         "CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS",
         1);
