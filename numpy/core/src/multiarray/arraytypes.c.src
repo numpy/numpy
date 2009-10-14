@@ -1816,10 +1816,9 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
 {
     intp i;
     if (src != NULL) {
-        if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src, sizeof(PyObject **)) &&
-            __ALIGNED(dstride,sizeof(PyObject **)) && __ALIGNED(sstride,sizeof(PyObject*))) {
-            dstride /= sizeof(PyObject **);
-            sstride /= sizeof(PyObject **);
+        dstride /= sizeof(PyObject **);
+        sstride /= sizeof(PyObject **);
+        if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src, sizeof(PyObject **))) {
             for (i=0; i<n; i++) {
                 Py_XINCREF(*src);
                 Py_XDECREF(*dst);
@@ -1829,13 +1828,10 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
             }
         }
         else {
-            unsigned char *dstp, *srcp;
             PyObject **dp, **sp;
-            dstp = (unsigned char*)dst;
-            srcp = (unsigned char*)src;
             for (i=0; i<n; i++) {
-                dp = (PyObject **)dstp;
-                sp = (PyObject **)srcp;
+                dp = dst;
+                sp = src;
                 Py_XINCREF(*sp);
                 Py_XDECREF(*dp);
                 memcpy(dst, src, sizeof(PyObject *));

@@ -1714,7 +1714,6 @@ class chararray(ndarray):
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    order=order)
         else:
-            print shape, dtype, itemsize
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,

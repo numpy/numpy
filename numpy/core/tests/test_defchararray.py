@@ -66,8 +66,6 @@ class TestBasic(TestCase):
 
     def test_from_unicode(self):
         A = np.char.array(u'\u03a3')
-        print A
-        print repr(A)
         assert_equal(len(A), 1)
         assert_equal(len(A[0]), 1)
         assert_equal(A.itemsize, 4)
