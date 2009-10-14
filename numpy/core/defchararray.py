@@ -622,10 +622,10 @@ def find(a, sub, start=0, end=None):
     return _vec_string(
         a, integer, 'find', [sub, start] + _clean_args(end))
 
-if sys.version_info >= (2.6):
-    def format(a, *args, **kwargs):
-        # _vec_string doesn't support kwargs at present
-        raise NotImplementedError
+# if sys.version_info >= (2.6):
+#     def format(a, *args, **kwargs):
+#         # _vec_string doesn't support kwargs at present
+#         raise NotImplementedError
 
 def index(a, sub, start=0, end=None):
     """
