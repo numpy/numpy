@@ -2450,7 +2450,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                         ucs4 = numpy.array(ucs2, 'u4')
                         obj = ucs4.data
             else:
-                obj = unicode(obj)
+                obj = _unicode(obj)
         else:
             # Let the default Unicode -> string encoding (if any) take
             # precedence.
