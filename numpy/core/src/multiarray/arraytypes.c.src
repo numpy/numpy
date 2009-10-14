@@ -1816,9 +1816,10 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
 {
     intp i;
     if (src != NULL) {
-        dstride /= sizeof(PyObject **);
-        sstride /= sizeof(PyObject **);
-        if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src, sizeof(PyObject **))) {
+        if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src, sizeof(PyObject **)) &&
+            __ALIGNED(dstride,sizeof(PyObject **)) && __ALIGNED(sstride, sizeof(PyObject **))) {
+            dstride /= sizeof(PyObject **);
+            sstride /= sizeof(PyObject **);
             for (i=0; i<n; i++) {
                 Py_XINCREF(*src);
                 Py_XDECREF(*dst);
@@ -1828,15 +1829,18 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
             }
         }
         else {
+            unsigned char *dstp, *srcp;
             PyObject **dp, **sp;
+            dstp = (unsigned char*)dst;
+            srcp = (unsigned char*)src;
             for (i=0; i<n; i++) {
-                dp = dst;
-                sp = src;
+                dp = (PyObject **)dstp;
+                sp = (PyObject **)srcp;
                 Py_XINCREF(*sp);
                 Py_XDECREF(*dp);
-                memcpy(dst, src, sizeof(PyObject *));
-                dst += dstride;
-                src += sstride;
+                memcpy(dstp, srcp, sizeof(PyObject *));
+                dstp += dstride;
+                srcp += sstride;
             }
         }
     }
@@ -1893,7 +1897,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
         Py_ssize_t pos=0;
         descr = arr->descr;
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) continue;
+            if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                         &title)) {
                 arr->descr=descr;return;
@@ -1945,7 +1949,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         Py_ssize_t pos=0;
         descr = arr->descr;  /* Save it */
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) continue;
+            if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                         &title)) {
                 arr->descr=descr;return;
@@ -2185,7 +2189,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         descr = ap->descr;
         savedflags = ap->flags;
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) continue;
+            if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                         &title)) {PyErr_Clear(); continue;}
             ap->descr = new;
@@ -3253,9 +3257,9 @@ PyArray_DescrFromType(int type)
 
     /* Make sure dtype metadata is initialized for DATETIME */
     if (PyTypeNum_ISDATETIME(type)) {
-	if (ret->metadata == NULL) {
-	    _init_datetime_descr(ret);
-	}
+        if (ret->metadata == NULL) {
+            _init_datetime_descr(ret);
+        }
     }
 
     return ret;

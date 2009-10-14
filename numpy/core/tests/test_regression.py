@@ -1150,5 +1150,11 @@ class TestRegression(TestCase):
         a = np.array([u'123', '1234', u'1234'])
         assert a.itemsize == 16
 
+    def test_misaligned_objects_segfault(self):
+        """Ticket #1198"""
+        a1 = np.zeros((10,), dtype=[('o', 'O'), ('c', 'c')])
+        a2 = np.zeros((10,), 'S10')
+        a1['o'] = a2
+
 if __name__ == "__main__":
     run_module_suite()
