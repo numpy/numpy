@@ -24,7 +24,7 @@ Released for unlimited redistribution.
 numpy.ma : a package to handle missing or invalid values.
 
 This package was initially written for numarray by Paul F. Dubois
-at Lawrence Livermore National Laboratory. 
+at Lawrence Livermore National Laboratory.
 In 2006, the package was completely rewritten by Pierre Gerard-Marchant
 (University of Georgia) to make the MaskedArray class a subclass of ndarray,
 and to improve support of structured arrays.
@@ -33,7 +33,7 @@ and to improve support of structured arrays.
 Copyright 1999, 2000, 2001 Regents of the University of California.
 Released for unlimited redistribution.
 * Adapted for numpy_core 2005 by Travis Oliphant and (mainly) Paul Dubois.
-* Subclassing of the base ndarray 2006 by Pierre Gerard-Marchant 
+* Subclassing of the base ndarray 2006 by Pierre Gerard-Marchant
   (pgmdevlist_AT_gmail_DOT_com)
 * Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
 
@@ -163,6 +163,7 @@ default_filler = {'b': True,
                   'S' : 'N/A',
                   'u' : 999999,
                   'V' : '???',
+                  'U' : 'N/A',
                   }
 max_filler = ntypes._minvals
 max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
@@ -217,9 +218,9 @@ def default_fill_value(obj):
         defval = _check_fill_value(None, obj.dtype)
     elif isinstance(obj, np.dtype):
         if obj.subdtype:
-            defval = default_filler[obj.subdtype[0].kind]
+            defval = default_filler.get(obj.subdtype[0].kind, '?')
         else:
-            defval = default_filler[obj.kind]
+            defval = default_filler.get(obj.kind, '?')
     elif isinstance(obj, float):
         defval = default_filler['f']
     elif isinstance(obj, int) or isinstance(obj, long):
@@ -872,7 +873,7 @@ class _MaskedUnaryOperation:
                 np.putmask(result, m, d)
             except TypeError:
                 pass
-        # Transform to 
+        # Transform to
         if isinstance(a, MaskedArray):
             subtype = type(a)
         else:
@@ -3173,7 +3174,7 @@ class MaskedArray(ndarray):
 
     baseclass = property(fget= lambda self:self._baseclass,
                          doc="Class of the underlying data (read-only).")
-    
+
     def _get_data(self):
         """Return the current data, as a view of the original
         underlying data.

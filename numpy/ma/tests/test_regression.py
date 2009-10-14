@@ -33,3 +33,7 @@ class TestRegression(TestCase):
         """Ticket #271"""
         np.ma.array([1],mask=False).repeat(10)
 
+    def test_masked_array_repr_unicode(self):
+        """Ticket #1256"""
+        repr(np.ma.array(u"Unicode"))
+
