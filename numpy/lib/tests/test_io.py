@@ -722,7 +722,7 @@ M   33  21.99
     def test_usecols(self):
         "Test the selection of columns"
         # Select 1 column
-        control = np.array( [[1, 2], [3, 4]], float)
+        control = np.array([[1, 2], [3, 4]], float)
         data = StringIO.StringIO()
         np.savetxt(data, control)
         data.seek(0)
@@ -739,13 +739,31 @@ M   33  21.99
         data.seek(0)
         test = np.ndfromtxt(data, dtype=float, usecols=np.array([1, 2]))
         assert_equal(test, control[:, 1:])
-        # Checking with dtypes defined converters.
+
+    def test_usecols_with_structured_dtype(self):
+        "Test usecols with an explicit structured dtype"
         data = StringIO.StringIO("""JOE 70.1 25.3\nBOB 60.5 27.9""")
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
         test = np.ndfromtxt(data, usecols=(0, 2), dtype=zip(names, dtypes))
         assert_equal(test['stid'],  ["JOE",  "BOB"])
         assert_equal(test['temp'],  [25.3,  27.9])
+
+    def test_usecols_with_integer(self):
+        "Test usecols with an integer"
+        test = np.genfromtxt(StringIO.StringIO("1 2 3\n4 5 6"), usecols=0)
+        assert_equal(test, np.array([1., 4.]))
+
+    def test_usecols_with_named_columns(self):
+        "Test usecols with named columns"
+        ctrl = np.array([(1, 3), (4, 6)], dtype=[('a', float), ('c', float)])
+        data = "1 2 3\n4 5 6"
+        kwargs = dict(names="a, b, c")
+        test = np.genfromtxt(StringIO.StringIO(data), usecols=(0, -1), **kwargs)
+        assert_equal(test, ctrl)
+        test = np.genfromtxt(StringIO.StringIO(data),
+                             usecols=('a', 'c'), **kwargs)
+        assert_equal(test, ctrl)
 
 
     def test_empty_file(self):
@@ -820,6 +838,24 @@ M   33  21.99
                             mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
                             dtype=mdtype)
         assert_equal(test, control)
+
+    def test_user_filling_values(self):
+        "Test with missing and filling values"
+        ctrl = np.array([(0, 3), (4, -999)], dtype=[('a', int), ('b', int)])
+        data = "N/A, 2, 3\n4, ,???"
+        kwargs = dict(delimiter=",",
+                      dtype=int,
+                      names="a,b,c",
+                      missing_values={0:"N/A", 'b':" ", 2:"???"},
+                      filling_values={0:0, 'b':0, 2:-999})
+        test = np.genfromtxt(StringIO.StringIO(data), **kwargs)
+        ctrl = np.array([(0, 2, 3), (4, 0, -999)],
+                        dtype=[(_, int) for _ in "abc"])
+        assert_equal(test, ctrl)
+        #
+        test = np.genfromtxt(StringIO.StringIO(data), usecols=(0, -1), **kwargs)
+        ctrl = np.array([(0, 3), (4, -999)], dtype=[(_, int) for _ in "ac"])
+        assert_equal(test, ctrl)
 
 
     def test_withmissing_float(self):

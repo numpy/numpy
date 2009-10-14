@@ -191,7 +191,16 @@ class TestStringConverter(TestCase):
         converter.upgrade('3.14159265')
         assert_equal(converter.default, 0)
         assert_equal(converter.type, np.dtype(float))
-
+    #
+    def test_keep_default_zero(self):
+        "Check that we don't lose a default of 0"
+        converter = StringConverter(int, default=0, missing_values="N/A")
+        assert_equal(converter.default, 0)
+    #
+    def test_keep_missing_values(self):
+        "Check that we're not losing missing values"
+        converter = StringConverter(int, default=0, missing_values="N/A")
+        assert_equal(converter.missing_values, set(['', 'N/A']))
 
 #-------------------------------------------------------------------------------
 

@@ -535,7 +535,10 @@ class StringConverter:
             for (i, (deftype, func, default_def)) in enumerate(self._mapper):
                 if np.issubdtype(ttype, deftype):
                     _status = i
-                    self.default = default or default_def
+                    if default is None:
+                        self.default = default_def
+                    else:
+                        self.default = default
                     break
             if _status == -1:
                 # We never found a match in the _mapper...
@@ -552,6 +555,8 @@ class StringConverter:
         if missing_values is None:
             self.missing_values = set([''])
         else:
+            if isinstance(missing_values, basestring):
+                missing_values = missing_values.split(",")
             self.missing_values = set(list(missing_values) + [''])
         #
         self._callingfunction = self._strict_call

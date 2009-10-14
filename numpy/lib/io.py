@@ -1068,7 +1068,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Check the columns to use
     if usecols is not None:
-        usecols = list(usecols)
+        try:
+            usecols = list(usecols)
+        except TypeError:
+            usecols = [usecols,]
     nbcols = len(usecols or first_values)
 
     # Check the names and overwrite the dtype.names if needed
@@ -1085,11 +1088,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if dtype is not None:
         dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
 
-    # If usecols is a list of names, convert to a list of indices
+
     if usecols:
         for (i, current) in enumerate(usecols):
+            # if usecols is a list of names, convert to a list of indices
             if _is_string_like(current):
                 usecols[i] = names.index(current)
+            elif current < 0:
+                usecols[i] = current + len(first_values)
+        # If the dtype is not None, make sure we update it
+        if (dtype is not None) and (len(dtype) > nbcols):
+            descr = dtype.descr
+            dtype = np.dtype([descr[_] for _ in usecols])
+            names = list(dtype.names)
+        # If the dtype is None, update the names
+        elif names is not None:
+            names = [names[_] for _ in usecols]
+
 
     # Process the missing values ...............................
     # Rename missing_values for convenience
@@ -1100,11 +1115,16 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):
-         # Loop on the items
+        # Loop on the items
         for (key, val) in user_missing_values.items():
-            # Make sure the key is an index
+            # Is the key a string ?
             if _is_string_like(key):
-                key = names.index(key)
+                try:
+                    # Transform it into an integer
+                    key = names.index(key)
+                except ValueError:
+                    # We couldn't find it: the name must have been dropped, then
+                    continue
             # Redefine the key as needed if it's a column number
             if usecols:
                 try:
@@ -1156,9 +1176,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # We have a dictionary : update each entry individually
     if isinstance(user_filling_values, dict):
         for (key, val) in user_filling_values.items():
-            # Make sure the key is an index
             if _is_string_like(key):
-                key = names.index(key)
+                try:
+                    # Transform it into an integer
+                    key = names.index(key)
+                except ValueError:
+                    # We couldn't find it: the name must have been dropped, then
+                    continue
             # Redefine the key if it's a column number and usecols is defined
             if usecols:
                 try:
@@ -1204,8 +1228,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     for (i, conv) in user_converters.items():
         # If the converter is specified by column names, use the index instead
         if _is_string_like(i):
-            i = names.index(i)
-        if usecols:
+            try:
+                i = names.index(i)
+            except ValueError:
+                continue
+        elif usecols:
             try:
                 i = usecols.index(i)
             except ValueError:
@@ -1220,9 +1247,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     miss_chars = [_.missing_values for _ in converters]
 
-    # Reset the names to match the usecols
-    if (not first_line) and usecols:
-        names = [names[_] for _ in usecols]
 
     # Initialize the output lists ...
     # ... rows
