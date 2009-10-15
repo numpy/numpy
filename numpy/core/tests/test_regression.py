@@ -1158,5 +1158,11 @@ class TestRegression(TestCase):
         a2 = np.zeros((10,), 'S10')
         a1['o'] = a2
 
+    def test_byteswap_complex_scalar(self):
+        """Ticket #1259"""
+        x = np.array([-1j], '<c8')
+        y = x[0].byteswap()
+        assert_equal(x, np.fromstring(y.tostring(), dtype='>c8'))
+
 if __name__ == "__main__":
     run_module_suite()
