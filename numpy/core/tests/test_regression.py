@@ -1150,7 +1150,8 @@ class TestRegression(TestCase):
         a = np.array([u'123', '1234', u'1234'])
         assert a.itemsize == 16
 
-    @decorators.skipif(sys.platform.startswith('sunos'))
+    @decorators.knownfailureif(sys.platform.startswith('sunos'),
+                               "Alignment issues on Solaris")
     def test_misaligned_objects_segfault(self):
         """Ticket #1198"""
         a1 = np.zeros((10,), dtype=[('o', 'O'), ('c', 'c')])
