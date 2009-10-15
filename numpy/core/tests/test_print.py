@@ -26,7 +26,6 @@ def check_float_type(tp):
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_float_types():
     """ Check formatting.
 
@@ -43,7 +42,6 @@ def check_nan_inf_float(tp):
         assert_equal(str(tp(x)), _REF[x],
                      err_msg='Failed str formatting for type %s' % tp)
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_nan_inf_float():
     """ Check formatting of nan & inf.
 
@@ -76,7 +74,6 @@ def check_complex_type(tp):
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_complex_types():
     """Check formatting of complex types.
 
@@ -171,7 +168,6 @@ def check_float_type_print(tp):
             ref = '1e+10'
         _test_redirected_print(float(1e10), tp, ref)
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
@@ -197,7 +193,6 @@ def test_float_type_print():
     for t in [np.float32, np.double, np.longdouble] :
         yield check_float_type_print, t
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_complex_type_print():
     """Check formatting when using print """
     for t in [np.complex64, np.cdouble, np.clongdouble] :
@@ -225,17 +220,14 @@ def in_foreign_locale(func):
             locale.setlocale(locale.LC_NUMERIC, locale=curloc)
     return nose.tools.make_decorator(func)(wrapper)
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 @in_foreign_locale
 def test_locale_single():
     assert_equal(str(np.float32(1.2)), str(float(1.2)))
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 @in_foreign_locale
 def test_locale_double():
     assert_equal(str(np.double(1.2)), str(float(1.2)))
 
-#@dec.knownfailureif(True, "formatting tests are known to fail")
 @in_foreign_locale
 def test_locale_longdouble():
     assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
