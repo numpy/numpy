@@ -1104,8 +1104,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             descr = dtype.descr
             dtype = np.dtype([descr[_] for _ in usecols])
             names = list(dtype.names)
-        # If the dtype is None, update the names
-        elif names is not None:
+        # If `names` is not None, update the names
+        elif (names is not None) and (len(names) > nbcols):
             names = [names[_] for _ in usecols]
 
 

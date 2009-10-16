@@ -801,7 +801,7 @@ M   33  21.99
 
     def test_withmissing(self):
         data = StringIO.StringIO('A,B\n0,1\n2,N/A')
-        kwargs = dict(delimiter=",", missing="N/A", names=True)
+        kwargs = dict(delimiter=",", missing_values="N/A", names=True)
         test = np.mafromtxt(data, dtype=None, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
@@ -820,16 +820,18 @@ M   33  21.99
 
     def test_user_missing_values(self):
         data = "A, B, C\n0, 0., 0j\n1, N/A, 1j\n-9, 2.2, N/A\n3, -99, 3j"
-        basekwargs = dict(dtype=None, delimiter=",", names=True, missing="N/A")
+        basekwargs = dict(dtype=None, delimiter=",", names=True,)
         mdtype = [('A', int), ('B', float), ('C', complex)]
         #
-        test = np.mafromtxt(StringIO.StringIO(data), **basekwargs)
+        test = np.mafromtxt(StringIO.StringIO(data), missing_values="N/A",
+                            **basekwargs)
         control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
                             (  -9, 2.2, -999j), (3,  -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (0, 0, 1), (0, 0, 0)],
                             dtype=mdtype)
         assert_equal(test, control)
         #
+        basekwargs['dtype'] = mdtype
         test = np.mafromtxt(StringIO.StringIO(data),
                             missing_values={0:-9, 1:-99, 2:-999j}, **basekwargs)
         control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
@@ -868,8 +870,8 @@ M   33  21.99
 
     def test_withmissing_float(self):
         data = StringIO.StringIO('A,B\n0,1.5\n2,-999.00')
-        test = np.mafromtxt(data, dtype=None, delimiter=',', missing='-999.0',
-                            names=True,)
+        test = np.mafromtxt(data, dtype=None, delimiter=',',
+                            missing_values='-999.0', names=True,)
         control = ma.array([(0, 1.5), (2, -1.)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', np.int), ('B', np.float)])
@@ -880,14 +882,16 @@ M   33  21.99
     def test_with_masked_column_uniform(self):
         "Test masked column"
         data = StringIO.StringIO('1 2 3\n4 5 6\n')
-        test = np.genfromtxt(data, missing='2,5', dtype=None, usemask=True)
+        test = np.genfromtxt(data, dtype=None,
+                             missing_values='2,5', usemask=True)
         control = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[0, 1, 0],[0, 1, 0]])
         assert_equal(test, control)
 
     def test_with_masked_column_various(self):
         "Test masked column"
         data = StringIO.StringIO('True 2 3\nFalse 5 6\n')
-        test = np.genfromtxt(data, missing='2,5', dtype=None, usemask=True)
+        test = np.genfromtxt(data, dtype=None,
+                             missing_values='2,5', usemask=True)
         control = ma.array([(1, 2, 3), (0, 5, 6)],
                            mask=[(0, 1, 0),(0, 1, 0)],
                            dtype=[('f0', bool), ('f1', bool), ('f2', int)])
@@ -1018,7 +1022,7 @@ M   33  21.99
     def test_names_auto_completion(self):
         "Make sure that names are properly completed"
         data = "1 2 3\n 4 5 6"
-        test = genfromtxt(StringIO.StringIO(data),
+        test = np.genfromtxt(StringIO.StringIO(data),
                              dtype=(int, float, int), names="a")
         ctrl = np.array([(1, 2, 3), (4, 5, 6)],
                         dtype=[('a', int), ('f0', float), ('f1', int)])
@@ -1051,15 +1055,15 @@ M   33  21.99
     def test_recfromtxt(self):
         #
         data = StringIO.StringIO('A,B\n0,1\n2,3')
-        test = np.recfromtxt(data, delimiter=',', missing='N/A', names=True)
+        kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+        test = np.recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', np.int), ('B', np.int)])
         self.failUnless(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = StringIO.StringIO('A,B\n0,1\n2,N/A')
-        test = np.recfromtxt(data, dtype=None, delimiter=',', missing='N/A',
-                             names=True, usemask=True)
+        test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', np.int), ('B', np.int)])
@@ -1071,7 +1075,7 @@ M   33  21.99
     def test_recfromcsv(self):
         #
         data = StringIO.StringIO('A,B\n0,1\n2,3')
-        kwargs = dict(missing='N/A', names=True, case_sensitive=True)
+        kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
         test = np.recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', np.int), ('B', np.int)])
@@ -1088,7 +1092,7 @@ M   33  21.99
         assert_equal(test.A, [0, 2])
         #
         data = StringIO.StringIO('A,B\n0,1\n2,3')
-        test = np.recfromcsv(data, missing='N/A',)
+        test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', np.int), ('b', np.int)])
         self.failUnless(isinstance(test, np.recarray))
