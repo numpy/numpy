@@ -740,6 +740,14 @@ M   33  21.99
         test = np.ndfromtxt(data, dtype=float, usecols=np.array([1, 2]))
         assert_equal(test, control[:, 1:])
 
+    def test_usecols_as_css(self):
+        "Test giving usecols with a comma-separated string"
+        data = "1 2 3\n4 5 6"
+        test = np.genfromtxt(StringIO.StringIO(data),
+                             names="a, b, c", usecols="a, c")
+        ctrl = np.array([(1, 3), (4, 6)], dtype=[(_, float) for _ in "ac"])
+        assert_equal(test, ctrl)
+
     def test_usecols_with_structured_dtype(self):
         "Test usecols with an explicit structured dtype"
         data = StringIO.StringIO("""JOE 70.1 25.3\nBOB 60.5 27.9""")
@@ -1007,6 +1015,14 @@ M   33  21.99
                         dtype=[(_, float) for _ in ('A', 'f0', 'C')])
         test = np.ndfromtxt(StringIO.StringIO(data), **kwargs)
 
+    def test_names_auto_completion(self):
+        "Make sure that names are properly completed"
+        data = "1 2 3\n 4 5 6"
+        test = genfromtxt(StringIO.StringIO(data),
+                             dtype=(int, float, int), names="a")
+        ctrl = np.array([(1, 2, 3), (4, 5, 6)],
+                        dtype=[('a', int), ('f0', float), ('f1', int)])
+        assert_equal(test, ctrl)
 
     def test_fixed_width_names(self):
         "Test fix-width w/ names"

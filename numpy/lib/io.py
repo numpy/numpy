@@ -1069,9 +1069,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Check the columns to use
     if usecols is not None:
         try:
-            usecols = list(usecols)
-        except TypeError:
-            usecols = [usecols,]
+            usecols = [_.strip() for _ in usecols.split(",")]
+        except AttributeError:
+            try:
+                usecols = list(usecols)
+            except TypeError:
+                usecols = [usecols,]
     nbcols = len(usecols or first_values)
 
     # Check the names and overwrite the dtype.names if needed
@@ -1087,7 +1090,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Get the dtype
     if dtype is not None:
         dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
-
+        names = dtype.names
 
     if usecols:
         for (i, current) in enumerate(usecols):
