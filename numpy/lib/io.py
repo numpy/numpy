@@ -275,7 +275,7 @@ def load(file, mmap_mode=None):
     import gzip
 
     if isinstance(file, basestring):
-        fid = _file(file,"rb")
+        fid = _file(file, "rb")
     elif isinstance(file, gzip.GzipFile):
         fid = seek_gzip_factory(file)
     else:
@@ -285,7 +285,7 @@ def load(file, mmap_mode=None):
     _ZIP_PREFIX = 'PK\x03\x04'
     N = len(format.MAGIC_PREFIX)
     magic = fid.read(N)
-    fid.seek(-N,1) # back-up
+    fid.seek(-N, 1) # back-up
     if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
         return NpzFile(fid)
     elif magic == format.MAGIC_PREFIX: # .npy file
@@ -656,7 +656,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         return X
 
 
-def savetxt(fname, X, fmt='%.18e',delimiter=' '):
+def savetxt(fname, X, fmt='%.18e', delimiter=' '):
     """
     Save an array to a text file.
 
@@ -743,9 +743,9 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     if _is_string_like(fname):
         if fname.endswith('.gz'):
             import gzip
-            fh = gzip.open(fname,'wb')
+            fh = gzip.open(fname, 'wb')
         else:
-            fh = file(fname,'w')
+            fh = file(fname, 'w')
     elif hasattr(fname, 'seek'):
         fh = fname
     else:
@@ -774,7 +774,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         format = delimiter.join(fmt)
     elif type(fmt) is str:
         if fmt.count('%') == 1:
-            fmt = [fmt,]*ncol
+            fmt = [fmt, ]*ncol
             format = delimiter.join(fmt)
         elif fmt.count('%') != ncol:
             raise AttributeError('fmt has wrong number of %% formats.  %s'
@@ -842,7 +842,7 @@ def fromregex(file, regexp, dtype):
 
     """
     if not hasattr(file, "read"):
-        file = open(file,'r')
+        file = open(file, 'r')
     if not hasattr(regexp, 'match'):
         regexp = re.compile(regexp)
     if not isinstance(dtype, np.dtype):
@@ -870,7 +870,7 @@ def fromregex(file, regexp, dtype):
 
 
 
-def genfromtxt(fname, dtype=float, comments='#', delimiter=None, 
+def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skiprows=0, skip_header=0, skip_footer=0, converters=None,
                missing='', missing_values=None, filling_values=None,
                usecols=None, names=None, excludelist=None, deletechars=None,
@@ -1074,7 +1074,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             try:
                 usecols = list(usecols)
             except TypeError:
-                usecols = [usecols,]
+                usecols = [usecols, ]
     nbcols = len(usecols or first_values)
 
     # Check the names and overwrite the dtype.names if needed
@@ -1085,12 +1085,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
         names = validate_names(names)
-    if names is not None:
-        names = list(names)
     # Get the dtype
     if dtype is not None:
         dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
         names = dtype.names
+    # Make sure the names is a list (for 2.5)
+    if names is not None:
+        names = list(names)
+
 
     if usecols:
         for (i, current) in enumerate(usecols):
@@ -1138,7 +1140,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if isinstance(val, (list, tuple)):
                 val = [str(_) for _ in val]
             else:
-                val = [str(val),]
+                val = [str(val), ]
             # Add the value(s) to the current list of missing
             if key is None:
                 # None acts as default
