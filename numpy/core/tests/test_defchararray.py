@@ -295,12 +295,10 @@ class TestMethods(TestCase):
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
-        print B[0][0]
         assert B[0][0] == r' \u03a3 '
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
-        print T
         assert T[2][0] == '123      345'
 
     def test_join(self):
