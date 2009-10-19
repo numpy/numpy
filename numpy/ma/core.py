@@ -227,6 +227,8 @@ def default_fill_value(obj):
         defval = default_filler['i']
     elif isinstance(obj, str):
         defval = default_filler['S']
+    elif isinstance(obj, unicode):
+        defval = default_filler['U']
     elif isinstance(obj, complex):
         defval = default_filler['c']
     else:
