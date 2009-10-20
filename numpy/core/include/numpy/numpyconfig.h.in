@@ -31,5 +31,5 @@
 /* Ugly, but we can't test this in a proper manner without requiring a C++
  * compiler at the configuration stage of numpy ? */
 #ifndef __STDC_FORMAT_MACROS
-	#define __STDC_FORMAT_MACROS 1
+        #define __STDC_FORMAT_MACROS 1
 #endif

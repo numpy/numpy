@@ -2,13 +2,13 @@
 #define __NUMPY_UTILS_HEADER__
 
 #ifndef __COMP_NPY_UNUSED
-	#if defined(__GNUC__)
-		#define __COMP_NPY_UNUSED __attribute__ ((__unused__))
-	# elif defined(__ICC)
-		#define __COMP_NPY_UNUSED __attribute__ ((__unused__))
-	#else
-		#define __COMP_NPY_UNUSED
-	#endif
+        #if defined(__GNUC__)
+                #define __COMP_NPY_UNUSED __attribute__ ((__unused__))
+        # elif defined(__ICC)
+                #define __COMP_NPY_UNUSED __attribute__ ((__unused__))
+        #else
+                #define __COMP_NPY_UNUSED
+        #endif
 #endif
 
 /* Use this to tag a variable as not used. It will remove unused variable

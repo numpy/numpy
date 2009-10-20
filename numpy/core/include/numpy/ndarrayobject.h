@@ -188,20 +188,20 @@ typedef enum {
 } NPY_CLIPMODE;
 
 typedef enum {
-	NPY_FR_Y,
-	NPY_FR_M,
-	NPY_FR_W,
-	NPY_FR_B,
-	NPY_FR_D,
-	NPY_FR_h,
-	NPY_FR_m,
-	NPY_FR_s,
-	NPY_FR_ms,
-	NPY_FR_us,
-	NPY_FR_ns,
-	NPY_FR_ps,
-	NPY_FR_fs,
-	NPY_FR_as
+        NPY_FR_Y,
+        NPY_FR_M,
+        NPY_FR_W,
+        NPY_FR_B,
+        NPY_FR_D,
+        NPY_FR_h,
+        NPY_FR_m,
+        NPY_FR_s,
+        NPY_FR_ms,
+        NPY_FR_us,
+        NPY_FR_ns,
+        NPY_FR_ps,
+        NPY_FR_fs,
+        NPY_FR_as
 } NPY_DATETIMEUNIT;
 
 #define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
@@ -280,9 +280,9 @@ typedef Py_uintptr_t npy_uintp;
 /* We can only use C99 formats for npy_int_p if it is the same as intp_t, hence
  * the condition on HAVE_UNITPTR_T */
 #if (NPY_USE_C99_FORMATS) == 1 \
-	&& (defined HAVE_UINTPTR_T) \
-	&& (defined HAVE_INTTYPES_H)
-	#include <inttypes.h>
+        && (defined HAVE_UINTPTR_T) \
+        && (defined HAVE_INTTYPES_H)
+        #include <inttypes.h>
         #undef NPY_INTP_FMT
         #define NPY_INTP_FMT PRIdPTR
 #endif
@@ -576,19 +576,19 @@ typedef struct {
 
 typedef struct {
         NPY_DATETIMEUNIT base;
-	int num;
-	int den;      /* Converted to 1 on input for now -- an input-only mechanism */
-	int events;
+        int num;
+        int den;      /* Converted to 1 on input for now -- an input-only mechanism */
+        int events;
 } PyArray_DatetimeMetaData;
 
 typedef struct {
-	npy_longlong year;
-	int month, day, hour, min, sec, us, ps, as;
+        npy_longlong year;
+        int month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
 typedef struct {
-	npy_longlong day;
-	int sec, us, ps, as;
+        npy_longlong day;
+        int sec, us, ps, as;
 } npy_timedeltastruct;
 
 
@@ -774,7 +774,7 @@ struct PyArrayIterObject_tag {
         _PyAIT(it)->index = 0;                                          \
         _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                     \
         memset(_PyAIT(it)->coordinates, 0,                              \
-	       (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp));                 \
+               (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp));                 \
 }
 
 #define _PyArray_ITER_NEXT1(it) {                                       \
@@ -822,7 +822,7 @@ struct PyArrayIterObject_tag {
                 _PyArray_ITER_NEXT1(_PyAIT(it));                           \
         }                                                                  \
         else if (_PyAIT(it)->contiguous)                                   \
-	        _PyAIT(it)->dataptr += _PyAIT(it)->ao->descr->elsize;      \
+                _PyAIT(it)->dataptr += _PyAIT(it)->ao->descr->elsize;      \
         else if (_PyAIT(it)->nd_m1 == 1) {                                 \
                 _PyArray_ITER_NEXT2(_PyAIT(it));                           \
         }                                                                  \
@@ -1444,7 +1444,7 @@ typedef struct {
 */
 
 #define NPY_TITLE_KEY(key, value) ((PyTuple_GET_SIZE((value))==3) && \
-				   (PyTuple_GET_ITEM((value), 2) == (key)))
+                                   (PyTuple_GET_ITEM((value), 2) == (key)))
 
 
 /* Define python version independent deprecation macro */
