@@ -1182,9 +1182,15 @@ class TestRegression(TestCase):
 
     def test_byteswap_complex_scalar(self):
         """Ticket #1259"""
-        x = np.array([-1j], '<c8')
-        y = x[0].byteswap()
-        assert_equal(x, np.fromstring(y.tostring(), dtype='>c8'))
+        z = np.array([-1j], '<c8')
+        x = z[0] # always native-endian
+        y = x.byteswap()
+        if x.dtype.byteorder == z.dtype.byteorder:
+            # little-endian machine
+            assert_equal(x, np.fromstring(y.tostring(), dtype='>c8'))
+        else:
+            # big-endian machine
+            assert_equal(x, np.fromstring(y.tostring(), dtype='<c8'))
 
 if __name__ == "__main__":
     run_module_suite()
