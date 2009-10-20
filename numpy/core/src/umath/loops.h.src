@@ -25,9 +25,9 @@
 
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or, logical_xor, add, bitwise_or, 
- *         bitwise_xor, bitwise_and, fmax, fmin, invert, multiply, negative, 
- *	   subtract#
+ *         logical_and, logical_or, logical_xor, add, bitwise_or,
+ *         bitwise_xor, bitwise_and, fmax, fmin, invert, multiply, negative,
+ *         subtract#
  **/
 
 NPY_NO_EXPORT void
