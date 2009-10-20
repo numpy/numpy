@@ -190,8 +190,8 @@ PyMappingMethods in py3k look to be the same as in py2k. The semantics
 of the slots needs to be checked.
 
 PyMappingMethods foo_mapping_methods = {
-	(lenfunc)0,                             /* mp_length */
-	(binaryfunc)0,                          /* mp_subscript */
-	(objobjargproc)0                        /* mp_ass_subscript */
+    (lenfunc)0,                             /* mp_length */
+    (binaryfunc)0,                          /* mp_subscript */
+    (objobjargproc)0                        /* mp_ass_subscript */
 };
 
