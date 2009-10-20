@@ -9,23 +9,23 @@
 
    ------------------------------------------------------------------
    The code in this module was based on a download from:
-	  http://www.math.keio.ac.jp/~matumoto/MT2002/emt19937ar.html
+      http://www.math.keio.ac.jp/~matumoto/MT2002/emt19937ar.html
 
    It was modified in 2002 by Raymond Hettinger as follows:
 
-	* the principal computational lines untouched except for tabbing.
+    * the principal computational lines untouched except for tabbing.
 
-	* renamed genrand_res53() to random_random() and wrapped
-	  in python calling/return code.
+    * renamed genrand_res53() to random_random() and wrapped
+      in python calling/return code.
 
-	* genrand_int32() and the helper functions, init_genrand()
-	  and init_by_array(), were declared static, wrapped in
-	  Python calling/return code.  also, their global data
-	  references were replaced with structure references.
+    * genrand_int32() and the helper functions, init_genrand()
+      and init_by_array(), were declared static, wrapped in
+      Python calling/return code.  also, their global data
+      references were replaced with structure references.
 
-	* unused functions from the original were deleted.
-	  new, original C python code was added to implement the
-	  Random() interface.
+    * unused functions from the original were deleted.
+      new, original C python code was added to implement the
+      Random() interface.
 
    The following are the verbatim comments from the original code:
 
@@ -43,15 +43,15 @@
    are met:
 
      1. Redistributions of source code must retain the above copyright
-	notice, this list of conditions and the following disclaimer.
+    notice, this list of conditions and the following disclaimer.
 
      2. Redistributions in binary form must reproduce the above copyright
-	notice, this list of conditions and the following disclaimer in the
-	documentation and/or other materials provided with the distribution.
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
 
      3. The names of its contributors may not be used to endorse or promote
-	products derived from this software without specific prior written
-	permission.
+    products derived from this software without specific prior written
+    permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -80,23 +80,23 @@ init_genrand(rk_state *self, unsigned long s);
 static void
 init_genrand(rk_state *self, unsigned long s)
 {
-	int mti;
-	unsigned long *mt;
+    int mti;
+    unsigned long *mt;
 
-	mt = self->key;
-	mt[0]= s & 0xffffffffUL;
-	for (mti=1; mti<RK_STATE_LEN; mti++) {
-		mt[mti] =
-		(1812433253UL * (mt[mti-1] ^ (mt[mti-1] >> 30)) + mti);
-		/* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
-		/* In the previous versions, MSBs of the seed affect   */
-		/* only MSBs of the array mt[]. 		       */
-		/* 2002/01/09 modified by Makoto Matsumoto	       */
-		mt[mti] &= 0xffffffffUL;
-		/* for >32 bit machines */
-	}
-	self->pos = mti;
-	return;
+    mt = self->key;
+    mt[0]= s & 0xffffffffUL;
+    for (mti=1; mti<RK_STATE_LEN; mti++) {
+        mt[mti] =
+        (1812433253UL * (mt[mti-1] ^ (mt[mti-1] >> 30)) + mti);
+        /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
+        /* In the previous versions, MSBs of the seed affect   */
+        /* only MSBs of the array mt[].                */
+        /* 2002/01/09 modified by Makoto Matsumoto         */
+        mt[mti] &= 0xffffffffUL;
+        /* for >32 bit machines */
+    }
+    self->pos = mti;
+    return;
 }
 
 
@@ -106,28 +106,28 @@ init_genrand(rk_state *self, unsigned long s)
 extern void
 init_by_array(rk_state *self, unsigned long init_key[], unsigned long key_length)
 {
-	unsigned int i, j, k;	/* was signed in the original code. RDH 12/16/2002 */
-	unsigned long *mt;
+    unsigned int i, j, k;   /* was signed in the original code. RDH 12/16/2002 */
+    unsigned long *mt;
 
-	mt = self->key;
-	init_genrand(self, 19650218UL);
-	i=1; j=0;
-	k = (RK_STATE_LEN>key_length ? RK_STATE_LEN : key_length);
-	for (; k; k--) {
-		mt[i] = (mt[i] ^ ((mt[i-1] ^ (mt[i-1] >> 30)) * 1664525UL))
-			 + init_key[j] + j; /* non linear */
-		mt[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
-		i++; j++;
-		if (i>=RK_STATE_LEN) { mt[0] = mt[RK_STATE_LEN-1]; i=1; }
-		if (j>=key_length) j=0;
-	}
-	for (k=RK_STATE_LEN-1; k; k--) {
-		mt[i] = (mt[i] ^ ((mt[i-1] ^ (mt[i-1] >> 30)) * 1566083941UL))
-			 - i; /* non linear */
-		mt[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
-		i++;
-		if (i>=RK_STATE_LEN) { mt[0] = mt[RK_STATE_LEN-1]; i=1; }
-	}
+    mt = self->key;
+    init_genrand(self, 19650218UL);
+    i=1; j=0;
+    k = (RK_STATE_LEN>key_length ? RK_STATE_LEN : key_length);
+    for (; k; k--) {
+        mt[i] = (mt[i] ^ ((mt[i-1] ^ (mt[i-1] >> 30)) * 1664525UL))
+             + init_key[j] + j; /* non linear */
+        mt[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
+        i++; j++;
+        if (i>=RK_STATE_LEN) { mt[0] = mt[RK_STATE_LEN-1]; i=1; }
+        if (j>=key_length) j=0;
+    }
+    for (k=RK_STATE_LEN-1; k; k--) {
+        mt[i] = (mt[i] ^ ((mt[i-1] ^ (mt[i-1] >> 30)) * 1566083941UL))
+             - i; /* non linear */
+        mt[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
+        i++;
+        if (i>=RK_STATE_LEN) { mt[0] = mt[RK_STATE_LEN-1]; i=1; }
+    }
 
     mt[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
     self->has_gauss = 0;

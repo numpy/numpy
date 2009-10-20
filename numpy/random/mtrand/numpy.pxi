@@ -7,15 +7,15 @@ cdef extern from "numpy/arrayobject.h":
         NPY_BYTE
         NPY_UBYTE
         NPY_SHORT
-        NPY_USHORT 
+        NPY_USHORT
         NPY_INT
-        NPY_UINT 
+        NPY_UINT
         NPY_LONG
         NPY_ULONG
         NPY_LONGLONG
         NPY_ULONGLONG
         NPY_FLOAT
-        NPY_DOUBLE 
+        NPY_DOUBLE
         NPY_LONGDOUBLE
         NPY_CFLOAT
         NPY_CDOUBLE
@@ -56,7 +56,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_OUT_FARRAY
         NPY_INOUT_FARRAY
 
-        NPY_UPDATE_ALL 
+        NPY_UPDATE_ALL
 
     cdef enum defines:
         NPY_MAXDIMS
@@ -69,7 +69,7 @@ cdef extern from "numpy/arrayobject.h":
         double real
         double imag
 
-    ctypedef int npy_intp 
+    ctypedef int npy_intp
 
     ctypedef extern class numpy.dtype [object PyArray_Descr]:
         cdef int type_num, elsize, alignment
@@ -90,7 +90,7 @@ cdef extern from "numpy/arrayobject.h":
         cdef npy_intp index, size
         cdef ndarray ao
         cdef char *dataptr
-        
+
     ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject]:
         cdef int numiter
         cdef npy_intp size, index
@@ -103,15 +103,15 @@ cdef extern from "numpy/arrayobject.h":
     dtype PyArray_DescrFromTypeNum(NPY_TYPES type_num)
     object PyArray_SimpleNew(int ndims, npy_intp* dims, NPY_TYPES type_num)
     int PyArray_Check(object obj)
-    object PyArray_ContiguousFromAny(object obj, NPY_TYPES type, 
+    object PyArray_ContiguousFromAny(object obj, NPY_TYPES type,
         int mindim, int maxdim)
-    object PyArray_ContiguousFromObject(object obj, NPY_TYPES type, 
+    object PyArray_ContiguousFromObject(object obj, NPY_TYPES type,
         int mindim, int maxdim)
     npy_intp PyArray_SIZE(ndarray arr)
     npy_intp PyArray_NBYTES(ndarray arr)
     void *PyArray_DATA(ndarray arr)
     object PyArray_FromAny(object obj, dtype newtype, int mindim, int maxdim,
-		    int requirements, object context)
+                            int requirements, object context)
     object PyArray_FROMANY(object obj, NPY_TYPES type_num, int min,
                            int max, int requirements)
     object PyArray_NewFromDescr(object subtype, dtype newtype, int nd,
@@ -124,7 +124,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_MultiIterNew(int n, ...)
 
     char *PyArray_MultiIter_DATA(broadcast multi, int i)
-    void PyArray_MultiIter_NEXTi(broadcast multi, int i) 
+    void PyArray_MultiIter_NEXTi(broadcast multi, int i)
     void PyArray_MultiIter_NEXT(broadcast multi)
 
     object PyArray_IterNew(object arr)

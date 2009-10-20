@@ -245,20 +245,20 @@ class TestMiscFunctions(TestCase):
         # As list of tuples w/o names
         ndtype = [('A', int), ('B', float)]
         assert_equal(easy_dtype(ndtype), np.dtype([('A', int), ('B', float)]))
-		# As list of tuples w/ names
+        # As list of tuples w/ names
         assert_equal(easy_dtype(ndtype, names="a,b"),
                      np.dtype([('a', int), ('b', float)]))
-		# As list of tuples w/ not enough names
+        # As list of tuples w/ not enough names
         assert_equal(easy_dtype(ndtype, names="a"),
                      np.dtype([('a', int), ('f0', float)]))
-		# As list of tuples w/ too many names
+        # As list of tuples w/ too many names
         assert_equal(easy_dtype(ndtype, names="a,b,c"),
                      np.dtype([('a', int), ('b', float)]))
-		# As list of types w/o names
+        # As list of types w/o names
         ndtype = (int, float, float)
         assert_equal(easy_dtype(ndtype),
                      np.dtype([('f0', int), ('f1', float), ('f2', float)]))
-		# As list of types w names
+                # As list of types w names
         ndtype = (int, float, float)
         assert_equal(easy_dtype(ndtype, names="a, b, c"),
                      np.dtype([('a', int), ('b', float), ('c', float)]))

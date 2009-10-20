@@ -4,5 +4,5 @@ from numscons import GetNumpyEnvironment
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
-env.NumpyPythonExtension('fftpack_lite', 
-			  source = ['fftpack_litemodule.c', 'fftpack.c'])
+env.NumpyPythonExtension('fftpack_lite',
+                          source = ['fftpack_litemodule.c', 'fftpack.c'])

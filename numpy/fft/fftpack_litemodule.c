@@ -292,21 +292,19 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
 /* List of methods defined in the module */
 
 static struct PyMethodDef fftpack_methods[] = {
-    {"cfftf",	fftpack_cfftf,	1,	fftpack_cfftf__doc__},
-    {"cfftb",	fftpack_cfftb,	1,	fftpack_cfftb__doc__},
-    {"cffti",	fftpack_cffti,	1,	fftpack_cffti__doc__},
-    {"rfftf",	fftpack_rfftf,	1,	fftpack_rfftf__doc__},
-    {"rfftb",	fftpack_rfftb,	1,	fftpack_rfftb__doc__},
-    {"rffti",	fftpack_rffti,	1,	fftpack_rffti__doc__},
-    {NULL,		NULL, 0, NULL}		/* sentinel */
+    {"cfftf",   fftpack_cfftf,  1,      fftpack_cfftf__doc__},
+    {"cfftb",   fftpack_cfftb,  1,      fftpack_cfftb__doc__},
+    {"cffti",   fftpack_cffti,  1,      fftpack_cffti__doc__},
+    {"rfftf",   fftpack_rfftf,  1,      fftpack_rfftf__doc__},
+    {"rfftb",   fftpack_rfftb,  1,      fftpack_rfftb__doc__},
+    {"rffti",   fftpack_rffti,  1,      fftpack_rffti__doc__},
+    {NULL, NULL, 0, NULL}          /* sentinel */
 };
 
 
 /* Initialization function for the module (*must* be called initfftpack) */
 
-static char fftpack_module_documentation[] =
-""
-;
+static char fftpack_module_documentation[] = "" ;
 
 PyMODINIT_FUNC initfftpack_lite(void)
 {

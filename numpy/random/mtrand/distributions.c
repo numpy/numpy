@@ -575,7 +575,7 @@ double rk_vonmises(rk_state *state, double mu, double kappa)
 
         while (1)
         {
-	    U = rk_double(state);
+        U = rk_double(state);
             Z = cos(M_PI*U);
             W = (1 + s*Z)/(s + Z);
             Y = kappa * (s - W);
@@ -591,7 +591,7 @@ double rk_vonmises(rk_state *state, double mu, double kappa)
         result = acos(W);
         if (U < 0.5)
         {
-	    result = -result;
+        result = -result;
         }
         result += mu;
         neg = (result < 0);
