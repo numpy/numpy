@@ -54,7 +54,7 @@ static int ulonglong_overflow(ulonglong a, ulonglong b)
 #else
 static int ulonglong_overflow(ulonglong NPY_UNUSED(a), ulonglong NPY_UNUSED(b))
 {
-	return 0;
+        return 0;
 }
 #endif
 
@@ -1055,9 +1055,9 @@ static PyObject*
         if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
     case -3: /* special case for longdouble and clongdouble
-		because they have a recursive getitem in their dtype */
+                because they have a recursive getitem in their dtype */
         Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
+        return Py_NotImplemented;
     }
 
     /* here we do the actual calculation with arg1 and arg2 */
