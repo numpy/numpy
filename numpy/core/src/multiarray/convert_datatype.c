@@ -835,7 +835,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
     *retn = n = PySequence_Length(op);
     if (n == 0) {
-	PyErr_SetString(PyExc_ValueError, "0-length sequence.");
+        PyErr_SetString(PyExc_ValueError, "0-length sequence.");
     }
     if (PyErr_Occurred()) {
         *retn = 0;
