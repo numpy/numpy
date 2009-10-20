@@ -151,8 +151,8 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     /* Create the neighborhood iterator */
     afill = NULL;
     if (mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
-	    afill = (PyArrayObject *)PyArray_FromObject(fill, typenum, 0, 0);
-	    if (afill == NULL) {
+            afill = (PyArrayObject *)PyArray_FromObject(fill, typenum, 0, 0);
+            if (afill == NULL) {
             goto clean_itx;
         }
     }
