@@ -356,7 +356,7 @@ PyArray_SetDatetimeParseFunction(PyObject *op)
     /* Add a reference to the new callback */
     Py_XINCREF(op);
     /* Remember new callback */
-    PyArray_DatetimeParseFunction = op;    
+    PyArray_DatetimeParseFunction = op;
 }
 
 
@@ -814,7 +814,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 
         op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
         while (PyDict_Next(self->descr->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) {
+            if NPY_TITLE_KEY(key, value) {
                 continue;
             }
             a = PyArray_EnsureAnyArray(array_subscript(self, key));
@@ -1330,5 +1330,3 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     0,                                          /* tp_version_tag */
 #endif
 };
-
-
