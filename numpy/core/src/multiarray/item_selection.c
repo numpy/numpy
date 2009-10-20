@@ -100,7 +100,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             copyret = 1;
         }
         ret = obj;
-	if (ret == NULL) {
+        if (ret == NULL) {
             goto fail;
         }
     }
@@ -620,7 +620,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     }
     /* Broadcast all arrays to each other, index array at the end. */ 
     multi = (PyArrayMultiIterObject *)
-	PyArray_MultiIterFromObjects((PyObject **)mps, n, 1, ap);
+        PyArray_MultiIterFromObjects((PyObject **)mps, n, 1, ap);
     if (multi == NULL) {
         goto fail;
     }
@@ -641,7 +641,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
         if ((PyArray_NDIM(ret) != multi->nd)
                 || !PyArray_CompareLists(
                     PyArray_DIMS(ret), multi->dimensions, multi->nd)) {
-	    PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_TypeError,
                             "invalid shape for output array.");
             ret = NULL;
             goto fail;
@@ -669,7 +669,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     ret_data = ret->data;
 
     while (PyArray_MultiIter_NOTDONE(multi)) {
-	mi = *((intp *)PyArray_MultiIter_DATA(multi, n));
+        mi = *((intp *)PyArray_MultiIter_DATA(multi, n));
         if (mi < 0 || mi >= n) {
             switch(clipmode) {
             case NPY_RAISE:
@@ -701,7 +701,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
         }
         memmove(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
         ret_data += elsize;
-	PyArray_MultiIter_NEXT(multi);
+        PyArray_MultiIter_NEXT(multi);
     }
 
     PyArray_INCREF(ret);
@@ -1458,7 +1458,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
     ap1 = (PyArrayObject *)PyArray_FromAny((PyObject *)op1, dtype,
-					   1, 1, NPY_DEFAULT, NULL);
+                                           1, 1, NPY_DEFAULT, NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
