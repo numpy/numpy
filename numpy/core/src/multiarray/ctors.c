@@ -933,7 +933,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
        * a faster algorithm.  Right now, just make sure a base-class array is
        * used so that the dimensionality reduction assumption is correct.
        */
-	s = PyArray_EnsureArray(s);
+        s = PyArray_EnsureArray(s);
     }
 
     if (dim > a->nd) {
@@ -1147,8 +1147,8 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
     PyObject *e;
 
     if (PyArray_Check(s)) {
-	*itemsize = MAX(*itemsize, PyArray_ITEMSIZE(s));
-	return 0;
+        *itemsize = MAX(*itemsize, PyArray_ITEMSIZE(s));
+        return 0;
     }
 
     n = PyObject_Length(s);
@@ -1182,10 +1182,10 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
 
 
     if (PyArray_Check(s)) {
-	for (i=0; i<nd; i++) {
-	    d[i] = PyArray_DIM(s,i);
-	}
-	return 0;
+        for (i=0; i<nd; i++) {
+            d[i] = PyArray_DIM(s,i);
+        }
+        return 0;
     }
     n = PyObject_Length(s);
     *d = n;
@@ -2923,7 +2923,7 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
                 err = 1;
                 break;
             }
-	    r->data = tmp;
+            r->data = tmp;
             dptr = tmp + (totalbytes - bytes);
             thisbuf = 0;
         }
@@ -2933,13 +2933,13 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
     }
     if (num < 0) {
         tmp = PyDataMem_RENEW(r->data, NPY_MAX(*nread,1)*dtype->elsize);
-	if (tmp == NULL) {
+        if (tmp == NULL) {
             err = 1;
         }
-	else {
+        else {
             PyArray_DIM(r,0) = *nread;
-	    r->data = tmp;
-	}
+            r->data = tmp;
+        }
     }
     NPY_END_ALLOW_THREADS;
     free(clean_sep);
@@ -3010,11 +3010,11 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
         const size_t nsize = NPY_MAX(nread,1)*ret->descr->elsize;
         char *tmp;
 
-	if((tmp = PyDataMem_RENEW(ret->data, nsize)) == NULL) {
-	    Py_DECREF(ret);
-	    return PyErr_NoMemory();
-	}
-	ret->data = tmp;
+        if((tmp = PyDataMem_RENEW(ret->data, nsize)) == NULL) {
+            Py_DECREF(ret);
+            return PyErr_NoMemory();
+        }
+        ret->data = tmp;
         PyArray_DIM(ret,0) = nread;
     }
     return (PyObject *)ret;
