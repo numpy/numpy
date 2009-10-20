@@ -563,37 +563,37 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
     /* Check for multiple field access */
     if (self->descr->names && PySequence_Check(op) && !PyTuple_Check(op)) {
-	int seqlen, i;
-	seqlen = PySequence_Size(op);
-	for (i = 0; i < seqlen; i++) {
-	    obj = PySequence_GetItem(op, i);
-	    if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
-		Py_DECREF(obj);
-		break;
-	    }
-	    Py_DECREF(obj);
-	}
-	/*
+        int seqlen, i;
+        seqlen = PySequence_Size(op);
+        for (i = 0; i < seqlen; i++) {
+            obj = PySequence_GetItem(op, i);
+            if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
+                Py_DECREF(obj);
+                break;
+            }
+            Py_DECREF(obj);
+        }
+        /*
          * extract multiple fields if all elements in sequence
-	 * are either string or unicode (i.e. no break occurred).
+         * are either string or unicode (i.e. no break occurred).
          */
-	fancy = ((seqlen > 0) && (i == seqlen));
-	if (fancy) {
-	    PyObject *_numpy_internal;
-	    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-	    if (_numpy_internal == NULL) {
+        fancy = ((seqlen > 0) && (i == seqlen));
+        if (fancy) {
+            PyObject *_numpy_internal;
+            _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+            if (_numpy_internal == NULL) {
                 return NULL;
             }
-	    obj = PyObject_CallMethod(_numpy_internal,
+            obj = PyObject_CallMethod(_numpy_internal,
                     "_index_fields", "OO", self, op);
-	    Py_DECREF(_numpy_internal);
-	    return obj;
-	}
+            Py_DECREF(_numpy_internal);
+            return obj;
+        }
     }
 
     if (op == Py_Ellipsis) {
-	Py_INCREF(self);
-	return (PyObject *)self;
+        Py_INCREF(self);
+        return (PyObject *)self;
     }
 
     if (self->nd == 0) {
@@ -962,9 +962,9 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         }
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
                  (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
-		  PyArray_ISBOOL(op))) {
-	    noellipses = FALSE;
-	}
+                  PyArray_ISBOOL(op))) {
+            noellipses = FALSE;
+        }
         else if (PySequence_Check(op)) {
             Py_ssize_t n, i;
             PyObject *temp;
@@ -1369,9 +1369,9 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     /* Here check the indexes (now that we have iteraxes) */
     mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (mit->size < 0) {
-	PyErr_SetString(PyExc_ValueError,
-			"dimensions too large in fancy indexing");
-	goto fail;
+        PyErr_SetString(PyExc_ValueError,
+                        "dimensions too large in fancy indexing");
+        goto fail;
     }
     if (mit->ait->size == 0 && mit->size != 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -1667,7 +1667,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     0,                                          /* tp_cache */
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
-    0,   				        /* tp_del */
+    0,                                          /* tp_del */
 #if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
 #endif
