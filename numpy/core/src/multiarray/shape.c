@@ -393,7 +393,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos = 0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) {
+            if NPY_TITLE_KEY(key, value) {
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
