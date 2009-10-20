@@ -265,14 +265,14 @@ PyArray_Ptp(PyArrayObject *ap, int axis, PyArrayObject *out)
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-	    int variance)
+            int variance)
 {
     return __New_PyArray_Std(self, axis, rtype, out, variance, 0);
 }
 
 NPY_NO_EXPORT PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-		  int variance, int num)
+                  int variance, int num)
 {
     PyObject *obj1 = NULL, *obj2 = NULL, *obj3 = NULL, *new = NULL;
     PyObject *ret = NULL, *newshape = NULL;
@@ -321,11 +321,11 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     }
     /* Compute x * x */
     if (PyArray_ISCOMPLEX(obj1)) {
-	obj3 = PyArray_Conjugate((PyAO *)obj1, NULL);
+        obj3 = PyArray_Conjugate((PyAO *)obj1, NULL);
     }
     else {
-	obj3 = obj1;
-	Py_INCREF(obj1);
+        obj3 = obj1;
+        Py_INCREF(obj1);
     }
     if (obj3 == NULL) {
         Py_DECREF(new);
@@ -340,7 +340,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         return NULL;
     }
     if (PyArray_ISCOMPLEX(obj2)) {
-	obj3 = PyObject_GetAttrString(obj2, "real");
+        obj3 = PyObject_GetAttrString(obj2, "real");
         switch(rtype) {
         case NPY_CDOUBLE:
             rtype = NPY_DOUBLE;
@@ -354,8 +354,8 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         }
     }
     else {
-	obj3 = obj2;
-	Py_INCREF(obj2);
+        obj3 = obj2;
+        Py_INCREF(obj2);
     }
     if (obj3 == NULL) {
         Py_DECREF(new);
@@ -716,13 +716,13 @@ PyArray_All(PyArrayObject *self, int axis, PyArrayObject *out)
 
 static PyObject *
 _GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
-			  PyObject *op)
+                          PyObject *op)
 {
     if (out == NULL) {
-	return PyObject_CallFunction(op, "OO", m1, m2);
+        return PyObject_CallFunction(op, "OO", m1, m2);
     }
     else {
-	return PyObject_CallFunction(op, "OOO", m1, m2, out);
+        return PyObject_CallFunction(op, "OOO", m1, m2, out);
     }
 }
 
@@ -732,27 +732,27 @@ _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObjec
     PyObject *res1=NULL, *res2=NULL;
 
     if (max != NULL) {
-	res1 = _GenericBinaryOutFunction(self, max, out, n_ops.minimum);
-	if (res1 == NULL) {
+        res1 = _GenericBinaryOutFunction(self, max, out, n_ops.minimum);
+        if (res1 == NULL) {
             return NULL;
         }
     }
     else {
-	res1 = (PyObject *)self;
-	Py_INCREF(res1);
+        res1 = (PyObject *)self;
+        Py_INCREF(res1);
     }
 
     if (min != NULL) {
-	res2 = _GenericBinaryOutFunction((PyArrayObject *)res1,
-					 min, out, n_ops.maximum);
-	if (res2 == NULL) {
+        res2 = _GenericBinaryOutFunction((PyArrayObject *)res1,
+                                         min, out, n_ops.maximum);
+        if (res2 == NULL) {
             Py_XDECREF(res1);
             return NULL;
         }
     }
     else {
-	res2 = res1;
-	Py_INCREF(res2);
+        res2 = res1;
+        Py_INCREF(res2);
     }
     Py_DECREF(res1);
     return res2;
@@ -774,9 +774,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     PyObject *zero;
 
     if ((max == NULL) && (min == NULL)) {
-	PyErr_SetString(PyExc_ValueError, "array_clip: must set either max "\
-			"or min");
-	return NULL;
+        PyErr_SetString(PyExc_ValueError, "array_clip: must set either max "\
+                        "or min");
+        return NULL;
     }
 
     func = self->descr->f->fastclip;
@@ -789,21 +789,21 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     /* First we need to figure out the correct type */
     indescr = NULL;
     if (min != NULL) {
-	indescr = PyArray_DescrFromObject(min, NULL);
-	if (indescr == NULL) {
+        indescr = PyArray_DescrFromObject(min, NULL);
+        if (indescr == NULL) {
             return NULL;
         }
     }
     if (max != NULL) {
-	newdescr = PyArray_DescrFromObject(max, indescr);
-	Py_XDECREF(indescr);
-	if (newdescr == NULL) {
+        newdescr = PyArray_DescrFromObject(max, indescr);
+        Py_XDECREF(indescr);
+        if (newdescr == NULL) {
             return NULL;
         }
     }
     else {
         /* Steal the reference */
-	newdescr = indescr;
+        newdescr = indescr;
     }
 
 
@@ -838,15 +838,15 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 
     /* Convert max to an array */
     if (max != NULL) {
-	maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0,
-					 NPY_DEFAULT, NULL);
-	if (maxa == NULL) {
+        maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0,
+                                         NPY_DEFAULT, NULL);
+        if (maxa == NULL) {
             return NULL;
         }
     }
     else {
-	/* Side-effect of PyArray_FromAny */
-	Py_DECREF(indescr);
+        /* Side-effect of PyArray_FromAny */
+        Py_DECREF(indescr);
     }
 
     /*
@@ -858,32 +858,32 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
      * are interpreted as their modular counterparts.
     */
     if (min != NULL) {
-	if (PyArray_ISUNSIGNED(self)) {
-	    int cmp;
-	    zero = PyInt_FromLong(0);
-	    cmp = PyObject_RichCompareBool(min, zero, Py_LT);
-	    if (cmp == -1) {
+        if (PyArray_ISUNSIGNED(self)) {
+            int cmp;
+            zero = PyInt_FromLong(0);
+            cmp = PyObject_RichCompareBool(min, zero, Py_LT);
+            if (cmp == -1) {
                 Py_DECREF(zero);
                 goto fail;
             }
-	    if (cmp == 1) {
-		min = zero;
-	    }
-	    else {
-		Py_DECREF(zero);
-		Py_INCREF(min);
-	    }
-	}
-	else {
-	    Py_INCREF(min);
-	}
+            if (cmp == 1) {
+                min = zero;
+            }
+            else {
+                Py_DECREF(zero);
+                Py_INCREF(min);
+            }
+        }
+        else {
+            Py_INCREF(min);
+        }
 
-	/* Convert min to an array */
-	Py_INCREF(indescr);
-	mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0,
-					 NPY_DEFAULT, NULL);
-	Py_DECREF(min);
-	if (mina == NULL) {
+        /* Convert min to an array */
+        Py_INCREF(indescr);
+        mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0,
+                                         NPY_DEFAULT, NULL);
+        Py_DECREF(min);
+        if (mina == NULL) {
             goto fail;
         }
     }
@@ -997,10 +997,10 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     /* Now we can call the fast-clip function */
     min_data = max_data = NULL;
     if (mina != NULL) {
-	min_data = mina->data;
+        min_data = mina->data;
     }
     if (maxa != NULL) {
-	max_data = maxa->data;
+        max_data = maxa->data;
     }
     func(newin->data, PyArray_SIZE(newin), min_data, max_data, newout->data);
 
