@@ -2,6 +2,7 @@ from StringIO import StringIO
 import pickle
 import sys
 import gc
+import copy
 from os import path
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
@@ -1150,13 +1151,34 @@ class TestRegression(TestCase):
         a = np.array([u'123', '1234', u'1234'])
         assert a.itemsize == 16
 
-    @decorators.knownfailureif(sys.platform.startswith('sunos'),
-                               "Alignment issues on Solaris")
     def test_misaligned_objects_segfault(self):
-        """Ticket #1198"""
-        a1 = np.zeros((10,), dtype=[('o', 'O'), ('c', 'c')])
-        a2 = np.zeros((10,), 'S10')
-        a1['o'] = a2
+        """Ticket #1198 and #1267"""
+        a1 = np.zeros((10,), dtype='O,c')
+        a2 = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], 'S10')
+        a1['f0'] = a2
+        r = repr(a1)
+        np.argmax(a1['f0'])
+        a1['f0'][1] = "FOO"
+        a1['f0'] = "FOO"
+        a3 = np.array(a1['f0'], dtype='S')
+        np.nonzero(a1['f0'])
+        a1.sort()
+        a4 = copy.deepcopy(a1)
+
+    def test_misaligned_scalars_segfault(self):
+        """Ticket #1267"""
+        s1 = np.array(('a', 'Foo'), dtype='c,O')
+        s2 = np.array(('b', 'Bar'), dtype='c,O')
+        s1['f1'] = s2['f1']
+        s1['f1'] = 'Baz'
+
+    def test_misaligned_dot_product_objects(self):
+        """Ticket #1267"""
+        # This didn't require a fix, but it's worth testing anyway, because
+        # it may fail if .dot stops enforcing the arrays to be BEHAVED
+        a = np.array([[(1, 'a'), (0, 'a')], [(0, 'a'), (1, 'a')]], dtype='O,c')
+        b = np.array([[(4, 'a'), (1, 'a')], [(2, 'a'), (2, 'a')]], dtype='O,c')
+        np.dot(a['f0'], b['f0'])
 
     def test_byteswap_complex_scalar(self):
         """Ticket #1259"""

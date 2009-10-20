@@ -1141,16 +1141,16 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         }
     }
     else {
-        PyObject **itemp, **otemp;
+        PyObject *itemp, *otemp;
         PyObject *res;
-        itemp = (PyObject **)iptr;
-        otemp = (PyObject **)optr;
-        Py_XINCREF(*itemp);
+        NPY_COPY_PYOBJECT_PTR(&itemp, iptr);
+        NPY_COPY_PYOBJECT_PTR(&otemp, optr);
+        Py_XINCREF(itemp);
         /* call deepcopy on this argument */
-        res = PyObject_CallFunctionObjArgs(deepcopy, *itemp, visit, NULL);
-        Py_XDECREF(*itemp);
-        Py_XDECREF(*otemp);
-        *otemp = res;
+        res = PyObject_CallFunctionObjArgs(deepcopy, itemp, visit, NULL);
+        Py_XDECREF(itemp);
+        Py_XDECREF(otemp);
+        NPY_COPY_PYOBJECT_PTR(optr, &res);
     }
 
 }

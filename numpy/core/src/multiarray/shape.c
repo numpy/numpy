@@ -403,10 +403,8 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         }
     }
     else {
-        PyObject **temp;
         Py_INCREF(zero);
-        temp = (PyObject **)optr;
-        *temp = zero;
+        NPY_COPY_PYOBJECT_PTR(optr, &zero);
     }
     return;
 }

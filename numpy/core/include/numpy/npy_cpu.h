@@ -68,4 +68,18 @@
     information about your platform (OS, CPU and compiler)
 #endif
 
+/*
+   This "white-lists" the architectures that we know don't require
+   pointer alignment.  We white-list, since the memcpy version will
+   work everywhere, whereas assignment will only work where pointer
+   dereferencing doesn't require alignment.
+
+   TODO: There may be more architectures we can white list.
+*/
+#if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
+    #define NPY_COPY_PYOBJECT_PTR(dst, src) (*((PyObject **)(dst)) = *((PyObject **)(src)))
+#else
+    #define NPY_COPY_PYOBJECT_PTR(dst, src) (memcpy((dst), (src), sizeof(PyObject *)))
+#endif
+
 #endif

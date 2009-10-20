@@ -1203,11 +1203,11 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     dptr = self->obval + offset;
 
     if (typecode->type_num == PyArray_OBJECT) {
-        PyObject **temp;
+        PyObject *temp;
         Py_INCREF(value);
-        temp = (PyObject **)dptr;
-        Py_XDECREF(*temp);
-        memcpy(temp, &value, sizeof(PyObject *));
+        NPY_COPY_PYOBJECT_PTR(&temp, dptr);
+        Py_XDECREF(temp);
+        NPY_COPY_PYOBJECT_PTR(dptr, &value);
         Py_DECREF(typecode);
     }
     else {

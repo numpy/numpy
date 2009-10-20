@@ -23,14 +23,14 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
 NPY_NO_EXPORT void
 PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
 {
-    PyObject **temp;
+    PyObject *temp;
 
     if (!PyDataType_REFCHK(descr)) {
         return;
     }
     if (descr->type_num == PyArray_OBJECT) {
-        temp = (PyObject **)data;
-        Py_XINCREF(*temp);
+        NPY_COPY_PYOBJECT_PTR(&temp, data);
+        Py_XINCREF(temp);
     }
     else if (PyDescr_HASFIELDS(descr)) {
         PyObject *key, *value, *title = NULL;
@@ -58,15 +58,15 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
 NPY_NO_EXPORT void
 PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
 {
-    PyObject **temp;
+    PyObject *temp;
 
     if (!PyDataType_REFCHK(descr)) {
         return;
     }
 
     if (descr->type_num == PyArray_OBJECT) {
-        temp = (PyObject **)data;
-        Py_XDECREF(*temp);
+        NPY_COPY_PYOBJECT_PTR(&temp, data);
+        Py_XDECREF(temp);
     }
     else if PyDescr_HASFIELDS(descr) {
             PyObject *key, *value, *title = NULL;
@@ -97,7 +97,8 @@ NPY_NO_EXPORT int
 PyArray_INCREF(PyArrayObject *mp)
 {
     intp i, n;
-    PyObject **data, **temp;
+    PyObject **data;
+    PyObject *temp;
     PyArrayIterObject *it;
 
     if (!PyDataType_REFCHK(mp->descr)) {
@@ -126,8 +127,8 @@ PyArray_INCREF(PyArrayObject *mp)
         }
         else {
             for( i = 0; i < n; i++, data++) {
-                temp = data;
-                Py_XINCREF(*temp);
+                NPY_COPY_PYOBJECT_PTR(&temp, data);
+                Py_XINCREF(temp);
             }
         }
     }
@@ -137,8 +138,8 @@ PyArray_INCREF(PyArrayObject *mp)
             return -1;
         }
         while(it->index < it->size) {
-            temp = (PyObject **)it->dataptr;
-            Py_XINCREF(*temp);
+            NPY_COPY_PYOBJECT_PTR(&temp, it->dataptr);
+            Py_XINCREF(temp);
             PyArray_ITER_NEXT(it);
         }
         Py_DECREF(it);
@@ -155,7 +156,7 @@ PyArray_XDECREF(PyArrayObject *mp)
 {
     intp i, n;
     PyObject **data;
-    PyObject **temp;
+    PyObject *temp;
     PyArrayIterObject *it;
 
     if (!PyDataType_REFCHK(mp->descr)) {
@@ -182,8 +183,8 @@ PyArray_XDECREF(PyArrayObject *mp)
         }
         else {
             for (i = 0; i < n; i++, data++) {
-                temp = data;
-                Py_XDECREF(*temp);
+                NPY_COPY_PYOBJECT_PTR(&temp, data);
+                Py_XDECREF(temp);
             }
         }
     }
@@ -193,8 +194,8 @@ PyArray_XDECREF(PyArrayObject *mp)
             return -1;
         }
         while(it->index < it->size) {
-            temp = (PyObject **)it->dataptr;
-            Py_XDECREF(*temp);
+            NPY_COPY_PYOBJECT_PTR(&temp, it->dataptr);
+            Py_XDECREF(temp);
             PyArray_ITER_NEXT(it);
         }
         Py_DECREF(it);
@@ -272,10 +273,8 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         }
     }
     else {
-        PyObject **temp;
         Py_XINCREF(obj);
-        temp = (PyObject **)optr;
-        *temp = obj;
+        NPY_COPY_PYOBJECT_PTR(optr, &obj);
         return;
     }
 }

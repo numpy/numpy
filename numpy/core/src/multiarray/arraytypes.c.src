@@ -443,22 +443,33 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 
 /* OBJECT */
 
+#define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
+
 static PyObject *
 OBJECT_getitem(char *ip, PyArrayObject *ap)
 {
-    if (*(PyObject **)ip == NULL) {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
+    /* TODO: We might be able to get away with just the "else" clause now */
     if (!ap || PyArray_ISALIGNED(ap)) {
-        Py_INCREF(*(PyObject **)ip);
-        return *(PyObject **)ip;
+        if (*(PyObject **)ip == NULL) {
+            Py_INCREF(Py_None);
+            return Py_None;
+        }
+        else {
+            Py_INCREF(*(PyObject **)ip);
+            return *(PyObject **)ip;
+        }
     }
     else {
-        PyObject **obj;
-        obj = (PyObject **)ip;
-        Py_INCREF(*obj);
-        return *obj;
+        PyObject *obj;
+        NPY_COPY_PYOBJECT_PTR(&obj, ip);
+        if (obj == NULL) {
+            Py_INCREF(Py_None);
+            return Py_None;
+        }
+        else {
+            Py_INCREF(obj);
+            return obj;
+        }
     }
 }
 
@@ -467,15 +478,16 @@ static int
 OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
     Py_INCREF(op);
+    /* TODO: We might be able to get away with just the "else" clause now */
     if (!ap || PyArray_ISALIGNED(ap)) {
         Py_XDECREF(*(PyObject **)ov);
         *(PyObject **)ov = op;
     }
     else {
-        PyObject **obj;
-        obj = (PyObject **)ov;
-        Py_XDECREF(*obj);
-        memcpy(ov, &op, sizeof(PyObject *));
+        PyObject *obj;
+        NPY_COPY_PYOBJECT_PTR(&obj, ov);
+        Py_XDECREF(obj);
+        NPY_COPY_PYOBJECT_PTR(ov, &op);
     }
     return PyErr_Occurred() ? -1 : 0;
 }
@@ -1809,7 +1821,6 @@ static void
 
 /**end repeat**/
 
-#define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 static void
 OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
                   intp n, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
@@ -1830,15 +1841,15 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
         }
         else {
             unsigned char *dstp, *srcp;
-            PyObject **dp, **sp;
+            PyObject *tmp;
             dstp = (unsigned char*)dst;
             srcp = (unsigned char*)src;
             for (i=0; i<n; i++) {
-                dp = (PyObject **)dstp;
-                sp = (PyObject **)srcp;
-                Py_XINCREF(*sp);
-                Py_XDECREF(*dp);
-                memcpy(dstp, srcp, sizeof(PyObject *));
+                NPY_COPY_PYOBJECT_PTR(&tmp, dstp);
+                Py_XDECREF(tmp);
+                NPY_COPY_PYOBJECT_PTR(&tmp, srcp);
+                Py_XINCREF(tmp);
+                NPY_COPY_PYOBJECT_PTR(dstp, srcp);
                 dstp += dstride;
                 srcp += sstride;
             }
@@ -1859,10 +1870,12 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap), void *NPY_
             *dst = *src;
         }
         else {
-            PyObject **dp=dst, **sp=src;
-            Py_XINCREF(*sp);
-            Py_XDECREF(*dp);
-            memcpy(dst, src, sizeof(PyObject *));
+            PyObject *tmp;
+            NPY_COPY_PYOBJECT_PTR(&tmp, dst);
+            Py_XDECREF(tmp);
+            NPY_COPY_PYOBJECT_PTR(&tmp, src);
+            Py_XINCREF(tmp);
+            NPY_COPY_PYOBJECT_PTR(dst, src);
         }
     }
 }
@@ -2161,14 +2174,15 @@ static Bool
 OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
 {
 
-    if (*ip == NULL) return FALSE;
     if (PyArray_ISALIGNED(ap)) {
+        if (*ip == NULL) return FALSE;
         return (Bool) PyObject_IsTrue(*ip);
     }
     else {
-        PyObject **obj;
-        obj = ip;
-        return (Bool) PyObject_IsTrue(*obj);
+        PyObject *obj;
+        NPY_COPY_PYOBJECT_PTR(&obj, ip);
+        if (obj == NULL) return FALSE;
+        return (Bool) PyObject_IsTrue(obj);
     }
 }
 
@@ -2358,6 +2372,11 @@ C@TYPE@_compare(@type@ *pa, @type@ *pb)
 static int
 OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
 {
+    /*
+     * ALIGNMENT NOTE: It seems that PyArray_Sort is already handling
+     * the alignment of pointers, so it doesn't need to be handled
+     * here.
+     */
     if ((*ip1 == NULL) || (*ip2 == NULL)) {
         if (ip1 == ip2) {
             return 1;
@@ -2626,6 +2645,11 @@ static void
 OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
            void *NPY_UNUSED(ignore))
 {
+    /*
+     * ALIGNMENT NOTE: np.dot, np.inner etc. enforce that the array is
+     * BEHAVED before getting to this point, so unaligned pointers aren't
+     * handled here.
+     */
     intp i;
     PyObject *tmp1, *tmp2, *tmp=NULL;
     PyObject **tmp3;
