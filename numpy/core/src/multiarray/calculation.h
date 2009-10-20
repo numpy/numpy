@@ -41,7 +41,7 @@ PyArray_Std(PyArrayObject* self, int axis, int rtype, PyArrayObject* out,
 
 NPY_NO_EXPORT PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-		  int variance, int num);
+                  int variance, int num);
 
 NPY_NO_EXPORT PyObject*
 PyArray_Sum(PyArrayObject* self, int axis, int rtype, PyArrayObject* out);
