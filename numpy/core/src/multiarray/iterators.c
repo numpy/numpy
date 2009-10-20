@@ -276,7 +276,7 @@ get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
     ret = iter->ao->data;
 
     for(i = 0; i < iter->ao->nd; ++i) {
-	    ret += coordinates[i] * iter->strides[i];
+            ret += coordinates[i] * iter->strides[i];
     }
 
     return ret;
@@ -284,7 +284,7 @@ get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
 
 /*
  * This is common initialization code between PyArrayIterObject and
- * PyArrayNeighborhoodIterObject 
+ * PyArrayNeighborhoodIterObject
  *
  * Increase ao refcount
  */
@@ -677,7 +677,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
             PyErr_Format(PyExc_IndexError,
                          "index %"INTP_FMT" out of bounds" \
                          " 0<=index<%"INTP_FMT,
-			 num, self->size);
+                         num, self->size);
             Py_DECREF(ind_it);
             Py_DECREF(r);
             PyArray_ITER_RESET(self);
@@ -1281,18 +1281,18 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     0,                                          /* tp_dict */
     0,                                          /* tp_descr_get */
     0,                                          /* tp_descr_set */
-    0,   				        /* tp_dictoffset */
-    0,   				        /* tp_init */
-    0,   				        /* tp_alloc */
-    0,   				        /* tp_new */
-    0,   				        /* tp_free */
-    0,   				        /* tp_is_gc */
-    0,   				        /* tp_bases */
-    0,   				        /* tp_mro */
-    0,   				        /* tp_cache */
-    0,   				        /* tp_subclasses */
-    0,   				        /* tp_weaklist */
-    0,   				        /* tp_del */
+    0,                                          /* tp_dictoffset */
+    0,                                          /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
 #if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
 #endif
@@ -1350,9 +1350,9 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
      */
     tmp = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (tmp < 0) {
-	PyErr_SetString(PyExc_ValueError,
-			"broadcast dimensions too large.");
-	return -1;
+        PyErr_SetString(PyExc_ValueError,
+                        "broadcast dimensions too large.");
+        return -1;
     }
     mit->size = tmp;
     for (i = 0; i < mit->numiter; i++) {
@@ -1426,12 +1426,12 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
 
     va_start(va, nadd);
     for (i = 0; i < ntot; i++) {
-	if (i < n) {
-	    current = mps[i];
-	}
-	else {
-	    current = va_arg(va, PyObject *);
-	}
+        if (i < n) {
+            current = mps[i];
+        }
+        else {
+            current = va_arg(va, PyObject *);
+        }
         arr = PyArray_FROM_O(current);
         if (arr == NULL) {
             err = 1;
@@ -1767,7 +1767,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
 
 static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter);
 
-static char* _set_constant(PyArrayNeighborhoodIterObject* iter, 
+static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
         PyArrayObject *fill)
 {
     char *ret;
@@ -1914,14 +1914,14 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
 #undef _INF_SET_PTR_CIRCULAR
 
 /*
- * fill and x->ao should have equivalent types 
+ * fill and x->ao should have equivalent types
  */
 /*NUMPY_API
  * A Neighborhood Iterator object.
 */
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds, 
-			    int mode, PyArrayObject* fill)
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
+                            int mode, PyArrayObject* fill)
 {
     int i;
     PyArrayNeighborhoodIterObject *ret;
@@ -2045,9 +2045,9 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     sizeof(PyArrayNeighborhoodIterObject),      /* tp_basicsize*/
     0,                                          /* tp_itemsize*/
     (destructor)neighiter_dealloc,              /* tp_dealloc*/
-    0,                        		        /* tp_print*/
-    0,                        		        /* tp_getattr*/
-    0,                        		        /* tp_setattr*/
+    0,                                          /* tp_print*/
+    0,                                          /* tp_getattr*/
+    0,                                          /* tp_setattr*/
 #if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
 #else
