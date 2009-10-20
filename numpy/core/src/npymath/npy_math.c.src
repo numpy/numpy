@@ -95,7 +95,7 @@ double npy_log1p(double x)
 }
 #endif
 
-/* Taken from FreeBSD mlib, adapted for numpy 
+/* Taken from FreeBSD mlib, adapted for numpy
  *
  * XXX: we could be a bit faster by reusing high/low words for inf/nan
  * classification instead of calling npy_isinf/npy_isnan: we should have some
@@ -127,7 +127,7 @@ double npy_atan2(double y, double x)
     m = 2 * npy_signbit(x) + npy_signbit(y);
     if (y == 0.0) {
         switch(m) {
-        case 0: 
+        case 0:
         case 1: return  y;  /* atan(+-0,+anything)=+-0 */
         case 2: return  NPY_PI;/* atan(+0,-anything) = pi */
         case 3: return -NPY_PI;/* atan(-0,-anything) =-pi */
@@ -304,10 +304,10 @@ double npy_log2(double x)
 #ifndef HAVE_COPYSIGN
 double npy_copysign(double x, double y)
 {
-	npy_uint32 hx,hy;
-	GET_HIGH_WORD(hx,x);
-	GET_HIGH_WORD(hy,y);
-	SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));
+        npy_uint32 hx,hy;
+        GET_HIGH_WORD(hx,x);
+        GET_HIGH_WORD(hy,y);
+        SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));
         return x;
 }
 #endif
