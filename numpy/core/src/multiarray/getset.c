@@ -664,17 +664,17 @@ array_imag_get(PyArrayObject *self)
     }
     else {
         Py_INCREF(self->descr);
-	ret = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type,
-						    self->descr,
-						    self->nd,
-						    self->dimensions,
-						    NULL, NULL,
-						    PyArray_ISFORTRAN(self),
-						    (PyObject *)self);
-	if (ret == NULL) {
+        ret = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type,
+                                                    self->descr,
+                                                    self->nd,
+                                                    self->dimensions,
+                                                    NULL, NULL,
+                                                    PyArray_ISFORTRAN(self),
+                                                    (PyObject *)self);
+        if (ret == NULL) {
             return NULL;
         }
-	if (_zerofill(ret) < 0) {
+        if (_zerofill(ret) < 0) {
             return NULL;
         }
         ret->flags &= ~WRITEABLE;
