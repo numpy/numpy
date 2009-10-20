@@ -146,13 +146,13 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (PyType_Check(out_dtype) &&
             PyType_IsSubtype((PyTypeObject *)out_dtype,
                              &PyArray_Type)) {
-	    if (out_type) {
+            if (out_type) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Cannot specify output type twice.");
                 return NULL;
             }
             out_type = out_dtype;
-	    out_dtype = NULL;
+            out_dtype = NULL;
         }
     }
 
@@ -1129,7 +1129,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         int offset;
         Py_ssize_t pos = 0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) {
+            if NPY_TITLE_KEY(key, value) {
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
@@ -1909,8 +1909,8 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     if (max == NULL && min == NULL) {
-	PyErr_SetString(PyExc_ValueError, "One of max or min must be given.");
-	return NULL;
+        PyErr_SetString(PyExc_ValueError, "One of max or min must be given.");
+        return NULL;
     }
     return _ARET(PyArray_Clip(self, min, max, out));
 }
