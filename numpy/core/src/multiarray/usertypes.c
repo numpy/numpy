@@ -68,7 +68,7 @@ _default_nonzero(void *ip, void *arr)
 
 static void
 _default_copyswapn(void *dst, npy_intp dstride, void *src,
-		   npy_intp sstride, npy_intp n, int swap, void *arr)
+                   npy_intp sstride, npy_intp n, int swap, void *arr)
 {
     npy_intp i;
     PyArray_CopySwapFunc *copyswap;
@@ -78,9 +78,9 @@ _default_copyswapn(void *dst, npy_intp dstride, void *src,
     copyswap = PyArray_DESCR(arr)->f->copyswap;
 
     for (i = 0; i < n; i++) {
-	copyswap(dstptr, srcptr, swap, arr);
-	dstptr += dstride;
-	srcptr += sstride;
+        copyswap(dstptr, srcptr, swap, arr);
+        dstptr += dstride;
+        srcptr += sstride;
     }
 }
 
@@ -153,11 +153,11 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         f->nonzero = _default_nonzero;
     }
     if (f->copyswapn == NULL) {
-	f->copyswapn = _default_copyswapn;
+        f->copyswapn = _default_copyswapn;
     }
     if (f->copyswap == NULL || f->getitem == NULL ||
         f->setitem == NULL) {
-	PyErr_SetString(PyExc_ValueError, "a required array function"	\
+        PyErr_SetString(PyExc_ValueError, "a required array function"   \
                         " is missing.");
         return -1;
     }
