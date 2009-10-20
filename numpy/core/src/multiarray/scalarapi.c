@@ -89,10 +89,10 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 _IFCASE(Int);
                 _IFCASE(Long);
                 _IFCASE(LongLong);
-		if _CHK(TimeInteger) {
-		    _IFCASE(Datetime);
-		    _IFCASE(Timedelta);
-		}
+                if _CHK(TimeInteger) {
+                    _IFCASE(Datetime);
+                    _IFCASE(Timedelta);
+                }
             }
             else {
                 /* Unsigned Integer */
@@ -611,14 +611,14 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         return NULL;
     }
     if PyTypeNum_ISDATETIME(type_num) {
-	/* We need to copy the resolution information over to the scalar */
-	/* Get the void * from the metadata dictionary */
-	PyObject *cobj; 
-	PyArray_DatetimeMetaData *dt_data;
-	cobj = PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR);
-	dt_data = PyCObject_AsVoidPtr(cobj);
-	memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
-	       sizeof(PyArray_DatetimeMetaData));	
+        /* We need to copy the resolution information over to the scalar */
+        /* Get the void * from the metadata dictionary */
+        PyObject *cobj; 
+        PyArray_DatetimeMetaData *dt_data;
+        cobj = PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR);
+        dt_data = PyCObject_AsVoidPtr(cobj);
+        memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
+               sizeof(PyArray_DatetimeMetaData));       
     }
     if PyTypeNum_ISFLEXIBLE(type_num) {
             if (type_num == PyArray_STRING) {
