@@ -27,9 +27,9 @@ def year_offset(year):
     code = """
     year-=1970;
     if ((year+1969) >= 0 || -1/4 == -1)
-	return_val = year*365 + year/4 - year/100 + year/400;
+        return_val = year*365 + year/4 - year/100 + year/400;
     else
-	return_val = year*365 + (year-3)/4 - (year-99)/100 + (year-399)/400;
+        return_val = year*365 + (year-3)/4 - (year-99)/100 + (year-399)/400;
         """        
     return weave.inline(code,['year'])
 
