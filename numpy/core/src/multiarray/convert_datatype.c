@@ -456,7 +456,7 @@ PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
 {
     int simple;
     PyArray_VectorUnaryFunc *castfunc = NULL;
-    int mpsize = PyArray_SIZE(mp);
+    npy_intp mpsize = PyArray_SIZE(mp);
 
     if (mpsize == 0) {
         return 0;
