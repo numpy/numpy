@@ -11,6 +11,7 @@ Numpy basics
 
    basics.types
    basics.creation
+   basics.io
    basics.indexing
    basics.broadcasting
    basics.byteswapping
