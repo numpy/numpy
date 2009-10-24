@@ -15,6 +15,7 @@ ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "  upload USER=...  to upload to numpy.scipy.org"
 	@echo "  html      to make standalone HTML files"
 	@echo "  dirhtml   to make HTML files named index.html in directories"
 	@echo "  pickle    to make pickle files"
@@ -30,6 +31,12 @@ help:
 
 clean:
 	-rm -rf build/*
+
+upload: html
+	chmod ug=rwX,o=rX -R build/html
+	rsync -r -z --delete-after -p \
+	    build/html/ \
+	    $(USER)@new.scipy.org:/srv/www/numpy/
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html
