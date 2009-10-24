@@ -137,8 +137,24 @@ The sections of the docstring are:
      x : type
         Description of parameter `x`.
 
-   Enclose variables in single back-tics.  If it is not necessary to
-   specify a keyword argument, use ``optional``::
+   Enclose variables in single back-tics.  
+
+   For the parameter types, be as preciese as possible.  Below are a
+   few examples of parameters and their types.
+
+   ::
+
+     Parameters
+     ----------
+     filename : str
+     copy : bool
+     dtype : data-type
+     iterable : iterable object     
+     shape : int or tuple of int
+     files : list of str
+
+   If it is not necessary to specify a keyword argument, use
+   ``optional``::
 
      x : int, optional
 
@@ -152,8 +168,8 @@ The sections of the docstring are:
    When a parameter can only assume one of a fixed set of values,
    those values can be listed in braces::
 
-     x : {True, False}
-         Description of `x`.
+     order : {'C', 'F', 'A'}
+         Description of `order`.
 
    When two or more input parameters have exactly the same type, shape and
    description, they can be combined::
