@@ -137,7 +137,7 @@ The sections of the docstring are:
      x : type
         Description of parameter `x`.
 
-   Enclose variables in single back-tics.  
+   Enclose variables in single backticks.  
 
    For the parameter types, be as preciese as possible.  Below are a
    few examples of parameters and their types.
