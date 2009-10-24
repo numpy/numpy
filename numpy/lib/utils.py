@@ -666,7 +666,8 @@ _lookfor_caches = {}
 # regexp whose match indicates that the string may contain a function signature
 _function_signature_re = re.compile(r"[a-z_]+\(.*[,=].*\)", re.I)
 
-def lookfor(what, module=None, import_modules=True, regenerate=False):
+def lookfor(what, module=None, import_modules=True, regenerate=False,
+            output=None):
     """
     Do a keyword search on docstrings.
 
@@ -679,13 +680,14 @@ def lookfor(what, module=None, import_modules=True, regenerate=False):
     ----------
     what : str
         String containing words to look for.
-    module : str, optional
-        Name of module whose docstrings to go through.
+    module : str or list, optional
+        Name of module(s) whose docstrings to go through.
     import_modules : bool, optional
-        Whether to import sub-modules in packages.
-        Will import only modules in ``__all__``. Default is True.
+        Whether to import sub-modules in packages. Default is True.
     regenerate : bool, optional
         Whether to re-generate the docstring cache. Default is False.
+    output : file-like, optional
+        File-like object to write the output to. If omitted, use a pager.
 
     See Also
     --------
@@ -779,8 +781,13 @@ def lookfor(what, module=None, import_modules=True, regenerate=False):
             first_doc = ""
         help_text.append("%s\n    %s" % (name, first_doc))
 
+    if not found:
+        help_text.append("Nothing found.")
+
     # Output
-    if len(help_text) > 10:
+    if output is not None:
+        output.write("\n".join(help_text))
+    elif len(help_text) > 10:
         pager = pydoc.getpager()
         pager("\n".join(help_text))
     else:
@@ -796,7 +803,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
         Module for which to generate docstring cache
     import_modules : bool
         Whether to import sub-modules in packages.
-        Will import only modules in __all__
     regenerate: bool
         Re-generate the docstring cache
 
@@ -810,12 +816,23 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     global _lookfor_caches
     # Local import to speed up numpy's import time.
     import inspect
+    from StringIO import StringIO
 
     if module is None:
         module = "numpy"
 
     if isinstance(module, str):
-        module = __import__(module)
+        try:
+            __import__(module)
+        except ImportError:
+            return {}
+        module = sys.modules[module]
+    elif isinstance(module, list) or isinstance(module, tuple):
+        cache = {}
+        for mod in module:
+            cache.update(_lookfor_generate_cache(mod, import_modules,
+                                                 regenerate))
+        return cache
 
     if id(module) in _lookfor_caches and not regenerate:
         return _lookfor_caches[id(module)]
@@ -845,23 +862,52 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
             if import_modules and hasattr(item, '__path__'):
                 for pth in item.__path__:
                     for mod_path in os.listdir(pth):
+                        this_py = os.path.join(pth, mod_path)
                         init_py = os.path.join(pth, mod_path, '__init__.py')
-                        if not os.path.isfile(init_py):
+                        if os.path.isfile(this_py) and mod_path.endswith('.py'):
+                            to_import = mod_path[:-3]
+                        elif os.path.isfile(init_py):
+                            to_import = mod_path
+                        else:
                             continue
-                        if _all is not None and mod_path not in _all:
-                            continue
-                        try:
-                            __import__("%s.%s" % (name, mod_path))
-                        except ImportError:
+                        if to_import == '__init__':
                             continue
 
-            for n, v in inspect.getmembers(item):
-                if _all is not None and n not in _all:
+                        try:
+                            # Catch SystemExit, too
+                            base_exc = BaseException
+                        except NameError:
+                            # Python 2.4 doesn't have BaseException
+                            base_exc = Exception
+
+                        try:
+                            old_stdout = sys.stdout
+                            old_stderr = sys.stderr
+                            try:
+                                sys.stdout = StringIO()
+                                sys.stderr = StringIO()
+                                __import__("%s.%s" % (name, to_import))
+                            finally:
+                                sys.stdout = old_stdout
+                                sys.stderr = old_stderr
+                        except base_exc:
+                            continue
+
+            for n, v in _getmembers(item):
+                item_name = getattr(v, '__name__', "%s.%s" % (name, n))
+                mod_name = getattr(v, '__module__', None)
+                if '.' not in item_name and mod_name:
+                    item_name = "%s.%s" % (mod_name, item_name)
+
+                if not item_name.startswith(name + '.'):
+                    # don't crawl foreign objects
+                    continue
+                elif not (inspect.ismodule(v) or _all is None or n in _all):
                     continue
                 stack.append(("%s.%s" % (name, n), v))
         elif inspect.isclass(item):
             kind = "class"
-            for n, v in inspect.getmembers(item):
+            for n, v in _getmembers(item):
                 stack.append(("%s.%s" % (name, n), v))
         elif callable(item):
             kind = "func"
@@ -871,6 +917,15 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
             cache[name] = (doc, kind, index)
 
     return cache
+
+def _getmembers(item):
+    import inspect
+    try:
+        members = inspect.getmembers(item)
+    except AttributeError:
+        members = [(x, getattr(item, x)) for x in dir(item)
+                   if hasattr(item, x)]
+    return members
 
 #-----------------------------------------------------------------------------
 
