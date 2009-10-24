@@ -1,4 +1,4 @@
-\documentclass[twocolumn]{article} 
+\documentclass[twocolumn]{article}
 \usepackage{epsfig}
 \usepackage{xspace}
 \usepackage{verbatim}
@@ -39,7 +39,7 @@ sh> #1
 
 \newcommand{\email}[1]{\special{html:<A href="mailto:#1">}\texttt{<#1>}\special{html:</A>}}
 \newcommand{\wwwsite}[1]{\special{html:<A href="#1">}{#1}\special{html:</A>}}
-\title{Fortran to Python Interface Generator with 
+\title{Fortran to Python Interface Generator with
 an Application to Aerospace Engineering}
 \author{
 \large Pearu Peterson\\
@@ -52,7 +52,7 @@ an Application to Aerospace Engineering}
 \small Department of Aeronautics and Astronautics\\
 \small Stanford University, CA
 }
-\date{$Revision: 1.17 $\\\today} 
+\date{$Revision: 1.17 $\\\today}
 \begin{document}
 
 \maketitle
@@ -76,7 +76,7 @@ an Application to Aerospace Engineering}
   control over the generation process of the interface by specifying the
   desired function signatures.  The home page for FPIG can be found at
   \wwwsite{http://cens.ioc.ee/projects/f2py2e/}.
-  
+
   FPIG has been used successfully to wrap a large number of Fortran
   programs and libraries.  Advances in computational science have led
   to large improvements in the modeling of physical systems which are
@@ -258,8 +258,8 @@ without arguments.
 The output messages in Fig. \ref{fig:f2pyoutmess}
 illustrate the procedure followed by \fpy:
  (i) it scans the Fortran source code specified in the command line,
- (ii) it analyses and determines the routine signatures, 
- (iii) it constructs the corresponding Python C/API extension modules, 
+ (ii) it analyses and determines the routine signatures,
+ (iii) it constructs the corresponding Python C/API extension modules,
  (iv) it writes documentation to a LaTeX file, and
  (v) it creates a GNU Makefile for building the shared modules.
 \begin{figure}[htb]
@@ -276,7 +276,7 @@ illustrate the procedure followed by \fpy:
 Now we can build the \texttt{foo} module:
 \shell{make -f Makefile-foo}
 
-Figure \ref{fig:exp1session} illustrates a sample session for 
+Figure \ref{fig:exp1session} illustrates a sample session for
  calling the Fortran routine \texttt{exp1} from Python.
 \begin{figure}[htb]
   \latexhide{\label{fig:exp1session}}
@@ -322,11 +322,11 @@ In our example,  \fpy could have been called as follows,
 where the option \texttt{-h foo.pyf} requests \fpy to read the
 routine signatures, save them to the file \texttt{foo.pyf}, and then
 exit.
-If \texttt{exp1.f} in Fig.~\ref{fig:exp1.f} were to 
+If \texttt{exp1.f} in Fig.~\ref{fig:exp1.f} were to
 contain no lines starting with \texttt{Cf2py}, the corresponding
 signature file \texttt{foo.pyf} would be as shown in Fig.~\ref{fig:foo.pyf}.
 In order to obtain the exchanged and more convenient signature
-\texttt{l,u=foo.exp1([n])}, we would edit \texttt{foo.pyf} as shown in 
+\texttt{l,u=foo.exp1([n])}, we would edit \texttt{foo.pyf} as shown in
 Fig.~\ref{fig:foom.pyf}.
 The Python C/API extension module \texttt{foo} can be constructed by
 applying \fpy to the signature file with the following command:
@@ -365,7 +365,7 @@ described in the \fpy User's Guide \cite{f2py-ug}.
 
 In this section a short overview of \fpy features is given.
 \begin{enumerate}
-\item All basic Fortran types are supported. They include 
+\item All basic Fortran types are supported. They include
 the following type specifications:
 \begin{verbatim}
 integer[ | *1 | *2 | *4 | *8 ]
@@ -377,7 +377,7 @@ character[ |*(*)|*1|*2|*3|...]
 \end{verbatim}
 In addition, they can all be in the kind-selector form
 (e.g. \texttt{real(kind=8)}) or char-selector form
-(e.g. \texttt{character(len=5)}). 
+(e.g. \texttt{character(len=5)}).
 \item Arrays of all basic types are supported. Dimension
   specifications can be of form \texttt{<dimension>} or
   \texttt{<start>:<end>}. In addition, \texttt{*} and \texttt{:}
@@ -622,7 +622,7 @@ variables to save data that is accessible from other routines.  Using
 FPIG, one can also access these data containers from Python. To achieve
 this, FPIG uses special wrapper functions (similar to the ones used
 for wrapping Fortran module routines) to save the references to these
-data containers so that they can later be used from C.  
+data containers so that they can later be used from C.
 
 FPIG can also handle \texttt{allocatable} arrays. For example, if a
 Fortran array is not yet allocated, then by assigning it in Python,
@@ -666,7 +666,7 @@ extremely compiler dependent and in some cases even impossible.
 Therefore, FPIG uses various wrapper functions for obtaining the
 references to Fortran objects. These wrapper functions are ordinary
 F77 subroutines that can easily access objects from F90 modules and
-that pass the references to Fortran objects as C variables.  
+that pass the references to Fortran objects as C variables.
 
 
 \fpy generated Python C/API extension modules use
@@ -677,7 +677,7 @@ Python in a user-friendly manner. For example, the item \texttt{a} in
 \texttt{COMMON /bar/ a(2)} can be accessed from Python as
 \texttt{foo.bar.a}.
 
-Detailed examples of \texttt{PyFortranObject} usage can be found in 
+Detailed examples of \texttt{PyFortranObject} usage can be found in
 \cite{PFO}.
 
 \subsection{Callback Functions}
@@ -707,7 +707,7 @@ example:
         call sun(boo)
       end
 \end{verbatim}
-\special{html:</BLOCKQUOTE>} 
+\special{html:</BLOCKQUOTE>}
 \fpy recognizes the signatures of the user routines \texttt{bar} and
 \texttt{fun} using the information contained in the lines \texttt{call
   bar(i, 1.2)} and \texttt{r = fun()}:
@@ -740,8 +740,8 @@ still issues that need to be resolved. Some of them are listed below:
 \item Another goal of FPIG is to become as simple to use as
   possible. To achieve that, FPIG should start using the facilities of
   \texttt{distutils}, the new Python standard to distribute and build
-  Python modules. Therefore, a contribution to \texttt{distutils}  
-  that can handle Fortran extensions should be developed. 
+  Python modules. Therefore, a contribution to \texttt{distutils}
+  that can handle Fortran extensions should be developed.
 \item Currently users must be aware of
   the fact that multi-dimensional arrays are stored differently in C
   and Fortran (they must provide transposed multi-dimensional arrays
@@ -858,8 +858,8 @@ showing the hierarchy of the objects in \emph{Flow} is shown in
 Fig.~\ref{fig:flow}.
 \tthhide{
 \begin{figure}[h]
-  \centering 
-  \epsfig{file=./flow.eps, angle=0, width=.7\linewidth} 
+  \centering
+  \epsfig{file=./flow.eps, angle=0, width=.7\linewidth}
   \caption{The \emph{Flow} container class.}
   \label{fig:flow}
 \end{figure}
@@ -889,8 +889,8 @@ its information. A list of the objects contained in this class can be
 seen in Fig.~\ref{fig:structure}.
 \tthhide{
 \begin{figure}[h]
-  \centering 
-  \epsfig{file=./structure.eps, angle=0, width=.7\linewidth} 
+  \centering
+  \epsfig{file=./structure.eps, angle=0, width=.7\linewidth}
   \caption{The \emph{Structure} container class.}
   \label{fig:structure}
 \end{figure}
@@ -909,7 +909,7 @@ seen in Fig.~\ref{fig:structure}.
 Since the \emph{Structure} class contains a
 dictionary of \emph{LoadCase} objects, it is able to store and solve
 multiple load cases, a capability that the original Fortran code
-does not have. 
+does not have.
 
 
 \subsubsection{Aerostructure}
@@ -950,8 +950,8 @@ be seen in Fig.~\ref{fig:aerostructure} for the case of a transonic
 airliner configuration.
 \tthhide{
 \begin{figure*}[t]
-  \centering 
-  \epsfig{file=./aerostructure.eps, angle=-90, width=\linewidth} 
+  \centering
+  \epsfig{file=./aerostructure.eps, angle=-90, width=\linewidth}
   \caption{Aero-structural model and results.}
   \label{fig:aerostructure}
 \end{figure*}
@@ -1000,7 +1000,7 @@ FPIG --- Fortran to Python Interface Generator.
 \bibitem{numpy}
 Numerical Extension to Python.
 \newblock \\\wwwsite{http://numpy.sourceforge.net/}
-\bibitem{graham-etal} 
+\bibitem{graham-etal}
 R. L. Graham, D. E. Knuth, and O. Patashnik.
 \newblock {\em {C}oncrete {M}athematics: a foundation for computer science.}
 \newblock Addison-Wesley, 1988
@@ -1038,9 +1038,7 @@ S. C. Smith.
 
 \end{document}
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: t
-%%% End: 
-
-
+%%% End:
