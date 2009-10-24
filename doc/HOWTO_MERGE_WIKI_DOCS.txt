@@ -1,0 +1,32 @@
+========================================
+Merging documentation back from Doc-Wiki
+========================================
+
+This document describes how to merge back docstring edits from the pydocweb
+wiki (at http://docs.scipy.org/doc/) to NumPy/SciPy trunk.
+
+Basic steps
+-----------
+It works like this, both for NumPy and SciPy:
+
+1. Go to http://docs.scipy.org/scipy/patch/ and log in.
+2. click on "Select OK to apply"
+3. click on "Generate patch"
+4. select all the text in the browser and save as a patch.
+5. check the patch file for errors, edit if necessary
+6. apply patch (typically ``patch -p1 < newdocs.patch`` from base numpy dir).
+7. run tests to see if nothing broke
+8. commit
+
+Errors in patch file
+--------------------
+Note that it is necessary to check the generated patch before trying to apply.
+If there are errors they are noted at the top of the file. There are two known
+reasons for errors:
+
+* If the error message is "source location for docstring is not
+  known", then the function usually needs to get handled with
+  ``add_newdoc()`` in numpy/add_newdocs.py.
+
+* If there are other messages, this may indicate a bug in the
+  patch generation itself.
