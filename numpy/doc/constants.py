@@ -386,5 +386,6 @@ if __doc__:
 
     __doc__ = __doc__ % dict(constant_list=constants_str)
     del constants_str, name, doc
+    del line, lines, new_lines, m, s, prev
 
 del constants, add_newdoc
