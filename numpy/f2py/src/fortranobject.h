@@ -106,6 +106,20 @@ typedef struct {
 #define F2PY_INTENT_C 64
 #define F2PY_OPTIONAL 128
 #define F2PY_INTENT_INPLACE 256
+#define F2PY_INTENT_ALIGNED4 512
+#define F2PY_INTENT_ALIGNED8 1024
+#define F2PY_INTENT_ALIGNED16 2048
+
+#define ARRAY_ISALIGNED(ARR, SIZE) ((size_t)(PyArray_DATA(ARR)) % (SIZE) == 0)
+#define F2PY_ALIGN4(intent) (intent & F2PY_INTENT_ALIGNED4)
+#define F2PY_ALIGN8(intent) (intent & F2PY_INTENT_ALIGNED8)
+#define F2PY_ALIGN16(intent) (intent & F2PY_INTENT_ALIGNED16)
+
+#define F2PY_GET_ALIGNMENT(intent) \
+	(F2PY_ALIGN4(intent) ? 4 : \
+	 (F2PY_ALIGN8(intent) ? 8 : \
+	  (F2PY_ALIGN16(intent) ? 16 : 1) ))
+#define F2PY_CHECK_ALIGNMENT(arr, intent) ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
 
   extern PyArrayObject* array_from_pyobj(const int type_num,
 					 npy_intp *dims,

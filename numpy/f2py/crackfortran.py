@@ -84,7 +84,7 @@ f2py_version = __version__.version
       D['typespec'] = 'byte' | 'character' | 'complex' | 'double complex' |
                       'double precision' | 'integer' | 'logical' | 'real' | 'type'
       D['attrspec'] --- list of attributes (e.g. 'dimension(<arrayspec>)',
-                        'external','intent(in|out|inout|hide|c|callback|cache)',
+                        'external','intent(in|out|inout|hide|c|callback|cache|aligned4|aligned8|aligned16)',
                         'optional','required', etc)
       K = D['kindselector'] = {['*','kind']} (only if D['typespec'] =
                           'complex' | 'integer' | 'logical' | 'real' )

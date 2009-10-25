@@ -345,11 +345,21 @@ def isintent_inplace(var):
 def isintent_aux(var):
     return 'aux' in var.get('intent',[])
 
+def isintent_aligned4(var):
+    return 'aligned4' in var.get('intent',[])
+def isintent_aligned8(var):
+    return 'aligned8' in var.get('intent',[])
+def isintent_aligned16(var):
+    return 'aligned16' in var.get('intent',[])
+
 isintent_dict = {isintent_in:'INTENT_IN',isintent_inout:'INTENT_INOUT',
                  isintent_out:'INTENT_OUT',isintent_hide:'INTENT_HIDE',
                  isintent_cache:'INTENT_CACHE',
                  isintent_c:'INTENT_C',isoptional:'OPTIONAL',
-                 isintent_inplace:'INTENT_INPLACE'
+                 isintent_inplace:'INTENT_INPLACE',
+                 isintent_aligned4:'INTENT_ALIGNED4',
+                 isintent_aligned8:'INTENT_ALIGNED8',
+                 isintent_aligned16:'INTENT_ALIGNED16',
                  }
 
 def isprivate(var):

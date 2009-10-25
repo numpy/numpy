@@ -614,10 +614,17 @@ PyArrayObject* array_from_pyobj(const int type_num,
         if (check_and_fix_dimensions(arr,rank,dims)) {
             return NULL; /*XXX: set exception */
         }
-
+	/*
+	printf("intent alignement=%d\n", F2PY_GET_ALIGNMENT(intent));
+	printf("alignement check=%d\n", F2PY_CHECK_ALIGNMENT(arr, intent));
+	int i;
+	for (i=1;i<=16;i++)
+	  printf("i=%d isaligned=%d\n", i, ARRAY_ISALIGNED(arr, i));
+	*/
         if ((! (intent & F2PY_INTENT_COPY))
             && PyArray_ITEMSIZE(arr)==elsize
             && ARRAY_ISCOMPATIBLE(arr,type_num)
+	    && F2PY_CHECK_ALIGNMENT(arr, intent)
             ) {
             if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
                 if ((intent & F2PY_INTENT_OUT)) {
@@ -642,6 +649,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
             if (!(ARRAY_ISCOMPATIBLE(arr,type_num)))
                 sprintf(mess+strlen(mess)," -- input '%c' not compatible to '%c'",
                         arr->descr->type,typechar);
+	    if (!(F2PY_CHECK_ALIGNMENT(arr, intent)))
+	      sprintf(mess+strlen(mess)," -- input not %d-aligned", F2PY_GET_ALIGNMENT(intent));
             PyErr_SetString(PyExc_ValueError,mess);
             return NULL;
         }
