@@ -94,12 +94,68 @@ else:
         func.__name__ = name
         return func
 
-def deprecate(func, old_name=None, new_name=None, message=None):
-    """
-    Deprecate old functions.
+class _Deprecate(object):
+    """Decorator class to deprecate old functions.
 
-    Issues a DeprecationWarning, adds warning to `old_name`'s docstring,
-    rebinds ``old_name.__name__`` and returns the new function object.
+    Refer to ``decorate``.
+
+    """
+    def __init__(self, old_name=None, new_name=None, message=None):
+        self.old_name = old_name
+        self.new_name = new_name
+        self.message = message
+
+    def __call__(self, func, *args, **kwargs):
+        """
+        Decorator call.  Refer to ``decorate``.
+
+        """
+        old_name = self.old_name
+        new_name = self.new_name
+        message = self.message
+
+        import warnings
+        if old_name is None:
+            try:
+                old_name = func.func_name
+            except AttributeError:
+                old_name = func.__name__
+        if new_name is None:
+            depdoc = "`%s` is deprecated!" % old_name
+        else:
+            depdoc = "`%s` is deprecated, use `%s` instead!" % \
+                     (old_name, new_name)
+
+        if message is not None:
+            depdoc += "\n" + message
+
+        def newfunc(*args,**kwds):
+            """`arrayrange` is deprecated, use `arange` instead!"""
+            warnings.warn(depdoc, DeprecationWarning)
+            return func(*args, **kwds)
+
+        newfunc = _set_function_name(newfunc, old_name)
+        doc = func.__doc__
+        if doc is None:
+            doc = depdoc
+        else:
+            doc = '\n\n'.join([depdoc, doc])
+        newfunc.__doc__ = doc
+        try:
+            d = func.__dict__
+        except AttributeError:
+            pass
+        else:
+            newfunc.__dict__.update(d)
+        return newfunc
+
+def deprecate(*args, **kwargs):
+    """
+    Issues a DeprecationWarning, adds warning to `old_name`'s
+    docstring, rebinds ``old_name.__name__`` and returns the new
+    function object.
+
+    This function may also be used as a decorator.
 
     Parameters
     ----------
@@ -134,40 +190,17 @@ def deprecate(func, old_name=None, new_name=None, message=None):
     6
 
     """
+    # Deprecate may be run as a function or as a decorator
+    # If run as a function, we initialise the decorator class
+    # and execute its __call__ method.
 
-    import warnings
-    if old_name is None:
-        try:
-            old_name = func.func_name
-        except AttributeError:
-            old_name = func.__name__
-    if new_name is None:
-        depdoc = "%s is deprecated" % old_name
+    if args:
+        fn = args[0]
+        args = args[1:]
+
+        return _Deprecate(*args, **kwargs)(fn)
     else:
-        depdoc = "%s is deprecated, use %s" % (old_name, new_name)
-
-    if message is not None:
-        depdoc += "\n" + message
-
-    def newfunc(*args,**kwds):
-        """arrayrange is DEPRECATED! -- use `arange` instead."""
-        warnings.warn(depdoc, DeprecationWarning)
-        return func(*args, **kwds)
-
-    newfunc = _set_function_name(newfunc, old_name)
-    doc = func.__doc__
-    if doc is None:
-        doc = depdoc
-    else:
-        doc = '\n\n'.join([depdoc, doc])
-    newfunc.__doc__ = doc
-    try:
-        d = func.__dict__
-    except AttributeError:
-        pass
-    else:
-        newfunc.__dict__.update(d)
-    return newfunc
+        return _Deprecate(*args, **kwargs)
 
 get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 
