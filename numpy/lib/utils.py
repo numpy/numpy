@@ -7,8 +7,9 @@ from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
-           'issubdtype', 'deprecate', 'get_numarray_include',
-           'get_include', 'info', 'source', 'who', 'lookfor',
+           'issubdtype', 'deprecate', 'deprecate_with_doc',
+           'get_numarray_include', 'get_include',
+           'info', 'source', 'who', 'lookfor',
            'byte_bounds', 'may_share_memory', 'safe_eval']
 
 def get_include():
@@ -198,10 +199,18 @@ def deprecate(*args, **kwargs):
         fn = args[0]
         args = args[1:]
 
+        # backward compatibility -- can be removed
+        # after next release
+        if 'newname' in kwargs:
+            kwargs['new_name'] = kwargs.pop('newname')
+        if 'oldname' in kwargs:
+            kwargs['old_name'] = kwargs.pop('oldname')
+
         return _Deprecate(*args, **kwargs)(fn)
     else:
         return _Deprecate(*args, **kwargs)
 
+deprecate_with_doc = lambda msg: _Deprecate(message=msg)
 get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 
 
