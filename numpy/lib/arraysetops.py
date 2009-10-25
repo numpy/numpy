@@ -32,7 +32,7 @@ __all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
            'setmember1d', 'union1d', 'setdiff1d', 'unique', 'in1d']
 
 import numpy as np
-from numpy.lib.utils import deprecate_with_doc
+from numpy.lib.utils import deprecate
 
 def ediff1d(ary, to_end=None, to_begin=None):
     """
@@ -418,7 +418,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         return np.asarray(ar1)[aux == 0]
 
-@deprecate_with_doc('')
+@deprecate
 def unique1d(ar1, return_index=False, return_inverse=False):
     """
     This function is deprecated. Use unique() instead.
@@ -458,7 +458,7 @@ def unique1d(ar1, return_index=False, return_inverse=False):
         flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
-@deprecate_with_doc('')
+@deprecate
 def intersect1d_nu(ar1, ar2):
     """
     This function is deprecated.  Use intersect1d()
@@ -469,7 +469,7 @@ def intersect1d_nu(ar1, ar2):
     aux.sort()
     return aux[aux[1:] == aux[:-1]]
 
-@deprecate_with_doc('')
+@deprecate
 def setmember1d(ar1, ar2):
     """
     This function is deprecated.  Use in1d(assume_unique=True)

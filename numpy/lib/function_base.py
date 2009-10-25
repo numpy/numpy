@@ -28,7 +28,7 @@ from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount, interp as compiled_interp
 from arraysetops import setdiff1d
-from utils import deprecate_with_doc
+from utils import deprecate
 import numpy as np
 
 #end Fernando's utilities
@@ -1226,7 +1226,7 @@ import sys
 if sys.hexversion < 0x2040000:
     from sets import Set as set
 
-@deprecate_with_doc('')
+@deprecate
 def unique(x):
     """
     This function is deprecated.  Use numpy.lib.arraysetops.unique()

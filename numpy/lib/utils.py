@@ -7,8 +7,7 @@ from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
-           'issubdtype', 'deprecate', 'deprecate_with_doc',
-           'get_numarray_include',
+           'issubdtype', 'deprecate', 'get_numarray_include',
            'get_include', 'info', 'source', 'who', 'lookfor',
            'byte_bounds', 'may_share_memory', 'safe_eval']
 
@@ -95,25 +94,28 @@ else:
         func.__name__ = name
         return func
 
-def deprecate(func, oldname=None, newname=None):
+def deprecate(func, old_name=None, new_name=None, message=None):
     """
     Deprecate old functions.
 
-    Issues a DeprecationWarning, adds warning to `oldname`'s docstring,
-    rebinds ``oldname.__name__`` and returns the new function object.
+    Issues a DeprecationWarning, adds warning to `old_name`'s docstring,
+    rebinds ``old_name.__name__`` and returns the new function object.
 
     Parameters
     ----------
     func : function
         The function to be deprecated.
-    oldname : str, optional
+    old_name : str, optional
         The name of the function to be deprecated. Default is None, in which
         case the name of `func` is used.
-    newname : str, optional
+    new_name : str, optional
         The new name for the function. Default is None, in which case
-        the deprecation message is that `oldname` is deprecated. If given,
-        the deprecation message is that `oldname` is deprecated and `newname`
+        the deprecation message is that `old_name` is deprecated. If given,
+        the deprecation message is that `old_name` is deprecated and `new_name`
         should be used instead.
+    message : str, optional
+        Additional explanation of the deprecation.  Displayed in the docstring
+        after the warning.
 
     Returns
     -------
@@ -134,24 +136,25 @@ def deprecate(func, oldname=None, newname=None):
     """
 
     import warnings
-    if oldname is None:
+    if old_name is None:
         try:
-            oldname = func.func_name
+            old_name = func.func_name
         except AttributeError:
-            oldname = func.__name__
-    if newname is None:
-        str1 = "%s is deprecated" % (oldname,)
-        depdoc = "%s is DEPRECATED!!" % (oldname,)
+            old_name = func.__name__
+    if new_name is None:
+        depdoc = "%s is deprecated" % old_name
     else:
-        str1 = "%s is deprecated, use %s" % (oldname, newname),
-        depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
+        depdoc = "%s is deprecated, use %s" % (old_name, new_name)
+
+    if message is not None:
+        depdoc += "\n" + message
 
     def newfunc(*args,**kwds):
-        """arrayrange is DEPRECATED!! -- use `arange` instead."""
-        warnings.warn(str1, DeprecationWarning)
+        """arrayrange is DEPRECATED! -- use `arange` instead."""
+        warnings.warn(depdoc, DeprecationWarning)
         return func(*args, **kwds)
 
-    newfunc = _set_function_name(newfunc, oldname)
+    newfunc = _set_function_name(newfunc, old_name)
     doc = func.__doc__
     if doc is None:
         doc = depdoc
@@ -165,24 +168,6 @@ def deprecate(func, oldname=None, newname=None):
     else:
         newfunc.__dict__.update(d)
     return newfunc
-
-def deprecate_with_doc(somestr):
-    """Decorator to deprecate functions and provide detailed documentation
-    with 'somestr' that is added to the functions docstring.
-
-    Example:
-    depmsg = 'function scipy.foo has been merged into numpy.foobar'
-    @deprecate_with_doc(depmsg)
-    def foo():
-        pass
-
-    """
-
-    def _decorator(func):
-        newfunc = deprecate(func)
-        newfunc.__doc__ += "\n" + somestr
-        return newfunc
-    return _decorator
 
 get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 
