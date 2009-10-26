@@ -95,7 +95,7 @@ def equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of string_ or unicode_
+    x1, x2 : array_like of str or unicode
         Input arrays of the same shape.
 
     Returns
@@ -119,7 +119,7 @@ def not_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of string_ or unicode_
+    x1, x2 : array_like of str or unicode
         Input arrays of the same shape.
 
     Returns
@@ -144,7 +144,7 @@ def greater_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of string_ or unicode_
+    x1, x2 : array_like of str or unicode
         Input arrays of the same shape.
 
     Returns
@@ -168,7 +168,7 @@ def less_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of string_ or unicode_
+    x1, x2 : array_like of str or unicode
         Input arrays of the same shape.
 
     Returns
@@ -192,7 +192,7 @@ def greater(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of string_ or unicode_
+    x1, x2 : array_like of str or unicode
         Input arrays of the same shape.
 
     Returns
@@ -216,7 +216,7 @@ def less(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of string_ or unicode_
+    x1, x2 : array_like of str or unicode
         Input arrays of the same shape.
 
     Returns
@@ -236,7 +236,7 @@ def str_len(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
@@ -252,12 +252,12 @@ def str_len(a):
 def add(x1, x2):
     """
     Return (x1 + x2), that is string concatenation, element-wise for a
-    pair of array_likes of string_ or unicode_.
+    pair of array_likes of str or unicode.
 
     Parameters
     ----------
-    x1 : array_like of string_ or unicode_
-    x2 : array_like of string_ or unicode_
+    x1 : array_like of str or unicode
+    x2 : array_like of str or unicode
 
     Returns
     -------
@@ -280,8 +280,8 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
-    i : array_like of integers
+    a : array_like of str or unicode
+    i : array_like of ints
 
     Returns
     -------
@@ -299,19 +299,19 @@ def multiply(a, i):
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
-    (iterpolation), element-wise for a pair of array_likes of string_
-    or unicode_.
+    (iterpolation), element-wise for a pair of array_likes of str
+    or unicode.
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     values : array_like of values
        These values will be element-wise interpolated into the string.
 
     Returns
     -------
     out : ndarray
-        Output array of string_ or unicode_, depending on input types
+        Output array of str or unicode, depending on input types
 
     See also
     --------
@@ -331,12 +331,13 @@ def capitalize(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of string_ or unicode_, depending on input types
+        Output array of str or unicode, depending on input
+        types
 
     See also
     --------
@@ -364,7 +365,7 @@ if sys.version_info >= (2, 4):
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         width : int
             The length of the resulting strings
         fillchar : str or unicode, optional
@@ -373,7 +374,8 @@ if sys.version_info >= (2, 4):
         Returns
         -------
         out : ndarray
-            Output array of string_ or unicode_, depending on input types
+            Output array of str or unicode, depending on input
+            types
 
         See also
         --------
@@ -394,14 +396,14 @@ else:
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         width : int
             The length of the resulting strings
 
         Returns
         -------
         out : ndarray, str or unicode
-            Output array of string_ or unicode_, depending on input types
+            Output array of str or unicode, depending on input types
 
         See also
         --------
@@ -422,7 +424,7 @@ def count(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     sub : str or unicode
        The substring to search for
     start, end : int, optional
@@ -432,7 +434,7 @@ def count(a, sub, start=0, end=None):
     Returns
     -------
     out : ndarray
-        Output array of integers.
+        Output array of ints.
 
     See also
     --------
@@ -461,7 +463,7 @@ def decode(a, encoding=None, errors=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     encoding : str, optional
        The name of an encoding
     errors : str, optional
@@ -499,7 +501,7 @@ def encode(a, encoding=None, errors=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     encoding : str, optional
        The name of an encoding
     errors : str, optional
@@ -529,7 +531,7 @@ def endswith(a, suffix, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like of string or unicode
+    a : array_like of str or unicode
     suffix : str
     start, end : int, optional
         With optional `start`, test beginning at that position. With
@@ -538,7 +540,7 @@ def endswith(a, suffix, start=0, end=None):
     Returns
     -------
     out : ndarray
-        Outputs an array of booleans.
+        Outputs an array of bools.
 
     See also
     --------
@@ -576,7 +578,7 @@ def expandtabs(a, tabsize=8):
 
     Parameters
     ----------
-    a : array_like of string or unicode
+    a : array_like of str or unicode
     tabsize : int, optional
 
     Returns
@@ -604,7 +606,7 @@ def find(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     sub : str or unicode
     start, end : int, optional
         Optional arguments `start` and `end` are interpreted as in
@@ -613,7 +615,7 @@ def find(a, sub, start=0, end=None):
     Returns
     -------
     out : {ndarray, integer}
-        Output array of integers.  Returns -1 if `sub` is not found.
+        Output array of ints.  Returns -1 if `sub` is not found.
 
     See also
     --------
@@ -635,14 +637,14 @@ def index(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     sub : str or unicode
     start, end : int, optional
 
     Returns
     -------
     out : ndarray
-        Output array of integers.  Returns -1 if `sub` is not found.
+        Output array of ints.  Returns -1 if `sub` is not found.
 
     See also
     --------
@@ -662,7 +664,7 @@ def isalnum(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
@@ -686,12 +688,12 @@ def isalpha(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of booleans
+        Output array of bools
 
     See also
     --------
@@ -710,12 +712,12 @@ def isdigit(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of booleans
+        Output array of bools
 
     See also
     --------
@@ -735,12 +737,12 @@ def islower(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of booleans
+        Output array of bools
 
     See also
     --------
@@ -760,12 +762,12 @@ def isspace(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of booleans
+        Output array of bools
 
     See also
     --------
@@ -784,12 +786,12 @@ def istitle(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of booleans
+        Output array of bools
 
     See also
     --------
@@ -809,12 +811,12 @@ def isupper(a):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of booleans
+        Output array of bools
 
     See also
     --------
@@ -831,13 +833,13 @@ def join(sep, seq):
 
     Parameters
     ----------
-    sep : array_like of string_ or unicode_
-    seq : array_like of string_ or unicode_
+    sep : array_like of str or unicode
+    seq : array_like of str or unicode
 
     Returns
     -------
     out : ndarray
-        Output array of string_ or unicode_, depending on input types
+        Output array of str or unicode, depending on input types
 
     See also
     --------
@@ -856,7 +858,7 @@ if sys.version_info >= (2, 4):
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         width : int
             The length of the resulting strings
         fillchar : str or unicode, optional
@@ -886,7 +888,7 @@ else:
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         width : int
             The length of the resulting strings
 
@@ -1005,9 +1007,9 @@ if sys.version_info >= (2, 5):
         Returns
         -------
         out : ndarray
-            Output array of string or unicode, depending on input
-            type.  The output array will have an extra dimension with
-            3 elements per input element.
+            Output array of str or unicode, depending on input type.
+            The output array will have an extra dimension with 3
+            elements per input element.
 
         See also
         --------
@@ -1063,7 +1065,7 @@ def rfind(a, sub, start=0, end=None):
     Returns
     -------
     out : ndarray
-       Output array of integers.  Return -1 on failure.
+       Output array of ints.  Return -1 on failure.
 
     See also
     --------
@@ -1088,7 +1090,7 @@ def rindex(a, sub, start=0, end=None):
     Returns
     -------
     out : ndarray
-       Output array of integers.
+       Output array of ints.
 
     See also
     --------
@@ -1107,7 +1109,7 @@ if sys.version_info >= (2, 4):
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         width : int
             The length of the resulting strings
         fillchar : str or unicode, optional
@@ -1137,7 +1139,7 @@ else:
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         width : int
             The length of the resulting strings
 
@@ -1201,7 +1203,7 @@ if sys.version_info >= (2, 4):
 
         Parameters
         ----------
-        a : array_like of string_ or unicode_
+        a : array_like of str or unicode
         sep : str or unicode, optional
             If `sep` is not specified or `None`, any whitespace string
             is a separator.
@@ -1273,7 +1275,7 @@ def split(a, sep=None, maxsplit=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     sep : str or unicode, optional
        If `sep` is not specified or `None`, any whitespace string is a
        separator.
@@ -1303,7 +1305,7 @@ def splitlines(a, keepends=None):
 
     Parameters
     ----------
-    a : array_like of string_ or unicode_
+    a : array_like of str or unicode
     keepends : bool, optional
         Line breaks are not included in the resulting list unless
         keepends is given and true.
@@ -1329,7 +1331,7 @@ def startswith(a, prefix, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like of string or unicode
+    a : array_like of str or unicode
     suffix : str
     start, end : int, optional
     end : int, optional
@@ -1625,9 +1627,8 @@ class chararray(ndarray):
        functions in :mod:`numpy.char <numpy.core.defchararray>` for
        fast vectorized string operations instead.
 
-    Versus a regular Numpy array of type 'string_' or 'unicode_', this
+    Versus a regular Numpy array of type `str` or `unicode`, this
     class adds the following functionality:
-
 
       1) values automatically have whitespace removed from the end
          when indexed
@@ -1657,21 +1658,21 @@ class chararray(ndarray):
     itemsize : int_like, > 0, optional
        Length of each array element, in number of characters. Default is 1.
 
-    unicode : {True, False}, optional
-       Are the array elements of unicode-type (``True``) or string-type
-       (``False``, the default).
+    unicode : bool, optional
+       Are the array elements of unicode-type (`True`) or string-type
+       (`False`, the default).
 
-    buffer : integer, > 0, optional
-       Memory address of the start of the array data.  If ``None``
+    buffer : int, > 0, optional
+       Memory address of the start of the array data.  If `None`
        (the default), a new array is created.
 
-    offset : integer, >= 0, optional
+    offset : int, >= 0, optional
        Fixed stride displacement from the beginning of an axis?
        Default is 0.
 
-    strides : array_like(?), optional
+    strides : array_like, optional
        Strides for the array (see `numpy.ndarray.strides` for full
-       description), default is ``None``.
+       description), default is `None`.
 
     order : {'C', 'F'}, optional
        The order in which the array data is stored in memory: 'C' ->
@@ -1804,7 +1805,7 @@ class chararray(ndarray):
     def __add__(self, other):
         """
         Return (self + other), that is string concatenation,
-        element-wise for a pair of array_likes of string_ or unicode_.
+        element-wise for a pair of array_likes of str or unicode.
 
         See also
         --------
@@ -2365,7 +2366,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
-    Versus a regular Numpy array of type `string_` or `unicode_`, this
+    Versus a regular Numpy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2386,22 +2387,22 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         resulting array.  If `itemsize` is None, and `obj` is an
         object array or a Python list, the `itemsize` will be
         automatically determined.  If `itemsize` is provided and `obj`
-        is of type `str` or `unicode`, then the `obj` string will be
+        is of type str or unicode, then the `obj` string will be
         chunked into `itemsize` pieces.
 
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy
         will only be made if __array__ returns a copy, if obj is a
         nested sequence, or if a copy is needed to satisfy any of the other
-        requirements (`itemsize`, `unicode`, `order`, etc.).
+        requirements (`itemsize`, unicode, `order`, etc.).
 
     unicode : bool, optional
         When true, the resulting `chararray` can contain Unicode
-        characters, when false only 8-bit characters.  If `unicode` is
+        characters, when false only 8-bit characters.  If unicode is
         `None` and `obj` is one of the following:
 
           - a `chararray`,
-          - an ndarray of type `string_` or `unicode_`
+          - an ndarray of type `str` or `unicode`
           - a Python str or unicode object,
 
         then the unicode setting of the output array will be
@@ -2521,7 +2522,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     Convert the input to a `chararray`, copying the data only if
     necessary.
 
-    Versus a regular Numpy array of type `string_` or `unicode_`, this
+    Versus a regular Numpy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2542,16 +2543,16 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         resulting array.  If `itemsize` is None, and `obj` is an
         object array or a Python list, the `itemsize` will be
         automatically determined.  If `itemsize` is provided and `obj`
-        is of type `str` or `unicode`, then the `obj` string will be
+        is of type str or unicode, then the `obj` string will be
         chunked into `itemsize` pieces.
 
     unicode : bool, optional
         When true, the resulting `chararray` can contain Unicode
-        characters, when false only 8-bit characters.  If `unicode` is
+        characters, when false only 8-bit characters.  If unicode is
         `None` and `obj` is one of the following:
 
           - a `chararray`,
-          - an ndarray of type `string_` or 'unicode_`
+          - an ndarray of type `str` or 'unicode`
           - a Python str or unicode object,
 
         then the unicode setting of the output array will be
