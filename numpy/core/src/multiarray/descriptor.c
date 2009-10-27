@@ -1273,6 +1273,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
  finish:
     if ((check_num == PyArray_NOTYPE + 10)
         || (*at = PyArray_DescrFromType(check_num)) == NULL) {
+        PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
         if (typeDict != NULL) {
             item = PyDict_GetItem(typeDict, obj);
