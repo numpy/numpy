@@ -1,0 +1,118 @@
+===============
+C coverage tool
+===============
+
+This directory contains a tool to generate C code-coverage reports
+using valgrind's callgrind tool.
+
+Prerequisites
+-------------
+
+ * `Valgrind <http://www.valgrind.org/>`_ (3.5.0 tested, earlier
+   versions may work)
+
+ * `Pygments <http://www.pygments.org/>`_ (0.11 or later required)
+
+C code-coverage
+---------------
+
+Generating C code coverage reports requires two steps:
+
+ * Collecting coverage results (from valgrind)
+
+ * Generating a report from one or more sets of results
+
+For most cases, it is good enough to do::
+
+  > c_coverage_collect.sh python -c "import numpy; numpy.test()"
+  > c_coverage_report.py callgrind.out.pid
+
+which will run all of the Numpy unit tests, create a directory called
+`coverage` and place the coverage results there.
+
+In a more advanced scenario, you may wish to run individual unit tests
+(since running under valgrind slows things down) and combine multiple
+results files together in a single report.
+
+Collecting results
+``````````````````
+
+To collect coverage results, you merely run the python interpreter
+under valgrind's callgrind tool.  The `c_coverage_collect.sh` helper
+script will pass all of the required arguments to valgrind.
+
+For example, in typical usage, you may want to run all of the Numpy
+unit tests::
+
+  > c_coverage_collect.sh python -c "import numpy; numpy.test()"
+
+This will output a file ``callgrind.out.pid`` containing the results of
+the run, where ``pid`` is the process id of the run.
+
+Generating a report
+```````````````````
+
+To generate a report, you pass the ``callgrind.out.pid`` output file to
+the `c_coverage_report.py` script::
+
+  > c_coverage_report.py callgrind.out.pid
+
+To combine multiple results files together, simply list them on the
+commandline or use wildcards::
+
+  > c_coverage_report.py callgrind.out.*
+
+Options
+'''''''
+
+  * ``--directory``: Specify a different output directory
+
+  * ``--pattern``: Specify a regex pattern to match for source files.
+    The default is `numpy`, so it will only include source files whose
+    path contains the string `numpy`.  If, for instance, you wanted to
+    include all source files covered (that are available on your
+    system), pass ``--pattern=.``.
+
+  * ``--format``: Specify the output format(s) to generate.  May be
+    either ``text`` or ``html``.  If ``--format`` is not provided,
+    both formats will be output.
+
+Reading a report
+----------------
+
+The C code coverage report is a flat directory of files, containing
+text and/or html files.  The files are named based on their path in
+the original source tree with slashes converted to underscores.
+
+Text reports
+````````````
+
+The text reports add a prefix to each line of source code:
+
+ - '>' indicates the line of code was run
+
+ - '!' indicates the line of code was not run
+
+HTML reports
+````````````
+
+The HTML report highlights the code that was run in green.
+
+The HTML report has special support for the "generated" functions in
+Numpy.  Each run line of code also contains a number in square
+brackets indicating the number of different generated functions the
+line was run in.  Hovering the mouse over the line will display a list
+of the versions of the function in which the line was run.  These
+numbers can be used to see if a particular line was run in all
+versions of the function.
+
+Caveats
+-------
+
+The coverage results occasionally misses lines that clearly must have
+been run.  This usually can be traced back to the compiler optimizer
+removing lines because they are tautologically impossible or to
+combine lines together.  Compiling Numpy without optimizations helps,
+but not completely.  Even despite this flaw, this tool is still
+helpful in identifying large missed blocks or functions.
+
