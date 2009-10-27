@@ -556,7 +556,7 @@ the output it."""
             pre_hooks = [self.pre_hooks[i] for i in id]
             post_hooks = [self.post_hooks[i] for i in id]
             pkg_names = [self.pkg_names[i] for i in id]
-            pkg_paths = [self.pkg_names[i] for i in id]
+            pkg_paths = [self.pkg_paths[i] for i in id]
         else:
             sconscripts = self.sconscripts
             pre_hooks = self.pre_hooks
