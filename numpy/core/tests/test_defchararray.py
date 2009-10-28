@@ -156,6 +156,22 @@ class TestComparisons(TestCase):
     def test_less(self):
         assert_array_equal((self.A < self.B), [[True, False], [False, False]])
 
+class TestComparisonsMixed1(TestComparisons):
+    """Ticket #1276"""
+
+    def setUp(self):
+        TestComparisons.setUp(self)
+        self.B = np.array([['efg', '123  '],
+                           ['051', 'tuv']], np.unicode_).view(np.chararray)
+
+class TestComparisonsMixed2(TestComparisons):
+    """Ticket #1276"""
+
+    def setUp(self):
+        TestComparisons.setUp(self)
+        self.A = np.array([['abc', '123'],
+                           ['789', 'xyz']], np.unicode_).view(np.chararray)
+
 class TestInformation(TestCase):
     def setUp(self):
         self.A = np.array([[' abc ', ''],

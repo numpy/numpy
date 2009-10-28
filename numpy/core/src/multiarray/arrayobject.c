@@ -722,8 +722,9 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         PyObject *new;
         if (self->descr->type_num == PyArray_STRING &&
             other->descr->type_num == PyArray_UNICODE) {
-            Py_INCREF(other->descr);
-            new = PyArray_FromAny((PyObject *)self, other->descr,
+            PyArray_Descr* unicode = PyArray_DescrNew(other->descr);
+            unicode->elsize = self->descr->elsize << 2;
+            new = PyArray_FromAny((PyObject *)self, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
                 return NULL;
@@ -733,8 +734,9 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         }
         else if (self->descr->type_num == PyArray_UNICODE &&
                  other->descr->type_num == PyArray_STRING) {
-            Py_INCREF(self->descr);
-            new = PyArray_FromAny((PyObject *)other, self->descr,
+            PyArray_Descr* unicode = PyArray_DescrNew(self->descr);
+            unicode->elsize = other->descr->elsize << 2;
+            new = PyArray_FromAny((PyObject *)other, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
                 return NULL;
