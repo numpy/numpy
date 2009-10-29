@@ -215,10 +215,6 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #define PyUInt64ArrType_Type PyULongArrType_Type
 #define NPY_INT64_FMT NPY_LONG_FMT
 #define NPY_UINT64_FMT NPY_ULONG_FMT
-        typedef long npy_datetime;
-#define NPY_DATETIME_FMT NPY_LONG_FMT
-        typedef long npy_timedelta;
-#define NPY_TIMEDELTA_FMT NPY_LONG_FMT
 #define MyPyLong_FromInt64 PyLong_FromLong
 #define MyPyLong_AsInt64 PyLong_AsLong
 #elif NPY_BITSOF_LONG == 128
@@ -295,10 +291,6 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #    define PyUInt64ArrType_Type PyULongLongArrType_Type
 #define NPY_INT64_FMT NPY_LONGLONG_FMT
 #define NPY_UINT64_FMT NPY_ULONGLONG_FMT
-        typedef npy_longlong npy_datetime;
-#    define NPY_DATETIME_FMT NPY_LONGLONG_FMT
-        typedef npy_longlong npy_timedelta;
-#    define NPY_TIMEDELTA_FMT NPY_LONGLONG_FMT
 #    define MyPyLong_FromInt64 PyLong_FromLongLong
 #    define MyPyLong_AsInt64 PyLong_AsLongLong
 #  endif
@@ -389,10 +381,6 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #    define PyUInt64ArrType_Type PyUIntArrType_Type
 #define NPY_INT64_FMT NPY_INT_FMT
 #define NPY_UINT64_FMT NPY_UINT_FMT
-        typedef int npy_datetime;
-#    define NPY_DATETIME_FMT NPY_INT_FMT
-        typedef int npy_timedelta;
-#    define NPY_TIMEDELTA_FMT NPY_INT_FMT
 #    define MyPyLong_FromInt64 PyLong_FromLong
 #    define MyPyLong_AsInt64 PyLong_AsLong
 #endif
@@ -463,10 +451,6 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #    define PyUInt64ArrType_Type PyUShortArrType_Type
 #define NPY_INT64_FMT NPY_SHORT_FMT
 #define NPY_UINT64_FMT NPY_USHORT_FMT
-        typedef short npy_datetime;
-#    define NPY_DATETIME_FMT NPY_SHORT_FMT
-        typedef short npy_timedelta;
-#    define NPY_TIMEDELTA_FMT NPY_SHORT_FMT
 #    define MyPyLong_FromInt64 PyLong_FromLong
 #    define MyPyLong_AsInt64 PyLong_AsLong
 #endif
@@ -538,10 +522,6 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #    define PyUInt64ArrType_Type PyUByteArrType_Type
 #define NPY_INT64_FMT NPY_BYTE_FMT
 #define NPY_UINT64_FMT NPY_UBYTE_FMT
-        typedef signed char npy_datetime;
-#    define NPY_DATETIME_FMT NPY_BYTE_FMT
-        typedef signed char npy_timedelta;
-#    define NPY_TIMEDELTA_FMT NPY_BYTE_FMT
 #    define MyPyLong_FromInt64 PyLong_FromLong
 #    define MyPyLong_AsInt64 PyLong_AsLong
 #endif
@@ -815,6 +795,12 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #define NPY_FLOAT256_FMT NPY_LONGDOUBLE_FMT
 #define NPY_COMPLEX512_FMT NPY_CLONGDOUBLE_FMT
 #endif
+
+/* datetime typedefs */
+typedef npy_int64 npy_timedelta;
+typedef npy_int64 npy_datetime;
+#define NPY_DATETIME_FMT NPY_INT64_FMT
+#define NPY_TIMEDELTA_FMT NPY_INT64_FMT
 
 /* End of typedefs for numarray style bit-width names */
 
