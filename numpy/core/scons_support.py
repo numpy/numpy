@@ -235,7 +235,7 @@ static %(inline)s int static_func (void)
         context.Result(0)
     return inline
 
-array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAPIGENCOMSTR'),
+array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAYPIGENCOMSTR'),
                             emitter = generate_api_emitter)
 
 
