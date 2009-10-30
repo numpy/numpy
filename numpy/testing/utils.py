@@ -14,7 +14,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-           'assert_']
+           'assert_', 'spacing', 'assert_array_almost_equal_nulp']
 
 verbose = 0
 
@@ -1081,6 +1081,85 @@ def _assert_valid_refcount(op):
         d = op(b,c)
 
     assert(sys.getrefcount(i) >= rc)
+
+def assert_array_almost_equal_nulp(x, y, nulp=1):
+    """Compare two arrays relatively to their spacing. It is a relatively
+    robust method to compare two arrays whose amplitude is variable.
+    
+    Note
+    ----
+    An assertion is raised if the following condition is not met:
+
+        abs(x - y) <= nulps * spacing(max(abs(x), abs(y)))
+
+    Parameters
+    ----------
+    x: array_like
+        first input array 
+    y: array_like
+        second input array 
+    nulp: int
+        max number of unit in the last place for tolerance (see Note)
+    """
+    import numpy as np
+    ax = np.abs(x)
+    ay = np.abs(y)
+    ref = nulp * spacing(np.where(ax > ay, ax, ay))
+    if not np.all(np.abs(x-y) <= ref):
+        max_nulp = np.max(nulp_diff(x, y))
+        raise AssertionError("X and Y are not equal to %d ULP "\
+                             "(max is %d)" % (nulp, max_nulp))
+
+def nulp_diff(x, y, dtype=None):
+    """For each item in x and y, eeturn the number of representable floating
+    points between them.
+
+    Parameters
+    ----------
+    x : array_like
+        first input array
+    y : array_like
+        second input array
+
+    Returns
+    -------
+    nulp: array_like
+        number of representable floating point numbers between each item in x
+        and y.
+
+    Examples
+    --------
+    # By definition, epsilon is the smallest number such as 1 + eps != 1, so
+    # there should be exactly one ULP between 1 and 1 + eps
+    >>> nulp_diff(1, 1 + np.finfo(x.dtype).eps)
+    1.0
+    """
+    import numpy as np
+    if dtype:
+        x = np.array(x, dtype=dtype)
+        y = np.array(y, dtype=dtype)
+    else:
+        x = np.array(x)
+        y = np.array(y)
+
+    t = np.common_type(x, y)
+    if np.iscomplexobj(x) or np.iscomplexobj(y):
+        raise NotImplementerError("_nulp not implemented for complex array")
+
+    x = np.array(x, dtype=t)
+    y = np.array(y, dtype=t)
+
+    if not x.shape == y.shape:
+        raise ValueError("x and y do not have the same shape: %s - %s" % \
+                         (x.shape, y.shape))
+
+    def _diff(rx, ry, vdt):
+        diff = np.array(rx-ry, dtype=vdt)
+        return np.abs(diff)
+
+    rx = integer_repr(x)
+    ry = integer_repr(y)
+    return _diff(rx, ry, t)
 
 def _integer_repr(x, vdt, comp):
     # Reinterpret binary representation of the float as sign-magnitude:

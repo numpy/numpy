@@ -301,6 +301,33 @@ class TestRaises(unittest.TestCase):
         else:
             raise AssertionError("should have raised an AssertionError")
 
+class TestArrayAlmostEqualNulp(unittest.TestCase):
+    def test_simple(self):
+        dev = np.random.randn(10)
+        x = np.ones(10)
+        y = x + dev * np.finfo(np.float64).eps
+        assert_array_almost_equal_nulp(x, y, nulp=2 * np.max(dev))
+
+    def test_simple2(self):
+        x = np.random.randn(10)
+        y = 2 * x
+        def failure():
+            return assert_array_almost_equal_nulp(x, y,
+                                                  nulp=1000)
+        self.failUnlessRaises(AssertionError, failure)
+
+    def test_big_float32(self):
+        x = (1e10 * np.random.randn(10)).astype(np.float32)
+        y = x + 1
+        assert_array_almost_equal_nulp(x, y, nulp=1000)
+
+    def test_big_float64(self):
+        x = 1e10 * np.random.randn(10)
+        y = x + 1
+        def failure():
+            assert_array_almost_equal_nulp(x, y, nulp=1000)
+        self.failUnlessRaises(AssertionError, failure)
+
 class TestSpacing(unittest.TestCase):
     def test_one(self):
         for dt, dec in zip([np.float32, np.float64], (10, 20)):
