@@ -1082,3 +1082,27 @@ def _assert_valid_refcount(op):
 
     assert(sys.getrefcount(i) >= rc)
 
+def _integer_repr(x, vdt, comp):
+    # Reinterpret binary representation of the float as sign-magnitude:
+    # take into account two-complement representation
+    # See also
+    # http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+    rx = x.view(vdt)
+    if not (rx.size == 1):
+        rx[rx < 0] = comp - rx[rx<0]
+    else:
+        if rx < 0:
+            rx = comp - rx
+
+    return rx
+
+def integer_repr(x):
+    """Return the signed-magnitude interpretation of the binary representation of
+    x."""
+    import numpy as np
+    if x.dtype == np.float32:
+        return _integer_repr(x, np.int32, np.int32(-2**31))
+    elif x.dtype == np.float64:
+        return _integer_repr(x, np.int64, np.int64(-2**63))
+    else:
+        raise ValueError("Unsupported dtype %s" % x.dtype)
