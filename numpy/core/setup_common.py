@@ -89,7 +89,7 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign"]
+        "copysign", "nextafter"]
 
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
@@ -100,7 +100,7 @@ C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
         "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
         "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
         "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
-        "exp2", "log2", "copysign"]
+        "exp2", "log2", "copysign", "nextafter"]
 
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
