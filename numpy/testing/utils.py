@@ -1086,7 +1086,7 @@ def _assert_valid_refcount(op):
 def assert_array_almost_equal_nulp(x, y, nulp=1):
     """Compare two arrays relatively to their spacing. It is a relatively
     robust method to compare two arrays whose amplitude is variable.
-    
+
     Note
     ----
     An assertion is raised if the following condition is not met:
@@ -1096,9 +1096,9 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     Parameters
     ----------
     x: array_like
-        first input array 
+        first input array
     y: array_like
-        second input array 
+        second input array
     nulp: int
         max number of unit in the last place for tolerance (see Note)
     """
