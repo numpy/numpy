@@ -835,6 +835,14 @@ def test_nextafter():
         assert np.isnan(np.nextafter(one, np.nan))
         assert np.nextafter(one, one) == one
 
+def test_nextafter_vs_spacing():
+    # XXX: spacing does not handle long double yet
+    for t in [np.float32, np.float64]:
+        for _f in [1, 1e-5, 1000]:
+            f = t(_f)
+            f1 = t(_f + 1)
+            assert np.nextafter(f, f1) - f == spacing(f, dtype=t)
+
 def test_pos_nan():
     """Check np.nan is a positive nan."""
     assert np.signbit(np.nan) == 0
