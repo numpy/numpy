@@ -830,7 +830,7 @@ def test_nextafter():
         zero = t(0)
         eps = np.finfo(t).eps
         assert np.nextafter(one, two) - one == eps
-        assert one - np.nextafter(one, zero) == -eps
+        assert np.nextafter(one, zero) - one < 0
         assert np.isnan(np.nextafter(np.nan, one))
         assert np.isnan(np.nextafter(one, np.nan))
         assert np.nextafter(one, one) == one
