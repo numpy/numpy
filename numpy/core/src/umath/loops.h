@@ -1607,6 +1607,10 @@ FLOAT_signbit(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 NPY_NO_EXPORT void
 FLOAT_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
+#line 210
+NPY_NO_EXPORT void
+FLOAT_nextafter(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
 
 #line 218
 NPY_NO_EXPORT void
@@ -1752,6 +1756,10 @@ DOUBLE_signbit(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 NPY_NO_EXPORT void
 DOUBLE_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
+#line 210
+NPY_NO_EXPORT void
+DOUBLE_nextafter(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
 
 #line 218
 NPY_NO_EXPORT void
@@ -1896,6 +1904,10 @@ LONGDOUBLE_signbit(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
 #line 210
 NPY_NO_EXPORT void
 LONGDOUBLE_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+#line 210
+NPY_NO_EXPORT void
+LONGDOUBLE_nextafter(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 
 #line 218

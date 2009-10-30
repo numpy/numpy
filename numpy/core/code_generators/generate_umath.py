@@ -655,6 +655,11 @@ defdict = {
           docstrings.get('numpy.core.umath.copysign'),
           TD(flts),
           ),
+'nextafter' :
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.nextafter'),
+          TD(flts),
+          ),
 'modf' :
     Ufunc(1, 2, None,
           docstrings.get('numpy.core.umath.modf'),

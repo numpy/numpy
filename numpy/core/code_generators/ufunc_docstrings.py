@@ -2783,6 +2783,29 @@ add_newdoc('numpy.core.umath', 'copysign',
 
     """)
 
+add_newdoc('numpy.core.umath', 'nextafter',
+    """
+    Return the next representable floating-point value after x1 in the direction
+    of y1 element-wise.
+
+    Parameters
+    ----------
+    x1: array_like
+        Values to find the next representable value of.
+    x2: array_like
+        The direction where to look for the next representable value of `x1`.
+
+    Returns
+    -------
+    out : array_like
+        The next representable values of `x1` in the direction of `x2`.
+
+    Examples
+    --------
+    >>> np.nextrepresentable(1, 2) == np.finfo(np.float64).eps
+    True
+    """)
+
 add_newdoc('numpy.core.umath', 'sin',
     """
     Trigonometric sine, element-wise.
