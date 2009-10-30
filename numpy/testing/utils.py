@@ -1215,8 +1215,6 @@ def spacing(x, dtype=None):
         raise NotImplementerError("_compute_spacing not implemented for complex array")
 
     t = x.dtype
-    if not t in [np.float32, np.float64]:
-        raise ValueError("Could not convert both arrays to supported type")
 
     res = integer_repr(x)
     return (res + 1).view(t) - res.view(t)
