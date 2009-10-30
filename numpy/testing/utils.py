@@ -1106,3 +1106,36 @@ def integer_repr(x):
         return _integer_repr(x, np.int64, np.int64(-2**63))
     else:
         raise ValueError("Unsupported dtype %s" % x.dtype)
+
+def spacing(x, dtype=None):
+    """Return the spacing for each item in x.
+
+    spacing(x) is defined as the space between x and the next representable
+    floating point number > x. For example, spacing(1) == EPS
+
+    This aims at being equivalent to the Fortran 95 spacing intrinsic.
+    """
+    import numpy as np
+    if dtype:
+        x = np.atleast_1d(np.array(x, dtype=dtype))
+    else:
+        x = np.atleast_1d(np.array(x))
+
+    if np.iscomplexobj(x):
+        raise NotImplementerError("_compute_spacing not implemented for complex array")
+
+    t = x.dtype
+    if not t in [np.float32, np.float64]:
+        raise ValueError("Could not convert both arrays to supported type")
+
+    res = integer_repr(x)
+    return (res + 1).view(t) - res.view(t)
+    # XXX: alternative implementation, the one used in gfortran: much simpler,
+    # but I am not sure I understand it, and it does not work for Nan
+    #p = np.finfo(t).nmant + 1
+    #emin = np.finfo(t).minexp
+    #
+    #e = np.frexp(x)[1] - p
+    #e[e<=emin] = emin
+
+    #return np.ldexp(np.array(1., dtype=t), e)
