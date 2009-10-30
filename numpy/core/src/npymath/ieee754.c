@@ -51,8 +51,8 @@ int _npy_signbit_ld(long double x)
 double npy_nextafter(double x, double y)
 {
     volatile double t;
-    int32_t hx, hy, ix, iy;
-    u_int32_t lx, ly;
+    npy_int32 hx, hy, ix, iy;
+    npy_uint32 lx, ly;
 
     EXTRACT_WORDS(hx, lx, x);
     EXTRACT_WORDS(hy, ly, y);
@@ -112,7 +112,7 @@ double npy_nextafter(double x, double y)
 float nextafterf(float x, float y)
 {
     volatile float t;
-    int32_t hx, hy, ix, iy;
+    npy_int32 hx, hy, ix, iy;
 
     GET_FLOAT_WORD(hx, x);
     GET_FLOAT_WORD(hy, y);
