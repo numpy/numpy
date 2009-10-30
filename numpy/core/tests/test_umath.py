@@ -823,6 +823,18 @@ def test_copysign():
     assert np.signbit(np.copysign(np.nan, -1))
     assert not np.signbit(np.copysign(np.nan, 1))
 
+def test_nextafter():
+    for t in [np.float32, np.float64, np.longdouble]:
+        one = t(1)
+        two = t(2)
+        zero = t(0)
+        eps = np.finfo(t).eps
+        assert np.nextafter(one, two) - one == eps
+        assert one - np.nextafter(one, zero) == -eps
+        assert np.isnan(np.nextafter(np.nan, one))
+        assert np.isnan(np.nextafter(one, np.nan))
+        assert np.nextafter(one, one) == one
+
 def test_pos_nan():
     """Check np.nan is a positive nan."""
     assert np.signbit(np.nan) == 0
