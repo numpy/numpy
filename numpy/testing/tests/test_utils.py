@@ -367,5 +367,58 @@ class TestSpacing(unittest.TestCase):
             x = np.array([1e-5, 1, 1000, 10500], dtype=dt)
             assert_array_almost_equal(spacing(x), ref[dt], decimal=dec)
 
+class TestULP(unittest.TestCase):
+    def test_equal(self):
+        x = np.random.randn(10)
+        assert_array_max_ulp(x, x, maxulp=0)
+
+    def test_single(self):
+        # Generate 1 + small deviation, check that adding eps gives a few UNL
+        x = np.ones(10).astype(np.float32)
+        x += 0.01 * np.random.randn(10).astype(np.float32)
+        eps = np.finfo(np.float32).eps
+        assert_array_max_ulp(x, x+eps, maxulp=20)
+
+    def test_double(self):
+        # Generate 1 + small deviation, check that adding eps gives a few UNL
+        x = np.ones(10).astype(np.float32)
+        x += 0.01 * np.random.randn(10).astype(np.float64)
+        eps = np.finfo(np.float64).eps
+        assert_array_max_ulp(x, x+eps, maxulp=200)
+
+    def test_inf(self):
+        for dt in [np.float32, np.float64]:
+            inf = np.array([np.inf]).astype(dt)
+            big = np.array([np.finfo(dt).max])
+            assert_array_max_ulp(inf, big, maxulp=200)
+
+    def test_nan(self):
+        # Test that nan is 'far' from small, tiny, inf, max and min
+        for dt in [np.float32, np.float64]:
+            if dt == np.float32:
+                maxulp = 1e6
+            else:
+                maxulp = 1e12
+            inf = np.array([np.inf]).astype(dt)
+            nan = np.array([np.nan]).astype(dt)
+            big = np.array([np.finfo(dt).max])
+            tiny = np.array([np.finfo(dt).tiny])
+            zero = np.array([np.PZERO]).astype(dt)
+            nzero = np.array([np.NZERO]).astype(dt)
+            self.failUnlessRaises(AssertionError,
+                                  lambda: assert_array_max_ulp(nan, inf,
+                                                               maxulp=maxulp))
+            self.failUnlessRaises(AssertionError,
+                                  lambda: assert_array_max_ulp(nan, big,
+                                                               maxulp=maxulp))
+            self.failUnlessRaises(AssertionError,
+                                  lambda: assert_array_max_ulp(nan, tiny,
+                                                               maxulp=maxulp))
+            self.failUnlessRaises(AssertionError,
+                                  lambda: assert_array_max_ulp(nan, zero,
+                                                               maxulp=maxulp))
+            self.failUnlessRaises(AssertionError,
+                                  lambda: assert_array_max_ulp(nan, nzero,
+                                                               maxulp=maxulp))
 if __name__ == '__main__':
     run_module_suite()

@@ -14,7 +14,8 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-           'assert_', 'spacing', 'assert_array_almost_equal_nulp']
+           'assert_', 'spacing', 'assert_array_almost_equal_nulp',
+           'assert_array_max_ulp']
 
 verbose = 0
 
@@ -1109,6 +1110,16 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
         max_nulp = np.max(nulp_diff(x, y))
         raise AssertionError("X and Y are not equal to %d ULP "\
                              "(max is %d)" % (nulp, max_nulp))
+
+def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
+    """Given two arrays a and b, check that every item differs in at most N
+    Unit in the Last Place."""
+    import numpy as np
+    ret = nulp_diff(a, b, dtype)
+    if not np.all(ret <= maxulp):
+        raise AssertionError("Arrays are not almost equal up to %d ULP" % \
+                             maxulp)
+    return ret
 
 def nulp_diff(x, y, dtype=None):
     """For each item in x and y, eeturn the number of representable floating
