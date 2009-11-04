@@ -78,6 +78,100 @@ Items are not almost equal:
     else:
         assert_almost_equal(x, y)
 
+class TestCexp(object):
+    def test_simple(self):
+        check = check_complex_value 
+        f = np.exp
+
+        yield check, f, 1, 0, np.exp(1), 0, False
+        yield check, f, 0, 1, np.cos(1), np.sin(1), False
+
+        ref = np.exp(1) * np.complex(np.cos(1), np.sin(1))
+        yield check, f, 1, 1, ref.real, ref.imag, False
+
+    def test_special_values(self):
+        # C99: Section G 6.3.1
+
+        check = check_complex_value 
+        f = np.exp
+
+        # cexp(+-0 + 0i) is 1 + 0i
+        yield check, f, np.PZERO, 0, 1, 0, False
+        yield check, f, np.NZERO, 0, 1, 0, False
+
+        # cexp(x + infi) is nan + nani for finite x and raises 'invalid' FPU
+        # exception
+        yield check, f,  1, np.inf, np.nan, np.nan
+        yield check, f, -1, np.inf, np.nan, np.nan
+        yield check, f,  0, np.inf, np.nan, np.nan
+
+        # cexp(inf + 0i) is inf + 0i
+        yield check, f,  np.inf, 0, np.inf, 0
+
+        # cexp(-inf + yi) is +0 * (cos(y) + i sin(y)) for finite y
+        ref = np.complex(np.cos(1.), np.sin(1.))
+        yield check, f,  -np.inf, 1, np.PZERO, np.PZERO
+
+        ref = np.complex(np.cos(np.pi * 0.75), np.sin(np.pi * 0.75))
+        yield check, f,  -np.inf, 0.75 * np.pi, np.NZERO, np.PZERO
+
+        # cexp(inf + yi) is +inf * (cos(y) + i sin(y)) for finite y
+        ref = np.complex(np.cos(1.), np.sin(1.))
+        yield check, f,  np.inf, 1, np.inf, np.inf
+
+        ref = np.complex(np.cos(np.pi * 0.75), np.sin(np.pi * 0.75))
+        yield check, f,  np.inf, 0.75 * np.pi, -np.inf, np.inf
+
+        # cexp(-inf + inf i) is +-0 +- 0i (signs unspecified)
+        def _check_ninf_inf(dummy):
+            z = f(np.array(np.complex(-np.inf, np.inf)))
+            if z.real != 0 or z.imag != 0:
+                raise AssertionError(
+                        "cexp(-inf, inf) is (%f, %f), expected (+-0, +-0)" \
+                        % (z.real, z.imag))
+        yield _check_ninf_inf, None
+
+        # cexp(inf + inf i) is +-inf + NaNi and raised invalid FPU ex.
+        def _check_inf_inf(dummy):
+            z = f(np.array(np.complex(np.inf, np.inf)))
+            if not np.isinf(z.real) or not np.isnan(z.imag):
+                raise AssertionError(
+                        "cexp(inf, inf) is (%f, %f), expected (+-inf, nan)" \
+                        % (z.real, z.imag))
+        yield _check_inf_inf, None
+
+        # cexp(-inf + nan i) is +-0 +- 0i
+        def _check_ninf_nan(dummy):
+            z = f(np.array(np.complex(-np.inf, np.nan)))
+            if z.real != 0 or z.imag != 0:
+                raise AssertionError(
+                        "cexp(-inf, nan) is (%f, %f), expected (+-0, +-0)" \
+                        % (z.real, z.imag))
+        yield _check_ninf_nan, None
+
+        # cexp(inf + nan i) is +-inf + nan
+        def _check_inf_nan(dummy):
+            z = f(np.array(np.complex(np.inf, np.nan)))
+            if not np.isinf(z.real) or not np.isnan(z.imag):
+                raise AssertionError(
+                        "cexp(-inf, nan) is (%f, %f), expected (+-inf, nan)" \
+                        % (z.real, z.imag))
+        yield _check_inf_nan, None
+
+        # cexp(nan + 0i) is nan + 0i
+        yield check, f, np.nan, 0, np.nan, 0
+
+        # cexp(nan + yi) is nan + nani for y != 0 (optional: raises invalid FPU
+        # ex)
+        yield check, f, np.nan, 1, np.nan, np.nan
+        yield check, f, np.nan, -1, np.nan, np.nan
+
+        yield check, f, np.nan,  np.inf, np.nan, np.nan
+        yield check, f, np.nan, -np.inf, np.nan, np.nan
+
+        # cexp(nan + nani) is nan + nani
+        yield check, f, np.nan, np.nan, np.nan, np.nan
+
 class TestClog(TestCase):
     def test_simple(self):
         x = np.array([1+0j, 1+2j])
