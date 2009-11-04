@@ -133,6 +133,13 @@ The following functions are deprecated:
 Internal changes
 ================
 
+Use C99 complex functions when available
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The numpy complex types are now guaranteed to be ABI compatible with C99
+complex type, if availble on the platform. Moreoever, the complex ufunc now use
+the platform C99 functions intead of our own.
+
 split multiarray and umath source code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -155,3 +162,14 @@ Separate core math library
 New functions which have been added:
 
 	* npy_copysign
+        * npy_nextafter
+        * npy_cpack
+        * npy_creal
+        * npy_cimag
+        * npy_cabs
+        * npy_cexp
+        * npy_clog
+        * npy_cpow
+        * npy_csqr
+        * npy_ccos
+        * npy_csin
