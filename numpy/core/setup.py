@@ -156,6 +156,16 @@ def check_math_capabilities(config, moredefs, mathlibs):
     check_funcs(C99_FUNCS_SINGLE)
     check_funcs(C99_FUNCS_EXTENDED)
 
+    # Check for complex support
+    st = config.check_header('complex.h')
+    if st:
+        moredefs.append('HAVE_COMPLEX_H')
+
+        if not check_funcs_once(C99_COMPLEX_FUNCS):
+            for f in C99_COMPLEX_FUNCS:
+                if config.check_func(f):
+                    moredefs.append(fname2def(f))
+
 def check_ieee_macros(config):
     priv = []
     pub = []
