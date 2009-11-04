@@ -332,11 +332,6 @@ npy_cdouble npy_csqrt(npy_cdouble z);
 npy_cdouble npy_ccos(npy_cdouble z);
 npy_cdouble npy_csin(npy_cdouble z);
 
-double npy_creal(npy_cdouble z);
-double npy_cimag(npy_cdouble z);
-double npy_cabs(npy_cdouble z);
-double npy_carg(npy_cdouble z);
-
 /*
  * Single precision complex functions
  */
@@ -353,11 +348,6 @@ npy_cfloat npy_csqrtf(npy_cfloat z);
 
 npy_cfloat npy_ccosf(npy_cfloat z);
 npy_cfloat npy_csinf(npy_cfloat z);
-
-float npy_crealf(npy_cfloat z);
-float npy_cimagf(npy_cfloat z);
-float npy_cabsf(npy_cfloat z);
-float npy_cargf(npy_cfloat z);
 
 /*
  * Extended precision complex functions
