@@ -93,9 +93,31 @@ typedef short npy_short;
 typedef int npy_int;
 typedef long npy_long;
 
-typedef struct { float real, imag; } npy_cfloat;
+/*
+ * Define our complex type to C99 complex type if C99 complex support is
+ * available
+ */
+#ifdef NPY_USE_C99_COMPLEX
+#include <complex.h>
+#endif
+
+#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_DOUBLE)
+typedef complex npy_cdouble;
+#else
 typedef struct { double real, imag; } npy_cdouble;
+#endif
+
+#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_FLOAT)
+typedef complex float npy_cfloat;
+#else
+typedef struct { float real, imag; } npy_cfloat;
+#endif
+
+#if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_LONG_DOUBLE)
+typedef complex long double npy_clongdouble;
+#else
 typedef struct {npy_longdouble real, imag;} npy_clongdouble;
+#endif
 
 /*
  * numarray-style bit-width typedefs
@@ -803,16 +825,6 @@ typedef npy_int64 npy_datetime;
 #define NPY_TIMEDELTA_FMT NPY_INT64_FMT
 
 /* End of typedefs for numarray style bit-width names */
-
-#ifdef NPY_USE_C99_COMPLEX
-#include "complex.h"
-typedef complex npy_complex_double;
-#else
-#undef complex
-typedef struct {
-        double x, y;
-} npy_complex_double;
-#endif
 
 #endif
 

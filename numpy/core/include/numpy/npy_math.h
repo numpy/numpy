@@ -288,10 +288,10 @@ npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
  * an array of two elements, where the first element is the real part
  * and the second element is the imaginary part.
  */
-static NPY_INLINE npy_complex_double npy_cpack(double x, double y)
+static NPY_INLINE npy_cdouble npy_cpack(double x, double y)
 {
     union {
-        npy_complex_double z;
+        npy_cdouble z;
         double a[2];
     } z1;;
 
@@ -301,18 +301,18 @@ static NPY_INLINE npy_complex_double npy_cpack(double x, double y)
     return z1.z;
 }
 
-double npy_creal(npy_complex_double z);
-double npy_cimag(npy_complex_double z);
-double npy_cabs(npy_complex_double z);
-double npy_carg(npy_complex_double z);
+double npy_creal(npy_cdouble z);
+double npy_cimag(npy_cdouble z);
+double npy_cabs(npy_cdouble z);
+double npy_carg(npy_cdouble z);
 
-npy_complex_double npy_cexp(npy_complex_double z);
-npy_complex_double npy_clog(npy_complex_double z);
-npy_complex_double npy_cpow(npy_complex_double x, npy_complex_double y);
+npy_cdouble npy_cexp(npy_cdouble z);
+npy_cdouble npy_clog(npy_cdouble z);
+npy_cdouble npy_cpow(npy_cdouble x, npy_cdouble y);
 
-npy_complex_double npy_csqrt(npy_complex_double z);
+npy_cdouble npy_csqrt(npy_cdouble z);
 
-npy_complex_double npy_ccos(npy_complex_double z);
-npy_complex_double npy_csin(npy_complex_double z);
+npy_cdouble npy_ccos(npy_cdouble z);
+npy_cdouble npy_csin(npy_cdouble z);
 
 #endif

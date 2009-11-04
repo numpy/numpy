@@ -125,20 +125,19 @@ do {                                                            \
 } while (0)
 
 /*
- * C99 specifies that complex numbers have the same representation as
- * an array of two elements, where the first element is the real part
- * and the second element is the imaginary part.
+ * Those unions are used to convert a pointer of npy_cdouble to native C99
+ * complex or our own complex type indenpendently on whether C99 complex
+ * support is available
  */
 #ifdef NPY_USE_C99_COMPLEX
-#include "complex.h"
 typedef union {
-	npy_complex_double npy_z;
+	npy_cdouble npy_z;
 	complex c99_z;
 } __npy_complex_to_c99_cast;
 #else
 typedef union {
-	npy_complex_double npy_z;
-	npy_complex_double c99_z;
+	npy_cdouble npy_z;
+	npy_cdouble c99_z;
 } __npy_complex_to_c99_cast;
 #endif
 

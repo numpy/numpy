@@ -37,7 +37,7 @@
 #include "npy_math_private.h"
 
 #ifndef HAVE_CREAL
-double npy_creal(npy_complex_double z)
+double npy_creal(npy_cdouble z)
 {
 	_double_complex z1;
 	z1.z = z;
@@ -46,7 +46,7 @@ double npy_creal(npy_complex_double z)
 #endif
 
 #ifndef HAVE_CIMAG
-double npy_cimag(npy_complex_double z)
+double npy_cimag(npy_cdouble z)
 {
 	_double_complex z1;
 	z1.z = z;
@@ -55,23 +55,23 @@ double npy_cimag(npy_complex_double z)
 #endif
 
 #ifndef HAVE_CABS
-double npy_cabs(npy_complex_double z)
+double npy_cabs(npy_cdouble z)
 {
 	return npy_hypot(npy_creal(z), npy_cimag(z));
 }
 #endif
 
 #ifndef HAVE_CARG
-double npy_carg(npy_complex_double z)
+double npy_carg(npy_cdouble z)
 {
 	return npy_atan2(npy_cimag(z), npy_creal(z));
 }
 #endif
 
 #ifndef HAVE_CEXP
-npy_complex_double npy_cexp(npy_complex_double z)
+npy_cdouble npy_cexp(npy_cdouble z)
 {
-	npy_complex_double ret;
+	npy_cdouble ret;
 	double x, y;
 
 	x = exp(npy_creal(z));
@@ -83,7 +83,7 @@ npy_complex_double npy_cexp(npy_complex_double z)
 #endif
 
 #ifndef HAVE_CLOG
-npy_complex_double npy_clog(npy_complex_double z)
+npy_cdouble npy_clog(npy_cdouble z)
 {
 	return npy_cpack(npy_log (npy_cabs (z)), npy_carg (z));
 }
@@ -94,9 +94,9 @@ npy_complex_double npy_clog(npy_complex_double z)
 /* We risk spurious overflow for components >= DBL_MAX / (1 + sqrt(2)). */
 #define	THRESH	0x1.a827999fcef32p+1022
 
-npy_complex_double npy_csqrt(npy_complex_double z)
+npy_cdouble npy_csqrt(npy_cdouble z)
 {
-	npy_complex_double result;
+	npy_cdouble result;
 	double a, b;
 	double t;
 	int scale;
@@ -157,9 +157,9 @@ npy_complex_double npy_csqrt(npy_complex_double z)
 #endif
 
 #ifndef HAVE_CPOW
-npy_complex_double npy_cpow (npy_complex_double x, npy_complex_double y)
+npy_cdouble npy_cpow (npy_cdouble x, npy_cdouble y)
 {
-	npy_complex_double b, p;
+	npy_cdouble b, p;
 	double bx, by, px, py;
 
 	b = clogf(x);
@@ -173,7 +173,7 @@ npy_complex_double npy_cpow (npy_complex_double x, npy_complex_double y)
 #endif
 
 #ifndef HAVE_CCOS
-npy_complex_double npy_ccos(npy_complex_double z)
+npy_cdouble npy_ccos(npy_cdouble z)
 {
 	double x, y;
 	x = npy_creal(z);
@@ -183,7 +183,7 @@ npy_complex_double npy_ccos(npy_complex_double z)
 #endif
 
 #ifndef HAVE_CSIN
-npy_complex_double npy_csin(npy_complex_double z)
+npy_cdouble npy_csin(npy_cdouble z)
 {
 	double x, y;
 	x = npy_creal(z);
@@ -201,7 +201,7 @@ npy_complex_double npy_csin(npy_complex_double z)
  * #KIND = CREAL,CIMAG,CABS,carg#
  */
 #ifdef HAVE_@KIND@
-double npy_@kind@(npy_complex_double z)
+double npy_@kind@(npy_cdouble z)
 {
         __npy_complex_to_c99_cast z1 = {z};
         return @kind@(z1.c99_z);
@@ -214,12 +214,12 @@ double npy_@kind@(npy_complex_double z)
  * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
  */
 #ifdef HAVE_@KIND@
-npy_complex_double npy_@kind@(npy_complex_double z)
+npy_cdouble npy_@kind@(npy_cdouble z)
 {
         __npy_complex_to_c99_cast z1 = {z};
         __npy_complex_to_c99_cast ret;
-        ret.npy_z = @kind@(z1.c99_z);
-	return ret.c99_z;
+        ret.c99_z = @kind@(z1.c99_z);
+	return ret.npy_z;
 }
 #endif
 /**end repeat**/
@@ -229,13 +229,13 @@ npy_complex_double npy_@kind@(npy_complex_double z)
  * #KIND = CPOW#
  */
 #ifdef HAVE_@KIND@
-npy_complex_double npy_@kind@(npy_complex_double x, npy_complex_double y)
+npy_cdouble npy_@kind@(npy_cdouble x, npy_cdouble y)
 {
         __npy_complex_to_c99_cast x1 = {x};
         __npy_complex_to_c99_cast y1 = {y};
         __npy_complex_to_c99_cast ret;
-        ret.npy_z = @kind@(x1.c99_z, y1.c99_z);
-	return ret.c99_z;
+        ret.c99_z = @kind@(x1.c99_z, y1.c99_z);
+	return ret.npy_z;
 }
 #endif
 /**end repeat**/
