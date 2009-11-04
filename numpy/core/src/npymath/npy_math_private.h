@@ -133,12 +133,32 @@ do {                                                            \
 typedef union {
 	npy_cdouble npy_z;
 	complex c99_z;
-} __npy_complex_to_c99_cast;
+} __npy_cdouble_to_c99_cast;
+
+typedef union {
+	npy_cfloat npy_z;
+	complex float c99_z;
+} __npy_cfloat_to_c99_cast;
+
+typedef union {
+	npy_clongdouble npy_z;
+	complex long double c99_z;
+} __npy_clongdouble_to_c99_cast;
 #else
 typedef union {
 	npy_cdouble npy_z;
 	npy_cdouble c99_z;
-} __npy_complex_to_c99_cast;
+} __npy_cdouble_to_c99_cast;
+
+typedef union {
+	npy_cfloat npy_z;
+	npy_cfloat c99_z;
+} __npy_cfloat_to_c99_cast;
+
+typedef union {
+	npy_clongdouble npy_z;
+	npy_clongdouble c99_z;
+} __npy_clongdouble_to_c99_cast;
 #endif
 
 #endif /* !_NPY_MATH_PRIVATE_H_ */

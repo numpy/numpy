@@ -30,94 +30,100 @@
  */
 #include <Python.h>
 #include <math.h>
+#include <float.h>
 
 #include "config.h"
 #include "numpy/npy_math.h"
 
 #include "npy_math_private.h"
 
-#ifndef HAVE_CREAL
-double npy_creal(npy_cdouble z)
+/**begin repeat
+ * #type = float,double,npy_longdouble#
+ * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
+ * #c = f, , l#
+ * #C = F, , L#
+ * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
+ */
+#ifndef HAVE_CREAL@C@
+@type@ npy_creal@c@(@ctype@ z)
 {
         union {
-                npy_cdouble z;
-                double a[2];
+                @ctype@ z;
+                @type@ a[2];
         } z1;
 	z1.z = z;
         return z1.a[0];
 }
 #endif
 
-#ifndef HAVE_CIMAG
-double npy_cimag(npy_cdouble z)
+#ifndef HAVE_CIMAG@C@
+@type@ npy_cimag@c@(@ctype@ z)
 {
         union {
-                npy_cdouble z;
-                double a[2];
+                @ctype@ z;
+                @type@ a[2];
         } z1;
 	z1.z = z;
         return z1.a[1];
 }
 #endif
 
-#ifndef HAVE_CABS
-double npy_cabs(npy_cdouble z)
+#ifndef HAVE_CABS@C@
+@type@ npy_cabs@c@(@ctype@ z)
 {
-	return npy_hypot(npy_creal(z), npy_cimag(z));
+	return npy_hypot@c@(npy_creal@c@(z), npy_cimag@c@(z));
 }
 #endif
 
-#ifndef HAVE_CARG
-double npy_carg(npy_cdouble z)
+#ifndef HAVE_CARG@C@
+@type@ npy_carg@c@(@ctype@ z)
 {
-	return npy_atan2(npy_cimag(z), npy_creal(z));
+	return npy_atan2@c@(npy_cimag@c@(z), npy_creal@c@(z));
 }
 #endif
 
-#ifndef HAVE_CEXP
-npy_cdouble npy_cexp(npy_cdouble z)
+#ifndef HAVE_CEXP@C@
+@ctype@ npy_cexp@c@(@ctype@ z)
 {
-	npy_cdouble ret;
-	double x, y;
+	@type@ x, y;
 
-	x = exp(npy_creal(z));
-	y = npy_cimag(z);
+	x = npy_exp@c@(npy_creal@c@(z));
+	y = npy_cimag@c@(z);
 
-	return npy_cpack(x * npy_cos(y), x * npy_sin(y));
-	
+	return npy_cpack@c@(x * npy_cos@c@(y), x * npy_sin@c@(y));
 }
 #endif
 
-#ifndef HAVE_CLOG
-npy_cdouble npy_clog(npy_cdouble z)
+#ifndef HAVE_CLOG@C@
+@ctype@ npy_clog@c@(@ctype@ z)
 {
-	return npy_cpack(npy_log (npy_cabs (z)), npy_carg (z));
+	return npy_cpack@c@(npy_log@c@ (npy_cabs@c@ (z)), npy_carg@c@ (z));
 }
 #endif
 
-#ifndef HAVE_CSQRT
+#ifndef HAVE_CSQRT@C@
 
 /* We risk spurious overflow for components >= DBL_MAX / (1 + sqrt(2)). */
-#define	THRESH	(DBL_MAX / (1 + NPY_SQRT2))
+#define	THRESH	(@TMAX@ / (1 + NPY_SQRT2@c@))
 
-npy_cdouble npy_csqrt(npy_cdouble z)
+@ctype@ npy_csqrt@c@(@ctype@ z)
 {
-	npy_cdouble result;
-	double a, b;
-	double t;
+	@ctype@ result;
+	@type@ a, b;
+	@type@ t;
 	int scale;
 
-	a = npy_creal(z);
-	b = npy_cimag(z);
+	a = npy_creal@c@(z);
+	b = npy_cimag@c@(z);
 
 	/* Handle special cases. */
 	if (a == 0 && b == 0)
-		return (npy_cpack(0, b));
+		return (npy_cpack@c@(0, b));
 	if (npy_isinf(b))
-		return (npy_cpack(NPY_INFINITY, b));
+		return (npy_cpack@c@(NPY_INFINITY, b));
 	if (npy_isnan(a)) {
 		t = (b - b) / (b - b);	/* raise invalid if b is not a NaN */
-		return (npy_cpack(a, t));	/* return NaN + NaN i */
+		return (npy_cpack@c@(a, t));	/* return NaN + NaN i */
 	}
 	if (npy_isinf(a)) {
 		/*
@@ -127,9 +133,9 @@ npy_cdouble npy_csqrt(npy_cdouble z)
 		 * csqrt(-inf + y i)   = 0   +  inf i
 		 */
 		if (npy_signbit(a))
-			return (npy_cpack(npy_fabs(b - b), npy_copysign(a, b)));
+			return (npy_cpack@c@(npy_fabs@c@(b - b), npy_copysign@c@(a, b)));
 		else
-			return (npy_cpack(a, npy_copysign(b - b, b)));
+			return (npy_cpack@c@(a, npy_copysign@c@(b - b, b)));
 	}
 	/*
 	 * The remaining special case (b is NaN) is handled just fine by
@@ -137,7 +143,7 @@ npy_cdouble npy_csqrt(npy_cdouble z)
 	 */
 
 	/* Scale to avoid overflow. */
-	if (npy_fabs(a) >= THRESH || npy_fabs(b) >= THRESH) {
+	if (npy_fabs@c@(a) >= THRESH || npy_fabs@c@(b) >= THRESH) {
 		a *= 0.25;
 		b *= 0.25;
 		scale = 1;
@@ -147,101 +153,113 @@ npy_cdouble npy_csqrt(npy_cdouble z)
 
 	/* Algorithm 312, CACM vol 10, Oct 1967. */
 	if (a >= 0) {
-		t = npy_sqrt((a + npy_hypot(a, b)) * 0.5);
-		result = npy_cpack(t, b / (2 * t));
+		t = npy_sqrt@c@((a + npy_hypot@c@(a, b)) * 0.5);
+		result = npy_cpack@c@(t, b / (2 * t));
 	} else {
-		t = npy_sqrt((-a + npy_hypot(a, b)) * 0.5);
-		result = npy_cpack(npy_fabs(b) / (2 * t), npy_copysign(t, b));
+		t = npy_sqrt@c@((-a + npy_hypot@c@(a, b)) * 0.5);
+		result = npy_cpack@c@(npy_fabs@c@(b) / (2 * t), npy_copysign@c@(t, b));
 	}
 
 	/* Rescale. */
 	if (scale)
-		return (npy_cpack(npy_creal(result) * 2, npy_cimag(result)));
+		return (npy_cpack@c@(npy_creal@c@(result) * 2, npy_cimag@c@(result)));
 	else
 		return (result);
 }
+#undef THRESH
 #endif
 
-#ifndef HAVE_CPOW
-npy_cdouble npy_cpow (npy_cdouble x, npy_cdouble y)
+#ifndef HAVE_CPOW@C@
+@ctype@ npy_cpow@c@ (@ctype@ x, @ctype@ y)
 {
-	npy_cdouble b, p;
-	double bx, by, px, py;
+	@ctype@ b, p;
+	@type@ bx, by, px, py;
 
-	b = npy_clog(x);
-	bx = npy_creal(b);
-	by = npy_cimag(b);
-	px = npy_creal(p);
-	py = npy_cimag(p);
+	b = npy_clog@c@(x);
+	p = npy_clog@c@(y);
+	bx = npy_creal@c@(b);
+	by = npy_cimag@c@(b);
+	px = npy_creal@c@(p);
+	py = npy_cimag@c@(p);
 
-	return npy_cexp(npy_cpack(bx * px - by * py, bx * py + by * px));
+	return npy_cexp@c@(npy_cpack@c@(bx * px - by * py, bx * py + by * px));
 }
 #endif
 
-#ifndef HAVE_CCOS
-npy_cdouble npy_ccos(npy_cdouble z)
+#ifndef HAVE_CCOS@C@
+@ctype@ npy_ccos@c@(@ctype@ z)
 {
-	double x, y;
-	x = npy_creal(z);
-	y = npy_cimag(z);
-	return npy_cpack(npy_cos(x) * npy_cosh(y), -(npy_sin(x) * npy_sinh(y)));
+	@type@ x, y;
+	x = npy_creal@c@(z);
+	y = npy_cimag@c@(z);
+	return npy_cpack@c@(npy_cos@c@(x) * npy_cosh@c@(y), -(npy_sin@c@(x) * npy_sinh@c@(y)));
 }
 #endif
 
-#ifndef HAVE_CSIN
-npy_cdouble npy_csin(npy_cdouble z)
+#ifndef HAVE_CSIN@C@
+@ctype@ npy_csin@c@(@ctype@ z)
 {
-	double x, y;
-	x = npy_creal(z);
-	y = npy_cimag(z);
-	return npy_cpack(npy_sin(x) * npy_cosh(y), npy_cos(x) * npy_sinh(y));
+	@type@ x, y;
+	x = npy_creal@c@(z);
+	y = npy_cimag@c@(z);
+	return npy_cpack@c@(npy_sin@c@(x) * npy_cosh@c@(y), npy_cos@c@(x) * npy_sinh@c@(y));
 }
 #endif
+/**end repeat**/
 
 /*
  * Decorate all the functions: those are the public ones
  */
 
 /**begin repeat
+ * #type = float, double, npy_longdouble#
+ * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #c = f, , l#
+ * #C = F, , L#
+ */
+
+/**begin repeat1
  * #kind = creal,cimag,cabs,carg#
  * #KIND = CREAL,CIMAG,CABS,carg#
  */
-#ifdef HAVE_@KIND@
-double npy_@kind@(npy_cdouble z)
+#ifdef HAVE_@KIND@@C@
+@type@ npy_@kind@@c@(@ctype@ z)
 {
-        __npy_complex_to_c99_cast z1 = {z};
-        return @kind@(z1.c99_z);
+        __@ctype@_to_c99_cast z1 = {z};
+        return @kind@@c@(z1.c99_z);
 }
 #endif
-/**end repeat**/
+/**end repeat1**/
 
-/**begin repeat
+/**begin repeat1
  * #kind = cexp,clog,csqrt,ccos,csin#
  * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
  */
-#ifdef HAVE_@KIND@
-npy_cdouble npy_@kind@(npy_cdouble z)
+#ifdef HAVE_@KIND@@C@
+@ctype@ npy_@kind@(@ctype@ z)
 {
-        __npy_complex_to_c99_cast z1 = {z};
-        __npy_complex_to_c99_cast ret;
-        ret.c99_z = @kind@(z1.c99_z);
+        __@ctype@_to_c99_cast z1 = {z};
+        __@ctype@_to_c99_cast ret;
+        ret.c99_z = @kind@@c@(z1.c99_z);
 	return ret.npy_z;
 }
 #endif
-/**end repeat**/
+/**end repeat1**/
 
-/**begin repeat
+/**begin repeat1
  * #kind = cpow#
  * #KIND = CPOW#
  */
-#ifdef HAVE_@KIND@
-npy_cdouble npy_@kind@(npy_cdouble x, npy_cdouble y)
+#ifdef HAVE_@KIND@@C@
+@ctype@ npy_@kind@(@ctype@ x, @ctype@ y)
 {
-        __npy_complex_to_c99_cast x1 = {x};
-        __npy_complex_to_c99_cast y1 = {y};
-        __npy_complex_to_c99_cast ret;
-        ret.c99_z = @kind@(x1.c99_z, y1.c99_z);
+        __@ctype@_to_c99_cast x1 = {x};
+        __@ctype@_to_c99_cast y1 = {y};
+        __@ctype@_to_c99_cast ret;
+        ret.c99_z = @kind@@c@(x1.c99_z, y1.c99_z);
 	return ret.npy_z;
 }
 #endif
+/**end repeat1**/
+
 /**end repeat**/
