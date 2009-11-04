@@ -127,6 +127,23 @@ precision are also available by adding the F and L suffixes respectively.
 
     The Euler constant (:math:`\lim_{n\rightarrow \infty}{\sum_{k=1}^n{\frac{1}{k}} - \ln n}`)
 
+Complex functions
+~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.4.0
+
+C99-like complex functions have been added. Those can be used if you wish to
+implement portable C extensions. Since we still support platforms without C99
+complex type, you need to restrict to C90-compatible syntax, e.g.:
+
+.. code-block:: c
+
+        /* a = 1 + 2i \*/
+        npy_complex a = npy_cpack(1, 2);
+        npy_complex b;
+
+        b = npy_log(a);
+
 Linking against the core math library in an extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
