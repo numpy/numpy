@@ -282,5 +282,8 @@ npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
 /*
  * Complex declarations
  */
+double npy_creal(npy_complex_double z);
+double npy_cimag(npy_complex_double z);
+double npy_cabs(npy_complex_double z);
 
 #endif
