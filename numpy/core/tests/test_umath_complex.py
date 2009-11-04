@@ -6,66 +6,56 @@ import numpy as np
 # TODO: conj 'symmetry'
 # TODO: FPU exceptions
 
-def _compare_zeros(x, y):
-    """Assuming both x and y are 0, raise an exception if x and y are not
-    exactly the same 0, taking into account the sign bit."""
-    if (np.iscomplexobj(x) and not np.iscomplexobj(y)) \
-            or (not np.iscomplexobj(x) and np.iscomplexobj(y)):
-            raise AssertionError("""
-Items are not equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
-
-    if np.iscomplexobj(x):
-        sxr = np.signbit(np.real(x))
-        sxi = np.signbit(np.imag(x))
-
-        syr = np.signbit(np.real(y))
-        syi = np.signbit(np.imag(y))
-
-        if (not sxr == syr) or (not sxi == syi):
-            raise AssertionError("""
-Items are not equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
-    else:
-        sx = np.signbit(x)
-        sy = np.signbit(y)
-
-        if (not sx == sy):
-            raise AssertionError("""
-Items are not equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
-
-def assert_equal_spec(x, y):
-    # Handles nan and inf
+def _are_equal(x, y):
     if x == 0:
         if y == 0:
-            _compare_zeros(x, y)
+            if not np.signbit(x) == np.signbit(y):
+                return False
         else:
-            raise AssertionError("""
-Items are not almost equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
-    elif np.isnan(x):
+            return False
+
+    # Handles nan and inf
+    if np.isnan(x):
         if np.isnan(y):
-            pass
+            return True
         else:
-            raise AssertionError("""
-Items are not almost equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
+            return False
     elif np.isinf(x) and np.isinf(y):
         if x * y > 0:
-            pass
+            return True
         else:
-            raise AssertionError("""
-Items are not equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
+            return False
     else:
-        assert_equal(x, y)
+        try:
+            assert_equal(x, y)
+            return True
+        except AssertionError:
+            return False
+
+def assert_equal_spec(x, y):
+    # Barf if x and y are not both complex or real right away
+    if (np.iscomplexobj(x) and not np.iscomplexobj(y)) \
+            or (not np.iscomplexobj(x) and np.iscomplexobj(y)):
+        raise AssertionError("Items are not equal:\n" \
+                             "ACTUAL: %s\n" \
+                             "DESIRED: %s\n" % (str(x), str(y)))
+
+    if np.iscomplexobj(x):
+        xr = np.real(x)
+        yr = np.real(y)
+
+        xi = np.imag(x)
+        yi = np.imag(y)
+
+        if not _are_equal(xr, xi) and _are_equal(yr, yi):
+            raise AssertionError("Items are not equal:\n" \
+                                 "ACTUAL: %s\n" \
+                                 "DESIRED: %s\n" % (str(x), str(y)))
+    else:
+        if not _are_equal(x, y):
+            raise AssertionError("Items are not equal:\n" \
+                                 "ACTUAL: %s\n" \
+                                 "DESIRED: %s\n" % (str(x), str(y)))
 
 def assert_almost_equal_spec(x, y):
     # Handles nan
