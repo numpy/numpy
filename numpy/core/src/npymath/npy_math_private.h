@@ -142,28 +142,4 @@ typedef union {
 } __npy_complex_to_c99_cast;
 #endif
 
-/*
- * C99 specifies that complex numbers have the same representation as
- * an array of two elements, where the first element is the real part
- * and the second element is the imaginary part.
- */
-typedef union {
-	npy_complex_double z;
-	double a[2];
-} _double_complex;
-
-/* those can be used as lvalues */
-#define REALPART(z)     ((z).a[0])
-#define IMAGPART(z)     ((z).a[1])
-
-static inline npy_complex_double cpack(double x, double y)
-{
-        _double_complex z1;
-
-        REALPART(z1) = x;
-        IMAGPART(z1) = y;
-
-        return z1.z;
-}
-
 #endif /* !_NPY_MATH_PRIVATE_H_ */

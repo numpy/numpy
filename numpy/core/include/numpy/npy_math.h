@@ -282,6 +282,25 @@ npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
 /*
  * Complex declarations
  */
+
+/*
+ * C99 specifies that complex numbers have the same representation as
+ * an array of two elements, where the first element is the real part
+ * and the second element is the imaginary part.
+ */
+static NPY_INLINE npy_complex_double npy_cpack(double x, double y)
+{
+    union {
+        npy_complex_double z;
+        double a[2];
+    } z1;;
+
+    z1.a[0] = x;
+    z1.a[1] = y;
+
+    return z1.z;
+}
+
 double npy_creal(npy_complex_double z);
 double npy_cimag(npy_complex_double z);
 double npy_cabs(npy_complex_double z);

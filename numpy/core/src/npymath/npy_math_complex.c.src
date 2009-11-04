@@ -77,7 +77,7 @@ npy_complex_double npy_cexp(npy_complex_double z)
 	x = exp(npy_creal(z));
 	y = npy_cimag(z);
 
-	return cpack(x * npy_cos(y), x * npy_sin(y));
+	return npy_cpack(x * npy_cos(y), x * npy_sin(y));
 	
 }
 #endif
@@ -85,7 +85,7 @@ npy_complex_double npy_cexp(npy_complex_double z)
 #ifndef HAVE_CLOG
 npy_complex_double npy_clog(npy_complex_double z)
 {
-	return cpack(npy_log (npy_cabs (z)), npy_carg (z));
+	return npy_cpack(npy_log (npy_cabs (z)), npy_carg (z));
 }
 #endif
 
@@ -106,12 +106,12 @@ npy_complex_double npy_csqrt(npy_complex_double z)
 
 	/* Handle special cases. */
 	if (a == 0 && b == 0)
-		return (cpack(0, b));
+		return (npy_cpack(0, b));
 	if (npy_isinf(b))
-		return (cpack(NPY_INFINITY, b));
+		return (npy_cpack(NPY_INFINITY, b));
 	if (npy_isnan(a)) {
 		t = (b - b) / (b - b);	/* raise invalid if b is not a NaN */
-		return (cpack(a, t));	/* return NaN + NaN i */
+		return (npy_cpack(a, t));	/* return NaN + NaN i */
 	}
 	if (npy_isinf(a)) {
 		/*
@@ -121,9 +121,9 @@ npy_complex_double npy_csqrt(npy_complex_double z)
 		 * csqrt(-inf + y i)   = 0   +  inf i
 		 */
 		if (npy_signbit(a))
-			return (cpack(npy_fabs(b - b), npy_copysign(a, b)));
+			return (npy_cpack(npy_fabs(b - b), npy_copysign(a, b)));
 		else
-			return (cpack(a, npy_copysign(b - b, b)));
+			return (npy_cpack(a, npy_copysign(b - b, b)));
 	}
 	/*
 	 * The remaining special case (b is NaN) is handled just fine by
@@ -142,15 +142,15 @@ npy_complex_double npy_csqrt(npy_complex_double z)
 	/* Algorithm 312, CACM vol 10, Oct 1967. */
 	if (a >= 0) {
 		t = npy_sqrt((a + npy_hypot(a, b)) * 0.5);
-		result = cpack(t, b / (2 * t));
+		result = npy_cpack(t, b / (2 * t));
 	} else {
 		t = npy_sqrt((-a + npy_hypot(a, b)) * 0.5);
-		result = cpack(npy_fabs(b) / (2 * t), npy_copysign(t, b));
+		result = npy_cpack(npy_fabs(b) / (2 * t), npy_copysign(t, b));
 	}
 
 	/* Rescale. */
 	if (scale)
-		return (cpack(npy_creal(result) * 2, npy_cimag(result)));
+		return (npy_cpack(npy_creal(result) * 2, npy_cimag(result)));
 	else
 		return (result);
 }
@@ -168,7 +168,7 @@ npy_complex_double npy_cpow (npy_complex_double x, npy_complex_double y)
 	px = npy_creal(p);
 	py = npy_cimag(p);
 
-	return npy_cexp(cpack(bx * px - by * py, bx * py + by * px));
+	return npy_cexp(npy_cpack(bx * px - by * py, bx * py + by * px));
 }
 #endif
 
@@ -178,7 +178,7 @@ npy_complex_double npy_ccos(npy_complex_double z)
 	double x, y;
 	x = npy_creal(z);
 	y = npy_cimag(z);
-	return cpack(npy_cos(x) * npy_cosh(y), -(npy_sin(x) * npy_sinh(y)));
+	return npy_cpack(npy_cos(x) * npy_cosh(y), -(npy_sin(x) * npy_sinh(y)));
 }
 #endif
 
@@ -188,7 +188,7 @@ npy_complex_double npy_csin(npy_complex_double z)
 	double x, y;
 	x = npy_creal(z);
 	y = npy_cimag(z);
-	return cpack(npy_sin(x) * npy_cosh(y), npy_cos(x) * npy_sinh(y));
+	return npy_cpack(npy_sin(x) * npy_cosh(y), npy_cos(x) * npy_sinh(y));
 }
 #endif
 
