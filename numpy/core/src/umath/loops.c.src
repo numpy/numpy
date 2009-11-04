@@ -1508,6 +1508,16 @@ C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 }
 
 NPY_NO_EXPORT void
+C@TYPE@__arg(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((@type@ *)op1) = npy_atan2@c@(in1i, in1r);
+    }
+}
+
+NPY_NO_EXPORT void
 C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /* fixme: sign of nan is currently 0 */

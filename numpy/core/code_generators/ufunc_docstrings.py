@@ -441,6 +441,11 @@ add_newdoc('numpy.core.umath', 'arctan2',
 
     """)
 
+add_newdoc('numpy.core.umath', '_arg',
+    """
+    DO NOT USE, ONLY FOR TESTING
+    """)
+
 add_newdoc('numpy.core.umath', 'arctanh',
     """
     Inverse hyperbolic tangent elementwise.

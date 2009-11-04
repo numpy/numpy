@@ -305,6 +305,11 @@ defdict = {
           TD(cmplx, out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
+'_arg' :
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath._arg'),
+          TD(cmplx, out=('f', 'd', 'g')),
+          ),
 'negative' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
