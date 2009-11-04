@@ -61,10 +61,17 @@ double npy_cabs(npy_complex_double z)
 }
 #endif
 
+#ifndef HAVE_CARG
+double npy_carg(npy_complex_double z)
+{
+	return npy_atan2(npy_cimag(z), npy_creal(z));
+}
+#endif
+
 #ifndef HAVE_CEXP
 npy_complex_double npy_cexp(npy_complex_double z)
 {
-	npy_double_complex ret;
+	npy_complex_double ret;
 	double x, y;
 
 	x = exp(npy_creal(z));
@@ -72,6 +79,13 @@ npy_complex_double npy_cexp(npy_complex_double z)
 
 	return cpack(x * npy_cos(y), x * npy_sin(y));
 	
+}
+#endif
+
+#ifndef HAVE_CLOG
+npy_complex_double npy_clog(npy_complex_double z)
+{
+	return cpack(npy_log (npy_cabs (z)), npy_carg (z));
 }
 #endif
 
@@ -142,13 +156,49 @@ npy_complex_double npy_csqrt(npy_complex_double z)
 }
 #endif
 
+#ifndef HAVE_CPOW
+npy_complex_double npy_cpow (npy_complex_double x, npy_complex_double y)
+{
+	npy_complex_double b, p;
+	double bx, by, px, py;
+
+	b = clogf(x);
+	bx = npy_creal(b);
+	by = npy_cimag(b);
+	px = npy_creal(p);
+	py = npy_cimag(p);
+
+	return npy_cexp(cpack(bx * px - by * py, bx * py + by * px));
+}
+#endif
+
+#ifndef HAVE_CCOS
+npy_complex_double npy_ccos(npy_complex_double z)
+{
+	double x, y;
+	x = npy_creal(z);
+	y = npy_cimag(z);
+	return cpack(npy_cos(x) * npy_cosh(y), -(npy_sin(x) * npy_sinh(y)));
+}
+#endif
+
+#ifndef HAVE_CSIN
+npy_complex_double npy_csin(npy_complex_double z)
+{
+	double x, y;
+	x = npy_creal(z);
+	y = npy_cimag(z);
+	return cpack(npy_sin(x) * npy_cosh(y), npy_cos(x) * npy_sinh(y));
+}
+#endif
+
 /*
  * Decorate all the functions: those are the public ones
  */
 
 /**begin repeat
- * #kind = creal,cimag,cabs#
- * #KIND = CREAL,CIMAG,CABS#
+ * #kind = creal,cimag,cabs,carg#
+ * #KIND = CREAL,CIMAG,CABS,carg#
  */
 #ifdef HAVE_@KIND@
 double npy_@kind@(npy_complex_double z)
