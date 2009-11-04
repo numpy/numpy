@@ -235,6 +235,8 @@ if config.CheckHeader('complex.h'):
     check_prec('')
     check_prec('f')
     check_prec('l')
+else:
+    numpyconfig_sym.append(('DEFINE_NPY_USE_C99_COMPLEX', ''))
 
 def visibility_define():
     if config.CheckGCC4():
