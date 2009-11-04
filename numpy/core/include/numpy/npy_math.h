@@ -286,4 +286,6 @@ double npy_creal(npy_complex_double z);
 double npy_cimag(npy_complex_double z);
 double npy_cabs(npy_complex_double z);
 
+npy_complex_double npy_cexp(npy_complex_double z);
+
 #endif

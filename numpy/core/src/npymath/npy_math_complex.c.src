@@ -61,6 +61,20 @@ double npy_cabs(npy_complex_double z)
 }
 #endif
 
+#ifndef HAVE_CEXP
+npy_complex_double npy_cexp(npy_complex_double z)
+{
+	npy_double_complex ret;
+	double x, y;
+
+	x = exp(npy_creal(z));
+	y = npy_cimag(z);
+
+	return cpack(x * npy_cos(y), x * npy_sin(y));
+	
+}
+#endif
+
 /*
  * Decorate all the functions: those are the public ones
  */
@@ -74,6 +88,21 @@ double npy_@kind@(npy_complex_double z)
 {
         __npy_complex_to_c99_cast z1 = {z};
         return @kind@(z1.c99_z);
+}
+#endif
+/**end repeat**/
+
+/**begin repeat
+ * #kind = cexp#
+ * #KIND = CEXP#
+ */
+#ifdef HAVE_@KIND@
+npy_complex_double npy_@kind@(npy_complex_double z)
+{
+        __npy_complex_to_c99_cast z1 = {z};
+        __npy_complex_to_c99_cast ret;
+        ret.npy_z = @kind@(z1.c99_z);
+	return ret.c99_z;
 }
 #endif
 /**end repeat**/
