@@ -318,33 +318,33 @@ class TestCabs(object):
         # cabs(+-nan + nani) returns nan
         x.append(np.nan)
         y.append(np.nan)
-        yield check_complex_value, np.abs,  np.nan, np.nan, np.nan, 0
+        yield check_real_value, np.abs,  np.nan, np.nan, np.nan
 
         x.append(np.nan)
         y.append(-np.nan)
-        yield check_complex_value, np.abs, -np.nan, np.nan, np.nan, 0
+        yield check_real_value, np.abs, -np.nan, np.nan, np.nan
 
         # According to C99 standard, if exactly one of the real/part is inf and
         # the other nan, then cabs should return inf
         x.append(np.inf)
         y.append(np.nan)
-        yield check_complex_value, np.abs,  np.inf, np.nan, np.inf, 0
+        yield check_real_value, np.abs,  np.inf, np.nan, np.inf
 
         x.append(-np.inf)
         y.append(np.nan)
-        yield check_complex_value, np.abs, -np.inf, np.nan, np.inf, 0
+        yield check_real_value, np.abs, -np.inf, np.nan, np.inf
 
-        # cabs(conj(z)) = conj(cabs(z)).
+        # cabs(conj(z)) == conj(cabs(z)) (= cabs(z))
         def f(a):
             return np.abs(np.conj(a))
         def g(a, b):
-            return np.conj(np.abs(np.complex(a, b)))
+            return np.abs(np.complex(a, b))
 
         xa = np.array(x, dtype=np.complex)
         ya = np.array(x, dtype=np.complex)
         for i in range(len(xa)):
             ref = g(x[i], y[i])
-            yield check_complex_value, f, x[i], y[i], ref.real, ref.imag
+            yield check_real_value, f, x[i], y[i], ref
 
 class TestCarg(object):
     def test_simple(self):
