@@ -180,10 +180,12 @@ def check_complex(config, mathlibs):
             if st:
                 pub.append(('NPY_HAVE_%s' % type2def(t), 1))
 
-        if not config.check_funcs_once(C99_COMPLEX_FUNCS):
-            for f in C99_COMPLEX_FUNCS:
-                if config.check_func(f):
-                    priv.append(fname2def(f))
+        def check_prec(prec):
+            flist = [f + prec for f in C99_COMPLEX_TYPES]
+            if not config.check_funcs_once(flist):
+                for f in flist:
+                    if config.check_func(f):
+                        priv.append(fname2def(f))
 
     return priv, pub
 
