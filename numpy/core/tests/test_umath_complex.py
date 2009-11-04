@@ -181,7 +181,7 @@ class TestCpow(TestCase):
         for i in range(len(x)):
             assert_almost_equal_spec(y[i], y_r[i])
 
-class TestCabs(TestCase):
+class TestCabs(object):
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
@@ -204,34 +204,38 @@ class TestCabs(TestCase):
         assert_array_equal(np.abs(x), np.real(x))
 
     def test_cabs_inf_nan(self):
-        xl = []
-        yl = []
+        x, y = [], []
 
-        x = np.array([complex(np.nan, np.nan)], np.complex)
-        y = np.nan
-        assert_almost_equal_spec(np.abs(x), y)
-        xl.append(x)
-        yl.append(y)
+        # cabs(+-nan + nani) returns nan
+        x.append(np.nan)
+        y.append(np.nan)
+        yield check_complex_value, np.abs,  np.nan, np.nan, np.nan, 0
+
+        x.append(np.nan)
+        y.append(-np.nan)
+        yield check_complex_value, np.abs, -np.nan, np.nan, np.nan, 0
 
         # According to C99 standard, if exactly one of the real/part is inf and
         # the other nan, then cabs should return inf
-        x = np.array([complex(np.inf, np.nan)], np.complex)
-        y = np.inf
-        assert_almost_equal_spec(np.abs(x), y)
-        xl.append(x)
-        yl.append(y)
+        x.append(np.inf)
+        y.append(np.nan)
+        yield check_complex_value, np.abs,  np.inf, np.nan, np.inf, 0
 
-        x = np.array([complex(-np.inf, np.nan)], np.complex)
-        y = np.inf
-        assert_almost_equal_spec(np.abs(x), y)
-        xl.append(x)
-        yl.append(y)
+        x.append(-np.inf)
+        y.append(np.nan)
+        yield check_complex_value, np.abs, -np.inf, np.nan, np.inf, 0
 
         # cabs(conj(z)) = conj(cabs(z)).
-        xa = np.array(xl, dtype=np.complex)
-        ya = np.array(yl, dtype=np.complex)
+        def f(a):
+            return np.abs(np.conj(a))
+        def g(a, b):
+            return np.conj(np.abs(np.complex(a, b)))
+
+        xa = np.array(x, dtype=np.complex)
+        ya = np.array(x, dtype=np.complex)
         for i in range(len(xa)):
-            assert_almost_equal_spec(np.abs(np.conj(xa[i])), np.conj(np.abs(xa[i])))
+            ref = g(x[i], y[i])
+            yield check_complex_value, f, x[i], y[i], ref.real, ref.imag
 
 class TestCarg(object):
     def test_simple(self):
