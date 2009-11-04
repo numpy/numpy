@@ -121,7 +121,7 @@ npy_complex_double npy_csqrt(npy_complex_double z)
 		 * csqrt(-inf + y i)   = 0   +  inf i
 		 */
 		if (npy_signbit(a))
-			return (cpack(fabs(b - b), npy_copysign(a, b)));
+			return (cpack(npy_fabs(b - b), npy_copysign(a, b)));
 		else
 			return (cpack(a, npy_copysign(b - b, b)));
 	}
