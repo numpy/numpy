@@ -75,6 +75,73 @@ npy_complex_double npy_cexp(npy_complex_double z)
 }
 #endif
 
+#ifndef HAVE_CSQRT
+
+/* We risk spurious overflow for components >= DBL_MAX / (1 + sqrt(2)). */
+#define	THRESH	0x1.a827999fcef32p+1022
+
+npy_complex_double npy_csqrt(npy_complex_double z)
+{
+	npy_complex_double result;
+	double a, b;
+	double t;
+	int scale;
+
+	a = npy_creal(z);
+	b = npy_cimag(z);
+
+	/* Handle special cases. */
+	if (z == 0)
+		return (cpack(0, b));
+	if (npy_isinf(b))
+		return (cpack(NPY_INFINITY, b));
+	if (npy_isnan(a)) {
+		t = (b - b) / (b - b);	/* raise invalid if b is not a NaN */
+		return (cpack(a, t));	/* return NaN + NaN i */
+	}
+	if (npy_isinf(a)) {
+		/*
+		 * csqrt(inf + NaN i)  = inf +  NaN i
+		 * csqrt(inf + y i)    = inf +  0 i
+		 * csqrt(-inf + NaN i) = NaN +- inf i
+		 * csqrt(-inf + y i)   = 0   +  inf i
+		 */
+		if (npy_signbit(a))
+			return (cpack(fabs(b - b), npy_copysign(a, b)));
+		else
+			return (cpack(a, npy_copysign(b - b, b)));
+	}
+	/*
+	 * The remaining special case (b is NaN) is handled just fine by
+	 * the normal code path below.
+	 */
+
+	/* Scale to avoid overflow. */
+	if (npy_fabs(a) >= THRESH || npy_fabs(b) >= THRESH) {
+		a *= 0.25;
+		b *= 0.25;
+		scale = 1;
+	} else {
+		scale = 0;
+	}
+
+	/* Algorithm 312, CACM vol 10, Oct 1967. */
+	if (a >= 0) {
+		t = npy_sqrt((a + npy_hypot(a, b)) * 0.5);
+		result = cpack(t, b / (2 * t));
+	} else {
+		t = npy_sqrt((-a + npy_hypot(a, b)) * 0.5);
+		result = cpack(npy_fabs(b) / (2 * t), npy_copysign(t, b));
+	}
+
+	/* Rescale. */
+	if (scale)
+		return (result * 2);
+	else
+		return (result);
+}
+#endif
+
 /*
  * Decorate all the functions: those are the public ones
  */
@@ -93,8 +160,8 @@ double npy_@kind@(npy_complex_double z)
 /**end repeat**/
 
 /**begin repeat
- * #kind = cexp#
- * #KIND = CEXP#
+ * #kind = cexp,csqrt#
+ * #KIND = CEXP,CSQRT#
  */
 #ifdef HAVE_@KIND@
 npy_complex_double npy_@kind@(npy_complex_double z)
