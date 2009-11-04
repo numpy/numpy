@@ -248,8 +248,8 @@
  */
 
 /**begin repeat1
- * #kind = creal,cimag,cabs,carg#
- * #KIND = CREAL,CIMAG,CABS,carg#
+ * #kind = cabs,carg#
+ * #KIND = CABS,carg#
  */
 #ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@ctype@ z)
