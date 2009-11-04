@@ -168,7 +168,7 @@ npy_cdouble npy_cpow (npy_cdouble x, npy_cdouble y)
 	npy_cdouble b, p;
 	double bx, by, px, py;
 
-	b = clogf(x);
+	b = npy_clog(x);
 	bx = npy_creal(b);
 	by = npy_cimag(b);
 	px = npy_creal(p);
