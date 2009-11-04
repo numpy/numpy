@@ -39,7 +39,8 @@
 #ifndef HAVE_CREAL
 double npy_creal(npy_complex_double z)
 {
-	_double_complex z1 = {z};
+	_double_complex z1;
+	z1.z = z;
         return REALPART(z1);
 }
 #endif
@@ -47,7 +48,8 @@ double npy_creal(npy_complex_double z)
 #ifndef HAVE_CIMAG
 double npy_cimag(npy_complex_double z)
 {
-	_double_complex z1 = {z};
+	_double_complex z1;
+	z1.z = z;
         return IMAGPART(z1);
 }
 #endif
