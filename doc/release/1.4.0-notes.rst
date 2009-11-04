@@ -52,6 +52,8 @@ The following ufuncs have been added to the C API:
 
     #. copysign - return the value of the first argument with the sign copied
        from the second argument.
+    #. nextafter - return the next representable floating point value of the
+       first argument toward the second argument.
 
 New defines
 ~~~~~~~~~~~

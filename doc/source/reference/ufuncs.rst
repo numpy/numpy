@@ -558,6 +558,7 @@ single operation.
     isnan
     signbit
     copysign
+    nextafter
     modf
     ldexp
     frexp
