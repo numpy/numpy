@@ -86,6 +86,13 @@ Testing
     #. deprecated decorator: this decorator may be used to avoid cluttering
        testing output while testing DeprecationWarning is effectively raised by
        the decorated test.
+    #. assert_array_almost_equal_nulps: new method to compare two arrays of
+       floating point values. With this function, two values are considered
+       close if there are not many representable floating point values in
+       between, thus being more robust than assert_array_almost_equal when the
+       values fluctuate a lot.
+    #. assert_array_max_ulp: raise an assertion if there are more than N
+       representable numbers between two floating point values.
 
 Improvements
 ============
