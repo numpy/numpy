@@ -83,22 +83,6 @@ failed detection of the PARISC processor has been fixed. The defines are:
     #. NPY_CPU_HPPA: PARISC
     #. NPY_CPU_ALPHA: Alpha
 
-Enhancements
-~~~~~~~~~~~~
-
-    #. The sort functions now sort nans to the end.
-
-        * Real sort order is [R, nan]
-        * Complex sort order is [R + Rj, R + nanj, nan + Rj, nan + nanj]
-
-       Complex numbers with the same nan placements are sorted according to
-       the non-nan part if it exists.
-    #. The type comparison functions have been made consistent with the new
-       sort order of nans. Searchsorted now works with sorted arrays
-       containing nan values.
-    #. Complex division has been made more resistent to overflow.
-    #. Complex floor division has been made more resistent to overflow.
-
 Testing
 ~~~~~~~
 
@@ -113,11 +97,33 @@ Testing
     #. assert_array_max_ulp: raise an assertion if there are more than N
        representable numbers between two floating point values.
 
+Reusing npymath
+~~~~~~~~~~~~~~~
+
+In 1.3.0, we started putting portable C math routines in npymath library, so
+that people can use those to write portable extensions. Unfortunately, it was
+not possible to easily link against this library: in 1.4.0, support has been
+added to numpy.distutils so that 3rd party can reuse this library. See coremath
+documentation for more information.
+
 Improvements
 ============
 
     #. numpy import is noticeably faster (from 20 to 30 % depending on the
     platform and computer)
+
+    #. The sort functions now sort nans to the end.
+
+        * Real sort order is [R, nan]
+        * Complex sort order is [R + Rj, R + nanj, nan + Rj, nan + nanj]
+
+       Complex numbers with the same nan placements are sorted according to
+       the non-nan part if it exists.
+    #. The type comparison functions have been made consistent with the new
+       sort order of nans. Searchsorted now works with sorted arrays
+       containing nan values.
+    #. Complex division has been made more resistent to overflow.
+    #. Complex floor division has been made more resistent to overflow.
 
 Deprecations
 ============
