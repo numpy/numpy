@@ -337,15 +337,6 @@ double npy_cimag(npy_cdouble z);
 double npy_cabs(npy_cdouble z);
 double npy_carg(npy_cdouble z);
 
-npy_cdouble npy_cexp(npy_cdouble z);
-npy_cdouble npy_clog(npy_cdouble z);
-npy_cdouble npy_cpow(npy_cdouble x, npy_cdouble y);
-
-npy_cdouble npy_csqrt(npy_cdouble z);
-
-npy_cdouble npy_ccos(npy_cdouble z);
-npy_cdouble npy_csin(npy_cdouble z);
-
 /*
  * Single precision complex functions
  */
@@ -368,32 +359,9 @@ float npy_cimagf(npy_cfloat z);
 float npy_cabsf(npy_cfloat z);
 float npy_cargf(npy_cfloat z);
 
-npy_cfloat npy_cexpf(npy_cfloat z);
-npy_cfloat npy_clogf(npy_cfloat z);
-npy_cfloat npy_cpowf(npy_cfloat x, npy_cfloat y);
-
-npy_cfloat npy_csqrtf(npy_cfloat z);
-
-npy_cfloat npy_ccosf(npy_cfloat z);
-npy_cfloat npy_csinf(npy_cfloat z);
-
 /*
  * Extended precision complex functions
  */
-npy_longdouble npy_creall(npy_clongdouble z);
-npy_longdouble npy_cimagl(npy_clongdouble z);
-npy_longdouble npy_cabsl(npy_clongdouble z);
-npy_longdouble npy_cargl(npy_clongdouble z);
-
-npy_clongdouble npy_cexpl(npy_clongdouble z);
-npy_clongdouble npy_clogl(npy_clongdouble z);
-npy_clongdouble npy_cpowl(npy_clongdouble x, npy_clongdouble y);
-
-npy_clongdouble npy_csqrtl(npy_clongdouble z);
-
-npy_clongdouble npy_ccosl(npy_clongdouble z);
-npy_clongdouble npy_csinl(npy_clongdouble z);
-
 npy_longdouble npy_creall(npy_clongdouble z);
 npy_longdouble npy_cimagl(npy_clongdouble z);
 npy_longdouble npy_cabsl(npy_clongdouble z);
