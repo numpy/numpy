@@ -240,7 +240,7 @@
  * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
  */
 #ifdef HAVE_@KIND@@C@
-@ctype@ npy_@kind@(@ctype@ z)
+@ctype@ npy_@kind@@c@(@ctype@ z)
 {
         __@ctype@_to_c99_cast z1 = {z};
         __@ctype@_to_c99_cast ret;
@@ -255,7 +255,7 @@
  * #KIND = CPOW#
  */
 #ifdef HAVE_@KIND@@C@
-@ctype@ npy_@kind@(@ctype@ x, @ctype@ y)
+@ctype@ npy_@kind@@c@(@ctype@ x, @ctype@ y)
 {
         __@ctype@_to_c99_cast x1 = {x};
         __@ctype@_to_c99_cast y1 = {y};
