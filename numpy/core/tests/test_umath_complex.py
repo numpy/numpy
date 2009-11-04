@@ -4,8 +4,14 @@ import numpy as np
 
 def assert_equal_spec(x, y):
     # Handles nan and inf
-    if np.isnan(x) and np.isnan(y):
-        pass
+    if np.isnan(x):
+        if np.isnan(y):
+            pass
+        else:
+            raise AssertionError("""
+Items are not almost equal:
+ ACTUAL: %s
+ DESIRED: %s""" % (str(x), str(y)))
     elif np.isinf(x) and np.isinf(y):
         if x * y > 0:
             pass
@@ -19,8 +25,14 @@ Items are not equal:
 
 def assert_almost_equal_spec(x, y):
     # Handles nan
-    if np.isnan(x) and np.isnan(y):
-        pass
+    if np.isnan(x):
+        if np.isnan(y):
+            pass
+        else:
+            raise AssertionError("""
+Items are not almost equal:
+ ACTUAL: %s
+ DESIRED: %s""" % (str(x), str(y)))
     elif np.isinf(x) and np.isinf(y):
         if x * y > 0:
             pass
