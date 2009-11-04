@@ -47,7 +47,7 @@ def assert_equal_spec(x, y):
         xi = np.imag(x)
         yi = np.imag(y)
 
-        if not _are_equal(xr, xi) and _are_equal(yr, yi):
+        if not (_are_equal(xr, yr) and _are_equal(xi, yi)):
             raise AssertionError("Items are not equal:\n" \
                                  "ACTUAL: %s\n" \
                                  "DESIRED: %s\n" % (str(x), str(y)))
