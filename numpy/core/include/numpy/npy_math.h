@@ -316,10 +316,52 @@ static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 #undef __NPY_CPACK_IMP
 
 /*
+ * Same remark as above, but in the other direction: extract first/second
+ * member of complex number, assuming a C99-compatible representation
+ */
+#define __NPY_CEXTRACT_IMP(z, index, type, ctype)   \
+	union {						\
+		ctype z;				\
+		type a[2];				\
+	} __z_repr;					\
+	__z_repr.z = z;				\
+								\
+	return __z_repr.a[index];
+
+NPY_INLINE double npy_creal(npy_cdouble z)
+{
+	__NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
+}
+
+NPY_INLINE double npy_cimag(npy_cdouble z)
+{
+	__NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
+}
+
+NPY_INLINE float npy_crealf(npy_cfloat z)
+{
+	__NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
+}
+
+NPY_INLINE float npy_cimagf(npy_cfloat z)
+{
+	__NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
+}
+
+NPY_INLINE npy_longdouble npy_creall(npy_clongdouble z)
+{
+	__NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
+}
+
+NPY_INLINE npy_longdouble npy_cimagl(npy_clongdouble z)
+{
+	__NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
+}
+#undef __NPY_CEXTRACT_IMP
+
+/*
  * Double precision complex functions
  */
-double npy_creal(npy_cdouble z);
-double npy_cimag(npy_cdouble z);
 double npy_cabs(npy_cdouble z);
 double npy_carg(npy_cdouble z);
 
@@ -335,8 +377,6 @@ npy_cdouble npy_csin(npy_cdouble z);
 /*
  * Single precision complex functions
  */
-float npy_crealf(npy_cfloat z);
-float npy_cimagf(npy_cfloat z);
 float npy_cabsf(npy_cfloat z);
 float npy_cargf(npy_cfloat z);
 
@@ -352,8 +392,6 @@ npy_cfloat npy_csinf(npy_cfloat z);
 /*
  * Extended precision complex functions
  */
-npy_longdouble npy_creall(npy_clongdouble z);
-npy_longdouble npy_cimagl(npy_clongdouble z);
 npy_longdouble npy_cabsl(npy_clongdouble z);
 npy_longdouble npy_cargl(npy_clongdouble z);
 

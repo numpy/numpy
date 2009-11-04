@@ -48,30 +48,6 @@
  * #C = F, , L#
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
  */
-#ifndef HAVE_CREAL@C@
-@type@ npy_creal@c@(@ctype@ z)
-{
-    union {
-        @ctype@ z;
-        @type@ a[2];
-    } z1;
-    z1.z = z;
-    return z1.a[0];
-}
-#endif
-
-#ifndef HAVE_CIMAG@C@
-@type@ npy_cimag@c@(@ctype@ z)
-{
-    union {
-        @ctype@ z;
-        @type@ a[2];
-    } z1;
-    z1.z = z;
-    return z1.a[1];
-}
-#endif
-
 #ifndef HAVE_CABS@C@
 @type@ npy_cabs@c@(@ctype@ z)
 {
