@@ -105,8 +105,18 @@ C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
 
+C99_COMPLEX_TYPES = ['complex double', 'complex float', 'complex long double']
+
 C99_COMPLEX_FUNCS = ['creal', 'cimag', 'cabs', 'carg', 'cexp', 'csqrt', 'clog',
                   'ccos', 'csin', 'cpow']
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()
+
+def sym2def(symbol):
+    define = symbol.replace(' ', '')
+    return define.upper()
+
+def type2def(symbol):
+    define = symbol.replace(' ', '_')
+    return define.upper()

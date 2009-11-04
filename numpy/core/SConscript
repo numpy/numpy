@@ -218,6 +218,12 @@ else:
 #-----------------------------
 if config.CheckHeader('complex.h'):
     numpyconfig_sym.append(('DEFINE_NPY_USE_C99_COMPLEX', '#define NPY_USE_C99_COMPLEX 1'))
+
+    for t in C99_COMPLEX_TYPES:
+        st = config.CheckType(t, includes='#include <complex.h>')
+        if st:
+            numpyconfig_sym.append(('NPY_%s' % sym2def(t), 1))
+
     st = config.CheckFuncsAtOnce(C99_COMPLEX_FUNCS)
     if not st:
         # Global check failed, check func per func

@@ -175,6 +175,11 @@ def check_complex(config, mathlibs):
         priv.append('HAVE_COMPLEX_H')
         pub.append('NPY_USE_C99_COMPLEX')
 
+        for t in C99_COMPLEX_TYPES:
+            st = config.check_type(t, headers=["complex.h"])
+            if st:
+                pub.append(('NPY_HAVE_%s' % type2def(t), 1))
+
         if not config.check_funcs_once(C99_COMPLEX_FUNCS):
             for f in C99_COMPLEX_FUNCS:
                 if config.check_func(f):
@@ -289,10 +294,6 @@ def check_types(config_cmd, ext, build_dir):
             ", please contact the maintainers")
 
     return private_defines, public_defines
-
-def sym2def(symbol):
-    define = symbol.replace(' ', '')
-    return define.upper()
 
 def check_mathlib(config_cmd):
     # Testing the C math library
