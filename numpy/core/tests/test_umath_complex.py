@@ -142,12 +142,7 @@ class TestClog(TestCase):
         yl.append(y)
 
         x = np.array([complex(-1, np.inf)], dtype=np.complex)
-        assert_almost_equal_spec(np.log(x), y)
-        xl.append(x)
-        yl.append(y)
-
-        x = np.array([complex(np.inf, np.inf)], dtype=np.complex)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
