@@ -10,7 +10,7 @@ def assert_equal_spec(x, y):
         if x * y > 0:
             pass
         else:
-            raise AssertError("""
+            raise AssertionError("""
 Items are not equal:
  ACTUAL: %s
  DESIRED: %s""" % (str(x), str(y)))
@@ -25,7 +25,7 @@ def assert_almost_equal_spec(x, y):
         if x * y > 0:
             pass
         else:
-            raise AssertError("""
+            raise AssertionError("""
 Items are not almost equal:
  ACTUAL: %s
  DESIRED: %s""" % (str(x), str(y)))
@@ -788,114 +788,109 @@ class TestClog(TestCase):
 
         # clog(-0 + i0) returns -inf + i pi and raises the 'divide-by-zero'
         # floating-point exception.
-        x = np.array([-0 + 0j], dtype=np.complex)
+        x = np.array([np.NZERO], dtype=np.complex)
         y = np.complex(-np.inf, np.pi)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+0 + i0) returns -inf + i0 and raises the 'divide-by-zero'
         # floating-point exception.
-        x = np.array([0 + 0j], dtype=np.complex)
-        y = np.complex(np.inf, np.pi)
-        assert_almost_equal(np.log(x), y)
+        x = np.array([0], dtype=np.complex)
+        y = np.complex(-np.inf, 0)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(x + i inf returns +inf + i pi /2, for finite x.
-        x = np.array([1 + np.inf * 1j], dtype=np.complex)
+        x = np.array([complex(1, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.5 * np.pi)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
-        x = np.array([-1 + np.inf * 1j], dtype=np.complex)
-        assert_almost_equal(np.log(x), y)
+        x = np.array([complex(-1, np.inf)], dtype=np.complex)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
-        x = np.array([np.inf + np.inf * 1j], dtype=np.complex)
-        assert_almost_equal(np.log(x), y)
-        xl.append(x)
-        yl.append(y)
-
-        x = np.array([np.nan + np.inf * 1j], dtype=np.complex)
-        assert_almost_equal(np.log(x), y)
+        x = np.array([complex(np.inf, np.inf)], dtype=np.complex)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(x + iNaN) returns NaN + iNaN and optionally raises the
         # 'invalid' floating- point exception, for finite x.
-        x = np.array([1. + np.nan * 1j], dtype=np.complex)
+        x = np.array([complex(1., np.nan)], dtype=np.complex)
         y = np.complex(np.nan, np.nan)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         x = np.array([np.inf + np.nan * 1j], dtype=np.complex)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(- inf + iy) returns +inf + ipi , for finite positive-signed y.
         x = np.array([-np.inf + 1j], dtype=np.complex)
         y = np.complex(np.inf, np.pi)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+ inf + iy) returns +inf + i0, for finite positive-signed y.
         x = np.array([np.inf + 1j], dtype=np.complex)
         y = np.complex(np.inf, 0)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(- inf + i inf) returns +inf + i3pi /4.
-        x = np.array([-np.inf + 1j * np.inf], dtype=np.complex)
+        x = np.array([complex(-np.inf, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.75 * np.pi)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+ inf + i inf) returns +inf + ipi /4.
-        x = np.array([np.inf + 1j * np.inf], dtype=np.complex)
+        x = np.array([complex(np.inf, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.25 * np.pi)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+/- inf + iNaN) returns +inf + iNaN.
-        x = np.array([+np.inf + 1j * np.nan], dtype=np.complex)
+        x = np.array([complex(np.inf, np.nan)], dtype=np.complex)
         y = np.complex(np.inf, np.nan)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
-        x = np.array([-np.inf + 1j * np.nan], dtype=np.complex)
-        assert_almost_equal(np.log(x), y)
+        x = np.array([complex(-np.inf, np.nan)], dtype=np.complex)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(NaN + iy) returns NaN + iNaN and optionally raises the
         # 'invalid' floating-point exception, for finite y.
-        x = np.array([np.nan + 1j], dtype=np.complex)
+        x = np.array([complex(np.nan, 1)], dtype=np.complex)
         y = np.complex(np.nan, np.nan)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(NaN + i inf) returns +inf + iNaN.
-        x = np.array([np.nan + 1j * np.inf], dtype=np.complex)
+        x = np.array([complex(np.nan, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, np.nan)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(NaN + iNaN) returns NaN + iNaN.
-        x = np.array([np.nan + 1j * np.nan], dtype=np.complex)
+        x = np.array([complex(np.nan, np.nan)], dtype=np.complex)
         y = np.complex(np.nan, np.nan)
-        assert_almost_equal(np.log(x), y)
+        assert_almost_equal_spec(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
@@ -903,7 +898,7 @@ class TestClog(TestCase):
         xa = np.array(xl, dtype=np.complex)
         ya = np.array(yl, dtype=np.complex)
         for i in range(len(xa)):
-            assert_almost_equal(np.log(np.conj(x[i])), np.conj(np.log(x[i])))
+            assert_almost_equal_spec(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
 
 class TestCpow(TestCase):
     def test_simple(self):
