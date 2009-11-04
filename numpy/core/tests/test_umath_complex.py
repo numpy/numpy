@@ -6,57 +6,6 @@ import numpy as np
 # TODO: conj 'symmetry'
 # TODO: FPU exceptions
 
-def _are_equal(x, y):
-    if x == 0:
-        if y == 0:
-            if not np.signbit(x) == np.signbit(y):
-                return False
-        else:
-            return False
-
-    # Handles nan and inf
-    if np.isnan(x):
-        if np.isnan(y):
-            return True
-        else:
-            return False
-    elif np.isinf(x) and np.isinf(y):
-        if x * y > 0:
-            return True
-        else:
-            return False
-    else:
-        try:
-            assert_equal(x, y)
-            return True
-        except AssertionError:
-            return False
-
-def assert_equal_spec(x, y):
-    # Barf if x and y are not both complex or real right away
-    if (np.iscomplexobj(x) and not np.iscomplexobj(y)) \
-            or (not np.iscomplexobj(x) and np.iscomplexobj(y)):
-        raise AssertionError("Items are not equal:\n" \
-                             "ACTUAL: %s\n" \
-                             "DESIRED: %s\n" % (str(x), str(y)))
-
-    if np.iscomplexobj(x):
-        xr = np.real(x)
-        yr = np.real(y)
-
-        xi = np.imag(x)
-        yi = np.imag(y)
-
-        if not (_are_equal(xr, yr) and _are_equal(xi, yi)):
-            raise AssertionError("Items are not equal:\n" \
-                                 "ACTUAL: %s\n" \
-                                 "DESIRED: %s\n" % (str(x), str(y)))
-    else:
-        if not _are_equal(x, y):
-            raise AssertionError("Items are not equal:\n" \
-                                 "ACTUAL: %s\n" \
-                                 "DESIRED: %s\n" % (str(x), str(y)))
-
 def assert_almost_equal_spec(x, y):
     # Handles nan
     if np.isnan(x):
@@ -511,7 +460,7 @@ class TestCarg(object):
 def check_real_value(f, x1, y1, x, exact=True):
     z1 = np.array([complex(x1, y1)])
     if exact:
-        assert_equal_spec(f(z1), x)
+        assert_equal(f(z1), x)
     else:
         assert_almost_equal_spec(f(z1), x)
 
@@ -519,7 +468,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
     z1 = np.array([complex(x1, y1)])
     z2 = np.complex(x2, y2)
     if exact:
-        assert_equal_spec(f(z1), z2)
+        assert_equal(f(z1), z2)
     else:
         assert_almost_equal_spec(f(z1), z2)
 
