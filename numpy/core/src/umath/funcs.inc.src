@@ -165,25 +165,7 @@ nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 static void
 nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ s,d;
-    if (x->real == 0. && x->imag == 0.)
-        *r = *x;
-    else {
-        s = npy_sqrt@c@((npy_fabs@c@(x->real) + npy_hypot@c@(x->real,x->imag))/2);
-        d = x->imag/(2*s);
-        if (x->real > 0) {
-            r->real = s;
-            r->imag = d;
-        }
-        else if (x->imag >= 0) {
-            r->real = d;
-            r->imag = s;
-        }
-        else {
-            r->real = -d;
-            r->imag = -s;
-        }
-    }
+    *r = npy_csqrt@c@(*x);
     return;
 }
 
@@ -197,9 +179,7 @@ nc_rint@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_log@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ l = npy_hypot@c@(x->real,x->imag);
-    r->imag = npy_atan2@c@(x->imag, x->real);
-    r->real = npy_log@c@(l);
+    *r = npy_clog@c@(*x);
     return;
 }
 
@@ -215,9 +195,7 @@ nc_log1p@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_exp@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ a = npy_exp@c@(x->real);
-    r->real = a*npy_cos@c@(x->imag);
-    r->imag = a*npy_sin@c@(x->imag);
+    *r = npy_cexp@c@(*x);
     return;
 }
 
@@ -243,61 +221,7 @@ nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-    intp n;
-    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-
-    if (br == 0. && bi == 0.) {
-        r->real = 1.;
-        r->imag = 0.;
-        return;
-    }
-    if (ar == 0. && ai == 0.) {
-        r->real = 0.;
-        r->imag = 0.;
-        return;
-    }
-    if (bi == 0 && (n=(intp)br) == br) {
-        if (n == 1) {
-            /* unroll: handle inf better */
-            r->real = a->real; r->imag = a->imag;
-            return;
-        }
-        else if (n == 2) {
-            /* unroll: handle inf better */
-            nc_prod@c@(a, a, r);
-            return;
-        }
-        else if (n == 3) {
-            /* unroll: handle inf better */
-            nc_prod@c@(a, a, r);
-            nc_prod@c@(a, r, r);
-            return;
-        }
-        else if (n > -100 && n < 100) {
-            c@typ@ p, aa;
-            intp mask = 1;
-            if (n < 0) n = -n;
-            aa = nc_1@c@;
-            p.real = ar; p.imag = ai;
-            while (1) {
-                if (n & mask)
-                    nc_prod@c@(&aa,&p,&aa);
-                mask <<= 1;
-                if (n < mask || mask <= 0) break;
-                nc_prod@c@(&p,&p,&p);
-            }
-            r->real = aa.real; r->imag = aa.imag;
-            if (br < 0) nc_quot@c@(&nc_1@c@, r, r);
-            return;
-        }
-    }
-    /*
-     * complexobect.c uses an inline version of this formula
-     * investigate whether this had better performance or accuracy
-     */
-    nc_log@c@(a, r);
-    nc_prod@c@(r, b, r);
-    nc_exp@c@(r, r);
+    *r = npy_cpow@c@(*a, *b);
     return;
 }
 
