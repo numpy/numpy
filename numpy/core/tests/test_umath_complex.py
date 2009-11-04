@@ -173,6 +173,81 @@ class TestClog(TestCase):
         for i in range(len(xa)):
             assert_almost_equal_spec(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
 
+class TestCsqrt(object):
+    def test_simple(self):
+        # sqrt(1)
+        yield check_complex_value, np.sqrt, 1, 0, 1, 0
+
+        # sqrt(1i)
+        yield check_complex_value, np.sqrt, 0, 1, 0.5*np.sqrt(2), 0.5*np.sqrt(2), False
+
+        # sqrt(-1)
+        yield check_complex_value, np.sqrt, -1, 0, 0, 1
+
+    def test_simple_conjugate(self):
+        ref = np.conj(np.sqrt(np.complex(1, 1)))
+        def f(z):
+            return np.sqrt(np.conj(z))
+        yield check_complex_value, f, 1, 1, ref.real, ref.imag, False
+
+    #def test_branch_cut(self):
+    #    _check_branch_cut(f, -1, 0, 1, -1)
+
+    def test_special_values(self):
+        check = check_complex_value 
+        f = np.sqrt
+
+        # C99: Sec G 6.4.2
+        x, y = [], []
+
+        # csqrt(+-0 + 0i) is 0 + 0i
+        yield check, f, np.PZERO, 0, 0, 0
+        yield check, f, np.NZERO, 0, 0, 0
+
+        # csqrt(x + infi) is inf + infi for any x (including NaN)
+        yield check, f,  1, np.inf, np.inf, np.inf
+        yield check, f, -1, np.inf, np.inf, np.inf
+
+        yield check, f, np.PZERO, np.inf, np.inf, np.inf
+        yield check, f, np.NZERO, np.inf, np.inf, np.inf
+        yield check, f,   np.inf, np.inf, np.inf, np.inf
+        yield check, f,  -np.inf, np.inf, np.inf, np.inf
+        yield check, f,  -np.nan, np.inf, np.inf, np.inf
+
+        # csqrt(x + nani) is nan + nani for any finite x
+        yield check, f,  1, np.nan, np.nan, np.nan
+        yield check, f, -1, np.nan, np.nan, np.nan
+        yield check, f,  0, np.nan, np.nan, np.nan
+
+        # csqrt(-inf + yi) is +0 + infi for any finite y > 0
+        yield check, f, -np.inf, 1, np.PZERO, np.inf
+
+        # csqrt(inf + yi) is +inf + 0i for any finite y > 0
+        yield check, f, np.inf, 1, np.inf, np.PZERO
+
+        # csqrt(-inf + nani) is nan +- infi (both +i infi are valid)
+        def _check_ninf_nan(dummy):
+            z = np.sqrt(np.array(np.complex(-np.inf, np.nan)))
+            if not np.isnan(z.real) or not np.isinf(z.imag):
+                raise AssertionError(
+                        "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)" \
+                        % (z.real, z.imag))
+
+        yield _check_ninf_nan, None
+
+        # csqrt(+inf + nani) is inf + nani
+        yield check, f, np.inf, np.nan, np.inf, np.nan
+
+        # csqrt(nan + yi) is nan + nani for any y
+        yield check, f, np.nan,       0, np.nan, np.nan
+        yield check, f, np.nan,       1, np.nan, np.nan
+        yield check, f, np.nan,  np.nan, np.nan, np.nan
+        yield check, f, np.nan,  np.inf, np.nan, np.nan
+        yield check, f, np.nan, -np.inf, np.nan, np.nan
+
+        # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
+        # cuts first)
+
 class TestCpow(TestCase):
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
