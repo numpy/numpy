@@ -37,6 +37,10 @@
 
 #include "npy_math_private.h"
 
+/*==========================================================
+ * Custom implementation of missing complex C99 functions
+ *=========================================================*/
+
 /**begin repeat
  * #type = float,double,npy_longdouble#
  * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
@@ -207,9 +211,9 @@
 #endif
 /**end repeat**/
 
-/*
- * Decorate all the functions: those are the public ones
- */
+/*==========================================================
+ * Decorate all the functions which are available natively
+ *=========================================================*/
 
 /**begin repeat
  * #type = float, double, npy_longdouble#
