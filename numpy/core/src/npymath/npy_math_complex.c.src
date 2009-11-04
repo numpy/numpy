@@ -57,7 +57,7 @@ double npy_cimag(npy_complex_double z)
 #ifndef HAVE_CABS
 double npy_cabs(npy_complex_double z)
 {
-	return nypy_hypot(npy_creal(z), npy_cimag(z));
+	return npy_hypot(npy_creal(z), npy_cimag(z));
 }
 #endif
 
