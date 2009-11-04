@@ -221,6 +221,56 @@ nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
+    intp n;
+    @typ@ ar = npy_creal@c@(*a);
+    @typ@ br = npy_creal@c@(*b);
+    @typ@ ai = npy_cimag@c@(*a);
+    @typ@ bi = npy_cimag@c@(*b);
+
+    if (br == 0. && bi == 0.) {
+        *r = npy_cpack@c@(1., 0.);
+        return;
+    }
+    if (ar == 0. && ai == 0.) {
+        *r = npy_cpack@c@(0., 0.);
+        return;
+    }
+    if (bi == 0 && (n=(intp)br) == br) {
+        if (n == 1) {
+            /* unroll: handle inf better */
+            *r = npy_cpack@c@(ar, ai);
+            return;
+        }
+        else if (n == 2) {
+            /* unroll: handle inf better */
+            nc_prod@c@(a, a, r);
+            return;
+        }
+        else if (n == 3) {
+            /* unroll: handle inf better */
+            nc_prod@c@(a, a, r);
+            nc_prod@c@(a, r, r);
+            return;
+        }
+        else if (n > -100 && n < 100) {
+            c@typ@ p, aa;
+            intp mask = 1;
+            if (n < 0) n = -n;
+            aa = nc_1@c@;
+            p = npy_cpack@c@(ar, ai);
+            while (1) {
+                if (n & mask)
+                    nc_prod@c@(&aa,&p,&aa);
+                mask <<= 1;
+                if (n < mask || mask <= 0) break;
+                nc_prod@c@(&p,&p,&p);
+            }
+            *r = npy_cpack@c@(npy_creal@c@(aa), npy_cimag@c@(aa));
+            if (br < 0) nc_quot@c@(&nc_1@c@, r, r);
+            return;
+        }
+    }
+
     *r = npy_cpow@c@(*a, *b);
     return;
 }
