@@ -318,6 +318,9 @@ static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 /*
  * Same remark as above, but in the other direction: extract first/second
  * member of complex number, assuming a C99-compatible representation
+ *
+ * Those are defineds as static inline, and such as a reasonable compiler would
+ * most likely compile this to one or two instructions (on CISC at least)
  */
 #define __NPY_CEXTRACT_IMP(z, index, type, ctype)   \
 	union {						\
@@ -328,32 +331,32 @@ static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 								\
 	return __z_repr.a[index];
 
-NPY_INLINE double npy_creal(npy_cdouble z)
+static NPY_INLINE double npy_creal(npy_cdouble z)
 {
 	__NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
 }
 
-NPY_INLINE double npy_cimag(npy_cdouble z)
+static NPY_INLINE double npy_cimag(npy_cdouble z)
 {
 	__NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
 }
 
-NPY_INLINE float npy_crealf(npy_cfloat z)
+static NPY_INLINE float npy_crealf(npy_cfloat z)
 {
 	__NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
 }
 
-NPY_INLINE float npy_cimagf(npy_cfloat z)
+static NPY_INLINE float npy_cimagf(npy_cfloat z)
 {
 	__NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
 }
 
-NPY_INLINE npy_longdouble npy_creall(npy_clongdouble z)
+static NPY_INLINE npy_longdouble npy_creall(npy_clongdouble z)
 {
 	__NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
 }
 
-NPY_INLINE npy_longdouble npy_cimagl(npy_clongdouble z)
+static NPY_INLINE npy_longdouble npy_cimagl(npy_clongdouble z)
 {
 	__NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
 }
