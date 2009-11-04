@@ -217,6 +217,7 @@ else:
 # Checking for complex support
 #-----------------------------
 if config.CheckHeader('complex.h'):
+    numpyconfig_sym.append(('DEFINE_NPY_USE_C99_COMPLEX', '#define NPY_USE_C99_COMPLEX 1'))
     st = config.CheckFuncsAtOnce(C99_COMPLEX_FUNCS)
     if not st:
         # Global check failed, check func per func
@@ -348,7 +349,8 @@ generated_headers.append(ufunc_api[0])
 env.Prepend(CPPPATH = ['include', '.', 'include/numpy'])
 
 # npymath core lib
-npymath_src = env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src'))
+npymath_src = [env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src')),
+               env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math_complex.c.src'))]
 npymath_src.append(pjoin('src', 'npymath', 'ieee754.c'))
 env.DistutilsInstalledStaticExtLibrary("npymath", npymath_src, install_dir='lib')
 env.Prepend(LIBS=["npymath"])

@@ -34,6 +34,7 @@ class CallOnceOnly(object):
     def __init__(self):
         self._check_types = None
         self._check_ieee_macros = None
+        self._check_complex = None
 
     def check_types(self, *a, **kw):
         if self._check_types is None:
@@ -49,6 +50,14 @@ class CallOnceOnly(object):
             self._check_ieee_macros = _pik.dumps(out)
         else:
             out = copy.deepcopy(_pik.loads(self._check_ieee_macros))
+        return out
+
+    def check_complex(self, *a, **kw):
+        if self._check_complex is None:
+            out = check_complex(*a, **kw)
+            self._check_complex = _pik.dumps(out)
+        else:
+            out = copy.deepcopy(_pik.loads(self._check_complex))
         return out
 
 PYTHON_HAS_UNICODE_WIDE = True
@@ -156,15 +165,22 @@ def check_math_capabilities(config, moredefs, mathlibs):
     check_funcs(C99_FUNCS_SINGLE)
     check_funcs(C99_FUNCS_EXTENDED)
 
+def check_complex(config, mathlibs):
+    priv = []
+    pub = []
+
     # Check for complex support
     st = config.check_header('complex.h')
     if st:
-        moredefs.append('HAVE_COMPLEX_H')
+        priv.append('HAVE_COMPLEX_H')
+        pub.append('NPY_USE_C99_COMPLEX')
 
-        if not check_funcs_once(C99_COMPLEX_FUNCS):
+        if not config.check_funcs_once(C99_COMPLEX_FUNCS):
             for f in C99_COMPLEX_FUNCS:
                 if config.check_func(f):
-                    moredefs.append(fname2def(f))
+                    priv.append(fname2def(f))
+
+    return priv, pub
 
 def check_ieee_macros(config):
     priv = []
@@ -352,6 +368,7 @@ def configuration(parent_package='',top_path=None):
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
+            moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[0])
 
             # Signal check
             if is_npy_no_signal():
@@ -439,7 +456,9 @@ def configuration(parent_package='',top_path=None):
             else:
                 moredefs.append(('NPY_NO_SMP', 0))
 
+            mathlibs = check_mathlib(config_cmd)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
+            moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
 
             if ENABLE_SEPARATE_COMPILATION:
                 moredefs.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))

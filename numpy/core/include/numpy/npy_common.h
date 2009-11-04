@@ -804,5 +804,15 @@ typedef npy_int64 npy_datetime;
 
 /* End of typedefs for numarray style bit-width names */
 
+#ifdef NPY_USE_C99_COMPLEX
+#include "complex.h"
+typedef complex npy_complex_double;
+#else
+#undef complex
+typedef struct {
+        double x, y;
+} npy_complex_double;
+#endif
+
 #endif
 
