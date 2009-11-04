@@ -101,6 +101,11 @@ typedef long npy_long;
 #include <complex.h>
 #endif
 
+/*
+ * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
+ * able to do .real/.imag. Will have to convert code first. 
+ */
+#if 0
 #if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_DOUBLE)
 typedef complex npy_cdouble;
 #else
@@ -118,6 +123,10 @@ typedef complex long double npy_clongdouble;
 #else
 typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #endif
+#endif
+typedef struct { double real, imag; } npy_cdouble;
+typedef struct { float real, imag; } npy_cfloat;
+typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 
 /*
  * numarray-style bit-width typedefs
