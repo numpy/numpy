@@ -84,8 +84,19 @@ def check_type(type, include = None):
     else:
         numpyconfig_sym.append(('SIZEOF_%s' % type.upper(), 0))
 
-for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
+for type in ('short', 'int', 'long'):
     check_type(type)
+
+for type in ('float', 'double', 'long double'):
+    sz = config.CheckTypeSize(type)
+    numpyconfig_sym.append(('SIZEOF_%s' % type2def(type), str(sz)))
+
+    # Compute size of corresponding complex type: used to check that our
+    # definition is binary compatible with C99 complex type (check done at
+    # build time in npy_common.h)
+    complex_def = "struct {%s __x; %s __y;}" % (type, type)
+    sz = config.CheckTypeSize(complex_def)
+    numpyconfig_sym.append(('SIZEOF_COMPLEX_%s' % type2def(type), str(sz)))
 
 for type in ('Py_intptr_t',):
     check_type(type, include = "#include <Python.h>\n")

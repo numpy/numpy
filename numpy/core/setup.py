@@ -247,18 +247,38 @@ def check_types(config_cmd, ext, build_dir):
                 "install python-dev|python-devel.")
 
     # Check basic types sizes
-    for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
+    for type in ('short', 'int', 'long'):
         res = config_cmd.check_decl("SIZEOF_%s" % sym2def(type), headers = ["Python.h"])
         if res:
             public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), "SIZEOF_%s" % sym2def(type)))
         else:
             res = config_cmd.check_type_size(type, expected=expected[type])
             if res >= 0:
-                if not type == 'long double':
-                    private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
                 public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
             else:
                 raise SystemError("Checking sizeof (%s) failed !" % type)
+
+    for type in ('float', 'double', 'long double'):
+        already_declared = config_cmd.check_decl("SIZEOF_%s" % sym2def(type),
+                                                 headers = ["Python.h"])
+        res = config_cmd.check_type_size(type, expected=expected[type])
+        if res >= 0:
+            public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
+            if not already_declared and not type == 'long double':
+                private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % type)
+
+        # Compute size of corresponding complex type: used to check that our
+        # definition is binary compatible with C99 complex type (check done at
+        # build time in npy_common.h)
+        complex_def = "struct {%s __x; %s __y;}" % (type, type)
+        res = config_cmd.check_type_size(complex_def, expected=2*expected[type])
+        if res >= 0:
+            public_defines.append(('NPY_SIZEOF_COMPLEX_%s' % sym2def(type), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % complex_def)
+
 
     for type in ('Py_intptr_t',):
         res = config_cmd.check_type_size(type, headers=["Python.h"],
