@@ -160,8 +160,8 @@ double npy_@kind@(npy_complex_double z)
 /**end repeat**/
 
 /**begin repeat
- * #kind = cexp,csqrt#
- * #KIND = CEXP,CSQRT#
+ * #kind = cexp,clog,csqrt,ccos,csin#
+ * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
  */
 #ifdef HAVE_@KIND@
 npy_complex_double npy_@kind@(npy_complex_double z)
@@ -169,6 +169,22 @@ npy_complex_double npy_@kind@(npy_complex_double z)
         __npy_complex_to_c99_cast z1 = {z};
         __npy_complex_to_c99_cast ret;
         ret.npy_z = @kind@(z1.c99_z);
+	return ret.c99_z;
+}
+#endif
+/**end repeat**/
+
+/**begin repeat
+ * #kind = cpow#
+ * #KIND = CPOW#
+ */
+#ifdef HAVE_@KIND@
+npy_complex_double npy_@kind@(npy_complex_double x, npy_complex_double y)
+{
+        __npy_complex_to_c99_cast x1 = {x};
+        __npy_complex_to_c99_cast y1 = {y};
+        __npy_complex_to_c99_cast ret;
+        ret.npy_z = @kind@(x1.c99_z, y1.c99_z);
 	return ret.c99_z;
 }
 #endif

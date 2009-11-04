@@ -105,7 +105,7 @@ C99_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
 
-C99_COMPLEX_FUNCS = ['creal', 'cimag', 'cabs', 'cexp', 'csqrt']
+C99_COMPLEX_FUNCS = ['creal', 'cimag', 'cabs', 'cexp', 'csqrt', 'clog', 'ccos', 'csin', 'cpow']
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()
