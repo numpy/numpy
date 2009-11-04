@@ -6,27 +6,6 @@ import numpy as np
 # TODO: conj 'symmetry'
 # TODO: FPU exceptions
 
-def assert_almost_equal_spec(x, y):
-    # Handles nan
-    if np.isnan(x):
-        if np.isnan(y):
-            pass
-        else:
-            raise AssertionError("""
-Items are not almost equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
-    elif np.isinf(x) and np.isinf(y):
-        if x * y > 0:
-            pass
-        else:
-            raise AssertionError("""
-Items are not almost equal:
- ACTUAL: %s
- DESIRED: %s""" % (str(x), str(y)))
-    else:
-        assert_almost_equal(x, y)
-
 class TestCexp(object):
     def test_simple(self):
         check = check_complex_value 
@@ -130,7 +109,7 @@ class TestClog(TestCase):
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
         for i in range(len(x)):
-            assert_almost_equal_spec(y[i], y_r[i])
+            assert_almost_equal(y[i], y_r[i])
 
     def test_special_values(self):
         xl = []
@@ -143,7 +122,7 @@ class TestClog(TestCase):
         # floating-point exception.
         x = np.array([np.NZERO], dtype=np.complex)
         y = np.complex(-np.inf, np.pi)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
@@ -151,14 +130,14 @@ class TestClog(TestCase):
         # floating-point exception.
         x = np.array([0], dtype=np.complex)
         y = np.complex(-np.inf, 0)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(x + i inf returns +inf + i pi /2, for finite x.
         x = np.array([complex(1, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.5 * np.pi)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
@@ -176,52 +155,52 @@ class TestClog(TestCase):
         # 'invalid' floating- point exception, for finite x.
         x = np.array([complex(1., np.nan)], dtype=np.complex)
         y = np.complex(np.nan, np.nan)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         x = np.array([np.inf + np.nan * 1j], dtype=np.complex)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(- inf + iy) returns +inf + ipi , for finite positive-signed y.
         x = np.array([-np.inf + 1j], dtype=np.complex)
         y = np.complex(np.inf, np.pi)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+ inf + iy) returns +inf + i0, for finite positive-signed y.
         x = np.array([np.inf + 1j], dtype=np.complex)
         y = np.complex(np.inf, 0)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(- inf + i inf) returns +inf + i3pi /4.
         x = np.array([complex(-np.inf, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.75 * np.pi)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+ inf + i inf) returns +inf + ipi /4.
         x = np.array([complex(np.inf, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.25 * np.pi)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(+/- inf + iNaN) returns +inf + iNaN.
         x = np.array([complex(np.inf, np.nan)], dtype=np.complex)
         y = np.complex(np.inf, np.nan)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         x = np.array([complex(-np.inf, np.nan)], dtype=np.complex)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
@@ -229,21 +208,21 @@ class TestClog(TestCase):
         # 'invalid' floating-point exception, for finite y.
         x = np.array([complex(np.nan, 1)], dtype=np.complex)
         y = np.complex(np.nan, np.nan)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(NaN + i inf) returns +inf + iNaN.
         x = np.array([complex(np.nan, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, np.nan)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
         # clog(NaN + iNaN) returns NaN + iNaN.
         x = np.array([complex(np.nan, np.nan)], dtype=np.complex)
         y = np.complex(np.nan, np.nan)
-        assert_almost_equal_spec(np.log(x), y)
+        assert_almost_equal(np.log(x), y)
         xl.append(x)
         yl.append(y)
 
@@ -251,7 +230,7 @@ class TestClog(TestCase):
         xa = np.array(xl, dtype=np.complex)
         ya = np.array(yl, dtype=np.complex)
         for i in range(len(xa)):
-            assert_almost_equal_spec(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
+            assert_almost_equal(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
 
 class TestCsqrt(object):
     def test_simple(self):
@@ -333,7 +312,7 @@ class TestCpow(TestCase):
         y_r = x ** 2
         y = np.power(x, 2)
         for i in range(len(x)):
-            assert_almost_equal_spec(y[i], y_r[i])
+            assert_almost_equal(y[i], y_r[i])
 
 class TestCabs(object):
     def test_simple(self):
@@ -341,7 +320,7 @@ class TestCabs(object):
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
         y = np.abs(x)
         for i in range(len(x)):
-            assert_almost_equal_spec(y[i], y_r[i])
+            assert_almost_equal(y[i], y_r[i])
 
     def test_fabs(self):
         # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
@@ -462,7 +441,7 @@ def check_real_value(f, x1, y1, x, exact=True):
     if exact:
         assert_equal(f(z1), x)
     else:
-        assert_almost_equal_spec(f(z1), x)
+        assert_almost_equal(f(z1), x)
 
 def check_complex_value(f, x1, y1, x2, y2, exact=True):
     z1 = np.array([complex(x1, y1)])
@@ -470,7 +449,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
     if exact:
         assert_equal(f(z1), z2)
     else:
-        assert_almost_equal_spec(f(z1), z2)
+        assert_almost_equal(f(z1), z2)
 
 if __name__ == "__main__":
     run_module_suite()
