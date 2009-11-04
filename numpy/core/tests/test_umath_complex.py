@@ -190,28 +190,48 @@ class TestCabs(TestCase):
             assert_almost_equal_spec(y[i], y_r[i])
 
     def test_fabs(self):
-        # Tesst that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
+        # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
         x = np.array([1+0j], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([1-0j], dtype=np.complex)
+        x = np.array([complex(1, np.NZERO)], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([np.inf-0j], dtype=np.complex)
+        x = np.array([complex(np.inf, np.NZERO)], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([np.nan-0j], dtype=np.complex)
+        x = np.array([complex(np.nan, np.NZERO)], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-    @dec.knownfailureif(True, "Buggy behavior of abs with inf complex")
     def test_cabs_inf_nan(self):
-        # According to C99 standard, cabs(inf + j * nan) should be inf
-        x = np.array([np.inf + 1j * np.nan, np.inf + 1j * np.inf,
-            np.nan + 1j * np.nan])
-        y_r = np.array([np.inf, np.inf, np.nan])
-        y = np.abs(x)
-        for i in range(len(x)):
-            assert_equal_spec(y_r[i], y[i])
+        xl = []
+        yl = []
+
+        x = np.array([complex(np.nan, np.nan)], np.complex)
+        y = np.nan
+        assert_almost_equal_spec(np.abs(x), y)
+        xl.append(x)
+        yl.append(y)
+
+        # According to C99 standard, if exactly one of the real/part is inf and
+        # the other nan, then cabs should return inf
+        x = np.array([complex(np.inf, np.nan)], np.complex)
+        y = np.inf
+        assert_almost_equal_spec(np.abs(x), y)
+        xl.append(x)
+        yl.append(y)
+
+        x = np.array([complex(-np.inf, np.nan)], np.complex)
+        y = np.inf
+        assert_almost_equal_spec(np.abs(x), y)
+        xl.append(x)
+        yl.append(y)
+
+        # cabs(conj(z)) = conj(cabs(z)).
+        xa = np.array(xl, dtype=np.complex)
+        ya = np.array(yl, dtype=np.complex)
+        for i in range(len(xa)):
+            assert_almost_equal_spec(np.abs(np.conj(xa[i])), np.conj(np.abs(xa[i])))
 
 if __name__ == "__main__":
     run_module_suite()
