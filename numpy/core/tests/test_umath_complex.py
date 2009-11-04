@@ -158,9 +158,6 @@ class TestCexp(object):
                         % (z.real, z.imag))
         yield _check_inf_nan, None
 
-        # cexp(nan + 0i) is nan + 0i
-        yield check, f, np.nan, 0, np.nan, 0
-
         # cexp(nan + yi) is nan + nani for y != 0 (optional: raises invalid FPU
         # ex)
         yield check, f, np.nan, 1, np.nan, np.nan
@@ -171,6 +168,12 @@ class TestCexp(object):
 
         # cexp(nan + nani) is nan + nani
         yield check, f, np.nan, np.nan, np.nan, np.nan
+
+    @dec.knownfailureif(True, "cexp(nan + 0I) is wrong on most implementations")
+    def test_special_values2(self):
+        # XXX: most implementations get it wrong here (including glibc <= 2.10)
+        # cexp(nan + 0i) is nan + 0i
+        yield check, f, np.nan, 0, np.nan, 0
 
 class TestClog(TestCase):
     def test_simple(self):
