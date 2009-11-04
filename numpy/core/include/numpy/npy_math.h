@@ -288,18 +288,49 @@ npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
  * an array of two elements, where the first element is the real part
  * and the second element is the imaginary part.
  */
+#define __NPY_CPACK_IMP(x, y, type, ctype)   \
+    union {                     \
+        ctype z;          \
+        type a[2];            \
+    } z1;;                      \
+                                \
+    z1.a[0] = (x);              \
+    z1.a[1] = (y);              \
+                                \
+    return z1.z;
+
 static NPY_INLINE npy_cdouble npy_cpack(double x, double y)
 {
-    union {
-        npy_cdouble z;
-        double a[2];
-    } z1;;
-
-    z1.a[0] = x;
-    z1.a[1] = y;
-
-    return z1.z;
+    __NPY_CPACK_IMP(x, y, double, npy_cdouble);
 }
+
+static NPY_INLINE npy_cfloat npy_cpackf(float x, float y)
+{
+    __NPY_CPACK_IMP(x, y, float, npy_cfloat);
+}
+
+static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
+{
+    __NPY_CPACK_IMP(x, y, npy_longdouble, npy_clongdouble);
+}
+#undef __NPY_CPACK_IMP
+
+/*
+ * Double precision complex functions
+ */
+double npy_creal(npy_cdouble z);
+double npy_cimag(npy_cdouble z);
+double npy_cabs(npy_cdouble z);
+double npy_carg(npy_cdouble z);
+
+npy_cdouble npy_cexp(npy_cdouble z);
+npy_cdouble npy_clog(npy_cdouble z);
+npy_cdouble npy_cpow(npy_cdouble x, npy_cdouble y);
+
+npy_cdouble npy_csqrt(npy_cdouble z);
+
+npy_cdouble npy_ccos(npy_cdouble z);
+npy_cdouble npy_csin(npy_cdouble z);
 
 double npy_creal(npy_cdouble z);
 double npy_cimag(npy_cdouble z);
@@ -314,5 +345,67 @@ npy_cdouble npy_csqrt(npy_cdouble z);
 
 npy_cdouble npy_ccos(npy_cdouble z);
 npy_cdouble npy_csin(npy_cdouble z);
+
+/*
+ * Single precision complex functions
+ */
+float npy_crealf(npy_cfloat z);
+float npy_cimagf(npy_cfloat z);
+float npy_cabsf(npy_cfloat z);
+float npy_cargf(npy_cfloat z);
+
+npy_cfloat npy_cexpf(npy_cfloat z);
+npy_cfloat npy_clogf(npy_cfloat z);
+npy_cfloat npy_cpowf(npy_cfloat x, npy_cfloat y);
+
+npy_cfloat npy_csqrtf(npy_cfloat z);
+
+npy_cfloat npy_ccosf(npy_cfloat z);
+npy_cfloat npy_csinf(npy_cfloat z);
+
+float npy_crealf(npy_cfloat z);
+float npy_cimagf(npy_cfloat z);
+float npy_cabsf(npy_cfloat z);
+float npy_cargf(npy_cfloat z);
+
+npy_cfloat npy_cexpf(npy_cfloat z);
+npy_cfloat npy_clogf(npy_cfloat z);
+npy_cfloat npy_cpowf(npy_cfloat x, npy_cfloat y);
+
+npy_cfloat npy_csqrtf(npy_cfloat z);
+
+npy_cfloat npy_ccosf(npy_cfloat z);
+npy_cfloat npy_csinf(npy_cfloat z);
+
+/*
+ * Extended precision complex functions
+ */
+npy_longdouble npy_creall(npy_clongdouble z);
+npy_longdouble npy_cimagl(npy_clongdouble z);
+npy_longdouble npy_cabsl(npy_clongdouble z);
+npy_longdouble npy_cargl(npy_clongdouble z);
+
+npy_clongdouble npy_cexpl(npy_clongdouble z);
+npy_clongdouble npy_clogl(npy_clongdouble z);
+npy_clongdouble npy_cpowl(npy_clongdouble x, npy_clongdouble y);
+
+npy_clongdouble npy_csqrtl(npy_clongdouble z);
+
+npy_clongdouble npy_ccosl(npy_clongdouble z);
+npy_clongdouble npy_csinl(npy_clongdouble z);
+
+npy_longdouble npy_creall(npy_clongdouble z);
+npy_longdouble npy_cimagl(npy_clongdouble z);
+npy_longdouble npy_cabsl(npy_clongdouble z);
+npy_longdouble npy_cargl(npy_clongdouble z);
+
+npy_clongdouble npy_cexpl(npy_clongdouble z);
+npy_clongdouble npy_clogl(npy_clongdouble z);
+npy_clongdouble npy_cpowl(npy_clongdouble x, npy_clongdouble y);
+
+npy_clongdouble npy_csqrtl(npy_clongdouble z);
+
+npy_clongdouble npy_ccosl(npy_clongdouble z);
+npy_clongdouble npy_csinl(npy_clongdouble z);
 
 #endif
