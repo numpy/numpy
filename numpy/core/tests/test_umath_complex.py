@@ -366,12 +366,11 @@ class TestCsqrt(object):
         # csqrt(+inf + nani) is inf + nani
         yield check, f, np.inf, np.nan, np.inf, np.nan
 
-        # csqrt(nan + yi) is nan + nani for any y
+        # csqrt(nan + yi) is nan + nani for any finite y (infinite handled in x
+        # + nani)
         yield check, f, np.nan,       0, np.nan, np.nan
         yield check, f, np.nan,       1, np.nan, np.nan
         yield check, f, np.nan,  np.nan, np.nan, np.nan
-        yield check, f, np.nan,  np.inf, np.nan, np.nan
-        yield check, f, np.nan, -np.inf, np.nan, np.nan
 
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
