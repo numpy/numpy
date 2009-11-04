@@ -32,6 +32,14 @@ crashes because the version M does not have a function in N. Starting from
 NumPy 1.4.0, this will cause a failure in import_array, so the error will be
 catched early on.
 
+New iterators
+~~~~~~~~~~~~~
+
+A new neighborhood iterator has been added to the C API. It can be used to
+iterate over the items in a neighborhood of an array, and can handle boundaries
+conditions automatically. Zero and one padding are available, as well as
+arbitrary constant value, mirror and circular padding.
+
 New C API
 ~~~~~~~~~
 
@@ -110,14 +118,6 @@ The following functions are deprecated:
        conventional correlation, and take the conjugate for complex arrays. The
        old behavior will be removed in NumPy 1.5, and raises a
        DeprecationWarning in 1.4.
-
-New iterators
-~~~~~~~~~~~~~
-
-A new neighborhood iterator has been added to the C API. It can be used to
-iterate over the items in a neighborhood of an array, and can handle boundaries
-conditions automatically. Zero and one padding are available, as well as
-arbitrary constant value, mirror and circular padding.
 
 Internal changes
 ================
