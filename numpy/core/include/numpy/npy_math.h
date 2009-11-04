@@ -279,4 +279,8 @@ npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
 #define npy_radiansf npy_deg2radf
 #define npy_radiansl npy_deg2radl
 
+/*
+ * Complex declarations
+ */
+
 #endif
