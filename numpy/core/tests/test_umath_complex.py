@@ -2,9 +2,53 @@ from numpy.testing import *
 import numpy.core.umath as ncu
 import numpy as np
 
+# TODO: branch cuts (use Pauli code)
+# TODO: conj 'symmetry'
+# TODO: FPU exceptions
+
+def _compare_zeros(x, y):
+    """Assuming both x and y are 0, raise an exception if x and y are not
+    exactly the same 0, taking into account the sign bit."""
+    if (np.iscomplexobj(x) and not np.iscomplexobj(y)) \
+            or (not np.iscomplexobj(x) and np.iscomplexobj(y)):
+            raise AssertionError("""
+Items are not equal:
+ ACTUAL: %s
+ DESIRED: %s""" % (str(x), str(y)))
+
+    if np.iscomplexobj(x):
+        sxr = np.signbit(np.real(x))
+        sxi = np.signbit(np.imag(x))
+
+        syr = np.signbit(np.real(y))
+        syi = np.signbit(np.imag(y))
+
+        if (not sxr == syr) or (not sxi == syi):
+            raise AssertionError("""
+Items are not equal:
+ ACTUAL: %s
+ DESIRED: %s""" % (str(x), str(y)))
+    else:
+        sx = np.signbit(x)
+        sy = np.signbit(y)
+
+        if (not sx == sy):
+            raise AssertionError("""
+Items are not equal:
+ ACTUAL: %s
+ DESIRED: %s""" % (str(x), str(y)))
+
 def assert_equal_spec(x, y):
     # Handles nan and inf
-    if np.isnan(x):
+    if x == 0:
+        if y == 0:
+            _compare_zeros(x, y)
+        else:
+            raise AssertionError("""
+Items are not almost equal:
+ ACTUAL: %s
+ DESIRED: %s""" % (str(x), str(y)))
+    elif np.isnan(x):
         if np.isnan(y):
             pass
         else:
@@ -314,69 +358,76 @@ class TestCabs(object):
 
 class TestCarg(object):
     def test_simple(self):
-        check_complex_value(ncu._arg, 1, 0, 0, 0, False)
-        check_complex_value(ncu._arg, 0, 1, 0.5*np.pi, 0, False)
+        check_real_value(ncu._arg, 1, 0, 0, False)
+        check_real_value(ncu._arg, 0, 1, 0.5*np.pi, False)
 
-        check_complex_value(ncu._arg, 1, 1, 0.25*np.pi, 0, False)
-        check_complex_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO, 0)
+        check_real_value(ncu._arg, 1, 1, 0.25*np.pi, False)
+        check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
 
     @dec.knownfailureif(True,
         "Complex arithmetic with signed zero is buggy on most implementation")
     def test_zero(self):
         # carg(-0 +- 0i) returns +- pi
-        yield check_complex_value, ncu._arg, np.NZERO, np.PZERO,  np.pi, 0, False
-        yield check_complex_value, ncu._arg, np.NZERO, np.NZERO, -np.pi, 0, False
+        yield check_real_value, ncu._arg, np.NZERO, np.PZERO,  np.pi, False
+        yield check_real_value, ncu._arg, np.NZERO, np.NZERO, -np.pi, False
 
         # carg(+0 +- 0i) returns +- 0
-        yield check_complex_value, ncu._arg, np.PZERO, np.PZERO, np.PZERO, 0
-        yield check_complex_value, ncu._arg, np.PZERO, np.NZERO, np.NZERO, 0
+        yield check_real_value, ncu._arg, np.PZERO, np.PZERO, np.PZERO
+        yield check_real_value, ncu._arg, np.PZERO, np.NZERO, np.NZERO
 
         # carg(x +- 0i) returns +- 0 for x > 0
-        yield check_complex_value, ncu._arg, 1, np.PZERO, np.PZERO, 0, False
-        yield check_complex_value, ncu._arg, 1, np.NZERO, np.NZERO, 0, False
+        yield check_real_value, ncu._arg, 1, np.PZERO, np.PZERO, False
+        yield check_real_value, ncu._arg, 1, np.NZERO, np.NZERO, False
 
         # carg(x +- 0i) returns +- pi for x < 0
-        yield check_complex_value, ncu._arg, -1, np.PZERO,  np.pi, 0, False
-        yield check_complex_value, ncu._arg, -1, np.NZERO, -np.pi, 0, False
+        yield check_real_value, ncu._arg, -1, np.PZERO,  np.pi, False
+        yield check_real_value, ncu._arg, -1, np.NZERO, -np.pi, False
 
         # carg(+- 0 + yi) returns pi/2 for y > 0
-        yield check_complex_value, ncu._arg, np.PZERO, 1, 0.5 * np.pi, 0, False
-        yield check_complex_value, ncu._arg, np.NZERO, 1, 0.5 * np.pi, 0, False
+        yield check_real_value, ncu._arg, np.PZERO, 1, 0.5 * np.pi, False
+        yield check_real_value, ncu._arg, np.NZERO, 1, 0.5 * np.pi, False
 
         # carg(+- 0 + yi) returns -pi/2 for y < 0
-        yield check_complex_value, ncu._arg, np.PZERO, -1, 0.5 * np.pi, 0, False
-        yield check_complex_value, ncu._arg, np.NZERO, -1,-0.5 * np.pi, 0, False
+        yield check_real_value, ncu._arg, np.PZERO, -1, 0.5 * np.pi, False
+        yield check_real_value, ncu._arg, np.NZERO, -1,-0.5 * np.pi, False
 
     #def test_branch_cuts(self):
     #    _check_branch_cut(ncu._arg, -1, 1j, -1, 1)
 
     def test_special_values(self):
         # carg(-np.inf +- yi) returns +-pi for finite y > 0
-        yield check_complex_value, ncu._arg, -np.inf,  1,  np.pi, 0, False
-        yield check_complex_value, ncu._arg, -np.inf, -1, -np.pi, 0, False
+        yield check_real_value, ncu._arg, -np.inf,  1,  np.pi, False
+        yield check_real_value, ncu._arg, -np.inf, -1, -np.pi, False
 
         # carg(np.inf +- yi) returns +-0 for finite y > 0
-        yield check_complex_value, ncu._arg, np.inf,  1, np.PZERO, 0, False
-        yield check_complex_value, ncu._arg, np.inf, -1, np.NZERO, 0, False
+        yield check_real_value, ncu._arg, np.inf,  1, np.PZERO, False
+        yield check_real_value, ncu._arg, np.inf, -1, np.NZERO, False
 
         # carg(x +- np.infi) returns +-pi/2 for finite x
-        yield check_complex_value, ncu._arg, 1,  np.inf,  0.5 * np.pi, 0, False
-        yield check_complex_value, ncu._arg, 1, -np.inf, -0.5 * np.pi, 0, False
+        yield check_real_value, ncu._arg, 1,  np.inf,  0.5 * np.pi, False
+        yield check_real_value, ncu._arg, 1, -np.inf, -0.5 * np.pi, False
 
         # carg(-np.inf +- np.infi) returns +-3pi/4
-        yield check_complex_value, ncu._arg, -np.inf,  np.inf,  0.75 * np.pi, 0, False
-        yield check_complex_value, ncu._arg, -np.inf, -np.inf, -0.75 * np.pi, 0, False
+        yield check_real_value, ncu._arg, -np.inf,  np.inf,  0.75 * np.pi, False
+        yield check_real_value, ncu._arg, -np.inf, -np.inf, -0.75 * np.pi, False
 
         # carg(np.inf +- np.infi) returns +-pi/4
-        yield check_complex_value, ncu._arg, np.inf,  np.inf,  0.25 * np.pi, 0, False
-        yield check_complex_value, ncu._arg, np.inf, -np.inf, -0.25 * np.pi, 0, False
+        yield check_real_value, ncu._arg, np.inf,  np.inf,  0.25 * np.pi, False
+        yield check_real_value, ncu._arg, np.inf, -np.inf, -0.25 * np.pi, False
 
         # carg(x + yi) returns np.nan if x or y is nan
-        yield check_complex_value, ncu._arg, np.nan,      0, np.nan, 0, False
-        yield check_complex_value, ncu._arg,      0, np.nan, np.nan, 0, False
+        yield check_real_value, ncu._arg, np.nan,      0, np.nan, False
+        yield check_real_value, ncu._arg,      0, np.nan, np.nan, False
 
-        yield check_complex_value, ncu._arg, np.nan, np.inf, np.nan, 0, False
-        yield check_complex_value, ncu._arg, np.inf, np.nan, np.nan, 0, False
+        yield check_real_value, ncu._arg, np.nan, np.inf, np.nan, False
+        yield check_real_value, ncu._arg, np.inf, np.nan, np.nan, False
+
+def check_real_value(f, x1, y1, x, exact=True):
+    z1 = np.array([complex(x1, y1)])
+    if exact:
+        assert_equal_spec(f(z1), x)
+    else:
+        assert_almost_equal_spec(f(z1), x)
 
 def check_complex_value(f, x1, y1, x2, y2, exact=True):
     z1 = np.array([complex(x1, y1)])
