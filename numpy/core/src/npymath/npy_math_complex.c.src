@@ -89,12 +89,61 @@
 #ifndef HAVE_CEXP@C@
 @ctype@ npy_cexp@c@(@ctype@ z)
 {
-	@type@ x, y;
+	@type@ x, c, s;
+	@type@ r, i;
+	@ctype@ ret;
 
-	x = npy_exp@c@(npy_creal@c@(z));
-	y = npy_cimag@c@(z);
+        r = npy_creal@c@(z);
+        i = npy_cimag@c@(z);
 
-	return npy_cpack@c@(x * npy_cos@c@(y), x * npy_sin@c@(y));
+        if (npy_isfinite(r)) {
+                x = npy_exp@c@(r);
+
+                c = npy_cos@c@(i);
+                s = npy_sin@c@(i);
+
+                if (npy_isfinite(i)) {
+                        ret = npy_cpack@c@(x * c, x * s);
+                } else {
+                        ret = npy_cpack@c@(NPY_NAN, npy_copysign@c@(NPY_NAN, i));
+                }
+
+        } else  if (npy_isnan(r)) {
+                /* r is nan */
+                if (i == 0) {
+                        ret = npy_cpack@c@(r, 0);
+                } else {
+                        ret = npy_cpack@c@(r, npy_copysign@c@(NPY_NAN, i));
+                }
+        } else {
+                /* r is +- inf */
+                if (r > 0) {
+                        if (i == 0) {
+                                ret = npy_cpack@c@(r, i);
+                        } else if (npy_isfinite(i)) {
+                                c = npy_cos@c@(i);
+                                s = npy_sin@c@(i);
+
+                                ret = npy_cpack@c@(r * c, r * s);
+                        } else {
+                                /* x = +inf, y = +-inf | nan */
+                                ret = npy_cpack@c@(r, NPY_NAN);
+                        }
+                } else {
+                        if (npy_isfinite(i)) {
+                                x = npy_exp@c@(r);
+                                c = npy_cos@c@(i);
+                                s = npy_sin@c@(i);
+
+                                ret = npy_cpack@c@(x * c, x * s);
+                        } else {
+                                /* x = -inf, y = nan | +i inf */
+                                ret = npy_cpack@c@(0, 0);
+                        }
+                }
+        }
+
+        return ret;
 }
 #endif
 
