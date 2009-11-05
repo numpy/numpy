@@ -124,6 +124,46 @@ do {                                                            \
   (d) = sl_u.value;                                             \
 } while (0)
 
+/* Set a double from two 32 bit ints.  */
+
+#define INSERT_WORDS(d,ix0,ix1)					\
+do {								\
+  ieee_double_shape_type iw_u;					\
+  iw_u.parts.msw = (ix0);					\
+  iw_u.parts.lsw = (ix1);					\
+  (d) = iw_u.value;						\
+} while (0)
+
+/*
+ * A union which permits us to convert between a float and a 32 bit
+ * int.
+ */
+
+typedef union
+{
+  float value;
+  /* FIXME: Assumes 32 bit int.  */
+  npy_uint32 word;
+} ieee_float_shape_type;
+
+/* Get a 32 bit int from a float.  */
+
+#define GET_FLOAT_WORD(i,d)					\
+do {								\
+  ieee_float_shape_type gf_u;					\
+  gf_u.value = (d);						\
+  (i) = gf_u.word;						\
+} while (0)
+
+/* Set a float from a 32 bit int.  */
+
+#define SET_FLOAT_WORD(d,i)					\
+do {								\
+  ieee_float_shape_type sf_u;					\
+  sf_u.word = (i);						\
+  (d) = sf_u.value;						\
+} while (0)
+
 /*
  * Those unions are used to convert a pointer of npy_cdouble to native C99
  * complex or our own complex type indenpendently on whether C99 complex
