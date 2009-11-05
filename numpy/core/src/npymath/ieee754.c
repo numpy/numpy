@@ -109,7 +109,7 @@ double npy_nextafter(double x, double y)
 #endif
 
 #ifndef HAVE_NEXTAFTERF
-float nextafterf(float x, float y)
+float npy_nextafterf(float x, float y)
 {
     volatile float t;
     npy_int32 hx, hy, ix, iy;
