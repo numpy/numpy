@@ -235,6 +235,8 @@ if config.CheckHeader('complex.h'):
         if st:
             numpyconfig_sym.append(('DEFINE_NPY_HAVE_%s' % type2def(t),
                                     '#define NPY_HAVE_%s' % type2def(t)))
+        else:
+            numpyconfig_sym.append(('DEFINE_NPY_HAVE_%s' % type2def(t), ''))
 
     def check_prec(prec):
         flist = [f + prec for f in C99_COMPLEX_FUNCS]
@@ -250,6 +252,8 @@ if config.CheckHeader('complex.h'):
 
 else:
     numpyconfig_sym.append(('DEFINE_NPY_USE_C99_COMPLEX', ''))
+    for t in C99_COMPLEX_TYPES:
+        numpyconfig_sym.append(('DEFINE_NPY_HAVE_%s' % type2def(t), ''))
 
 def visibility_define():
     if config.CheckGCC4():
