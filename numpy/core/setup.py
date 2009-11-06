@@ -413,6 +413,24 @@ def configuration(parent_package='',top_path=None):
             if ENABLE_SEPARATE_COMPILATION:
                 moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
 
+            # Get long double representation
+            if sys.platform != 'darwin':
+                rep = check_long_double_representation(config_cmd)
+                if rep == 'INTEL_EXTENDED_12B_LE':
+                    moredefs.append(('HAVE_LDOUBLE_INTEL_EXT_12_BYTES_LE', 1))
+                elif rep == 'INTEL_EXTENDED_16B_LE':
+                    moredefs.append(('HAVE_LDOUBLE_INTEL_EXT_16_BYTES_LE', 1))
+                elif rep == 'IEEE_QUAD_16B_LE':
+                    moredefs.append(('HAVE_LDOUBLE_IEEE_QUAD_LE', 1))
+                elif rep == 'IEEE_QUAD_16B_BE':
+                    moredefs.append(('HAVE_LDOUBLE_IEEE_QUAD_BE', 1))
+                elif rep == 'IEEE_DOUBLE_LE':
+                    moredefs.append(('HAVE_LDOUBLE_IEEE_DOUBLE_LE', 1))
+                elif rep == 'IEEE_DOUBLE_BE':
+                    moredefs.append(('HAVE_LDOUBLE_IEEE_DOUBLE_BE', 1))
+                else:
+                    raise ValueError("Unrecognized long double format: %s" % rep)
+
             # Generate the config.h file from moredefs
             target_f = open(target, 'w')
             for d in moredefs:
