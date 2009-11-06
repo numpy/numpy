@@ -100,7 +100,8 @@ for type in ('float', 'double', 'long double'):
     sz = config.CheckTypeSize(complex_def)
     numpyconfig_sym.append(('SIZEOF_COMPLEX_%s' % type2def(type), str(sz)))
 
-config.CheckLongDoubleRepresentation()
+if sys.platform != 'darwin':
+    config.CheckLongDoubleRepresentation()
 
 for type in ('Py_intptr_t',):
     check_type(type, include = "#include <Python.h>\n")
