@@ -767,7 +767,7 @@ static int long_double_from_pyobj(long_double* v,PyObject *obj,const char *errme
 \t\t\treturn 1;
 \t\t}
 \t\telse if (PyArray_Check(obj) && PyArray_TYPE(obj)==PyArray_LONGDOUBLE) {
-\t\t\t(*v) = *((npy_longdouble *)PyArray_DATA(obj))
+\t\t\t(*v) = *((npy_longdouble *)PyArray_DATA(obj));
 \t\t\treturn 1;
 \t\t}
 \t}
