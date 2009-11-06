@@ -282,6 +282,7 @@ class _TestNorm(TestCase):
                     decimal=self.dec)
             np.testing.assert_almost_equal(norm(v,-2), ((205./144)**-0.5),
                     decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,0), 4, decimal=self.dec)
 
         for v in (a, b, c,):
             _test(v)
@@ -304,6 +305,7 @@ class _TestNorm(TestCase):
 
         self.assertRaises(ValueError, norm, A, 'nofro')
         self.assertRaises(ValueError, norm, A, -3)
+        self.assertRaises(ValueError, norm, A, 0)
 
 class TestNormDouble(_TestNorm):
     dt = np.double

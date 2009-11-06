@@ -1674,7 +1674,7 @@ def norm(x, ord=None):
 
     Notes
     -----
-    For values of ``ord < 0``, the result is, strictly speaking, not a
+    For values of ``ord <= 0``, the result is, strictly speaking, not a
     mathematical 'norm', but it may still be useful for various numerical
     purposes.
 
@@ -1687,6 +1687,7 @@ def norm(x, ord=None):
     'fro'  Frobenius norm                --
     inf    max(sum(abs(x), axis=1))      max(abs(x))
     -inf   min(sum(abs(x), axis=1))      min(abs(x))
+    0      --                            sum(x != 0)
     1      max(sum(abs(x), axis=0))      as below
     -1     min(sum(abs(x), axis=0))      as below
     2      2-norm (largest sing. value)  as below
@@ -1754,15 +1755,17 @@ def norm(x, ord=None):
 
     """
     x = asarray(x)
-    nd = len(x.shape)
     if ord is None: # check the default case first and handle it immediately
         return sqrt(add.reduce((x.conj() * x).ravel().real))
 
+    nd = x.ndim
     if nd == 1:
         if ord == Inf:
             return abs(x).max()
         elif ord == -Inf:
             return abs(x).min()
+        elif ord == 0:
+            return (x != 0).sum() # Zero norm
         elif ord == 1:
             return abs(x).sum() # special case for speedup
         elif ord == 2:
