@@ -18,7 +18,8 @@ from setup_common import *
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal, CheckInline
 from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
-                          umath_bld, CheckGCC4, check_api_version
+                          umath_bld, CheckGCC4, check_api_version, \
+                          CheckLongDoubleRepresentation
 
 import SCons
 
@@ -50,7 +51,8 @@ check_api_version(C_API_VERSION)
 # Starting Configuration
 #=======================
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
-    'CheckCBLAS' : CheckCBLAS, 'CheckInline': CheckInline, 'CheckGCC4' : CheckGCC4},
+    'CheckCBLAS' : CheckCBLAS, 'CheckInline': CheckInline, 'CheckGCC4' : CheckGCC4,
+    'CheckLongDoubleRepresentation': CheckLongDoubleRepresentation},
     config_h = pjoin('config.h'))
 
 # numpyconfig_sym will keep the values of some configuration variables, the one
@@ -97,6 +99,8 @@ for type in ('float', 'double', 'long double'):
     complex_def = "struct {%s __x; %s __y;}" % (type, type)
     sz = config.CheckTypeSize(complex_def)
     numpyconfig_sym.append(('SIZEOF_COMPLEX_%s' % type2def(type), str(sz)))
+
+config.CheckLongDoubleRepresentation()
 
 for type in ('Py_intptr_t',):
     check_type(type, include = "#include <Python.h>\n")
