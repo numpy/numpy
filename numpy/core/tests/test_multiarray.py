@@ -644,6 +644,19 @@ class TestArgmax(TestCase):
             axes.remove(i)
             assert all(amax == aargmax.choose(*a.transpose(i,*axes)))
 
+class TestMinMax(TestCase):
+    def test_scalar(self):
+        assert_raises(ValueError, np.amax, 1, 1)
+        assert_raises(ValueError, np.amin, 1, 1)
+
+        assert_equal(np.amax(1, axis=0), 1)
+        assert_equal(np.amin(1, axis=0), 1)
+        assert_equal(np.amax(1, axis=None), 1)
+        assert_equal(np.amin(1, axis=None), 1)
+
+    def test_axis(self):
+        assert_raises(ValueError, np.amax, [1,2,3], 1000)
+        assert_equal(np.amax([[1,2,3]], axis=1), 3)
 
 class TestNewaxis(TestCase):
     def test_basic(self):

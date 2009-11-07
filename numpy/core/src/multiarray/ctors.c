@@ -2424,6 +2424,9 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 
 /*NUMPY_API
   PyArray_CheckAxis
+
+  check that axis is valid
+  convert 0-d arrays to 1-d arrays
 */
 NPY_NO_EXPORT PyObject *
 PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
@@ -2431,14 +2434,16 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
     PyObject *temp1, *temp2;
     int n = arr->nd;
 
-    if ((*axis >= MAX_DIMS) || (n==0)) {
+    if (*axis == MAX_DIMS || n == 0) {
         if (n != 1) {
             temp1 = PyArray_Ravel(arr,0);
             if (temp1 == NULL) {
                 *axis = 0;
                 return NULL;
             }
-            *axis = PyArray_NDIM(temp1)-1;
+            if (*axis == MAX_DIMS) {
+                *axis = PyArray_NDIM(temp1)-1;
+            }
         }
         else {
             temp1 = (PyObject *)arr;
