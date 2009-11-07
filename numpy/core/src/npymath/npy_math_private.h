@@ -164,6 +164,10 @@ do {								\
   (d) = sf_u.value;						\
 } while (0)
 
+#ifdef NPY_USE_C99_COMPLEX
+#include <complex.h>
+#endif
+
 /*
  * Those unions are used to convert a pointer of npy_cdouble to native C99
  * complex or our own complex type indenpendently on whether C99 complex

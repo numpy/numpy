@@ -94,14 +94,6 @@ typedef int npy_int;
 typedef long npy_long;
 
 /*
- * Define our complex type to C99 complex type if C99 complex support is
- * available
- */
-#ifdef NPY_USE_C99_COMPLEX
-#include <complex.h>
-#endif
-
-/*
  * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
  * able to do .real/.imag. Will have to convert code first. 
  */
