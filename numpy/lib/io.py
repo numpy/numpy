@@ -888,12 +888,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         File or filename to read.  If the filename extension is `.gz` or
         `.bz2`, the file is first decompressed.
     dtype : dtype, optional
-        Data type of the resulting array.  If this is a structured data type,
-        the resulting array will be 1-dimensional, and each row will be
-        interpreted as an element of the array. In this case, the number
-        of columns used must match the number of fields in the data-type,
-        and the names of each field will be set by the corresponding name
-        of the dtype.
+        Data type of the resulting array.
         If None, the dtypes will be determined by the contents of each
         column, individually.
     comments : str, optional
@@ -903,23 +898,18 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
         can also be provided as width(s) of each field.
-    skiprows : int, optional
-        Numbers of lines to skip at the beginning of the file.
-        The use of skiprows is deprecated: use `skip_header` instead.
     skip_header : int, optional
-        Numbers of lines to skip at the beginning of the file.
-    converters : dict or None, optional
-        A dictionary mapping column number to a function that will convert
-        values in the column to a number. Converters can also be used to
-        provide a default value for missing data:
-        ``converters = {3: lambda s: float(s or 0)}``.
-    missing : str, optional
-        A string representing a missing value, irrespective of the column where
-        it appears (e.g., `'missing'` or `'unused'`).
-        The use of `missing` is deprecated, use `missing_values` instead.
-    missing_values : dict or None, optional
-        A dictionary mapping a column number to a string indicating whether the
-        corresponding field should be masked.
+        The numbers of lines to skip at the beginning of the file.
+    skip_footer : int, optional
+        The numbers of lines to skip at the end of the file
+    converters : variable or None, optional
+        The set of functions that convert the data of a column to a value.
+        The converters can also be used to provide a default value
+        for missing data: ``converters = {3: lambda s: float(s or 0)}``.
+    missing_values : variable or None, optional
+        The set of strings corresponding to missing data.
+    filling_values : variable or None, optional
+        The set of values to be used as default when the data are missing.
     usecols : sequence or None, optional
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.

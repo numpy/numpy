@@ -3,5 +3,6 @@ I/O with Numpy
 **************
 
 .. toctree::
+   :maxdepth: 2
 
-   basic.io.genfromtxt
+   basics.io.genfromtxt

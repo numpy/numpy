@@ -8,6 +8,7 @@ Numpy basics
    and "Guide to Numpy" chapter 2. Needs combining?
 
 .. toctree::
+   :maxdepth: 2
 
    basics.types
    basics.creation
