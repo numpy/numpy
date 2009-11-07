@@ -2450,7 +2450,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
             Py_INCREF(temp1);
             *axis = 0;
         }
-        if (!flags) {
+        if (!flags && *axis == 0) {
             return temp1;
         }
     }
