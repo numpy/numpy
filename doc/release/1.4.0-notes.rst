@@ -136,6 +136,16 @@ The following functions are deprecated:
        old behavior will be removed in NumPy 1.5, and raises a
        DeprecationWarning in 1.4.
 
+The following raise errors:
+
+    #. When operating on 0-d arrays, ``numpy.max`` and other functions accept
+       only ``axis=0``, ``axis=-1`` and ``axis=None``. Using an out-of-bounds
+       axes is an indication of a bug, so Numpy raises an error for these cases
+       now.
+
+    #. Specifying ``axis > MAX_DIMS`` is no longer allowed; Numpy raises now an
+       error instead of behaving similarly as for ``axis=None``.
+
 Internal changes
 ================
 
