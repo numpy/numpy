@@ -1,12 +1,7 @@
 /*
  * Low-level routines related to IEEE-754 format
  */
-#include <Python.h>
-#include <math.h>
-
-#include "npy_config.h"
-#include "numpy/npy_math.h"
-
+#include "npy_math_common.h"
 #include "npy_math_private.h"
 
 #ifndef HAVE_COPYSIGN

@@ -28,13 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <Python.h>
-#include <math.h>
-#include <float.h>
-
-#include "config.h"
-#include "numpy/npy_math.h"
-
+#include "npy_math_common.h"
 #include "npy_math_private.h"
 
 /*==========================================================

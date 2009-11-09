@@ -53,13 +53,6 @@
  * is preserved.
  * ====================================================
  */
-
-#include <Python.h>
-#include <math.h>
-
-#include "npy_config.h"
-#include "numpy/npy_math.h"
-
 #include "npy_math_private.h"
 
 /*
