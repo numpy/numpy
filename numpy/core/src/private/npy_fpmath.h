@@ -28,7 +28,7 @@
         #elif defined(NPY_CPU_AMD64)
             #define HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
         #elif defined(NPY_CPU_PPC) || defined(NPY_CPU_PPC64)
-            #define HAVE_LDOUBLE_IEEE_QUAD_BE
+            #define HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE
         #endif
     #endif
 #endif
@@ -37,6 +37,7 @@
       defined(HAVE_LDOUBLE_IEEE_QUAD_LE) || \
       defined(HAVE_LDOUBLE_IEEE_DOUBLE_LE) || \
       defined(HAVE_LDOUBLE_IEEE_DOUBLE_BE) || \
+      defined(HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE) || \
       defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
       defined(HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE))
     #error No long double representation defined

@@ -203,6 +203,22 @@ do {								\
     };
     #define LDBL_NBIT   0x80000000
     #define mask_nbit_l(u)  ((u).bits.manh &= ~LDBL_NBIT)
+#elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE)
+    /* 64 bits IEEE double precision aligned on 16 bytes: used by ppc arch on
+     * Mac OS X */
+    union IEEEl2bits {
+        npy_longdouble  e;
+        struct {
+            npy_uint32  sign    :1;
+            npy_uint32  exp     :11;
+            npy_uint32  manh    :20;
+            npy_uint32  manl    :32;
+            npy_uint32  junkh   :32;
+            npy_uint32  junkl   :32;
+        } bits;
+    };
+    #define LDBL_NBIT   0
+    #define mask_nbit_l(u)  ((void)0)
 #elif defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
     /* Quad precision IEEE format */
     union IEEEl2bits {
