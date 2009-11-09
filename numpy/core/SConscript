@@ -382,7 +382,7 @@ generated_headers.append(ufunc_api[0])
 # include/numpy is added for compatibility reasons with distutils: this is
 # needed for __multiarray_api.c and __ufunc_api.c included from multiarray and
 # ufunc.
-env.Prepend(CPPPATH = ['include', '.', 'include/numpy'])
+env.Prepend(CPPPATH = ['src/private', 'include', '.', 'include/numpy'])
 
 # npymath core lib
 npymath_src = [env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src')),

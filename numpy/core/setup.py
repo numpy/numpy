@@ -559,6 +559,7 @@ def configuration(parent_package='',top_path=None):
     generate_numpy_api = generate_api_func('generate_numpy_api')
     generate_ufunc_api = generate_api_func('generate_ufunc_api')
 
+    config.add_include_dirs(join(local_dir, "src", "private"))
     config.add_include_dirs(join(local_dir, "src"))
     config.add_include_dirs(join(local_dir))
     # Multiarray version: this function is needed to build foo.c from foo.c.src
