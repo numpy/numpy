@@ -106,11 +106,26 @@ not possible to easily link against this library: in 1.4.0, support has been
 added to numpy.distutils so that 3rd party can reuse this library. See coremath
 documentation for more information.
 
+Improved set operations
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In previous versions of NumPy some set functions (intersect1d,
+setxor1d, setdiff1d and setmember1d) could return incorrect results if
+the input arrays contained duplicate items. These now work correctly
+for input arrays with duplicates. setmember1d has been renamed to
+in1d, as with the change to accept arrays with duplicates it is
+no longer a set operation, and is conceptually similar to an
+elementwise version of the Python operator 'in'.  All of these
+functions now accept the boolean keyword assume_unique. This is False
+by default, but can be set True if the input arrays are known not
+to contain duplicates, which can increase the functions' execution
+speed.
+
 Improvements
 ============
 
     #. numpy import is noticeably faster (from 20 to 30 % depending on the
-    platform and computer)
+       platform and computer)
 
     #. The sort functions now sort nans to the end.
 
@@ -135,6 +150,15 @@ The following functions are deprecated:
        conventional correlation, and take the conjugate for complex arrays. The
        old behavior will be removed in NumPy 1.5, and raises a
        DeprecationWarning in 1.4.
+
+    #. unique1d: use unique instead. unique1d raises a deprecation
+       warning in 1.4, and will be removed in 1.5.
+
+    #. intersect1d_nu: use intersect1d instead. intersect1d_nu raises
+       a deprecation warning in 1.4, and will be removed in 1.5.
+
+    #. setmember1d: use in1d instead. setmember1d raises a deprecation
+       warning in 1.4, and will be removed in 1.5.
 
 The following raise errors:
 
