@@ -22,6 +22,8 @@
 #include <math.h>
 
 #include "npy_config.h"
+#include "npy_fpmath.h"
+
 #include "numpy/npy_math.h"
 #include "numpy/npy_cpu.h"
 #include "numpy/npy_endian.h"
@@ -167,6 +169,76 @@ do {								\
 
 #ifdef NPY_USE_C99_COMPLEX
 #include <complex.h>
+#endif
+
+/*
+ * Long double support
+ */
+#if defined(HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE)
+    /* 80 bits Intel format aligned on 12 bytes */
+    union IEEEl2bits {
+        npy_longdouble  e;
+        struct {
+            npy_uint32  manl    :32;
+            npy_uint32  manh    :32;
+            npy_uint32  exp     :15;
+            npy_uint32  sign    :1;
+            npy_uint32  junk    :16;
+        } bits;
+    };
+    #define LDBL_NBIT   0x80000000
+    #define mask_nbit_l(u)  ((u).bits.manh &= ~LDBL_NBIT)
+#elif defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE)
+    /* 80 bits Intel format aligned on 16 bytes */
+    union IEEEl2bits {
+        npy_longdouble  e;
+        struct {
+            npy_uint32  manl    :32;
+            npy_uint32  manh    :32;
+            npy_uint32  exp     :15;
+            npy_uint32  sign    :1;
+            npy_uint32  junkl   :16;
+            npy_uint32  junkh   :32;
+        } bits;
+    };
+    #define LDBL_NBIT   0x80000000
+    #define mask_nbit_l(u)  ((u).bits.manh &= ~LDBL_NBIT)
+#elif defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
+    /* Quad precision IEEE format */
+    union IEEEl2bits {
+        npy_longdouble  e;
+        struct {
+            npy_uint32  sign    :1;
+            npy_uint32  exp     :15;
+            npy_uint64  manh    :48;
+            npy_uint64  manl    :64;
+        } bits;
+    };
+    #define mask_nbit_l(u)  ((void)0)
+#elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_LE)
+    union IEEEl2bits {
+        npy_longdouble  e;
+        struct {
+            npy_unit32  manl    :32;
+            npy_unit32  manh    :20;
+            npy_unit32  exp     :11;
+            npy_unit32  sign    :1;
+        } bits;
+    };
+    #define LDBL_NBIT   0
+    #define mask_nbit_l(u)  ((void)0)
+#elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_BE)
+    union IEEEl2bits {
+        npy_longdouble  e;
+        struct {
+            npy_unit32  sign    :1;
+            npy_unit32  exp     :11;
+            npy_unit32  manh    :20;
+            npy_unit32  manl    :32;
+        } bits;
+    };
+    #define LDBL_NBIT   0
+    #define mask_nbit_l(u)  ((void)0)
 #endif
 
 /*
