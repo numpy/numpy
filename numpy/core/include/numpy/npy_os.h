@@ -21,7 +21,7 @@
     #define NPY_OS_CYGWIN
 #elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
     #define NPY_OS_WIN32
-#elif defined(DARWIN)
+#elif defined(__APPLE__)
     #define NPY_OS_DARWIN
 #else
     #define NPY_OS_UNKNOWN
