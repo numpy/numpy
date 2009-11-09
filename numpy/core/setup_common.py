@@ -226,14 +226,14 @@ def long_double_representation(lines):
                 saw = copy.copy(read)
                 if read[:12] == _BEFORE_SEQ[4:]:
                     if read[12:-8] == _INTEL_EXTENDED_12B:
-                        return 'INTEL_EXTENDED_12B_LE'
+                        return 'INTEL_EXTENDED_12_BYTES_LE'
                 elif read[:8] == _BEFORE_SEQ[8:]:
                     if read[8:-8] == _INTEL_EXTENDED_16B:
-                        return 'INTEL_EXTENDED_16B_LE'
+                        return 'INTEL_EXTENDED_16_BYTES_LE'
                     elif read[8:-8] == _IEEE_QUAD_PREC_BE:
-                        return 'IEEE_QUAD_16B_BE'
+                        return 'IEEE_QUAD_BE'
                     elif read[8:-8] == _IEEE_QUAD_PREC_LE:
-                        return 'IEEE_QUAD_16B_LE'
+                        return 'IEEE_QUAD_LE'
                 elif read[:16] == _BEFORE_SEQ:
                     if read[16:-8] == _IEEE_DOUBLE_LE:
                         return 'IEEE_DOUBLE_LE'

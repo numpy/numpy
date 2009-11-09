@@ -416,18 +416,11 @@ def configuration(parent_package='',top_path=None):
             # Get long double representation
             if sys.platform != 'darwin':
                 rep = check_long_double_representation(config_cmd)
-                if rep == 'INTEL_EXTENDED_12B_LE':
-                    moredefs.append(('HAVE_LDOUBLE_INTEL_EXT_12_BYTES_LE', 1))
-                elif rep == 'INTEL_EXTENDED_16B_LE':
-                    moredefs.append(('HAVE_LDOUBLE_INTEL_EXT_16_BYTES_LE', 1))
-                elif rep == 'IEEE_QUAD_16B_LE':
-                    moredefs.append(('HAVE_LDOUBLE_IEEE_QUAD_LE', 1))
-                elif rep == 'IEEE_QUAD_16B_BE':
-                    moredefs.append(('HAVE_LDOUBLE_IEEE_QUAD_BE', 1))
-                elif rep == 'IEEE_DOUBLE_LE':
-                    moredefs.append(('HAVE_LDOUBLE_IEEE_DOUBLE_LE', 1))
-                elif rep == 'IEEE_DOUBLE_BE':
-                    moredefs.append(('HAVE_LDOUBLE_IEEE_DOUBLE_BE', 1))
+                if rep in ['INTEL_EXTENDED_12_BYTES_LE',
+                           'INTEL_EXTENDED_16_BYTES_LE',
+                           'IEEE_QUAD_16B_LE', 'IEEE_QUAD_16B_BE',
+                           'IEEE_DOUBLE_LE', 'IEEE_DOUBLE_BE']:
+                    moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
                 else:
                     raise ValueError("Unrecognized long double format: %s" % rep)
 

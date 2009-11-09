@@ -239,10 +239,10 @@ static %(inline)s int static_func (void)
 
 def CheckLongDoubleRepresentation(context):
     msg = {
-        'INTEL_EXTENDED_12B_LE': "Intel extended, little endian",
-        'INTEL_EXTENDED_16B_LE': "Intel extended, little endian",
-        'IEEE_QUAD_16B_BE': "IEEE Quad precision, big endian",
-        'IEEE_QUAD_16B_LE': "IEEE Quad precision, little endian",
+        'INTEL_EXTENDED_12_BYTES_LE': "Intel extended, little endian",
+        'INTEL_EXTENDED_16_BYTES_LE': "Intel extended, little endian",
+        'IEEE_QUAD_BE': "IEEE Quad precision, big endian",
+        'IEEE_QUAD_LE': "IEEE Quad precision, little endian",
         'IEEE_DOUBLE_LE': "IEEE Double precision, little endian",
         'IEEE_DOUBLE_BE': "IEEE Double precision, big endian"
     }
@@ -253,9 +253,10 @@ def CheckLongDoubleRepresentation(context):
     if st:
         obj = str(context.sconf.lastTarget)
         tp = long_double_representation(pyod(obj))
-        return context.Result(msg[tp])
+        context.Result(msg[tp])
+        return tp
     if not st:
-        return context.Result(0)
+        context.Result(0)
 
 array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAYPIGENCOMSTR'),
                             emitter = generate_api_emitter)
