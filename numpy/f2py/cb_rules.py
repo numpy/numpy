@@ -271,16 +271,16 @@ cb_arg_rules=[
     },
     {
     'args':{
-    l_and (isscalar,isintent_c):'#ctype# #varname#',
-    l_and (isscalar,l_not(isintent_c)):'#ctype# *#varname#_cb_capi',
-    isarray:'#ctype# *#varname#',
-    isstring:'#ctype# #varname#'
+    l_and (isscalar,isintent_c):'#ctype# #varname_i#',
+    l_and (isscalar,l_not(isintent_c)):'#ctype# *#varname_i#_cb_capi',
+    isarray:'#ctype# *#varname_i#',
+    isstring:'#ctype# #varname_i#'
     },
     'args_nm':{
-    l_and (isscalar,isintent_c):'#varname#',
-    l_and (isscalar,l_not(isintent_c)):'#varname#_cb_capi',
-    isarray:'#varname#',
-    isstring:'#varname#'
+    l_and (isscalar,isintent_c):'#varname_i#',
+    l_and (isscalar,l_not(isintent_c)):'#varname_i#_cb_capi',
+    isarray:'#varname_i#',
+    isstring:'#varname_i#'
     },
     'args_td':{
     l_and (isscalar,isintent_c):'#ctype#',
@@ -288,21 +288,21 @@ cb_arg_rules=[
     isarray:'#ctype# *',
     isstring:'#ctype#'
     },
-    'strarglens':{isstring:',int #varname#_cb_len'}, # untested with multiple args
+    'strarglens':{isstring:',int #varname_i#_cb_len'}, # untested with multiple args
     'strarglens_td':{isstring:',int'}, # untested with multiple args
-    'strarglens_nm':{isstring:',#varname#_cb_len'}, # untested with multiple args
+    'strarglens_nm':{isstring:',#varname_i#_cb_len'}, # untested with multiple args
      },
     { # Scalars
-    'decl':{l_not(isintent_c):'\t#ctype# #varname#=(*#varname#_cb_capi);'},
+    'decl':{l_not(isintent_c):'\t#ctype# #varname_i#=(*#varname_i#_cb_capi);'},
     'error': {l_and(isintent_c,isintent_out,
                     throw_error('intent(c,out) is forbidden for callback scalar arguments')):\
                ''},
     'frompyobj':[{debugcapi:'\tCFUNCSMESS("cb:Getting #varname#->");'},
-                 {isintent_out:'\tif (capi_j>capi_i)\n\t\tGETSCALARFROMPYTUPLE(capi_return,capi_i++,#varname#_cb_capi,#ctype#,"#ctype#_from_pyobj failed in converting argument #varname# of call-back function #name# to C #ctype#\\n");'},
-                 {l_and(debugcapi,l_and(l_not(iscomplex),isintent_c)):'\tfprintf(stderr,"#showvalueformat#.\\n",#varname#);'},
-                 {l_and(debugcapi,l_and(l_not(iscomplex),l_not(isintent_c))):'\tfprintf(stderr,"#showvalueformat#.\\n",*#varname#_cb_capi);'},
-                 {l_and(debugcapi,l_and(iscomplex,isintent_c)):'\tfprintf(stderr,"#showvalueformat#.\\n",(#varname#).r,(#varname#).i);'},
-                 {l_and(debugcapi,l_and(iscomplex,l_not(isintent_c))):'\tfprintf(stderr,"#showvalueformat#.\\n",(*#varname#_cb_capi).r,(*#varname#_cb_capi).i);'},
+                 {isintent_out:'\tif (capi_j>capi_i)\n\t\tGETSCALARFROMPYTUPLE(capi_return,capi_i++,#varname_i#_cb_capi,#ctype#,"#ctype#_from_pyobj failed in converting argument #varname# of call-back function #name# to C #ctype#\\n");'},
+                 {l_and(debugcapi,l_and(l_not(iscomplex),isintent_c)):'\tfprintf(stderr,"#showvalueformat#.\\n",#varname_i#);'},
+                 {l_and(debugcapi,l_and(l_not(iscomplex),l_not(isintent_c))):'\tfprintf(stderr,"#showvalueformat#.\\n",*#varname_i#_cb_capi);'},
+                 {l_and(debugcapi,l_and(iscomplex,isintent_c)):'\tfprintf(stderr,"#showvalueformat#.\\n",(#varname_i#).r,(#varname_i#).i);'},
+                 {l_and(debugcapi,l_and(iscomplex,l_not(isintent_c))):'\tfprintf(stderr,"#showvalueformat#.\\n",(*#varname_i#_cb_capi).r,(*#varname_i#_cb_capi).i);'},
                  ],
     'need':[{isintent_out:['#ctype#_from_pyobj','GETSCALARFROMPYTUPLE']},
             {debugcapi:'CFUNCSMESS'}],
@@ -310,11 +310,11 @@ cb_arg_rules=[
      },{
     'pyobjfrom':[{isintent_in:"""\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1(#varname#)))
+\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1(#varname_i#)))
 \t\t\tgoto capi_fail;"""},
                  {isintent_inout:"""\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname#_cb_capi)))
+\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname_i#_cb_capi)))
 \t\t\tgoto capi_fail;"""}],
     'need':[{isintent_in:'pyobj_from_#ctype#1'},
             {isintent_inout:'pyarr_from_p_#ctype#1'},
@@ -324,22 +324,22 @@ cb_arg_rules=[
     },{# String
     'frompyobj':[{debugcapi:'\tCFUNCSMESS("cb:Getting #varname#->\\"");'},
                  """\tif (capi_j>capi_i)
-\t\tGETSTRFROMPYTUPLE(capi_return,capi_i++,#varname#,#varname#_cb_len);""",
-                 {debugcapi:'\tfprintf(stderr,"#showvalueformat#\\":%d:.\\n",#varname#,#varname#_cb_len);'},
+\t\tGETSTRFROMPYTUPLE(capi_return,capi_i++,#varname_i#,#varname_i#_cb_len);""",
+                 {debugcapi:'\tfprintf(stderr,"#showvalueformat#\\":%d:.\\n",#varname_i#,#varname_i#_cb_len);'},
                  ],
     'need':['#ctype#','GETSTRFROMPYTUPLE',
             {debugcapi:'CFUNCSMESS'},'string.h'],
     '_check':l_and(isstring,isintent_out)
     },{
-    'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname#,#varname#_cb_len);'},
+    'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
                  {isintent_in:"""\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1(#varname#)))
+\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1(#varname_i#)))
 \t\t\tgoto capi_fail;"""},
                  {isintent_inout:"""\
 \tif (#name#_nofargs>capi_i) {
-\t\tint #varname#_cb_dims[] = {#varname#_cb_len};
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname#,#varname#_cb_dims)))
+\t\tint #varname_i#_cb_dims[] = {#varname_i#_cb_len};
+\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname_i#,#varname_i#_cb_dims)))
 \t\t\tgoto capi_fail;
 \t}"""}],
     'need':[{isintent_in:'pyobj_from_#ctype#1'},
@@ -349,7 +349,7 @@ cb_arg_rules=[
     },
 # Array ...
     {
-    'decl':'\tnpy_intp #varname#_Dims[#rank#] = {#rank*[-1]#};',
+    'decl':'\tnpy_intp #varname_i#_Dims[#rank#] = {#rank*[-1]#};',
     'setdims':'\t#cbsetdims#;',
     '_check':isarray,
     '_depend':''
@@ -358,11 +358,11 @@ cb_arg_rules=[
     'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                  {isintent_c:"""\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,NPY_CARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_CARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
                   l_not(isintent_c):"""\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,NPY_FARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_FARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
                   },
                  """
@@ -378,14 +378,14 @@ cb_arg_rules=[
                  """\tif (capi_j>capi_i) {
 \t\tPyArrayObject *rv_cb_arr = NULL;
 \t\tif ((capi_tmp = PyTuple_GetItem(capi_return,capi_i++))==NULL) goto capi_fail;
-\t\trv_cb_arr =  array_from_pyobj(#atype#,#varname#_Dims,#rank#,F2PY_INTENT_IN""",
+\t\trv_cb_arr =  array_from_pyobj(#atype#,#varname_i#_Dims,#rank#,F2PY_INTENT_IN""",
     {isintent_c:'|F2PY_INTENT_C'},
     """,capi_tmp);
 \t\tif (rv_cb_arr == NULL) {
 \t\t\tfprintf(stderr,\"rv_cb_arr is NULL\\n\");
 \t\t\tgoto capi_fail;
 \t\t}
-\t\tMEMCOPY(#varname#,rv_cb_arr->data,PyArray_NBYTES(rv_cb_arr));
+\t\tMEMCOPY(#varname_i#,rv_cb_arr->data,PyArray_NBYTES(rv_cb_arr));
 \t\tif (capi_tmp != (PyObject *)rv_cb_arr) {
 \t\t\tPy_DECREF(rv_cb_arr);
 \t\t}
@@ -427,8 +427,8 @@ def buildcallback(rout,um):
             ar=applyrules(r,vrd,rout)
             rd=dictappend(rd,ar)
     savevrd={}
-    for a in args:
-        vrd=capi_maps.cb_sign2map(a,var[a])
+    for i,a in enumerate(args):
+        vrd=capi_maps.cb_sign2map(a,var[a], index=i)
         savevrd[a]=vrd
         for r in cb_arg_rules:
             if '_depend' in r:
