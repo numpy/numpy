@@ -14,7 +14,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-           'assert_', 'spacing', 'assert_array_almost_equal_nulp',
+           'assert_', 'assert_array_almost_equal_nulp',
            'assert_array_max_ulp']
 
 verbose = 0
@@ -1105,7 +1105,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     import numpy as np
     ax = np.abs(x)
     ay = np.abs(y)
-    ref = nulp * spacing(np.where(ax > ay, ax, ay))
+    ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
     if not np.all(np.abs(x-y) <= ref):
         max_nulp = np.max(nulp_diff(x, y))
         raise AssertionError("X and Y are not equal to %d ULP "\
@@ -1196,34 +1196,3 @@ def integer_repr(x):
         return _integer_repr(x, np.int64, np.int64(-2**63))
     else:
         raise ValueError("Unsupported dtype %s" % x.dtype)
-
-def spacing(x, dtype=None):
-    """Return the spacing for each item in x.
-
-    spacing(x) is defined as the space between x and the next representable
-    floating point number > x. For example, spacing(1) == EPS
-
-    This aims at being equivalent to the Fortran 95 spacing intrinsic.
-    """
-    import numpy as np
-    if dtype:
-        x = np.atleast_1d(np.array(x, dtype=dtype))
-    else:
-        x = np.atleast_1d(np.array(x))
-
-    if np.iscomplexobj(x):
-        raise NotImplementerError("_compute_spacing not implemented for complex array")
-
-    t = x.dtype
-
-    res = integer_repr(x)
-    return (res + 1).view(t) - res.view(t)
-    # XXX: alternative implementation, the one used in gfortran: much simpler,
-    # but I am not sure I understand it, and it does not work for Nan
-    #p = np.finfo(t).nmant + 1
-    #emin = np.finfo(t).minexp
-    #
-    #e = np.frexp(x)[1] - p
-    #e[e<=emin] = emin
-
-    #return np.ldexp(np.array(1., dtype=t), e)
