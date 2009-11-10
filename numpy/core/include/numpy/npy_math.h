@@ -139,6 +139,7 @@ double npy_modf(double x, double* y);
 
 double npy_copysign(double x, double y);
 double npy_nextafter(double x, double y);
+double npy_spacing(double x);
 
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
@@ -212,6 +213,7 @@ float npy_modff(float x, float* y);
 
 float npy_copysignf(float x, float y);
 float npy_nextafterf(float x, float y);
+float npy_spacingf(float x);
 
 /*
  * float C99 math functions
@@ -252,6 +254,7 @@ npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
 
 npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);
+npy_longdouble npy_spacingl(npy_longdouble x);
 
 /*
  * Non standard functions

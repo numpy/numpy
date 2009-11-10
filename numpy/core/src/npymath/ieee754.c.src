@@ -215,6 +215,26 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 }
 #endif
 
+/**begin repeat
+ * #suff = f,,l#
+ * #SUFF = F,,L#
+ * #type = float, double, npy_longdouble#
+ */
+@type@ npy_spacing@suff@(@type@ x)
+{
+    /* XXX: npy isnan/isinf may be optimized by bit twiddling */
+    if (npy_isnan(x)) {
+        return x;
+    }
+
+    if (npy_isinf(x)) {
+        return NPY_NAN@SUFF@;
+    }
+
+    return npy_nextafter@suff@(x, x+1) - x;
+}
+/**end repeat**/
+
 /*
  * Decorate all the math functions which are available on the current platform
  */
