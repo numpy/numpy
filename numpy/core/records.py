@@ -73,7 +73,7 @@ def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     dup = []
     for i in range(len(list)):
-        if (list[i] in list[i+1:]):
+        if (list[i] in list[i + 1:]):
             if (list[i] not in dup):
                 dup.append(list[i])
     return dup
@@ -196,7 +196,7 @@ class format_parser:
             titles = []
 
         if (self._nfields > len(titles)):
-            self._titles += [None]*(self._nfields-len(titles))
+            self._titles += [None] * (self._nfields - len(titles))
 
     def _createdescr(self, byteorder):
         descr = sb.dtype({'names':self._names,
@@ -254,7 +254,7 @@ class record(nt.void):
         if res:
             return self.setfield(val, *res[:2])
         else:
-            if getattr(self,attr,None):
+            if getattr(self, attr, None):
                 return nt.void.__setattr__(self, attr, val)
             else:
                 raise AttributeError, "'record' object has no "\
@@ -265,9 +265,9 @@ class record(nt.void):
         names = self.dtype.names
         maxlen = max([len(name) for name in names])
         rows = []
-        fmt = '%% %ds: %%s' %maxlen
+        fmt = '%% %ds: %%s' % maxlen
         for name in names:
-            rows.append(fmt%(name, getattr(self, name)))
+            rows.append(fmt % (name, getattr(self, name)))
         return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
@@ -404,7 +404,7 @@ class recarray(ndarray):
             return object.__getattribute__(self, attr)
         except AttributeError: # attr must be a fieldname
             pass
-        fielddict = ndarray.__getattribute__(self,'dtype').fields
+        fielddict = ndarray.__getattribute__(self, 'dtype').fields
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
@@ -428,12 +428,12 @@ class recarray(ndarray):
         try:
             ret = object.__setattr__(self, attr, val)
         except:
-            fielddict = ndarray.__getattribute__(self,'dtype').fields or {}
+            fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
                 exctype, value = sys.exc_info()[:2]
                 raise exctype, value
         else:
-            fielddict = ndarray.__getattribute__(self,'dtype').fields or {}
+            fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
                 return ret
             if newattr:         # We just added this one
@@ -444,7 +444,7 @@ class recarray(ndarray):
                     return ret
         try:
             res = fielddict[attr][:2]
-        except (TypeError,KeyError):
+        except (TypeError, KeyError):
             raise AttributeError, "record array has no attribute %s" % attr
         return self.setfield(val, *res)
 
@@ -460,10 +460,10 @@ class recarray(ndarray):
 
     def field(self, attr, val=None):
         if isinstance(attr, int):
-            names = ndarray.__getattribute__(self,'dtype').names
+            names = ndarray.__getattribute__(self, 'dtype').names
             attr = names[attr]
 
-        fielddict = ndarray.__getattribute__(self,'dtype').fields
+        fielddict = ndarray.__getattribute__(self, 'dtype').fields
 
         res = fielddict[attr][:2]
 
@@ -550,7 +550,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     for k, obj in enumerate(arrayList):
         nn = len(descr[k].shape)
-        testshape = obj.shape[:len(obj.shape)-nn]
+        testshape = obj.shape[:len(obj.shape) - nn]
         if testshape != shape:
             raise ValueError, "array-shape mismatch in array %d" % k
 
@@ -596,17 +596,17 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     nfields = len(recList[0])
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
-        arrlist = [sb.array(obj[...,i].tolist()) for i in xrange(nfields)]
+        arrlist = [sb.array(obj[..., i].tolist()) for i in xrange(nfields)]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)
 
     if dtype is not None:
-        descr = sb.dtype(dtype)
+        descr = sb.dtype((record, dtype))
     else:
         descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
     try:
-        retval = sb.array(recList, dtype = descr)
+        retval = sb.array(recList, dtype=descr)
     except TypeError:  # list of lists instead of list of tuples
         if (shape is None or shape == 0):
             shape = len(recList)
@@ -624,7 +624,6 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     res = retval.view(recarray)
 
-    res.dtype = sb.dtype((record, res.dtype))
     return res
 
 
@@ -644,7 +643,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
     itemsize = descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
-        shape = (len(datastring)-offset) / itemsize
+        shape = (len(datastring) - offset) / itemsize
 
     _array = recarray(shape, descr, buf=datastring, offset=offset)
     return _array
@@ -703,14 +702,14 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     itemsize = descr.itemsize
 
     shapeprod = sb.array(shape).prod()
-    shapesize = shapeprod*itemsize
+    shapesize = shapeprod * itemsize
     if shapesize < 0:
         shape = list(shape)
         shape[ shape.index(-1) ] = size / -shapesize
         shape = tuple(shape)
         shapeprod = sb.array(shape).prod()
 
-    nbytes = shapeprod*itemsize
+    nbytes = shapeprod * itemsize
 
     if nbytes > size:
         raise ValueError(
@@ -794,7 +793,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         obj = sb.array(obj)
         if dtype is not None and (obj.dtype != dtype):
             obj = obj.view(dtype)
-        res  = obj.view(recarray)
+        res = obj.view(recarray)
         if issubclass(res.dtype.type, nt.void):
             res.dtype = sb.dtype((record, res.dtype))
         return res
