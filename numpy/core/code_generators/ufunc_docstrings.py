@@ -2807,7 +2807,7 @@ add_newdoc('numpy.core.umath', 'nextafter',
 
     Examples
     --------
-    >>> np.nextrepresentable(1, 2) == np.finfo(np.float64).eps
+    >>> np.nextrepresentable(1, 2) - 1 == np.finfo(np.float64).eps
     True
     """)
 
