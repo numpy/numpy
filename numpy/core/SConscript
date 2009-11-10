@@ -388,8 +388,8 @@ env.Prepend(CPPPATH = ['src/private', 'include', '.', 'include/numpy'])
 
 # npymath core lib
 npymath_src = [env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math.c.src')),
-               env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math_complex.c.src'))]
-npymath_src.append(pjoin('src', 'npymath', 'ieee754.c'))
+               env.GenerateFromTemplate(pjoin('src', 'npymath', 'npy_math_complex.c.src')),
+               env.GenerateFromTemplate(pjoin('src', 'npymath', 'ieee754.c.src'))]
 env.DistutilsInstalledStaticExtLibrary("npymath", npymath_src, install_dir='lib')
 env.Prepend(LIBS=["npymath"])
 env.Prepend(LIBPATH=["."])
