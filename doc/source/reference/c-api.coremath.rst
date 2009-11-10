@@ -127,6 +127,28 @@ precision are also available by adding the F and L suffixes respectively.
 
     The Euler constant (:math:`\lim_{n\rightarrow \infty}{\sum_{k=1}^n{\frac{1}{k}} - \ln n}`)
 
+Low-level floating point manipulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Those can be useful for precise floating point comparison.
+
+.. cfunction:: double npy_nextafter(double x, double y)
+
+    This is a function equivalent to C99 nextafter: return next representable
+    floating point value from x in the direction of y. Single and extended
+    precisions are available with suffix f and l.
+
+    .. versionadded:: 1.4.0
+
+.. cfunction:: double npy_spacing(double x)
+
+    This is a function equivalent to Fortran intrinsic. Return distance between
+    x and next representable floating point value from x, e.g. spacing(1) ==
+    eps. spacing of nan and +/- inf return nan. Single and extended precisions
+    are available with suffix f and l.
+
+    .. versionadded:: 1.4.0
+
 Complex functions
 ~~~~~~~~~~~~~~~~~
 
