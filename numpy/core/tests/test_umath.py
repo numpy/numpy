@@ -841,7 +841,12 @@ def test_spacing():
     for t in [np.float32, np.float64, np.longdouble]:
         one = t(1)
         eps = np.finfo(t).eps
+        nan = t(np.nan)
+        inf = t(np.inf)
         assert np.spacing(one) == eps
+        assert np.isnan(np.spacing(nan))
+        assert np.isnan(np.spacing(inf))
+        assert np.isnan(np.spacing(-inf))
 
 def test_spacing_gfortran():
     # Reference from this fortran file, built with gfortran 4.3.3 on linux
