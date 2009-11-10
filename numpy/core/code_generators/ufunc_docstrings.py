@@ -2811,6 +2811,34 @@ add_newdoc('numpy.core.umath', 'nextafter',
     True
     """)
 
+add_newdoc('numpy.core.umath', 'spacing',
+    """
+    Return the distance between x and the nearest adjacent number.
+
+    Parameters
+    ----------
+    x1: array_like
+        Values to find the spacing of.
+
+    Returns
+    -------
+    out : array_like
+        The spacing of values of `x1`.
+
+    Examples
+    --------
+    >>> np.spacing(1, 2) == np.finfo(np.float64).eps
+    True
+
+    Note
+    ----
+    It can be considered as a generalization of EPS: spacing(np.float64(1)) ==
+    np.finfo(np.float64).eps, and there should not be any representable number
+    between x + spacing(x) and x for any finite x.
+
+    spacing of +- inf and nan is nan.
+    """)
+
 add_newdoc('numpy.core.umath', 'sin',
     """
     Trigonometric sine, element-wise.

@@ -1611,6 +1611,10 @@ FLOAT_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 NPY_NO_EXPORT void
 FLOAT_nextafter(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
+#line 210
+NPY_NO_EXPORT void
+FLOAT_spacing(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
 
 #line 218
 NPY_NO_EXPORT void
@@ -1760,6 +1764,10 @@ DOUBLE_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fun
 NPY_NO_EXPORT void
 DOUBLE_nextafter(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
+#line 210
+NPY_NO_EXPORT void
+DOUBLE_spacing(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
 
 #line 218
 NPY_NO_EXPORT void
@@ -1908,6 +1916,10 @@ LONGDOUBLE_copysign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
 #line 210
 NPY_NO_EXPORT void
 LONGDOUBLE_nextafter(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+#line 210
+NPY_NO_EXPORT void
+LONGDOUBLE_spacing(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 
 #line 218
@@ -2080,9 +2092,6 @@ NPY_NO_EXPORT void
 CFLOAT_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-CFLOAT__arg(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 CFLOAT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 #line 372
@@ -2196,9 +2205,6 @@ NPY_NO_EXPORT void
 CDOUBLE_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-CDOUBLE__arg(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 CDOUBLE_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 #line 372
@@ -2310,9 +2316,6 @@ CLONGDOUBLE_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
 
 NPY_NO_EXPORT void
 CLONGDOUBLE_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-CLONGDOUBLE__arg(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 CLONGDOUBLE_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));

@@ -665,6 +665,11 @@ defdict = {
           docstrings.get('numpy.core.umath.nextafter'),
           TD(flts),
           ),
+'spacing' :
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.spacing'),
+          TD(flts),
+          ),
 'modf' :
     Ufunc(1, 2, None,
           docstrings.get('numpy.core.umath.modf'),
