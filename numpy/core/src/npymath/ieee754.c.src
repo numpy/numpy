@@ -159,59 +159,66 @@ float npy_nextafterf(float x, float y)
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 {
     volatile npy_longdouble t;
-    union IEEEl2bits ux, uy;
+    ldouble_man_t xmanl, xmanh, ymanl, ymanh;
+    ldouble_exp_t xexp, yexp;
+    ldouble_sign_t xsign, ysign;
 
-    ux.e = x;
-    uy.e = y;
+	GET_LDOUBLE_SIGN(x, xsign);
+	GET_LDOUBLE_EXP(x, xexp);
+	GET_LDOUBLE_MANL(x, xmanl);
+	GET_LDOUBLE_MANH(x, xmanh);
 
-    if ((ux.bits.exp == 0x7fff &&
-         ((ux.bits.manh & ~LDBL_NBIT) | ux.bits.manl) != 0) ||
-        (uy.bits.exp == 0x7fff &&
-         ((uy.bits.manh & ~LDBL_NBIT) | uy.bits.manl) != 0)) {
+	GET_LDOUBLE_SIGN(y, ysign);
+	GET_LDOUBLE_EXP(y, yexp);
+	GET_LDOUBLE_MANL(y, ymanl);
+	GET_LDOUBLE_MANH(y, ymanh);
+
+    if ((xexp == 0x7fff && ((xmanh & ~LDBL_NBIT) | xmanl) != 0) ||
+        (yexp == 0x7fff && ((ymanh & ~LDBL_NBIT) | ymanl) != 0)) {
         return x + y;           /* x or y is nan */
     }
     if (x == y) {
         return y;               /* x=y, return y */
     }
     if (x == 0.0) {
-        ux.bits.manh = 0;       /* return +-minsubnormal */
-        ux.bits.manl = 1;
-        ux.bits.sign = uy.bits.sign;
-        t = ux.e * ux.e;
-        if (t == ux.e) {
+        xmanh = 0;              /* return +-minsubnormal */
+        xmanl = 1;
+        xsign = ysign;
+        t = x * x;
+        if (t == x) {
             return t;
         } else {
-            return ux.e;        /* raise underflow flag */
+            return x;           /* raise underflow flag */
         }
     }
     if (x > 0.0 ^ x < y) {      /* x -= ulp */
-        if (ux.bits.manl == 0) {
-            if ((ux.bits.manh & ~LDBL_NBIT) == 0) {
-                ux.bits.exp -= 1;
+        if (xmanl == 0) {
+            if ((xmanh & ~LDBL_NBIT) == 0) {
+                xexp -= 1;
             }
-            ux.bits.manh = (ux.bits.manh - 1) | (ux.bits.manh & LDBL_NBIT);
+            xmanh = (xmanh - 1) | (xmanh & LDBL_NBIT);
         }
-        ux.bits.manl -= 1;
+        xmanl -= 1;
     } else {                    /* x += ulp */
-        ux.bits.manl += 1;
-        if (ux.bits.manl == 0) {
-            ux.bits.manh = (ux.bits.manh + 1) | (ux.bits.manh & LDBL_NBIT);
-            if ((ux.bits.manh & ~LDBL_NBIT) == 0) {
-                ux.bits.exp += 1;
+        xmanl += 1;
+        if (xmanl == 0) {
+            xmanh = (xmanh + 1) | (xmanh & LDBL_NBIT);
+            if ((xmanh & ~LDBL_NBIT) == 0) {
+                xexp += 1;
             }
         }
     }
-    if (ux.bits.exp == 0x7fff) {
+    if (xexp == 0x7fff) {
         return x + x;           /* overflow  */
     }
-    if (ux.bits.exp == 0) {     /* underflow */
-        mask_nbit_l(ux);
-        t = ux.e * ux.e;
-        if (t != ux.e) {        /* raise underflow flag */
-            return ux.e;
+    if (xexp == 0) {            /* underflow */
+        mask_nbit_l(xmanh);
+        t = x * x;
+        if (t != x) {           /* raise underflow flag */
+            return x;
         }
     }
-    return ux.e;
+    return x;
 }
 #endif
 
