@@ -10,8 +10,11 @@ from distutils.file_util import write_file
 
 class install(old_install):
 
-    # Always run install_clib - the command is cheap, so no need to bypass it
-    sub_commands = old_install.sub_commands + [('install_clib', lambda x: True)]
+    # Always run install_clib - the command is cheap, so no need to bypass it;
+    # but it's not run by setuptools -- so it's run again in install_data
+    sub_commands = old_install.sub_commands + [
+        ('install_clib', lambda x: True)
+    ]
 
     def finalize_options (self):
         old_install.finalize_options(self)
