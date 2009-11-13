@@ -1109,7 +1109,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     if not np.all(np.abs(x-y) <= ref):
         max_nulp = np.max(nulp_diff(x, y))
         raise AssertionError("X and Y are not equal to %d ULP "\
-                             "(max is %d)" % (nulp, max_nulp))
+                             "(max is %g)" % (nulp, max_nulp))
 
 def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     """Given two arrays a and b, check that every item differs in at most N
@@ -1117,7 +1117,7 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %d ULP" % \
+        raise AssertionError("Arrays are not almost equal up to %g ULP" % \
                              maxulp)
     return ret
 
