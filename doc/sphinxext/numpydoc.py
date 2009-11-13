@@ -24,14 +24,16 @@ import inspect
 def mangle_docstrings(app, what, name, obj, options, lines,
                       reference_offset=[0]):
 
+    cfg = dict(use_plots=app.config.numpydoc_use_plots,
+               show_class_members=app.config.numpydoc_show_class_members)
+
     if what == 'module':
         # Strip top title
         title_re = re.compile(ur'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
                               re.I|re.S)
         lines[:] = title_re.sub(u'', u"\n".join(lines)).split(u"\n")
     else:
-        doc = get_doc_object(obj, what, u"\n".join(lines))
-        doc.use_plots = app.config.numpydoc_use_plots
+        doc = get_doc_object(obj, what, u"\n".join(lines), config=cfg)
         lines[:] = unicode(doc).split(u"\n")
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
@@ -91,11 +93,12 @@ def initialize(app):
 def setup(app, get_doc_object_=get_doc_object):
     global get_doc_object
     get_doc_object = get_doc_object_
-    
+
     app.connect('autodoc-process-docstring', mangle_docstrings)
     app.connect('builder-inited', initialize)
-    app.add_config_value('numpydoc_edit_link', None, True)
+    app.add_config_value('numpydoc_edit_link', None, False)
     app.add_config_value('numpydoc_use_plots', None, False)
+    app.add_config_value('numpydoc_show_class_members', True, True)
 
     # Extra mangling directives
     name_type = {
@@ -114,7 +117,7 @@ def setup(app, get_doc_object_=get_doc_object):
 
     for name, objtype in name_type.items():
         app.add_directive('np-' + name, wrap_mangling_directive(name, objtype))
-    
+
 #------------------------------------------------------------------------------
 # Input-mangling directives
 #------------------------------------------------------------------------------
