@@ -9,7 +9,40 @@ __all__ = np.__all__[:] # copy numpy namespace
 __all__ += ['rand', 'randn', 'repmat']
 
 def empty(shape, dtype=None, order='C'):
-    """return an empty matrix of the given shape
+    """
+    Return a new matrix of given shape and type, without initializing entries.
+
+    Parameters
+    ----------
+    shape : int or tuple of int
+        Shape of the empty matrix.
+    dtype : data-type, optional
+        Desired output data-type.
+    order : {'C', 'F'}, optional
+        Whether to store multi-dimensional data in C (row-major) or
+        Fortran (column-major) order in memory.
+
+    See Also
+    --------
+    empty_like, zeros
+
+    Notes
+    -----
+    `empty`, unlike `zeros`, does not set the matrix values to zero,
+    and may therefore be marginally faster.  On the other hand, it requires
+    the user to manually set all the values in the array, and should be
+    used with caution.
+
+    Examples
+    --------
+    >>> import numpy.matlib
+    >>> np.matlib.empty((2, 2))    # filled with random data
+    matrix([[  6.76425276e-320,   9.79033856e-307],
+            [  7.39337286e-309,   3.22135945e-309]])
+    >>> np.matlib.empty((2, 2), dtype=int)
+    matrix([[ 6600475,        0],
+            [ 6586976, 22740995]])
+
     """
     return ndarray.__new__(matrix, shape, dtype, order=order)
 
@@ -60,16 +93,14 @@ def ones(shape, dtype=None, order='C'):
 
 def zeros(shape, dtype=None, order='C'):
     """
-    Zero matrix.
-
-    Return a matrix of given shape and type, filled with zeros
+    Return a matrix of given shape and type, filled with zeros.
 
     Parameters
     ----------
-    shape : {sequence of ints, int}
+    shape : int or sequence of ints
         Shape of the matrix
     dtype : data-type, optional
-        The desired data-type for the matrix, default is np.float64.
+        The desired data-type for the matrix, default is float.
     order : {'C', 'F'}, optional
         Whether to store the result in C- or Fortran-contiguous order,
         default is 'C'.
@@ -81,8 +112,8 @@ def zeros(shape, dtype=None, order='C'):
 
     See Also
     --------
-    zeros : Zero array.
-    matlib.ones : Matrix of ones.
+    numpy.zeros : Equivalent array function.
+    matlib.ones : Return a matrix of ones.
 
     Notes
     -----
@@ -91,7 +122,8 @@ def zeros(shape, dtype=None, order='C'):
 
     Examples
     --------
-    >>> np.matlib.zeros((2,3))
+    >>> import numpy.matlib
+    >>> np.matlib.zeros((2, 3))
     matrix([[ 0.,  0.,  0.],
             [ 0.,  0.,  0.]])
 
@@ -110,8 +142,7 @@ def identity(n,dtype=None):
     Parameters
     ----------
     n : int
-        Size of identity matrix
-
+        Size of the returned identity matrix.
     dtype : data-type, optional
         Data-type of the output. Defaults to ``float``.
 
@@ -123,13 +154,16 @@ def identity(n,dtype=None):
 
     See Also
     --------
-    identity : Equivalent array function.
+    numpy.identity : Equivalent array function.
     matlib.eye : More general matrix identity function.
 
-    Notes
-    -----
-    For more detailed documentation, see the docstring of the equivalent
-    array function ``np.identity``
+    Examples
+    --------
+    >>> import numpy.matlib
+    >>> np.identity(3, dtype=int)
+    array([[1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 1]])
 
     """
     a = array([1]+n*[0],dtype=dtype)
@@ -146,7 +180,7 @@ def eye(n,M=None, k=0, dtype=float):
     n : int
         Number of rows in the output.
     M : int, optional
-        Number of columns in the output, defaults to n.
+        Number of columns in the output, defaults to `n`.
     k : int, optional
         Index of the diagonal: 0 refers to the main diagonal,
         a positive value refers to an upper diagonal,
@@ -158,33 +192,155 @@ def eye(n,M=None, k=0, dtype=float):
     -------
     I : matrix
         A `n` x `M` matrix where all elements are equal to zero,
-        except for the k-th diagonal, whose values are equal to one.
+        except for the `k`-th diagonal, whose values are equal to one.
 
     See Also
     --------
-    eye : Equivalent array function
-    matlib.identity : Square identity matrix
+    numpy.eye : Equivalent array function.
+    identity : Square identity matrix.
 
-    Notes
-    -----
-    For more detailed docuemtation, see the docstring of the equivalent
-    array function ``np.eye``.
+    Examples
+    --------
+    >>> import numpy.matlib
+    >>> np.matlib.eye(3, k=1, dtype=float)
+    matrix([[ 0.,  1.,  0.],
+            [ 0.,  0.,  1.],
+            [ 0.,  0.,  0.]])
 
     """
     return asmatrix(np.eye(n,M,k,dtype))
 
 def rand(*args):
+    """
+    Return a matrix of random values with given shape.
+
+    Create a matrix of the given shape and propagate it with
+    random samples from a uniform distribution over ``[0, 1)``.
+
+    Parameters
+    ----------
+    \\*args : Arguments
+        Shape of the output.
+        If given as N integers, each integer specifies the size of one
+        dimension.
+        If given as a tuple, this tuple gives the complete shape.
+
+    Returns
+    -------
+    out : ndarray
+        The matrix of random values with shape given by `\\*args`.
+
+    See Also
+    --------
+    randn, numpy.random.rand
+
+    Examples
+    --------
+    >>> import numpy.matlib
+    >>> np.matlib.rand(2, 3)
+    matrix([[ 0.68340382,  0.67926887,  0.83271405],
+            [ 0.00793551,  0.20468222,  0.95253525]])
+    >>> np.matlib.rand((2, 3))
+    matrix([[ 0.84682055,  0.73626594,  0.11308016],
+            [ 0.85429008,  0.3294825 ,  0.89139555]])
+
+    If the first argument is a tuple, other arguments are ignored:
+
+    >>> np.matlib.rand((2, 3), 4)
+    matrix([[ 0.46898646,  0.15163588,  0.95188261],
+            [ 0.59208621,  0.09561818,  0.00583606]])
+
+    """
     if isinstance(args[0], tuple):
         args = args[0]
     return asmatrix(np.random.rand(*args))
 
 def randn(*args):
+    """
+    Return a random matrix with data from the "standard normal" distribution.
+
+    `randn` generates a matrix filled with random floats sampled from a
+    univariate "normal" (Gaussian) distribution of mean 0 and variance 1.
+
+    Parameters
+    ----------
+    \\*args : Arguments
+        Shape of the output.
+        If given as N integers, each integer specifies the size of one
+        dimension. If given as a tuple, this tuple gives the complete shape.
+
+    Returns
+    -------
+    Z : matrix of floats
+        A matrix of floating-point samples drawn from the standard normal
+        distribution.
+
+    See Also
+    --------
+    rand, random.randn
+
+    Notes
+    -----
+    For random samples from :math:`N(\\mu, \\sigma^2)`, use:
+
+    ``sigma * np.matlib.randn(...) + mu``
+
+    Examples
+    --------
+    >>> import numpy.matlib
+    >>> np.matlib.randn(1)
+    matrix([[-0.09542833]])
+    >>> np.matlib.randn(1, 2, 3)
+    matrix([[ 0.16198284,  0.0194571 ,  0.18312985],
+            [-0.7509172 ,  1.61055   ,  0.45298599]])
+
+    Two-by-four matrix of samples from :math:`N(3, 6.25)`:
+
+    >>> 2.5 * np.matlib.randn((2, 4)) + 3
+    matrix([[ 4.74085004,  8.89381862,  4.09042411,  4.83721922],
+            [ 7.52373709,  5.07933944, -2.64043543,  0.45610557]])
+
+    """
     if isinstance(args[0], tuple):
         args = args[0]
     return asmatrix(np.random.randn(*args))
 
 def repmat(a, m, n):
-    """Repeat a 0-d to 2-d array mxn times
+    """
+    Repeat a 0-D to 2-D array or matrix MxN times.
+
+    Parameters
+    ----------
+    a : array_like
+        The array or matrix to be repeated.
+    m, n : int
+        The number of times `a` is repeated along the first and second axes.
+
+    Returns
+    -------
+    out : ndarray
+        The result of repeating `a`.
+
+    Examples
+    --------
+    >>> import numpy.matlib
+    >>> a0 = np.array(1)
+    >>> np.matlib.repmat(a0, 2, 3)
+    array([[1, 1, 1],
+           [1, 1, 1]])
+
+    >>> a1 = np.arange(4)
+    >>> np.matlib.repmat(a1, 2, 2)
+    array([[0, 1, 2, 3, 0, 1, 2, 3],
+           [0, 1, 2, 3, 0, 1, 2, 3]])
+
+    >>> a2 = np.asmatrix(np.arange(6).reshape(2, 3))
+    >>> np.matlib.repmat(a2, 2, 3)
+    matrix([[0, 1, 2, 0, 1, 2, 0, 1, 2],
+            [3, 4, 5, 3, 4, 5, 3, 4, 5],
+            [0, 1, 2, 0, 1, 2, 0, 1, 2],
+            [3, 4, 5, 3, 4, 5, 3, 4, 5]])
+
     """
     a = asanyarray(a)
     ndim = a.ndim

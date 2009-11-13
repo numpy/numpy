@@ -1431,13 +1431,13 @@ def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
     ----------
     m : array_like
         Potential mask.
-    copy : bool
+    copy : bool, optional
         Whether to return a copy of `m` (True) or `m` itself (False).
-    shrink : bool
+    shrink : bool, optional
         Whether to shrink `m` to ``nomask`` if all its values are False.
-    flag : bool
+    flag : bool, optional
         Deprecated equivalent of `shrink`.
-    dtype : dtype
+    dtype : dtype, optional
         Data-type of the output mask. By default, the output mask has
         a dtype of MaskType (bool). If the dtype is flexible, each field
         has a boolean dtype.
@@ -1639,21 +1639,23 @@ def flatten_mask(mask):
     Parameters
     ----------
     mask : array_like
-        Array of booleans
+        Input array, which will be interpreted as booleans.
 
     Returns
     -------
-    flattened_mask : ndarray
-        Boolean array.
+    flattened_mask : ndarray of bools
+        The flattened input.
 
     Examples
     --------
     >>> mask = np.array([0, 0, 1], dtype=np.bool)
     >>> flatten_mask(mask)
     array([False, False,  True], dtype=bool)
+
     >>> mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
     >>> flatten_mask(mask)
     array([False, False, False,  True], dtype=bool)
+
     >>> mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
     >>> mask = np.array([(0, (0, 0)), (0, (0, 1))], dtype=mdtype)
     >>> flatten_mask(mask)
@@ -3134,14 +3136,30 @@ class MaskedArray(ndarray):
 
     #............................................
     def harden_mask(self):
-        """Force the mask to hard.
+        """
+        Force the mask to hard.
+
+        Whether the mask of a masked array is hard or soft is determined by
+        its `hardmask` property. `harden_mask` sets `hardmask` to True.
+
+        See Also
+        --------
+        hardmask
 
         """
         self._hardmask = True
         return self
 
     def soften_mask(self):
-        """Force the mask to soft.
+        """
+        Force the mask to soft.
+
+        Whether the mask of a masked array is hard or soft is determined by
+        its `hardmask` property. `soften_mask` sets `hardmask` to False.
+
+        See Also
+        --------
+        hardmask
 
         """
         self._hardmask = False
@@ -3152,7 +3170,16 @@ class MaskedArray(ndarray):
 
 
     def unshare_mask(self):
-        """Copy the mask and set the sharedmask flag to False.
+        """
+        Copy the mask and set the sharedmask flag to False.
+
+        Whether the mask is shared between masked arrays can be seen from
+        the `sharedmask` property. `unshare_mask` ensures the mask is not shared.
+        A copy of the mask is only made if it was shared.
+
+        See Also
+        --------
+        sharedmask
 
         """
         if self._sharedmask:
@@ -3164,7 +3191,26 @@ class MaskedArray(ndarray):
                           doc="Share status of the mask (read-only).")
 
     def shrink_mask(self):
-        """Reduce a mask to nomask when possible.
+        """
+        Reduce a mask to nomask when possible.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2 ], [3, 4]], mask=[0]*4)
+        >>> x.mask
+        array([[False, False],
+               [False, False]], dtype=bool)
+        >>> x.shrink_mask()
+        >>> x.mask
+        False
 
         """
         m = self._mask

@@ -9,6 +9,10 @@ __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
 _VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
 
 class FormatError(IOError):
+    """
+    Exception thrown when there is a problem parsing a configuration file.
+
+    """
     def __init__(self, msg):
         self.msg = msg
 
@@ -16,6 +20,7 @@ class FormatError(IOError):
         return self.msg
 
 class PkgNotFound(IOError):
+    """Exception raised when a package can not be located."""
     def __init__(self, msg):
         self.msg = msg
 
@@ -23,6 +28,27 @@ class PkgNotFound(IOError):
         return self.msg
 
 def parse_flags(line):
+    """
+    Parse a line from a config file containing compile flags.
+
+    Parameters
+    ----------
+    line : str
+        A single line containing one or more compile flags.
+
+    Returns
+    -------
+    d : dict
+        Dictionary of parsed flags, split into relevant categories.
+        These categories are the keys of `d`:
+
+        * 'include_dirs'
+        * 'library_dirs'
+        * 'libraries'
+        * 'macros'
+        * 'ignored'
+
+    """
     lexer = shlex.shlex(line)
     lexer.whitespace_split = True
 
@@ -59,6 +85,32 @@ def _escape_backslash(val):
     return val.replace('\\', '\\\\')
 
 class LibraryInfo(object):
+    """
+    Object containing build information about a library.
+
+    Parameters
+    ----------
+    name : str
+        The library name.
+    description : str
+        Description of the library.
+    version : str
+        Version string.
+    sections : dict
+        The sections of the configuration file for the library. The keys are
+        the section headers, the values the text under each header.
+    vars : class instance
+        A `VariableSet` instance, which contains ``(name, value)`` pairs for
+        variables defined in the configuration file for the library.
+    requires : sequence, optional
+        The required libraries for the library to be installed.
+
+    Notes
+    -----
+    All input parameters (except "sections" which is a method) are available as
+    attributes of the same name.
+
+    """
     def __init__(self, name, description, version, sections, vars, requires=None):
         self.name = name
         self.description = description
@@ -71,6 +123,19 @@ class LibraryInfo(object):
         self.vars = vars
 
     def sections(self):
+        """
+        Return the section headers of the config file.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        keys : list of str
+            The list of section headers.
+
+        """
         return self._sections.keys()
 
     def cflags(self, section="default"):
@@ -93,6 +158,18 @@ class LibraryInfo(object):
         return "\n".join(m)
 
 class VariableSet(object):
+    """
+    Container object for the variables defined in a config file.
+
+    `VariableSet` can be used as a plain dictionary, with the variable names
+    as keys.
+
+    Parameters
+    ----------
+    d : dict
+        Dict of items in the "variables" section of the configuration file.
+
+    """
     def __init__(self, d):
         self._raw_data = dict([(k, v) for k, v in d.items()])
 
@@ -125,6 +202,19 @@ class VariableSet(object):
         return value
 
     def variables(self):
+        """
+        Return the list of variable names.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        names : list of str
+            The names of all variables in the `VariableSet` instance.
+
+        """
         return self._raw_data.keys()
 
     # Emulate a dict to set/get variables values

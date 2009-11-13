@@ -261,6 +261,7 @@ class record(nt.void):
                       "attribute '%s'" % attr
 
     def pprint(self):
+        """Pretty-print all fields."""
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max([len(name) for name in names])
@@ -303,7 +304,7 @@ class recarray(ndarray):
         Note that `formats` must be a list, not a tuple.
         Given that `formats` is somewhat limited, we recommend specifying
         `dtype` instead.
-    names : tuple of strings, optional
+    names : tuple of str, optional
         The name of each column, e.g. ``('x', 'y', 'z')``.
     buf : buffer, optional
         By default, a new array is created of the given shape and data-type.
@@ -313,14 +314,14 @@ class recarray(ndarray):
 
     Other Parameters
     ----------------
-    titles : tuple of strings, optional
+    titles : tuple of str, optional
         Aliases for column names.  For example, if `names` were
         ``('x', 'y', 'z')`` and `titles` is
         ``('x_coordinate', 'y_coordinate', 'z_coordinate')``, then
         ``arr['x']`` is equivalent to both ``arr.x`` and ``arr.x_coordinate``.
     byteorder : {'<', '>', '='}, optional
         Byte-order for all fields.
-    aligned : {True, False}, optional
+    aligned : bool, optional
         Align the fields in memory as the C-compiler would.
     strides : tuple of ints, optional
         Buffer (`buf`) is interpreted according to these strides (strides
@@ -337,8 +338,8 @@ class recarray(ndarray):
     See Also
     --------
     rec.fromrecords : Construct a record array from data.
-    record : fundamental data-type for recarray
-    format_parser : determine a data-type from formats, names, titles
+    record : fundamental data-type for `recarray`.
+    format_parser : determine a data-type from formats, names, titles.
 
     Notes
     -----

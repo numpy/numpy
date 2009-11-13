@@ -458,30 +458,34 @@ def hfft(a, n=None, axis=-1):
 
 def ihfft(a, n=None, axis=-1):
     """
-    Compute the inverse fft of a signal whose spectrum has Hermitian symmetry.
+    Compute the inverse FFT of a signal whose spectrum has Hermitian symmetry.
 
     Parameters
     ----------
     a : array_like
         Input array.
     n : int, optional
-        Length of the ihfft.
+        Length of the inverse FFT.
     axis : int, optional
-        Axis over which to compute the ihfft.
+        Axis over which to compute the inverse FFT, assuming Hermitian
+        symmetry of the spectrum. Default is the last axis.
+
+    Returns
+    -------
+    out : ndarray
+        The transformed input.
 
     See also
     --------
-    rfft, hfft
+    hfft, irfft
 
     Notes
     -----
-    These are a pair analogous to rfft/irfft, but for the
+    `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
     opposite case: here the signal is real in the frequency domain and has
-    Hermite symmetry in the time domain. So here it's hermite_fft for which
-    you must supply the length of the result if it is to be odd.
-
-    ihfft(hfft(a), len(a)) == a
-    within numerical accuracy.
+    Hermite symmetry in the time domain. So here it's `hfft` for which
+    you must supply the length of the result if it is to be odd:
+    ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
 
     """
 

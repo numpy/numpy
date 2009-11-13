@@ -176,12 +176,11 @@ class DataSource (object):
 
     Examples
     --------
-
     ::
 
         >>> ds = DataSource('/home/guido')
         >>> urlname = 'http://www.google.com/index.html'
-        >>> gfile = ds.open('http://www.google.com/index.html')  # open remote file
+        >>> gfile = ds.open('http://www.google.com/index.html')  # remote file
         >>> ds.abspath(urlname)
         '/home/guido/www.google.com/site/index.html'
 

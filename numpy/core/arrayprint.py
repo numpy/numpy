@@ -122,8 +122,8 @@ def get_printoptions():
           - edgeitems : int
           - linewidth : int
           - suppress : bool
-          - nanstr : string
-          - infstr : string
+          - nanstr : str
+          - infstr : str
 
         For a full description of these options, see `set_printoptions`.
 
@@ -253,9 +253,9 @@ def array2string(a, max_line_width = None, precision = None,
     suppress_small : bool, optional
         Represent very small numbers as zero. A number is "very small" if it
         is smaller than the current printing precision.
-    separator : string, optional
+    separator : str, optional
         Inserted between elements.
-    prefix : string, optional
+    prefix : str, optional
         An array is typically printed as::
 
           'prefix(' + array2string(a) + ')'

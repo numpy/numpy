@@ -3,15 +3,17 @@ This module contains a set of functions for vectorized string
 operations and methods.
 
 .. note::
-   The chararray module exists for backwards compatibility with
+   The `chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. If one needs
    arrays of strings, use arrays of `dtype` `object_`, `string_` or
-   `unicode_`.
+   `unicode_`, and use the free functions in the `numpy.char` module
+   for fast vectorized string operations.
 
-Methods will only be available if the corresponding str method is
+Some methods will only be available if the corresponding str method is
 available in your version of Python.
 
 The preferred alias for `defchararray` is `numpy.char`.
+
 """
 
 import sys
@@ -281,12 +283,14 @@ def multiply(a, i):
     Parameters
     ----------
     a : array_like of str or unicode
+
     i : array_like of ints
 
     Returns
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
+
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
@@ -305,6 +309,7 @@ def mod(a, values):
     Parameters
     ----------
     a : array_like of str or unicode
+
     values : array_like of values
        These values will be element-wise interpolated into the string.
 
@@ -316,6 +321,7 @@ def mod(a, values):
     See also
     --------
     str.__mod__
+
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, '__mod__', (values,)))
@@ -366,6 +372,7 @@ if sys.version_info >= (2, 4):
         Parameters
         ----------
         a : array_like of str or unicode
+
         width : int
             The length of the resulting strings
         fillchar : str or unicode, optional
@@ -380,6 +387,7 @@ if sys.version_info >= (2, 4):
         See also
         --------
         str.center
+
         """
         a_arr = numpy.asarray(a)
         width_arr = numpy.asarray(width)
@@ -425,8 +433,10 @@ def count(a, sub, start=0, end=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     sub : str or unicode
-       The substring to search for
+       The substring to search for.
+
     start, end : int, optional
        Optional arguments `start` and `end` are interpreted as slice
        notation to specify the range in which to count.
@@ -454,6 +464,7 @@ def count(a, sub, start=0, end=None):
     array([2, 1, 1])
     >>> np.char.count(c, 'A', start=1, end=3)
     array([1, 0, 0])
+
     """
     return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
 
@@ -461,11 +472,17 @@ def decode(a, encoding=None, errors=None):
     """
     Calls `str.decode` element-wise.
 
+    The set of available codecs comes from the Python standard library,
+    and may be extended at runtime.  For more information, see the
+    :mod:`codecs` module.
+
     Parameters
     ----------
     a : array_like of str or unicode
+
     encoding : str, optional
        The name of an encoding
+
     errors : str, optional
        Specifies how to handle encoding errors
 
@@ -473,13 +490,13 @@ def decode(a, encoding=None, errors=None):
     -------
     out : ndarray
 
-    Notes
-    -----
-    The type of the result will depend on the encoding specified.
-
     See also
     --------
     str.decode
+
+    Notes
+    -----
+    The type of the result will depend on the encoding specified.
 
     Examples
     --------
@@ -491,6 +508,7 @@ def decode(a, encoding=None, errors=None):
     array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
         '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
         dtype='|S7')
+
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
@@ -499,11 +517,17 @@ def encode(a, encoding=None, errors=None):
     """
     Calls `str.encode` element-wise.
 
+    The set of available codecs comes from the Python standard library,
+    and may be extended at runtime. For more information, see the codecs
+    module.
+
     Parameters
     ----------
     a : array_like of str or unicode
+
     encoding : str, optional
        The name of an encoding
+
     errors : str, optional
        Specifies how to handle encoding errors
 
@@ -511,13 +535,14 @@ def encode(a, encoding=None, errors=None):
     -------
     out : ndarray
 
+    See also
+    --------
+    str.encode
+
     Notes
     -----
     The type of the result will depend on the encoding specified.
 
-    See also
-    --------
-    str.encode
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
@@ -532,7 +557,9 @@ def endswith(a, suffix, start=0, end=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     suffix : str
+
     start, end : int, optional
         With optional `start`, test beginning at that position. With
         optional `end`, stop comparing at that position.
@@ -558,6 +585,7 @@ def endswith(a, suffix, start=0, end=None):
     array([False,  True], dtype=bool)
     >>> s.endswith(s, 'a', start=1, end=2)
     array([False,  True], dtype=bool)
+
     """
     return _vec_string(
         a, bool_, 'endswith', [suffix, start] + _clean_args(end))
@@ -607,19 +635,22 @@ def find(a, sub, start=0, end=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     sub : str or unicode
+
     start, end : int, optional
         Optional arguments `start` and `end` are interpreted as in
         slice notation.
 
     Returns
     -------
-    out : {ndarray, integer}
+    out : ndarray or int
         Output array of ints.  Returns -1 if `sub` is not found.
 
     See also
     --------
     str.find
+
     """
     return _vec_string(
         a, integer, 'find', [sub, start] + _clean_args(end))
@@ -638,7 +669,9 @@ def index(a, sub, start=0, end=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     sub : str or unicode
+
     start, end : int, optional
 
     Returns
@@ -649,6 +682,7 @@ def index(a, sub, start=0, end=None):
     See also
     --------
     find, str.find
+
     """
     return _vec_string(
         a, integer, 'index', [sub, start] + _clean_args(end))
@@ -859,6 +893,7 @@ if sys.version_info >= (2, 4):
         Parameters
         ----------
         a : array_like of str or unicode
+
         width : int
             The length of the resulting strings
         fillchar : str or unicode, optional
@@ -872,6 +907,7 @@ if sys.version_info >= (2, 4):
         See also
         --------
         str.ljust
+
         """
         a_arr = numpy.asarray(a)
         width_arr = numpy.asarray(width)
@@ -950,6 +986,7 @@ def lstrip(a, chars=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     chars : str or unicode, optional
        The `chars` argument is a string specifying the set of
        characters to be removed. If omitted or None, the `chars`
@@ -982,6 +1019,7 @@ def lstrip(a, chars=None):
     True
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
     True
+
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'lstrip', (chars,))
@@ -1028,7 +1066,9 @@ def replace(a, old, new, count=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     old, new : str or unicode
+
     count : int, optional
         If the optional argument `count` is given, only the first
         `count` occurrences are replaced.
@@ -1041,6 +1081,7 @@ def replace(a, old, new, count=None):
     See also
     --------
     str.replace
+
     """
     return _to_string_or_unicode_array(
         _vec_string(
@@ -1057,7 +1098,9 @@ def rfind(a, sub, start=0, end=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     sub : str or unicode
+
     start, end : int, optional
         Optional arguments `start` and `end` are interpreted as in
         slice notation.
@@ -1070,6 +1113,7 @@ def rfind(a, sub, start=0, end=None):
     See also
     --------
     str.rfind
+
     """
     return _vec_string(
         a, integer, 'rfind', [sub, start] + _clean_args(end))
@@ -1084,7 +1128,9 @@ def rindex(a, sub, start=0, end=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     sub : str or unicode
+
     start, end : int, optional
 
     Returns
@@ -1095,6 +1141,7 @@ def rindex(a, sub, start=0, end=None):
     See also
     --------
     rfind, str.rindex
+
     """
     return _vec_string(
         a, integer, 'rindex', [sub, start] + _clean_args(end))
@@ -1110,6 +1157,7 @@ if sys.version_info >= (2, 4):
         Parameters
         ----------
         a : array_like of str or unicode
+
         width : int
             The length of the resulting strings
         fillchar : str or unicode, optional
@@ -1123,6 +1171,7 @@ if sys.version_info >= (2, 4):
         See also
         --------
         str.rjust
+
         """
         a_arr = numpy.asarray(a)
         width_arr = numpy.asarray(width)
@@ -1204,6 +1253,7 @@ if sys.version_info >= (2, 4):
         Parameters
         ----------
         a : array_like of str or unicode
+
         sep : str or unicode, optional
             If `sep` is not specified or `None`, any whitespace string
             is a separator.
@@ -1219,6 +1269,7 @@ if sys.version_info >= (2, 4):
         See also
         --------
         str.rsplit, split
+
         """
         # This will return an array of lists of different sizes, so we
         # leave it as an object array
@@ -1235,6 +1286,7 @@ def rstrip(a, chars=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     chars : str or unicode, optional
        The `chars` argument is a string specifying the set of
        characters to be removed. If omitted or None, the `chars`
@@ -1262,6 +1314,7 @@ def rstrip(a, chars=None):
     >>> np.char.rstrip(c, 'A')
     array(['aAaAa', 'abBABba'],
         dtype='|S7')
+
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
@@ -1276,9 +1329,11 @@ def split(a, sep=None, maxsplit=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     sep : str or unicode, optional
        If `sep` is not specified or `None`, any whitespace string is a
        separator.
+
     maxsplit : int, optional
         If `maxsplit` is given, at most `maxsplit` splits are done.
 
@@ -1290,6 +1345,7 @@ def split(a, sep=None, maxsplit=None):
     See also
     --------
     str.split, rsplit
+
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1306,6 +1362,7 @@ def splitlines(a, keepends=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     keepends : bool, optional
         Line breaks are not included in the resulting list unless
         keepends is given and true.
@@ -1318,6 +1375,7 @@ def splitlines(a, keepends=None):
     See also
     --------
     str.splitlines
+
     """
     return _vec_string(
         a, object_, 'splitlines', _clean_args(keepends))
@@ -1332,9 +1390,10 @@ def startswith(a, prefix, start=0, end=None):
     Parameters
     ----------
     a : array_like of str or unicode
+
     suffix : str
+
     start, end : int, optional
-    end : int, optional
         With optional `start`, test beginning at that position. With
         optional `end`, stop comparing at that position.
 
@@ -1346,6 +1405,7 @@ def startswith(a, prefix, start=0, end=None):
     See also
     --------
     str.startswith
+
     """
     return _vec_string(
         a, bool_, 'startswith', [prefix, start] + _clean_args(end))
@@ -1360,6 +1420,7 @@ def strip(a, chars=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     chars : str or unicode, optional
        The `chars` argument is a string specifying the set of
        characters to be removed. If omitted or None, the `chars`
@@ -1391,6 +1452,7 @@ def strip(a, chars=None):
     >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because (unprinted) ws trails
     array(['aAaAa', '  aA', 'abBABba'],
         dtype='|S7')
+
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'strip', _clean_args(chars))
@@ -1476,7 +1538,9 @@ def translate(a, table, deletechars=None):
     Parameters
     ----------
     a : array-like of str or unicode
+
     table : str of length 256
+
     deletechars : str
 
     Returns
@@ -1487,6 +1551,7 @@ def translate(a, table, deletechars=None):
     See also
     --------
     str.translate
+
     """
     a_arr = numpy.asarray(a)
     if issubclass(a_arr.dtype.type, unicode_):
@@ -1621,11 +1686,11 @@ class chararray(ndarray):
     Provides a convenient view on arrays of string and unicode values.
 
     .. note::
-       This class is provided for numarray backward-compatibility.
-       New code (not concerned with numarray compatibility) should use
-       arrays of type string_ or unicode_ and use the free
-       functions in :mod:`numpy.char <numpy.core.defchararray>` for
-       fast vectorized string operations instead.
+       The `chararray` class exists for backwards compatibility with
+       Numarray, it is not recommended for new development. If one needs
+       arrays of strings, use arrays of `dtype` `object_`, `string_` or
+       `unicode_`, and use the free functions in the `numpy.char` module
+       for fast vectorized string operations.
 
     Versus a regular Numpy array of type `str` or `unicode`, this
     class adds the following functionality:
@@ -1637,64 +1702,58 @@ class chararray(ndarray):
          end when comparing values
 
       3) vectorized string operations are provided as methods
-         (e.g. `.endswith`) and infix operators (e.g. +, *, %)
+         (e.g. `.endswith`) and infix operators (e.g. ``"+", "*", "%"``)
 
-    chararrays should be created using `numpy.char.array
-    <numpy.core.defchararray.array>` or `numpy.char.asarray
-    <numpy.core.defchararray.asarray>`, rather than this constructor
-    directly.
+    chararrays should be created using `numpy.char.array` or
+    `numpy.char.asarray`, rather than this constructor directly.
 
-    Create the array, using `buffer` (with `offset` and `strides`) if
-    it is not ``None``. If `buffer` is ``None``, then construct a new
-    array with `strides` in "C order," unless both ``len(shape) >= 2``
-    and ``order='Fortran'``, in which case `strides` is in "Fortran
-    order."
+    This constructor creates the array, using `buffer` (with `offset`
+    and `strides`) if it is not ``None``. If `buffer` is ``None``, then
+    constructs a new array with `strides` in "C order", unless both
+    ``len(shape) >= 2`` and ``order='Fortran'``, in which case `strides`
+    is in "Fortran order".
 
     Parameters
     ----------
     shape : tuple
-       Shape of the array.
-
-    itemsize : int_like, > 0, optional
-       Length of each array element, in number of characters. Default is 1.
-
+        Shape of the array.
+    itemsize : int, optional
+        Length of each array element, in number of characters. Default is 1.
     unicode : bool, optional
-       Are the array elements of unicode-type (`True`) or string-type
-       (`False`, the default).
-
-    buffer : int, > 0, optional
-       Memory address of the start of the array data.  If `None`
-       (the default), a new array is created.
-
-    offset : int, >= 0, optional
-       Fixed stride displacement from the beginning of an axis?
-       Default is 0.
-
-    strides : array_like, optional
-       Strides for the array (see `numpy.ndarray.strides` for full
-       description), default is `None`.
-
+        Are the array elements of type unicode (True) or string (False).
+        Default is False.
+    buffer : int, optional
+        Memory address of the start of the array data.  Default is None,
+        in which case a new array is created.
+    offset : int, optional
+        Fixed stride displacement from the beginning of an axis?
+        Default is 0. Needs to be >=0.
+    strides : array_like of ints, optional
+        Strides for the array (see `ndarray.strides` for full description).
+        Default is None.
     order : {'C', 'F'}, optional
-       The order in which the array data is stored in memory: 'C' ->
-       "row major" order (the default), 'F' -> "column major"
-       (Fortran) order.
+        The order in which the array data is stored in memory: 'C' ->
+        "row major" order (the default), 'F' -> "column major"
+        (Fortran) order.
 
     Examples
     --------
     >>> charar = np.chararray((3, 3))
-    >>> charar[:,:] = 'abc'
+    >>> charar[:, :] = 'abc'
     >>> charar
     chararray([['a', 'a', 'a'],
            ['a', 'a', 'a'],
            ['a', 'a', 'a']],
           dtype='|S1')
+
     >>> charar = np.chararray(charar.shape, itemsize=5)
-    >>> charar[:,:] = 'abc'
+    >>> charar[:, :] = 'abc'
     >>> charar
     chararray([['abc', 'abc', 'abc'],
            ['abc', 'abc', 'abc'],
            ['abc', 'abc', 'abc']],
           dtype='|S5')
+
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
@@ -1889,7 +1948,8 @@ class chararray(ndarray):
 
         See also
         --------
-        capitalize
+        char.capitalize
+
         """
         return asarray(capitalize(self))
 
@@ -1923,7 +1983,8 @@ class chararray(ndarray):
 
         See also
         --------
-        count
+        char.count
+
         """
         return count(self, sub, start, end)
 
@@ -1934,7 +1995,8 @@ class chararray(ndarray):
 
         See also
         --------
-        decode
+        char.decode
+
         """
         return decode(self, encoding, errors)
 
@@ -1944,7 +2006,8 @@ class chararray(ndarray):
 
         See also
         --------
-        encode
+        char.encode
+
         """
         return encode(self, encoding, errors)
 
@@ -1955,7 +2018,8 @@ class chararray(ndarray):
 
         See also
         --------
-        endswith
+        char.endswith
+
         """
         return endswith(self, suffix, start, end)
 
@@ -1966,7 +2030,8 @@ class chararray(ndarray):
 
         See also
         --------
-        expandtabs
+        char.expandtabs
+
         """
         return asarray(expandtabs(self, tabsize))
 
@@ -1977,7 +2042,8 @@ class chararray(ndarray):
 
         See also
         --------
-        find
+        char.find
+
         """
         return find(self, sub, start, end)
 
@@ -1987,7 +2053,8 @@ class chararray(ndarray):
 
         See also
         --------
-        index
+        char.index
+
         """
         return index(self, sub, start, end)
 
@@ -1999,7 +2066,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isalnum
+        char.isalnum
+
         """
         return isalnum(self)
 
@@ -2011,7 +2079,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isalpha
+        char.isalpha
+
         """
         return isalpha(self)
 
@@ -2022,7 +2091,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isdigit
+        char.isdigit
+
         """
         return isdigit(self)
 
@@ -2034,7 +2104,8 @@ class chararray(ndarray):
 
         See also
         --------
-        islower
+        char.islower
+
         """
         return islower(self)
 
@@ -2046,7 +2117,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isspace
+        char.isspace
+
         """
         return isspace(self)
 
@@ -2057,7 +2129,8 @@ class chararray(ndarray):
 
         See also
         --------
-        istitle
+        char.istitle
+
         """
         return istitle(self)
 
@@ -2069,7 +2142,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isupper
+        char.isupper
+
         """
         return isupper(self)
 
@@ -2080,7 +2154,8 @@ class chararray(ndarray):
 
         See also
         --------
-        join
+        char.join
+
         """
         return join(self, seq)
 
@@ -2092,7 +2167,8 @@ class chararray(ndarray):
 
             See also
             --------
-            ljust
+            char.ljust
+
             """
             return asarray(ljust(self, width, fillchar))
     else:
@@ -2111,9 +2187,11 @@ class chararray(ndarray):
         """
         Return an array with the elements of `self` converted to
         lowercase.
+
         See also
         --------
-        lower
+        char.lower
+
         """
         return asarray(lower(self))
 
@@ -2124,7 +2202,8 @@ class chararray(ndarray):
 
         See also
         --------
-        lstrip
+        char.lstrip
+
         """
         return asarray(lstrip(self, chars))
 
@@ -2146,7 +2225,8 @@ class chararray(ndarray):
 
         See also
         --------
-        replace
+        char.replace
+
         """
         return asarray(replace(self, old, new, count))
 
@@ -2158,7 +2238,8 @@ class chararray(ndarray):
 
         See also
         --------
-        rfind
+        char.rfind
+
         """
         return rfind(self, sub, start, end)
 
@@ -2169,7 +2250,8 @@ class chararray(ndarray):
 
         See also
         --------
-        rindex
+        char.rindex
+
         """
         return rindex(self, sub, start, end)
 
@@ -2181,7 +2263,8 @@ class chararray(ndarray):
 
             See also
             --------
-            rjust
+            char.rjust
+
             """
             return asarray(rjust(self, width, fillchar))
     else:
@@ -2215,7 +2298,8 @@ class chararray(ndarray):
 
             See also
             --------
-            rsplit
+            char.rsplit
+
             """
             return rsplit(self, sep, maxsplit)
 
@@ -2226,7 +2310,8 @@ class chararray(ndarray):
 
         See also
         --------
-        rstrip
+        char.rstrip
+
         """
         return asarray(rstrip(self, chars))
 
@@ -2237,7 +2322,8 @@ class chararray(ndarray):
 
         See also
         --------
-        split
+        char.split
+
         """
         return split(self, sep, maxsplit)
 
@@ -2248,7 +2334,8 @@ class chararray(ndarray):
 
         See also
         --------
-        splitlines
+        char.splitlines
+
         """
         return splitlines(self, keepends)
 
@@ -2259,7 +2346,8 @@ class chararray(ndarray):
 
         See also
         --------
-        startswith
+        char.startswith
+
         """
         return startswith(self, prefix, start, end)
 
@@ -2270,7 +2358,8 @@ class chararray(ndarray):
 
         See also
         --------
-        strip
+        char.strip
+
         """
         return asarray(strip(self, chars))
 
@@ -2281,7 +2370,8 @@ class chararray(ndarray):
 
         See also
         --------
-        swapcase
+        char.swapcase
+
         """
         return asarray(swapcase(self))
 
@@ -2293,7 +2383,8 @@ class chararray(ndarray):
 
         See also
         --------
-        title
+        char.title
+
         """
         return asarray(title(self))
 
@@ -2306,7 +2397,8 @@ class chararray(ndarray):
 
         See also
         --------
-        translate
+        char.translate
+
         """
         return asarray(translate(self, table, deletechars))
 
@@ -2317,7 +2409,8 @@ class chararray(ndarray):
 
         See also
         --------
-        upper
+        char.upper
+
         """
         return asarray(upper(self))
 
@@ -2328,7 +2421,8 @@ class chararray(ndarray):
 
         See also
         --------
-        zfill
+        char.zfill
+
         """
         return asarray(zfill(self, width))
 
@@ -2339,7 +2433,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isnumeric
+        char.isnumeric
+
         """
         return isnumeric(self)
 
@@ -2350,7 +2445,8 @@ class chararray(ndarray):
 
         See also
         --------
-        isdecimal
+        char.isdecimal
+
         """
         return isdecimal(self)
 

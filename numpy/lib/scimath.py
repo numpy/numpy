@@ -167,48 +167,39 @@ def _fix_real_abs_gt_1(x):
 
 def sqrt(x):
     """
-    Return the square root of x.
+    Compute the square root of x.
+
+    For negative input elements, a complex value is returned
+    (unlike `numpy.sqrt` which returns NaN).
 
     Parameters
     ----------
     x : array_like
+       The input value(s).
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+       The square root of `x`. If `x` was a scalar, so is `out`,
+       otherwise an array is returned.
 
-    Notes
-    -----
-
-    As the numpy.sqrt, this returns the principal square root of x, which is
-    what most people mean when they use square root; the principal square root
-    of x is not any number z such as z^2 = x.
-
-    For positive numbers, the principal square root is defined as the positive
-    number z such as z^2 = x.
-
-    The principal square root of -1 is i, the principal square root of any
-    negative number -x is defined a i * sqrt(x). For any non zero complex
-    number, it is defined by using the following branch cut: x = r e^(i t) with
-    r > 0 and -pi < t <= pi. The principal square root is then
-    sqrt(r) e^(i t/2).
+    See Also
+    --------
+    numpy.sqrt
 
     Examples
     --------
-
-    For real, non-negative inputs this works just like numpy.sqrt():
+    For real, non-negative inputs this works just like `numpy.sqrt`:
 
     >>> np.lib.scimath.sqrt(1)
     1.0
-
-    >>> np.lib.scimath.sqrt([1,4])
+    >>> np.lib.scimath.sqrt([1, 4])
     array([ 1.,  2.])
 
     But it automatically handles negative inputs:
 
     >>> np.lib.scimath.sqrt(-1)
     (0.0+1.0j)
-
     >>> np.lib.scimath.sqrt([-1,4])
     array([ 0.+1.j,  2.+0.j])
 
@@ -227,14 +218,14 @@ def log(x):
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
        The value(s) whose log is (are) required.
 
     Returns
     -------
     out : ndarray or scalar
        The log of the `x` value(s). If `x` was a scalar, so is `out`,
-       otherwise an array object is returned.
+       otherwise an array is returned.
 
     See Also
     --------
@@ -252,8 +243,8 @@ def log(x):
     >>> np.emath.log(np.exp(1))
     1.0
 
-    Negative arguments are handled "correctly" (recall that `exp(log(x)) == x`
-    does *not* hold for real `x < 0`):
+    Negative arguments are handled "correctly" (recall that
+    ``exp(log(x)) == x`` does *not* hold for real ``x < 0``):
 
     >>> np.emath.log(-np.exp(1)) == (1 + np.pi * 1j)
     True
@@ -314,28 +305,29 @@ def logn(n, x):
     """
     Take log base n of x.
 
-    If x contains negative inputs, the answer is computed and returned in the
+    If `x` contains negative inputs, the answer is computed and returned in the
     complex domain.
 
     Parameters
     ----------
+    n : int
+       The base in which the log is taken.
     x : array_like
+       The value(s) whose log base `n` is (are) required.
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+       The log base `n` of the `x` value(s). If `x` was a scalar, so is
+       `out`, otherwise an array is returned.
 
     Examples
     --------
-
-    (We set the printing precision so the example can be auto-tested)
-
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.logn(2,[4,8])
+    >>> np.lib.scimath.logn(2, [4, 8])
     array([ 2.,  3.])
-
-    >>> np.lib.scimath.logn(2,[-4,-8,8])
+    >>> np.lib.scimath.logn(2, [-4, -8, 8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
 
     """
@@ -354,14 +346,14 @@ def log2(x):
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
        The value(s) whose log base 2 is (are) required.
 
     Returns
     -------
     out : ndarray or scalar
        The log base 2 of the `x` value(s). If `x` was a scalar, so is `out`,
-       otherwise an array object is returned.
+       otherwise an array is returned.
 
     See Also
     --------
@@ -376,14 +368,12 @@ def log2(x):
 
     Examples
     --------
-
-    (We set the printing precision so the example can be auto-tested)
+    We set the printing precision so the example can be auto-tested:
 
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.log2(8)
     3.0
-
     >>> np.emath.log2([-4, -8, 8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
 
@@ -393,34 +383,40 @@ def log2(x):
 
 def power(x, p):
     """
-    Return x**p.
+    Return x to the power p, (x**p).
 
-    If x contains negative values, it is converted to the complex domain.
-
-    If p contains negative values, it is converted to floating point.
+    If `x` contains negative values, the output is converted to the
+    complex domain.
 
     Parameters
     ----------
     x : array_like
-    p : array_like of integers
+        The input value(s).
+    p : array_like of ints
+        The power(s) to which `x` is raised. If `x` contains multiple values,
+        `p` has to either be a scalar, or contain the same number of values
+        as `x`. In the latter case, the result is
+        ``x[0]**p[0], x[1]**p[1], ...``.
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
+        The result of ``x**p``. If `x` and `p` are scalars, so is `out`,
+        otherwise an array is returned.
+
+    See Also
+    --------
+    numpy.power
 
     Examples
     --------
-    (We set the printing precision so the example can be auto-tested)
-
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.power([2,4],2)
+    >>> np.lib.scimath.power([2, 4], 2)
     array([ 4, 16])
-
-    >>> np.lib.scimath.power([2,4],-2)
+    >>> np.lib.scimath.power([2, 4], -2)
     array([ 0.25  ,  0.0625])
-
-    >>> np.lib.scimath.power([-2,4],2)
+    >>> np.lib.scimath.power([-2, 4], 2)
     array([  4.+0.j,  16.+0.j])
 
     """
@@ -527,14 +523,14 @@ def arctanh(x):
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
        The value(s) whose arctanh is (are) required.
 
     Returns
     -------
     out : ndarray or scalar
        The inverse hyperbolic tangent(s) of the `x` value(s). If `x` was
-       a scalar so is `out`, otherwise an array object is returned.
+       a scalar so is `out`, otherwise an array is returned.
 
 
     See Also
@@ -551,10 +547,9 @@ def arctanh(x):
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> np.emath.arctanh(np.matrix(np.eye(2))) # Note: an array is returned
+    >>> np.emath.arctanh(np.matrix(np.eye(2)))
     array([[ Inf,   0.],
            [  0.,  Inf]])
-
     >>> np.emath.arctanh([1j])
     array([ 0.+0.7854j])
 

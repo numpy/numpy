@@ -63,6 +63,15 @@ except ImportError:
 
 if ctypes is None:
     def _dummy(*args, **kwds):
+        """
+        Dummy object that raises an ImportError if ctypes is not available.
+
+        Raises
+        ------
+        ImportError
+            If ctypes is not available.
+
+        """
         raise ImportError, "ctypes is not available."
     ctypes_load_library = _dummy
     load_library = _dummy
@@ -194,7 +203,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         Number of array dimensions.
     shape : tuple of ints, optional
         Array shape.
-    flags : string or tuple of strings
+    flags : str or tuple of str
         Array flags; may be one or more of:
 
           - C_CONTIGUOUS / C / CONTIGUOUS
@@ -204,9 +213,20 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
           - ALIGNED / A
           - UPDATEIFCOPY / U
 
+    Returns
+    -------
+    klass : ndpointer type object
+        A type object, which is an ``_ndtpr`` instance containing
+        dtype, ndim, shape and flags information.
+
+    Raises
+    ------
+    TypeError
+        If a given array does not satisfy the specified restrictions.
+
     Examples
     --------
-    >>> clib.somefunc.argtypes = [np.ctypeslib.ndpointer(dtype=float64,
+    >>> clib.somefunc.argtypes = [np.ctypeslib.ndpointer(dtype=np.float64,
     ...                                                  ndim=1,
     ...                                                  flags='C_CONTIGUOUS')]
     >>> clib.somefunc(np.array([1, 2, 3], dtype=np.float64))

@@ -231,12 +231,13 @@ def solve(a, b):
     ----------
     a : array_like, shape (M, M)
         Coefficient matrix.
-    b : array_like, shape (M,)
+    b : array_like, shape (M,) or (M, N)
         Ordinate or "dependent variable" values.
 
     Returns
     -------
-    x : ndarray, shape (M,)
+    x : ndarray, shape (M,) or (M, N) depending on b
+        Solution to the system a x = b
 
     Raises
     ------
@@ -531,27 +532,28 @@ def qr(a, mode='full'):
 
     Returns
     -------
-    mode = 'full'
-           q : double or complex array, shape (M, K)
+    * If mode = 'full':
 
-           r : double or complex array, shape (K, N)
+        * q : ndarray of float or complex, shape (M, K)
+        * r : ndarray of float or complex, shape (K, N)
 
-    Size K = min(M, N)
+      Size K = min(M, N)
 
-    mode = 'r'
-           r : double or complex array, shape (K, N)
+    * If mode = 'r':
 
-    mode = 'economic'
-           a2 : double or complex array, shape (M, N)
+      * r : ndarray of float or complex, shape (K, N)
 
-                The diagonal and the upper triangle of a2 contains r,
-                while the rest of the matrix is undefined.
+    * If mode = 'economic':
 
-    If `a` is a matrix, so are all the return values.
+      * a2 : ndarray of float or complex, shape (M, N)
+
+      The diagonal and the upper triangle of a2 contains r,
+      while the rest of the matrix is undefined.
 
     Raises
     ------
-    LinAlgError : if factoring fails
+    LinAlgError
+        If factoring fails.
 
     Notes
     -----
@@ -561,16 +563,18 @@ def qr(a, mode='full'):
     For more information on the qr factorization, see for example:
     http://en.wikipedia.org/wiki/QR_factorization
 
+    Subclasses of `ndarray` are preserved, so if `a` is of type `matrix`,
+    all the return values will be matrices too.
 
     Examples
     --------
     >>> a = np.random.randn(9, 6)
     >>> q, r = np.linalg.qr(a)
-    >>> np.allclose(a, np.dot(q, r)) # a does equal qr
+    >>> np.allclose(a, np.dot(q, r))  # a does equal qr
     True
     >>> r2 = np.linalg.qr(a, mode='r')
     >>> r3 = np.linalg.qr(a, mode='economic')
-    >>> np.allclose(r, r2) # mode='r' returns the same r as mode='full'
+    >>> np.allclose(r, r2)  # mode='r' returns the same r as mode='full'
     True
     >>> # But only triu parts are guaranteed equal when mode='economic'
     >>> np.allclose(r, np.triu(r3[:6,:6], k=0))
@@ -582,11 +586,11 @@ def qr(a, mode='full'):
     What are the least-squares-best `m` and `y0` in ``y = y0 + mx`` for
     the following data: {(0,1), (1,0), (1,2), (2,1)}. (Graph the points
     and you'll see that it should be y0 = 0, m = 1.)  The answer is provided
-    by solving the over-determined matrix equation ``Ax = b``, where:
+    by solving the over-determined matrix equation ``Ax = b``, where::
 
       A = array([[0, 1], [1, 1], [1, 1], [2, 1]])
-
-      x = array([[y0], [m]])  b = array([[1], [0], [2], [1]])
+      x = array([[y0], [m]])
+      b = array([[1], [0], [2], [1]])
 
     If A = qr such that q is orthonormal (which is always possible via
     Gram-Schmidt), then ``x = inv(r) * (q.T) * b``.  (In numpy practice,

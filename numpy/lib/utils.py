@@ -96,9 +96,14 @@ else:
         return func
 
 class _Deprecate(object):
-    """Decorator class to deprecate old functions.
+    """
+    Decorator class to deprecate old functions.
 
-    Refer to ``decorate``.
+    Refer to `deprecate` for details.
+
+    See Also
+    --------
+    deprecate
 
     """
     def __init__(self, old_name=None, new_name=None, message=None):

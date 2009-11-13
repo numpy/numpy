@@ -1473,6 +1473,12 @@ class mr_class(MAxisConcatenator):
     """
     Translate slice objects to concatenation along the first axis.
 
+    This is the masked array version of `lib.index_tricks.RClass`.
+
+    See Also
+    --------
+    lib.index_tricks.RClass
+
     Examples
     --------
     >>> np.ma.mr_[np.ma.array([1,2,3]), 0, 0, np.ma.array([4,5,6])]
@@ -1490,8 +1496,44 @@ mr_ = mr_class()
 
 def flatnotmasked_edges(a):
     """
-    Find the indices of the first and last valid values in a 1D masked array. 
-    If all values are masked, returns None.
+    Find the indices of the first and last unmasked values.
+
+    Expects a 1-D `MaskedArray`, returns None if all values are masked.
+
+    Parameters
+    ----------
+    arr : array_like
+        Input 1-D `MaskedArray`
+
+    Returns
+    -------
+    edges : ndarray or None
+        The indices of first and last non-masked value in the array.
+        Returns None if all values are masked.
+
+    See Also
+    --------
+    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges
+
+    Notes
+    -----
+    Only accepts 1-D arrays.
+
+    Examples
+    --------
+    >>> a = np.arange(10)
+    >>> mask = (a < 3) | (a > 8) | (a == 5)
+
+    >>> ma = np.ma.array(a, mask=m)
+    >>> np.array(ma[~ma.mask])
+    array([3, 4, 6, 7, 8])
+
+    >>> flatnotmasked_edges(ma)
+    array([3, 8])
+
+    >>> ma = np.ma.array(a, mask=np.ones_like(a))
+    >>> print flatnotmasked_edges(ma)
+    None
 
     """
     m = getmask(a)
@@ -1506,18 +1548,43 @@ def flatnotmasked_edges(a):
 
 def notmasked_edges(a, axis=None):
     """
-    Find the indices of the first and last not masked values along
-    the given axis in a masked array.
+    Find the indices of the first and last unmasked values along an axis.
 
     If all values are masked, return None.  Otherwise, return a list
-    of 2 tuples, corresponding to the indices of the first and last
+    of two tuples, corresponding to the indices of the first and last
     unmasked values respectively.
 
     Parameters
     ----------
+    a : array_like
+        The input array.
     axis : int, optional
         Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
+        If None (default), applies to a flattened version of the array.
+
+    Returns
+    -------
+    edges : ndarray or list
+        An array of start and end indexes if there are any masked data in
+        the array. If there are no masked data in the array, `edges` is a
+        list of the first and last index.
+
+    See Also
+    --------
+    flatnotmasked_contiguous, flatnotmasked_edges, notmasked_contiguous
+
+    Examples
+    --------
+    >>> a = np.arange(9).reshape((3, 3))
+    >>> m = np.zeros_like(a)
+    >>> m[1:, 1:] = 1
+
+    >>> ma = np.ma.array(a, mask=m)
+    >>> np.array(ma[~ma.mask])
+    array([0, 1, 2, 3, 6])
+
+    >>> np.ma.extras.notmasked_edges(ma)
+    array([0, 6])
 
     """
     a = asarray(a)
@@ -1531,9 +1598,39 @@ def notmasked_edges(a, axis=None):
 
 def flatnotmasked_contiguous(a):
     """
-    Find contiguous unmasked data in a flattened masked array.
+    Find contiguous unmasked data in a masked array along the given axis.
 
-    Return a sorted sequence of slices (start index, end index).
+    Parameters
+    ----------
+    a : narray
+        The input array.
+
+    Returns
+    -------
+    slice_list : list
+        A sorted sequence of slices (start index, end index).
+
+    See Also
+    --------
+    flatnotmasked_edges, notmasked_contiguous, notmasked_edges
+
+    Notes
+    -----
+    Only accepts 2-D arrays at most.
+
+    Examples
+    --------
+    >>> a = np.arange(10)
+    >>> mask = (a < 3) | (a > 8) | (a == 5)
+    >>> ma = np.ma.array(a, mask=mask)
+    >>> np.array(ma[~ma.mask])
+    array([3, 4, 6, 7, 8])
+
+    >>> np.ma.extras.flatnotmasked_contiguous(ma)
+    [slice(3, 4, None), slice(6, 8, None)]
+    >>> ma = np.ma.array(a, mask=np.ones_like(a))
+    >>> print np.ma.extras.flatnotmasked_edges(ma)
+    None
 
     """
     m = getmask(a)
@@ -1556,17 +1653,38 @@ def notmasked_contiguous(a, axis=None):
 
     Parameters
     ----------
+    a : array_like
+        The input array.
     axis : int, optional
         Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
+        If None (default), applies to a flattened version of the array.
 
     Returns
     -------
-    A sorted sequence of slices (start index, end index).
+    endpoints : list
+        A list of slices (start and end indexes) of unmasked indexes
+        in the array.
+
+    See Also
+    --------
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges
 
     Notes
     -----
-    Only accepts 2D arrays at most.
+    Only accepts 2-D arrays at most.
+
+    Examples
+    --------
+    >>> a = np.arange(9).reshape((3, 3))
+    >>> mask = np.zeros_like(a)
+    >>> mask[1:, 1:] = 1
+
+    >>> ma = np.ma.array(a, mask=mask)
+    >>> np.array(ma[~ma.mask])
+    array([0, 1, 2, 3, 6])
+
+    >>> np.ma.extras.notmasked_contiguous(ma)
+    [slice(0, 3, None), slice(6, 6, None)]
 
     """
     a = asarray(a)
@@ -1607,16 +1725,30 @@ def _ezclump(mask):
 
 def clump_unmasked(a):
     """
-    Returns a list of slices corresponding to the unmasked clumps of a 1D array.
+    Return list of slices corresponding to the unmasked clumps of a 1-D array.
+
+    Parameters
+    ----------
+    a : ndarray
+        A one-dimensional masked array.
+
+    Returns
+    -------
+    slices : list of slice
+        The list of slices, one for each continuous region of unmasked
+        elements in `a`.
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
 
     Examples
     --------
-    >>> a = ma.masked_array(np.arange(10))
-    >>> a[[0, 1, 2, 6, 8, 9]] = ma.masked
-    >>> clump_unmasked(a)
+    >>> a = np.ma.masked_array(np.arange(10))
+    >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
+    >>> np.ma.extras.clump_unmasked(a)
     [slice(3, 6, None), slice(7, 8, None)]
 
-    .. versionadded:: 1.4.0
     """
     mask = getattr(a, '_mask', nomask)
     if mask is nomask:
@@ -1631,16 +1763,30 @@ def clump_unmasked(a):
 
 def clump_masked(a):
     """
-    Returns a list of slices corresponding to the masked clumps of a 1D array.
+    Returns a list of slices corresponding to the masked clumps of a 1-D array.
+
+    Parameters
+    ----------
+    a : ndarray
+        A one-dimensional masked array.
+
+    Returns
+    -------
+    slices : list of slice
+        The list of slices, one for each continuous region of masked elements
+        in `a`.
+
+    Notes
+    -----
+    .. versionadded:: 1.4.0
 
     Examples
     --------
-    >>> a = ma.masked_array(np.arange(10))
-    >>> a[[0, 1, 2, 6, 8, 9]] = ma.masked
-    >>> clump_masked(a)
+    >>> a = np.ma.masked_array(np.arange(10))
+    >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
+    >>> np.ma.extras.clump_masked(a)
     [slice(0, 3, None), slice(6, 7, None), slice(8, None, None)]
 
-    .. versionadded:: 1.4.0
     """
     mask = ma.getmask(a)
     if mask is nomask:

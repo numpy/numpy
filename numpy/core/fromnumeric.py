@@ -154,52 +154,121 @@ def reshape(a, newshape, order='C'):
 
 def choose(a, choices, out=None, mode='raise'):
     """
-    Use an index array to construct a new array from a set of choices.
+    Construct an array from an index array and a set of arrays to choose from.
 
-    Given an array of integers and a set of n choice arrays, this function
-    will create a new array that merges each of the choice arrays.  Where a
-    value in `a` is i, then the new array will have the value that
-    choices[i] contains in the same place.
+    First of all, if confused or uncertain, definitely look at the Examples -
+    in its full generality, this function is less simple than it might
+    seem from the following code description (below ndi =
+    `numpy.lib.index_tricks`):
+
+    ``np.choose(a,c) == np.array([c[a[I]][I] for I in ndi.ndindex(a.shape)])``.
+
+    But this omits some subtleties.  Here is a fully general summary:
+
+    Given an "index" array (`a`) of integers and a sequence of `n` arrays
+    (`choices`), `a` and each choice array are first broadcast, as necessary,
+    to arrays of a common shape; calling these *Ba* and *Bchoices[i], i =
+    0,...,n-1* we have that, necessarily, ``Ba.shape == Bchoices[i].shape``
+    for each `i`.  Then, a new array with shape ``Ba.shape`` is created as
+    follows:
+
+    * if ``mode=raise`` (the default), then, first of all, each element of
+      `a` (and thus `Ba`) must be in the range `[0, n-1]`; now, suppose that
+      `i` (in that range) is the value at the `(j0, j1, ..., jm)` position
+      in `Ba` - then the value at the same position in the new array is the
+      value in `Bchoices[i]` at that same position;
+
+    * if ``mode=wrap``, values in `a` (and thus `Ba`) may be any (signed)
+      integer; modular arithmetic is used to map integers outside the range
+      `[0, n-1]` back into that range; and then the new array is constructed
+      as above;
+
+    * if ``mode=clip``, values in `a` (and thus `Ba`) may be any (signed)
+      integer; negative integers are mapped to 0; values greater than `n-1`
+      are mapped to `n-1`; and then the new array is constructed as above.
 
     Parameters
     ----------
     a : int array
-        This array must contain integers in [0, n-1], where n is the number
-        of choices.
+        This array must contain integers in `[0, n-1]`, where `n` is the number
+        of choices, unless ``mode=wrap`` or ``mode=clip``, in which cases any
+        integers are permissible.
     choices : sequence of arrays
-        Choice arrays. The index array and all of the choices should be
-        broadcastable to the same shape.
+        Choice arrays. `a` and all of the choices must be broadcastable to the
+        same shape.  If `choices` is itself an array (not recommended), then
+        its outermost dimension (i.e., the one corresponding to
+        ``choices.shape[0]``) is taken as defining the "sequence".
     out : array, optional
         If provided, the result will be inserted into this array. It should
-        be of the appropriate shape and dtype
-    mode : {'raise', 'wrap', 'clip'}, optional
-        Specifies how out-of-bounds indices will behave:
+        be of the appropriate shape and dtype.
+    mode : {'raise' (default), 'wrap', 'clip'}, optional
+        Specifies how indices outside `[0, n-1]` will be treated:
 
-          * 'raise' : raise an error
-          * 'wrap' : wrap around
-          * 'clip' : clip to the range
+          * 'raise' : an exception is raised
+          * 'wrap' : value becomes value mod `n`
+          * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
     -------
     merged_array : array
-        The merged results.
+        The merged result.
+
+    Raises
+    ------
+    ValueError: shape mismatch
+        If `a` and each choice array are not all broadcastable to the same
+        shape.
 
     See Also
     --------
     ndarray.choose : equivalent method
-    numpy.doc.ufuncs : Section "Output arguments"
+
+    Notes
+    -----
+    To reduce the chance of misinterpretation, even though the following
+    "abuse" is nominally supported, `choices` should neither be, nor be
+    thought of as, a single array, i.e., the outermost sequence-like container
+    should be either a list or a tuple.
 
     Examples
     --------
 
     >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
     ...   [20, 21, 22, 23], [30, 31, 32, 33]]
-    >>> np.choose([2, 3, 1, 0], choices)
+    >>> np.choose([2, 3, 1, 0], choices
+    ... # the first element of the result will be the first element of the
+    ... # third (2+1) "array" in choices, namely, 20; the second element
+    ... # will be the second element of the fourth (3+1) choice array, i.e.,
+    ... # 31, etc.
+    ... )
     array([20, 31, 12,  3])
-    >>> np.choose([2, 4, 1, 0], choices, mode='clip')
+    >>> np.choose([2, 4, 1, 0], choices, mode='clip') # 4 goes to 3 (4-1)
     array([20, 31, 12,  3])
-    >>> np.choose([2, 4, 1, 0], choices, mode='wrap')
+    >>> # because there are 4 choice arrays
+    >>> np.choose([2, 4, 1, 0], choices, mode='wrap') # 4 goes to (4 mod 4)
     array([20,  1, 12,  3])
+    >>> # i.e., 0
+
+    A couple examples illustrating how choose broadcasts:
+
+    >>> a = [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
+    >>> choices = [-10, 10]
+    >>> np.choose(a, choices)
+    array([[ 10, -10,  10],
+           [-10,  10, -10],
+           [ 10, -10,  10]])
+
+    >>> # With thanks to Anne Archibald
+    >>> a = np.array([0, 1]).reshape((2,1,1))
+    >>> c1 = np.array([1, 2, 3]).reshape((1,3,1))
+    >>> c2 = np.array([-1, -2, -3, -4, -5]).reshape((1,1,5))
+    >>> np.choose(a, (c1, c2)) # result is 2x3x5, res[0,:,:]=c1, res[1,:,:]=c2
+    array([[[ 1,  1,  1,  1,  1],
+            [ 2,  2,  2,  2,  2],
+            [ 3,  3,  3,  3,  3]],
+           [[-1, -2, -3, -4, -5],
+            [-1, -2, -3, -4, -5],
+            [-1, -2, -3, -4, -5]]])
 
     """
     try:

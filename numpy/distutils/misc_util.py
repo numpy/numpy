@@ -26,6 +26,27 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info']
 
 class InstallableLib:
+    """
+    Container to hold information on an installable library.
+
+    Parameters
+    ----------
+    name : str
+        Name of the installed library.
+    build_info : dict
+        Dictionary holding build information.
+    target_dir : str
+        Absolute path specifying where to install the library.
+
+    See Also
+    --------
+    Configuration.add_installed_library
+
+    Notes
+    -----
+    The three parameters are stored as attributes with the same names.
+
+    """
     def __init__(self, name, build_info, target_dir):
         self.name = name
         self.build_info = build_info
@@ -591,6 +612,34 @@ def get_frame(level=0):
         return frame
 
 class SconsInfo(object):
+    """
+    Container object holding build info for building a package with scons.
+
+    Parameters
+    ----------
+    scons_path : str or None
+        Path to scons script, relative to the directory of setup.py.
+        If None, no scons script is specified. This can be useful to add only
+        pre- and post-hooks to a configuration.
+    parent_name : str or None
+        Name of the parent package (for example "numpy").
+    pre_hook : sequence of callables or None
+        Callables that are executed before scons is invoked.
+        Each callable should be defined as ``callable(*args, **kw)``.
+    post_hook : sequence of callables or None
+        Callables that are executed after scons is invoked.
+        Each callable should be defined as ``callable(*args, **kw)``.
+    source_files : list of str or None
+        List of paths to source files, relative to the directory of setup.py.
+    pkg_path : str or None
+        Path to the package for which the `SconsInfo` instance holds the
+        build info, relative to the directory of setup.py.
+
+    Notes
+    -----
+    All parameters are available as attributes of a `SconsInfo` instance.
+
+    """
     def __init__(self, scons_path, parent_name, pre_hook,
             post_hook, source_files, pkg_path):
         self.scons_path = scons_path
@@ -1375,21 +1424,22 @@ class Configuration(object):
         return ext
 
     def add_library(self,name,sources,**build_info):
-        """Add library to configuration.
+        """
+        Add library to configuration.
 
         Parameters
         ----------
-        name: str
-            name of the extension
-        sources: seq
-            list of the sources. The list of sources may contain functions
+        name : str
+            Name of the extension.
+        sources : sequence
+            List of the sources. The list of sources may contain functions
             (called source generators) which must take an extension instance
             and a build directory as inputs and return a source file or list of
             source files or None. If None is returned then no sources are
             generated. If the Extension instance has no sources after
             processing all source generators, then no extension module is
             built.
-        build_info: dict
+        build_info : dict, optional
             The following keys are allowed:
 
                 * depends
@@ -1398,6 +1448,7 @@ class Configuration(object):
                 * extra_compiler_args
                 * f2py_options
                 * language
+
         """
         self._add_library(name, sources, None, build_info)
 
@@ -1424,33 +1475,46 @@ class Configuration(object):
         self.libraries.append((name, build_info))
 
     def add_installed_library(self, name, sources, install_dir, build_info=None):
-        """Similar to add_library, but the corresponding library is installed.
+        """
+        Similar to add_library, but the specified library is installed.
 
-        Most C libraries are only used to build python extensions, but
-        libraries built through this method will be installed so that they can
-        be reused by third-party. install_dir is relative to the current
-        subpackage.
+        Most C libraries used with `distutils` are only used to build python
+        extensions, but libraries built through this method will be installed
+        so that they can be reused by third-party packages.
 
         Parameters
         ----------
-        name: str
-            name of the installed library
-        sources: seq
-            list of source files of the library
-        install_dir: str
-            path where to install the library (relatively to the current
-            sub-package)
+        name : str
+            Name of the installed library.
+        sources : sequence
+            List of the library's source files. See `add_library` for details.
+        install_dir : str
+            Path to install the library, relative to the current sub-package.
+        build_info : dict, optional
+            The following keys are allowed:
 
-        See also
+                * depends
+                * macros
+                * include_dirs
+                * extra_compiler_args
+                * f2py_options
+                * language
+
+        Returns
+        -------
+        None
+
+        See Also
         --------
         add_library, add_npy_pkg_config, get_info
 
         Notes
         -----
-        The best way to encode the necessary options to link against those C
-        libraries is to use a libname.ini file, and use get_info to retrieve
-        those informations (see add_npy_pkg_config method for more
+        The best way to encode the options required to link against the specified
+        C libraries is to use a "libname.ini" file, and use `get_info` to
+        retrieve the required options (see `add_npy_pkg_config` for more
         information).
+
         """
         if not build_info:
             build_info = {}
@@ -1460,20 +1524,23 @@ class Configuration(object):
         self.installed_libraries.append(InstallableLib(name, build_info, install_dir))
 
     def add_npy_pkg_config(self, template, install_dir, subst_dict=None):
-        """Generate a npy-pkg config file from the template, and install it in
-        given install directory, using subst_dict for variable substitution.
+        """
+        Generate and install a npy-pkg config file from a template.
+
+        The config file generated from `template` is installed in the
+        given install directory, using `subst_dict` for variable substitution.
 
         Parameters
         ----------
-        template: str
-            the path of the template, relatively to the current package path
-        install_dir: str
-            where to install the npy-pkg config file, relatively to the current
-            package path
-        subst_dict: dict (None by default)
-            if given, any string of the form @key@ will be replaced by
-            subst_dict[key] in the template file when installed. The install
-            prefix is always available through the variable @prefix@, since the
+        template : str
+            The path of the template, relatively to the current package path.
+        install_dir : str
+            Where to install the npy-pkg config file, relatively to the current
+            package path.
+        subst_dict : dict, optional
+            If given, any string of the form ``@key@`` will be replaced by
+            ``subst_dict[key]`` in the template file when installed. The install
+            prefix is always available through the variable ``@prefix@``, since the
             install prefix is not easy to get reliably from setup.py.
 
         See also
@@ -1483,11 +1550,13 @@ class Configuration(object):
         Notes
         -----
         This works for both standard installs and in-place builds, i.e. the
-        @prefix@ refer to the source directory for in-place builds.
+        ``@prefix@`` refer to the source directory for in-place builds.
 
         Examples
         --------
-        config.add_npy_pkg_config('foo.ini.in', 'lib', {'foo': bar})
+        ::
+
+            config.add_npy_pkg_config('foo.ini.in', 'lib', {'foo': bar})
 
         Assuming the foo.ini.in file has the following content::
 
@@ -1512,6 +1581,7 @@ class Configuration(object):
             Libs=
 
         and will be installed as foo.ini in the 'lib' subpath.
+
         """
         if subst_dict is None:
             subst_dict = {}
@@ -1526,7 +1596,16 @@ class Configuration(object):
                 subst_dict)]
 
     def add_scons_installed_library(self, name, install_dir):
-        """Add an scons-built installable library to distutils.
+        """
+        Add a scons-built installable library to distutils.
+
+        Parameters
+        ----------
+        name : str
+            The name of the library.
+        install_dir : str
+            Path to install the library, relative to the current sub-package.
+
         """
         install_dir = os.path.join(self.package_path, install_dir)
         self.installed_libraries.append(InstallableLib(name, {}, install_dir))
@@ -1901,27 +1980,34 @@ def get_npy_pkg_dir():
     return d
 
 def get_pkg_info(pkgname, dirs=None):
-    """Given a clib package name, returns a info dict with the necessary
-    options to use the clib.
+    """
+    Return library info for the given package.
 
     Parameters
     ----------
-    pkgname: str
-        name of the package (should match the name of the .ini file, without
-        the extension, e.g. foo for the file foo.ini)
-    dirs: seq {None}
-        if given, should be a sequence of additional directories where to look
-        for npy-pkg-config files. Those directories are search prior to the
-        numpy one.
+    pkgname : str
+        Name of the package (should match the name of the .ini file, without
+        the extension, e.g. foo for the file foo.ini).
+    dirs : sequence, optional
+        If given, should be a sequence of additional directories where to look
+        for npy-pkg-config files. Those directories are searched prior to the
+        NumPy directory.
 
-    Note
-    ----
-    Raise a numpy.distutils.PkgNotFound exception if the package is not
-    found.
+    Returns
+    -------
+    pkginfo : class instance
+        The `LibraryInfo` instance containing the build information.
+
+    Raises
+    ------
+    PkgNotFound
+        If the package is not found.
 
     See Also
     --------
-    add_npy_pkg_info, add_installed_library, get_info
+    Configuration.add_npy_pkg_config, Configuration.add_installed_library,
+    get_info
+
     """
     from numpy.distutils.npy_pkg_config import read_config
 
@@ -1932,34 +2018,49 @@ def get_pkg_info(pkgname, dirs=None):
     return read_config(pkgname, dirs)
 
 def get_info(pkgname, dirs=None):
-    """Given a clib package name, returns a info dict with the necessary
-    options to use the clib.
+    """
+    Return an info dict for a given C library.
+
+    The info dict contains the necessary options to use the C library.
 
     Parameters
     ----------
-    pkgname: str
-        name of the package (should match the name of the .ini file, without
-        the extension, e.g. foo for the file foo.ini)
-    dirs: seq {None}
-        if given, should be a sequence of additional directories where to look
-        for npy-pkg-config files. Those directories are search prior to the
-        numpy one.
+    pkgname : str
+        Name of the package (should match the name of the .ini file, without
+        the extension, e.g. foo for the file foo.ini).
+    dirs : sequence, optional
+        If given, should be a sequence of additional directories where to look
+        for npy-pkg-config files. Those directories are searched prior to the
+        NumPy directory.
 
-    Note
-    ----
-    Raise a numpy.distutils.PkgNotFound exception if the package is not
-    found.
+    Returns
+    -------
+    info : dict
+        The dictionary with build information.
+
+    Raises
+    ------
+    PkgNotFound
+        If the package is not found.
 
     See Also
     --------
-    add_npy_pkg_info, add_installed_library, get_pkg_info
+    Configuration.add_npy_pkg_config, Configuration.add_installed_library,
+    get_pkg_info
 
-    Example
-    -------
-    To get the necessary informations for the npymath library from NumPy:
+    Examples
+    --------
+    To get the necessary information for the npymath library from NumPy:
 
-    >>> npymath_info = get_info('npymath')
-    >>> config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
+    >>> npymath_info = np.distutils.misc_util.get_info('npymath')
+    >>> npymath_info
+    {'define_macros': [], 'libraries': ['npymath'], 'library_dirs':
+    ['.../numpy/core/lib'], 'include_dirs': ['.../numpy/core/include']}
+
+    This info dict can then be used as input to a `Configuration` instance::
+
+      config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
+
     """
     from numpy.distutils.npy_pkg_config import parse_flags
     pkg_info = get_pkg_info(pkgname, dirs)

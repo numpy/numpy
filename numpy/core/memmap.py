@@ -26,12 +26,11 @@ class memmap(ndarray):
 
     Parameters
     ----------
-    filename : string or file-like object
-        The file name or file object to be used as the array data
-        buffer.
+    filename : str or file-like object
+        The file name or file object to be used as the array data buffer.
     dtype : data-type, optional
         The data-type used to interpret the file contents.
-        Default is `uint8`
+        Default is `uint8`.
     mode : {'r+', 'r', 'w+', 'c'}, optional
         The file is opened in this mode:
 
@@ -48,10 +47,10 @@ class memmap(ndarray):
         +------+-------------------------------------------------------------+
 
         Default is 'r+'.
-    offset : integer, optional
+    offset : int, optional
         In the file, array data starts at this offset. Since `offset` is
         measured in bytes, it should be a multiple of the byte-size of
-        `dtype`. Requires `shape=None`. The default is 0.
+        `dtype`. Requires ``shape=None``. The default is 0.
     shape : tuple, optional
         The desired shape of the array. By default, the returned array will be
         1-D with the number of elements determined by file size and data-type.
@@ -248,16 +247,12 @@ class memmap(ndarray):
         --------
         memmap
 
-        Examples
-        --------
-        Awaiting one...
-
         """
         if self._mmap is not None:
             self._mmap.flush()
 
     def sync(self):
-        """Flush any changes in the array to the file on disk."""
+        """This method is deprecated, use `flush`."""
         warnings.warn("Use ``flush``.", DeprecationWarning)
         self.flush()
 

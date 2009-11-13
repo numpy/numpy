@@ -391,12 +391,29 @@ def str2bool(value):
 
 
 class ConverterError(Exception):
+    """
+    Exception raised when an error occurs in a converter for string values.
+
+    """
     pass
 
 class ConverterLockError(ConverterError):
+    """
+    Exception raised when an attempt is made to upgrade a locked converter.
+
+    """
     pass
 
 class ConversionWarning(UserWarning):
+    """
+    Warning issued when a string converter has a problem.
+
+    Notes
+    -----
+    In `genfromtxt` a `ConversionWarning` is issued if raising exceptions
+    is explicitly suppressed with the "invalid_raise" keyword.
+
+    """
     pass
 
 
@@ -708,22 +725,23 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
     """
     Convenience function to create a `np.dtype` object.
 
-    The function processes the input dtype and matches it with the given names.
+    The function processes the input `dtype` and matches it with the given
+    names.
 
     Parameters
     ----------
     ndtype : var
-        Definition of the dtype. Can be any string or dictionary recognized
-        by the `np.dtype` function or a sequence of types.
+        Definition of the dtype. Can be any string or dictionary
+        recognized by the `np.dtype` function, or a sequence of types.
     names : str or sequence, optional
         Sequence of strings to use as field names for a structured dtype.
         For convenience, `names` can be a string of a comma-separated list of
-        names
+        names.
     defaultfmt : str, optional
-        Format string used to define missing names, such as "f%i" (default),
-        "fields_%02i"...
+        Format string used to define missing names, such as ``"f%i"``
+        (default) or ``"fields_%02i"``.
     validationargs : optional
-        A series of optional arguments used to initialize a NameValidator.
+        A series of optional arguments used to initialize a `NameValidator`.
 
     Examples
     --------
@@ -733,10 +751,12 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
     dtype([('f0', '<i4'), ('f1', '<f8')])
     >>> np.lib._iotools.easy_dtype("i4, f8", defaultfmt="field_%03i")
     dtype([('field_000', '<i4'), ('field_001', '<f8')])
+
     >>> np.lib._iotools.easy_dtype((int, float, float), names="a,b,c")
     dtype([('a', '<i8'), ('b', '<f8'), ('c', '<f8')])
     >>> np.lib._iotools.easy_dtype(float, names="a,b,c")
     dtype([('a', '<f8'), ('b', '<f8'), ('c', '<f8')])
+
     """
     try:
         ndtype = np.dtype(ndtype)
