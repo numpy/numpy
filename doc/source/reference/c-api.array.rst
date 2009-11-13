@@ -2372,7 +2372,7 @@ Other conversions
     signed and unsigned integers, floating point numbers, and
     complex-floating point numbers are recognized and converted. Other
     values of gentype are returned. This function can be used to
-    convert, for example, the string'f4' to :cdata:`NPY_FLOAT32`.
+    convert, for example, the string 'f4' to :cdata:`NPY_FLOAT32`.
 
 
 Miscellaneous

@@ -1,20 +1,23 @@
 .. _user:
 
 ################
-Numpy User Guide
+NumPy User Guide
 ################
 
-This guide explains how to make use of different features
-of Numpy. For a detailed documentation about different functions
-and classes, see :ref:`reference`.
+This guide is intended as an introductory overview of NumPy and
+explains how to install and make use of the most important features of
+NumPy. For detailed reference documentation of the functions and
+classes contained in the package, see the :ref:`reference`.
 
 .. warning::
 
-   This "User Guide" is still very much work in progress; the material
-   is not organized, and many aspects of Numpy are not covered.
+   This "User Guide" is still a work in progress; some of the material
+   is not organized, and several aspects of NumPy are not yet covered
+   in sufficient detail. However, we are continually working to
+   improve the documentation.
 
-   More documentation for Numpy can be found on the
-   `scipy.org <http://www.scipy.org/Documentation>`__ website.
+   More documentation for NumPy can be found on the `numpy.org
+   <http://www.numpy.org>`__ website.
 
 .. toctree::
    :maxdepth: 2

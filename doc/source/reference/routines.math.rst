@@ -19,6 +19,8 @@ Trigonometric functions
    degrees
    radians
    unwrap
+   deg2rad
+   rad2deg
 
 Hyperbolic functions
 --------------------
@@ -43,6 +45,7 @@ Rounding
    fix
    floor
    ceil
+   trunc
 
 Sums, products, differences
 ---------------------------
@@ -67,10 +70,13 @@ Exponents and logarithms
 
    exp
    expm1
+   exp2
    log
    log10
    log2
    log1p
+   logaddexp
+   logaddexp2
 
 Other special functions
 -----------------------
@@ -86,6 +92,7 @@ Floating point routines
    :toctree: generated/
 
    signbit
+   copysign
    frexp
    ldexp
 

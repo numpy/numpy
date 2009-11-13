@@ -120,6 +120,8 @@ strided scheme, and correspond to the strides:
 
 .. index:: single-segment, contiguous, non-contiguous
 
+where :math:`d_j` = `self.itemsize * self.shape[j]`.
+
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 :term:`single-segment`, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
@@ -231,7 +233,7 @@ Array methods
 
 An :class:`ndarray` object has many methods which operate on or with
 the array in some fashion, typically returning an array result. These
-methods are briefly explained below. (Each method's doc string has a
+methods are briefly explained below. (Each method's docstring has a
 more complete description.)
 
 For the following methods there are also corresponding functions in
@@ -317,10 +319,44 @@ Many of these methods take an argument named *axis*. In such cases,
 - If *axis* is *None* (the default), the array is treated as a 1-D
   array and the operation is performed over the entire array. This
   behavior is also the default if self is a 0-dimensional array or
-  array scalar.
+  array scalar. (An array scalar is an instance of the types/classes
+  float32, float64, etc., whereas a 0-dimensional array is an ndarray
+  instance containing precisely one array scalar.)
 
 - If *axis* is an integer, then the operation is done over the given axis
   (for each 1-D subarray that can be created along the given axis).
+
+.. admonition:: Example of the *axis* argument
+
+   A 3-dimensional array of size 3 x 3 x 3, summed over each of its
+   three axes
+
+   >>> x
+   array([[[ 0,  1,  2],
+           [ 3,  4,  5],
+           [ 6,  7,  8]],
+          [[ 9, 10, 11],
+           [12, 13, 14],
+           [15, 16, 17]],
+          [[18, 19, 20],
+           [21, 22, 23],
+           [24, 25, 26]]])
+   >>> x.sum(axis=0)
+   array([[27, 30, 33],
+          [36, 39, 42],
+          [45, 48, 51]])
+   >>> # for sum, axis is the first keyword, so we may omit it,
+   >>> # specifying only its value
+   >>> x.sum(0), x.sum(1), x.sum(2)
+   (array([[27, 30, 33],
+           [36, 39, 42],
+           [45, 48, 51]]),
+    array([[ 9, 12, 15],
+           [36, 39, 42],
+           [63, 66, 69]]),
+    array([[ 3, 12, 21],
+           [30, 39, 48],
+           [57, 66, 75]]))
 
 The parameter *dtype* specifies the data type over which a reduction
 operation (like summing) should take place. The default reduce data
@@ -332,7 +368,6 @@ and the result will be placed into the output array given. The *out*
 argument must be an :class:`ndarray` and have the same number of
 elements. It can have a different data type in which case casting will
 be performed.
-
 
 .. autosummary::
    :toctree: generated/

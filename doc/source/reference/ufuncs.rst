@@ -313,7 +313,7 @@ possess. None of the attributes can be set.
 ============  =================================================================
 **__doc__**   A docstring for each ufunc. The first part of the docstring is
               dynamically generated from the number of outputs, the name, and
-              the number of inputs. The second part of the doc string is
+              the number of inputs. The second part of the docstring is
               provided at creation time and stored with the ufunc.
 
 **__name__**  The name of the ufunc.

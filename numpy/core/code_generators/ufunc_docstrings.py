@@ -268,6 +268,9 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     ----------
     x : array_like
         Input array.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See `doc.ufuncs`.
 
     Returns
     -------
@@ -557,6 +560,9 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     ----------
     x1, x2 : array_like
         Only integer types are handled (including booleans).
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
@@ -735,6 +741,11 @@ add_newdoc('numpy.core.umath', 'conjugate',
     >>> np.conjugate(1+2j)
     (1-2j)
 
+    >>> x = np.eye(2) + 1j * np.eye(2)
+    >>> np.conjugate(x)
+    array([[ 1.-1.j,  0.-0.j],
+           [ 0.-0.j,  1.-1.j]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'cos',
@@ -829,7 +840,7 @@ add_newdoc('numpy.core.umath', 'degrees',
 
     Returns
     -------
-    y : ndarray
+    y : ndarray of floats
         The corresponding degree values.
 
     See Also
@@ -845,8 +856,10 @@ add_newdoc('numpy.core.umath', 'degrees',
     array([   0.,   30.,   60.,   90.,  120.,  150.,  180.,  210.,  240.,
             270.,  300.,  330.])
 
-    >>> foo = np.zeros((rad.shape))
-    >>> degrees(rad, foo)
+    >>> out = np.zeros((rad.shape))
+    >>> r = degrees(rad, out)
+    >>> np.all(r == out)
+    True
 
     """)
 
@@ -858,6 +871,9 @@ add_newdoc('numpy.core.umath', 'rad2deg',
     ----------
     x : array_like
         Angle in radians.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
@@ -892,6 +908,9 @@ add_newdoc('numpy.core.umath', 'divide',
         Dividend array.
     x2 : array_like
         Divisor array.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
@@ -1130,6 +1149,9 @@ add_newdoc('numpy.core.umath', 'fabs',
     x : array_like
         The array of numbers for which the absolute values are required. If
         `x` is a scalar, the result `y` will also be a scalar.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
@@ -1243,8 +1265,8 @@ add_newdoc('numpy.core.umath', 'fmod',
     -----
     The result of the modulo operation for negative dividend and divisors is
     bound by conventions. In `fmod`, the sign of the remainder is the sign of
-    the dividend: in contrast to `remainder`, the sign of the divisor has no
-    influence on the sign of the result.
+    the dividend. In `remainder`, the sign of the divisor does not affect the
+    sign of the result.
 
     Examples
     --------
@@ -2531,8 +2553,10 @@ add_newdoc('numpy.core.umath', 'radians',
             2.61799388,  3.14159265,  3.66519143,  4.1887902 ,  4.71238898,
             5.23598776,  5.75958653])
 
-    >>> foo = np.zeros((deg.shape))
-    >>> radians(deg, foo)
+    >>> out = np.zeros((deg.shape))
+    >>> ret = np.radians(deg, out)
+    >>> ret is out
+    True
 
     """)
 
@@ -2606,7 +2630,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     """
     Return element-wise remainder of division.
 
-    Computes ``x1 - floor(x1/x2)*x2``.
+    Computes ``x1 - floor(x1 / x2) * x2``.
 
     Parameters
     ----------
@@ -2614,6 +2638,9 @@ add_newdoc('numpy.core.umath', 'remainder',
         Dividend array.
     x2 : array_like
         Divisor array.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
@@ -2631,7 +2658,7 @@ add_newdoc('numpy.core.umath', 'remainder',
 
     Examples
     --------
-    >>> np.remainder([4,7], [2,3])
+    >>> np.remainder([4, 7], [2, 3])
     array([0, 1])
     >>> np.remainder(np.arange(7), 5)
     array([0, 1, 2, 3, 4, 0, 1])
@@ -2737,11 +2764,14 @@ add_newdoc('numpy.core.umath', 'signbit',
     ----------
     x: array_like
         The input value(s).
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved
+        and it must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
     out : array_like, bool
-        Output.
+        Output array.
 
     Examples
     --------
@@ -2766,6 +2796,9 @@ add_newdoc('numpy.core.umath', 'copysign',
         Values to change the sign of.
     x2: array_like
         The sign of `x2` is copied to `x1`.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
 
     Returns
     -------
@@ -2791,14 +2824,17 @@ add_newdoc('numpy.core.umath', 'copysign',
 add_newdoc('numpy.core.umath', 'nextafter',
     """
     Return the next representable floating-point value after x1 in the direction
-    of y1 element-wise.
+    of x2 element-wise.
 
     Parameters
     ----------
-    x1: array_like
+    x1 : array_like
         Values to find the next representable value of.
-    x2: array_like
+    x2 : array_like
         The direction where to look for the next representable value of `x1`.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See `doc.ufuncs`.
 
     Returns
     -------
@@ -2807,8 +2843,12 @@ add_newdoc('numpy.core.umath', 'nextafter',
 
     Examples
     --------
-    >>> np.nextrepresentable(1, 2) - 1 == np.finfo(np.float64).eps
+    >>> eps = np.finfo(np.float64).eps
+    >>> np.nextafter(1, 2) == eps + 1
     True
+    >>> np.nextafter([1, 2], [2, 1]) == [eps + 1, 2 - eps]
+    array([ True,  True], dtype=bool)
+
     """)
 
 add_newdoc('numpy.core.umath', 'spacing',
@@ -2825,18 +2865,20 @@ add_newdoc('numpy.core.umath', 'spacing',
     out : array_like
         The spacing of values of `x1`.
 
+    Notes
+    -----
+    It can be considered as a generalization of EPS:
+    ``spacing(np.float64(1)) == np.finfo(np.float64).eps``, and there
+    should not be any representable number between ``x + spacing(x)`` and
+    x for any finite x.
+
+    Spacing of +- inf and nan is nan.
+
     Examples
     --------
     >>> np.spacing(1, 2) == np.finfo(np.float64).eps
     True
 
-    Note
-    ----
-    It can be considered as a generalization of EPS: spacing(np.float64(1)) ==
-    np.finfo(np.float64).eps, and there should not be any representable number
-    between x + spacing(x) and x for any finite x.
-
-    spacing of +- inf and nan is nan.
     """)
 
 add_newdoc('numpy.core.umath', 'sin',
