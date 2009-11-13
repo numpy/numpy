@@ -1,4 +1,7 @@
+/* -*- c -*- */
 /*
+ * vim:syntax=c
+ *
  * Low-level routines related to IEEE-754 format
  */
 #include "npy_math_common.h"
@@ -159,66 +162,67 @@ float npy_nextafterf(float x, float y)
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 {
     volatile npy_longdouble t;
-    ldouble_man_t xmanl, xmanh, ymanl, ymanh;
-    ldouble_exp_t xexp, yexp;
-    ldouble_sign_t xsign, ysign;
+    union IEEEl2bitsrep ux;
+    union IEEEl2bitsrep uy;
 
-	GET_LDOUBLE_SIGN(x, xsign);
-	GET_LDOUBLE_EXP(x, xexp);
-	GET_LDOUBLE_MANL(x, xmanl);
-	GET_LDOUBLE_MANH(x, xmanh);
+    ux.e = x;
+    uy.e = y;
 
-	GET_LDOUBLE_SIGN(y, ysign);
-	GET_LDOUBLE_EXP(y, yexp);
-	GET_LDOUBLE_MANL(y, ymanl);
-	GET_LDOUBLE_MANH(y, ymanh);
-
-    if ((xexp == 0x7fff && ((xmanh & ~LDBL_NBIT) | xmanl) != 0) ||
-        (yexp == 0x7fff && ((ymanh & ~LDBL_NBIT) | ymanl) != 0)) {
-        return x + y;           /* x or y is nan */
+    if ((GET_LDOUBLE_EXP(ux) == 0x7fff &&
+         ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) | GET_LDOUBLE_MANL(ux)) != 0) ||
+        (GET_LDOUBLE_EXP(uy) == 0x7fff &&
+         ((GET_LDOUBLE_MANH(uy) & ~LDBL_NBIT) | GET_LDOUBLE_MANL(uy)) != 0)) {
+        return ux.e + uy.e;        /* x or y is nan */
     }
-    if (x == y) {
-        return y;               /* x=y, return y */
+    if (ux.e == uy.e) {
+        return uy.e;               /* x=y, return y */
     }
-    if (x == 0.0) {
-        xmanh = 0;              /* return +-minsubnormal */
-        xmanl = 1;
-        xsign = ysign;
-        t = x * x;
-        if (t == x) {
+    if (ux.e == 0.0) {
+        SET_LDOUBLE_MANH(ux, 0);              /* return +-minsubnormal */
+        SET_LDOUBLE_MANL(ux, 1);
+        SET_LDOUBLE_SIGN(ux, GET_LDOUBLE_SIGN(uy));
+        t = ux.e * ux.e;
+        if (t == ux.e) {
             return t;
         } else {
-            return x;           /* raise underflow flag */
+            return ux.e;           /* raise underflow flag */
         }
     }
-    if (x > 0.0 ^ x < y) {      /* x -= ulp */
-        if (xmanl == 0) {
-            if ((xmanh & ~LDBL_NBIT) == 0) {
-                xexp -= 1;
+    if ((ux.e > 0.0) ^ (ux.e < uy.e)) {      /* x -= ulp */
+        if (GET_LDOUBLE_MANL(ux) == 0) {
+            if ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) == 0) {
+                SET_LDOUBLE_EXP(ux, GET_LDOUBLE_EXP(ux) - 1);
             }
-            xmanh = (xmanh - 1) | (xmanh & LDBL_NBIT);
+            SET_LDOUBLE_MANH(ux,
+                             (GET_LDOUBLE_MANH(ux) - 1) |
+                             (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
         }
-        xmanl -= 1;
+        SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) - 1);
     } else {                    /* x += ulp */
-        xmanl += 1;
-        if (xmanl == 0) {
-            xmanh = (xmanh + 1) | (xmanh & LDBL_NBIT);
-            if ((xmanh & ~LDBL_NBIT) == 0) {
-                xexp += 1;
+        SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) + 1);
+        if (GET_LDOUBLE_MANL(ux) == 0) {
+            SET_LDOUBLE_MANH(ux,
+                             (GET_LDOUBLE_MANH(ux) + 1) |
+                             (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
+            if ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) == 0) {
+                SET_LDOUBLE_EXP(ux, GET_LDOUBLE_EXP(ux) + 1);
             }
         }
     }
-    if (xexp == 0x7fff) {
-        return x + x;           /* overflow  */
+    if (GET_LDOUBLE_EXP(ux) == 0x7fff) {
+        return ux.e + ux.e;           /* overflow  */
     }
-    if (xexp == 0) {            /* underflow */
-        mask_nbit_l(xmanh);
-        t = x * x;
-        if (t != x) {           /* raise underflow flag */
-            return x;
+    if (GET_LDOUBLE_EXP(ux) == 0) {            /* underflow */
+        if (LDBL_NBIT) {
+            SET_LDOUBLE_MANH(ux, GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT);
+        }
+        t = ux.e * ux.e;
+        if (t != ux.e) {           /* raise underflow flag */
+            return ux.e;
         }
     }
-    return x;
+
+    return ux.e;
 }
 #endif
 

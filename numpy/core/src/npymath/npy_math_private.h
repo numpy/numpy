@@ -129,12 +129,12 @@ do {                                                            \
 
 /* Set a double from two 32 bit ints.  */
 
-#define INSERT_WORDS(d,ix0,ix1)					\
-do {								\
-  ieee_double_shape_type iw_u;					\
-  iw_u.parts.msw = (ix0);					\
-  iw_u.parts.lsw = (ix1);					\
-  (d) = iw_u.value;						\
+#define INSERT_WORDS(d,ix0,ix1)                                 \
+do {                                                            \
+  ieee_double_shape_type iw_u;                                  \
+  iw_u.parts.msw = (ix0);                                       \
+  iw_u.parts.lsw = (ix1);                                       \
+  (d) = iw_u.value;                                             \
 } while (0)
 
 /*
@@ -151,20 +151,20 @@ typedef union
 
 /* Get a 32 bit int from a float.  */
 
-#define GET_FLOAT_WORD(i,d)					\
-do {								\
-  ieee_float_shape_type gf_u;					\
-  gf_u.value = (d);						\
-  (i) = gf_u.word;						\
+#define GET_FLOAT_WORD(i,d)                                     \
+do {                                                            \
+  ieee_float_shape_type gf_u;                                   \
+  gf_u.value = (d);                                             \
+  (i) = gf_u.word;                                              \
 } while (0)
 
 /* Set a float from a 32 bit int.  */
 
-#define SET_FLOAT_WORD(d,i)					\
-do {								\
-  ieee_float_shape_type sf_u;					\
-  sf_u.word = (i);						\
-  (d) = sf_u.value;						\
+#define SET_FLOAT_WORD(d,i)                                     \
+do {                                                            \
+  ieee_float_shape_type sf_u;                                   \
+  sf_u.word = (i);                                              \
+  (d) = sf_u.value;                                             \
 } while (0)
 
 #ifdef NPY_USE_C99_COMPLEX
@@ -183,65 +183,69 @@ do {								\
      *
      * 16 stronger bits of a[2] are junk
      */
+    typedef npy_uint32 IEEEl2bitsrep_part;
+
+/* my machine */
+
     union IEEEl2bitsrep {
-        npy_longdouble  e;
-        npy_uint32      a[3];
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[3];
     };
 
     #define LDBL_MANL_INDEX     0
     #define LDBL_MANL_MASK      0xFFFFFFFF
-    #define LDBL_MANL_SHIFT(x)  (x)
+    #define LDBL_MANL_SHIFT     0
 
     #define LDBL_MANH_INDEX     1
     #define LDBL_MANH_MASK      0xFFFFFFFF
-    #define LDBL_MANH_SHIFT(x)  (x)
+    #define LDBL_MANH_SHIFT     0
 
     #define LDBL_EXP_INDEX      2
     #define LDBL_EXP_MASK       0x7FFF
-    #define LDBL_EXP_SHIFT(x)   (x)
+    #define LDBL_EXP_SHIFT      0
 
     #define LDBL_SIGN_INDEX     2
     #define LDBL_SIGN_MASK      0x8000
-    #define LDBL_SIGN_SHIFT(x)  ((x) >>  15)
+    #define LDBL_SIGN_SHIFT     15
 
     #define LDBL_NBIT           0x80000000
-    #define mask_nbit_l(manh)   ((manh) &= ~LDBL_NBIT)
 
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
     typedef npy_uint32 ldouble_sign_t;
 #elif defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE)
-    /* 
+    /*
      * Intel extended 80 bits precision, 16 bytes alignment.. Bit representation is
-     *		|  junk	 |     s  |eeeeeeeeeeeeeee|mmmmmmmm................mmmmmmm|
-     *		| 16 bits|  1 bit |    15 bits    |            64 bits	          |
-     *		|             a[2]       	  |  	a[1]	 |    a[0]	  |
+     *          |  junk  |     s  |eeeeeeeeeeeeeee|mmmmmmmm................mmmmmmm|
+     *          | 16 bits|  1 bit |    15 bits    |            64 bits            |
+     *          |             a[2]                |     a[1]     |    a[0]        |
      *
      * a[3] and 16 stronger bits of a[2] are junk
      */
+    typedef npy_uint32 IEEEl2bitsrep_part;
+
     union IEEEl2bitsrep {
-    	npy_longdouble e;
-    	npy_uint32     a[4];
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[4];
     };
 
     #define LDBL_MANL_INDEX     0
-    #define LDBL_MANL_MASK 	0xFFFFFFFF
-    #define LDBL_MANL_SHIFT(x)  ((x))
-    
-    #define LDBL_MANH_INDEX     1
-    #define LDBL_MANH_MASK 	0xFFFFFFFF
-    #define LDBL_MANH_SHIFT(x)  ((x))
-    
-    #define LDBL_EXP_INDEX 	2
-    #define LDBL_EXP_MASK  	0x7FFF
-    #define LDBL_EXP_SHIFT(x)   (x)
-    
-    #define LDBL_SIGN_INDEX     2
-    #define LDBL_SIGN_MASK	0x8000
-    #define LDBL_SIGN_SHIFT(x)  ((x) >>  15)
+    #define LDBL_MANL_MASK      0xFFFFFFFF
+    #define LDBL_MANL_SHIFT     0
 
-    #define LDBL_NBIT           0x80000000
-    #define mask_nbit_l(manh)   ((manh) &= ~LDBL_NBIT)
+    #define LDBL_MANH_INDEX     1
+    #define LDBL_MANH_MASK      0xFFFFFFFF
+    #define LDBL_MANH_SHIFT     0
+
+    #define LDBL_EXP_INDEX      2
+    #define LDBL_EXP_MASK       0x7FFF
+    #define LDBL_EXP_SHIFT      0
+
+    #define LDBL_SIGN_INDEX     2
+    #define LDBL_SIGN_MASK      0x8000
+    #define LDBL_SIGN_SHIFT     15
+
+    #define LDBL_NBIT           0x800000000
 
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
@@ -251,35 +255,36 @@ do {								\
     /* 64 bits IEEE double precision aligned on 16 bytes: used by ppc arch on
      * Mac OS X */
 
-    /* 
+    /*
      * IEEE double precision. Bit representation is
-     *		|  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
-     *		|1 bit|  11 bits  |            52 bits		  |
-     *		|          a[0]         |  	  a[1]		  |
+     *          |  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
+     *          |1 bit|  11 bits  |            52 bits            |
+     *          |          a[0]         |         a[1]            |
      */
+    typedef npy_uint32 IEEEl2bitsrep_part;
+
     union IEEEl2bitsrep {
-    	long double e;
-    	npy_uint32 a[2];
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[2];
     };
-    
+
     #define LDBL_MANL_INDEX     1
-    #define LDBL_MANL_MASK 	0xFFFFFFFF
-    #define LDBL_MANL_SHIFT(x)  ((x))
-    
+    #define LDBL_MANL_MASK      0xFFFFFFFF
+    #define LDBL_MANL_SHIFT(x)  0
+
     #define LDBL_MANH_INDEX     0
-    #define LDBL_MANH_MASK 	0x000FFFFF
-    #define LDBL_MANH_SHIFT(x)  ((x))
-    
-    #define LDBL_EXP_INDEX 	0
-    #define LDBL_EXP_MASK  	0x7FF00000
-    #define LDBL_EXP_SHIFT(x)   ((x) >>  20)
-    
+    #define LDBL_MANH_MASK      0x000FFFFF
+    #define LDBL_MANH_SHIFT(x)  0
+
+    #define LDBL_EXP_INDEX      0
+    #define LDBL_EXP_MASK       0x7FF00000
+    #define LDBL_EXP_SHIFT(x)   20
+
     #define LDBL_SIGN_INDEX     0
-    #define LDBL_SIGN_MASK	0x80000000
-    #define LDBL_SIGN_SHIFT(x)  ((x) >>  31)
+    #define LDBL_SIGN_MASK      0x80000000
+    #define LDBL_SIGN_SHIFT(x)  31
 
     #define LDBL_NBIT           0
-    #define mask_nbit_l(u)      ((void)0)
 
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
@@ -287,137 +292,151 @@ do {								\
 #elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_LE)
     /* 64 bits IEEE double precision, Little Endian. */
 
-    /* 
+    /*
      * IEEE double precision. Bit representation is
-     *		|  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
-     *		|1 bit|  11 bits  |            52 bits		  |
-     *		|          a[1]         |  	  a[0]		  |
+     *          |  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
+     *          |1 bit|  11 bits  |            52 bits            |
+     *          |          a[1]         |         a[0]            |
      */
-    union IEEEl2bitsrep {
-    	npy_longdouble  e;
-    	npy_uint32      a[2];
-    };
-    
-    #define LDBL_MANL_INDEX     0
-    #define LDBL_MANL_MASK 	0xFFFFFFFF
-    #define LDBL_MANL_SHIFT(x)  ((x))
-    
-    #define LDBL_MANH_INDEX     1
-    #define LDBL_MANH_MASK 	0x000FFFFF
-    #define LDBL_MANH_SHIFT(x)  ((x))
-    
-    #define LDBL_EXP_INDEX 	1
-    #define LDBL_EXP_MASK  	0x7FF00000
-    #define LDBL_EXP_SHIFT(x)   ((x) >>  20)
-    
-    #define LDBL_SIGN_INDEX     1
-    #define LDBL_SIGN_MASK	0x80000000
-    #define LDBL_SIGN_SHIFT(x)  ((x) >>  31)
+    typedef npy_uint32 IEEEl2bitsrep_part;
 
-    #define LDBL_NBIT           0x80000000
-    #define mask_nbit_l(manh)   ((manh) &= ~LDBL_NBIT)
+    union IEEEl2bitsrep {
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[2];
+    };
+
+    #define LDBL_MANL_INDEX     0
+    #define LDBL_MANL_MASK      0xFFFFFFFF
+    #define LDBL_MANL_SHIFT     0
+
+    #define LDBL_MANH_INDEX     1
+    #define LDBL_MANH_MASK      0x000FFFFF
+    #define LDBL_MANH_SHIFT     0
+
+    #define LDBL_EXP_INDEX      1
+    #define LDBL_EXP_MASK       0x7FF00000
+    #define LDBL_EXP_SHIFT      20
+
+    #define LDBL_SIGN_INDEX     1
+    #define LDBL_SIGN_MASK      0x80000000
+    #define LDBL_SIGN_SHIFT     31
+
+    #define LDBL_NBIT           0x00000080
 
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
     typedef npy_uint32 ldouble_sign_t;
 #elif defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
-    /* 
+    /*
      * IEEE quad precision, Big Endian. Bit representation is
-     *		|  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
-     *		|1 bit|  15 bits  |            112 bits		  |
-     *		|          a[0]         |           a[1]          |
+     *          |  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
+     *          |1 bit|  15 bits  |            112 bits           |
+     *          |          a[0]         |           a[1]          |
      */
-    union IEEEl2bitsrep {
-    	npy_longdouble  e;
-    	npy_uint64      a[2];
-    };
-    
-    #define LDBL_MANL_INDEX     1
-    #define LDBL_MANL_MASK 	0xFFFFFFFFFFFFFFFF
-    #define LDBL_MANL_SHIFT(x)  ((x))
-    
-    #define LDBL_MANH_INDEX     0
-    #define LDBL_MANH_MASK 	0x0000FFFFFFFFFFFF
-    #define LDBL_MANH_SHIFT(x)  ((x))
-    
-    #define LDBL_EXP_INDEX 	0
-    #define LDBL_EXP_MASK  	0x7FFF000000000000
-    #define LDBL_EXP_SHIFT(x)   ((x) >>  48)
-    
-    #define LDBL_SIGN_INDEX     0
-    #define LDBL_SIGN_MASK	0x8000000000000000
-    #define LDBL_SIGN_SHIFT(x)  ((x) >>  63)
+    typedef npy_uint64 IEEEl2bitsrep_part;
 
-    #define mask_nbit_l(u)  ((void)0)
+    union IEEEl2bitsrep {
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[2];
+    };
+
+    #define LDBL_MANL_INDEX     1
+    #define LDBL_MANL_MASK      0xFFFFFFFFFFFFFFFF
+    #define LDBL_MANL_SHIFT     0
+
+    #define LDBL_MANH_INDEX     0
+    #define LDBL_MANH_MASK      0x0000FFFFFFFFFFFF
+    #define LDBL_MANH_SHIFT     0
+
+    #define LDBL_EXP_INDEX      0
+    #define LDBL_EXP_MASK       0x7FFF000000000000
+    #define LDBL_EXP_SHIFT      48
+
+    #define LDBL_SIGN_INDEX     0
+    #define LDBL_SIGN_MASK      0x8000000000000000
+    #define LDBL_SIGN_SHIFT     63
+
+    #define LDBL_NBIT           0
 
     typedef npy_uint64 ldouble_man_t;
     typedef npy_uint64 ldouble_exp_t;
     typedef npy_uint32 ldouble_sign_t;
 #endif
 
-/* Put the sign bit of x into i - i should be defined as ldouble_sign_t */
-#define GET_LDOUBLE_SIGN(x, i)	\
-do {				\
-	const union IEEEl2bitsrep u = {x};	\
-	(i) = LDBL_SIGN_SHIFT(u.a[LDBL_SIGN_INDEX] & LDBL_SIGN_MASK);  \
-} while (0)
+/* Get the sign bit of x. x should be of type IEEEl2bitsrep */
+#define GET_LDOUBLE_SIGN(x) \
+    (((x).a[LDBL_SIGN_INDEX] & LDBL_SIGN_MASK) >> LDBL_SIGN_SHIFT)
 
-/* Put the exp bits of x into i - i should be defined as ldouble_exp_t */
-#define GET_LDOUBLE_EXP(x, i)	\
-do {				\
-	const union IEEEl2bitsrep u = {x};	\
-	(i) = LDBL_EXP_SHIFT(u.a[LDBL_EXP_INDEX] & LDBL_EXP_MASK);  \
-} while (0)
+/* Set the sign bit of x to v. x should be of type IEEEl2bitsrep */
+#define SET_LDOUBLE_SIGN(x, v) \
+  ((x).a[LDBL_SIGN_INDEX] =                                             \
+   ((x).a[LDBL_SIGN_INDEX] & ~LDBL_SIGN_MASK) |                         \
+   (((IEEEl2bitsrep_part)(v) << LDBL_SIGN_SHIFT) & LDBL_SIGN_MASK))
 
-/* Put the manl bits of x into i - i should be defined as ldouble_man_t */
-#define GET_LDOUBLE_MANL(x, i)	\
-do {				\
-	const union IEEEl2bitsrep u = {x};	\
-	(i) = LDBL_MANL_SHIFT(u.a[LDBL_MANL_INDEX] & LDBL_MANL_MASK);  \
-} while (0)
+/* Get the exp bits of x. x should be of type IEEEl2bitsrep */
+#define GET_LDOUBLE_EXP(x) \
+    (((x).a[LDBL_EXP_INDEX] & LDBL_EXP_MASK) >> LDBL_EXP_SHIFT)
 
-/* Put the manh bits (hist bits of mantisss) of x into i - i should be defined
- * as ldouble_man_t */
-#define GET_LDOUBLE_MANH(x, i)	\
-do {				\
-	const union IEEEl2bitsrep u = {x};	\
-	(i) = LDBL_MANH_SHIFT(u.a[LDBL_MANH_INDEX] & LDBL_MANH_MASK);  \
-} while (0)
+/* Set the exp bit of x to v. x should be of type IEEEl2bitsrep */
+#define SET_LDOUBLE_EXP(x, v) \
+  ((x).a[LDBL_EXP_INDEX] =                                              \
+   ((x).a[LDBL_EXP_INDEX] & ~LDBL_EXP_MASK) |                           \
+   (((IEEEl2bitsrep_part)(v) << LDBL_EXP_SHIFT) & LDBL_EXP_MASK))
+
+/* Get the manl bits of x. x should be of type IEEEl2bitsrep */
+#define GET_LDOUBLE_MANL(x) \
+    (((x).a[LDBL_MANL_INDEX] & LDBL_MANL_MASK) >> LDBL_MANL_SHIFT)
+
+/* Set the manl bit of x to v. x should be of type IEEEl2bitsrep */
+#define SET_LDOUBLE_MANL(x, v) \
+  ((x).a[LDBL_MANL_INDEX] =                                             \
+   ((x).a[LDBL_MANL_INDEX] & ~LDBL_MANL_MASK) |                         \
+   (((IEEEl2bitsrep_part)(v) << LDBL_MANL_SHIFT) & LDBL_MANL_MASK))
+
+/* Get the manh bits of x. x should be of type IEEEl2bitsrep */
+#define GET_LDOUBLE_MANH(x) \
+    (((x).a[LDBL_MANH_INDEX] & LDBL_MANH_MASK) >> LDBL_MANH_SHIFT)
+
+/* Set the manh bit of x to v. x should be of type IEEEl2bitsrep */
+#define SET_LDOUBLE_MANH(x, v) \
+    ((x).a[LDBL_MANH_INDEX] = \
+     ((x).a[LDBL_MANH_INDEX] & ~LDBL_MANH_MASK) |                       \
+     (((IEEEl2bitsrep_part)(v) << LDBL_MANH_SHIFT) & LDBL_MANH_MASK))
 
 /*
  * Those unions are used to convert a pointer of npy_cdouble to native C99
- * complex or our own complex type indenpendently on whether C99 complex
+ * complex or our own complex type independently on whether C99 complex
  * support is available
  */
 #ifdef NPY_USE_C99_COMPLEX
 typedef union {
-	npy_cdouble npy_z;
-	complex c99_z;
+        npy_cdouble npy_z;
+        complex c99_z;
 } __npy_cdouble_to_c99_cast;
 
 typedef union {
-	npy_cfloat npy_z;
-	complex float c99_z;
+        npy_cfloat npy_z;
+        complex float c99_z;
 } __npy_cfloat_to_c99_cast;
 
 typedef union {
-	npy_clongdouble npy_z;
-	complex long double c99_z;
+        npy_clongdouble npy_z;
+        complex long double c99_z;
 } __npy_clongdouble_to_c99_cast;
 #else
 typedef union {
-	npy_cdouble npy_z;
-	npy_cdouble c99_z;
+        npy_cdouble npy_z;
+        npy_cdouble c99_z;
 } __npy_cdouble_to_c99_cast;
 
 typedef union {
-	npy_cfloat npy_z;
-	npy_cfloat c99_z;
+        npy_cfloat npy_z;
+        npy_cfloat c99_z;
 } __npy_cfloat_to_c99_cast;
 
 typedef union {
-	npy_clongdouble npy_z;
-	npy_clongdouble c99_z;
+        npy_clongdouble npy_z;
+        npy_clongdouble c99_z;
 } __npy_clongdouble_to_c99_cast;
 #endif
 
