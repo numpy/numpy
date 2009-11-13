@@ -9,4 +9,9 @@
 #undef HAVE_HYPOT
 #endif
 
+/* Disable broken Sun Workshop Pro math functions */
+#ifdef __SUNPRO_C
+#undef HAVE_ATAN2
+#endif
+
 #endif
