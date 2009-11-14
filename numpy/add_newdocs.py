@@ -4925,12 +4925,9 @@ add_newdoc('numpy.lib.index_tricks', 'mgrid',
 
     See Also
     --------
-    numpy.lib.index_tricks.nd_grid :
-        class of `ogrid` and `mgrid` objects
-    ogrid :
-        like mgrid but returns open (not fleshed out) mesh grids
-
-    `r_` : array concatenator
+    numpy.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    r_ : array concatenator
 
     Examples
     --------
