@@ -58,6 +58,8 @@ linalg
     Core Linear Algebra Tools
 fft
     Core FFT routines
+polynomial
+    Polynomial tools
 testing
     Numpy testing tools
 f2py
@@ -143,6 +145,7 @@ else:
     from lib import *
     import linalg
     import fft
+    import polynomial
     import random
     import ctypeslib
     import ma
