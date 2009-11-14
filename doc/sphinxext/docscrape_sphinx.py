@@ -196,9 +196,9 @@ class SphinxFunctionDoc(SphinxDocString, FunctionDoc):
         FunctionDoc.__init__(self, obj, doc=doc, config=config)
 
 class SphinxClassDoc(SphinxDocString, ClassDoc):
-    def __init__(self, obj, doc=None, config={}):
+    def __init__(self, obj, doc=None, func_doc=None, config={}):
         self.use_plots = config.get('use_plots', False)
-        ClassDoc.__init__(self, obj, doc=doc, config=config)
+        ClassDoc.__init__(self, obj, doc=doc, func_doc=None, config=config)
 
 class SphinxObjDoc(SphinxDocString):
     def __init__(self, obj, doc=None, config={}):
