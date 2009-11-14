@@ -51,6 +51,25 @@ iterate over the items in a neighborhood of an array, and can handle boundaries
 conditions automatically. Zero and one padding are available, as well as
 arbitrary constant value, mirror and circular padding.
 
+New polynomial support
+~~~~~~~~~~~~~~~~~~~~~~
+
+New modules chebyshev and polynomial have been added. The new polynomial module
+is not compatible with the current polynomial support in numpy, but is much
+like the new chebyshev module. The most noticeable difference to most will
+be that coefficients are specified from low to high power, that the low
+level functions do *not* work with the Chebyshev and Polynomial classes as
+arguements, and that the Chebyshev and Polynomial classes include a domain.
+Mapping between domains is a linear substitution and the two classes can be
+converted one to the other, allowing, for instance, a Chebyshev series in
+one domain to be expanded as a polynomial in another domain. The new classes
+should generally be used instead of the low level functions, the latter are
+provided for those who wish to build their own classes.
+
+The new modules are not automatically imported into the numpy namespace,
+they must be explicitly brought in with an "import numpy.polynomial"
+statement.
+
 New C API
 ~~~~~~~~~
 
