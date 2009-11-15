@@ -496,8 +496,49 @@ class $name(pu.PolyBase) :
     def fit(x, y, deg, domain=$domain, rcond=None, full=False) :
         """Least squares fit to data.
 
-        Return the least squares fit to the data `y` sampled at `x` as a
-        $name object. See ${nick}fit for full documentation.
+        Return a `$name` instance that is the least squares fit to the data
+        `y` sampled at `x`. Unlike ${nick}fit, the domain of the returned
+        instance can be specified and this will often result in a superior
+        fit with less chance of ill conditioning. See ${nick}fit for full
+        documentation of the implementation.
+
+        Parameters
+        ----------
+        x : array_like, shape (M,)
+            x-coordinates of the M sample points ``(x[i], y[i])``.
+        y : array_like, shape (M,) or (M, K)
+            y-coordinates of the sample points. Several data sets of sample
+            points sharing the same x-coordinates can be fitted at once by
+            passing in a 2D-array that contains one dataset per column.
+        deg : int
+            Degree of the fitting polynomial
+        domain : {None, [beg, end]}, optional
+            Domain to use for the returned $name instance. If ``None``,
+            then a minimal domain that covers the points `x` is chosen. The
+            default value is ``$domain``.
+        rcond : float, optional
+            Relative condition number of the fit. Singular values smaller
+            than this relative to the largest singular value will be
+            ignored. The default value is len(x)*eps, where eps is the
+            relative precision of the float type, about 2e-16 in most
+            cases.
+        full : bool, optional
+            Switch determining nature of return value. When it is False
+            (the default) just the coefficients are returned, when True
+            diagnostic information from the singular value decomposition is
+            also returned.
+
+        Returns
+        -------
+        coef : ndarray, shape (M,) or (M, K)
+            Polynomial coefficients ordered from low to high. If `y` was 2-D,
+            the coefficients for the data in column k  of `y` are in column
+            `k`.
+
+        [residuals, rank, singular_values, rcond] : present when `full` = True
+            Residuals of the least-squares fit, the effective rank of the
+            scaled Vandermonde matrix and its singular values, and the
+            specified value of `rcond`. For more details, see `linalg.lstsq`.
 
         See Also
         --------
