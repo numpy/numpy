@@ -530,15 +530,15 @@ class $name(pu.PolyBase) :
 
         Returns
         -------
-        coef : ndarray, shape (M,) or (M, K)
-            Polynomial coefficients ordered from low to high. If `y` was 2-D,
-            the coefficients for the data in column k  of `y` are in column
-            `k`.
+        least_squares_fit : instance of $name
+            The $name instance is the least squares fit to the data and
+            has the domain specified in the call.
 
-        [residuals, rank, singular_values, rcond] : present when `full` = True
+        [residuals, rank, singular_values, rcond] : only if `full` = True
             Residuals of the least-squares fit, the effective rank of the
             scaled Vandermonde matrix and its singular values, and the
-            specified value of `rcond`. For more details, see `linalg.lstsq`.
+            specified value of `rcond`. For more details, see
+            `linalg.lstsq`.
 
         See Also
         --------
