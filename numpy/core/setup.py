@@ -377,11 +377,6 @@ def configuration(parent_package='',top_path=None):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
 
-            # Check that the toolchain works, to fail early if it doesn't
-            # (avoid late errors with MATHLIB which are confusing if the
-            # compiler does not work).
-            config_cmd.try_link('int main(void) { return 0;}')
-
             # Check sizeof
             moredefs, ignored = cocache.check_types(config_cmd, ext, build_dir)
 
@@ -645,6 +640,13 @@ def configuration(parent_package='',top_path=None):
         # but we cannot use add_installed_pkg_config here either, so we only
         # updated the substition dictionary during npymath build
         config_cmd = config.get_config_cmd()
+
+        # Check that the toolchain works, to fail early if it doesn't
+        # (avoid late errors with MATHLIB which are confusing if the
+        # compiler does not work).
+        st = config_cmd.try_link('int main(void) { return 0;}')
+        if not st:
+            raise RuntimeError("Broken toolchain: cannot link a simple C program")
         mlibs = check_mathlib(config_cmd)
 
         posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
