@@ -61,6 +61,7 @@ class build_ext (old_build_ext):
                 if self.distribution.have_run.get('build_clib'):
                     log.warn('build_clib already run, it is too late to ' \
                             'ensure in-place build of build_clib')
+                    build_clib = self.distribution.get_command_obj('build_clib')
                 else:
                     build_clib = self.distribution.get_command_obj('build_clib')
                     build_clib.inplace = 1
