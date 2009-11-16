@@ -83,7 +83,7 @@ setup_py = __import__("setup")
 FULLVERSION = setup_py.FULLVERSION
 
 # Wine config for win32 builds
-WINE_SITE_CFG = ""
+WINE_SITE_CFG = {}
 if sys.platform == "darwin":
     WINE_PY25 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python25/python.exe"
     WINE_PY26 = "/Applications/Darwine/Wine.bundle/Contents/bin/wine /Users/david/.wine/drive_c/Python26/python.exe"
@@ -353,7 +353,7 @@ def bdist_superpack(options):
     shutil.copy(source, target)
 
 @task
-@needs('clean', 'bdist_wininst')
+@needs('clean')
 def bdist_wininst_simple():
     """Simple wininst-based installer."""
     _bdist_wininst(pyver=options.wininst.pyver)
