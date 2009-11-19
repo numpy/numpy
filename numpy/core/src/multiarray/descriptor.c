@@ -562,7 +562,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
     }
     meta->base = (NPY_DATETIMEUNIT) baseunit[i];
     meta->den = 1;
-    meta->num = q;
+    meta->num *= q;
 
     return 0;
 }

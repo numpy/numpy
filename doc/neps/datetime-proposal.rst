@@ -88,26 +88,29 @@ the above table
 Besides these basic code units, the user can create derived units
 consisting of multiples of any basic unit: 100ns, 3M, 15m, etc.
 
-A limited number of divisions of any basic unit can be used to create multiples 
-of a higher-resolution unit provided the divisor can be divided evenly into 
-the number of higher-resolution units available.  
-For example: Y/4 is just short-hand for -> (12M)/4 -> 3M and Y/4 will be represented
-	     after creation as 3M 
-The first lower unit found to have an even divisor will be chosen 
-   (up to 3 lower units).  The following standardized definitions are used 
-   in this specific case to find acceptable divisors 
+A limited number of divisions of any basic unit can be used to create
+multiples of a higher-resolution unit provided the divisor can be
+divided evenly into the number of higher-resolution units available.
+For example: Y/4 is just short-hand for -> (12M)/4 -> 3M and Y/4 will be
+represented 1after creation as 3M The first lower unit found to have an
+even divisor will be chosen (up to 3 lower units).  The following
+standardized definitions are used in this specific case to find
+acceptable divisors
 
+====== ====================
+ Code    Interpreted as
+====== ====================
+Y      12M, 52W, 365D
+M      4W, 30D, 720h
+W      5B, 7D, 168h, 10080m
+B      24h, 1440m, 86400s
+D      24h, 1440m, 86400s
+h      60m, 3600s
+m      60s, 60000ms
+====== ====================
 
-Y -   12M,   52W,   365D
-M -    4W,   30D,   720h
-W - 5B,7D,  168h, 10080m
-B -   24h, 1440m, 86400s
-D -   24h, 1440m, 86400s
-h -   60m, 3600s
-m -   60s, 60000ms
-
-s, ms, us, ns, ps, fs (use 1000 and 1000000 of the next two 
-		       available lower units respectively).
+s, ms, us, ns, ps, fs (use 1000 and 1000000 of the next two available
+lower units respectively).
 
 
 Finally, a date-time data-type can be created with support for tracking
@@ -134,7 +137,7 @@ complicated example) 'M8[7s/9]//5'.
 
 If a time unit is not specified, then it defaults to [us].  Thus 'M8' is
 equivalent to 'M8[us]' (except when modulo event-units are desired --
-i.e. you cannot specify 'M8[us]//5' as 'M8//5'
+i.e. you cannot specify 'M8[us]//5' as 'M8//5' or as '//5'
 
 ``datetime64``
 ==============
