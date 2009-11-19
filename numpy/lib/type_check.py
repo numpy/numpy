@@ -3,11 +3,12 @@
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isreal','nan_to_num','real','real_if_close',
            'typename','asfarray','mintypecode','asscalar',
-           'common_type']
+           'common_type', 'datetime_data']
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, array, isnan, \
                 obj2sctype, zeros
+from numpy.core.multiarray import METADATA_DTSTR
 from ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
@@ -598,3 +599,34 @@ def common_type(*arrays):
         return array_type[1][precision]
     else:
         return array_type[0][precision]
+
+def datetime_data(dtype):
+    """Return (unit, numerator, denominator, events) from a datetime
+    """
+    try:
+        import ctypes
+    except ImportError:
+        raise RuntimeError, "Cannot access date-time internals without ctypes installed."
+    
+    obj = dtype.metadata[METADATA_DTSTR]
+    class DATETIMEMETA(ctypes.Structure):
+        _fields_ = [('base', ctypes.c_int),
+                    ('num', ctypes.c_int),
+                    ('den', ctypes.c_int),
+                    ('events', ctypes.c_int)]
+
+    func = ctypes.pythonapi.PyCObject_AsVoidPtr
+    func.argtypes = [ctypes.py_object]
+    func.restype = ctypes.c_void_p
+
+    result = func(ctypes.py_object(obj))
+    result = ctypes.cast(ctypes.c_void_p(result), ctypes.POINTER(DATETIMEMETA))
+
+    struct = result[0]
+    base = struct.base
+
+    # FIXME: This needs to be kept consistent with enum in ndarrayobject.h
+    _unitnum2name = ['Y', 'M', 'W', 'B', 'D', 'h', 'm', 's', 'ms', 'us', 'ns', 'ps', 'fs', 'as']
+
+    return (_unitnum2name[base], struct.num, struct.den, struct.events)
+    
