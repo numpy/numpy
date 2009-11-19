@@ -652,13 +652,10 @@ _convert_from_datetime_tuple(PyObject *obj)
         if (freq_key == NULL) return NULL;
     }
 
-    if (new->metadata == NULL) {
-        if ((new->metadata = PyDict_New())== NULL) return NULL;
-    }
-    if (!PyDict_Check(new->metadata)) {
-        PyErr_SetString(PyExc_RuntimeError, "metadata is not a dictionary");
-        return NULL;
-    }
+    /* Remove any reference to old metadata dictionary */
+    /* And create a new one for this new dtype */
+    Py_XDECREF(new->metadata);
+    if ((new->metadata = PyDict_New())== NULL) return NULL;
 
     dt_cobj = _convert_datetime_tuple_to_cobj(dt_tuple);
     if (dt_cobj == NULL) { /* Failure in conversion */
