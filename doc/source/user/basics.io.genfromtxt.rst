@@ -378,19 +378,15 @@ The :keyword:`missing_values` argument accepts three kind of values:
 We know how to recognize missing data, but we still need to provide a value for these missing entries.
 By default, this value is determined from the expected dtype according to this table:
 
-+---------------+-------------+
-+ Expected type +     Default +
-+---------------+-------------+
-+ ``bool``      +    ``False``+
-+---------------+-------------+
-+ ``int``       +     ``-1``  +
-+---------------+-------------+
-+ ``float``     +  ``np.nan`` +
-+---------------+-------------+
-+ ``complex``   +``np.nan+0j``+
-+---------------+-------------+
-+ ``string``    + ``'???'``   +
-+---------------+-------------+
+=============  ==============
+Expected type  Default
+=============  ==============
+``bool``       ``False``
+``int``        ``-1``
+``float``      ``np.nan``
+``complex``    ``np.nan+0j``
+``string``     ``'???'``
+=============  ==============
 
 We can get a finer control on the conversion of missing values with the :keyword:`filling_values` optional argument.
 Like :keyword:`missing_values`, this argument accepts different kind of values:
@@ -423,7 +419,6 @@ array([(0, 2, 3), (4, 0, -999)],
 We may also want to keep track of the occurrence of missing data by constructing a boolean mask, with ``True`` entries where data was missing and ``False`` otherwise.
 To do that, we just have to set the optional argument :keyword:`usemask` to ``True`` (the default is ``False``).
 The output array will then be a :class:`~numpy.ma.MaskedArray`.
-
 
 
 .. unpack=None, loose=True, invalid_raise=True)
