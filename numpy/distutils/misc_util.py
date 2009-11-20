@@ -769,8 +769,8 @@ class Configuration(object):
         Return a dictionary compatible with the keyword arguments of distutils
         setup function. 
 
-        Example
-        -------
+        Examples
+        --------
         >>> setup(\**config.todict()).
         """
 
