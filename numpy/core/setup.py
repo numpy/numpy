@@ -200,7 +200,7 @@ def check_ieee_macros(config):
     # functions we test. We remove every function tested by python's
     # autoconf, hoping their own test are correct
     _macros = ["isnan", "isinf", "signbit", "isfinite"]
-    if sys.version_info[:2] >= (2, 7):
+    if sys.version_info[:2] >= (2, 6):
         for f in _macros:
             st = config.check_decl(fname2def("decl_%s" % f),
                     headers=["Python.h", "math.h"])
