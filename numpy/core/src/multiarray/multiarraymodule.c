@@ -2999,6 +2999,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "METADATA_DTSTR", s);
     Py_DECREF(s);
 
+    s = PyCObject_FromVoidPtr((void *)_datetime_strings, NULL);
+    PyDict_SetItemString(d, "DATETIMEUNITS", s);
+    Py_DECREF(s);
+
 #define ADDCONST(NAME)                          \
     s = PyInt_FromLong(NPY_##NAME);             \
     PyDict_SetItemString(d, #NAME, s);          \

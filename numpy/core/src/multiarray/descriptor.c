@@ -468,6 +468,7 @@ _convert_from_list(PyObject *obj, int align)
     return NULL;
 }
 
+/* Exported as DATETIMEUNITS in multiarraymodule.c */
 static char *_datetime_strings[] = {
     NPY_STR_Y,
     NPY_STR_M,
@@ -475,6 +476,7 @@ static char *_datetime_strings[] = {
     NPY_STR_B,
     NPY_STR_D,
     NPY_STR_h,
+    NPY_STR_m,
     NPY_STR_s,
     NPY_STR_ms,
     NPY_STR_us,
@@ -546,9 +548,10 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
         ind = ((int)NPY_FR_s - (int)NPY_FR_Y)*2;
         totry = _multiples_table[ind];
         baseunit = (NPY_DATETIMEUNIT *)_multiples_table[ind+1];
-        baseunit[0] = meta->base - 1;
-        baseunit[1] = meta->base - 2;
-        if (meta->base == NPY_DATETIME_NUMUNITS-1) num = 1;
+        baseunit[0] = meta->base + 1;
+        baseunit[1] = meta->base + 2;
+        if (meta->base == NPY_DATETIME_NUMUNITS-2) num = 1;
+	if (meta->base == NPY_DATETIME_NUMUNITS-1) num = 0;
     }
 
     for (i=0; i<num; i++) {
@@ -560,7 +563,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
         PyErr_Format(PyExc_ValueError, "divisor (%d) is not a multiple of a lower-unit", meta->den);
         return -1;
     }
-    meta->base = (NPY_DATETIMEUNIT) baseunit[i];
+    meta->base = baseunit[i];
     meta->den = 1;
     meta->num *= q;
 

@@ -601,12 +601,15 @@ def common_type(*arrays):
         return array_type[0][precision]
 
 def datetime_data(dtype):
-    """Return (unit, numerator, denominator, events) from a datetime
+    """Return (unit, numerator, denominator, events) from a datetime dtype
     """
     try:
         import ctypes
     except ImportError:
-        raise RuntimeError, "Cannot access date-time internals without ctypes installed."
+        raise RuntimeError, "Cannot access date-time internals without ctypes installed"
+
+    if dtype.kind not in ['m','M']:
+        raise ValueError, "Not a date-time dtype"
     
     obj = dtype.metadata[METADATA_DTSTR]
     class DATETIMEMETA(ctypes.Structure):
@@ -626,7 +629,10 @@ def datetime_data(dtype):
     base = struct.base
 
     # FIXME: This needs to be kept consistent with enum in ndarrayobject.h
-    _unitnum2name = ['Y', 'M', 'W', 'B', 'D', 'h', 'm', 's', 'ms', 'us', 'ns', 'ps', 'fs', 'as']
+    from numpy.core.multiarray import DATETIMEUNITS
+    obj = ctypes.py_object(DATETIMEUNITS)
+    result = func(obj)
+    _unitnum2name = ctypes.cast(ctypes.c_void_p(result), ctypes.POINTER(ctypes.c_char_p))
 
     return (_unitnum2name[base], struct.num, struct.den, struct.events)
     

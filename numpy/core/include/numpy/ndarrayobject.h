@@ -213,6 +213,7 @@ typedef enum {
 #define NPY_STR_B "B"
 #define NPY_STR_D "D"
 #define NPY_STR_h "h"
+#define NPY_STR_m "m"
 #define NPY_STR_s "s"
 #define NPY_STR_ms "ms"
 #define NPY_STR_us "us"
