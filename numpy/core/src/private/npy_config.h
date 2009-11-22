@@ -4,7 +4,7 @@
 #include "config.h"
 
 /* Disable broken MS math functions */
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32_VERSION)
 #undef HAVE_ATAN2
 #undef HAVE_HYPOT
 #endif
