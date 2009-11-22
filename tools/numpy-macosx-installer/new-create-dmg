@@ -1,0 +1,112 @@
+#! /bin/bash
+SRC_FOLDER=content
+VOLUME_NAME=numpy
+DMG_TEMP_NAME=numpy.tmp.dmg
+title="${VOLUME_NAME}"
+applicationName=numpy-1.4.0.dev-py2.6.mpkg
+finalDMGName=numpy.dmg
+backgroundPictureName=dmgbackground.png
+
+WINX=100
+WINY=100
+WINW=600
+WINH=600
+ICON_SIZE=128
+
+BACKGROUND_FILE=art/dmgbackground.png
+NUMPY_MPKG=""
+
+while test "${1:0:1}" = "-"; do
+  case $1 in
+    --pkgname)
+      NUMPY_MPKG="$2"
+      shift; shift;;
+    --volname)
+      VOLUME_NAME="$2"
+      shift; shift;;
+    -h | --help)
+      usage;;
+    --version)
+      version; exit 0;;
+    --pure-version)
+      pure_version; exit 0;;
+    -*)
+      echo "Unknown option $1. Run with --help for help."
+      exit 1;;
+  esac
+done
+
+test -z "$2" && {
+  echo "Not enough arguments. Invoke with --help for help."
+  exit 1
+}
+
+# Check for mandatory options
+if [ -e $NUMPY_MPKG ]
+then
+	echo "--pkgname is mandatory"
+fi
+
+BACKGROUND_FILE_NAME="$(basename $BACKGROUND_FILE)"
+BACKGROUND_CLAUSE="set background picture of opts to file \".background:$BACKGROUND_FILE_NAME\""
+
+DOCUMENTATION_PATH="Documentation"
+
+DMG_PATH="$1"
+DMG_DIRNAME="$(dirname "$DMG_PATH")"
+DMG_DIR="$(cd $DMG_DIRNAME > /dev/null; pwd)"
+DMG_NAME="$(basename "$DMG_PATH")"
+DMG_TEMP_NAME="$DMG_DIR/rw.${DMG_NAME}"
+SRC_FOLDER="$(cd "$2" > /dev/null; pwd)"
+DMG_SIZE=10m
+test -z "$VOLUME_NAME" && VOLUME_NAME="$(basename "$DMG_PATH" .dmg)"
+
+# AUX_PATH="$(cd "$(dirname $0)"; pwd)/support"
+# 
+# test -d "$AUX_PATH" || {
+#   echo "Cannot find support directory: $AUX_PATH"
+#   exit 1
+# }
+
+# Create the image
+echo "Creating disk image..."
+test -f "${DMG_TEMP_NAME}" && rm -f "${DMG_TEMP_NAME}"
+hdiutil create -srcfolder "$SRC_FOLDER" -volname "${VOLUME_NAME}" -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size "${DMG_SIZE}" "${DMG_TEMP_NAME}"
+device=$(hdiutil attach -readwrite -noverify -noautoopen "${DMG_TEMP_NAME}" | egrep '^/dev/' | sed 1q | awk '{print $1}')
+
+# Copy background image
+mkdir /Volumes/"${VOLUME_NAME}"/.background
+cp $BACKGROUND_FILE /Volumes/"${VOLUME_NAME}"/.background/"${BACKGROUND_FILE_NAME}"
+
+# Set background image + icon size + icon position
+# XXX: the close/open after icon positioning is to circumvent a big in Snow
+# Leopard. Without it, the icon position is not changed
+echo '
+   tell application "Finder"
+       tell disk "'${VOLUME_NAME}'"
+	       open
+	       set current view of container window to icon view
+	       set toolbar visible of container window to false
+	       set statusbar visible of container window to false
+	       set the bounds of container window to {100, 100, 600, 600}
+	       set theViewOptions to the icon view options of container window
+	       set arrangement of theViewOptions to not arranged
+	       set icon size of theViewOptions to 128
+	       set background picture of theViewOptions to file ".background:'${BACKGROUND_FILE_NAME}'"
+	       set position of item "'${NUMPY_MPKG}'" of container window to {125, 320}
+	       set position of item "'${DOCUMENTATION_PATH}'" of container window to {375, 320}
+	       close
+	       open
+	       update without registering applications
+	       delay 5
+       end tell
+   end tell
+' | osascript
+
+rm -f "${DMG_NAME}"
+chmod -Rf go-w /Volumes/"${VOLUME_NAME}"
+sync
+sync
+hdiutil detach ${device}
+hdiutil convert "${DMG_TEMP_NAME}" -format UDZO -imagekey zlib-level=9 -o "${DMG_NAME}"
+rm -f ${DMG_TEMP_NAME}
