@@ -115,6 +115,8 @@ Testing
        values fluctuate a lot.
     #. assert_array_max_ulp: raise an assertion if there are more than N
        representable numbers between two floating point values.
+    #. assert_warns: raise an AssertionError if a callable does not generate a
+       warning of the appropriate class, without altering the warning state.
 
 Reusing npymath
 ~~~~~~~~~~~~~~~

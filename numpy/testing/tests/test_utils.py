@@ -1,3 +1,6 @@
+import warnings
+import sys
+
 import numpy as np
 from numpy.testing import *
 import unittest
@@ -300,6 +303,37 @@ class TestRaises(unittest.TestCase):
             return
         else:
             raise AssertionError("should have raised an AssertionError")
+
+class TestWarns(unittest.TestCase):
+    def test_warn(self):
+        def f():
+            warnings.warn("yo")
+
+        before_filters = sys.modules['warnings'].filters[:]
+        assert_warns(UserWarning, f)
+        after_filters = sys.modules['warnings'].filters
+
+        # Check that the warnings state is unchanged
+        assert_equal(before_filters, after_filters,
+                     "assert_warns does not preserver warnings state")
+
+    def test_warn_wrong_warning(self):
+        def f():
+            warnings.warn("yo", DeprecationWarning)
+
+        failed = False
+        filters = sys.modules['warnings'].filters[:]
+        try:
+            # Should raise an AssertionError
+            assert_warns(UserWarning, f)
+            failed = True
+        except AssertionError:
+            pass
+        finally:
+            sys.modules['warnings'].filters = filters
+
+        if failed:
+            raise AssertionError("wrong warning caught by assert_warn")
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
     def test_simple(self):

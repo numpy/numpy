@@ -7,6 +7,7 @@ import sys
 import re
 import operator
 import types
+import warnings
 from nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
@@ -15,7 +16,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp',
-           'assert_array_max_ulp']
+           'assert_array_max_ulp', 'assert_warns']
 
 verbose = 0
 
@@ -1281,3 +1282,26 @@ class WarningManager:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
 
+def assert_warns(warning_class, func, *args, **kw):
+    """Fail unless a warning of class warning_class is thrown by callable when
+    invoked with arguments args and keyword arguments kwargs.
+    
+    If a different type of warning is thrown, it will not be caught, and the
+    test case will be deemed to have suffered an error.
+    """
+
+    # XXX: once we may depend on python >= 2.6, this can be replaced by the
+    # warnings module context manager.
+    ctx = WarningManager(record=True)
+    l = ctx.__enter__()
+    warnings.simplefilter('always')
+    try:
+        func(*args, **kw)
+        if not len(l) > 0:
+            raise AssertionError("No warning raised when calling %s"
+                    % func.__name__)
+        if not l[0].category is warning_class:
+            raise AssertionError("First warning for %s is not a " \
+                    "%s( is %s)" % (func.__name__, warning_class, l[0]))
+    finally:
+        ctx.__exit__()
