@@ -37,7 +37,7 @@ Exported symbols include:
     float_, complex_,
     longfloat, clongfloat,
 
-    datetime, timedelta,  (these inherit from timeinteger which inherits from signedinteger)
+    datetime_, timedelta_,  (these inherit from timeinteger which inherits from signedinteger)
     
 
    As part of the type-hierarchy:    xx -- is bit-width
@@ -373,13 +373,15 @@ def _set_up_aliases():
                   ('unicode_', 'unicode'),
                   ('str_', 'string'),
                   ('string_', 'string'),
-                  ('object_', 'object')]
+                  ('object_', 'object'),
+                  ('timedelta_', 'timedelta'),
+                  ('datetime_', 'datetime')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
     for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
-              'complex', 'bool', 'string']:
+              'complex', 'bool', 'string', 'datetime', 'timedelta']:
         try:
             del allTypes[t]
             del sctypeDict[t]

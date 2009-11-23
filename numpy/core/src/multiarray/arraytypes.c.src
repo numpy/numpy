@@ -3359,7 +3359,7 @@ set_typeinfo(PyObject *dict)
                 (PyObject *)\
                 &Py@Name@ArrType_Type));
     Py_DECREF(s);
-    /**end repeat**/
+/**end repeat**/
 
     PyDict_SetItemString(infodict, "OBJECT",
             s=Py_BuildValue("ciiiO", PyArray_OBJECTLTR,

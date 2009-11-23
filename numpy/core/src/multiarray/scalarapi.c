@@ -282,6 +282,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         Py_INCREF(scalar);
         return r;
     }
+
     r = PyArray_NewFromDescr(&PyArray_Type,
             typecode,
             0, NULL,
@@ -510,6 +511,41 @@ PyArray_DescrFromScalar(PyObject *sc)
         Py_INCREF(descr);
         return descr;
     }
+    
+    if (PyArray_IsScalar(sc, TimeInteger)) {
+	PyObject *cobj;
+	PyArray_DatetimeMetaData *dt_data;
+	
+	dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
+	
+	if (PyArray_IsScalar(sc, Datetime)) {
+	    descr = PyArray_DescrNewFromType(PyArray_DATETIME);
+	    memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
+		   sizeof(PyArray_DatetimeMetaData));
+	}
+	else {/* Timedelta */
+	    descr = PyArray_DescrNewFromType(PyArray_TIMEDELTA);
+	    memcpy(dt_data, &((PyTimedeltaScalarObject *)sc)->obmeta, 
+		   sizeof(PyArray_DatetimeMetaData));
+	}
+        cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+	
+	/* Add correct meta-data to the data-type */
+
+	if (descr == NULL) {Py_DECREF(cobj); return NULL;}
+
+	Py_XDECREF(descr->metadata);
+	if ((descr->metadata = PyDict_New())== NULL) {
+	    Py_DECREF(descr); Py_DECREF(cobj); return NULL;
+	}
+	
+	/* Assume this sets a new reference to cobj */
+	PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);
+	Py_DECREF(cobj);
+	
+	return descr;
+    }
+
     descr = PyArray_DescrFromTypeObject((PyObject *)sc->ob_type);
     if (descr->elsize == 0) {
         PyArray_DESCR_REPLACE(descr);

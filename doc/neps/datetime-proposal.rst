@@ -92,7 +92,7 @@ A limited number of divisions of any basic unit can be used to create
 multiples of a higher-resolution unit provided the divisor can be
 divided evenly into the number of higher-resolution units available.
 For example: Y/4 is just short-hand for -> (12M)/4 -> 3M and Y/4 will be
-represented 1after creation as 3M The first lower unit found to have an
+represented after creation as 3M.  The first lower unit found to have an
 even divisor will be chosen (up to 3 lower units).  The following
 standardized definitions are used in this specific case to find
 acceptable divisors
@@ -111,7 +111,6 @@ m      60s, 60000ms
 
 s, ms, us, ns, ps, fs (use 1000 and 1000000 of the next two available
 lower units respectively).
-
 
 Finally, a date-time data-type can be created with support for tracking
 sequential events within a basic unit: [D]//100, [Y]//4 (notice the
@@ -617,6 +616,24 @@ list of tuples describing a data-format can itself be a tuple of
 
 Final considerations
 ====================
+
+Why the fractional time and events: [3Y/12]//50
+-----------------------------------------------
+
+It is difficult to come up with enough units to satisfy every need.  For
+example, in C# on Windows the fundamental tick of time is 100ns.
+Multiple of basic units are simple to handle.  Divisors of basic units
+are harder to handle arbitrarily, but it is common to mentally think of
+a month as 1/12 of a year, or a day as 1/7 of a week.  Therefore, the
+ability to specify a unit in terms of a fraction of a "larger" unit was
+implemented.  
+
+The event notion (//50) was added to solve a use-case of a commercial
+sponsor of this NEP.  The idea is to allow timestamp to carry both event
+number and timestamp information.  The remainder carries the event
+number information, while the quotient carries the timestamp
+information.  
+
 
 Why the ``origin`` metadata disappeared
 ---------------------------------------

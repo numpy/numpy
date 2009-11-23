@@ -621,8 +621,6 @@ _convert_from_datetime_tuple(PyObject *obj)
     PyObject *dt_tuple;
     PyObject *dt_cobj;
     PyObject *datetime;
-    static PyObject *freq_key=NULL;
-
 
     if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj)!=2) {
         PyErr_SetString(PyExc_RuntimeError, "_datetimestring is "       \
@@ -649,12 +647,6 @@ _convert_from_datetime_tuple(PyObject *obj)
 
     if (new == NULL) return NULL;
 
-    /* Add correct metadata */
-    if (freq_key == NULL) {
-        freq_key = PyString_InternFromString(NPY_METADATA_DTSTR);
-        if (freq_key == NULL) return NULL;
-    }
-
     /* Remove any reference to old metadata dictionary */
     /* And create a new one for this new dtype */
     Py_XDECREF(new->metadata);
@@ -667,7 +659,7 @@ _convert_from_datetime_tuple(PyObject *obj)
     }
 
     /* Assume this sets a new reference to dt_cobj */
-    PyDict_SetItem(new->metadata, freq_key, dt_cobj);
+    PyDict_SetItemString(new->metadata, NPY_METADATA_DTSTR, dt_cobj);
     Py_DECREF(dt_cobj);
 
     return new;
