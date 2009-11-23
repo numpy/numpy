@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from numpy.ma.testutils import *
+from numpy.testing import assert_warns
 
 import StringIO
 import gzip
@@ -11,7 +12,8 @@ from tempfile import mkstemp, NamedTemporaryFile
 import sys, time
 from datetime import datetime
 
-from numpy.lib._iotools import ConverterError, ConverterLockError
+from numpy.lib._iotools import ConverterError, ConverterLockError, \
+                               ConversionWarning
 
 
 MAJVER, MINVER = sys.version_info[:2]
@@ -907,7 +909,13 @@ M   33  21.99
         mdata = StringIO.StringIO("\n".join(data))
         #
         kwargs = dict(delimiter=",", dtype=None, names=True)
-        mtest = np.ndfromtxt(mdata, invalid_raise=False, **kwargs)
+        # XXX: is there a better way to get the return value of the callable in
+        # assert_warns ?
+        ret = {}
+        def f(_ret={}):
+            _ret['mtest'] = np.ndfromtxt(mdata, invalid_raise=False, **kwargs)
+        assert_warns(ConversionWarning, f, _ret=ret)
+        mtest = ret['mtest']
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -924,8 +932,13 @@ M   33  21.99
         mdata = StringIO.StringIO("\n".join(data))
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
-        #
-        mtest = np.ndfromtxt(mdata, usecols=(0, 4), **kwargs)
+        # XXX: is there a better way to get the return value of the callable in
+        # assert_warns ?
+        ret = {}
+        def f(_ret={}):
+            _ret['mtest'] = np.ndfromtxt(mdata, usecols=(0, 4), **kwargs)
+        assert_warns(ConversionWarning, f, _ret=ret)
+        mtest = ret['mtest']
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
