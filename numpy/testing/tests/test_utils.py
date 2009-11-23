@@ -324,11 +324,12 @@ class TestWarns(unittest.TestCase):
         failed = False
         filters = sys.modules['warnings'].filters[:]
         try:
-            # Should raise an AssertionError
-            assert_warns(UserWarning, f)
-            failed = True
-        except AssertionError:
-            pass
+            try:
+                # Should raise an AssertionError
+                assert_warns(UserWarning, f)
+                failed = True
+            except AssertionError:
+                pass
         finally:
             sys.modules['warnings'].filters = filters
 
