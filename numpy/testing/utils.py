@@ -1196,3 +1196,88 @@ def integer_repr(x):
         return _integer_repr(x, np.int64, np.int64(-2**63))
     else:
         raise ValueError("Unsupported dtype %s" % x.dtype)
+
+# The following two classes are copied from python 2.6 warnings module (context
+# manager)
+class WarningMessage(object):
+
+    """
+    Holds the result of a single showwarning() call.
+
+    Notes
+    -----
+    `WarningMessage` is copied from the Python 2.6 warnings module,
+    so it can be used in NumPy with older Python versions.
+
+    """
+
+    _WARNING_DETAILS = ("message", "category", "filename", "lineno", "file",
+                        "line")
+
+    def __init__(self, message, category, filename, lineno, file=None,
+                    line=None):
+        local_values = locals()
+        for attr in self._WARNING_DETAILS:
+            setattr(self, attr, local_values[attr])
+        if category:
+            self._category_name = category.__name__
+        else:
+            self._category_name = None
+
+    def __str__(self):
+        return ("{message : %r, category : %r, filename : %r, lineno : %s, "
+                    "line : %r}" % (self.message, self._category_name,
+                                    self.filename, self.lineno, self.line))
+
+class WarningManager:
+    """
+    A context manager that copies and restores the warnings filter upon
+    exiting the context.
+
+    The 'record' argument specifies whether warnings should be captured by a
+    custom implementation of ``warnings.showwarning()`` and be appended to a
+    list returned by the context manager. Otherwise None is returned by the
+    context manager. The objects appended to the list are arguments whose
+    attributes mirror the arguments to ``showwarning()``.
+
+    The 'module' argument is to specify an alternative module to the module
+    named 'warnings' and imported under that name. This argument is only useful
+    when testing the warnings module itself.
+
+    Notes
+    -----
+    `WarningManager` is a copy of the ``catch_warnings`` context manager
+    from the Python 2.6 warnings module, with slight modifications.
+    It is copied so it can be used in NumPy with older Python versions.
+
+    """
+    def __init__(self, record=False, module=None):
+        self._record = record
+        if module is None:
+            self._module = sys.modules['warnings']
+        else:
+            self._module = module
+        self._entered = False
+
+    def __enter__(self):
+        if self._entered:
+            raise RuntimeError("Cannot enter %r twice" % self)
+        self._entered = True
+        self._filters = self._module.filters
+        self._module.filters = self._filters[:]
+        self._showwarning = self._module.showwarning
+        if self._record:
+            log = []
+            def showwarning(*args, **kwargs):
+                log.append(WarningMessage(*args, **kwargs))
+            self._module.showwarning = showwarning
+            return log
+        else:
+            return None
+
+    def __exit__(self):
+        if not self._entered:
+            raise RuntimeError("Cannot exit %r without entering first" % self)
+        self._module.filters = self._filters
+        self._module.showwarning = self._showwarning
+
