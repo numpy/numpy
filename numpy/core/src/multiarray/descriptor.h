@@ -10,6 +10,10 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args);
 NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj);
 
-extern char **_datetime_strings;
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+extern NPY_NO_EXPORT char *_datetime_strings[];
+#else
+NPY_NO_EXPORT char *_datetime_strings[];
+#endif
 
 #endif
