@@ -249,7 +249,6 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-
 NPY_NO_EXPORT void
 @TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
@@ -361,6 +360,9 @@ C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
 
 NPY_NO_EXPORT void
 C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@__arg(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
