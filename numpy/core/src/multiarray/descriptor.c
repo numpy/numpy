@@ -469,7 +469,7 @@ _convert_from_list(PyObject *obj, int align)
 }
 
 /* Exported as DATETIMEUNITS in multiarraymodule.c */
-static char *_datetime_strings[] = {
+NPY_NO_EXPORT char *_datetime_strings[] = {
     NPY_STR_Y,
     NPY_STR_M,
     NPY_STR_W,
