@@ -66,9 +66,9 @@ import shutil
 import subprocess
 import re
 try:
-    from hash import md5
+    from hashlib import md5
 except ImportError:
-    import md5
+    from md5 import md5
 
 import paver
 from paver.easy import \
@@ -492,7 +492,7 @@ def compute_md5(idirs):
     released = paver.path.path(idirs).listdir()
     checksums = []
     for f in released:
-        m = md5.md5(open(f, 'r').read())
+        m = md5(open(f, 'r').read())
         checksums.append('%s  %s' % (m.hexdigest(), f))
 
     return checksums
