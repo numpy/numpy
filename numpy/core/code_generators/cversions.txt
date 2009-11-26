@@ -3,3 +3,5 @@
 0x00000002 = 8ecb29306758515ae69749c803a75da1
 0x00000003 = bf22c0d05b31625d2a7015988d61ce5a
 # Starting from here, the hash is defined from numpy_api.full_api dict
+# version 4 added neighborhood iterators and PyArray_Correlate2
+0x00000004 = 3d8940bf7b0d2a4e25be4338c14c3c85
