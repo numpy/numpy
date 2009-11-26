@@ -64,9 +64,9 @@ multiarray_types_api = {
     'PyVoidArrType_Type':               39,
 # Those were added much later, and there is no space anymore between Void and
 # first functions from multiarray API
-    'PyTimeIntegerArrType_Type':        215,
-    'PyDatetimeArrType_Type':           216,
-    'PyTimedeltaArrType_Type':          217,
+#    'PyTimeIntegerArrType_Type':        215,
+#    'PyDatetimeArrType_Type':           216,
+#    'PyTimedeltaArrType_Type':          217,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])
@@ -249,11 +249,11 @@ multiarray_funcs_api = {
     'PyArray_GetNDArrayCFeatureVersion':    211,
     'PyArray_Correlate2':                   212,
     'PyArray_NeighborhoodIterNew':          213,
-    'PyArray_SetDatetimeParseFunction':     214,
-    'PyArray_DatetimeToDatetimeStruct':     218,
-    'PyArray_TimedeltaToTimedeltaStruct':   219,
-    'PyArray_DatetimeStructToDatetime':     220,
-    'PyArray_TimedeltaStructToTimedelta':   221,
+#    'PyArray_SetDatetimeParseFunction':     214,
+#    'PyArray_DatetimeToDatetimeStruct':     218,
+#    'PyArray_TimedeltaToTimedeltaStruct':   219,
+#    'PyArray_DatetimeStructToDatetime':     220,
+#    'PyArray_TimedeltaStructToTimedelta':   221,
 }
 
 ufunc_types_api = {

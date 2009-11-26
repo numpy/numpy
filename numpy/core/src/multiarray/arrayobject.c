@@ -345,7 +345,7 @@ PyArray_SetStringFunction(PyObject *op, int repr)
     }
 }
 
-/*NUMPY_API
+/*
  * Set the date time print function to be a Python function.
  */
 NPY_NO_EXPORT void

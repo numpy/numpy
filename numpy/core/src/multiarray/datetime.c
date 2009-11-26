@@ -256,7 +256,7 @@ seconds_to_hmsstruct(npy_longlong dlong)
  Structure is assumed to be already normalized
 */
 
-/*NUMPY_API
+/*
  * Create a datetime value from a filled datetime struct and resolution unit.
  */
 NPY_NO_EXPORT npy_datetime
@@ -384,7 +384,7 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 #define _DAYS_PER_MONTH 30.436875
 #define _DAYS_PER_YEAR  365.2425
 
-/*NUMPY_API
+/*
  * Create a timdelta value from a filled timedelta struct and resolution unit.
  */
 NPY_NO_EXPORT npy_datetime
@@ -476,7 +476,7 @@ PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
 
 
 
-/*NUMPY_API
+/*
  * Fill the datetime struct from the value and resolution unit.
  */
 NPY_NO_EXPORT void
@@ -772,7 +772,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
  *   To convert from Years, Months, and Business Days, multiplication by the average is done
  */
 
-/*NUMPY_API
+/*
  * Fill the timedelta struct from the timedelta value and resolution unit.
  */
 NPY_NO_EXPORT void
