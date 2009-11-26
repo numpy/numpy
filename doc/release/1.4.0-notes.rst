@@ -8,8 +8,6 @@ is backward compatible with 1.3.0 release.
 Highlights
 ==========
 
-* New datetime dtype support to deal with dates in arrays
-
 * Faster import time
 
 * Extended array wrapping mechanism for ufuncs
