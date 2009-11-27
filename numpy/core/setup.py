@@ -466,7 +466,7 @@ def configuration(parent_package='',top_path=None):
 
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
-        target = join(build_dir,header_dir,'numpyconfig.h')
+        target = join(build_dir,header_dir,'_numpyconfig.h')
         d = os.path.dirname(target)
         if not os.path.exists(d):
             os.makedirs(d)

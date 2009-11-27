@@ -337,8 +337,8 @@ for key, value in numpyconfig_sym:
 env['SUBST_DICT'] = config_dict
 
 include_dir = 'include/numpy'
-target = env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'),
-        pjoin(include_dir, 'numpyconfig.h.in'))
+target = env.SubstInFile(pjoin(include_dir, '_numpyconfig.h'),
+        pjoin(include_dir, '_numpyconfig.h.in'))
 generated_headers.append(target[0])
 
 env['CONFIG_H_GEN'] = numpyconfig_sym

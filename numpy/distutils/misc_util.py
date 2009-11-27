@@ -145,17 +145,17 @@ def get_mathlibs(path=None):
     """Return the MATHLIB line from numpyconfig.h
     """
     if path is not None:
-        config_file = os.path.join(path,'numpyconfig.h')
+        config_file = os.path.join(path,'_numpyconfig.h')
     else:
         # Look for the file in each of the numpy include directories.
         dirs = get_numpy_include_dirs()
         for path in dirs:
-            fn = os.path.join(path,'numpyconfig.h')
+            fn = os.path.join(path,'_numpyconfig.h')
             if os.path.exists(fn):
                 config_file = fn
                 break
         else:
-            raise DistutilsError('numpyconfig.h not found in numpy include '
+            raise DistutilsError('_numpyconfig.h not found in numpy include '
                 'dirs %r' % (dirs,))
 
     fid = open(config_file)
