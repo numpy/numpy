@@ -1101,6 +1101,16 @@ class TestRegression(TestCase):
         assert np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9]))
         assert np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9]))
 
+    def test_array_from_sequence_scalar_array(self):
+        """Ticket #1078: segfaults when creating an array with a sequence of 0d
+        arrays."""
+        a = np.ones(2)
+        b = np.array(3)
+        assert_raises(ValueError, lambda: np.array((a, b)))
+
+        t = ((1,), np.array(1))
+        assert_raises(ValueError, lambda: np.array(t))
+
     def test_array_too_big(self):
         """Ticket #1080."""
         assert_raises(ValueError, np.zeros, [2**10]*10)

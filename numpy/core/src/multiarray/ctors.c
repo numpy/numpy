@@ -1182,8 +1182,17 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
 
 
     if (PyArray_Check(s)) {
-        for (i=0; i<nd; i++) {
-            d[i] = PyArray_DIM(s,i);
+        /*
+         * XXXX: we handle the case of scalar arrays (0 dimensions) separately.
+         * This is an hack, the function discover_dimensions needs to be
+         * improved.
+         */
+        if (PyArray_NDIM(s) == 0) {
+            d[0] = 0;
+        } else {
+            for (i=0; i<nd; i++) {
+                d[i] = PyArray_DIM(s,i);
+            }
         }
         return 0;
     }
