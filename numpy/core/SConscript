@@ -316,6 +316,12 @@ if config.CheckCBLAS():
 else:
     build_blasdot = 0
 
+config.config_h_text += """
+#ifndef _NPY_NPY_CONFIG_H_
+#error config.h should never be included directly, include npy_config.h instead
+#endif
+"""
+
 config.Finish()
 write_info(env)
 
