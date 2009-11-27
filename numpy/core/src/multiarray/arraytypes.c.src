@@ -17,6 +17,7 @@
 #include "usertypes.h"
 #include "npy_config.h"
 #include "_datetime.h"
+#include "scalartypes.h"
 
 #include "numpyos.h"
 

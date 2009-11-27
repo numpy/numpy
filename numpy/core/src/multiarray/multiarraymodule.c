@@ -2510,7 +2510,7 @@ _vec_string_no_args(PyArrayObject* char_array,
 }
 
 static PyObject *
-_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyArrayObject* char_array = NULL;
     PyArray_Descr *type = NULL;
