@@ -8,6 +8,8 @@ import atexit
 import tempfile
 import subprocess
 
+from distutils.errors import DistutilsError
+
 try:
     set
 except NameError:
