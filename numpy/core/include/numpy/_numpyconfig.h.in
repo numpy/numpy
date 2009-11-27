@@ -1,3 +1,7 @@
+#ifndef _NPY_NUMPYCONFIG_H_
+#error this header should not be included directly, always include numpyconfig.h instead
+#endif
+
 #define NPY_SIZEOF_SHORT        @SIZEOF_SHORT@
 #define NPY_SIZEOF_INT          @SIZEOF_INT@
 #define NPY_SIZEOF_LONG         @SIZEOF_LONG@
