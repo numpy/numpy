@@ -87,7 +87,12 @@ def check_type(type, include = None):
         numpyconfig_sym.append(('SIZEOF_%s' % type.upper(), 0))
 
 for type in ('short', 'int', 'long'):
-    check_type(type)
+    # SIZEOF_LONG defined on darwin
+    if type == "long":
+        if not config.CheckDeclaration("SIZEOF_LONG", includes="#include <Python.h>"):
+            check_type(type)
+    else:
+        check_type(type)
 
 for type in ('float', 'double', 'long double'):
     sz = config.CheckTypeSize(type)
