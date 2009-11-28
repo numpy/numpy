@@ -293,7 +293,7 @@ add_newdoc('numpy.core', 'broadcast', ('size',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=True)
+    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0)
 
     Create an array.
 
