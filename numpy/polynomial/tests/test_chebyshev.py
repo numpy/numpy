@@ -105,7 +105,7 @@ class TestArithmetic(TestCase) :
             return x*(x**2 - 1)
 
         #check empty input
-        assert_equal(ch.chebval([], 1).size, 0)
+        assert_equal(ch.chebval([], [1]).size, 0)
 
         #check normal input)
         for i in range(5) :

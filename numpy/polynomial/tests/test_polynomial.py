@@ -97,7 +97,7 @@ class TestArithmetic(TestCase) :
             return x*(x**2 - 1)
 
         #check empty input
-        assert_equal(poly.polyval([], 1).size, 0)
+        assert_equal(poly.polyval([], [1]).size, 0)
 
         #check normal input)
         x = np.linspace(-1,1)
