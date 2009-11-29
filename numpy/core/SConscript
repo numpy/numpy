@@ -91,6 +91,8 @@ for type in ('short', 'int', 'long'):
     if type == "long":
         if not config.CheckDeclaration("SIZEOF_LONG", includes="#include <Python.h>"):
             check_type(type)
+        else:
+            numpyconfig_sym.append(('SIZEOF_LONG', 'SIZEOF_LONG'))
     else:
         check_type(type)
 
