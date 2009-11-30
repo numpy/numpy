@@ -99,16 +99,16 @@ Section "Core" SecCore
         Pop $0
         StrCpy $HasSSE3 $0
 
-        ; ; Debug
-        ; StrCmp $HasSSE2 "Y" include_sse2 no_include_sse2
-        ; include_sse2:
-        ;         DetailPrint '"Target CPU handles SSE2"'
-        ;         StrCpy $CPUSSE "2"
-        ;         goto done_sse2
-        ; no_include_sse2:
-        ;         DetailPrint '"Target CPU does NOT handle SSE2"'
-        ;         goto done_sse2
-        ; done_sse2:
+        ; Debug
+        StrCmp $HasSSE2 "Y" include_sse2 no_include_sse2
+        include_sse2:
+                DetailPrint '"Target CPU handles SSE2"'
+                StrCpy $CPUSSE "2"
+                goto done_sse2
+        no_include_sse2:
+                DetailPrint '"Target CPU does NOT handle SSE2"'
+                goto done_sse2
+        done_sse2:
 
         StrCmp $HasSSE3 "Y" include_sse3 no_include_sse3
         include_sse3:
@@ -130,10 +130,10 @@ Section "Core" SecCore
                 DetailPrint '"nosse install (arch value: $option_arch)"'
                 StrCpy $CPUSSE "0"
                 ${Break}
-                ; ${Case} "sse2"
-                ; DetailPrint '"sse2 install (arch value: $option_arch)"'
-                ; StrCpy $CPUSSE "2"
-                ; ${Break}
+                ${Case} "sse2"
+                DetailPrint '"sse2 install (arch value: $option_arch)"'
+                StrCpy $CPUSSE "2"
+                ${Break}
                 ${Case} "sse3"
                 DetailPrint '"sse3 install (arch value: $option_arch)"'
                 StrCpy $CPUSSE "3"
@@ -151,11 +151,11 @@ Section "Core" SecCore
                 File "binaries\@SSE3_BINARY@"
                 ExecWait '"$INSTDIR\@SSE3_BINARY@"'
                 ${Break}
-        ; ${Case} "2"
-        ;         DetailPrint '"Install SSE 2"'
-        ;         File "binaries\@SSE2_BINARY@"
-        ;         ExecWait '"$INSTDIR\@SSE2_BINARY@"'
-        ;         ${Break}
+        ${Case} "2"
+                DetailPrint '"Install SSE 2"'
+                File "binaries\@SSE2_BINARY@"
+                ExecWait '"$INSTDIR\@SSE2_BINARY@"'
+                ${Break}
         ${Default}
                 DetailPrint '"Install NO SSE"'
                 File "binaries\@NOSSE_BINARY@"
