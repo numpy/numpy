@@ -370,7 +370,10 @@ def mpkg_name(pyver):
 def _build_mpkg(pyver):
     ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
     ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
-    sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
+    if pyver == "2.5":
+        sh("CC=gcc-4.0 LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
+    else:
+        sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
 
 @task
 def simple_dmg():
