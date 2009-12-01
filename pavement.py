@@ -97,7 +97,7 @@ options(bootstrap=Bunch(bootstrap_dir="bootstrap"),
             sdir=os.path.join("doc", "source"),
             bdir=os.path.join("doc", "build"),
             bdir_latex=os.path.join("doc", "build", "latex"),
-            destdir_pdf=os.path.join("build", "pdf")
+            destdir_pdf=os.path.join("build_doc", "pdf")
         ),
         html=Bunch(builddir=os.path.join("build", "html")),
         dmg=Bunch(python_version=DEFAULT_PYTHON),
@@ -414,22 +414,22 @@ def _create_dmg(pyver, src_dir, volname=None):
         cmd.extend(["-volname", "'%s'" % volname])
     sh(" ".join(cmd))
 
-def dmg_name():
-    maj, min = macosx_version()[:2]
-    pyver = ".".join([str(i) for i in sys.version_info[:2]])
-    return "numpy-%s-py%s-macosx%s.%s.dmg" % \
-            (FULLVERSION, pyver, maj, min)
-
 @task
-@needs("bdist_mpkg", "pdf")
-#@cmdopts([("python-version=", "p", "python version")])
+@needs("pdf")
+@cmdopts([("python-version=", "p", "python version")])
 def dmg(options):
-    pyver = options.python_version
+    try:
+        pyver = options.dmg.python_version
+    except:
+        pyver = DEFAULT_PYTHON
     idirs = options.installers.installersdir
+
+    call_task("clean")
+    _build_mpkg(pyver)
 
     macosx_installer_dir = "tools/numpy-macosx-installer"
 
-    dmg = os.path.join(macosx_installer_dir, dmg_name())
+    dmg = os.path.join(macosx_installer_dir, dmg_name(FULLVERSION, pyver))
     if os.path.exists(dmg):
         os.remove(dmg)
 
@@ -462,6 +462,8 @@ def dmg(options):
 
     source = dmg
     target = os.path.join(idirs, os.path.basename(dmg))
+    if not os.path.exists(os.path.dirname(target)):
+        os.makedirs(os.path.dirname(target))
     shutil.copy(source, target)
 
 #--------------------------
