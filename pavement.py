@@ -202,8 +202,8 @@ def bdist_superpack(options):
 
     bdist_wininst_arch(pyver, 'nosse')
     copy_bdist("nosse")
-    #bdist_wininst_arch(pyver, 'sse2')
-    #copy_bdist("sse2")
+    bdist_wininst_arch(pyver, 'sse2')
+    copy_bdist("sse2")
     bdist_wininst_arch(pyver, 'sse3')
     copy_bdist("sse3")
     
