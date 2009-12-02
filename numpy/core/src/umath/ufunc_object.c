@@ -2512,7 +2512,8 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     else {
         loop->obj = 0;
     }
-    if (loop->meth == ZERO_EL_REDUCELOOP) {
+    if ((loop->meth == ZERO_EL_REDUCELOOP) || \
+	((operation == UFUNC_REDUCEAT) && (loop->meth == BUFFER_UFUNCLOOP))) {
         idarr = _getidentity(self, otype, str);
         if (idarr == NULL) {
             goto fail;
