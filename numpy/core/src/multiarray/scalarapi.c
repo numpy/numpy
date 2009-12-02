@@ -313,7 +313,8 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     {
         memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
         if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
-            Py_INCREF(*((PyObject **)memptr));
+	    /* Need to INCREF just the PyObject portion */
+	    PyArray_Item_INCREF(memptr, typecode);
         }
     }
 

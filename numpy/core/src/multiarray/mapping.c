@@ -315,11 +315,11 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     copyswap = PyArray_DESCR(arr)->f->copyswap;
     PyArray_MapIterReset(mit);
     /* Need to decref hasobject arrays */
-    if (PyDataType_FLAGCHK(descr, NPY_ITEM_REFCOUNT)) {
+    if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) {
         while (index--) {
-            PyArray_Item_XDECREF(mit->dataptr, PyArray_DESCR(arr));
             PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(arr));
-            memmove(mit->dataptr, it->dataptr, sizeof(PyObject *));
+            PyArray_Item_XDECREF(mit->dataptr, PyArray_DESCR(arr));
+            memmove(mit->dataptr, it->dataptr, PyArray_ITEMSIZE(arr));
             /* ignored unless VOID array with object's */
             if (swap) {
                 copyswap(mit->dataptr, NULL, swap, arr);
