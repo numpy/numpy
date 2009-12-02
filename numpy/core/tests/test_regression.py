@@ -1202,5 +1202,17 @@ class TestRegression(TestCase):
             # big-endian machine
             assert_equal(x, np.fromstring(y.tostring(), dtype='<c8'))
 
+    def test_structured_arrays_with_objects(self):
+        """Ticket #1299"""
+        stra = 'aaaa'
+        strb = 'bbbb'
+        numb = sys.getrefcount(strb)
+        numa = sys.getrefcount(stra)
+        x = np.array([[(0,stra),(1,strb)]], 'i8,O')
+        x[x.nonzero()] = x.ravel()[:1]
+        assert x[0,1] == x[0,0]
+        assert sys.getrefcount(strb) == numb
+        assert sys.getrefcount(stra) == numa + 2
+
 if __name__ == "__main__":
     run_module_suite()
