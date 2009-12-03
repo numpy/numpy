@@ -921,32 +921,37 @@ static int
 setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
 {
     Py_ssize_t i, slen;
-    int res = 0;
+    int res = -1;
 
     /*
      * This code is to ensure that the sequence access below will
      * return a lower-dimensional sequence.
      */
+
+    /* INCREF on entry DECREF on exit */
+    Py_INCREF(s);
+
     if (PyArray_Check(s) && !(PyArray_CheckExact(s))) {
       /*
        * FIXME:  This could probably copy the entire subarray at once here using
        * a faster algorithm.  Right now, just make sure a base-class array is
        * used so that the dimensionality reduction assumption is correct.
        */
+        /* This will DECREF(s) if replaced */
         s = PyArray_EnsureArray(s);
     }
 
     if (dim > a->nd) {
         PyErr_Format(PyExc_ValueError,
                      "setArrayFromSequence: sequence/array dimensions mismatch.");
-        return -1;
+        goto fail;
     }
 
     slen = PySequence_Length(s);
     if (slen != a->dimensions[dim]) {
         PyErr_Format(PyExc_ValueError,
                      "setArrayFromSequence: sequence/array shape mismatch.");
-        return -1;
+        goto fail;
     }
 
     for (i = 0; i < slen; i++) {
@@ -959,11 +964,17 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
         }
         Py_DECREF(o);
         if (res < 0) {
-            return res;
+            goto fail;
         }
         offset += a->strides[dim];
     }
+
+    Py_DECREF(s);
     return 0;
+
+ fail:
+    Py_DECREF(s);
+    return res;
 }
 
 static int
