@@ -117,9 +117,9 @@ import copy
 import warnings
 from glob import glob
 if sys.version_info[0] < 3:
-    from ConfigParser import SafeConfigParser, NoOptionError
+    from ConfigParser import SafeConfigParser, NoOptionError, ConfigParser
 else:
-    from configparser import SafeConfigParser, NoOptionError
+    from configparser import SafeConfigParser, NoOptionError, ConfigParser
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
@@ -399,7 +399,7 @@ class system_info:
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
-        self.cp = ConfigParser.ConfigParser(defaults)
+        self.cp = ConfigParser(defaults)
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
@@ -542,7 +542,7 @@ class system_info:
     def get_libs(self, key, default):
         try:
             libs = self.cp.get(self.section, key)
-        except ConfigParser.NoOptionError:
+        except NoOptionError:
             if not default:
                 return []
             if is_string(default):
