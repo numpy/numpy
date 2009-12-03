@@ -15,6 +15,8 @@ try:
 except NameError:
     from sets import Set as set
 
+from numpy.distutils.compat import get_exception
+
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -79,7 +81,7 @@ def rel_path(path, parent_path):
     if apath==pd:
         return ''
     if pd == apath[:len(pd)]:
-        assert apath[len(pd)] in [os.sep],`path,apath[len(pd)]`
+        assert apath[len(pd)] in [os.sep],repr((path,apath[len(pd)]))
         path = apath[len(pd)+1:]
     return path
 
@@ -201,7 +203,7 @@ def minrelpath(path):
 def _fix_paths(paths,local_path,include_non_existing):
     assert is_sequence(paths), repr(type(paths))
     new_paths = []
-    assert not is_string(paths),`paths`
+    assert not is_string(paths),repr(paths)
     for n in paths:
         if is_string(n):
             if '*' in n or '?' in n:
@@ -214,8 +216,8 @@ def _fix_paths(paths,local_path,include_non_existing):
                 else:
                     if include_non_existing:
                         new_paths.append(n)
-                    print 'could not resolve pattern in %r: %r' \
-                              % (local_path,n)
+                    print('could not resolve pattern in %r: %r' \
+                              % (local_path,n))
             else:
                 n2 = njoin(local_path,n)
                 if os.path.exists(n2):
@@ -226,8 +228,8 @@ def _fix_paths(paths,local_path,include_non_existing):
                     elif include_non_existing:
                         new_paths.append(n)
                     if not os.path.exists(n):
-                        print 'non-existing path in %r: %r' \
-                              % (local_path,n)
+                        print('non-existing path in %r: %r' \
+                              % (local_path,n))
 
         elif is_sequence(n):
             new_paths.extend(_fix_paths(n,local_path,include_non_existing))
@@ -293,7 +295,7 @@ def terminal_has_colors():
                          and curses.tigetstr("setab") is not None)
                      or curses.tigetstr("scp") is not None)):
                 return 1
-        except Exception,msg:
+        except Exception:
             pass
     return 0
 
@@ -370,7 +372,7 @@ def msvc_on_amd64():
     if 'DISTUTILS_USE_SDK' in os.environ:
         return
     # try to avoid _MSVCCompiler__root attribute error
-    print 'Forcing DISTUTILS_USE_SDK=1'
+    print('Forcing DISTUTILS_USE_SDK=1')
     os.environ['DISTUTILS_USE_SDK']='1'
     return
 
@@ -594,9 +596,9 @@ def get_data_files(data):
             if os.path.isfile(s):
                 filenames.append(s)
             else:
-                print 'Not existing data file:',s
+                print('Not existing data file:',s)
         else:
-            raise TypeError,repr(s)
+            raise TypeError(repr(s))
     return filenames
 
 def dot_join(*args):
@@ -787,10 +789,10 @@ class Configuration(object):
 
     def info(self, message):
         if not self.options['quiet']:
-            print message
+            print(message)
 
     def warn(self, message):
-        print>>sys.stderr, blue_text('Warning: %s' % (message,))
+        sys.stderr.write('Warning: %s' % (message,))
 
     def set_options(self, **options):
         """Configure Configuration instance.
@@ -805,7 +807,7 @@ class Configuration(object):
             if key in self.options:
                 self.options[key] = value
             else:
-                raise ValueError,'Unknown option: '+key
+                raise ValueError('Unknown option: '+key)
 
     def get_distribution(self):
         """Return the distutils distribution object for self."""
@@ -898,7 +900,7 @@ class Configuration(object):
             return self._wildcard_get_subpackage(subpackage_name,
                                                  parent_name,
                                                  caller_level = caller_level+1)
-        assert '*' not in subpackage_name,`subpackage_name, subpackage_path,parent_name`
+        assert '*' not in subpackage_name,repr((subpackage_name, subpackage_path,parent_name))
         if subpackage_path is None:
             subpackage_path = njoin([self.local_path] + l)
         else:
@@ -961,7 +963,7 @@ class Configuration(object):
             d = config
             if isinstance(config, Configuration):
                 d = config.todict()
-            assert isinstance(d,dict),`type(d)`
+            assert isinstance(d,dict),repr(type(d))
 
             self.info('Appending %s configuration to %s' \
                       % (d.get('name'), self.name))
@@ -1052,7 +1054,7 @@ class Configuration(object):
                 #
                 for path in paths:
                     if not os.path.isdir(path):
-                        print 'Not a directory, skipping',path
+                        print('Not a directory, skipping',path)
                         continue
                     rpath = rel_path(path, self.local_path)
                     path_list = rpath.split(os.sep)
@@ -1062,11 +1064,11 @@ class Configuration(object):
                     for s in pattern_list:
                         if is_glob_pattern(s):
                             if i>=len(path_list):
-                                raise ValueError,'cannot fill pattern %r with %r' \
-                                      % (d, path)
+                                raise ValueError('cannot fill pattern %r with %r' \
+                                      % (d, path))
                             target_list.append(path_list[i])
                         else:
-                            assert s==path_list[i],`s,path_list[i],data_path,d,path,rpath`
+                            assert s==path_list[i],repr((s,path_list[i],data_path,d,path,rpath))
                             target_list.append(s)
                         i += 1
                     if path_list[i:]:
@@ -1078,7 +1080,7 @@ class Configuration(object):
                 for path in paths:
                     self.add_data_dir((d,path))
             return
-        assert not is_glob_pattern(d),`d`
+        assert not is_glob_pattern(d),repr(d)
 
         dist = self.get_distribution()
         if dist is not None and dist.data_files is not None:
@@ -1207,7 +1209,7 @@ class Configuration(object):
                     self.add_data_files((d,f))
                 return
         else:
-            raise TypeError,`type(files)`
+            raise TypeError(repr(type(files)))
 
         if d is None:
             if callable(filepat):
@@ -1241,7 +1243,7 @@ class Configuration(object):
             else:
                 self.add_data_files((d,paths))
             return
-        assert not is_glob_pattern(d),`d,filepat`
+        assert not is_glob_pattern(d),repr((d,filepat))
 
         dist = self.get_distribution()
         if dist is not None and dist.data_files is not None:
@@ -1692,7 +1694,7 @@ class Configuration(object):
                 # key is already processed above
                 pass
             else:
-                raise ValueError, "Don't know about key=%r" % (key)
+                raise ValueError("Don't know about key=%r" % (key))
 
     def __str__(self):
         from pprint import pformat
@@ -1855,7 +1857,8 @@ class Configuration(object):
                 n = dot_join(self.name,name)
                 try:
                     version_module = imp.load_module('_'.join(n.split('.')),*info)
-                except ImportError,msg:
+                except ImportError:
+                    msg = get_exception()
                     self.warn(str(msg))
                     version_module = None
                 if version_module is None:
