@@ -2322,24 +2322,20 @@ PyArray_EnsureArray(PyObject *op)
 {
     PyObject *new;
 
-    if (op == NULL) {
-        return NULL;
+    if ((op == NULL) || (PyArray_CheckExact(op))) {
+        new = op;
+        Py_XINCREF(new);
     }
-    if (PyArray_CheckExact(op)) {
-        return op;
-    }
-    if (PyArray_Check(op)) {
+    else if (PyArray_Check(op)) {
         new = PyArray_View((PyArrayObject *)op, NULL, &PyArray_Type);
-        Py_DECREF(op);
-        return new;
     }
-    if (PyArray_IsScalar(op, Generic)) {
+    else if (PyArray_IsScalar(op, Generic)) {
         new = PyArray_FromScalar(op, NULL);
-        Py_DECREF(op);
-        return new;
     }
-    new = PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY, NULL);
-    Py_DECREF(op);
+    else {
+        new = PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY, NULL);
+    }
+    Py_XDECREF(op);
     return new;
 }
 
