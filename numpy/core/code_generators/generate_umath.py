@@ -786,7 +786,15 @@ def make_ufuncs(funcdict):
         uf = funcdict[name]
         mlist = []
         docstring = textwrap.dedent(uf.docstring).strip()
-        docstring = docstring.encode('string-escape').replace(r'"', r'\"')
+        if sys.version_info[0] < 3:
+            docstring = docstring.encode('string-escape')
+            docstring = docstring.replace(r'"', r'\"')
+        else:
+            docstring = docstring.encode('unicode-escape').decode('ascii')
+            docstring = docstring.replace(r'"', r'\"')
+            # XXX: I don't understand why the following replace is not
+            # necessary in the python 2 case.
+            docstring = docstring.replace(r"'", r"\'")
         # Split the docstring because some compilers (like MS) do not like big
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
