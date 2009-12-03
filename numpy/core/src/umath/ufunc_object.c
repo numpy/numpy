@@ -27,7 +27,7 @@
 
 #include "Python.h"
 
-#include "npy_config.h"
+#include "npy_config.h" c
 #ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
@@ -2816,6 +2816,22 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             loop->bufptr[2] = loop->bufptr[0];
             loop->index++;
         }
+
+        /* DECREF left-over objects if buffering was used.           
+           It is needed when casting created new objects in
+           castbuf.  Intermediate copying into castbuf (via
+           loop->function) decref'd what was already there.
+           
+           It's the final copy into the astbuf that needs a DECREF.
+        */
+        /* Only when casting needed and it is from a non-object array */
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && \
+            (!PyArray_ISOBJECT(arr))) {
+            for (i=0; i<loop->bufsize; i++) {
+                Py_CLEAR(((PyObject **)loop->castbuf)[i]);
+            }
+        }
+
     }
     NPY_LOOP_END_THREADS;
     /* Hang on to this reference -- will be decref'd with loop */
@@ -2964,6 +2980,22 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             loop->bufptr[2] = loop->bufptr[0] + loop->steps[0];
             loop->index++;
         }
+
+        /* DECREF left-over objects if buffering was used.           
+           It is needed when casting created new objects in
+           castbuf.  Intermediate copying into castbuf (via
+           loop->function) decref'd what was already there.
+           
+           It's the final copy into the astbuf that needs a DECREF.
+        */
+        /* Only when casting needed and it is from a non-object array */
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && \
+            (!PyArray_ISOBJECT(arr))) {
+            for (i=0; i<loop->bufsize; i++) {
+                Py_CLEAR(((PyObject **)loop->castbuf)[i]);
+            }
+        }
+
     }
     NPY_LOOP_END_THREADS;
     /* Hang on to this reference -- will be decref'd with loop */
@@ -3121,6 +3153,22 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
             loop->bufptr[0] = loop->rit->dataptr;
             loop->index++;
         }
+
+        /* DECREF left-over objects if buffering was used.           
+           It is needed when casting created new objects in
+           castbuf.  Intermediate copying into castbuf (via
+           loop->function) decref'd what was already there.
+           
+           It's the final copy into the astbuf that needs a DECREF.
+        */
+        /* Only when casting needed and it is from a non-object array */
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && \
+            (!PyArray_ISOBJECT(arr))) {
+            for (i=0; i<loop->bufsize; i++) {
+                Py_CLEAR(((PyObject **)loop->castbuf)[i]);
+            }
+        }
+
         break;
     }
     NPY_LOOP_END_THREADS;
