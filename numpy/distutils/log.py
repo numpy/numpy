@@ -4,7 +4,11 @@ import sys
 from distutils.log import *
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
-from misc_util import red_text, default_text, cyan_text, green_text, is_sequence, is_string
+
+if sys.version_info[0] < 3:
+    from misc_util import red_text, default_text, cyan_text, green_text, is_sequence, is_string
+else:
+    from numpy.distutils.misc_util import red_text, default_text, cyan_text, green_text, is_sequence, is_string
 
 
 def _fix_args(args,flag=1):
@@ -24,7 +28,7 @@ class Log(old_Log):
                     return
                 if msg.startswith('byte-compiling '):
                     return
-            print _global_color_map[level](msg)
+            print(_global_color_map[level](msg))
             sys.stdout.flush()
 
     def good(self, msg, *args):
@@ -33,9 +37,9 @@ class Log(old_Log):
         """
         if WARN >= self.threshold:
             if args:
-                print green_text(msg % _fix_args(args))
+                print(green_text(msg % _fix_args(args)))
             else:
-                print green_text(msg)
+                print(green_text(msg))
             sys.stdout.flush()
 _global_log.__class__ = Log
 
