@@ -125,10 +125,9 @@ class build_clib(old_build_clib):
 
         sources = build_info.get('sources')
         if sources is None or not is_sequence(sources):
-            raise DistutilsSetupError, \
-                  ("in 'libraries' option (library '%s'), " +
+            raise DistutilsSetupError(("in 'libraries' option (library '%s'), " +
                    "'sources' must be present and must be " +
-                   "a list of source filenames") % lib_name
+                   "a list of source filenames") % lib_name)
         sources = list(sources)
 
         c_sources, cxx_sources, f_sources, fmodule_sources \
@@ -173,8 +172,8 @@ class build_clib(old_build_clib):
 
         # check availability of Fortran compilers
         if (f_sources or fmodule_sources) and fcompiler is None:
-            raise DistutilsError, "library %s has Fortran sources"\
-                  " but no Fortran compiler found" % (lib_name)
+            raise DistutilsError("library %s has Fortran sources"\
+                  " but no Fortran compiler found" % (lib_name))
 
         macros = build_info.get('macros')
         include_dirs = build_info.get('include_dirs')

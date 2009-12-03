@@ -481,8 +481,8 @@ class build_src(build_ext.build_ext):
                 pyrex_result = Pyrex.Compiler.Main.compile(source,
                                                            options=options)
                 if pyrex_result.num_errors != 0:
-                    raise DistutilsError,"%d errors while compiling %r with Pyrex" \
-                          % (pyrex_result.num_errors, source)
+                    raise DistutilsError("%d errors while compiling %r with Pyrex" \
+                          % (pyrex_result.num_errors, source))
             elif os.path.isfile(target_file):
                 log.warn("Pyrex required for compiling %r but not available,"\
                          " using old target %r"\
