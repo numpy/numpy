@@ -12,11 +12,11 @@ def configuration(parent_package='',top_path=None):
     lapack_info = get_info('lapack_opt',0) # and {}
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
-            print "### Warning:  Using unoptimized lapack ###"
+            print("### Warning:  Using unoptimized lapack ###")
             return ext.depends[:-1]
         else:
             if sys.platform=='win32':
-                print "### Warning:  python_xerbla.c is disabled ###"
+                print("### Warning:  python_xerbla.c is disabled ###")
                 return ext.depends[:1]
             return ext.depends[:2]
 
