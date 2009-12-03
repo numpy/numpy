@@ -16,14 +16,20 @@ __all__ = ['cpu']
 
 import sys, re, types
 import os
-import commands
+if sys.version_info[0] < 3:
+    from commands import getstatusoutput
+else:
+    from subprocess import getstatusoutput
 import warnings
 import platform
 
+from numpy.distutils.compat import get_exception
+
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
-        status, output = commands.getstatusoutput(cmd)
-    except EnvironmentError, e:
+        status, output = getstatusoutput(cmd)
+    except EnvironmentError:
+        e = get_exception()
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
         return False, output
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
@@ -76,7 +82,7 @@ class CPUInfoBase(object):
                     return lambda func=self._try_call,attr=attr : func(attr)
             else:
                 return lambda : None
-        raise AttributeError,name
+        raise AttributeError(name)
 
     def _getNCPUs(self):
         return 1
@@ -105,7 +111,8 @@ class LinuxCPUInfo(CPUInfoBase):
             info[0]['uname_m'] = output.strip()
         try:
             fo = open('/proc/cpuinfo')
-        except EnvironmentError, e:
+        except EnvironmentError:
+            e = get_exception()
             warnings.warn(str(e), UserWarning)
         else:
             for line in fo:
@@ -509,7 +516,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Model"]=int(srch.group("MDL"))
                                     info[-1]["Stepping"]=int(srch.group("STP"))
         except:
-            print sys.exc_value,'(ignoring)'
+            print(sys.exc_value,'(ignoring)')
         self.__class__.info = info
 
     def _not_impl(self): pass
@@ -660,19 +667,19 @@ else:
 
 cpu = cpuinfo()
 
-if __name__ == "__main__":
-
-    cpu.is_blaa()
-    cpu.is_Intel()
-    cpu.is_Alpha()
-
-    print 'CPU information:',
-    for name in dir(cpuinfo):
-        if name[0]=='_' and name[1]!='_':
-            r = getattr(cpu,name[1:])()
-            if r:
-                if r!=1:
-                    print '%s=%s' %(name[1:],r),
-                else:
-                    print name[1:],
-    print
+#if __name__ == "__main__":
+#
+#    cpu.is_blaa()
+#    cpu.is_Intel()
+#    cpu.is_Alpha()
+#
+#    print 'CPU information:',
+#    for name in dir(cpuinfo):
+#        if name[0]=='_' and name[1]!='_':
+#            r = getattr(cpu,name[1:])()
+#            if r:
+#                if r!=1:
+#                    print '%s=%s' %(name[1:],r),
+#                else:
+#                    print name[1:],
+#    print
