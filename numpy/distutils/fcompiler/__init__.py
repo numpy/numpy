@@ -19,7 +19,7 @@ __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
 import os
 import sys
 import re
-import new
+import types
 try:
     set
 except NameError:
@@ -36,6 +36,7 @@ from numpy.distutils import log
 from numpy.distutils.misc_util import is_string, all_strings, is_sequence, make_temp_file
 from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
+from numpy.distutils.compat import get_exception
 
 __metaclass__ = type
 
@@ -223,7 +224,7 @@ class FCompiler(CCompiler):
         self._is_customised = False
 
     def __copy__(self):
-        obj = new.instance(self.__class__, self.__dict__)
+        obj = types.InstanceType(self.__class__, self.__dict__)
         obj.distutils_vars = obj.distutils_vars.clone(obj._environment_hook)
         obj.command_vars = obj.command_vars.clone(obj._environment_hook)
         obj.flag_vars = obj.flag_vars.clone(obj._environment_hook)
@@ -555,14 +556,14 @@ class FCompiler(CCompiler):
             flavor = ':f90'
             compiler = self.compiler_f90
             if compiler is None:
-                raise DistutilsExecError, 'f90 not supported by %s needed for %s'\
-                      % (self.__class__.__name__,src)
+                raise DistutilsExecError('f90 not supported by %s needed for %s'\
+                      % (self.__class__.__name__,src))
         else:
             flavor = ':fix'
             compiler = self.compiler_fix
             if compiler is None:
-                raise DistutilsExecError, 'f90 (fixed) not supported by %s needed for %s'\
-                      % (self.__class__.__name__,src)
+                raise DistutilsExecError('f90 (fixed) not supported by %s needed for %s'\
+                      % (self.__class__.__name__,src))
         if self.object_switch[-1]==' ':
             o_args = [self.object_switch.strip(),obj]
         else:
@@ -583,8 +584,9 @@ class FCompiler(CCompiler):
                               src)
         try:
             self.spawn(command,display=display)
-        except DistutilsExecError, msg:
-            raise CompileError, msg
+        except DistutilsExecError:
+            msg = str(get_exception())
+            raise CompileError(msg)
 
     def module_options(self, module_dirs, module_build_dir):
         options = []
@@ -623,7 +625,7 @@ class FCompiler(CCompiler):
         if is_string(output_dir):
             output_filename = os.path.join(output_dir, output_filename)
         elif output_dir is not None:
-            raise TypeError, "'output_dir' must be a string or None"
+            raise TypeError("'output_dir' must be a string or None")
 
         if self._need_link(objects, output_filename):
             if self.library_switch[-1]==' ':
@@ -650,8 +652,9 @@ class FCompiler(CCompiler):
             command = linker + ld_args
             try:
                 self.spawn(command)
-            except DistutilsExecError, msg:
-                raise LinkError, msg
+            except DistutilsExecError:
+                msg = str(get_exception())
+                raise LinkError(msg)
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
 
@@ -854,7 +857,8 @@ def show_fcompilers(dist=None):
             c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
-        except (DistutilsModuleError, CompilerNotFound), e:
+        except (DistutilsModuleError, CompilerNotFound):
+            e = get_exception()
             log.debug("show_fcompilers: %s not found" % (compiler,))
             log.debug(repr(e))
 
