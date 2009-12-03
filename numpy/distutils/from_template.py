@@ -152,7 +152,7 @@ def expand_sub(substr,names):
         if r not in rules:
             thelist = lnames.get(r,names.get(r,None))
             if thelist is None:
-                raise ValueError,'No replicates found for <%s>' % (r)
+                raise ValueError('No replicates found for <%s>' % (r))
             if r not in names and not thelist.startswith('_'):
                 names[r] = thelist
             rule = [i.replace('@comma@',',') for i in thelist.split(',')]
@@ -165,10 +165,10 @@ def expand_sub(substr,names):
             elif num == numsubs:
                 rules[r] = rule
             else:
-                print "Mismatch in number of replacements (base <%s=%s>)"\
+                print("Mismatch in number of replacements (base <%s=%s>)"\
                       " for <%s=%s>. Ignoring." % (base_rule,
                                                   ','.join(rules[base_rule]),
-                                                  r,thelist)
+                                                  r,thelist))
     if not rules:
         return substr
 
@@ -215,7 +215,7 @@ def resolve_includes(source):
             if not os.path.isabs(fn):
                 fn = os.path.join(d,fn)
             if os.path.isfile(fn):
-                print 'Including file',fn
+                print ('Including file',fn)
                 lines.extend(resolve_includes(fn))
             else:
                 lines.append(line)
