@@ -53,6 +53,7 @@ import shlex
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
+from numpy.distutils.compat import get_exception
 
 def temp_file_name():
     fo, name = make_temp_file()
@@ -378,7 +379,8 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         os.dup2(fout.fileno(),se_fileno)
     try:
         status = spawn_command(os.P_WAIT,argv0,argv,os.environ)
-    except OSError,errmess:
+    except OSError:
+        errmess = str(get_exception())
         status = 999
         sys.stderr.write('%s: %s'%(errmess,argv[0]))
 
@@ -408,14 +410,14 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
                 text = text + '\n'
             #text = '%sCOMMAND %r FAILED: %s' %(text,command,errmess)
             text = text + errmess
-            print errmess
+            print (errmess)
     if text[-1:]=='\n':
         text = text[:-1]
     if status is None:
         status = 0
 
     if use_tee:
-        print text
+        print (text)
 
     return status, text
 
@@ -494,7 +496,7 @@ def test_nt(**kws):
     s,o=exec_command('%s -c "print \'Heipa\'"' % pythonexe)
     assert s==0 and o=='Heipa',(s,o)
 
-    print 'ok'
+    print ('ok')
 
 def test_posix(**kws):
     s,o=exec_command("echo Hello",**kws)
@@ -542,7 +544,7 @@ def test_posix(**kws):
     s,o=exec_command('python -c "print \'Heipa\'"',**kws)
     assert s==0 and o=='Heipa',(s,o)
 
-    print 'ok'
+    print ('ok')
 
 def test_execute_in(**kws):
     pythonexe = get_pythonexe()
@@ -560,25 +562,25 @@ def test_execute_in(**kws):
                        execute_in = tmpdir,**kws)
     assert s==0 and o=='Hello',(s,o)
     os.remove(tmpfile)
-    print 'ok'
+    print ('ok')
 
 def test_svn(**kws):
     s,o = exec_command(['svn','status'],**kws)
     assert s,(s,o)
-    print 'svn ok'
+    print ('svn ok')
 
 def test_cl(**kws):
     if os.name=='nt':
         s,o = exec_command(['cl','/V'],**kws)
         assert s,(s,o)
-        print 'cl ok'
+        print ('cl ok')
 
 if os.name=='posix':
     test = test_posix
 elif os.name in ['nt','dos']:
     test = test_nt
 else:
-    raise NotImplementedError,'exec_command tests for '+os.name
+    raise NotImplementedError('exec_command tests for ', os.name)
 
 ############################################################
 

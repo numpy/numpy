@@ -1,4 +1,8 @@
-from ConfigParser import SafeConfigParser, NoOptionError
+import sys
+if sys.version_info[0] < 3:
+    from ConfigParser import SafeConfigParser, NoOptionError
+else:
+    from configparser import SafeConfigParser, NoOptionError
 import re
 import os
 import shlex
@@ -366,7 +370,7 @@ if __name__ == '__main__':
         files = glob.glob("*.ini")
         for f in files:
             info = read_config(f)
-            print "%s\t%s - %s" % (info.name, info.name, info.description)
+            print ("%s\t%s - %s" % (info.name, info.name, info.description))
 
     pkg_name = args[1]
     import os
@@ -392,10 +396,10 @@ if __name__ == '__main__':
         info.vars[name] = value
 
     if options.cflags:
-        print info.cflags(section)
+        print (info.cflags(section))
     if options.libs:
-        print info.libs(section)
+        print (info.libs(section))
     if options.version:
-        print info.version
+        print (info.version)
     if options.min_version:
-        print info.version >= options.min_version
+        print (info.version >= options.min_version)
