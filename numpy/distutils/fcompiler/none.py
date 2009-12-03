@@ -27,4 +27,4 @@ if __name__ == '__main__':
     log.set_verbosity(2)
     compiler = NoneFCompiler()
     compiler.customize()
-    print compiler.get_version()
+    print(compiler.get_version())

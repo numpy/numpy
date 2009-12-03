@@ -82,16 +82,16 @@ class CompaqVisualFCompiler(FCompiler):
                         pass
         except AttributeError, msg:
             if '_MSVCCompiler__root' in str(msg):
-                print 'Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg)
+                print('Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg))
             else:
                 raise
         except IOError, e:
             if not "vcvarsall.bat" in str(e):
-                print "Unexpected IOError in", __file__
+                print("Unexpected IOError in", __file__)
                 raise e
         except ValueError, e:
             if not "path']" in str(e):
-                print "Unexpected ValueError in", __file__
+                print("Unexpected ValueError in", __file__)
                 raise e
 
     executables = {
@@ -120,4 +120,4 @@ if __name__ == '__main__':
     from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='compaq')
     compiler.customize()
-    print compiler.get_version()
+    print(compiler.get_version())

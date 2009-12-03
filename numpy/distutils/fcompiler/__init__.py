@@ -540,7 +540,7 @@ class FCompiler(CCompiler):
                                               % (self.__class__.__name__)):
             if l[:4]=='  --':
                 l = '  ' + l[4:]
-            print l
+            print(l)
 
     ###################
 
@@ -594,14 +594,14 @@ class FCompiler(CCompiler):
             else:
                 options.append(self.module_dir_switch.strip()+module_build_dir)
         else:
-            print 'XXX: module_build_dir=%r option ignored' % (module_build_dir)
-            print 'XXX: Fix module_dir_switch for ',self.__class__.__name__
+            print('XXX: module_build_dir=%r option ignored' % (module_build_dir))
+            print('XXX: Fix module_dir_switch for ',self.__class__.__name__)
         if self.module_include_switch is not None:
             for d in [module_build_dir]+module_dirs:
                 options.append('%s%s' % (self.module_include_switch, d))
         else:
-            print 'XXX: module_dirs=%r option ignored' % (module_dirs)
-            print 'XXX: Fix module_include_switch for ',self.__class__.__name__
+            print('XXX: module_dirs=%r option ignored' % (module_dirs))
+            print('XXX: Fix module_include_switch for ',self.__class__.__name__)
         return options
 
     def library_option(self, lib):
@@ -881,7 +881,7 @@ def show_fcompilers(dist=None):
     if compilers_ni:
         pretty_printer = FancyGetopt(compilers_ni)
         pretty_printer.print_help("Compilers not available on this platform:")
-    print "For compiler details, run 'config_fc --verbose' setup command."
+    print("For compiler details, run 'config_fc --verbose' setup command.")
 
 
 def dummy_fortran_file():

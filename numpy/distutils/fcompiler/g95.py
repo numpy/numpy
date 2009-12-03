@@ -41,4 +41,4 @@ if __name__ == '__main__':
     log.set_verbosity(2)
     compiler = G95FCompiler()
     compiler.customize()
-    print compiler.get_version()
+    print(compiler.get_version())

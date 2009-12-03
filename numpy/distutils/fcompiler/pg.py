@@ -38,4 +38,4 @@ if __name__ == '__main__':
     from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='pg')
     compiler.customize()
-    print compiler.get_version()
+    print(compiler.get_version())
