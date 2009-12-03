@@ -588,7 +588,7 @@ def get_data_files(data):
     sources = data[1]
     filenames = []
     for s in sources:
-        if callable(s):
+        if hasattr(s, '__call__'):
             continue
         if is_local_src_dir(s):
             filenames.extend(list(general_source_files(s)))
@@ -1222,7 +1222,7 @@ class Configuration(object):
             raise TypeError(repr(type(files)))
 
         if d is None:
-            if callable(filepat):
+            if hasattr(filepat, '__call__'):
                 d = ''
             elif os.path.isabs(filepat):
                 d = ''
