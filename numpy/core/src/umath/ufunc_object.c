@@ -27,7 +27,7 @@
 
 #include "Python.h"
 
-#include "npy_config.h" c
+#include "npy_config.h"
 #ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
@@ -2512,7 +2512,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     else {
         loop->obj = 0;
     }
-    if ((loop->meth == ZERO_EL_REDUCELOOP) || \
+    if ((loop->meth == ZERO_EL_REDUCELOOP) || 
 	((operation == UFUNC_REDUCEAT) && (loop->meth == BUFFER_UFUNCLOOP))) {
         idarr = _getidentity(self, otype, str);
         if (idarr == NULL) {
@@ -2825,7 +2825,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
            It's the final copy into the astbuf that needs a DECREF.
         */
         /* Only when casting needed and it is from a non-object array */
-        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && \
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && 
             (!PyArray_ISOBJECT(arr))) {
             for (i=0; i<loop->bufsize; i++) {
                 Py_CLEAR(((PyObject **)loop->castbuf)[i]);
@@ -2989,7 +2989,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
            It's the final copy into the astbuf that needs a DECREF.
         */
         /* Only when casting needed and it is from a non-object array */
-        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && \
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && 
             (!PyArray_ISOBJECT(arr))) {
             for (i=0; i<loop->bufsize; i++) {
                 Py_CLEAR(((PyObject **)loop->castbuf)[i]);
@@ -3162,7 +3162,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
            It's the final copy into the astbuf that needs a DECREF.
         */
         /* Only when casting needed and it is from a non-object array */
-        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && \
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && 
             (!PyArray_ISOBJECT(arr))) {
             for (i=0; i<loop->bufsize; i++) {
                 Py_CLEAR(((PyObject **)loop->castbuf)[i]);
