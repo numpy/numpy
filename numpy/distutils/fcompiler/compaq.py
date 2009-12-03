@@ -5,6 +5,7 @@ import os
 import sys
 
 from numpy.distutils.fcompiler import FCompiler
+from numpy.distutils.compat import get_exception
 from distutils.errors import DistutilsPlatformError
 
 compilers = ['CompaqFCompiler']
@@ -78,18 +79,21 @@ class CompaqVisualFCompiler(FCompiler):
             m = MSVCCompiler()
             m.initialize()
             ar_exe = m.lib
-        except DistutilsPlatformError, msg:
-                        pass
-        except AttributeError, msg:
+        except DistutilsPlatformError:
+            pass
+        except AttributeError:
+            msg = get_exception()
             if '_MSVCCompiler__root' in str(msg):
                 print('Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg))
             else:
                 raise
-        except IOError, e:
+        except IOError:
+            e = get_exception()
             if not "vcvarsall.bat" in str(e):
                 print("Unexpected IOError in", __file__)
                 raise e
-        except ValueError, e:
+        except ValueError:
+            e = get_exception()
             if not "path']" in str(e):
                 print("Unexpected ValueError in", __file__)
                 raise e
