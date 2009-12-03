@@ -594,7 +594,7 @@ _squote_re = re.compile(r"'(?:[^'\\]|\\.)*'")
 _dquote_re = re.compile(r'"(?:[^"\\]|\\.)*"')
 _has_white_re = re.compile(r'\s')
 def split_quoted(s):
-    s = string.strip(s)
+    s = s.strip()
     words = []
     pos = 0
 
@@ -607,7 +607,7 @@ def split_quoted(s):
 
         if s[end] in string.whitespace: # unescaped, unquoted whitespace: now
             words.append(s[:end])       # we definitely have a word delimiter
-            s = string.lstrip(s[end:])
+            s = s[end:].lstrip()
             pos = 0
 
         elif s[end] == '\\':            # preserve whatever is being escaped;
