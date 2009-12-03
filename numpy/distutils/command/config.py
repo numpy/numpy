@@ -16,6 +16,7 @@ import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import check_inline, check_compiler_gcc4
+from numpy.distutils.compat import get_exception
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -53,7 +54,8 @@ class config(old_config):
             if not self.compiler.initialized:
                 try:
                     self.compiler.initialize()
-                except IOError, e:
+                except IOError:
+                    e = get_exception()
                     msg = """\
 Could not initialize compiler instance: do you have Visual Studio
 installed ? If you are trying to build with mingw, please use python setup.py
@@ -63,8 +65,8 @@ correctly installed, and the right version (VS 2008 for python 2.6, VS 2003 for
 class was %s
 ============================================================================""" \
                         % (e, self.compiler.__class__.__name__)
-                    print """\
-============================================================================"""
+                    print ("""\
+============================================================================""")
                     raise distutils.errors.DistutilsPlatformError(msg)
 
         if not isinstance(self.fcompiler, FCompiler):
@@ -85,7 +87,8 @@ class was %s
             self.compiler = self.fcompiler
         try:
             ret = mth(*((self,)+args))
-        except (DistutilsExecError,CompileError),msg:
+        except (DistutilsExecError,CompileError):
+            msg = str(get_exception())
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler
@@ -188,7 +191,7 @@ int main() {
                 self._compile(body % {'type': type_name},
                         headers, include_dirs, 'c')
                 st = True
-            except distutils.errors.CompileError, e:
+            except distutils.errors.CompileError:
                 st = False
         finally:
             self._clean()
