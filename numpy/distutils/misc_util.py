@@ -1480,7 +1480,7 @@ class Configuration(object):
 
         # Sometimes, depends is not set up to an empty list by default, and if
         # depends is not given to add_library, distutils barfs (#1134)
-        if not build_info.has_key('depends'):
+        if not 'depends' in build_info:
             build_info['depends'] = []
 
         self._fix_paths_dict(build_info)
@@ -1602,7 +1602,7 @@ class Configuration(object):
         basename = os.path.splitext(template)[0]
         template = os.path.join(self.package_path, template)
 
-        if self.installed_pkg_config.has_key(self.name):
+        if self.name in self.installed_pkg_config:
             self.installed_pkg_config[self.name].append((template, install_dir,
                 subst_dict))
         else:
