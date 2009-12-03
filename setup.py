@@ -15,11 +15,15 @@ basic linear algebra and random number generation.
 
 DOCLINES = __doc__.split("\n")
 
-import __builtin__
 import os
 import sys
 import re
 import subprocess
+
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
 
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable
@@ -96,7 +100,7 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # numpy __init__ can detect if it is being loaded by the setup routine, to
 # avoid attempting to load components that aren't built yet.  While ugly, it's
 # a lot more robust than what was previously being used.
-__builtin__.__NUMPY_SETUP__ = True
+builtins.__NUMPY_SETUP__ = True
 
 FULLVERSION = VERSION
 if not ISRELEASED:
