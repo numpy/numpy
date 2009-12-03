@@ -355,8 +355,8 @@ int main ()
         body.append("int main (void) {")
         if call:
             for f in funcs:
-                if call.has_key(f) and call[f]:
-                    if not (call_args and call_args.has_key(f) and call_args[f]):
+                if f in call and call[f]:
+                    if not (call_args and f in call_args and call_args[f]):
                         args = ''
                     else:
                         args = call_args[f]
