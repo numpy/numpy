@@ -14,6 +14,7 @@ except ImportError:
     md5new = md5.new
 if sys.version_info[:2] < (2, 6):
     from sets import Set as set
+import textwrap
 
 from os.path import join
 
@@ -370,9 +371,9 @@ NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
 def order_dict(d):
     """Order dict by its values."""
     o = d.items()
-    def cmp(x, y):
-        return x[1] - y[1]
-    return sorted(o, cmp=cmp)
+    def _key(x):
+        return (x[1], x[0])
+    return sorted(o, key=_key)
 
 def merge_api_dicts(dicts):
     ret = {}
