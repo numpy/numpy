@@ -15,8 +15,6 @@ except ImportError:
 if sys.version_info[:2] < (2, 6):
     from sets import Set as set
 
-import textwrap
-
 from os.path import join
 
 __docformat__ = 'restructuredtext'
@@ -67,14 +65,14 @@ class Function(object):
         self.args = args
         self.doc = doc
 
-    def _format_arg(self, (typename, name)):
+    def _format_arg(self, typename, name):
         if typename.endswith('*'):
             return typename + name
         else:
             return typename + ' ' + name
 
     def __str__(self):
-        argstr = ', '.join([self._format_arg(a) for a in self.args])
+        argstr = ', '.join([self._format_arg(*a) for a in self.args])
         if self.doc:
             doccomment = '/* %s */\n' % self.doc
         else:
@@ -83,7 +81,7 @@ class Function(object):
 
     def to_ReST(self):
         lines = ['::', '', '  ' + self.return_type]
-        argstr = ',\000'.join([self._format_arg(a) for a in self.args])
+        argstr = ',\000'.join([self._format_arg(*a) for a in self.args])
         name = '  %s' % (self.name,)
         s = textwrap.wrap('(%s)' % (argstr,), width=72,
                           initial_indent=name,
@@ -239,7 +237,7 @@ def find_functions(filename, tag='API'):
                 else:
                     function_args.append(line)
         except:
-            print filename, lineno+1
+            print(filename, lineno+1)
             raise
     fo.close()
     return functions
@@ -433,12 +431,12 @@ def fullapi_hash(api_dicts):
         def sorted_by_values(d):
             """Sort a dictionary by its values. Assume the dictionary items is of
             the form func_name -> order"""
-            return sorted(d.items(), key=lambda (x, y): (y, x))
+            return sorted(d.items(), key=lambda x_y: (x_y[1], x_y[0]))
         for name, index in sorted_by_values(d):
             a.extend(name)
             a.extend(str(index))
 
-    return md5new(''.join(a)).hexdigest()
+    return md5new(''.join(a).encode('ascii')).hexdigest()
 
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
@@ -465,11 +463,11 @@ def main():
     functions = get_api_functions(tagname, order_file)
     m = md5new(tagname)
     for func in functions:
-        print func
+        print(func)
         ah = func.api_hash()
         m.update(ah)
-        print hex(int(ah,16))
-    print hex(int(m.hexdigest()[:8],16))
+        print(hex(int(ah,16)))
+    print(hex(int(m.hexdigest()[:8],16)))
 
 if __name__ == '__main__':
     main()
