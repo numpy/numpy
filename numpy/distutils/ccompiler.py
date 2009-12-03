@@ -1,7 +1,7 @@
 import re
 import os
 import sys
-import new
+import types
 
 from distutils.ccompiler import *
 from distutils import ccompiler
@@ -11,6 +11,7 @@ from distutils.version import LooseVersion
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, quote_args, msvc_on_amd64
+from numpy.distutils.compat import get_exception
 
 # hack to set compiler optimizing options. Needs to integrated with something.
 import distutils.sysconfig
@@ -21,7 +22,11 @@ def _new_init_posix():
 #distutils.sysconfig._init_posix = _new_init_posix
 
 def replace_method(klass, method_name, func):
-    m = new.instancemethod(func, None, klass)
+    if sys.version_info[0] < 3:
+        m = types.MethodType(func, None, klass)
+    else:
+        # Py3k does not have unbound method anymore, MethodType does not work
+        m = lambda self, *args, **kw: func(self, *args, **kw)
     setattr(klass, method_name, m)
 
 # Using customized CCompiler.spawn.
@@ -56,13 +61,12 @@ def CCompiler_spawn(self, cmd, display=None):
     if s:
         if is_sequence(cmd):
             cmd = ' '.join(list(cmd))
-        print o
+        print(o)
         if re.search('Too many open files', o):
             msg = '\nTry rerunning setup command until build succeeds.'
         else:
             msg = ''
-        raise DistutilsExecError,\
-              'Command "%s" failed with exit status %d%s' % (cmd, s, msg)
+        raise DistutilsExecError('Command "%s" failed with exit status %d%s' % (cmd, s, msg))
 
 replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
@@ -104,8 +108,7 @@ def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir='
             d = os.path.basename(os.path.abspath(d))
             base = d + base[i:]
         if ext not in self.src_extensions:
-            raise UnknownFileError, \
-                  "unknown file type '%s' (from '%s')" % (ext, src_name)
+            raise UnknownFileError("unknown file type '%s' (from '%s')" % (ext, src_name))
         if strip_dir:
             base = os.path.basename(base)
         obj_name = os.path.join(output_dir,base + self.obj_extension)
@@ -292,10 +295,10 @@ def CCompiler_show_customization(self):
     except:
         pass
     if log._global_log.threshold<2:
-        print '*'*80
-        print self.__class__
-        print _compiler_to_string(self)
-        print '*'*80
+        print('*'*80)
+        print(self.__class__)
+        print(_compiler_to_string(self))
+        print('*'*80)
 
 replace_method(CCompiler, 'show_customization', CCompiler_show_customization)
 
@@ -523,27 +526,27 @@ def new_compiler (plat=None,
         msg = "don't know how to compile C/C++ code on platform '%s'" % plat
         if compiler is not None:
             msg = msg + " with '%s' compiler" % compiler
-        raise DistutilsPlatformError, msg
+        raise DistutilsPlatformError(msg)
     module_name = "numpy.distutils." + module_name
     try:
         __import__ (module_name)
-    except ImportError, msg:
+    except ImportError:
+        msg = str(get_exception())
         log.info('%s in numpy.distutils; trying from distutils',
                  str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)
-        except ImportError, msg:
-            raise DistutilsModuleError, \
-                  "can't compile C/C++ code: unable to load module '%s'" % \
-                  module_name
+        except ImportError:
+            msg = str(get_exception())
+            raise DistutilsModuleError("can't compile C/C++ code: unable to load module '%s'" % \
+                  module_name)
     try:
         module = sys.modules[module_name]
         klass = vars(module)[class_name]
     except KeyError:
-        raise DistutilsModuleError, \
-              ("can't compile C/C++ code: unable to find class '%s' " +
-               "in module '%s'") % (class_name, module_name)
+        raise DistutilsModuleError(("can't compile C/C++ code: unable to find class '%s' " +
+               "in module '%s'") % (class_name, module_name))
     compiler = klass(None, dry_run, force)
     log.debug('new_compiler returns %s' % (klass))
     return compiler
@@ -618,12 +621,10 @@ def split_quoted(s):
             elif s[end] == '"':         # slurp doubly-quoted string
                 m = _dquote_re.match(s, end)
             else:
-                raise RuntimeError, \
-                      "this can't happen (bad char '%c')" % s[end]
+                raise RuntimeError("this can't happen (bad char '%c')" % s[end])
 
             if m is None:
-                raise ValueError, \
-                      "bad string (mismatched %s quotes?)" % s[end]
+                raise ValueError("bad string (mismatched %s quotes?)" % s[end])
 
             (beg, end) = m.span()
             if _has_white_re.search(s[beg+1:end-1]):
