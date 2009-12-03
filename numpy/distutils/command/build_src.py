@@ -186,8 +186,8 @@ class build_src(build_ext.build_ext):
                     build_dir = self.get_package_dir('.'.join(d.split(os.sep)))
                 else:
                     build_dir = os.path.join(self.build_src,d)
-                funcs = filter(callable,files)
-                files = filter(lambda f:not callable(f), files)
+                funcs = filter(lambda f:hasattr(f, '__call__'), files)
+                files = filter(lambda f:not hasattr(f, '__call__'), files)
                 for f in funcs:
                     if f.func_code.co_argcount==1:
                         s = f(build_dir)
@@ -274,7 +274,7 @@ class build_src(build_ext.build_ext):
                 else:
                     build_dir = os.path.join(self.build_src,
                                              os.path.join(*package.split('.')))
-                if callable(source):
+                if hasattr(source, '__call__'):
                     target = os.path.join(build_dir, module_base + '.py')
                     source = source(target)
                 if source is None:
