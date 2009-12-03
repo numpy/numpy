@@ -9,6 +9,7 @@ from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import msvc_runtime_library
+from numpy.distutils.compat import get_exception
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -197,7 +198,8 @@ class GnuFCompiler(FCompiler):
         return ['-g']
 
     def get_flags_opt(self):
-        if self.get_version()<='3.3.3':
+        v = self.get_version()
+        if v and v<='3.3.3':
             # With this compiler version building Fortran BLAS/LAPACK
             # with -O3 caused failures in lib.lapack heevr,syevr tests.
             opt = ['-O2']
@@ -352,6 +354,7 @@ if __name__ == '__main__':
         compiler = Gnu95FCompiler()
         compiler.customize()
         print(compiler.get_version())
-    except Exception, msg:
+    except Exception:
+        msg = get_exception()
         print(msg)
     raw_input('Press ENTER to continue...')
