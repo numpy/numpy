@@ -111,12 +111,12 @@ except NameError:
 
 if __NUMPY_SETUP__:
     import sys as _sys
-    print >> _sys.stderr, 'Running from numpy source directory.'
+    _sys.stderr.write('Running from numpy source directory.')
     del _sys
 else:
     try:
         from numpy.__config__ import show as show_config
-    except ImportError, e:
+    except ImportError:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
         your python intepreter from there."""
