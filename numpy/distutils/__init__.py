@@ -1,19 +1,35 @@
+import sys
 
-from __version__ import version as __version__
+if sys.version_info[0] < 3:
+    from __version__ import version as __version__
+    # Must import local ccompiler ASAP in order to get
+    # customized CCompiler.spawn effective.
+    import ccompiler
+    import unixccompiler
 
-# Must import local ccompiler ASAP in order to get
-# customized CCompiler.spawn effective.
-import ccompiler
-import unixccompiler
+    from info import __doc__
+    from npy_pkg_config import *
 
-from info import __doc__
-from npy_pkg_config import *
+    try:
+        import __config__
+        _INSTALLED = True
+    except ImportError:
+        _INSTALLED = False
+else:
+    from numpy.distutils.__version__ import version as __version__
+    # Must import local ccompiler ASAP in order to get
+    # customized CCompiler.spawn effective.
+    import numpy.distutils.ccompiler
+    import numpy.distutils.unixccompiler
 
-try:
-    import __config__
-    _INSTALLED = True
-except ImportError:
-    _INSTALLED = False
+    from numpy.distutils.info import __doc__
+    from numpy.distutils.npy_pkg_config import *
+
+    try:
+        import numpy.distutils.__config__
+        _INSTALLED = True
+    except ImportError:
+        _INSTALLED = False
 
 if _INSTALLED:
     from numpy.testing import Tester
