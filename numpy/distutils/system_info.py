@@ -116,7 +116,10 @@ import re
 import copy
 import warnings
 from glob import glob
-import ConfigParser
+if sys.version_info[0] < 3:
+    from ConfigParser import SafeConfigParser, NoOptionError
+else:
+    from configparser import SafeConfigParser, NoOptionError
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
@@ -127,6 +130,7 @@ from numpy.distutils.exec_command import \
     find_executable, exec_command, get_pythonexe
 from numpy.distutils.misc_util import is_sequence, is_string
 from numpy.distutils.command.config import config as cmd_config
+from numpy.distutils.compat import get_exception
 
 # Determine number of bits
 import platform
@@ -1600,15 +1604,18 @@ class numerix_info(system_info):
             try:
                 import numpy
                 which = "numpy", "defaulted"
-            except ImportError,msg1:
+            except ImportError:
+                msg1 = str(get_exception())
                 try:
                     import Numeric
                     which = "numeric", "defaulted"
-                except ImportError,msg2:
+                except ImportError:
+                    msg2 = str(get_exception())
                     try:
                         import numarray
                         which = "numarray", "defaulted"
-                    except ImportError,msg3:
+                    except ImportError:
+                        msg3 = str(get_exception())
                         log.info(msg1)
                         log.info(msg2)
                         log.info(msg3)
