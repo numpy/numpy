@@ -69,7 +69,7 @@ def _dict_append(d, **kws):
         elif is_string(dv):
             d[k] = dv + v
         else:
-            raise TypeError, repr(type(dv))
+            raise TypeError(repr(type(dv)))
 
 def _command_line_ok(_cache=[]):
     """ Return True if command line does not contain any
@@ -109,9 +109,9 @@ def _exit_interactive_session(_cache=[]):
     if _cache:
         return # been here
     _cache.append(1)
-    print '-'*72
+    print('-'*72)
     raw_input('Press ENTER to close the interactive session..')
-    print '='*72
+    print('='*72)
 
 def setup(**attr):
 
@@ -161,7 +161,7 @@ def setup(**attr):
         for item in ext.libraries:
             if is_sequence(item):
                 lib_name, build_info = item
-                _check_append_ext_library(libraries, item)
+                _check_append_ext_library(libraries, lib_name, build_info)
                 new_libraries.append(lib_name)
             elif is_string(item):
                 new_libraries.append(item)
@@ -211,7 +211,7 @@ def _check_append_library(libraries, item):
                     return
     libraries.append(item)
 
-def _check_append_ext_library(libraries, (lib_name,build_info)):
+def _check_append_ext_library(libraries, lib_name, build_info):
     for item in libraries:
         if is_sequence(item):
             if item[0]==lib_name:
