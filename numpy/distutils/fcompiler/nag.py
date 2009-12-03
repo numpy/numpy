@@ -27,7 +27,7 @@ class NAGFCompiler(FCompiler):
         return ['-O4']
     def get_flags_arch(self):
         version = self.get_version()
-        if version < '5.1':
+        if version and version < '5.1':
             return ['-target=native']
         else:
             return ['']
