@@ -13,6 +13,7 @@ from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_bootstrapping, get_cmd
 from numpy.distutils.misc_util import get_numpy_include_dirs as _incdir
+from numpy.distutils.compat import get_exception
 
 # A few notes:
 #   - numscons is not mandatory to build numpy, so we cannot import it here.
@@ -264,7 +265,8 @@ def check_numscons(minver):
     minver is a 3 integers tuple which defines the min version."""
     try:
         import numscons
-    except ImportError, e:
+    except ImportError:
+        e = get_exception()
         raise RuntimeError("importing numscons failed (error was %s), using " \
                            "scons within distutils is not possible without "
                            "this package " % str(e))
@@ -385,7 +387,8 @@ class scons(old_build_ext):
                 distutils_compiler.initialize()
             self.scons_compiler = dist2sconscc(distutils_compiler)
             self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
-        except DistutilsPlatformError, e:
+        except DistutilsPlatformError:
+            e = get_exception()
             if not self._bypass_distutils_cc:
                 raise e
             else:
