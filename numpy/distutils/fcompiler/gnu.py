@@ -303,13 +303,13 @@ class Gnu95FCompiler(GnuFCompiler):
                     i = opt.index("gcc")
                     opt.insert(i+1, "mingwex")
                     opt.insert(i+1, "mingw32")
-	# XXX: fix this mess, does not work for mingw
-	if is_win64():
-            c_compiler = self.c_compiler
-            if c_compiler and c_compiler.compiler_type == "msvc":
-	        return []
-	    else:
-		raise NotImplementedError("Only MS compiler supported with gfortran on win64")
+            # XXX: fix this mess, does not work for mingw
+            if is_win64():
+                c_compiler = self.c_compiler
+                if c_compiler and c_compiler.compiler_type == "msvc":
+                    return []
+            else:
+                raise NotImplementedError("Only MS compiler supported with gfortran on win64")
         return opt
 
     def get_target(self):
@@ -323,10 +323,10 @@ class Gnu95FCompiler(GnuFCompiler):
         return ""
 
     def get_flags_opt(self):
-	if is_win64():
-	    return ['-O0']
+        if is_win64():
+            return ['-O0']
         else:
-	    return GnuFCompiler.get_flags_opt(self)
+            return GnuFCompiler.get_flags_opt(self)
 def _can_target(cmd, arch):
     """Return true is the command supports the -arch flag for the given
     architecture."""
