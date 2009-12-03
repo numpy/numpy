@@ -104,8 +104,8 @@ def win32_checks(deflist):
     a = get_build_architecture()
 
     # Distutils hack on AMD64 on windows
-    print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % \
-          (a, os.name, sys.platform)
+    print('BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % \
+          (a, os.name, sys.platform))
     if a == 'AMD64':
         deflist.append('DISTUTILS_USE_SDK')
 
@@ -444,11 +444,11 @@ def configuration(parent_package='',top_path=None):
 """)
 
             target_f.close()
-            print 'File:',target
+            print('File:',target)
             target_f = open(target)
-            print target_f.read()
+            print(target_f.read())
             target_f.close()
-            print 'EOF'
+            print('EOF')
         else:
             mathlibs = []
             target_f = open(target)
@@ -529,11 +529,11 @@ def configuration(parent_package='',top_path=None):
             target_f.close()
 
             # Dump the numpyconfig.h header to stdout
-            print 'File: %s' % target
+            print('File: %s' % target)
             target_f = open(target)
-            print target_f.read()
+            print(target_f.read())
             target_f.close()
-            print 'EOF'
+            print('EOF')
         config.add_data_files((header_dir, target))
         return target
 

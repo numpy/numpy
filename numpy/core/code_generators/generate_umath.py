@@ -110,7 +110,11 @@ class Ufunc(object):
 # String-handling utilities to avoid locale-dependence.
 
 import string
-UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+if sys.version_info[0] < 3:
+    UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+else:
+    UPPER_TABLE = string.maketrans(bytes(string.ascii_lowercase, "ascii"), 
+            bytes(string.ascii_uppercase, "ascii"))
 
 def english_upper(s):
     """ Apply English case rules to convert ASCII strings to all upper case.
