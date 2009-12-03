@@ -101,7 +101,7 @@ class build_ext (old_build_ext):
                 if libname in clibs and clibs[libname] != build_info:
                     log.warn('library %r defined more than once,'\
                              ' overwriting build_info\n%s... \nwith\n%s...' \
-                             % (libname, `clibs[libname]`[:300], `build_info`[:300]))
+                             % (libname, repr(clibs[libname])[:300], repr(build_info)[:300]))
                 clibs[libname] = build_info
         # .. and distribution libraries:
         for libname,build_info in self.distribution.libraries or []:
@@ -303,11 +303,11 @@ class build_ext (old_build_ext):
 
         # check for the availability of required compilers
         if cxx_sources and cxx_compiler is None:
-            raise DistutilsError, "extension %r has C++ sources" \
-                  "but no C++ compiler found" % (ext.name)
+            raise DistutilsError("extension %r has C++ sources" \
+                  "but no C++ compiler found" % (ext.name))
         if (f_sources or fmodule_sources) and fcompiler is None:
-            raise DistutilsError, "extension %r has Fortran sources " \
-                  "but no Fortran compiler found" % (ext.name)
+            raise DistutilsError("extension %r has Fortran sources " \
+                  "but no Fortran compiler found" % (ext.name))
         if ext.language in ['f77','f90'] and fcompiler is None:
             self.warn("extension %r has Fortran libraries " \
                   "but no Fortran linker found, using default linker" % (ext.name))

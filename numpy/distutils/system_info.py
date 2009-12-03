@@ -451,7 +451,7 @@ class system_info:
                     if notfound_action==1:
                         warnings.warn(self.notfounderror.__doc__)
                     elif notfound_action==2:
-                        raise self.notfounderror,self.notfounderror.__doc__
+                        raise self.notfounderror(self.notfounderror.__doc__)
                     else:
                         raise ValueError(repr(notfound_action))
 
