@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     config = configuration(top_path='')
     version = config.get_version()
-    print 'F2PY Version',version
+    print('F2PY Version',version)
     config = config.todict()
 
     if sys.version[:3]>='2.3':
