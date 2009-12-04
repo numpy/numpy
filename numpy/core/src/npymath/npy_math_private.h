@@ -411,7 +411,7 @@ do {                                                            \
 #ifdef NPY_USE_C99_COMPLEX
 typedef union {
         npy_cdouble npy_z;
-        complex c99_z;
+        complex double c99_z;
 } __npy_cdouble_to_c99_cast;
 
 typedef union {
