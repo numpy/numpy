@@ -79,7 +79,9 @@ The following C functions have been added to the C API:
        definition of correlation. Inputs are not swapped, and conjugate is
        taken for complex arrays.
     #. PyArray_NeighborhoodIterNew - a new iterator to iterate over a
-       neighborhood of a point, with automatic boundaries handling.
+       neighborhood of a point, with automatic boundaries handling. It is
+       documented in the iterators section of the C-API reference, and you can
+       find some examples in  the multiarray_test.c.src file in numpy.core.
 
 New ufuncs
 ~~~~~~~~~~
