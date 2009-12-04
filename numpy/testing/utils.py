@@ -301,9 +301,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
                 raise AssertionError(msg)
     # If TypeError or ValueError raised while using isnan and co, just handle
     # as before
-    except TypeError:
-        pass
-    except ValueError:
+    except (TypeError, ValueError, NotImplementedError):
         pass
     if desired != actual :
         raise AssertionError(msg)
@@ -453,7 +451,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
                 if not desired == actual:
                     raise AssertionError(msg)
             return
-    except TypeError:
+    except (NotImplementedError, TypeError):
         pass
     if round(abs(desired - actual),decimal) != 0 :
         raise AssertionError(msg)
@@ -543,7 +541,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
                 if not desired == actual:
                     raise AssertionError(msg)
             return
-    except TypeError:
+    except (TypeError, NotImplementedError):
         pass
     if np.abs(sc_desired - sc_actual) >= np.power(10.,-(significant-1)) :
         raise AssertionError(msg)
@@ -755,7 +753,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
                     return x == y
                 x = x[~xinfid]
                 y = y[~yinfid]
-        except TypeError:
+        except (TypeError, NotImplementedError):
             pass
         z = abs(x-y)
         if not issubdtype(z.dtype, number):
