@@ -350,18 +350,27 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 
+        PyDict_SetItem(fields, name, tup);
+
         /*
          * Title can be "meta-data".  Only insert it
          * into the fields dictionary if it is a string
+         * and if it is not the same as the name.
          */
         if (title != NULL) {
             Py_INCREF(title);
             PyTuple_SET_ITEM(tup, 2, title);
             if (PyString_Check(title) || PyUnicode_Check(title)) {
+                if (PyDict_GetItem(fields, title) != NULL) {
+                    PyErr_SetString(PyExc_ValueError,
+                                    "title already used as a "\
+                                    "name or title.");
+                    Py_DECREF(tup);
+                    goto fail;
+                }
                 PyDict_SetItem(fields, title, tup);
             }
         }
-        PyDict_SetItem(fields, name, tup);
         totalsize += conv->elsize;
         Py_DECREF(tup);
     }
@@ -978,14 +987,13 @@ _convert_from_dict(PyObject *obj, int align)
         PyDict_SetItem(fields, name, tup);
         Py_DECREF(name);
         if (len == 3) {
-            if ((PyString_Check(item) || PyUnicode_Check(item))
-                && PyDict_GetItem(fields, item) != NULL) {
-                PyErr_SetString(PyExc_ValueError,
-                                "title already used as a "\
-                                "name or title.");
-                ret=PY_FAIL;
-            }
-            else {
+            if (PyString_Check(item) || PyUnicode_Check(item)) {
+                if (PyDict_GetItem(fields, item) != NULL) {
+                    PyErr_SetString(PyExc_ValueError,
+                                    "title already used as a "  \
+                                    "name or title.");
+                    ret=PY_FAIL;
+                }
                 PyDict_SetItem(fields, item, tup);
             }
         }

@@ -1224,3 +1224,8 @@ class TestRegression(TestCase):
 
 if __name__ == "__main__":
     run_module_suite()
+    def test_duplicate_title_and_name(self):
+        """Ticket #1254"""
+        def func():
+            x = np.dtype([(('a', 'a'), 'i'), ('b', 'i')])
+        self.failUnlessRaises(ValueError, func)
