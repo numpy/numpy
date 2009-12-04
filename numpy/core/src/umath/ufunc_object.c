@@ -2512,7 +2512,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     else {
         loop->obj = 0;
     }
-    if ((loop->meth == ZERO_EL_REDUCELOOP) || 
+    if ((loop->meth == ZERO_EL_REDUCELOOP) ||
 	((operation == UFUNC_REDUCEAT) && (loop->meth == BUFFER_UFUNCLOOP))) {
         idarr = _getidentity(self, otype, str);
         if (idarr == NULL) {
@@ -2817,17 +2817,17 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             loop->index++;
         }
 
-        /* 
-         * DECREF left-over objects if buffering was used.           
+        /*
+         * DECREF left-over objects if buffering was used.
          * It is needed when casting created new objects in
          * castbuf.  Intermediate copying into castbuf (via
          * loop->function) decref'd what was already there.
-           
+
          * It's the final copy into the castbuf that needs a DECREF.
          */
 
         /* Only when casting needed and it is from a non-object array */
-        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && 
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast &&
             (!PyArray_ISOBJECT(arr))) {
             for (i=0; i<loop->bufsize; i++) {
                 Py_CLEAR(((PyObject **)loop->castbuf)[i]);
@@ -2983,17 +2983,17 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             loop->index++;
         }
 
-        /* 
-         * DECREF left-over objects if buffering was used.           
+        /*
+         * DECREF left-over objects if buffering was used.
          * It is needed when casting created new objects in
          * castbuf.  Intermediate copying into castbuf (via
          * loop->function) decref'd what was already there.
-           
+
          * It's the final copy into the castbuf that needs a DECREF.
          */
 
         /* Only when casting needed and it is from a non-object array */
-        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && 
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast &&
             (!PyArray_ISOBJECT(arr))) {
             for (i=0; i<loop->bufsize; i++) {
                 Py_CLEAR(((PyObject **)loop->castbuf)[i]);
@@ -3158,17 +3158,17 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
             loop->index++;
         }
 
-        /* 
-         * DECREF left-over objects if buffering was used.           
+        /*
+         * DECREF left-over objects if buffering was used.
          * It is needed when casting created new objects in
          * castbuf.  Intermediate copying into castbuf (via
          * loop->function) decref'd what was already there.
-           
+
          * It's the final copy into the castbuf that needs a DECREF.
          */
-        
+
         /* Only when casting needed and it is from a non-object array */
-        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast && 
+        if ((loop->obj & UFUNC_OBJ_ISOBJECT) && loop->cast &&
             (!PyArray_ISOBJECT(arr))) {
             for (i=0; i<loop->bufsize; i++) {
                 Py_CLEAR(((PyObject **)loop->castbuf)[i]);
