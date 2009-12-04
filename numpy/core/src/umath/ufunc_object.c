@@ -3520,16 +3520,15 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         }
         if (errval == -1)
             return NULL;
-        else {
-            /*
-             * PyErr_SetString(PyExc_TypeError,"");
-             * return NULL;
-             */
-            /* This is expected by at least the ndarray rich_comparisons
-               to allow for additional handling for strings.
-             */
+        else if (self->nin == 2 && self->nout == 1) {
+          /* To allow the other argument to be given a chance
+           */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+        }
+        else {
+            PyErr_SetString(PyExc_NotImplementedError, "Not implemented for this type");
+            return NULL;
         }
     }
     for (i = 0; i < self->nin; i++) {
