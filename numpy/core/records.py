@@ -44,6 +44,8 @@ import types
 import os
 import sys
 
+from numpy.compat import isfileobj
+
 ndarray = sb.ndarray
 
 _byteorderconv = {'b':'>',
@@ -731,7 +733,8 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     """Construct a record array from a wide-variety of objects.
     """
 
-    if isinstance(obj, (type(None), str, file)) and (formats is None) \
+    if (isinstance(obj, (type(None), str)) or isfileobj(obj)) \
+           and (formats is None) \
            and (dtype is None):
         raise ValueError("Must define formats (or dtype) if object is "\
                          "None, string, or an open file")
@@ -772,7 +775,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             new = new.copy()
         return new
 
-    elif isinstance(obj, file):
+    elif isfileobj(obj):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, ndarray):

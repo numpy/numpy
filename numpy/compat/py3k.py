@@ -3,7 +3,7 @@ Python 3 compatibility tools.
 
 """
 
-__all__ = ['bytes', 'asbytes', 'isfile']
+__all__ = ['bytes', 'asbytes', 'isfileobj']
 
 import sys
 if sys.version_info[0] >= 3:
@@ -13,10 +13,10 @@ if sys.version_info[0] >= 3:
         if isinstance(s, bytes):
             return s
         return s.encode('iso-8859-1')
-    def isfile(f):
+    def isfileobj(f):
         return isinstance(f, io.IOBase)
 else:
     bytes = str
     asbytes = str
-    def isfile(f):
+    def isfileobj(f):
         return isinstance(f, file)

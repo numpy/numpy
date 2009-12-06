@@ -139,7 +139,7 @@ import cPickle
 
 import numpy
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, isfile
+from numpy.compat import asbytes, isfileobj
 
 MAGIC_PREFIX = '\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
@@ -397,7 +397,7 @@ def write_array(fp, array, version=(1,0)):
         # handle Fortran-contiguous arrays.
         fp.write(array.data)
     else:
-        if isfile(fp):
+        if isfileobj(fp):
             array.tofile(fp)
         else:
             # XXX: We could probably chunk this using something like
@@ -440,7 +440,7 @@ def read_array(fp):
         # The array contained Python objects. We need to unpickle the data.
         array = cPickle.load(fp)
     else:
-        if isfile(fp):
+        if isfileobj(fp):
             # We can use the fast fromfile() function.
             array = numpy.fromfile(fp, dtype=dtype, count=count)
         else:
