@@ -1449,6 +1449,9 @@ arraydescr_dealloc(PyArray_Descr *self)
         _pya_free(self->subarray);
     }
     Py_XDECREF(self->metadata);
+    if (self->buffer_format) {
+        free(self->buffer_format);
+    }
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -1942,6 +1945,9 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
             conv->metadata = PyDict_Copy(ometadata);
         }
     }
+
+    conv->buffer_format = NULL;
+
     return (PyObject *)conv;
 }
 

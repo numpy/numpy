@@ -76,6 +76,12 @@ array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
  * PEP 3118 buffer protocol
  *************************************************************************/
 
+
+/*
+ * Note: because for backward compatibility we cannot define bf_releasebuffer,
+ * we must go through some additional contortions in bf_getbuffer.
+ */
+
 #if PY_VERSION_HEX >= 0x02060000
 
 /*
@@ -90,9 +96,9 @@ typedef struct {
 
 typedef struct {
     char *format;
+    int nd;
     Py_ssize_t *strides;
     Py_ssize_t *shape;
-    int count;
 } _buffer_data;
 
 static int
@@ -263,7 +269,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 
     if (self->buffer_info == NULL) {
         cache = (_buffer_data*)malloc(sizeof(_buffer_data));
-        cache->count = 0;
+        cache->nd = 0;
         cache->format = NULL;
         cache->strides = NULL;
         cache->shape = NULL;
@@ -300,32 +306,53 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     view->len = PyArray_NBYTES(self);
 
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
-        if (cache->format == NULL) {
+#warning XXX -- assumes descriptors are immutable
+        if (PyArray_DESCR(self)->buffer_format == NULL) {
             int offset = 0;
             _tmp_string fmt = {0,0,0};
             if (_buffer_format_string(PyArray_DESCR(self), &fmt, &offset)) {
                 goto fail;
             }
             _append_char(&fmt, '\0');
-            cache->format = fmt.s;
+            PyArray_DESCR(self)->buffer_format = fmt.s;
         }
-        view->format = cache->format;
+        view->format = PyArray_DESCR(self)->buffer_format;
     }
     else {
         view->format = NULL;
     }
 
     if ((flags & PyBUF_STRIDED) == PyBUF_STRIDED) {
-        if (cache->strides == NULL) {
-            int k;
+        int shape_changed = 0;
+        int k;
+
+        if (cache->nd != PyArray_NDIM(self)) {
+            shape_changed = 1;
+        }
+        else {
+            for (k = 0; k < PyArray_NDIM(self); ++k) {
+                if (cache->shape[k] != PyArray_DIMS(self)[k]
+                    || cache->strides[k] != PyArray_STRIDES(self)[k]) {
+                    shape_changed = 1;
+                    break;
+                }
+            }
+        }
+
+        if (cache->strides == NULL || shape_changed) {
+            if (cache->shape != NULL) {
+                free(cache->shape);
+            }
+            cache->nd = PyArray_NDIM(self);
             cache->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
-                                               * PyArray_NDIM(self) * 2);
+                                               * PyArray_NDIM(self) * 2 + 1);
             cache->strides = cache->shape + PyArray_NDIM(self);
             for (k = 0; k < PyArray_NDIM(self); ++k) {
                 cache->shape[k] = PyArray_DIMS(self)[k];
                 cache->strides[k] = PyArray_STRIDES(self)[k];
             }
         }
+
         view->ndim = PyArray_NDIM(self);
         view->shape = cache->shape;
         view->strides = cache->strides;
@@ -343,47 +370,38 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     view->obj = self;
     Py_INCREF(self);
 
-    cache->count++;
-
     return 0;
 
 fail:
-    if (view->format) {
-        free(view->format);
-    }
-    if (view->shape) {
-        free(view->shape);
-    }
     return -1;
 }
 
 
 /*
- * Releasing buffers
+ * NOTE: for backward compatibility (esp. with PyArg_ParseTuple("s#", ...))
+ * we do *not* define bf_releasebuffer at all.
+ *
+ * Instead, any extra data allocated with the buffer is released only in
+ * array_dealloc.
+ *
+ * Ensuring that the buffer stays in place is taken care by refcounting;
+ * ndarrays do not reallocate if there are references to them, and a buffer
+ * view holds one reference.
  */
 
-static void
-array_releasebuffer(PyObject *obj, Py_buffer *view)
+NPY_NO_EXPORT void
+_array_dealloc_buffer_info(PyArrayObject *self)
 {
     _buffer_data *cache;
-    PyArrayObject *self;
 
-    self = (PyArrayObject*)obj;
     cache = self->buffer_info;
 
     if (cache != NULL) {
-        cache->count--;
-
-        if (cache->count == 0) {
-            if (cache->format) {
-                free(cache->format);
-            }
-            if (cache->shape) {
-                free(cache->shape);
-            }
-            free(cache);
-            self->buffer_info = NULL;
+        if (cache->shape) {
+            free(cache->shape);
         }
+        free(cache);
+        self->buffer_info = NULL;
     }
 }
 
@@ -407,6 +425,6 @@ NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
 #endif
 #if PY_VERSION_HEX >= 0x02060000
     (getbufferproc)array_getbuffer,
-    (releasebufferproc)array_releasebuffer,
+    (releasebufferproc)0,
 #endif
 };

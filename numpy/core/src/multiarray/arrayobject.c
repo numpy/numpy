@@ -163,6 +163,8 @@ PyArray_TypeNumFromName(char *str)
 static void
 array_dealloc(PyArrayObject *self) {
 
+    _array_dealloc_buffer_info(self);
+
     if (self->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);
     }

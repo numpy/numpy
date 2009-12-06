@@ -520,6 +520,8 @@ typedef struct _PyArray_Descr {
                                     basic data descriptor */
 
         PyObject *metadata;     /* Metadata about this dtype */
+
+        char *buffer_format;    /* Buffer interface format string, or NULL */
 } PyArray_Descr;
 
 typedef struct _arr_descr {
