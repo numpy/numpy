@@ -84,7 +84,9 @@ def svn_version():
     r = re.compile('Revision: ([0-9]+)')
     svnver = ""
 
-    for line in out.split('\n'.encode()):
+    out = out.decode()
+
+    for line in out.split('\n'):
         m = r.match(line.strip())
         if m:
             svnver = m.group(1)
