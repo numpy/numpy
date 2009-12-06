@@ -1,0 +1,8 @@
+=========================
+NumPy 1.5.0 Release Notes
+=========================
+
+This release has the following aims:
+
+* Python 3 compatibility
+* :pep:`3118` compatibility
