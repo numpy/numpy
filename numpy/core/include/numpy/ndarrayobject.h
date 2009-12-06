@@ -551,6 +551,7 @@ typedef struct PyArrayObject {
         PyArray_Descr *descr;   /* Pointer to type structure */
         int flags;              /* Flags describing array -- see below*/
         PyObject *weakreflist;  /* For weakreferences */
+        void *buffer_info;      /* Data used by the buffer interface */
 } PyArrayObject;
 
 #define NPY_AO PyArrayObject

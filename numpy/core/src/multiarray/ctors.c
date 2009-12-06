@@ -1466,6 +1466,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     self->descr = descr;
     self->base = (PyObject *)NULL;
     self->weakreflist = (PyObject *)NULL;
+    self->buffer_info = NULL;
 
     if (nd > 0) {
         self->dimensions = PyDimMem_NEW(2*nd);

@@ -72,10 +72,14 @@ array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 }
 
 
+/*************************************************************************
+ * PEP 3118 buffer protocol
+ *************************************************************************/
+
 #if PY_VERSION_HEX >= 0x02060000
 
 /*
- * Buffer protocol format string translator
+ * Format string translator
  */
 
 typedef struct {
@@ -83,6 +87,13 @@ typedef struct {
     int allocated;
     int pos;
 } _tmp_string;
+
+typedef struct {
+    char *format;
+    Py_ssize_t *strides;
+    Py_ssize_t *shape;
+    int count;
+} _buffer_data;
 
 static int
 _append_char(_tmp_string *s, char c)
@@ -235,12 +246,33 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string *str, int *offset)
 }
 
 /*
- * The new buffer protocol
+ * Retrieving buffers
  */
 
 static int
-array_getbuffer(PyObject *self, Py_buffer *view, int flags)
+array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 {
+    PyArrayObject *self;
+    _buffer_data *cache = NULL;
+
+    self = (PyArrayObject*)obj;
+
+    if (view == NULL) {
+        return -1;
+    }
+
+    if (self->buffer_info == NULL) {
+        cache = (_buffer_data*)malloc(sizeof(_buffer_data));
+        cache->count = 0;
+        cache->format = NULL;
+        cache->strides = NULL;
+        cache->shape = NULL;
+        self->buffer_info = cache;
+    }
+    else {
+        cache = self->buffer_info;
+    }
+
     view->format = NULL;
     view->shape = NULL;
 
@@ -277,25 +309,28 @@ array_getbuffer(PyObject *self, Py_buffer *view, int flags)
             _append_char(&fmt, '\0');
             cache->format = fmt.s;
         }
-        _append_char(&fmt, '\0');
-        view->format = fmt.s;
+        view->format = cache->format;
     }
     else {
         view->format = NULL;
     }
 
     if ((flags & PyBUF_STRIDED) == PyBUF_STRIDED) {
-        int k;
-        view->ndim = PyArray_NDIM(self);
-        view->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t) * view->ndim * 2);
-        view->strides = view->shape + view->ndim;
-        for (k = 0; k < PyArray_NDIM(self); ++k) {
-            view->shape[k] = PyArray_DIMS(self)[k];
-            view->strides[k] = PyArray_STRIDES(self)[k];
+        if (cache->strides == NULL) {
+            int k;
+            cache->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
+                                               * PyArray_NDIM(self) * 2);
+            cache->strides = cache->shape + PyArray_NDIM(self);
+            for (k = 0; k < PyArray_NDIM(self); ++k) {
+                cache->shape[k] = PyArray_DIMS(self)[k];
+                cache->strides[k] = PyArray_STRIDES(self)[k];
+            }
         }
+        view->ndim = PyArray_NDIM(self);
+        view->shape = cache->shape;
+        view->strides = cache->strides;
     }
     else if (PyArray_ISONESEGMENT(self)) {
-#warning XXX -- should try harder here to determine single-segmentness?
         view->ndim = 0;
         view->shape = NULL;
         view->strides = NULL;
@@ -307,6 +342,8 @@ array_getbuffer(PyObject *self, Py_buffer *view, int flags)
 
     view->obj = self;
     Py_INCREF(self);
+
+    cache->count++;
 
     return 0;
 
@@ -320,21 +357,39 @@ fail:
     return -1;
 }
 
+
+/*
+ * Releasing buffers
+ */
+
 static void
-array_releasebuffer(PyObject *self, Py_buffer *view)
+array_releasebuffer(PyObject *obj, Py_buffer *view)
 {
-    if (view->format != NULL) {
-        free(view->format);
-        view->format = NULL;
-    }
-    if (view->shape != NULL) {
-        free(view->shape);
-        view->shape = NULL;
+    _buffer_data *cache;
+    PyArrayObject *self;
+
+    self = (PyArrayObject*)obj;
+    cache = self->buffer_info;
+
+    if (cache != NULL) {
+        cache->count--;
+
+        if (cache->count == 0) {
+            if (cache->format) {
+                free(cache->format);
+            }
+            if (cache->shape) {
+                free(cache->shape);
+            }
+            free(cache);
+            self->buffer_info = NULL;
+        }
     }
 }
 
 #endif
 
+/*************************************************************************/
 
 NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
 #if !defined(NPY_PY3K)
