@@ -1203,7 +1203,15 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     if (object == NULL || object == Py_None) {
         *val = PyArray_ANYORDER;
     }
-    else if (!PyString_Check(object) || PyString_GET_SIZE(object) < 1) {
+    else if (PyUnicode_Check(object)) {
+        PyObject *tmp;
+        int ret;
+        tmp = PyUnicode_AsASCIIString(object);
+        ret = PyArray_OrderConverter(tmp, val);
+        Py_DECREF(tmp);
+        return ret;
+    }
+    else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
         if (PyObject_IsTrue(object)) {
             *val = PyArray_FORTRANORDER;
         }
@@ -1216,7 +1224,7 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         return PY_SUCCEED;
     }
     else {
-        str = PyString_AS_STRING(object);
+        str = PyBytes_AS_STRING(object);
         if (str[0] == 'C' || str[0] == 'c') {
             *val = PyArray_CORDER;
         }
@@ -1244,9 +1252,9 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
     if (object == NULL || object == Py_None) {
         *val = NPY_RAISE;
     }
-    else if (PyString_Check(object)) {
+    else if (PyBytes_Check(object)) {
         char *str;
-        str = PyString_AS_STRING(object);
+        str = PyBytes_AS_STRING(object);
         if (str[0] == 'C' || str[0] == 'c') {
             *val = NPY_CLIP;
         }
@@ -1261,6 +1269,14 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
                             "clipmode not understood");
             return PY_FAIL;
         }
+    }
+    else if (PyUnicode_Check(object)) {
+        PyObject *tmp;
+        int ret;
+        tmp = PyUnicode_AsASCIIString(object);
+        ret = PyArray_ClipmodeConverter(tmp, val);
+        Py_DECREF(tmp);
+        return ret;
     }
     else {
         int number = PyInt_AsLong(object);
@@ -2281,7 +2297,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         precision = 70;
     }
     format_longdouble(repr, 100, x, precision);
-    return PyString_FromString(repr);
+    return PyUString_FromString(repr);
 }
 
 static PyObject *
@@ -3043,15 +3059,11 @@ PyMODINIT_FUNC initmultiarray(void) {
      */
     PyDict_SetItemString (d, "error", PyExc_Exception);
 
-    s = PyString_FromString("3.1");
+    s = PyUString_FromString("3.1");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-#if defined(NPY_PY3K)
-    s = PyUnicode_InternFromString(NPY_METADATA_DTSTR);
-#else
-    s = PyString_InternFromString(NPY_METADATA_DTSTR);
-#endif
+    s = PyUString_InternFromString(NPY_METADATA_DTSTR);
     PyDict_SetItemString(d, "METADATA_DTSTR", s);
     Py_DECREF(s);
 
