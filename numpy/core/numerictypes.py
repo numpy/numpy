@@ -494,13 +494,19 @@ def maximum_sctype(t):
     else:
         return sctypes[base][-1]
 
+try:
+    buffer_type = _types.BufferType
+except AttributeError:
+    # Py3K
+    buffer_type = memoryview
+
 _python_types = {int : 'int_',
                  float: 'float_',
                  complex: 'complex_',
                  bool: 'bool_',
                  str: 'string_',
                  unicode: 'unicode_',
-                 _types.BufferType: 'void',
+                 buffer_type: 'void',
                 }
 def _python_type(t):
     """returns the type corresponding to a certain Python type"""
@@ -722,9 +728,13 @@ def sctype2char(sctype):
 
 
 cast = _typedict()
-ScalarType = [_types.IntType, _types.FloatType,
-              _types.ComplexType, _types.LongType, _types.BooleanType,
-              _types.StringType, _types.UnicodeType, _types.BufferType]
+try:
+    ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,
+                  _types.LongType, _types.BooleanType,
+                   _types.StringType, _types.UnicodeType, _types.BufferType]
+except AttributeError:
+    # Py3K
+    ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 ScalarType.extend(_sctype2char_dict.keys())
 ScalarType = tuple(ScalarType)
 for key in _sctype2char_dict.keys():
