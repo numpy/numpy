@@ -216,15 +216,22 @@ NPY_NO_EXPORT int
 PyArray_ByteorderConverter(PyObject *obj, char *endian)
 {
     char *str;
+    PyObject *tmp = NULL;
+
+    if (PyUnicode_Check(obj)) {
+        obj = tmp = PyUnicode_AsASCIIString(obj);
+    }
 
     *endian = PyArray_SWAP;
-    str = PyString_AsString(obj);
+    str = PyBytes_AsString(obj);
     if (!str) {
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
     if (strlen(str) < 1) {
         PyErr_SetString(PyExc_ValueError,
                         "Byteorder string must be at least length 1");
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
     *endian = str[0];
@@ -249,9 +256,11 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
             PyErr_Format(PyExc_ValueError,
                          "%s is an unrecognized byteorder",
                          str);
+            Py_XDECREF(tmp);
             return PY_FAIL;
         }
     }
+    Py_XDECREF(tmp);
     return PY_SUCCEED;
 }
 
@@ -262,15 +271,22 @@ NPY_NO_EXPORT int
 PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
 {
     char *str;
+    PyObject *tmp = NULL;
+
+    if (PyUnicode_Check(obj)) {
+        obj = tmp = PyUnicode_AsASCIIString(obj);
+    }
 
     *sortkind = PyArray_QUICKSORT;
-    str = PyString_AsString(obj);
+    str = PyBytes_AsString(obj);
     if (!str) {
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
     if (strlen(str) < 1) {
         PyErr_SetString(PyExc_ValueError,
                         "Sort kind string must be at least length 1");
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
     if (str[0] == 'q' || str[0] == 'Q') {
@@ -286,8 +302,10 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         PyErr_Format(PyExc_ValueError,
                      "%s is an unrecognized kind of sort",
                      str);
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
+    Py_XDECREF(tmp);
     return PY_SUCCEED;
 }
 
@@ -298,11 +316,18 @@ NPY_NO_EXPORT int
 PyArray_SearchsideConverter(PyObject *obj, void *addr)
 {
     NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)addr;
-    char *str = PyString_AsString(obj);
+    char *str;
+    PyObject *tmp = NULL;
 
+    if (PyUnicode_Check(obj)) {
+        obj = tmp = PyUnicode_AsASCIIString(obj);
+    }
+
+    str = PyBytes_AsString(obj);
     if (!str || strlen(str) < 1) {
         PyErr_SetString(PyExc_ValueError,
                         "expected nonempty string for keyword 'side'");
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
 
@@ -315,8 +340,10 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
     else {
         PyErr_Format(PyExc_ValueError,
                      "'%s' is an invalid value for keyword 'side'", str);
+        Py_XDECREF(tmp);
         return PY_FAIL;
     }
+    Py_XDECREF(tmp);
     return PY_SUCCEED;
 }
 
