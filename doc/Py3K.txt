@@ -1,0 +1,513 @@
+******************************************
+Notes on making the transition to Python 3
+******************************************
+
+General
+=======
+
+Resources
+---------
+
+Information on porting to 3K:
+
+- http://wiki.python.org/moin/cporting
+- http://wiki.python.org/moin/PortingExtensionModulesToPy3k
+
+Git trees
+---------
+
+- http://github.com/pv/numpy-work/commits/py3k
+- http://github.com/illume/numpy3k/commits/work
+
+Prerequisites
+-------------
+
+The Nose test framework has currently (Nov 2009) no released Python 3
+compatible version. Its 3K SVN branch, however, works quite well:
+
+- http://python-nose.googlecode.com/svn/branches/py3k
+
+
+Semantic changes
+================
+
+We make the following semantic changes:
+
+* division: integer division is by default true_divide, also for arrays
+* dtype fields: 'a' and b'a' are different fields
+
+
+Python code
+===========
+
+
+What we do now
+--------------
+
+2to3 in setup.py
+
+    Currently, setup.py calls 2to3 automatically to convert Python sources
+    to Python 3 ones, and stores the results under::
+
+        build/py3k
+
+    Only changed files will be re-converted when setup.py is called a second
+    time, making development much faster.
+
+    Currently, this seems to handle most (all?) of the necessary Python
+    code conversion.
+
+numpy.compat.py3k
+
+    There are some utility functions needed for 3K compatibility in
+    ``numpy.compat.py3k`` -- they can be imported from ``numpy.compat``.
+    More can be added as needed.
+
+
+Syntax changes
+--------------
+
+Code that wants to cater for both Python2 and Python3 needs to take
+at least the following into account:
+
+1) "except FooException, bar:" -> "except FooException as bar:"
+
+2) "from localmodule import foo"
+
+   Syntax for relative imports has changed and is incompatible between
+   Python 2.4 and Python 3. The only way seems to use absolute imports
+   throughout.
+
+3) "print foo, bar" -> "print(foo, bar)"
+
+   Print is no longer a statement.
+
+
+C Code
+======
+
+What has been done so far, and some known TODOs
+-----------------------------------------------
+
+private/npy_3kcompat.h
+
+    Convenience macros for Python 3 support.
+    New ones that need to be added should be added in this file.
+
+ob_type etc.
+
+    These use Py_SIZE, etc. macros now.  The macros are also defined in
+    npy_3kcompat.h for the Python versions that don't have them natively.
+
+PyNumberMethod
+
+    The structures have been converted to the new format.
+
+    TODO: check if semantics of the methods have changed
+
+PyBuffer_*
+
+    These parts have been replaced with stub code, marked by #warning XXX
+
+    TODO: implement the new buffer protocol: for scalars and arrays
+
+          - generate format strings from dtype
+          - parse format strings?
+          - Py_Ssize_t for strides and shape?
+
+    TODO: decide what to do with the fact that PyMemoryView object is not
+          stand-alone. Do we need a separate "dummy" object?
+
+PyString
+
+    PyString is currently defined to PyBytes in npy_3kcompat.h.
+
+    Decisions:
+
+    * field names are Unicode
+
+    * field titles can be arbitrary objects.
+      If they are Unicode, insert to fields dict.
+
+    * dtype strings are Unicode.
+
+    * datetime tuple contains Unicode.
+
+    * Exceptions should preferably be ASCII-only -> use AsUnicodeEscape
+
+
+    TODO: Are exception strings bytes or unicode? What about tp_doc?
+
+          Fix lib/src/_compiled_base accordingly.
+
+    TODO: I have a feeling that we should avoid PyUnicode_AsUTF8EncodedString
+          wherever possible...
+
+    TODO: Decide on a policy between Unicode and Bytes
+
+          a) what is allowed for the user to pass in: which one or both?
+          b) what is the internal format: which one or both?
+          c) if we do conversions, what is the encoding?
+             (anything apart from utf-8 or ascii does not make sense, imho)
+
+          Some instances:
+
+          - dtype field names (if both, which is the default?)
+            If unicode, what to do with serialization to npy files etc.?
+            force utf8?
+
+          - dtype field titles (probably can be arbitrary object)
+
+          - dtype format strings ('i4', '|S7' etc.)
+
+    TODO: Replace all occurrences of String by Bytes or Unicode, to ensure
+    	  that we have made a conscious choice for each case in Py3K.
+
+	  #define PyBytes -> PyString for Python 2 in npy_3kcompath.h
+
+          Finally remove the PyString -> PyBytes defines from npy_3kcompat.h
+          This is probably the *easiest* way to make sure all of
+          the string/unicode transition has been audited.
+
+          The String/Unicode transition is simply too dangerous to handle
+          by a blanket replacement. 
+
+PyInt
+
+    PyInt is currently replaced by PyLong, via macros in npy_3kcompat.h
+
+    Dtype decision rules were changed accordingly, so Numpy understands
+    Python int to be dtype-compatible with NPY_LONG.
+
+    TODO: Decide on
+
+          ... what is: array([1]).dtype
+          ... what is: array([2**40]).dtype
+          ... what is: array([2**256]).dtype
+          ... what is: array([1]) + 2**40
+          ... what is: array([1]) + 2**256
+
+          ie. dtype casting rules. It seems to <pv> that we will want to
+          fix the dtype of Python 3 int to be the machine integer size,
+          despite the fact that the actual Python 3 object is not fixed-size.
+
+    TODO: Audit the automatic dtype decision -- did I plug all the cases?
+
+Divide
+
+    The Divide operation is no more.
+
+    So we change array(1) / 10 == array(0.1)
+
+tp_compare
+
+    The compare method has vanished.
+
+    TODO: ensure that all types that had only tp_compare have also
+          tp_richcompare.
+
+
+PyTypeObject
+------------
+
+The PyTypeObject of py3k is binary compatible with the py2k version and the
+old initializers should work. However, there are several considerations to
+keep in mind.
+
+1) Because the first three slots are now part of a struct some compilers issue
+   warnings if they are initialized in the old way.
+
+   In practice, it is necessary to use the Py_TYPE, Py_SIZE, Py_REFCNT
+   macros instead of accessing ob_type, ob_size and ob_refcnt
+   directly.  These are defined for backward compatibility in
+   private/npy_3kcompat.h
+
+2) The compare slot has been made reserved in order to preserve binary
+   compatibily while the tp_compare function went away. The tp_richcompare
+   function has replaced it and we need to use that slot instead. This will
+   likely require modifications in the searchsorted functions and generic sorts
+   that currently use the compare function.
+
+3) The previous numpy practice of initializing the COUNT_ALLOCS slots was
+   bogus. They are not supposed to be explicitly initialized and were out of
+   place in any case because an extra base slot was added in python 2.6.
+
+Because of these facts it was thought better to use #ifdefs to bring the old
+initializers up to py3k snuff rather than just fill the tp_richcompare slot.
+They also serve to mark the places where changes have been made. The new form
+is shown below. Note that explicit initialization can stop once none of the
+remaining entries are non-zero, because zero is the default value that
+variables with non-local linkage receive.
+
+
+NPY_NO_EXPORT PyTypeObject Foo_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(0,0)
+#else
+    PyObject_HEAD_INIT(0)
+    0,                                          /* ob_size */
+#endif
+    "numpy.foo"                                 /* tp_name */
+    0,                                          /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    0,                                          /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    (void *)0,                                  /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    0,                                          /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    0,                                          /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+    0                                           /* tp_version_tag (2.6) */
+};
+
+checklist of types having tp_compare but no tp_richcompare
+
+1) multiarray/flagsobject.c
+
+PyNumberMethods
+---------------
+
+Types with tp_as_number defined
+
+1) multiarray/arrayobject.c
+
+The slots np_divide, np_long, np_oct, np_hex, and np_inplace_divide
+have gone away. The slot np_int is what np_long used to be, tp_divide
+is now tp_floor_divide, and np_inplace_divide is now
+np_inplace_floor_divide. We will also have to make sure the
+*_true_divide variants are defined. This should also be done for
+python < 3.x, but that introduces a requirement for the
+Py_TPFLAGS_HAVE_CLASS in the type flag.
+
+/*
+ * Number implementations must check *both* arguments for proper type and
+ * implement the necessary conversions in the slot functions themselves.
+*/
+PyNumberMethods foo_number_methods = {
+    (binaryfunc)0,                              /* nb_add */
+    (binaryfunc)0,                              /* nb_subtract */
+    (binaryfunc)0,                              /* nb_multiply */
+    (binaryfunc)0,                              /* nb_remainder */
+    (binaryfunc)0,                              /* nb_divmod */
+    (ternaryfunc)0,                             /* nb_power */
+    (unaryfunc)0,                               /* nb_negative */
+    (unaryfunc)0,                               /* nb_positive */
+    (unaryfunc)0,                               /* nb_absolute */
+    (inquiry)0,                                 /* nb_bool, nee nb_nonzero */
+    (unaryfunc)0,                               /* nb_invert */
+    (binaryfunc)0,                              /* nb_lshift */
+    (binaryfunc)0,                              /* nb_rshift */
+    (binaryfunc)0,                              /* nb_and */
+    (binaryfunc)0,                              /* nb_xor */
+    (binaryfunc)0,                              /* nb_or */
+    (unaryfunc)0,                               /* nb_int */
+    (void *)0,                                  /* nb_reserved, nee nb_long */
+    (unaryfunc)0,                               /* nb_float */
+    (binaryfunc)0,                              /* nb_inplace_add */
+    (binaryfunc)0,                              /* nb_inplace_subtract */
+    (binaryfunc)0,                              /* nb_inplace_multiply */
+    (binaryfunc)0,                              /* nb_inplace_remainder */
+    (ternaryfunc)0,                             /* nb_inplace_power */
+    (binaryfunc)0,                              /* nb_inplace_lshift */
+    (binaryfunc)0,                              /* nb_inplace_rshift */
+    (binaryfunc)0,                              /* nb_inplace_and */
+    (binaryfunc)0,                              /* nb_inplace_xor */
+    (binaryfunc)0,                              /* nb_inplace_or */
+    (binaryfunc)0,                              /* nb_floor_divide */
+    (binaryfunc)0,                              /* nb_true_divide */
+    (binaryfunc)0,                              /* nb_inplace_floor_divide */
+    (binaryfunc)0,                              /* nb_inplace_true_divide */
+    (unaryfunc)0                                /* nb_index */
+};
+
+PySequenceMethods
+-----------------
+
+Types with tp_as_sequence defined
+
+1) multiarray/descriptor.c
+2) multiarray/scalartypes.c.src
+3) multiarray/arrayobject.c
+
+PySequenceMethods in py3k are binary compatible with py2k, but some of the
+slots have gone away. I suspect this means some functions need redefining so
+the semantics of the slots needs to be checked.
+
+PySequenceMethods foo_sequence_methods = {
+    (lenfunc)0,                                 /* sq_length */
+    (binaryfunc)0,                              /* sq_concat */
+    (ssizeargfunc)0,                            /* sq_repeat */
+    (ssizeargfunc)0,                            /* sq_item */
+    (void *)0,                                  /* nee sq_slice */
+    (ssizeobjargproc)0,                         /* sq_ass_item */
+    (void *)0,                                  /* nee sq_ass_slice */
+    (objobjproc)0,                              /* sq_contains */
+    (binaryfunc)0,                              /* sq_inplace_concat */
+    (ssizeargfunc)0                             /* sq_inplace_repeat */
+};
+
+PyMappingMethods
+----------------
+
+Types with tp_as_mapping defined
+
+1) multiarray/descriptor.c
+2) multiarray/iterators.c
+3) multiarray/scalartypes.c.src
+4) multiarray/flagsobject.c
+5) multiarray/arrayobject.c
+
+PyMappingMethods in py3k look to be the same as in py2k. The semantics
+of the slots needs to be checked.
+
+PyMappingMethods foo_mapping_methods = {
+    (lenfunc)0,                             /* mp_length */
+    (binaryfunc)0,                          /* mp_subscript */
+    (objobjargproc)0                        /* mp_ass_subscript */
+};
+
+
+PyBuffer
+--------
+
+Parts involving the PyBuffer_* likely require the most work, and they
+are widely spread in multiarray:
+
+1) The void scalar makes use of buffers
+2) Multiarray has methods for creating buffers etc. explicitly
+3) Arrays can be created from buffers etc.
+4) The .data attribute of an array is a buffer
+
+There are two things to note in 3K:
+
+1) The buffer protocol has changed.  It is also now quite complicated,
+   and implementing it properly requires several pieces.
+
+2) There is no PyBuffer object any more. Instead, a MemoryView
+   object is present, but it always must piggy-pack on another existing
+   object.
+
+Currently, what has been done is:
+
+1) Replace protocol implementations with stubs that either raise errors
+   or offer limited functionality.
+
+2) Replace PyBuffer usage by PyMemoryView where possible.
+
+3) ... and where not possible, use stubs that raise errors.
+
+What likely needs to be done is:
+
+1) Implement a simple "stub" compatibility buffer object 
+   the memoryview can piggy-pack on.
+
+
+PyNumber_Divide
+---------------
+
+This function has vanished -- needs to be replaced with PyNumber_TrueDivide
+or FloorDivide.
+
+PyFile
+------
+
+Many of the PyFile items have disappeared:
+
+1) PyFile_Type
+2) PyFile_AsFile
+3) PyFile_FromString
+
+Compatibility wrappers for these are now in private/npy_3kcompat.h
+
+
+PyString
+--------
+
+PyString was removed, and needs to be replaced either by PyBytes or PyUnicode.
+The plan of attack currently is:
+
+1) The 'string' array dtype will be replaced by Bytes
+2) The 'unicode' array dtype will stay Unicode
+3) dtype fields names can be *either* Bytes or Unicode
+
+Some compatibility wrappers are defined in private/npy_3kcompat.h,
+redefining essentially String as Bytes.
+
+However, at least following points need still to be audited:
+
+1) PyObject_Str -> it now returns unicodes
+2) tp_doc -> char* string, but is it in unicode or what?
+
+
+RO
+--
+
+The RO alias for READONLY is no more.
+
+
+Py_TPFLAGS_CHECKTYPES
+---------------------
+
+This has vanished and is always on in Py3K.
+
+
+PyInt
+-----
+
+There is no limited-range integer type any more in Py3K.
+
+Currently, the plan is the following:
+
+1) Numpy's integer types no longer inherit from Python integer.
+2) Convert Longs to integers, if their size is small enough and known.
+3) Otherwise, use long longs.
+
+
+PyOS
+----
+
+Deprecations:
+
+1) PyOS_ascii_strtod -> PyOS_double_from_string;
+   curiously enough, PyOS_ascii_strtod is not only deprecated but also
+   causes segfaults
