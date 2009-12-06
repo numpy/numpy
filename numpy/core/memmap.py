@@ -4,6 +4,8 @@ import warnings
 from numeric import uint8, ndarray, dtype
 import sys
 
+from numpy.compat import asbytes
+
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+","w+"]
@@ -174,7 +176,7 @@ class memmap(ndarray):
         if hasattr(filename,'read'):
             fid = filename
         else:
-            fid = file(filename, (mode == 'c' and 'r' or mode)+'b')
+            fid = open(filename, (mode == 'c' and 'r' or mode)+'b')
 
         if (mode == 'w+') and shape is None:
             raise ValueError, "shape must be given"
@@ -203,7 +205,7 @@ class memmap(ndarray):
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
             fid.seek(bytes - 1, 0)
-            fid.write(chr(0))
+            fid.write(asbytes('\0'))
             fid.flush()
 
         if mode == 'c':
