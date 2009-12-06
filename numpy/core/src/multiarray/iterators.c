@@ -1201,8 +1201,8 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
 
 
 static PyMemberDef iter_members[] = {
-    {"base", T_OBJECT, offsetof(PyArrayIterObject, ao), RO, NULL},
-    {"index", T_INT, offsetof(PyArrayIterObject, index), RO, NULL},
+    {"base", T_OBJECT, offsetof(PyArrayIterObject, ao), READONLY, NULL},
+    {"index", T_INT, offsetof(PyArrayIterObject, index), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -1682,8 +1682,8 @@ static PyGetSetDef arraymultiter_getsetlist[] = {
 
 static PyMemberDef arraymultiter_members[] = {
     {"numiter", T_INT, offsetof(PyArrayMultiIterObject, numiter),
-     RO, NULL},
-    {"nd", T_INT, offsetof(PyArrayMultiIterObject, nd), RO, NULL},
+     READONLY, NULL},
+    {"nd", T_INT, offsetof(PyArrayMultiIterObject, nd), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
