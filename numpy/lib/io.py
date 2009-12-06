@@ -23,7 +23,7 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype
 
-_file = file
+_file = open
 _string_like = _is_string_like
 
 def seek_gzip_factory(f):
