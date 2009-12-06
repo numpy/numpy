@@ -11,6 +11,8 @@
 
 #include "npy_config.h"
 
+#include "npy_3kcompat.h"
+
 #include "common.h"
 
 #define _chk_byteorder(arg) (arg == '>' || arg == '<' ||        \

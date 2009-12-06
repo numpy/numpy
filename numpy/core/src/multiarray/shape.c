@@ -11,6 +11,8 @@
 
 #include "npy_config.h"
 
+#include "npy_3kcompat.h"
+
 #include "ctors.h"
 
 #include "shape.h"

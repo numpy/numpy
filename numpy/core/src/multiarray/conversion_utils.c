@@ -8,6 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
+#include "npy_3kcompat.h"
 
 #include "common.h"
 #include "arraytypes.h"

@@ -6,6 +6,7 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
+#include "npy_3kcompat.h"
 
 #include "usertypes.h"
 

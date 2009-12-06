@@ -8,6 +8,8 @@
 
 #include "npy_config.h"
 
+#include "npy_3kcompat.h"
+
 #include "common.h"
 #include "number.h"
 
