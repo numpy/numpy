@@ -343,7 +343,11 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     if (PyErr_Occurred()) {
         PyErr_Clear();
     }
+#if defined(NPY_PY3K)
+    if ((temp=PyUnicode_FromObject(op)) == NULL) {
+#else
     if ((temp=PyObject_Unicode(op)) == NULL) {
+#endif
         return -1;
     }
     ptr = PyUnicode_AS_UNICODE(temp);
@@ -422,7 +426,11 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     if (PyErr_Occurred()) {
         PyErr_Clear();
     }
+#if defined(NPY_PY3K)
+    if ((temp = PyObject_Bytes(op)) == NULL) {
+#else
     if ((temp = PyObject_Str(op)) == NULL) {
+#endif
         return -1;
     }
     if (PyString_AsStringAndSize(temp, &ptr, &len) == -1) {
