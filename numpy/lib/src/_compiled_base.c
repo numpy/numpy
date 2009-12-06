@@ -1,6 +1,7 @@
 #include "Python.h"
 #include "structmember.h"
 #include "numpy/noprefix.h"
+#include "npy_config.h"
 
 static intp
 incr_slot_(double x, double *bins, intp lbins)
@@ -562,11 +563,20 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         return Py_None;
     }
+#if defined(NPY_PY3K)
+    if (!PyArg_ParseTuple(args, "OO!", &obj, &PyUnicode_Type, &str)) {
+        return NULL;
+    }
+
+    docstr = PyUnicode_AS_DATA(str);
+#warning XXX -- is this correct at all!?
+#else
     if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str)) {
         return NULL;
     }
 
     docstr = PyString_AS_STRING(str);
+#endif
 
 #define _TESTDOC1(typebase) (obj->ob_type == &Py##typebase##_Type)
 #define _TESTDOC2(typebase) (obj->ob_type == Py##typebase##_TypePtr)
@@ -930,10 +940,6 @@ PyMODINIT_FUNC init_compiled_base(void) {
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
-
-    s = PyString_FromString("0.5");
-    PyDict_SetItemString(d, "__version__", s);
-    Py_DECREF(s);
 
     /*
      * PyExc_Exception should catch all the standard errors that are
