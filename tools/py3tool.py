@@ -24,16 +24,20 @@ import os
 import sys
 import re
 import subprocess
+import fnmatch
 
 BASE = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 TEMP = os.path.normpath(os.path.join(BASE, '_py3k'))
 
-SCRIPTS = [
-    'generate_umath.py',
-    'setup.py',
-    'generate_numpy_api.py',
-    'generate_ufunc_api.py',
-]
+EXTRA_2TO3_FLAGS = {
+    '*/setup.py': '-x import',
+    'numpy/core/code_generators/generate_umath.py': '-x import',
+    'numpy/core/code_generators/generate_numpy_api.py': '-x import',
+    'numpy/core/code_generators/generate_ufunc_api.py': '-x import',
+    'numpy/core/defchararray.py': '-x unicode',
+    'numpy/core/tests/test_defchararray.py': '-x unicode',
+    'numpy/compat/py3k.py': '-x unicode',
+}
 
 def main():
     p = OptionParser(usage=__doc__.strip())
@@ -232,29 +236,30 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
 
             # add .py files to 2to3 list
             if dst_fn.endswith('.py'):
-                to_convert.append(dst_fn)
+                to_convert.append((src_fn, dst_fn))
 
     # run 2to3
-    scripts = []
-
-    for fn in list(to_convert):
-        if os.path.basename(fn) in SCRIPTS:
-            scripts.append(fn)
-            to_convert.remove(fn)
+    flag_sets = {}
+    for fn, dst_fn in to_convert:
+        flag = ''
+        for pat, opt in EXTRA_2TO3_FLAGS.items():
+            if fnmatch.fnmatch(fn, pat):
+                flag = opt
+                break
+        flag_sets.setdefault(flag, []).append(dst_fn)
 
     if patchfile:
         p = open(patchfile, 'wb+')
     else:
         p = open(os.devnull, 'wb')
 
-    if to_convert:
-        subprocess.call(['2to3', '-w'] + to_convert, stdout=p)
-    if scripts:
-        subprocess.call(['2to3', '-w', '-x', 'import'] + scripts, stdout=p)
+    for flags, filenames in flag_sets.items():
+        subprocess.call(['2to3', '-w'] + flags.split() + filenames,
+                        stdout=p)
 
-    for fn in to_convert + scripts:
+    for fn, dst_fn in to_convert:
         # perform custom mangling
-        custom_mangling(fn)
+        custom_mangling(dst_fn)
 
     p.close()
 
