@@ -2136,11 +2136,11 @@ def scons_generate_config_py(target):
     f.write(r'''
 def show():
     for pkg, config in _config.items():
-        print "package %s configuration:" % pkg
+        print("package %s configuration:" % pkg)
         for lib, libc in config.items():
-            print '    %s' % lib
+            print('    %s' % lib)
             for line in libc.split('\n'):
-                print '\t%s' % line
+                print('\t%s' % line)
     ''')
     f.close()
     return target
@@ -2217,15 +2217,14 @@ def get_info(name):
 def show():
     for name,info_dict in globals().items():
         if name[0] == "_" or type(info_dict) is not type({}): continue
-        print name + ":"
+        print(name + ":")
         if not info_dict:
-            print "  NOT AVAILABLE"
+            print("  NOT AVAILABLE")
         for k,v in info_dict.items():
             v = str(v)
             if k == "sources" and len(v) > 200:
                 v = v[:60] + " ...\n... " + v[-60:]
-            print "    %s = %s" % (k,v)
-        print
+            print("    %s = %s" % (k,v))
     ''')
 
     f.close()
