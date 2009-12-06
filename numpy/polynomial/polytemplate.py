@@ -2,10 +2,16 @@
 
 """
 import string
+import sys
+
+if sys.version_info[0] >= 3:
+    rel_import = "from . import"
+else:
+    rel_import = "import"
 
 polytemplate = string.Template('''
 from __future__ import division
-import polyutils as pu
+REL_IMPORT polyutils as pu
 import numpy as np
 
 class $name(pu.PolyBase) :
@@ -594,4 +600,4 @@ class $name(pu.PolyBase) :
         off, scl = pu.mapparms($domain, domain)
         coef = ${nick}line(off, scl)
         return $name(coef, domain)
-''')
+'''.replace('REL_IMPORT', rel_import))
