@@ -87,7 +87,7 @@ def test_complex_types():
 
 def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
-    if sys.version_info[0] >= 2 and sys.version_info[1] >= 6:
+    if sys.version_info >= (2, 6):
         TESTS = {
             complex(np.inf, 0): "(inf+0j)",
             complex(0, np.inf): "inf*j",
