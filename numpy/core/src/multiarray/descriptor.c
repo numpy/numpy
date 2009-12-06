@@ -2011,7 +2011,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         if (self->type_num == PyArray_UNICODE) {
             elsize >>= 2;
         }
-        obj = PyBytes_FromFormat("%c%d",self->kind, elsize);
+        obj = PyUString_FromFormat("%c%d",self->kind, elsize);
     }
     PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, 1));
 
@@ -2028,7 +2028,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     state = PyTuple_New(9);
     PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
-    PyTuple_SET_ITEM(state, 1, PyBytes_FromFormat("%c", endian));
+    PyTuple_SET_ITEM(state, 1, PyUString_FromFormat("%c", endian));
     PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
     if (self->names) {
         Py_INCREF(self->names);
@@ -2120,7 +2120,11 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
     int elsize = -1, alignment = -1;
     int version = 4;
+#if defined(NPY_PY3K)
+    int endian;
+#else
     char endian;
+#endif
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
     int dtypeflags = 0;
@@ -2136,28 +2140,44 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
+#if defined(NPY_PY3K)
+        if (!PyArg_ParseTuple(args, "(iCOOOiiiO)", &version, &endian,
+#else
         if (!PyArg_ParseTuple(args, "(icOOOiiiO)", &version, &endian,
+#endif
                     &subarray, &names, &fields, &elsize,
                     &alignment, &dtypeflags, &metadata)) {
             return NULL;
         }
         break;
     case 8:
+#if defined(NPY_PY3K)
+        if (!PyArg_ParseTuple(args, "(iCOOOiii)", &version, &endian,
+#else
         if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
+#endif
                     &subarray, &names, &fields, &elsize,
                     &alignment, &dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
+#if defined(NPY_PY3K)
+        if (!PyArg_ParseTuple(args, "(iCOOOii)", &version, &endian,
+#else
         if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian,
+#endif
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
             return NULL;
         }
         break;
     case 6:
+#if defined(NPY_PY3K)
+        if (!PyArg_ParseTuple(args, "(iCOOii)", &version,
+#else
         if (!PyArg_ParseTuple(args, "(icOOii)", &version,
+#endif
                     &endian, &subarray, &fields,
                     &elsize, &alignment)) {
             PyErr_Clear();
@@ -2165,7 +2185,11 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         break;
     case 5:
         version = 0;
+#if defined(NPY_PY3K)
+        if (!PyArg_ParseTuple(args, "(COOii)",
+#else
         if (!PyArg_ParseTuple(args, "(cOOii)",
+#endif
                     &endian, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;

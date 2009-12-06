@@ -537,50 +537,62 @@ class TestSubscripting(TestCase):
 
 
 class TestPickling(TestCase):
-    def test_both(self):
+    def test_roundtrip(self):
         import pickle
         carray = array([[2,9],[7,0],[3,8]])
-        tarray = transpose(carray)
-        assert_equal(carray, pickle.loads(carray.dumps()))
-        assert_equal(tarray, pickle.loads(tarray.dumps()))
+        DATA = [
+            carray,
+            transpose(carray),
+            array([('xxx', 1, 2.0)], dtype=[('a', (str,3)), ('b', int),
+                                            ('c', float)])
+        ]
+
+        for a in DATA:
+            assert_equal(a, pickle.loads(a.dumps()), err_msg="%r" % a)
+
+    def _loads(self, obj):
+        if sys.version_info[0] >= 3:
+            return loads(obj, encoding='latin1')
+        else:
+            return loads(obj)
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
     def test_version0_int8(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = array([1,2,3,4], dtype=int8)
-        p = loads(asbytes(s))
+        p = self._loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version0_float32(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
-        p = loads(asbytes(s))
+        p = self._loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version0_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = array([{'a':1}, {'b':2}])
-        p = loads(asbytes(s))
+        p = self._loads(asbytes(s))
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
     def test_version1_int8(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = array([1,2,3,4], dtype=int8)
-        p = loads(asbytes(s))
+        p = self._loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version1_float32(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
-        p = loads(asbytes(s))
+        p = self._loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version1_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = array([{'a':1}, {'b':2}])
-        p = loads(asbytes(s))
+        p = self._loads(asbytes(s))
         assert_equal(a, p)
 
 

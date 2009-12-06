@@ -1337,6 +1337,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_ssize_t len;
     intp size, dimensions[MAX_DIMS];
     int nd;
+    int incref_base = 1;
 
     /* This will free any memory associated with a and
        use the string in setstate as the (writeable) memory.
@@ -1388,13 +1389,23 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
-        if (!PyString_Check(rawdata)) {
+#if defined(NPY_PY3K)
+        /* Backward compatibility with Python 2 Numpy pickles */
+        if (PyUnicode_Check(rawdata)) {
+            PyObject *tmp;
+            tmp = PyUnicode_AsLatin1String(rawdata);
+            rawdata = tmp;
+            incref_base = 0;
+        }
+#endif
+
+        if (!PyBytes_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "pickle not returning string");
             return NULL;
         }
 
-        if (PyString_AsStringAndSize(rawdata, &datastr, &len))
+        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len))
             return NULL;
 
         if ((len != (self->descr->elsize * size))) {
@@ -1472,7 +1483,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         else {
             self->base = rawdata;
-            Py_INCREF(self->base);
+            if (incref_base) {
+                Py_INCREF(self->base);
+            }
         }
     }
     else {

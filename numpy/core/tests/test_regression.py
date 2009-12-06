@@ -876,7 +876,10 @@ class TestRegression(TestCase):
         # The dtype is float64, but the isbuiltin attribute is 0.
         data_dir = path.join(path.dirname(__file__), 'data')
         filename = path.join(data_dir, "astype_copy.pkl")
-        xp = pickle.load(open(filename))
+        if sys.version_info[0] >= 3:
+            xp = pickle.load(open(filename, 'rb'), encoding='latin1')
+        else:
+            xp = pickle.load(open(filename))
         xpd = xp.astype(np.float64)
         assert (xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0])
