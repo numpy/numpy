@@ -92,7 +92,7 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
                     errtype, name);
             goto fail;
         }
-        args = Py_BuildValue("NN", PyString_FromString(errtype),
+        args = Py_BuildValue("NN", PyUString_FromString(errtype),
                 PyInt_FromLong((long) retstatus));
         if (args == NULL) {
             goto fail;
@@ -774,7 +774,7 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
     if (PyUFunc_NUM_NODEFAULTS != 0) {
 #endif
         if (PyUFunc_PYVALS_NAME == NULL) {
-            PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
+            PyUFunc_PYVALS_NAME = PyUString_InternFromString(UFUNC_PYVALS_NAME);
         }
         thedict = PyThreadState_GetDict();
         if (thedict == NULL) {
@@ -3628,7 +3628,7 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
     if (PyUFunc_PYVALS_NAME == NULL) {
-        PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
+        PyUFunc_PYVALS_NAME = PyUString_InternFromString(UFUNC_PYVALS_NAME);
     }
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
@@ -3699,7 +3699,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
     if (PyUFunc_PYVALS_NAME == NULL) {
-        PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
+        PyUFunc_PYVALS_NAME = PyUString_InternFromString(UFUNC_PYVALS_NAME);
     }
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
@@ -4041,7 +4041,7 @@ ufunc_repr(PyUFuncObject *self)
     char buf[100];
 
     sprintf(buf, "<ufunc '%.50s'>", self->name);
-    return PyString_FromString(buf);
+    return PyUString_FromString(buf);
 }
 
 
@@ -4235,17 +4235,17 @@ ufunc_get_doc(PyUFuncObject *self)
     outargs = _makeargs(self->nout, "out", 1);
     inargs = _makeargs(self->nin, "x", 0);
     if (outargs == NULL) {
-        doc = PyString_FromFormat("%s(%s)\n\n%s",
-                                  self->name,
-                                  PyString_AS_STRING(inargs),
-                                  self->doc);
+        doc = PyUString_FromFormat("%s(%s)\n\n%s",
+                                   self->name,
+                                   PyString_AS_STRING(inargs),
+                                   self->doc);
     }
     else {
-        doc = PyString_FromFormat("%s(%s[, %s])\n\n%s",
-                                  self->name,
-                                  PyString_AS_STRING(inargs),
-                                  PyString_AS_STRING(outargs),
-                                  self->doc);
+        doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
+                                   self->name,
+                                   PyString_AS_STRING(inargs),
+                                   PyString_AS_STRING(outargs),
+                                   self->doc);
         Py_DECREF(outargs);
     }
     Py_DECREF(inargs);
@@ -4313,7 +4313,7 @@ ufunc_get_types(PyUFuncObject *self)
 static PyObject *
 ufunc_get_name(PyUFuncObject *self)
 {
-    return PyString_FromString(self->name);
+    return PyUString_FromString(self->name);
 }
 
 static PyObject *
@@ -4334,7 +4334,7 @@ ufunc_get_signature(PyUFuncObject *self)
     if (!self->core_enabled) {
         Py_RETURN_NONE;
     }
-    return PyString_FromString(self->core_signature);
+    return PyUString_FromString(self->core_signature);
 }
 
 #undef _typecharfromnum
