@@ -669,7 +669,11 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
         return NULL;
     }
     if (!out) {
+#if defined(NPY_PY3K)
+        ret = PyNumber_TrueDivide(obj1, obj2);
+#else
         ret = PyNumber_Divide(obj1, obj2);
+#endif
     }
     else {
         ret = PyObject_CallFunction(n_ops.divide, "OOO", out, obj2, out);

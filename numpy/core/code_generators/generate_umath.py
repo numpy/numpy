@@ -681,6 +681,9 @@ defdict = {
           ),
 }
 
+if sys.version_info[0] >= 3:
+    defdict['divide'] = defdict['true_divide']
+
 def indent(st,spaces):
     indention = ' '*spaces
     indented = indention + st.replace('\n','\n'+indention)

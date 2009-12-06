@@ -6,9 +6,13 @@ import numpy as np
 
 class TestDivision(TestCase):
     def test_division_int(self):
-        # int division should return the floor of the result, a la Python
+        # int division should follow Python
         x = np.array([5, 10, 90, 100, -5, -10, -90, -100, -120])
-        assert_equal(x / 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
+        if 5 / 10 == 0.5:
+            assert_equal(x / 100, [0.05, 0.1, 0.9, 1,
+                                   -0.05, -0.1, -0.9, -1, -1.2])
+        else:
+            assert_equal(x / 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 

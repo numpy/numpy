@@ -6,6 +6,8 @@
  * object functions.
  */
 
+#include "npy_3kcompat.h"
+
 
 /*
  *****************************************************************************
@@ -34,7 +36,11 @@ Py_reciprocal(PyObject *o)
     if (!one) {
         return NULL;
     }
+#if defined(NPY_PY3K)
+    result = PyNumber_TrueDivide(one, o);
+#else
     result = PyNumber_Divide(one, o);
+#endif
     Py_DECREF(one);
     return result;
 }
