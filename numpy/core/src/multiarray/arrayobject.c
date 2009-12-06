@@ -719,6 +719,15 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 
     /* Cast arrays to a common type */
     if (self->descr->type_num != other->descr->type_num) {
+#if defined(NPY_PY3K)
+        /*
+         * Comparison between Bytes and Unicode is not defined in Py3K;
+         * we follow.
+         */
+        result = Py_NotImplemented;
+        Py_INCREF(result);
+        return result;
+#else
         PyObject *new;
         if (self->descr->type_num == PyArray_STRING &&
             other->descr->type_num == PyArray_UNICODE) {
@@ -750,6 +759,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                             "in comparison");
             return NULL;
         }
+#endif
     }
     else {
         Py_INCREF(self);
