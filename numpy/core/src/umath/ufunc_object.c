@@ -67,7 +67,7 @@ static int
 _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *first)
 {
     PyObject *pyfunc, *ret, *args;
-    char *name = PyString_AS_STRING(PyTuple_GET_ITEM(errobj,0));
+    char *name = PyBytes_AS_STRING(PyTuple_GET_ITEM(errobj,0));
     char msg[100];
     ALLOW_C_API_DEF;
 
@@ -754,7 +754,7 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
         Py_DECREF(temp);
     }
 
-    *errobj = Py_BuildValue("NO", PyString_FromString(name), retval);
+    *errobj = Py_BuildValue("NO", PyBytes_FromString(name), retval);
     if (*errobj == NULL) {
         return -1;
     }
@@ -786,7 +786,7 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 #endif
     if (ref == NULL) {
         *errmask = UFUNC_ERR_DEFAULT;
-        *errobj = Py_BuildValue("NO", PyString_FromString(name), Py_None);
+        *errobj = Py_BuildValue("NO", PyBytes_FromString(name), Py_None);
         *bufsize = PyArray_BUFSIZE;
         return 0;
     }
@@ -4303,7 +4303,7 @@ ufunc_get_types(PyUFuncObject *self)
             t[ni + 2 + j] = _typecharfromnum(self->types[n]);
             n++;
         }
-        str = PyString_FromStringAndSize(t, no + ni + 2);
+        str = PyUString_FromStringAndSize(t, no + ni + 2);
         PyList_SET_ITEM(list, k, str);
     }
     _pya_free(t);
