@@ -97,7 +97,7 @@ static int _array_descr_walk_fields(PyObject* fields, PyObject* l)
          */
 
         /* XXX: are those checks necessary ? */
-        if (!PyString_Check(key)) {
+        if (!PyUString_Check(key)) {
             PyErr_SetString(PyExc_SystemError,
                     "(Hash) key of dtype dict not a string ???");
             return -1;
