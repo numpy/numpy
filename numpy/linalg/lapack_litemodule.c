@@ -820,7 +820,7 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
 
 static char lapack_lite_module_documentation[] = "";
 
-DL_EXPORT(void)
+PyMODINIT_FUNC
 initlapack_lite(void)
 {
     PyObject *m,*d;
