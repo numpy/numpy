@@ -139,7 +139,7 @@ import cPickle
 
 import numpy
 from numpy.lib.utils import safe_eval
-
+from numpy.compat import asbytes, isfile
 
 MAGIC_PREFIX = '\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
@@ -276,7 +276,7 @@ def write_array_header_1_0(fp, d):
         raise ValueError("header does not fit inside %s bytes" % (256*256))
     header_len_str = struct.pack('<H', len(header))
     fp.write(header_len_str)
-    fp.write(header)
+    fp.write(asbytes(header))
 
 def read_array_header_1_0(fp):
     """
@@ -386,7 +386,7 @@ def write_array(fp, array, version=(1,0)):
     if version != (1, 0):
         msg = "we only support format version (1,0), not %s"
         raise ValueError(msg % (version,))
-    fp.write(magic(*version))
+    fp.write(asbytes(magic(*version)))
     write_array_header_1_0(fp, header_data_from_array_1_0(array))
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data directly.
@@ -397,7 +397,7 @@ def write_array(fp, array, version=(1,0)):
         # handle Fortran-contiguous arrays.
         fp.write(array.data)
     else:
-        if isinstance(fp, file):
+        if isfile(fp):
             array.tofile(fp)
         else:
             # XXX: We could probably chunk this using something like
@@ -440,7 +440,7 @@ def read_array(fp):
         # The array contained Python objects. We need to unpickle the data.
         array = cPickle.load(fp)
     else:
-        if isinstance(fp, file):
+        if isfile(fp):
             # We can use the fast fromfile() function.
             array = numpy.fromfile(fp, dtype=dtype, count=count)
         else:
@@ -528,7 +528,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(filename, mode+'b')
         try:
-            fp.write(magic(*version))
+            fp.write(asbytes(magic(*version)))
             write_array_header_1_0(fp, d)
             offset = fp.tell()
         finally:
