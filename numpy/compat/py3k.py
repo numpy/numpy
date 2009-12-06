@@ -3,9 +3,10 @@ Python 3 compatibility tools.
 
 """
 
-__all__ = ['bytes', 'asbytes', 'isfileobj']
+__all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception']
 
 import sys
+
 if sys.version_info[0] >= 3:
     import io
     bytes = bytes
@@ -20,3 +21,7 @@ else:
     asbytes = str
     def isfileobj(f):
         return isinstance(f, file)
+
+def getexception():
+    return sys.exc_info()[1]
+
