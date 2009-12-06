@@ -928,12 +928,39 @@ define_types(void)
     return;
 }
 
-/* Initialization function for the module (*must* be called init<name>) */
-PyMODINIT_FUNC init_compiled_base(void) {
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_compiled_base",
+        NULL,
+        -1,
+        methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
+
+#if defined(NPY_PY3K)
+#define RETVAL m
+PyObject *PyInit__compiled_base(void)
+#else
+#define RETVAL
+PyMODINIT_FUNC
+init_compiled_base(void)
+#endif
+{
     PyObject *m, *d, *s;
 
-    /* Create the module and add the functions */
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule("_compiled_base", methods);
+#endif
+    if (!m) {
+        return RETVAL;
+    }
 
     /* Import the array objects */
     import_array();
@@ -952,5 +979,5 @@ PyMODINIT_FUNC init_compiled_base(void) {
     /* define PyGetSetDescr_Type and PyMemberDescr_Type */
     define_types();
 
-    return;
+    return RETVAL;
 }
