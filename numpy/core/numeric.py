@@ -1728,7 +1728,7 @@ def base_repr (number, base=2, padding=0):
 
 from cPickle import load, loads
 _cload = load
-_file = file
+_file = open
 
 def load(file):
     """

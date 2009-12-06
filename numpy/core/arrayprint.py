@@ -13,7 +13,6 @@ __docformat__ = 'restructuredtext'
 # and by Travis Oliphant  2005-8-22 for numpy
 
 import sys
-import numeric      as _nc
 import numerictypes as _nt
 from umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from multiarray import format_longfloat
@@ -142,6 +141,7 @@ def get_printoptions():
     return d
 
 def _leading_trailing(a):
+    import numeric as _nc
     if a.ndim == 1:
         if len(a) > 2*_summaryEdgeItems:
             b = _nc.concatenate((a[:_summaryEdgeItems],
@@ -224,6 +224,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     return lst
 
 def _convert_arrays(obj):
+    import numeric as _nc
     newtup = []
     for k in obj:
         if isinstance(k, _nc.ndarray):
@@ -386,6 +387,7 @@ class FloatFormat(object):
         self.fillFormat(data)
 
     def fillFormat(self, data):
+        import numeric as _nc
         errstate = _nc.seterr(all='ignore')
         try:
             special = isnan(data) | isinf(data)
