@@ -999,19 +999,15 @@ class TestIO(object):
         f.close()
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
-    @in_foreign_locale
-    def _run_in_foreign_locale(self, func, fail=False):
-        np.testing.dec.knownfailureif(fail)(func)(self)
-
     def test_locale(self):
-        yield self._run_in_foreign_locale, TestIO.test_numbers
-        yield self._run_in_foreign_locale, TestIO.test_nan
-        yield self._run_in_foreign_locale, TestIO.test_inf
-        yield self._run_in_foreign_locale, TestIO.test_counted_string
-        yield self._run_in_foreign_locale, TestIO.test_ascii
-        yield self._run_in_foreign_locale, TestIO.test_malformed
-        yield self._run_in_foreign_locale, TestIO.test_tofile_sep
-        yield self._run_in_foreign_locale, TestIO.test_tofile_format
+        in_foreign_locale(self.test_numbers)()
+        in_foreign_locale(self.test_nan)()
+        in_foreign_locale(self.test_inf)()
+        in_foreign_locale(self.test_counted_string)()
+        in_foreign_locale(self.test_ascii)()
+        in_foreign_locale(self.test_malformed)()
+        in_foreign_locale(self.test_tofile_sep)()
+        in_foreign_locale(self.test_tofile_format)()
 
 
 class TestFromBuffer(TestCase):
