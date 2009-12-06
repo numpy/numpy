@@ -268,7 +268,8 @@ class DataSource (object):
         """
         # We import these here because importing urllib2 is slow and
         # a significant fraction of numpy's total import time.
-        from urllib2 import urlopen, URLError
+        from urllib2 import urlopen
+        from urllib2 import URLError
 
         upath = self.abspath(path)
 
@@ -412,7 +413,8 @@ class DataSource (object):
         """
         # We import this here because importing urllib2 is slow and
         # a significant fraction of numpy's total import time.
-        from urllib2 import urlopen, URLError
+        from urllib2 import urlopen
+        from urllib2 import URLError
 
         # Test local path
         if os.path.exists(path):
