@@ -31,6 +31,8 @@
 #include "numpy/noprefix.h"
 #include "numpy/npy_math.h"
 
+#include "npy_config.h"
+
 #define NOT_USED NPY_UNUSED(unused)
 #define PYA_QS_STACK 100
 #define SMALL_QUICKSORT 15
@@ -986,7 +988,6 @@ add_sortfuncs(void)
 static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
 };
-
 
 
 #if defined(NPY_PY3K)
