@@ -64,7 +64,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     intp n, n2;
     size_t n3, n4;
     PyArrayIterObject *it;
-    PyObject *obj, *strobj, *tupobj;
+    PyObject *obj, *strobj, *tupobj, *byteobj;
 
     n3 = (sep ? strlen((const char *)sep) : 0);
     if (n3 == 0) {
@@ -148,13 +148,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
                 PyTuple_SET_ITEM(tupobj,0,obj);
-                obj = PyString_FromString((const char *)format);
+                obj = PyUString_FromString((const char *)format);
                 if (obj == NULL) {
                     Py_DECREF(tupobj);
                     Py_DECREF(it);
                     return -1;
                 }
-                strobj = PyString_Format(obj, tupobj);
+                strobj = PyUString_Format(obj, tupobj);
                 Py_DECREF(obj);
                 Py_DECREF(tupobj);
                 if (strobj == NULL) {
@@ -162,10 +162,18 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
             }
+#if defined(NPY_PY3K)
+            byteobj = PyUnicode_AsASCIIString(strobj);
+#else
+            byteobj = strobj;
+#endif
             NPY_BEGIN_ALLOW_THREADS;
-            n2 = PyString_GET_SIZE(strobj);
-            n = fwrite(PyString_AS_STRING(strobj), 1, n2, fp);
+            n2 = PyBytes_GET_SIZE(byteobj);
+            n = fwrite(PyBytes_AS_STRING(byteobj), 1, n2, fp);
             NPY_END_ALLOW_THREADS;
+#if defined(NPY_PY3K)
+            Py_DECREF(byteobj);
+#endif
             if (n < n2) {
                 PyErr_Format(PyExc_IOError,
                         "problem writing element %"INTP_FMT\
@@ -217,7 +225,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     numbytes = PyArray_NBYTES(self);
     if ((PyArray_ISCONTIGUOUS(self) && (order == NPY_CORDER))
         || (PyArray_ISFORTRAN(self) && (order == NPY_FORTRANORDER))) {
-        ret = PyString_FromStringAndSize(self->data, (Py_ssize_t) numbytes);
+        ret = PyBytes_FromStringAndSize(self->data, (Py_ssize_t) numbytes);
     }
     else {
         PyObject *new;
@@ -237,12 +245,12 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         if (it == NULL) {
             return NULL;
         }
-        ret = PyString_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
+        ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
         if (ret == NULL) {
             Py_DECREF(it);
             return NULL;
         }
-        dptr = PyString_AS_STRING(ret);
+        dptr = PyBytes_AS_STRING(ret);
         index = it->size;
         elsize = self->descr->elsize;
         while (index--) {

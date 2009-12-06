@@ -63,6 +63,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyUString_GET_SIZE PyUnicode_GET_SIZE
 #define PyUString_Size PyUnicode_Size
 #define PyUString_InternFromString PyUnicode_InternFromString
+#define PyUString_Format PyUnicode_Format
 
 #else
 
@@ -91,6 +92,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyUString_GET_SIZE PyString_GET_SIZE
 #define PyUString_Size PyString_Size
 #define PyUString_InternFromString PyString_InternFromString
+#define PyUString_Format PyString_Format
 
 #endif /* NPY_PY3K */
 
