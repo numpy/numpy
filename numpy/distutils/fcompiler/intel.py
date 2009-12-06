@@ -1,6 +1,3 @@
-# -*- encoding: iso-8859-1 -*-
-# above encoding b/c there's a non-ASCII character in the sample output
-# of intele
 # http://developer.intel.com/software/products/compilers/flin/
 
 import sys
@@ -123,11 +120,6 @@ class IntelItaniumFCompiler(IntelFCompiler):
     description = 'Intel Fortran Compiler for Itanium apps'
 
     version_match = intel_version_match('Itanium|IA-64')
-
-#Intel(R) Fortran Itanium(R) Compiler for Itanium(R)-based applications
-#Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
-#Copyright (C) 1985-2006 Intel Corporation.  All rights reserved.
-#30 DAY EVALUATION LICENSE
 
     possible_executables = ['ifort', 'efort', 'efc']
 
