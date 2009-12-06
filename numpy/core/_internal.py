@@ -3,12 +3,13 @@
 
 import re
 import sys
-#from _mx_datetime_parser import *
+
+from numpy.compat import asbytes, bytes
 
 if (sys.byteorder == 'little'):
-    _nbo = '<'
+    _nbo = asbytes('<')
 else:
-    _nbo = '>'
+    _nbo = asbytes('>')
 
 def _makenames_list(adict):
     from multiarray import dtype
@@ -18,15 +19,15 @@ def _makenames_list(adict):
         obj = adict[fname]
         n = len(obj)
         if not isinstance(obj, tuple) or n not in [2,3]:
-            raise ValueError, "entry not a 2- or 3- tuple"
+            raise ValueError("entry not a 2- or 3- tuple")
         if (n > 2) and (obj[2] == fname):
             continue
         num = int(obj[1])
         if (num < 0):
-            raise ValueError, "invalid offset."
+            raise ValueError("invalid offset.")
         format = dtype(obj[0])
         if (format.itemsize == 0):
-            raise ValueError, "all itemsizes must be fixed."
+            raise ValueError("all itemsizes must be fixed.")
         if (n > 2):
             title = obj[2]
         else:
@@ -134,16 +135,16 @@ def _split(input):
        the tuple used to specify multi-dimensional arrays."""
 
     newlist = []
-    hold = ''
+    hold = asbytes('')
 
-    listinput = input.split(',')
+    listinput = input.split(asbytes(','))
     for element in listinput:
-        if hold != '':
-            item = hold + ',' + element
+        if hold != asbytes(''):
+            item = hold + asbytes(',') + element
         else:
             item = element
-        left = item.count('(')
-        right = item.count(')')
+        left = item.count(asbytes('('))
+        right = item.count(asbytes(')'))
 
         # if the parenthesis is not balanced, hold the string
         if left > right :
@@ -152,36 +153,38 @@ def _split(input):
         # when balanced, append to the output list and reset the hold
         elif left == right:
             newlist.append(item.strip())
-            hold = ''
+            hold = asbytes('')
 
         # too many close parenthesis is unacceptable
         else:
-            raise SyntaxError, item
+            raise SyntaxError(item)
 
     # if there is string left over in hold
-    if hold != '':
-        raise SyntaxError, hold
+    if hold != asbytes(''):
+        raise SyntaxError(hold)
 
     return newlist
 
-format_datetime = re.compile(r"""(?P<typecode>M8|m8|datetime64|timedelta64)
-                                 ([[]
-                                   ((?P<num>\d+)?
-                                   (?P<baseunit>Y|M|W|B|D|h|m|s|ms|us|ns|ps|fs|as)
-                                   (/(?P<den>\d+))?
-                                  []])
-                                 (//(?P<events>\d+))?)?""", re.X)
+format_datetime = re.compile(asbytes(r"""
+     (?P<typecode>M8|m8|datetime64|timedelta64)
+     ([[]
+       ((?P<num>\d+)?
+       (?P<baseunit>Y|M|W|B|D|h|m|s|ms|us|ns|ps|fs|as)
+       (/(?P<den>\d+))?
+      []])
+     (//(?P<events>\d+))?)?"""), re.X)
+
 # Return (baseunit, num, den, events), datetime
 #  from date-time string
 def _datetimestring(astr):
     res = format_datetime.match(astr)
     if res is None:
-        raise ValueError, "Incorrect date-time string."
+        raise ValueError("Incorrect date-time string.")
     typecode = res.group('typecode')
-    datetime = (typecode == 'M8' or typecode == 'datetime64')
-    defaults = ['us', 1, 1, 1]
+    datetime = (typecode == asbytes('M8') or typecode == asbytes('datetime64'))
+    defaults = [asbytes('us'), 1, 1, 1]
     names = ['baseunit', 'num', 'den', 'events']
-    func = [str, int, int, int]
+    func = [bytes, int, int, int]
     dt_tuple = []
     for i, name in enumerate(names):
         value = res.group(name)
@@ -192,19 +195,16 @@ def _datetimestring(astr):
 
     return tuple(dt_tuple), datetime
 
-format_re = re.compile(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*)')
+format_re = re.compile(asbytes(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*)'))
 
 # astr is a string (perhaps comma separated)
 
-_convorder = {'=': _nbo,
-              '|': '|',
-              '>': '>',
-              '<': '<'}
+_convorder = {asbytes('='): _nbo}
 
 def _commastring(astr):
     res = _split(astr)
     if (len(res)) < 1:
-        raise ValueError, "unrecognized formant"
+        raise ValueError("unrecognized formant")
     result = []
     for k,item in enumerate(res):
         # convert item
@@ -213,21 +213,21 @@ def _commastring(astr):
         except (TypeError, AttributeError):
             raise ValueError('format %s is not recognized' % item)
 
-        if order2 == '':
+        if order2 == asbytes(''):
             order = order1
-        elif order1 == '':
+        elif order1 == asbytes(''):
             order = order2
         else:
-            order1 = _convorder[order1]
-            order2 = _convorder[order2]
+            order1 = _convorder.get(order1, order1)
+            order2 = _convorder.get(order2, order2)
             if (order1 != order2):
                 raise ValueError('in-consistent byte-order specification %s and %s' % (order1, order2))
             order = order1
 
-        if order in ['|', '=', _nbo]:
-            order = ''
-        dtype = '%s%s' % (order, dtype)
-        if (repeats == ''):
+        if order in [asbytes('|'), asbytes('='), _nbo]:
+            order = asbytes('')
+        dtype = order + dtype
+        if (repeats == asbytes('')):
             newitem = dtype
         else:
             newitem = (dtype, eval(repeats))
@@ -325,9 +325,9 @@ def _newnames(datatype, order):
             try:
                 nameslist.remove(name)
             except ValueError:
-                raise ValueError, "unknown field name: %s" % (name,)
+                raise ValueError("unknown field name: %s" % (name,))
         return tuple(list(order) + nameslist)
-    raise ValueError, "unsupported order value: %s" % (order,)
+    raise ValueError("unsupported order value: %s" % (order,))
 
 # Given an array with fields and a sequence of field names
 # construct a new array with just those fields copied over
