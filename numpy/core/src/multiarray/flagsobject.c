@@ -363,13 +363,26 @@ static PyGetSetDef arrayflags_getsets[] = {
 static PyObject *
 arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 {
-    char *key;
+    char *key = NULL;
+    char buf[16];
     int n;
-    if (!PyString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
+        PyObject *tmp_str;
+        tmp_str = PyUnicode_AsASCIIString(ind);
+        key = PyBytes_AS_STRING(tmp_str);
+        n = PyBytes_GET_SIZE(tmp_str);
+        if (n > 16) n = 16;
+        memcpy(buf, key, n);
+        Py_DECREF(tmp_str);
+        key = buf;
+    }
+    else if (PyBytes_Check(ind)) {
+        key = PyBytes_AS_STRING(ind);
+        n = PyBytes_GET_SIZE(ind);
+    }
+    else {
         goto fail;
     }
-    key = PyString_AS_STRING(ind);
-    n = PyString_GET_SIZE(ind);
     switch(n) {
     case 1:
         switch(key[0]) {
@@ -463,12 +476,25 @@ static int
 arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
 {
     char *key;
+    char buf[16];
     int n;
-    if (!PyString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
+        PyObject *tmp_str;
+        tmp_str = PyUnicode_AsASCIIString(ind);
+        key = PyBytes_AS_STRING(tmp_str);
+        n = PyBytes_GET_SIZE(tmp_str);
+        if (n > 16) n = 16;
+        memcpy(buf, key, n);
+        Py_DECREF(tmp_str);
+        key = buf;
+    }
+    else if (PyBytes_Check(ind)) {
+        key = PyBytes_AS_STRING(ind);
+        n = PyBytes_GET_SIZE(ind);
+    }
+    else {
         goto fail;
     }
-    key = PyString_AS_STRING(ind);
-    n = PyString_GET_SIZE(ind);
     if (((n==9) && (strncmp(key, "WRITEABLE", n) == 0)) ||
         ((n==1) && (strncmp(key, "W", n) == 0))) {
         return arrayflags_writeable_set(self, item);
@@ -503,7 +529,7 @@ arrayflags_print(PyArrayFlagsObject *self)
 {
     int fl = self->flags;
 
-    return PyString_FromFormat("  %s : %s\n  %s : %s\n  %s : %s\n"\
+    return PyUString_FromFormat("  %s : %s\n  %s : %s\n  %s : %s\n"\
                                "  %s : %s\n  %s : %s\n  %s : %s",
                                "C_CONTIGUOUS", _torf_(fl, CONTIGUOUS),
                                "F_CONTIGUOUS", _torf_(fl, FORTRAN),
