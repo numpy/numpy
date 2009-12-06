@@ -2,6 +2,7 @@
 #define _NPY_3KCOMPAT_H_
 
 #include <Python.h>
+#include <stdio.h>
 #include "npy_config.h"
 
 /*
@@ -59,6 +60,36 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
 #define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
 #endif
+
+/*
+ * PyFile_AsFile
+ */
+#if defined(NPY_PY3K)
+static NPY_INLINE FILE*
+npy_PyFile_AsFile(PyObject *file, char *mode)
+{
+    int fd;
+    fd = PyObject_AsFileDescriptor(file);
+    if (fd == -1) {
+        return NULL;
+    }
+#warning XXX -- who releases the FILE* returned by fdopen? fclose() closes the file...
+    return fdopen(fd, mode);
+}
+#else
+#define npy_PyFile_AsFile(file, mode) PyFile_AsFile(file)
+#endif
+
+static NPY_INLINE PyObject*
+npy_PyFile_OpenFile(PyObject *filename, char *mode)
+{
+    PyObject *open;
+    open = PyDict_GetItemString(PyEval_GetBuiltins(), "open");
+    if (open == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(open, "Os", filename, mode);
+}
 
 /*
  * PyObject_Cmp

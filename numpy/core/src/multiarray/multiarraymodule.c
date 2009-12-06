@@ -1713,8 +1713,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
-        file = PyObject_CallFunction((PyObject *)&PyFile_Type,
-                                     "Os", file, "rb");
+        file = npy_PyFile_OpenFile(file, "rb");
         if (file == NULL) {
             return NULL;
         }
@@ -1722,7 +1721,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     else {
         Py_INCREF(file);
     }
-    fp = PyFile_AsFile(file);
+    fp = npy_PyFile_AsFile(file, "rb");
     if (fp == NULL) {
         PyErr_SetString(PyExc_IOError,
                         "first argument must be an open file");

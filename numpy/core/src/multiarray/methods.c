@@ -489,9 +489,8 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (PyString_Check(file) || PyUnicode_Check(file)) {
-        file = PyObject_CallFunction((PyObject *)&PyFile_Type,
-                                     "Os", file, "wb");
+    if (PyBytes_Check(file) || PyUnicode_Check(file)) {
+        file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {
             return NULL;
         }
@@ -499,7 +498,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     else {
         Py_INCREF(file);
     }
-    fd = PyFile_AsFile(file);
+    fd = npy_PyFile_AsFile(file, "wb");
     if (fd == NULL) {
         PyErr_SetString(PyExc_IOError, "first argument must be a " \
                         "string or open file");
@@ -1516,8 +1515,8 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
     if (cpick == NULL) {
         return -1;
     }
-    if PyString_Check(file) {
-        file = PyFile_FromString(PyString_AS_STRING(file), "wb");
+    if (PyString_Check(file)) {
+        file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {
             return -1;
         }
