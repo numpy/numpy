@@ -405,6 +405,13 @@ _array_dealloc_buffer_info(PyArrayObject *self)
     }
 }
 
+#else
+
+NPY_NO_EXPORT void
+_array_dealloc_buffer_info(PyArrayObject *self)
+{
+}
+
 #endif
 
 /*************************************************************************/
