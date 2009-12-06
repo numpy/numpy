@@ -9,6 +9,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 
+#include "npy_3kcompat.h"
+
 #include "npy_config.h"
 
 /*
@@ -244,15 +246,29 @@ static PyObject *
 UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int nin, nout;
-    PyObject *signature;
+    PyObject *signature, *sig_str;
     PyObject *f;
     int core_enabled;
 
     if (!PyArg_ParseTuple(args, "iiO", &nin, &nout, &signature)) return NULL;
+
+
+    if (PyString_Check(signature)) {
+        sig_str = signature;
+    } else if (PyUnicode_Check(signature)) {
+        sig_str = PyUnicode_AsUTF8String(signature);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "signature should be a string");
+        return NULL;
+    }
+
     f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
-        1, PyString_AS_STRING(signature));
+        1, PyString_AS_STRING(sig_str));
+    if (sig_str != signature) {
+        Py_DECREF(sig_str);
+    }
     if (f == NULL) return NULL;
     core_enabled = ((PyUFuncObject*)f)->core_enabled;
     return Py_BuildValue("i", core_enabled);
