@@ -8,10 +8,13 @@ __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
+import sys
 import numpy as np
 from numpy import recarray
 from numpy.core.records import fromrecords as recfromrecords, \
                                fromarrays as recfromarrays
+
+from numpy.compat import asbytes
 
 import numpy.ma.testutils
 from numpy.ma.testutils import *
@@ -36,7 +39,10 @@ class TestMRecords(TestCase):
         slist = ['one','two','three','four','five']
         ddtype = [('a',int),('b',float),('c','|S8')]
         mask = [0,1,0,0,1]
-        self.base = ma.array(zip(ilist,flist,slist), mask=mask, dtype=ddtype)
+        if sys.version_info[0] >= 3:
+            slist = list(map(asbytes, slist))
+        self.base = ma.array(list(zip(ilist,flist,slist)),
+                             mask=mask, dtype=ddtype)
 
     def test_byview(self):
         "Test creation by view"
@@ -388,10 +394,12 @@ class TestMRecordsImport(TestCase):
         "Generic setup"
         _a = ma.array([1,2,3],mask=[0,0,1],dtype=int)
         _b = ma.array([1.1,2.2,3.3],mask=[0,0,1],dtype=float)
-        _c = ma.array(['one','two','three'],mask=[0,0,1],dtype='|S8')
+        _c = ma.array(list(map(asbytes,['one','two','three'])),
+                      mask=[0,0,1],dtype='|S8')
         ddtype = [('a',int),('b',float),('c','|S8')]
         mrec = fromarrays([_a,_b,_c], dtype=ddtype,
-                          fill_value=(99999,99999.,'N/A'))
+                          fill_value=(asbytes('99999'),asbytes('99999.'),
+                                      asbytes('N/A')))
         nrec = recfromarrays((_a._data,_b._data,_c._data), dtype=ddtype)
         self.data = (mrec, nrec, ddtype)
 
