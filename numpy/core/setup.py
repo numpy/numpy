@@ -419,6 +419,10 @@ def configuration(parent_package='',top_path=None):
                 else:
                     raise ValueError("Unrecognized long double format: %s" % rep)
 
+            # Py3K check
+            if sys.version_info[0] == 3:
+                moredefs.append(('NPY_PY3K', 1))
+
             # Generate the config.h file from moredefs
             target_f = open(target, 'w')
             for d in moredefs:
