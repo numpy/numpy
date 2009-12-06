@@ -4,10 +4,15 @@ from numpy.testing import *
 from numpy.core import *
 
 # Guess the UCS length for this python interpreter
-if len(buffer(u'u')) == 4:
+if sys.version_info[0] >= 3:
+    import warnings
+    warnings.warn('XXX: how to detect UCS size on Py3?')
     ucs4 = True
 else:
-    ucs4 = False
+    if len(buffer(u'u')) == 4:
+        ucs4 = True
+    else:
+        ucs4 = False
 
 # Value that can be represented in UCS2 interpreters
 ucs2_value = u'\uFFFF'
