@@ -3,7 +3,9 @@
 
 #include <Python.h>
 #include <stdio.h>
+
 #include "npy_config.h"
+#include "numpy/npy_common.h"
 
 /*
  * PyInt -> PyLong

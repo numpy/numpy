@@ -11,6 +11,8 @@
 
 #include "npy_config.h"
 
+#include "npy_3kcompat.h"
+
 /* Functions only needed on narrow builds of Python
    for converting back and forth between the NumPy Unicode data-type
    (always 4-byte)

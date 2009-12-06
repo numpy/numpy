@@ -10,6 +10,8 @@
 
 #include "npy_config.h"
 
+#include "npy_3kcompat.h"
+
 #include "_datetime.h"
 
 /* For defaults and errors */

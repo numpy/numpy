@@ -11,6 +11,7 @@
 #include "numpy/npy_math.h"
 #include "numpy/arrayscalars.h"
 
+#include "npy_3kcompat.h"
 
 #include "npy_config.h"
 #include "mapping.h"
