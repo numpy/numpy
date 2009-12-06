@@ -262,6 +262,7 @@ The plan of attack currently is:
 
 1) The 'string' array dtype will be replaced by Bytes
 2) The 'unicode' array dtype will stay Unicode
+3) dtype fields names can be *either* Bytes or Unicode
 
 Some compatibility wrappers are defined in private/npy_3kcompat.h,
 redefining essentially String as Bytes.
@@ -295,3 +296,12 @@ Currently, the plan is the following:
 2) Convert Longs to integers, if their size is small enough and known.
 3) Otherwise, use long longs.
 
+
+PyOS
+----
+
+Deprecations:
+
+1) PyOS_ascii_strtod -> PyOS_double_from_string;
+   curiously enough, PyOS_ascii_strtod is not only deprecated but also
+   causes segfaults
