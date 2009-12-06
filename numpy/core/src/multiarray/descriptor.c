@@ -2481,7 +2481,6 @@ arraydescr_str(PyArray_Descr *self)
             PyErr_Clear();
         }
         else {
-#warning XXX -- different representation in Py3K due to use of Bytes...
             sub = PyObject_Str(lst);
         }
         Py_XDECREF(lst);

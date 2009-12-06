@@ -301,11 +301,6 @@ array_data_get(PyArrayObject *self)
 static int
 array_data_set(PyArrayObject *self, PyObject *op)
 {
-#if defined(NPY_PY3K)
-#warning XXX -- need to implement this
-    PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
-    return -1;
-#else
     void *buf;
     Py_ssize_t buf_len;
     int writeable=1;
@@ -347,7 +342,6 @@ array_data_set(PyArrayObject *self, PyObject *op)
         self->flags &= ~WRITEABLE;
     }
     return 0;
-#endif
 }
 
 
