@@ -118,6 +118,48 @@ except:
         # Run nosetests
         subprocess.call(['nosetests3', '-v', d], cwd=TEMP)
 
+def custom_mangling(filename):
+    import_mangling = [
+        os.path.join('core', '__init__.py'),
+        os.path.join('core', 'numeric.py'),
+        os.path.join('core', '_internal.py'),
+        os.path.join('core', 'arrayprint.py'),
+        os.path.join('core', 'fromnumeric.py'),
+        os.path.join('numpy', '__init__.py'),
+        os.path.join('lib', 'io.py'),
+        os.path.join('lib', 'function_base.py'),
+        os.path.join('fft', 'fftpack.py'),
+        os.path.join('random', '__init__.py'),
+    ]
+
+    if any(filename.endswith(x) for x in import_mangling):
+        f = open(filename, 'r')
+        text = f.read()
+        f.close()
+        for mod in ['multiarray', 'scalarmath', 'umath', '_sort',
+                    '_compiled_base', 'core', 'lib', 'testing', 'fft',
+                    'polynomial', 'random', 'ma', 'linalg', 'compat',
+                    'mtrand']:
+            text = re.sub(r'^(\s*)import %s' % mod,
+                          r'\1from . import %s' % mod,
+                          text, flags=re.M)
+            text = re.sub(r'^(\s*)from %s import' % mod,
+                          r'\1from .%s import' % mod,
+                          text, flags=re.M)
+        text = text.replace('from matrixlib', 'from .matrixlib')
+        f = open(filename, 'w')
+        f.write(text)
+        f.close()
+
+    if filename.endswith(os.path.join('lib', 'io.py')):
+        f = open(filename, 'r')
+        text = f.read()
+        f.close()
+        text = text.replace('from . import io', 'import io')
+        f = open(filename, 'w')
+        f.write(text)
+        f.close()
+
 def walk_sync(dir1, dir2, _seen=None):
     if _seen is None:
         seen = {}
@@ -205,6 +247,11 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
         subprocess.call(['2to3', '-w'] + to_convert, stdout=p)
     if scripts:
         subprocess.call(['2to3', '-w', '-x', 'import'] + scripts, stdout=p)
+
+    for fn in to_convert + scripts:
+        # perform custom mangling
+        custom_mangling(fn)
+
     p.close()
 
 if __name__ == "__main__":
