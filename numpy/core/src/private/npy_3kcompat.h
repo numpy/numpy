@@ -37,19 +37,83 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
  */
 
 #if defined(NPY_PY3K)
+
 #define PyString_Type PyBytes_Type
 #define PyString_Check PyBytes_Check
-
 #define PyStringObject PyBytesObject
-
 #define PyString_FromString PyBytes_FromString
+#define PyString_FromStringAndSize PyBytes_FromStringAndSize
 #define PyString_AS_STRING PyBytes_AS_STRING
+#define PyString_AsStringAndSize PyBytes_AsStringAndSize
 #define PyString_FromFormat PyBytes_FromFormat
 #define PyString_Concat PyBytes_Concat
 #define PyString_ConcatAndDel PyBytes_ConcatAndDel
 #define PyString_AsString PyBytes_AsString
 #define PyString_GET_SIZE PyBytes_GET_SIZE
+#define PyString_Size PyBytes_Size
+
+#define PyUString_Type PyUnicode_Type
+#define PyUString_Check PyUnicode_Check
+#define PyUStringObject PyUnicodeObject
+#define PyUString_FromString PyUnicode_FromString
+#define PyUString_FromStringAndSize PyUnicode_FromStringAndSize
+#define PyUString_FromFormat PyUnicode_FromFormat
+#define PyUString_Concat PyUnicode_Concat2
+#define PyUString_ConcatAndDel PyUnicode_ConcatAndDel
+#define PyUString_GET_SIZE PyUnicode_GET_SIZE
+#define PyUString_Size PyUnicode_Size
+#define PyUString_InternFromString PyUnicode_InternFromString
+
+#else
+
+#define PyBytes_Type PyString_Type
+#define PyBytes_Check PyString_Check
+#define PyBytesObject PyStringObject
+#define PyBytes_FromString PyString_FromString
+#define PyBytes_FromStringAndSize PyString_FromStringAndSize
+#define PyBytes_AS_STRING PyString_AS_STRING
+#define PyBytes_AsStringAndSize PyString_AsStringAndSize
+#define PyBytes_FromFormat PyString_FromFormat
+#define PyBytes_Concat PyString_Concat
+#define PyBytes_ConcatAndDel PyString_ConcatAndDel
+#define PyBytes_AsString PyString_AsString
+#define PyBytes_GET_SIZE PyString_GET_SIZE
+#define PyBytes_Size PyString_Size
+
+#define PyUString_Type PyString_Type
+#define PyUString_Check PyString_Check
+#define PyUStringObject PyStringObject
+#define PyUString_FromString PyString_FromString
+#define PyUString_FromStringAndSize PyString_FromStringAndSize
+#define PyUString_FromFormat PyString_FromFormat
+#define PyUString_Concat PyString_Concat
+#define PyUString_ConcatAndDel PyString_ConcatAndDel
+#define PyUString_GET_SIZE PyString_GET_SIZE
+#define PyUString_Size PyString_Size
+#define PyUString_InternFromString PyString_InternFromString
+
 #endif /* NPY_PY3K */
+
+
+static NPY_INLINE void
+PyUnicode_ConcatAndDel(PyObject **left, PyObject *right)
+{
+    PyObject *new;
+    new = PyUnicode_Concat(*left, right);
+    Py_DECREF(*left);
+    Py_DECREF(right);
+    *left = new;
+}
+
+static NPY_INLINE void
+PyUnicode_Concat2(PyObject **left, PyObject *right)
+{
+    PyObject *new;
+    new = PyUnicode_Concat(*left, right);
+    Py_DECREF(*left);
+    *left = new;
+}
+
 
 /*
  * Accessing items of ob_base
