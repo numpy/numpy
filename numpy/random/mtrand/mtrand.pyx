@@ -31,6 +31,9 @@ cdef extern from "math.h":
     double sin(double x)
     double cos(double x)
 
+cdef extern from "mtrand_py_helper.h":
+    object empty_py_bytes(unsigned long length, void **bytes)
+
 cdef extern from "randomkit.h":
 
     ctypedef struct rk_state:
@@ -883,8 +886,7 @@ cdef class RandomState:
 
         """
         cdef void *bytes
-        bytestring = PyString_FromStringAndSize(NULL, length)
-        bytes = PyString_AS_STRING(bytestring)
+        bytestring = empty_py_bytes(length, &bytes)
         rk_fill(bytes, length, self.internal_state)
         return bytestring
 
