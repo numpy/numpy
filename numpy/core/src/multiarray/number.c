@@ -643,6 +643,8 @@ array_float(PyArrayObject *v)
     return pv2;
 }
 
+#if !defined(NPY_PY3K)
+
 static PyObject *
 array_long(PyArrayObject *v)
 {
@@ -718,6 +720,8 @@ array_hex(PyArrayObject *v)
     return pv2;
 }
 
+#endif
+
 static PyObject *
 _array_copy_nice(PyArrayObject *self)
 {
@@ -742,7 +746,10 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_add,                      /*nb_add*/
     (binaryfunc)array_subtract,                 /*nb_subtract*/
     (binaryfunc)array_multiply,                 /*nb_multiply*/
+#if defined(NPY_PY3K)
+#else
     (binaryfunc)array_divide,                   /*nb_divide*/
+#endif
     (binaryfunc)array_remainder,                /*nb_remainder*/
     (binaryfunc)array_divmod,                   /*nb_divmod*/
     (ternaryfunc)array_power,                   /*nb_power*/
@@ -756,12 +763,22 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_bitwise_and,              /*nb_and*/
     (binaryfunc)array_bitwise_xor,              /*nb_xor*/
     (binaryfunc)array_bitwise_or,               /*nb_or*/
+#if defined(NPY_PY3K)
+#else
     0,                                          /*nb_coerce*/
+#endif
     (unaryfunc)array_int,                       /*nb_int*/
+#if defined(NPY_PY3K)
+    0,                                          /*nb_reserved*/
+#else
     (unaryfunc)array_long,                      /*nb_long*/
+#endif
     (unaryfunc)array_float,                     /*nb_float*/
+#if defined(NPY_PY3K)
+#else
     (unaryfunc)array_oct,                       /*nb_oct*/
     (unaryfunc)array_hex,                       /*nb_hex*/
+#endif
 
     /*
      * This code adds augmented assignment functionality
@@ -770,7 +787,10 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_inplace_add,              /*inplace_add*/
     (binaryfunc)array_inplace_subtract,         /*inplace_subtract*/
     (binaryfunc)array_inplace_multiply,         /*inplace_multiply*/
+#if defined(NPY_PY3K)
+#else
     (binaryfunc)array_inplace_divide,           /*inplace_divide*/
+#endif
     (binaryfunc)array_inplace_remainder,        /*inplace_remainder*/
     (ternaryfunc)array_inplace_power,           /*inplace_power*/
     (binaryfunc)array_inplace_left_shift,       /*inplace_lshift*/

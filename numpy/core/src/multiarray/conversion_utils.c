@@ -377,6 +377,7 @@ PyArray_PyIntAsInt(PyObject *o)
         long_value = (long) PyLong_AsLong(obj);
         Py_DECREF(obj);
     }
+#if !defined(NPY_PY3K)
     else if (Py_TYPE(o)->tp_as_number != NULL &&                    \
              Py_TYPE(o)->tp_as_number->nb_long != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_long(o);
@@ -386,6 +387,7 @@ PyArray_PyIntAsInt(PyObject *o)
         long_value = (long) PyLong_AsLong(obj);
         Py_DECREF(obj);
     }
+#endif
     else {
         PyErr_SetString(PyExc_NotImplementedError,"");
     }
@@ -465,6 +467,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         goto finish;
     }
 #endif
+#if !defined(NPY_PY3K)
     if (Py_TYPE(o)->tp_as_number != NULL &&                 \
         Py_TYPE(o)->tp_as_number->nb_long != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_long(o);
@@ -473,7 +476,9 @@ PyArray_PyIntAsIntp(PyObject *o)
             Py_DECREF(obj);
         }
     }
-    else if (Py_TYPE(o)->tp_as_number != NULL &&            \
+    else
+#endif
+    if (Py_TYPE(o)->tp_as_number != NULL &&                 \
              Py_TYPE(o)->tp_as_number->nb_int != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_int(o);
         if (obj != NULL) {

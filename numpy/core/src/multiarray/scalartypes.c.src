@@ -212,7 +212,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 
 /**begin repeat
  *
- * #name = add, subtract, divide, remainder, divmod, lshift, rshift,
+ * #name = add, subtract, remainder, divmod, lshift, rshift,
  *         and, xor, or, floor_divide, true_divide#
  */
 static PyObject *
@@ -223,6 +223,18 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 
 /**end repeat**/
 
+#if !defined(NPY_PY3K)
+/**begin repeat
+ *
+ * #name = divide#
+ */
+static PyObject *
+gentype_@name@(PyObject *m1, PyObject *m2)
+{
+    return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
+}
+/**end repeat**/
+#endif
 
 static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
@@ -259,7 +271,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 
 /**begin repeat
  *
- * #name=positive, negative, absolute, invert, int, long, float, oct, hex#
+ * #name=positive, negative, absolute, invert, int, float#
  */
 static PyObject *
 gentype_@name@(PyObject *m1)
@@ -276,6 +288,27 @@ gentype_@name@(PyObject *m1)
 }
 /**end repeat**/
 
+#if !defined(NPY_PY3K)
+/**begin repeat
+ *
+ * #name=long, oct, hex#
+ */
+static PyObject *
+gentype_@name@(PyObject *m1)
+{
+    PyObject *arr, *ret;
+
+    arr = PyArray_FromScalar(m1, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+    ret = Py_TYPE(arr)->tp_as_number->nb_@name@(arr);
+    Py_DECREF(arr);
+    return ret;
+}
+/**end repeat**/
+#endif
+
 static int
 gentype_nonzero_number(PyObject *m1)
 {
@@ -286,7 +319,11 @@ gentype_nonzero_number(PyObject *m1)
     if (arr == NULL) {
         return -1;
     }
+#if defined(NPY_PY3K)
+    ret = Py_TYPE(arr)->tp_as_number->nb_bool(arr);
+#else
     ret = Py_TYPE(arr)->tp_as_number->nb_nonzero(arr);
+#endif
     Py_DECREF(arr);
     return ret;
 }
@@ -578,11 +615,11 @@ c@name@type_print(PyObject *v, FILE *fp, int flags)
 
 /**begin repeat
  *
- * #name = (int, long, hex, oct, float)*2#
- * #KIND = (Long*4, Float)*2#
- * #char = ,,,,,c*5#
- * #CHAR = ,,,,,C*5#
- * #POST = ,,,,,.real*5#
+ * #name = (int, float)*2#
+ * #KIND = (Long, Float)*2#
+ * #char = ,,c*2#
+ * #CHAR = ,,C*2#
+ * #POST = ,,.real*2#
  */
 static PyObject *
 @char@longdoubletype_@name@(PyObject *self)
@@ -598,12 +635,40 @@ static PyObject *
 }
 /**end repeat**/
 
+#if !defined(NPY_PY3K)
+
+/**begin repeat
+ *
+ * #name = (long, hex, oct)*2#
+ * #KIND = (Long*3)*2#
+ * #char = ,,,c*3#
+ * #CHAR = ,,,C*3#
+ * #POST = ,,,.real*3#
+ */
+static PyObject *
+@char@longdoubletype_@name@(PyObject *self)
+{
+    double dval;
+    PyObject *obj, *ret;
+
+    dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
+    obj = Py@KIND@_FromDouble(dval);
+    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
+    Py_DECREF(obj);
+    return ret;
+}
+/**end repeat**/
+
+#endif /* !defined(NPY_PY3K) */
 
 static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_add,                     /*nb_add*/
     (binaryfunc)gentype_subtract,                /*nb_subtract*/
     (binaryfunc)gentype_multiply,                /*nb_multiply*/
+#if defined(NPY_PY3K)
+#else
     (binaryfunc)gentype_divide,                  /*nb_divide*/
+#endif
     (binaryfunc)gentype_remainder,               /*nb_remainder*/
     (binaryfunc)gentype_divmod,                  /*nb_divmod*/
     (ternaryfunc)gentype_power,                  /*nb_power*/
@@ -617,16 +682,29 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_and,                     /*nb_and*/
     (binaryfunc)gentype_xor,                     /*nb_xor*/
     (binaryfunc)gentype_or,                      /*nb_or*/
+#if defined(NPY_PY3K)
+#else
     0,                                           /*nb_coerce*/
+#endif
     (unaryfunc)gentype_int,                      /*nb_int*/
+#if defined(NPY_PY3K)
+    0,                                           /*nb_reserved*/
+#else
     (unaryfunc)gentype_long,                     /*nb_long*/
+#endif
     (unaryfunc)gentype_float,                    /*nb_float*/
+#if defined(NPY_PY3K)
+#else
     (unaryfunc)gentype_oct,                      /*nb_oct*/
     (unaryfunc)gentype_hex,                      /*nb_hex*/
+#endif
     0,                                           /*inplace_add*/
     0,                                           /*inplace_subtract*/
     0,                                           /*inplace_multiply*/
+#if defined(NPY_PY3K)
+#else
     0,                                           /*inplace_divide*/
+#endif
     0,                                           /*inplace_remainder*/
     0,                                           /*inplace_power*/
     0,                                           /*inplace_lshift*/
@@ -2137,31 +2215,47 @@ NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     0,                                           /* nb_add */
     0,                                           /* nb_subtract */
     0,                                           /* nb_multiply */
+#if defined(NPY_PY3K)
+#else
     0,                                           /* nb_divide */
+#endif
     0,                                           /* nb_remainder */
     0,                                           /* nb_divmod */
     0,                                           /* nb_power */
     0,                                           /* nb_negative */
     0,                                           /* nb_positive */
     0,                                           /* nb_absolute */
-    (inquiry)bool_arrtype_nonzero,               /* nb_nonzero */
+    (inquiry)bool_arrtype_nonzero,               /* nb_nonzero / nb_bool */
     0,                                           /* nb_invert */
     0,                                           /* nb_lshift */
     0,                                           /* nb_rshift */
     (binaryfunc)bool_arrtype_and,                /* nb_and */
     (binaryfunc)bool_arrtype_xor,                /* nb_xor */
     (binaryfunc)bool_arrtype_or,                 /* nb_or */
+#if defined(NPY_PY3K)
+#else
     0,                                           /* nb_coerce */
+#endif
     0,                                           /* nb_int */
+#if defined(NPY_PY3K)
+    0,                                           /* nb_reserved */
+#else
     0,                                           /* nb_long */
+#endif
     0,                                           /* nb_float */
+#if defined(NPY_PY3K)
+#else
     0,                                           /* nb_oct */
     0,                                           /* nb_hex */
+#endif
     /* Added in release 2.0 */
     0,                                           /* nb_inplace_add */
     0,                                           /* nb_inplace_subtract */
     0,                                           /* nb_inplace_multiply */
+#if defined(NPY_PY3K)
+#else
     0,                                           /* nb_inplace_divide */
+#endif
     0,                                           /* nb_inplace_remainder */
     0,                                           /* nb_inplace_power */
     0,                                           /* nb_inplace_lshift */
@@ -2200,7 +2294,11 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             PyArray_IsScalar(obj, Integer) ||
             (PyArray_Check(obj) && PyArray_NDIM(obj)==0 &&
              PyArray_ISINTEGER(obj))) {
+#if defined(NPY_PY3K)
+        new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
+#else
         new = Py_TYPE(obj)->tp_as_number->nb_long(obj);
+#endif
     }
     if (new && PyLong_Check(new)) {
         PyObject *ret;
@@ -3103,12 +3201,23 @@ initialize_numeric_types(void)
     PyCLongDoubleArrType_Type.tp_as_number = &clongdoubletype_as_number;
 
     /**begin repeat
-     * #name = int, long, hex, oct, float, repr, str#
-     * #kind = tp_as_number->nb*5, tp*2#
+     * #name = int, float, repr, str#
+     * #kind = tp_as_number->nb*2, tp*2#
      */
     PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
     PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
     /**end repeat**/
+
+#if !defined(NPY_PY3K)
+    /**begin repeat
+     * #name = long, hex, oct#
+     * #kind = tp_as_number->nb*3#
+     */
+    PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
+    PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
+    /**end repeat**/
+
+#endif
 
     PyStringArrType_Type.tp_itemsize = sizeof(char);
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
