@@ -5,7 +5,8 @@ import numpy as np
 from numpy.testing import *
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
-from numpy.compat import asbytes
+
+from numpy.compat import asbytes, getexception
 
 from test_print import in_foreign_locale
 
@@ -89,7 +90,7 @@ class TestAttributes(TestCase):
             try:
                 r = ndarray([size], dtype=int, buffer=x, offset=offset*x.itemsize)
             except:
-                pass
+                raise RuntimeError(getexception())
             r.strides = strides=strides*x.itemsize
             return r
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
