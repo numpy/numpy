@@ -43,7 +43,7 @@ class TestErrstate(TestCase):
 
     def test_errcall(self):
         def foo(*args):
-            print args
+            print(args)
         olderrcall = geterrcall()
         with errstate(call=foo):
             assert(geterrcall() is foo), 'call is not foo'

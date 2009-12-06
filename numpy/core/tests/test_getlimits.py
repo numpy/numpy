@@ -2,8 +2,15 @@
 """
 
 from numpy.testing import *
+
 import numpy.lib
-reload(numpy.lib)
+try:
+    reload(numpy.lib)
+except NameError:
+    # Py3K
+    import imp
+    imp.reload(numpy.lib)
+
 from numpy.core import finfo, iinfo
 from numpy import single,double,longdouble
 import numpy as np
