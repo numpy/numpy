@@ -196,6 +196,10 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
             src_fn = os.path.join(src_dir, fn)
             dst_fn = os.path.join(dst_dir, fn)
 
+            # skip temporary etc. files
+            if fn.startswith('.#') or fn.endswith('~'):
+                continue
+
             # remove non-existing
             if os.path.exists(dst_fn) and not os.path.exists(src_fn):
                 if clean:
