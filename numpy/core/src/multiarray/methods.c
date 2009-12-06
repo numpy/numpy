@@ -1511,7 +1511,11 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
         protocol = 2;
     }
 
+#if defined(NPY_PY3K)
+    cpick = PyImport_ImportModule("pickle");
+#else
     cpick = PyImport_ImportModule("cPickle");
+#endif
     if (cpick == NULL) {
         return -1;
     }
@@ -1543,7 +1547,11 @@ PyArray_Dumps(PyObject *self, int protocol)
     if (protocol < 0) {
         protocol = 2;
     }
+#if defined(NPY_PY3K)
+    cpick = PyImport_ImportModule("pickle");
+#else
     cpick = PyImport_ImportModule("cPickle");
+#endif
     if (cpick == NULL) {
         return NULL;
     }
