@@ -119,7 +119,7 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 static void
 gentype_dealloc(PyObject *v)
 {
-    v->ob_type->tp_free(v);
+    Py_TYPE(v)->tp_free(v);
 }
 
 
@@ -131,7 +131,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
 
     if (!PyArray_IsScalar(m1,Generic)) {
         if (PyArray_Check(m1)) {
-            ret = m1->ob_type->tp_as_number->nb_power(m1,m2, Py_None);
+            ret = Py_TYPE(m1)->tp_as_number->nb_power(m1,m2, Py_None);
         }
         else {
             if (!PyArray_IsScalar(m2,Generic)) {
@@ -142,14 +142,14 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
             if (arr == NULL) {
                 return NULL;
             }
-            ret = arr->ob_type->tp_as_number->nb_power(m1, arr, Py_None);
+            ret = Py_TYPE(arr)->tp_as_number->nb_power(m1, arr, Py_None);
             Py_DECREF(arr);
         }
         return ret;
     }
     if (!PyArray_IsScalar(m2, Generic)) {
         if (PyArray_Check(m2)) {
-            ret = m2->ob_type->tp_as_number->nb_power(m1,m2, Py_None);
+            ret = Py_TYPE(m2)->tp_as_number->nb_power(m1,m2, Py_None);
         }
         else {
             if (!PyArray_IsScalar(m1, Generic)) {
@@ -160,7 +160,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
             if (arr == NULL) {
                 return NULL;
             }
-            ret = arr->ob_type->tp_as_number->nb_power(arr, m2, Py_None);
+            ret = Py_TYPE(arr)->tp_as_number->nb_power(arr, m2, Py_None);
             Py_DECREF(arr);
         }
         return ret;
@@ -173,7 +173,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
         Py_XDECREF(arg2);
         return NULL;
     }
-    ret = arr->ob_type->tp_as_number->nb_power(arr, arg2, Py_None);
+    ret = Py_TYPE(arr)->tp_as_number->nb_power(arr, arg2, Py_None);
     Py_DECREF(arr);
     Py_DECREF(arg2);
     return ret;
@@ -231,8 +231,8 @@ gentype_multiply(PyObject *m1, PyObject *m2)
     long repeat;
 
     if (!PyArray_IsScalar(m1, Generic) &&
-            ((m1->ob_type->tp_as_number == NULL) ||
-             (m1->ob_type->tp_as_number->nb_multiply == NULL))) {
+            ((Py_TYPE(m1)->tp_as_number == NULL) ||
+             (Py_TYPE(m1)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m2 to an int and try sequence repeat */
         repeat = PyInt_AsLong(m2);
         if (repeat == -1 && PyErr_Occurred()) {
@@ -241,8 +241,8 @@ gentype_multiply(PyObject *m1, PyObject *m2)
         ret = PySequence_Repeat(m1, (int) repeat);
     }
     else if (!PyArray_IsScalar(m2, Generic) &&
-            ((m2->ob_type->tp_as_number == NULL) ||
-             (m2->ob_type->tp_as_number->nb_multiply == NULL))) {
+            ((Py_TYPE(m2)->tp_as_number == NULL) ||
+             (Py_TYPE(m2)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m1 to an int and try sequence repeat */
         repeat = PyInt_AsLong(m1);
         if (repeat == -1 && PyErr_Occurred()) {
@@ -270,7 +270,7 @@ gentype_@name@(PyObject *m1)
     if (arr == NULL) {
         return NULL;
     }
-    ret = arr->ob_type->tp_as_number->nb_@name@(arr);
+    ret = Py_TYPE(arr)->tp_as_number->nb_@name@(arr);
     Py_DECREF(arr);
     return ret;
 }
@@ -286,7 +286,7 @@ gentype_nonzero_number(PyObject *m1)
     if (arr == NULL) {
         return -1;
     }
-    ret = arr->ob_type->tp_as_number->nb_nonzero(arr);
+    ret = Py_TYPE(arr)->tp_as_number->nb_nonzero(arr);
     Py_DECREF(arr);
     return ret;
 }
@@ -592,7 +592,7 @@ static PyObject *
 
     dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
     obj = Py@KIND@_FromDouble(dval);
-    ret = obj->ob_type->tp_as_number->nb_@name@(obj);
+    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
     Py_DECREF(obj);
     return ret;
 }
@@ -653,7 +653,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
     if (arr == NULL) {
         return NULL;
     }
-    ret = arr->ob_type->tp_richcompare(arr, other, cmp_op);
+    ret = Py_TYPE(arr)->tp_richcompare(arr, other, cmp_op);
     Py_DECREF(arr);
     return ret;
 }
@@ -1189,7 +1189,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    mysize = self->ob_size;
+    mysize = Py_SIZE(self);
 
     if (offset < 0 || (offset + typecode->elsize) > mysize) {
         PyErr_Format(PyExc_ValueError,
@@ -1879,14 +1879,14 @@ void_dealloc(PyVoidScalarObject *v)
     }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
-    v->ob_type->tp_free(v);
+    Py_TYPE(v)->tp_free(v);
 }
 
 static void
 object_arrtype_dealloc(PyObject *v)
 {
     Py_XDECREF(((PyObjectScalarObject *)v)->obval);
-    v->ob_type->tp_free(v);
+    Py_TYPE(v)->tp_free(v);
 }
 
 /*
@@ -1997,7 +1997,7 @@ finish:
     return robj;
 #else
     /* Normal return */
-    if ((robj == NULL) || (robj->ob_type == type)) {
+    if ((robj == NULL) || (Py_TYPE(robj) == type)) {
         return robj;
     }
 
@@ -2200,7 +2200,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             PyArray_IsScalar(obj, Integer) ||
             (PyArray_Check(obj) && PyArray_NDIM(obj)==0 &&
              PyArray_ISINTEGER(obj))) {
-        new = obj->ob_type->tp_as_number->nb_long(obj);
+        new = Py_TYPE(obj)->tp_as_number->nb_long(obj);
     }
     if (new && PyLong_Check(new)) {
         PyObject *ret;
@@ -2223,7 +2223,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             return PyErr_NoMemory();
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
-        ((PyVoidScalarObject *)ret)->ob_size = (int) memu;
+        Py_SIZE((PyVoidScalarObject *)ret) = (int) memu;
         ((PyVoidScalarObject *)ret)->descr =
             PyArray_DescrNewFromType(PyArray_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
@@ -2537,7 +2537,7 @@ object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
 {
     Py_ssize_t newlen;
     int cnt;
-    PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
 
     if (pb == NULL ||
             pb->bf_getsegcount == NULL ||
@@ -2553,7 +2553,7 @@ object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
 static Py_ssize_t
 object_arrtype_getreadbuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr)
 {
-    PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
 
     if (pb == NULL ||
             pb->bf_getreadbuffer == NULL ||
@@ -2568,7 +2568,7 @@ object_arrtype_getreadbuf(PyObjectScalarObject *self, Py_ssize_t segment, void *
 static Py_ssize_t
 object_arrtype_getwritebuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr)
 {
-    PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
 
     if (pb == NULL ||
             pb->bf_getwritebuffer == NULL ||
@@ -2584,7 +2584,7 @@ static Py_ssize_t
 object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
                           constchar **ptrptr)
 {
-    PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
 
     if (pb == NULL ||
             pb->bf_getcharbuffer == NULL ||

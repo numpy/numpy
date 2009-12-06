@@ -368,18 +368,18 @@ PyArray_PyIntAsInt(PyObject *o)
         goto finish;
     }
 #endif
-    if (o->ob_type->tp_as_number != NULL &&         \
-        o->ob_type->tp_as_number->nb_int != NULL) {
-        obj = o->ob_type->tp_as_number->nb_int(o);
+    if (Py_TYPE(o)->tp_as_number != NULL &&         \
+        Py_TYPE(o)->tp_as_number->nb_int != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
         if (obj == NULL) {
             return -1;
         }
         long_value = (long) PyLong_AsLong(obj);
         Py_DECREF(obj);
     }
-    else if (o->ob_type->tp_as_number != NULL &&                    \
-             o->ob_type->tp_as_number->nb_long != NULL) {
-        obj = o->ob_type->tp_as_number->nb_long(o);
+    else if (Py_TYPE(o)->tp_as_number != NULL &&                    \
+             Py_TYPE(o)->tp_as_number->nb_long != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
         if (obj == NULL) {
             return -1;
         }
@@ -465,17 +465,17 @@ PyArray_PyIntAsIntp(PyObject *o)
         goto finish;
     }
 #endif
-    if (o->ob_type->tp_as_number != NULL &&                 \
-        o->ob_type->tp_as_number->nb_long != NULL) {
-        obj = o->ob_type->tp_as_number->nb_long(o);
+    if (Py_TYPE(o)->tp_as_number != NULL &&                 \
+        Py_TYPE(o)->tp_as_number->nb_long != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
         if (obj != NULL) {
             long_value = (longlong) PyLong_AsLongLong(obj);
             Py_DECREF(obj);
         }
     }
-    else if (o->ob_type->tp_as_number != NULL &&            \
-             o->ob_type->tp_as_number->nb_int != NULL) {
-        obj = o->ob_type->tp_as_number->nb_int(o);
+    else if (Py_TYPE(o)->tp_as_number != NULL &&            \
+             Py_TYPE(o)->tp_as_number->nb_int != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
         if (obj != NULL) {
             long_value = (longlong) PyLong_AsLongLong(obj);
             Py_DECREF(obj);

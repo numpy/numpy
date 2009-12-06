@@ -123,7 +123,7 @@ _use_default_type(PyObject *op)
 
     typenum = -1;
     l = 0;
-    type = (PyObject *)op->ob_type;
+    type = (PyObject *)Py_TYPE(op);
     while (l < PyArray_NUMUSERTYPES) {
         if (type == (PyObject *)(userdescrs[l]->typeobj)) {
             typenum = l + PyArray_USERDEF;
@@ -245,7 +245,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 
     if (PyBuffer_Check(op)) {
         chktype = PyArray_DescrNewFromType(PyArray_VOID);
-        chktype->elsize = op->ob_type->tp_as_sequence->sq_length(op);
+        chktype->elsize = Py_TYPE(op)->tp_as_sequence->sq_length(op);
         PyErr_Clear();
         goto finish;
     }

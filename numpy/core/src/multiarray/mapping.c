@@ -54,7 +54,7 @@ array_big_item(PyArrayObject *self, intp i)
         return NULL;
     }
     Py_INCREF(self->descr);
-    r = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type,
+    r = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                               self->descr,
                                               self->nd-1,
                                               self->dimensions+1,
@@ -233,7 +233,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     temp = mit->ait->ao;
     Py_INCREF(temp->descr);
     ret = (PyArrayObject *)
-        PyArray_NewFromDescr(temp->ob_type,
+        PyArray_NewFromDescr(Py_TYPE(temp),
                              temp->descr,
                              mit->nd, mit->dimensions,
                              NULL, NULL,
@@ -392,7 +392,7 @@ add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
     }
     Py_INCREF(arr->descr);
     if ((other = (PyArrayObject *)
-         PyArray_NewFromDescr(arr->ob_type, arr->descr,
+         PyArray_NewFromDescr(Py_TYPE(arr), arr->descr,
                               newaxis_count, dimensions,
                               NULL, arr->data,
                               arr->flags,
@@ -521,7 +521,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     /* This will only work if new array will be a view */
     Py_INCREF(self->descr);
     if ((other = (PyArrayObject *)
-         PyArray_NewFromDescr(self->ob_type, self->descr,
+         PyArray_NewFromDescr(Py_TYPE(self), self->descr,
                               nd, dimensions,
                               strides, self->data+offset,
                               self->flags,
@@ -622,7 +622,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             else {
                 intp oned = 0;
                 Py_INCREF(self->descr);
-                return PyArray_NewFromDescr(self->ob_type,
+                return PyArray_NewFromDescr(Py_TYPE(self),
                                             self->descr,
                                             1, &oned,
                                             NULL, NULL,
@@ -1357,7 +1357,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
                 PyErr_Format(PyExc_ValueError,
                              "unexpected object "       \
                              "(%s) in selection position %d",
-                             obj->ob_type->tp_name, i);
+                             Py_TYPE(obj)->tp_name, i);
                 goto fail;
             }
             else {

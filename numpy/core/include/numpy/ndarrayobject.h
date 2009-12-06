@@ -1260,10 +1260,10 @@ typedef struct {
 
 /* C-API that requries previous API to be defined */
 
-#define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
+#define PyArray_DescrCheck(op) (((PyObject*)(op))->ob_type==&PyArrayDescr_Type)
 
 #define PyArray_Check(op) PyObject_TypeCheck(op, &PyArray_Type)
-#define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
+#define PyArray_CheckExact(op) (((PyObject*)(op))->ob_type == &PyArray_Type)
 
 #define PyArray_HasArrayInterfaceType(op, type, context, out)                 \
         ((((out)=PyArray_FromStructInterface(op)) != Py_NotImplemented) ||    \

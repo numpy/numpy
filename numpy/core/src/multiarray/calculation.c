@@ -101,7 +101,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     if (!out) {
-        rp = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd-1,
+        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), ap->nd-1,
                                           ap->dimensions, PyArray_INTP,
                                           NULL, NULL, 0, 0,
                                           (PyObject *)ap);
@@ -396,14 +396,14 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     if (ret == NULL || PyArray_CheckExact(self)) {
         return ret;
     }
-    if (PyArray_Check(self) && self->ob_type == ret->ob_type) {
+    if (PyArray_Check(self) && Py_TYPE(self) == Py_TYPE(ret)) {
         return ret;
     }
     obj1 = PyArray_EnsureArray(ret);
     if (obj1 == NULL) {
         return NULL;
     }
-    ret = PyArray_View((PyAO *)obj1, NULL, self->ob_type);
+    ret = PyArray_View((PyAO *)obj1, NULL, Py_TYPE(self));
     Py_DECREF(obj1);
     if (out) {
         if (PyArray_CopyAnyInto(out, (PyArrayObject *)ret) < 0) {
@@ -942,7 +942,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
      */
     if (out == NULL) {
         Py_INCREF(indescr);
-        out = (NPY_AO*)PyArray_NewFromDescr(self->ob_type,
+        out = (NPY_AO*)PyArray_NewFromDescr(Py_TYPE(self),
                                             indescr, self->nd,
                                             self->dimensions,
                                             NULL, NULL,

@@ -594,7 +594,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     }
     itemsize = self->ao->descr->elsize;
     Py_INCREF(self->ao->descr);
-    r = PyArray_NewFromDescr(self->ao->ob_type,
+    r = PyArray_NewFromDescr(Py_TYPE(self->ao),
                              self->ao->descr, 1, &count,
                              NULL, NULL,
                              0, (PyObject *)self->ao);
@@ -654,7 +654,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     }
 
     Py_INCREF(self->ao->descr);
-    r = PyArray_NewFromDescr(self->ao->ob_type, self->ao->descr,
+    r = PyArray_NewFromDescr(Py_TYPE(self->ao), self->ao->descr,
                              ind->nd, ind->dimensions,
                              NULL, NULL,
                              0, (PyObject *)self->ao);
@@ -741,7 +741,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         else { /* empty array */
             intp ii = 0;
             Py_INCREF(self->ao->descr);
-            r = PyArray_NewFromDescr(self->ao->ob_type,
+            r = PyArray_NewFromDescr(Py_TYPE(self->ao),
                                      self->ao->descr,
                                      1, &ii,
                                      NULL, NULL, 0,
@@ -770,7 +770,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             }
         size = self->ao->descr->elsize;
         Py_INCREF(self->ao->descr);
-        r = PyArray_NewFromDescr(self->ao->ob_type,
+        r = PyArray_NewFromDescr(Py_TYPE(self->ao),
                                  self->ao->descr,
                                  1, &n_steps,
                                  NULL, NULL,
@@ -1607,7 +1607,7 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
     for (i = 0; i < multi->numiter; i++) {
         Py_XDECREF(multi->iters[i]);
     }
-    multi->ob_type->tp_free((PyObject *)multi);
+    Py_TYPE(multi)->tp_free((PyObject *)multi);
 }
 
 static PyObject *

@@ -166,7 +166,7 @@ static void
 arrayflags_dealloc(PyArrayFlagsObject *self)
 {
     Py_XDECREF(self->arr);
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 

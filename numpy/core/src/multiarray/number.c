@@ -291,7 +291,7 @@ array_power_is_scalar(PyObject *o2, double* exp)
            (optimize_fpexps && PyArray_ISFLOAT(o2))))) ||
         PyArray_IsScalar(o2, Integer) ||
         (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
-        temp = o2->ob_type->tp_as_number->nb_float(o2);
+        temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
         if (temp != NULL) {
             *exp = PyFloat_AsDouble(o2);
             Py_DECREF(temp);
@@ -595,20 +595,20 @@ array_int(PyArrayObject *v)
     if (pv == NULL) {
         return NULL;
     }
-    if (pv->ob_type->tp_as_number == 0) {
+    if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
         Py_DECREF(pv);
         return NULL;
     }
-    if (pv->ob_type->tp_as_number->nb_int == 0) {
+    if (Py_TYPE(pv)->tp_as_number->nb_int == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to int");
         Py_DECREF(pv);
         return NULL;
     }
 
-    pv2 = pv->ob_type->tp_as_number->nb_int(pv);
+    pv2 = Py_TYPE(pv)->tp_as_number->nb_int(pv);
     Py_DECREF(pv);
     return pv2;
 }
@@ -626,19 +626,19 @@ array_float(PyArrayObject *v)
     if (pv == NULL) {
         return NULL;
     }
-    if (pv->ob_type->tp_as_number == 0) {
+    if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to a "\
                         "float; scalar object is not a number");
         Py_DECREF(pv);
         return NULL;
     }
-    if (pv->ob_type->tp_as_number->nb_float == 0) {
+    if (Py_TYPE(pv)->tp_as_number->nb_float == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to float");
         Py_DECREF(pv);
         return NULL;
     }
-    pv2 = pv->ob_type->tp_as_number->nb_float(pv);
+    pv2 = Py_TYPE(pv)->tp_as_number->nb_float(pv);
     Py_DECREF(pv);
     return pv2;
 }
@@ -653,17 +653,17 @@ array_long(PyArrayObject *v)
         return NULL;
     }
     pv = v->descr->f->getitem(v->data, v);
-    if (pv->ob_type->tp_as_number == 0) {
+    if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
         return NULL;
     }
-    if (pv->ob_type->tp_as_number->nb_long == 0) {
+    if (Py_TYPE(pv)->tp_as_number->nb_long == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to long");
         return NULL;
     }
-    pv2 = pv->ob_type->tp_as_number->nb_long(pv);
+    pv2 = Py_TYPE(pv)->tp_as_number->nb_long(pv);
     Py_DECREF(pv);
     return pv2;
 }
@@ -678,17 +678,17 @@ array_oct(PyArrayObject *v)
         return NULL;
     }
     pv = v->descr->f->getitem(v->data, v);
-    if (pv->ob_type->tp_as_number == 0) {
+    if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
         return NULL;
     }
-    if (pv->ob_type->tp_as_number->nb_oct == 0) {
+    if (Py_TYPE(pv)->tp_as_number->nb_oct == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to oct");
         return NULL;
     }
-    pv2 = pv->ob_type->tp_as_number->nb_oct(pv);
+    pv2 = Py_TYPE(pv)->tp_as_number->nb_oct(pv);
     Py_DECREF(pv);
     return pv2;
 }
@@ -703,17 +703,17 @@ array_hex(PyArrayObject *v)
         return NULL;
     }
     pv = v->descr->f->getitem(v->data, v);
-    if (pv->ob_type->tp_as_number == 0) {
+    if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
         return NULL;
     }
-    if (pv->ob_type->tp_as_number->nb_hex == 0) {
+    if (Py_TYPE(pv)->tp_as_number->nb_hex == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to hex");
         return NULL;
     }
-    pv2 = pv->ob_type->tp_as_number->nb_hex(pv);
+    pv2 = Py_TYPE(pv)->tp_as_number->nb_hex(pv);
     Py_DECREF(pv);
     return pv2;
 }

@@ -586,7 +586,7 @@ _get_part(PyArrayObject *self, int imag)
         type = new;
     }
     ret = (PyArrayObject *)
-        PyArray_NewFromDescr(self->ob_type,
+        PyArray_NewFromDescr(Py_TYPE(self),
                              type,
                              self->nd,
                              self->dimensions,
@@ -666,7 +666,7 @@ array_imag_get(PyArrayObject *self)
     }
     else {
         Py_INCREF(self->descr);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type,
+        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                                     self->descr,
                                                     self->nd,
                                                     self->dimensions,

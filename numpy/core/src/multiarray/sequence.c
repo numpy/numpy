@@ -66,7 +66,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow,
     self->dimensions[0] = ihigh-ilow;
     Py_INCREF(self->descr);
     r = (PyArrayObject *)                                           \
-        PyArray_NewFromDescr(self->ob_type, self->descr,
+        PyArray_NewFromDescr(Py_TYPE(self), self->descr,
                              self->nd, self->dimensions,
                              self->strides, data,
                              self->flags, (PyObject *)self);

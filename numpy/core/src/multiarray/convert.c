@@ -329,7 +329,7 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
         fortran = PyArray_ISFORTRAN(m1);
 
     Py_INCREF(m1->descr);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(m1->ob_type,
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(m1),
                                                 m1->descr,
                                                 m1->nd,
                                                 m1->dimensions,
@@ -361,7 +361,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = pytype;
     }
     else {
-        subtype = self->ob_type;
+        subtype = Py_TYPE(self);
     }
     Py_INCREF(self->descr);
     new = PyArray_NewFromDescr(subtype,

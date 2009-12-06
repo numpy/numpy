@@ -60,7 +60,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
         }
     }
 
-    out = PyArray_NewFromDescr(mp->ob_type, at,
+    out = PyArray_NewFromDescr(Py_TYPE(mp), at,
                                mp->nd,
                                mp->dimensions,
                                NULL, NULL,

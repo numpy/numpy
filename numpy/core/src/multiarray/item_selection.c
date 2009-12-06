@@ -65,7 +65,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
     Py_INCREF(self->descr);
     if (!ret) {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type,
+        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                                     self->descr,
                                                     nd, shape,
                                                     NULL, NULL, 0,
@@ -543,7 +543,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     /* Construct new array */
     aop->dimensions[axis] = total;
     Py_INCREF(aop->descr);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(aop->ob_type,
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(aop),
                                                 aop->descr,
                                                 aop->nd,
                                                 aop->dimensions,
@@ -629,7 +629,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     /* Set-up return array */
     if (!ret) {
         Py_INCREF(mps[0]->descr);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(ap->ob_type,
+        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
                                                     mps[0]->descr,
                                                     multi->nd,
                                                     multi->dimensions,
@@ -820,7 +820,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFunc *argsort;
     BEGIN_THREADS_DEF;
 
-    ret = PyArray_New(op->ob_type, op->nd,
+    ret = PyArray_New(Py_TYPE(op), op->nd,
                           op->dimensions, PyArray_INTP,
                           NULL, NULL, 0, 0, (PyObject *)op);
     if (ret == NULL) {
@@ -1061,7 +1061,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     n = op->nd;
     if ((n == 0) || (PyArray_SIZE(op) == 1)) {
-        ret = (PyArrayObject *)PyArray_New(op->ob_type, op->nd,
+        ret = (PyArrayObject *)PyArray_New(Py_TYPE(op), op->nd,
                                            op->dimensions,
                                            PyArray_INTP,
                                            NULL, NULL, 0, 0,
@@ -1101,7 +1101,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     if (op == NULL) {
         return NULL;
     }
-    ret = (PyArrayObject *)PyArray_New(op->ob_type, op->nd,
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(op), op->nd,
                                        op->dimensions, PyArray_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)op);
     if (ret == NULL) {
@@ -1473,7 +1473,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
         goto fail;
     }
     /* ret is a contiguous array of intp type to hold returned indices */
-    ret = (PyArrayObject *)PyArray_New(ap2->ob_type, ap2->nd,
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), ap2->nd,
                                        ap2->dimensions, PyArray_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)ap2);
     if (ret == NULL) {
@@ -1710,7 +1710,7 @@ PyArray_Nonzero(PyArrayObject *self)
         goto fail;
     }
     for (j = 0; j < n; j++) {
-        item = PyArray_New(self->ob_type, 1, &count,
+        item = PyArray_New(Py_TYPE(self), 1, &count,
                            PyArray_INTP, NULL, NULL, 0, 0,
                            (PyObject *)self);
         if (item == NULL) {

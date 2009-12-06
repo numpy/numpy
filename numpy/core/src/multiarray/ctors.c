@@ -1818,7 +1818,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     PyTypeObject *subtype;
 
     oldtype = PyArray_DESCR(arr);
-    subtype = arr->ob_type;
+    subtype = Py_TYPE(arr);
     if (newtype == NULL) {
         newtype = oldtype; Py_INCREF(oldtype);
     }
@@ -3069,9 +3069,9 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_DECREF(type);
         return NULL;
     }
-    if (buf->ob_type->tp_as_buffer == NULL
-        || (buf->ob_type->tp_as_buffer->bf_getwritebuffer == NULL
-            && buf->ob_type->tp_as_buffer->bf_getreadbuffer == NULL)) {
+    if (Py_TYPE(buf)->tp_as_buffer == NULL
+        || (Py_TYPE(buf)->tp_as_buffer->bf_getwritebuffer == NULL
+            && Py_TYPE(buf)->tp_as_buffer->bf_getreadbuffer == NULL)) {
         PyObject *newbuf;
         newbuf = PyObject_GetAttrString(buf, "__buffer__");
         if (newbuf == NULL) {

@@ -1383,7 +1383,7 @@ arraydescr_dealloc(PyArray_Descr *self)
         _pya_free(self->subarray);
     }
     Py_XDECREF(self->metadata);
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 /*
@@ -1726,7 +1726,7 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
         if (!valid) {
             PyErr_Format(PyExc_ValueError,
                          "item #%d of names is of type %s and not string",
-                         i, item->ob_type->tp_name);
+                         i, Py_TYPE(item)->tp_name);
             return -1;
         }
     }

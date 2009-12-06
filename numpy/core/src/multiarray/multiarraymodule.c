@@ -382,11 +382,11 @@ PyArray_Concatenate(PyObject *op, int axis)
             Py_DECREF(mps[i]);
             mps[i] = (PyArrayObject *)otmp;
         }
-        if (mps[i]->ob_type != subtype) {
+        if (Py_TYPE(mps[i]) != subtype) {
             prior2 = PyArray_GetPriority((PyObject *)(mps[i]), 0.0);
             if (prior2 > prior1) {
                 prior1 = prior2;
-                subtype = mps[i]->ob_type;
+                subtype = Py_TYPE(mps[i]);
             }
         }
     }
@@ -585,14 +585,14 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    if (ap2->ob_type != ap1->ob_type) {
+    if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
         prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
         prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
     }
     else {
         prior1 = prior2 = 0.0;
-        subtype = ap1->ob_type;
+        subtype = Py_TYPE(ap1);
     }
 
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
@@ -637,7 +637,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     }
     if (ap1->nd == 0 || ap2->nd == 0) {
         ret = (ap1->nd == 0 ? ap1 : ap2);
-        ret = (PyArrayObject *)ret->ob_type->tp_as_number->nb_multiply(
+        ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
                                             (PyObject *)ap1, (PyObject *)ap2);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
@@ -744,7 +744,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     }
     if (ap1->nd == 0 || ap2->nd == 0) {
         ret = (ap1->nd == 0 ? ap1 : ap2);
-        ret = (PyArrayObject *)ret->ob_type->tp_as_number->nb_multiply(
+        ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
                                         (PyObject *)ap1, (PyObject *)ap2);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
@@ -880,7 +880,7 @@ PyArray_CopyAndTranspose(PyObject *op)
     dims[1] = PyArray_DIM(arr,0);
     elsize = PyArray_ITEMSIZE(arr);
     Py_INCREF(PyArray_DESCR(arr));
-    ret = PyArray_NewFromDescr(arr->ob_type,
+    ret = PyArray_NewFromDescr(Py_TYPE(arr),
                                PyArray_DESCR(arr),
                                2, dims,
                                NULL, NULL, 0, arr);
@@ -1405,7 +1405,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
         newstrides[i] = arr->strides[k];
     }
     Py_INCREF(arr->descr);
-    ret = PyArray_NewFromDescr(arr->ob_type, arr->descr, ndmin,
+    ret = PyArray_NewFromDescr(Py_TYPE(arr), arr->descr, ndmin,
                                newdims, newstrides, arr->data, arr->flags,
                                (PyObject *)arr);
     /* steals a reference to arr --- so don't increment here */

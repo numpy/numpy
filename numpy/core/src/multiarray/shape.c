@@ -303,7 +303,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     Py_INCREF(self->descr);
-    ret = (PyAO *)PyArray_NewFromDescr(self->ob_type,
+    ret = (PyAO *)PyArray_NewFromDescr(Py_TYPE(self),
                                        self->descr,
                                        n, dimensions,
                                        strides,
@@ -616,7 +616,7 @@ PyArray_Squeeze(PyArrayObject *self)
     }
 
     Py_INCREF(self->descr);
-    ret = PyArray_NewFromDescr(self->ob_type,
+    ret = PyArray_NewFromDescr(Py_TYPE(self),
                                self->descr,
                                newnd, dimensions,
                                strides, self->data,
@@ -744,7 +744,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
      */
     Py_INCREF(ap->descr);
     ret = (PyArrayObject *)\
-        PyArray_NewFromDescr(ap->ob_type,
+        PyArray_NewFromDescr(Py_TYPE(ap),
                              ap->descr,
                              n, ap->dimensions,
                              NULL, ap->data, ap->flags,
@@ -804,7 +804,7 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     }
     size = PyArray_SIZE(a);
     Py_INCREF(a->descr);
-    ret = PyArray_NewFromDescr(a->ob_type,
+    ret = PyArray_NewFromDescr(Py_TYPE(a),
                                a->descr,
                                1, &size,
                                NULL,

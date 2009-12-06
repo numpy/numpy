@@ -33,6 +33,8 @@
 #define NO_IMPORT_ARRAY
 #endif
 
+#include "npy_3kcompat.h"
+
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"
 
@@ -424,7 +426,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
             return -1;
         }
     }
-    else if PyString_Check(type_tup) {
+    else if (PyString_Check(type_tup)) {
             Py_ssize_t slen;
             char *thestr;
 
@@ -1141,7 +1143,7 @@ _trunc_coredim(PyArrayObject *ap, int core_nd)
     /* NewFromDescr will steal this reference */
     Py_INCREF(ap->descr);
     ret = (PyArrayObject *)
-        PyArray_NewFromDescr(ap->ob_type, ap->descr,
+        PyArray_NewFromDescr(Py_TYPE(ap), ap->descr,
                              nd, ap->dimensions,
                              ap->strides, ap->data, ap->flags,
                              (PyObject *)ap);
@@ -1266,7 +1268,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
         if (!PyArray_CheckExact(_obj)
             /* If both are same subtype of object arrays, then proceed */
-            && !(_obj->ob_type == (PyTuple_GET_ITEM(args, 0))->ob_type)
+            && !(Py_TYPE(_obj) == Py_TYPE(PyTuple_GET_ITEM(args, 0)))
             && PyObject_HasAttrString(_obj, "__array_priority__")
             && _has_reflected_op(_obj, loop->ufunc->name)) {
             loop->notimplemented = 1;
@@ -2541,7 +2543,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         }
         if (out == NULL) {
             loop->ret = (PyArrayObject *)
-                PyArray_New(aar->ob_type, aar->nd-1, loop_i,
+                PyArray_New(Py_TYPE(aar), aar->nd-1, loop_i,
                             otype, NULL, NULL, 0, 0,
                             (PyObject *)aar);
         }
@@ -2552,7 +2554,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     case UFUNC_ACCUMULATE:
         if (out == NULL) {
             loop->ret = (PyArrayObject *)
-                PyArray_New(aar->ob_type, aar->nd, aar->dimensions,
+                PyArray_New(Py_TYPE(aar), aar->nd, aar->dimensions,
                             otype, NULL, NULL, 0, 0, (PyObject *)aar);
         }
         else {
@@ -2565,7 +2567,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         loop_i[axis] = ind_size;
         if (out == NULL) {
             loop->ret = (PyArrayObject *)
-                PyArray_New(aar->ob_type, aar->nd, loop_i, otype,
+                PyArray_New(Py_TYPE(aar), aar->nd, loop_i, otype,
                             NULL, NULL, 0, 0, (PyObject *)aar);
         }
         else {
@@ -3364,7 +3366,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     if (ret == NULL) {
         return NULL;
     }
-    if (op->ob_type != ret->ob_type) {
+    if (Py_TYPE(op) != Py_TYPE(ret)) {
         res = PyObject_CallMethod(op, "__array_wrap__", "O", ret);
         if (res == NULL) {
             PyErr_Clear();

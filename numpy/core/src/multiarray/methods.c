@@ -291,7 +291,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         Py_DECREF(typed);
         return NULL;
     }
-    ret = PyArray_NewFromDescr(self->ob_type,
+    ret = PyArray_NewFromDescr(Py_TYPE(self),
                                typed,
                                self->nd, self->dimensions,
                                self->strides,
@@ -344,7 +344,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
         Py_DECREF(dtype);
         return -1;
     }
-    ret = PyArray_NewFromDescr(self->ob_type,
+    ret = PyArray_NewFromDescr(Py_TYPE(self),
                                dtype, self->nd, self->dimensions,
                                self->strides, self->data + offset,
                                self->flags, (PyObject *)self);
@@ -778,9 +778,9 @@ array_wraparray(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    if (self->ob_type != arr->ob_type){
+    if (Py_TYPE(self) != Py_TYPE(arr)){
         Py_INCREF(PyArray_DESCR(arr));
-        ret = PyArray_NewFromDescr(self->ob_type,
+        ret = PyArray_NewFromDescr(Py_TYPE(self),
                                    PyArray_DESCR(arr),
                                    PyArray_NDIM(arr),
                                    PyArray_DIMS(arr),
@@ -819,7 +819,7 @@ array_preparearray(PyArrayObject *self, PyObject *args)
     }
 
     Py_INCREF(PyArray_DESCR(arr));
-    ret = PyArray_NewFromDescr(self->ob_type,
+    ret = PyArray_NewFromDescr(Py_TYPE(self),
                                PyArray_DESCR(arr),
                                PyArray_NDIM(arr),
                                PyArray_DIMS(arr),
@@ -851,7 +851,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
         PyObject *new;
         PyTypeObject *subtype = &PyArray_Type;
 
-        if (!PyType_IsSubtype(self->ob_type, &PyArray_Type)) {
+        if (!PyType_IsSubtype(Py_TYPE(self), &PyArray_Type)) {
             subtype = &PyArray_Type;
         }
 
@@ -1276,7 +1276,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(ret, 0, obj);
     PyTuple_SET_ITEM(ret, 1,
                      Py_BuildValue("ONc",
-                                   (PyObject *)self->ob_type,
+                                   (PyObject *)Py_TYPE(self),
                                    Py_BuildValue("(N)",
                                                  PyInt_FromLong(0)),
                                    /* dummy data-type */

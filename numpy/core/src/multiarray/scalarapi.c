@@ -549,7 +549,7 @@ PyArray_DescrFromScalar(PyObject *sc)
 	return descr;
     }
 
-    descr = PyArray_DescrFromTypeObject((PyObject *)sc->ob_type);
+    descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
     if (descr->elsize == 0) {
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
@@ -564,7 +564,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         }
         else {
             descr->elsize =
-                ((PyVoidScalarObject *)sc)->ob_size;
+                Py_SIZE((PyVoidScalarObject *)sc);
             descr->fields = PyObject_GetAttrString(sc, "fields");
             if (!descr->fields || !PyDict_Check(descr->fields) ||
                     (descr->fields == Py_None)) {
@@ -735,7 +735,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                 vobj->descr = descr;
                 Py_INCREF(descr);
                 vobj->obval = NULL;
-                vobj->ob_size = itemsize;
+                Py_SIZE(vobj) = itemsize;
                 vobj->flags = BEHAVED | OWNDATA;
                 swap = 0;
                 if (descr->names) {

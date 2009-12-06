@@ -207,7 +207,7 @@ array_dealloc(PyArrayObject *self) {
 
     PyDimMem_FREE(self->dimensions);
     Py_DECREF(self->descr);
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static int

@@ -1,16 +1,14 @@
 #ifndef _NPY_3KCOMPAT_H_
 #define _NPY_3KCOMPAT_H_
 
-#include "npy_config.h"
-
-#if defined(NPY_PY3K)
-
 #include <Python.h>
+#include "npy_config.h"
 
 /*
  * PyInt -> PyLong
  */
 
+#if defined(NPY_PY3K)
 /* Return True only if the long fits in a C long */
 static NPY_INLINE int PyInt_Check(PyObject *op) {
     int overflow = 0;
@@ -31,11 +29,13 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
  * Since the PyLong type is very different from the fixed-range PyInt,
  * we don't define PyInt_Type -> PyLong_Type.
  */
+#endif /* NPY_PY3K */
 
 /*
  * PyString -> PyBytes
  */
 
+#if defined(NPY_PY3K)
 #define PyString_Type PyBytes_Type
 #define PyString_Check PyBytes_Check
 
@@ -46,7 +46,16 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyString_ConcatAndDel PyBytes_ConcatAndDel
 #define PyString_AsString PyBytes_AsString
 #define PyString_GET_SIZE PyBytes_GET_SIZE
-
 #endif /* NPY_PY3K */
+
+/*
+ * Accessing items of ob_base
+ */
+
+#if (PY_VERSION_HEX < 0x02060000)
+#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
+#define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
+#define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
+#endif
 
 #endif /* _NPY_3KCOMPAT_H_ */
