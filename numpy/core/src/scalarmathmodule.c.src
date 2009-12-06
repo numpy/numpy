@@ -1475,14 +1475,44 @@ static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC initscalarmath(void) {
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "scalarmath",
+        NULL,
+        -1,
+        methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
 
+#if defined(NPY_PY3K)
+#define RETVAL m
+PyObject *PyInit_scalarmath(void)
+#else
+#define RETVAL
+PyMODINIT_FUNC
+initscalarmath(void)
+#endif
+{
+    PyObject *m;
+
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+    if (!m) {
+        return NULL;
+    }
+#else
     Py_InitModule("scalarmath", methods);
+#endif
 
     import_array();
     import_umath();
 
-    if (get_functions() < 0) return;
+    if (get_functions() < 0) return RETVAL;
 
     add_scalarmath();
 
@@ -1504,5 +1534,5 @@ PyMODINIT_FUNC initscalarmath(void) {
 #endif
     saved_tables[8] = PyComplex_Type.tp_richcompare;
 
-    return;
+    return RETVAL;
 }

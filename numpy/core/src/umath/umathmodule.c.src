@@ -242,7 +242,29 @@ static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
-PyMODINIT_FUNC initumath(void) {
+
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "umath",
+        NULL,
+        -1,
+        methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
+
+#if defined(NPY_PY3K)
+#define RETVAL m
+PyObject *PyInit_umath(void)
+#else
+#define RETVAL
+PyMODINIT_FUNC initumath(void)
+#endif
+{
     PyObject *m, *d, *s, *s2, *c_api;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
@@ -250,7 +272,14 @@ PyMODINIT_FUNC initumath(void) {
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
     /* Create the module and add the functions */
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule("umath", methods);
+#endif
+    if (!m) {
+        return RETVAL;
+    }
 
     /* Import the array */
     if (_import_array() < 0) {
@@ -258,12 +287,12 @@ PyMODINIT_FUNC initumath(void) {
             PyErr_SetString(PyExc_ImportError,
                             "umath failed: Could not import array core.");
         }
-        return;
+        return RETVAL;
     }
 
     /* Initialize the types */
     if (PyType_Ready(&PyUFunc_Type) < 0)
-        return;
+        return RETVAL;
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
@@ -333,7 +362,7 @@ PyMODINIT_FUNC initumath(void) {
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
 
-    return;
+    return RETVAL;
 
  err:
     /* Check for errors */
@@ -341,5 +370,5 @@ PyMODINIT_FUNC initumath(void) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath module.");
     }
-    return;
+    return RETVAL;
 }

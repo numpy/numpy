@@ -373,18 +373,44 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
+
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "multiarray_tests",
+        NULL,
+        -1,
+        Multiarray_TestsMethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
+
+#if defined(NPY_PY3K)
+#define RETVAL m
+PyObject *PyInit_multiarray_tests(void)
+#else
+#define RETVAL
 PyMODINIT_FUNC
 initmultiarray_tests(void)
+#endif
 {
     PyObject *m;
 
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule("multiarray_tests", Multiarray_TestsMethods);
+#endif
     if (m == NULL) {
-        return;
+        return RETVAL;
     }
     import_array();
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath_tests module.");
     }
+    return RETVAL;
 }

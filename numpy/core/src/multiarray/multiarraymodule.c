@@ -2265,7 +2265,7 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 #if defined(NPY_PY3K)
     PyErr_SetString(PyExc_RuntimeError,
-                    "XXX -- not implemented!")
+                    "XXX -- not implemented!");
     return NULL;
 #else
     if (ro) {
@@ -2964,15 +2964,37 @@ set_flaginfo(PyObject *d)
     return;
 }
 
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "multiarray",
+        NULL,
+        -1,
+        array_module_methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
 
 /* Initialization function for the module */
-
+#if defined(NPY_PY3K)
+#define RETVAL m
+PyObject *PyInit_multiarray(void) {
+#else
+#define RETVAL
 PyMODINIT_FUNC initmultiarray(void) {
+#endif
     PyObject *m, *d, *s;
     PyObject *c_api;
 
     /* Create the module and add the functions */
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule("multiarray", array_module_methods);
+#endif
     if (!m) {
         goto err;
     }
@@ -2993,7 +3015,7 @@ PyMODINIT_FUNC initmultiarray(void) {
     }
     PyArray_Type.tp_free = _pya_free;
     if (PyType_Ready(&PyArray_Type) < 0) {
-        return;
+        return RETVAL;
     }
     if (setup_scalartypes(d) < 0) {
         goto err;
@@ -3002,25 +3024,25 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_free = _pya_free;
     if (PyType_Ready(&PyArrayIter_Type) < 0) {
-        return;
+        return RETVAL;
     }
     if (PyType_Ready(&PyArrayMapIter_Type) < 0) {
-        return;
+        return RETVAL;
     }
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
-        return;
+        return RETVAL;
     }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
-        return;
+        return RETVAL;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
-        return;
+        return RETVAL;
     }
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
-        return;
+        return RETVAL;
     }
     c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
@@ -3094,12 +3116,12 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-    return;
+    return RETVAL;
 
  err:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
-    return;
+    return RETVAL;
 }
