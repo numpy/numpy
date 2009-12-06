@@ -9,17 +9,22 @@ old initializers should work. However, there are several considerations to
 keep in mind.
 
 1) Because the first three slots are now part of a struct some compilers issue
-warnings if they are initialized in the old way.
+   warnings if they are initialized in the old way.
+
+   In practice, it is necessary to use the Py_TYPE, Py_SIZE, Py_REFCNT
+   macros instead of accessing ob_type, ob_size and ob_refcnt
+   directly.  These are defined for backward compatibility in
+   private/npy_3kcompat.h
 
 2) The compare slot has been made reserved in order to preserve binary
-compatibily while the tp_compare function went away. The tp_richcompare
-function has replaced it and we need to use that slot instead. This will
-likely require modifications in the searchsorted functions and generic sorts
-that currently use the compare function.
+   compatibily while the tp_compare function went away. The tp_richcompare
+   function has replaced it and we need to use that slot instead. This will
+   likely require modifications in the searchsorted functions and generic sorts
+   that currently use the compare function.
 
 3) The previous numpy practice of initializing the COUNT_ALLOCS slots was
-bogus. They are not supposed to be explicitly initialized and were out of
-place in any case because an extra base slot was added in python 2.6.
+   bogus. They are not supposed to be explicitly initialized and were out of
+   place in any case because an extra base slot was added in python 2.6.
 
 Because of these facts it was thought better to use #ifdefs to bring the old
 initializers up to py3k snuff rather than just fill the tp_richcompare slot.
@@ -100,13 +105,13 @@ Types with tp_as_number defined
 
 1) multiarray/arrayobject.c
 
-The PyNumberMethods struct has changed enough that it looks easiest to just
-have an alternate version. Note that np_divide, np_long, np_oct, np_hex, and
-np_inplace_divide have gone away. The slot np_int is what np_long used to be,
-tp_divide is now tp_floor_divide, and np_inplace_divide is now
-np_inplace_floor_divide. We will also have to make sure the *_true_divide
-variants are defined. This should also be done for python < 3.x, but that
-introduces a requirement for the Py_TPFLAGS_HAVE_CLASS in the type flag.
+The slots np_divide, np_long, np_oct, np_hex, and np_inplace_divide
+have gone away. The slot np_int is what np_long used to be, tp_divide
+is now tp_floor_divide, and np_inplace_divide is now
+np_inplace_floor_divide. We will also have to make sure the
+*_true_divide variants are defined. This should also be done for
+python < 3.x, but that introduces a requirement for the
+Py_TPFLAGS_HAVE_CLASS in the type flag.
 
 /*
  * Number implementations must check *both* arguments for proper type and
@@ -194,4 +199,99 @@ PyMappingMethods foo_mapping_methods = {
     (binaryfunc)0,                          /* mp_subscript */
     (objobjargproc)0                        /* mp_ass_subscript */
 };
+
+
+PyBuffer
+--------
+
+Parts involving the PyBuffer_* likely require the most work, and they
+are widely spread in multiarray:
+
+1) The void scalar makes use of buffers
+2) Multiarray has methods for creating buffers etc. explicitly
+3) Arrays can be created from buffers etc.
+4) The .data attribute of an array is a buffer
+
+There are two things to note in 3K:
+
+1) The buffer protocol has changed.  It is also now quite complicated,
+   and implementing it properly requires several pieces.
+
+2) There is no PyBuffer object any more. Instead, a MemoryView
+   object is present, but it always must piggy-pack on another existing
+   object.
+
+Currently, what has been done is:
+
+1) Replace protocol implementations with stubs that either raise errors
+   or offer limited functionality.
+
+2) Replace PyBuffer usage by PyMemoryView where possible.
+
+3) ... and where not possible, use stubs that raise errors.
+
+What likely needs to be done is:
+
+1) Implement a simple "stub" compatibility buffer object 
+   the memoryview can piggy-pack on.
+
+
+PyNumber_Divide
+---------------
+
+This function has vanished -- needs to be replaced with PyNumber_TrueDivide
+or FloorDivide.
+
+PyFile
+------
+
+Many of the PyFile items have disappeared:
+
+1) PyFile_Type
+2) PyFile_AsFile
+3) PyFile_FromString
+
+Compatibility wrappers for these are now in private/npy_3kcompat.h
+
+
+PyString
+--------
+
+PyString was removed, and needs to be replaced either by PyBytes or PyUnicode.
+The plan of attack currently is:
+
+1) The 'string' array dtype will be replaced by Bytes
+2) The 'unicode' array dtype will stay Unicode
+
+Some compatibility wrappers are defined in private/npy_3kcompat.h,
+redefining essentially String as Bytes.
+
+However, at least following points need still to be audited:
+
+1) PyObject_Str -> it now returns unicodes
+2) tp_doc -> char* string, but is it in unicode or what?
+
+
+RO
+--
+
+The RO alias for READONLY is no more.
+
+
+Py_TPFLAGS_CHECKTYPES
+---------------------
+
+This has vanished and is always on in Py3K.
+
+
+PyInt
+-----
+
+There is no limited-range integer type any more in Py3K.
+
+Currently, the plan is the following:
+
+1) Numpy's integer types no longer inherit from Python integer.
+2) Convert Longs to integers, if their size is small enough and known.
+3) Otherwise, use long longs.
 
