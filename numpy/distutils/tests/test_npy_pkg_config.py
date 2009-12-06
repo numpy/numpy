@@ -41,7 +41,7 @@ class TestLibraryInfo(TestCase):
         try:
             pkg = os.path.splitext(filename)[0]
             try:
-                os.write(fd, simple)
+                os.write(fd, simple.encode('ascii'))
             finally:
                 os.close(fd)
 
@@ -58,7 +58,7 @@ class TestLibraryInfo(TestCase):
         try:
             pkg = os.path.splitext(filename)[0]
             try:
-                os.write(fd, simple_variable)
+                os.write(fd, simple_variable.encode('ascii'))
             finally:
                 os.close(fd)
 
