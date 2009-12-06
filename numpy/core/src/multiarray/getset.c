@@ -279,6 +279,9 @@ array_interface_get(PyArrayObject *self)
 static PyObject *
 array_data_get(PyArrayObject *self)
 {
+#if defined(NPY_PY3K)
+    return PyMemoryView_FromObject(self);
+#else
     intp nbytes;
     if (!(PyArray_ISONESEGMENT(self))) {
         PyErr_SetString(PyExc_AttributeError, "cannot get single-"\
@@ -286,17 +289,23 @@ array_data_get(PyArrayObject *self)
         return NULL;
     }
     nbytes = PyArray_NBYTES(self);
-    if PyArray_ISWRITEABLE(self) {
+    if (PyArray_ISWRITEABLE(self)) {
         return PyBuffer_FromReadWriteObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
     }
     else {
         return PyBuffer_FromObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
     }
+#endif
 }
 
 static int
 array_data_set(PyArrayObject *self, PyObject *op)
 {
+#if defined(NPY_PY3K)
+#warning XXX -- need to implement this
+    PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
+    return -1;
+#else
     void *buf;
     Py_ssize_t buf_len;
     int writeable=1;
@@ -338,6 +347,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
         self->flags &= ~WRITEABLE;
     }
     return 0;
+#endif
 }
 
 

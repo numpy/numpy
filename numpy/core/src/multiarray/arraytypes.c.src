@@ -586,10 +586,22 @@ finish:
     }
     itemsize = ap->descr->elsize;
     if (PyArray_ISWRITEABLE(ap)) {
+#if defined(NPY_PY3K)
+#warning XXX -- needs implementation
+        PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
+        u = NULL;
+#else
         u = PyBuffer_FromReadWriteMemory(ip, itemsize);
+#endif
     }
     else {
+#if defined(NPY_PY3K)
+#warning XXX -- needs implementation
+        PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
+        u = NULL;
+#else
         u = PyBuffer_FromMemory(ip, itemsize);
+#endif
     }
     if (u == NULL) {
         goto fail;

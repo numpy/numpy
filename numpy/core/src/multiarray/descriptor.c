@@ -1149,9 +1149,15 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         else if (obj == (PyObject *)(&PyUnicode_Type)) {
             check_num = PyArray_UNICODE;
         }
+#if defined(NPY_PY3K)
+        else if (obj == (PyObject *)(&PyMemoryView_Type)) {
+            check_num = PyArray_VOID;
+        }
+#else
         else if (obj == (PyObject *)(&PyBuffer_Type)) {
             check_num = PyArray_VOID;
         }
+#endif
         else {
             *at = _arraydescr_fromobj(obj);
             if (*at) {

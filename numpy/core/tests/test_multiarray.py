@@ -1380,5 +1380,13 @@ class TestStackedNeighborhoodIter(TestCase):
         l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
                 [-1, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
+
+
+if sys.version_info >= (2, 6):
+    class TestNewBufferProtocol(object):
+        def test_there_are_no_tests_yet_so_fail(self):
+            raise AssertionError("Need tests for the new buffer interface! "
+                                 "For arrays and scalars.")
+
 if __name__ == "__main__":
     run_module_suite()

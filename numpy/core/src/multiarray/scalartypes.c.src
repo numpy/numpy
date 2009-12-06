@@ -772,7 +772,11 @@ voidtype_dtypedescr_get(PyVoidScalarObject *self)
 static PyObject *
 gentype_data_get(PyObject *self)
 {
+#if defined(NPY_PY3K)
+    return PyMemoryView_FromObject(self);
+#else
     return PyBuffer_FromObject(self, 0, Py_END_OF_BUFFER);
+#endif
 }
 
 
@@ -1812,7 +1816,6 @@ static PySequenceMethods voidtype_as_sequence = {
 };
 
 
-
 static Py_ssize_t
 gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
 {
@@ -1871,15 +1874,34 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
     }
 }
 
+#if PY_VERSION_HEX >= 0x02060000
+
+static int
+gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    Py_ssize_t len;
+    void *buf;
+
+#warning XXX: the format is not implemented! -- this needs more work
+
+    len = gentype_getreadbuf(self, 0, &buf);
+    return PyBuffer_FillInfo(view, self, buf, len, 1, flags);
+}
+
+/* releasebuffer is not needed */
+
+#endif
 
 static PyBufferProcs gentype_as_buffer = {
+#if !defined(NPY_PY3K)
     gentype_getreadbuf,                          /* bf_getreadbuffer*/
     NULL,                                        /* bf_getwritebuffer*/
     gentype_getsegcount,                         /* bf_getsegcount*/
     gentype_getcharbuf,                          /* bf_getcharbuffer*/
+#endif
 #if PY_VERSION_HEX >= 0x02060000
-    NULL,
-    NULL,
+    gentype_getbuffer,                           /* bf_getbuffer */
+    NULL,                                        /* bf_releasebuffer */
 #endif
 };
 
@@ -2635,6 +2657,7 @@ static PyMappingMethods object_arrtype_as_mapping = {
 #endif
 };
 
+#if !defined(NPY_PY3K)
 static Py_ssize_t
 object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
 {
@@ -2698,22 +2721,53 @@ object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
     }
     return (*pb->bf_getcharbuffer)(self->obval, segment, ptrptr);
 }
+#endif
+
+#if PY_VERSION_HEX >= 0x02060000
+static int
+object_arrtype_getbuffer(PyObjectScalarObject *self, Py_buffer *view, int flags)
+{
+    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
+    if (pb == NULL || pb->bf_getbuffer == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "expected a readable buffer object");
+        return -1;
+    }
+    return (*pb->bf_getbuffer)(self->obval, view, flags);
+}
+
+static void
+object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
+{
+    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
+    if (pb == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "expected a readable buffer object");
+        return;
+    }
+    if (pb->bf_releasebuffer != NULL) {
+        (*pb->bf_releasebuffer)(self->obval, view);
+    }
+}
+#endif
 
 static PyBufferProcs object_arrtype_as_buffer = {
+#if !defined(NPY_PY3K)
 #if PY_VERSION_HEX >= 0x02050000
     (readbufferproc)object_arrtype_getreadbuf,
     (writebufferproc)object_arrtype_getwritebuf,
     (segcountproc)object_arrtype_getsegcount,
     (charbufferproc)object_arrtype_getcharbuf,
-#if PY_VERSION_HEX >= 0x02060000
-    (getbufferproc)0,
-    (releasebufferproc)0,
-#endif
 #else
     (getreadbufferproc)object_arrtype_getreadbuf,
     (getwritebufferproc)object_arrtype_getwritebuf,
     (getsegcountproc)object_arrtype_getsegcount,
     (getcharbufferproc)object_arrtype_getcharbuf,
+#endif
+#endif
+#if PY_VERSION_HEX >= 0x02060000
+    (getbufferproc)object_arrtype_getbuffer,
+    (releasebufferproc)object_arrtype_releasebuffer,
 #endif
 };
 

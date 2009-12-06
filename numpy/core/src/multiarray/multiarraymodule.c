@@ -2138,14 +2138,25 @@ new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &size)) {
         return NULL;
     }
+#if defined(NPY_PY3K)
+#warning XXX -- needs to implement this?
+    PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
+    return NULL;
+#else
     return PyBuffer_New(size);
+#endif
 }
 
 static PyObject *
 buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    Py_ssize_t offset = 0, size = Py_END_OF_BUFFER, n;
+    Py_ssize_t offset = 0, n;
+#if defined(NPY_PY3K)
+    Py_ssize_t size;
+#else
+    Py_ssize_t size = Py_END_OF_BUFFER;
+#endif
     void *unused;
     static char *kwlist[] = {"object", "offset", "size", NULL};
 
@@ -2156,10 +2167,20 @@ buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
     if (PyObject_AsWriteBuffer(obj, &unused, &n) < 0) {
         PyErr_Clear();
+#if defined(NPY_PY3K)
+#warning XXX: should use the full memoryview capabilities
+        return PyMemoryView_FromObject(obj);
+#else
         return PyBuffer_FromObject(obj, offset, size);
+#endif
     }
     else {
+#if defined(NPY_PY3K)
+#warning XXX: should use the full memoryview capabilities
+        return PyMemoryView_FromObject(obj);
+#else
         return PyBuffer_FromReadWriteObject(obj, offset, size);
+#endif
     }
 }
 
@@ -2242,10 +2263,16 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
 
 
+#if defined(NPY_PY3K)
+    PyErr_SetString(PyExc_RuntimeError,
+                    "XXX -- not implemented!")
+    return NULL;
+#else
     if (ro) {
         return PyBuffer_FromMemory(memptr, size);
     }
     return PyBuffer_FromReadWriteMemory(memptr, size);
+#endif
 }
 
 #undef _test_code

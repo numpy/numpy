@@ -158,9 +158,15 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->len = (intp) buflen;
 
     /* Point to the base of the buffer object if present */
+#if defined(NPY_PY3K)
+    if (PyMemoryView_Check(obj)) {
+        buf->base = PyMemoryView_GET_BASE(obj);
+    }
+#else
     if (PyBuffer_Check(obj)) {
         buf->base = ((PyArray_Chunk *)obj)->base;
     }
+#endif
     if (buf->base == NULL) {
         buf->base = obj;
     }

@@ -1103,7 +1103,13 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
     if (PyArray_IsScalar(s, Generic)) {
         return 0;
     }
-    if (PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s)) {
+    if (PyString_Check(s) ||
+#if defined(NPY_PY3K)
+        PyMemoryView_Check(s) ||
+#else
+        PyBuffer_Check(s) ||
+#endif
+        PyUnicode_Check(s)) {
         return stop_at_string ? 0:1;
     }
     if (stop_at_tuple && PyTuple_Check(s)) {
@@ -1171,7 +1177,13 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 
     n = PyObject_Length(s);
     if ((nd == 0) || PyString_Check(s) ||
-            PyUnicode_Check(s) || PyBuffer_Check(s)) {
+#if defined(NPY_PY3K)
+        PyMemoryView_Check(s) ||
+#else
+        PyBuffer_Check(s) ||
+#endif
+        PyUnicode_Check(s)) {
+
         *itemsize = MAX(*itemsize, n);
         return 0;
     }
@@ -3071,8 +3083,13 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         return NULL;
     }
     if (Py_TYPE(buf)->tp_as_buffer == NULL
+#if defined(NPY_PY3K)
+        || Py_TYPE(buf)->tp_as_buffer->bf_getbuffer == NULL
+#else
         || (Py_TYPE(buf)->tp_as_buffer->bf_getwritebuffer == NULL
-            && Py_TYPE(buf)->tp_as_buffer->bf_getreadbuffer == NULL)) {
+            && Py_TYPE(buf)->tp_as_buffer->bf_getreadbuffer == NULL)
+#endif
+        ) {
         PyObject *newbuf;
         newbuf = PyObject_GetAttrString(buf, "__buffer__");
         if (newbuf == NULL) {
@@ -3084,6 +3101,8 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     else {
         Py_INCREF(buf);
     }
+
+#warning XXX: Should implement support for the new buffer interface here!
 
     if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
         write = 0;

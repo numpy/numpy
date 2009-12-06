@@ -243,7 +243,11 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         goto finish;
     }
 
+#if defined(NPY_PY3K)
+    if (PyMemoryView_Check(op)) {
+#else
     if (PyBuffer_Check(op)) {
+#endif
         chktype = PyArray_DescrNewFromType(PyArray_VOID);
         chktype->elsize = Py_TYPE(op)->tp_as_sequence->sq_length(op);
         PyErr_Clear();
