@@ -1087,8 +1087,13 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
     if(max < 1) {
         return -1;
     }
-    if(!PySequence_Check(s) || PyInstance_Check(s) ||
-            PySequence_Length(s) < 0) {
+    if(!PySequence_Check(s) ||
+#if defined(NPY_PY3K)
+#warning XXX -- what is the correct thing to do here?
+#else
+       PyInstance_Check(s) ||
+#endif
+       PySequence_Length(s) < 0) {
         PyErr_Clear();
         return 0;
     }

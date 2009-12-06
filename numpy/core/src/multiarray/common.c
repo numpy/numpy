@@ -262,9 +262,13 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         if (PyErr_Occurred()) PyErr_Clear();
     }
 
+#if defined(NPY_PY3K)
+#warning XXX -- what is the correct thing to do here?
+#else
     if (PyInstance_Check(op)) {
         goto deflt;
     }
+#endif
     if (PySequence_Check(op)) {
         l = PyObject_Length(op);
         if (l < 0 && PyErr_Occurred()) {
