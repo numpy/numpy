@@ -2392,7 +2392,17 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
         }
         return 1;
     }
+#if defined(NPY_PY3K)
+    if (PyObject_RichCompareBool(*ip1, *ip2, Py_LT) == 1) {
+        return -1;
+    } else if (PyObject_RichCompareBool(*ip1, *ip2, Py_GT) == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
+#else
     return PyObject_Compare(*ip1, *ip2);
+#endif
 }
 
 
@@ -2553,7 +2563,11 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(ai
     }
     for(; i<n; i++) {
         ip++;
-        if (*ip != NULL && PyObject_Compare(*ip,mp) > 0) {
+#if defined(NPY_PY3K)
+        if (*ip != NULL && PyObject_RichCompareBool(*ip, mp, Py_GT) == 1) {
+#else
+        if (*ip != NULL && PyObject_Compare(*ip, mp) > 0) {
+#endif
             mp = *ip;
             *max_ind=i;
         }

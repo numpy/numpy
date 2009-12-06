@@ -1298,8 +1298,13 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
     if (field1 == NULL || field2 == NULL) {
         return 0;
     }
+#if defined(NPY_PY3K)
+    val = PyObject_RichCompareBool(field1, field2, Py_EQ);
+    if (val != 1 || PyErr_Occurred()) {
+#else
     val = PyObject_Compare(field1, field2);
     if (val != 0 || PyErr_Occurred()) {
+#endif
         same = 0;
     }
     else {
@@ -2810,6 +2815,14 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     }                                                                   \
     Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
 
+#if defined(NPY_PY3K)
+#define DUAL_INHERIT_COMPARE(child, parent1, parent2)
+#else
+#define DUAL_INHERIT_COMPARE(child, parent1, parent2)                   \
+    Py##child##ArrType_Type.tp_compare =                                \
+        Py##parent1##_Type.tp_compare;
+#endif
+
 #define DUAL_INHERIT2(child, parent1, parent2)                          \
     Py##child##ArrType_Type.tp_base = &Py##parent1##_Type;              \
     Py##child##ArrType_Type.tp_bases =                                  \
@@ -2817,8 +2830,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
                       &Py##parent2##ArrType_Type);                      \
     Py##child##ArrType_Type.tp_richcompare =                            \
         Py##parent1##_Type.tp_richcompare;                              \
-    Py##child##ArrType_Type.tp_compare =                                \
-        Py##parent1##_Type.tp_compare;                                  \
+    DUAL_INHERIT_COMPARE(child, parent1, parent2)                       \
     Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;       \
     if (PyType_Ready(&Py##child##ArrType_Type) < 0) {                   \
         PyErr_Print();                                                  \

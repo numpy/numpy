@@ -60,4 +60,42 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
 #endif
 
+/*
+ * PyObject_Cmp
+ */
+#if defined(NPY_PY3K)
+static NPY_INLINE int
+PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
+{
+    int v;
+    v = PyObject_RichCompareBool(i1, i2, Py_LT);
+    if (v == 0) {
+        *cmp = -1;
+        return 1;
+    }
+    else if (v == -1) {
+        return -1;
+    }
+
+    v = PyObject_RichCompareBool(i1, i2, Py_GT);
+    if (v == 0) {
+        *cmp = 1;
+        return 1;
+    }
+    else if (v == -1) {
+        return -1;
+    }
+
+    v = PyObject_RichCompareBool(i1, i2, Py_EQ);
+    if (v == 0) {
+        *cmp = 0;
+        return 1;
+    }
+    else {
+        *cmp = 0;
+        return -1;
+    }
+}
+#endif
+
 #endif /* _NPY_3KCOMPAT_H_ */

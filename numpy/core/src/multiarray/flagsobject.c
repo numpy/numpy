@@ -528,6 +528,35 @@ arrayflags_compare(PyArrayFlagsObject *self, PyArrayFlagsObject *other)
     }
 }
 
+
+static PyObject*
+arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
+{
+    PyObject *result = Py_NotImplemented;
+    int cmp;
+
+    if (cmp_op != Py_EQ && cmp_op != Py_NE) {
+        PyErr_SetString(PyExc_TypeError,
+                        "undefined comparison for flag object");
+        return NULL;
+    }
+
+    if (PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
+        cmp = arrayflags_compare((PyArrayFlagsObject *)self,
+                                 (PyArrayFlagsObject *)other);
+    }
+
+    if (cmp_op == Py_EQ) {
+        result = (cmp == 0) ? Py_True : Py_False;
+    }
+    else if (cmp_op == Py_NE) {
+        result = (cmp != 0) ? Py_True : Py_False;
+    }
+
+    Py_INCREF(result);
+    return result;
+}
+
 static PyMappingMethods arrayflags_as_mapping = {
 #if PY_VERSION_HEX >= 0x02050000
     (lenfunc)NULL,                       /*mp_length*/
@@ -588,7 +617,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
+    arrayflags_richcompare,                     /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
     0,                                          /* tp_iter */
     0,                                          /* tp_iternext */

@@ -1195,13 +1195,19 @@ add_scalarmath(void)
     /**end repeat**/
 
     saved_tables_arrtype[0] = PyLongArrType_Type.tp_as_number;
+#if !defined(NPY_PY3K)
     saved_tables_arrtype[1] = PyLongArrType_Type.tp_compare;
+#endif
     saved_tables_arrtype[2] = PyLongArrType_Type.tp_richcompare;
     saved_tables_arrtype[3] = PyDoubleArrType_Type.tp_as_number;
+#if !defined(NPY_PY3K)
     saved_tables_arrtype[4] = PyDoubleArrType_Type.tp_compare;
+#endif
     saved_tables_arrtype[5] = PyDoubleArrType_Type.tp_richcompare;
     saved_tables_arrtype[6] = PyCDoubleArrType_Type.tp_as_number;
+#if !defined(NPY_PY3K)
     saved_tables_arrtype[7] = PyCDoubleArrType_Type.tp_compare;
+#endif
     saved_tables_arrtype[8] = PyCDoubleArrType_Type.tp_richcompare;
 }
 
@@ -1293,19 +1299,28 @@ alter_pyscalars(PyObject *NPY_UNUSED(dummy), PyObject *args)
     n = PyTuple_GET_SIZE(args);
     while(n--) {
         obj = PyTuple_GET_ITEM(args, n);
+#if !defined(NPY_PY3K)
         if (obj == (PyObject *)(&PyInt_Type)) {
             PyInt_Type.tp_as_number = PyLongArrType_Type.tp_as_number;
             PyInt_Type.tp_compare = PyLongArrType_Type.tp_compare;
             PyInt_Type.tp_richcompare = PyLongArrType_Type.tp_richcompare;
         }
-        else if (obj == (PyObject *)(&PyFloat_Type)) {
+        else
+#else
+#warning XXX -- is it important to do something with the integers here?
+#endif
+        if (obj == (PyObject *)(&PyFloat_Type)) {
             PyFloat_Type.tp_as_number = PyDoubleArrType_Type.tp_as_number;
+#if !defined(NPY_PY3K)
             PyFloat_Type.tp_compare = PyDoubleArrType_Type.tp_compare;
+#endif
             PyFloat_Type.tp_richcompare = PyDoubleArrType_Type.tp_richcompare;
         }
         else if (obj == (PyObject *)(&PyComplex_Type)) {
             PyComplex_Type.tp_as_number = PyCDoubleArrType_Type.tp_as_number;
+#if !defined(NPY_PY3K)
             PyComplex_Type.tp_compare = PyCDoubleArrType_Type.tp_compare;
+#endif
             PyComplex_Type.tp_richcompare =             \
                 PyCDoubleArrType_Type.tp_richcompare;
         }
@@ -1328,19 +1343,28 @@ restore_pyscalars(PyObject *NPY_UNUSED(dummy), PyObject *args)
     n = PyTuple_GET_SIZE(args);
     while(n--) {
         obj = PyTuple_GET_ITEM(args, n);
+#if !defined(NPY_PY3K)
         if (obj == (PyObject *)(&PyInt_Type)) {
             PyInt_Type.tp_as_number = saved_tables[0];
             PyInt_Type.tp_compare = saved_tables[1];
             PyInt_Type.tp_richcompare = saved_tables[2];
         }
-        else if (obj == (PyObject *)(&PyFloat_Type)) {
+        else
+#else
+#warning XXX -- is it important to do something with the integers here?
+#endif
+        if (obj == (PyObject *)(&PyFloat_Type)) {
             PyFloat_Type.tp_as_number = saved_tables[3];
+#if !defined(NPY_PY3K)
             PyFloat_Type.tp_compare = saved_tables[4];
+#endif
             PyFloat_Type.tp_richcompare = saved_tables[5];
         }
         else if (obj == (PyObject *)(&PyComplex_Type)) {
             PyComplex_Type.tp_as_number = saved_tables[6];
+#if !defined(NPY_PY3K)
             PyComplex_Type.tp_compare = saved_tables[7];
+#endif
             PyComplex_Type.tp_richcompare = saved_tables[8];
         }
         else {
@@ -1362,19 +1386,28 @@ use_pythonmath(PyObject *NPY_UNUSED(dummy), PyObject *args)
     n = PyTuple_GET_SIZE(args);
     while(n--) {
         obj = PyTuple_GET_ITEM(args, n);
+#if !defined(NPY_PY3K)
         if (obj == (PyObject *)(&PyInt_Type)) {
             PyLongArrType_Type.tp_as_number = saved_tables[0];
             PyLongArrType_Type.tp_compare = saved_tables[1];
             PyLongArrType_Type.tp_richcompare = saved_tables[2];
         }
-        else if (obj == (PyObject *)(&PyFloat_Type)) {
+        else
+#else
+#warning XXX -- is it important to do something with the integers here?
+#endif
+        if (obj == (PyObject *)(&PyFloat_Type)) {
             PyDoubleArrType_Type.tp_as_number = saved_tables[3];
+#if !defined(NPY_PY3K)
             PyDoubleArrType_Type.tp_compare = saved_tables[4];
+#endif
             PyDoubleArrType_Type.tp_richcompare = saved_tables[5];
         }
         else if (obj == (PyObject *)(&PyComplex_Type)) {
             PyCDoubleArrType_Type.tp_as_number = saved_tables[6];
+#if !defined(NPY_PY3K)
             PyCDoubleArrType_Type.tp_compare = saved_tables[7];
+#endif
             PyCDoubleArrType_Type.tp_richcompare = saved_tables[8];
         }
         else {
@@ -1396,19 +1429,28 @@ use_scalarmath(PyObject *NPY_UNUSED(dummy), PyObject *args)
     n = PyTuple_GET_SIZE(args);
     while(n--) {
         obj = PyTuple_GET_ITEM(args, n);
+#if !defined(NPY_PY3K)
         if (obj == (PyObject *)(&PyInt_Type)) {
             PyLongArrType_Type.tp_as_number = saved_tables_arrtype[0];
             PyLongArrType_Type.tp_compare = saved_tables_arrtype[1];
             PyLongArrType_Type.tp_richcompare = saved_tables_arrtype[2];
         }
-        else if (obj == (PyObject *)(&PyFloat_Type)) {
+        else
+#else
+#warning XXX -- is it important to do something with the integers here?
+#endif
+        if (obj == (PyObject *)(&PyFloat_Type)) {
             PyDoubleArrType_Type.tp_as_number = saved_tables_arrtype[3];
+#if !defined(NPY_PY3K)
             PyDoubleArrType_Type.tp_compare = saved_tables_arrtype[4];
+#endif
             PyDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[5];
         }
         else if (obj == (PyObject *)(&PyComplex_Type)) {
             PyCDoubleArrType_Type.tp_as_number = saved_tables_arrtype[6];
+#if !defined(NPY_PY3K)
             PyCDoubleArrType_Type.tp_compare = saved_tables_arrtype[7];
+#endif
             PyCDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[8];
         }
         else {
@@ -1444,14 +1486,22 @@ PyMODINIT_FUNC initscalarmath(void) {
 
     add_scalarmath();
 
+#if !defined(NPY_PY3K)
     saved_tables[0] = PyInt_Type.tp_as_number;
     saved_tables[1] = PyInt_Type.tp_compare;
     saved_tables[2] = PyInt_Type.tp_richcompare;
+#else
+#warning XXX -- is it important to do something with the integers here?
+#endif
     saved_tables[3] = PyFloat_Type.tp_as_number;
+#if !defined(NPY_PY3K)
     saved_tables[4] = PyFloat_Type.tp_compare;
+#endif
     saved_tables[5] = PyFloat_Type.tp_richcompare;
     saved_tables[6] = PyComplex_Type.tp_as_number;
+#if !defined(NPY_PY3K)
     saved_tables[7] = PyComplex_Type.tp_compare;
+#endif
     saved_tables[8] = PyComplex_Type.tp_richcompare;
 
     return;
