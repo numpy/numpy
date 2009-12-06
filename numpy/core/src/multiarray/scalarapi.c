@@ -663,8 +663,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             if (type_num == PyArray_STRING) {
                 destptr = PyString_AS_STRING(obj);
                 ((PyStringObject *)obj)->ob_shash = -1;
+#if !defined(NPY_PY3K)
                 ((PyStringObject *)obj)->ob_sstate =    \
                     SSTATE_NOT_INTERNED;
+#endif
                 memcpy(destptr, data, itemsize);
                 return obj;
             }
