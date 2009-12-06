@@ -2,6 +2,7 @@
 
 #define _libnumarray_MODULE
 #include "numpy/libnumarray.h"
+#include "npy_config.h"
 #include <float.h>
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG)
@@ -55,7 +56,7 @@ getBuffer( PyObject *obj)
 {
     if (!obj) return PyErr_Format(PyExc_RuntimeError,
             "NULL object passed to getBuffer()");
-    if (obj->ob_type->tp_as_buffer == NULL) {
+    if (((PyObject*)obj)->ob_type->tp_as_buffer == NULL) {
         return PyObject_CallMethod(obj, "__buffer__", NULL);
     } else {
         Py_INCREF(obj);  /* Since CallMethod returns a new object when it
@@ -88,6 +89,12 @@ isBuffer (PyObject *obj)
 static int
 getWriteBufferDataPtr(PyObject *buffobj, void **buff)
 {
+#if defined(NPY_PY3K)
+#warning XXX - needs implementation
+    PyErr_SetString(PyExc_RuntimeError,
+                    "XXX: getWriteBufferDataPtr is not implemented");
+    return -1;
+#else
     int rval = -1;
     PyObject *buff2;
     if ((buff2 = getBuffer(buffobj)))
@@ -98,6 +105,7 @@ getWriteBufferDataPtr(PyObject *buffobj, void **buff)
         Py_DECREF(buff2);
     }
     return rval;
+#endif
 }
 
 /**********************************************************************/
@@ -118,6 +126,12 @@ isBufferWriteable (PyObject *buffobj)
 static int
 getReadBufferDataPtr(PyObject *buffobj, void **buff)
 {
+#if defined(NPY_PY3K)
+#warning XXX - needs implementation
+    PyErr_SetString(PyExc_RuntimeError,
+                    "XXX: getWriteBufferDataPtr is not implemented");
+    return -1;
+#else
     int rval = -1;
     PyObject *buff2;
     if ((buff2 = getBuffer(buffobj))) {
@@ -127,6 +141,7 @@ getReadBufferDataPtr(PyObject *buffobj, void **buff)
         Py_DECREF(buff2);
     }
     return rval;
+#endif
 }
 
 /**********************************************************************/
@@ -134,6 +149,12 @@ getReadBufferDataPtr(PyObject *buffobj, void **buff)
 static int
 getBufferSize(PyObject *buffobj)
 {
+#if defined(NPY_PY3K)
+#warning XXX - needs implementation
+    PyErr_SetString(PyExc_RuntimeError,
+                    "XXX: getWriteBufferDataPtr is not implemented");
+    return -1;
+#else
     Py_ssize_t size=0;
     PyObject *buff2;
     if ((buff2 = getBuffer(buffobj)))
@@ -144,6 +165,7 @@ getBufferSize(PyObject *buffobj)
     else
         size = -1;
     return size;
+#endif
 }
 
 
@@ -901,7 +923,7 @@ cfunc_call(PyObject *self, PyObject *argsTuple, PyObject *NPY_UNUSED(argsDict))
     }
 }
 
-staticforward PyTypeObject CfuncType;
+static PyTypeObject CfuncType;
 
 static void
 cfunc_dealloc(PyObject* self)
@@ -986,8 +1008,9 @@ NA_new_cfunc(CfuncDescriptor *cfd)
 {
     CfuncObject* cfunc;
 
-    CfuncType.ob_type = &PyType_Type;  /* Should be done once at init.
-                                          Do now since there is no init. */
+    /* Should be done once at init.
+       Do now since there is no init. */
+    ((PyObject*)&CfuncType)->ob_type = &PyType_Type;
 
     cfunc = PyObject_New(CfuncObject, &CfuncType);
 
@@ -2439,7 +2462,11 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
                     "NA_setFromPythonScalar: len(string) must be 1.");
             return -1;
         }
+#if defined(NPY_PY3K)
+        NA_set_Int64(a, offset, *PyBytes_AsString(value));
+#else
         NA_set_Int64(a, offset, *PyString_AsString(value));
+#endif
     } else {
         PyErr_Format(PyExc_TypeError,
                 "NA_setFromPythonScalar: bad value type.");
