@@ -3014,7 +3014,11 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
+#if defined(NPY_PY3K)
+    s = PyUnicode_InternFromString(NPY_METADATA_DTSTR);
+#else
     s = PyString_InternFromString(NPY_METADATA_DTSTR);
+#endif
     PyDict_SetItemString(d, "METADATA_DTSTR", s);
     Py_DECREF(s);
 
