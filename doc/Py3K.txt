@@ -34,7 +34,9 @@ Semantic changes
 We make the following semantic changes:
 
 * division: integer division is by default true_divide, also for arrays
-* dtype fields: 'a' and b'a' are different fields
+
+* Unicode field names are no longer supported in Py2,
+  and Byte field names will not be supported in Py3.
 
 
 Python code
@@ -121,10 +123,17 @@ PyBuffer_*
 PyString
 
     PyString is currently defined to PyBytes in npy_3kcompat.h.
+    This definition will go away in the end.
+
+    All instances of PyString must be converted to one of:
+
+    - PyBytes: byte character strings in Py2 and Py3
+    - PyUnicode: unicode strings in Py2 and Py3 
+    - PyUString: unicode in Py3, byte string in Py2
 
     Decisions:
 
-    * field names are Unicode
+    * field names are UString
 
     * field titles can be arbitrary objects.
       If they are Unicode, insert to fields dict.
@@ -143,25 +152,8 @@ PyString
     TODO: I have a feeling that we should avoid PyUnicode_AsUTF8EncodedString
           wherever possible...
 
-    TODO: Decide on a policy between Unicode and Bytes
-
-          a) what is allowed for the user to pass in: which one or both?
-          b) what is the internal format: which one or both?
-          c) if we do conversions, what is the encoding?
-             (anything apart from utf-8 or ascii does not make sense, imho)
-
-          Some instances:
-
-          - dtype field names (if both, which is the default?)
-            If unicode, what to do with serialization to npy files etc.?
-            force utf8?
-
-          - dtype field titles (probably can be arbitrary object)
-
-          - dtype format strings ('i4', '|S7' etc.)
-
-    TODO: Replace all occurrences of String by Bytes or Unicode, to ensure
-    	  that we have made a conscious choice for each case in Py3K.
+    TODO: Replace all occurrences of String by Bytes, Unicode or UString,
+          to ensure that we have made a conscious choice for each case in Py3K.
 
 	  #define PyBytes -> PyString for Python 2 in npy_3kcompath.h
 
@@ -205,6 +197,15 @@ tp_compare
 
     TODO: ensure that all types that had only tp_compare have also
           tp_richcompare.
+
+pickles
+
+    It is not possible to support Python 2 pickles in Python 3.
+
+    This is because Python 2 strings pickle to Python 3 unicode objects,
+    which causes problems if there are non-ascii characters there.
+    The errors are raised before reaching any Numpy code, so we just can't
+    preserve backwards compatibility here.
 
 
 PyTypeObject
