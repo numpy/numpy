@@ -1,9 +1,16 @@
-******************************************
-Notes on making the transition to Python 3
-******************************************
+.. -*-rst-*-
+
+*********************************************
+Developer notes on the transition to Python 3
+*********************************************
+
+:date: 2009-12-05
+:author: Charles R. Harris
+:author: Pauli Virtanen
 
 General
 =======
+
 
 Resources
 ---------
@@ -13,11 +20,14 @@ Information on porting to 3K:
 - http://wiki.python.org/moin/cporting
 - http://wiki.python.org/moin/PortingExtensionModulesToPy3k
 
+
 Git trees
 ---------
 
 - http://github.com/pv/numpy-work/commits/py3k
+- http://github.com/cournape/numpy/commits/py3_bootstrap
 - http://github.com/illume/numpy3k/commits/work
+
 
 Prerequisites
 -------------
@@ -28,184 +38,501 @@ compatible version. Its 3K SVN branch, however, works quite well:
 - http://python-nose.googlecode.com/svn/branches/py3k
 
 
-Semantic changes
-================
+Known semantic changes on Py2
+=============================
 
-We make the following semantic changes:
+As a side effect, the Py3 adaptation has caused the following semantic
+changes that are visible on Py2.
 
-* division: integer division is by default true_divide, also for arrays
+* There are no known semantic changes.
 
-* Unicode field names are no longer supported in Py2,
-  and Byte field names will not be supported in Py3.
+
+Known semantic changes on Py3
+=============================
+
+The following semantic changes have been made on Py3:
+
+* Division: integer division is by default true_divide, also for arrays.
+
+* Dtype field names are Unicode.
+
+* Only unicode dtype field titles are included in fields dict.
+
+.. todo::
+
+   Check for any other changes ... This we want in the end to include
+   in the release notes, and also in a "how to port" document.
 
 
 Python code
 ===========
 
 
-What we do now
---------------
-
 2to3 in setup.py
+----------------
 
-    Currently, setup.py calls 2to3 automatically to convert Python sources
-    to Python 3 ones, and stores the results under::
+Currently, setup.py calls 2to3 automatically to convert Python sources
+to Python 3 ones, and stores the results under::
 
-        build/py3k
+    build/py3k
 
-    Only changed files will be re-converted when setup.py is called a second
-    time, making development much faster.
+Only changed files will be re-converted when setup.py is called a second
+time, making development much faster.
 
-    Currently, this seems to handle most (all?) of the necessary Python
-    code conversion.
+Currently, this seems to handle most (all?) of the necessary Python
+code conversion.
+
+Not all of the 2to3 transformations are appropriate for all files.
+Especially, 2to3 seems to be quite trigger-happy in replacing e.g.
+``unicode`` by ``str`` which causes problems in ``defchararray.py``.
+For files that need special handling, add entries to
+``tools/py3tool.py``.
+
+.. todo::
+
+   Should we be a good citizen and use ``lib2to3`` instead?
+
+.. todo::
+
+   Do we want to get rid of this hack in the long run?
+
 
 numpy.compat.py3k
+-----------------
 
-    There are some utility functions needed for 3K compatibility in
-    ``numpy.compat.py3k`` -- they can be imported from ``numpy.compat``.
-    More can be added as needed.
+There are some utility functions needed for 3K compatibility in
+``numpy.compat.py3k`` -- they can be imported from ``numpy.compat``:
+
+- bytes: bytes constructor
+- asbytes: convert string to bytes (no-op on Py2)
+- getexception: get current exception (see below)
+- isfileobj: detect Python file objects
+
+More can be added as needed.
 
 
-Syntax changes
---------------
+Exception syntax
+----------------
 
-Code that wants to cater for both Python2 and Python3 needs to take
-at least the following into account:
+Syntax change: "except FooException, bar:" -> "except FooException as bar:"
 
-1) "except FooException, bar:" -> "except FooException as bar:"
+Code that wants to cater both for Py2 and Py3 should do something like::
 
-2) "from localmodule import foo"
+    try:
+       spam
+    except SpamException:
+       exc = getexception()
 
-   Syntax for relative imports has changed and is incompatible between
-   Python 2.4 and Python 3. The only way seems to use absolute imports
-   throughout.
+This is taken care also by 2to3, however.
 
-3) "print foo, bar" -> "print(foo, bar)"
 
-   Print is no longer a statement.
+Relative imports
+----------------
+
+The new relative import syntax,
+
+    from . import foo
+
+is not available on Py2.4, so we can't simply use it.
+
+Using absolute imports everywhere is probably OK, if they just happen
+to work.
+
+2to3, however, converts the old syntax to new syntax, so as long as we
+use the hack, it takes care of most parts.
+
+
+Print
+-----
+
+The Print statement changed to a builtin function in Py3.
+
+Probably can generally be replaced by something like::
+
+    print("%s %s %s" % (a, b, c))
+
+and in any case, there shouldn't be many print() statements in a
+library as low-level as Numpy is. When writing to a file, `file.write`
+should also be preferred to print.
+
+types module
+------------
+
+The following items were removed from `types` module in Py3:
+
+- StringType    (Py3: `bytes` is equivalent, to some degree)
+- InstanceType  (Py3: ???)
+- IntType       (Py3: no equivalent)
+- LongType      (Py3: equivalent `long`)
+- FloatType     (Py3: equivalent `float`)
+- BooleanType   (Py3: equivalent `bool`)
+- ComplexType   (Py3: equivalent `complex`)
+- UnicodeType   (Py3: equivalent `str`)
+- BufferType    (Py3: more-or-less equivalent `memoryview`)
+
+In ``numerictypes.py``, the "common" types were replaced by their
+plain equivalents, and `IntType` was dropped.
+
+.. todo::
+
+   BufferType should probably be replaced with `memoryview` in most places.
+   This was currently changed in a couple of places.
 
 
 C Code
 ======
 
-What has been done so far, and some known TODOs
------------------------------------------------
+
+NPY_PY3K
+--------
+
+A #define in config.h, defined when building for Py3.
+
+.. todo::
+
+   Currently, this is generated as a part of the config.
+   Is this sensible (we could also use PY_MAJOR_VERSION)?
+
 
 private/npy_3kcompat.h
+----------------------
 
-    Convenience macros for Python 3 support.
-    New ones that need to be added should be added in this file.
+Convenience macros for Python 3 support:
 
-ob_type etc.
+- PyInt -> PyLong on Py3
+- PyString -> PyBytes on Py3
+- PyUString -> PyUnicode on Py3 and PyString on Py2
+- PyBytes on Py3
+- Py_SIZE et al., for older Python versions
+- PyFile compatibility on Py3
+- PyObject_Cmp, convenience comparison function on Py3
 
-    These use Py_SIZE, etc. macros now.  The macros are also defined in
-    npy_3kcompat.h for the Python versions that don't have them natively.
+Any new ones that need to be added should be added in this file.
+
+.. todo::
+
+   Remove PyString_* eventually -- having a call to one of these in Numpy
+   sources is a sign of an error...
+
+
+ob_type, ob_size
+----------------
+
+These use Py_SIZE, etc. macros now.  The macros are also defined in
+npy_3kcompat.h for the Python versions that don't have them natively.
+
 
 PyNumberMethod
+--------------
 
-    The structures have been converted to the new format.
+The structures have been converted to the new format:
 
-    TODO: check if semantics of the methods have changed
+- number.c
+- scalartypes.c.src
+- scalarmathmodule.c.src
 
-PyBuffer_*
+The slots np_divide, np_long, np_oct, np_hex, and np_inplace_divide
+have gone away. The slot np_int is what np_long used to be, tp_divide
+is now tp_floor_divide, and np_inplace_divide is now
+np_inplace_floor_divide.
 
-    These parts have been replaced with stub code, marked by #warning XXX
+These have simply been #ifdef'd out on Py3.
 
-    TODO: implement the new buffer protocol: for scalars and arrays
+.. todo::
 
-          - generate format strings from dtype
-          - parse format strings?
-          - Py_Ssize_t for strides and shape?
+   Check if semantics of the methods have changed
 
-    TODO: decide what to do with the fact that PyMemoryView object is not
-          stand-alone. Do we need a separate "dummy" object?
+.. todo::
+
+   We will also have to make sure the
+   *_true_divide variants are defined. This should also be done for
+   python < 3.x, but that introduces a requirement for the
+   Py_TPFLAGS_HAVE_CLASS in the type flag.
+
+
+PyBuffer
+--------
+
+PyBuffer usage is widely spread in multiarray:
+
+1) The void scalar makes use of buffers
+2) Multiarray has methods for creating buffers etc. explicitly
+3) Arrays can be created from buffers etc.
+4) The .data attribute of an array is a buffer
+
+Py3 introduces the PEP 3118 buffer protocol as the *only* protocol,
+so we must implement it.
+
+The exporter parts of the PEP 3118 buffer protocol are currently
+implemented in ``buffer.c`` for arrays, and in ``scalartypes.c.src``
+for generic array scalars. The generic array scalar exporter, however,
+doesn't currently produce format strings, which needs to be fixed.
+
+Currently, the format string and some of the memory is cached in the
+PyArrayObject structure. This is partly needed because of Python bug #7433.
+
+From the consumer side, the new buffer protocol is mostly backward
+compatible with the old one, so little needs to be done here to retain
+basic functionality. However, we *do* want to make use of the new
+features, at least in `multiarray.frombuffer` and maybe in `multiarray.array`.
+
+Since there is a native buffer object in Py3, the `memoryview`, the
+`newbuffer` and `getbuffer` functions are removed from `multiarray` in
+Py3: their functionality is taken over by the new `memoryview` object.
+
+.. todo::
+
+   Implement support for consuming new buffer objects.
+   Probably in multiarray.frombuffer? Perhaps also in multiarray.array?
+
+.. todo::
+
+   make ndarray shape and strides natively Py_ssize_t
+
+.. todo::
+
+   Revise the decision on where to cache the format string -- dtype
+   would be a better place for this.
+
+.. todo::
+
+   There's some buffer code in numarray/_capi.c that needs to be addressed.
+
+.. todo::
+
+   Does altering the PyArrayObject structure require bumping the ABI?
+
 
 PyString
+--------
 
-    PyString is currently defined to PyBytes in npy_3kcompat.h.
-    This definition will go away in the end.
+There is no PyString in Py3, everything is either Bytes or Unicode.
+Unicode is also preferred in many places, e.g., in __dict__.
 
-    All instances of PyString must be converted to one of:
+There are two issues related to the str/bytes change:
 
-    - PyBytes: byte character strings in Py2 and Py3
-    - PyUnicode: unicode strings in Py2 and Py3 
-    - PyUString: unicode in Py3, byte string in Py2
+1) Return values etc. should prefer unicode
+2) The 'S' dtype
 
-    Decisions:
+This entry discusses return values etc. only, the 'S' dtype is a
+separate topic.
 
-    * field names are UString
+All uses of PyString in Numpy should be changed to one of
 
-    * field titles can be arbitrary objects.
-      If they are Unicode, insert to fields dict.
+- PyBytes: one-byte character strings in Py2 and Py3
+- PyUString (defined in npy_3kconfig.h): PyString in Py2, PyUnicode in Py3
+- PyUnicode: UCS in Py2 and Py3
 
-    * dtype strings are Unicode.
+In many cases the conversion only entails replacing PyString with
+PyUString.
 
-    * datetime tuple contains Unicode.
+PyString is currently defined to PyBytes in npy_3kcompat.h, for making
+things to build. This definition will be removed when Py3 support is
+finished.
 
-    * Exceptions should preferably be ASCII-only -> use AsUnicodeEscape
+Where *_AsStringAndSize is used, more care needs to be taken, as
+encoding Unicode to Bytes may needed. If this cannot be avoided, the
+encoding should be ASCII, unless there is a very strong reason to do
+otherwise. Especially, I don't believe we should silently fall back to
+UTF-8 -- raising an exception may be a better choice.
+
+Exceptions should use PyUnicode_AsUnicodeEscape -- this should result
+to an ASCII-clean string that is appropriate for the exception
+message.
+
+Some specific decisions that have been made so far:
+
+* descriptor.c: dtype field names are UString
+
+  At some places in Numpy code, there are some guards for Unicode field
+  names. However, the dtype constructor accepts only strings as field names,
+  so we should assume field names are *always* UString.
+
+* descriptor.c: field titles can be arbitrary objects.
+  If they are UString (or, on Py2, Bytes or Unicode), insert to fields dict.
+
+* descriptor.c: dtype strings are Unicode.
+
+* descriptor.c: datetime tuple contains Bytes only.
+
+* repr() and str() should return UString
+
+* comparison between Unicode and Bytes is not defined in Py3
+
+* Type codes in numerictypes.typeInfo dict are Unicode
+
+* Func name in errobj is Bytes (should be forced to ASCII)
+
+.. todo::
+
+   tp_doc -- it's a char* pointer, but what is the encoding?
+   Check esp. lib/src/_compiled_base
+
+.. todo::
+
+   ufunc names -- again, what's the encoding?
+
+.. todo::
+
+   Replace all occurrences of PyString by PyBytes, PyUnicode, or PyUString.
+
+.. todo::
+
+   Finally, remove the convenience PyString #define from npy_3kcompat.h
+
+.. todo::
+
+   Revise errobj decision?
+
+.. todo::
+
+   Check that non-UString field names are not accepted anywhere.
 
 
-    TODO: Are exception strings bytes or unicode? What about tp_doc?
+PyUnicode
+---------
 
-          Fix lib/src/_compiled_base accordingly.
+PyUnicode in Py3 is pretty much as it was in Py2, except that it is
+now the only "real" string type.
 
-    TODO: I have a feeling that we should avoid PyUnicode_AsUTF8EncodedString
-          wherever possible...
+In Py3, Unicode and Bytes are not comparable, ie., 'a' != b'a'.  Numpy
+comparison routines were handled to act in the same way, leaving
+comparison between Unicode and Bytes undefined.
 
-    TODO: Replace all occurrences of String by Bytes, Unicode or UString,
-          to ensure that we have made a conscious choice for each case in Py3K.
+.. todo::
 
-	  #define PyBytes -> PyString for Python 2 in npy_3kcompath.h
+   Check that indeed all comparison routines were changed.
 
-          Finally remove the PyString -> PyBytes defines from npy_3kcompat.h
-          This is probably the *easiest* way to make sure all of
-          the string/unicode transition has been audited.
 
-          The String/Unicode transition is simply too dangerous to handle
-          by a blanket replacement. 
+Fate of the 'S' dtype
+---------------------
+
+"Strings" in Py3 are now Unicode, so it would make sense to
+re-associate Numpy's dtype letter 'S' with Unicode, and introduce
+a separate letter for Bytes.
+
+The Bytes dtype can probably not be wholly dropped -- there may be
+some use for 1-byte character strings in e.g. genetics?
+
+.. todo::
+
+   'S' dtype should be aliased to 'U'. One of the two should be deprecated.
+
+.. todo::
+
+   All dtype code should be checked for usage of *_STRINGLTR.
+
+.. todo::
+
+   A new 'bytes' dtype? Should the type code be 'y'
+
+.. todo::
+
+   Catch all worms that come out of the can because of this change.
+   In any case, I guess many of the current failures in our test suite
+   are because code 'S' does not correspond to the `str` type.
+
+.. todo::
+
+   Currently, in parts of the code, both Bytes and Unicode strings
+   are classified as "strings", and share some of the code paths.
+
+   It should probably be checked if preferring Unicode for Py3 requires
+   changing some of these parts.
+
 
 PyInt
+-----
 
-    PyInt is currently replaced by PyLong, via macros in npy_3kcompat.h
+There is no limited-range integer type any more in Py3.  It makes no
+sense to inherit Numpy ints from Py3 ints.
 
-    Dtype decision rules were changed accordingly, so Numpy understands
-    Python int to be dtype-compatible with NPY_LONG.
+Currently, the following is done:
 
-    TODO: Decide on
+1) Numpy's integer types no longer inherit from Python integer.
+2) int is taken dtype-equivalent to NPY_LONG
+3) ints are converted to NPY_LONG 
 
-          ... what is: array([1]).dtype
-          ... what is: array([2**40]).dtype
-          ... what is: array([2**256]).dtype
-          ... what is: array([1]) + 2**40
-          ... what is: array([1]) + 2**256
+PyInt methods are currently replaced by PyLong, via macros in npy_3kcompat.h.
 
-          ie. dtype casting rules. It seems to <pv> that we will want to
-          fix the dtype of Python 3 int to be the machine integer size,
-          despite the fact that the actual Python 3 object is not fixed-size.
+Dtype decision rules were changed accordingly, so that Numpy understands
+Py3 int translate to NPY_LONG as far as dtypes are concerned.
 
-    TODO: Audit the automatic dtype decision -- did I plug all the cases?
+.. todo::
+
+   Decide on
+
+   * what is: array([1]).dtype
+   * what is: array([2**40]).dtype
+   * what is: array([2**256]).dtype
+   * what is: array([1]) + 2**40
+   * what is: array([1]) + 2**256
+
+   ie. dtype casting rules. It seems to <pv> that we will want to
+   fix the dtype of Python 3 int to be the machine integer size,
+   despite the fact that the actual Python 3 object is not fixed-size.
+
+.. todo::
+
+   Audit the automatic dtype decision -- did I plug all the cases?
+
 
 Divide
+------
 
-    The Divide operation is no more.
+The Divide operation is no more.
 
-    So we change array(1) / 10 == array(0.1)
+Calls to PyNumber_Divide were replaced by FloorDivide or TrueDivide,
+as appropriate.
 
-tp_compare
+The PyNumberMethods entry is #ifdef'd out on Py3, see above.
 
-    The compare method has vanished.
 
-    TODO: ensure that all types that had only tp_compare have also
-          tp_richcompare.
+tp_compare, PyObject_Compare
+----------------------------
 
-pickles
+The compare method has vanished, and is replaced with richcompare.
+We just #ifdef the compare methods out on Py3.
 
-    It is not possible to support Python 2 pickles in Python 3.
+New richcompare methods were implemented for:
 
-    This is because Python 2 strings pickle to Python 3 unicode objects,
-    which causes problems if there are non-ascii characters there.
-    The errors are raised before reaching any Numpy code, so we just can't
-    preserve backwards compatibility here.
+* flagsobject.c
+
+On the consumer side, we have a convenience wrapper in npy_3kcompat.h
+providing PyObject_Cmp also on Py3.
+
+.. todo::
+
+   Ensure that all types that had only tp_compare have also
+   tp_richcompare.
+
+
+Pickling
+--------
+
+The ndarray and dtype __setstate__ were modified to be
+backward-compatible with Py3: they need to accept a Unicode endian
+character, and Unicode data since that's what Py2 str is unpickled to
+in Py3.
+
+An encoding assumption is required for backward compatibility: the user
+must do
+
+    loads(f, encoding='latin1')
+
+to successfully read pickles created by Py2.
+
+.. todo::
+
+   Forward compatibility? Is it even possible?
+   For sure, we are not knowingly going to store data in PyUnicode,
+   so probably the only way for forward compatibility is to implement
+   a custom Unpickler for Py2?
+
+.. todo::
+
+   If forward compatibility is not possible, aim to store also the endian
+   character as Bytes...
 
 
 PyTypeObject
@@ -218,11 +545,6 @@ keep in mind.
 1) Because the first three slots are now part of a struct some compilers issue
    warnings if they are initialized in the old way.
 
-   In practice, it is necessary to use the Py_TYPE, Py_SIZE, Py_REFCNT
-   macros instead of accessing ob_type, ob_size and ob_refcnt
-   directly.  These are defined for backward compatibility in
-   private/npy_3kcompat.h
-
 2) The compare slot has been made reserved in order to preserve binary
    compatibily while the tp_compare function went away. The tp_richcompare
    function has replaced it and we need to use that slot instead. This will
@@ -233,142 +555,22 @@ keep in mind.
    bogus. They are not supposed to be explicitly initialized and were out of
    place in any case because an extra base slot was added in python 2.6.
 
-Because of these facts it was thought better to use #ifdefs to bring the old
-initializers up to py3k snuff rather than just fill the tp_richcompare slot.
-They also serve to mark the places where changes have been made. The new form
-is shown below. Note that explicit initialization can stop once none of the
+Because of these facts it is better to use #ifdefs to bring the old
+initializers up to py3k snuff rather than just fill the tp_richcompare
+slot.  They also serve to mark the places where changes have been
+made. Note that explicit initialization can stop once none of the
 remaining entries are non-zero, because zero is the default value that
 variables with non-local linkage receive.
 
-
-NPY_NO_EXPORT PyTypeObject Foo_Type = {
-#if defined(NPY_PY3K)
-    PyVarObject_HEAD_INIT(0,0)
-#else
-    PyObject_HEAD_INIT(0)
-    0,                                          /* ob_size */
-#endif
-    "numpy.foo"                                 /* tp_name */
-    0,                                          /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    0,                                          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    (void *)0,                                  /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    0,                                          /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0                                           /* tp_version_tag (2.6) */
-};
-
-checklist of types having tp_compare but no tp_richcompare
-
-1) multiarray/flagsobject.c
-
-PyNumberMethods
----------------
-
-Types with tp_as_number defined
-
-1) multiarray/arrayobject.c
-
-The slots np_divide, np_long, np_oct, np_hex, and np_inplace_divide
-have gone away. The slot np_int is what np_long used to be, tp_divide
-is now tp_floor_divide, and np_inplace_divide is now
-np_inplace_floor_divide. We will also have to make sure the
-*_true_divide variants are defined. This should also be done for
-python < 3.x, but that introduces a requirement for the
-Py_TPFLAGS_HAVE_CLASS in the type flag.
-
-/*
- * Number implementations must check *both* arguments for proper type and
- * implement the necessary conversions in the slot functions themselves.
-*/
-PyNumberMethods foo_number_methods = {
-    (binaryfunc)0,                              /* nb_add */
-    (binaryfunc)0,                              /* nb_subtract */
-    (binaryfunc)0,                              /* nb_multiply */
-    (binaryfunc)0,                              /* nb_remainder */
-    (binaryfunc)0,                              /* nb_divmod */
-    (ternaryfunc)0,                             /* nb_power */
-    (unaryfunc)0,                               /* nb_negative */
-    (unaryfunc)0,                               /* nb_positive */
-    (unaryfunc)0,                               /* nb_absolute */
-    (inquiry)0,                                 /* nb_bool, nee nb_nonzero */
-    (unaryfunc)0,                               /* nb_invert */
-    (binaryfunc)0,                              /* nb_lshift */
-    (binaryfunc)0,                              /* nb_rshift */
-    (binaryfunc)0,                              /* nb_and */
-    (binaryfunc)0,                              /* nb_xor */
-    (binaryfunc)0,                              /* nb_or */
-    (unaryfunc)0,                               /* nb_int */
-    (void *)0,                                  /* nb_reserved, nee nb_long */
-    (unaryfunc)0,                               /* nb_float */
-    (binaryfunc)0,                              /* nb_inplace_add */
-    (binaryfunc)0,                              /* nb_inplace_subtract */
-    (binaryfunc)0,                              /* nb_inplace_multiply */
-    (binaryfunc)0,                              /* nb_inplace_remainder */
-    (ternaryfunc)0,                             /* nb_inplace_power */
-    (binaryfunc)0,                              /* nb_inplace_lshift */
-    (binaryfunc)0,                              /* nb_inplace_rshift */
-    (binaryfunc)0,                              /* nb_inplace_and */
-    (binaryfunc)0,                              /* nb_inplace_xor */
-    (binaryfunc)0,                              /* nb_inplace_or */
-    (binaryfunc)0,                              /* nb_floor_divide */
-    (binaryfunc)0,                              /* nb_true_divide */
-    (binaryfunc)0,                              /* nb_inplace_floor_divide */
-    (binaryfunc)0,                              /* nb_inplace_true_divide */
-    (unaryfunc)0                                /* nb_index */
-};
 
 PySequenceMethods
 -----------------
 
 Types with tp_as_sequence defined
 
-1) multiarray/descriptor.c
-2) multiarray/scalartypes.c.src
-3) multiarray/arrayobject.c
+* multiarray/descriptor.c
+* multiarray/scalartypes.c.src
+* multiarray/arrayobject.c
 
 PySequenceMethods in py3k are binary compatible with py2k, but some of the
 slots have gone away. I suspect this means some functions need redefining so
@@ -387,16 +589,21 @@ PySequenceMethods foo_sequence_methods = {
     (ssizeargfunc)0                             /* sq_inplace_repeat */
 };
 
+.. todo::
+
+   Check semantics of the PySequence methods.
+
+
 PyMappingMethods
 ----------------
 
 Types with tp_as_mapping defined
 
-1) multiarray/descriptor.c
-2) multiarray/iterators.c
-3) multiarray/scalartypes.c.src
-4) multiarray/flagsobject.c
-5) multiarray/arrayobject.c
+* multiarray/descriptor.c
+* multiarray/iterators.c
+* multiarray/scalartypes.c.src
+* multiarray/flagsobject.c
+* multiarray/arrayobject.c
 
 PyMappingMethods in py3k look to be the same as in py2k. The semantics
 of the slots needs to be checked.
@@ -407,47 +614,10 @@ PyMappingMethods foo_mapping_methods = {
     (objobjargproc)0                        /* mp_ass_subscript */
 };
 
+.. todo::
 
-PyBuffer
---------
+   Check semantics of the PyMapping methods.
 
-Parts involving the PyBuffer_* likely require the most work, and they
-are widely spread in multiarray:
-
-1) The void scalar makes use of buffers
-2) Multiarray has methods for creating buffers etc. explicitly
-3) Arrays can be created from buffers etc.
-4) The .data attribute of an array is a buffer
-
-There are two things to note in 3K:
-
-1) The buffer protocol has changed.  It is also now quite complicated,
-   and implementing it properly requires several pieces.
-
-2) There is no PyBuffer object any more. Instead, a MemoryView
-   object is present, but it always must piggy-pack on another existing
-   object.
-
-Currently, what has been done is:
-
-1) Replace protocol implementations with stubs that either raise errors
-   or offer limited functionality.
-
-2) Replace PyBuffer usage by PyMemoryView where possible.
-
-3) ... and where not possible, use stubs that raise errors.
-
-What likely needs to be done is:
-
-1) Implement a simple "stub" compatibility buffer object 
-   the memoryview can piggy-pack on.
-
-
-PyNumber_Divide
----------------
-
-This function has vanished -- needs to be replaced with PyNumber_TrueDivide
-or FloorDivide.
 
 PyFile
 ------
@@ -458,32 +628,29 @@ Many of the PyFile items have disappeared:
 2) PyFile_AsFile
 3) PyFile_FromString
 
-Compatibility wrappers for these are now in private/npy_3kcompat.h
+Most importantly, in Py3 there is no way to extract a FILE* pointer
+from the Python file object. There are, however, new PyFile_* functions
+for writing and reading data from the file.
+
+Temporary compatibility wrappers that return a `fdopen` file pointer
+are in private/npy_3kcompat.h.  However, this is an unsatisfactory
+approach, since the FILE* pointer returned by `fdopen` cannot be freed
+as `fclose` on it would also close the underlying file.
+
+.. todo::
+
+   Adapt all Numpy I/O to use the PyFile_* methods or the low-level
+   IO routines. In any case, it's unlikely that C stdio can be used any more.
+
+   Perhaps using PyFile_* makes numpy.tofile e.g. to a gzip to work?
 
 
-PyString
+READONLY
 --------
 
-PyString was removed, and needs to be replaced either by PyBytes or PyUnicode.
-The plan of attack currently is:
-
-1) The 'string' array dtype will be replaced by Bytes
-2) The 'unicode' array dtype will stay Unicode
-3) dtype fields names can be *either* Bytes or Unicode
-
-Some compatibility wrappers are defined in private/npy_3kcompat.h,
-redefining essentially String as Bytes.
-
-However, at least following points need still to be audited:
-
-1) PyObject_Str -> it now returns unicodes
-2) tp_doc -> char* string, but is it in unicode or what?
-
-
-RO
---
-
 The RO alias for READONLY is no more.
+
+These were replaced, as READONLY is present also on Py2.
 
 
 Py_TPFLAGS_CHECKTYPES
@@ -491,17 +658,7 @@ Py_TPFLAGS_CHECKTYPES
 
 This has vanished and is always on in Py3K.
 
-
-PyInt
------
-
-There is no limited-range integer type any more in Py3K.
-
-Currently, the plan is the following:
-
-1) Numpy's integer types no longer inherit from Python integer.
-2) Convert Longs to integers, if their size is small enough and known.
-3) Otherwise, use long longs.
+It is currently #ifdef'd out for Py3.
 
 
 PyOS
@@ -512,3 +669,16 @@ Deprecations:
 1) PyOS_ascii_strtod -> PyOS_double_from_string;
    curiously enough, PyOS_ascii_strtod is not only deprecated but also
    causes segfaults
+
+
+PyInstance
+----------
+
+There are some checks for PyInstance in ``common.c`` and ``ctors.c``.
+
+Currently, ``PyInstance_Check`` is just #ifdef'd out for Py3. This is,
+quite likely, not the correct thing to do.
+
+.. todo::
+
+   Do the right thing for PyInstance checks.
