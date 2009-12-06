@@ -5,6 +5,7 @@ import numpy as np
 from numpy.testing import *
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
+from numpy.compat import asbytes
 
 from test_print import in_foreign_locale
 
@@ -547,38 +548,38 @@ class TestPickling(TestCase):
     def test_version0_int8(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = array([1,2,3,4], dtype=int8)
-        p = loads(s)
+        p = loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version0_float32(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
-        p = loads(s)
+        p = loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version0_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = array([{'a':1}, {'b':2}])
-        p = loads(s)
+        p = loads(asbytes(s))
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
     def test_version1_int8(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = array([1,2,3,4], dtype=int8)
-        p = loads(s)
+        p = loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version1_float32(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
-        p = loads(s)
+        p = loads(asbytes(s))
         assert_equal(a, p)
 
     def test_version1_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = array([{'a':1}, {'b':2}])
-        p = loads(s)
+        p = loads(asbytes(s))
         assert_equal(a, p)
 
 
@@ -908,11 +909,11 @@ class TestIO(object):
         assert_array_equal(x, y)
 
     def _check_from(self, s, value, **kw):
-        y = np.fromstring(s, **kw)
+        y = np.fromstring(asbytes(s), **kw)
         assert_array_equal(y, value)
 
         f = open(self.filename, 'wb')
-        f.write(s)
+        f.write(asbytes(s))
         f.close()
         y = np.fromfile(self.filename, **kw)
         assert_array_equal(y, value)
