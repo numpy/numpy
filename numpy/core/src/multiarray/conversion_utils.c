@@ -523,7 +523,7 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
      */
     if ((nd=PySequence_Length(seq)) == -1) {
         if (PyErr_Occurred()) PyErr_Clear();
-#if SIZEOF_LONG >= SIZEOF_INTP
+#if SIZEOF_LONG >= SIZEOF_INTP && !defined(NPY_PY3K)
         if (!(op = PyNumber_Int(seq))) {
             return -1;
         }
