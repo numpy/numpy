@@ -32,10 +32,10 @@ class TestErrstate(TestCase):
             a = -arange(3)
             # This should work
             with errstate(divide='ignore'):
-                a / 0
+                a // 0
             # While this should fail!
             try:
-                a / 0
+                a // 0
             except FloatingPointError:
                 pass
             else:
