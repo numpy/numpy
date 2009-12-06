@@ -503,7 +503,7 @@ static PyObject *
     }
     new = Py@Name@_From@Name@@extra@(ip, len);
     if (new == NULL) {
-        return PyString_FromString("");
+        return PyUString_FromString("");
     }
     ret = Py@Name@_Type.tp_@form@(new);
     Py_DECREF(new);
@@ -549,7 +549,7 @@ static PyObject *
     @name@ val = ((Py@Name@ScalarObject *)self)->obval;
 
     format_@name@(buf, sizeof(buf), val, PREC);
-    return PyString_FromString(buf);
+    return PyUString_FromString(buf);
 }
 
 static PyObject *
@@ -559,7 +559,7 @@ c@name@type_@kind@(PyObject *self)
     c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
 
     format_c@name@(buf, sizeof(buf), val, PREC);
-    return PyString_FromString(buf);
+    return PyUString_FromString(buf);
 }
 
 #undef PREC
@@ -1366,7 +1366,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
             buffer = tmp;
         }
 #endif
-        mod = PyString_FromStringAndSize(buffer, buflen);
+        mod = PyBytes_FromStringAndSize(buffer, buflen);
         if (mod == NULL) {
             Py_DECREF(ret);
 #ifndef Py_UNICODE_WIDE
@@ -1678,7 +1678,11 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
         return NULL;
     }
 
-    if (PyString_Check(ind) || PyUnicode_Check(ind)) {
+#if defined(NPY_PY3K)
+    if (PyUString_Check(ind)) {
+#else
+    if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
+#endif
         /* look up in fields */
         fieldinfo = PyDict_GetItem(self->descr->fields, ind);
         if (!fieldinfo) {
@@ -1752,7 +1756,11 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
         return -1;
     }
 
-    if (PyString_Check(ind) || PyUnicode_Check(ind)) {
+#if defined(NPY_PY3K)
+    if (PyUString_Check(ind)) {
+#else
+    if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
+#endif
         /* look up in fields */
         fieldinfo = PyDict_GetItem(self->descr->fields, ind);
         if (!fieldinfo) {
@@ -2114,7 +2122,7 @@ finish:
 
     /* Need to allocate new type and copy data-area over */
     if (type->tp_itemsize) {
-        itemsize = PyString_GET_SIZE(robj);
+        itemsize = PyBytes_GET_SIZE(robj);
     }
     else {
         itemsize = 0;
