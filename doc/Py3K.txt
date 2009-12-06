@@ -11,6 +11,7 @@ Developer notes on the transition to Python 3
 General
 =======
 
+If you work on Py3 transition, please try to keep this document up-to-date.
 
 Resources
 ---------
@@ -222,8 +223,8 @@ These use Py_SIZE, etc. macros now.  The macros are also defined in
 npy_3kcompat.h for the Python versions that don't have them natively.
 
 
-PyNumberMethod
---------------
+PyNumberMethods
+---------------
 
 The structures have been converted to the new format:
 
@@ -237,6 +238,72 @@ is now tp_floor_divide, and np_inplace_divide is now
 np_inplace_floor_divide.
 
 These have simply been #ifdef'd out on Py3.
+
+The Py2/Py3 compatible structure definition looks like::
+
+    static PyNumberMethods @name@_as_number = {
+	(binaryfunc)0,               /*nb_add*/
+	(binaryfunc)0,               /*nb_subtract*/
+	(binaryfunc)0,               /*nb_multiply*/
+    #if defined(NPY_PY3K)
+    #else
+	(binaryfunc)0,               /*nb_divide*/
+    #endif
+	(binaryfunc)0,               /*nb_remainder*/
+	(binaryfunc)0,               /*nb_divmod*/
+	(ternaryfunc)0,              /*nb_power*/
+	(unaryfunc)0,
+	(unaryfunc)0,                /*nb_pos*/
+	(unaryfunc)0,                /*nb_abs*/
+    #if defined(NPY_PY3K)
+	(inquiry)0,                  /*nb_bool*/
+    #else
+	(inquiry)0,                  /*nb_nonzero*/
+    #endif
+	(unaryfunc)0,                /*nb_invert*/
+	(binaryfunc)0,               /*nb_lshift*/
+	(binaryfunc)0,               /*nb_rshift*/
+	(binaryfunc)0,               /*nb_and*/
+	(binaryfunc)0,               /*nb_xor*/
+	(binaryfunc)0,               /*nb_or*/
+    #if defined(NPY_PY3K)
+    #else
+	0,                           /*nb_coerce*/
+    #endif
+	(unaryfunc)0,                /*nb_int*/
+    #if defined(NPY_PY3K)
+	(unaryfunc)0,                /*nb_reserved*/
+    #else
+	(unaryfunc)0,                /*nb_long*/
+    #endif
+	(unaryfunc)0,                /*nb_float*/
+    #if defined(NPY_PY3K)
+    #else
+	(unaryfunc)0,                /*nb_oct*/
+	(unaryfunc)0,                /*nb_hex*/
+    #endif
+	0,                           /*inplace_add*/
+	0,                           /*inplace_subtract*/
+	0,                           /*inplace_multiply*/
+    #if defined(NPY_PY3K)
+    #else
+	0,                           /*inplace_divide*/
+    #endif
+	0,                           /*inplace_remainder*/
+	0,                           /*inplace_power*/
+	0,                           /*inplace_lshift*/
+	0,                           /*inplace_rshift*/
+	0,                           /*inplace_and*/
+	0,                           /*inplace_xor*/
+	0,                           /*inplace_or*/
+	(binaryfunc)0,               /*nb_floor_divide*/
+	(binaryfunc)0,               /*nb_true_divide*/
+	0,                           /*nb_inplace_floor_divide*/
+	0,                           /*nb_inplace_true_divide*/
+    #if PY_VERSION_HEX >= 0x02050000
+	(unaryfunc)NULL,             /*nb_index*/
+    #endif
+    };
 
 .. todo::
 
@@ -279,6 +346,50 @@ features, at least in `multiarray.frombuffer` and maybe in `multiarray.array`.
 Since there is a native buffer object in Py3, the `memoryview`, the
 `newbuffer` and `getbuffer` functions are removed from `multiarray` in
 Py3: their functionality is taken over by the new `memoryview` object.
+
+There are a couple of places that need further attention:
+
+- VOID_getitem
+
+  In some cases, this returns a buffer object, built from scratch to
+  point to a region of memory. However, in Py3 there is no stand-alone
+  buffer object: the MemoryView always piggy-packs on some other object.
+
+  Should it actually return a Bytes object containing a copy of the data?
+
+- multiarray.int_asbuffer
+
+  Converts an integer to a void* pointer -- in Python.
+
+  Should we just remove this for Py3? It doesn't seem like it is used
+  anywhere, and it doesn't sound very useful.
+
+The Py2/Py3 compatible PyBufferMethods definition looks like::
+
+    NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
+    #if !defined(NPY_PY3K)
+    #if PY_VERSION_HEX >= 0x02050000
+	(readbufferproc)array_getreadbuf,       /*bf_getreadbuffer*/
+	(writebufferproc)array_getwritebuf,     /*bf_getwritebuffer*/
+	(segcountproc)array_getsegcount,        /*bf_getsegcount*/
+	(charbufferproc)array_getcharbuf,       /*bf_getcharbuffer*/
+    #else
+	(getreadbufferproc)array_getreadbuf,    /*bf_getreadbuffer*/
+	(getwritebufferproc)array_getwritebuf,  /*bf_getwritebuffer*/
+	(getsegcountproc)array_getsegcount,     /*bf_getsegcount*/
+	(getcharbufferproc)array_getcharbuf,    /*bf_getcharbuffer*/
+    #endif
+    #endif
+    #if PY_VERSION_HEX >= 0x02060000
+	(getbufferproc)array_getbuffer,         /*bf_getbuffer*/
+	(releasebufferproc)array_releasebuffer, /*bf_releasebuffer*/
+    #endif
+    };
+
+.. todo::
+
+   Take a second look at places that used PyBuffer_FromMemory and 
+   PyBuffer_FromReadWriteMemory -- what can be done with these?
 
 .. todo::
 
@@ -561,6 +672,69 @@ slot.  They also serve to mark the places where changes have been
 made. Note that explicit initialization can stop once none of the
 remaining entries are non-zero, because zero is the default value that
 variables with non-local linkage receive.
+
+The Py2/Py3 compatible TypeObject definition looks like::
+
+    NPY_NO_EXPORT PyTypeObject Foo_Type = {
+    #if defined(NPY_PY3K)
+	PyVarObject_HEAD_INIT(0,0)
+    #else
+	PyObject_HEAD_INIT(0)
+	0,                                          /* ob_size */
+    #endif
+	"numpy.foo"                                 /* tp_name */
+	0,                                          /* tp_basicsize */
+	0,                                          /* tp_itemsize */
+	/* methods */
+	0,                                          /* tp_dealloc */
+	0,                                          /* tp_print */
+	0,                                          /* tp_getattr */
+	0,                                          /* tp_setattr */
+    #if defined(NPY_PY3K)
+	(void *)0,                                  /* tp_reserved */
+    #else
+	0,                                          /* tp_compare */
+    #endif
+	0,                                          /* tp_repr */
+	0,                                          /* tp_as_number */
+	0,                                          /* tp_as_sequence */
+	0,                                          /* tp_as_mapping */
+	0,                                          /* tp_hash */
+	0,                                          /* tp_call */
+	0,                                          /* tp_str */
+	0,                                          /* tp_getattro */
+	0,                                          /* tp_setattro */
+	0,                                          /* tp_as_buffer */
+	0,                                          /* tp_flags */
+	0,                                          /* tp_doc */
+	0,                                          /* tp_traverse */
+	0,                                          /* tp_clear */
+	0,                                          /* tp_richcompare */
+	0,                                          /* tp_weaklistoffset */
+	0,                                          /* tp_iter */
+	0,                                          /* tp_iternext */
+	0,                                          /* tp_methods */
+	0,                                          /* tp_members */
+	0,                                          /* tp_getset */
+	0,                                          /* tp_base */
+	0,                                          /* tp_dict */
+	0,                                          /* tp_descr_get */
+	0,                                          /* tp_descr_set */
+	0,                                          /* tp_dictoffset */
+	0,                                          /* tp_init */
+	0,                                          /* tp_alloc */
+	0,                                          /* tp_new */
+	0,                                          /* tp_free */
+	0,                                          /* tp_is_gc */
+	0,                                          /* tp_bases */
+	0,                                          /* tp_mro */
+	0,                                          /* tp_cache */
+	0,                                          /* tp_subclasses */
+	0,                                          /* tp_weaklist */
+	0,                                          /* tp_del */
+	0                                           /* tp_version_tag (2.6) */
+    };
+
 
 
 PySequenceMethods
