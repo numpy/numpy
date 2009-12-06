@@ -9,7 +9,10 @@ extensions, which may be included for the following reasons:
 
 """
 import _inspect
+import py3k
 from _inspect import getargspec, formatargspec
+from py3k import *
 
 __all__ = []
 __all__.extend(_inspect.__all__)
+__all__.extend(py3k.__all__)
