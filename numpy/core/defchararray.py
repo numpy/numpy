@@ -36,7 +36,10 @@ __all__ = ['chararray',
            'array', 'asarray']
 
 _globalvar = 0
-_unicode = unicode
+if sys.version_info[0] >= 3:
+    _unicode = str
+else:
+    _unicode = unicode
 _len = len
 
 def _use_unicode(*args):
