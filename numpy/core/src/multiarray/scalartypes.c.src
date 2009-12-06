@@ -1884,8 +1884,13 @@ static PyBufferProcs gentype_as_buffer = {
 };
 
 
+#if defined(NPY_PY3K)
+#define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE
+#define LEAFFLAGS  Py_TPFLAGS_DEFAULT
+#else
 #define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES
 #define LEAFFLAGS  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES
+#endif
 
 NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 #if defined(NPY_PY3K)

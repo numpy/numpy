@@ -1299,8 +1299,10 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (setattrofunc)0,                            /* tp_setattro */
     &array_as_buffer,                           /* tp_as_buffer */
     (Py_TPFLAGS_DEFAULT
-     | Py_TPFLAGS_BASETYPE
-     | Py_TPFLAGS_CHECKTYPES),                  /* tp_flags */
+#if !defined(NPY_PY3K)
+     | Py_TPFLAGS_CHECKTYPES
+#endif
+     | Py_TPFLAGS_BASETYPE),                  /* tp_flags */
     0,                                          /* tp_doc */
 
     (traverseproc)0,                            /* tp_traverse */
