@@ -33,7 +33,7 @@ __all__ = ['RankWarning', 'PolyError', 'PolyDomainError', 'PolyBase',
            'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain',
            'mapparms']
 
-import warnings, exceptions
+import warnings
 import numpy as np
 import sys
 
