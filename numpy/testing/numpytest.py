@@ -18,8 +18,9 @@ def output_exception(printstream = sys.stdout):
         #this is more verbose
         #traceback.print_exc()
         filename, lineno, function, text = info[-1] # last line only
-        print>>printstream, "%s:%d: %s: %s (in %s)" %\
-                            (filename, lineno, type.__name__, str(value), function)
+        msg = "%s:%d: %s: %s (in %s)\n" % (
+            filename, lineno, type.__name__, str(value), function)
+        printstream.write(msg)
     finally:
         type = value = tb = None # clean up
     return
