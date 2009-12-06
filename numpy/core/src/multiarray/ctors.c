@@ -1515,12 +1515,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
      */
     if ((subtype != &PyArray_Type)) {
         PyObject *res, *func, *args;
-        static PyObject *str = NULL;
 
-        if (str == NULL) {
-            str = PyString_InternFromString("__array_finalize__");
-        }
-        func = PyObject_GetAttr((PyObject *)self, str);
+        func = PyObject_GetAttrString((PyObject *)self, "__array_finalize__");
         if (func && func != Py_None) {
             if (strides != NULL) {
                 /*
