@@ -304,15 +304,15 @@ array_repr_builtin(PyArrayObject *self, int repr)
             char buf[100];
             PyOS_snprintf(buf, sizeof(buf), "%d", self->descr->elsize);
             sprintf(string+n, ", '%c%s')", self->descr->type, buf);
-            ret = PyString_FromStringAndSize(string, n + 6 + strlen(buf));
+            ret = PyUString_FromStringAndSize(string, n + 6 + strlen(buf));
         }
         else {
             sprintf(string+n, ", '%c')", self->descr->type);
-            ret = PyString_FromStringAndSize(string, n+6);
+            ret = PyUString_FromStringAndSize(string, n+6);
         }
     }
     else {
-        ret = PyString_FromStringAndSize(string, n);
+        ret = PyUString_FromStringAndSize(string, n);
     }
 
     _pya_free(string);
