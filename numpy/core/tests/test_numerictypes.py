@@ -77,7 +77,7 @@ def normalize_descr(descr):
                     dtype = "|" + dtype
                 else:
                     dtype = byteorder + dtype
-            if len(item) > 2 and item[2] > 1:
+            if len(item) > 2 and np.prod(item[2]) > 1:
                 nitem = (item[0], dtype, item[2])
             else:
                 nitem = (item[0], dtype)
