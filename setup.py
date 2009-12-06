@@ -16,6 +16,7 @@ basic linear algebra and random number generation.
 DOCLINES = __doc__.split("\n")
 
 import os
+import shutil
 import sys
 import re
 import subprocess
@@ -156,16 +157,31 @@ def configuration(parent_package='',top_path=None):
 
 def setup_package():
 
-    from numpy.distutils.core import setup
-
-    old_path = os.getcwd()
-    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-    os.chdir(local_path)
-    sys.path.insert(0,local_path)
-
     # Rewrite the version file everytime
     if os.path.exists('numpy/version.py'): os.remove('numpy/version.py')
     write_version_py()
+
+    # Perform 2to3 if needed
+    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    src_path = local_path
+
+    if sys.version_info[0] == 3:
+        src_path = os.path.join(local_path, 'build', 'py3k')
+        sys.path.insert(0, os.path.join(local_path, 'tools'))
+        import py3tool
+        print("Converting to Python3 via 2to3...")
+        py3tool.sync_2to3('numpy', os.path.join(src_path, 'numpy'))
+
+        site_cfg = os.path.join(local_path, 'site.cfg')
+        if os.path.isfile(site_cfg):
+            shutil.copy(site_cfg, src_path)
+
+    # Run build
+    old_path = os.getcwd()
+    os.chdir(src_path)
+    sys.path.insert(0, src_path)
+
+    from numpy.distutils.core import setup
 
     try:
         setup(
