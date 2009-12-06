@@ -1394,7 +1394,13 @@ static void
             PyObject *new, *args;
             /* call out to the Python builtin given by convstr */
             args = Py_BuildValue("(N)", temp);
+#if defined(NPY_PY3K)
+#define PyInt_Type PyLong_Type
+#endif
             new = Py@convstr@_Type.tp_new(&Py@convstr@_Type, args, NULL);
+#if defined(NPY_PY3K)
+#undef PyInt_Type
+#endif
             Py_DECREF(args);
             temp = new;
             if (temp == NULL) {

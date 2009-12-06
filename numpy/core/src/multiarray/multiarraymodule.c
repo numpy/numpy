@@ -2755,9 +2755,11 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     if (PyType_Ready(&PyBool_Type) < 0) {
         return -1;
     }
+#if !defined(NPY_PY3K)
     if (PyType_Ready(&PyInt_Type) < 0) {
         return -1;
     }
+#endif
     if (PyType_Ready(&PyFloat_Type) < 0) {
         return -1;
     }
@@ -2829,13 +2831,17 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(Bool, Generic);
     SINGLE_INHERIT(Byte, SignedInteger);
     SINGLE_INHERIT(Short, SignedInteger);
-#if SIZEOF_INT == SIZEOF_LONG
+#if SIZEOF_INT == SIZEOF_LONG && !defined(NPY_PY3K)
     DUAL_INHERIT(Int, Int, SignedInteger);
 #else
     SINGLE_INHERIT(Int, SignedInteger);
 #endif
+#if !defined(NPY_PY3K)
     DUAL_INHERIT(Long, Int, SignedInteger);
-#if SIZEOF_LONGLONG == SIZEOF_LONG
+#else
+    SINGLE_INHERIT(Long, SignedInteger);
+#endif
+#if SIZEOF_LONGLONG == SIZEOF_LONG && !defined(NPY_PY3K)
     DUAL_INHERIT(LongLong, Int, SignedInteger);
 #else
     SINGLE_INHERIT(LongLong, SignedInteger);

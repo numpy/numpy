@@ -1122,12 +1122,18 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             }
         }
         check_num = PyArray_OBJECT;
+#if !defined(NPY_PY3K)
         if (obj == (PyObject *)(&PyInt_Type)) {
             check_num = PyArray_LONG;
         }
         else if (obj == (PyObject *)(&PyLong_Type)) {
             check_num = PyArray_LONGLONG;
         }
+#else
+        if (obj == (PyObject *)(&PyLong_Type)) {
+            check_num = PyArray_LONG;
+        }
+#endif
         else if (obj == (PyObject *)(&PyFloat_Type)) {
             check_num = PyArray_DOUBLE;
         }
