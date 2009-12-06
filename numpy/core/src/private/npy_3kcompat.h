@@ -39,6 +39,8 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyString_Type PyBytes_Type
 #define PyString_Check PyBytes_Check
 
+#define PyStringObject PyBytesObject
+
 #define PyString_FromString PyBytes_FromString
 #define PyString_AS_STRING PyBytes_AS_STRING
 #define PyString_FromFormat PyBytes_FromFormat
