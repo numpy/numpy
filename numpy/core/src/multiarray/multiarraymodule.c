@@ -2130,6 +2130,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwd
     return retobj;
 }
 
+#if !defined(NPY_PY3K)
 static PyObject *
 new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
@@ -2138,13 +2139,7 @@ new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &size)) {
         return NULL;
     }
-#if defined(NPY_PY3K)
-#warning XXX -- needs to implement this?
-    PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
-    return NULL;
-#else
     return PyBuffer_New(size);
-#endif
 }
 
 static PyObject *
@@ -2152,11 +2147,7 @@ buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     Py_ssize_t offset = 0, n;
-#if defined(NPY_PY3K)
-    Py_ssize_t size;
-#else
     Py_ssize_t size = Py_END_OF_BUFFER;
-#endif
     void *unused;
     static char *kwlist[] = {"object", "offset", "size", NULL};
 
@@ -2167,22 +2158,13 @@ buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
     if (PyObject_AsWriteBuffer(obj, &unused, &n) < 0) {
         PyErr_Clear();
-#if defined(NPY_PY3K)
-#warning XXX: should use the full memoryview capabilities
-        return PyMemoryView_FromObject(obj);
-#else
         return PyBuffer_FromObject(obj, offset, size);
-#endif
     }
     else {
-#if defined(NPY_PY3K)
-#warning XXX: should use the full memoryview capabilities
-        return PyMemoryView_FromObject(obj);
-#else
         return PyBuffer_FromReadWriteObject(obj, offset, size);
-#endif
     }
 }
+#endif
 
 #ifndef _MSC_VER
 #include <setjmp.h>
@@ -2743,12 +2725,14 @@ static struct PyMethodDef array_module_methods[] = {
     {"can_cast",
         (PyCFunction)array_can_cast_safely,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#if !defined(NPY_PY3K)
     {"newbuffer",
         (PyCFunction)new_buffer,
         METH_VARARGS, NULL},
     {"getbuffer",
         (PyCFunction)buffer_buffer,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#endif
     {"int_asbuffer",
         (PyCFunction)as_buffer,
         METH_VARARGS | METH_KEYWORDS, NULL},

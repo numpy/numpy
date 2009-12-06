@@ -1,7 +1,7 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
-           'fromstring', 'fromfile', 'frombuffer','newbuffer',
-           'getbuffer', 'int_asbuffer', 'where', 'argwhere',
+           'fromstring', 'fromfile', 'frombuffer',
+           'int_asbuffer', 'where', 'argwhere',
            'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
@@ -28,6 +28,9 @@ import umath
 from umath import *
 import numerictypes
 from numerictypes import *
+
+if sys.version_info[0] < 3:
+    __all__.extend(['getbuffer', 'newbuffer'])
 
 bitwise_not = invert
 
@@ -186,8 +189,9 @@ fromstring = multiarray.fromstring
 fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
-newbuffer = multiarray.newbuffer
-getbuffer = multiarray.getbuffer
+if sys.version_info[0] < 3:
+    newbuffer = multiarray.newbuffer
+    getbuffer = multiarray.getbuffer
 int_asbuffer = multiarray.int_asbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
