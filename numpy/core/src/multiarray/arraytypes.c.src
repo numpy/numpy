@@ -3372,7 +3372,11 @@ set_typeinfo(PyObject *dict)
 #cn=i*7,N,i,l,i,N,i#
 */
     PyDict_SetItemString(infodict, "@name@",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("Ciii@cx@@cn@O",
+#else
             s=Py_BuildValue("ciii@cx@@cn@O",
+#endif
                 PyArray_@name@LTR,
                 PyArray_@name@,
                 BITSOF_@uname@,
@@ -3393,7 +3397,11 @@ set_typeinfo(PyObject *dict)
 #Name=Float,Double,LongDouble,CFloat,CDouble,CLongDouble#
 */
     PyDict_SetItemString(infodict, "@name@",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiO", PyArray_@name@LTR,
+#else
             s=Py_BuildValue("ciiiO", PyArray_@name@LTR,
+#endif
                 PyArray_@name@, BITSOF_@name@,
                 _ALIGN(@type@),
                 (PyObject *)\
@@ -3402,7 +3410,11 @@ set_typeinfo(PyObject *dict)
 /**end repeat**/
 
     PyDict_SetItemString(infodict, "OBJECT",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiO", PyArray_OBJECTLTR,
+#else
             s=Py_BuildValue("ciiiO", PyArray_OBJECTLTR,
+#endif
                 PyArray_OBJECT,
                 sizeof(PyObject *)*CHAR_BIT,
                 _ALIGN(PyObject *),
@@ -3410,28 +3422,44 @@ set_typeinfo(PyObject *dict)
                 &PyObjectArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "STRING",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiO", PyArray_STRINGLTR,
+#else
             s=Py_BuildValue("ciiiO", PyArray_STRINGLTR,
+#endif
                 PyArray_STRING, 0,
                 _ALIGN(char),
                 (PyObject *)\
                 &PyStringArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "UNICODE",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiO", PyArray_UNICODELTR,
+#else
             s=Py_BuildValue("ciiiO", PyArray_UNICODELTR,
+#endif
                 PyArray_UNICODE, 0,
                 _ALIGN(PyArray_UCS4),
                 (PyObject *)\
                 &PyUnicodeArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "VOID",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiO", PyArray_VOIDLTR,
+#else
             s=Py_BuildValue("ciiiO", PyArray_VOIDLTR,
+#endif
                 PyArray_VOID, 0,
                 _ALIGN(char),
                 (PyObject *)\
                 &PyVoidArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "DATETIME",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiNNO", PyArray_DATETIMELTR,
+#else
             s=Py_BuildValue("ciiiNNO", PyArray_DATETIMELTR,
+#endif
                 PyArray_DATETIME,
                 sizeof(npy_datetime)*CHAR_BIT,
                 _ALIGN(npy_datetime),
@@ -3439,7 +3467,11 @@ set_typeinfo(PyObject *dict)
                 (PyObject *)&PyDatetimeArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "TIMEDELTA",
+#if defined(NPY_PY3K)
+            s=Py_BuildValue("CiiiNNO", PyArray_TIMEDELTALTR,
+#else
             s=Py_BuildValue("ciiiNNO", PyArray_TIMEDELTALTR,
+#endif
                 PyArray_TIMEDELTA,
                 sizeof(npy_timedelta)*CHAR_BIT,
                 _ALIGN(npy_timedelta),
