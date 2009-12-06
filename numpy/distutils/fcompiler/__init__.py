@@ -224,7 +224,8 @@ class FCompiler(CCompiler):
         self._is_customised = False
 
     def __copy__(self):
-        obj = types.InstanceType(self.__class__, self.__dict__)
+        obj = self.__new__(self.__class__)
+        obj.__dict__.update(self.__dict__)
         obj.distutils_vars = obj.distutils_vars.clone(obj._environment_hook)
         obj.command_vars = obj.command_vars.clone(obj._environment_hook)
         obj.flag_vars = obj.flag_vars.clone(obj._environment_hook)
