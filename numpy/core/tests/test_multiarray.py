@@ -1428,6 +1428,7 @@ class TestStackedNeighborhoodIter(TestCase):
 
 if sys.version_info >= (2, 6):
     class TestNewBufferProtocol(object):
+        @dec.knownfailureif(True, "No tests for the new buffer interface yet.")
         def test_there_are_no_tests_yet_so_fail(self):
             raise AssertionError("Need tests for the new buffer interface! "
                                  "For arrays and scalars.")
