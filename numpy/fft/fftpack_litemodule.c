@@ -306,14 +306,38 @@ static struct PyMethodDef fftpack_methods[] = {
 
 static char fftpack_module_documentation[] = "" ;
 
-PyMODINIT_FUNC initfftpack_lite(void)
-{
-    PyObject *m, *d;
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "fftpack_lite",
+        NULL,
+        -1,
+        fftpack_methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
 
-    /* Create the module and add the functions */
+/* Initialization function for the module */
+#if PY_MAJOR_VERSION >= 3
+#define RETVAL m
+PyObject *PyInit_fftpack_lite(void)
+#else
+#define RETVAL
+PyMODINIT_FUNC
+initfftpack_lite(void)
+#endif
+{
+    PyObject *m,*d;
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule4("fftpack_lite", fftpack_methods,
             fftpack_module_documentation,
             (PyObject*)NULL,PYTHON_API_VERSION);
+#endif
 
     /* Import the array object */
     import_array();
@@ -325,4 +349,5 @@ PyMODINIT_FUNC initfftpack_lite(void)
 
     /* XXXX Add constants here */
 
+    return RETVAL;
 }
