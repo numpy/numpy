@@ -369,9 +369,15 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
     if (PyUnicode_Check(ind)) {
         PyObject *tmp_str;
         tmp_str = PyUnicode_AsASCIIString(ind);
+        if (tmp_str == NULL) {
+            return NULL;
+        }
         key = PyBytes_AS_STRING(tmp_str);
         n = PyBytes_GET_SIZE(tmp_str);
-        if (n > 16) n = 16;
+        if (n > 16) {
+            Py_DECREF(tmp_str);
+            goto fail;
+        }
         memcpy(buf, key, n);
         Py_DECREF(tmp_str);
         key = buf;
