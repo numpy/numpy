@@ -1416,7 +1416,7 @@ class TestUfuncs(TestCase):
             ur = uf(*args)
             mr = mf(*args)
             assert_equal(ur.filled(0), mr.filled(0), f)
-            assert_mask_equal(ur.mask, mr.mask)
+            assert_mask_equal(ur.mask, mr.mask, err_msg=f)
     #........................
     def test_reduce(self):
         "Tests reduce on MaskedArrays."
