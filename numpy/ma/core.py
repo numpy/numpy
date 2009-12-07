@@ -854,6 +854,7 @@ class _MaskedUnaryOperation:
             np.seterr(**err_status_ini)
             # Make a mask
             m = ~umath.isfinite(result)
+            m |= self.domain(d)
             m |= getmask(a)
         # Case 1.2. : Function without a domain
         else:
