@@ -228,10 +228,10 @@ def assert_array_less(x, y, err_msg='', verbose=True):
                          header='Arrays are not less-ordered')
 
 
-def assert_mask_equal(m1, m2):
+def assert_mask_equal(m1, m2, err_msg=''):
     """Asserts the equality of two masks."""
     if m1 is nomask:
         assert(m2 is nomask)
     if m2 is nomask:
         assert(m1 is nomask)
-    assert_array_equal(m1, m2)
+    assert_array_equal(m1, m2, err_msg=err_msg)
