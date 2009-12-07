@@ -195,17 +195,16 @@
 #ifndef HAVE_CPOW@C@
 @ctype@ npy_cpow@c@ (@ctype@ x, @ctype@ y)
 {
-    @ctype@ b, p;
-    @type@ bx, by, px, py;
+    @ctype@ b;
+    @type@ br, bi, yr, yi;
 
+    yr = npy_creal@c@(y);
+    yi = npy_cimag@c@(y);
     b = npy_clog@c@(x);
-    p = npy_clog@c@(y);
-    bx = npy_creal@c@(b);
-    by = npy_cimag@c@(b);
-    px = npy_creal@c@(p);
-    py = npy_cimag@c@(p);
+    br = npy_creal@c@(b);
+    bi = npy_cimag@c@(b);
 
-    return npy_cexp@c@(npy_cpack@c@(bx * px - by * py, bx * py + by * px));
+    return npy_cexp@c@(npy_cpack@c@(br * yr - bi * yi, br * yi + bi * yr));
 }
 #endif
 
