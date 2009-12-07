@@ -273,9 +273,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
             assert_equal(actualr, desiredr)
             assert_equal(actuali, desiredi)
         except AssertionError:
-            raise AssertionError("Items are not equal:\n" \
-                    "ACTUAL: %s\n" \
-                    "DESIRED: %s\n" % (str(actual), str(desired)))
+            raise AssertionError(msg)
 
     # Inf/nan/negative zero handling
     try:
@@ -413,6 +411,9 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     except ValueError:
         usecomplex = False
 
+    msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
+                         header='Arrays are not almost equal')
+
     if usecomplex:
         if iscomplexobj(actual):
             actualr = real(actual)
@@ -430,15 +431,11 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             assert_almost_equal(actualr, desiredr, decimal=decimal)
             assert_almost_equal(actuali, desiredi, decimal=decimal)
         except AssertionError:
-            raise AssertionError("Items are not equal:\n" \
-                    "ACTUAL: %s\n" \
-                    "DESIRED: %s\n" % (str(actual), str(desired)))
+            raise AssertionError(msg)
 
     if isinstance(actual, (ndarray, tuple, list)) \
             or isinstance(desired, (ndarray, tuple, list)):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
-    msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
-                         header='Arrays are not almost equal')
     try:
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
