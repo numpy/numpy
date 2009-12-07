@@ -277,7 +277,9 @@ def _zseries_int(zs) :
     n = 1 + len(zs)//2
     ns = np.array([-1, 0, 1], dtype=zs.dtype)
     zs = _zseries_mul(zs, ns)
-    zs /= np.arange(-n, n+1)*2
+    div = np.arange(-n, n+1)*2
+    zs[:n] /= div[:n]
+    zs[n+1:] /= div[n+1:]
     zs[n] = 0
     return zs
 
