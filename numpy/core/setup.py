@@ -181,11 +181,20 @@ def check_complex(config, mathlibs):
                 pub.append(('NPY_HAVE_%s' % type2def(t), 1))
 
         def check_prec(prec):
-            flist = [f + prec for f in C99_COMPLEX_TYPES]
-            if not config.check_funcs_once(flist):
+            flist = [f + prec for f in C99_COMPLEX_FUNCS]
+            decl = dict([(f, True) for f in flist])
+            if not config.check_funcs_once(flist, call=decl, decl=decl,
+                                           libraries=mathlibs):
                 for f in flist:
-                    if config.check_func(f):
+                    if config.check_func(f, call=True, decl=True,
+                                         libraries=mathlibs):
                         priv.append(fname2def(f))
+            else:
+                priv.extend([fname2def(f) for f in flist])
+
+        check_prec('')
+        check_prec('f')
+        check_prec('l')
 
     return priv, pub
 
