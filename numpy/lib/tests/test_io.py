@@ -90,7 +90,7 @@ class RoundtripTest(object):
         a = np.array([1, 2, 3, 4], int)
         self.roundtrip(a)
 
-    @np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
+    @np.testing.dec.knownfailureif(sys.platform == 'win32', "Fail on Win32")
     def test_mmap(self):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
@@ -113,7 +113,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
     def test_multiple_arrays(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
-        self.roundtrip(a,b)
+        self.roundtrip(a, b)
 
     def test_named_arrays(self):
         a = np.array([[1, 2], [3, 4]], float)
@@ -133,7 +133,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             fd, tmp = mkstemp(suffix='.npz')
             os.close(fd)
             try:
-                arr = np.random.randn(500,500)
+                arr = np.random.randn(500, 500)
                 try:
                     np.savez(tmp, arr=arr)
                 except OSError, err:
@@ -154,7 +154,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
 class TestSaveTxt(TestCase):
     def test_array(self):
-        a =np.array([[1, 2], [3, 4]], float)
+        a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
         c = StringIO.StringIO()
         np.savetxt(c, a, fmt=fmt)
@@ -163,7 +163,7 @@ class TestSaveTxt(TestCase):
                [(fmt + ' ' + fmt + '\n') % (1, 2),
                 (fmt + ' ' + fmt + '\n') % (3, 4)])
 
-        a =np.array([[1, 2], [3, 4]], int)
+        a = np.array([[1, 2], [3, 4]], int)
         c = StringIO.StringIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
@@ -226,7 +226,7 @@ class TestLoadTxt(TestCase):
         d = StringIO.StringIO()
         d.write('M 64.0 75.0\nF 25.0 60.0')
         d.seek(0)
-        mydescriptor = {'names': ('gender','age','weight'),
+        mydescriptor = {'names': ('gender', 'age', 'weight'),
                         'formats': ('S1',
                                     'i4', 'f4')}
         b = np.array([('M', 64.0, 75.0),
@@ -268,7 +268,7 @@ class TestLoadTxt(TestCase):
         c.write('1,2,3,,5\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
-            converters={3:lambda s: int(s or -999)})
+            converters={3:lambda s: int(s or - 999)})
         a = np.array([1, 2, 3, -999, 5], int)
         assert_array_equal(x, a)
 
@@ -277,7 +277,7 @@ class TestLoadTxt(TestCase):
         c.write('1,2,3,,5\n6,7,8,9,10\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
-            converters={3:lambda s: int(s or -999)}, \
+            converters={3:lambda s: int(s or - 999)}, \
             usecols=(1, 3,))
         a = np.array([[2, -999], [7, 9]], int)
         assert_array_equal(x, a)
@@ -314,9 +314,9 @@ class TestLoadTxt(TestCase):
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,))
-        assert_array_equal(x, a[:,1])
+        assert_array_equal(x, a[:, 1])
 
-        a =np.array([[1, 2, 3], [3, 4, 5]], float)
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
         c = StringIO.StringIO()
         np.savetxt(c, a)
         c.seek(0)
@@ -336,8 +336,8 @@ class TestLoadTxt(TestCase):
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
         arr = np.loadtxt(c, usecols=(0, 2), dtype=zip(names, dtypes))
-        assert_equal(arr['stid'], ["JOE",  "BOB"])
-        assert_equal(arr['temp'], [25.3,  27.9])
+        assert_equal(arr['stid'], ["JOE", "BOB"])
+        assert_equal(arr['temp'], [25.3, 27.9])
 
     def test_fancy_dtype(self):
         c = StringIO.StringIO()
@@ -387,7 +387,7 @@ class TestLoadTxt(TestCase):
         converters = {1: func}
         test = np.loadtxt(StringIO.StringIO(data), delimiter=";", dtype=ndtype,
                              converters=converters)
-        control = np.array([(1, datetime(2001,1,1)), (2, datetime(2002,1,31))],
+        control = np.array([(1, datetime(2001, 1, 1)), (2, datetime(2002, 1, 31))],
                            dtype=ndtype)
         assert_equal(test, control)
 
@@ -442,7 +442,7 @@ class TestFromTxt(TestCase):
         #
         data = StringIO.StringIO('M 64.0 75.0\nF 25.0 60.0')
 #        data.seek(0)
-        descriptor = {'names': ('gender','age','weight'),
+        descriptor = {'names': ('gender', 'age', 'weight'),
                       'formats': ('S1', 'i4', 'f4')}
         control = np.array([('M', 64.0, 75.0), ('F', 25.0, 60.0)],
                            dtype=descriptor)
@@ -452,12 +452,12 @@ class TestFromTxt(TestCase):
     def test_array(self):
         "Test outputing a standard ndarray"
         data = StringIO.StringIO('1 2\n3 4')
-        control = np.array([[1,2],[3,4]], dtype=int)
+        control = np.array([[1, 2], [3, 4]], dtype=int)
         test = np.ndfromtxt(data, dtype=int)
         assert_array_equal(test, control)
         #
         data.seek(0)
-        control = np.array([[1,2],[3,4]], dtype=float)
+        control = np.array([[1, 2], [3, 4]], dtype=float)
         test = np.loadtxt(data, dtype=float)
         assert_array_equal(test, control)
 
@@ -527,9 +527,9 @@ class TestFromTxt(TestCase):
         control = [np.array(['A', 'BCD']),
                    np.array([64, 25]),
                    np.array([75.0, 60.0]),
-                   np.array([3+4j, 5+6j]),
-                   np.array([True, False]),]
-        assert_equal(test.dtype.names, ['f0','f1','f2','f3','f4'])
+                   np.array([3 + 4j, 5 + 6j]),
+                   np.array([True, False]), ]
+        assert_equal(test.dtype.names, ['f0', 'f1', 'f2', 'f3', 'f4'])
         for (i, ctrl) in enumerate(control):
             assert_equal(test['f%i' % i], ctrl)
 
@@ -538,7 +538,7 @@ class TestFromTxt(TestCase):
         "Tests whether the output dtype can be uniformized"
         data = StringIO.StringIO('1 2 3 4\n5 6 7 8\n')
         test = np.ndfromtxt(data, dtype=None)
-        control = np.array([[1,2,3,4],[5,6,7,8]])
+        control = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
         assert_equal(test, control)
 
 
@@ -547,16 +547,16 @@ class TestFromTxt(TestCase):
         data = StringIO.StringIO('1,2,3.0\n4,5,6.0\n')
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         test = np.ndfromtxt(data, dtype=fancydtype, delimiter=',')
-        control = np.array([(1,(2,3.0)),(4,(5,6.0))], dtype=fancydtype)
+        control = np.array([(1, (2, 3.0)), (4, (5, 6.0))], dtype=fancydtype)
         assert_equal(test, control)
 
 
     def test_names_overwrite(self):
         "Test overwriting the names of the dtype"
-        descriptor = {'names': ('g','a','w'),
+        descriptor = {'names': ('g', 'a', 'w'),
                       'formats': ('S1', 'i4', 'f4')}
         data = StringIO.StringIO('M 64.0 75.0\nF 25.0 60.0')
-        names = ('gender','age','weight')
+        names = ('gender', 'age', 'weight')
         test = np.ndfromtxt(data, dtype=descriptor, names=names)
         descriptor['names'] = names
         control = np.array([('M', 64.0, 75.0),
@@ -575,7 +575,7 @@ M   33  21.99
         # The # is part of the first name and should be deleted automatically.
         test = np.genfromtxt(data, names=True, dtype=None)
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
-                  dtype=[('gender','|S1'), ('age', int), ('weight', float)])
+                  dtype=[('gender', '|S1'), ('age', int), ('weight', float)])
         assert_equal(test, ctrl)
         # Ditto, but we should get rid of the first element
         data = StringIO.StringIO("""
@@ -602,9 +602,9 @@ M   33  21.99
         "Test the combination user-defined converters and usecol"
         data = StringIO.StringIO('1,2,3,,5\n6,7,8,9,10\n')
         test = np.ndfromtxt(data, dtype=int, delimiter=',',
-                            converters={3:lambda s: int(s or -999)},
-                            usecols=(1, 3, ))
-        control = np.array([[2,  -999], [7, 9]], int)
+                            converters={3:lambda s: int(s or - 999)},
+                            usecols=(1, 3,))
+        control = np.array([[2, -999], [7, 9]], int)
         assert_equal(test, control)
 
     def test_converters_with_usecols_and_names(self):
@@ -621,8 +621,8 @@ M   33  21.99
         converter = {'date': lambda s: strptime(s, '%Y-%m-%d %H:%M:%SZ')}
         data = StringIO.StringIO('2009-02-03 12:00:00Z, 72214.0')
         test = np.ndfromtxt(data, delimiter=',', dtype=None,
-                            names=['date','stid'], converters=converter)
-        control = np.array((datetime(2009,02,03), 72214.),
+                            names=['date', 'stid'], converters=converter)
+        control = np.array((datetime(2009, 02, 03), 72214.),
                            dtype=[('date', np.object_), ('stid', float)])
         assert_equal(test, control)
 
@@ -658,7 +658,7 @@ M   33  21.99
         test = np.ndfromtxt(StringIO.StringIO(dstr,),
                             delimiter=";", dtype=float, converters={0:str})
         control = np.array([('2009', 23., 46)],
-                           dtype=[('f0','|S4'), ('f1', float), ('f2', float)])
+                           dtype=[('f0', '|S4'), ('f1', float), ('f2', float)])
         assert_equal(test, control)
         test = np.ndfromtxt(StringIO.StringIO(dstr,),
                             delimiter=";", dtype=float, converters={0:float})
@@ -679,7 +679,7 @@ M   33  21.99
         converters = {1: func}
         test = np.genfromtxt(StringIO.StringIO(data), delimiter=";", dtype=ndtype,
                              converters=converters)
-        control = np.array([(1, datetime(2001,1,1)), (2, datetime(2002,1,31))],
+        control = np.array([(1, datetime(2001, 1, 1)), (2, datetime(2002, 1, 31))],
                            dtype=ndtype)
         assert_equal(test, control)
         #
@@ -709,16 +709,27 @@ M   33  21.99
         data = StringIO.StringIO("1  2  3  4   5\n6  7  8  9  10")
         test = np.ndfromtxt(data)
         control = np.array([[ 1., 2., 3., 4., 5.],
-                            [ 6., 7., 8., 9.,10.]])
+                            [ 6., 7., 8., 9., 10.]])
         assert_equal(test, control)
 
 
     def test_missing(self):
         data = StringIO.StringIO('1,2,3,,5\n')
         test = np.ndfromtxt(data, dtype=int, delimiter=',', \
-                            converters={3:lambda s: int(s or -999)})
+                            converters={3:lambda s: int(s or - 999)})
         control = np.array([1, 2, 3, -999, 5], int)
         assert_equal(test, control)
+
+
+    def test_missing_with_tabs(self):
+        "Test w/ a delimiter tab"
+        txt = "1\t2\t3\n\t2\t\n1\t\t3"
+        test = np.genfromtxt(StringIO.StringIO(txt), delimiter="\t",
+                             usemask=True,)
+        ctrl_d = np.array([(1, 2, 3), (np.nan, 2, np.nan), (1, np.nan, 3)],)
+        ctrl_m = np.array([(0, 0, 0), (1, 0, 1), (0, 1, 0)], dtype=bool)
+        assert_equal(test.data, ctrl_d)
+        assert_equal(test.mask, ctrl_m)
 
 
     def test_usecols(self):
@@ -731,7 +742,7 @@ M   33  21.99
         test = np.ndfromtxt(data, dtype=float, usecols=(1,))
         assert_equal(test, control[:, 1])
         #
-        control = np.array( [[1, 2, 3], [3, 4, 5]], float)
+        control = np.array([[1, 2, 3], [3, 4, 5]], float)
         data = StringIO.StringIO()
         np.savetxt(data, control)
         data.seek(0)
@@ -756,8 +767,8 @@ M   33  21.99
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
         test = np.ndfromtxt(data, usecols=(0, 2), dtype=zip(names, dtypes))
-        assert_equal(test['stid'],  ["JOE",  "BOB"])
-        assert_equal(test['temp'],  [25.3,  27.9])
+        assert_equal(test['stid'], ["JOE", "BOB"])
+        assert_equal(test['temp'], [25.3, 27.9])
 
     def test_usecols_with_integer(self):
         "Test usecols with an integer"
@@ -787,7 +798,7 @@ M   33  21.99
         data = StringIO.StringIO('1,2,3.0\n4,5,6.0\n')
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         test = np.mafromtxt(data, dtype=fancydtype, delimiter=',')
-        control = ma.array([(1,(2,3.0)),(4,(5,6.0))], dtype=fancydtype)
+        control = ma.array([(1, (2, 3.0)), (4, (5, 6.0))], dtype=fancydtype)
         assert_equal(test, control)
 
 
@@ -827,8 +838,8 @@ M   33  21.99
         #
         test = np.mafromtxt(StringIO.StringIO(data), missing_values="N/A",
                             **basekwargs)
-        control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
-                            (  -9, 2.2, -999j), (3,  -99, 3j)],
+        control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
+                            (-9, 2.2, -999j), (3, -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (0, 0, 1), (0, 0, 0)],
                             dtype=mdtype)
         assert_equal(test, control)
@@ -836,8 +847,8 @@ M   33  21.99
         basekwargs['dtype'] = mdtype
         test = np.mafromtxt(StringIO.StringIO(data),
                             missing_values={0:-9, 1:-99, 2:-999j}, **basekwargs)
-        control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
-                            (  -9, 2.2, -999j), (3,  -99, 3j)],
+        control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
+                            (-9, 2.2, -999j), (3, -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
                             dtype=mdtype)
         assert_equal(test, control)
@@ -845,8 +856,8 @@ M   33  21.99
         test = np.mafromtxt(StringIO.StringIO(data),
                             missing_values={0:-9, 'B':-99, 'C':-999j},
                             **basekwargs)
-        control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
-                            (  -9, 2.2, -999j), (3,  -99, 3j)],
+        control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
+                            (-9, 2.2, -999j), (3, -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
                             dtype=mdtype)
         assert_equal(test, control)
@@ -886,7 +897,7 @@ M   33  21.99
         data = StringIO.StringIO('1 2 3\n4 5 6\n')
         test = np.genfromtxt(data, dtype=None,
                              missing_values='2,5', usemask=True)
-        control = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[0, 1, 0],[0, 1, 0]])
+        control = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[0, 1, 0], [0, 1, 0]])
         assert_equal(test, control)
 
     def test_with_masked_column_various(self):
@@ -895,7 +906,7 @@ M   33  21.99
         test = np.genfromtxt(data, dtype=None,
                              missing_values='2,5', usemask=True)
         control = ma.array([(1, 2, 3), (0, 5, 6)],
-                           mask=[(0, 1, 0),(0, 1, 0)],
+                           mask=[(0, 1, 0), (0, 1, 0)],
                            dtype=[('f0', bool), ('f1', bool), ('f2', int)])
         assert_equal(test, control)
 
@@ -1059,7 +1070,7 @@ M   33  21.99
     def test_filling_values(self):
         "Test missing values"
         data = "1, 2, 3\n1, , 5\n0, 6, \n"
-        kwargs = dict(delimiter=",", dtype=None, filling_values=-999)
+        kwargs = dict(delimiter=",", dtype=None, filling_values= -999)
         ctrl = np.array([[1, 2, 3], [1, -999, 5], [0, 6, -999]], dtype=int)
         test = np.ndfromtxt(StringIO.StringIO(data), **kwargs)
         assert_equal(test, ctrl)
