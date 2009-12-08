@@ -166,8 +166,8 @@ class LineSplitter:
         # Delimiter is a list of field widths
         elif hasattr(delimiter, '__iter__'):
             _handyman = self._variablewidth_splitter
-            idx = np.cumsum([0]+list(delimiter))
-            delimiter = [slice(i,j) for (i,j) in zip(idx[:-1], idx[1:])]
+            idx = np.cumsum([0] + list(delimiter))
+            delimiter = [slice(i, j) for (i, j) in zip(idx[:-1], idx[1:])]
         # Delimiter is a single integer
         elif int(delimiter):
             (_handyman, delimiter) = (self._fixedwidth_splitter, int(delimiter))
@@ -180,7 +180,7 @@ class LineSplitter:
             self._handyman = _handyman
     #
     def _delimited_splitter(self, line):
-        line = line.split(self.comments)[0].strip()
+        line = line.split(self.comments)[0].strip(" \r\n")
         if not line:
             return []
         return line.split(self.delimiter)
@@ -190,7 +190,7 @@ class LineSplitter:
         if not line:
             return []
         fixed = self.delimiter
-        slices = [slice(i, i+fixed) for i in range(len(line))[::fixed]]
+        slices = [slice(i, i + fixed) for i in range(len(line))[::fixed]]
         return [line[s] for s in slices]
     #
     def _variablewidth_splitter(self, line):
@@ -255,7 +255,7 @@ class NameValidator:
 
     """
     #
-    defaultexcludelist = ['return','file','print']
+    defaultexcludelist = ['return', 'file', 'print']
     defaultdeletechars = set("""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
     #
     def __init__(self, excludelist=None, deletechars=None, case_sensitive=None):
@@ -313,7 +313,7 @@ class NameValidator:
                 return None
             names = []
         if isinstance(names, basestring):
-            names = [names,]
+            names = [names, ]
         if nbfields is not None:
             nbnames = len(names)
             if (nbnames < nbfields):
@@ -468,7 +468,7 @@ class StringConverter:
     _mapper = [(nx.bool_, str2bool, False),
                (nx.integer, int, -1),
                (nx.floating, float, nx.nan),
-               (complex, complex, nx.nan+0j),
+               (complex, complex, nx.nan + 0j),
                (nx.string_, str, '???')]
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
     #
@@ -513,7 +513,7 @@ class StringConverter:
                 default = [None] * len(func)
             else:
                 default = list(default)
-                default.append([None] * (len(func)-len(default)))
+                default.append([None] * (len(func) - len(default)))
             for (fct, dft) in zip(func, default):
                 cls._mapper.insert(-1, (cls._getsubdtype(dft), fct, dft))
     #
