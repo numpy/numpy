@@ -104,10 +104,6 @@ import warnings
 MaskType = np.bool_
 nomask = MaskType(0)
 
-np.seterr(all='ignore')
-
-
-
 def doc_note(initialdoc, note):
     """
     Adds a Notes section to an existing docstring.
