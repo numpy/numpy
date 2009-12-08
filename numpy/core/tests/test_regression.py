@@ -1236,6 +1236,15 @@ class TestRegression(TestCase):
             x = np.dtype([(('a', 'a'), 'i'), ('b', 'i')])
         self.failUnlessRaises(ValueError, func)
 
+    def test_signed_integer_division_overflow(self):
+        """Ticket #1317."""
+        def test_type(t):
+            min = np.array([np.iinfo(t).min])
+            min /= -1
+
+        for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
+            test_type(t)
+
     def test_buffer_hashlib(self):
         try:
             from hashlib import md5
