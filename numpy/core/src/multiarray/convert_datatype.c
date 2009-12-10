@@ -117,9 +117,15 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             cls = PyObject_GetAttrString(obj, "ComplexWarning");
             Py_DECREF(obj);
         }
+#if PY_VERSION_HEX >= 0x02050000
         PyErr_WarnEx(cls,
                      "Casting complex values to real discards the imaginary "
                      "part", 0);
+#else
+        PyErr_Warn(cls,
+                   "Casting complex values to real discards the imaginary "
+                   "part");
+#endif
         Py_XDECREF(cls);
     }
     if (castfunc) {
