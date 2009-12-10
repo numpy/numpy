@@ -796,7 +796,7 @@ static PyObject *
      * as a function call.
      */
 #if @cmplx@
-    if (arg2.real == 0 && arg1.real == 0) {
+    if (arg2.real == 0 && arg2.imag == 0) {
         out1.real = out.real = 1;
         out1.imag = out.imag = 0;
     }

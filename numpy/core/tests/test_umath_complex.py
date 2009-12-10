@@ -309,6 +309,32 @@ class TestCpow(TestCase):
         for i in range(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
+    def test_scalar(self):
+        x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
+        y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
+        lx = range(len(x))
+        # Compute the values for complex type in python
+        p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
+        # Substitute a result allowed by C99 standard
+        p_r[4] = complex(np.inf, np.nan)
+        # Do the same with numpy complex scalars
+        n_r = [x[i] ** y[i] for i in lx]
+        for i in lx:
+            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+
+    def test_array(self):
+        x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
+        y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
+        lx = range(len(x))
+        # Compute the values for complex type in python
+        p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
+        # Substitute a result allowed by C99 standard
+        p_r[4] = complex(np.inf, np.nan)
+        # Do the same with numpy arrays
+        n_r = x ** y
+        for i in lx:
+            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+
 class TestCabs(object):
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
