@@ -3,6 +3,7 @@ import os
 import sys
 import warnings
 import platform
+import tempfile
 from subprocess import Popen, PIPE, STDOUT
 
 from numpy.distutils.cpuinfo import cpu
@@ -14,13 +15,6 @@ from numpy.distutils.compat import get_exception
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
 TARGET_R = re.compile("Target: ([a-zA-Z0-9_\-]*)")
-
-# XXX: do we really need to check for target ? If the arch is not supported,
-# the return code should be != 0
-_R_ARCHS = {"ppc": r"^Target: (powerpc-.*)$",
-    "i686": r"^Target: (i686-.*)$",
-    "x86_64": r"^Target: (i686-.*)$",
-    "ppc64": r"^Target: (powerpc-.*)$",}
 
 # XXX: handle cross compilation
 def is_win64():
@@ -329,20 +323,27 @@ class Gnu95FCompiler(GnuFCompiler):
             return ['-O0']
         else:
             return GnuFCompiler.get_flags_opt(self)
+
 def _can_target(cmd, arch):
     """Return true is the command supports the -arch flag for the given
     architecture."""
     newcmd = cmd[:]
-    newcmd.extend(["-arch", arch, "-v"])
-    p = Popen(newcmd, stderr=STDOUT, stdout=PIPE)
-    stdout, stderr = p.communicate()
-    if p.returncode == 0:
-        for line in stdout.splitlines():
-            m = re.search(_R_ARCHS[arch], line)
-            if m:
-                return True
+    fid, filename = tempfile.mkstemp(suffix=".f")
+    try:
+        d = os.path.dirname(filename)
+        output = os.path.splitext(filename)[0] + ".o"
+        try:
+            newcmd.extend(["-arch", arch, "-c", filename])
+            p = Popen(newcmd, stderr=STDOUT, stdout=PIPE, cwd=d)
+            p.communicate()
+            return p.returncode == 0
+        finally:
+            if os.path.exists(output):
+                os.remove(output)
+    finally:
+        os.remove(filename)
     return False
-        
+
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
