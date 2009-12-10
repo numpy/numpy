@@ -3,6 +3,5 @@
 from numscons import GetNumpyEnvironment
 
 env = GetNumpyEnvironment(ARGUMENTS)
-env.Append(CPPPATH = ['numpy'])
-
+env.Prepend(CPPPATH=['numpy', "#$build_prefix/numpy/core/src/private"])
 env.NumpyPythonExtension('_capi', source = ['_capi.c'])

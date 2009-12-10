@@ -3,4 +3,5 @@
 from numscons import GetNumpyEnvironment
 
 env = GetNumpyEnvironment(ARGUMENTS)
+env.Prepend(CPPPATH=["#$build_prefix/numpy/core/src/private"])
 env.NumpyPythonExtension('_compiled_base', source = ['src/_compiled_base.c'])
