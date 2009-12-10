@@ -108,7 +108,9 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
         }
     }
     if (PyTypeNum_ISCOMPLEX(descr->type_num) &&
-        !PyTypeNum_ISCOMPLEX(type_num)) {
+        !PyTypeNum_ISCOMPLEX(type_num) &&
+        PyTypeNum_ISNUMBER(type_num) &&
+        !PyTypeNum_ISBOOL(type_num)) {
         PyObject *cls = NULL, *obj = NULL;
         obj = PyImport_ImportModule("numpy.core");
         if (obj) {
