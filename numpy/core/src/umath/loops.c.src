@@ -770,7 +770,14 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
+        /*
+         * FIXME: On x86 at least, dividing the smallest representable integer
+         * by -1 causes a SIFGPE (division overflow). We treat this case here
+         * (to avoid a SIGFPE crash at python level), but a good solution would
+         * be to treat integer division problems separately from FPU exceptions
+         * (i.e. fixing generate_divbyzero_error()).
+         */
+        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
             generate_divbyzero_error();
             *((@type@ *)op1) = 0;
         }

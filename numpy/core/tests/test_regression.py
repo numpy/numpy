@@ -1221,6 +1221,15 @@ class TestRegression(TestCase):
         assert sys.getrefcount(strb) == numb
         assert sys.getrefcount(stra) == numa + 2
         
+    def test_signed_integer_division_overflow(self):
+        """Ticket #1317."""
+        def test_type(t):
+            min = np.array([np.iinfo(t).min])
+            min /= -1
+
+        for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
+            test_type(t)
+
 
 if __name__ == "__main__":
     run_module_suite()
