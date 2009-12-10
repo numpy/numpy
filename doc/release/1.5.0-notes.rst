@@ -2,7 +2,36 @@
 NumPy 1.5.0 Release Notes
 =========================
 
+
+Plans
+=====
+
 This release has the following aims:
 
 * Python 3 compatibility
 * :pep:`3118` compatibility
+
+
+Highlights
+==========
+
+
+New features
+============
+
+Warning on casting complex to real
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Numpy now emits a `numpy.ComplexWarning` when a complex number is cast
+into a real number. For example:
+
+    >>> x = np.array([1,2,3])
+    >>> x[:2] = np.array([1+2j, 1-2j])
+    ComplexWarning: Casting complex values to real discards the imaginary part
+
+The cast indeed discards the imaginary part, and this may not be the
+intended behavior in all cases, hence the warning. This warning can be
+turned off in the standard way:
+
+    >>> import warnings
+    >>> warnings.simplefilter("ignore", np.ComplexWarning)

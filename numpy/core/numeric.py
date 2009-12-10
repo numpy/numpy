@@ -19,7 +19,8 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
-           'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS']
+           'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
+           'ComplexWarning']
 
 import sys
 import warnings
@@ -31,6 +32,16 @@ from numerictypes import *
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
+
+class ComplexWarning(RuntimeWarning):
+    """
+    Warning that is raised when casting complex numbers to real.
+
+    Casting a complex number to real discards its imaginary part, and
+    this behavior may not be what is intended in all cases.
+
+    """
+    pass
 
 bitwise_not = invert
 

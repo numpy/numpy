@@ -106,11 +106,21 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
                 castfunc = PyCObject_AsVoidPtr(cobj);
             }
         }
-        if (castfunc) {
-            return castfunc;
-        }
     }
-    else {
+    if (PyTypeNum_ISCOMPLEX(descr->type_num) &&
+        !PyTypeNum_ISCOMPLEX(type_num)) {
+        PyObject *cls = NULL, *obj = NULL;
+        obj = PyImport_ImportModule("numpy.core");
+        if (obj) {
+            cls = PyObject_GetAttrString(obj, "ComplexWarning");
+            Py_DECREF(obj);
+        }
+        PyErr_WarnEx(cls,
+                     "Casting complex values to real discards the imaginary "
+                     "part", 0);
+        Py_XDECREF(cls);
+    }
+    if (castfunc) {
         return castfunc;
     }
 

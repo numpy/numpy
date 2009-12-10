@@ -1425,6 +1425,16 @@ class TestStackedNeighborhoodIter(TestCase):
                 [-1, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
+class TestWarnings(object):
+    def test_complex_warning(self):
+        import warnings
+
+        x = np.array([1,2])
+        y = np.array([1-2j,1+2j])
+
+        warnings.simplefilter("error", np.ComplexWarning)
+        assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
+        warnings.simplefilter("default", np.ComplexWarning)
 
 if sys.version_info >= (2, 6):
     class TestNewBufferProtocol(object):
