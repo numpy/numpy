@@ -326,7 +326,7 @@ def _read_config_imp(filenames, dirs=None):
                              (pkgname, meta["name"]))
 
         mod = sys.modules[pkgname]
-        vars["pkgdir"] = os.path.dirname(mod.__file__)
+        vars["pkgdir"] = _escape_backslash(os.path.dirname(mod.__file__))
             
     return LibraryInfo(name=meta["name"], description=meta["description"],
             version=meta["version"], sections=sections, vars=VariableSet(vars))
