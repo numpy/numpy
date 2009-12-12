@@ -315,6 +315,18 @@ def _read_config_imp(filenames, dirs=None):
 
     meta, vars, sections, reqs = _read_config(filenames)
 
+    # FIXME: document this. If pkgname is defined in the variables section, and
+    # there is no pkgdir variable defined, pkgdir is automatically defined to
+    # the path of pkgname. This requires the package to be imported to work
+    if not vars.has_key("pkgdir") and vars.has_key("pkgname"):
+        pkgname = vars["pkgname"]
+        if not pkgname in sys.modules:
+            raise ValueError("You should import %s to get information on %s" % 
+                             (pkgname, meta["name"]))
+
+        mod = sys.modules[pkgname]
+        vars["pkgdir"] = os.path.dirname(mod.__file__)
+            
     return LibraryInfo(name=meta["name"], description=meta["description"],
             version=meta["version"], sections=sections, vars=VariableSet(vars))
 
