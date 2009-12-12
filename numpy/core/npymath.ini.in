@@ -4,7 +4,8 @@ Description=Portable, core math library implementing C99 standard
 Version=0.1
 
 [variables]
-prefix=@prefix@
+pkgname=@pkgname@
+prefix=${pkgdir}
 libdir=${prefix}@sep@lib
 includedir=${prefix}@sep@include
 
