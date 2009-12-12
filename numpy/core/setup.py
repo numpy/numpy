@@ -655,7 +655,7 @@ def configuration(parent_package='',top_path=None):
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
 
-    subst_dict = dict([("sep", os.path.sep)])
+    subst_dict = dict([("sep", os.path.sep), ("pkgname", "numpy.core")])
     def get_mathlib_info(*args):
         # Another ugly hack: the mathlib info is known once build_src is run,
         # but we cannot use add_installed_pkg_config here either, so we only
