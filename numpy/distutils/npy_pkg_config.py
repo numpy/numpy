@@ -1,3 +1,4 @@
+import sys
 from ConfigParser import SafeConfigParser, NoOptionError
 import re
 import os
