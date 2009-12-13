@@ -33,6 +33,163 @@ int _npy_signbit_ld(long double x)
 #endif
 
 /*
+ * FIXME: There is a lot of redundancy between _next* and npy_nextafter*.
+ * refactor this at some point
+ *
+ * p >= 0, returnx x + nulp
+ * p < 0, returnx x - nulp
+ */
+double _next(double x, int p)
+{
+    volatile double t;
+    npy_int32 hx, hy, ix;
+    npy_uint32 lx, ly;
+
+    EXTRACT_WORDS(hx, lx, x);
+    ix = hx & 0x7fffffff;       /* |x| */
+
+    if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0))        /* x is nan */
+        return x;
+    if ((ix | lx) == 0) {       /* x == 0 */
+        if (p >= 0) {
+            INSERT_WORDS(x, 0x0, 1);    /* return +minsubnormal */
+        } else {
+            INSERT_WORDS(x, 0x80000000, 1);    /* return -minsubnormal */
+        }
+        t = x * x;
+        if (t == x)
+            return t;
+        else
+            return x;           /* raise underflow flag */
+    }
+    if (p < 0) {     /* x -= ulp */
+        if (lx == 0)
+            hx -= 1;
+        lx -= 1;
+    } else {         /* x += ulp */
+        lx += 1;
+        if (lx == 0)
+            hx += 1;
+    }
+    hy = hx & 0x7ff00000;
+    if (hy >= 0x7ff00000)
+        return x + x;           /* overflow  */
+    if (hy < 0x00100000) {      /* underflow */
+        t = x * x;
+        if (t != x) {           /* raise underflow flag */
+            INSERT_WORDS(x, hx, lx);
+            return x;
+        }
+    }
+    INSERT_WORDS(x, hx, lx);
+    return x;
+}
+
+float _nextf(float x, int p)
+{
+    volatile float t;
+    npy_int32 hx, hy, ix;
+
+    GET_FLOAT_WORD(hx, x);
+    ix = hx & 0x7fffffff;       /* |x| */
+
+    if ((ix > 0x7f800000))      /* x is nan */
+        return x;
+    if (ix == 0) {              /* x == 0 */
+        if (p >= 0) {
+            SET_FLOAT_WORD(x, (0x0) | 1); /* return +-minsubnormal */
+        } else {
+            SET_FLOAT_WORD(x, (hy & 0x80000000) | 1); /* return +-minsubnormal */
+        }
+        t = x * x;
+        if (t == x)
+            return t;
+        else
+            return x;           /* raise underflow flag */
+    }
+    if (p < 0) {            /* x -= ulp */
+        hx -= 1;
+    } else {                /* x += ulp */
+        hx += 1;
+    }
+    hy = hx & 0x7f800000;
+    if (hy >= 0x7f800000)
+        return x + x;           /* overflow  */
+    if (hy < 0x00800000) {      /* underflow */
+        t = x * x;
+        if (t != x) {           /* raise underflow flag */
+            SET_FLOAT_WORD(x, hx);
+            return x;
+        }
+    }
+    SET_FLOAT_WORD(x, hx);
+    return x;
+}
+
+npy_longdouble _nextl(npy_longdouble x, int p)
+{
+    volatile npy_longdouble t;
+    union IEEEl2bitsrep ux;
+
+    ux.e = x;
+
+    if ((GET_LDOUBLE_EXP(ux) == 0x7fff &&
+         ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) | GET_LDOUBLE_MANL(ux)) != 0)) {
+        return ux.e;        /* x is nan */
+    }
+    if (ux.e == 0.0) {
+        SET_LDOUBLE_MANH(ux, 0);              /* return +-minsubnormal */
+        SET_LDOUBLE_MANL(ux, 1);
+        if (p >= 0) {
+            SET_LDOUBLE_SIGN(ux, 0);
+        } else {
+            SET_LDOUBLE_SIGN(ux, 1);
+        }
+        t = ux.e * ux.e;
+        if (t == ux.e) {
+            return t;
+        } else {
+            return ux.e;           /* raise underflow flag */
+        }
+    }
+    if (p < 0) {      /* x -= ulp */
+        if (GET_LDOUBLE_MANL(ux) == 0) {
+            if ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) == 0) {
+                SET_LDOUBLE_EXP(ux, GET_LDOUBLE_EXP(ux) - 1);
+            }
+            SET_LDOUBLE_MANH(ux,
+                             (GET_LDOUBLE_MANH(ux) - 1) |
+                             (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
+        }
+        SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) - 1);
+    } else {                    /* x += ulp */
+        SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) + 1);
+        if (GET_LDOUBLE_MANL(ux) == 0) {
+            SET_LDOUBLE_MANH(ux,
+                             (GET_LDOUBLE_MANH(ux) + 1) |
+                             (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
+            if ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) == 0) {
+                SET_LDOUBLE_EXP(ux, GET_LDOUBLE_EXP(ux) + 1);
+            }
+        }
+    }
+    if (GET_LDOUBLE_EXP(ux) == 0x7fff) {
+        return ux.e + ux.e;           /* overflow  */
+    }
+    if (GET_LDOUBLE_EXP(ux) == 0) {            /* underflow */
+        if (LDBL_NBIT) {
+            SET_LDOUBLE_MANH(ux, GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT);
+        }
+        t = ux.e * ux.e;
+        if (t != ux.e) {           /* raise underflow flag */
+            return ux.e;
+        }
+    }
+
+    return ux.e;
+}
+
+/*
  * nextafter code taken from BSD math lib, the code contains the following
  * notice:
  *
@@ -45,6 +202,7 @@ int _npy_signbit_ld(long double x)
  * is preserved.
  * ====================================================
  */
+
 #ifndef HAVE_NEXTAFTER
 double npy_nextafter(double x, double y)
 {
@@ -234,15 +392,11 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 @type@ npy_spacing@suff@(@type@ x)
 {
     /* XXX: npy isnan/isinf may be optimized by bit twiddling */
-    if (npy_isnan(x)) {
-        return x;
-    }
-
     if (npy_isinf(x)) {
         return NPY_NAN@SUFF@;
     }
 
-    return npy_nextafter@suff@(x, x+1) - x;
+    return _next@suff@(x, 1) - x;
 }
 /**end repeat**/
 

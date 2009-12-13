@@ -878,6 +878,7 @@ def _test_spacing(t):
     assert np.isnan(np.spacing(nan))
     assert np.isnan(np.spacing(inf))
     assert np.isnan(np.spacing(-inf))
+    assert np.spacing(t(1e30)) != 0
 
 def test_spacing():
     return _test_spacing(np.float64)
