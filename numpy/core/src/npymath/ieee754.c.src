@@ -43,7 +43,7 @@ double _next(double x, int p)
 {
     volatile double t;
     npy_int32 hx, hy, ix;
-    npy_uint32 lx, ly;
+    npy_uint32 lx;
 
     EXTRACT_WORDS(hx, lx, x);
     ix = hx & 0x7fffffff;       /* |x| */
@@ -97,9 +97,9 @@ float _nextf(float x, int p)
         return x;
     if (ix == 0) {              /* x == 0 */
         if (p >= 0) {
-            SET_FLOAT_WORD(x, (0x0) | 1); /* return +-minsubnormal */
+            SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
         } else {
-            SET_FLOAT_WORD(x, (hy & 0x80000000) | 1); /* return +-minsubnormal */
+            SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
         }
         t = x * x;
         if (t == x)
