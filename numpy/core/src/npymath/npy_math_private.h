@@ -270,19 +270,19 @@ do {                                                            \
 
     #define LDBL_MANL_INDEX     1
     #define LDBL_MANL_MASK      0xFFFFFFFF
-    #define LDBL_MANL_SHIFT(x)  0
+    #define LDBL_MANL_SHIFT     0
 
     #define LDBL_MANH_INDEX     0
     #define LDBL_MANH_MASK      0x000FFFFF
-    #define LDBL_MANH_SHIFT(x)  0
+    #define LDBL_MANH_SHIFT     0
 
     #define LDBL_EXP_INDEX      0
     #define LDBL_EXP_MASK       0x7FF00000
-    #define LDBL_EXP_SHIFT(x)   20
+    #define LDBL_EXP_SHIFT      20
 
     #define LDBL_SIGN_INDEX     0
     #define LDBL_SIGN_MASK      0x80000000
-    #define LDBL_SIGN_SHIFT(x)  31
+    #define LDBL_SIGN_SHIFT     31
 
     #define LDBL_NBIT           0
 
