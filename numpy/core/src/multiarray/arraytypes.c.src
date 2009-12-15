@@ -954,7 +954,8 @@ PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
                     "need a 2-tuple on setting if events > 1");
             return -1;
         }
-        /* Alter the dictionary and call again (not thread safe) */
+        /* Alter the dictionary and call again */
+        /* FIXME:  not thread safe */
         events = meta->events;
         meta->events = 1;
         tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
@@ -1059,7 +1060,6 @@ DATETIME_getitem(char *ip, PyArrayObject *ap) {
     }
 }
 
-
 static PyObject *
 TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
     timedelta t1;
@@ -1091,7 +1091,35 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     datetime temp;
 
     if (PyArray_IsScalar(op, Datetime)) {
+        /* This needs to convert based on type */
         temp = ((PyDatetimeScalarObject *)op)->obval;
+    }
+#if defined(NPY_PY3K)
+    else if (PyUString_Check(op)) {
+#else
+    else if (PyUString_Check(op) || PyUnicode_Check(op)) {
+#endif
+        /* FIXME:  Converts to DateTime first and therefore does not handle extended notation */
+        /* import _mx_datetime_parser 
+         * res = _mx_datetime_parser(name)
+         *  Convert from datetime to Int
+         */
+        PyObject *res, *module;
+
+        module = PyImport_ImportModule("numpy.core._mx_datetime_parser");
+        if (module == NULL) { return -1; }
+        res = PyObject_CallMethod(module, "datetime_from_string", "O", op);
+        Py_DECREF(module);
+        if (res == NULL) { return -1; }
+        temp = PyDateTime_AsInt64(res, ap->descr);
+        Py_DECREF(res);
+        if (PyErr_Occurred()) return -1;
+    }
+    else if (PyInt_Check(op)) {
+        temp = PyInt_AS_LONG(op);
+    }
+    else if (PyLong_Check(op)) {
+        temp = PyLong_AsLongLong(op);
     }
     else {
         temp = PyDateTime_AsInt64(op, ap->descr);
@@ -1126,6 +1154,12 @@ TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 
     if (PyArray_IsScalar(op, Timedelta)) {
         temp = ((PyTimedeltaScalarObject *)op)->obval;
+    }
+    else if (PyInt_Check(op)) {
+        temp = PyInt_AS_LONG(op);
+    }
+    else if (PyLong_Check(op)) {
+        temp = PyLong_AsLongLong(op);
     }
     else {
         temp = PyTimeDelta_AsInt64(op, ap->descr);
