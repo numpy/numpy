@@ -968,7 +968,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
         }
         offset += a->strides[dim];
     }
-    
+
     Py_DECREF(s);
     return 0;
 
@@ -2774,7 +2774,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     /* calculate the length and next = start + step*/
     length = _calc_length(start, stop, step, &next,
                           PyTypeNum_ISCOMPLEX(dtype->type_num));
-    err = PyErr_Occurred(); 
+    err = PyErr_Occurred();
     if (err) {
         Py_DECREF(dtype);
         if (err && PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
@@ -3029,6 +3029,10 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
         ret = array_from_text(dtype, num, sep, &nread, fp,
                 (next_element) fromfile_next_element,
                 (skip_separator) fromfile_skip_separator, NULL);
+    }
+    if (ret == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
     }
     if (((intp) nread) < num) {
         /* Realloc memory for smaller number of elements */
