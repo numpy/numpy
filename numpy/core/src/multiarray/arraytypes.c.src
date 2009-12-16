@@ -1074,11 +1074,7 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         /* This needs to convert based on type */
         temp = ((PyDatetimeScalarObject *)op)->obval;
     }
-#if defined(NPY_PY3K)
-    else if (PyUString_Check(op)) {
-#else
-    else if (PyUString_Check(op) || PyUnicode_Check(op)) {
-#endif
+    else if (PyString_Check(op) || PyUnicode_Check(op)) {
         /* FIXME:  Converts to DateTime first and therefore does not handle extended notation */
         /* import _mx_datetime_parser 
          * res = _mx_datetime_parser(name)
