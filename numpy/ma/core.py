@@ -65,8 +65,8 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'harden_mask', 'hypot',
            'identity', 'ids', 'indices', 'inner', 'innerproduct',
            'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
-           'left_shift', 'less', 'less_equal', 'load', 'loads', 'log', 'log10',
-           'logical_and', 'logical_not', 'logical_or', 'logical_xor',
+           'left_shift', 'less', 'less_equal', 'load', 'loads', 'log', 'log2',
+           'log10', 'logical_and', 'logical_not', 'logical_or', 'logical_xor',
            'make_mask', 'make_mask_descr', 'make_mask_none', 'mask_or',
            'masked', 'masked_array', 'masked_equal', 'masked_greater',
            'masked_greater_equal', 'masked_inside', 'masked_invalid',
@@ -74,7 +74,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'masked_object', 'masked_outside', 'masked_print_option',
            'masked_singleton', 'masked_values', 'masked_where', 'max', 'maximum',
            'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
-           'mod', 'multiply',
+           'mod', 'multiply', 'mvoid',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'prod', 'product', 'ptp', 'put', 'putmask',
@@ -843,11 +843,11 @@ class _MaskedUnaryOperation:
         if self.domain is not None:
             # Save the error status
             err_status_ini = np.geterr()
-            np.seterr(divide='ignore', invalid='ignore')
-            # Get the result
-            result = self.f(d, *args, **kwargs)
-            # Reset the error status
-            np.seterr(**err_status_ini)
+            try:
+                np.seterr(divide='ignore', invalid='ignore')
+                result = self.f(d, *args, **kwargs)
+            finally:
+                np.seterr(**err_status_ini)
             # Make a mask
             m = ~umath.isfinite(result)
             m |= self.domain(d)
@@ -934,7 +934,12 @@ class _MaskedBinaryOperation:
         else:
             m = umath.logical_or(ma, mb)
         # Get the result
-        result = self.f(da, db, *args, **kwargs)
+        err_status_ini = np.geterr()
+        try:
+            np.seterr(divide='ignore', invalid='ignore')
+            result = self.f(da, db, *args, **kwargs)
+        finally:
+            np.seterr(**err_status_ini)
         # Case 1. : scalar
         if not result.ndim:
             if m:
@@ -1068,7 +1073,12 @@ class _DomainedBinaryOperation:
         err_status_ini = np.geterr()
         np.seterr(divide='ignore', invalid='ignore')
         # Get the result
-        result = self.f(da, db, *args, **kwargs)
+        err_status_ini = np.geterr()
+        try:
+            np.seterr(divide='ignore', invalid='ignore')
+            result = self.f(da, db, *args, **kwargs)
+        finally:
+            np.seterr(**err_status_ini)
         # Reset the error status
         np.seterr(**err_status_ini)
         # Get the mask as a combination of ma, mb and invalid
@@ -1121,6 +1131,8 @@ logical_not = _MaskedUnaryOperation(umath.logical_not)
 sqrt = _MaskedUnaryOperation(umath.sqrt, 0.0,
                              _DomainGreaterEqual(0.0))
 log = _MaskedUnaryOperation(umath.log, 1.0,
+                            _DomainGreater(0.0))
+log2 = _MaskedUnaryOperation(umath.log2, 1.0,
                             _DomainGreater(0.0))
 log10 = _MaskedUnaryOperation(umath.log10, 1.0,
                               _DomainGreater(0.0))
@@ -2331,7 +2343,62 @@ def _recursive_filled(a, mask, fill_value):
         else:
             np.putmask(current, mask[name], fill_value[name])
 
-#...............................................................................
+
+
+def flatten_structured_array(a):
+    """
+    Flatten a structured array.
+
+    The data type of the output is chosen such that it can represent all of the
+    (nested) fields.
+
+    Parameters
+    ----------
+    a : structured array
+
+    Returns
+    -------
+    output : masked array or ndarray
+        A flattened masked array if the input is a masked array, otherwise a
+        standard ndarray.
+
+    Examples
+    --------
+    >>> ndtype = [('a', int), ('b', float)]
+    >>> a = np.array([(1, 1), (2, 2)], dtype=ndtype)
+    >>> flatten_structured_array(a)
+    array([[1., 1.],
+           [2., 2.]])
+
+    """
+    #
+    def flatten_sequence(iterable):
+        """Flattens a compound of nested iterables."""
+        for elm in iter(iterable):
+            if hasattr(elm, '__iter__'):
+                for f in flatten_sequence(elm):
+                    yield f
+            else:
+                yield elm
+    #
+    a = np.asanyarray(a)
+    inishape = a.shape
+    a = a.ravel()
+    if isinstance(a, MaskedArray):
+        out = np.array([tuple(flatten_sequence(d.item())) for d in a._data])
+        out = out.view(MaskedArray)
+        out._mask = np.array([tuple(flatten_sequence(d.item()))
+                              for d in getmaskarray(a)])
+    else:
+        out = np.array([tuple(flatten_sequence(d.item())) for d in a])
+    if len(inishape) > 1:
+        newshape = list(out.shape)
+        newshape[0] = inishape
+        out.shape = tuple(flatten_sequence(newshape))
+    return out
+
+
+
 class _arraymethod(object):
     """
     Define a wrapper for basic array methods.
@@ -2399,7 +2466,8 @@ class _arraymethod(object):
             if mask.ndim and (not mask.dtype.names and mask.all()):
                 return masked
         return result
-#..........................................................
+
+
 
 class MaskedIterator(object):
     """
@@ -2501,59 +2569,6 @@ class MaskedIterator(object):
         if self.maskiter is not None and self.maskiter.next():
             d = masked
         return d
-
-
-def flatten_structured_array(a):
-    """
-    Flatten a structured array.
-
-    The data type of the output is chosen such that it can represent all of the
-    (nested) fields.
-
-    Parameters
-    ----------
-    a : structured array
-
-    Returns
-    -------
-    output : masked array or ndarray
-        A flattened masked array if the input is a masked array, otherwise a
-        standard ndarray.
-
-    Examples
-    --------
-    >>> ndtype = [('a', int), ('b', float)]
-    >>> a = np.array([(1, 1), (2, 2)], dtype=ndtype)
-    >>> flatten_structured_array(a)
-    array([[1., 1.],
-           [2., 2.]])
-
-    """
-    #
-    def flatten_sequence(iterable):
-        """Flattens a compound of nested iterables."""
-        for elm in iter(iterable):
-            if hasattr(elm, '__iter__'):
-                for f in flatten_sequence(elm):
-                    yield f
-            else:
-                yield elm
-    #
-    a = np.asanyarray(a)
-    inishape = a.shape
-    a = a.ravel()
-    if isinstance(a, MaskedArray):
-        out = np.array([tuple(flatten_sequence(d.item())) for d in a._data])
-        out = out.view(MaskedArray)
-        out._mask = np.array([tuple(flatten_sequence(d.item()))
-                              for d in getmaskarray(a)])
-    else:
-        out = np.array([tuple(flatten_sequence(d.item())) for d in a])
-    if len(inishape) > 1:
-        newshape = list(out.shape)
-        newshape[0] = inishape
-        out.shape = tuple(flatten_sequence(newshape))
-    return out
 
 
 
@@ -2762,7 +2777,8 @@ class MaskedArray(ndarray):
         self.__dict__.update(_dict)
         self.__dict__.update(_optinfo)
         return
-    #........................
+
+
     def __array_finalize__(self, obj):
         """Finalizes the masked array.
         """
@@ -2783,8 +2799,16 @@ class MaskedArray(ndarray):
                 self._mask.shape = self.shape
             except ValueError:
                 self._mask = nomask
+            except AttributeError:
+                # When _mask.shape is not writable (because it's a void)
+                pass
         return
-    #..................................
+
+
+#    def __array_prepare__(self, obj, context=None):
+#        print "DEBUG: __array_prepare__ on obj", obj, " with context:", context
+
+
     def __array_wrap__(self, obj, context=None):
         """
         Special hook for ufuncs.
@@ -2832,7 +2856,8 @@ class MaskedArray(ndarray):
                 result._sharedmask = False
         #....
         return result
-    #.............................................
+
+
     def view(self, dtype=None, type=None):
         if dtype is None:
             if type is None:
@@ -2855,15 +2880,19 @@ class MaskedArray(ndarray):
             if dtype is None:
                 dtype = output.dtype
             mdtype = make_mask_descr(dtype)
-
             output._mask = self._mask.view(mdtype, ndarray)
-            output._mask.shape = output.shape
+            # Try to reset the shape of the mask (if we don't have a void)
+            try:
+                output._mask.shape = output.shape
+            except AttributeError:
+                pass
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None):
             output._fill_value = None
         return output
     view.__doc__ = ndarray.view.__doc__
-    #.............................................
+
+
     def astype(self, newtype):
         """
         Returns a copy of the MaskedArray cast to given newtype.
@@ -2902,7 +2931,8 @@ class MaskedArray(ndarray):
         if self._fill_value is not None:
             output._fill_value = _check_fill_value(self._fill_value, newtype)
         return output
-    #.............................................
+
+
     def __getitem__(self, indx):
         """x.__getitem__(y) <==> x[y]
 
@@ -2913,7 +2943,8 @@ class MaskedArray(ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
-        dout = ndarray.__getitem__(ndarray.view(self, ndarray), indx)
+        _data = ndarray.view(self, ndarray)
+        dout = ndarray.__getitem__(_data, indx)
         # We could directly use ndarray.__getitem__ on self...
         # But then we would have to modify __array_finalize__ to prevent the
         # mask of being reshaped if it hasn't been set up properly yet...
@@ -2924,7 +2955,7 @@ class MaskedArray(ndarray):
             if isinstance(dout, np.void):
                 mask = _mask[indx]
                 if flatten_mask(mask).any():
-                    dout = masked_array(dout, mask=mask)
+                    dout = mvoid(dout, mask=mask)
                 else:
                     return dout
             # Just a scalar............
@@ -2946,7 +2977,7 @@ class MaskedArray(ndarray):
                 dout._sharedmask = True
 #               Note: Don't try to check for m.any(), that'll take too long...
         return dout
-    #........................
+
     def __setitem__(self, indx, value):
         """x.__setitem__(i, y) <==> x[i]=y
 
@@ -3032,7 +3063,6 @@ class MaskedArray(ndarray):
 
         """
         return self.__getitem__(slice(i, j))
-
 
     def __setslice__(self, i, j, value):
         """x.__setslice__(i, j, value) <==> x[i:j]=value
@@ -3728,7 +3758,8 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError, 'Cannot convert masked element to a Python int.'
         return int(self.item())
-    #............................................
+
+
     def get_imag(self):
         """
         Return the imaginary part of the masked array.
@@ -5398,6 +5429,66 @@ def _mareconstruct(subtype, baseclass, baseshape, basetype,):
     _data = ndarray.__new__(baseclass, baseshape, basetype)
     _mask = ndarray.__new__(ndarray, baseshape, make_mask_descr(basetype))
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
+
+
+
+
+
+
+class mvoid(MaskedArray):
+    """
+    Fake a 'void' object to use for masked array with structured dtypes.
+    """
+    #
+    def __new__(self, data, mask=nomask):
+        _data = ndarray.__new__(self, (), dtype=data.dtype, buffer=data.data)
+#        _data = _data.view(self)
+#        self = MaskedArray.__new__(self, np.void(data), mask=nomask)
+        if mask is not nomask:
+            _data._mask = np.void(mask)
+        return _data
+    #
+    def _get_data(self):
+        # Make sure that the _data part is a np.void
+        return self.view(ndarray).reshape(1)[0]
+    _data = property(fget=_get_data)
+    #
+    def __getitem__(self, indx):
+        "Get the index..."
+        _mask = self._mask.astype(np.void)
+        if _mask is not nomask and _mask[indx]:
+            return masked
+        return self._data[indx]
+    #
+    def __str__(self):
+        m = self._mask
+        if (m is nomask):
+            return self._data.__str__()
+        m = tuple(m)
+        if (not any(m)):
+            return self._data.__repr__()
+        r = self._data.tolist()
+        p = masked_print_option
+        if not p.enabled():
+            p = 'N/A'
+        else:
+            p = str(p)
+        r = [(str(_), p)[_m] for (_, _m) in zip(self._data.tolist(), tuple(m))]
+        return "(%s)" % ", ".join(r)
+
+    __repr__ = __str__
+
+    def __iter__(self):
+        (_data, _mask) = (self._data, self._mask)
+        if _mask is nomask:
+            for d in _data:
+                yield d
+        else:
+            for (d, m) in zip(_data, _mask):
+                if m:
+                    yield masked
+                else:
+                    yield d
 
 
 #####--------------------------------------------------------------------------

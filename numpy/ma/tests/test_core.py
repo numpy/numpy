@@ -62,7 +62,6 @@ class TestMaskedArray(TestCase):
         x = array(0, mask=1)
         self.failUnless(x.filled().dtype is x._data.dtype)
 
-
     def test_basic1d(self):
         "Test of basic array creation and properties in 1 dimension."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
@@ -564,6 +563,45 @@ class TestMaskedArray(TestCase):
         assert_equal(test.dtype, control.dtype)
 
 
+
+    def test_void0d(self):
+        "Test creating a mvoid object"
+        ndtype = [('a', int), ('b', int)]
+        a = np.array([(1, 2,)], dtype=ndtype)[0]
+        f = mvoid(a)
+        assert(isinstance(f, mvoid))
+        #
+        a = masked_array([(1, 2)], mask=[(1, 0)], dtype=ndtype)[0]
+        assert(isinstance(a, mvoid))
+        #
+        a = masked_array([(1, 2), (1, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
+        f = mvoid(a._data[0], a._mask[0])
+        assert(isinstance(f, mvoid))
+
+    def test_mvoid_getitem(self):
+        "Test mvoid.__getitem__"
+        ndtype = [('a', int), ('b', int)]
+        a = masked_array([(1, 2,), (3, 4)], mask=[(0, 0), (1, 0)], dtype=ndtype)
+        # w/o mask
+        f = a[0]
+        self.failUnless(isinstance(f, np.void))
+        assert_equal((f[0], f['a']), (1, 1))
+        assert_equal(f['b'], 2)
+        # w/ mask
+        f = a[1]
+        self.failUnless(isinstance(f, mvoid))
+        self.failUnless(f[0] is masked)
+        self.failUnless(f['a'] is masked)
+        assert_equal(f[1], 4)
+
+    def test_mvoid_iter(self):
+        "Test iteration on __getitem__"
+        ndtype = [('a', int), ('b', int)]
+        a = masked_array([(1, 2,), (3, 4)], mask=[(0, 0), (1, 0)], dtype=ndtype)
+        # w/o mask
+        assert_equal(list(a[0]), [1, 2])
+        # w/ mask
+        assert_equal(list(a[1]), [masked, 4])
 
 
 #------------------------------------------------------------------------------
