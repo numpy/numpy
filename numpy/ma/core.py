@@ -68,7 +68,6 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'zeros']
 
 import cPickle
-import operator
 
 import numpy as np
 from numpy import ndarray, amax, amin, iscomplexobj, bool_
@@ -108,12 +107,12 @@ def get_object_signature(obj):
     try:
         sig = formatargspec(*getargspec(obj))
     except TypeError, errmsg:
-        msg = "Unable to retrieve the signature of %s '%s'\n"\
-              "(Initial error message: %s)"
+        sig = ''
+#        msg = "Unable to retrieve the signature of %s '%s'\n"\
+#              "(Initial error message: %s)"
 #        warnings.warn(msg % (type(obj),
 #                             getattr(obj, '__name__', '???'),
 #                             errmsg))
-        sig = ''
     return sig
 
 
@@ -411,10 +410,10 @@ def _check_fill_value(fill_value, ndtype):
         else:
             # In case we want to convert 1e+20 to int...
             try:
-                fill_value = np.array(fill_value, copy=False, dtype=ndtype).item()
+                fill_value = np.array(fill_value, copy=False, dtype=ndtype)#.item()
             except OverflowError:
                 fill_value = default_fill_value(ndtype)
-    return fill_value
+    return np.array(fill_value)
 
 
 def set_fill_value(a, fill_value):
@@ -478,7 +477,7 @@ def set_fill_value(a, fill_value):
 
     """
     if isinstance(a, MaskedArray):
-        a._fill_value = _check_fill_value(fill_value, a.dtype)
+        a.set_fill_value(fill_value)
     return
 
 def get_fill_value(a):
@@ -3259,23 +3258,21 @@ class MaskedArray(ndarray):
         """
         warnings.warn('Use .data instead.', DeprecationWarning)
         return self._data
-    #............................................
-    def _get_flat(self):
-        """Return a flat iterator.
 
-        """
+
+    def _get_flat(self):
+        "Return a flat iterator."
         return MaskedIterator(self)
     #
     def _set_flat (self, value):
-        """Set a flattened version of self to value.
-
-        """
+        "Set a flattened version of self to value."
         y = self.ravel()
         y[:] = value
     #
     flat = property(fget=_get_flat, fset=_set_flat,
                     doc="Flat version of the array.")
-    #............................................
+
+
     def get_fill_value(self):
         """
         Return the filling value of the masked array.
@@ -3302,7 +3299,7 @@ class MaskedArray(ndarray):
         """
         if self._fill_value is None:
             self._fill_value = _check_fill_value(None, self.dtype)
-        return self._fill_value
+        return self._fill_value[()]
 
     def set_fill_value(self, value=None):
         """
@@ -3334,7 +3331,14 @@ class MaskedArray(ndarray):
         1e+20
 
         """
-        self._fill_value = _check_fill_value(value, self.dtype)
+        target = _check_fill_value(value, self.dtype)
+        _fill_value = self._fill_value
+        if _fill_value is None:
+            # Create the attribute if it was undefined
+            self._fill_value = target
+        else:
+            # Don't overwrite the attribute, just fill it (for propagation)
+            _fill_value[()] = target
 
     fill_value = property(fget=get_fill_value, fset=set_fill_value,
                           doc="Filling value.")
@@ -5400,7 +5404,7 @@ class MaskedArray(ndarray):
         - a binary string for the mask.
 
         """
-        (ver, shp, typ, isf, raw, msk, flv) = state
+        (_, shp, typ, isf, raw, msk, flv) = state
         ndarray.__setstate__(self, (shp, typ, isf, raw))
         self._mask.__setstate__((shp, make_mask_descr(typ), isf, msk))
         self.fill_value = flv
@@ -5525,7 +5529,14 @@ class mvoid(MaskedArray):
 
     def tolist(self):
         """
-    Transforms the object into a list
+    Transforms the mvoid object into a tuple.
+
+    Masked fields are replaced by None.
+
+    Returns
+    -------
+    returned_tuple
+        Tuple of fields
         """
         _mask = self._mask
         if _mask is nomask:

@@ -1297,13 +1297,13 @@ class TestFillingValues(TestCase):
         fval = _check_fill_value([-999, -999.9, "???"], ndtype)
         self.failUnless(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -999.9, "???"])
-        # A check on Non should output the defaults
+        # A check on None should output the defaults
         fval = _check_fill_value(None, ndtype)
         self.failUnless(isinstance(fval, ndarray))
         assert_equal(fval.item(), [default_fill_value(0),
                                    default_fill_value(0.),
                                    default_fill_value("0")])
-        #.....Using a flexible type as fill_value should work
+        #.....Using a structured type as fill_value should work
         fill_val = np.array((-999, -999.9, "???"), dtype=ndtype)
         fval = _check_fill_value(fill_val, ndtype)
         self.failUnless(isinstance(fval, ndarray))
@@ -1378,6 +1378,7 @@ class TestFillingValues(TestCase):
         x.fill_value = 999
         assert_equal(np.asarray(x.fill_value).dtype, float)
         assert_equal(x.fill_value, 999.)
+        assert_equal(x._fill_value, np.array(999.))
 
 
     def test_fillvalue_exotic_dtype(self):
@@ -1429,6 +1430,18 @@ class TestFillingValues(TestCase):
         assert_equal(test[1][1], maximum_fill_value(a['B']['BB']))
         assert_equal(test[1], maximum_fill_value(a['B']))
 
+    def test_fillvalue_individual_fields(self):
+        "Test setting fill_value on individual fields"
+        ndtype = [('a', int), ('b', int)]
+        a = array(zip([1, 2, 3], [4, 5, 6]),
+                  fill_value=(-999, -999), dtype=ndtype)
+        f = a._fill_value
+        aa = a['a']
+        aa.set_fill_value(10)
+        assert_equal(aa._fill_value, np.array(10))
+        assert_equal(tuple(a.fill_value), (10, -999))
+        a.fill_value['b'] = -10
+        assert_equal(tuple(a.fill_value), (10, -10))
 
 #------------------------------------------------------------------------------
 
