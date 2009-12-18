@@ -20,27 +20,7 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
-"""
-numpy.ma : a package to handle missing or invalid values.
 
-This package was initially written for numarray by Paul F. Dubois
-at Lawrence Livermore National Laboratory.
-In 2006, the package was completely rewritten by Pierre Gerard-Marchant
-(University of Georgia) to make the MaskedArray class a subclass of ndarray,
-and to improve support of structured arrays.
-
-
-Copyright 1999, 2000, 2001 Regents of the University of California.
-Released for unlimited redistribution.
-* Adapted for numpy_core 2005 by Travis Oliphant and (mainly) Paul Dubois.
-* Subclassing of the base ndarray 2006 by Pierre Gerard-Marchant
-  (pgmdevlist_AT_gmail_DOT_com)
-* Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
-
-.. moduleauthor:: Pierre Gerard-Marchant
-
-
-"""
 __author__ = "Pierre GF Gerard-Marchant"
 __docformat__ = "restructuredtext en"
 
@@ -135,6 +115,7 @@ def get_object_signature(obj):
 #                             errmsg))
         sig = ''
     return sig
+
 
 #####--------------------------------------------------------------------------
 #---- --- Exceptions ---
@@ -3361,14 +3342,13 @@ class MaskedArray(ndarray):
 
     def filled(self, fill_value=None):
         """
-        Return a copy of self, where masked values are filled with a fill value.
-
-        If `fill_value` is None, `MaskedArray.fill_value` is used instead.
+        Return a copy of self, with masked values filled with a given value.
 
         Parameters
         ----------
         fill_value : scalar, optional
-            The value to use for invalid entries. Default is None.
+            The value to use for invalid entries (None by default).
+            If None, the `fill_value` attribute of the array is used instead.
 
         Notes
         -----
@@ -5235,31 +5215,54 @@ class MaskedArray(ndarray):
         [[1, -999, 3], [-999, 5, -999], [7, -999, 9]]
 
         """
+        _mask = self._mask
+        # No mask ? Just return .data.tolist ?
+        if _mask is nomask:
+            return self._data.tolist()
+        # Explicit fill_value: fill the array and get the list
         if fill_value is not None:
             return self.filled(fill_value).tolist()
-        result = self.filled().tolist()
-        # Set temps to save time when dealing w/ mrecarrays...
-        _mask = self._mask
+        # Structured array .............
+        names = self.dtype.names
+        if names:
+            result = self.astype([(_, object) for _ in names])
+            for n in names:
+                result[n][_mask[n]] = None
+            return result.data.tolist()
+        # Standard arrays ...............
         if _mask is nomask:
-            return result
-        nbdims = self.ndim
-        dtypesize = len(self.dtype)
-        if nbdims == 0:
-            return tuple([None] * dtypesize)
-        elif nbdims == 1:
-            maskedidx = _mask.nonzero()[0].tolist()
-            if dtypesize:
-                nodata = tuple([None] * dtypesize)
-            else:
-                nodata = None
-            [operator.setitem(result, i, nodata) for i in maskedidx]
-        else:
-            for idx in zip(*[i.tolist() for i in _mask.nonzero()]):
-                tmp = result
-                for i in idx[:-1]:
-                    tmp = tmp[i]
-                tmp[idx[-1]] = None
-        return result
+            return [None]
+        # Set temps to save time when dealing w/ marrays...
+        inishape = self.shape
+        result = np.array(self._data.ravel(), dtype=object)
+        result[_mask.ravel()] = None
+        result.shape = inishape
+        return result.tolist()
+#        if fill_value is not None:
+#            return self.filled(fill_value).tolist()
+#        result = self.filled().tolist()
+#        # Set temps to save time when dealing w/ mrecarrays...
+#        _mask = self._mask
+#        if _mask is nomask:
+#            return result
+#        nbdims = self.ndim
+#        dtypesize = len(self.dtype)
+#        if nbdims == 0:
+#            return tuple([None] * dtypesize)
+#        elif nbdims == 1:
+#            maskedidx = _mask.nonzero()[0].tolist()
+#            if dtypesize:
+#                nodata = tuple([None] * dtypesize)
+#            else:
+#                nodata = None
+#            [operator.setitem(result, i, nodata) for i in maskedidx]
+#        else:
+#            for idx in zip(*[i.tolist() for i in _mask.nonzero()]):
+#                tmp = result
+#                for i in idx[:-1]:
+#                    tmp = tmp[i]
+#                tmp[idx[-1]] = None
+#        return result
     #........................
     def tostring(self, fill_value=None, order='C'):
         """
@@ -5440,26 +5443,33 @@ class mvoid(MaskedArray):
     Fake a 'void' object to use for masked array with structured dtypes.
     """
     #
-    def __new__(self, data, mask=nomask):
-        _data = ndarray.__new__(self, (), dtype=data.dtype, buffer=data.data)
-#        _data = _data.view(self)
-#        self = MaskedArray.__new__(self, np.void(data), mask=nomask)
+    def __new__(self, data, mask=nomask, dtype=None, fill_value=None):
+        dtype = dtype or data.dtype
+        _data = ndarray.__new__(self, (), dtype=dtype, buffer=data.data)
         if mask is not nomask:
-            _data._mask = np.void(mask)
+            try:
+                # Mask is already a 0D array
+                _data._mask = np.void(mask)
+            except TypeError:
+                # Transform the mask to a void
+                mdtype = make_mask_descr(dtype)
+                _data._mask = np.array(mask, dtype=mdtype)[()]
+        if fill_value is not None:
+            _data.fill_value = fill_value
         return _data
-    #
+
     def _get_data(self):
         # Make sure that the _data part is a np.void
-        return self.view(ndarray).reshape(1)[0]
+        return self.view(ndarray)[()]
     _data = property(fget=_get_data)
-    #
+
     def __getitem__(self, indx):
         "Get the index..."
         _mask = self._mask.astype(np.void)
         if _mask is not nomask and _mask[indx]:
             return masked
         return self._data[indx]
-    #
+
     def __str__(self):
         m = self._mask
         if (m is nomask):
@@ -5479,6 +5489,7 @@ class mvoid(MaskedArray):
     __repr__ = __str__
 
     def __iter__(self):
+        "Defines an iterator for mvoid"
         (_data, _mask) = (self._data, self._mask)
         if _mask is nomask:
             for d in _data:
@@ -5490,6 +5501,27 @@ class mvoid(MaskedArray):
                 else:
                     yield d
 
+    def filled(self, fill_value=None):
+        """
+        Return a copy with masked fields filled with a given value.
+
+        Parameters
+        ----------
+        fill_value : scalar, optional
+            The value to use for invalid entries (None by default).
+            If None, the `fill_value` attribute is used instead.
+
+        Returns
+        -------
+        filled_void:
+            A `np.void` object
+
+        See Also
+        --------
+        MaskedArray.filled
+
+    """
+        return asarray(self).filled(fill_value)[()]
 
 #####--------------------------------------------------------------------------
 #---- --- Shortcuts ---

@@ -482,7 +482,8 @@ class TestMaskedArray(TestCase):
 
     def test_filled_w_flexible_dtype(self):
         "Test filled w/ flexible dtype"
-        flexi = array([(1, 1, 1)], dtype=[('i', int), ('s', '|S8'), ('f', float)])
+        flexi = array([(1, 1, 1)],
+                      dtype=[('i', int), ('s', '|S8'), ('f', float)])
         flexi[0] = masked
         assert_equal(flexi.filled(),
                      np.array([(default_fill_value(0),
@@ -491,6 +492,20 @@ class TestMaskedArray(TestCase):
         flexi[0] = masked
         assert_equal(flexi.filled(1),
                      np.array([(1, '1', 1.)], dtype=flexi.dtype))
+
+    def test_filled_w_mvoid(self):
+        "Test filled w/ mvoid"
+        ndtype = [('a', int), ('b', float)]
+        a = mvoid(np.array((1, 2)), mask=[(0, 1)], dtype=ndtype)
+        # Filled using default
+        test = a.filled()
+        assert_equal(tuple(test), (1, default_fill_value(1.)))
+        # Explicit fill_value
+        test = a.filled((-1, -1))
+        assert_equal(tuple(test), (1, -1))
+        # Using predefined filling values
+        a.fill_value = (-999, -999)
+        assert_equal(tuple(a.filled()), (1, -999))
 
 
     def test_filled_w_nested_dtype(self):
@@ -2290,25 +2305,33 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_tolist(self):
         "Tests to list"
+        # ... on 1D
         x = array(np.arange(12))
         x[[1, -2]] = masked
         xlist = x.tolist()
         self.failUnless(xlist[1] is None)
         self.failUnless(xlist[-2] is None)
-        #
+        # ... on 2D
         x.shape = (3, 4)
         xlist = x.tolist()
-        #
+        ctrl = [[0, None, 2, 3], [4, 5, 6, 7], [8, 9, None, 11]]
         assert_equal(xlist[0], [0, None, 2, 3])
         assert_equal(xlist[1], [4, 5, 6, 7])
         assert_equal(xlist[2], [8, 9, None, 11])
-        # Make sure a masked record is output as a tuple of None
+        assert_equal(xlist, ctrl)
+        # ... on structured array w/ masked records
         x = array(zip([1, 2, 3],
                       [1.1, 2.2, 3.3],
                       ['one', 'two', 'thr']),
                   dtype=[('a', int), ('b', float), ('c', '|S8')])
         x[-1] = masked
-        assert_equal(x.tolist(), [(1, 1.1, 'one'), (2, 2.2, 'two'), (None, None, None)])
+        assert_equal(x.tolist(),
+                     [(1, 1.1, 'one'), (2, 2.2, 'two'), (None, None, None)])
+        # ... on structured array w/ masked fields
+        a = array([(1, 2,), (3, 4)], mask=[(0, 1), (0, 0)],
+                  dtype=[('a', int), ('b', int)])
+        test = a.tolist()
+        assert_equal(test, [[1, None], [3, 4]])
 
 
     def test_toflex(self):
