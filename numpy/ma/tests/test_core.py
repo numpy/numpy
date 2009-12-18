@@ -2332,6 +2332,10 @@ class TestMaskedArrayMethods(TestCase):
                   dtype=[('a', int), ('b', int)])
         test = a.tolist()
         assert_equal(test, [[1, None], [3, 4]])
+        # ... on mvoid
+        a = a[0]
+        test = a.tolist()
+        assert_equal(test, [1, None])
 
 
     def test_toflex(self):

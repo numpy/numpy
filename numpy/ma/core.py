@@ -5225,10 +5225,10 @@ class MaskedArray(ndarray):
         # Structured array .............
         names = self.dtype.names
         if names:
-            result = self.astype([(_, object) for _ in names])
+            result = self._data.astype([(_, object) for _ in names])
             for n in names:
                 result[n][_mask[n]] = None
-            return result.data.tolist()
+            return result.tolist()
         # Standard arrays ...............
         if _mask is nomask:
             return [None]
@@ -5522,6 +5522,23 @@ class mvoid(MaskedArray):
 
     """
         return asarray(self).filled(fill_value)[()]
+
+    def tolist(self):
+        """
+    Transforms the object into a list
+        """
+        _mask = self._mask
+        if _mask is nomask:
+            return self._data.tolist()
+        result = []
+        for (d, m) in zip(self._data, self._mask):
+            if m:
+                result.append(None)
+            else:
+                result.append(d)
+        return tuple(result)
+
+
 
 #####--------------------------------------------------------------------------
 #---- --- Shortcuts ---
