@@ -5387,7 +5387,9 @@ class MaskedArray(ndarray):
                  self.dtype,
                  self.flags.fnc,
                  self._data.tostring(cf),
+                 #self._data.tolist(),
                  getmaskarray(self).tostring(cf),
+                 #getmaskarray(self).tolist(),
                  self._fill_value,
                  )
         return state
@@ -5546,7 +5548,8 @@ class mvoid(MaskedArray):
             if m:
                 result.append(None)
             else:
-                result.append(d)
+                # .item() makes sure we return a standard Python object
+                result.append(d.item())
         return tuple(result)
 
 

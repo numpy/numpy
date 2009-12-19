@@ -396,6 +396,13 @@ class TestMaskedArray(TestCase):
         test = cPickle.loads(cPickle.dumps(b))
         assert_equal(test, b)
 
+#    def test_pickling_oddity(self):
+#        "Test some pickling oddity"
+#        import cPickle
+#        a = array([{'a':1}, {'b':2}, 3], dtype=object)
+#        test = cPickle.loads(cPickle.dumps(a))
+#        assert_equal(test, a)
+
     def test_single_element_subscript(self):
         "Tests single element subscripts of Maskedarrays."
         a = array([1, 3, 2])
@@ -2349,6 +2356,19 @@ class TestMaskedArrayMethods(TestCase):
         a = a[0]
         test = a.tolist()
         assert_equal(test, [1, None])
+
+    def test_tolist_specialcase(self):
+        "Test mvoid.tolist: make sure we return a standard Python object"
+        a = array([(0, 1), (2, 3)], dtype=[('a', int), ('b', int)])
+        # w/o mask: each entry is a np.void whose elements are standard Python
+        for entry in a:
+            for item in entry.tolist():
+                assert(not isinstance(item, np.generic))
+        # w/ mask: each entry is a ma.void whose elements should be standard Python
+        a.mask[0] = (0, 1)
+        for entry in a:
+            for item in entry.tolist():
+                assert(not isinstance(item, np.generic))
 
 
     def test_toflex(self):
