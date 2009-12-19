@@ -370,8 +370,12 @@ clean_ax:
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
-    {"test_neighborhood_iterator",  test_neighborhood_iterator, METH_VARARGS, NULL},
-    {"test_neighborhood_iterator_oob",  test_neighborhood_iterator_oob, METH_VARARGS, NULL},
+    {"test_neighborhood_iterator",
+        test_neighborhood_iterator,
+        METH_VARARGS, NULL},
+    {"test_neighborhood_iterator_oob",
+        test_neighborhood_iterator_oob,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

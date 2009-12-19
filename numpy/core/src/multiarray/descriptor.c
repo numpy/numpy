@@ -2490,11 +2490,14 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 static PyMethodDef arraydescr_methods[] = {
     /* for pickling */
     {"__reduce__",
-        (PyCFunction)arraydescr_reduce, METH_VARARGS, NULL},
+        (PyCFunction)arraydescr_reduce,
+        METH_VARARGS, NULL},
     {"__setstate__",
-        (PyCFunction)arraydescr_setstate, METH_VARARGS, NULL},
+        (PyCFunction)arraydescr_setstate,
+        METH_VARARGS, NULL},
     {"newbyteorder",
-        (PyCFunction)arraydescr_newbyteorder, METH_VARARGS, NULL},
+        (PyCFunction)arraydescr_newbyteorder,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 

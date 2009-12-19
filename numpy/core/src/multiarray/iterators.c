@@ -1180,8 +1180,12 @@ iter_copy(PyArrayIterObject *it, PyObject *args)
 
 static PyMethodDef iter_methods[] = {
     /* to get array */
-    {"__array__", (PyCFunction)iter_array, 1, NULL},
-    {"copy", (PyCFunction)iter_copy, 1, NULL},
+    {"__array__",
+        (PyCFunction)iter_array,
+        METH_VARARGS, NULL},
+    {"copy",
+        (PyCFunction)iter_copy,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
@@ -1201,8 +1205,14 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
 
 
 static PyMemberDef iter_members[] = {
-    {"base", T_OBJECT, offsetof(PyArrayIterObject, ao), READONLY, NULL},
-    {"index", T_INT, offsetof(PyArrayIterObject, index), READONLY, NULL},
+    {"base",
+        T_OBJECT,
+        offsetof(PyArrayIterObject, ao),
+        READONLY, NULL},
+    {"index",
+        T_INT,
+        offsetof(PyArrayIterObject, index),
+        READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -1233,8 +1243,9 @@ iter_coords_get(PyArrayIterObject *self)
 
 static PyGetSetDef iter_getsets[] = {
     {"coords",
-     (getter)iter_coords_get,
-     NULL, NULL, NULL},
+        (getter)iter_coords_get,
+        NULL,
+        NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -1666,24 +1677,33 @@ arraymultiter_iters_get(PyArrayMultiIterObject *self)
 
 static PyGetSetDef arraymultiter_getsetlist[] = {
     {"size",
-     (getter)arraymultiter_size_get,
-     NULL, NULL, NULL},
+        (getter)arraymultiter_size_get,
+        NULL,
+        NULL, NULL},
     {"index",
-     (getter)arraymultiter_index_get,
-     NULL, NULL, NULL},
+        (getter)arraymultiter_index_get,
+        NULL,
+        NULL, NULL},
     {"shape",
-     (getter)arraymultiter_shape_get,
-     NULL, NULL, NULL},
+        (getter)arraymultiter_shape_get,
+        NULL,
+        NULL, NULL},
     {"iters",
-     (getter)arraymultiter_iters_get,
-     NULL, NULL, NULL},
+        (getter)arraymultiter_iters_get,
+        NULL,
+        NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
 static PyMemberDef arraymultiter_members[] = {
-    {"numiter", T_INT, offsetof(PyArrayMultiIterObject, numiter),
-     READONLY, NULL},
-    {"nd", T_INT, offsetof(PyArrayMultiIterObject, nd), READONLY, NULL},
+    {"numiter",
+        T_INT,
+        offsetof(PyArrayMultiIterObject, numiter),
+        READONLY, NULL},
+    {"nd",
+        T_INT,
+        offsetof(PyArrayMultiIterObject, nd),
+        READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -1699,8 +1719,10 @@ arraymultiter_reset(PyArrayMultiIterObject *self, PyObject *args)
 }
 
 static PyMethodDef arraymultiter_methods[] = {
-    {"reset", (PyCFunction) arraymultiter_reset, METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL},
+    {"reset",
+        (PyCFunction) arraymultiter_reset,
+        METH_VARARGS, NULL},
+    {NULL, NULL, 0, NULL},      /* sentinal */
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
