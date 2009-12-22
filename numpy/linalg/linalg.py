@@ -11,13 +11,14 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'det', 'svd',
-           'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'LinAlgError']
+           'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
+           'LinAlgError']
 
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        isfinite, size
+        isfinite, size, finfo
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
 from numpy.matrixlib.defmatrix import matrix_power
@@ -1375,6 +1376,66 @@ def cond(x, p=None):
         return s[0]/s[-1]
     else:
         return norm(x,p)*norm(inv(x),p)
+
+
+def matrix_rank(M, tol=None):
+    ''' Return matrix rank of array using SVD method
+
+    Rank of the array is the number of SVD singular values of the
+    array that are greater than `tol`.
+    
+    Parameters
+    ----------
+    M : array-like
+        array of <=2 dimensions
+    tol : {None, float}
+       threshold below which SVD values are considered zero. If `tol` is
+       None, and ``S`` is an array with singular values for `M`, and
+       ``eps`` is the epsilon value for datatype of ``S``, then `tol`
+       set to ``S.max() * eps``.
+
+    Examples
+    --------
+    >>> matrix_rank(np.eye(4)) # Full rank matrix
+    4
+    >>> I=np.eye(4); I[-1,-1] = 0. # rank deficient matrix
+    >>> matrix_rank(I)
+    3
+    >>> matrix_rank(np.ones((4,))) # 1 dimension - rank 1 unless all 0
+    1
+    >>> matrix_rank(np.zeros((4,)))
+    0
+
+    Notes
+    -----
+    Golub and van Loan [1]_ define "numerical rank deficiency" as using
+    tol=eps*S[0] (where S[0] is the maximum singular value and thus the
+    2-norm of the matrix). This is one definition of rank deficiency,
+    and the one we use here.  When floating point roundoff is the main
+    concern, then "numerical rank deficiency" is a reasonable choice. In
+    some cases you may prefer other definitions. The most useful measure
+    of the tolerance depends on the operations you intend to use on your
+    matrix. For example, if your data come from uncertain measurements
+    with uncertainties greater than floating point epsilon, choosing a
+    tolerance near that uncertainty may be preferable.  The tolerance
+    may be absolute if the uncertainties are absolute rather than
+    relative.
+
+    References
+    ----------
+    .. [1] G. H. Golub and C. F. Van Loan, _Matrix Computations_.
+    Baltimore: Johns Hopkins University Press, 1996.
+    '''
+    M = asarray(M)
+    if M.ndim > 2:
+        raise TypeError('array should have 2 or fewer dimensions')
+    if M.ndim < 2:
+        return int(not all(M==0))
+    S = svd(M, compute_uv=False)
+    if tol is None:
+        tol = S.max() * finfo(S.dtype).eps
+    return sum(S > tol)
+
 
 # Generalized inverse
 

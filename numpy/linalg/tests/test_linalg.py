@@ -6,7 +6,7 @@ from numpy.testing import *
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
-from numpy.linalg import matrix_power, norm
+from numpy.linalg import matrix_power, norm, matrix_rank
 
 def ifthen(a, b):
     return not a or b
@@ -315,5 +315,25 @@ class TestNormSingle(_TestNorm):
     dt = np.float32
     dec = 6
 
+
+def test_matrix_rank():
+    # Full rank matrix
+    yield assert_equal, 4, matrix_rank(np.eye(4))
+    # rank deficient matrix
+    I=np.eye(4); I[-1,-1] = 0. 
+    yield assert_equal, matrix_rank(I), 3
+    # All zeros - zero rank
+    yield assert_equal, matrix_rank(np.zeros((4,4))), 0
+    # 1 dimension - rank 1 unless all 0
+    yield assert_equal, matrix_rank([1, 0, 0, 0]), 1
+    yield assert_equal, matrix_rank(np.zeros((4,))), 0
+    # accepts array-like
+    yield assert_equal, matrix_rank([1]), 1
+    # greater than 2 dimensions raises error
+    yield assert_raises, TypeError, matrix_rank, np.zeros((2,2,2))
+    # works on scalar
+    yield assert_equal, matrix_rank(1), 1
+    
+    
 if __name__ == "__main__":
     run_module_suite()
