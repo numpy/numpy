@@ -52,7 +52,7 @@ def fliplr(m):
            [ 3.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
-    >>> np.all(numpy.fliplr(A)==A[:,::-1,...])
+    >>> np.all(np.fliplr(A)==A[:,::-1,...])
     True
 
     """
@@ -582,7 +582,7 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
     >>> x, y = np.random.randn(2, 100)
     >>> H, xedges, yedges = np.histogram2d(x, y, bins=(5, 8))
     >>> H.shape, xedges.shape, yedges.shape
-    ((5,8), (6,), (9,))
+    ((5, 8), (6,), (9,))
 
     We can now use the Matplotlib to visualize this 2-dimensional histogram:
 

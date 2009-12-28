@@ -46,9 +46,9 @@ def apply_along_axis(func1d,axis,arr,*args):
     ...     return (a[0] + a[-1]) * 0.5
     >>> b = np.array([[1,2,3], [4,5,6], [7,8,9]])
     >>> np.apply_along_axis(my_func, 0, b)
-    array([4., 5., 6.])
+    array([ 4.,  5.,  6.])
     >>> np.apply_along_axis(my_func, 1, b)
-    array([2., 5., 8.])
+    array([ 2.,  5.,  8.])
 
     For a function that doesn't return a scalar, the number of dimensions in
     `outarr` is the same as `arr`.
@@ -729,7 +729,7 @@ def kron(a,b):
     >>> J1 = (0,) + J             # extend to ndim=4
     >>> S1 = (1,) + b.shape
     >>> K = tuple(np.array(I) * np.array(S1) + np.array(J1))
-    >>> C[K] == A[I]*B[J]
+    >>> c[K] == a[I]*b[J]
     True
 
     """

@@ -404,12 +404,12 @@ add_newdoc('numpy.core.multiarray', 'empty',
     Examples
     --------
     >>> np.empty([2, 2])
-    array([[ -9.74499359e+001,   6.69583040e-309],  #random data
-           [  2.13182611e-314,   3.06959433e-309]])
+    array([[ -9.74499359e+001,   6.69583040e-309],
+           [  2.13182611e-314,   3.06959433e-309]])         #random
 
     >>> np.empty([2, 2], dtype=int)
-    array([[-1073741821, -1067949133],  #random data
-           [  496041986,    19249760]])
+    array([[-1073741821, -1067949133],
+           [  496041986,    19249760]])                     #random
 
     """)
 
@@ -1516,7 +1516,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
 
     >>> np.ndarray(shape=(2,2), dtype=float, order='F')
     array([[ -1.13698227e+002,   4.25087011e-303],
-           [  2.88528414e-306,   3.27025015e-309]])
+           [  2.88528414e-306,   3.27025015e-309]])         #random
 
     Second mode:
 

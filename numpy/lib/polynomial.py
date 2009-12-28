@@ -92,11 +92,17 @@ def poly(seq_of_zeros):
     Given a sequence of a polynomial's zeros:
 
     >>> np.poly((0, 0, 0)) # Multiple root example
-    array([1, 0, 0, 0]) # i.e., z**3 + 0*z**2 + 0*z + 0
+    array([1, 0, 0, 0])
+    
+    The line above represents z**3 + 0*z**2 + 0*z + 0.
+
     >>> np.poly((-1./2, 0, 1./2))
-    array([ 1.  ,  0.  , -0.25,  0.  ]) # z**3 - z/4
+    array([ 1.  ,  0.  , -0.25,  0.  ])
+    
+    The line above represents z**3 - z/4
+
     >>> np.poly((np.random.random(1.)[0], 0, np.random.random(1.)[0]))
-    array([ 1.        , -0.77086955,  0.08618131,  0.        ])
+    array([ 1.        , -0.77086955,  0.08618131,  0.        ]) #random
 
     Given a square array object:
 
@@ -264,6 +270,7 @@ def polyint(p, m=1, k=None):
 
     >>> p = np.poly1d([1,1,1])
     >>> P = np.polyint(p)
+    >>> P
     poly1d([ 0.33333333,  0.5       ,  1.        ,  0.        ])
     >>> np.polyder(P) == p
     True
@@ -279,7 +286,7 @@ def polyint(p, m=1, k=None):
     0.0
     >>> P = np.polyint(p, 3, k=[6,5,3])
     >>> P
-    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3.,  5.,  3. ])
+    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3. ,  5. ,  3. ])
 
     Note that 3 = 6 / 2!, and that the constants are given in the order of
     integrations. Constant of the highest-order polynomial term comes first:
@@ -484,6 +491,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
     >>> x = np.array([0.0, 1.0, 2.0, 3.0,  4.0,  5.0])
     >>> y = np.array([0.0, 0.8, 0.9, 0.1, -0.8, -1.0])
     >>> z = np.polyfit(x, y, 3)
+    >>> z
     array([ 0.08703704, -0.81349206,  1.69312169, -0.03968254])
 
     It is convenient to use `poly1d` objects for dealing with polynomials:
@@ -512,7 +520,9 @@ def polyfit(x, y, deg, rcond=None, full=False):
     >>> import matplotlib.pyplot as plt
     >>> xp = np.linspace(-2, 6, 100)
     >>> plt.plot(x, y, '.', xp, p(xp), '-', xp, p30(xp), '--')
+    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
     >>> plt.ylim(-2,2)
+    (-2, 2)
     >>> plt.show()
 
     """
@@ -836,7 +846,7 @@ def polydiv(u, v):
     >>> x = np.array([3.0, 5.0, 2.0])
     >>> y = np.array([2.0, 1.0])
     >>> np.polydiv(x, y)
-    >>> (array([ 1.5 ,  1.75]), array([ 0.25]))
+    (array([ 1.5 ,  1.75]), array([ 0.25]))
 
     """
     truepoly = (isinstance(u, poly1d) or isinstance(u, poly1d))
@@ -930,7 +940,9 @@ class poly1d(object):
     >>> p.r
     array([-1.+1.41421356j, -1.-1.41421356j])
     >>> p(p.r)
-    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j]) # i.e., (0, 0)
+    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j])
+    
+    These numbers in the previous line represent (0, 0) to machine precision
 
     Show the coefficients:
 
@@ -955,7 +967,7 @@ class poly1d(object):
     poly1d([ 1,  4, 10, 12,  9])
 
     >>> (p**3 + 4) / p
-    (poly1d([  1.,   4.,  10.,  12.,   9.]), poly1d([4]))
+    (poly1d([  1.,   4.,  10.,  12.,   9.]), poly1d([ 4.]))
 
     ``asarray(p)`` gives the coefficient array, so polynomials can be
     used in all functions that accept arrays:

@@ -1298,8 +1298,9 @@ def clip(a, a_min, a_max, out=None):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     >>> np.clip(a, 3, 6, out=a)
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a = np.arange(10)
     >>> a
-    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     >>> np.clip(a, [3,4,1,1,1,4,4,4,4,4], 8)
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
@@ -1500,7 +1501,7 @@ def any(a,axis=None, out=None):
     >>> # Check now that z is a reference to o
     >>> z is o
     True
-    >>> id(z), id(o) # identity of z and o
+    >>> id(z), id(o) # identity of z and o              # doctest: +SKIP
     (191614240, 191614240)
 
     """
@@ -1563,7 +1564,7 @@ def all(a,axis=None, out=None):
 
     >>> o=np.array([False])
     >>> z=np.all([-1, 4, 5], out=o)
-    >>> id(z), id(o), z
+    >>> id(z), id(o), z                             # doctest: +SKIP
     (28293632, 28293632, array([ True], dtype=bool))
 
     """

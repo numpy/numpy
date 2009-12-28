@@ -88,7 +88,7 @@ examples illustrates best: ::
  >>> x[:-7]
  array([0, 1, 2])
  >>> x[1:7:2]
- array([1,3,5])
+ array([1, 3, 5])
  >>> y = np.arange(35).reshape(5,7)
  >>> y[1:5:2,::3]
  array([[ 7, 10, 13],
@@ -294,6 +294,9 @@ remaining unspecified dimensions. For example: ::
 This is equivalent to: ::
 
  >>> z[1,:,:,2]
+ array([[29, 32, 35],
+        [38, 41, 44],
+        [47, 50, 53]])
 
 Assigning values to indexed arrays
 ==================================
@@ -304,6 +307,7 @@ assigned to the indexed array must be shape consistent (the same shape
 or broadcastable to the shape the index produces). For example, it is
 permitted to assign a constant to a slice: ::
 
+ >>> x = np.arange(10)
  >>> x[2:7] = 1
 
 or an array of the right size: ::
@@ -327,7 +331,7 @@ assignments are always made to the original data in the array
 actions may not work as one may naively expect. This particular
 example is often surprising to people: ::
 
- >>> x[np.array([1, 1, 3, 1]) += 1
+ >>> x[np.array([1, 1, 3, 1])] += 1
 
 Where people expect that the 1st location will be incremented by 3.
 In fact, it will only be incremented by 1. The reason is because
@@ -360,6 +364,7 @@ Slices can be specified within programs by using the slice() function
 in Python. For example: ::
 
  >>> indices = (1,1,1,slice(0,2)) # same as [1,1,1,0:2]
+ >>> z[indices]
  array([39, 40])
 
 Likewise, ellipsis can be specified by code by using the Ellipsis object: ::
@@ -376,9 +381,10 @@ function directly as an index since it always returns a tuple of index arrays.
 Because the special treatment of tuples, they are not automatically converted
 to an array as a list would be. As an example: ::
 
- >>> z[[1,1,1,1]]
- ... # produces a large array
- >>> z[(1,1,1,1)]
- 40 # returns a single value
+ >>> z[[1,1,1,1]] # produces a large array
+ array([[[[27, 28, 29],
+          [30, 31, 32], ...
+ >>> z[(1,1,1,1)] # returns a single value
+ 40
 
 """

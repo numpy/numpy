@@ -322,20 +322,20 @@ add_newdoc('numpy', 'newaxis',
 
     Examples
     --------
-    >>> newaxis is None
+    >>> np.newaxis is None
     True
     >>> x = np.arange(3)
     >>> x
     array([0, 1, 2])
-    >>> x[:, newaxis]
+    >>> x[:, np.newaxis]
     array([[0],
     [1],
     [2]])
-    >>> x[:, newaxis, newaxis]
+    >>> x[:, np.newaxis, np.newaxis]
     array([[[0]],
     [[1]],
     [[2]]])
-    >>> x[:, newaxis] * x
+    >>> x[:, np.newaxis] * x
     array([[0, 0, 0],
     [0, 1, 2],
     [0, 2, 4]])
@@ -343,20 +343,20 @@ add_newdoc('numpy', 'newaxis',
     Outer product, same as ``outer(x, y)``:
 
     >>> y = np.arange(3, 6)
-    >>> x[:, newaxis] * y
+    >>> x[:, np.newaxis] * y
     array([[ 0,  0,  0],
     [ 3,  4,  5],
     [ 6,  8, 10]])
 
     ``x[newaxis, :]`` is equivalent to ``x[newaxis]`` and ``x[None]``:
 
-    >>> x[newaxis, :].shape
+    >>> x[np.newaxis, :].shape
     (1, 3)
-    >>> x[newaxis].shape
+    >>> x[np.newaxis].shape
     (1, 3)
     >>> x[None].shape
     (1, 3)
-    >>> x[:, newaxis].shape
+    >>> x[:, np.newaxis].shape
     (3, 1)
 
     """)

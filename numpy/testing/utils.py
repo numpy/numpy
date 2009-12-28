@@ -381,6 +381,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     Examples
     --------
+    >>> import numpy.testing as npt
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
     ...

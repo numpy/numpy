@@ -63,8 +63,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     >>> x1 = np.linspace(0, 10, N, endpoint=True)
     >>> x2 = np.linspace(0, 10, N, endpoint=False)
     >>> plt.plot(x1, y, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.plot(x2, y + 0.5, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.ylim([-0.5, 1])
+    (-0.5, 1)
     >>> plt.show()
 
     """
@@ -129,8 +132,10 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0):
     -----
     Logspace is equivalent to the code
 
-    >>> y = linspace(start, stop, num=num, endpoint=endpoint)
+    >>> y = np.linspace(start, stop, num=num, endpoint=endpoint)
+    ... # doctest: +SKIP
     >>> power(base, y)
+    ... # doctest: +SKIP
 
     Examples
     --------
@@ -149,8 +154,11 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0):
     >>> x2 = np.logspace(0.1, 1, N, endpoint=False)
     >>> y = np.zeros(N)
     >>> plt.plot(x1, y, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.plot(x2, y + 0.5, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.ylim([-0.5, 1])
+    (-0.5, 1)
     >>> plt.show()
 
     """

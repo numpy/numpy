@@ -638,6 +638,7 @@ def correlate(a,v,mode='valid',old_behavior=True):
     This function is equivalent to
 
     >>> np.convolve(a, v[::-1], mode=mode)
+    ... #doctest: +SKIP
 
     where ``v[::-1]`` is the reverse of `v`.
 
@@ -963,6 +964,9 @@ def tensordot(a, b, axes=2):
             [aaaaaaacccccccc, bbbbbbbdddddddd]]], dtype=object)
 
     >>> np.tensordot(a, A, 0) # "Left for reader" (result too long to incl.)
+    array([[[[[a, b],
+              [c, d]],
+              ...
 
     >>> np.tensordot(a, A, (0, 1))
     array([[[abbbbb, cddddd],
@@ -1413,7 +1417,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     Examples
     --------
     >>> np.array_str(np.arange(3))
-    >>> '[0 1 2]'
+    '[0 1 2]'
 
     """
     return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
@@ -1465,7 +1469,7 @@ def indices(dimensions, dtype=int):
     --------
     >>> grid = np.indices((2, 3))
     >>> grid.shape
-    (2,2,3)
+    (2, 2, 3)
     >>> grid[0]        # row indices
     array([[0, 0, 0],
            [1, 1, 1]])
@@ -1973,19 +1977,19 @@ def array_equiv(a1, a2):
     Examples
     --------
     >>> np.array_equiv([1, 2], [1, 2])
-    >>> True
+    True
     >>> np.array_equiv([1, 2], [1, 3])
-    >>> False
+    False
 
     Showing the shape equivalence:
 
     >>> np.array_equiv([1, 2], [[1, 2], [1, 2]])
-    >>> True
+    True
     >>> np.array_equiv([1, 2], [[1, 2, 1, 2], [1, 2, 1, 2]])
-    >>> False
+    False
 
     >>> np.array_equiv([1, 2], [[1, 2], [1, 3]])
-    >>> False
+    False
 
     """
     try:
@@ -2064,11 +2068,12 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Examples
     --------
+    >>> old_settings = np.seterr(all='ignore')  #seterr to known value
     >>> np.seterr(over='raise')
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
      'under': 'ignore'}
     >>> np.seterr(all='ignore')  # reset to default
-    {'over': 'raise', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
+    {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
 
     >>> np.int16(32000) * np.int16(3)
     30464
@@ -2078,16 +2083,28 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
       File "<stdin>", line 1, in <module>
     FloatingPointError: overflow encountered in short_scalars
 
-    >>> np.seterr(all='print')
+    >>> old_settings = np.seterr(all='print')
+    >>> np.geterr()
     {'over': 'print', 'divide': 'print', 'invalid': 'print', 'under': 'print'}
     >>> np.int16(32000) * np.int16(3)
     Warning: overflow encountered in short_scalars
     30464
 
     Calling `seterr` with no arguments resets treatment for all floating-point
-    errors to the defaults.
+    errors to the defaults. XXX: lies!!! code doesn't do that
+    >>> np.geterr()
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    >>> np.seterr(all='warn')
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    >>> np.geterr()
+    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
+    >>> np.seterr() # XXX: this should reset to defaults according to docstring above
+    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
+    >>> np.geterr() # XXX: but clearly it doesn't
+    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
 
     >>> old_settings = np.seterr()
+    >>> old_settings = np.seterr(all='ignore')
     >>> np.geterr()
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
     'under': 'ignore'}
@@ -2234,7 +2251,7 @@ def seterrcall(func):
     Callback upon error:
 
     >>> def err_handler(type, flag):
-            print "Floating point error (%s), with flag %s" % (type, flag)
+    ...     print "Floating point error (%s), with flag %s" % (type, flag)
     ...
 
     >>> saved_handler = np.seterrcall(err_handler)
@@ -2245,13 +2262,15 @@ def seterrcall(func):
     array([ Inf,  Inf,  Inf])
 
     >>> np.seterrcall(saved_handler)
+    <function err_handler at 0x...>
     >>> np.seterr(**save_err)
+    {'over': 'call', 'divide': 'call', 'invalid': 'call', 'under': 'call'}
 
     Log error message:
 
     >>> class Log(object):
-            def write(self, msg):
-                print "LOG: %s" % msg
+    ...     def write(self, msg):
+    ...         print "LOG: %s" % msg
     ...
 
     >>> log = Log()
@@ -2260,9 +2279,13 @@ def seterrcall(func):
 
     >>> np.array([1, 2, 3]) / 0.0
     LOG: Warning: divide by zero encountered in divide
+    <BLANKLINE>
+    array([ Inf,  Inf,  Inf])
 
     >>> np.seterrcall(saved_handler)
+    <__main__.Log object at 0x...>
     >>> np.seterr(**save_err)
+    {'over': 'log', 'divide': 'log', 'invalid': 'log', 'under': 'log'}
 
     """
     if func is not None and not callable(func):
@@ -2371,7 +2394,6 @@ class errstate(object):
     nan
     >>> with np.errstate(invalid='raise'):
     ...     np.sqrt(-1)
-    ...
     Traceback (most recent call last):
       File "<stdin>", line 2, in <module>
     FloatingPointError: invalid value encountered in sqrt

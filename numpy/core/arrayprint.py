@@ -88,6 +88,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     >>> x**2 - (x + eps)**2
     array([-0., -0.,  0.,  0.])
 
+    To put back the default options, you can use:
+
+    >>> np.set_printoptions(edgeitems=3,infstr='Inf',
+    ... linewidth=75, nanstr='NaN', precision=8,
+    ... suppress=False, threshold=1000)
     """
 
     global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \

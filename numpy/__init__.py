@@ -24,11 +24,13 @@ The docstring examples assume that `numpy` has been imported as `np`::
 
 Code snippets are indicated by three greater-than signs::
 
+  >>> x = 42
   >>> x = x + 1
 
 Use the built-in ``help`` function to view a function's docstring::
 
   >>> help(np.sort)
+  ... # doctest: +SKIP
 
 For some objects, ``np.info(obj)`` may provide additional help.  This is
 particularly true if you see the line "Help on ufunc object:" at the top
@@ -39,12 +41,14 @@ np.info() function does.
 To search for documents containing a keyword, do::
 
   >>> np.lookfor('keyword')
+  ... # doctest: +SKIP
 
 General-purpose documents like a glossary and help on the basic concepts
 of numpy are available under the ``doc`` sub-module::
 
   >>> from numpy import doc
   >>> help(doc)
+  ... # doctest: +SKIP
 
 Available subpackages
 ---------------------

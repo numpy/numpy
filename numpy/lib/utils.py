@@ -344,7 +344,7 @@ def who(vardict=None):
 
     >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
     ... 'idx':5}
-    >>> np.whos(d)
+    >>> np.who(d)
     Name            Shape            Bytes            Type
     ===========================================================
     y               3                24               float64
@@ -666,7 +666,7 @@ def source(object, output=sys.stdout):
 
     Examples
     --------
-    >>> np.source(np.interp)
+    >>> np.source(np.interp)                        #doctest: +SKIP
     In file: /usr/lib/python2.6/dist-packages/numpy/lib/function_base.py
     def interp(x, xp, fp, left=None, right=None):
         \"\"\".... (full docstring printed)\"\"\"
@@ -677,7 +677,7 @@ def source(object, output=sys.stdout):
 
     The source code is only returned for objects written in Python.
 
-    >>> np.source(np.array)
+    >>> np.source(np.array)                         #doctest: +SKIP
     Not available for this object.
 
     """
@@ -737,6 +737,8 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     ------------------------------------------
     numpy.binary_repr
         Return the binary representation of the input number as a string.
+    numpy.core.setup_common.long_double_representation
+        Given a binary dump as given by GNU od -b, look for long double
     numpy.base_repr
         Return a string representation of a number in the given base system.
     ...
@@ -1066,7 +1068,7 @@ def safe_eval(source):
       ...
     SyntaxError: invalid syntax
 
-    >>> safe_eval('open("/home/user/.ssh/id_dsa").read()')
+    >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
     SyntaxError: Unsupported source construct: compiler.ast.CallFunc

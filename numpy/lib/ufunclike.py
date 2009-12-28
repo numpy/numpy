@@ -99,9 +99,9 @@ def isposinf(x, y=None):
     >>> x = np.array([-np.inf, 0., np.inf])
     >>> y = np.array([2, 2, 2])
     >>> np.isposinf(x, y)
-    array([1, 0, 0])
+    array([0, 0, 1])
     >>> y
-    array([1, 0, 0])
+    array([0, 0, 1])
 
     """
     if y is None:

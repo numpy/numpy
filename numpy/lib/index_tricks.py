@@ -462,6 +462,7 @@ class RClass(AxisConcatenator):
     String integers specify the axis to concatenate along or the minimum
     number of dimensions to force entries into.
 
+    >>> a = np.array([[0, 1, 2], [3, 4, 5]])
     >>> np.r_['-1', a, a] # concatenate along last axis
     array([[0, 1, 2, 0, 1, 2],
            [3, 4, 5, 3, 4, 5]])
@@ -757,8 +758,8 @@ def fill_diagonal(a, val):
 
     Examples
     --------
-    >>> a = zeros((3, 3), int)
-    >>> fill_diagonal(a, 5)
+    >>> a = np.zeros((3, 3), int)
+    >>> np.fill_diagonal(a, 5)
     >>> a
     array([[5, 0, 0],
            [0, 5, 0],
@@ -766,8 +767,8 @@ def fill_diagonal(a, val):
 
     The same function can operate on a 4-D array:
 
-    >>> a = zeros((3, 3, 3, 3), int)
-    >>> fill_diagonal(a, 4)
+    >>> a = np.zeros((3, 3, 3, 3), int)
+    >>> np.fill_diagonal(a, 4)
 
     We only show a few blocks for clarity:
 

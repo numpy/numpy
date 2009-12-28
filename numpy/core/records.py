@@ -126,7 +126,7 @@ class format_parser:
     >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
     ...                  ['T1', 'T2', 'T3']).dtype
     dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'),
-           (('T3', 'col3'), '|S5')]
+           (('T3', 'col3'), '|S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names

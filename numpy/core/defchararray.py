@@ -457,7 +457,7 @@ def count(a, sub, start=0, end=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA', 'abBABba'],
+    array(['aAaAaA', '  aA  ', 'abBABba'],
         dtype='|S7')
     >>> np.char.count(c, 'A')
     array([3, 1, 1])
@@ -505,7 +505,7 @@ def decode(a, encoding=None, errors=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA', 'abBABba'],
+    array(['aAaAaA', '  aA  ', 'abBABba'],
         dtype='|S7')
     >>> np.char.encode(c, encoding='cp037')
     array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
@@ -584,9 +584,9 @@ def endswith(a, suffix, start=0, end=None):
     >>> s
     array(['foo', 'bar'],
         dtype='|S3')
-    >>> np.charendswith(s, 'ar')
+    >>> np.char.endswith(s, 'ar')
     array([False,  True], dtype=bool)
-    >>> s.endswith(s, 'a', start=1, end=2)
+    >>> np.char.endswith(s, 'a', start=1, end=2)
     array([False,  True], dtype=bool)
 
     """
@@ -1010,15 +1010,17 @@ def lstrip(a, chars=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA', 'abBABba'],
+    array(['aAaAaA', '  aA  ', 'abBABba'],
         dtype='|S7')
     >>> np.char.lstrip(c, 'a') # 'a' unstripped from c[1] because whitespace leading
-    array(['AaAaA', '  aA', 'bBABba'],
-        dtype='|S6')
+    array(['AaAaA', '  aA  ', 'bBABba'],
+        dtype='|S7')
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
-    array(['aAaAaA', '  aA', 'abBABba'],
+    array(['aAaAaA', '  aA  ', 'abBABba'],
         dtype='|S7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
+    ... # XXX: is this a regression? this line now returns False
+    ... # np.char.lstrip(c,'') does not modify c at all.
     True
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
     True
@@ -1313,7 +1315,7 @@ def rstrip(a, chars=None):
         dtype='|S7')
     >>> np.char.rstrip(c, 'a')
     array(['aAaAaA', 'abBABb'],
-        dtype='|S6')
+        dtype='|S7')
     >>> np.char.rstrip(c, 'A')
     array(['aAaAa', 'abBABba'],
         dtype='|S7')
@@ -1444,16 +1446,16 @@ def strip(a, chars=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA', 'abBABba'],
+    array(['aAaAaA', '  aA  ', 'abBABba'],
         dtype='|S7')
     >>> np.char.strip(c)
     array(['aAaAaA', 'aA', 'abBABba'],
         dtype='|S7')
     >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because whitespace leads
-    array(['AaAaA', '  aA', 'bBABb'],
-        dtype='|S6')
+    array(['AaAaA', '  aA  ', 'bBABb'],
+        dtype='|S7')
     >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because (unprinted) ws trails
-    array(['aAaAa', '  aA', 'abBABba'],
+    array(['aAaAa', '  aA  ', 'abBABba'],
         dtype='|S7')
 
     """
@@ -1523,7 +1525,7 @@ def title(a):
     array(['a1b c', '1b ca', 'b ca1', 'ca1b'],
         dtype='|S5')
     >>> np.char.title(c)
-    chararray(['A1B C', '1B Ca', 'B Ca1', 'Ca1B'],
+    array(['A1B C', '1B Ca', 'B Ca1', 'Ca1B'],
         dtype='|S5')
     """
     a_arr = numpy.asarray(a)
@@ -1590,7 +1592,7 @@ def upper(a):
     >>> c = np.array(['a1b c', '1bca', 'bca1']); c
     array(['a1b c', '1bca', 'bca1'],
         dtype='|S5')
-    >>> numpy.char.upper(c)
+    >>> np.char.upper(c)
     array(['A1B C', '1BCA', 'BCA1'],
         dtype='|S5')
     """
@@ -1742,7 +1744,7 @@ class chararray(ndarray):
     Examples
     --------
     >>> charar = np.chararray((3, 3))
-    >>> charar[:, :] = 'abc'
+    >>> charar[:] = 'a'
     >>> charar
     chararray([['a', 'a', 'a'],
            ['a', 'a', 'a'],
@@ -1750,7 +1752,7 @@ class chararray(ndarray):
           dtype='|S1')
 
     >>> charar = np.chararray(charar.shape, itemsize=5)
-    >>> charar[:, :] = 'abc'
+    >>> charar[:] = 'abc'
     >>> charar
     chararray([['abc', 'abc', 'abc'],
            ['abc', 'abc', 'abc'],

@@ -775,7 +775,7 @@ class Configuration(object):
 
         Examples
         --------
-        >>> setup(\**config.todict()).
+        >>> setup(**config.todict())                           #doctest: +SKIP
         """
 
         self._optimize_data_files()
@@ -1019,9 +1019,9 @@ class Configuration(object):
         For example suppose the source directory contains fun/foo.dat and
         fun/bar/car.dat::
 
-            >>> self.add_data_dir('fun')
-            >>> self.add_data_dir(('sun', 'fun'))
-            >>> self.add_data_dir(('gun', '/full/path/to/fun'))
+            >>> self.add_data_dir('fun')                       #doctest: +SKIP
+            >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
+            >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
 
         Will install data-files to the locations::
 
@@ -1176,9 +1176,9 @@ class Configuration(object):
         Add files to the list of data_files to be included with the package.
 
             >>> self.add_data_files('foo.dat',
-                    ('fun', ['gun.dat', 'nun/pun.dat', '/tmp/sun.dat']),
-                    'bar/cat.dat',
-                    '/full/path/to/can.dat')
+            ...     ('fun', ['gun.dat', 'nun/pun.dat', '/tmp/sun.dat']),
+            ...     'bar/cat.dat',
+            ...     '/full/path/to/can.dat')                   #doctest: +SKIP
 
         will install these data files to::
 
@@ -2068,7 +2068,7 @@ def get_info(pkgname, dirs=None):
     To get the necessary information for the npymath library from NumPy:
 
     >>> npymath_info = np.distutils.misc_util.get_info('npymath')
-    >>> npymath_info
+    >>> npymath_info                                    #doctest: +SKIP
     {'define_macros': [], 'libraries': ['npymath'], 'library_dirs':
     ['.../numpy/core/lib'], 'include_dirs': ['.../numpy/core/include']}
 

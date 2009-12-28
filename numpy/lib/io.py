@@ -734,9 +734,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' '):
 
     Examples
     --------
-    >>> savetxt('test.out', x, delimiter=',')   # X is an array
-    >>> savetxt('test.out', (x,y,z))   # x,y,z equal sized 1D arrays
-    >>> savetxt('test.out', x, fmt='%1.4e')   # use exponential notation
+    >>> x = y = z = np.arange(0.0,5.0,1.0)
+    >>> np.savetxt('test.out', x, delimiter=',')   # X is an array
+    >>> np.savetxt('test.out', (x,y,z))   # x,y,z equal sized 1D arrays
+    >>> np.savetxt('test.out', x, fmt='%1.4e')   # use exponential notation
 
     """
 
@@ -833,7 +834,7 @@ def fromregex(file, regexp, dtype):
 
     >>> regexp = r"(\\d+)\\s+(...)"  # match [digits, whitespace, anything]
     >>> output = np.fromregex('test.dat', regexp,
-                              [('num', np.int64), ('key', 'S3')])
+    ...                       [('num', np.int64), ('key', 'S3')])
     >>> output
     array([(1312L, 'foo'), (1534L, 'bar'), (444L, 'qux')],
           dtype=[('num', '<i8'), ('key', '|S3')])
@@ -974,7 +975,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     >>> s = StringIO("1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
-        ('mystring','S5')], delimiter=",")
+    ... ('mystring','S5')], delimiter=",")
     >>> data
     array((1, 1.3, 'abcde'),
           dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
@@ -983,7 +984,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     >>> s.seek(0) # needed for StringIO example only
     >>> data = np.genfromtxt(s, dtype=None,
-        names = ['myint','myfloat','mystring'], delimiter=",")
+    ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
     array((1, 1.3, 'abcde'),
           dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
@@ -992,7 +993,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     >>> s.seek(0)
     >>> data = np.genfromtxt(s, dtype="i8,f8,S5",
-        names=['myint','myfloat','mystring'], delimiter=",")
+    ... names=['myint','myfloat','mystring'], delimiter=",")
     >>> data
     array((1, 1.3, 'abcde'),
           dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
@@ -1001,7 +1002,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     >>> s = StringIO("11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
-            delimiter=[1,3,5])
+    ...     delimiter=[1,3,5])
     >>> data
     array((1, 1.3, 'abcde'),
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])

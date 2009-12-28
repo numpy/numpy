@@ -260,7 +260,7 @@ def iscomplexobj(x):
     False
     >>> np.iscomplexobj(1+0j)
     True
-    np.iscomplexobj([3, 1+0j, True])
+    >>> np.iscomplexobj([3, 1+0j, True])
     True
 
     """
@@ -345,6 +345,7 @@ def nan_to_num(x):
 
     Examples
     --------
+    >>> np.set_printoptions(precision=8)
     >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
     >>> np.nan_to_num(x)
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,

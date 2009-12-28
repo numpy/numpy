@@ -67,6 +67,7 @@ functions or methods accept. Some examples::
     >>> y
     array([1, 2, 4])
     >>> z = np.arange(3, dtype=np.uint8)
+    >>> z
     array([0, 1, 2], dtype=uint8)
 
 Array types can also be referred to by character codes, mostly to retain
@@ -81,8 +82,8 @@ We recommend using dtype objects instead.
 To convert the type of an array, use the .astype() method (preferred) or
 the type itself as a function. For example: ::
 
-    >>> z.astype(float)
-    array([0.,  1.,  2.])
+    >>> z.astype(float)                 #doctest: +NORMALIZE_WHITESPACE
+    array([  0.,  1.,  2.])
     >>> np.int8(z)
     array([0, 1, 2], dtype=int8)
 

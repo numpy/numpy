@@ -154,6 +154,7 @@ def fft(a, n=None, axis=-1):
     >>> sp = np.fft.fft(np.sin(t))
     >>> freq = np.fft.fftfreq(t.shape[-1])
     >>> plt.plot(freq, sp.real, freq, sp.imag)
+    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
     >>> plt.show()
 
     In this example, real input has an FFT which is Hermitian, i.e., symmetric
@@ -233,7 +234,9 @@ def ifft(a, n=None, axis=-1):
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
+    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
     >>> plt.legend(('real', 'imaginary'))
+    <matplotlib.legend.Legend object at 0x...>
     >>> plt.show()
 
     """
@@ -586,7 +589,7 @@ def fftn(a, s=None, axes=None):
 
     Examples
     --------
-    >>> a = mgrid[:3, :3, :3][0]
+    >>> a = np.mgrid[:3, :3, :3][0]
     >>> np.fft.fftn(a, axes=(1, 2))
     array([[[  0.+0.j,   0.+0.j,   0.+0.j],
             [  0.+0.j,   0.+0.j,   0.+0.j],
@@ -605,10 +608,11 @@ def fftn(a, s=None, axes=None):
 
     >>> import matplotlib.pyplot as plt
     >>> [X, Y] = np.meshgrid(2 * np.pi * np.arange(200) / 12,
-                             2 * np.pi * np.arange(200) / 34)
+    ...                      2 * np.pi * np.arange(200) / 34)
     >>> S = np.sin(X) + np.cos(Y) + np.random.uniform(0, 1, X.shape)
     >>> FS = np.fft.fftn(S)
     >>> plt.imshow(np.log(np.abs(np.fft.fftshift(FS))**2))
+    <matplotlib.image.AxesImage object at 0x...>
     >>> plt.show()
 
     """
@@ -700,6 +704,7 @@ def ifftn(a, s=None, axes=None):
     >>> n[60:80, 20:40] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20, 20)))
     >>> im = np.fft.ifftn(n).real
     >>> plt.imshow(im)
+    <matplotlib.image.AxesImage object at 0x...>
     >>> plt.show()
 
     """

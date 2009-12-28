@@ -153,11 +153,11 @@ def libpaths(paths,bits):
     >>> paths = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
 
     For a 32-bit platform, this is already valid:
-    >>> libpaths(paths,32)
+    >>> np.distutils.system_info.libpaths(paths,32)
     ['/usr/X11R6/lib', '/usr/X11/lib', '/usr/lib']
 
     On 64 bits, we prepend the '64' postfix
-    >>> libpaths(paths,64)
+    >>> np.distutils.system_info.libpaths(paths,64)
     ['/usr/X11R6/lib64', '/usr/X11R6/lib', '/usr/X11/lib64', '/usr/X11/lib',
     '/usr/lib64', '/usr/lib']
     """

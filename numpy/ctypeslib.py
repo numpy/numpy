@@ -18,14 +18,14 @@ Examples
 --------
 Load the C library:
 
->>> _lib = np.ctypeslib.load_library('libmystuff', '.') #DOCTEST: +ignore
+>>> _lib = np.ctypeslib.load_library('libmystuff', '.')     #doctest: +SKIP
 
 Our result type, an ndarray that must be of type double, be 1-dimensional
 and is C-contiguous in memory:
 
 >>> array_1d_double = np.ctypeslib.ndpointer(
 ...                          dtype=np.double,
-...                          ndim=1, flags='CONTIGUOUS') #DOCTEST: +ignore
+...                          ndim=1, flags='CONTIGUOUS')    #doctest: +SKIP
 
 Our C-function typically takes an array and updates its values
 in-place.  For example::
@@ -40,13 +40,13 @@ in-place.  For example::
 
 We wrap it using:
 
->>> lib.foo_func.restype = None #DOCTEST: +ignore
->>> lib.foo.argtypes = [array_1d_double, c_int] #DOCTEST: +ignore
+>>> lib.foo_func.restype = None                 #doctest: +SKIP
+>>> lib.foo.argtypes = [array_1d_double, c_int] #doctest: +SKIP
 
 Then, we're ready to call ``foo_func``:
 
 >>> out = np.empty(15, dtype=np.double)
->>> _lib.foo_func(out, len(out)) #DOCTEST: +ignore
+>>> _lib.foo_func(out, len(out))                #doctest: +SKIP
 
 """
 __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
@@ -229,7 +229,9 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     >>> clib.somefunc.argtypes = [np.ctypeslib.ndpointer(dtype=np.float64,
     ...                                                  ndim=1,
     ...                                                  flags='C_CONTIGUOUS')]
+    ... #doctest: +SKIP
     >>> clib.somefunc(np.array([1, 2, 3], dtype=np.float64))
+    ... #doctest: +SKIP
 
     """
 

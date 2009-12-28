@@ -13,12 +13,12 @@ original value was)
 
 Note: cannot use equality to test NaNs. E.g.: ::
 
+ >>> myarr = np.array([1., 0., np.nan, 3.])
  >>> np.where(myarr == np.nan)
  >>> nan == nan  # is always False! Use special numpy functions instead.
 
  >>> np.nan == np.nan
  False
- >>> myarr = np.array([1., 0., np.nan, 3.])
  >>> myarr[myarr == np.nan] = 0. # doesn't work
  >>> myarr
  array([  1.,   0.,  NaN,   3.])
@@ -68,7 +68,7 @@ These behaviors can be set for all kinds of errors or specific ones: ::
  underflow: floating point underflows
 
 Note that integer divide-by-zero is handled by the same machinery.
-These behaviors are set on a per-thead basis.
+These behaviors are set on a per-thread basis.
 
 Examples:
 ------------
@@ -86,6 +86,7 @@ Examples:
  >>> def errorhandler(errstr, errflag):
  ...      print "saw stupid error!"
  >>> np.seterrcall(errorhandler)
+<function err_handler at 0x...>
  >>> j = np.seterr(all='call')
  >>> np.zeros(5, dtype=np.int32)/0
  FloatingPointError: invalid value encountered in divide

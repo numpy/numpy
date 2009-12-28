@@ -181,7 +181,7 @@ iterable
       [1, 4, 9]
 
     It is often used in combintion with ``enumerate``::
-
+      >>> keys = ['a','b','c']
       >>> for n, k in enumerate(keys):
       ...     print "Key %d: %s" % (n, k)
       ...
@@ -242,13 +242,16 @@ masked array
       >>> x = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
       >>> x
       masked_array(data = [-- 2.0 --],
-            mask = [ True False  True],
-            fill_value=1e+20)
+                   mask = [ True False  True],
+             fill_value = 1e+20)
+      <BLANKLINE>
 
       >>> x + [1, 2, 3]
       masked_array(data = [-- 4.0 --],
-            mask = [ True False  True],
-            fill_value=1e+20)
+                   mask = [ True False  True],
+             fill_value = 1e+20)
+      <BLANKLINE>
+
 
     Masked arrays are often used when operating on arrays containing
     missing or invalid entries.
@@ -366,7 +369,7 @@ tuple
     This is often used when a function returns multiple values:
 
       >>> def return_many():
-      ...     return 1, 'alpha'
+      ...     return 1, 'alpha', None
 
       >>> a, b, c = return_many()
       >>> a, b, c

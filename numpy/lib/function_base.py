@@ -112,7 +112,6 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     (array([ 0.25,  0.25,  0.25,  0.25]), array([0, 1, 2, 3, 4]))
     >>> np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3])
     (array([1, 4, 1]), array([0, 1, 2, 3]))
-    ]), array([0, 1, 2, 3]))
 
     >>> a = np.arange(5)
     >>> hist, bin_edges = np.histogram(a, normed=True)
@@ -147,7 +146,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
             if mn == mx:
                 mn -= 0.5
                 mx += 0.5
-            bins = linspace(mn, mx, bins, endpoint=False)
+            bins = np.linspace(mn, mx, bins, endpoint=False)
         else:
             if normed:
                 raise ValueError, 'Use new=True to pass bin edges explicitly.'
@@ -293,7 +292,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     >>> r = np.random.randn(100,3)
     >>> H, edges = np.histogramdd(r, bins = (5, 8, 4))
     >>> H.shape, edges[0].size, edges[1].size, edges[2].size
-    ((5,8,4), 6, 9, 5)
+    ((5, 8, 4), 6, 9, 5)
 
     """
 
@@ -791,7 +790,7 @@ def copy(a):
     -----
     This is equivalent to
 
-    >>> np.array(a, copy=True)
+    >>> np.array(a, copy=True)                              #doctest: +SKIP
 
     Examples
     --------
@@ -1019,7 +1018,7 @@ def interp(x, xp, fp, left=None, right=None):
     >>> np.interp(2.5, xp, fp)
     1.0
     >>> np.interp([0, 1, 1.5, 2.72, 3.14], xp, fp)
-    array([ 3. ,  3. ,  2.5,  0.56,  0. ])
+    array([ 3. ,  3. ,  2.5 ,  0.56,  0. ])
     >>> UNDEF = -99.0
     >>> np.interp(3.14, xp, fp, right=UNDEF)
     -99.0
@@ -1032,7 +1031,9 @@ def interp(x, xp, fp, left=None, right=None):
     >>> yinterp = np.interp(xvals, x, y)
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(x, y, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.plot(xvals, yinterp, '-x')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.show()
 
     """
@@ -1161,7 +1162,7 @@ def sort_complex(a):
     array([ 1.+0.j,  2.+0.j,  3.+0.j,  5.+0.j,  6.+0.j])
 
     >>> np.sort_complex([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
-    array([ 1.+2.j,  2.-1.j,  3.-5.j,  3.-3.j,  3.+2.j])
+    array([ 1.+2.j,  2.-1.j,  3.-3.j,  3.-2.j,  3.+5.j])
 
     """
     b = array(a,copy=True)
@@ -2041,28 +2042,38 @@ def blackman(M):
 
     Plot the window and the frequency response:
 
-    >>> from numpy import clip, log10, array, bartlett, linspace
-    >>> from scipy.fftpack import fft, fftshift
+    >>> from numpy import clip, log10, array, blackman, linspace
+    >>> from numpy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
 
     >>> window = blackman(51)
     >>> plt.plot(window)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Blackman window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Sample")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.show()
     
     >>> plt.figure()
+    <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
     >>> mag = abs(fftshift(A))
     >>> freq = linspace(-0.5,0.5,len(A))
     >>> response = 20*log10(mag)
     >>> response = clip(response,-100,100)
     >>> plt.plot(freq, response)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of Blackman window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Magnitude [dB]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.axis('tight')
+    (-0.5, 0.5, -100.0, ...)
     >>> plt.show()
 
     """
@@ -2146,22 +2157,32 @@ def bartlett(M):
 
     >>> window = bartlett(51)
     >>> plt.plot(window)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Bartlett window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Sample")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.show()
     
     >>> plt.figure()
+    <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
     >>> mag = abs(fftshift(A))
     >>> freq = linspace(-0.5,0.5,len(A))
     >>> response = 20*log10(mag)
     >>> response = clip(response,-100,100)
     >>> plt.plot(freq, response)
-    >>> plt.title("Frequency response of Blackman window")
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.title("Frequency response of Bartlett window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Magnitude [dB]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.axis('tight')
+    (-0.5, 0.5, -100.0, ...)
     >>> plt.show()
 
     """
@@ -2237,25 +2258,39 @@ def hanning(M):
 
     >>> window = np.hanning(51)
     >>> plt.plot(window)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Hann window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Sample")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.show()
 
     >>> plt.figure()
+    <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
     >>> mag = abs(fftshift(A))
     >>> freq = np.linspace(-0.5,0.5,len(A))
     >>> response = 20*np.log10(mag)
     >>> response = np.clip(response,-100,100)
     >>> plt.plot(freq, response)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of the Hann window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Magnitude [dB]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.axis('tight')
+    (-0.5, 0.5, -100.0, ...)
     >>> plt.show()
 
     """
+    # XXX: this docstring is inconsistent with other filter windows, e.g.
+    # Blackman and Bartlett -  they should all follow the same convention for
+    # clarity. Either use np. for all numpy members (as above), or import all
+    # numpy members (as in Blackman and Bartlett examples)
     if M < 1:
         return array([])
     if M == 1:
@@ -2321,27 +2356,37 @@ def hamming(M):
 
     Plot the window and the frequency response:
 
-    >>> from scipy.fftpack import fft, fftshift
+    >>> from numpy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
 
     >>> window = np.hamming(51)
     >>> plt.plot(window)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Hamming window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Sample")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.show()
 
     >>> plt.figure()
+    <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
     >>> response = 20 * np.log10(mag)
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of Hamming window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Magnitude [dB]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.axis('tight')
+    (-0.5, 0.5, -100.0, ...)
     >>> plt.show()
 
     """
@@ -2587,27 +2632,37 @@ def kaiser(M,beta):
     Plot the window and the frequency response:
 
     >>> from numpy import clip, log10, array, kaiser, linspace
-    >>> from scipy.fftpack import fft, fftshift
+    >>> from numpy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
 
     >>> window = kaiser(51, 14)
     >>> plt.plot(window)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Kaiser window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Sample")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.show()
 
     >>> plt.figure()
+    <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
     >>> mag = abs(fftshift(A))
     >>> freq = linspace(-0.5,0.5,len(A))
     >>> response = 20*log10(mag)
     >>> response = clip(response,-100,100)
     >>> plt.plot(freq, response)
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of Kaiser window")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Magnitude [dB]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.axis('tight')
+    (-0.5, 0.5, -100.0, ...)
     >>> plt.show()
 
     """
@@ -2674,9 +2729,13 @@ def sinc(x):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(x, np.sinc(x))
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Sinc Function")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.ylabel("Amplitude")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.xlabel("X")
+    <matplotlib.text.Text object at 0x...>
     >>> plt.show()
 
     It works in 2-D as well:
@@ -2684,6 +2743,7 @@ def sinc(x):
     >>> x = np.arange(-200., 201.)/50.
     >>> xx = np.outer(x, x)
     >>> plt.imshow(np.sinc(xx))
+    <matplotlib.image.AxesImage object at 0x...>
 
     """
     y = pi* where(x == 0, 1.0e-20, x)
@@ -3277,7 +3337,7 @@ def append(arr, values, axis=None):
     >>> np.append([[1, 2, 3], [4, 5, 6]], [7, 8, 9], axis=0)
     Traceback (most recent call last):
     ...
-    ValueError: arrays must have same number of dimension
+    ValueError: arrays must have same number of dimensions
 
     """
     arr = asanyarray(arr)

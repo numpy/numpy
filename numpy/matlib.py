@@ -38,10 +38,10 @@ def empty(shape, dtype=None, order='C'):
     >>> import numpy.matlib
     >>> np.matlib.empty((2, 2))    # filled with random data
     matrix([[  6.76425276e-320,   9.79033856e-307],
-            [  7.39337286e-309,   3.22135945e-309]])
+            [  7.39337286e-309,   3.22135945e-309]])        #random
     >>> np.matlib.empty((2, 2), dtype=int)
     matrix([[ 6600475,        0],
-            [ 6586976, 22740995]])
+            [ 6586976, 22740995]])                          #random
 
     """
     return ndarray.__new__(matrix, shape, dtype, order=order)
@@ -239,16 +239,16 @@ def rand(*args):
     >>> import numpy.matlib
     >>> np.matlib.rand(2, 3)
     matrix([[ 0.68340382,  0.67926887,  0.83271405],
-            [ 0.00793551,  0.20468222,  0.95253525]])
+            [ 0.00793551,  0.20468222,  0.95253525]])       #random
     >>> np.matlib.rand((2, 3))
     matrix([[ 0.84682055,  0.73626594,  0.11308016],
-            [ 0.85429008,  0.3294825 ,  0.89139555]])
+            [ 0.85429008,  0.3294825 ,  0.89139555]])       #random
 
     If the first argument is a tuple, other arguments are ignored:
 
     >>> np.matlib.rand((2, 3), 4)
     matrix([[ 0.46898646,  0.15163588,  0.95188261],
-            [ 0.59208621,  0.09561818,  0.00583606]])
+            [ 0.59208621,  0.09561818,  0.00583606]])       #random
 
     """
     if isinstance(args[0], tuple):
@@ -289,16 +289,16 @@ def randn(*args):
     --------
     >>> import numpy.matlib
     >>> np.matlib.randn(1)
-    matrix([[-0.09542833]])
+    matrix([[-0.09542833]])                                 #random
     >>> np.matlib.randn(1, 2, 3)
     matrix([[ 0.16198284,  0.0194571 ,  0.18312985],
-            [-0.7509172 ,  1.61055   ,  0.45298599]])
+            [-0.7509172 ,  1.61055   ,  0.45298599]])       #random
 
     Two-by-four matrix of samples from :math:`N(3, 6.25)`:
 
     >>> 2.5 * np.matlib.randn((2, 4)) + 3
     matrix([[ 4.74085004,  8.89381862,  4.09042411,  4.83721922],
-            [ 7.52373709,  5.07933944, -2.64043543,  0.45610557]])
+            [ 7.52373709,  5.07933944, -2.64043543,  0.45610557]])  #random
 
     """
     if isinstance(args[0], tuple):

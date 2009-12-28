@@ -105,7 +105,7 @@ dtype definition (using any of the variants being described here). As
 an example (using a definition using a list, so see 3) for further
 details): ::
 
- >>> x = zeros(3, dtype=('i4',[('r','u1'), ('g','u1'), ('b','u1'), ('a','u1')]))
+ >>> x = np.zeros(3, dtype=('i4',[('r','u1'), ('g','u1'), ('b','u1'), ('a','u1')]))
  >>> x
  array([0, 0, 0])
  >>> x['r']
@@ -145,6 +145,7 @@ The other dictionary form permitted is a dictionary of name keys with tuple
 values specifying type, offset, and an optional title.
 
  >>> x = np.zeros(3, dtype={'col1':('i1',0,'title 1'), 'col2':('f4',1,'title 2')})
+ >>> x
  array([(0, 0.0), (0, 0.0), (0, 0.0)],
        dtype=[(('title 1', 'col1'), '|i1'), (('title 2', 'col2'), '>f4')])
 

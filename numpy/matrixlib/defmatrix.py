@@ -647,10 +647,10 @@ class matrix(N.ndarray):
         >>> x.max()
         11
         >>> x.max(0)
-        matrix([[8, 9, 10, 11]])
-        >>> x.argmax(1)
-        matrix([[3],
-                [7],
+        matrix([[ 8,  9, 10, 11]])
+        >>> x.max(1)
+        matrix([[ 3],
+                [ 7],
                 [11]])
 
         """

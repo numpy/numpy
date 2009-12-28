@@ -82,7 +82,7 @@ array. A couple examples: ::
 
  >>> np.add.accumulate(np.arange(10))
  array([ 0,  1,  3,  6, 10, 15, 21, 28, 36, 45])
- >>>  np.multiply.accumulate(np.arange(1,9))
+ >>> np.multiply.accumulate(np.arange(1,9))
  array([    1,     2,     6,    24,   120,   720,  5040, 40320])
 
 The behavior for multidimensional arrays is the same as for .reduce(), as is the use of the axis keyword).

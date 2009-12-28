@@ -20,7 +20,7 @@ The following topics are available:
 
 You can view them by
 
->>> help(np.doc.TOPIC)
+>>> help(np.doc.TOPIC)                                      #doctest: +SKIP
 
 """ % '\n- '.join([''] + __all__)
 
