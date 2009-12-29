@@ -295,14 +295,48 @@ class KnownFailure(ErrorClassPlugin):
             self.enabled = False
 
 
+class NpConfig(nose.core.Config):
+    ''' Class to pull out nose doctest plugin after configuration
 
-# Because nose currently discards the test result object, but we need
-# to return it to the user, override TestProgram.runTests to retain
-# the result
+    This allows the user to set doctest related settings in their
+    configuration.  For example, without this fix, a setting of
+    'with-doctest=1' in the user's .noserc file would cause an error, if
+    we remove the doctest extension before this stage.  Our configure
+    uses the plugin to parse any settings, but then removed the doctest
+    plugin because the numpy doctester should be used for doctests
+    instead.
+    '''
+    def __init__(self, config):
+        self.__dict__ = config.__dict__
+        
+    def configure(self, *args, **kwargs):
+        super(NpConfig, self).configure(*args, **kwargs)
+        self.plugins.plugins = [p for p in self.plugins.plugins
+                                if p.name != 'doctest']
+        
+
+# Our class has two uses.  First, to allow us to use NpConfig above to
+# remove the doctest plugin after it has parsed the configuration.
+# Second we save the results of the tests in runTests - see runTests
+# method docstring for details
 class NumpyTestProgram(nose.core.TestProgram):
+    def makeConfig(self, *args, **kwargs):
+        """Load a Config, pre-filled with user config files if any are
+        found.
+
+        We override this method only to allow us to return a NpConfig
+        object instead of a Config object. 
+        """
+        config = super(NumpyTestProgram, self).makeConfig(*args, **kwargs)
+        return NpConfig(config)
+    
     def runTests(self):
         """Run Tests. Returns true on success, false on failure, and
         sets self.success to the same value.
+
+        Because nose currently discards the test result object, but we need
+        to return it to the user, override TestProgram.runTests to retain
+        the result
         """
         if self.testRunner is None:
             self.testRunner = nose.core.TextTestRunner(stream=self.config.stream,
