@@ -15,9 +15,7 @@ Note: cannot use equality to test NaNs. E.g.: ::
 
  >>> myarr = np.array([1., 0., np.nan, 3.])
  >>> np.where(myarr == np.nan)
- >>> nan == nan  # is always False! Use special numpy functions instead.
-
- >>> np.nan == np.nan
+ >>> np.nan == np.nan  # is always False! Use special numpy functions instead.
  False
  >>> myarr[myarr == np.nan] = 0. # doesn't work
  >>> myarr
@@ -86,13 +84,13 @@ Examples:
  >>> def errorhandler(errstr, errflag):
  ...      print "saw stupid error!"
  >>> np.seterrcall(errorhandler)
-<function err_handler at 0x...>
+ <function err_handler at 0x...>
  >>> j = np.seterr(all='call')
  >>> np.zeros(5, dtype=np.int32)/0
  FloatingPointError: invalid value encountered in divide
  saw stupid error!
  >>> j = np.seterr(**oldsettings) # restore previous
-                                  # error-handling settings
+ ...                              # error-handling settings
 
 Interfacing to C:
 -----------------
