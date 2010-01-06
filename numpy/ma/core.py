@@ -4743,8 +4743,7 @@ class MaskedArray(ndarray):
     round.__doc__ = ndarray.round.__doc__
 
     #............................................
-    def argsort(self, axis=None, fill_value=None, kind='quicksort',
-                order=None):
+    def argsort(self, axis=None, kind='quicksort', order=None, fill_value=None):
         """
         Return an ndarray of indices that sort the array along the
         specified axis.  Masked values are filled beforehand to

@@ -2270,7 +2270,11 @@ class TestMaskedArrayMethods(TestCase):
             dtype=[('A', int), ('B', int)])
         assert_equal(test, b)
         assert_equal(test.mask, b.mask)
-        #
+
+    def test_argsort(self):
+        "Test argsort"
+        a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
+        assert_equal(np.argsort(a), argsort(a))
 
 
     def test_squeeze(self):
