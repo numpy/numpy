@@ -2627,6 +2627,26 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_equal(out, control)
 
 
+    def test_axis_methods_nomask(self):
+        "Test the combination nomask & methods w/ axis"
+        a = array([[1, 2, 3], [4, 5, 6]])
+        #
+        assert_equal(a.sum(0), [5, 7, 9])
+        assert_equal(a.sum(-1), [6, 15])
+        assert_equal(a.sum(1), [6, 15])
+        #
+        assert_equal(a.prod(0), [4, 10, 18])
+        assert_equal(a.prod(-1), [6, 120])
+        assert_equal(a.prod(1), [6, 120])
+        #
+        assert_equal(a.min(0), [1, 2, 3])
+        assert_equal(a.min(-1), [1, 4])
+        assert_equal(a.min(1), [1, 4])
+        #
+        assert_equal(a.max(0), [4, 5, 6])
+        assert_equal(a.max(-1), [3, 6])
+        assert_equal(a.max(1), [3, 6])
+
 #------------------------------------------------------------------------------
 
 class TestMaskedArrayMathMethodsComplex(TestCase):

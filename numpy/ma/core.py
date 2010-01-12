@@ -1677,6 +1677,13 @@ def flatten_mask(mask):
     return np.array([_ for _ in flattened], dtype=bool)
 
 
+def _check_mask_axis(mask, axis):
+    "Check whether there are masked values along the given axis"
+    if mask is not nomask:
+        return mask.all(axis=axis)
+    return nomask
+
+
 #####--------------------------------------------------------------------------
 #--- --- Masking functions ---
 #####--------------------------------------------------------------------------
@@ -4152,7 +4159,7 @@ class MaskedArray(ndarray):
     True
 
         """
-        mask = self._mask.all(axis)
+        mask = _check_mask_axis(self._mask, axis)
         if out is None:
             d = self.filled(True).all(axis=axis).view(type(self))
             if d.ndim:
@@ -4188,7 +4195,7 @@ class MaskedArray(ndarray):
         any : equivalent function
 
         """
-        mask = self._mask.all(axis)
+        mask = _check_mask_axis(self._mask, axis)
         if out is None:
             d = self.filled(False).any(axis=axis).view(type(self))
             if d.ndim:
@@ -4365,7 +4372,7 @@ class MaskedArray(ndarray):
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
-        newmask = _mask.all(axis=axis)
+        newmask = _check_mask_axis(_mask, axis)
         # No explicit output
         if out is None:
             result = self.filled(0).sum(axis, dtype=dtype)
@@ -4493,7 +4500,7 @@ class MaskedArray(ndarray):
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
-        newmask = _mask.all(axis=axis)
+        newmask = _check_mask_axis(_mask, axis)
         # No explicit output
         if out is None:
             result = self.filled(1).prod(axis, dtype=dtype)
@@ -5017,7 +5024,7 @@ class MaskedArray(ndarray):
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
-        newmask = _mask.all(axis=axis)
+        newmask = _check_mask_axis(_mask, axis)
         if fill_value is None:
             fill_value = minimum_fill_value(self)
         # No explicit output
@@ -5116,7 +5123,7 @@ class MaskedArray(ndarray):
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
-        newmask = _mask.all(axis=axis)
+        newmask = _check_mask_axis(_mask, axis)
         if fill_value is None:
             fill_value = maximum_fill_value(self)
         # No explicit output
