@@ -1216,7 +1216,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             dims.ptr[0] = (buffer.len-(intp)offset) / itemsize;
         }
         else if ((strides.ptr == NULL) &&
-                 (buffer.len < ((intp)itemsize)*
+                 (buffer.len < (offset + (intp)itemsize)*
                   PyArray_MultiplyList(dims.ptr, dims.len))) {
             PyErr_SetString(PyExc_TypeError,
                             "buffer is too small for "      \
