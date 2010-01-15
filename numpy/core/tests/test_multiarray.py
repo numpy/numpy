@@ -94,9 +94,10 @@ class TestAttributes(TestCase):
             r.strides = strides=strides*x.itemsize
             return r
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
+        assert_equal(make_array(7,3,1), array([3, 4, 5, 6, 7, 8, 9]))
         self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
         self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
-        self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
+        self.failUnlessRaises(RuntimeError, make_array, 8, 3, 1)
         #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
 
     def test_fill(self):
