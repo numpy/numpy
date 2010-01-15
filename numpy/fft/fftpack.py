@@ -37,7 +37,6 @@ __all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
      take
 import fftpack_lite as fftpack
-from helper import *
 
 _fft_cache = {}
 _real_fft_cache = {}
