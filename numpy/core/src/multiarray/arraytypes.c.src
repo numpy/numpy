@@ -2094,16 +2094,20 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 #type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, datetime, timedelta#
 */
 static Bool
-@fname@_nonzero (@type@ *ip, PyArrayObject *ap)
+@fname@_nonzero (char *ip, PyArrayObject *ap)
 {
-    @type@ t1;
-    if (ap==NULL || PyArray_ISBEHAVED_RO(ap))
-        return (Bool) (*ip != 0);
+    if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
+        @type@ *ptmp = (@type@ *)ip;
+        return (Bool) (*ptmp != 0);
+    }
     else {
-        /* don't worry about swap, since we are just testing
-           whether or not equal to 0 */
-        memcpy(&t1, ip, sizeof(@type@));
-        return (Bool) (t1 != 0);
+        /*
+         * don't worry about swap, since we are just testing
+         * whether or not equal to 0
+         */
+        @type@ tmp;
+        memcpy(&tmp, ip, sizeof(@type@));
+        return (Bool) (tmp != 0);
     }
 }
 /**end repeat**/
@@ -2113,16 +2117,20 @@ static Bool
 #type=cfloat, cdouble, clongdouble#
 */
 static Bool
-@fname@_nonzero (@type@ *ip, PyArrayObject *ap)
+@fname@_nonzero (char *ip, PyArrayObject *ap)
 {
-    @type@ t1;
-    if (ap==NULL || PyArray_ISBEHAVED_RO(ap))
-        return (Bool) ((ip->real != 0) || (ip->imag != 0));
+    if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
+        @type@ *ptmp = (@type@ *)ip;
+        return (Bool) ((ptmp->real != 0) || (ptmp->imag != 0));
+    }
     else {
-        /* don't worry about swap, since we are just testing
-           whether or not equal to 0 */
-        memcpy(&t1, ip, sizeof(@type@));
-        return (Bool) ((t1.real != 0) || (t1.imag != 0));
+        /*
+         * don't worry about swap, since we are just testing
+         * whether or not equal to 0
+         */
+        @type@ tmp;
+        memcpy(&tmp, ip, sizeof(@type@));
+        return (Bool) ((tmp.real != 0) || (tmp.imag != 0));
     }
 }
 /**end repeat**/
