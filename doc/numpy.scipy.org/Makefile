@@ -9,7 +9,7 @@ PAPER         =
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = -d _build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
@@ -30,86 +30,86 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf build/*
+	-rm -rf _build/*
 
 upload: html
-	chmod ug=rwX,o=rX -R build/html
+	chmod ug=rwX,o=rX -R _build/html
 	rsync -r -z --delete-after -p \
-	    build/html/ \
+	    _build/html/ \
 	    $(USER)@new.scipy.org:/srv/www/numpy/
 
 html:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) _build/html
 	@echo
-	@echo "Build finished. The HTML pages are in build/html."
+	@echo "Build finished. The HTML pages are in _build/html."
 
 dirhtml:
-	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) build/dirhtml
+	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) _build/dirhtml
 	@echo
-	@echo "Build finished. The HTML pages are in build/dirhtml."
+	@echo "Build finished. The HTML pages are in _build/dirhtml."
 
 pickle:
-	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) build/pickle
+	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) _build/pickle
 	@echo
 	@echo "Build finished; now you can process the pickle files."
 
 json:
-	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) build/json
+	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) _build/json
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
 htmlhelp:
-	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) build/htmlhelp
+	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) _build/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
-	      ".hhp project file in build/htmlhelp."
+	      ".hhp project file in _build/htmlhelp."
 
 qthelp:
-	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp
+	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) _build/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
-	      ".qhcp project file in build/qthelp, like this:"
-	@echo "# qcollectiongenerator build/qthelp/Numpy.qhcp"
+	      ".qhcp project file in _build/qthelp, like this:"
+	@echo "# qcollectiongenerator _build/qthelp/Numpy.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile build/qthelp/Numpy.qhc"
+	@echo "# assistant -collectionFile _build/qthelp/Numpy.qhc"
 
 devhelp:
-	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) build/devhelp
+	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) _build/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
 	@echo "# mkdir -p $$HOME/.local/share/devhelp/Numpy"
-	@echo "# ln -s build/devhelp $$HOME/.local/share/devhelp/Numpy"
+	@echo "# ln -s _build/devhelp $$HOME/.local/share/devhelp/Numpy"
 	@echo "# devhelp"
 
 latex:
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) _build/latex
 	@echo
-	@echo "Build finished; the LaTeX files are in build/latex."
+	@echo "Build finished; the LaTeX files are in _build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
 	      "run these through (pdf)latex."
 
 latexpdf: latex
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) _build/latex
 	@echo "Running LaTeX files through pdflatex..."
-	make -C build/latex all-pdf
-	@echo "pdflatex finished; the PDF files are in build/latex."
+	make -C _build/latex all-pdf
+	@echo "pdflatex finished; the PDF files are in _build/latex."
 
 changes:
-	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) build/changes
+	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) _build/changes
 	@echo
-	@echo "The overview file is in build/changes."
+	@echo "The overview file is in _build/changes."
 
 linkcheck:
-	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) build/linkcheck
+	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) _build/linkcheck
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
-	      "or in build/linkcheck/output.txt."
+	      "or in _build/linkcheck/output.txt."
 
 doctest:
-	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) build/doctest
+	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) _build/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
-	      "results in build/doctest/output.txt."
+	      "results in _build/doctest/output.txt."
 
 webup:
 	@echo "Copying html files to numpy.scipy.org..."
