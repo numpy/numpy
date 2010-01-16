@@ -110,3 +110,7 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) build/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in build/doctest/output.txt."
+
+webup:
+	@echo "Copying html files to numpy.scipy.org..."
+	rsync -avH -e ssh _build/html/ jarrod.millman@numpy.scipy.org:/srv/www/numpy
