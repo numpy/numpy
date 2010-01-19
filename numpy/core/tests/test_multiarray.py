@@ -414,11 +414,13 @@ class TestMethods(TestCase):
             strtype = '>i2'
         else:
             strtype = '<i2'
+        mydtype = [('name', 'S5'),('col2',strtype)]
         r = np.array([('a', 1),('b', 255), ('c', 3), ('d', 258)],
-                     dtype=[('name', 'S5'),('col2',strtype)])
+                     dtype= mydtype)
         r.sort(order='col2')
         assert_equal(r['col2'], [1, 3, 255, 258])
-        assert_equal(r, [('a', 1), ('c', 3), ('b', 255), ('d', 258)])
+        assert_equal(r, np.array([('a', 1), ('c', 3), ('b', 255), ('d', 258)],
+                                 dtype=mydtype))
 
     def test_argsort(self):
         # all c scalar argsorts use the same code with different types
