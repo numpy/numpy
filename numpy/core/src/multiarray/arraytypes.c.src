@@ -2608,6 +2608,7 @@ UNICODE_compare(PyArray_UCS4 *ip1, PyArray_UCS4 *ip2,
  * in not_equal.
  *
  * Must align data passed on to sub-comparisons.
+ * Also must swap data based on to sub-comparisons.
  */
 static int
 VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
@@ -2616,7 +2617,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     PyObject *names, *key;
     PyObject *tup, *title;
     char *nip1, *nip2;
-    int i, offset, res = 0;
+    int i, offset, res = 0, swap=0;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
@@ -2634,18 +2635,21 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             goto finish;
         }
         ap->descr = new;
+        swap = PyArray_ISBYTESWAPPED(ap);
         nip1 = ip1+offset;
         nip2 = ip2+offset;
-        if (new->alignment > 1) {
-            if (((intp)(nip1) % new->alignment) != 0) {
+        if ((swap) || (new->alignment > 1)) {
+            if ((swap) || (((intp)(nip1) % new->alignment) != 0)) {
                 /* create buffer and copy */
                 nip1 = _pya_malloc(new->elsize);
                 if (nip1 == NULL) {
                     goto finish;
                 }
                 memcpy(nip1, ip1+offset, new->elsize);
+                if (swap)
+                    new->f->copyswap(nip1, NULL, swap, ap);
             }
-            if (((intp)(nip2) % new->alignment) != 0) {
+            if ((swap) || (((intp)(nip2) % new->alignment) != 0)) {
                 /* copy data to a buffer */
                 nip2 = _pya_malloc(new->elsize);
                 if (nip2 == NULL) {
@@ -2655,10 +2659,12 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                     goto finish;
                 }
                 memcpy(nip2, ip2+offset, new->elsize);
+                if (swap)
+                    new->f->copyswap(nip2, NULL, swap, ap);
             }
         }
         res = new->f->compare(nip1, nip2, ap);
-        if (new->alignment > 1) {
+        if ((swap) || (new->alignment > 1)) {
             if (nip1 != ip1+offset) {
                 _pya_free(nip1);
             }

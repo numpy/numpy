@@ -410,6 +410,16 @@ class TestMethods(TestCase):
         assert_equal(r.word, array(['my','first','name']))
         assert_equal(r.number, array([3.1,4.5,6.2]))
 
+        if sys.byteorder == 'little':
+            strtype = '>i2'
+        else:
+            strtype = '<i2'
+        r = np.array([('a', 1),('b', 255), ('c', 3), ('d', 258)],
+                     dtype=[('name', 'S5'),('col2',strtype)])
+        r.sort(order='col2')
+        assert_equal(r['col2'], [1, 3, 255, 258])
+        assert_equal(r, [('a', 1), ('c', 3), ('b', 255), ('d', 258)])
+
     def test_argsort(self):
         # all c scalar argsorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
