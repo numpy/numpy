@@ -2194,9 +2194,9 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
  * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *         longlong, ulonglong, float, double, longdouble,
  *         datetime, timedelta#
-*/
+ */
 static Bool
-@fname@_nonzero (@type@ *ip, PyArrayObject *ap)
+@fname@_nonzero (char *ip, PyArrayObject *ap)
 {
     if (ap == NULL || PyArray_ISBEHAVED_RO(ap)) {
         @type@ *ptmp = (@type@ *)ip;
