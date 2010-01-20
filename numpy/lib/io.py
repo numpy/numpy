@@ -1428,7 +1428,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     mdtype = np.bool
                 outputmask = np.array(masks, dtype=mdtype)
     # Try to take care of the missing data we missed
-    if usemask and output.dtype.names:
+    names = output.dtype.names
+    if usemask and names:
         for (name, conv) in zip(names or (), converters):
             missing_values = [conv(_) for _ in conv.missing_values if _ != '']
             for mval in missing_values:
