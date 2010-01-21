@@ -4887,13 +4887,13 @@ class MaskedArray(ndarray):
     def sort(self, axis= -1, kind='quicksort', order=None,
              endwith=True, fill_value=None):
         """
-    Return a sorted copy of an array.
+    Sort the array, in-place
 
     Parameters
     ----------
     a : array_like
         Array to be sorted.
-    axis : int or None, optional
+    axis : int, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
@@ -4905,9 +4905,9 @@ class MaskedArray(ndarray):
     endwith : {True, False}, optional
         Whether missing values (if any) should be forced in the upper indices
         (at the end of the array) (True) or lower indices (at the beginning).
-    fill_value : {var}
-        Value used to fill in the masked values.  If None, use
-        the the output of minimum_fill_value().
+    fill_value : {var}, optional
+        Value used internally for the masked values.
+        If ``fill_value`` is not None, it supersedes ``endwith``.
 
     Returns
     -------
@@ -4923,56 +4923,28 @@ class MaskedArray(ndarray):
 
     Notes
     -----
-    The various sorting algorithms are characterized by their average speed,
-    worst case performance, work space size, and whether they are stable. A
-    stable sort keeps items with the same key in the same relative
-    order. The three available algorithms have the following
-    properties:
-
-    =========== ======= ============= ============ =======
-       kind      speed   worst case    work space  stable
-    =========== ======= ============= ============ =======
-    'quicksort'    1     O(n^2)            0          no
-    'mergesort'    2     O(n*log(n))      ~n/2        yes
-    'heapsort'     3     O(n*log(n))       0          no
-    =========== ======= ============= ============ =======
-
-    All the sort algorithms make temporary copies of the data when
-    sorting along any but the last axis.  Consequently, sorting along
-    the last axis is faster and uses less space than sorting along
-    any other axis.
+    See ``sort`` for notes on the different sorting algorithms.
 
     Examples
     --------
-    >>> a = np.array([[1,4],[3,1]])
-    >>> np.sort(a)                # sort along the last axis
-    array([[1, 4],
-           [1, 3]])
-    >>> np.sort(a, axis=None)     # sort the flattened array
-    array([1, 1, 3, 4])
-    >>> np.sort(a, axis=0)        # sort along the first axis
-    array([[1, 1],
-           [3, 4]])
+    >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
+    >>> # Default
+    >>> a.sort()
+    >>> print a
+    [1 3 5 -- --]
 
-    Use the `order` keyword to specify a field to use when sorting a
-    structured array:
+    >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
+    >>> # Put missing values in the front
+    >>> a.sort(endwith=False)
+    >>> print a
+    [-- -- 1 3 5]
 
-    >>> dtype = [('name', 'S10'), ('height', float), ('age', int)]
-    >>> values = [('Arthur', 1.8, 41), ('Lancelot', 1.9, 38),
-    ...           ('Galahad', 1.7, 38)]
-    >>> a = np.array(values, dtype=dtype)       # create a structured array
-    >>> np.sort(a, order='height')                        # doctest: +SKIP
-    array([('Galahad', 1.7, 38), ('Arthur', 1.8, 41),
-           ('Lancelot', 1.8999999999999999, 38)],
-          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
-
-    Sort by age, then height if ages are equal:
-
-    >>> np.sort(a, order=['age', 'height'])               # doctest: +SKIP
-    array([('Galahad', 1.7, 38), ('Lancelot', 1.8999999999999999, 38),
-           ('Arthur', 1.8, 41)],
-          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
-
+    >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
+    >>> # fill_value takes over endwith
+    >>> a.sort(endwith=False, fill_value=3)
+    >>> print a
+    [1 -- -- 3 5]
+    
         """
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
