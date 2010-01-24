@@ -8,7 +8,7 @@ from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
 
 compilers = ['IntelFCompiler', 'IntelVisualFCompiler',
              'IntelItaniumFCompiler', 'IntelItaniumVisualFCompiler',
-             'IntelEM64TFCompiler']
+             'IntelEM64VisualFCompiler', 'IntelEM64TFCompiler']
 
 def intel_version_match(type):
     # Match against the important stuff in the version string
@@ -165,9 +165,14 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
     compiler_type = 'intelv'
     description = 'Intel Visual Fortran Compiler for 32-bit apps'
     version_match = intel_version_match('32-bit|IA-32')
+    
+    def update_executables(self):
+        f = dummy_fortran_file()    
+        self.executables['version_cmd'] = ['<F77>', '/FI', '/c',
+                                           f + '.f', '/o', f + '.o']
 
     ar_exe = 'lib.exe'
-    possible_executables = ['ifl']
+    possible_executables = ['ifort', 'ifl']
 
     executables = {
         'version_cmd'  : None,
@@ -196,7 +201,7 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return ['/4Yb','/d2']
 
     def get_flags_opt(self):
-        return ['/O3','/Qip','/Qipo','/Qipo_obj']
+        return ['/O3','/Qip']
 
     def get_flags_arch(self):
         opt = []
@@ -230,6 +235,13 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
         'ranlib'       : None
         }
+
+class IntelEM64VisualFCompiler(IntelVisualFCompiler):
+    compiler_type = 'intelvem'
+    description = 'Intel Visual Fortran Compiler for 64-bit apps'
+
+    version_match = simple_version_match(start='Intel\(R\).*?64,')
+
 
 if __name__ == '__main__':
     from distutils import log

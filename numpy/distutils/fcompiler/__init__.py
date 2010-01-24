@@ -688,7 +688,8 @@ class FCompiler(CCompiler):
 
 _default_compilers = (
     # sys.platform mappings
-    ('win32', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
+    ('win32', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95',
+               'intelvem', 'intelem')),
     ('cygwin.*', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
     ('linux.*', ('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
                 'intele','intelem','gnu95','g95')),
