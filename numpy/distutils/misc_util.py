@@ -1275,6 +1275,8 @@ class Configuration(object):
         include_dirs = self.paths(paths)
         dist = self.get_distribution()
         if dist is not None:
+            if dist.include_dirs is None:
+                dist.include_dirs = []
             dist.include_dirs.extend(include_dirs)
         else:
             self.include_dirs.extend(include_dirs)
@@ -1311,6 +1313,8 @@ class Configuration(object):
                 [headers.append((path[0],p)) for p in self.paths(path[1])]
         dist = self.get_distribution()
         if dist is not None:
+            if dist.headers is None:
+                dist.headers = []
             dist.headers.extend(headers)
         else:
             self.headers.extend(headers)
@@ -1655,6 +1659,8 @@ class Configuration(object):
                                pre_hook, post_hook,
                                full_source_files, package_path)
         if dist is not None:
+            if dist.scons_data is None:
+                dist.scons_data = []
             dist.scons_data.append(scons_info)
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
