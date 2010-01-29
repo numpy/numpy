@@ -1677,6 +1677,8 @@ class Configuration(object):
         scripts = self.paths(files)
         dist = self.get_distribution()
         if dist is not None:
+            if dist.scripts is None:
+                dist.scripts = []
             dist.scripts.extend(scripts)
         else:
             self.scripts.extend(scripts)
