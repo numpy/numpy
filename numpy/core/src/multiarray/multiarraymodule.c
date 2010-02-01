@@ -626,12 +626,12 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, BEHAVED, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, ALIGNED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(typec);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0, BEHAVED, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
@@ -733,12 +733,12 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, BEHAVED, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, ALIGNED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(typec);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0, BEHAVED, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
