@@ -176,6 +176,9 @@ class TestRegression(TestCase):
             sys.stdout = sys.__stdout__
             raise AssertionError("ticket #1243")
 
+    def test_bincount_empty(self):
+        """Ticket #1387: empty array as input for bincount."""
+        assert_raises(ValueError, lambda : np.bincount(np.array([], dtype=np.intp)))
 
 if __name__ == "__main__":
     run_module_suite()

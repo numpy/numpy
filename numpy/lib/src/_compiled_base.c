@@ -117,6 +117,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             goto fail;
     }
     len = PyArray_SIZE(lst);
+    if (len < 1) {
+        PyErr_SetString(PyExc_ValueError,
+                "The first argument cannot be empty.");
+        goto fail;
+    }
     numbers = (intp *) PyArray_DATA(lst);
     mxi = mxx(numbers, len);
     mni = mnx(numbers, len);
