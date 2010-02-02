@@ -6,6 +6,8 @@ from numpy.lib import *
 from numpy.core import *
 from numpy import matrix, asmatrix
 
+import numpy as np
+
 class TestAny(TestCase):
     def test_basic(self):
         y1 = [0,0,1,0]
@@ -851,6 +853,27 @@ class TestPiecewise(TestCase):
         y = piecewise(x, x>3, [4, 0])
         assert y.ndim == 0
         assert y == 0
+
+class TestBincount(TestCase):
+    def test_simple(self):
+        y = np.bincount(np.arange(4))
+        assert_array_equal(y, np.ones(4))
+
+    def test_simple2(self):
+        y = np.bincount(np.array([1, 5, 2, 4, 1]))
+        assert_array_equal(y, np.array([0, 2, 1, 0, 1, 1]))
+
+    def test_simple_weight(self):
+        x = np.arange(4)
+        w = np.array([0.2, 0.3, 0.5, 0.1])
+        y = np.bincount(x, w)
+        assert_array_equal(y, w)
+
+    def test_simple_weight2(self):
+        x = np.array([1, 2, 4, 5, 2])
+        w = np.array([0.2, 0.3, 0.5, 0.1, 0.2])
+        y = np.bincount(x, w)
+        assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1]))
 
 def compare_results(res,desired):
     for i in range(len(desired)):
