@@ -301,8 +301,8 @@ if ctypes is not None:
         try: simple_type.__array_interface__
         except AttributeError: pass
         else: return
-	
-	typestr = _dtype(dtype).str
+
+        typestr = _dtype(dtype).str
         _typecodes[typestr] = simple_type
 
         def __array_interface__(self):
