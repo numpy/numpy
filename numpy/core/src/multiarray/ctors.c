@@ -3121,8 +3121,11 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 
     if ((offset < 0) || (offset >= ts)) {
         PyErr_Format(PyExc_ValueError,
-                     "offset must be positive and smaller than %"
-                     INTP_FMT, (intp)ts);
+                     "offset must be non-negative and smaller than buffer "\
+                     "lenth (%" INTP_FMT ")", (intp)ts);
+        Py_DECREF(buf);
+        Py_DECREF(type);
+        return NULL;
     }
 
     data += offset;

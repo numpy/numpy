@@ -294,14 +294,15 @@ if ctypes is not None:
     # c_double. Filled in by prep_simple.
     _typecodes = {}
 
-    def prep_simple(simple_type, typestr):
+    def prep_simple(simple_type, dtype):
         """Given a ctypes simple type, construct and attach an
         __array_interface__ property to it if it does not yet have one.
         """
         try: simple_type.__array_interface__
         except AttributeError: pass
         else: return
-
+	
+	typestr = _dtype(dtype).str
         _typecodes[typestr] = simple_type
 
         def __array_interface__(self):
@@ -316,11 +317,6 @@ if ctypes is not None:
 
         simple_type.__array_interface__ = property(__array_interface__)
 
-    if sys.byteorder == "little":
-        TYPESTR = "<%c%d"
-    else:
-        TYPESTR = ">%c%d"
-
     simple_types = [
         ((ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong), "i"),
         ((ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong), "u"),
@@ -330,7 +326,7 @@ if ctypes is not None:
     # Prep that numerical ctypes types:
     for types, code in simple_types:
         for tp in types:
-            prep_simple(tp, TYPESTR % (code, ct.sizeof(tp)))
+            prep_simple(tp, "%c%d" % (code, ct.sizeof(tp)))
 
     ################################################################
     # array types
