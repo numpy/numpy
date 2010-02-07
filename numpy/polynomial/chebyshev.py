@@ -69,8 +69,8 @@ __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
 import numpy as np
 import numpy.linalg as la
 import polyutils as pu
+import warnings
 from polytemplate import polytemplate
-from polyutils import RankWarning, PolyError, PolyDomainError
 
 chebtrim = pu.trimcoef
 
