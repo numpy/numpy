@@ -2733,6 +2733,9 @@ class MaskedArray(ndarray):
         # But don't run the check unless we have something to check....
         if fill_value is not None:
             _data._fill_value = _check_fill_value(fill_value, _data.dtype)
+        elif names_:
+            # Named fields: make sure _fill_value is initialized
+            _data._fill_value = _check_fill_value(None, _data.dtype)
         # Process extra options ..
         if hard_mask is None:
             _data._hardmask = getattr(data, '_hardmask', False)

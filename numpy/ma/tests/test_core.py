@@ -1440,6 +1440,7 @@ class TestFillingValues(TestCase):
     def test_fillvalue_individual_fields(self):
         "Test setting fill_value on individual fields"
         ndtype = [('a', int), ('b', int)]
+        # Explicit fill_value
         a = array(zip([1, 2, 3], [4, 5, 6]),
                   fill_value=(-999, -999), dtype=ndtype)
         f = a._fill_value
@@ -1449,6 +1450,12 @@ class TestFillingValues(TestCase):
         assert_equal(tuple(a.fill_value), (10, -999))
         a.fill_value['b'] = -10
         assert_equal(tuple(a.fill_value), (10, -10))
+        # Implicit fill_value
+        t = array(zip([1, 2, 3], [4, 5, 6]), dtype=[('a', int), ('b', int)])
+        tt = t['a']
+        tt.set_fill_value(10)
+        assert_equal(tt._fill_value, np.array(10))
+        assert_equal(tuple(t.fill_value), (10, default_fill_value(0)))
 
 #------------------------------------------------------------------------------
 
