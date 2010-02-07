@@ -47,7 +47,7 @@
     #define NPY_CPU_S390
 #elif defined(__ia64)
     #define NPY_CPU_IA64
-#elif defined(__hppa__)
+#elif defined(__hppa)
     #define NPY_CPU_HPPA
 #elif defined(__alpha__)
     #define NPY_CPU_ALPHA
