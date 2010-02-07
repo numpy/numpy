@@ -3104,6 +3104,9 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         PyErr_Format(PyExc_ValueError,
                      "offset must be positive and smaller than %"
                      INTP_FMT, (intp)ts);
+        Py_DECREF(buf);
+        Py_DECREF(type);
+        return NULL;
     }
 
     data += offset;
