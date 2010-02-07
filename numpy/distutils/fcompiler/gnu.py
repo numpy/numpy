@@ -302,8 +302,8 @@ class Gnu95FCompiler(GnuFCompiler):
                 c_compiler = self.c_compiler
                 if c_compiler and c_compiler.compiler_type == "msvc":
                     return []
-            else:
-                raise NotImplementedError("Only MS compiler supported with gfortran on win64")
+                else:
+                    raise NotImplementedError("Only MS compiler supported with gfortran on win64")
         return opt
 
     def get_target(self):
