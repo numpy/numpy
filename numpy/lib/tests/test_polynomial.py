@@ -143,5 +143,11 @@ class TestDocs(TestCase):
         p2 = p.integ(3, k=[9,7,6])
         assert (p2.coeffs == [1/4./5.,1/3./4.,1/2./3.,9/1./2.,7,6]).all()
 
+    def test_zero_dims(self):
+        try:
+            np.poly(np.zeros((0, 0)))
+        except ValueError:
+            pass
+
 if __name__ == "__main__":
     run_module_suite()

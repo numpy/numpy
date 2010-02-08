@@ -120,9 +120,9 @@ def poly(seq_of_zeros):
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)
     sh = seq_of_zeros.shape
-    if len(sh) == 2 and sh[0] == sh[1]:
+    if len(sh) == 2 and sh[0] == sh[1] and sh[0] != 0:
         seq_of_zeros = eigvals(seq_of_zeros)
-    elif len(sh) ==1:
+    elif len(sh) == 1:
         pass
     else:
         raise ValueError, "input must be 1d or square 2d array."
