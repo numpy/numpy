@@ -503,7 +503,7 @@ class TestMaskedArray(TestCase):
     def test_filled_w_mvoid(self):
         "Test filled w/ mvoid"
         ndtype = [('a', int), ('b', float)]
-        a = mvoid(np.array((1, 2)), mask=[(0, 1)], dtype=ndtype)
+        a = mvoid((1, 2.), mask=[(0, 1)], dtype=ndtype)
         # Filled using default
         test = a.filled()
         assert_equal(tuple(test), (1, default_fill_value(1.)))
@@ -1456,6 +1456,19 @@ class TestFillingValues(TestCase):
         tt.set_fill_value(10)
         assert_equal(tt._fill_value, np.array(10))
         assert_equal(tuple(t.fill_value), (10, default_fill_value(0)))
+
+    def test_fillvalue_implicit_structured_array(self):
+        "Check that fill_value is always defined for structured arrays"
+        ndtype = ('b', float)
+        adtype = ('a', float)
+        a = array([(1.,), (2.,)], mask=[(False,), (False,)],
+                  fill_value=(np.nan,), dtype=np.dtype([adtype]))
+        b = empty(a.shape, dtype=[adtype, ndtype])
+        b['a'] = a['a']
+        b['a'].set_fill_value(a['a'].fill_value)
+        f = b._fill_value[()]
+        assert(np.isnan(f[0]))
+        assert_equal(f[-1], default_fill_value(1.))
 
 #------------------------------------------------------------------------------
 

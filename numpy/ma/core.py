@@ -2792,6 +2792,10 @@ class MaskedArray(ndarray):
             except AttributeError:
                 # When _mask.shape is not writable (because it's a void)
                 pass
+        # Finalize the fill_value for structured arrays
+        if self.dtype.names:
+            if self._fill_value is None:
+                self._fill_value = _check_fill_value(None, self.dtype)
         return
 
 
@@ -3569,7 +3573,8 @@ class MaskedArray(ndarray):
         elif n <= 1:
             return _print_templates['short'] % parameters
         return _print_templates['long'] % parameters
-    #............................................
+
+
     def __eq__(self, other):
         "Check whether other equals self elementwise"
         if self is masked:
@@ -5432,7 +5437,9 @@ class mvoid(MaskedArray):
     #
     def __new__(self, data, mask=nomask, dtype=None, fill_value=None):
         dtype = dtype or data.dtype
-        _data = ndarray.__new__(self, (), dtype=dtype, buffer=data.data)
+        _data = ndarray((), dtype=dtype)
+        _data[()] = data
+        _data = _data.view(self)
         if mask is not nomask:
             try:
                 # Mask is already a 0D array
@@ -5463,17 +5470,29 @@ class mvoid(MaskedArray):
             return self._data.__str__()
         m = tuple(m)
         if (not any(m)):
-            return self._data.__repr__()
+            return self._data.__str__()
         r = self._data.tolist()
         p = masked_print_option
         if not p.enabled():
             p = 'N/A'
         else:
             p = str(p)
-        r = [(str(_), p)[_m] for (_, _m) in zip(self._data.tolist(), tuple(m))]
+        r = [(str(_), p)[_m] for (_, _m) in zip(r, m)]
         return "(%s)" % ", ".join(r)
 
-    __repr__ = __str__
+    def __repr__(self):
+        m = self._mask
+        if (m is nomask):
+            return self._data.__repr__()
+        m = tuple(m)
+        if not any(m):
+            return self._data.__repr__()
+        p = masked_print_option
+        if not p.enabled():
+            return self.filled(self.fill_value).__repr__()
+        p = str(p)
+        r = [(str(_), p)[_m] for (_, _m) in zip(r, m)]
+        return "(%s)" % ", ".join(r)
 
     def __iter__(self):
         "Defines an iterator for mvoid"
