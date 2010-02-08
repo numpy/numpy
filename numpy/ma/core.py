@@ -394,7 +394,7 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = default_fill_value(ndtype)
     elif fields:
         fdtype = [(_[0], _[1]) for _ in ndtype.descr]
-        if isinstance(fill_value, ndarray):
+        if isinstance(fill_value, (ndarray, np.void)):
             try:
                 fill_value = np.array(fill_value, copy=False, dtype=fdtype)
             except ValueError:
@@ -2733,9 +2733,6 @@ class MaskedArray(ndarray):
         # But don't run the check unless we have something to check....
         if fill_value is not None:
             _data._fill_value = _check_fill_value(fill_value, _data.dtype)
-        elif names_:
-            # Named fields: make sure _fill_value is initialized
-            _data._fill_value = _check_fill_value(None, _data.dtype)
         # Process extra options ..
         if hard_mask is None:
             _data._hardmask = getattr(data, '_hardmask', False)
