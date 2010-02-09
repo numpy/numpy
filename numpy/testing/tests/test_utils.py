@@ -363,6 +363,19 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
             assert_array_almost_equal_nulp(x, y, nulp=1000)
         self.failUnlessRaises(AssertionError, failure)
 
+    def test_complex(self):
+        x = np.random.randn(10) + 1j * np.random.randn(10)
+        y = x + 1
+        def failure():
+            assert_array_almost_equal_nulp(x, y, nulp=1000)
+        self.failUnlessRaises(AssertionError, failure)
+
+    def test_complex2(self):
+        x = np.random.randn(10)
+        y = np.array(x, np.complex) + 1e-16 * np.random.randn(10)
+
+        assert_array_almost_equal_nulp(x, y, nulp=1000)
+
 class TestULP(unittest.TestCase):
     def test_equal(self):
         x = np.random.randn(10)
