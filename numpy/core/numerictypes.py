@@ -373,15 +373,13 @@ def _set_up_aliases():
                   ('unicode_', 'unicode'),
                   ('str_', 'string'),
                   ('string_', 'string'),
-                  ('object_', 'object'),
-                  ('timedelta_', 'timedelta'),
-                  ('datetime_', 'datetime')]
+                  ('object_', 'object'),]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
     for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
-              'complex', 'bool', 'string', 'datetime', 'timedelta']:
+              'complex', 'bool', 'string', 'datetime']:
         try:
             del allTypes[t]
             del sctypeDict[t]

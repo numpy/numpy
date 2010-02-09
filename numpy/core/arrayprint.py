@@ -191,13 +191,10 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             # make sure True and False line up.
             format_function = _boolFormatter
         elif issubclass(dtypeobj, _nt.integer):
-            if issubclass(dtypeobj, _nt.timeinteger):
-                format_function = str
-            else:
-                max_str_len = max(len(str(maximum.reduce(data))),
-                                  len(str(minimum.reduce(data))))
-                format = '%' + str(max_str_len) + 'd'
-                format_function = lambda x: _formatInteger(x, format)
+            max_str_len = max(len(str(maximum.reduce(data))),
+                              len(str(minimum.reduce(data))))
+            format = '%' + str(max_str_len) + 'd'
+            format_function = lambda x: _formatInteger(x, format)
         elif issubclass(dtypeobj, _nt.floating):
             if issubclass(dtypeobj, _nt.longfloat):
                 format_function = _longfloatFormatter(precision)
