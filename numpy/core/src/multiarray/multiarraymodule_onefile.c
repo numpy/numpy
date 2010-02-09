@@ -10,7 +10,6 @@
 #include "scalartypes.c"
 #include "scalarapi.c"
 
-#include "datetime.c"
 #include "arraytypes.c"
 
 #include "hashdescr.c"
