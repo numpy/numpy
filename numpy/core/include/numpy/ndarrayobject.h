@@ -78,7 +78,6 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_OBJECT=17,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
-                    NPY_DATETIME, NPY_TIMEDELTA,
                     NPY_NTYPES,
                     NPY_NOTYPE,
                     NPY_CHAR,      /* special flag */
@@ -573,25 +572,6 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
-
-
-typedef struct {
-        NPY_DATETIMEUNIT base;
-        int num;
-        int den;      /* Converted to 1 on input for now -- an input-only mechanism */
-        int events;
-} PyArray_DatetimeMetaData;
-
-typedef struct {
-        npy_longlong year;
-        int month, day, hour, min, sec, us, ps, as;
-} npy_datetimestruct;
-
-typedef struct {
-        npy_longlong day;
-        int sec, us, ps, as;
-} npy_timedeltastruct;
-
 
 #define PyDataType_GetDatetimeMetaData(descr) ((descr->metadata == NULL) ? NULL : ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
 

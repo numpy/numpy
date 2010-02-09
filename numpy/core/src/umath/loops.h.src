@@ -396,49 +396,6 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 
 /*
  *****************************************************************************
- **                            DATETIME LOOPS                               **
- *****************************************************************************
- */
-
-/**begin repeat
- * #TYPE = DATETIME, TIMEDELTA#
- */
-#define @TYPE@_fmax @TYPE@_maximum
-#define @TYPE@_fmin @TYPE@_minimum
-/**end repeat**/
-
-/**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *      absolute, logical_and, logical_not, logical_or, logical_xor, maximum,
- *      minimum, negative, ones_like, sign#
- */
-NPY_NO_EXPORT void
-DATETIME_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-/**end repeat**/
-
-NPY_NO_EXPORT void
-DATETIME_Mm_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DATETIME_mM_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DATETIME_Mm_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DATETIME_MM_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_mm_m_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-/*
- *****************************************************************************
  **                            OBJECT LOOPS                                 **
  *****************************************************************************
  */

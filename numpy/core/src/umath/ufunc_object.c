@@ -213,9 +213,6 @@ _lowest_type(char intype)
     case PyArray_INT:
     case PyArray_LONG:
     case PyArray_LONGLONG:
-    case PyArray_DATETIME:
-    case PyArray_TIMEDELTA:
-        return PyArray_BYTE;
     /* case PyArray_UBYTE */
     case PyArray_USHORT:
     case PyArray_UINT:
@@ -1539,13 +1536,6 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                     || (arg_types[i] == PyArray_OBJECT))) {
             loop->obj = UFUNC_OBJ_ISOBJECT|UFUNC_OBJ_NEEDS_API;
         }
-        if (!(loop->obj & UFUNC_OBJ_NEEDS_API)
-                && ((mps[i]->descr->type_num == PyArray_DATETIME)
-                    || (mps[i]->descr->type_num == PyArray_TIMEDELTA)
-                    || (arg_types[i] == PyArray_DATETIME)
-                    || (arg_types[i] == PyArray_TIMEDELTA))) {
-            loop->obj = UFUNC_OBJ_NEEDS_API;
-        }
     }
 
     if (self->core_enabled && (loop->obj & UFUNC_OBJ_ISOBJECT)) {
@@ -2503,13 +2493,6 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     /* Determine if object arrays are involved */
     if (otype == PyArray_OBJECT || aar->descr->type_num == PyArray_OBJECT) {
         loop->obj = UFUNC_OBJ_ISOBJECT | UFUNC_OBJ_NEEDS_API;
-    }
-    else if ((otype == PyArray_DATETIME)
-            || (aar->descr->type_num == PyArray_DATETIME)
-            || (otype == PyArray_TIMEDELTA)
-            || (aar->descr->type_num == PyArray_TIMEDELTA))
-    {
-        loop->obj = UFUNC_OBJ_NEEDS_API;
     }
     else {
         loop->obj = 0;

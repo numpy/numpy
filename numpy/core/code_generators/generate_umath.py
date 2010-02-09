@@ -168,19 +168,16 @@ chartoname = {'?': 'bool',
               'F': 'cfloat',
               'D': 'cdouble',
               'G': 'clongdouble',
-              'M': 'datetime',
-              'm': 'timedelta',
               'O': 'OBJECT',
               # '.' is like 'O', but calls a method of the object instead
               # of a function
               'P': 'OBJECT',
               }
 
-all = '?bBhHiIlLqQfdgFDGOMm'
+all = '?bBhHiIlLqQfdgFDGO'
 O = 'O'
 P = 'P'
 ints = 'bBhHiIlLqQ'
-times = 'Mm'
 intsO = ints + O
 bints = '?' + ints
 bintsO = bints + O
@@ -193,13 +190,13 @@ cmplxP = cmplx + P
 inexact = flts + cmplx
 noint = inexact+O
 nointP = inexact+P
-allP = bints+times+flts+cmplxP
+allP = bints+flts+cmplxP
 nobool = all[1:]
-noobj = all[:-3]+all[-2:]
-nobool_or_obj = all[1:-3]+all[-2:]
+noobj = all[:-2]
+nobool_or_obj = all[1:-2]
 intflt = ints+flts
 intfltcmplx = ints+flts+cmplx
-nocmplx = bints+times+flts
+nocmplx = bints+flts
 nocmplxO = nocmplx+O
 nocmplxP = nocmplx+P
 notimes_or_obj = bints + inexact
@@ -218,20 +215,20 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
           TD(notimes_or_obj),
-          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
-           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
-           TypeDescription('M', UsesArraysAsData, 'mM', 'M'),
-          ],
+          #[TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
+          # TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
+          # TypeDescription('M', UsesArraysAsData, 'mM', 'M'),
+          #],
           TD(O, f='PyNumber_Add'),
           ),
 'subtract' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.subtract'),
           TD(notimes_or_obj),
-          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
-           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
-           TypeDescription('M', UsesArraysAsData, 'MM', 'm'),
-          ],
+          #[TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
+          # TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
+          # TypeDescription('M', UsesArraysAsData, 'MM', 'm'),
+          #],
           TD(O, f='PyNumber_Subtract'),
           ),
 'multiply' :

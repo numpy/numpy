@@ -703,7 +703,6 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'hashdescr.c'),
         join('src', 'multiarray', 'arrayobject.c'),
         join('src', 'multiarray', 'buffer.c'),
-        join('src', 'multiarray', 'datetime.c'),
         join('src', 'multiarray', 'numpyos.c'),
         join('src', 'multiarray', 'conversion_utils.c'),
         join('src', 'multiarray', 'flagsobject.c'),

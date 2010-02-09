@@ -1307,34 +1307,6 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
     return same;
 }
 
-/*
- * compare the metadata for two date-times
- * return 1 if they are the same 
- * or 0 if not
- */
-static int
-_equivalent_units(PyObject *meta1, PyObject *meta2) 
-{
-    PyObject *cobj1, *cobj2;
-    PyArray_DatetimeMetaData *data1, *data2;
-    
-    /* Same meta object */
-    if (meta1 == meta2)
-	return 1;
-    
-    cobj1 = PyDict_GetItemString(meta1, NPY_METADATA_DTSTR);
-    cobj2 = PyDict_GetItemString(meta2, NPY_METADATA_DTSTR);
-    if (cobj1 == cobj2) 
-	return 1;
-    
-    data1 = PyCObject_AsVoidPtr(cobj1);
-    data2 = PyCObject_AsVoidPtr(cobj2);
-    
-    return ((data1->base == data2->base) && (data1->num == data2->num) 
-	    && (data1->den == data2->den) && (data1->events == data2->events));    
-}
-
-
 /*NUMPY_API
  *
  * This function returns true if the two typecodes are
@@ -1358,11 +1330,6 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
         || typenum2 == PyArray_VOID) {
         return ((typenum1 == typenum2) &&
                 _equivalent_fields(typ1->fields, typ2->fields));
-    }
-    if (typenum1 == PyArray_DATETIME || typenum1 == PyArray_DATETIME
-	|| typenum2 == PyArray_TIMEDELTA || typenum2 == PyArray_TIMEDELTA) {
-	return ((typenum1 == typenum2) &&
-		_equivalent_units(typ1->metadata, typ2->metadata));
     }
     return (typ1->kind == typ2->kind);
 }
@@ -2839,10 +2806,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    SINGLE_INHERIT(TimeInteger, SignedInteger);
-    SINGLE_INHERIT(Datetime, TimeInteger);
-    SINGLE_INHERIT(Timedelta, TimeInteger);
-
     /*
        fprintf(stderr,
         "tp_free = %p, PyObject_Del = %p, int_tp_free = %p, base.tp_free = %p\n",
@@ -2997,10 +2960,6 @@ PyMODINIT_FUNC initmultiarray(void) {
 
     s = PyString_InternFromString(NPY_METADATA_DTSTR);
     PyDict_SetItemString(d, "METADATA_DTSTR", s);
-    Py_DECREF(s);
-
-    s = PyCObject_FromVoidPtr((void *)_datetime_strings, NULL);
-    PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 
 #define ADDCONST(NAME)                          \
