@@ -1104,9 +1104,12 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     ay = np.abs(y)
     ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
     if not np.all(np.abs(x-y) <= ref):
-        max_nulp = np.max(nulp_diff(x, y))
-        raise AssertionError("X and Y are not equal to %d ULP "\
-                             "(max is %g)" % (nulp, max_nulp))
+        if np.iscomplexobj(x) or np.iscomplexobj(y):
+            msg = "X and Y are not equal to %d ULP" % nulp
+        else:
+            max_nulp = np.max(nulp_diff(x, y))
+            msg = "X and Y are not equal to %d ULP (max is %g)" % (nulp, max_nulp)
+        raise AssertionError(msg)
 
 def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     """Given two arrays a and b, check that every item differs in at most N
