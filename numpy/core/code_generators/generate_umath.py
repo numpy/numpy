@@ -301,7 +301,7 @@ defdict = {
 'absolute' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
-          TD(bints+flts+times),
+          TD(nocmplx),
           TD(cmplx, out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
@@ -313,7 +313,7 @@ defdict = {
 'negative' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
-          TD(bints+flts+times),
+          TD(nocmplx),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
