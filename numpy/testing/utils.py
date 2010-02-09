@@ -1152,7 +1152,7 @@ def nulp_diff(x, y, dtype=None):
 
     t = np.common_type(x, y)
     if np.iscomplexobj(x) or np.iscomplexobj(y):
-        raise NotImplementerError("_nulp not implemented for complex array")
+        raise NotImplementedError("_nulp not implemented for complex array")
 
     x = np.array(x, dtype=t)
     y = np.array(y, dtype=t)
