@@ -2032,8 +2032,27 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
             endian = '>';
         }
     }
-    state = PyTuple_New(9);
-    PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+    if (self->metadata) {
+        state = PyTuple_New(9);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));        
+        if (PyDataType_ISDATETIME(self)) {
+            PyObject *newobj;
+            /* Handle CObject in NPY_METADATA_DTSTR key separately */
+            /* newobj is a tuple of cleaned metadata dictionary
+               and tuple of date_time info (str, num, den, events) */
+            newobj = _get_pickleabletype_from_metadata(self->metadata);
+            PyTuple_SET_ITEM(state, 8, newobj);
+        }
+        else {
+            Py_INCREF(self->metadata);
+            PyTuple_SET_ITEM(state, 8, self->metadata);
+        }
+    }
+    else { /* Use version 3 pickle format */
+        state = PyTuple_New(8);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(3));
+    }
+
     PyTuple_SET_ITEM(state, 1, PyUString_FromFormat("%c", endian));
     PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
     if (self->names) {
@@ -2061,24 +2080,6 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
-    if (self->metadata) {
-        if (PyDataType_ISDATETIME(self)) {
-            PyObject *newobj;
-            /* Handle CObject in NPY_METADATA_DTSTR key separately */
-            /* newobj is a tuple of cleaned metadata dictionary
-               and tuple of date_time info (str, num, den, events) */
-            newobj = _get_pickleabletype_from_metadata(self->metadata);
-            PyTuple_SET_ITEM(state, 8, newobj);
-        }
-        else {
-            Py_INCREF(self->metadata);
-            PyTuple_SET_ITEM(state, 8, self->metadata);
-        }
-    }
-    else {
-        PyTuple_SET_ITEM(state, 8, Py_None);
-        Py_INCREF(Py_None);
-    }
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2143,67 +2144,77 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         !(PyTuple_Check(PyTuple_GET_ITEM(args, 0)))) {
         PyErr_BadInternalCall();
         return NULL;
-    }
+    }    
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
 #if defined(NPY_PY3K)
-        if (!PyArg_ParseTuple(args, "(iCOOOiiiO)", &version, &endian,
+#define _ARGSTR_ "(iCOOOiiiO)"
 #else
-        if (!PyArg_ParseTuple(args, "(icOOOiiiO)", &version, &endian,
+#define _ARGSTR_ "(icOOOiiiO)"
 #endif
-                    &subarray, &names, &fields, &elsize,
-                    &alignment, &dtypeflags, &metadata)) {
+        if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
+                              &subarray, &names, &fields, &elsize,
+                              &alignment, &dtypeflags, &metadata)) {
             return NULL;
         }
         break;
     case 8:
 #if defined(NPY_PY3K)
-        if (!PyArg_ParseTuple(args, "(iCOOOiii)", &version, &endian,
+#define _ARGSTR_ "(iCOOOiii)"
 #else
-        if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
+#define _ARGSTR_ "(icOOOiii)"
 #endif
-                    &subarray, &names, &fields, &elsize,
-                    &alignment, &dtypeflags)) {
+        if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
+                              &subarray, &names, &fields, &elsize,
+                              &alignment, &dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
 #if defined(NPY_PY3K)
-        if (!PyArg_ParseTuple(args, "(iCOOOii)", &version, &endian,
+#define _ARGSTR_ "(iCOOOii)"
 #else
-        if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian,
+#define _ARGSTR_ "(icOOOii)"
 #endif
-                    &subarray, &names, &fields, &elsize,
-                    &alignment)) {
+        if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
+                              &subarray, &names, &fields, &elsize,
+                              &alignment)) {
             return NULL;
         }
         break;
     case 6:
 #if defined(NPY_PY3K)
-        if (!PyArg_ParseTuple(args, "(iCOOii)", &version,
+#define _ARGSTR_ "(iCOOii)"
 #else
-        if (!PyArg_ParseTuple(args, "(icOOii)", &version,
+#define _ARGSTR_ "(icOOii)"
 #endif
-                    &endian, &subarray, &fields,
-                    &elsize, &alignment)) {
+        if (!PyArg_ParseTuple(args, _ARGSTR_, &version,
+                              &endian, &subarray, &fields,
+                              &elsize, &alignment)) {
             PyErr_Clear();
         }
         break;
     case 5:
         version = 0;
 #if defined(NPY_PY3K)
-        if (!PyArg_ParseTuple(args, "(COOii)",
+#define _ARGSTR_ "(COOii)"
 #else
-        if (!PyArg_ParseTuple(args, "(cOOii)",
+#define _ARGSTR_ "(cOOii)"
 #endif
-                    &endian, &subarray, &fields, &elsize,
-                    &alignment)) {
+        if (!PyArg_ParseTuple(args, _ARGSTR_,
+                              &endian, &subarray, &fields, &elsize,
+                              &alignment)) {
             return NULL;
         }
         break;
     default:
         /* raise an error */
-        version = -1;
+        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
+            version = PyInt_AsLong(PyTuple_GET_ITEM(args, 0));
+        }
+        else {
+            version = -1;
+        }
     }
 
     /*
