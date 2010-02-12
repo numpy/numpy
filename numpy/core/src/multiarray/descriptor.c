@@ -1641,8 +1641,18 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
             endian = '>';
         }
     }
-    state = PyTuple_New(9);
-    PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+
+    if (self->metadata) {
+        state = PyTuple_New(9);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+        Py_INCREF(self->metadata);
+        PyTuple_SET_ITEM(state, 8, self->metadata);
+    }
+    else {
+        state = PyTuple_New(8);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(3));
+    }
+
     PyTuple_SET_ITEM(state, 1, PyString_FromFormat("%c", endian));
     PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
     if (self->names) {
@@ -1670,14 +1680,6 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
-    if (self->metadata) {
-        Py_INCREF(self->metadata);
-        PyTuple_SET_ITEM(state, 8, self->metadata);
-    }
-    else {
-        PyTuple_SET_ITEM(state, 8, Py_None);
-        Py_INCREF(Py_None);
-    }
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
