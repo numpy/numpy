@@ -401,14 +401,14 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     /* Choose which subtype to return */
-    if (ap1->ob_type != ap2->ob_type) {
+    if (Py_Type(ap1) != Py_Type(ap2)) {
         prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
         prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
     }
     else {
         prior1 = prior2 = 0.0;
-        subtype = ap1->ob_type;
+        subtype = Py_TYPE(ap1);
     }
 
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
@@ -900,7 +900,7 @@ dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     /* Choose which subtype to return */
     prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
     prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-    subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+    subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
 
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
                                        typenum, NULL, NULL, 0, 0,
