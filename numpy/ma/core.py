@@ -2786,7 +2786,7 @@ class MaskedArray(ndarray):
                 self._mask.shape = self.shape
             except ValueError:
                 self._mask = nomask
-            except AttributeError:
+            except (TypeError, AttributeError):
                 # When _mask.shape is not writable (because it's a void)
                 pass
         # Finalize the fill_value for structured arrays
