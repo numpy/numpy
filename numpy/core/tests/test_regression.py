@@ -1251,7 +1251,7 @@ class TestRegression(TestCase):
         except ImportError:
             from md5 import new as md5
 
-        x = np.array([1,2,3], dtype=np.int32)
+        x = np.array([1,2,3], dtype=np.dtype('<i4'))
         assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
 
 if __name__ == "__main__":
