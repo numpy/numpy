@@ -2875,7 +2875,7 @@ class MaskedArray(ndarray):
             # Try to reset the shape of the mask (if we don't have a void)
             try:
                 output._mask.shape = output.shape
-            except AttributeError:
+            except (AttributeError, TypeError):
                 pass
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None):
