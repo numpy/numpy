@@ -3452,9 +3452,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
         (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
         (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
+        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
         (PyArray_VectorUnaryFunc*)@from@_to_VOID
