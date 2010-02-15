@@ -5,3 +5,4 @@
 # Starting from here, the hash is defined from numpy_api.full_api dict
 # version 4 added neighborhood iterators and PyArray_Correlate2
 0x00000004 = 3d8940bf7b0d2a4e25be4338c14c3c85
+0x00000005 = 77e2e846db87f25d7cf99f9d812076f0

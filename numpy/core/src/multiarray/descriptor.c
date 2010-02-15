@@ -231,7 +231,7 @@ _convert_from_tuple(PyObject *obj)
         PyDimMem_FREE(shape.ptr);
         newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
         newdescr->subarray->base = type;
-        newdescr->hasobject = type->hasobject;
+        newdescr->flags = type->flags;
         Py_INCREF(val);
         newdescr->subarray->shape = val;
         Py_XDECREF(newdescr->fields);
@@ -356,7 +356,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                             "two fields with the same name");
             goto fail;
         }
-        dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
+        dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         tup = PyTuple_New((title == NULL ? 2 : 3));
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         if (align) {
@@ -402,7 +402,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     new->fields = fields;
     new->names = nameslist;
     new->elsize = totalsize;
-    new->hasobject=dtypeflags;
+    new->flags=dtypeflags;
     if (maxalign > 1) {
         totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
     }
@@ -465,7 +465,7 @@ _convert_from_list(PyObject *obj, int align)
             Py_DECREF(key);
             goto fail;
         }
-        dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
+        dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         if (align) {
             int _align;
@@ -485,7 +485,7 @@ _convert_from_list(PyObject *obj, int align)
     new = PyArray_DescrNewFromType(PyArray_VOID);
     new->fields = fields;
     new->names = nameslist;
-    new->hasobject=dtypeflags;
+    new->flags=dtypeflags;
     if (maxalign > 1) {
         totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
     }
@@ -839,7 +839,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
         new->names = conv->names;
         Py_XINCREF(new->names);
     }
-    new->hasobject = conv->hasobject;
+    new->flags = conv->flags;
     Py_DECREF(conv);
     *errflag = 0;
     return new;
@@ -1033,7 +1033,7 @@ _convert_from_dict(PyObject *obj, int align)
         if ((ret == PY_FAIL) || (newdescr->elsize == 0)) {
             goto fail;
         }
-        dtypeflags |= (newdescr->hasobject & NPY_FROM_FIELDS);
+        dtypeflags |= (newdescr->flags & NPY_FROM_FIELDS);
         totalsize += newdescr->elsize;
     }
 
@@ -1056,7 +1056,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
     new->names = names;
     new->fields = fields;
-    new->hasobject = dtypeflags;
+    new->flags = dtypeflags;
 
     metadata = PyDict_GetItemString(obj, "metadata");
 
@@ -1477,7 +1477,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_UBYTE, offsetof(PyArray_Descr, hasobject), READONLY, NULL},
+        T_INT, offsetof(PyArray_Descr, flags), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -2079,7 +2079,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
+    PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->flags));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2091,7 +2091,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
 static int
 _descr_find_object(PyArray_Descr *self)
 {
-    if (self->hasobject || self->type_num == PyArray_OBJECT ||
+    if (self->flags || self->type_num == PyArray_OBJECT ||
         self->kind == 'O') {
         return NPY_OBJECT_DTYPE_FLAGS;
     }
@@ -2110,7 +2110,7 @@ _descr_find_object(PyArray_Descr *self)
                 return 0;
             }
             if (_descr_find_object(new)) {
-                new->hasobject = NPY_OBJECT_DTYPE_FLAGS;
+                new->flags = NPY_OBJECT_DTYPE_FLAGS;
                 return NPY_OBJECT_DTYPE_FLAGS;
             }
         }
@@ -2156,6 +2156,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                               &subarray, &names, &fields, &elsize,
                               &alignment, &dtypeflags, &metadata)) {
             return NULL;
+#undef _ARGSTR_
         }
         break;
     case 8:
@@ -2168,6 +2169,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                               &subarray, &names, &fields, &elsize,
                               &alignment, &dtypeflags)) {
             return NULL;
+#undef _ARGSTR_
         }
         break;
     case 7:
@@ -2180,6 +2182,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                               &subarray, &names, &fields, &elsize,
                               &alignment)) {
             return NULL;
+#undef _ARGSTR_
         }
         break;
     case 6:
@@ -2192,6 +2195,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                               &endian, &subarray, &fields,
                               &elsize, &alignment)) {
             PyErr_Clear();
+#undef _ARGSTR_
         }
         break;
     case 5:
@@ -2204,6 +2208,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         if (!PyArg_ParseTuple(args, _ARGSTR_,
                               &endian, &subarray, &fields, &elsize,
                               &alignment)) {
+#undef _ARGSTR_
             return NULL;
         }
         break;
@@ -2289,9 +2294,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->alignment = alignment;
     }
 
-    self->hasobject = dtypeflags;
+    self->flags = dtypeflags;
     if (version < 3) {
-        self->hasobject = _descr_find_object(self);
+        self->flags = _descr_find_object(self);
     }
 
     Py_XDECREF(self->metadata);

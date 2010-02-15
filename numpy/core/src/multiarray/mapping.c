@@ -316,7 +316,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
             (PyArray_ISNOTSWAPPED(arr)));
     copyswap = PyArray_DESCR(arr)->f->copyswap;
     PyArray_MapIterReset(mit);
-    /* Need to decref hasobject arrays */
+    /* Need to decref arrays with objects in them */
     if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) {
         while (index--) {
             PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(arr));

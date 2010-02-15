@@ -42,8 +42,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "number.h"
 #include "scalartypes.h"
 
-NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
-
 /*NUMPY_API
  * Get Priority from object
  */

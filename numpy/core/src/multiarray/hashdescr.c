@@ -53,11 +53,11 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
     PyObject *t, *item;
 
     /*
-     * For builtin type, hash relies on : kind + byteorder + hasobject +
+     * For builtin type, hash relies on : kind + byteorder + flags +
      * type_num + elsize + alignment
      */
-    t = Py_BuildValue("(ccciii)", descr->kind, descr->byteorder,
-            descr->hasobject, descr->type_num, descr->elsize,
+    t = Py_BuildValue("(cciiii)", descr->kind, descr->byteorder,
+            descr->flags, descr->type_num, descr->elsize,
             descr->alignment);
 
     for(i = 0; i < PyTuple_Size(t); ++i) {

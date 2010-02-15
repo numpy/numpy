@@ -61,9 +61,9 @@ This is a very flexible function.
 
 ``subtype`` : ``PyTypeObject *``
     The subtype that should be created (either pass in
-    ``&PyArray_Type``, ``&PyBigArray_Type``, or ``obj->ob_type``,
+    ``&PyArray_Type``,  or ``obj->ob_type``,
     where ``obj`` is a an instance of a subtype (or subclass) of
-    ``PyArray_Type`` or ``PyBigArray_Type``).
+    ``PyArray_Type``).
 
 ``descr`` : ``PyArray_Descr *``
     The type descriptor for the array. This is a Python object (this
@@ -114,7 +114,7 @@ This is a very flexible function.
     order array. See below for an explanation of the flags.
 
 ``obj`` : ``PyObject *``
-    If subtypes is ``&PyArray_Type`` or ``&PyBigArray_Type``, this argument is
+    If subtypes is ``&PyArray_Type``, this argument is
     ignored. Otherwise, the ``__array_finalize__`` method of the subtype
     is called (if present) and passed this object. This is usually an
     array of the type to be created (so the ``__array_finalize__`` method

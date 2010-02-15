@@ -191,7 +191,8 @@ PyArrayDescr_Type
           char kind;
           char type;
           char byteorder;
-          char hasobject;
+          char unused;
+          int flags;
           int type_num;
           int elsize;
           int alignment;
@@ -208,7 +209,7 @@ PyArrayDescr_Type
     should point to a user-defined typeobject. This typeobject can
     either inherit from array scalars or not. If it does not inherit
     from array scalars, then the :cdata:`NPY_USE_GETITEM` and
-    :cdata:`NPY_USE_SETITEM` flags should be set in the ``hasobject`` flag.
+    :cdata:`NPY_USE_SETITEM` flags should be set in the ``flags`` member.
 
 .. cmember:: char PyArray_Descr.kind
 
@@ -229,7 +230,7 @@ PyArrayDescr_Type
     endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
     types have byteorder '='.
 
-.. cmember:: char PyArray_Descr.hasobject
+.. cmember:: int PyArray_Descr.flags
 
     A data-type bit-flag that determines if the data-type exhibits object-
     array like behavior. Each bit in this member is a flag which are named

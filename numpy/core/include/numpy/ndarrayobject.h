@@ -75,10 +75,10 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_LONGLONG, NPY_ULONGLONG,
                     NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
                     NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-                    NPY_OBJECT=17,
+                    NPY_DATETIME, NPY_TIMEDELTA,
+                    NPY_OBJECT=19,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
-                    NPY_DATETIME, NPY_TIMEDELTA,
                     NPY_NTYPES,
                     NPY_NOTYPE,
                     NPY_CHAR,      /* special flag */
@@ -381,10 +381,6 @@ typedef struct {
 } PyArray_Dims;
 
 typedef struct {
-        /* Functions to cast to all other standard types*/
-        /* Can have some NULL entries */
-        PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
-
         /* The next four functions *cannot* be NULL */
 
         /* Functions to get and set items with standard
@@ -453,6 +449,17 @@ typedef struct {
         PyArray_FastClipFunc *fastclip;
         PyArray_FastPutmaskFunc *fastputmask;
         PyArray_FastTakeFunc *fasttake;
+
+        /* A little room to grow --- should use generic function interface for most additions */
+        void *pad1;
+        void *pad2;
+        void *pad3;
+        void *pad4;
+
+        /* Functions to cast to all other standard types*/
+        /* Can have some NULL entries */
+        PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
+
 } PyArray_ArrFuncs;
 
 /* The item must be reference counted when it is inserted or extracted. */
@@ -483,12 +490,11 @@ typedef struct {
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
 #define PyDataType_FLAGCHK(dtype, flag)                                   \
-        (((dtype)->hasobject & (flag)) == (flag))
+        (((dtype)->flags & (flag)) == (flag))
 
 #define PyDataType_REFCHK(dtype)                                          \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
-/* Change dtype hasobject to 32-bit in 1.1 and change its name */
 typedef struct _PyArray_Descr {
         PyObject_HEAD
         PyTypeObject *typeobj;  /* the type object representing an
@@ -499,9 +505,9 @@ typedef struct _PyArray_Descr {
         char type;              /* unique-character representing this type */
         char byteorder;         /* '>' (big), '<' (little), '|'
                                    (not-applicable), or '=' (native). */
-        char hasobject;         /* non-zero if it has object arrays
-                                   in fields */
-        int type_num;          /* number representing this type */
+        char unused;            
+        int flags;              /* flag describing data type */
+        int type_num;           /* number representing this type */
         int elsize;             /* element size for this type */
         int alignment;          /* alignment needed for this type */
         struct _arr_descr                                       \
