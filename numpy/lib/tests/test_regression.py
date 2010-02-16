@@ -98,16 +98,6 @@ class TestRegression(TestCase):
         tested = np.polyfit(x, y, 4)
         assert_array_almost_equal(ref, tested)
 
-    def test_hist_bins_as_list(self, level=rlevel):
-        """Ticket #632"""
-        import warnings
-        warnings.simplefilter('ignore', Warning)
-        try:
-            hist,edges = np.histogram([1,2,3,4],[1,2],  new=False)
-            assert_array_equal(hist,[1,3])
-            assert_array_equal(edges,[1,2])
-        finally:
-            warnings.resetwarnings()
 
     def test_polydiv_type(self) :
         """Make polydiv work for complex types"""

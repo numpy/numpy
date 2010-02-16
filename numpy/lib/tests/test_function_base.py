@@ -444,21 +444,10 @@ class TestSinc(TestCase):
 
 class TestHistogram(TestCase):
     def setUp(self):
-        warnings.simplefilter('ignore', DeprecationWarning)
+        pass
 
     def tearDown(self):
-        warnings.resetwarnings()
-
-    def test_simple_old(self):
-        n=100
-        v=rand(n)
-        (a,b)=histogram(v,  new=False)
-        #check if the sum of the bins equals the number of samples
-        assert_equal(sum(a,axis=0), n)
-        #check that the bin counts are evenly spaced when the data is from a
-        # linear function
-        (a,b)=histogram(linspace(0,10,100),  new=False)
-        assert_array_equal(a, 10)
+        pass
 
     def test_simple(self):
         n=100
