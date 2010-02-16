@@ -3338,12 +3338,12 @@ static PyTypeObject *typeobjects[] = {
     &PyCFloatArrType_Type,
     &PyCDoubleArrType_Type,
     &PyCLongDoubleArrType_Type,
+    &PyDatetimeArrType_Type,
+    &PyTimedeltaArrType_Type,
     &PyObjectArrType_Type,
     &PyStringArrType_Type,
     &PyUnicodeArrType_Type,
-    &PyVoidArrType_Type,
-    &PyDatetimeArrType_Type,
-    &PyTimedeltaArrType_Type
+    &PyVoidArrType_Type
 };
 
 NPY_NO_EXPORT int
