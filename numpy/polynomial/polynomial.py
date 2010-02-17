@@ -50,6 +50,7 @@ __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain',
 import numpy as np
 import numpy.linalg as la
 import polyutils as pu
+import warnings
 from polytemplate import polytemplate
 
 polytrim = pu.trimcoef
