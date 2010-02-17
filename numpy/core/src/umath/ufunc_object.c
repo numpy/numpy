@@ -2514,17 +2514,18 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     else {
         loop->obj = 0;
     }
-    if ((loop->meth == ZERO_EL_REDUCELOOP) ||
-	((operation == UFUNC_REDUCEAT) && (loop->meth == BUFFER_UFUNCLOOP))) {
+    if ((loop->meth == ZERO_EL_REDUCELOOP)
+            || ((operation == UFUNC_REDUCEAT)
+                && (loop->meth == BUFFER_UFUNCLOOP))) {
         idarr = _getidentity(self, otype, str);
         if (idarr == NULL) {
             goto fail;
         }
         if (idarr->descr->elsize > UFUNC_MAXIDENTITY) {
             PyErr_Format(PyExc_RuntimeError,
-                         "UFUNC_MAXIDENTITY (%d)"           \
-                         " is too small (needs to be at least %d)",
-                         UFUNC_MAXIDENTITY, idarr->descr->elsize);
+                    "UFUNC_MAXIDENTITY (%d) is too small"\
+                    "(needs to be at least %d)",
+                    UFUNC_MAXIDENTITY, idarr->descr->elsize);
             Py_DECREF(idarr);
             goto fail;
         }
@@ -2555,7 +2556,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         if (out == NULL) {
             loop->ret = (PyArrayObject *)
                 PyArray_New(Py_TYPE(aar), aar->nd, aar->dimensions,
-                            otype, NULL, NULL, 0, 0, (PyObject *)aar);
+                        otype, NULL, NULL, 0, 0, (PyObject *)aar);
         }
         else {
             outsize = PyArray_MultiplyList(aar->dimensions, aar->nd);
@@ -2568,7 +2569,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         if (out == NULL) {
             loop->ret = (PyArrayObject *)
                 PyArray_New(Py_TYPE(aar), aar->nd, loop_i, otype,
-                            NULL, NULL, 0, 0, (PyObject *)aar);
+                        NULL, NULL, 0, 0, (PyObject *)aar);
         }
         else {
             outsize = PyArray_MultiplyList(loop_i, aar->nd);
@@ -2585,7 +2586,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     if (out) {
         if (PyArray_SIZE(out) != outsize) {
             PyErr_SetString(PyExc_ValueError,
-                            "wrong shape for output");
+                    "wrong shape for output");
             goto fail;
         }
         loop->ret = (PyArrayObject *)
