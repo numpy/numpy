@@ -12,26 +12,26 @@
  */
 NPY_INLINE static float __npy_inff(void)
 {
-        const union { npy_uint32 __i; float __f;} __bint = {0x7f800000UL};
-        return __bint.__f;
+    const union { npy_uint32 __i; float __f;} __bint = {0x7f800000UL};
+    return __bint.__f;
 }
 
 NPY_INLINE static float __npy_nanf(void)
 {
-        const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
-        return __bint.__f;
+    const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
+    return __bint.__f;
 }
 
 NPY_INLINE static float __npy_pzerof(void)
 {
-        const union { npy_uint32 __i; float __f;} __bint = {0x00000000UL};
-        return __bint.__f;
+    const union { npy_uint32 __i; float __f;} __bint = {0x00000000UL};
+    return __bint.__f;
 }
 
 NPY_INLINE static float __npy_nzerof(void)
 {
-        const union { npy_uint32 __i; float __f;} __bint = {0x80000000UL};
-        return __bint.__f;
+    const union { npy_uint32 __i; float __f;} __bint = {0x80000000UL};
+    return __bint.__f;
 }
 
 #define NPY_INFINITYF __npy_inff()
@@ -145,33 +145,33 @@ double npy_spacing(double x);
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
 #ifndef NPY_HAVE_DECL_ISNAN
-        #define npy_isnan(x) ((x) != (x))
+    #define npy_isnan(x) ((x) != (x))
 #else
-        #define npy_isnan(x) isnan((x))
+    #define npy_isnan(x) isnan((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_ISFINITE
-        #define npy_isfinite(x) !npy_isnan((x) + (-x))
+    #define npy_isfinite(x) !npy_isnan((x) + (-x))
 #else
-        #define npy_isfinite(x) isfinite((x))
+    #define npy_isfinite(x) isfinite((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_ISINF
-        #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
+    #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
 #else
-        #define npy_isinf(x) isinf((x))
+    #define npy_isinf(x) isinf((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_SIGNBIT
-        int _npy_signbit_f(float x);
-        int _npy_signbit_d(double x);
-        int _npy_signbit_ld(npy_longdouble x);
-        #define npy_signbit(x) \
-              (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
-               : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
-               : _npy_signbit_f (x))
+    int _npy_signbit_f(float x);
+    int _npy_signbit_d(double x);
+    int _npy_signbit_ld(npy_longdouble x);
+    #define npy_signbit(x) \
+        (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
+         : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
+         : _npy_signbit_f (x))
 #else
-        #define npy_signbit(x) signbit((x))
+    #define npy_signbit(x) signbit((x))
 #endif
 
 /*
@@ -292,14 +292,14 @@ npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
  * and the second element is the imaginary part.
  */
 #define __NPY_CPACK_IMP(x, y, type, ctype)   \
-    union {                     \
-        ctype z;          \
-        type a[2];            \
-    } z1;;                      \
-                                \
-    z1.a[0] = (x);              \
-    z1.a[1] = (y);              \
-                                \
+    union {                                  \
+        ctype z;                             \
+        type a[2];                           \
+    } z1;;                                   \
+                                             \
+    z1.a[0] = (x);                           \
+    z1.a[1] = (y);                           \
+                                             \
     return z1.z;
 
 static NPY_INLINE npy_cdouble npy_cpack(double x, double y)
@@ -326,42 +326,42 @@ static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
  * most likely compile this to one or two instructions (on CISC at least)
  */
 #define __NPY_CEXTRACT_IMP(z, index, type, ctype)   \
-	union {						\
-		ctype z;				\
-		type a[2];				\
-	} __z_repr;					\
-	__z_repr.z = z;				\
-								\
-	return __z_repr.a[index];
+    union {                                         \
+        ctype z;                                    \
+        type a[2];                                  \
+    } __z_repr;                                     \
+    __z_repr.z = z;                                 \
+                                                    \
+    return __z_repr.a[index];
 
 static NPY_INLINE double npy_creal(npy_cdouble z)
 {
-	__NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
+    __NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
 }
 
 static NPY_INLINE double npy_cimag(npy_cdouble z)
 {
-	__NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
+    __NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
 }
 
 static NPY_INLINE float npy_crealf(npy_cfloat z)
 {
-	__NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
+    __NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
 }
 
 static NPY_INLINE float npy_cimagf(npy_cfloat z)
 {
-	__NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
+    __NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
 }
 
 static NPY_INLINE npy_longdouble npy_creall(npy_clongdouble z)
 {
-	__NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
+    __NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
 }
 
 static NPY_INLINE npy_longdouble npy_cimagl(npy_clongdouble z)
 {
-	__NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
+    __NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
 }
 #undef __NPY_CEXTRACT_IMP
 
