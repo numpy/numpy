@@ -34,7 +34,8 @@ Large parts of this manual originate from Travis E. Oliphant's book
 Public Domain in August 2008). The reference documentation for many of
 the functions are written by numerous contributors and developers of
 Numpy, both prior to and during the
-`Numpy Documentation Marathon <http://scipy.org/Developer_Zone/DocMarathon2008>`__.
+`Numpy Documentation Marathon
+<http://scipy.org/Developer_Zone/DocMarathon2008>`__.
 
 Please help to improve NumPy's documentation! Instructions on how to
 join the ongoing documentation marathon can be found

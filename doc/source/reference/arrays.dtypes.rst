@@ -148,8 +148,8 @@ Array-scalar types
 
     .. admonition:: Example
 
-       >>> dt = np.dtype(np.int32)       # 32-bit integer
-       >>> dt = np.dtype(np.complex128)  # 128-bit complex floating-point number
+       >>> dt = np.dtype(np.int32)      # 32-bit integer
+       >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
 
@@ -305,9 +305,9 @@ Type strings
 
     .. admonition:: Example
 
-       >>> dt = np.dtype((np.int32, (2,2)))            # 2 x 2 integer sub-array
-       >>> dt = np.dtype(('S10', 1))                   # 10-character string
-       >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3)))   # 2 x 3 record sub-array
+       >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
+       >>> dt = np.dtype(('S10', 1))                 # 10-character string
+       >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 record sub-array
 
 ``(base_dtype, new_dtype)``
 
@@ -321,7 +321,7 @@ Type strings
        32-bit integer, whose first two bytes are interpreted as an integer
        via field ``real``, and the following two bytes via field ``imag``.
 
-       >>> dt = np.dtype((np.int32, {'real': (np.int16, 0), 'imag': (np.int16, 2)})
+       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)})
 
        32-bit integer, which is interpreted as consisting of a sub-array
        of shape ``(4,)`` containing 8-bit integers:
@@ -332,8 +332,6 @@ Type strings
        interpret the 4 bytes in the integer as four unsigned integers:
 
        >>> dt = np.dtype(('i4', [('r','u1'),('g','u1'),('b','u1'),('a','u1')]))
-
-.. note:: XXX: does the second-to-last example above make sense?
 
 .. index::
    triple: dtype; construction; from list
@@ -428,7 +426,8 @@ Type strings
        byte position 0), ``col2`` (32-bit float at byte position 10),
        and ``col3`` (integers at byte position 14):
 
-       >>> dt = np.dtype({'col1': ('S10', 0), 'col2': (float32, 10), 'col3': (int, 14)})
+       >>> dt = np.dtype({'col1': ('S10', 0), 'col2': (float32, 10),
+           'col3': (int, 14)})
 
 
 :class:`dtype`

@@ -75,8 +75,8 @@ add_newdoc('numpy', 'NINF',
 
     isnan : Shows which elements are Not a Number
 
-    isfinite : Shows which elements are finite (not one of
-             Not a Number, positive infinity and negative infinity)
+    isfinite : Shows which elements are finite (not one of Not a Number,
+    positive infinity and negative infinity)
 
     Notes
     -----
@@ -214,7 +214,7 @@ add_newdoc('numpy', 'e',
     """
     Euler's constant, base of natural logarithms, Napier's constant.
 
-    `e = 2.71828182845904523536028747135266249775724709369995...`
+    ``e = 2.71828182845904523536028747135266249775724709369995...``
 
     See Also
     --------
@@ -246,8 +246,8 @@ add_newdoc('numpy', 'inf',
 
     isnan : Shows which elements are Not a Number
 
-    isfinite : Shows which elements are finite (not one of
-               Not a Number, positive infinity and negative infinity)
+    isfinite : Shows which elements are finite (not one of Not a Number,
+    positive infinity and negative infinity)
 
     Notes
     -----
@@ -322,20 +322,20 @@ add_newdoc('numpy', 'newaxis',
 
     Examples
     --------
-    >>> np.newaxis is None
+    >>> newaxis is None
     True
     >>> x = np.arange(3)
     >>> x
     array([0, 1, 2])
-    >>> x[:, np.newaxis]
+    >>> x[:, newaxis]
     array([[0],
     [1],
     [2]])
-    >>> x[:, np.newaxis, np.newaxis]
+    >>> x[:, newaxis, newaxis]
     array([[[0]],
     [[1]],
     [[2]]])
-    >>> x[:, np.newaxis] * x
+    >>> x[:, newaxis] * x
     array([[0, 0, 0],
     [0, 1, 2],
     [0, 2, 4]])
@@ -343,20 +343,20 @@ add_newdoc('numpy', 'newaxis',
     Outer product, same as ``outer(x, y)``:
 
     >>> y = np.arange(3, 6)
-    >>> x[:, np.newaxis] * y
+    >>> x[:, newaxis] * y
     array([[ 0,  0,  0],
     [ 3,  4,  5],
     [ 6,  8, 10]])
 
     ``x[newaxis, :]`` is equivalent to ``x[newaxis]`` and ``x[None]``:
 
-    >>> x[np.newaxis, :].shape
+    >>> x[newaxis, :].shape
     (1, 3)
-    >>> x[np.newaxis].shape
+    >>> x[newaxis].shape
     (1, 3)
     >>> x[None].shape
     (1, 3)
-    >>> x[:, np.newaxis].shape
+    >>> x[:, newaxis].shape
     (3, 1)
 
     """)

@@ -44,7 +44,8 @@ From existing data
 Creating record arrays (:mod:`numpy.rec`)
 -----------------------------------------
 
-.. note:: :mod:`numpy.rec` is the preferred alias for :mod:`numpy.core.records`.
+.. note:: :mod:`numpy.rec` is the preferred alias for
+   :mod:`numpy.core.records`.
 
 .. autosummary::
    :toctree: generated/
@@ -60,7 +61,8 @@ Creating record arrays (:mod:`numpy.rec`)
 Creating character arrays (:mod:`numpy.char`)
 ---------------------------------------------
 
-.. note:: :mod:`numpy.char` is the preferred alias for :mod:`numpy.core.defchararray`.
+.. note:: :mod:`numpy.char` is the preferred alias for
+   :mod:`numpy.core.defchararray`.
 
 .. autosummary::
    :toctree: generated/

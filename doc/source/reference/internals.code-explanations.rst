@@ -99,7 +99,7 @@ have to create an iterator object from an ndarray, work with the
 dataptr member of the iterator object structure and call the macro
 :cfunc:`PyArray_ITER_NEXT` (it) on the iterator object to move to the next
 element. The "next" element is always in C-contiguous order. The macro
-works by first special casing the C-contiguous, 1-d, and 2-d cases
+works by first special casing the C-contiguous, 1-D, and 2-D cases
 which work very simply.
 
 For the general case, the iteration works by keeping track of a list
@@ -196,7 +196,7 @@ Advanced ("Fancy") Indexing
 
 The implementation of advanced indexing represents some of the most
 difficult code to write and explain. In fact, there are two
-implementations of advanced indexing. The first works only with 1-d
+implementations of advanced indexing. The first works only with 1-D
 arrays and is implemented to handle expressions involving a.flat[obj].
 The second is general-purpose that works for arrays of "arbitrary
 dimension" (up to a fixed maximum). The one-dimensional indexing
@@ -222,7 +222,7 @@ because that is optimized by the Python interpreter itself.
 
 After these optimizations, the array_subscript function itself is
 called. This function first checks for field selection which occurs
-when a string is passed as the indexing object. Then, 0-d arrays are
+when a string is passed as the indexing object. Then, 0-D arrays are
 given special-case consideration. Finally, the code determines whether
 or not advanced, or fancy, indexing needs to be performed. If fancy
 indexing is not needed, then standard view-based indexing is performed
@@ -330,12 +330,12 @@ Universal Functions
    single: ufunc
 
 Universal functions are callable objects that take :math:`N` inputs
-and produce :math:`M` outputs by wrapping basic 1-d loops that work
+and produce :math:`M` outputs by wrapping basic 1-D loops that work
 element-by-element into full easy-to use functions that seamlessly
 implement broadcasting, type-checking and buffered coercion, and
 output-argument handling. New universal functions are normally created
 in C, although there is a mechanism for creating ufuncs from Python
-functions (:func:`frompyfunc`). The user must supply a 1-d loop that
+functions (:func:`frompyfunc`). The user must supply a 1-D loop that
 implements the basic function taking the input scalar values and
 placing the resulting scalars into the appropriate output slots as
 explaine n implementation.
@@ -349,7 +349,7 @@ the calculation. The practical significance of this overhead is that
 even though the actual calculation of the ufunc is very fast, you will
 be able to write array and type-specific code that will work faster
 for small arrays than the ufunc. In particular, using ufuncs to
-perform many calculations on 0-d arrays will be slower than other
+perform many calculations on 0-D arrays will be slower than other
 Python-based solutions (the silently-imported scalarmath module exists
 precisely to give array scalars the look-and-feel of ufunc-based
 calculations with significantly reduced overhead).
@@ -366,9 +366,9 @@ The first thing done is to look-up in the thread-specific global
 dictionary the current values for the buffer-size, the error mask, and
 the associated error object. The state of the error mask controls what
 happens when an error-condiction is found. It should be noted that
-checking of the hardware error flags is only performed after each 1-d
+checking of the hardware error flags is only performed after each 1-D
 loop is executed. This means that if the input and output arrays are
-contiguous and of the correct type so that a single 1-d loop is
+contiguous and of the correct type so that a single 1-D loop is
 performed, then the flags may not be checked until all elements of the
 array have been calcluated. Looking up these values in a thread-
 specific dictionary takes time which is easily ignored for all but
@@ -378,11 +378,11 @@ After checking, the thread-specific global variables, the inputs are
 evaluated to determine how the ufunc should proceed and the input and
 output arrays are constructed if necessary. Any inputs which are not
 arrays are converted to arrays (using context if necessary). Which of
-the inputs are scalars (and therefore converted to 0-d arrays) is
+the inputs are scalars (and therefore converted to 0-D arrays) is
 noted.
 
-Next, an appropriate 1-d loop is selected from the 1-d loops available
-to the ufunc based on the input array types. This 1-d loop is selected
+Next, an appropriate 1-D loop is selected from the 1-D loops available
+to the ufunc based on the input array types. This 1-D loop is selected
 by trying to match the signature of the data-types of the inputs
 against the available signatures. The signatures corresponding to
 built-in types are stored in the types member of the ufunc structure.
@@ -394,10 +394,10 @@ The signatures are searched until a signature is found to which the
 input arrays can all be cast safely (ignoring any scalar arguments
 which are not allowed to determine the type of the result). The
 implication of this search procedure is that "lesser types" should be
-placed below "larger types" when the signatures are stored. If no 1-d
+placed below "larger types" when the signatures are stored. If no 1-D
 loop is found, then an error is reported. Otherwise, the argument_list
 is updated with the stored signature --- in case casting is necessary
-and to fix the output types assumed by the 1-d loop.
+and to fix the output types assumed by the 1-D loop.
 
 If the ufunc has 2 inputs and 1 output and the second input is an
 Object array then a special-case check is performed so that
@@ -406,7 +406,7 @@ the __array_priority\__ attribute, and has an __r{op}\__ special
 method. In this way, Python is signaled to give the other object a
 chance to complete the operation instead of using generic object-array
 calculations. This allows (for example) sparse matrices to override
-the multiplication operator 1-d loop.
+the multiplication operator 1-D loop.
 
 For input arrays that are smaller than the specified buffer size,
 copies are made of all non-contiguous, mis-aligned, or out-of-
@@ -441,7 +441,7 @@ execution possibilities. If :cdata:`NPY_ALLOW_THREADS` is defined during
 compilation, then the Python Global Interpreter Lock (GIL) is released
 prior to calling all of these loops (as long as they don't involve
 object arrays). It is re-acquired if necessary to handle error
-conditions. The hardware error flags are checked only after the 1-d
+conditions. The hardware error flags are checked only after the 1-D
 loop is calcluated.
 
 
@@ -449,10 +449,10 @@ One Loop
 ^^^^^^^^
 
 This is the simplest case of all. The ufunc is executed by calling the
-underlying 1-d loop exactly once. This is possible only when we have
+underlying 1-D loop exactly once. This is possible only when we have
 aligned data of the correct type (including byte-order) for both input
 and output and all arrays have uniform strides (either contiguous,
-0-d, or 1-d). In this case, the 1-d computational loop is called once
+0-D, or 1-D). In this case, the 1-D computational loop is called once
 to compute the calculation for the entire array. Note that the
 hardware error flags are only checked after the entire calculation is
 complete.
@@ -462,13 +462,13 @@ Strided Loop
 ^^^^^^^^^^^^
 
 When the input and output arrays are aligned and of the correct type,
-but the striding is not uniform (non-contiguous and 2-d or larger),
+but the striding is not uniform (non-contiguous and 2-D or larger),
 then a second looping structure is employed for the calculation. This
 approach converts all of the iterators for the input and output
 arguments to iterate over all but the largest dimension. The inner
-loop is then handled by the underlying 1-d computational loop. The
+loop is then handled by the underlying 1-D computational loop. The
 outer loop is a standard iterator loop on the converted iterators. The
-hardware error flags are checked after each 1-d loop is completed.
+hardware error flags are checked after each 1-D loop is completed.
 
 
 Buffered Loop
@@ -476,12 +476,12 @@ Buffered Loop
 
 This is the code that handles the situation whenever the input and/or
 output arrays are either misaligned or of the wrong data-type
-(including being byte-swapped) from what the underlying 1-d loop
+(including being byte-swapped) from what the underlying 1-D loop
 expects. The arrays are also assumed to be non-contiguous. The code
-works very much like the strided loop except for the inner 1-d loop is
+works very much like the strided loop except for the inner 1-D loop is
 modified so that pre-processing is performed on the inputs and post-
 processing is performed on the outputs in bufsize chunks (where
-bufsize is a user-settable parameter). The underlying 1-d
+bufsize is a user-settable parameter). The underlying 1-D
 computational loop is called on data that is copied over (if it needs
 to be). The setup code and the loop code is considerably more
 complicated in this case because it has to handle:
@@ -497,10 +497,10 @@ complicated in this case because it has to handle:
 - special-casing Object arrays so that reference counts are properly
   handled when copies and/or casts are necessary.
 
-- breaking up the inner 1-d loop into bufsize chunks (with a possible
+- breaking up the inner 1-D loop into bufsize chunks (with a possible
   remainder).
 
-Again, the hardware error flags are checked at the end of each 1-d
+Again, the hardware error flags are checked at the end of each 1-D
 loop.
 
 
@@ -544,7 +544,7 @@ The setup function for all three methods is ``construct_reduce``.
 This function creates a reducing loop object and fills it with
 parameters needed to complete the loop. All of the methods only work
 on ufuncs that take 2-inputs and return 1 output. Therefore, the
-underlying 1-d loop is selected assuming a signature of [ ``otype``,
+underlying 1-D loop is selected assuming a signature of [ ``otype``,
 ``otype``, ``otype`` ] where ``otype`` is the requested reduction
 data-type. The buffer size and error handling is then retrieved from
 (per-thread) global storage. For small arrays that are mis-aligned or
@@ -573,10 +573,10 @@ Reduce
 .. index::
    triple: ufunc; methods; reduce
 
-All of the ufunc methods use the same underlying 1-d computational
+All of the ufunc methods use the same underlying 1-D computational
 loops with input and output arguments adjusted so that the appropriate
 reduction takes place. For example, the key to the functioning of
-reduce is that the 1-d loop is called with the output and the second
+reduce is that the 1-D loop is called with the output and the second
 input pointing to the same position in memory and both having a step-
 size of 0. The first input is pointing to the input array with a step-
 size given by the appropriate stride for the selected axis. In this
@@ -594,7 +594,7 @@ where :math:`N+1` is the number of elements in the input, :math:`i`,
 :math:`o` is the output, and :math:`i[k]` is the
 :math:`k^{\textrm{th}}` element of :math:`i` along the selected axis.
 This basic operations is repeated for arrays with greater than 1
-dimension so that the reduction takes place for every 1-d sub-array
+dimension so that the reduction takes place for every 1-D sub-array
 along the selected axis. An iterator with the selected dimension
 removed handles this looping.
 
@@ -625,9 +625,10 @@ the current output pointer. Thus, the operation performed is
    o[k] & = & i[k]\textrm{<op>}o[k-1]\quad k=1\ldots N.
    \end{align*}
 
-The output has the same shape as the input and each 1-d loop operates
-over :math:`N` elements when the shape in the selected axis is :math:`N+1`. Again, buffered loops take care to copy and cast the data before
-calling the underlying 1-d computational loop.
+The output has the same shape as the input and each 1-D loop operates
+over :math:`N` elements when the shape in the selected axis is :math:`N+1`.
+Again, buffered loops take care to copy and cast the data before
+calling the underlying 1-D computational loop.
 
 
 Reduceat
@@ -645,21 +646,21 @@ the selected dimension before the loop calculations take place. The
 loop implementation is handled using code that is very similar to the
 reduce code repeated as many times as there are elements in the
 indices input. In particular: the first input pointer passed to the
-underlying 1-d computational loop points to the input array at the
+underlying 1-D computational loop points to the input array at the
 correct location indicated by the index array. In addition, the output
-pointer and the second input pointer passed to the underlying 1-d loop
-point to the same position in memory. The size of the 1-d
+pointer and the second input pointer passed to the underlying 1-D loop
+point to the same position in memory. The size of the 1-D
 computational loop is fixed to be the difference between the current
 index and the next index (when the current index is the last index,
 then the next index is assumed to be the length of the array along the
-selected dimension). In this way, the 1-d loop will implement a reduce
+selected dimension). In this way, the 1-D loop will implement a reduce
 over the specified indices.
 
 Mis-aligned or a loop data-type that does not match the input and/or
 output data-type is handled using buffered code where-in data is
 copied to a temporary buffer and cast to the correct data-type if
-necessary prior to calling the underlying 1-d function. The temporary
+necessary prior to calling the underlying 1-D function. The temporary
 buffers are created in (element) sizes no bigger than the user
 settable buffer-size value. Thus, the loop must be flexible enough to
-call the underlying 1-d computational loop enough times to complete
+call the underlying 1-D computational loop enough times to complete
 the total calculation in chunks no bigger than the buffer-size.

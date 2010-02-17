@@ -318,13 +318,6 @@ done.
    Also recognize that ``x[[1,2,3]]`` will trigger advanced indexing,
    whereas ``x[[1,2,slice(None)]]`` will trigger basic slicing.
 
-.. note::
-
-   XXX: this section may need some tuning...
-   Also the above warning needs explanation as the last part is at odds
-   with the definition of basic indexing.
-
-
 .. _arrays.indexing.rec:
 
 Record Access

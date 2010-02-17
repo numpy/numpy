@@ -3985,6 +3985,12 @@ add_newdoc('numpy.core', 'ufunc',
     """
     Functions that operate element by element on whole arrays.
 
+    To see the documentation for a specific ufunc, use np.info().  For
+    example, np.info(np.sin).  Because ufuncs are written in C
+    (for speed) and linked into Python with NumPy's ufunc facility,
+    Python's help() function finds this page whenever help() is called
+    on a ufunc.
+
     A detailed explanation of ufuncs can be found in the "ufuncs.rst"
     file in the NumPy reference guide.
 

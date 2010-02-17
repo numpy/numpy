@@ -13,8 +13,8 @@ difficult decision, and can be simply a matter of choice. NumPy has
 several tools for simplifying how your new object interacts with other
 array objects, and so the choice may not be significant in the
 end. One way to simplify the question is by asking yourself if the
-object you are interested in can be replaced as a single array or does it
-really require two or more arrays at its core.
+object you are interested in can be replaced as a single array or does
+it really require two or more arrays at its core.
 
 Note that :func:`asarray` always returns the base-class ndarray. If
 you are confident that your use of the array object can handle any
@@ -42,10 +42,10 @@ customize:
 
    This method is called whenever the system internally allocates a
    new array from *obj*, where *obj* is a subclass (subtype) of the
-   :class:`ndarray`. It can be used to change attributes of *self* after
-   construction (so as to ensure a 2-d matrix for example), or to
-   update meta-information from the "parent." Subclasses inherit a
-   default implementation of this method that does nothing.
+   :class:`ndarray`. It can be used to change attributes of *self*
+   after construction (so as to ensure a 2-d matrix for example), or
+   to update meta-information from the "parent." Subclasses inherit
+   a default implementation of this method that does nothing.
 
 .. function:: __array_prepare__(array, context=None)
 
@@ -66,10 +66,10 @@ customize:
    the output object if one was specified. The ufunc-computed array
    is passed in and whatever is returned is passed to the user.
    Subclasses inherit a default implementation of this method, which
-   transforms the array into a new instance of the object's class. Subclasses
-   may opt to use this method to transform the output array into an
-   instance of the subclass and update metadata before returning the
-   array to the user.
+   transforms the array into a new instance of the object's class.
+   Subclasses may opt to use this method to transform the output array
+   into an instance of the subclass and update metadata before
+   returning the array to the user.
 
 .. data:: __array_priority__
 
@@ -96,21 +96,21 @@ important differences of matrix objects, however, that may lead to
 unexpected results when you use matrices but expect them to act like
 arrays:
 
-1. Matrix objects can be created using a string notation to allow Matlab-
-   style syntax where spaces separate columns and semicolons (';')
-   separate rows.
+1. Matrix objects can be created using a string notation to allow
+   Matlab-style syntax where spaces separate columns and semicolons
+   (';') separate rows.
 
 2. Matrix objects are always two-dimensional. This has far-reaching
-   implications, in that m.ravel() is still two-dimensional (with a 1 in
-   the first dimension) and item selection returns two-dimensional
+   implications, in that m.ravel() is still two-dimensional (with a 1
+   in the first dimension) and item selection returns two-dimensional
    objects so that sequence behavior is fundamentally different than
    arrays.
 
 3. Matrix objects over-ride multiplication to be
    matrix-multiplication. **Make sure you understand this for
    functions that you may want to receive matrices. Especially in
-   light of the fact that asanyarray(m) returns a matrix when m is a
-   matrix.**
+   light of the fact that asanyarray(m) returns a matrix when m is
+   a matrix.**
 
 4. Matrix objects over-ride power to be matrix raised to a power. The
    same warning about using power inside a function that uses
@@ -119,8 +119,8 @@ arrays:
 5. The default __array_priority\__ of matrix objects is 10.0, and
    therefore mixed operations with ndarrays always produce matrices.
 
-6. Matrices have special attributes which make calculations easier. These
-   are
+6. Matrices have special attributes which make calculations easier.
+   These are
 
    .. autosummary::
       :toctree: generated/
@@ -132,11 +132,12 @@ arrays:
 
 .. warning::
 
-    Matrix objects over-ride multiplication, '*', and power, '**', to be
-    matrix-multiplication and matrix power, respectively. If your
-    subroutine can accept sub-classes and you do not convert to base-class
-    arrays, then you must use the ufuncs multiply and power to be sure
-    that you are performing the correct operation for all inputs.
+    Matrix objects over-ride multiplication, '*', and power, '**', to
+    be matrix-multiplication and matrix power, respectively. If your
+    subroutine can accept sub-classes and you do not convert to base-
+    class arrays, then you must use the ufuncs multiply and power to
+    be sure that you are performing the correct operation for all
+    inputs.
 
 The matrix class is a Python subclass of the ndarray and can be used
 as a reference for how to construct your own subclass of the ndarray.
@@ -194,10 +195,10 @@ array actually get written to disk.
 
 .. note::
 
-    Memory-mapped arrays use the the Python memory-map object which (prior
-    to Python 2.5) does not allow files to be larger than a certain size
-    depending on the platform. This size is always < 2GB even on 64-bit
-    systems.
+    Memory-mapped arrays use the the Python memory-map object which
+    (prior to Python 2.5) does not allow files to be larger than a
+    certain size depending on the platform. This size is always
+    < 2GB even on 64-bit systems.
 
 .. autosummary::
    :toctree: generated/
@@ -228,10 +229,11 @@ Character arrays (:mod:`numpy.char`)
    single: character arrays
 
 .. note::
-   The chararray module exists for backwards compatibility with
-   Numarray, it is not recommended for new development. If one needs
-   arrays of strings, use arrays of `dtype` `object_`, `str` or
-   `unicode`.
+   The `chararray` class exists for backwards compatibility with
+   Numarray, it is not recommended for new development. Starting from numpy
+   1.4, if one needs arrays of strings, it is recommended to use arrays of
+   `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+   in the `numpy.char` module for fast vectorized string operations.
 
 These are enhanced arrays of either :class:`string_` type or
 :class:`unicode_` type.  These arrays inherit from the
@@ -240,8 +242,8 @@ and ``%`` on a (broadcasting) element-by-element basis.  These
 operations are not available on the standard :class:`ndarray` of
 character type. In addition, the :class:`chararray` has all of the
 standard :class:`string <str>` (and :class:`unicode`) methods,
-executing them on an element-by-element basis. Perhaps the easiest way
-to create a chararray is to use :meth:`self.view(chararray)
+executing them on an element-by-element basis. Perhaps the easiest
+way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode
 data-type. However, a chararray can also be created using the
 :meth:`numpy.chararray` constructor, or via the
@@ -255,8 +257,8 @@ data-type. However, a chararray can also be created using the
 
 Another difference with the standard ndarray of str data-type is
 that the chararray inherits the feature introduced by Numarray that
-white-space at the end of any element in the array will be ignored on
-item retrieval and comparison operations.
+white-space at the end of any element in the array will be ignored
+on item retrieval and comparison operations.
 
 
 .. _arrays.classes.rec:
@@ -341,7 +343,8 @@ used as an iterator. The default behavior is equivalent to::
     for i in arr.shape[0]:
         val = arr[i]
 
-This default iterator selects a sub-array of dimension :math:`N-1` from the array. This can be a useful construct for defining recursive
+This default iterator selects a sub-array of dimension :math:`N-1`
+from the array. This can be a useful construct for defining recursive
 algorithms. To loop over the entire array requires :math:`N` for-loops.
 
 >>> a = arange(24).reshape(3,2,4)+10

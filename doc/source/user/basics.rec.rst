@@ -1,3 +1,5 @@
+.. _structured_arrays:
+
 ***************************************
 Structured arrays (aka "Record arrays")
 ***************************************

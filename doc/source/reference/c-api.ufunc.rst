@@ -63,7 +63,9 @@ Macros
 Functions
 ---------
 
-.. cfunction:: PyObject* PyUFunc_FromFuncAndData(PyUFuncGenericFunction* func, void** data, char* types, int ntypes, int nin, int nout, int identity, char* name, char* doc, int check_return)
+.. cfunction:: PyObject* PyUFunc_FromFuncAndData(PyUFuncGenericFunction* func,
+   void** data, char* types, int ntypes, int nin, int nout, int identity,
+   char* name, char* doc, int check_return)
 
     Create a new broadcasting universal function from required variables.
     Each ufunc builds around the notion of an element-by-element
@@ -102,9 +104,6 @@ Functions
     :param nout:
         The number of outputs
 
-    :param identity:
-        XXX: Undocumented
-
     :param name:
         The name for the ufunc.  Specifying a name of 'add' or
         'multiply' enables a special behavior for  integer-typed
@@ -127,7 +126,8 @@ Functions
         structure and it does get set with this value when the ufunc
         object is created.
 
-.. cfunction:: int PyUFunc_RegisterLoopForType(PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
+.. cfunction:: int PyUFunc_RegisterLoopForType(PyUFuncObject* ufunc,
+   int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
 
     This function allows the user to register a 1-d loop with an
     already- created ufunc to be used whenever the ufunc is called
@@ -140,7 +140,9 @@ Functions
     in as *arg_types* which must be a pointer to memory at least as
     large as ufunc->nargs.
 
-.. cfunction:: int PyUFunc_ReplaceLoopBySignature(PyUFuncObject* ufunc, PyUFuncGenericFunction newfunc, int* signature, PyUFuncGenericFunction* oldfunc)
+.. cfunction:: int PyUFunc_ReplaceLoopBySignature(PyUFuncObject* ufunc,
+   PyUFuncGenericFunction newfunc, int* signature,
+   PyUFuncGenericFunction* oldfunc)
 
     Replace a 1-d loop matching the given *signature* in the
     already-created *ufunc* with the new 1-d loop newfunc. Return the
@@ -150,7 +152,8 @@ Functions
     signature is an array of data-type numbers indicating the inputs
     followed by the outputs assumed by the 1-d loop.
 
-.. cfunction:: int PyUFunc_GenericFunction(PyUFuncObject* self, PyObject* args, PyArrayObject** mps)
+.. cfunction:: int PyUFunc_GenericFunction(PyUFuncObject* self,
+   PyObject* args, PyArrayObject** mps)
 
     A generic ufunc call. The ufunc is passed in as *self*, the
     arguments to the ufunc as *args*. The *mps* argument is an array
@@ -179,7 +182,8 @@ Functions
 
     Clear the IEEE error flags.
 
-.. cfunction:: void PyUFunc_GetPyValues(char* name, int* bufsize, int* errmask, PyObject** errobj)
+.. cfunction:: void PyUFunc_GetPyValues(char* name, int* bufsize,
+   int* errmask, PyObject** errobj)
 
     Get the Python values used for ufunc processing from the
     thread-local storage area unless the defaults have been set in
@@ -206,21 +210,29 @@ of these functions are suitable for placing directly in the array of
 functions stored in the functions member of the PyUFuncObject
 structure.
 
-.. cfunction:: void PyUFunc_f_f_As_d_d(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_f_f_As_d_d(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_d_d(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_d_d(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_f_f(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_f_f(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_g_g(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_g_g(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_F_F_As_D_D(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_F_F_As_D_D(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_F_F(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_F_F(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_D_D(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_D_D(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_G_G(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_G_G(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
     Type specific, core 1-d functions for ufuncs where each
     calculation is obtained by calling a function taking one input
@@ -235,21 +247,29 @@ structure.
     but calls out to a C-function that takes double and returns
     double.
 
-.. cfunction:: void PyUFunc_ff_f_As_dd_d(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_ff_f_As_dd_d(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_ff_f(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_ff_f(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_dd_d(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_dd_d(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_gg_g(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_gg_g(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_FF_F_As_DD_D(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_FF_F_As_DD_D(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_DD_D(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_DD_D(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_FF_F(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_FF_F(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_GG_G(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_GG_G(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
     Type specific, core 1-d functions for ufuncs where each
     calculation is obtained by calling a function taking two input
@@ -261,25 +281,29 @@ structure.
     of one data type but cast the values at each iteration of the loop
     to use the underlying function that takes a different data type.
 
-.. cfunction:: void PyUFunc_O_O(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_O_O(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_OO_O(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_OO_O(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
     One-input, one-output, and two-input, one-output core 1-d functions
-    for the :cdata:`NPY_OBJECT` data type. These functions handle reference count
-    issues and return early on error. The actual function to call is *func*
-    and it must accept calls with the signature ``(PyObject*)(PyObject*)``
-    for :cfunc:`PyUFunc_O_O` or ``(PyObject*)(PyObject *, PyObject *)``
-    for :cfunc:`PyUFunc_OO_O`.
+    for the :cdata:`NPY_OBJECT` data type. These functions handle reference
+    count issues and return early on error. The actual function to call is
+    *func* and it must accept calls with the signature ``(PyObject*)
+    (PyObject*)`` for :cfunc:`PyUFunc_O_O` or ``(PyObject*)(PyObject *,
+    PyObject *)`` for :cfunc:`PyUFunc_OO_O`.
 
-.. cfunction:: void PyUFunc_O_O_method(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_O_O_method(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
     This general purpose 1-d core function assumes that *func* is a string
     representing a method of the input object. For each
     iteration of the loop, the Python obejct is extracted from the array
     and its *func* method is called returning the result to the output array.
 
-.. cfunction:: void PyUFunc_OO_O_method(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_OO_O_method(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
     This general purpose 1-d core function assumes that *func* is a
     string representing a method of the input object that takes one
@@ -288,7 +312,8 @@ structure.
     function. The output of the function is stored in the third entry
     of *args*.
 
-.. cfunction:: void PyUFunc_On_Om(char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+.. cfunction:: void PyUFunc_On_Om(char** args, npy_intp* dimensions,
+   npy_intp* steps, void* func)
 
     This is the 1-d core function used by the dynamic ufuncs created
     by umath.frompyfunc(function, nin, nout). In this case *func* is a

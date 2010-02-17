@@ -1641,7 +1641,7 @@ add_newdoc('numpy.core.umath', 'left_shift',
     x1 : array_like of integer type
         Input values.
     x2 : array_like of integer type
-        Number of zeros to append to `x1`.
+        Number of zeros to append to `x1`. Has to be non-negative.
 
     Returns
     -------
@@ -1848,6 +1848,16 @@ add_newdoc('numpy.core.umath', 'log2',
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log2`
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
+
+    Examples
+    --------
+    >>> x = np.array([0, 1, 2, 2**4])
+    >>> np.log2(x)
+    array([-Inf,   0.,   1.,   4.])
+
+    >>> xi = np.array([0+1.j, 1, 2+0.j, 4.j])
+    >>> np.log2(xi)
+    array([ 0.+2.26618007j,  0.+0.j        ,  1.+0.j        ,  2.+2.26618007j])
 
     """)
 

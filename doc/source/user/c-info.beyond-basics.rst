@@ -159,17 +159,18 @@ Broadcasting over multiple arrays
 .. index::
    single: broadcasting
 
-When multiple arrays are involved in an operation, you may want to use the same
-broadcasting rules that the math operations ( *i.e.* the ufuncs) use. This can
-be done easily using the :ctype:`PyArrayMultiIterObject`.  This is the object
-returned from the Python command numpy.broadcast and it is almost as easy to
-use from C. The function :cfunc:`PyArray_MultiIterNew` ( ``n``, ``...`` ) is
-used (with ``n`` input objects in place of ``...`` ). The input objects can be
-arrays or anything that can be converted into an array. A pointer to a
-PyArrayMultiIterObject is returned.  Broadcasting has already been accomplished
-which adjusts the iterators so that all that needs to be done to advance to the
-next element in each array is for PyArray_ITER_NEXT to be called for each of
-the inputs. This incrementing is automatically performed by
+When multiple arrays are involved in an operation, you may want to use the
+same broadcasting rules that the math operations (*i.e.* the ufuncs) use.
+This can be done easily using the :ctype:`PyArrayMultiIterObject`.  This is
+the object returned from the Python command numpy.broadcast and it is almost
+as easy to use from C. The function
+:cfunc:`PyArray_MultiIterNew` ( ``n``, ``...`` ) is used (with ``n`` input
+objects in place of ``...`` ). The input objects can be arrays or anything
+that can be converted into an array. A pointer to a PyArrayMultiIterObject is
+returned.  Broadcasting has already been accomplished which adjusts the
+iterators so that all that needs to be done to advance to the next element in
+each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
+incrementing is automatically performed by
 :cfunc:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
 multiterator ``obj`` as either a :ctype:`PyArrayMultiObject *` or a
 :ctype:`PyObject *`). The data from input number ``i`` is available using
@@ -233,15 +234,19 @@ can be used. The function call used to create a new ufunc to work on
 built-in data-types is given below. A different mechanism is used to
 register ufuncs for user-defined data-types.
 
-.. cfunction:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func, void** data, char* types, int ntypes, int nin, int nout, int identity, char* name, char* doc, int check_return)
+.. cfunction:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
+   void** data, char* types, int ntypes, int nin, int nout, int identity,
+   char* name, char* doc, int check_return)
 
     *func*
 
         A pointer to an array of 1-d functions to use. This array must be at
-        least ntypes long. Each entry in the array must be a ``PyUFuncGenericFunction`` function. This function has the following signature. An example of a
-        valid 1d loop function is also given.
+        least ntypes long. Each entry in the array must be a
+        ``PyUFuncGenericFunction`` function. This function has the following
+        signature. An example of a valid 1d loop function is also given.
 
-        .. cfunction:: void loop1d(char** args, npy_intp* dimensions, npy_intp* steps, void* data)
+        .. cfunction:: void loop1d(char** args, npy_intp* dimensions,
+           npy_intp* steps, void* data)
 
         *args*
 
@@ -269,7 +274,8 @@ register ufuncs for user-defined data-types.
         .. code-block:: c
 
             static void
-            double_add(char *args, npy_intp *dimensions, npy_intp *steps, void *extra)
+            double_add(char *args, npy_intp *dimensions, npy_intp *steps,
+               void *extra)
             {
                 npy_intp i;
                 npy_intp is1=steps[0], is2=steps[1];
@@ -320,9 +326,9 @@ register ufuncs for user-defined data-types.
 
     *identity*
 
-        Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`, :cdata:`PyUFunc_None`.
-        This specifies what should be returned when an empty array is
-        passed to the reduce method of the ufunc.
+        Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`,
+        :cdata:`PyUFunc_None`. This specifies what should be returned when
+        an empty array is passed to the reduce method of the ufunc.
 
     *name*
 
@@ -458,7 +464,8 @@ functions for each conversion you want to support and then registering
 these functions with the data-type descriptor. A low-level casting
 function has the signature.
 
-.. cfunction:: void castfunc( void* from, void* to, npy_intp n, void* fromarr, void* toarr)
+.. cfunction:: void castfunc( void* from, void* to, npy_intp n, void* fromarr,
+   void* toarr)
 
     Cast ``n`` elements ``from`` one type ``to`` another. The data to
     cast from is in a contiguous, correctly-swapped and aligned chunk
@@ -531,7 +538,8 @@ previously created. Then you call :cfunc:`PyUFunc_RegisterLoopForType`
 this function is ``0`` if the process was successful and ``-1`` with
 an error condition set if it was not successful.
 
-.. cfunction:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
+.. cfunction:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc,
+   int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
 
     *ufunc*
 
@@ -660,10 +668,6 @@ Specific features of ndarray sub-typing
 
 Some special methods and attributes are used by arrays in order to
 facilitate the interoperation of sub-types with the base ndarray type.
-
-.. note:: XXX: some of the documentation below needs to be moved to the
-               reference guide.
-
 
 The __array_finalize\__ method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

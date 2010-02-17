@@ -9,9 +9,9 @@ The N-dimensional array (:class:`ndarray`)
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions
 and items in an array is defined by its :attr:`shape <ndarray.shape>`,
-which is a :class:`tuple` of *N* positive integers that specify the sizes of
-each dimension. The type of items in the array is specified by a
-separate :ref:`data-type object (dtype) <arrays.dtypes>`, one of which
+which is a :class:`tuple` of *N* positive integers that specify the
+sizes of each dimension. The type of items in the array is specified by
+a separate :ref:`data-type object (dtype) <arrays.dtypes>`, one of which
 is associated with each ndarray.
 
 As with other container objects in Python, the contents of an
@@ -32,7 +32,8 @@ objects implementing the :class:`buffer` or :ref:`array
 
 .. admonition:: Example
 
-   A 2-dimensional array of size 2 x 3, composed of 4-byte integer elements:
+   A 2-dimensional array of size 2 x 3, composed of 4-byte integer
+   elements:
 
    >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
    >>> type(x)
@@ -44,10 +45,11 @@ objects implementing the :class:`buffer` or :ref:`array
 
    The array can be indexed using Python container-like syntax:
 
-   >>> x[1,2] # i.e., the element of x in the *second* row, *third* column
-   6
+   >>> x[1,2] # i.e., the element of x in the *second* row, *third*
+   column, namely, 6.
 
-   For example :ref:`slicing <arrays.indexing>` can produce views of the array:
+   For example :ref:`slicing <arrays.indexing>` can produce views of
+   the array:
 
    >>> y = x[:,1]
    >>> y
@@ -96,14 +98,15 @@ which the indices can vary is specified by the :obj:`shape
 the bytes are interpreted is defined by the :ref:`data-type object
 <arrays.dtypes>` associated with the array.
 
-.. index:: C-order, Fortran-order, row-major, column-major, stride, offset
+.. index:: C-order, Fortran-order, row-major, column-major, stride,
+  offset
 
 A segment of memory is inherently 1-dimensional, and there are many
-different schemes for arranging the items of an *N*-dimensional array in
-a 1-dimensional block. Numpy is flexible, and :class:`ndarray` objects
-can accommodate any *strided indexing scheme*. In a strided scheme,
-the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})` corresponds
-to the offset (in bytes)
+different schemes for arranging the items of an *N*-dimensional array
+in a 1-dimensional block. Numpy is flexible, and :class:`ndarray`
+objects can accommodate any *strided indexing scheme*. In a strided
+scheme, the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})`
+corresponds to the offset (in bytes):
 
 .. math:: n_{\mathrm{offset}} = \sum_{k=0}^{N-1} s_k n_k
 
@@ -116,7 +119,8 @@ strided scheme, and correspond to the strides:
 
 .. math::
 
-   s_k^{\mathrm{column}} = \prod_{j=0}^{k-1} d_j , \quad  s_k^{\mathrm{row}} = \prod_{j=k+1}^{N-1} d_j .
+   s_k^{\mathrm{column}} = \prod_{j=0}^{k-1} d_j ,
+   \quad  s_k^{\mathrm{row}} = \prod_{j=k+1}^{N-1} d_j .
 
 .. index:: single-segment, contiguous, non-contiguous
 
@@ -172,8 +176,6 @@ of the array:
    ndarray.nbytes
    ndarray.base
 
-.. note:: XXX: update and check these docstrings.
-
 Data type
 ---------
 
@@ -186,8 +188,6 @@ The data type object associated with the array can be found in the
    :toctree: generated/
 
    ndarray.dtype
-
-.. note:: XXX: update the dtype attribute docstring: setting etc.
 
 Other attributes
 ----------------
@@ -223,9 +223,6 @@ Array interface
 
    ndarray.ctypes
 
-.. note:: XXX: update and check these docstrings.
-
-
 .. _array.ndarray.methods:
 
 Array methods
@@ -241,11 +238,12 @@ For the following methods there are also corresponding functions in
 :func:`argmin`, :func:`argsort`, :func:`choose`, :func:`clip`,
 :func:`compress`, :func:`copy`, :func:`cumprod`, :func:`cumsum`,
 :func:`diagonal`, :func:`imag`, :func:`max <amax>`, :func:`mean`,
-:func:`min <amin>`, :func:`nonzero`, :func:`prod`, :func:`ptp`, :func:`put`,
-:func:`ravel`, :func:`real`, :func:`repeat`, :func:`reshape`,
-:func:`round <around>`, :func:`searchsorted`, :func:`sort`, :func:`squeeze`,
-:func:`std`, :func:`sum`, :func:`swapaxes`, :func:`take`,
-:func:`trace`, :func:`transpose`, :func:`var`.
+:func:`min <amin>`, :func:`nonzero`, :func:`prod`, :func:`ptp`,
+:func:`put`, :func:`ravel`, :func:`real`, :func:`repeat`,
+:func:`reshape`, :func:`round <around>`, :func:`searchsorted`,
+:func:`sort`, :func:`squeeze`, :func:`std`, :func:`sum`,
+:func:`swapaxes`, :func:`take`, :func:`trace`, :func:`transpose`,
+:func:`var`.
 
 Array conversion
 ----------------
@@ -267,8 +265,6 @@ Array conversion
    ndarray.getfield
    ndarray.setflags
    ndarray.fill
-
-.. note:: XXX: update and check these docstrings.
 
 Shape manipulation
 ------------------
@@ -323,8 +319,8 @@ Many of these methods take an argument named *axis*. In such cases,
   float32, float64, etc., whereas a 0-dimensional array is an ndarray
   instance containing precisely one array scalar.)
 
-- If *axis* is an integer, then the operation is done over the given axis
-  (for each 1-D subarray that can be created along the given axis).
+- If *axis* is an integer, then the operation is done over the given
+  axis (for each 1-D subarray that can be created along the given axis).
 
 .. admonition:: Example of the *axis* argument
 
@@ -393,9 +389,6 @@ be performed.
 Arithmetic and comparison operations
 ====================================
 
-.. note:: XXX: write all attributes explicitly here instead of relying on
-          the auto\* stuff?
-
 .. index:: comparison, arithmetic, operation, operator
 
 Arithmetic and comparison operations on :class:`ndarrays <ndarray>`
@@ -435,9 +428,9 @@ Truth value of an array (:func:`bool()`):
    :meth:`ndarray.__nonzero__`, which raises an error if the number of
    elements in the the array is larger than 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
-   :meth:`.all() <ndarray.all>` instead to be clear about what is meant in
-   such cases. (If the number of elements is 0, the array evaluates to
-   ``False``.)
+   :meth:`.all() <ndarray.all>` instead to be clear about what is meant
+   in such cases. (If the number of elements is 0, the array evaluates
+   to ``False``.)
 
 
 Unary operations:

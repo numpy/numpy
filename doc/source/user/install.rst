@@ -12,29 +12,30 @@ Windows
 -------
 
 Good solutions for Windows are, The Enthought Python Distribution `(EPD)
-<http://www.enthought.com/products/epd.php>`_ (which provides binary installers
-for Windows, OS X and Redhat) and `Python (x, y) <http://www.pythonxy.com>`_.
-Both of these packages include Python, NumPy and many additional packages.
-A lightweight alternative is to download the Python installer from
-`www.python.org <http://www.python.org>`_ and the NumPy installer for your
-Python version from the Sourceforge `download site
-<http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_
+<http://www.enthought.com/products/epd.php>`_ (which provides binary
+installers for Windows, OS X and Redhat) and `Python (x, y)
+<http://www.pythonxy.com>`_. Both of these packages include Python, NumPy and
+many additional packages. A lightweight alternative is to download the Python
+installer from `www.python.org <http://www.python.org>`_ and the NumPy
+installer for your Python version from the Sourceforge `download site <http://
+sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_
 
 Linux
 -----
 
 Most of the major distributions provide packages for NumPy, but these can lag
 behind the most recent NumPy release. Pre-built binary packages for Ubuntu are
-available on the `scipy ppa <https://edge.launchpad.net/~scipy/+archive/ppa>`_.
-Redhat binaries are available in the `EPD
-<http://www.enthought.com/products/epd.php>`_.
+available on the `scipy ppa
+<https://edge.launchpad.net/~scipy/+archive/ppa>`_. Redhat binaries are
+available in the `EPD <http://www.enthought.com/products/epd.php>`_.
 
 Mac OS X
 --------
 
 A universal binary installer for NumPy is available from the `download site
-<http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_.
-The `EPD <http://www.enthought.com/products/epd.php>`_ provides NumPy binaries.
+<http://sourceforge.net/project/showfiles.php?group_id=1369&
+package_id=175103>`_. The `EPD <http://www.enthought.com/products/epd.php>`_
+provides NumPy binaries.
 
 Building from source
 ====================
@@ -62,21 +63,22 @@ Building NumPy requires the following software installed:
 
 2) Compilers
 
-   To build any extension modules for Python, you'll need a C compiler.  Various
-   NumPy modules use FORTRAN 77 libraries, so you'll also need a FORTRAN 77
-   compiler installed.
+   To build any extension modules for Python, you'll need a C compiler.
+   Various NumPy modules use FORTRAN 77 libraries, so you'll also need a
+   FORTRAN 77 compiler installed.
 
-   Note that NumPy is developed mainly using GNU compilers. Compilers from other
-   vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Porland, Lahey, HP,
-   IBM, Microsoft are only supported in the form of community feedback, and may
-   not work out of the box. GCC 3.x (and later) compilers are recommended.
+   Note that NumPy is developed mainly using GNU compilers. Compilers from
+   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Porland,
+   Lahey, HP, IBM, Microsoft are only supported in the form of community
+   feedback, and may not work out of the box. GCC 3.x (and later) compilers
+   are recommended.
 
 3) Linear Algebra libraries
 
-   NumPy does not require any external linear algebra libraries to be installed.
-   However, if these are available, NumPy's setup script can detect them and use
-   them for building. A number of different LAPACK library setups can be used,
-   including optimized LAPACK libraries such as ATLAS, MKL or the
+   NumPy does not require any external linear algebra libraries to be
+   installed. However, if these are available, NumPy's setup script can detect
+   them and use them for building. A number of different LAPACK library setups
+   can be used, including optimized LAPACK libraries such as ATLAS, MKL or the
    Accelerate/vecLib framework on OS X.
 
 FORTRAN ABI mismatch
@@ -87,8 +89,8 @@ Unfortunately, they are not ABI compatible, which means that concretely you
 should avoid mixing libraries built with one with another. In particular, if
 your blas/lapack/atlas is built with g77, you *must* use g77 when building
 numpy and scipy; on the contrary, if your atlas is built with gfortran, you
-*must* build numpy/scipy with gfortran. This applies for most other cases where
-different FORTRAN compilers might have been used.
+*must* build numpy/scipy with gfortran. This applies for most other cases
+where different FORTRAN compilers might have been used.
 
 Choosing the fortran compiler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,9 +112,9 @@ How to check the ABI of blas/lapack/atlas
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a a dependency, gfortran has
-been used. If both are dependencies, this means both have been used, which is
-almost always a very bad idea.
+means that g77 has been used. If libgfortran.so is a a dependency, gfortran
+has been used. If both are dependencies, this means both have been used, which
+is almost always a very bad idea.
 
 Building with ATLAS support
 ---------------------------

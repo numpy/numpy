@@ -125,7 +125,8 @@ precision are also available by adding the F and L suffixes respectively.
 
 .. cvar:: NPY_EULER
 
-    The Euler constant (:math:`\lim_{n\rightarrow \infty}{\sum_{k=1}^n{\frac{1}{k}} - \ln n}`)
+    The Euler constant
+        :math:`\lim_{n\rightarrow\infty}({\sum_{k=1}^n{\frac{1}{k}}-\ln n})`
 
 Low-level floating point manipulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

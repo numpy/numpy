@@ -416,7 +416,8 @@ PyArrayDescr_Type
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
 
-    .. cmember:: void cast(void *from, void *to, npy_intp n, void *fromarr, void *toarr)
+    .. cmember:: void cast(void *from, void *to, npy_intp n, void *fromarr,
+       void *toarr)
 
         An array of function pointers to cast from the current type to
         all of the other builtin types. Each function casts a
@@ -442,7 +443,8 @@ PyArrayDescr_Type
         a zero is returned, otherwise, a negative one is returned (and
         a Python error set).
 
-    .. cmember:: void copyswapn(void *dest, npy_intp dstride, void *src, npy_intp sstride, npy_intp n, int swap, void *arr)
+    .. cmember:: void copyswapn(void *dest, npy_intp dstride, void *src,
+       npy_intp sstride, npy_intp n, int swap, void *arr)
 
     .. cmember:: void copyswap(void *dest, void *src, int swap, void *arr)
 
@@ -468,7 +470,8 @@ PyArrayDescr_Type
         ``d1`` < * ``d2``. The array object arr is used to retrieve
         itemsize and field information for flexible arrays.
 
-    .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind, void* arr)
+    .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind,
+       void* arr)
 
         A pointer to a function that retrieves the index of the
         largest of ``n`` elements in ``arr`` beginning at the element
@@ -477,7 +480,8 @@ PyArrayDescr_Type
         always 0. The index of the largest element is returned in
         ``max_ind``.
 
-    .. cmember:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, npy_intp n, void* arr)
+    .. cmember:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2,
+       void* op, npy_intp n, void* arr)
 
         A pointer to a function that multiplies two ``n`` -length
         sequences together, adds them, and places the result in
@@ -527,7 +531,8 @@ PyArrayDescr_Type
         computed by repeatedly adding this computed delta. The data
         buffer must be well-behaved.
 
-    .. cmember:: void fillwithscalar(void* buffer, npy_intp length, void* value, void* arr)
+    .. cmember:: void fillwithscalar(void* buffer, npy_intp length,
+       void* value, void* arr)
 
         A pointer to a function that fills a contiguous ``buffer`` of
         the given ``length`` with a single scalar ``value`` whose
@@ -542,7 +547,8 @@ PyArrayDescr_Type
         :cdata:`PyArray_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
-    .. cmember:: int argsort(void* start, npy_intp* result, npy_intp length, void \*arr)
+    .. cmember:: int argsort(void* start, npy_intp* result, npy_intp length,
+       void \*arr)
 
         An array of function pointers to sorting algorithms for this
         data type. The same sorting algorithms as for sort are
@@ -666,11 +672,12 @@ PyUFunc_Type
 
    .. cmember:: int PyUFuncObject.identity
 
-       Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`, or :cdata:`PyUFunc_None`
-       to indicate the identity for this operation. It is only used
-       for a reduce-like call on an empty array.
+       Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`, or
+       :cdata:`PyUFunc_None` to indicate the identity for this operation.
+       It is only used for a reduce-like call on an empty array.
 
-   .. cmember:: void PyUFuncObject.functions(char** args, npy_intp* dims, npy_intp* steps, void* extradata)
+   .. cmember:: void PyUFuncObject.functions(char** args, npy_intp* dims,
+      npy_intp* steps, void* extradata)
 
        An array of function pointers --- one for each data type
        supported by the ufunc. This is the vector loop that is called
@@ -764,8 +771,8 @@ PyArrayIter_Type
 .. ctype:: PyArrayIterObject
 
    The C-structure corresponding to an object of :cdata:`PyArrayIter_Type` is
-   the :ctype:`PyArrayIterObject`. The :ctype:`PyArrayIterObject` is used to keep
-   track of a pointer into an N-dimensional array. It contains associated
+   the :ctype:`PyArrayIterObject`. The :ctype:`PyArrayIterObject` is used to
+   keep track of a pointer into an N-dimensional array. It contains associated
    information used to quickly march through the array. The pointer can
    be adjusted in three basic ways: 1) advance to the "next" position in
    the array in a C-style contiguous fashion, 2) advance to an arbitrary
@@ -928,8 +935,9 @@ PyArrayNeighborhoodIter_Type
 
 .. ctype:: PyArrayNeighborhoodIterObject
 
-   The C-structure corresponding to an object of :cdata:`PyArrayNeighborhoodIter_Type` is
-   the :ctype:`PyArrayNeighborhoodIterObject`.
+   The C-structure corresponding to an object of
+   :cdata:`PyArrayNeighborhoodIter_Type` is the
+   :ctype:`PyArrayNeighborhoodIterObject`.
 
 PyArrayFlags_Type
 -----------------
@@ -1183,4 +1191,3 @@ for completeness and assistance in understanding the code.
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
-
