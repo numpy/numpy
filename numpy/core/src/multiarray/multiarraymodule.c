@@ -1340,19 +1340,22 @@ _equivalent_units(PyObject *meta1, PyObject *meta2)
     PyArray_DatetimeMetaData *data1, *data2;
 
     /* Same meta object */
-    if (meta1 == meta2)
-	return 1;
+    if (meta1 == meta2) {
+        return 1;
+    }
 
     cobj1 = PyDict_GetItemString(meta1, NPY_METADATA_DTSTR);
     cobj2 = PyDict_GetItemString(meta2, NPY_METADATA_DTSTR);
-    if (cobj1 == cobj2)
-	return 1;
+    if (cobj1 == cobj2) {
+        return 1;
+    }
 
     data1 = PyCObject_AsVoidPtr(cobj1);
     data2 = PyCObject_AsVoidPtr(cobj2);
-
-    return ((data1->base == data2->base) && (data1->num == data2->num)
-	    && (data1->den == data2->den) && (data1->events == data2->events));
+    return ((data1->base == data2->base)
+            && (data1->num == data2->num)
+            && (data1->den == data2->den)
+            && (data1->events == data2->events));
 }
 
 
@@ -1377,13 +1380,15 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
     }
     if (typenum1 == PyArray_VOID
         || typenum2 == PyArray_VOID) {
-        return ((typenum1 == typenum2) &&
-                _equivalent_fields(typ1->fields, typ2->fields));
+        return ((typenum1 == typenum2)
+                && _equivalent_fields(typ1->fields, typ2->fields));
     }
-    if (typenum1 == PyArray_DATETIME || typenum1 == PyArray_DATETIME
-	|| typenum2 == PyArray_TIMEDELTA || typenum2 == PyArray_TIMEDELTA) {
-	return ((typenum1 == typenum2) &&
-		_equivalent_units(typ1->metadata, typ2->metadata));
+    if (typenum1 == PyArray_DATETIME
+            || typenum1 == PyArray_DATETIME
+            || typenum2 == PyArray_TIMEDELTA
+            || typenum2 == PyArray_TIMEDELTA) {
+        return ((typenum1 == typenum2)
+                && _equivalent_units(typ1->metadata, typ2->metadata));
     }
     return (typ1->kind == typ2->kind);
 }
@@ -1425,8 +1430,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
     }
     Py_INCREF(arr->descr);
     ret = PyArray_NewFromDescr(Py_TYPE(arr), arr->descr, ndmin,
-                               newdims, newstrides, arr->data, arr->flags,
-                               (PyObject *)arr);
+            newdims, newstrides, arr->data, arr->flags, (PyObject *)arr);
     /* steals a reference to arr --- so don't increment here */
     PyArray_BASE(ret) = (PyObject *)arr;
     return ret;
