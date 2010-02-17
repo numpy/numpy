@@ -13,7 +13,7 @@ from numscons import write_info
 from code_generators.numpy_api import \
     multiarray_api as multiarray_api_dict, \
     ufunc_api as ufunc_api_dict
-    
+
 from setup_common import *
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal, CheckInline
@@ -408,8 +408,7 @@ env.Prepend(LIBS=["npymath"])
 env.Prepend(LIBPATH=["."])
 
 subst_dict = {'@prefix@': '$distutils_install_prefix',
-	      '@pkgname@': 'numpy.core',
-              '@sep@': os.path.sep}
+    '@pkgname@': 'numpy.core', '@sep@': os.path.sep}
 npymath_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'npymath.ini'),
     'npymath.ini.in', SUBST_DICT=subst_dict)
 
