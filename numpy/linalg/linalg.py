@@ -1175,34 +1175,38 @@ def svd(a, full_matrices=1, compute_uv=1):
     """
     Singular Value Decomposition.
 
-    Factors the matrix `a` into ``u * np.diag(s) * v.H``, where `u` and `v`
-    are unitary (i.e., ``u.H = inv(u)`` and similarly for `v`), ``.H`` is the
-    conjugate transpose operator (which is the ordinary transpose for
-    real-valued matrices), and `s` is a 1-D array of `a`'s singular values.
+    Factors the matrix ``a`` into ``u * np.diag(s) * v``, where ``u`` and
+    ``v`` are unitary (i.e., ``u.H = inv(u)`` and similarly for ``v``) and
+    ``s`` is a 1-D array of ``a``'s singular values.  Note that, in the
+    literature, it is common to see this decomposition expressed as (in
+    NumPy notation) ``a = u * np.diag(s) * v.H``, whereas the ``v`` this
+    function returns is such that ``a`` would be reconstructed as above; in
+    other words, "our" ``v`` is the Hermitian (conjugate transpose) of that
+    commonly seen in the literature.
 
     Parameters
     ----------
     a : array_like
         Matrix of shape ``(M, N)`` to decompose.
     full_matrices : bool, optional
-        If True (default), ``u`` and ``v.H`` have the shapes
-        ``(M, M)`` and ``(N, N)``, respectively.  Otherwise, the shapes
-        are ``(M, K)`` and ``(K, N)``, resp., where ``K = min(M, N)``.
+        If True (default), ``u`` and ``v`` have the shapes ``(M, M)``
+        and ``(N, N)``, respectively.  Otherwise, the shapes are ``(M, K)``
+        and ``(K, N)``, resp., where ``K = min(M, N)``.
     compute_uv : bool, optional
-        Whether or not to compute ``u`` and ``v.H`` in addition to ``s``.
+        Whether or not to compute ``u`` and ``v`` in addition to ``s``.
         True by default.
 
     Returns
     -------
     u : ndarray
-        Unitary matrix. The shape of `U` is ``(M, M)`` or ``(M, K)``
-        depending on value of `full_matrices`.
+        Unitary matrix. The shape of ``U`` is ``(M, M)`` or ``(M, K)``
+        depending on value of ``full_matrices``.
     s : ndarray
         The singular values, sorted so that ``s[i] >= s[i+1]``.
-        `S` is a 1-D array of length ``min(M, N)``
-    v.H : ndarray
+        ``S`` is a 1-D array of length ``min(M, N)``
+    v : ndarray
         Unitary matrix of shape ``(N, N)`` or ``(K, N)``, depending
-        on `full_matrices`.
+        on ``full_matrices``.
 
     Raises
     ------
@@ -1211,21 +1215,21 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     Notes
     -----
-    If `a` is a matrix object (as opposed to an `ndarray`), then so are all
-    the return values.
+    If ``a`` is a matrix object (as opposed to an `ndarray`), then so are
+    all the return values.
 
     Examples
     --------
     >>> a = np.random.randn(9, 6) + 1j*np.random.randn(9, 6)
-    >>> U, s, Vh = np.linalg.svd(a)
-    >>> U.shape, Vh.shape, s.shape
+    >>> U, s, V = np.linalg.svd(a)
+    >>> U.shape, V.shape, s.shape
     ((9, 9), (6, 6), (6,))
 
-    >>> U, s, Vh = np.linalg.svd(a, full_matrices=False)
-    >>> U.shape, Vh.shape, s.shape
+    >>> U, s, V = np.linalg.svd(a, full_matrices=False)
+    >>> U.shape, V.shape, s.shape
     ((9, 6), (6, 6), (6,))
     >>> S = np.diag(s)
-    >>> np.allclose(a, np.dot(U, np.dot(S, Vh)))
+    >>> np.allclose(a, np.dot(U, np.dot(S, V)))
     True
 
     >>> s2 = np.linalg.svd(a, compute_uv=False)

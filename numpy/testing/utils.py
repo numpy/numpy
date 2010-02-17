@@ -1081,23 +1081,54 @@ def _assert_valid_refcount(op):
     assert(sys.getrefcount(i) >= rc)
 
 def assert_array_almost_equal_nulp(x, y, nulp=1):
-    """Compare two arrays relatively to their spacing. It is a relatively
-    robust method to compare two arrays whose amplitude is variable.
+    """
+    Compare two arrays relatively to their spacing.
 
-    Note
-    ----
-    An assertion is raised if the following condition is not met:
-
-        abs(x - y) <= nulps * spacing(max(abs(x), abs(y)))
+    This is a relatively robust method to compare two arrays whose amplitude
+    is variable.
 
     Parameters
     ----------
-    x: array_like
-        first input array
-    y: array_like
-        second input array
-    nulp: int
-        max number of unit in the last place for tolerance (see Note)
+    x, y : array_like
+        Input arrays.
+    nulp : int, optional
+        The maximum number of unit in the last place for tolerance (see Notes).
+        Default is 1.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the spacing between `x` and `y` for one or more elements is larger
+        than `nulp`.
+
+    See Also
+    --------
+    assert_array_max_ulp : Check that all items of arrays differ in at most
+        N Units in the Last Place.
+    spacing : Return the distance between x and the nearest adjacent number.
+
+    Notes
+    -----
+    An assertion is raised if the following condition is not met::
+
+        abs(x - y) <= nulps * spacing(max(abs(x), abs(y)))
+
+    Examples
+    --------
+    >>> x = np.array([1., 1e-10, 1e-20])
+    >>> eps = np.finfo(x.dtype).eps
+    >>> np.testing.assert_array_almost_equal_nulp(x, x*eps/2 + x)
+
+    >>> np.testing.assert_array_almost_equal_nulp(x, x*eps + x)
+    ------------------------------------------------------------
+    Traceback (most recent call last):
+      ...
+    AssertionError: X and Y are not equal to 1 ULP (max is 2)
+
     """
     import numpy as np
     ax = np.abs(x)
@@ -1112,8 +1143,41 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
         raise AssertionError(msg)
 
 def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
-    """Given two arrays a and b, check that every item differs in at most N
-    Unit in the Last Place."""
+    """
+    Check that all items of arrays differ in at most N Units in the Last Place.
+
+    Parameters
+    ----------
+    a, b : array_like
+        Input arrays to be compared.
+    maxulp : int, optional
+        The maximum number of units in the last place that elements of `a` and
+        `b` can differ. Default is 1.
+    dtype : dtype, optional
+        Data-type to convert `a` and `b` to if given. Default is None.
+
+    Returns
+    -------
+    ret : ndarray
+        Array containing number of representable floating point numbers between
+        items in `a` and `b`.
+
+    Raises
+    ------
+    AssertionError
+        If one or more elements differ by more than `maxulp`.
+
+    See Also
+    --------
+    assert_array_almost_equal_nulp : Compare two arrays relatively to their
+        spacing.
+
+    Examples
+    --------
+    >>> a = np.linspace(0., 1., 100)
+    >>> res = np.testing.assert_array_max_ulp(a, np.arcsin(np.sin(a)))
+
+    """
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
@@ -1282,11 +1346,29 @@ class WarningManager:
         self._module.showwarning = self._showwarning
 
 def assert_warns(warning_class, func, *args, **kw):
-    """Fail unless a warning of class warning_class is thrown by callable when
+    """
+    Fail unless the given callable throws the specified warning.
+
+    A warning of class warning_class should be thrown by the callable when
     invoked with arguments args and keyword arguments kwargs.
-    
     If a different type of warning is thrown, it will not be caught, and the
     test case will be deemed to have suffered an error.
+
+    Parameters
+    ----------
+    warning_class : class
+        The class defining the warning that `func` is expected to throw.
+    func : callable
+        The callable to test.
+    \\*args : Arguments
+        Arguments passed to `func`.
+    \\*\\*kwargs : Kwargs
+        Keyword arguments passed to `func`.
+
+    Returns
+    -------
+    None
+
     """
 
     # XXX: once we may depend on python >= 2.6, this can be replaced by the

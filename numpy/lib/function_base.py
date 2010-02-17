@@ -1366,24 +1366,20 @@ def nansum(a, axis=None):
 
 def nanmin(a, axis=None):
     """
-    Return the minimum of array elements over the given axis ignoring any NaNs.
+    Return the minimum of an array or minimum along an axis ignoring any NaNs.
 
     Parameters
     ----------
     a : array_like
-        Array containing numbers whose sum is desired. If `a` is not
-        an array, a conversion is attempted.
+        Array containing numbers whose minimum is desired.
     axis : int, optional
         Axis along which the minimum is computed.The default is to compute
         the minimum of the flattened array.
 
     Returns
     -------
-    y : {ndarray, scalar}
-        An array with the same shape as `a`, with the specified axis removed.
-        If `a` is a 0-d array, or if axis is None, a scalar is returned. The
-        the same dtype as `a` is returned.
-
+    nanmin : ndarray
+        A new array or a scalar array with the result.
 
     See Also
     --------
@@ -1461,7 +1457,7 @@ def nanargmin(a, axis=None):
 
 def nanmax(a, axis=None):
     """
-    Return the maximum of array elements over the given axis ignoring any NaNs.
+    Return the maximum of an array or maximum along an axis ignoring any NaNs.
 
     Parameters
     ----------
@@ -1469,15 +1465,15 @@ def nanmax(a, axis=None):
         Array containing numbers whose maximum is desired. If `a` is not
         an array, a conversion is attempted.
     axis : int, optional
-        Axis along which the maximum is computed.The default is to compute
+        Axis along which the maximum is computed. The default is to compute
         the maximum of the flattened array.
 
     Returns
     -------
-    y : ndarray
+    nanmax : ndarray
         An array with the same shape as `a`, with the specified axis removed.
-        If `a` is a 0-d array, or if axis is None, a scalar is returned. The
-        the same dtype as `a` is returned.
+        If `a` is a 0-d array, or if axis is None, a ndarray scalar is
+        returned.  The the same dtype as `a` is returned.
 
     See Also
     --------

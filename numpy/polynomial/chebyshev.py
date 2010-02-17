@@ -1,50 +1,58 @@
-"""Functions for dealing with Chebyshev series.
+"""
+Objects for dealing with Chebyshev series.
 
-This module provide s a number of functions that are useful in dealing with
-Chebyshev series as well as a ``Chebyshev`` class that encapsuletes the usual
-arithmetic operations. All the Chebyshev series are assumed to be ordered
-from low to high, thus ``array([1,2,3])`` will be treated as the series
-``T_0 + 2*T_1 + 3*T_2``
+This module provides a number of objects (mostly functions) useful for
+dealing with Chebyshev series, including a `Chebyshev` class that
+encapsulates the usual arithmetic operations.  (General information
+on how this module represents and works with such polynomials is in the
+docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- chebdomain -- Chebyshev series default domain
-- chebzero -- Chebyshev series that evaluates to 0.
-- chebone -- Chebyshev series that evaluates to 1.
-- chebx -- Chebyshev series of the identity map (x).
+- `chebdomain` -- Chebyshev series default domain, [-1,1].
+- `chebzero` -- (Coefficients of the) Chebyshev series that evaluates
+  identically to 0.
+- `chebone` -- (Coefficients of the) Chebyshev series that evaluates
+  identically to 1.
+- `chebx` -- (Coefficients of the) Chebyshev series for the identity map,
+  ``f(x) = x``.
 
 Arithmetic
 ----------
-- chebadd -- add a Chebyshev series to another.
-- chebsub -- subtract a Chebyshev series from another.
-- chebmul -- multiply a Chebyshev series by another
-- chebdiv -- divide one Chebyshev series by another.
-- chebval -- evaluate a Chebyshev series at given points.
+- `chebadd` -- add two Chebyshev series.
+- `chebsub` -- subtract one Chebyshev series from another.
+- `chebmul` -- multiply two Chebyshev series.
+- `chebdiv` -- divide one Chebyshev series by another.
+- `chebval` -- evaluate a Chebyshev series at given points.
 
 Calculus
 --------
-- chebder -- differentiate a Chebyshev series.
-- chebint -- integrate a Chebyshev series.
+- `chebder` -- differentiate a Chebyshev series.
+- `chebint` -- integrate a Chebyshev series.
 
 Misc Functions
 --------------
-- chebfromroots -- create a Chebyshev series with specified roots.
-- chebroots -- find the roots of a Chebyshev series.
-- chebvander -- Vandermode like matrix for Chebyshev polynomials.
-- chebfit -- least squares fit returning a Chebyshev series.
-- chebtrim -- trim leading coefficients from a Chebyshev series.
-- chebline -- Chebyshev series of given straight line
-- cheb2poly -- convert a Chebyshev series to a polynomial.
-- poly2cheb -- convert a polynomial to a Chebyshev series.
+- `chebfromroots` -- create a Chebyshev series with specified roots.
+- `chebroots` -- find the roots of a Chebyshev series.
+- `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
+- `chebfit` -- least-squares fit returning a Chebyshev series.
+- `chebtrim` -- trim leading coefficients from a Chebyshev series.
+- `chebline` -- Chebyshev series of given straight line.
+- `cheb2poly` -- convert a Chebyshev series to a polynomial.
+- `poly2cheb` -- convert a polynomial to a Chebyshev series.
 
 Classes
 -------
-- Chebyshev -- Chebyshev series class.
+- `Chebyshev` -- A Chebyshev series class.
+
+See also
+--------
+`numpy.polynomial`
 
 Notes
 -----
 The implementations of multiplication, division, integration, and
-differentiation use the algebraic identities:
+differentiation use the algebraic identities [1]_:
 
 .. math ::
     T_n(x) = \\frac{z^n + z^{-n}}{2} \\\\
@@ -55,8 +63,14 @@ where
 .. math :: x = \\frac{z + z^{-1}}{2}.
 
 These identities allow a Chebyshev series to be expressed as a finite,
-symmetric Laurent series. These sorts of Laurent series are referred to as
-z-series in this module.
+symmetric Laurent series.  In this module, this sort of Laurent series
+is referred to as a "z-series."
+
+References
+----------
+.. [1] A. T. Benjamin, et al., "Combinatorial Trigonometry with Chebyshev
+  Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
+  (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
 from __future__ import division
@@ -289,26 +303,47 @@ def _zseries_int(zs) :
 
 
 def poly2cheb(pol) :
-    """Convert a polynomial to a Chebyshev series.
+    """
+    poly2cheb(pol)
 
-    Convert a series containing polynomial coefficients ordered by degree
-    from low to high to an equivalent Chebyshev series ordered from low to
-    high.
+    Convert a polynomial to a Chebyshev series.
 
-    Inputs
-    ------
+    Convert an array representing the coefficients of a polynomial (relative
+    to the "standard" basis) ordered from lowest degree to highest, to an
+    array of the coefficients of the equivalent Chebyshev series, ordered
+    from lowest to highest degree.
+
+    Parameters
+    ----------
     pol : array_like
-        1-d array containing the polynomial coeffients
+        1-d array containing the polynomial coefficients
 
     Returns
     -------
-    cseries : ndarray
+    cs : ndarray
         1-d array containing the coefficients of the equivalent Chebyshev
         series.
 
     See Also
     --------
     cheb2poly
+
+    Notes
+    -----
+    Note that a consequence of the input needing to be array_like and that
+    the output is an ndarray, is that if one is going to use this function
+    to convert a Polynomial instance, P, to a Chebyshev instance, T, the
+    usage is ``T = Chebyshev(poly2cheb(P.coef))``; see Examples below.
+
+    Examples
+    --------
+    >>> from numpy import polynomial as P
+    >>> p = P.Polynomial(np.arange(4))
+    >>> p
+    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    >>> c = P.Chebyshev(P.poly2cheb(p.coef))
+    >>> c
+    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
 
     """
     [pol] = pu.as_series([pol])
@@ -322,27 +357,49 @@ def poly2cheb(pol) :
 
 
 def cheb2poly(cs) :
-    """Convert a Chebyshev series to a polynomial.
+    """
+    cheb2poly(cs)
 
-    Covert a series containing Chebyshev series coefficients orderd from
-    low to high to an equivalent polynomial ordered from low to
-    high by degree.
+    Convert a Chebyshev series to a polynomial.
 
-    Inputs
-    ------
+    Convert an array representing the coefficients of a Chebyshev series,
+    ordered from lowest degree to highest, to an array of the coefficients
+    of the equivalent polynomial (relative to the "standard" basis) ordered
+    from lowest to highest degree.
+
+    Parameters
+    ----------
     cs : array_like
-        1-d array containing the Chebyshev series coeffients ordered from
-        low to high.
+        1-d array containing the Chebyshev series coefficients, ordered
+        from lowest order term to highest.
 
     Returns
     -------
     pol : ndarray
         1-d array containing the coefficients of the equivalent polynomial
-        ordered from low to high by degree.
+        (relative to the "standard" basis) ordered from lowest order term
+        to highest.
 
     See Also
     --------
     poly2cheb
+
+    Notes
+    -----
+    Note that a consequence of the input needing to be array_like and that
+    the output is an ndarray, is that if one is going to use this function
+    to convert a Chebyshev instance, T, to a Polynomial instance, P, the
+    usage is ``P = Polynomial(cheb2poly(T.coef))``; see Examples below.
+
+    Examples
+    --------
+    >>> from numpy import polynomial as P
+    >>> c = P.Chebyshev(np.arange(4))
+    >>> c
+    Chebyshev([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    >>> p = P.Polynomial(P.cheb2poly(c.coef))
+    >>> p
+    Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
 
     """
     [cs] = pu.as_series([cs])
@@ -373,19 +430,33 @@ chebone = np.array([1])
 chebx = np.array([0,1])
 
 def chebline(off, scl) :
-    """Chebyshev series whose graph is a straight line
+    """
+    Chebyshev series whose graph is a straight line.
 
-    The line has the formula ``off + scl*x``
 
-    Parameters:
-    -----------
+
+    Parameters
+    ----------
     off, scl : scalars
         The specified line is given by ``off + scl*x``.
 
-    Returns:
+    Returns
+    -------
+    y : ndarray
+        This module's representation of the Chebyshev series for
+        ``off + scl*x``.
+
+    See Also
     --------
-    series : 1d ndarray
-        The Chebyshev series representation of ``off + scl*x``.
+    polyline
+
+    Examples
+    --------
+    >>> import numpy.polynomial.chebyshev as C
+    >>> C.chebline(3,2)
+    array([3, 2])
+    >>> C.chebval(-3, C.chebline(3,2)) # should be -3
+    -3.0
 
     """
     if scl != 0 :
@@ -394,25 +465,55 @@ def chebline(off, scl) :
         return np.array([off])
 
 def chebfromroots(roots) :
-    """Generate a Chebyschev series with given roots.
+    """
+    Generate a Chebyshev series with the given roots.
 
-    Generate a Chebyshev series whose roots are given by `roots`. The
-    resulting series is the produet `(x - roots[0])*(x - roots[1])*...`
+    Return the array of coefficients for the C-series whose roots (a.k.a.
+    "zeros") are given by *roots*.  The returned array of coefficients is
+    ordered from lowest order "term" to highest, and zeros of multiplicity
+    greater than one must be included in *roots* a number of times equal
+    to their multiplicity (e.g., if `2` is a root of multiplicity three,
+    then [2,2,2] must be in *roots*).
 
-    Inputs
-    ------
+    Parameters
+    ----------
     roots : array_like
-        1-d array containing the roots in sorted order.
+        Sequence containing the roots.
 
     Returns
     -------
-    series : ndarray
-        1-d array containing the coefficients of the Chebeshev series
-        ordered from low to high.
+    out : ndarray
+        1-d array of the C-series' coefficients, ordered from low to
+        high.  If all roots are real, ``out.dtype`` is a float type;
+        otherwise, ``out.dtype`` is a complex type, even if all the
+        coefficients in the result are real (see Examples below).
 
     See Also
     --------
-    chebroots
+    polyfromroots
+
+    Notes
+    -----
+    What is returned are the :math:`c_i` such that:
+
+    .. math::
+
+        \\sum_{i=0}^{n} c_i*T_i(x) = \\prod_{i=0}^{n} (x - roots[i])
+
+    where ``n == len(roots)`` and :math:`T_i(x)` is the `i`-th Chebyshev
+    (basis) polynomial over the domain `[-1,1]`.  Note that, unlike
+    `polyfromroots`, due to the nature of the C-series basis set, the
+    above identity *does not* imply :math:`c_n = 1` identically (see
+    Examples).
+
+    Examples
+    --------
+    >>> import numpy.polynomial.chebyshev as C
+    >>> C.chebfromroots((-1,0,1)) # x^3 - x relative to the standard basis
+    array([ 0.  , -0.25,  0.  ,  0.25])
+    >>> j = complex(0,1)
+    >>> C.chebfromroots((-j,j)) # x^2 + 1 relative to the standard basis
+    array([ 1.5+0.j,  0.0+0.j,  0.5+0.j])
 
     """
     if len(roots) == 0 :
@@ -427,26 +528,42 @@ def chebfromroots(roots) :
 
 
 def chebadd(c1, c2):
-    """Add one Chebyshev series to another.
+    """
+    Add one Chebyshev series to another.
 
-    Returns the sum of two Chebyshev series `c1` + `c2`. The arguments are
-    sequences of coefficients ordered from low to high, i.e., [1,2,3] is
-    the series "T_0 + 2*T_1 + 3*T_2".
+    Returns the sum of two Chebyshev series `c1` + `c2`.  The arguments
+    are sequences of coefficients ordered from lowest order term to
+    highest, i.e., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of Chebyshev series coefficients ordered from low to
+        1-d arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Chebyshev series of the sum.
+        Array representing the Chebyshev series of their sum.
 
     See Also
     --------
     chebsub, chebmul, chebdiv, chebpow
+
+    Notes
+    -----
+    Unlike multiplication, division, etc., the sum of two Chebyshev series
+    is a Chebyshev series (without having to "reproject" the result onto
+    the basis set) so addition, just like that of "standard" polynomials,
+    is simply "component-wise."
+
+    Examples
+    --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebadd(c1,c2)
+    array([ 4.,  4.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -461,29 +578,44 @@ def chebadd(c1, c2):
 
 
 def chebsub(c1, c2):
-    """Subtract one Chebyshev series from another.
+    """
+    Subtract one Chebyshev series from another.
 
-    Returns the difference of two Chebyshev series `c1` - `c2`. The
-    sequences of coefficients are ordered from low to high, i.e., [1,2,3]
-    is the series ``T_0 + 2*T_1 + 3*T_2.``
+    Returns the difference of two Chebyshev series `c1` - `c2`.  The
+    sequences of coefficients are from lowest order term to highest, i.e.,
+    [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of Chebyshev series coefficients ordered from low to
+        1-d arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Chebyshev series of the difference.
+        Of Chebyshev series coefficients representing their difference.
 
     See Also
     --------
     chebadd, chebmul, chebdiv, chebpow
 
+    Notes
+    -----
+    Unlike multiplication, division, etc., the difference of two Chebyshev
+    series is a Chebyshev series (without having to "reproject" the result
+    onto the basis set) so subtraction, just like that of "standard"
+    polynomials, is simply "component-wise."
+
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebsub(c1,c2)
+    array([-2.,  0.,  2.])
+    >>> C.chebsub(c2,c1) # -C.chebsub(c1,c2)
+    array([ 2.,  0., -2.])
 
     """
     # c1, c2 are trimmed copies
@@ -499,26 +631,43 @@ def chebsub(c1, c2):
 
 
 def chebmul(c1, c2):
-    """Multiply one Chebyshev series by another.
+    """
+    Multiply one Chebyshev series by another.
 
-    Returns the product of two Chebyshev series `c1` * `c2`. The arguments
-    are sequences of coefficients ordered from low to high, i.e., [1,2,3]
-    is the series ``T_0 + 2*T_1 + 3*T_2.``
+    Returns the product of two Chebyshev series `c1` * `c2`.  The arguments
+    are sequences of coefficients, from lowest order "term" to highest,
+    e.g., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of chebyshev series coefficients ordered from low to
+        1-d arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Chebyshev series of the product.
+        Of Chebyshev series coefficients representing their product.
 
     See Also
     --------
     chebadd, chebsub, chebdiv, chebpow
+
+    Notes
+    -----
+    In general, the (polynomial) product of two C-series results in terms
+    that are not in the Chebyshev polynomial basis set.  Thus, to express
+    the product as a C-series, it is typically necessary to "re-project"
+    the product onto said basis set, which typically produces
+    "un-intuitive" (but correct) results; see Examples section below.
+
+    Examples
+    --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebmul(c1,c2) # multiplication requires "reprojection"
+    array([  6.5,  12. ,  12. ,   4. ,   1.5])
 
     """
     # c1, c2 are trimmed copies
@@ -531,29 +680,49 @@ def chebmul(c1, c2):
 
 
 def chebdiv(c1, c2):
-    """Divide one Chebyshev series by another.
+    """
+    Divide one Chebyshev series by another.
 
-    Returns the quotient of two Chebyshev series `c1` / `c2`. The arguments
-    are sequences of coefficients ordered from low to high, i.e., [1,2,3]
-    is the series ``T_0 + 2*T_1 + 3*T_2.``
+    Returns the quotient-with-remainder of two Chebyshev series
+    `c1` / `c2`.  The arguments are sequences of coefficients from lowest
+    order "term" to highest, e.g., [1,2,3] represents the series
+    ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of chebyshev series coefficients ordered from low to
+        1-d arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
     -------
-    [quo, rem] : ndarray
-        Chebyshev series of the quotient and remainder.
+    [quo, rem] : ndarrays
+        Of Chebyshev series coefficients representing the quotient and
+        remainder.
 
     See Also
     --------
     chebadd, chebsub, chebmul, chebpow
 
+    Notes
+    -----
+    In general, the (polynomial) division of one C-series by another
+    results in quotient and remainder terms that are not in the Chebyshev
+    polynomial basis set.  Thus, to express these results as C-series, it
+    is typically necessary to "re-project" the results onto said basis
+    set, which typically produces "un-intuitive" (but correct) results;
+    see Examples section below.
+
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> C.chebdiv(c1,c2) # quotient "intuitive," remainder not
+    (array([ 3.]), array([-8., -4.]))
+    >>> c2 = (0,1,2,3)
+    >>> C.chebdiv(c2,c1) # neither "intuitive"
+    (array([ 0.,  2.]), array([-2., -4.]))
 
     """
     # c1, c2 are trimmed copies
@@ -627,24 +796,25 @@ def chebpow(cs, pow, maxpower=16) :
         return _zseries_to_cseries(prd)
 
 def chebder(cs, m=1, scl=1) :
-    """Differentiate a Chebyshev series.
+    """
+    Differentiate a Chebyshev series.
 
-    Returns the series `cs` differentiated `m` times. At each iteration the
-    result is multiplied by `scl`. The scaling factor is for use in a
-    linear change of variable. The argument `cs` is a sequence of
-    coefficients ordered from low to high. i.e., [1,2,3] is the series
+    Returns the series `cs` differentiated `m` times.  At each iteration the
+    result is multiplied by `scl` (the scaling factor is for use in a linear
+    change of variable).  The argument `cs` is the sequence of coefficients
+    from lowest order "term" to highest, e.g., [1,2,3] represents the series
     ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     cs: array_like
-        1d array of chebyshev series coefficients ordered from low to high.
+        1-d array of Chebyshev series coefficients ordered from low to high.
     m : int, optional
-        Order of differentiation, must be non-negative. (default: 1)
+        Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
-        The result of each derivation is multiplied by `scl`. The end
-        result is multiplication by `scl`**`m`. This is for use in a linear
-        change of variable. (default: 1)
+        Each differentiation is multiplied by `scl`.  The end result is
+        multiplication by ``scl**m``.  This is for use in a linear change of
+        variable. (Default: 1)
 
     Returns
     -------
@@ -655,8 +825,25 @@ def chebder(cs, m=1, scl=1) :
     --------
     chebint
 
+    Notes
+    -----
+    In general, the result of differentiating a C-series needs to be
+    "re-projected" onto the C-series basis set. Thus, typically, the
+    result of this function is "un-intuitive," albeit correct; see Examples
+    section below.
+
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> cs = (1,2,3,4)
+    >>> C.chebder(cs)
+    array([ 14.,  12.,  24.])
+    >>> C.chebder(cs,3)
+    array([ 96.])
+    >>> C.chebder(cs,scl=-1)
+    array([-14., -12., -24.])
+    >>> C.chebder(cs,2,-1)
+    array([ 12.,  96.])
 
     """
     # cs is a trimmed copy
@@ -678,49 +865,80 @@ def chebder(cs, m=1, scl=1) :
 
 
 def chebint(cs, m=1, k=[], lbnd=0, scl=1) :
-    """Integrate a Chebyshev series.
+    """
+    Integrate a Chebyshev series.
 
-    Returns the series integrated from `lbnd` to x `m` times. At each
-    iteration the resulting series is multiplied by `scl` and an
-    integration constant specified by `k` is added. The scaling factor is
-    for use in a linear change of variable. The argument `cs` is a sequence
-    of coefficients ordered from low to high. i.e., [1,2,3] is the series
-    ``T_0 + 2*T_1 + 3*T_2``.
-
+    Returns, as a C-series, the input C-series `cs`, integrated `m` times
+    from `lbnd` to `x`.  At each iteration the resulting series is
+    **multiplied** by `scl` and an integration constant, `k`, is added.
+    The scaling factor is for use in a linear change of variable.  ("Buyer
+    beware": note that, depending on what one is doing, one may want `scl`
+    to be the reciprocal of what one might expect; for more information,
+    see the Notes section below.)  The argument `cs` is a sequence of
+    coefficients, from lowest order C-series "term" to highest, e.g.,
+    [1,2,3] represents the series :math:`T_0(x) + 2T_1(x) + 3T_2(x)`.
 
     Parameters
     ----------
-    cs: array_like
-        1d array of chebyshev series coefficients ordered from low to high.
+    cs : array_like
+        1-d array of C-series coefficients, ordered from low to high.
     m : int, optional
-        Order of integration, must be positeve. (default: 1)
+        Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
-        Integration constants. The value of the first integral at zero is
-        the first value in the list, the value of the second integral at
-        zero is the second value in the list, and so on. If ``[]``
-        (default), all constants are set zero.  If `m = 1`, a single scalar
-        can be given instead of a list.
+        Integration constant(s).  The value of the first integral at zero
+        is the first value in the list, the value of the second integral
+        at zero is the second value, etc.  If ``k == []`` (the default),
+        all constants are set to zero.  If ``m == 1``, a single scalar can
+        be given instead of a list.
     lbnd : scalar, optional
-        The lower bound of the integral. (default: 0)
+        The lower bound of the integral. (Default: 0)
     scl : scalar, optional
-        Following each integration the result is multiplied by `scl` before
-        the integration constant is added. (default: 1)
+        Following each integration the result is *multiplied* by `scl`
+        before the integration constant is added. (Default: 1)
 
     Returns
     -------
-    der : ndarray
-        Chebyshev series of the integral.
+    S : ndarray
+        C-series coefficients of the integral.
 
     Raises
     ------
     ValueError
+        If ``m < 1``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
+        ``np.isscalar(scl) == False``.
 
     See Also
     --------
     chebder
 
+    Notes
+    -----
+    Note that the result of each integration is *multiplied* by `scl`.
+    Why is this important to note?  Say one is making a linear change of
+    variable :math:`u = ax + b` in an integral relative to `x`.  Then
+    :math:`dx = du/a`, so one will need to set `scl` equal to :math:`1/a`
+    - perhaps not what one would have first thought.
+
+    Also note that, in general, the result of integrating a C-series needs
+    to be "re-projected" onto the C-series basis set.  Thus, typically,
+    the result of this function is "un-intuitive," albeit correct; see
+    Examples section below.
+
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> cs = (1,2,3)
+    >>> C.chebint(cs)
+    array([ 0.5, -0.5,  0.5,  0.5])
+    >>> C.chebint(cs,3)
+    array([ 0.03125   , -0.1875    ,  0.04166667, -0.05208333,  0.01041667,
+            0.00625   ])
+    >>> C.chebint(cs, k=3)
+    array([ 3.5, -0.5,  0.5,  0.5])
+    >>> C.chebint(cs,lbnd=-2)
+    array([ 8.5, -0.5,  0.5,  0.5])
+    >>> C.chebint(cs,scl=-2)
+    array([-1.,  1., -1., -1.])
 
     """
     if np.isscalar(k) :
@@ -839,10 +1057,11 @@ def chebvander(x, deg) :
     return v
 
 def chebfit(x, y, deg, rcond=None, full=False):
-    """Least squares fit of Chebyshev series to data.
+    """
+    Least squares fit of Chebyshev series to data.
 
-    Fit a Chebyshev series ``p(x) = p[0] * T_{deq}(x) + ... + p[deg] *
-    T_{0}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
+    Fit a Chebyshev series ``p(x) = p[0] * T_{0}(x) + ... + p[deg] *
+    T_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
     coefficients `p` that minimises the squared error.
 
     Parameters
@@ -900,7 +1119,7 @@ def chebfit(x, y, deg, rcond=None, full=False):
     The solution are the coefficients ``c[i]`` of the Chebyshev series
     ``T(x)`` that minimizes the squared error
 
-    ``E = \sum_j |y_j - T(x_j)|^2``.
+    ``E = \\sum_j |y_j - T(x_j)|^2``.
 
     This problem is solved by setting up as the overdetermined matrix
     equation
@@ -971,24 +1190,45 @@ def chebfit(x, y, deg, rcond=None, full=False):
 
 
 def chebroots(cs):
-    """Roots of a Chebyshev series.
+    """
+    Compute the roots of a Chebyshev series.
 
-    Compute the roots of the Chebyshev series `cs`. The argument `cs` is a
-    sequence of coefficients ordered from low to high. i.e., [1,2,3] is the
-    series ``T_0 + 2*T_1 + 3*T_2``.
+    Return the roots (a.k.a "zeros") of the C-series represented by `cs`,
+    which is the sequence of the C-series' coefficients from lowest order
+    "term" to highest, e.g., [1,2,3] represents the C-series
+    ``T_0 + 2*T_1 + 3*T_2``.
 
     Parameters
     ----------
     cs : array_like
-        1D array of Chebyshev coefficients ordered from low to high.
+        1-d array of C-series coefficients ordered from low to high.
 
     Returns
     -------
     out : ndarray
-        An array containing the complex roots of the chebyshev series.
+        Array of the roots.  If all the roots are real, then so is the
+        dtype of ``out``; otherwise, ``out``'s dtype is complex.
+
+    See Also
+    --------
+    polyroots
+
+    Notes
+    -----
+    Algorithm(s) used:
+
+    Remember: because the C-series basis set is different from the
+    "standard" basis set, the results of this function *may* not be what
+    one is expecting.
 
     Examples
     --------
+    >>> import numpy.polynomial as P
+    >>> import numpy.polynomial.chebyshev as C
+    >>> P.polyroots((-1,1,-1,1)) # x^3 - x^2 + x - 1 has two complex roots
+    array([ -4.99600361e-16-1.j,  -4.99600361e-16+1.j,   1.00000e+00+0.j])
+    >>> C.chebroots((-1,1,-1,1)) # T3 - T2 + T1 - T0 has only real roots
+    array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
 
     """
     # cs is a trimmed copy

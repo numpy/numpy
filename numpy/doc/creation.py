@@ -9,7 +9,8 @@ Introduction
 There are 5 general mechanisms for creating arrays:
 
 1) Conversion from other Python structures (e.g., lists, tuples)
-2) Intrinsic numpy array array creation objects (e.g., arange, ones, zeros, etc.)
+2) Intrinsic numpy array array creation objects (e.g., arange, ones, zeros,
+   etc.)
 3) Reading arrays from disk, either from standard or custom formats
 4) Creating arrays from raw bytes through the use of strings or buffers
 5) Use of special library functions (e.g., random)
@@ -22,17 +23,19 @@ Converting Python array_like Objects to Numpy Arrays
 ====================================================
 
 In general, numerical data arranged in an array-like structure in Python can
-be converted to arrays through the use of the array() function. The most obvious
-examples are lists and tuples. See the documentation for array() for details for
-its use. Some objects may support the array-protocol and allow conversion to arrays
-this way. A simple way to find out if the object can be converted to a numpy array
-using array() is simply to try it interactively and see if it works! (The Python Way).
+be converted to arrays through the use of the array() function. The most
+obvious examples are lists and tuples. See the documentation for array() for
+details for its use. Some objects may support the array-protocol and allow
+conversion to arrays this way. A simple way to find out if the object can be
+converted to a numpy array using array() is simply to try it interactively and
+see if it works! (The Python Way).
 
 Examples: ::
 
  >>> x = np.array([2,3,1,0])
  >>> x = np.array([2, 3, 1, 0])
- >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)]) # note mix of tuple and lists, and types
+ >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)]) # note mix of tuple and lists,
+     and types
  >>> x = np.array([[ 1.+0.j, 2.+0.j], [ 0.+0.j, 0.+0.j], [ 1.+1.j, 3.+0.j]])
 
 Intrinsic Numpy Array Creation
@@ -102,7 +105,6 @@ check the last section as well)
 
  HDF5: PyTables
  FITS: PyFITS
- Others? xxx
 
 Examples of formats that cannot be read directly but for which it is not hard
 to convert are libraries like PIL (able to read and write many image formats
@@ -125,9 +127,9 @@ There are a variety of approaches one can use. If the file has a relatively
 simple format then one can write a simple I/O library and use the numpy
 fromfile() function and .tofile() method to read and write numpy arrays
 directly (mind your byteorder though!) If a good C or C++ library exists that
-read the data, one can wrap that library with a variety of techniques (see
-xxx) though that certainly is much more work and requires significantly more
-advanced knowledge to interface with C or C++.
+read the data, one can wrap that library with a variety of techniques though
+that certainly is much more work and requires significantly more advanced
+knowledge to interface with C or C++.
 
 Use of Special Libraries
 ------------------------
@@ -136,6 +138,6 @@ There are libraries that can be used to generate arrays for special purposes
 and it isn't possible to enumerate all of them. The most common uses are use
 of the many array generation functions in random that can generate arrays of
 random values, and some utility functions to generate special matrices (e.g.
-diagonal)
+diagonal).
 
 """

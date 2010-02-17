@@ -13,12 +13,11 @@ example is the addition operator: ::
  >>> np.array([0,2,3,4]) + np.array([1,1,-1,2])
  array([1, 3, 2, 6])
 
-The unfunc module lists all the available ufuncs in numpy. Additional ufuncts
-available in xxx in scipy. Documentation on the specific ufuncs may be found
-in those modules. This documentation is intended to address the more general
-aspects of unfuncs common to most of them. All of the ufuncs that make use of
-Python operators (e.g., +, -, etc.) have equivalent functions defined
-(e.g. add() for +)
+The unfunc module lists all the available ufuncs in numpy. Documentation on
+the specific ufuncs may be found in those modules. This documentation is
+intended to address the more general aspects of unfuncs common to most of
+them. All of the ufuncs that make use of Python operators (e.g., +, -, etc.)
+have equivalent functions defined (e.g. add() for +)
 
 Type coercion
 =============
@@ -58,10 +57,10 @@ For example: ::
 ufunc methods
 =============
 
-Binary ufuncs support 4 methods. These methods are explained in detail in xxx
-(or are they, I don't see anything in the ufunc docstring that is useful?).
+Binary ufuncs support 4 methods.
 
-**.reduce(arr)** applies the binary operator to elements of the array in sequence. For example: ::
+**.reduce(arr)** applies the binary operator to elements of the array in
+  sequence. For example: ::
 
  >>> np.add.reduce(np.arange(10))  # adds all elements of array
  45
@@ -76,22 +75,25 @@ The axis keyword can be used to specify different axes to reduce: ::
  >>> np.add.reduce(np.arange(10).reshape(2,5),axis=1)
  array([10, 35])
 
-**.accumulate(arr)** applies the binary operator and generates an an equivalently
-shaped array that includes the accumulated amount for each element of the
-array. A couple examples: ::
+**.accumulate(arr)** applies the binary operator and generates an an
+equivalently shaped array that includes the accumulated amount for each
+element of the array. A couple examples: ::
 
  >>> np.add.accumulate(np.arange(10))
  array([ 0,  1,  3,  6, 10, 15, 21, 28, 36, 45])
  >>> np.multiply.accumulate(np.arange(1,9))
  array([    1,     2,     6,    24,   120,   720,  5040, 40320])
 
-The behavior for multidimensional arrays is the same as for .reduce(), as is the use of the axis keyword).
+The behavior for multidimensional arrays is the same as for .reduce(),
+as is the use of the axis keyword).
 
-**.reduceat(arr,indices)** allows one to apply reduce to selected parts of an array.
-It is a difficult method to understand. See the documentation at:
+**.reduceat(arr,indices)** allows one to apply reduce to selected parts
+  of an array. It is a difficult method to understand. See the documentation
+  at:
 
-**.outer(arr1,arr2)** generates an outer operation on the two arrays arr1 and arr2. It will work on multidimensional arrays (the shape of the result is the
-concatenation of the two input shapes.: ::
+**.outer(arr1,arr2)** generates an outer operation on the two arrays arr1 and
+  arr2. It will work on multidimensional arrays (the shape of the result is
+  the concatenation of the two input shapes.: ::
 
  >>> np.multiply.outer(np.arange(3),np.arange(4))
  array([[0, 0, 0, 0],
@@ -101,14 +103,14 @@ concatenation of the two input shapes.: ::
 Output arguments
 ================
 
-All ufuncs accept an optional output array. The array must be of the expected output shape. Beware that if the type of the output array is of a
-different (and lower) type than the output result, the results may be silently
-truncated or otherwise corrupted in the downcast to the lower type. This usage
-is useful when one wants to avoid creating large temporary arrays and instead
-allows one to reuse the same array memory repeatedly (at the expense of not
-being able to use more convenient operator notation in expressions). Note that
-when the output argument is used, the ufunc still returns a reference to the
-result.
+All ufuncs accept an optional output array. The array must be of the expected
+output shape. Beware that if the type of the output array is of a different
+(and lower) type than the output result, the results may be silently truncated
+or otherwise corrupted in the downcast to the lower type. This usage is useful
+when one wants to avoid creating large temporary arrays and instead allows one
+to reuse the same array memory repeatedly (at the expense of not being able to
+use more convenient operator notation in expressions). Note that when the
+output argument is used, the ufunc still returns a reference to the result.
 
  >>> x = np.arange(2)
  >>> np.add(np.arange(2),np.arange(2.),x)

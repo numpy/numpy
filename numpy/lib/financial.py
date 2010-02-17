@@ -206,7 +206,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
 def nper(rate, pmt, pv, fv=0, when='end'):
     """
-    Compute the number of periods.
+    Compute the number of periodic payments.
 
     Parameters
     ----------
@@ -225,16 +225,16 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     -----
     The number of periods ``nper`` is computed by solving the equation::
 
-      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) == 0
+     fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate*((1+rate)**nper-1) = 0
 
-    or, when ``rate == 0``::
+    but if ``rate = 0`` then::
 
-      fv + pv + pmt * nper == 0
+     fv + pv + pmt*nper = 0
 
     Examples
     --------
-    If you only had $150 to spend as payment, how long would it take to pay-off
-    a loan of $8,000 at 7% annual interest?
+    If you only had $150/month to pay towards the loan, how long would it take
+    to pay-off a loan of $8,000 at 7% annual interest?
 
     >>> np.nper(0.07/12, -150, 8000)
     64.073348770661852
@@ -244,11 +244,13 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     The same analysis could be done with several different interest rates
     and/or payments and/or total amounts to produce an entire table.
 
-    >>> np.nper(*(np.ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
-    array([[[ 32.58497782,  38.57048452],
-            [ 71.51317802,  86.37179563]],
-           [[ 33.07413144,  39.26244268],
-            [ 74.06368256,  90.22989997]]])
+    >>> np.nper(*(np.ogrid[0.07/12: 0.08/12: 0.01/12,
+    ...                    -150   : -99     : 50    ,
+    ...                    8000   : 9001    : 1000]))
+    array([[[  64.07334877,   74.06368256],
+            [ 108.07548412,  127.99022654]],
+           [[  66.12443902,   76.87897353],
+            [ 114.70165583,  137.90124779]]])
 
     """
     when = _convert_when(when)

@@ -1,43 +1,49 @@
-"""Functions for dealing with polynomials.
+"""
+Objects for dealing with polynomials.
 
-This module provides a number of functions that are useful in dealing with
-polynomials as well as a ``Polynomial`` class that encapsuletes the usual
-arithmetic operations. All arrays of polynomial coefficients are assumed to
-be ordered from low to high degree, thus `array([1,2,3])` will be treated
-as the polynomial ``1 + 2*x + 3*x**2``
+This module provides a number of objects (mostly functions) useful for
+dealing with polynomials, including a `Polynomial` class that
+encapsulates the usual arithmetic operations.  (General information
+on how this module represents and works with polynomial objects is in
+the docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- polydomain -- Polynomial default domain
-- polyzero -- Polynomial that evaluates to 0.
-- polyone -- Polynomial that evaluates to 1.
-- polyx -- Polynomial of the identity map (x).
+- `polydomain` -- Polynomial default domain, [-1,1].
+- `polyzero` -- (Coefficients of the) "zero polynomial."
+- `polyone` -- (Coefficients of the) constant polynomial 1.
+- `polyx` -- (Coefficients of the) identity map polynomial, ``f(x) = x``.
 
 Arithmetic
 ----------
-- polyadd -- add a polynomial to another.
-- polysub -- subtract a polynomial from another.
-- polymul -- multiply a polynomial by another
-- polydiv -- divide one polynomial by another.
-- polyval -- evaluate a polynomial at given points.
+- `polyadd` -- add two polynomials.
+- `polysub` -- subtract one polynomial from another.
+- `polymul` -- multiply two polynomials.
+- `polydiv` -- divide one polynomial by another.
+- `polyval` -- evaluate a polynomial at given points.
 
 Calculus
 --------
-- polyder -- differentiate a polynomial.
-- polyint -- integrate a polynomial.
+- `polyder` -- differentiate a polynomial.
+- `polyint` -- integrate a polynomial.
 
 Misc Functions
 --------------
-- polyfromroots -- create a polynomial with specified roots.
-- polyroots -- find the roots of a polynomial.
-- polyvander -- Vandermode like matrix for powers.
-- polyfit -- least squares fit returning a polynomial.
-- polytrim -- trim leading coefficients from a polynomial.
-- polyline -- Polynomial of given straight line
+- `polyfromroots` -- create a polynomial with specified roots.
+- `polyroots` -- find the roots of a polynomial.
+- `polyvander` -- Vandermonde-like matrix for powers.
+- `polyfit` -- least-squares fit returning a polynomial.
+- `polytrim` -- trim leading coefficients from a polynomial.
+- `polyline` -- Given a straight line, return the equivalent polynomial
+  object.
 
 Classes
 -------
-- Polynomial -- polynomial class.
+- `Polynomial` -- polynomial class.
+
+See also
+--------
+`numpy.polynomial`
 
 """
 from __future__ import division
@@ -77,19 +83,31 @@ polyx = np.array([0,1])
 #
 
 def polyline(off, scl) :
-    """Polynomial whose graph is a straight line.
+    """
+    Returns an array representing a linear polynomial.
 
-    The line has the formula ``off + scl*x``
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     off, scl : scalars
-        The specified line is given by ``off + scl*x``.
+        The "y-intercept" and "slope" of the line, respectively.
 
-    Returns:
+    Returns
+    -------
+    y : ndarray
+        This module's representation of the linear polynomial ``off +
+        scl*x``.
+
+    See Also
     --------
-    series : 1d ndarray
-        The polynomial equal to ``off + scl*x``.
+    chebline
+
+    Examples
+    --------
+    >>> from numpy import polynomial as P
+    >>> P.polyline(1,-1)
+    array([ 1, -1])
+    >>> P.polyval(1, P.polyline(1,-1)) # should be 0
+    0.0
 
     """
     if scl != 0 :
@@ -98,25 +116,53 @@ def polyline(off, scl) :
         return np.array([off])
 
 def polyfromroots(roots) :
-    """Generate a polynomial with given roots.
+    """
+    Generate a polynomial with the given roots.
 
-    Generate a polynomial whose roots are given by `roots`. The resulting
-    series is the produet `(x - roots[0])*(x - roots[1])*...`
+    Return the array of coefficients for the polynomial whose leading
+    coefficient (i.e., that of the highest order term) is `1` and whose
+    roots (a.k.a. "zeros") are given by *roots*.  The returned array of
+    coefficients is ordered from lowest order term to highest, and zeros
+    of multiplicity greater than one must be included in *roots* a number
+    of times equal to their multiplicity (e.g., if `2` is a root of
+    multiplicity three, then [2,2,2] must be in *roots*).
 
-    Inputs
-    ------
+    Parameters
+    ----------
     roots : array_like
-        1-d array containing the roots in sorted order.
+        Sequence containing the roots.
 
     Returns
     -------
-    series : ndarray
-        1-d array containing the coefficients of the Chebeshev series
-        ordered from low to high.
+    out : ndarray
+        1-d array of the polynomial's coefficients, ordered from low to
+        high.  If all roots are real, ``out.dtype`` is a float type;
+        otherwise, ``out.dtype`` is a complex type, even if all the
+        coefficients in the result are real (see Examples below).
 
     See Also
     --------
-    polyroots
+    chebfromroots
+
+    Notes
+    -----
+    What is returned are the :math:`a_i` such that:
+
+    .. math::
+
+        \\sum_{i=0}^{n} a_ix^i = \\prod_{i=0}^{n} (x - roots[i])
+
+    where ``n == len(roots)``; note that this implies that `1` is always
+    returned for :math:`a_n`.
+
+    Examples
+    --------
+    >>> import numpy.polynomial as P
+    >>> P.polyfromroots((-1,0,1)) # x(x - 1)(x + 1) = x^3 - x
+    array([ 0., -1.,  0.,  1.])
+    >>> j = complex(0,1)
+    >>> P.polyfromroots((-j,j)) # complex returned, though values are real
+    array([ 1.+0.j,  0.+0.j,  1.+0.j])
 
     """
     if len(roots) == 0 :
@@ -131,26 +177,36 @@ def polyfromroots(roots) :
 
 
 def polyadd(c1, c2):
-    """Add one polynomial to another.
+    """
+    Add one polynomial to another.
 
-    Returns the sum of two polynomials `c1` + `c2`. The arguments are
-    sequences of coefficients ordered from low to high, i.e., [1,2,3] is
-    the polynomial ``1 + 2*x + 3*x**2"``.
+    Returns the sum of two polynomials `c1` + `c2`.  The arguments are
+    sequences of coefficients from lowest order term to highest, i.e.,
+    [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2"``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of polynomial coefficients ordered from low to
-        high.
+        1-d arrays of polynomial coefficients ordered from low to high.
 
     Returns
     -------
     out : ndarray
-        polynomial of the sum.
+        The coefficient array representing their sum.
 
     See Also
     --------
     polysub, polymul, polydiv, polypow
+
+    Examples
+    --------
+    >>> from numpy import polynomial as P
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> sum = P.polyadd(c1,c2); sum
+    array([ 4.,  4.,  4.])
+    >>> P.polyval(2, sum) # 4 + 4(2) + 4(2**2)
+    28.0
 
     """
     # c1, c2 are trimmed copies
@@ -165,22 +221,23 @@ def polyadd(c1, c2):
 
 
 def polysub(c1, c2):
-    """Subtract one polynomial from another.
+    """
+    Subtract one polynomial from another.
 
-    Returns the difference of two polynomials `c1` - `c2`. The arguments
-    are sequences of coefficients ordered from low to high, i.e., [1,2,3]
-    is the polynomial ``1 + 2*x + 3*x**2``.
+    Returns the difference of two polynomials `c1` - `c2`.  The arguments
+    are sequences of coefficients from lowest order term to highest, i.e.,
+    [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of polynomial coefficients ordered from low to
+        1-d arrays of polynomial coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        polynomial of the difference.
+        Of coefficients representing their difference.
 
     See Also
     --------
@@ -188,6 +245,13 @@ def polysub(c1, c2):
 
     Examples
     --------
+    >>> from numpy import polynomial as P
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> P.polysub(c1,c2)
+    array([-2.,  0.,  2.])
+    >>> P.polysub(c2,c1) # -P.polysub(c1,c2)
+    array([ 2.,  0., -2.])
 
     """
     # c1, c2 are trimmed copies
@@ -203,26 +267,35 @@ def polysub(c1, c2):
 
 
 def polymul(c1, c2):
-    """Multiply one polynomial by another.
+    """
+    Multiply one polynomial by another.
 
-    Returns the product of two polynomials `c1` * `c2`. The arguments
-    are sequences of coefficients ordered from low to high, i.e., [1,2,3]
-    is the polynomial  ``1 + 2*x + 3*x**2.``
+    Returns the product of two polynomials `c1` * `c2`.  The arguments are
+    sequences of coefficients, from lowest order term to highest, e.g.,
+    [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2.``
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of polyyshev series coefficients ordered from low to
-        high.
+        1-d arrays of coefficients representing a polynomial, relative to the
+        "standard" basis, and ordered from lowest order term to highest.
 
     Returns
     -------
     out : ndarray
-        polynomial of the product.
+        Of the coefficients of their product.
 
     See Also
     --------
     polyadd, polysub, polydiv, polypow
+
+    Examples
+    --------
+    >>> import numpy.polynomial as P
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> P.polymul(c1,c2)
+    array([  3.,   8.,  14.,   8.,   3.])
 
     """
     # c1, c2 are trimmed copies
@@ -232,22 +305,22 @@ def polymul(c1, c2):
 
 
 def polydiv(c1, c2):
-    """Divide one polynomial by another.
+    """
+    Divide one polynomial by another.
 
-    Returns the quotient of two polynomials `c1` / `c2`. The arguments are
-    sequences of coefficients ordered from low to high, i.e., [1,2,3] is
-    the series  ``1 + 2*x + 3*x**2.``
+    Returns the quotient-with-remainder of two polynomials `c1` / `c2`.
+    The arguments are sequences of coefficients, from lowest order term
+    to highest, e.g., [1,2,3] represents ``1 + 2*x + 3*x**2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1d arrays of chebyshev series coefficients ordered from low to
-        high.
+        1-d arrays of polynomial coefficients ordered from low to high.
 
     Returns
     -------
-    [quo, rem] : ndarray
-        polynomial of the quotient and remainder.
+    [quo, rem] : ndarrays
+        Of coefficient series representing the quotient and remainder.
 
     See Also
     --------
@@ -255,6 +328,13 @@ def polydiv(c1, c2):
 
     Examples
     --------
+    >>> import numpy.polynomial as P
+    >>> c1 = (1,2,3)
+    >>> c2 = (3,2,1)
+    >>> P.polydiv(c1,c2)
+    (array([ 3.]), array([-8., -4.]))
+    >>> P.polydiv(c2,c1)
+    (array([ 0.33333333]), array([ 2.66666667,  1.33333333]))
 
     """
     # c1, c2 are trimmed copies
@@ -331,27 +411,30 @@ def polypow(cs, pow, maxpower=None) :
         return prd
 
 def polyder(cs, m=1, scl=1) :
-    """Differentiate a polynomial.
+    """
+    Differentiate a polynomial.
 
-    Returns the polynomial `cs` differentiated `m` times. The argument `cs`
-    is a sequence of coefficients ordered from low to high. i.e., [1,2,3]
-    is the series  ``1 + 2*x + 3*x**2.``
+    Returns the polynomial `cs` differentiated `m` times.  At each
+    iteration the result is multiplied by `scl` (the scaling factor is for
+    use in a linear change of variable).  The argument `cs` is the sequence
+    of coefficients from lowest order term to highest, e.g., [1,2,3]
+    represents the polynomial ``1 + 2*x + 3*x**2``.
 
     Parameters
     ----------
     cs: array_like
-        1d array of chebyshev series coefficients ordered from low to high.
+        1-d array of polynomial coefficients ordered from low to high.
     m : int, optional
-        Order of differentiation, must be non-negative. (default: 1)
+        Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
-        The result of each derivation is multiplied by `scl`. The end
-        result is multiplication by `scl`**`m`. This is for use in a linear
-        change of variable. (default: 1)
+        Each differentiation is multiplied by `scl`.  The end result is
+        multiplication by ``scl**m``.  This is for use in a linear change
+        of variable. (Default: 1)
 
     Returns
     -------
     der : ndarray
-        polynomial of the derivative.
+        Polynomial of the derivative.
 
     See Also
     --------
@@ -359,6 +442,16 @@ def polyder(cs, m=1, scl=1) :
 
     Examples
     --------
+    >>> from numpy import polynomial as P
+    >>> cs = (1,2,3,4) # 1 + 2x + 3x**2 + 4x**3
+    >>> P.polyder(cs) # (d/dx)(cs) = 2 + 6x + 12x**2
+    array([  2.,   6.,  12.])
+    >>> P.polyder(cs,3) # (d**3/dx**3)(cs) = 24
+    array([ 24.])
+    >>> P.polyder(cs,scl=-1) # (d/d(-x))(cs) = -2 - 6x - 12x**2
+    array([ -2.,  -6., -12.])
+    >>> P.polyder(cs,2,-1) # (d**2/d(-x)**2)(cs) = 6 + 24x
+    array([  6.,  24.])
 
     """
     # cs is a trimmed copy
@@ -380,49 +473,75 @@ def polyder(cs, m=1, scl=1) :
         return cs[i+1:].copy()
 
 def polyint(cs, m=1, k=[], lbnd=0, scl=1) :
-    """Integrate a polynomial.
+    """
+    Integrate a polynomial.
 
-    Returns the polynomial `cs` integrated from `lbnd` to x `m` times. At
-    each iteration the resulting series is multiplied by `scl` and an
-    integration constant specified by `k` is added. The scaling factor is
-    for use in a linear change of variable. The argument `cs` is a sequence
-    of coefficients ordered from low to high. i.e., [1,2,3] is the
-    polynomial ``1 + 2*x + 3*x**2``.
-
+    Returns the polynomial `cs`, integrated `m` times from `lbnd` to `x`.
+    At each iteration the resulting series is **multiplied** by `scl` and
+    an integration constant, `k`, is added.  The scaling factor is for use
+    in a linear change of variable.  ("Buyer beware": note that, depending
+    on what one is doing, one may want `scl` to be the reciprocal of what
+    one might expect; for more information, see the Notes section below.)
+    The argument `cs` is a sequence of coefficients, from lowest order
+    term to highest, e.g., [1,2,3] represents the polynomial
+    ``1 + 2*x + 3*x**2``.
 
     Parameters
     ----------
     cs : array_like
-        1d array of chebyshev series coefficients ordered from low to high.
+        1-d array of polynomial coefficients, ordered from low to high.
     m : int, optional
-        Order of integration, must be positeve. (default: 1)
+        Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
-        Integration constants. The value of the first integral at zero is
-        the first value in the list, the value of the second integral at
-        zero is the second value in the list, and so on. If ``[]``
-        (default), all constants are set zero.  If `m = 1`, a single scalar
-        can be given instead of a list.
+        Integration constant(s).  The value of the first integral at zero
+        is the first value in the list, the value of the second integral
+        at zero is the second value, etc.  If ``k == []`` (the default),
+        all constants are set to zero.  If ``m == 1``, a single scalar can
+        be given instead of a list.
     lbnd : scalar, optional
-        The lower bound of the integral. (default: 0)
+        The lower bound of the integral. (Default: 0)
     scl : scalar, optional
-        Following each integration the result is multiplied by `scl` before
-        the integration constant is added. (default: 1)
+        Following each integration the result is *multiplied* by `scl`
+        before the integration constant is added. (Default: 1)
 
     Returns
     -------
-    der : ndarray
-        polynomial of the integral.
+    S : ndarray
+        Coefficients of the integral.
 
     Raises
     ------
     ValueError
+        If ``m < 1``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
+        ``np.isscalar(scl) == False``.
 
     See Also
     --------
     polyder
 
+    Notes
+    -----
+    Note that the result of each integration is *multiplied* by `scl`.
+    Why is this important to note?  Say one is making a linear change of
+    variable :math:`u = ax + b` in an integral relative to `x`.  Then
+    :math:`dx = du/a`, so one will need to set `scl` equal to :math:`1/a`
+    - perhaps not what one would have first thought.
+
     Examples
     --------
+    >>> from numpy import polynomial as P
+    >>> cs = (1,2,3)
+    >>> P.polyint(cs) # should return array([0, 1, 1, 1])
+    array([ 0.,  1.,  1.,  1.])
+    >>> P.polyint(cs,3) # should return array([0, 0, 0, 1/6, 1/12, 1/20])
+    array([ 0.        ,  0.        ,  0.        ,  0.16666667,  0.08333333,
+            0.05      ])
+    >>> P.polyint(cs,k=3) # should return array([3, 1, 1, 1])
+    array([ 3.,  1.,  1.,  1.])
+    >>> P.polyint(cs,lbnd=-2) # should return array([6, 1, 1, 1])
+    array([ 6.,  1.,  1.,  1.])
+    >>> P.polyint(cs,scl=-2) # should return array([0, -2, -2, -2])
+    array([ 0., -2., -2., -2.])
 
     """
     if np.isscalar(k) :
@@ -448,7 +567,8 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1) :
     return ret
 
 def polyval(x, cs):
-    """Evaluate a polynomial.
+    """
+    Evaluate a polynomial.
 
     If `cs` is of length `n`, this function returns :
 
@@ -476,15 +596,9 @@ def polyval(x, cs):
     --------
     polyfit
 
-    Examples
-    --------
-
     Notes
     -----
     The evaluation uses Horner's method.
-
-    Examples
-    --------
 
     """
     # cs is a trimmed copy
@@ -529,50 +643,56 @@ def polyvander(x, deg) :
     return v
 
 def polyfit(x, y, deg, rcond=None, full=False):
-    """Least squares fit of polynomial to data.
+    """
+    Least-squares fit of a polynomial to data.
 
-    Fit a polynomial ``p(x) = p[0] * T_{deq}(x) + ... + p[deg] *
-    T_{0}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
-    coefficients `p` that minimises the squared error.
+    Fit a polynomial ``c0 + c1*x + c2*x**2 + ... + c[deg]*x**deg`` to
+    points (`x`, `y`).  Returns a 1-d (if `y` is 1-d) or 2-d (if `y` is 2-d)
+    array of coefficients representing, from lowest order term to highest,
+    the polynomial(s) which minimize the total square error.
 
     Parameters
     ----------
-    x : array_like, shape (M,)
-        x-coordinates of the M sample points ``(x[i], y[i])``.
-    y : array_like, shape (M,) or (M, K)
-        y-coordinates of the sample points. Several data sets of sample
-        points sharing the same x-coordinates can be fitted at once by
-        passing in a 2D-array that contains one dataset per column.
+    x : array_like, shape (`M`,)
+        x-coordinates of the `M` sample (data) points ``(x[i], y[i])``.
+    y : array_like, shape (`M`,) or (`M`, `K`)
+        y-coordinates of the sample points.  Several sets of sample points
+        sharing the same x-coordinates can be (independently) fit with one
+        call to `polyfit` by passing in for `y` a 2-d array that contains
+        one data set per column.
     deg : int
-        Degree of the fitting polynomial
+        Degree of the polynomial(s) to be fit.
     rcond : float, optional
-        Relative condition number of the fit. Singular values smaller than
-        this relative to the largest singular value will be ignored. The
-        default value is len(x)*eps, where eps is the relative precision of
-        the float type, about 2e-16 in most cases.
+        Relative condition number of the fit.  Singular values smaller
+        than `rcond`, relative to the largest singular value, will be
+        ignored.  The default value is ``len(x)*eps``, where `eps` is the
+        relative precision of the platform's float type, about 2e-16 in
+        most cases.
     full : bool, optional
-        Switch determining nature of return value. When it is False (the
-        default) just the coefficients are returned, when True diagnostic
-        information from the singular value decomposition is also returned.
+        Switch determining the nature of the return value.  When ``False``
+        (the default) just the coefficients are returned; when ``True``,
+        diagnostic information from the singular value decomposition (used
+        to solve the fit's matrix equation) is also returned.
 
     Returns
     -------
-    coef : ndarray, shape (M,) or (M, K)
-        Polynomial coefficients ordered from low to high. If `y` was 2-D,
-        the coefficients for the data in column k  of `y` are in column
-        `k`.
+    coef : ndarray, shape (`deg` + 1,) or (`deg` + 1, `K`)
+        Polynomial coefficients ordered from low to high.  If `y` was 2-d,
+        the coefficients in column `k` of `coef` represent the polynomial
+        fit to the data in `y`'s `k`-th column.
 
-    [residuals, rank, singular_values, rcond] : present when `full` = True
-        Residuals of the least-squares fit, the effective rank of the
-        scaled Vandermonde matrix and its singular values, and the
-        specified value of `rcond`. For more details, see `linalg.lstsq`.
+    [residuals, rank, singular_values, rcond] : present when `full` == True
+        Sum of the squared residuals (SSR) of the least-squares fit; the
+        effective rank of the scaled Vandermonde matrix; its singular
+        values; and the specified value of `rcond`.  For more information,
+        see `linalg.lstsq`.
 
-    Warns
-    -----
+    Raises
+    ------
     RankWarning
-        The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.  The
-        warnings can be turned off by
+        Raised if the matrix in the least-squares fit is rank deficient.
+        The warning is only raised if `full` == False.  The warnings can
+        be turned off by:
 
         >>> import warnings
         >>> warnings.simplefilter('ignore', RankWarning)
@@ -587,41 +707,60 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     Notes
     -----
-    The solution are the coefficients ``c[i]`` of the polynomial ``P(x)``
-    that minimizes the squared error
+    The solutions are the coefficients ``c[i]`` of the polynomial ``P(x)``
+    that minimizes the total squared error:
 
-    ``E = \sum_j |y_j - P(x_j)|^2``.
+    .. math :: E = \\sum_j (y_j - P(x_j))^2
 
-    This problem is solved by setting up as the overdetermined matrix
-    equation
+    This problem is solved by setting up the (typically) over-determined
+    matrix equation:
 
-    ``V(x)*c = y``,
+    .. math :: V(x)*c = y
 
-    where ``V`` is the Vandermonde matrix of `x`, the elements of ``c`` are
-    the coefficients to be solved for, and the elements of `y` are the
-    observed values.  This equation is then solved using the singular value
-    decomposition of ``V``.
+    where `V` is the Vandermonde matrix of `x`, the elements of `c` are the
+    coefficients to be solved for, and the elements of `y` are the observed
+    values.  This equation is then solved using the singular value
+    decomposition of `V`.
 
-    If some of the singular values of ``V`` are so small that they are
-    neglected, then a `RankWarning` will be issued. This means that the
-    coeficient values may be poorly determined. Using a lower order fit
-    will usually get rid of the warning.  The `rcond` parameter can also be
-    set to a value smaller than its default, but the resulting fit may be
-    spurious and have large contributions from roundoff error.
+    If some of the singular values of `V` are so small that they are
+    neglected (and `full` == ``False``), a `RankWarning` will be raised.
+    This means that the coefficient values may be poorly determined.
+    Fitting to a lower order polynomial will usually get rid of the warning
+    (but may not be what you want, of course; if you have independent
+    reason(s) for choosing the degree which isn't working, you may have to:
+    a) reconsider those reasons, and/or b) reconsider the quality of your
+    data).  The `rcond` parameter can also be set to a value smaller than
+    its default, but the resulting fit may be spurious and have large
+    contributions from roundoff error.
 
-    Fits using double precision and polynomials tend to fail at about
-    degree 20. Fits using Chebyshev series are generally better
-    conditioned, but much can still depend on the distribution of the
-    sample points and the smoothness of the data. If the quality of the fit
-    is inadequate splines may be a good alternative.
-
-    References
-    ----------
-    .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+    Polynomial fits using double precision tend to "fail" at about
+    (polynomial) degree 20. Fits using Chebyshev series are generally
+    better conditioned, but much can still depend on the distribution of
+    the sample points and the smoothness of the data.  If the quality of
+    the fit is inadequate, splines may be a good alternative.
 
     Examples
     --------
+    >>> from numpy import polynomial as P
+    >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
+    >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
+    >>> c, stats = P.polyfit(x,y,3,full=True)
+    >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
+    array([ 0.01909725, -1.30598256, -0.00577963,  1.02644286])
+    >>> stats # note the large SSR, explaining the rather poor results
+    [array([ 38.06116253]), 4, array([ 1.38446749,  1.32119158,  0.50443316,
+    0.28853036]), 1.1324274851176597e-014]
+
+    Same thing without the added noise
+
+    >>> y = x**3 - x
+    >>> c, stats = P.polyfit(x,y,3,full=True)
+    >>> c # c[0], c[2] should be "very close to 0", c[1] ~= -1, c[3] ~= 1
+    array([ -1.73362882e-17,  -1.00000000e+00,  -2.67471909e-16,
+             1.00000000e+00])
+    >>> stats # note the minuscule SSR
+    [array([  7.46346754e-31]), 4, array([ 1.38446749,  1.32119158,
+    0.50443316,  0.28853036]), 1.1324274851176597e-014]
 
     """
     order = int(deg) + 1
@@ -662,24 +801,39 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
 
 def polyroots(cs):
-    """Roots of a polynomial.
+    """
+    Compute the roots of a polynomial.
 
-    Compute the roots of the Chebyshev series `cs`. The argument `cs` is a
-    sequence of coefficients ordered from low to high. i.e., [1,2,3] is the
-    polynomial ``1 + 2*x + 3*x**2``.
+    Return the roots (a.k.a. "zeros") of the "polynomial" `cs`, the
+    polynomial's coefficients from lowest order term to highest
+    (e.g., [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2``).
 
     Parameters
     ----------
-    cs : array_like of shape(M,)
-        1D array of polynomial coefficients ordered from low to high.
+    cs : array_like of shape (M,)
+        1-d array of polynomial coefficients ordered from low to high.
 
     Returns
     -------
     out : ndarray
-        An array containing the complex roots of the polynomial series.
+        Array of the roots of the polynomial.  If all the roots are real,
+        then so is the dtype of ``out``; otherwise, ``out``'s dtype is
+        complex.
+
+    See Also
+    --------
+    chebroots
 
     Examples
     --------
+    >>> import numpy.polynomial as P
+    >>> P.polyroots(P.polyfromroots((-1,0,1)))
+    array([-1.,  0.,  1.])
+    >>> P.polyroots(P.polyfromroots((-1,0,1))).dtype
+    dtype('float64')
+    >>> j = complex(0,1)
+    >>> P.polyroots(P.polyfromroots((-j,0,j)))
+    array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])
 
     """
     # cs is a trimmed copy

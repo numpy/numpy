@@ -30,8 +30,8 @@ Other related special value functions: ::
  isfinite(): True if not nan or inf
  nan_to_num(): Map nan to 0, inf to max float, -inf to min float
 
-The following corresponds to the usual functions except that nans are excluded from
-the results: ::
+The following corresponds to the usual functions except that nans are excluded
+from the results: ::
 
  nansum()
  nanmax()
@@ -160,7 +160,8 @@ Thus:
 
  - Minuses:
 
-   - can't use for writing code to be turned into C extensions, only a wrapper tool.
+   - can't use for writing code to be turned into C extensions, only a wrapper
+     tool.
 
 5) SWIG (automatic wrapper generator)
 
@@ -174,11 +175,11 @@ Thus:
  - Minuses:
 
    - generates lots of code between Python and the C code
-
-     - can cause performance problems that are nearly impossible to optimize out
-
+   - can cause performance problems that are nearly impossible to optimize
+       out
    - interface files can be hard to write
-   - doesn't necessarily avoid reference counting issues or needing to know API's
+   - doesn't necessarily avoid reference counting issues or needing to know
+     API's
 
 7) Weave
 
@@ -187,8 +188,8 @@ Thus:
    - Phenomenal tool
    - can turn many numpy expressions into C code
    - dynamic compiling and loading of generated C code
-   - can embed pure C code in Python module and have weave extract, generate interfaces
-     and compile, etc.
+   - can embed pure C code in Python module and have weave extract, generate
+     interfaces and compile, etc.
 
  - Minuses:
 
@@ -198,7 +199,8 @@ Thus:
 
  - Plusses:
 
-   - Turns pure python into efficient machine code through jit-like optimizations
+   - Turns pure python into efficient machine code through jit-like
+     optimizations
    - very fast when it optimizes well
 
  - Minuses:
@@ -208,15 +210,15 @@ Thus:
 
 Interfacing to Fortran:
 -----------------------
-Fortran: Clear choice is f2py. (Pyfort is an older alternative, but not supported
-any longer)
+Fortran: Clear choice is f2py. (Pyfort is an older alternative, but not
+supported any longer)
 
 Interfacing to C++:
 -------------------
-1) CXX
-2) Boost.python
-3) SWIG
-4) Sage has used cython to wrap C++ (not pretty, but it can be done)
-5) SIP (used mainly in PyQT)
+ 1) CXX
+ 2) Boost.python
+ 3) SWIG
+ 4) Sage has used cython to wrap C++ (not pretty, but it can be done)
+ 5) SIP (used mainly in PyQT)
 
 """

@@ -545,6 +545,10 @@ def filled(a, fill_value=None):
     a : ndarray
         The filled array.
 
+    See Also
+    --------
+    compressed
+
     Examples
     --------
     >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],

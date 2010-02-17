@@ -44,7 +44,7 @@ having unique characteristics.  Once you have imported NumPy using
 the dtypes are available as ``np.bool``, ``np.float32``, etc.
 
 Advanced types, not listed in the table above, are explored in
-section `link_here`.
+section :ref:`structured_arrays`.
 
 There are 5 basic numerical types representing booleans (bool), integers (int),
 unsigned integers (uint) floating point (float) and complex. Those with numbers
@@ -98,8 +98,8 @@ To determine the type of an array, look at the dtype attribute::
     dtype('uint8')
 
 dtype objects also contain information about the type, such as its bit-width
-and its byte-order. See xxx for details.  The data type can also be used
-indirectly to query properties of the type, such as whether it is an integer::
+and its byte-order.  The data type can also be used indirectly to query
+properties of the type, such as whether it is an integer::
 
     >>> d = np.dtype(int)
     >>> d

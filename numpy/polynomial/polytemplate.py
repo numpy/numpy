@@ -1,4 +1,12 @@
-"""Template for the Chebyshev and Polynomial classes.
+"""
+Template for the Chebyshev and Polynomial classes.
+
+This module houses a Python string module Template object (see, e.g.,
+http://docs.python.org/library/string.html#template-strings) used by
+the `polynomial` and `chebyshev` modules to implement their respective
+`Polynomial` and `Chebyshev` classes.  It provides a mechanism for easily
+creating additional specific polynomial classes (e.g., Legendre, Jacobi,
+etc.) in the future, such that all these classes will have a common API.
 
 """
 import string

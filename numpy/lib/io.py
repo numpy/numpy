@@ -306,9 +306,11 @@ def save(file, arr):
 
     Parameters
     ----------
-    file : file or string
-        File or filename to which the data is saved.  If the filename
-        does not already have a ``.npy`` extension, it is added.
+    file : file or str
+        File or filename to which the data is saved.  If file is a file-object,
+        then the filename is unchanged.  If file is a string, a ``.npy``
+        extension will be appended to the file name if it does not already
+        have one.
     arr : array_like
         Array data to be saved.
 
@@ -329,7 +331,7 @@ def save(file, arr):
     >>> x = np.arange(10)
     >>> np.save(outfile, x)
 
-    >>> outfile.seek(0) # only necessary in this example (with tempfile)
+    >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -348,25 +350,29 @@ def savez(file, *args, **kwds):
     """
     Save several arrays into a single, compressed file in ``.npz`` format.
 
-    If keyword arguments are given, the names for variables assigned to the
-    keywords are the keyword names (not the variable names in the caller).
     If arguments are passed in with no keywords, the corresponding variable
-    names are arr_0, arr_1, etc.
+    names, in the .npz file, are 'arr_0', 'arr_1', etc. If keyword arguments
+    are given, the corresponding variable names, in the ``.npz`` file will
+    match the keyword names.
 
     Parameters
     ----------
     file : str or file
         Either the file name (string) or an open file (file-like object)
-        If file is a string, it names the output file.  ".npz" will be appended
-        to the file name if it is not already there.
-    args : Arguments
-        Any function arguments other than the file name are variables to save.
-        Since it is not possible for Python to know their names outside
-        `savez`, they will be saved with names "arr_0", "arr_1", and so on.
-        These arguments can be any expression.
-    kwds : Keyword arguments
-        All keyword=value pairs cause the value to be saved with the name of
-        the keyword.
+        where the data will be saved. If file is a string, the ``.npz``
+        extension will be appended to the file name if it is not already there.
+    \\*args : Arguments, optional
+        Arrays to save to the file. Since it is not possible for Python to
+        know the names of the arrays outside `savez`, the arrays will be saved
+        with names "arr_0", "arr_1", and so on. These arguments can be any
+        expression.
+    \\*\\*kwds : Keyword arguments, optional
+        Arrays to save to the file. Arrays will be saved in the file with the
+        keyword names.
+
+    Returns
+    -------
+    None
 
     See Also
     --------
@@ -379,6 +385,11 @@ def savez(file, *args, **kwds):
     variables they contain.  Each file contains one variable in ``.npy``
     format. For a description of the ``.npy`` format, see `format`.
 
+    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
+    returned. This is a dictionary-like object which can be queried for
+    its list of arrays (with the ``.files`` attribute), and for the arrays
+    themselves.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -389,11 +400,11 @@ def savez(file, *args, **kwds):
     Using `savez` with \\*args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
-    >>> outfile.seek(0)  # only necessary in this example (with tempfile)
-    >>> npz = np.load(outfile)
-    >>> npz.files
+    >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
+    >>> npzfile = np.load(outfile)
+    >>> npzfile.files
     ['arr_1', 'arr_0']
-    >>> npz['arr_0']
+    >>> npzfile['arr_0']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     Using `savez` with \\*\\*kwds, the arrays are saved with the keyword names.
@@ -401,10 +412,10 @@ def savez(file, *args, **kwds):
     >>> outfile = TemporaryFile()
     >>> np.savez(outfile, x=x, y=y)
     >>> outfile.seek(0)
-    >>> npz = np.load(outfile)
-    >>> npz.files
+    >>> npzfile = np.load(outfile)
+    >>> npzfile.files
     ['y', 'x']
-    >>> npz['x']
+    >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
@@ -510,7 +521,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     See Also
     --------
     load, fromstring, fromregex
+    genfromtxt : Load data with missing values handled as specified.
     scipy.io.loadmat : reads Matlab(R) data files
+
+    Notes
+    -----
+    This function aims to be a fast reader for simply formatted files. The
+    `genfromtxt` function provides more sophisticated handling of, e.g.,
+    lines with missing values.
 
     Examples
     --------
