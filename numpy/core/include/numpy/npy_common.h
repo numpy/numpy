@@ -95,7 +95,7 @@ typedef long npy_long;
 
 /*
  * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
- * able to do .real/.imag. Will have to convert code first. 
+ * able to do .real/.imag. Will have to convert code first.
  */
 #if 0
 #if defined(NPY_USE_C99_COMPLEX) && defined(NPY_HAVE_COMPLEX_DOUBLE)
@@ -118,22 +118,22 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #endif
 #if NPY_SIZEOF_COMPLEX_DOUBLE != 2 * NPY_SIZEOF_DOUBLE
 #error npy_cdouble definition is not compatible with C99 complex definition ! \
-	Please contact Numpy maintainers and give detailed information about your \
-	compiler and platform
+        Please contact Numpy maintainers and give detailed information about your \
+        compiler and platform
 #endif
 typedef struct { double real, imag; } npy_cdouble;
 
 #if NPY_SIZEOF_COMPLEX_FLOAT != 2 * NPY_SIZEOF_FLOAT
 #error npy_cfloat definition is not compatible with C99 complex definition ! \
-	Please contact Numpy maintainers and give detailed information about your \
-	compiler and platform
+        Please contact Numpy maintainers and give detailed information about your \
+        compiler and platform
 #endif
 typedef struct { float real, imag; } npy_cfloat;
 
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != 2 * NPY_SIZEOF_LONGDOUBLE
 #error npy_clongdouble definition is not compatible with C99 complex definition ! \
-	Please contact Numpy maintainers and give detailed information about your \
-	compiler and platform
+        Please contact Numpy maintainers and give detailed information about your \
+        compiler and platform
 #endif
 typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 
