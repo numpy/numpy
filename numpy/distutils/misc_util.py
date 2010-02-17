@@ -795,13 +795,15 @@ class Configuration(object):
         sys.stderr.write('Warning: %s' % (message,))
 
     def set_options(self, **options):
-        """Configure Configuration instance.
+        """
+        Configure Configuration instance.
 
         The following options are available:
-        - ignore_setup_xxx_py
-        - assume_default_configuration
-        - delegate_options_to_subpackages
-        - quiet
+         - ignore_setup_xxx_py
+         - assume_default_configuration
+         - delegate_options_to_subpackages
+         - quiet
+
         """
         for key, value in options.items():
             if key in self.options:

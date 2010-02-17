@@ -1,6 +1,7 @@
-"""numerictypes: Define the numeric type objects
+"""
+numerictypes: Define the numeric type objects
 
-This module is designed so 'from numerictypes import *' is safe.
+This module is designed so "from numerictypes import \\*" is safe.
 Exported symbols include:
 
   Dictionary with all registered number types (including aliases):
@@ -37,8 +38,10 @@ Exported symbols include:
     float_, complex_,
     longfloat, clongfloat,
 
-    datetime_, timedelta_,  (these inherit from timeinteger which inherits from signedinteger)
-    
+
+    datetime_, timedelta_,  (these inherit from timeinteger which inherits
+    from signedinteger)
+
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -65,7 +68,7 @@ Exported symbols include:
      |   |     single
      |   |     float_  (double)
      |   |     longfloat
-     |   \-> complexfloating    (complexxx)     (kind=c)
+     |   \\-> complexfloating    (complexxx)     (kind=c)
      |         csingle  (singlecomplex)
      |         complex_ (cfloat, cdouble)
      |         clongfloat (longcomplex)
@@ -75,7 +78,8 @@ Exported symbols include:
      |     unicode_                             (kind=U)
      |     void                                 (kind=V)
      |
-     \-> object_ (not used much)                (kind=O)
+     \\-> object_ (not used much)                (kind=O)
+
 """
 
 # we add more at the bottom

@@ -218,7 +218,7 @@ def hstack(tup):
     Stack arrays in sequence horizontally (column wise).
 
     Take a sequence of arrays and stack them horizontally to make
-    a single array. Rebuild arrays divided by ``hsplit``.
+    a single array. Rebuild arrays divided by `hsplit`.
 
     Parameters
     ----------

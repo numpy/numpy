@@ -127,9 +127,27 @@ def reshape(a, newshape, order='C'):
         This will be a new view object if possible; otherwise, it will
         be a copy.
 
+
     See Also
     --------
     ndarray.reshape : Equivalent method.
+
+    Notes
+    -----
+
+    It is not always possible to change the shape of an array without
+    copying the data. If you want an error to be raise if the data is copied,
+    you should assign the new shape to the shape attribute of the array::
+
+     >>> a = np.zeros((10, 2))
+     # A transpose make the array non-contiguous
+     >>> b = a.T
+     # Taking a view makes it possible to modify the shape without modiying the
+     # initial object.
+     >>> c = b.view()
+     >>> c.shape = (20)
+     AttributeError: incompatible shape for a non-contiguous array
+
 
     Examples
     --------
@@ -1708,7 +1726,7 @@ def ptp(a, axis=None, out=None):
 
 def amax(a, axis=None, out=None):
     """
-    Return the maximum along an axis.
+    Return the maximum of an array or maximum along an axis.
 
     Parameters
     ----------
@@ -1724,8 +1742,7 @@ def amax(a, axis=None, out=None):
     Returns
     -------
     amax : ndarray
-        A new array or a scalar with the result, or a reference to `out`
-        if it was specified.
+        A new array or a scalar array with the result.
 
     See Also
     --------
@@ -1769,7 +1786,7 @@ def amax(a, axis=None, out=None):
 
 def amin(a, axis=None, out=None):
     """
-    Return the minimum along an axis.
+    Return the minimum of an array or minimum along an axis.
 
     Parameters
     ----------
@@ -1785,8 +1802,7 @@ def amin(a, axis=None, out=None):
     Returns
     -------
     amin : ndarray
-        A new array or a scalar with the result, or a reference to `out` if it
-        was specified.
+        A new array or a scalar array with the result.
 
     See Also
     --------

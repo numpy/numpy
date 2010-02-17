@@ -262,6 +262,14 @@ def asarray(a, dtype=None, order=None):
     >>> np.asarray(a) is a
     True
 
+    If `dtype` is set, array is copied only if dtype does not match:
+
+    >>> a = np.array([1, 2], dtype=np.float32)
+    >>> np.asarray(a, dtype=np.float32) is a
+    True
+    >>> np.asarray(a, dtype=np.float64) is a
+    False
+
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
 
     >>> issubclass(np.matrix, np.ndarray)
@@ -2089,25 +2097,6 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.int16(32000) * np.int16(3)
     Warning: overflow encountered in short_scalars
     30464
-
-    Calling `seterr` with no arguments resets treatment for all floating-point
-    errors to the defaults. XXX: lies!!! code doesn't do that
-    >>> np.geterr()
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    >>> np.seterr(all='warn')
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    >>> np.geterr()
-    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
-    >>> np.seterr() # XXX: this should reset to defaults according to docstring above
-    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
-    >>> np.geterr() # XXX: but clearly it doesn't
-    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn', 'under': 'warn'}
-
-    >>> old_settings = np.seterr()
-    >>> old_settings = np.seterr(all='ignore')
-    >>> np.geterr()
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
-    'under': 'ignore'}
 
     """
 

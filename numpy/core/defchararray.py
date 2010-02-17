@@ -4,12 +4,12 @@ operations and methods.
 
 .. note::
    The `chararray` class exists for backwards compatibility with
-   Numarray, it is not recommended for new development. If one needs
-   arrays of strings, use arrays of `dtype` `object_`, `string_` or
-   `unicode_`, and use the free functions in the `numpy.char` module
-   for fast vectorized string operations.
+   Numarray, it is not recommended for new development. Starting from numpy
+   1.4, if one needs arrays of strings, it is recommended to use arrays of
+   `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+   in the `numpy.char` module for fast vectorized string operations.
 
-Some methods will only be available if the corresponding str method is
+Some methods will only be available if the corresponding string method is
 available in your version of Python.
 
 The preferred alias for `defchararray` is `numpy.char`.
@@ -1692,10 +1692,10 @@ class chararray(ndarray):
 
     .. note::
        The `chararray` class exists for backwards compatibility with
-       Numarray, it is not recommended for new development. If one needs
-       arrays of strings, use arrays of `dtype` `object_`, `string_` or
-       `unicode_`, and use the free functions in the `numpy.char` module
-       for fast vectorized string operations.
+       Numarray, it is not recommended for new development. Starting from numpy
+       1.4, if one needs arrays of strings, it is recommended to use arrays of
+       `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+       in the `numpy.char` module for fast vectorized string operations.
 
     Versus a regular Numpy array of type `str` or `unicode`, this
     class adds the following functionality:
@@ -1717,6 +1717,71 @@ class chararray(ndarray):
     constructs a new array with `strides` in "C order", unless both
     ``len(shape) >= 2`` and ``order='Fortran'``, in which case `strides`
     is in "Fortran order".
+
+    Methods
+    -------
+    astype
+    argsort
+    copy
+    count
+    decode
+    dump
+    dumps
+    encode
+    endswith
+    expandtabs
+    fill
+    find
+    flatten
+    getfield
+    index
+    isalnum
+    isalpha
+    isdecimal
+    isdigit
+    islower
+    isnumeric
+    isspace
+    istitle
+    isupper
+    item
+    join
+    ljust
+    lower
+    lstrip
+    nonzero
+    put
+    ravel
+    repeat
+    replace
+    reshape
+    resize
+    rfind
+    rindex
+    rjust
+    rsplit
+    rstrip
+    searchsorted
+    setfield
+    setflags
+    sort
+    split
+    splitlines
+    squeeze
+    startswith
+    strip
+    swapaxes
+    swapcase
+    take
+    title
+    tofile
+    tolist
+    tostring
+    translate
+    transpose
+    upper
+    view
+    zfill
 
     Parameters
     ----------
