@@ -6,7 +6,7 @@ from numpy.testing import *
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
-from numpy.compat import asbytes, getexception
+from numpy.compat import asbytes, getexception, strchar
 
 from test_print import in_foreign_locale
 
@@ -414,7 +414,7 @@ class TestMethods(TestCase):
             strtype = '>i2'
         else:
             strtype = '<i2'
-        mydtype = [('name', 'S5'),('col2',strtype)]
+        mydtype = [('name', strchar + '5'),('col2',strtype)]
         r = np.array([('a', 1),('b', 255), ('c', 3), ('d', 258)],
                      dtype= mydtype)
         r.sort(order='col2')
@@ -1063,13 +1063,13 @@ class TestRecord(TestCase):
             assert_raises(TypeError, np.dtype, [(('b', asbytes('a')), int)])
 
             dt = np.dtype([((asbytes('a'), 'b'), int)])
-            assert_raises(KeyError, dt.__getitem__, asbytes('a'))
+            assert_raises(ValueError, dt.__getitem__, asbytes('a'))
 
             x = np.array([(1,), (2,), (3,)], dtype=dt)
-            assert_raises(KeyError, x.__getitem__, asbytes('a'))
+            assert_raises(ValueError, x.__getitem__, asbytes('a'))
 
             y = x[0]
-            assert_raises(KeyError, y.__getitem__, asbytes('a'))
+            assert_raises(IndexError, y.__getitem__, asbytes('a'))
     else:
         def test_unicode_field_titles(self):
             # Unicode field titles are added to field dict on Py2
@@ -1087,8 +1087,8 @@ class TestRecord(TestCase):
         def test_unicode_field_names(self):
             # Unicode field names are not allowed on Py2
             title = unicode('b')
-            assert_raises(TypeError, np.dtype, [(title, int)])
-            assert_raises(TypeError, np.dtype, [(('a', title), int)])
+            assert_raises(ValueError, np.dtype, [(title, int)])
+            assert_raises(ValueError, np.dtype, [(('a', title), int)])
 
 class TestView(TestCase):
     def test_basic(self):

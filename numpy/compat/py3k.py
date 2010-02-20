@@ -3,7 +3,7 @@ Python 3 compatibility tools.
 
 """
 
-__all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception']
+__all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar']
 
 import sys
 
@@ -16,9 +16,11 @@ if sys.version_info[0] >= 3:
         return s.encode('iso-8859-1')
     def isfileobj(f):
         return isinstance(f, io.IOBase)
+    strchar = 'U'
 else:
     bytes = str
     asbytes = str
+    strchar = 'S'
     def isfileobj(f):
         return isinstance(f, file)
 
