@@ -2912,6 +2912,16 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 }
 
 
+#define NAME_bool "bool"
+#define NAME_void "void"
+#if defined(NPY_PY3K)
+#define NAME_string "bytes"
+#define NAME_unicode "str"
+#else
+#define NAME_string "string"
+#define NAME_unicode "unicode"
+#endif
+
 /**begin repeat
  * #name = bool, string, unicode, void#
  * #NAME = Bool, String, Unicode, Void#
@@ -2924,7 +2934,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
-    "numpy.@name@@ex@",                         /* tp_name*/
+    "numpy." NAME_@name@ "@ex@",                /* tp_name*/
     sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize */
     0,                                          /* tp_dealloc */
@@ -2978,6 +2988,11 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 #endif
 };
 /**end repeat**/
+
+#undef NAME_bool
+#undef NAME_void
+#undef NAME_string
+#undef NAME_unicode
 
 /**begin repeat
  * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
