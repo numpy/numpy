@@ -45,7 +45,11 @@ Known semantic changes on Py2
 As a side effect, the Py3 adaptation has caused the following semantic
 changes that are visible on Py2.
 
-* There are no known semantic changes.
+* Objects (non-string, non-unicode) that implement the PEP 3118 array interface
+  will behave as ndarrays in `array(...)` and `asarray(...)`; the same way
+  as if they had ``__array_interface__`` defined.
+
+* Otherwise, there are no known semantic changes.
 
 
 Known semantic changes on Py3
@@ -187,6 +191,24 @@ plain equivalents, and `IntType` was dropped.
 
    BufferType should probably be replaced with `memoryview` in most places.
    This was currently changed in a couple of places.
+
+numpy.core.numerictypes
+-----------------------
+
+In numerictypes, types on Python 3 were changed so that:
+
+===========   ============
+Scalar type   Value
+===========   ============
+str_          This is the basic Unicode string type on Py3
+bytes_        This is the basic Byte-string type on Py3
+string_       bytes_ alias
+unicode_      str_ alias
+===========   ============
+
+.. todo::
+
+   Check if I missed something here.
 
 
 C Code
