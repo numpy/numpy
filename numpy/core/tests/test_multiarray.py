@@ -545,7 +545,9 @@ class TestMethods(TestCase):
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
         x = array([1,2,3])
-        self.failUnless(isinstance(x[0], int))
+        self.failUnless(isinstance(x[0], np.int_))
+        if sys.version_info[0] < 3:
+            self.failUnless(isinstance(x[0], int))
         self.failUnless(type(x[0, ...]) is ndarray)
 
 
@@ -1087,8 +1089,8 @@ class TestRecord(TestCase):
         def test_unicode_field_names(self):
             # Unicode field names are not allowed on Py2
             title = unicode('b')
-            assert_raises(ValueError, np.dtype, [(title, int)])
-            assert_raises(ValueError, np.dtype, [(('a', title), int)])
+            assert_raises(TypeError, np.dtype, [(title, int)])
+            assert_raises(TypeError, np.dtype, [(('a', title), int)])
 
 class TestView(TestCase):
     def test_basic(self):

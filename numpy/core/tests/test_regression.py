@@ -6,6 +6,7 @@ import copy
 from os import path
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
+from numpy.compat import asbytes, asunicode
 import numpy as np
 
 rlevel = 1
@@ -793,7 +794,7 @@ class TestRegression(TestCase):
         """Ticket 702"""
         class MyFloat:
             def __float__(self):
-                return 1
+                return 1.0
 
         tmp = np.atleast_1d([MyFloat()])
         tmp2 = tmp.astype(float)
@@ -991,7 +992,7 @@ class TestRegression(TestCase):
         for i in range(1,9) :
             msg = 'unicode offset: %d chars'%i
             t = np.dtype([('a','S%d'%i),('b','U2')])
-            x = np.array([('a',u'b')], dtype=t)
+            x = np.array([(asbytes('a'),u'b')], dtype=t)
             assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
 
     def test_sign_for_complex_nan(self, level=rlevel):

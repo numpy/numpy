@@ -1,6 +1,7 @@
 from os import path
 import numpy as np
 from numpy.testing import *
+from numpy.compat import asbytes, asunicode
 
 class TestFromrecords(TestCase):
     def test_fromrecords(self):
@@ -9,7 +10,7 @@ class TestFromrecords(TestCase):
         assert_equal(r[0].item(), (456, 'dbe', 1.2))
 
     def test_method_array(self):
-        r = np.rec.array('abcdefg' * 100, formats='i2,a3,i4', shape=3, byteorder='big')
+        r = np.rec.array(asbytes('abcdefg') * 100, formats='i2,a3,i4', shape=3, byteorder='big')
         assert_equal(r[1].item(), (25444, 'efg', 1633837924))
 
     def test_method_array2(self):
@@ -34,7 +35,7 @@ class TestFromrecords(TestCase):
     def test_recarray_fromfile(self):
         data_dir = path.join(path.dirname(__file__), 'data')
         filename = path.join(data_dir, 'recarray_from_file.fits')
-        fd = open(filename)
+        fd = open(filename, 'rb')
         fd.seek(2880 * 2)
         r = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
 
