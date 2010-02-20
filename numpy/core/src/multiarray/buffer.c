@@ -74,35 +74,42 @@ array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 
 /*************************************************************************
  * PEP 3118 buffer protocol
+ *
+ * Implementing PEP 3118 is somewhat convoluted because of the desirata:
+ *
+ * - Don't add new members to ndarray or descr structs, to preserve binary
+ *   compatibility. (Also, adding the items is actually not very useful,
+ *   since mutability issues prevent an 1 to 1 relationship between arrays
+ *   and buffer views.)
+ *
+ * - Don't use bf_releasebuffer, because it prevents PyArg_ParseTuple("s#", ...
+ *   from working. Breaking this would cause several backward compatibility
+ *   issues already on Python 2.6.
+ *
+ * - Behave correctly when array is reshaped in-place, or it's dtype is
+ *   altered.
+ *
+ * The solution taken below is to manually track memory allocated for
+ * Py_buffers.
  *************************************************************************/
-
-
-/*
- * Note: because for backward compatibility we cannot define bf_releasebuffer,
- * we must go through some additional contortions in bf_getbuffer.
- */
 
 #if PY_VERSION_HEX >= 0x02060000
 
 /*
  * Format string translator
+ *
+ * Translate PyArray_Descr to a PEP 3118 format string.
  */
 
+/* Fast string 'class' */
 typedef struct {
     char *s;
     int allocated;
     int pos;
-} _tmp_string;
-
-typedef struct {
-    char *format;
-    int nd;
-    Py_ssize_t *strides;
-    Py_ssize_t *shape;
-} _buffer_data;
+} _tmp_string_t;
 
 static int
-_append_char(_tmp_string *s, char c)
+_append_char(_tmp_string_t *s, char c)
 {
     char *p;
     if (s->s == NULL) {
@@ -125,20 +132,19 @@ _append_char(_tmp_string *s, char c)
 }
 
 static int
-_append_str(_tmp_string *s, char *c)
+_append_str(_tmp_string_t *s, char *c)
 {
     while (*c != '\0') {
         if (_append_char(s, *c)) return -1;
         ++c;
     }
+    return 0;
 }
 
 static int
-_buffer_format_string(PyArray_Descr *descr, _tmp_string *str, int *offset)
+_buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str, int *offset)
 {
-    PyObject *s;
     int k;
-    int zero_offset = 0;
 
     if (descr->subarray) {
         PyErr_SetString(PyExc_ValueError,
@@ -251,6 +257,180 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string *str, int *offset)
     return 0;
 }
 
+
+/*
+ * Global information about all active buffers
+ *
+ * Note: because for backward compatibility we cannot define bf_releasebuffer,
+ * we must manually keep track of the additional data required by the buffers.
+ */
+
+/* Additional per-array data required for providing the buffer interface */
+typedef struct {
+    char *format;
+    int ndim;
+    Py_ssize_t *strides;
+    Py_ssize_t *shape;
+} _buffer_info_t;
+
+/*
+ * { id(array): [list of pointers to _buffer_info_t, the last one is latest] }
+ *
+ * Because shape, strides, and format can be different for different buffers,
+ * we may need to keep track of multiple buffer infos for each array.
+ *
+ * However, when none of them has changed, the same buffer info may be reused.
+ *
+ * Thread-safety is provided by GIL.
+ */
+static PyObject *_buffer_info_cache = NULL;
+
+/* Fill in the info structure */
+static _buffer_info_t*
+_buffer_info_new(PyArrayObject *arr)
+{
+    _buffer_info_t *info;
+    int offset = 0;
+    _tmp_string_t fmt = {0,0,0};
+    int k;
+
+    info = (_buffer_info_t*)malloc(sizeof(_buffer_info_t));
+
+    /* Fill in format */
+    if (_buffer_format_string(PyArray_DESCR(arr), &fmt, &offset) != 0) {
+        free(info);
+        return NULL;
+    }
+    _append_char(&fmt, '\0');
+    info->format = fmt.s;
+
+    /* Fill in shape and strides */
+    info->ndim = PyArray_NDIM(arr);
+    info->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
+                                      * PyArray_NDIM(arr) * 2 + 1);
+    info->strides = info->shape + PyArray_NDIM(arr);
+    for (k = 0; k < PyArray_NDIM(arr); ++k) {
+        info->shape[k] = PyArray_DIMS(arr)[k];
+        info->strides[k] = PyArray_STRIDES(arr)[k];
+    }
+
+    return info;
+}
+
+/* Compare two info structures */
+static Py_ssize_t
+_buffer_info_cmp(_buffer_info_t *a, _buffer_info_t *b)
+{
+    Py_ssize_t c;
+    int k;
+
+    c = strcmp(a->format, b->format);
+    if (c != 0) return c;
+
+    c = a->ndim - b->ndim;
+    if (c != 0) return c;
+
+    for (k = 0; k < a->ndim; ++k) {
+        c = a->shape[k] - b->shape[k];
+        if (c != 0) return c;
+        c = a->strides[k] - b->strides[k];
+        if (c != 0) return c;
+    }
+
+    return 0;
+}
+
+static void
+_buffer_info_free(_buffer_info_t *info)
+{
+    if (info->format) {
+        free(info->format);
+    }
+    if (info->shape) {
+        free(info->shape);
+    }
+    free(info);
+}
+
+/* Get buffer info from the global dictionary */
+static _buffer_info_t*
+_buffer_get_info(PyObject *arr)
+{
+    PyObject *key, *item_list, *item;
+    _buffer_info_t *info = NULL, *old_info = NULL;
+
+    if (_buffer_info_cache == NULL) {
+        _buffer_info_cache = PyDict_New();
+        if (_buffer_info_cache == NULL) {
+            return NULL;
+        }
+    }
+
+    /* Compute information */
+    info = _buffer_info_new((PyArrayObject*)arr);
+    if (info == NULL) {
+        return NULL;
+    }
+
+    /* Check if it is identical with an old one; reuse old one, if yes */
+    key = PyLong_FromVoidPtr((void*)arr);
+    item_list = PyDict_GetItem(_buffer_info_cache, key);
+
+    if (item_list != NULL) {
+        Py_INCREF(item_list);
+        if (PyList_GET_SIZE(item_list) > 0) {
+            item = PyList_GetItem(item_list, PyList_GET_SIZE(item_list) - 1);
+            old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
+
+            if (_buffer_info_cmp(info, old_info) == 0) {
+                _buffer_info_free(info);
+                info = old_info;
+            }
+        }
+    }
+    else {
+        item_list = PyList_New(0);
+        PyDict_SetItem(_buffer_info_cache, key, item_list);
+    }
+
+    if (info != old_info) {
+        /* Needs insertion */
+        item = PyLong_FromVoidPtr((void*)info);
+        PyList_Append(item_list, item);
+        Py_DECREF(item);
+    }
+
+    Py_DECREF(item_list);
+    Py_DECREF(key);
+    return info;
+}
+
+/* Clear buffer info from the global dictionary */
+static void
+_buffer_clear_info(PyObject *arr)
+{
+    PyObject *key, *item_list, *item;
+    _buffer_info_t *info;
+    int k;
+
+    if (_buffer_info_cache == NULL) {
+        return;
+    }
+
+    key = PyLong_FromVoidPtr((void*)arr);
+    item_list = PyDict_GetItem(_buffer_info_cache, key);
+    if (item_list != NULL) {
+        for (k = 0; k < PyList_GET_SIZE(item_list); ++k) {
+            item = PyList_GET_ITEM(item_list, k);
+            info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
+            _buffer_info_free(info);
+        }
+        PyDict_DelItem(_buffer_info_cache, key);
+    }
+
+    Py_DECREF(key);
+}
+
 /*
  * Retrieving buffers
  */
@@ -259,24 +439,12 @@ static int
 array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 {
     PyArrayObject *self;
-    _buffer_data *cache = NULL;
+    _buffer_info_t *info = NULL;
 
     self = (PyArrayObject*)obj;
 
     if (view == NULL) {
         return -1;
-    }
-
-    if (self->buffer_info == NULL) {
-        cache = (_buffer_data*)malloc(sizeof(_buffer_data));
-        cache->nd = 0;
-        cache->format = NULL;
-        cache->strides = NULL;
-        cache->shape = NULL;
-        self->buffer_info = cache;
-    }
-    else {
-        cache = self->buffer_info;
     }
 
     view->format = NULL;
@@ -305,57 +473,22 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     view->internal = NULL;
     view->len = PyArray_NBYTES(self);
 
+    info = _buffer_get_info(obj);
+    if (info == NULL) {
+        goto fail;
+    }
+
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
-#warning XXX -- assumes descriptors are immutable
-        if (PyArray_DESCR(self)->buffer_format == NULL) {
-            int offset = 0;
-            _tmp_string fmt = {0,0,0};
-            if (_buffer_format_string(PyArray_DESCR(self), &fmt, &offset)) {
-                goto fail;
-            }
-            _append_char(&fmt, '\0');
-            PyArray_DESCR(self)->buffer_format = fmt.s;
-        }
-        view->format = PyArray_DESCR(self)->buffer_format;
+        view->format = info->format;
     }
     else {
         view->format = NULL;
     }
 
     if ((flags & PyBUF_STRIDED) == PyBUF_STRIDED) {
-        int shape_changed = 0;
-        int k;
-
-        if (cache->nd != PyArray_NDIM(self)) {
-            shape_changed = 1;
-        }
-        else {
-            for (k = 0; k < PyArray_NDIM(self); ++k) {
-                if (cache->shape[k] != PyArray_DIMS(self)[k]
-                    || cache->strides[k] != PyArray_STRIDES(self)[k]) {
-                    shape_changed = 1;
-                    break;
-                }
-            }
-        }
-
-        if (cache->strides == NULL || shape_changed) {
-            if (cache->shape != NULL) {
-                free(cache->shape);
-            }
-            cache->nd = PyArray_NDIM(self);
-            cache->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
-                                               * PyArray_NDIM(self) * 2 + 1);
-            cache->strides = cache->shape + PyArray_NDIM(self);
-            for (k = 0; k < PyArray_NDIM(self); ++k) {
-                cache->shape[k] = PyArray_DIMS(self)[k];
-                cache->strides[k] = PyArray_STRIDES(self)[k];
-            }
-        }
-
-        view->ndim = PyArray_NDIM(self);
-        view->shape = cache->shape;
-        view->strides = cache->strides;
+        view->ndim = info->ndim;
+        view->shape = info->shape;
+        view->strides = info->strides;
     }
     else if (PyArray_ISONESEGMENT(self)) {
         view->ndim = 0;
@@ -367,7 +500,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         goto fail;
     }
 
-    view->obj = self;
+    view->obj = (PyObject*)self;
     Py_INCREF(self);
 
     return 0;
@@ -392,17 +525,7 @@ fail:
 NPY_NO_EXPORT void
 _array_dealloc_buffer_info(PyArrayObject *self)
 {
-    _buffer_data *cache;
-
-    cache = self->buffer_info;
-
-    if (cache != NULL) {
-        if (cache->shape) {
-            free(cache->shape);
-        }
-        free(cache);
-        self->buffer_info = NULL;
-    }
+    _buffer_clear_info((PyObject*)self);
 }
 
 #else
