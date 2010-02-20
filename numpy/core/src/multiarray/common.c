@@ -195,6 +195,21 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         goto finish;
     }
 
+    if (PyBytes_Check(op)) {
+        chktype = PyArray_DescrNewFromType(PyArray_STRING);
+        chktype->elsize = PyString_GET_SIZE(op);
+        goto finish;
+    }
+
+    if (PyUnicode_Check(op)) {
+        chktype = PyArray_DescrNewFromType(PyArray_UNICODE);
+        chktype->elsize = PyUnicode_GET_DATA_SIZE(op);
+#ifndef Py_UNICODE_WIDE
+        chktype->elsize <<= 1;
+#endif
+        goto finish;
+    }
+
 #if PY_VERSION_HEX >= 0x02070000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
@@ -256,21 +271,6 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     }
     else {
         PyErr_Clear();
-    }
-
-    if (PyString_Check(op)) {
-        chktype = PyArray_DescrNewFromType(PyArray_STRING);
-        chktype->elsize = PyString_GET_SIZE(op);
-        goto finish;
-    }
-
-    if (PyUnicode_Check(op)) {
-        chktype = PyArray_DescrNewFromType(PyArray_UNICODE);
-        chktype->elsize = PyUnicode_GET_DATA_SIZE(op);
-#ifndef Py_UNICODE_WIDE
-        chktype->elsize <<= 1;
-#endif
-        goto finish;
     }
 
 #if !defined(NPY_PY3K)
