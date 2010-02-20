@@ -471,10 +471,6 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 
     self = (PyArrayObject*)obj;
 
-    if (view == NULL) {
-        goto fail;
-    }
-
     /* Check whether we can provide the wanted properties */
     if ((flags & PyBUF_C_CONTIGUOUS) == PyBUF_C_CONTIGUOUS &&
         !PyArray_CHKFLAGS(self, NPY_C_CONTIGUOUS)) {
@@ -492,14 +488,20 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         goto fail;
     }
     if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES &&
+        (flags & PyBUF_ND) == PyBUF_ND &&
         !PyArray_CHKFLAGS(self, NPY_C_CONTIGUOUS)) {
-        /* Non-strided buffers must be C-contiguous */
+        /* Non-strided N-dim buffers must be C-contiguous */
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE &&
         !PyArray_ISWRITEABLE(self)) {
         PyErr_SetString(PyExc_ValueError, "ndarray is not writeable");
+        goto fail;
+    }
+
+    if (view == NULL) {
+        PyErr_SetString(PyExc_ValueError, "NULL view in getbuffer");
         goto fail;
     }
 
@@ -520,9 +522,20 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     } else {
         view->format = NULL;
     }
-    view->ndim = info->ndim;
-    view->shape = info->shape;
-    view->strides = info->strides;
+    if ((flags & PyBUF_ND) == PyBUF_ND) {
+        view->ndim = info->ndim;
+        view->shape = info->shape;
+    }
+    else {
+        view->ndim = 0;
+        view->shape = NULL;
+    }
+    if ((flags & PyBUF_STRIDES) == PyBUF_STRIDES) {
+        view->strides = info->strides;
+    }
+    else {
+        view->strides = NULL;
+    }
     view->obj = (PyObject*)self;
 
     Py_INCREF(self);
