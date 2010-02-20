@@ -153,6 +153,9 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     PyObject *ip;
     PyArray_Descr *chktype = NULL;
     PyArray_Descr *outtype;
+#if PY_VERSION_HEX >= 0x02070000
+    Py_buffer buffer_view;
+#endif
 
     /*
      * These need to come first because if op already carries
@@ -191,6 +194,33 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     if (chktype) {
         goto finish;
     }
+
+#if PY_VERSION_HEX >= 0x02070000
+    /* PEP 3118 buffer interface */
+    memset(&buffer_view, 0, sizeof(Py_buffer));
+    if (PyObject_GetBuffer(op, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+        PyObject_GetBuffer(op, &buffer_view, PyBUF_FORMAT) == 0) {
+
+        PyErr_Clear();
+        chktype = _descriptor_from_pep3118_format(buffer_view.format);
+        PyBuffer_Release(&buffer_view);
+        if (chktype) {
+            goto finish;
+        }
+    }
+    else if (PyObject_GetBuffer(op, &buffer_view, PyBUF_STRIDES) == 0 ||
+             PyObject_GetBuffer(op, &buffer_view, PyBUF_SIMPLE) == 0) {
+
+        PyErr_Clear();
+        chktype = PyArray_DescrNewFromType(PyArray_VOID);
+        chktype->elsize = buffer_view.itemsize;
+        PyBuffer_Release(&buffer_view);
+        goto finish;
+    }
+    else {
+        PyErr_Clear();
+    }
+#endif
 
     if ((ip=PyObject_GetAttrString(op, "__array_interface__"))!=NULL) {
         if (PyDict_Check(ip)) {
@@ -243,16 +273,14 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         goto finish;
     }
 
-#if defined(NPY_PY3K)
-    if (PyMemoryView_Check(op)) {
-#else
+#if !defined(NPY_PY3K)
     if (PyBuffer_Check(op)) {
-#endif
         chktype = PyArray_DescrNewFromType(PyArray_VOID);
         chktype->elsize = Py_TYPE(op)->tp_as_sequence->sq_length(op);
         PyErr_Clear();
         goto finish;
     }
+#endif
 
     if (PyObject_HasAttrString(op, "__array__")) {
         ip = PyObject_CallMethod(op, "__array__", NULL);

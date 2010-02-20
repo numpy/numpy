@@ -1083,6 +1083,9 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 {
     int d = 0;
     PyObject *e;
+#if PY_VERSION_HEX >= 0x02070000
+    Py_buffer buffer_view;
+#endif
 
     if(max < 1) {
         return -1;
@@ -1105,7 +1108,6 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
     }
     if (PyString_Check(s) ||
 #if defined(NPY_PY3K)
-        PyMemoryView_Check(s) ||
 #else
         PyBuffer_Check(s) ||
 #endif
@@ -1115,6 +1117,23 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
     if (stop_at_tuple && PyTuple_Check(s)) {
         return 0;
     }
+#if PY_VERSION_HEX >= 0x02070000
+    /* PEP 3118 buffer interface */
+    memset(&buffer_view, 0, sizeof(Py_buffer));
+    if (PyObject_GetBuffer(s, &buffer_view, PyBUF_STRIDES) == 0 ||
+        PyObject_GetBuffer(s, &buffer_view, PyBUF_ND) == 0) {
+        d = buffer_view.ndim;
+        PyBuffer_Release(&buffer_view);
+        return d;
+    }
+    else if (PyObject_GetBuffer(s, &buffer_view, PyBUF_SIMPLE) == 0) {
+        PyBuffer_Release(&buffer_view);
+        return 1;
+    }
+    else {
+        PyErr_Clear();
+    }
+#endif
     if ((e = PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
         d = -1;
         if (PyCObject_Check(e)) {
@@ -1608,6 +1627,94 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
     return new;
 }
 
+
+NPY_NO_EXPORT int
+_array_from_buffer_3118(PyObject *obj, PyObject **out)
+{
+#if PY_VERSION_HEX >= 0x02070000
+    /* XXX: Pythons < 2.7 do not have the memory view object. This makes
+     *      using buffers somewhat difficult, since one cannot release them
+     *      using the garbage collection
+     */
+
+    /* PEP 3118 */
+    PyObject *memoryview;
+    Py_buffer *view;
+    PyArray_Descr *descr = NULL;
+    PyObject *r;
+    int nd, flags, k;
+    Py_ssize_t d;
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+
+    memoryview = PyMemoryView_FromObject(obj);
+    if (memoryview == NULL) {
+        PyErr_Clear();
+        return -1;
+    }
+
+    view = PyMemoryView_GET_BUFFER(memoryview);
+    if (view->format != NULL) {
+        descr = _descriptor_from_pep3118_format(view->format);
+        if (descr == NULL) {
+            goto fail;
+        }
+    }
+    else {
+        descr = PyArray_DescrNewFromType(PyArray_STRING);
+        descr->elsize = view->itemsize;
+    }
+
+    if (view->shape != NULL) {
+        nd = view->ndim;
+        if (nd >= NPY_MAXDIMS || nd < 0) {
+            goto fail;
+        }
+        for (k = 0; k < nd; ++k) {
+            if (k >= NPY_MAXDIMS) {
+                goto fail;
+            }
+            shape[k] = view->shape[k];
+        }
+        if (view->strides != NULL) {
+            for (k = 0; k < nd; ++k) {
+                strides[k] = view->strides[k];
+            }
+        }
+        else {
+            d = view->len;
+            for (k = 0; k < nd; ++k) {
+                d /= view->shape[k];
+                strides[k] = d;
+            }
+        }
+    }
+    else {
+        nd = 1;
+        shape[0] = view->len / view->itemsize;
+        strides[0] = view->itemsize;
+    }
+
+    flags = (view->readonly ? 0 : NPY_WRITEABLE);
+    r = PyArray_NewFromDescr(&PyArray_Type, descr,
+                             nd, shape, strides, view->buf,
+                             flags, NULL);
+    ((PyArrayObject *)r)->base = memoryview;
+    PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL);
+
+    *out = r;
+    return 0;
+
+fail:
+    Py_XDECREF(descr);
+    Py_DECREF(memoryview);
+    return -1;
+
+#else
+    return -1;
+#endif
+}
+
+
 /*NUMPY_API
  * Does not check for ENSURECOPY and NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
@@ -1645,6 +1752,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         }
         r = Array_FromPyScalar(op, newtype);
     }
+#if PY_VERSION_HEX >= 0x02070000
+    else if (_array_from_buffer_3118(op, &r) == 0) {
+        r = r;
+    }
+#endif
     else if (PyArray_HasArrayInterfaceType(op, newtype, context, r)) {
         PyObject *new;
         if (r == NULL) {
