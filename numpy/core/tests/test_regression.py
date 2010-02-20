@@ -525,8 +525,8 @@ class TestRegression(TestCase):
 
     def test_junk_in_string_fields_of_recarray(self, level=rlevel):
         """Ticket #483"""
-        r = np.array([['abc']], dtype=[('var1', '|S20')])
-        assert str(r['var1'][0][0]) == 'abc'
+        r = np.array([[asbytes('abc')]], dtype=[('var1', '|S20')])
+        assert asbytes(r['var1'][0][0]) == asbytes('abc')
 
     def test_take_output(self, level=rlevel):
         """Ensure that 'take' honours output parameter."""
