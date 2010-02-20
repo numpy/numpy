@@ -1317,6 +1317,9 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 #if !defined(NPY_PY3K)
      | Py_TPFLAGS_CHECKTYPES
 #endif
+#if (PY_VERSION_HEX >= 0x02060000) && (PY_VERSION_HEX < 0x03000000)
+     | Py_TPFLAGS_HAVE_NEWBUFFER
+#endif
      | Py_TPFLAGS_BASETYPE),                  /* tp_flags */
     0,                                          /* tp_doc */
 

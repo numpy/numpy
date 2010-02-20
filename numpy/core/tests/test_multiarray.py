@@ -1451,7 +1451,11 @@ class TestWarnings(object):
         assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
         warnings.simplefilter("default", np.ComplexWarning)
 
-if sys.version_info >= (2, 7):
+if sys.version_info >= (2, 6):
+
+    if sys.version_info[:2] == (2, 6):
+        from numpy.core.multiarray import memorysimpleview as memoryview
+
     class TestNewBufferProtocol(object):
         def _check_roundtrip(self, obj):
             obj = np.asarray(obj)
@@ -1556,9 +1560,9 @@ if sys.version_info >= (2, 7):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
             y = memoryview(x)
             assert y.format == 'T{(2,2)=l:a:}'
-            assert y.shape == ()
+            assert y.shape is None
             assert y.ndim == 0
-            assert y.strides == ()
+            assert y.strides is None
             assert y.suboffsets is None
             assert y.itemsize == 16
 

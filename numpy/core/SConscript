@@ -447,6 +447,7 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'conversion_utils.c'),
         pjoin('src', 'multiarray', 'usertypes.c'),
         pjoin('src', 'multiarray', 'buffer.c'),
+        pjoin('src', 'multiarray', 'numpymemoryview.c'),
         pjoin('src', 'multiarray', 'scalarapi.c')]
     multiarray_src.extend(arraytypes_src)
     multiarray_src.extend(scalartypes_src)

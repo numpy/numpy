@@ -153,7 +153,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     PyObject *ip;
     PyArray_Descr *chktype = NULL;
     PyArray_Descr *outtype;
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
 #endif
 
@@ -210,7 +210,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         goto finish;
     }
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
     if (PyObject_GetBuffer(op, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||

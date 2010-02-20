@@ -17,6 +17,8 @@
 
 #include "ctors.h"
 
+#include "numpymemoryview.h"
+
 /*
  * Reading from a file or a string.
  *
@@ -1083,7 +1085,7 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 {
     int d = 0;
     PyObject *e;
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
 #endif
 
@@ -1117,7 +1119,7 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
     if (stop_at_tuple && PyTuple_Check(s)) {
         return 0;
     }
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
     if (PyObject_GetBuffer(s, &buffer_view, PyBUF_STRIDES) == 0 ||
@@ -1631,12 +1633,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 NPY_NO_EXPORT int
 _array_from_buffer_3118(PyObject *obj, PyObject **out)
 {
-#if PY_VERSION_HEX >= 0x02070000
-    /* XXX: Pythons < 2.7 do not have the memory view object. This makes
-     *      using buffers somewhat difficult, since one cannot release them
-     *      using the garbage collection
-     */
-
+#if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 */
     PyObject *memoryview;
     Py_buffer *view;
@@ -1654,7 +1651,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
 
     view = PyMemoryView_GET_BUFFER(memoryview);
     if (view->format != NULL) {
-        descr = _descriptor_from_pep3118_format(view->format);
+        descr = (PyObject*)_descriptor_from_pep3118_format(view->format);
         if (descr == NULL) {
             goto fail;
         }
