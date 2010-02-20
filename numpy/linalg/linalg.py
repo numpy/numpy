@@ -22,6 +22,14 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
 from numpy.matrixlib.defmatrix import matrix_power
+from numpy.compat import asbytes
+
+# For Python2/3 compatibility
+_N = asbytes('N')
+_V = asbytes('V')
+_A = asbytes('A')
+_S = asbytes('S')
+_L = asbytes('L')
 
 fortran_int = intc
 
@@ -503,7 +511,7 @@ def cholesky(a):
         lapack_routine = lapack_lite.zpotrf
     else:
         lapack_routine = lapack_lite.dpotrf
-    results = lapack_routine('L', n, a, m, 0)
+    results = lapack_routine(_L, n, a, m, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Matrix is not positive definite - \
         Cholesky decomposition cannot be computed'
@@ -762,11 +770,11 @@ def eigvals(a):
         rwork = zeros((n,), real_t)
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'N', n, a, n, w,
+        results = lapack_routine(_N, _N, n, a, n, w,
                                  dummy, 1, dummy, 1, work, -1, rwork, 0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'N', n, a, n, w,
+        results = lapack_routine(_N, _N, n, a, n, w,
                                  dummy, 1, dummy, 1, work, lwork, rwork, 0)
     else:
         lapack_routine = lapack_lite.dgeev
@@ -774,11 +782,11 @@ def eigvals(a):
         wi = zeros((n,), t)
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'N', n, a, n, wr, wi,
+        results = lapack_routine(_N, _N, n, a, n, wr, wi,
                                  dummy, 1, dummy, 1, work, -1, 0)
         lwork = int(work[0])
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'N', n, a, n, wr, wi,
+        results = lapack_routine(_N, _N, n, a, n, wr, wi,
                                  dummy, 1, dummy, 1, work, lwork, 0)
         if all(wi == 0.):
             w = wr
@@ -838,6 +846,7 @@ def eigvalsh(a, UPLO='L'):
     array([ 0.17157288+0.j,  5.82842712+0.j])
 
     """
+    UPLO = asbytes(UPLO)
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
@@ -854,24 +863,24 @@ def eigvalsh(a, UPLO='L'):
         work = zeros((lwork,), t)
         lrwork = 1
         rwork = zeros((lrwork,), real_t)
-        results = lapack_routine('N', UPLO, n, a, n, w, work, -1,
+        results = lapack_routine(_N, UPLO, n, a, n, w, work, -1,
                                  rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
         rwork = zeros((lrwork,), real_t)
-        results = lapack_routine('N', UPLO, n, a, n, w, work, lwork,
+        results = lapack_routine(_N, UPLO, n, a, n, w, work, lwork,
                                 rwork, lrwork, iwork, liwork,  0)
     else:
         lapack_routine = lapack_lite.dsyevd
         w = zeros((n,), t)
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine('N', UPLO, n, a, n, w, work, -1,
+        results = lapack_routine(_N, UPLO, n, a, n, w, work, -1,
                                  iwork, liwork, 0)
         lwork = int(work[0])
         work = zeros((lwork,), t)
-        results = lapack_routine('N', UPLO, n, a, n, w, work, lwork,
+        results = lapack_routine(_N, UPLO, n, a, n, w, work, lwork,
                                  iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
@@ -1010,11 +1019,11 @@ def eig(a):
         lwork = 1
         work = zeros((lwork,), t)
         rwork = zeros((2*n,), real_t)
-        results = lapack_routine('N', 'V', n, a, n, w,
+        results = lapack_routine(_N, _V, n, a, n, w,
                                  dummy, 1, v, n, work, -1, rwork, 0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'V', n, a, n, w,
+        results = lapack_routine(_N, _V, n, a, n, w,
                                  dummy, 1, v, n, work, lwork, rwork, 0)
     else:
         lapack_routine = lapack_lite.dgeev
@@ -1023,11 +1032,11 @@ def eig(a):
         vr = zeros((n, n), t)
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'V', n, a, n, wr, wi,
+        results = lapack_routine(_N, _V, n, a, n, wr, wi,
                                   dummy, 1, vr, n, work, -1, 0)
         lwork = int(work[0])
         work = zeros((lwork,), t)
-        results = lapack_routine('N', 'V', n, a, n, wr, wi,
+        results = lapack_routine(_N, _V, n, a, n, wr, wi,
                                   dummy, 1, vr, n, work, lwork, 0)
         if all(wi == 0.0):
             w = wr
@@ -1128,6 +1137,7 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     """
+    UPLO = asbytes(UPLO)
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
@@ -1144,24 +1154,24 @@ def eigh(a, UPLO='L'):
         work = zeros((lwork,), t)
         lrwork = 1
         rwork = zeros((lrwork,), real_t)
-        results = lapack_routine('V', UPLO, n, a, n, w, work, -1,
+        results = lapack_routine(_V, UPLO, n, a, n, w, work, -1,
                                  rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
         rwork = zeros((lrwork,), real_t)
-        results = lapack_routine('V', UPLO, n, a, n, w, work, lwork,
+        results = lapack_routine(_V, UPLO, n, a, n, w, work, lwork,
                                  rwork, lrwork, iwork, liwork,  0)
     else:
         lapack_routine = lapack_lite.dsyevd
         w = zeros((n,), t)
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine('V', UPLO, n, a, n, w, work, -1,
+        results = lapack_routine(_V, UPLO, n, a, n, w, work, -1,
                 iwork, liwork, 0)
         lwork = int(work[0])
         work = zeros((lwork,), t)
-        results = lapack_routine('V', UPLO, n, a, n, w, work, lwork,
+        results = lapack_routine(_V, UPLO, n, a, n, w, work, lwork,
                 iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
@@ -1249,15 +1259,15 @@ def svd(a, full_matrices=1, compute_uv=1):
         if full_matrices:
             nu = m
             nvt = n
-            option = 'A'
+            option = _A
         else:
             nu = min(n, m)
             nvt = min(n, m)
-            option = 'S'
+            option = _S
         u = zeros((nu, m), t)
         vt = zeros((n, nvt), t)
     else:
-        option = 'N'
+        option = _N
         nu = 1
         nvt = 1
         u = empty((1, 1), t)
