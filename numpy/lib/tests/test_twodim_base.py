@@ -114,11 +114,11 @@ class TestDiag(TestCase):
         assert_equal(diag(A, k=-3), [])
 
     def test_failure(self):
-        self.failUnlessRaises(ValueError, diag, [[[1]]])
+        self.assertRaises(ValueError, diag, [[[1]]])
 
 class TestFliplr(TestCase):
     def test_basic(self):
-        self.failUnlessRaises(ValueError, fliplr, ones(4))
+        self.assertRaises(ValueError, fliplr, ones(4))
         a = get_mat(4)
         b = a[:,::-1]
         assert_equal(fliplr(a),b)
@@ -141,7 +141,7 @@ class TestFlipud(TestCase):
 
 class TestRot90(TestCase):
     def test_basic(self):
-        self.failUnlessRaises(ValueError, rot90, ones(4))
+        self.assertRaises(ValueError, rot90, ones(4))
 
         a = [[0,1,2],
              [3,4,5]]

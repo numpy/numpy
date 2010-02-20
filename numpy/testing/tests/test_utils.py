@@ -174,7 +174,7 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
 
         self._assert_func(x, y, decimal=3)
         self._assert_func(x, y, decimal=4)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda: self._assert_func(x, y, decimal=5))
 
     def test_nan(self):
@@ -182,11 +182,11 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         aone = np.array([1])
         ainf = np.array([np.inf])
         self._assert_func(anan, anan)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(anan, aone))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(anan, ainf))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(ainf, anan))
 
 class TestAlmostEqual(_GenericTest, unittest.TestCase):
@@ -195,11 +195,11 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
 
     def test_nan_item(self):
         self._assert_func(np.nan, np.nan)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(np.nan, 1))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(np.nan, np.inf))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(np.inf, np.nan))
 
     def test_inf_item(self):
@@ -235,7 +235,7 @@ class TestApproxEqual(unittest.TestCase):
 
         self._assert_func(x, y, significant=5)
         self._assert_func(x, y, significant=6)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda: self._assert_func(x, y, significant=7))
 
     def test_simple_items(self):
@@ -245,7 +245,7 @@ class TestApproxEqual(unittest.TestCase):
         self._assert_func(x, y, significant=4)
         self._assert_func(x, y, significant=5)
         self._assert_func(x, y, significant=6)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda: self._assert_func(x, y, significant=7))
 
     def test_nan_array(self):
@@ -253,11 +253,11 @@ class TestApproxEqual(unittest.TestCase):
         aone = np.array(1)
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(anan, aone))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(anan, ainf))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(ainf, anan))
 
     def test_nan_items(self):
@@ -265,11 +265,11 @@ class TestApproxEqual(unittest.TestCase):
         aone = np.array(1)
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(anan, aone))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(anan, ainf))
-        self.failUnlessRaises(AssertionError,
+        self.assertRaises(AssertionError,
                 lambda : self._assert_func(ainf, anan))
 
 class TestRaises(unittest.TestCase):
@@ -349,7 +349,7 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         def failure():
             return assert_array_almost_equal_nulp(x, y,
                                                   nulp=1000)
-        self.failUnlessRaises(AssertionError, failure)
+        self.assertRaises(AssertionError, failure)
 
     def test_big_float32(self):
         x = (1e10 * np.random.randn(10)).astype(np.float32)
@@ -361,14 +361,14 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         y = x + 1
         def failure():
             assert_array_almost_equal_nulp(x, y, nulp=1000)
-        self.failUnlessRaises(AssertionError, failure)
+        self.assertRaises(AssertionError, failure)
 
     def test_complex(self):
         x = np.random.randn(10) + 1j * np.random.randn(10)
         y = x + 1
         def failure():
             assert_array_almost_equal_nulp(x, y, nulp=1000)
-        self.failUnlessRaises(AssertionError, failure)
+        self.assertRaises(AssertionError, failure)
 
     def test_complex2(self):
         x = np.random.randn(10)
@@ -414,19 +414,19 @@ class TestULP(unittest.TestCase):
             tiny = np.array([np.finfo(dt).tiny])
             zero = np.array([np.PZERO]).astype(dt)
             nzero = np.array([np.NZERO]).astype(dt)
-            self.failUnlessRaises(AssertionError,
+            self.assertRaises(AssertionError,
                                   lambda: assert_array_max_ulp(nan, inf,
                                                                maxulp=maxulp))
-            self.failUnlessRaises(AssertionError,
+            self.assertRaises(AssertionError,
                                   lambda: assert_array_max_ulp(nan, big,
                                                                maxulp=maxulp))
-            self.failUnlessRaises(AssertionError,
+            self.assertRaises(AssertionError,
                                   lambda: assert_array_max_ulp(nan, tiny,
                                                                maxulp=maxulp))
-            self.failUnlessRaises(AssertionError,
+            self.assertRaises(AssertionError,
                                   lambda: assert_array_max_ulp(nan, zero,
                                                                maxulp=maxulp))
-            self.failUnlessRaises(AssertionError,
+            self.assertRaises(AssertionError,
                                   lambda: assert_array_max_ulp(nan, nzero,
                                                                maxulp=maxulp))
 if __name__ == '__main__':

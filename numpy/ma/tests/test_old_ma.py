@@ -38,16 +38,16 @@ class TestMa(TestCase):
     def test_testBasic1d(self):
         "Test of basic array creation and properties in 1 dimension."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.failIf(isMaskedArray(x))
-        self.failUnless(isMaskedArray(xm))
+        self.assertFalse(isMaskedArray(x))
+        self.assertTrue(isMaskedArray(xm))
         self.assertEqual(shape(xm), s)
         self.assertEqual(xm.shape, s)
         self.assertEqual(xm.dtype, x.dtype)
         self.assertEqual( xm.size , reduce(lambda x,y:x*y, s))
         self.assertEqual(count(xm) , len(m1) - reduce(lambda x,y:x+y, m1))
-        self.failUnless(eq(xm, xf))
-        self.failUnless(eq(filled(xm, 1.e20), xf))
-        self.failUnless(eq(x, xm))
+        self.assertTrue(eq(xm, xf))
+        self.assertTrue(eq(filled(xm, 1.e20), xf))
+        self.assertTrue(eq(x, xm))
 
     def test_testBasic2d(self):
         "Test of basic array creation and properties in 2 dimensions."
@@ -59,15 +59,15 @@ class TestMa(TestCase):
             ym.shape = s
             xf.shape = s
 
-            self.failIf(isMaskedArray(x))
-            self.failUnless(isMaskedArray(xm))
+            self.assertFalse(isMaskedArray(x))
+            self.assertTrue(isMaskedArray(xm))
             self.assertEqual(shape(xm), s)
             self.assertEqual(xm.shape, s)
             self.assertEqual( xm.size , reduce(lambda x,y:x*y, s))
             self.assertEqual( count(xm) , len(m1) - reduce(lambda x,y:x+y, m1))
-            self.failUnless(eq(xm, xf))
-            self.failUnless(eq(filled(xm, 1.e20), xf))
-            self.failUnless(eq(x, xm))
+            self.assertTrue(eq(xm, xf))
+            self.assertTrue(eq(filled(xm, 1.e20), xf))
+            self.assertTrue(eq(x, xm))
             self.setUp()
 
     def test_testArithmetic (self):
@@ -75,94 +75,94 @@ class TestMa(TestCase):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         a2d = array([[1,2],[0,4]])
         a2dm = masked_array(a2d, [[0,0],[1,0]])
-        self.failUnless(eq (a2d * a2d, a2d * a2dm))
-        self.failUnless(eq (a2d + a2d, a2d + a2dm))
-        self.failUnless(eq (a2d - a2d, a2d - a2dm))
+        self.assertTrue(eq (a2d * a2d, a2d * a2dm))
+        self.assertTrue(eq (a2d + a2d, a2d + a2dm))
+        self.assertTrue(eq (a2d - a2d, a2d - a2dm))
         for s in [(12,), (4,3), (2,6)]:
             x = x.reshape(s)
             y = y.reshape(s)
             xm = xm.reshape(s)
             ym = ym.reshape(s)
             xf = xf.reshape(s)
-            self.failUnless(eq(-x, -xm))
-            self.failUnless(eq(x + y, xm + ym))
-            self.failUnless(eq(x - y, xm - ym))
-            self.failUnless(eq(x * y, xm * ym))
+            self.assertTrue(eq(-x, -xm))
+            self.assertTrue(eq(x + y, xm + ym))
+            self.assertTrue(eq(x - y, xm - ym))
+            self.assertTrue(eq(x * y, xm * ym))
             olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            self.failUnless(eq(x / y, xm / ym))
+            self.assertTrue(eq(x / y, xm / ym))
             numpy.seterr(**olderr)
-            self.failUnless(eq(a10 + y, a10 + ym))
-            self.failUnless(eq(a10 - y, a10 - ym))
-            self.failUnless(eq(a10 * y, a10 * ym))
+            self.assertTrue(eq(a10 + y, a10 + ym))
+            self.assertTrue(eq(a10 - y, a10 - ym))
+            self.assertTrue(eq(a10 * y, a10 * ym))
             olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            self.failUnless(eq(a10 / y, a10 / ym))
+            self.assertTrue(eq(a10 / y, a10 / ym))
             numpy.seterr(**olderr)
-            self.failUnless(eq(x + a10, xm + a10))
-            self.failUnless(eq(x - a10, xm - a10))
-            self.failUnless(eq(x * a10, xm * a10))
-            self.failUnless(eq(x / a10, xm / a10))
-            self.failUnless(eq(x**2, xm**2))
-            self.failUnless(eq(abs(x)**2.5, abs(xm) **2.5))
-            self.failUnless(eq(x**y, xm**ym))
-            self.failUnless(eq(numpy.add(x,y), add(xm, ym)))
-            self.failUnless(eq(numpy.subtract(x,y), subtract(xm, ym)))
-            self.failUnless(eq(numpy.multiply(x,y), multiply(xm, ym)))
+            self.assertTrue(eq(x + a10, xm + a10))
+            self.assertTrue(eq(x - a10, xm - a10))
+            self.assertTrue(eq(x * a10, xm * a10))
+            self.assertTrue(eq(x / a10, xm / a10))
+            self.assertTrue(eq(x**2, xm**2))
+            self.assertTrue(eq(abs(x)**2.5, abs(xm) **2.5))
+            self.assertTrue(eq(x**y, xm**ym))
+            self.assertTrue(eq(numpy.add(x,y), add(xm, ym)))
+            self.assertTrue(eq(numpy.subtract(x,y), subtract(xm, ym)))
+            self.assertTrue(eq(numpy.multiply(x,y), multiply(xm, ym)))
             olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            self.failUnless(eq(numpy.divide(x,y), divide(xm, ym)))
+            self.assertTrue(eq(numpy.divide(x,y), divide(xm, ym)))
             numpy.seterr(**olderr)
 
 
     def test_testMixedArithmetic(self):
         na = numpy.array([1])
         ma = array([1])
-        self.failUnless(isinstance(na + ma, MaskedArray))
-        self.failUnless(isinstance(ma + na, MaskedArray))
+        self.assertTrue(isinstance(na + ma, MaskedArray))
+        self.assertTrue(isinstance(ma + na, MaskedArray))
 
     def test_testUfuncs1 (self):
         "Test various functions such as sin, cos."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.failUnless (eq(numpy.cos(x), cos(xm)))
-        self.failUnless (eq(numpy.cosh(x), cosh(xm)))
-        self.failUnless (eq(numpy.sin(x), sin(xm)))
-        self.failUnless (eq(numpy.sinh(x), sinh(xm)))
-        self.failUnless (eq(numpy.tan(x), tan(xm)))
-        self.failUnless (eq(numpy.tanh(x), tanh(xm)))
+        self.assertTrue (eq(numpy.cos(x), cos(xm)))
+        self.assertTrue (eq(numpy.cosh(x), cosh(xm)))
+        self.assertTrue (eq(numpy.sin(x), sin(xm)))
+        self.assertTrue (eq(numpy.sinh(x), sinh(xm)))
+        self.assertTrue (eq(numpy.tan(x), tan(xm)))
+        self.assertTrue (eq(numpy.tanh(x), tanh(xm)))
         olderr = numpy.seterr(divide='ignore', invalid='ignore')
-        self.failUnless (eq(numpy.sqrt(abs(x)), sqrt(xm)))
-        self.failUnless (eq(numpy.log(abs(x)), log(xm)))
-        self.failUnless (eq(numpy.log10(abs(x)), log10(xm)))
+        self.assertTrue (eq(numpy.sqrt(abs(x)), sqrt(xm)))
+        self.assertTrue (eq(numpy.log(abs(x)), log(xm)))
+        self.assertTrue (eq(numpy.log10(abs(x)), log10(xm)))
         numpy.seterr(**olderr)
-        self.failUnless (eq(numpy.exp(x), exp(xm)))
-        self.failUnless (eq(numpy.arcsin(z), arcsin(zm)))
-        self.failUnless (eq(numpy.arccos(z), arccos(zm)))
-        self.failUnless (eq(numpy.arctan(z), arctan(zm)))
-        self.failUnless (eq(numpy.arctan2(x, y), arctan2(xm, ym)))
-        self.failUnless (eq(numpy.absolute(x), absolute(xm)))
-        self.failUnless (eq(numpy.equal(x,y), equal(xm, ym)))
-        self.failUnless (eq(numpy.not_equal(x,y), not_equal(xm, ym)))
-        self.failUnless (eq(numpy.less(x,y), less(xm, ym)))
-        self.failUnless (eq(numpy.greater(x,y), greater(xm, ym)))
-        self.failUnless (eq(numpy.less_equal(x,y), less_equal(xm, ym)))
-        self.failUnless (eq(numpy.greater_equal(x,y), greater_equal(xm, ym)))
-        self.failUnless (eq(numpy.conjugate(x), conjugate(xm)))
-        self.failUnless (eq(numpy.concatenate((x,y)), concatenate((xm,ym))))
-        self.failUnless (eq(numpy.concatenate((x,y)), concatenate((x,y))))
-        self.failUnless (eq(numpy.concatenate((x,y)), concatenate((xm,y))))
-        self.failUnless (eq(numpy.concatenate((x,y,x)), concatenate((x,ym,x))))
+        self.assertTrue (eq(numpy.exp(x), exp(xm)))
+        self.assertTrue (eq(numpy.arcsin(z), arcsin(zm)))
+        self.assertTrue (eq(numpy.arccos(z), arccos(zm)))
+        self.assertTrue (eq(numpy.arctan(z), arctan(zm)))
+        self.assertTrue (eq(numpy.arctan2(x, y), arctan2(xm, ym)))
+        self.assertTrue (eq(numpy.absolute(x), absolute(xm)))
+        self.assertTrue (eq(numpy.equal(x,y), equal(xm, ym)))
+        self.assertTrue (eq(numpy.not_equal(x,y), not_equal(xm, ym)))
+        self.assertTrue (eq(numpy.less(x,y), less(xm, ym)))
+        self.assertTrue (eq(numpy.greater(x,y), greater(xm, ym)))
+        self.assertTrue (eq(numpy.less_equal(x,y), less_equal(xm, ym)))
+        self.assertTrue (eq(numpy.greater_equal(x,y), greater_equal(xm, ym)))
+        self.assertTrue (eq(numpy.conjugate(x), conjugate(xm)))
+        self.assertTrue (eq(numpy.concatenate((x,y)), concatenate((xm,ym))))
+        self.assertTrue (eq(numpy.concatenate((x,y)), concatenate((x,y))))
+        self.assertTrue (eq(numpy.concatenate((x,y)), concatenate((xm,y))))
+        self.assertTrue (eq(numpy.concatenate((x,y,x)), concatenate((x,ym,x))))
 
     def test_xtestCount (self):
         "Test count"
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
-        self.failUnless( isinstance(count(ott), types.IntType))
+        self.assertTrue( isinstance(count(ott), types.IntType))
         self.assertEqual(3, count(ott))
         self.assertEqual(1, count(1))
-        self.failUnless (eq(0, array(1,mask=[1])))
+        self.assertTrue (eq(0, array(1,mask=[1])))
         ott=ott.reshape((2,2))
         assert isinstance(count(ott,0),numpy.ndarray)
         assert isinstance(count(ott), types.IntType)
-        self.failUnless (eq(3, count(ott)))
+        self.assertTrue (eq(3, count(ott)))
         assert getmask(count(ott,0)) is nomask
-        self.failUnless (eq([1,2],count(ott,0)))
+        self.assertTrue (eq([1,2],count(ott,0)))
 
     def test_testMinMax (self):
         "Test minimum and maximum."
@@ -171,31 +171,31 @@ class TestMa(TestCase):
         xmr = ravel(xm)
 
         #true because of careful selection of data
-        self.failUnless(eq(max(xr), maximum(xmr)))
+        self.assertTrue(eq(max(xr), maximum(xmr)))
 
         #true because of careful selection of data
-        self.failUnless(eq(min(xr), minimum(xmr)))
+        self.assertTrue(eq(min(xr), minimum(xmr)))
 
     def test_testAddSumProd (self):
         "Test add, sum, product."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.failUnless (eq(numpy.add.reduce(x), add.reduce(x)))
-        self.failUnless (eq(numpy.add.accumulate(x), add.accumulate(x)))
-        self.failUnless (eq(4, sum(array(4),axis=0)))
-        self.failUnless (eq(4, sum(array(4), axis=0)))
-        self.failUnless (eq(numpy.sum(x,axis=0), sum(x,axis=0)))
-        self.failUnless (eq(numpy.sum(filled(xm,0),axis=0), sum(xm,axis=0)))
-        self.failUnless (eq(numpy.sum(x,0), sum(x,0)))
-        self.failUnless (eq(numpy.product(x,axis=0), product(x,axis=0)))
-        self.failUnless (eq(numpy.product(x,0), product(x,0)))
-        self.failUnless (eq(numpy.product(filled(xm,1),axis=0),
+        self.assertTrue (eq(numpy.add.reduce(x), add.reduce(x)))
+        self.assertTrue (eq(numpy.add.accumulate(x), add.accumulate(x)))
+        self.assertTrue (eq(4, sum(array(4),axis=0)))
+        self.assertTrue (eq(4, sum(array(4), axis=0)))
+        self.assertTrue (eq(numpy.sum(x,axis=0), sum(x,axis=0)))
+        self.assertTrue (eq(numpy.sum(filled(xm,0),axis=0), sum(xm,axis=0)))
+        self.assertTrue (eq(numpy.sum(x,0), sum(x,0)))
+        self.assertTrue (eq(numpy.product(x,axis=0), product(x,axis=0)))
+        self.assertTrue (eq(numpy.product(x,0), product(x,0)))
+        self.assertTrue (eq(numpy.product(filled(xm,1),axis=0),
                             product(xm,axis=0)))
         if len(s) > 1:
-            self.failUnless (eq(numpy.concatenate((x,y),1),
+            self.assertTrue (eq(numpy.concatenate((x,y),1),
                                 concatenate((xm,ym),1)))
-            self.failUnless (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
-            self.failUnless (eq(numpy.sum(x,1), sum(x,1)))
-            self.failUnless (eq(numpy.product(x,1), product(x,1)))
+            self.assertTrue (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
+            self.assertTrue (eq(numpy.sum(x,1), sum(x,1)))
+            self.assertTrue (eq(numpy.product(x,1), product(x,1)))
 
 
     def test_testCI(self):
@@ -252,39 +252,39 @@ class TestMa(TestCase):
         n = [0,0,1,0,0]
         m = make_mask(n)
         m2 = make_mask(m)
-        self.failUnless(m is m2)
+        self.assertTrue(m is m2)
         m3 = make_mask(m, copy=1)
-        self.failUnless(m is not m3)
+        self.assertTrue(m is not m3)
 
         x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
-        self.failUnless( y1._data is not x1)
-        self.failUnless( allequal(x1,y1._data))
-        self.failUnless( y1.mask is m)
+        self.assertTrue( y1._data is not x1)
+        self.assertTrue( allequal(x1,y1._data))
+        self.assertTrue( y1.mask is m)
 
         y1a = array(y1, copy=0)
-        self.failUnless( y1a.mask is y1.mask)
+        self.assertTrue( y1a.mask is y1.mask)
 
         y2 = array(x1, mask=m, copy=0)
-        self.failUnless( y2.mask is m)
-        self.failUnless( y2[2] is masked)
+        self.assertTrue( y2.mask is m)
+        self.assertTrue( y2[2] is masked)
         y2[2]=9
-        self.failUnless( y2[2] is not masked)
-        self.failUnless( y2.mask is not m)
-        self.failUnless( allequal(y2.mask, 0))
+        self.assertTrue( y2[2] is not masked)
+        self.assertTrue( y2.mask is not m)
+        self.assertTrue( allequal(y2.mask, 0))
 
         y3 = array(x1*1.0, mask=m)
-        self.failUnless(filled(y3).dtype is (x1*1.0).dtype)
+        self.assertTrue(filled(y3).dtype is (x1*1.0).dtype)
 
         x4 = arange(4)
         x4[2] = masked
         y4 = resize(x4, (8,))
-        self.failUnless( eq(concatenate([x4,x4]), y4))
-        self.failUnless( eq(getmask(y4),[0,0,1,0,0,0,1,0]))
+        self.assertTrue( eq(concatenate([x4,x4]), y4))
+        self.assertTrue( eq(getmask(y4),[0,0,1,0,0,0,1,0]))
         y5 = repeat(x4, (2,2,2,2), axis=0)
-        self.failUnless( eq(y5, [0,0,1,1,2,2,3,3]))
+        self.assertTrue( eq(y5, [0,0,1,1,2,2,3,3]))
         y6 = repeat(x4, 2, axis=0)
-        self.failUnless( eq(y5, y6))
+        self.assertTrue( eq(y5, y6))
 
     def test_testPut(self):
         "Test of put"
@@ -292,19 +292,19 @@ class TestMa(TestCase):
         n = [0,0,0,1,1]
         m = make_mask(n)
         x = array(d, mask = m)
-        self.failUnless( x[3] is masked)
-        self.failUnless( x[4] is masked)
+        self.assertTrue( x[3] is masked)
+        self.assertTrue( x[4] is masked)
         x[[1,4]] = [10,40]
-        self.failUnless( x.mask is not m)
-        self.failUnless( x[3] is masked)
-        self.failUnless( x[4] is not masked)
-        self.failUnless( eq(x, [0,10,2,-1,40]))
+        self.assertTrue( x.mask is not m)
+        self.assertTrue( x[3] is masked)
+        self.assertTrue( x[4] is not masked)
+        self.assertTrue( eq(x, [0,10,2,-1,40]))
 
         x = array(d, mask = m)
         x.put([0,1,2],[-1,100,200])
-        self.failUnless( eq(x, [-1,100,200,0,0]))
-        self.failUnless( x[3] is masked)
-        self.failUnless( x[4] is masked)
+        self.assertTrue( eq(x, [-1,100,200,0,0]))
+        self.assertTrue( x[3] is masked)
+        self.assertTrue( x[4] is masked)
 
     def test_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
@@ -505,67 +505,67 @@ class TestMa(TestCase):
         "Test of masked element"
         xx=arange(6)
         xx[1] = masked
-        self.failUnless(str(masked) ==  '--')
-        self.failUnless(xx[1] is masked)
-        self.failUnlessEqual(filled(xx[1], 0), 0)
+        self.assertTrue(str(masked) ==  '--')
+        self.assertTrue(xx[1] is masked)
+        self.assertEqual(filled(xx[1], 0), 0)
         # don't know why these should raise an exception...
-        #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, masked)
-        #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, 2)
-        #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, xx)
-        #self.failUnlessRaises(Exception, lambda x,y: x+y, xx, masked)
+        #self.assertRaises(Exception, lambda x,y: x+y, masked, masked)
+        #self.assertRaises(Exception, lambda x,y: x+y, masked, 2)
+        #self.assertRaises(Exception, lambda x,y: x+y, masked, xx)
+        #self.assertRaises(Exception, lambda x,y: x+y, xx, masked)
 
     def test_testAverage1(self):
         "Test of average."
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
-        self.failUnless(eq(2.0, average(ott,axis=0)))
-        self.failUnless(eq(2.0, average(ott, weights=[1., 1., 2., 1.])))
+        self.assertTrue(eq(2.0, average(ott,axis=0)))
+        self.assertTrue(eq(2.0, average(ott, weights=[1., 1., 2., 1.])))
         result, wts = average(ott, weights=[1.,1.,2.,1.], returned=1)
-        self.failUnless(eq(2.0, result))
-        self.failUnless(wts == 4.0)
+        self.assertTrue(eq(2.0, result))
+        self.assertTrue(wts == 4.0)
         ott[:] = masked
-        self.failUnless(average(ott,axis=0) is masked)
+        self.assertTrue(average(ott,axis=0) is masked)
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
         ott=ott.reshape(2,2)
         ott[:,1] = masked
-        self.failUnless(eq(average(ott,axis=0), [2.0, 0.0]))
-        self.failUnless(average(ott,axis=1)[0] is masked)
-        self.failUnless(eq([2.,0.], average(ott, axis=0)))
+        self.assertTrue(eq(average(ott,axis=0), [2.0, 0.0]))
+        self.assertTrue(average(ott,axis=1)[0] is masked)
+        self.assertTrue(eq([2.,0.], average(ott, axis=0)))
         result, wts = average(ott, axis=0, returned=1)
-        self.failUnless(eq(wts, [1., 0.]))
+        self.assertTrue(eq(wts, [1., 0.]))
 
     def test_testAverage2(self):
         "More tests of average."
         w1 = [0,1,1,1,1,0]
         w2 = [[0,1,1,1,1,0],[1,0,0,0,0,1]]
         x=arange(6)
-        self.failUnless(allclose(average(x, axis=0), 2.5))
-        self.failUnless(allclose(average(x, axis=0, weights=w1), 2.5))
+        self.assertTrue(allclose(average(x, axis=0), 2.5))
+        self.assertTrue(allclose(average(x, axis=0, weights=w1), 2.5))
         y=array([arange(6), 2.0*arange(6)])
-        self.failUnless(allclose(average(y, None),
+        self.assertTrue(allclose(average(y, None),
                                  numpy.add.reduce(numpy.arange(6))*3./12.))
-        self.failUnless(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
-        self.failUnless(allclose(average(y, axis=1),
+        self.assertTrue(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
+        self.assertTrue(allclose(average(y, axis=1),
                                  [average(x,axis=0), average(x,axis=0) * 2.0]))
-        self.failUnless(allclose(average(y, None, weights=w2), 20./6.))
-        self.failUnless(allclose(average(y, axis=0, weights=w2),
+        self.assertTrue(allclose(average(y, None, weights=w2), 20./6.))
+        self.assertTrue(allclose(average(y, axis=0, weights=w2),
                                  [0.,1.,2.,3.,4.,10.]))
-        self.failUnless(allclose(average(y, axis=1),
+        self.assertTrue(allclose(average(y, axis=1),
                                  [average(x,axis=0), average(x,axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0,0,1,1,0,0]
         m3 = [[0,0,1,1,0,0],[0,1,1,1,1,0]]
         m4 = ones(6)
         m5 = [0, 1, 1, 1, 1, 1]
-        self.failUnless(allclose(average(masked_array(x, m1),axis=0), 2.5))
-        self.failUnless(allclose(average(masked_array(x, m2),axis=0), 2.5))
-        self.failUnless(average(masked_array(x, m4),axis=0) is masked)
+        self.assertTrue(allclose(average(masked_array(x, m1),axis=0), 2.5))
+        self.assertTrue(allclose(average(masked_array(x, m2),axis=0), 2.5))
+        self.assertTrue(average(masked_array(x, m4),axis=0) is masked)
         self.assertEqual(average(masked_array(x, m5),axis=0), 0.0)
         self.assertEqual(count(average(masked_array(x, m4),axis=0)), 0)
         z = masked_array(y, m3)
-        self.failUnless(allclose(average(z, None), 20./6.))
-        self.failUnless(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
-        self.failUnless(allclose(average(z, axis=1), [2.5, 5.0]))
-        self.failUnless(allclose( average(z,axis=0, weights=w2),
+        self.assertTrue(allclose(average(z, None), 20./6.))
+        self.assertTrue(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
+        self.assertTrue(allclose(average(z, axis=1), [2.5, 5.0]))
+        self.assertTrue(allclose( average(z,axis=0, weights=w2),
                                   [0.,1., 99., 99., 4.0, 10.0]))
 
         a = arange(6)
@@ -578,72 +578,72 @@ class TestMa(TestCase):
         r2, w2 = average(ones((2,2,3)), returned=1)
         self.assertEqual(shape(w2) , shape(r2))
         r2, w2 = average(ones((2,2,3)), weights=ones((2,2,3)), returned=1)
-        self.failUnless(shape(w2) == shape(r2))
+        self.assertTrue(shape(w2) == shape(r2))
         a2d = array([[1,2],[0,4]], float)
         a2dm = masked_array(a2d, [[0,0],[1,0]])
         a2da = average(a2d, axis=0)
-        self.failUnless(eq (a2da, [0.5, 3.0]))
+        self.assertTrue(eq (a2da, [0.5, 3.0]))
         a2dma = average(a2dm, axis=0)
-        self.failUnless(eq( a2dma, [1.0, 3.0]))
+        self.assertTrue(eq( a2dma, [1.0, 3.0]))
         a2dma = average(a2dm, axis=None)
-        self.failUnless(eq(a2dma, 7./3.))
+        self.assertTrue(eq(a2dma, 7./3.))
         a2dma = average(a2dm, axis=1)
-        self.failUnless(eq(a2dma, [1.5, 4.0]))
+        self.assertTrue(eq(a2dma, [1.5, 4.0]))
 
     def test_testToPython(self):
         self.assertEqual(1, int(array(1)))
         self.assertEqual(1.0, float(array(1)))
         self.assertEqual(1, int(array([[[1]]])))
         self.assertEqual(1.0, float(array([[1]])))
-        self.failUnlessRaises(TypeError, float, array([1,1]))
-        self.failUnlessRaises(ValueError, bool, array([0,1]))
-        self.failUnlessRaises(ValueError, bool, array([0,0],mask=[0,1]))
+        self.assertRaises(TypeError, float, array([1,1]))
+        self.assertRaises(ValueError, bool, array([0,1]))
+        self.assertRaises(ValueError, bool, array([0,0],mask=[0,1]))
 
     def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
-        self.failUnless((1/array(0)).mask)
-        self.failUnless((1 + xm).mask)
-        self.failUnless((-xm).mask)
-        self.failUnless((-xm).mask)
-        self.failUnless(maximum(xm, xm).mask)
-        self.failUnless(minimum(xm, xm).mask)
-        self.failUnless(xm.filled().dtype is xm._data.dtype)
+        self.assertTrue((1/array(0)).mask)
+        self.assertTrue((1 + xm).mask)
+        self.assertTrue((-xm).mask)
+        self.assertTrue((-xm).mask)
+        self.assertTrue(maximum(xm, xm).mask)
+        self.assertTrue(minimum(xm, xm).mask)
+        self.assertTrue(xm.filled().dtype is xm._data.dtype)
         x = array(0, mask=0)
-        self.failUnless(x.filled() == x._data)
-        self.failUnlessEqual(str(xm), str(masked_print_option))
+        self.assertTrue(x.filled() == x._data)
+        self.assertEqual(str(xm), str(masked_print_option))
 
     def test_testArrayMethods(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
-        self.failUnless(eq(a.any(), a._data.any()))
-        self.failUnless(eq(a.all(), a._data.all()))
-        self.failUnless(eq(a.argmax(), a._data.argmax()))
-        self.failUnless(eq(a.argmin(), a._data.argmin()))
-        self.failUnless(eq(a.choose(0,1,2,3,4), a._data.choose(0,1,2,3,4)))
-        self.failUnless(eq(a.compress([1,0,1]), a._data.compress([1,0,1])))
-        self.failUnless(eq(a.conj(), a._data.conj()))
-        self.failUnless(eq(a.conjugate(), a._data.conjugate()))
+        self.assertTrue(eq(a.any(), a._data.any()))
+        self.assertTrue(eq(a.all(), a._data.all()))
+        self.assertTrue(eq(a.argmax(), a._data.argmax()))
+        self.assertTrue(eq(a.argmin(), a._data.argmin()))
+        self.assertTrue(eq(a.choose(0,1,2,3,4), a._data.choose(0,1,2,3,4)))
+        self.assertTrue(eq(a.compress([1,0,1]), a._data.compress([1,0,1])))
+        self.assertTrue(eq(a.conj(), a._data.conj()))
+        self.assertTrue(eq(a.conjugate(), a._data.conjugate()))
         m = array([[1,2],[3,4]])
-        self.failUnless(eq(m.diagonal(), m._data.diagonal()))
-        self.failUnless(eq(a.sum(), a._data.sum()))
-        self.failUnless(eq(a.take([1,2]), a._data.take([1,2])))
-        self.failUnless(eq(m.transpose(), m._data.transpose()))
+        self.assertTrue(eq(m.diagonal(), m._data.diagonal()))
+        self.assertTrue(eq(a.sum(), a._data.sum()))
+        self.assertTrue(eq(a.take([1,2]), a._data.take([1,2])))
+        self.assertTrue(eq(m.transpose(), m._data.transpose()))
 
     def test_testArrayAttributes(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
-        self.failUnlessEqual(a.ndim, 1)
+        self.assertEqual(a.ndim, 1)
 
     def test_testAPI(self):
-        self.failIf([m for m in dir(numpy.ndarray)
+        self.assertFalse([m for m in dir(numpy.ndarray)
                      if m not in dir(MaskedArray) and not m.startswith('_')])
 
     def test_testSingleElementSubscript(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
-        self.failUnlessEqual(a[0].shape, ())
-        self.failUnlessEqual(b[0].shape, ())
-        self.failUnlessEqual(b[1].shape, ())
+        self.assertEqual(a[0].shape, ())
+        self.assertEqual(b[0].shape, ())
+        self.assertEqual(b[1].shape, ())
 
 class TestUfuncs(TestCase):
     def setUp(self):
@@ -689,30 +689,30 @@ class TestUfuncs(TestCase):
             ur = uf(*args)
             mr = mf(*args)
             numpy.seterr(**olderr)
-            self.failUnless(eq(ur.filled(0), mr.filled(0), f))
-            self.failUnless(eqmask(ur.mask, mr.mask))
+            self.assertTrue(eq(ur.filled(0), mr.filled(0), f))
+            self.assertTrue(eqmask(ur.mask, mr.mask))
 
     def test_reduce(self):
         a = self.d[0]
-        self.failIf(alltrue(a,axis=0))
-        self.failUnless(sometrue(a,axis=0))
-        self.failUnlessEqual(sum(a[:3],axis=0), 0)
-        self.failUnlessEqual(product(a,axis=0), 0)
+        self.assertFalse(alltrue(a,axis=0))
+        self.assertTrue(sometrue(a,axis=0))
+        self.assertEqual(sum(a[:3],axis=0), 0)
+        self.assertEqual(product(a,axis=0), 0)
 
     def test_minmax(self):
         a = arange(1,13).reshape(3,4)
         amask = masked_where(a < 5,a)
-        self.failUnlessEqual(amask.max(), a.max())
-        self.failUnlessEqual(amask.min(), 5)
-        self.failUnless((amask.max(0) == a.max(0)).all())
-        self.failUnless((amask.min(0) == [5,6,7,8]).all())
-        self.failUnless(amask.max(1)[0].mask)
-        self.failUnless(amask.min(1)[0].mask)
+        self.assertEqual(amask.max(), a.max())
+        self.assertEqual(amask.min(), 5)
+        self.assertTrue((amask.max(0) == a.max(0)).all())
+        self.assertTrue((amask.min(0) == [5,6,7,8]).all())
+        self.assertTrue(amask.max(1)[0].mask)
+        self.assertTrue(amask.min(1)[0].mask)
 
     def test_nonzero(self):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = array([1,0,2,0], mask=[0,0,1,1])
-            self.failUnless(eq(nonzero(x), [0]))
+            self.assertTrue(eq(nonzero(x), [0]))
 
 
 class TestArrayMethods(TestCase):
@@ -753,15 +753,15 @@ class TestArrayMethods(TestCase):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXdiag = mX.diagonal()
         self.assertEqual(mX.trace(), mX.diagonal().compressed().sum())
-        self.failUnless(eq(mX.trace(),
+        self.assertTrue(eq(mX.trace(),
                            X.trace() - sum(mXdiag.mask*X.diagonal(),axis=0)))
 
     def test_clip(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         clipped = mx.clip(2,8)
-        self.failUnless(eq(clipped.mask,mx.mask))
-        self.failUnless(eq(clipped._data,x.clip(2,8)))
-        self.failUnless(eq(clipped._data,mx._data.clip(2,8)))
+        self.assertTrue(eq(clipped.mask,mx.mask))
+        self.assertTrue(eq(clipped._data,x.clip(2,8)))
+        self.assertTrue(eq(clipped._data,mx._data.clip(2,8)))
 
     def test_ptp(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
@@ -773,13 +773,13 @@ class TestArrayMethods(TestCase):
             cols[k] = mX[:,k].compressed().ptp()
         for k in range(n):
             rows[k] = mX[k].compressed().ptp()
-        self.failUnless(eq(mX.ptp(0),cols))
-        self.failUnless(eq(mX.ptp(1),rows))
+        self.assertTrue(eq(mX.ptp(0),cols))
+        self.assertTrue(eq(mX.ptp(1),rows))
 
     def test_swapaxes(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXswapped = mX.swapaxes(0,1)
-        self.failUnless(eq(mXswapped[-1],mX[:,-1]))
+        self.assertTrue(eq(mXswapped[-1],mX[:,-1]))
         mXXswapped = mXX.swapaxes(0,2)
         self.assertEqual(mXXswapped.shape,(2,2,3,3))
 
@@ -787,28 +787,28 @@ class TestArrayMethods(TestCase):
     def test_cumprod(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXcp = mX.cumprod(0)
-        self.failUnless(eq(mXcp._data,mX.filled(1).cumprod(0)))
+        self.assertTrue(eq(mXcp._data,mX.filled(1).cumprod(0)))
         mXcp = mX.cumprod(1)
-        self.failUnless(eq(mXcp._data,mX.filled(1).cumprod(1)))
+        self.assertTrue(eq(mXcp._data,mX.filled(1).cumprod(1)))
 
     def test_cumsum(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXcp = mX.cumsum(0)
-        self.failUnless(eq(mXcp._data,mX.filled(0).cumsum(0)))
+        self.assertTrue(eq(mXcp._data,mX.filled(0).cumsum(0)))
         mXcp = mX.cumsum(1)
-        self.failUnless(eq(mXcp._data,mX.filled(0).cumsum(1)))
+        self.assertTrue(eq(mXcp._data,mX.filled(0).cumsum(1)))
 
     def test_varstd(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
-        self.failUnless(eq(mX.var(axis=None),mX.compressed().var()))
-        self.failUnless(eq(mX.std(axis=None),mX.compressed().std()))
-        self.failUnless(eq(mXX.var(axis=3).shape,XX.var(axis=3).shape))
-        self.failUnless(eq(mX.var().shape,X.var().shape))
+        self.assertTrue(eq(mX.var(axis=None),mX.compressed().var()))
+        self.assertTrue(eq(mX.std(axis=None),mX.compressed().std()))
+        self.assertTrue(eq(mXX.var(axis=3).shape,XX.var(axis=3).shape))
+        self.assertTrue(eq(mX.var().shape,X.var().shape))
         (mXvar0,mXvar1) = (mX.var(axis=0), mX.var(axis=1))
         for k in range(6):
-            self.failUnless(eq(mXvar1[k],mX[k].compressed().var()))
-            self.failUnless(eq(mXvar0[k],mX[:,k].compressed().var()))
-            self.failUnless(eq(numpy.sqrt(mXvar0[k]),
+            self.assertTrue(eq(mXvar1[k],mX[k].compressed().var()))
+            self.assertTrue(eq(mXvar0[k],mX[:,k].compressed().var()))
+            self.assertTrue(eq(numpy.sqrt(mXvar0[k]),
                                mX[:,k].compressed().std()))
 
 

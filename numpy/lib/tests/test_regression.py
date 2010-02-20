@@ -48,7 +48,7 @@ class TestRegression(TestCase):
     def test_poly1d_nan_roots(self, level=rlevel):
         """Ticket #396"""
         p = np.poly1d([np.nan,np.nan,1], r=0)
-        self.failUnlessRaises(np.linalg.LinAlgError,getattr,p,"r")
+        self.assertRaises(np.linalg.LinAlgError,getattr,p,"r")
 
     def test_mem_polymul(self, level=rlevel):
         """Ticket #448"""
@@ -146,8 +146,8 @@ class TestRegression(TestCase):
             a = np.ones((n,)*5)
             i = np.random.randint(0,n,size=thesize)
             g = a[np.ix_(i,i,i,i,i)]
-        self.failUnlessRaises(ValueError, dp)
-        self.failUnlessRaises(ValueError, dp2)
+        self.assertRaises(ValueError, dp)
+        self.assertRaises(ValueError, dp2)
 
     def test_void_coercion(self, level=rlevel):
         dt = np.dtype([('a','f4'),('b','i4')])

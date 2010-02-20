@@ -399,11 +399,11 @@ class TestStackArrays(TestCase):
         (_, x, _, _) = self.data
         test = stack_arrays((x,))
         assert_equal(test, x)
-        self.failUnless(test is x)
+        self.assertTrue(test is x)
         #
         test = stack_arrays(x)
         assert_equal(test, x)
-        self.failUnless(test is x)
+        self.assertTrue(test is x)
     #
     def test_unnamed_fields(self):
         "Tests combinations of arrays w/o named fields"

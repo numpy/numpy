@@ -1094,7 +1094,7 @@ M   33  21.99
         test = np.recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', np.int), ('B', np.int)])
-        self.failUnless(isinstance(test, np.recarray))
+        self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = StringIO('A,B\n0,1\n2,N/A')
@@ -1114,7 +1114,7 @@ M   33  21.99
         test = np.recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', np.int), ('B', np.int)])
-        self.failUnless(isinstance(test, np.recarray))
+        self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = StringIO('A,B\n0,1\n2,N/A')
@@ -1130,7 +1130,7 @@ M   33  21.99
         test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', np.int), ('b', np.int)])
-        self.failUnless(isinstance(test, np.recarray))
+        self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
 
 

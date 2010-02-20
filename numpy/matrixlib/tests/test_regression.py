@@ -23,7 +23,7 @@ class TestRegression(TestCase):
         def mul() :
             np.mat(np.eye(2))*np.ones(2)
 
-        self.failUnlessRaises(ValueError,mul)
+        self.assertRaises(ValueError,mul)
 
     def test_matrix_std_argmax(self,level=rlevel):
         """Ticket #83"""

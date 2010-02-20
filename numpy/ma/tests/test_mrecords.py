@@ -268,16 +268,16 @@ class TestMRecords(TestCase):
         base = self.base.copy()
         mbase = base.view(mrecarray)
         mbase.harden_mask()
-        self.failUnless(mbase._hardmask)
+        self.assertTrue(mbase._hardmask)
         mbase.mask = nomask
         assert_equal_records(mbase._mask, base._mask)
         mbase.soften_mask()
-        self.failUnless(not mbase._hardmask)
+        self.assertTrue(not mbase._hardmask)
         mbase.mask = nomask
         # So, the mask of a field is no longer set to nomask...
         assert_equal_records(mbase._mask,
                              ma.make_mask_none(base.shape,base.dtype))
-        self.failUnless(ma.make_mask(mbase['b']._mask) is nomask)
+        self.assertTrue(ma.make_mask(mbase['b']._mask) is nomask)
         assert_equal(mbase['a']._mask,mbase['b']._mask)
     #
     def test_pickling(self):
@@ -360,7 +360,7 @@ class TestView(TestCase):
     def test_view_by_itself(self):
         (mrec, a, b, arr) = self.data
         test = mrec.view()
-        self.failUnless(isinstance(test, MaskedRecords))
+        self.assertTrue(isinstance(test, MaskedRecords))
         assert_equal_records(test, mrec)
         assert_equal_records(test._mask, mrec._mask)
     #
@@ -368,19 +368,19 @@ class TestView(TestCase):
         (mrec, a, b, arr) = self.data
         ntype = (np.float, 2)
         test = mrec.view(ntype)
-        self.failUnless(isinstance(test, ma.MaskedArray))
+        self.assertTrue(isinstance(test, ma.MaskedArray))
         assert_equal(test, np.array(zip(a,b), dtype=np.float))
-        self.failUnless(test[3,1] is ma.masked)
+        self.assertTrue(test[3,1] is ma.masked)
     #
     def test_view_flexible_type(self):
         (mrec, a, b, arr) = self.data
         alttype = [('A',np.float), ('B',np.float)]
         test = mrec.view(alttype)
-        self.failUnless(isinstance(test, MaskedRecords))
+        self.assertTrue(isinstance(test, MaskedRecords))
         assert_equal_records(test, arr.view(alttype))
-        self.failUnless(test['B'][3] is masked)
+        self.assertTrue(test['B'][3] is masked)
         assert_equal(test.dtype, np.dtype(alttype))
-        self.failUnless(test._fill_value is None)
+        self.assertTrue(test._fill_value is None)
 
 
 ################################################################################
@@ -480,7 +480,7 @@ class TestMRecordsImport(TestCase):
         mrectxt = fromtextfile(tmp_fl, delimitor=',',varnames='ABCDEFG')
         os.remove(tmp_fl)
         #
-        self.failUnless(isinstance(mrectxt, MaskedRecords))
+        self.assertTrue(isinstance(mrectxt, MaskedRecords))
         assert_equal(mrectxt.F, [1,1,1,1])
         assert_equal(mrectxt.E._mask, [1,1,1,1])
         assert_equal(mrectxt.C, [1,2,3.e+5,-1e-10])

@@ -99,7 +99,7 @@ class TestAverage(TestCase):
         assert_equal(2.0, average(ott, weights=[1., 1., 2., 1.]))
         result, wts = average(ott, weights=[1., 1., 2., 1.], returned=1)
         assert_equal(2.0, result)
-        self.failUnless(wts == 4.0)
+        self.assertTrue(wts == 4.0)
         ott[:] = masked
         assert_equal(average(ott, axis=0).mask, [True])
         ott = array([0., 1., 2., 3.], mask=[True, False, False, False])
@@ -189,7 +189,7 @@ class TestConcatenator(TestCase):
         m = [1,0,0,0,0]
         d = masked_array(b,mask=m)
         c = mr_[d,0,0,d]
-        self.failUnless(isinstance(c,MaskedArray) or isinstance(c,core.MaskedArray))
+        self.assertTrue(isinstance(c,MaskedArray) or isinstance(c,core.MaskedArray))
         assert_array_equal(c,[1,1,1,1,1,0,0,1,1,1,1,1])
         assert_array_equal(c.mask, mr_[m,0,0,m])
 
@@ -202,12 +202,12 @@ class TestConcatenator(TestCase):
         b_1 = masked_array(a_1,mask=m_1)
         b_2 = masked_array(a_2,mask=m_2)
         d = mr_['1',b_1,b_2]  # append columns
-        self.failUnless(d.shape == (5,10))
+        self.assertTrue(d.shape == (5,10))
         assert_array_equal(d[:,:5],b_1)
         assert_array_equal(d[:,5:],b_2)
         assert_array_equal(d.mask, np.r_['1',m_1,m_2])
         d = mr_[b_1,b_2]
-        self.failUnless(d.shape == (10,5))
+        self.assertTrue(d.shape == (10,5))
         assert_array_equal(d[:5,:],b_1)
         assert_array_equal(d[5:,:],b_2)
         assert_array_equal(d.mask, np.r_[m_1,m_2])
@@ -266,14 +266,14 @@ class TestNotMasked(TestCase):
         assert_equal(tmp[-3], slice(0,3,None))
         #
         tmp = notmasked_contiguous(a, 0)
-        self.failUnless(len(tmp[-1]) == 1)
-        self.failUnless(tmp[-2] is None)
+        self.assertTrue(len(tmp[-1]) == 1)
+        self.assertTrue(tmp[-2] is None)
         assert_equal(tmp[-3],tmp[-1])
-        self.failUnless(len(tmp[0]) == 2)
+        self.assertTrue(len(tmp[0]) == 2)
         #
         tmp = notmasked_contiguous(a, 1)
         assert_equal(tmp[0][-1], slice(0,3,None))
-        self.failUnless(tmp[1] is None)
+        self.assertTrue(tmp[1] is None)
         assert_equal(tmp[2][-1], slice(7,7,None))
         assert_equal(tmp[2][-2], slice(0,5,None))
 
@@ -315,12 +315,12 @@ class Test2DFunctions(TestCase):
         assert_equal(mask_rowcols(x,0).mask, [[1,1,1],[1,1,1],[0,0,0]] )
         assert_equal(mask_rowcols(x,1,).mask, [[1,1,0],[1,1,0],[1,1,0]] )
         x = array(x._data, mask=[[1,0,0],[0,1,0],[0,0,1]])
-        self.failUnless(mask_rowcols(x).all() is masked)
-        self.failUnless(mask_rowcols(x,0).all() is masked)
-        self.failUnless(mask_rowcols(x,1).all() is masked)
-        self.failUnless(mask_rowcols(x).mask.all())
-        self.failUnless(mask_rowcols(x,0).mask.all())
-        self.failUnless(mask_rowcols(x,1).mask.all())
+        self.assertTrue(mask_rowcols(x).all() is masked)
+        self.assertTrue(mask_rowcols(x,0).all() is masked)
+        self.assertTrue(mask_rowcols(x,1).all() is masked)
+        self.assertTrue(mask_rowcols(x).mask.all())
+        self.assertTrue(mask_rowcols(x,0).mask.all())
+        self.assertTrue(mask_rowcols(x,1).mask.all())
     #
     def test_dot(self):
         "Tests dot product"
@@ -607,7 +607,7 @@ class TestArraySetOps(TestCase):
         "Test unique on list"
         data = [1, 1, 1, 2, 2, 3]
         test = unique(data, return_index=True, return_inverse=True)
-        self.failUnless(isinstance(test[0], MaskedArray))
+        self.assertTrue(isinstance(test[0], MaskedArray))
         assert_equal(test[0], masked_array([1, 2, 3], mask=[0, 0, 0]))
         assert_equal(test[1], [0, 3, 5])
         assert_equal(test[2], [0, 0, 0, 1, 1, 2])
@@ -703,13 +703,13 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x)
         control = array([1, 1, 1, 1], mask=[0, 0, 0, 0])
         assert_equal(test, control)
-        self.failUnless(isinstance(test, MaskedArray))
+        self.assertTrue(isinstance(test, MaskedArray))
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=masked, to_begin=masked)
         control = array([0, 1, 1, 1, 1, 0], mask=[1, 0, 0, 0, 0, 1])
-        self.failUnless(isinstance(test, MaskedArray))
+        self.assertTrue(isinstance(test, MaskedArray))
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
 

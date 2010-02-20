@@ -81,40 +81,40 @@ class TestSubclassing(TestCase):
         m = [0,0,1,0,0]
         xsub = SubArray(x)
         xmsub = masked_array(xsub, mask=m)
-        self.failUnless(isinstance(xmsub, MaskedArray))
+        self.assertTrue(isinstance(xmsub, MaskedArray))
         assert_equal(xmsub._data, xsub)
-        self.failUnless(isinstance(xmsub._data, SubArray))
+        self.assertTrue(isinstance(xmsub._data, SubArray))
 
     def test_maskedarray_subclassing(self):
         "Tests subclassing MaskedArray"
         (x, mx) = self.data
-        self.failUnless(isinstance(mx._data, np.matrix))
+        self.assertTrue(isinstance(mx._data, np.matrix))
 
     def test_masked_unary_operations(self):
         "Tests masked_unary_operation"
         (x, mx) = self.data
-        self.failUnless(isinstance(log(mx), mmatrix))
+        self.assertTrue(isinstance(log(mx), mmatrix))
         assert_equal(log(x), np.log(x))
 
     def test_masked_binary_operations(self):
         "Tests masked_binary_operation"
         (x, mx) = self.data
         # Result should be a mmatrix
-        self.failUnless(isinstance(add(mx,mx), mmatrix))
-        self.failUnless(isinstance(add(mx,x), mmatrix))
+        self.assertTrue(isinstance(add(mx,mx), mmatrix))
+        self.assertTrue(isinstance(add(mx,x), mmatrix))
         # Result should work
         assert_equal(add(mx,x), mx+x)
-        self.failUnless(isinstance(add(mx,mx)._data, np.matrix))
-        self.failUnless(isinstance(add.outer(mx,mx), mmatrix))
-        self.failUnless(isinstance(hypot(mx,mx), mmatrix))
-        self.failUnless(isinstance(hypot(mx,x), mmatrix))
+        self.assertTrue(isinstance(add(mx,mx)._data, np.matrix))
+        self.assertTrue(isinstance(add.outer(mx,mx), mmatrix))
+        self.assertTrue(isinstance(hypot(mx,mx), mmatrix))
+        self.assertTrue(isinstance(hypot(mx,x), mmatrix))
 
     def test_masked_binary_operations(self):
         "Tests domained_masked_binary_operation"
         (x, mx) = self.data
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
-        self.failUnless(isinstance(divide(mx,mx), mmatrix))
-        self.failUnless(isinstance(divide(mx,x), mmatrix))
+        self.assertTrue(isinstance(divide(mx,mx), mmatrix))
+        self.assertTrue(isinstance(divide(mx,x), mmatrix))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
     def test_attributepropagation(self):
@@ -123,16 +123,16 @@ class TestSubclassing(TestCase):
         ym = msubarray(x)
         #
         z = (my+1)
-        self.failUnless(isinstance(z,MaskedArray))
-        self.failUnless(not isinstance(z, MSubArray))
-        self.failUnless(isinstance(z._data, SubArray))
+        self.assertTrue(isinstance(z,MaskedArray))
+        self.assertTrue(not isinstance(z, MSubArray))
+        self.assertTrue(isinstance(z._data, SubArray))
         assert_equal(z._data.info, {})
         #
         z = (ym+1)
-        self.failUnless(isinstance(z, MaskedArray))
-        self.failUnless(isinstance(z, MSubArray))
-        self.failUnless(isinstance(z._data, SubArray))
-        self.failUnless(z._data.info['added'] > 0)
+        self.assertTrue(isinstance(z, MaskedArray))
+        self.assertTrue(isinstance(z, MSubArray))
+        self.assertTrue(isinstance(z._data, SubArray))
+        self.assertTrue(z._data.info['added'] > 0)
         #
         ym._set_mask([1,0,0,0,1])
         assert_equal(ym._mask, [1,0,0,0,1])
@@ -141,7 +141,7 @@ class TestSubclassing(TestCase):
         #
         xsub = subarray(x, info={'name':'x'})
         mxsub = masked_array(xsub)
-        self.failUnless(hasattr(mxsub, 'info'))
+        self.assertTrue(hasattr(mxsub, 'info'))
         assert_equal(mxsub.info, xsub.info)
 
     def test_subclasspreservation(self):
@@ -152,22 +152,22 @@ class TestSubclassing(TestCase):
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
         #
         mxsub = masked_array(xsub, subok=False)
-        self.failUnless(not isinstance(mxsub, MSubArray))
-        self.failUnless(isinstance(mxsub, MaskedArray))
+        self.assertTrue(not isinstance(mxsub, MSubArray))
+        self.assertTrue(isinstance(mxsub, MaskedArray))
         assert_equal(mxsub._mask, m)
         #
         mxsub = asarray(xsub)
-        self.failUnless(not isinstance(mxsub, MSubArray))
-        self.failUnless(isinstance(mxsub, MaskedArray))
+        self.assertTrue(not isinstance(mxsub, MSubArray))
+        self.assertTrue(isinstance(mxsub, MaskedArray))
         assert_equal(mxsub._mask, m)
         #
         mxsub = masked_array(xsub, subok=True)
-        self.failUnless(isinstance(mxsub, MSubArray))
+        self.assertTrue(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, xsub._mask)
         #
         mxsub = asanyarray(xsub)
-        self.failUnless(isinstance(mxsub, MSubArray))
+        self.assertTrue(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, m)
 
