@@ -1449,12 +1449,131 @@ class TestWarnings(object):
         assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
         warnings.simplefilter("default", np.ComplexWarning)
 
-if sys.version_info >= (2, 6):
+if sys.version_info >= (2, 7):
     class TestNewBufferProtocol(object):
-        @dec.knownfailureif(True, "No tests for the new buffer interface yet.")
-        def test_there_are_no_tests_yet_so_fail(self):
-            raise AssertionError("Need tests for the new buffer interface! "
-                                 "For arrays and scalars.")
+        def _check_roundtrip(self, obj):
+            obj = np.asarray(obj)
+            x = memoryview(obj)
+            y = np.asarray(x)
+            assert y.dtype == obj.dtype, (obj, y)
+            assert_array_equal(obj, y)
+
+        def test_roundtrip(self):
+            x = np.array([1,2,3,4,5], dtype='i4')
+            self._check_roundtrip(x)
+
+            x = np.array([[1,2],[3,4]], dtype=np.float64)
+            self._check_roundtrip(x)
+
+            x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
+            self._check_roundtrip(x)
+
+            dt = [('a', np.int8),
+                  ('b', np.int16),
+                  ('c', np.int32),
+                  ('d', np.int64),
+                  ('e', np.uint8),
+                  ('f', np.uint16),
+                  ('g', np.uint32),
+                  ('h', np.uint64),
+                  ('i', np.float),
+                  ('j', np.double),
+                  ('k', np.longdouble),
+                  ('l', 'S4'),
+                  ('m', 'U4')]
+            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                           asbytes('aaaa'), 'bbbb')],
+                         dtype=dt)
+            self._check_roundtrip(x)
+
+            x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
+            self._check_roundtrip(x)
+
+            x = np.array([1,2,3], dtype='>i4')
+            self._check_roundtrip(x)
+
+            x = np.array([1,2,3], dtype='<i4')
+            self._check_roundtrip(x)
+
+        def test_export_simple_1d(self):
+            x = np.array([1,2,3,4,5], dtype='i4')
+            y = memoryview(x)
+            assert y.format == '=l'
+            assert y.shape == (5,)
+            assert y.ndim == 1
+            assert y.strides == (4,)
+            assert y.suboffsets is None
+            assert y.itemsize == 4
+
+        def test_export_simple_nd(self):
+            x = np.array([[1,2],[3,4]], dtype=np.float64)
+            y = memoryview(x)
+            assert y.format == '=d'
+            assert y.shape == (2, 2)
+            assert y.ndim == 2
+            assert y.strides == (16, 8)
+            assert y.suboffsets is None
+            assert y.itemsize == 8
+
+        def test_export_discontiguous(self):
+            x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
+            y = memoryview(x)
+            assert y.format == '=f'
+            assert y.shape == (3, 3)
+            assert y.ndim == 2
+            assert y.strides == (36, 4)
+            assert y.suboffsets is None
+            assert y.itemsize == 4
+
+        def test_export_record(self):
+            dt = [('a', np.int8),
+                  ('b', np.int16),
+                  ('c', np.int32),
+                  ('d', np.int64),
+                  ('e', np.uint8),
+                  ('f', np.uint16),
+                  ('g', np.uint32),
+                  ('h', np.uint64),
+                  ('i', np.float),
+                  ('j', np.double),
+                  ('k', np.longdouble),
+                  ('l', 'S4'),
+                  ('m', 'U4')]
+            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                           asbytes('aaaa'), 'bbbb')],
+                         dtype=dt)
+            y = memoryview(x)
+            assert y.format == 'T{b:a:=h:b:=l:c:=q:d:B:e:=H:f:=L:g:=Q:h:=d:i:=d:j:=g:k:4s:l:=4w:m:}'
+            assert y.shape == (1,)
+            assert y.ndim == 1
+            assert y.strides == (78,)
+            assert y.suboffsets is None
+            assert y.itemsize == 78
+
+        def test_export_subarray(self):
+            x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
+            y = memoryview(x)
+            assert y.format == 'T{(2,2)=l:a:}'
+            assert y.shape == ()
+            assert y.ndim == 0
+            assert y.strides == ()
+            assert y.suboffsets is None
+            assert y.itemsize == 16
+
+        def test_export_endian(self):
+            x = np.array([1,2,3], dtype='>i4')
+            y = memoryview(x)
+            if sys.byteorder == 'little':
+                assert y.format in '>l'
+            else:
+                assert y.format == '=l'
+
+            x = np.array([1,2,3], dtype='<i4')
+            y = memoryview(x)
+            if sys.byteorder == 'little':
+                assert y.format in '=l'
+            else:
+                assert y.format == '<l'
 
 if __name__ == "__main__":
     run_module_suite()
