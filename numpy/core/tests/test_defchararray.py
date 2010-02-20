@@ -4,6 +4,9 @@ import numpy as np
 import sys
 from numpy.core.multiarray import _vec_string
 
+kw_unicode_true = {'unicode': True}
+kw_unicode_false = {'unicode': False}
+
 class TestBasic(TestCase):
     def test_from_object_array(self):
         A = np.array([['abc', 2],
@@ -16,7 +19,7 @@ class TestBasic(TestCase):
         A = np.array([['abc', u'Sigma \u03a3'],
                       ['long   ', '0123456789']], dtype='O')
         self.failUnlessRaises(ValueError, np.char.array, (A,))
-        B = np.char.array(A, unicode=True)
+        B = np.char.array(A, **kw_unicode_true)
         assert_equal(B.dtype.itemsize, 10 * np.array('a', 'U').dtype.itemsize)
         assert_array_equal(B, [['abc', u'Sigma \u03a3'], ['long', '0123456789']])
 
@@ -45,12 +48,12 @@ class TestBasic(TestCase):
         assert_array_equal(B, A)
         assert_equal(B.dtype, A.dtype)
         assert_equal(B.shape, A.shape)
-        B = np.char.array(A, unicode=True)
+        B = np.char.array(A, **kw_unicode_true)
         assert_array_equal(B, A)
         assert_equal(B.dtype, A.dtype)
         assert_equal(B.shape, A.shape)
         def fail():
-            B = np.char.array(A, unicode=False)
+            B = np.char.array(A, **kw_unicode_false)
         self.failUnlessRaises(UnicodeEncodeError, fail)
 
     def test_unicode_upconvert(self):

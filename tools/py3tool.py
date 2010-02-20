@@ -35,7 +35,6 @@ EXTRA_2TO3_FLAGS = {
     'numpy/core/code_generators/generate_numpy_api.py': '-x import',
     'numpy/core/code_generators/generate_ufunc_api.py': '-x import',
     'numpy/core/defchararray.py': '-x unicode',
-    'numpy/core/tests/test_defchararray.py': '-x unicode',
     'numpy/compat/py3k.py': '-x unicode',
 }
 
