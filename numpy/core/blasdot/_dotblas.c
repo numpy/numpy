@@ -401,7 +401,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     /* Choose which subtype to return */
-    if (Py_Type(ap1) != Py_Type(ap2)) {
+    if (Py_TYPE(ap1) != Py_TYPE(ap2)) {
         prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
         prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
         subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));

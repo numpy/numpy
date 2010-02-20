@@ -556,7 +556,7 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
         if (!PyArray_IsScalar(a, Number)) {
             return -1;
         }
-        descr1 = PyArray_DescrFromTypeObject((PyObject *)(a->ob_type));
+        descr1 = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
         if (PyArray_CanCastSafely(descr1->type_num, PyArray_@NAME@)) {
             PyArray_CastScalarDirect(a, descr1, arg1, PyArray_@NAME@);
             Py_DECREF(descr1);
