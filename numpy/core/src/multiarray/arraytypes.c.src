@@ -334,7 +334,7 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     char *buffer;
 #endif
 
-    if (!PyString_Check(op) && !PyUnicode_Check(op) &&
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
             PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
@@ -414,7 +414,7 @@ STRING_getitem(char *ip, PyArrayObject *ap)
     while (*ptr-- == '\0' && size > 0) {
         size--;
     }
-    return PyString_FromStringAndSize(ip,size);
+    return PyBytes_FromStringAndSize(ip,size);
 }
 
 static int
@@ -424,7 +424,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     Py_ssize_t len;
     PyObject *temp = NULL;
 
-    if (!PyString_Check(op) && !PyUnicode_Check(op)
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)
             && PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
