@@ -1691,7 +1691,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         strides[0] = view->itemsize;
     }
 
-    flags = (view->readonly ? 0 : NPY_WRITEABLE);
+    flags = BEHAVED & (view->readonly ? ~NPY_WRITEABLE : ~0);
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
@@ -1752,7 +1752,12 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     else if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
              _array_from_buffer_3118(op, &r) == 0) {
         /* PEP 3118 buffer -- but don't accept Bytes objects here */
-        r = r;
+        PyObject *new;
+        if (newtype != NULL || flags != 0) {
+            new = PyArray_FromArray((PyArrayObject *)r, newtype, flags);
+            Py_DECREF(r);
+            r = new;
+        }
     }
     else if (PyArray_HasArrayInterfaceType(op, newtype, context, r)) {
         PyObject *new;

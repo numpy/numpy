@@ -1461,8 +1461,13 @@ if sys.version_info >= (2, 6):
             obj = np.asarray(obj)
             x = memoryview(obj)
             y = np.asarray(x)
+            y2 = np.array(x)
+            assert not y.flags.owndata
+            assert y2.flags.owndata
             assert y.dtype == obj.dtype, (obj, y)
             assert_array_equal(obj, y)
+            assert y2.dtype == obj.dtype, (obj, y2)
+            assert_array_equal(obj, y2)
 
         def test_roundtrip(self):
             x = np.array([1,2,3,4,5], dtype='i4')
