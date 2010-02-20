@@ -60,7 +60,7 @@ def fftshift(x,axes=None):
     y = tmp
     for k in axes:
         n = tmp.shape[k]
-        p2 = (n+1)/2
+        p2 = (n+1)//2
         mylist = concatenate((arange(p2,n),arange(p2)))
         y = take(y,mylist,k)
     return y
@@ -106,7 +106,7 @@ def ifftshift(x,axes=None):
     y = tmp
     for k in axes:
         n = tmp.shape[k]
-        p2 = n-(n+1)/2
+        p2 = n-(n+1)//2
         mylist = concatenate((arange(p2,n),arange(p2)))
         y = take(y,mylist,k)
     return y
