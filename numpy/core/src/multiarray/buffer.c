@@ -606,7 +606,7 @@ _descriptor_from_pep3118_format(char *s)
 {
     char *buf, *p;
     int in_name = 0;
-    PyArray_Descr *descr;
+    PyObject *descr;
     PyObject *str;
     PyObject *_numpy_internal;
 
@@ -636,15 +636,22 @@ _descriptor_from_pep3118_format(char *s)
         return NULL;
     }
     str = PyUString_FromStringAndSize(buf, strlen(buf));
+    free(buf);
     descr = (PyArray_Descr*)PyObject_CallMethod(
         _numpy_internal, "_dtype_from_pep3118", "O", str);
     Py_DECREF(str);
     if (descr == NULL) {
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
+        return NULL;
     }
-    free(buf);
-    return descr;
+    if (!PyArray_DescrCheck(descr)) {
+        PyErr_Format(PyExc_RuntimeError,
+                     "internal error: numpy.core._internal._dtype_from_pep3118 "
+                     "did not return a valid dtype", buf);
+        return NULL;
+    }
+    return (PyArray_Descr*)descr;
 }
 
 #else
