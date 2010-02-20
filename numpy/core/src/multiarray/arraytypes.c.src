@@ -345,7 +345,14 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         PyErr_Clear();
     }
 #if defined(NPY_PY3K)
-    if ((temp=PyUnicode_FromObject(op)) == NULL) {
+    if (PyBytes_Check(op)) {
+        /* Try to decode from ASCII */
+        temp = PyUnicode_FromEncodedObject(op, "ASCII", "strict");
+        if (temp == NULL) {
+            return -1;
+        }
+    }
+    else if ((temp=PyObject_Str(op)) == NULL) {
 #else
     if ((temp=PyObject_Unicode(op)) == NULL) {
 #endif
@@ -428,13 +435,36 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         PyErr_Clear();
     }
 #if defined(NPY_PY3K)
-    if ((temp = PyObject_Bytes(op)) == NULL) {
+    if (PyUnicode_Check(op)) {
+        /* Assume ASCII codec -- function similarly as Python 2 */
+        temp = PyUnicode_AsASCIIString(op);
+        if (temp == NULL) return -1;
+    }
+    else if (PyBytes_Check(op)) {
+        temp = PyObject_Bytes(op);
+        if (temp == NULL) {
+            return -1;
+        }
+    }
+    else {
+        /* Emulate similar casting behavior as on Python 2 */
+        PyObject *str;
+        str = PyObject_Str(op);
+        if (str == NULL) {
+            return -1;
+        }
+        temp = PyUnicode_AsASCIIString(str);
+        Py_DECREF(str);
+        if (temp == NULL) {
+            return -1;
+        }
+    }
 #else
     if ((temp = PyObject_Str(op)) == NULL) {
-#endif
         return -1;
     }
-    if (PyString_AsStringAndSize(temp, &ptr, &len) == -1) {
+#endif
+    if (PyBytes_AsStringAndSize(temp, &ptr, &len) == -1) {
         Py_DECREF(temp);
         return -1;
     }
