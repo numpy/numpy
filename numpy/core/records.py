@@ -44,7 +44,7 @@ import types
 import os
 import sys
 
-from numpy.compat import isfileobj
+from numpy.compat import isfileobj, bytes
 
 ndarray = sb.ndarray
 
@@ -757,7 +757,8 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         if shape is None:
             raise ValueError("Must define a shape if obj is None")
         return recarray(shape, dtype, buf=obj, offset=offset, strides=strides)
-    elif isinstance(obj, str):
+
+    elif isinstance(obj, bytes):
         return fromstring(obj, dtype, shape=shape, offset=offset, **kwds)
 
     elif isinstance(obj, (list, tuple)):
