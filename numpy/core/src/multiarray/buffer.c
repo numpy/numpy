@@ -142,15 +142,36 @@ _append_str(_tmp_string_t *s, char *c)
 }
 
 static int
-_buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str, int *offset)
+_buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
+                      Py_ssize_t *offset)
 {
     int k;
 
     if (descr->subarray) {
-        PyErr_SetString(PyExc_ValueError,
-                        "data types with sub-arrays cannot be exported as "
-                        "buffers");
-        return -1;
+        PyObject *item, *repr;
+        Py_ssize_t total_count = 1;
+        Py_ssize_t dim_size;
+        char buf[128];
+        int old_offset;
+        int ret;
+
+        _append_char(str, '(');
+        for (k = 0; k < PyTuple_GET_SIZE(descr->subarray->shape); ++k) {
+            if (k > 0) {
+                _append_char(str, ',');
+            }
+            item = PyTuple_GET_ITEM(descr->subarray->shape, k);
+            dim_size = PyNumber_AsSsize_t(item, NULL);
+
+            PyOS_snprintf(buf, sizeof(buf), "%ld", (long)dim_size);
+            _append_str(str, buf);
+            total_count *= dim_size;
+        }
+        _append_char(str, ')');
+        old_offset = *offset;
+        ret = _buffer_format_string(descr->subarray->base, str, offset);
+        *offset = old_offset + (*offset - old_offset) * total_count;
+        return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
         _append_str(str, "T{");
@@ -290,7 +311,7 @@ static _buffer_info_t*
 _buffer_info_new(PyArrayObject *arr)
 {
     _buffer_info_t *info;
-    int offset = 0;
+    Py_ssize_t offset = 0;
     _tmp_string_t fmt = {0,0,0};
     int k;
 
