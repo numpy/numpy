@@ -1752,11 +1752,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         }
         r = Array_FromPyScalar(op, newtype);
     }
-#if PY_VERSION_HEX >= 0x02070000
-    else if (_array_from_buffer_3118(op, &r) == 0) {
+    else if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
+             _array_from_buffer_3118(op, &r) == 0) {
+        /* PEP 3118 buffer -- but don't accept Bytes objects here */
         r = r;
     }
-#endif
     else if (PyArray_HasArrayInterfaceType(op, newtype, context, r)) {
         PyObject *new;
         if (r == NULL) {
@@ -3230,8 +3230,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     else {
         Py_INCREF(buf);
     }
-
-#warning XXX: Should implement support for the new buffer interface here!
 
     if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
         write = 0;
