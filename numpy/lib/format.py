@@ -393,9 +393,10 @@ def write_array(fp, array, version=(1,0)):
         # Instead, we will pickle it out with version 2 of the pickle protocol.
         cPickle.dump(array, fp, protocol=2)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
-        # Use a suboptimal, possibly memory-intensive, but correct way to
-        # handle Fortran-contiguous arrays.
-        fp.write(array.data)
+        if isfileobj(fp):
+            array.T.tofile(fp)
+        else:
+            fp.write(array.T.tostring('C'))
     else:
         if isfileobj(fp):
             array.tofile(fp)
@@ -447,7 +448,7 @@ def read_array(fp):
             # This is not a real file. We have to read it the memory-intensive
             # way.
             # XXX: we can probably chunk this to avoid the memory hit.
-            data = fp.read(count * dtype.itemsize)
+            data = fp.read(int(count * dtype.itemsize))
             array = numpy.fromstring(data, dtype=dtype, count=count)
 
         if fortran_order:
