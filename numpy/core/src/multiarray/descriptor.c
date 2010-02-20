@@ -1217,15 +1217,9 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         else if (obj == (PyObject *)(&PyBool_Type)) {
             check_num = PyArray_BOOL;
         }
-#if defined(NPY_PY3K)
-        else if (obj == (PyObject *)(&PyBytes_Type)) {
-            check_num = PyArray_LONG;
-        }
-#else
         else if (obj == (PyObject *)(&PyBytes_Type)) {
             check_num = PyArray_STRING;
         }
-#endif
         else if (obj == (PyObject *)(&PyUnicode_Type)) {
             check_num = PyArray_UNICODE;
         }
