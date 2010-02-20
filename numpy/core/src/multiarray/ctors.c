@@ -2260,11 +2260,22 @@ PyArray_FromInterface(PyObject *input)
         }
     }
     attr = tstr;
-    if (!PyString_Check(attr)) {
+#if defined(NPY_PY3K)
+    if (PyUnicode_Check(tstr)) {
+        /* Allow unicode type strings */
+        attr = PyUnicode_AsASCIIString(tstr);
+    }
+#endif
+    if (!PyBytes_Check(attr)) {
         PyErr_SetString(PyExc_TypeError, "typestr must be a string");
         goto fail;
     }
     type = _array_typedescr_fromstr(PyString_AS_STRING(attr));
+#if defined(NPY_PY3K)
+    if (attr != tstr) {
+        Py_DECREF(attr);
+    }
+#endif
     if (type == NULL) {
         goto fail;
     }
