@@ -17,6 +17,8 @@
 
 #include "ctors.h"
 
+#include "buffer.h"
+
 #include "numpymemoryview.h"
 
 /*

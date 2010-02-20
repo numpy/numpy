@@ -17,6 +17,8 @@
 #include "descriptor.h"
 #include "scalartypes.h"
 
+#include "common.h"
+
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)
 {
