@@ -138,6 +138,7 @@ alternatives, is described fully in the "npy-format" NEP.
 import cPickle
 
 import numpy
+import sys
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, isfileobj
 
@@ -164,7 +165,10 @@ def magic(major, minor):
         raise ValueError("major version must be 0 <= major < 256")
     if minor < 0 or minor > 255:
         raise ValueError("minor version must be 0 <= minor < 256")
-    return asbytes('%s%s%s' % (MAGIC_PREFIX, chr(major), chr(minor)))
+    if sys.version_info[0] < 3:
+        return MAGIC_PREFIX + chr(major) + chr(minor)
+    else:
+        return MAGIC_PREFIX + bytes([major, minor])
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -185,7 +189,10 @@ def read_magic(fp):
     if magic_str[:-2] != MAGIC_PREFIX:
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
-    major, minor = map(ord, magic_str[-2:])
+    if sys.version_info[0] < 3:
+        major, minor = map(ord, magic_str[-2:])
+    else:
+        major, minor = magic_str[-2:]
     return major, minor
 
 def dtype_to_descr(dtype):
@@ -271,7 +278,7 @@ def write_array_header_1_0(fp, d):
     # advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
-    header = asbytes('%s%s\n' % (header, ' '*topad))
+    header = asbytes(header + ' '*topad + '\n')
     if len(header) >= (256*256):
         raise ValueError("header does not fit inside %s bytes" % (256*256))
     header_len_str = struct.pack('<H', len(header))
@@ -386,7 +393,7 @@ def write_array(fp, array, version=(1,0)):
     if version != (1, 0):
         msg = "we only support format version (1,0), not %s"
         raise ValueError(msg % (version,))
-    fp.write(asbytes(magic(*version)))
+    fp.write(magic(*version))
     write_array_header_1_0(fp, header_data_from_array_1_0(array))
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data directly.
@@ -529,7 +536,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(filename, mode+'b')
         try:
-            fp.write(asbytes(magic(*version)))
+            fp.write(magic(*version))
             write_array_header_1_0(fp, d)
             offset = fp.tell()
         finally:

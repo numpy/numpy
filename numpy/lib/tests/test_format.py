@@ -2,7 +2,11 @@ r''' Test the .npy file format.
 
 Set up:
 
-    >>> from cStringIO import StringIO
+    >>> import sys
+    >>> if sys.version_info[0] >= 3:
+    ...     from io import BytesIO as StringIO
+    ... else:
+    ...     from cStringIO import StringIO
     >>> from numpy.lib import format
     >>>
     >>> scalars = [
@@ -275,10 +279,14 @@ Test the header writing.
 
 
 import sys
-from cStringIO import StringIO
 import os
 import shutil
 import tempfile
+
+if sys.version_info[0] >= 3:
+    from io import BytesIO as StringIO
+else:
+    from cStringIO import StringIO
 
 import numpy as np
 from numpy.testing import *
