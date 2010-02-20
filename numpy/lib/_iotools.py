@@ -190,7 +190,7 @@ class LineSplitter:
         if not line:
             return []
         fixed = self.delimiter
-        slices = [slice(i, i + fixed) for i in range(len(line))[::fixed]]
+        slices = [slice(i, i + fixed) for i in range(0, len(line), fixed)]
         return [line[s] for s in slices]
     #
     def _variablewidth_splitter(self, line):
