@@ -7,7 +7,7 @@ no overhead.
 
 import types
 
-__all__ = ['getarspec', 'formatargspec']
+__all__ = ['getargspec', 'formatargspec']
 
 # ----------------------------------------------------------- type-checking
 def ismethod(object):
