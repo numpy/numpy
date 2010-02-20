@@ -293,6 +293,8 @@ from numpy.testing import *
 
 from numpy.lib import format
 
+from numpy.compat import asbytes, asbytes_nested
+
 
 tempdir = None
 
@@ -489,15 +491,15 @@ def test_write_version_1_0():
             raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
-bad_version_magic = [
+bad_version_magic = asbytes_nested([
     '\x93NUMPY\x01\x01',
     '\x93NUMPY\x00\x00',
     '\x93NUMPY\x00\x01',
     '\x93NUMPY\x02\x00',
     '\x93NUMPY\x02\x02',
     '\x93NUMPY\xff\xff',
-]
-malformed_magic = [
+])
+malformed_magic = asbytes_nested([
     '\x92NUMPY\x01\x00',
     '\x00NUMPY\x01\x00',
     '\x93numpy\x01\x00',
@@ -505,7 +507,7 @@ malformed_magic = [
     '\x93NUMPY\x01',
     '\x93NUMPY',
     '',
-]
+])
 
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
@@ -536,11 +538,11 @@ def test_bad_header():
     # header of length less than 2 should fail
     s = StringIO()
     assert_raises(ValueError, format.read_array_header_1_0, s)
-    s = StringIO('1')
+    s = StringIO(asbytes('1'))
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # header shorter than indicated size should fail
-    s = StringIO('\x01\x00')
+    s = StringIO(asbytes('\x01\x00'))
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
