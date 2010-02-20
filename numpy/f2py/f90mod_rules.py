@@ -26,7 +26,6 @@ show=pprint.pprint
 from auxfuncs import *
 import numpy as np
 import capi_maps
-import rules
 import func2subr
 from crackfortran import undo_rmbadname, undo_rmbadname1
 
@@ -83,6 +82,7 @@ fgetdims2_sa="""\
 
 def buildhooks(pymod):
     global fgetdims1,fgetdims2
+    import rules
     ret = {'f90modhooks':[],'initf90modhooks':[],'body':[],
            'need':['F_FUNC','arrayobject.h'],
            'separatorsfor':{'includes0':'\n','includes':'\n'},

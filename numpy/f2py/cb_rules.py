@@ -27,7 +27,6 @@ outmess=sys.stdout.write
 show=pprint.pprint
 
 from auxfuncs import *
-import capi_maps
 import cfuncs
 
 ################## Rules for callback function ##############
@@ -415,6 +414,8 @@ def buildcallbacks(m):
 
 def buildcallback(rout,um):
     global cb_map
+    import capi_maps
+
     outmess('\tConstructing call-back function "cb_%s_in_%s"\n'%(rout['name'],um))
     args,depargs=getargs(rout)
     capi_maps.depargs=depargs
