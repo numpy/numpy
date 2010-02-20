@@ -682,6 +682,12 @@ Py3 int translate to NPY_LONG as far as dtypes are concerned.
 
    Audit the automatic dtype decision -- did I plug all the cases?
 
+.. todo::
+
+   Not inheriting from `int` on Python 3 makes the following not work:
+   ``np.intp("0xff", 16)`` -- because the Numpy type does not take
+   the second argument. This could perhaps be fixed...
+
 
 Divide
 ------
