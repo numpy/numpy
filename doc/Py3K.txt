@@ -59,6 +59,15 @@ The following semantic changes have been made on Py3:
 
 * Only unicode dtype field titles are included in fields dict.
 
+* :pep:`3118` buffer objects will behave differently from Py2 buffer objects
+  when used as an argument to `array(...)`, `asarray(...)`.
+
+  In Py2, they would cast to an object array.
+
+  In Py3, they cast similarly as objects having an
+  ``__array_interface__`` attribute, ie., they behave as if they were
+  an ndarray view on the data.
+
 .. todo::
 
    Check for any other changes ... This we want in the end to include
@@ -317,8 +326,8 @@ The Py2/Py3 compatible structure definition looks like::
    Py_TPFLAGS_HAVE_CLASS in the type flag.
 
 
-PyBuffer
---------
+PyBuffer (provider)
+-------------------
 
 PyBuffer usage is widely spread in multiarray:
 
@@ -335,32 +344,12 @@ implemented in ``buffer.c`` for arrays, and in ``scalartypes.c.src``
 for generic array scalars. The generic array scalar exporter, however,
 doesn't currently produce format strings, which needs to be fixed.
 
-Currently, the format string and some of the memory is cached in the
-PyArrayObject structure. This is partly needed because of Python bug #7433.
-
 Also some code also stops working when ``bf_releasebuffer`` is
 defined.  Most importantly, ``PyArg_ParseTuple("s#", ...)`` refuses to
 return a buffer if ``bf_releasebuffer`` is present.  For this reason,
 the buffer interface for arrays is implemented currently *without*
 defining ``bf_releasebuffer`` at all. This forces us to go through
-some additional contortions. But basically, since the strides and shape
-of an array are locked when references to it are held, we can do with
-a single allocated ``Py_ssize_t`` shape+strides buffer.
-
-The buffer format string is currently cached in the ``dtype`` object.
-Currently, there's a slight problem as dtypes are not immutable --
-the names of the fields can be changed. Right now, this issue is
-just ignored, and the field names in the buffer format string are
-not updated.
-
-From the consumer side, the new buffer protocol is mostly backward
-compatible with the old one, so little needs to be done here to retain
-basic functionality. However, we *do* want to make use of the new
-features, at least in `multiarray.frombuffer` and maybe in `multiarray.array`.
-
-Since there is a native buffer object in Py3, the `memoryview`, the
-`newbuffer` and `getbuffer` functions are removed from `multiarray` in
-Py3: their functionality is taken over by the new `memoryview` object.
+some additional work.
 
 There are a couple of places that need further attention:
 
@@ -401,6 +390,9 @@ The Py2/Py3 compatible PyBufferMethods definition looks like::
     #endif
     };
 
+.. todo::
+
+   Produce PEP 3118 format strings for array scalar objects.
 
 .. todo::
 
@@ -411,21 +403,71 @@ The Py2/Py3 compatible PyBufferMethods definition looks like::
 
    It seems we should submit patches to Python on this. At least "s#"
    implementation on Py3 won't work at all, since the old buffer
-   interface is no more present.
+   interface is no more present. But perhaps Py3 users should just give
+   up using "s#" in ParseTuple, and use the 3118 interface instead.
 
 .. todo::
 
-   Find a way around the dtype mutability issue.
+   Make ndarray shape and strides natively Py_ssize_t?
 
-   Note that we cannot just realloc the format string when the names
-   are changed: this would invalidate any existing buffer
-   interfaces. And since we can't define ``bf_releasebuffer``, we
-   don't know if there are any buffer interfaces present.
 
-   One solution would be to alloc a "big enough" buffer at the
-   beginning, and not change it after that. We could also make the
-   strides etc.  in the ``buffer_info`` structure static size. There's
-   MAXDIMS present after all.
+PyBuffer (consumer)
+-------------------
+
+There are two places in which we may want to be able to consume buffer
+objects and cast them to ndarrays:
+
+1) `multiarray.frombuffer`, ie., ``PyArray_FromAny``
+
+   The frombuffer returns only arrays of a fixed dtype.  It does not
+   make sense to support PEP 3118 at this location, since not much
+   would be gained from that -- the backward compatibility functions
+   using the old array interface still work.
+
+   So no changes needed here.
+
+2) `multiarray.array`, ie., ``PyArray_FromAny``
+
+   In general, we would like to handle :pep:`3118` buffers in the same way
+   as ``__array_interface__`` objects. Hence, we want to be able to cast
+   them to arrays already in ``PyArray_FromAny``.
+
+   Hence, ``PyArray_FromAny`` needs additions.
+
+There are a few caveats in allowing :pep:`3118` buffers in
+``PyArray_FromAny``:
+
+a) `bytes` (and `str` on Py2) objects offer a buffer interface that
+   specifies them as 1-D array of bytes.
+
+   Previously ``PyArray_FromAny`` has cast these to 'S#' dtypes. We
+   don't want to change this, since will cause problems in many places.
+
+   We do, however, want to allow other objects that provide 1-D byte arrays
+   to be cast to 1-D ndarrays and not 'S#' arrays -- for instance, 'S#'
+   arrays tend to strip trailing NUL characters.
+
+So what is done in ``PyArray_FromAny`` currently is that:
+
+- Presence of :pep:`3118` buffer interface is checked before checking
+  for array interface. If it is present *and* the object is not
+  `bytes` object, then it is used for creating a view on the buffer.
+
+- We also check in ``discover_depth`` and ``_array_find_type`` for the
+  3118 buffers, so that::
+
+      array([some_3118_object])
+  
+  will treat the object similarly as it would handle an `ndarray`.
+
+  However, again, bytes (and unicode) have priority and will not be
+  handled as buffer objects.
+
+This amounts to possible semantic changes:
+
+- ``array(buffer)`` will no longer create an object array 
+  ``array([buffer], dtype='O')``, but will instead expand to a view
+  on the buffer.
 
 .. todo::
 
@@ -434,25 +476,15 @@ The Py2/Py3 compatible PyBufferMethods definition looks like::
 
 .. todo::
 
-   Implement support for consuming new buffer objects.
-   Probably in multiarray.frombuffer? Perhaps also in multiarray.array?
-
-.. todo::
-
-   make ndarray shape and strides natively Py_ssize_t
-
-.. todo::
-
-   Revise the decision on where to cache the format string -- dtype
-   would be a better place for this.
-
-.. todo::
-
    There's some buffer code in numarray/_capi.c that needs to be addressed.
 
-.. todo::
 
-   Does altering the PyArrayObject structure require bumping the ABI?
+PyBuffer (object)
+-----------------
+
+Since there is a native buffer object in Py3, the `memoryview`, the
+`newbuffer` and `getbuffer` functions are removed from `multiarray` in
+Py3: their functionality is taken over by the new `memoryview` object.
 
 
 PyString
