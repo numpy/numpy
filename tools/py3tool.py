@@ -29,6 +29,8 @@ import fnmatch
 BASE = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 TEMP = os.path.normpath(os.path.join(BASE, '_py3k'))
 
+SCRIPT_2TO3 = os.path.join(BASE, 'tools', '2to3.py')
+
 EXTRA_2TO3_FLAGS = {
     '*/setup.py': '-x import',
     'numpy/core/code_generators/generate_umath.py': '-x import',
@@ -36,6 +38,7 @@ EXTRA_2TO3_FLAGS = {
     'numpy/core/code_generators/generate_ufunc_api.py': '-x import',
     'numpy/core/defchararray.py': '-x unicode',
     'numpy/compat/py3k.py': '-x unicode',
+    'numpy/ma/timer_comparison.py': 'skip',
 }
 
 def main():
@@ -192,6 +195,9 @@ def walk_sync(dir1, dir2, _seen=None):
             yield root1, root2, dirs, files
 
 def sync_2to3(src, dst, patchfile=None, clean=False):
+    import lib2to3.main
+    from io import StringIO
+
     to_convert = []
 
     for src_dir, dst_dir, dirs, files in walk_sync(src, dst):
@@ -253,8 +259,15 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
         p = open(os.devnull, 'wb')
 
     for flags, filenames in flag_sets.items():
-        subprocess.call(['2to3', '-w'] + flags.split() + filenames,
-                        stdout=p)
+        if flags == 'skip':
+            continue
+
+        _old_stdout = sys.stdout
+        try:
+            sys.stdout = StringIO()
+            lib2to3.main.main("lib2to3.fixes", ['-w'] + flags.split()+filenames)
+        finally:
+            sys.stdout = _old_stdout
 
     for fn, dst_fn in to_convert:
         # perform custom mangling
