@@ -11,6 +11,7 @@
 #include "usertypes.h"
 
 #include "common.h"
+#include "buffer.h"
 
 /*
  * new reference
