@@ -543,6 +543,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     PyObject *obj;
 
     if (PyString_Check(op) || PyUnicode_Check(op)) {
+        PyObject *temp;
+
         if (self->descr->names) {
             obj = PyDict_GetItem(self->descr->fields, op);
             if (obj != NULL) {
@@ -557,9 +559,16 @@ array_subscript(PyArrayObject *self, PyObject *op)
             }
         }
 
+        temp = op;
+        if (PyUnicode_Check(op)) {
+            temp = PyUnicode_AsUnicodeEscapeString(op);
+        }
         PyErr_Format(PyExc_ValueError,
                      "field named %s not found.",
-                     PyString_AsString(op));
+                     PyBytes_AsString(temp));
+        if (temp != op) {
+            Py_DECREF(temp);
+        }
         return NULL;
     }
 
