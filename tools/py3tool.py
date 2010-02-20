@@ -39,6 +39,15 @@ EXTRA_2TO3_FLAGS = {
     'numpy/core/defchararray.py': '-x unicode',
     'numpy/compat/py3k.py': '-x unicode',
     'numpy/ma/timer_comparison.py': 'skip',
+    'numpy/distutils/system_info.py': '-x reduce',
+    'numpy/f2py/auxfuncs.py': '-x reduce',
+    'numpy/lib/arrayterator.py': '-x reduce',
+    'numpy/lib/tests/test_arrayterator.py': '-x reduce',
+    'numpy/ma/core.py': '-x reduce',
+    'numpy/ma/tests/test_core.py': '-x reduce',
+    'numpy/ma/tests/test_old_ma.py': '-x reduce',
+    'numpy/ma/timer_comparison.py': '-x reduce',
+    'numpy/oldnumeric/ma.py': '-x reduce',
 }
 
 def main():

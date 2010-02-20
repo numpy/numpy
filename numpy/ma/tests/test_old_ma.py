@@ -5,6 +5,10 @@ from numpy.core.numerictypes import float32
 from numpy.ma.core import umath
 from numpy.testing import *
 
+import sys
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 pi = numpy.pi
 def eq(v,w, msg=''):
     result = allclose(v,w)

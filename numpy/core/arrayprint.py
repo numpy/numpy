@@ -29,6 +29,8 @@ _line_width = 75
 _nan_str = 'NaN'
 _inf_str = 'Inf'
 
+if sys.version_info[0] >= 3:
+    from functools import reduce
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None,

@@ -18,6 +18,9 @@ from numpy.core.numerictypes import bool_, typecodes
 import numpy.core.numeric as numeric
 import warnings
 
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 # Ufunc domain lookup for __array_wrap__
 ufunc_domain = {}
 # Ufunc fills lookup for __array__

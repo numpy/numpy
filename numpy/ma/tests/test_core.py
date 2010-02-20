@@ -19,6 +19,10 @@ from numpy.ma.core import *
 
 pi = np.pi
 
+import sys
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 #..............................................................................
 class TestMaskedArray(TestCase):
     "Base test class for MaskedArrays."

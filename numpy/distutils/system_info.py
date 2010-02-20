@@ -132,6 +132,9 @@ from numpy.distutils.misc_util import is_sequence, is_string
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 # Determine number of bits
 import platform
 _bits = {'32bit':32,'64bit':64}

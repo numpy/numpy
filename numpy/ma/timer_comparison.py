@@ -1,5 +1,6 @@
 import timeit
 
+import sys
 import numpy as np
 from numpy import float_
 import np.core.fromnumeric as fromnumeric
@@ -10,8 +11,10 @@ np.seterr(all='ignore')
 
 pi = np.pi
 
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 class moduletester:
-    #-----------------------------------
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal
@@ -46,7 +49,7 @@ class moduletester:
         except AttributeError:
             self.umath = module.core.umath
         self.testnames = []
-    #........................
+
     def assert_array_compare(self, comparison, x, y, err_msg='', header='',
                          fill_value=True):
         """Asserts that a comparison relation between two masked arrays is satisfied
@@ -100,19 +103,19 @@ class moduletester:
         except ValueError:
             msg = build_err_msg([x, y], err_msg, header=header, names=('x', 'y'))
             raise ValueError(msg)
-    #............................
+
     def assert_array_equal(self, x, y, err_msg=''):
         """Checks the elementwise equality of two masked arrays."""
         self.assert_array_compare(self.equal, x, y, err_msg=err_msg,
                                   header='Arrays are not equal')
-    #----------------------------------
+
     def test_0(self):
         "Tests creation"
         x = np.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         xm = self.masked_array(x, mask=m)
         xm[0]
-    #----------------------------------
+
     def test_1(self):
         "Tests creation"
         x = np.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
@@ -126,13 +129,13 @@ class moduletester:
         zm = self.masked_array(z, mask=[0,1,0,0])
         xf = np.where(m1, 1.e+20, x)
         xm.set_fill_value(1.e+20)
-        #.....
+
         assert((xm-ym).filled(0).any())
         #fail_if_equal(xm.mask.astype(int_), ym.mask.astype(int_))
         s = x.shape
         assert(xm.size == reduce(lambda x,y:x*y, s))
         assert(self.count(xm) == len(m1) - reduce(lambda x,y:x+y, m1))
-        #.....
+
         for s in [(4,3), (6,2)]:
             x.shape = s
             y.shape = s
@@ -141,7 +144,7 @@ class moduletester:
             xf.shape = s
 
             assert(self.count(xm) == len(m1) - reduce(lambda x,y:x+y, m1))
-    #----------------------------------
+
     def test_2(self):
         "Tests conversions and indexing"
         x1 = np.array([1,2,4,3])
@@ -193,7 +196,7 @@ class moduletester:
         m3 = self.make_mask(m, copy=1)
         assert(m is not m3)
 
-    #----------------------------------
+
     def test_3(self):
         "Tests resize/repeat"
         x4 = self.arange(4)

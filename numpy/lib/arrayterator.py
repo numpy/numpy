@@ -14,6 +14,10 @@ from operator import mul
 
 __all__ = ['Arrayterator']
 
+import sys
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 class Arrayterator(object):
     """
     Buffered iterator for big arrays.

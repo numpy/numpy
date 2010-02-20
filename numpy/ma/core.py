@@ -79,6 +79,9 @@ from numpy.compat import getargspec, formatargspec
 from numpy import expand_dims as n_expand_dims
 import warnings
 
+import sys
+if sys.version_info[0] >= 3:
+    from functools import reduce
 
 MaskType = np.bool_
 nomask = MaskType(0)

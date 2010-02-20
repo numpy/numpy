@@ -4,6 +4,10 @@ import numpy as np
 from numpy.random import randint
 from numpy.lib import Arrayterator
 
+import sys
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 def test():
     np.random.seed(np.arange(10))
 

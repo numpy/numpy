@@ -32,6 +32,9 @@ options={}
 debugoptions=[]
 wrapfuncs = 1
 
+if sys.version_info[0] >= 3:
+    from functools import reduce
+
 def outmess(t):
     if options.get('verbose',1):
         sys.stdout.write(t)
