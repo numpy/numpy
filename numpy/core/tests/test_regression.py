@@ -9,6 +9,10 @@ from numpy.testing.utils import _assert_valid_refcount
 from numpy.compat import asbytes, asunicode
 import numpy as np
 
+if sys.version_info[0] >= 3:
+    import io
+    StringIO = io.BytesIO
+
 rlevel = 1
 
 class TestRegression(TestCase):
