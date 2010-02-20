@@ -4,7 +4,8 @@ Python 3 compatibility tools.
 """
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
-           'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested']
+           'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
+           'asstr']
 
 import sys
 
@@ -16,7 +17,11 @@ if sys.version_info[0] >= 3:
     def asbytes(s):
         if isinstance(s, bytes):
             return s
-        return s.encode('iso-8859-1')
+        return s.encode('latin1')
+    def asstr(s):
+        if isinstance(s, str):
+            return s
+        return bytes.decode('latin1')
     def isfileobj(f):
         return isinstance(f, io.FileIO)
     strchar = 'U'
@@ -24,13 +29,14 @@ else:
     bytes = str
     unicode = unicode
     asbytes = str
+    asstr = str
     strchar = 'S'
     def isfileobj(f):
         return isinstance(f, file)
     def asunicode(s):
         if isinstance(s, unicode):
             return s
-        return s.decode('iso-8859-1')
+        return s.decode('ascii')
 
 def getexception():
     return sys.exc_info()[1]
