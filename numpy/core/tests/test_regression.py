@@ -139,11 +139,11 @@ class TestRegression(TestCase):
     def test_intp(self,level=rlevel):
         """Ticket #99"""
         i_width = np.int_(0).nbytes*2 - 1
-        long('0x' + 'f'*i_width,16)
-        #self.failUnlessRaises(OverflowError,np.intp,'0x' + 'f'*(i_width+1),16)
-        #self.failUnlessRaises(ValueError,np.intp,'0x1',32)
-        assert_equal(255,np.long('0xFF',16))
-        assert_equal(1024,np.long(1024))
+        np.intp('0x' + 'f'*i_width,16)
+        self.failUnlessRaises(OverflowError,np.intp,'0x' + 'f'*(i_width+1),16)
+        self.failUnlessRaises(ValueError,np.intp,'0x1',32)
+        assert_equal(255,np.intp('0xFF',16))
+        assert_equal(1024,np.intp(1024))
 
     def test_endian_bool_indexing(self,level=rlevel):
         """Ticket #105"""
