@@ -23,6 +23,8 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype
 
+from numpy.compat import asbytes
+
 _file = open
 _string_like = _is_string_like
 
@@ -282,7 +284,7 @@ def load(file, mmap_mode=None):
         fid = file
 
     # Code to distinguish from NumPy binary files and pickles.
-    _ZIP_PREFIX = 'PK\x03\x04'
+    _ZIP_PREFIX = asbytes('PK\x03\x04')
     N = len(format.MAGIC_PREFIX)
     magic = fid.read(N)
     fid.seek(-N, 1) # back-up

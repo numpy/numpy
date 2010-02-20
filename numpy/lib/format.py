@@ -141,7 +141,7 @@ import numpy
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, isfileobj
 
-MAGIC_PREFIX = '\x93NUMPY'
+MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 
 def magic(major, minor):
@@ -164,7 +164,7 @@ def magic(major, minor):
         raise ValueError("major version must be 0 <= major < 256")
     if minor < 0 or minor > 255:
         raise ValueError("minor version must be 0 <= minor < 256")
-    return '%s%s%s' % (MAGIC_PREFIX, chr(major), chr(minor))
+    return asbytes('%s%s%s' % (MAGIC_PREFIX, chr(major), chr(minor)))
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -271,12 +271,12 @@ def write_array_header_1_0(fp, d):
     # advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
-    header = '%s%s\n' % (header, ' '*topad)
+    header = asbytes('%s%s\n' % (header, ' '*topad))
     if len(header) >= (256*256):
         raise ValueError("header does not fit inside %s bytes" % (256*256))
     header_len_str = struct.pack('<H', len(header))
     fp.write(header_len_str)
-    fp.write(asbytes(header))
+    fp.write(header)
 
 def read_array_header_1_0(fp):
     """
