@@ -42,4 +42,6 @@
 
 #include "arrayobject.c"
 
+#include "numpymemoryview.c"
+
 #include "multiarraymodule.c"
