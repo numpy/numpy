@@ -6,7 +6,7 @@ import numpy as np
 import numpy.core.numeric as nx
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
-from numpy.compat import asbytes, bytes
+from numpy.compat import asbytes, bytes, asbytes_nested
 
 if sys.version_info[0] >= 3:
     def _bytes_to_complex(s):
@@ -542,6 +542,11 @@ class StringConverter:
     #
     def __init__(self, dtype_or_func=None, default=None, missing_values=None,
                  locked=False):
+        # Convert unicode (for Py3)
+        if isinstance(missing_values, unicode):
+            missing_values = asbytes(missing_values)
+        elif isinstance(missing_values, (list, tuple)):
+            missing_values = asbytes_nested(missing_values)
         # Defines a lock for upgrade
         self._locked = bool(locked)
         # No input dtype: minimal initialization
@@ -566,7 +571,7 @@ class StringConverter:
                 # If we don't have a default, try to guess it or set it to None
                 if default is None:
                     try:
-                        default = self.func('0')
+                        default = self.func(asbytes('0'))
                     except ValueError:
                         default = None
                 ttype = self._getsubdtype(default)
@@ -729,7 +734,7 @@ class StringConverter:
             self.type = self._getsubdtype(default)
         else:
             try:
-                tester = func('1')
+                tester = func(asbytes('1'))
             except (TypeError, ValueError):
                 tester = None
             self.type = self._getsubdtype(tester)

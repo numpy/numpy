@@ -8,7 +8,7 @@ __all__ = ['savetxt', 'loadtxt',
 
 import numpy as np
 import format
-import cStringIO
+import sys
 import os
 import sys
 import itertools
@@ -24,7 +24,13 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype, _bytes_to_name
 
-from numpy.compat import asbytes, asstr
+from numpy.compat import asbytes, asstr, asbytes_nested
+
+if sys.version_info[0] >= 3:
+    import io
+    BytesIO = io.BytesIO
+else:
+    from cStringIO import StringIO as BytesIO
 
 _file = open
 _string_like = _is_string_like
@@ -34,7 +40,7 @@ def seek_gzip_factory(f):
     import on gzip.
 
     """
-    import gzip, new
+    import gzip
 
     def seek(self, offset, whence=0):
         # figure out new position (we can only seek forwards)
@@ -58,8 +64,14 @@ def seek_gzip_factory(f):
     if isinstance(f, str):
         f = gzip.GzipFile(f)
 
-    f.seek = new.instancemethod(seek, f)
-    f.tell = new.instancemethod(tell, f)
+    if sys.version_info[0] >= 3:
+        import types
+        f.seek = types.MethodType(seek, f)
+        f.tell = types.MethodType(tell, f)
+    else:
+        import new
+        f.seek = new.instancemethod(seek, f)
+        f.tell = new.instancemethod(tell, f)
 
     return f
 
@@ -180,7 +192,7 @@ class NpzFile(object):
         if member:
             bytes = self.zip.read(key)
             if bytes.startswith(format.MAGIC_PREFIX):
-                value = cStringIO.StringIO(bytes)
+                value = BytesIO(bytes)
                 return format.read_array(value)
             else:
                 return bytes
@@ -474,12 +486,14 @@ def _getconv(dtype):
         return float
     elif issubclass(typ, np.complex):
         return complex
+    elif issubclass(typ, np.bytes_):
+        return bytes
     else:
         return str
 
 
 
-def loadtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
+def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False):
     """
     Load data from a text file.
@@ -555,6 +569,11 @@ def loadtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
     array([ 2.,  4.])
 
     """
+    # Type conversions for Py3 convenience
+    comments = asbytes(comments)
+    if delimiter is not None:
+        delimiter = asbytes(delimiter)
+
     user_converters = converters
 
     if usecols is not None:
@@ -768,9 +787,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
     """
 
     # Py3 conversions first
-    if isinstance(format, bytes):
-        format = asstr(format)
-    delimiter = asbytes(delimiter)
+    if isinstance(fmt, bytes):
+        fmt = asstr(fmt)
+    delimiter = asstr(delimiter)
 
     if _is_string_like(fname):
         if fname.endswith('.gz'):
@@ -877,9 +896,9 @@ def fromregex(file, regexp, dtype):
 
     """
     if not hasattr(file, "read"):
-        file = open(file, 'r')
+        file = open(file, 'rb')
     if not hasattr(regexp, 'match'):
-        regexp = re.compile(regexp)
+        regexp = re.compile(asbytes(regexp))
     if not isinstance(dtype, np.dtype):
         dtype = np.dtype(dtype)
 
@@ -905,9 +924,9 @@ def fromregex(file, regexp, dtype):
 
 
 
-def genfromtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
+def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skiprows=0, skip_header=0, skip_footer=0, converters=None,
-               missing=asbytes(''), missing_values=None, filling_values=None,
+               missing='', missing_values=None, filling_values=None,
                usecols=None, names=None, excludelist=None, deletechars=None,
                autostrip=False, case_sensitive=True, defaultfmt="f%i",
                unpack=None, usemask=False, loose=True, invalid_raise=True):
@@ -1042,6 +1061,15 @@ def genfromtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
 
     """
+    # Py3 data conversions to bytes, for convenience
+    comments = asbytes(comments)
+    if isinstance(delimiter, unicode):
+        delimiter = asbytes(delimiter)
+    if isinstance(missing, unicode):
+        missing = asbytes(missing)
+    if isinstance(missing_values, (unicode, list, tuple)):
+        missing_values = asbytes_nested(missing_values)
+
     #
     if usemask:
         from numpy.ma import MaskedArray, make_mask_descr
@@ -1182,7 +1210,7 @@ def genfromtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
                 entry.append(value)
     # We have a string : apply it to all entries
     elif isinstance(user_missing_values, basestring):
-        user_value = user_missing_values.split(",")
+        user_value = user_missing_values.split(asbytes(","))
         for entry in missing_values:
             entry.extend(user_value)
     # We have something else: apply it to all entries
@@ -1195,7 +1223,7 @@ def genfromtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
         warnings.warn("The use of `missing` is deprecated.\n"\
                       "Please use `missing_values` instead.",
                       DeprecationWarning)
-        values = [str(_) for _ in missing.split(",")]
+        values = [str(_) for _ in missing.split(asbytes(","))]
         for entry in missing_values:
             entry.extend(values)
 

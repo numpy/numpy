@@ -21,7 +21,7 @@ if sys.version_info[0] >= 3:
     def asstr(s):
         if isinstance(s, str):
             return s
-        return bytes.decode('latin1')
+        return s.decode('latin1')
     def isfileobj(f):
         return isinstance(f, io.FileIO)
     strchar = 'U'

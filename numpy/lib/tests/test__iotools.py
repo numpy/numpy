@@ -6,6 +6,9 @@ if sys.version_info[0] >= 3:
 else:
     from StringIO import StringIO
 
+from datetime import date
+import time
+
 import numpy as np
 from numpy.lib._iotools import LineSplitter, NameValidator, StringConverter,\
                                has_nested_fields, easy_dtype
@@ -130,6 +133,12 @@ class TestNameValidator(TestCase):
 
 #-------------------------------------------------------------------------------
 
+def _bytes_to_date(s):
+    if sys.version_info[0] >= 3:
+        return date(*time.strptime(s.decode('latin1'), "%Y-%m-%d")[:3])
+    else:
+        return date(*time.strptime(s, "%Y-%m-%d")[:3])
+
 class TestStringConverter(TestCase):
     "Test StringConverter"
     #
@@ -168,27 +177,19 @@ class TestStringConverter(TestCase):
     #
     def test_upgrademapper(self):
         "Tests updatemapper"
-        from datetime import date
-        import time
-        if sys.version_info[0] >= 3:
-            dateparser = lambda s : date(*time.strptime(s.decode('latin1'),
-                                                        "%Y-%m-%d")[:3])
-        else:
-            dateparser = lambda s : date(*time.strptime(s, "%Y-%m-%d")[:3])
+        dateparser = _bytes_to_date
         StringConverter.upgrade_mapper(dateparser, date(2000,1,1))
         convert = StringConverter(dateparser, date(2000, 1, 1))
-        test = convert('2001-01-01')
+        test = convert(asbytes('2001-01-01'))
         assert_equal(test, date(2001, 01, 01))
-        test = convert('2009-01-01')
+        test = convert(asbytes('2009-01-01'))
         assert_equal(test, date(2009, 01, 01))
-        test = convert('')
+        test = convert(asbytes(''))
         assert_equal(test, date(2000, 01, 01))
     #
     def test_string_to_object(self):
         "Make sure that string-to-object functions are properly recognized"
-        from datetime import date
-        import time
-        conv = StringConverter(lambda s: date(*(time.strptime(s)[:3])))
+        conv = StringConverter(_bytes_to_date)
         assert_equal(conv._mapper[-2][0](0), 0j)
         assert(hasattr(conv, 'default'))
     #

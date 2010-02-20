@@ -15,7 +15,7 @@ from datetime import datetime
 
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
-from numpy.compat import asbytes
+from numpy.compat import asbytes, asbytes_nested
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -31,7 +31,10 @@ def strptime(s, fmt=None):
     from Python >= 2.5.
 
     """
-    return datetime(*time.strptime(s, fmt)[:3])
+    if sys.version_info[0] >= 3:
+        return datetime(*time.strptime(s.decode('latin1'), fmt)[:3])
+    else:
+        return datetime(*time.strptime(s, fmt)[:3])
 
 class RoundtripTest(object):
     def roundtrip(self, save_func, *args, **kwargs):
@@ -175,7 +178,7 @@ class TestSaveTxt(TestCase):
         c = StringIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), ['1 2\n', '3 4\n'])
+        assert_equal(c.readlines(), asbytes_nested(['1 2\n', '3 4\n']))
 
     def test_1D(self):
         a = np.array([1, 2, 3, 4], int)
@@ -190,7 +193,7 @@ class TestSaveTxt(TestCase):
         c = StringIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), ['1 2\n', '3 4\n'])
+        assert_equal(c.readlines(), asbytes_nested(['1 2\n', '3 4\n']))
 
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -205,34 +208,34 @@ class TestSaveTxt(TestCase):
         # Sequence of formats
         np.savetxt(c, a, fmt=['%02d', '%3.1f'])
         c.seek(0)
-        assert_equal(c.readlines(), ['01 2.0\n', '03 4.0\n'])
+        assert_equal(c.readlines(), asbytes_nested(['01 2.0\n', '03 4.0\n']))
 
         # A single multiformat string
         c = StringIO()
         np.savetxt(c, a, fmt='%02d : %3.1f')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
+        assert_equal(lines, asbytes_nested(['01 : 2.0\n', '03 : 4.0\n']))
 
         # Specify delimiter, should be overiden
         c = StringIO()
         np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
+        assert_equal(lines, asbytes_nested(['01 : 2.0\n', '03 : 4.0\n']))
 
 
 class TestLoadTxt(TestCase):
     def test_record(self):
         c = StringIO()
-        c.write('1 2\n3 4')
+        c.write(asbytes('1 2\n3 4'))
         c.seek(0)
         x = np.loadtxt(c, dtype=[('x', np.int32), ('y', np.int32)])
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         assert_array_equal(x, a)
 
         d = StringIO()
-        d.write('M 64.0 75.0\nF 25.0 60.0')
+        d.write(asbytes('M 64.0 75.0\nF 25.0 60.0'))
         d.seek(0)
         mydescriptor = {'names': ('gender', 'age', 'weight'),
                         'formats': ('S1',
@@ -244,7 +247,7 @@ class TestLoadTxt(TestCase):
 
     def test_array(self):
         c = StringIO()
-        c.write('1 2\n3 4')
+        c.write(asbytes('1 2\n3 4'))
 
         c.seek(0)
         x = np.loadtxt(c, dtype=int)
@@ -258,14 +261,14 @@ class TestLoadTxt(TestCase):
 
     def test_1D(self):
         c = StringIO()
-        c.write('1\n2\n3\n4\n')
+        c.write(asbytes('1\n2\n3\n4\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int)
         a = np.array([1, 2, 3, 4], int)
         assert_array_equal(x, a)
 
         c = StringIO()
-        c.write('1,2,3,4\n')
+        c.write(asbytes('1,2,3,4\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',')
         a = np.array([1, 2, 3, 4], int)
@@ -273,7 +276,7 @@ class TestLoadTxt(TestCase):
 
     def test_missing(self):
         c = StringIO()
-        c.write('1,2,3,,5\n')
+        c.write(asbytes('1,2,3,,5\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             converters={3:lambda s: int(s or - 999)})
@@ -282,7 +285,7 @@ class TestLoadTxt(TestCase):
 
     def test_converters_with_usecols(self):
         c = StringIO()
-        c.write('1,2,3,,5\n6,7,8,9,10\n')
+        c.write(asbytes('1,2,3,,5\n6,7,8,9,10\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             converters={3:lambda s: int(s or - 999)}, \
@@ -292,7 +295,7 @@ class TestLoadTxt(TestCase):
 
     def test_comments(self):
         c = StringIO()
-        c.write('# comment\n1,2,3,5\n')
+        c.write(asbytes('# comment\n1,2,3,5\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             comments='#')
@@ -301,7 +304,7 @@ class TestLoadTxt(TestCase):
 
     def test_skiprows(self):
         c = StringIO()
-        c.write('comment\n1,2,3,5\n')
+        c.write(asbytes('comment\n1,2,3,5\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             skiprows=1)
@@ -309,7 +312,7 @@ class TestLoadTxt(TestCase):
         assert_array_equal(x, a)
 
         c = StringIO()
-        c.write('# comment\n1,2,3,5\n')
+        c.write(asbytes('# comment\n1,2,3,5\n'))
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             skiprows=1)
@@ -344,12 +347,12 @@ class TestLoadTxt(TestCase):
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
         arr = np.loadtxt(c, usecols=(0, 2), dtype=zip(names, dtypes))
-        assert_equal(arr['stid'], ["JOE", "BOB"])
+        assert_equal(arr['stid'], asbytes_nested(["JOE", "BOB"]))
         assert_equal(arr['temp'], [25.3, 27.9])
 
     def test_fancy_dtype(self):
         c = StringIO()
-        c.write('1,2,3.0\n4,5,6.0\n')
+        c.write(asbytes('1,2,3.0\n4,5,6.0\n'))
         c.seek(0)
         dt = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         x = np.loadtxt(c, dtype=dt, delimiter=',')
@@ -371,7 +374,7 @@ class TestLoadTxt(TestCase):
 
     def test_unused_converter(self):
         c = StringIO()
-        c.writelines(['1 21\n', '3 42\n'])
+        c.writelines([asbytes('1 21\n'), asbytes('3 42\n')])
         c.seek(0)
         data = np.loadtxt(c, usecols=(1,),
                           converters={0: lambda s: int(s, 16)})
@@ -404,7 +407,7 @@ class TestLoadTxt(TestCase):
 class Testfromregex(TestCase):
     def test_record(self):
         c = StringIO()
-        c.write('1.312 foo\n1.534 bar\n4.444 qux')
+        c.write(asbytes('1.312 foo\n1.534 bar\n4.444 qux'))
         c.seek(0)
 
         dt = [('num', np.float64), ('val', 'S3')]
@@ -415,7 +418,7 @@ class Testfromregex(TestCase):
 
     def test_record_2(self):
         c = StringIO()
-        c.write('1312 foo\n1534 bar\n4444 qux')
+        c.write(asbytes('1312 foo\n1534 bar\n4444 qux'))
         c.seek(0)
 
         dt = [('num', np.int32), ('val', 'S3')]
@@ -426,7 +429,7 @@ class Testfromregex(TestCase):
 
     def test_record_3(self):
         c = StringIO()
-        c.write('1312 foo\n1534 bar\n4444 qux')
+        c.write(asbytes('1312 foo\n1534 bar\n4444 qux'))
         c.seek(0)
 
         dt = [('num', np.float64)]
@@ -521,7 +524,7 @@ class TestFromTxt(TestCase):
         "Test retrieving a header"
         data = StringIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
         test = np.ndfromtxt(data, dtype=None, names=True)
-        control = {'gender': np.array(['M', 'F']),
+        control = {'gender': np.array(asbytes_nested(['M', 'F'])),
                    'age': np.array([64.0, 25.0]),
                    'weight': np.array([75.0, 60.0])}
         assert_equal(test['gender'], control['gender'])
@@ -532,7 +535,7 @@ class TestFromTxt(TestCase):
         "Test the automatic definition of the output dtype"
         data = StringIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
         test = np.ndfromtxt(data, dtype=None)
-        control = [np.array(['A', 'BCD']),
+        control = [np.array(asbytes_nested(['A', 'BCD'])),
                    np.array([64, 25]),
                    np.array([75.0, 60.0]),
                    np.array([3 + 4j, 5 + 6j]),
@@ -649,10 +652,10 @@ M   33  21.99
 
 
     def test_invalid_converter(self):
-        strip_rand = lambda x : float(('r' in x.lower() and x.split()[-1]) or
-                                      (not 'r' in x.lower() and x.strip() or 0.0))
-        strip_per = lambda x : float(('%' in x.lower() and x.split()[0]) or
-                                     (not '%' in x.lower() and x.strip() or 0.0))
+        strip_rand = lambda x : float((asbytes('r') in x.lower() and x.split()[-1]) or
+                                      (not asbytes('r') in x.lower() and x.strip() or 0.0))
+        strip_per = lambda x : float((asbytes('%') in x.lower() and x.split()[0]) or
+                                     (not asbytes('%') in x.lower() and x.strip() or 0.0))
         s = StringIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n" \
                               "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                               "D02N03,10/10/2004,R 1,,7,145.55")
@@ -678,10 +681,10 @@ M   33  21.99
         "Test using an explicit dtype with an object"
         from datetime import date
         import time
-        data = """
+        data = asbytes("""
         1; 2001-01-01
         2; 2002-01-31
-        """
+        """)
         ndtype = [('idx', int), ('code', np.object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
@@ -775,7 +778,7 @@ M   33  21.99
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
         test = np.ndfromtxt(data, usecols=(0, 2), dtype=zip(names, dtypes))
-        assert_equal(test['stid'], ["JOE", "BOB"])
+        assert_equal(test['stid'], asbytes_nested(["JOE", "BOB"]))
         assert_equal(test['temp'], [25.3, 27.9])
 
     def test_usecols_with_integer(self):
@@ -1153,7 +1156,7 @@ def test_gzip_loadtxt():
     # which is then read from by the loadtxt function
     s = StringIO()
     g = gzip.GzipFile(fileobj=s, mode='w')
-    g.write('1 2 3\n')
+    g.write(asbytes('1 2 3\n'))
     g.close()
     s.seek(0)
 
@@ -1169,7 +1172,7 @@ def test_gzip_loadtxt():
 def test_gzip_loadtxt_from_string():
     s = StringIO()
     f = gzip.GzipFile(fileobj=s, mode="w")
-    f.write('1 2 3\n')
+    f.write(asbytes('1 2 3\n'))
     f.close()
     s.seek(0)
 
