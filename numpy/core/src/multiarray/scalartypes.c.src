@@ -1625,6 +1625,12 @@ static PyMethodDef gentype_methods[] = {
     {"round",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#if defined(NPY_PY3K)
+    /* Hook for the round() builtin */
+    {"__round__",
+        (PyCFunction)gentype_round,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+#endif
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
