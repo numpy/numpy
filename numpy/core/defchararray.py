@@ -21,6 +21,7 @@ from numerictypes import string_, unicode_, integer, object_, bool_, character
 from numeric import ndarray, compare_chararrays
 from numeric import array as narray
 from numpy.core.multiarray import _vec_string
+from numpy.compat import asbytes
 import numpy
 
 __all__ = ['chararray',
@@ -397,6 +398,8 @@ if sys.version_info >= (2, 4):
         a_arr = numpy.asarray(a)
         width_arr = numpy.asarray(width)
         size = long(numpy.max(width_arr.flat))
+        if numpy.issubdtype(a_arr.dtype, numpy.string_):
+            fillchar = asbytes(fillchar)
         return _vec_string(
             a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
 else:
@@ -917,6 +920,8 @@ if sys.version_info >= (2, 4):
         a_arr = numpy.asarray(a)
         width_arr = numpy.asarray(width)
         size = long(numpy.max(width_arr.flat))
+        if numpy.issubdtype(a_arr.dtype, numpy.string_):
+            fillchar = asbytes(fillchar)
         return _vec_string(
             a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
 else:
@@ -1183,6 +1188,8 @@ if sys.version_info >= (2, 4):
         a_arr = numpy.asarray(a)
         width_arr = numpy.asarray(width)
         size = long(numpy.max(width_arr.flat))
+        if numpy.issubdtype(a_arr.dtype, numpy.string_):
+            fillchar = asbytes(fillchar)
         return _vec_string(
             a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
 else:
@@ -1841,6 +1848,13 @@ class chararray(ndarray):
         # strings in the new array.
         itemsize = long(itemsize)
 
+        if sys.version_info[0] >= 3 and isinstance(buffer, _unicode):
+            # On Py3, unicode objects do not have the buffer interface
+            filler = buffer
+            buffer = None
+        else:
+            filler = None
+
         _globalvar = 1
         if buffer is None:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
@@ -1850,6 +1864,8 @@ class chararray(ndarray):
                                    buffer=buffer,
                                    offset=offset, strides=strides,
                                    order=order)
+        if filler is not None:
+            self[...] = filler
         _globalvar = 0
         return self
 
@@ -2594,7 +2610,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
         if itemsize is None:
             itemsize = _len(obj)
-        shape = _len(obj) / itemsize
+        shape = _len(obj) // itemsize
 
         if unicode:
             if sys.maxunicode == 0xffff:
