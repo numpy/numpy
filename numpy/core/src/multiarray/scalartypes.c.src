@@ -1328,6 +1328,14 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
+#if defined(NPY_PY3K)
+    if (PyArray_IsScalar(self, Unicode)) {
+        /* Unicode on Python 3 does not expose the buffer interface */
+        buffer = PyUnicode_AS_DATA(self);
+        buflen = PyUnicode_GET_DATA_SIZE(self);
+    }
+    else
+#endif
     if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
         Py_DECREF(ret);
         return NULL;
