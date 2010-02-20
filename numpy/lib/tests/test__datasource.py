@@ -7,6 +7,8 @@ import urllib2
 
 from numpy.testing import *
 
+from numpy.compat import asbytes
+
 import numpy.lib._datasource as datasource
 
 def urlopen_stub(url, data=None):
@@ -36,7 +38,7 @@ http_fakefile = 'fake.txt'
 malicious_files = ['/etc/shadow', '../../shadow',
                    '..\\system.dat', 'c:\\windows\\system.dat']
 
-magic_line = 'three is the magic number'
+magic_line = asbytes('three is the magic number')
 
 
 # Utility functions used by many TestCases

@@ -35,7 +35,9 @@ Example::
 __docformat__ = "restructuredtext en"
 
 import os
-from shutil import rmtree
+from shutil import rmtree, copyfile, copyfileobj
+
+_open = open
 
 # Using a class instead of a module-level dictionary
 # to reduce the inital 'import numpy' overhead by
@@ -281,16 +283,15 @@ class DataSource (object):
         if self._isurl(path):
             try:
                 openedurl = urlopen(path)
-                file(upath, 'w').write(openedurl.read())
+                f = _open(upath, 'wb')
+                try:
+                    copyfileobj(openedurl, f)
+                finally:
+                    f.close()
             except URLError:
                 raise URLError("URL not found: %s" % path)
         else:
-            try:
-                # TODO: Why not just copy the file with shutils.copyfile?
-                fp = file(path, 'r')
-                file(upath, 'w').write(fp.read())
-            except IOError:
-                raise IOError("File not found: %s" % path)
+            shutil.copyfile(path, upath)
         return upath
 
     def _findfile(self, path):
