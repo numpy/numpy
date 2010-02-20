@@ -575,7 +575,7 @@ def getrestdoc(rout):
     return rout['f2pymultilines'].get(k,None)
 
 def gentitle(name):
-    l=(80-len(name)-6)/2
+    l=(80-len(name)-6)//2
     return '/*%s %s %s*/'%(l*'*',name,l*'*')
 
 def flatlist(l):
