@@ -38,8 +38,10 @@ __all__ = ['chararray',
 _globalvar = 0
 if sys.version_info[0] >= 3:
     _unicode = str
+    _bytes = bytes
 else:
     _unicode = unicode
+    _bytes = str
 _len = len
 
 def _use_unicode(*args):
@@ -2583,7 +2585,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
     """
-    if isinstance(obj, (str, _unicode)):
+    if isinstance(obj, (_bytes, _unicode)):
         if unicode is None:
             if isinstance(obj, _unicode):
                 unicode = True
@@ -2621,7 +2623,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         else:
             # Let the default Unicode -> string encoding (if any) take
             # precedence.
-            obj = str(obj)
+            obj = _bytes(obj)
 
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)
