@@ -134,18 +134,27 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
  */
 #if defined(NPY_PY3K)
 static NPY_INLINE FILE*
-npy_PyFile_AsFile(PyObject *file, char *mode)
+npy_PyFile_Dup(PyObject *file, char *mode)
 {
-    int fd;
+    int fd, fd2;
+    PyObject *ret, *os;
     fd = PyObject_AsFileDescriptor(file);
     if (fd == -1) {
         return NULL;
     }
-#warning XXX -- who releases the FILE* returned by fdopen? fclose() closes the file...
-    return fdopen(fd, mode);
+    os = PyImport_ImportModule("os");
+    if (os == NULL) {
+        return NULL;
+    }
+    ret = PyObject_CallMethod(os, "dup", "i", fd);
+    Py_DECREF(os);
+    if (ret == NULL) {
+        return NULL;
+    }
+    fd2 = PyNumber_AsSsize_t(ret, NULL);
+    Py_DECREF(ret);
+    return fdopen(fd2, mode);
 }
-#else
-#define npy_PyFile_AsFile(file, mode) PyFile_AsFile(file)
 #endif
 
 static NPY_INLINE PyObject*

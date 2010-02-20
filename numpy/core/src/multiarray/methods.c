@@ -498,7 +498,11 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     else {
         Py_INCREF(file);
     }
-    fd = npy_PyFile_AsFile(file, "wb");
+#if defined(NPY_PY3K)
+    fd = npy_PyFile_Dup(file, "wb");
+#else
+    fd = PyFile_AsFile(file);
+#endif
     if (fd == NULL) {
         PyErr_SetString(PyExc_IOError, "first argument must be a " \
                         "string or open file");
@@ -506,6 +510,9 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     ret = PyArray_ToFile(self, fd, sep, format);
+#if defined(NPY_PY3K)
+    fclose(fd);
+#endif
     Py_DECREF(file);
     if (ret < 0) {
         return NULL;

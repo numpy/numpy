@@ -1723,7 +1723,11 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     else {
         Py_INCREF(file);
     }
-    fp = npy_PyFile_AsFile(file, "rb");
+#if defined(NPY_PY3K)
+    fp = npy_PyFile_Dup(file, "rb");
+#else
+    fp = PyFile_AsFile(file);
+#endif
     if (fp == NULL) {
         PyErr_SetString(PyExc_IOError,
                 "first argument must be an open file");
@@ -1734,6 +1738,9 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         type = PyArray_DescrFromType(PyArray_DEFAULT);
     }
     ret = PyArray_FromFile(fp, type, (intp) nin, sep);
+#if defined(NPY_PY3K)
+    fclose(fp);
+#endif
     Py_DECREF(file);
     return ret;
 }
