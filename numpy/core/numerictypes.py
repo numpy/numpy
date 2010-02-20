@@ -74,9 +74,13 @@ Exported symbols include:
      |         clongfloat (longcomplex)
      +-> flexible
      |     character
-     |     str_     (string_)                   (kind=S)
-     |     unicode_                             (kind=U)
      |     void                                 (kind=V)
+     |
+     |     str_     (string_, bytes_)           (kind=S)    [Python 2]
+     |     unicode_                             (kind=U)    [Python 2]
+     |
+     |     bytes_   (string_)                   (kind=S)    [Python 3]
+     |     str_     (unicode_)                  (kind=U)    [Python 3]
      |
      \\-> object_ (not used much)                (kind=O)
 
@@ -90,10 +94,18 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
 
 from numpy.core.multiarray import typeinfo, ndarray, array, empty, dtype
 import types as _types
+import sys
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
+
+if sys.version_info[0] >= 3:
+    # Py3K
+    from builtins import bytes
+    class long(int):
+        # Placeholder class -- this will not escape outside numerictypes.py
+        pass
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -237,12 +249,6 @@ def bitname(obj):
     if name == 'bool_':
         char = 'b'
         base = 'bool'
-    elif name=='string_':
-        char = 'S'
-        base = 'string'
-    elif name=='unicode_':
-        char = 'U'
-        base = 'unicode'
     elif name=='void':
         char = 'V'
         base = 'void'
@@ -250,6 +256,21 @@ def bitname(obj):
         char = 'O'
         base = 'object'
         bits = 0
+
+    if sys.version_info[0] >= 3:
+        if name=='bytes_':
+            char = 'S'
+            base = 'bytes'
+        elif name=='str_':
+            char = 'U'
+            base = 'str'
+    else:
+        if name=='string_':
+            char = 'S'
+            base = 'string'
+        elif name=='unicode_':
+            char = 'U'
+            base = 'unicode'
 
     bytes = bits // 8
 
@@ -375,17 +396,30 @@ def _set_up_aliases():
                   ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
                   ('unicode_', 'unicode'),
-                  ('str_', 'string'),
-                  ('string_', 'string'),
                   ('object_', 'object'),
                   ('timedelta_', 'timedelta'),
                   ('datetime_', 'datetime')]
+    if sys.version_info[0] >= 3:
+        type_pairs.extend([('bytes_', 'string'),
+                           ('str_', 'unicode'),
+                           ('string_', 'string')])
+    else:
+        type_pairs.extend([('str_', 'string'),
+                           ('string_', 'string'),
+                           ('bytes_', 'string')])
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
-              'complex', 'bool', 'string', 'datetime', 'timedelta']:
+    to_remove = ['ulong', 'object', 'unicode', 'int', 'long', 'float',
+                 'complex', 'bool', 'string', 'datetime', 'timedelta']
+    if sys.version_info[0] >= 3:
+        # Py3K
+        to_remove.append('bytes')
+        to_remove.append('str')
+        to_remove.remove('unicode')
+        to_remove.remove('long')
+    for t in to_remove:
         try:
             del allTypes[t]
             del sctypeDict[t]
@@ -738,7 +772,8 @@ try:
                    _types.StringType, _types.UnicodeType, _types.BufferType]
 except AttributeError:
     # Py3K
-    ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
+    ScalarType = [int, float, complex, long, bool, bytes, str, memoryview]
+
 ScalarType.extend(_sctype2char_dict.keys())
 ScalarType = tuple(ScalarType)
 for key in _sctype2char_dict.keys():
@@ -759,8 +794,13 @@ for key, val in _typestr.items():
 
 # Add additional strings to the sctypeDict
 
-_toadd = ['int', 'float', 'complex', 'bool', 'object', 'string', ('str', allTypes['string_']),
-          'unicode', 'object', ('a', allTypes['string_'])]
+if sys.version_info[0] >= 3:
+    _toadd = ['int', 'float', 'complex', 'bool', 'object',
+              'str', 'bytes', 'object', ('a', allTypes['bytes_'])]
+else:
+    _toadd = ['int', 'float', 'complex', 'bool', 'object', 'string',
+              ('str', allTypes['string_']),
+              'unicode', 'object', ('a', allTypes['string_'])]
 
 for name in _toadd:
     if isinstance(name, tuple):
