@@ -10,6 +10,7 @@ import numpy as np
 import format
 import cStringIO
 import os
+import sys
 import itertools
 import warnings
 from operator import itemgetter
@@ -23,7 +24,7 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype, _bytes_to_name
 
-from numpy.compat import asbytes
+from numpy.compat import asbytes, asstr
 
 _file = open
 _string_like = _is_string_like
@@ -676,7 +677,7 @@ def loadtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
         return X
 
 
-def savetxt(fname, X, fmt='%.18e', delimiter=' '):
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
     """
     Save an array to a text file.
 
@@ -694,6 +695,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' '):
         case `delimiter` is ignored.
     delimiter : str
         Character separating columns.
+    newline : str
+        .. versionadded:: 2.0
+
+        Character separating lines.
+
 
     See Also
     --------
@@ -761,12 +767,20 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' '):
 
     """
 
+    # Py3 conversions first
+    if isinstance(format, bytes):
+        format = asstr(format)
+    delimiter = asbytes(delimiter)
+
     if _is_string_like(fname):
         if fname.endswith('.gz'):
             import gzip
             fh = gzip.open(fname, 'wb')
         else:
-            fh = file(fname, 'w')
+            if sys.version_info[0] >= 3:
+                fh = file(fname, 'wb')
+            else:
+                fh = file(fname, 'w')
     elif hasattr(fname, 'seek'):
         fh = fname
     else:
@@ -792,7 +806,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' '):
     if type(fmt) in (list, tuple):
         if len(fmt) != ncol:
             raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
-        format = delimiter.join(fmt)
+        format = asstr(delimiter).join(map(asstr, fmt))
     elif type(fmt) is str:
         if fmt.count('%') == 1:
             fmt = [fmt, ]*ncol
@@ -804,7 +818,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' '):
             format = fmt
 
     for row in X:
-        fh.write(format % tuple(row) + '\n')
+        fh.write(asbytes(format % tuple(row) + newline))
 
 import re
 def fromregex(file, regexp, dtype):
@@ -1355,11 +1369,11 @@ def genfromtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
 #        rows[i] = tuple([convert(val)
 #                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        rows = zip(*(map(converter._loose_call, map(itemgetter(i), rows))
-                     for (i, converter) in enumerate(converters)))
+        rows = zip(*[map(converter._loose_call, map(itemgetter(i), rows))
+                     for (i, converter) in enumerate(converters)])
     else:
-        rows = zip(*(map(converter._strict_call, map(itemgetter(i), rows))
-                     for (i, converter) in enumerate(converters)))
+        rows = zip(*[map(converter._strict_call, map(itemgetter(i), rows))
+                     for (i, converter) in enumerate(converters)])
     # Reset the dtype
     data = rows
     if dtype is None:
