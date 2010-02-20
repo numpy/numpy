@@ -21,7 +21,7 @@ from _compiled_base import packbits, unpackbits
 from _iotools import LineSplitter, NameValidator, StringConverter, \
                      ConverterError, ConverterLockError, ConversionWarning, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
-                     easy_dtype
+                     easy_dtype, _bytes_to_name
 
 from numpy.compat import asbytes
 
@@ -478,8 +478,8 @@ def _getconv(dtype):
 
 
 
-def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
-            skiprows=0, usecols=None, unpack=False):
+def loadtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
+            converters=None, skiprows=0, usecols=None, unpack=False):
     """
     Load data from a text file.
 
@@ -613,7 +613,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         first_vals = None
         while not first_vals:
             first_line = fh.readline()
-            if first_line == '': # EOF reached
+            if not first_line: # EOF reached
                 raise IOError('End-of-file reached before encountering data.')
             first_vals = split_line(first_line)
         N = len(usecols or first_vals)
@@ -891,9 +891,9 @@ def fromregex(file, regexp, dtype):
 
 
 
-def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
+def genfromtxt(fname, dtype=float, comments=asbytes('#'), delimiter=None,
                skiprows=0, skip_header=0, skip_footer=0, converters=None,
-               missing='', missing_values=None, filling_values=None,
+               missing=asbytes(''), missing_values=None, filling_values=None,
                usecols=None, names=None, excludelist=None, deletechars=None,
                autostrip=False, case_sensitive=True, defaultfmt="f%i",
                unpack=None, usemask=False, loose=True, invalid_raise=True):
@@ -1065,11 +1065,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     first_values = None
     while not first_values:
         first_line = fhd.readline()
-        if first_line == '':
+        if not first_line:
             raise IOError('End-of-file reached before encountering data.')
         if names is True:
             if comments in first_line:
-                first_line = ''.join(first_line.split(comments)[1])
+                first_line = asbytes('').join(first_line.split(comments)[1:])
         first_values = split_line(first_line)
     # Should we take the first values as names ?
     if names is True:
@@ -1090,8 +1090,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Check the names and overwrite the dtype.names if needed
     if names is True:
-        names = validate_names([_.strip() for _ in first_values])
-        first_line = ''
+        names = validate_names([_bytes_to_name(_.strip())
+                                for _ in first_values])
+        first_line = asbytes('')
     elif _is_string_like(names):
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
@@ -1127,7 +1128,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     user_missing_values = missing_values or ()
 
     # Define the list of missing_values (one column: one list)
-    missing_values = [list(['']) for _ in range(nbcols)]
+    missing_values = [list([asbytes('')]) for _ in range(nbcols)]
 
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):
@@ -1176,7 +1177,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             entry.extend([str(user_missing_values)])
 
     # Process the deprecated `missing`
-    if missing != '':
+    if missing != asbytes(''):
         warnings.warn("The use of `missing` is deprecated.\n"\
                       "Please use `missing_values` instead.",
                       DeprecationWarning)
@@ -1451,7 +1452,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     names = output.dtype.names
     if usemask and names:
         for (name, conv) in zip(names or (), converters):
-            missing_values = [conv(_) for _ in conv.missing_values if _ != '']
+            missing_values = [conv(_) for _ in conv.missing_values
+                              if _ != asbytes('')]
             for mval in missing_values:
                 outputmask[name] |= (output[name] == mval)
     # Construct the final array

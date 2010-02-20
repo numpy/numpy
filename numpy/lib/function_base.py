@@ -13,6 +13,7 @@ __all__ = ['select', 'piecewise', 'trim_zeros',
 import warnings
 
 import types
+import sys
 import numpy.core.numeric as _nx
 from numpy.core import linspace
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
@@ -1596,7 +1597,18 @@ import re
 def _get_nargs(obj):
     if not callable(obj):
         raise TypeError, "Object is not callable."
-    if hasattr(obj,'func_code'):
+    if sys.version_info[0] >= 3:
+        import inspect
+        spec = inspect.getargspec(obj)
+        nargs = len(spec.args)
+        if spec.defaults:
+            ndefaults = len(spec.defaults)
+        else:
+            ndefaults = 0
+        if inspect.ismethod(obj):
+            nargs -= 1
+        return nargs, ndefaults
+    elif hasattr(obj,'func_code'):
         fcode = obj.func_code
         nargs = fcode.co_argcount
         if obj.func_defaults is not None:

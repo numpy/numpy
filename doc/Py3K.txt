@@ -211,6 +211,16 @@ unicode_      str_ alias
    Check if I missed something here.
 
 
+numpy.loadtxt et al
+-------------------
+
+These routines are difficult to duck-type to read both Unicode and
+Bytes input.
+
+I assume they are meant for reading Bytes streams -- this is probably
+the far more common use case with scientific data.
+
+
 C Code
 ======
 

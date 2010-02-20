@@ -1,10 +1,21 @@
 """A collection of functions designed to help I/O with ascii files."""
 __docformat__ = "restructuredtext en"
 
+import sys
 import numpy as np
 import numpy.core.numeric as nx
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
+from numpy.compat import asbytes, bytes
+
+if sys.version_info[0] >= 3:
+    def _bytes_to_complex(s):
+        return complex(s.decode('ascii'))
+    def _bytes_to_name(s):
+        return s.decode('ascii')
+else:
+    _bytes_to_complex = complex
+    _bytes_to_name = str
 
 def _is_string_like(obj):
     """
@@ -12,6 +23,16 @@ def _is_string_like(obj):
     """
     try:
         obj + ''
+    except (TypeError, ValueError):
+        return False
+    return True
+
+def _is_bytes_like(obj):
+    """
+    Check whether obj behaves like a bytes object.
+    """
+    try:
+        obj + asbytes('')
     except (TypeError, ValueError):
         return False
     return True
@@ -157,10 +178,12 @@ class LineSplitter:
         """
         return lambda input: [_.strip() for _ in method(input)]
     #
-    def __init__(self, delimiter=None, comments='#', autostrip=True):
+    def __init__(self, delimiter=None, comments=asbytes('#'), autostrip=True):
         self.comments = comments
         # Delimiter is a character
-        if (delimiter is None) or _is_string_like(delimiter):
+        if isinstance(delimiter, unicode):
+            delimiter = delimiter.encode('ascii')
+        if (delimiter is None) or _is_bytes_like(delimiter):
             delimiter = delimiter or None
             _handyman = self._delimited_splitter
         # Delimiter is a list of field widths
@@ -180,7 +203,7 @@ class LineSplitter:
             self._handyman = _handyman
     #
     def _delimited_splitter(self, line):
-        line = line.split(self.comments)[0].strip(" \r\n")
+        line = line.split(self.comments)[0].strip(asbytes(" \r\n"))
         if not line:
             return []
         return line.split(self.delimiter)
@@ -382,9 +405,9 @@ def str2bool(value):
 
     """
     value = value.upper()
-    if value == 'TRUE':
+    if value == asbytes('TRUE'):
         return True
-    elif value == 'FALSE':
+    elif value == asbytes('FALSE'):
         return False
     else:
         raise ValueError("Invalid boolean")
@@ -468,8 +491,8 @@ class StringConverter:
     _mapper = [(nx.bool_, str2bool, False),
                (nx.integer, int, -1),
                (nx.floating, float, nx.nan),
-               (complex, complex, nx.nan + 0j),
-               (nx.string_, str, '???')]
+               (complex, _bytes_to_complex, nx.nan + 0j),
+               (nx.string_, bytes, asbytes('???'))]
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
     #
     @classmethod
@@ -570,11 +593,11 @@ class StringConverter:
                 self.func = lambda x : int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = set([''])
+            self.missing_values = set([asbytes('')])
         else:
             if isinstance(missing_values, basestring):
-                missing_values = missing_values.split(",")
-            self.missing_values = set(list(missing_values) + [''])
+                missing_values = missing_values.split(asbytes(","))
+            self.missing_values = set(list(missing_values) + [asbytes('')])
         #
         self._callingfunction = self._strict_call
         self.type = ttype
@@ -672,7 +695,8 @@ class StringConverter:
             self._status = _status
             self.iterupgrade(value)
 
-    def update(self, func, default=None, missing_values='', locked=False):
+    def update(self, func, default=None, missing_values=asbytes(''),
+               locked=False):
         """
         Set StringConverter attributes directly.
 
@@ -711,7 +735,7 @@ class StringConverter:
             self.type = self._getsubdtype(tester)
         # Add the missing values to the existing set
         if missing_values is not None:
-            if _is_string_like(missing_values):
+            if _is_bytes_like(missing_values):
                 self.missing_values.add(missing_values)
             elif hasattr(missing_values, '__iter__'):
                 for val in missing_values:

@@ -1,71 +1,78 @@
-
-import StringIO
+import sys
+if sys.version_info[0] >= 3:
+    from io import BytesIO
+    def StringIO(s=""):
+        return BytesIO(asbytes(s))
+else:
+    from StringIO import StringIO
 
 import numpy as np
 from numpy.lib._iotools import LineSplitter, NameValidator, StringConverter,\
                                has_nested_fields, easy_dtype
 from numpy.testing import *
 
+from numpy.compat import asbytes, asbytes_nested
+
 class TestLineSplitter(TestCase):
     "Tests the LineSplitter class."
     #
     def test_no_delimiter(self):
         "Test LineSplitter w/o delimiter"
-        strg = " 1 2 3 4  5 # test"
+        strg = asbytes(" 1 2 3 4  5 # test")
         test = LineSplitter()(strg)
-        assert_equal(test, ['1', '2', '3', '4', '5'])
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '5']))
         test = LineSplitter('')(strg)
-        assert_equal(test, ['1', '2', '3', '4', '5'])
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '5']))
 
     def test_space_delimiter(self):
         "Test space delimiter"
-        strg = " 1 2 3 4  5 # test"
-        test = LineSplitter(' ')(strg)
-        assert_equal(test, ['1', '2', '3', '4', '', '5'])
-        test = LineSplitter('  ')(strg)
-        assert_equal(test, ['1 2 3 4', '5'])
+        strg = asbytes(" 1 2 3 4  5 # test")
+        test = LineSplitter(asbytes(' '))(strg)
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5']))
+        test = LineSplitter(asbytes('  '))(strg)
+        assert_equal(test, asbytes_nested(['1 2 3 4', '5']))
 
     def test_tab_delimiter(self):
         "Test tab delimiter"
-        strg= " 1\t 2\t 3\t 4\t 5  6"
-        test = LineSplitter('\t')(strg)
-        assert_equal(test, ['1', '2', '3', '4', '5  6'])
-        strg= " 1  2\t 3  4\t 5  6"
-        test = LineSplitter('\t')(strg)
-        assert_equal(test, ['1  2', '3  4', '5  6'])
+        strg= asbytes(" 1\t 2\t 3\t 4\t 5  6")
+        test = LineSplitter(asbytes('\t'))(strg)
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '5  6']))
+        strg= asbytes(" 1  2\t 3  4\t 5  6")
+        test = LineSplitter(asbytes('\t'))(strg)
+        assert_equal(test, asbytes_nested(['1  2', '3  4', '5  6']))
 
     def test_other_delimiter(self):
         "Test LineSplitter on delimiter"
-        strg = "1,2,3,4,,5"
-        test = LineSplitter(',')(strg)
-        assert_equal(test, ['1', '2', '3', '4', '', '5'])
+        strg = asbytes("1,2,3,4,,5")
+        test = LineSplitter(asbytes(','))(strg)
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5']))
         #
-        strg = " 1,2,3,4,,5 # test"
-        test = LineSplitter(',')(strg)
-        assert_equal(test, ['1', '2', '3', '4', '', '5'])
+        strg = asbytes(" 1,2,3,4,,5 # test")
+        test = LineSplitter(asbytes(','))(strg)
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5']))
 
     def test_constant_fixed_width(self):
         "Test LineSplitter w/ fixed-width fields"
-        strg = "  1  2  3  4     5   # test"
+        strg = asbytes("  1  2  3  4     5   # test")
         test = LineSplitter(3)(strg)
-        assert_equal(test, ['1', '2', '3', '4', '', '5', ''])
+        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5', '']))
         #
-        strg = "  1     3  4  5  6# test"
+        strg = asbytes("  1     3  4  5  6# test")
         test = LineSplitter(20)(strg)
-        assert_equal(test, ['1     3  4  5  6'])
+        assert_equal(test, asbytes_nested(['1     3  4  5  6']))
         #
-        strg = "  1     3  4  5  6# test"
+        strg = asbytes("  1     3  4  5  6# test")
         test = LineSplitter(30)(strg)
-        assert_equal(test, ['1     3  4  5  6'])
+        assert_equal(test, asbytes_nested(['1     3  4  5  6']))
 
     def test_variable_fixed_width(self):
-        strg = "  1     3  4  5  6# test"
+        strg = asbytes("  1     3  4  5  6# test")
         test = LineSplitter((3,6,6,3))(strg)
-        assert_equal(test, ['1', '3', '4  5', '6'])
+        assert_equal(test, asbytes_nested(['1', '3', '4  5', '6']))
         #
-        strg = "  1     3  4  5  6# test"
+        strg = asbytes("  1     3  4  5  6# test")
         test = LineSplitter((6,6,9))(strg)
-        assert_equal(test, ['1', '3  4', '5  6'])
+        assert_equal(test, asbytes_nested(['1', '3  4', '5  6']))
 
 
 #-------------------------------------------------------------------------------
@@ -136,23 +143,24 @@ class TestStringConverter(TestCase):
         "Tests the upgrade method."
         converter = StringConverter()
         assert_equal(converter._status, 0)
-        converter.upgrade('0')
+        converter.upgrade(asbytes('0'))
         assert_equal(converter._status, 1)
-        converter.upgrade('0.')
+        converter.upgrade(asbytes('0.'))
         assert_equal(converter._status, 2)
-        converter.upgrade('0j')
+        converter.upgrade(asbytes('0j'))
         assert_equal(converter._status, 3)
-        converter.upgrade('a')
+        converter.upgrade(asbytes('a'))
         assert_equal(converter._status, len(converter._mapper)-1)
     #
     def test_missing(self):
         "Tests the use of missing values."
-        converter = StringConverter(missing_values=('missing','missed'))
-        converter.upgrade('0')
-        assert_equal(converter('0'), 0)
-        assert_equal(converter(''), converter.default)
-        assert_equal(converter('missing'), converter.default)
-        assert_equal(converter('missed'), converter.default)
+        converter = StringConverter(missing_values=(asbytes('missing'),
+                                                    asbytes('missed')))
+        converter.upgrade(asbytes('0'))
+        assert_equal(converter(asbytes('0')), 0)
+        assert_equal(converter(asbytes('')), converter.default)
+        assert_equal(converter(asbytes('missing')), converter.default)
+        assert_equal(converter(asbytes('missed')), converter.default)
         try:
             converter('miss')
         except ValueError:
@@ -162,7 +170,11 @@ class TestStringConverter(TestCase):
         "Tests updatemapper"
         from datetime import date
         import time
-        dateparser = lambda s : date(*time.strptime(s, "%Y-%m-%d")[:3])
+        if sys.version_info[0] >= 3:
+            dateparser = lambda s : date(*time.strptime(s.decode('latin1'),
+                                                        "%Y-%m-%d")[:3])
+        else:
+            dateparser = lambda s : date(*time.strptime(s, "%Y-%m-%d")[:3])
         StringConverter.upgrade_mapper(dateparser, date(2000,1,1))
         convert = StringConverter(dateparser, date(2000, 1, 1))
         test = convert('2001-01-01')
@@ -182,25 +194,28 @@ class TestStringConverter(TestCase):
     #
     def test_keep_default(self):
         "Make sure we don't lose an explicit default"
-        converter = StringConverter(None, missing_values='', default=-999)
-        converter.upgrade('3.14159265')
+        converter = StringConverter(None, missing_values=asbytes(''),
+                                    default=-999)
+        converter.upgrade(asbytes('3.14159265'))
         assert_equal(converter.default, -999)
         assert_equal(converter.type, np.dtype(float))
         #
-        converter = StringConverter(None, missing_values='', default=0)
-        converter.upgrade('3.14159265')
+        converter = StringConverter(None, missing_values=asbytes(''), default=0)
+        converter.upgrade(asbytes('3.14159265'))
         assert_equal(converter.default, 0)
         assert_equal(converter.type, np.dtype(float))
     #
     def test_keep_default_zero(self):
         "Check that we don't lose a default of 0"
-        converter = StringConverter(int, default=0, missing_values="N/A")
+        converter = StringConverter(int, default=0,
+                                    missing_values=asbytes("N/A"))
         assert_equal(converter.default, 0)
     #
     def test_keep_missing_values(self):
         "Check that we're not losing missing values"
-        converter = StringConverter(int, default=0, missing_values="N/A")
-        assert_equal(converter.missing_values, set(['', 'N/A']))
+        converter = StringConverter(int, default=0,
+                                    missing_values=asbytes("N/A"))
+        assert_equal(converter.missing_values, set(asbytes_nested(['', 'N/A'])))
 
 #-------------------------------------------------------------------------------
 

@@ -5,11 +5,6 @@ from numpy.testing import assert_warns
 
 import sys
 
-if sys.version_info[0] >= 3:
-    from io import BytesIO as StringIO
-else:
-    from StringIO import StringIO
-
 import gzip
 import os
 import threading
@@ -20,7 +15,14 @@ from datetime import datetime
 
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
+from numpy.compat import asbytes
 
+if sys.version_info[0] >= 3:
+    from io import BytesIO
+    def StringIO(s=""):
+        return BytesIO(asbytes(s))
+else:
+    from StringIO import StringIO
 
 MAJVER, MINVER = sys.version_info[:2]
 
@@ -193,7 +195,7 @@ class TestSaveTxt(TestCase):
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
         c = StringIO()
-        np.savetxt(c, a, delimiter=',', fmt='%d')
+        np.savetxt(c, a, delimiter=asbytes(','), fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), ['1,2\n', '3,4\n'])
 
@@ -440,7 +442,7 @@ class TestFromTxt(TestCase):
     #
     def test_record(self):
         "Test w/ explicit dtype"
-        data = StringIO('1 2\n3 4')
+        data = StringIO(asbytes('1 2\n3 4'))
 #        data.seek(0)
         test = np.ndfromtxt(data, dtype=[('x', np.int32), ('y', np.int32)])
         control = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
@@ -476,7 +478,7 @@ class TestFromTxt(TestCase):
         assert_array_equal(test, control)
         #
         data = StringIO('1,2,3,4\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',')
+        test = np.ndfromtxt(data, dtype=int, delimiter=asbytes(','))
         assert_array_equal(test, control)
 
     def test_comments(self):
@@ -484,17 +486,17 @@ class TestFromTxt(TestCase):
         control = np.array([1, 2, 3, 5], int)
         # Comment on its own line
         data = StringIO('# comment\n1,2,3,5\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',', comments='#')
+        test = np.ndfromtxt(data, dtype=int, delimiter=asbytes(','), comments=asbytes('#'))
         assert_equal(test, control)
         # Comment at the end of a line
         data = StringIO('1,2,3,5# comment\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',', comments='#')
+        test = np.ndfromtxt(data, dtype=int, delimiter=asbytes(','), comments=asbytes('#'))
         assert_equal(test, control)
 
     def test_skiprows(self):
         "Test row skipping"
         control = np.array([1, 2, 3, 5], int)
-        kwargs = dict(dtype=int, delimiter=',')
+        kwargs = dict(dtype=int, delimiter=asbytes(','))
         #
         data = StringIO('comment\n1,2,3,5\n')
         test = np.ndfromtxt(data, skip_header=1, **kwargs)
@@ -510,7 +512,7 @@ class TestFromTxt(TestCase):
         data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
         data[-1] = "99,99"
         kwargs = dict(delimiter=",", names=True, skip_header=5, skip_footer=10)
-        test = np.genfromtxt(StringIO("\n".join(data)), **kwargs)
+        test = np.genfromtxt(StringIO(asbytes("\n".join(data))), **kwargs)
         ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(40)],
                         dtype=[(_, float) for _ in "ABC"])
         assert_equal(test, ctrl)
