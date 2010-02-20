@@ -143,6 +143,7 @@ npy_PyFile_Dup(PyObject *file, char *mode)
     if (ret == NULL) {
         return NULL;
     }
+    Py_DECREF(ret);
     fd = PyObject_AsFileDescriptor(file);
     if (fd == -1) {
         return NULL;
