@@ -34,7 +34,7 @@ def _makenames_list(adict):
             title = None
         allfields.append((fname, format, num, title))
     # sort by offsets
-    allfields.sort(lambda x,y: cmp(x[2],y[2]))
+    allfields.sort(key=lambda x: x[2])
     names = [x[0] for x in allfields]
     formats = [x[1] for x in allfields]
     offsets = [x[2] for x in allfields]
