@@ -102,6 +102,9 @@ MyPyUnicode_New(int length)
     unicode->length = length;
     unicode->hash = -1;
     unicode->defenc = NULL;
+#if defined(NPY_PY3K)
+    unicode->state = 0; /* Not interned */
+#endif
     return (PyObject *)unicode;
 }
 
