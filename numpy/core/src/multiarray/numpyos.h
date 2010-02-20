@@ -22,4 +22,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr);
 NPY_NO_EXPORT int
 NumPyOS_ascii_ftolf(FILE *fp, double *value);
 
+NPY_NO_EXPORT int
+NumPyOS_ascii_isspace(char c);
+
 #endif

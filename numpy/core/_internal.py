@@ -347,3 +347,125 @@ def _index_fields(ary, fields):
 
     return newarray
     
+# Given a string containing a PEP 3118 format specifier,
+# construct a Numpy dtype
+
+_pep3118_map = {
+    'b': 'b',
+    'B': 'B',
+    'h': 'h',
+    'H': 'H',
+    'i': 'i',
+    'I': 'I',
+    'l': 'l',
+    'L': 'L',
+    'q': 'q',
+    'Q': 'Q',
+    'f': 'f',
+    'd': 'd',
+    'g': 'g',
+    'Q': 'Q',
+    'Zf': 'F',
+    'Zd': 'D',
+    'Zg': 'G',
+    's': 'S',
+    'w': 'U',
+    'O': 'O',
+    'x': 'V', # padding
+}
+
+def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
+    from numpy.core.multiarray import dtype
+
+    fields = {}
+    offset = 0
+    findex = 0
+    explicit_name = False
+
+    while spec:
+        value = None
+
+        # End of structure, bail out to upper level
+        if spec[0] == '}':
+            spec = spec[1:]
+            break
+
+        # Sub-arrays (1)
+        shape = None
+        if spec[0] == '(':
+            j = spec.index(')')
+            shape = tuple(map(int, spec[1:j].split(',')))
+            spec = spec[j+1:]
+
+        # Byte order
+        if spec[0] in ('=', '<', '>'):
+            byteorder = spec[0]
+            spec = spec[1:]
+
+        # Item sizes
+        itemsize = 1
+        if spec[0].isdigit():
+            j = 1
+            for j in xrange(1, len(spec)):
+                if not spec[j].isdigit():
+                    break
+            itemsize = int(spec[:j])
+            spec = spec[j:]
+
+        # Data types
+        is_padding = False
+
+        if spec[:2] == 'T{':
+            value, spec = _dtype_from_pep3118(spec[2:], byteorder=byteorder,
+                                              is_subdtype=True)
+            if itemsize != 1:
+                # Not supported
+                raise ValueError("Non item-size 1 structures not supported")
+        elif spec[0].isalpha():
+            j = 1
+            for j in xrange(1, len(spec)):
+                if not spec[j].isalpha():
+                    break
+            typechar = spec[:j]
+            spec = spec[j:]
+            is_padding = (typechar == 'x')
+            dtypechar = _pep3118_map[typechar]
+            if dtypechar in 'USV':
+                dtypechar += '%d' % itemsize
+                itemsize = 1
+            value = dtype(byteorder + dtypechar)
+        else:
+            raise ValueError("Unknown PEP 3118 data type specifier %r" % spec)
+
+        # Convert itemsize to sub-array
+        if itemsize != 1:
+            value = dtype((value, (itemsize,)))
+
+        # Sub-arrays (2)
+        if shape is not None:
+            value = dtype((value, shape))
+
+        # Field name
+        if spec and spec.startswith(':'):
+            i = spec[1:].index(':') + 1
+            name = spec[1:i]
+            spec = spec[i+1:]
+            explicit_name = True
+        else:
+            name = 'f%d' % findex
+            findex += 1
+
+        if not is_padding:
+            fields[name] = (value, offset)
+        offset += value.itemsize
+
+
+    if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0:
+        ret = fields['f0'][0]
+    else:
+        ret = dtype(fields)
+
+    if is_subdtype:
+        return ret, spec
+    else:
+        return ret

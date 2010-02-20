@@ -594,3 +594,67 @@ NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
     (releasebufferproc)0,
 #endif
 };
+
+
+/*************************************************************************
+ * Convert PEP 3118 format string to PyArray_Descr
+ */
+#if PY_VERSION_HEX >= 0x02060000
+
+NPY_NO_EXPORT PyArray_Descr*
+_descriptor_from_pep3118_format(char *s)
+{
+    char *buf, *p;
+    int in_name = 0;
+    PyArray_Descr *descr;
+    PyObject *str;
+    PyObject *_numpy_internal;
+
+    if (s == NULL) {
+        return PyArray_DescrNewFromType(PyArray_BYTE);
+    }
+
+    /* Strip whitespace, except from field names */
+    buf = (char*)malloc(strlen(s) + 1);
+    p = buf;
+    while (*s != '\0') {
+        if (*s == ':') {
+            in_name = !in_name;
+            *p = *s;
+        }
+        else if (in_name || !NumPyOS_ascii_isspace(*s)) {
+            *p = *s;
+        }
+        ++p;
+        ++s;
+    }
+    *p = '\0';
+
+    /* Convert */
+    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    if (_numpy_internal == NULL) {
+        return NULL;
+    }
+    str = PyUString_FromStringAndSize(buf, strlen(buf));
+    descr = PyObject_CallMethod(_numpy_internal, "_dtype_from_pep3118",
+                                "O", str);
+    Py_DECREF(str);
+    if (descr == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                     "'%s' is not a valid PEP 3118 buffer format string", buf);
+    }
+    free(buf);
+    return descr;
+}
+
+#else
+
+NPY_NO_EXPORT PyArray_Descr*
+_descriptor_from_pep3118_format(char *s)
+{
+    PyErr_SetString(PyExc_RuntimeError,
+                    "PEP 3118 is not supported on Python versions < 2.6");
+    return NULL;
+}
+
+#endif

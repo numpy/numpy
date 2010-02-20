@@ -336,7 +336,7 @@ _ASCII_FORMAT(long double, l, double)
  *
  * Same as isspace under C locale
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_isspace(char c)
 {
     return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t'
