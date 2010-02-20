@@ -138,6 +138,11 @@ npy_PyFile_Dup(PyObject *file, char *mode)
 {
     int fd, fd2;
     PyObject *ret, *os;
+    /* Flush first to ensure things end up in the file in the correct order */
+    ret = PyObject_CallMethod(file, "flush", "");
+    if (ret == NULL) {
+        return NULL;
+    }
     fd = PyObject_AsFileDescriptor(file);
     if (fd == -1) {
         return NULL;
