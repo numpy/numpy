@@ -327,12 +327,19 @@ _buffer_info_new(PyArrayObject *arr)
 
     /* Fill in shape and strides */
     info->ndim = PyArray_NDIM(arr);
-    info->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
-                                      * PyArray_NDIM(arr) * 2 + 1);
-    info->strides = info->shape + PyArray_NDIM(arr);
-    for (k = 0; k < PyArray_NDIM(arr); ++k) {
-        info->shape[k] = PyArray_DIMS(arr)[k];
-        info->strides[k] = PyArray_STRIDES(arr)[k];
+
+    if (info->ndim == 0) {
+        info->shape = NULL;
+        info->strides = NULL;
+    }
+    else {
+        info->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
+                                          * PyArray_NDIM(arr) * 2 + 1);
+        info->strides = info->shape + PyArray_NDIM(arr);
+        for (k = 0; k < PyArray_NDIM(arr); ++k) {
+            info->shape[k] = PyArray_DIMS(arr)[k];
+            info->strides[k] = PyArray_STRIDES(arr)[k];
+        }
     }
 
     return info;
@@ -465,15 +472,13 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     self = (PyArrayObject*)obj;
 
     if (view == NULL) {
-        return -1;
+        goto fail;
     }
 
-    view->format = NULL;
-    view->shape = NULL;
-
+    /* Check whether we can provide the wanted properties */
     if ((flags & PyBUF_C_CONTIGUOUS) == PyBUF_C_CONTIGUOUS &&
         !PyArray_CHKFLAGS(self, NPY_C_CONTIGUOUS)) {
-        PyErr_SetString(PyExc_ValueError, "ndarray is not C contiguous");
+        PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
     if ((flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS &&
@@ -486,6 +491,23 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         PyErr_SetString(PyExc_ValueError, "ndarray is not contiguous");
         goto fail;
     }
+    if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES &&
+        !PyArray_CHKFLAGS(self, NPY_C_CONTIGUOUS)) {
+        /* Non-strided buffers must be C-contiguous */
+        PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
+        goto fail;
+    }
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE &&
+        !PyArray_ISWRITEABLE(self)) {
+        PyErr_SetString(PyExc_ValueError, "ndarray is not writeable");
+        goto fail;
+    }
+
+    /* Fill in information */
+    info = _buffer_get_info(obj);
+    if (info == NULL) {
+        goto fail;
+    }
 
     view->buf = PyArray_DATA(self);
     view->suboffsets = NULL;
@@ -493,37 +515,17 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     view->readonly = !PyArray_ISWRITEABLE(self);
     view->internal = NULL;
     view->len = PyArray_NBYTES(self);
-
-    info = _buffer_get_info(obj);
-    if (info == NULL) {
-        goto fail;
-    }
-
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
         view->format = info->format;
-    }
-    else {
+    } else {
         view->format = NULL;
     }
-
-    if ((flags & PyBUF_STRIDED) == PyBUF_STRIDED) {
-        view->ndim = info->ndim;
-        view->shape = info->shape;
-        view->strides = info->strides;
-    }
-    else if (PyArray_ISONESEGMENT(self)) {
-        view->ndim = 0;
-        view->shape = NULL;
-        view->strides = NULL;
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "ndarray is not single-segment");
-        goto fail;
-    }
-
+    view->ndim = info->ndim;
+    view->shape = info->shape;
+    view->strides = info->strides;
     view->obj = (PyObject*)self;
-    Py_INCREF(self);
 
+    Py_INCREF(self);
     return 0;
 
 fail:
