@@ -18,7 +18,7 @@ if sys.version_info[0] >= 3:
             return s
         return s.encode('iso-8859-1')
     def isfileobj(f):
-        return isinstance(f, io.IOBase)
+        return isinstance(f, io.FileIO)
     strchar = 'U'
 else:
     bytes = str
