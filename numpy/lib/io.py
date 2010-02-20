@@ -24,7 +24,7 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype, _bytes_to_name
 
-from numpy.compat import asbytes, asstr, asbytes_nested
+from numpy.compat import asbytes, asstr, asbytes_nested, bytes
 
 if sys.version_info[0] >= 3:
     import io
