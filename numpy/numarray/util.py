@@ -1,16 +1,24 @@
 import os
-import numpy
+import numpy as np
 
 __all__ = ['MathDomainError', 'UnderflowError', 'NumOverflowError',
            'handleError', 'get_numarray_include_dirs']
 
-class MathDomainError(ArithmeticError): pass
-class UnderflowError(ArithmeticError): pass
-class NumOverflowError(OverflowError, ArithmeticError): pass
+class MathDomainError(ArithmeticError):
+    pass
+
+
+class UnderflowError(ArithmeticError):
+    pass
+
+
+class NumOverflowError(OverflowError, ArithmeticError):
+    pass
+
 
 def handleError(errorStatus, sourcemsg):
     """Take error status and use error mode to handle it."""
-    modes = numpy.geterr()
+    modes = np.geterr()
     if errorStatus & numpy.FPE_INVALID:
         if modes['invalid'] == "warn":
             print "Warning: Encountered invalid numeric result(s)", sourcemsg
