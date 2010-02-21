@@ -1156,6 +1156,8 @@ class poly1d(object):
             other = poly1d(other)
             return polydiv(other, self)
 
+    __rtruediv__ = __rdiv__
+
     def __eq__(self, other):
         return NX.alltrue(self.coeffs == other.coeffs)
 
