@@ -198,14 +198,14 @@ class TestIsfinite(TestCase):
         assert_all(alltrue(res,axis=0))
 
     def test_posinf(self):
-        olderr = seterr(divide='ignore')
+        olderr = seterr(divide='ignore', invalid='ignore')
         try:
             assert_all(isfinite(array((1.,))/0.) == 0)
         finally:
             seterr(**olderr)
 
     def test_neginf(self):
-        olderr = seterr(divide='ignore')
+        olderr = seterr(divide='ignore', invalid='ignore')
         try:
             assert_all(isfinite(array((-1.,))/0.) == 0)
         finally:
@@ -243,28 +243,28 @@ class TestIsinf(TestCase):
         assert_all(alltrue(res,axis=0))
 
     def test_posinf(self):
-        olderr = seterr(divide='ignore')
+        olderr = seterr(divide='ignore', invalid='ignore')
         try:
             assert_all(isinf(array((1.,))/0.) == 1)
         finally:
             seterr(**olderr)
 
     def test_posinf_scalar(self):
-        olderr = seterr(divide='ignore')
+        olderr = seterr(divide='ignore', invalid='ignore')
         try:
             assert_all(isinf(array(1.,)/0.) == 1)
         finally:
             seterr(**olderr)
 
     def test_neginf(self):
-        olderr = seterr(divide='ignore')
+        olderr = seterr(divide='ignore', invalid='ignore')
         try:
             assert_all(isinf(array((-1.,))/0.) == 1)
         finally:
             seterr(**olderr)
 
     def test_neginf_scalar(self):
-        olderr = seterr(divide='ignore')
+        olderr = seterr(divide='ignore', invalid='ignore')
         try:
             assert_all(isinf(array(-1.)/0.) == 1)
         finally:
