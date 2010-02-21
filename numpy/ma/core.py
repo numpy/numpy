@@ -405,6 +405,7 @@ def _check_fill_value(fill_value, ndtype):
                 raise ValueError(err_msg % (fill_value, fdtype))
         else:
             descr = ndtype.descr
+            fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, descr),
                                   dtype=ndtype)
     else:

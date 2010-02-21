@@ -1307,41 +1307,41 @@ class TestFillingValues(TestCase):
         _check_fill_value = np.ma.core._check_fill_value
         ndtype = [('a', int), ('b', float), ('c', "|S3")]
         # A check on a list should return a single record
-        fval = _check_fill_value([-999, -999.9, "???"], ndtype)
+        fval = _check_fill_value([-999, -12345678.9, "???"], ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -999.9, "???"])
+        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
         # A check on None should output the defaults
         fval = _check_fill_value(None, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
         assert_equal(fval.item(), [default_fill_value(0),
                                    default_fill_value(0.),
-                                   default_fill_value("0")])
+                                   asbytes(default_fill_value("0"))])
         #.....Using a structured type as fill_value should work
-        fill_val = np.array((-999, -999.9, "???"), dtype=ndtype)
+        fill_val = np.array((-999, -12345678.9, "???"), dtype=ndtype)
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -999.9, "???"])
+        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
         #.....Using a flexible type w/ a different type shouldn't matter
-        fill_val = np.array((-999, -999.9, "???"),
+        fill_val = np.array((-999, -12345678.9, "???"),
                             dtype=[("A", int), ("B", float), ("C", "|S3")])
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -999.9, "???"])
+        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
         #.....Using an object-array shouldn't matter either
-        fill_value = np.array((-999, -999.9, "???"), dtype=object)
+        fill_value = np.array((-999, -12345678.9, "???"), dtype=object)
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -999.9, "???"])
+        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
         #
-        fill_value = np.array((-999, -999.9, "???"))
+        fill_value = np.array((-999, -12345678.9, "???"))
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -999.9, "???"])
+        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
         #.....One-field-only flexible type should work as well
         ndtype = [("a", int)]
-        fval = _check_fill_value(-999, ndtype)
+        fval = _check_fill_value(-999999999, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), (-999,))
+        assert_equal(fval.item(), (-999999999,))
 
 
     def test_fillvalue_conversion(self):
