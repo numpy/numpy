@@ -1209,7 +1209,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if value not in entry:
                 entry.append(value)
     # We have a string : apply it to all entries
-    elif isinstance(user_missing_values, basestring):
+    elif isinstance(user_missing_values, bytes):
         user_value = user_missing_values.split(asbytes(","))
         for entry in missing_values:
             entry.extend(user_value)

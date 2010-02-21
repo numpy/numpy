@@ -600,7 +600,7 @@ class StringConverter:
         if missing_values is None:
             self.missing_values = set([asbytes('')])
         else:
-            if isinstance(missing_values, basestring):
+            if isinstance(missing_values, bytes):
                 missing_values = missing_values.split(asbytes(","))
             self.missing_values = set(list(missing_values) + [asbytes('')])
         #
