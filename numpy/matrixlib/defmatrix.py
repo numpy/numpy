@@ -6,21 +6,33 @@ from numpy.core.numeric import concatenate, isscalar, binary_repr, identity, asa
 from numpy.core.numerictypes import issubdtype
 
 # make translation table
-_table = [None]*256
-for k in range(256):
-    _table[k] = chr(k)
-_table = ''.join(_table)
-
 _numchars = '0123456789.-+jeEL'
-_todelete = []
-for k in _table:
-    if k not in _numchars:
-        _todelete.append(k)
-_todelete = ''.join(_todelete)
-del k
 
-def _eval(astr):
-    return eval(astr.translate(_table,_todelete))
+if sys.version_info[0] >= 3:
+    class _NumCharTable:
+        def __getitem__(self, i):
+            if chr(i) in _numchars:
+                return chr(i)
+            else:
+                return None
+    _table = _NumCharTable()
+    def _eval(astr):
+        return eval(astr.translate(_table))
+else:
+    _table = [None]*256
+    for k in range(256):
+        _table[k] = chr(k)
+    _table = ''.join(_table)
+
+    _todelete = []
+    for k in _table:
+        if k not in _numchars:
+            _todelete.append(k)
+    _todelete = ''.join(_todelete)
+    del k
+
+    def _eval(astr):
+        return eval(astr.translate(_table,_todelete))
 
 def _convert_from_string(data):
     rows = data.split(';')
