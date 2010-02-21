@@ -131,7 +131,7 @@ _IntTupleFromSsizet(int len, Py_ssize_t *vals)
 static PyObject *
 memorysimpleview_format_get(PyMemorySimpleViewObject *self)
 {
-    return PyUnicode_FromString(self->view.format);
+    return PyUString_FromString(self->view.format);
 }
 
 static PyObject *
