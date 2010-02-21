@@ -89,14 +89,18 @@ class TestMa(TestCase):
             self.assertTrue(eq(x - y, xm - ym))
             self.assertTrue(eq(x * y, xm * ym))
             olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            self.assertTrue(eq(x / y, xm / ym))
-            numpy.seterr(**olderr)
+            try:
+                self.assertTrue(eq(x / y, xm / ym))
+            finally:
+                numpy.seterr(**olderr)
             self.assertTrue(eq(a10 + y, a10 + ym))
             self.assertTrue(eq(a10 - y, a10 - ym))
             self.assertTrue(eq(a10 * y, a10 * ym))
             olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            self.assertTrue(eq(a10 / y, a10 / ym))
-            numpy.seterr(**olderr)
+            try:
+                self.assertTrue(eq(a10 / y, a10 / ym))
+            finally:
+                numpy.seterr(**olderr)
             self.assertTrue(eq(x + a10, xm + a10))
             self.assertTrue(eq(x - a10, xm - a10))
             self.assertTrue(eq(x * a10, xm * a10))
@@ -108,8 +112,10 @@ class TestMa(TestCase):
             self.assertTrue(eq(numpy.subtract(x,y), subtract(xm, ym)))
             self.assertTrue(eq(numpy.multiply(x,y), multiply(xm, ym)))
             olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            self.assertTrue(eq(numpy.divide(x,y), divide(xm, ym)))
-            numpy.seterr(**olderr)
+            try:
+                self.assertTrue(eq(numpy.divide(x,y), divide(xm, ym)))
+            finally:
+                numpy.seterr(**olderr)
 
 
     def test_testMixedArithmetic(self):
@@ -128,10 +134,12 @@ class TestMa(TestCase):
         self.assertTrue (eq(numpy.tan(x), tan(xm)))
         self.assertTrue (eq(numpy.tanh(x), tanh(xm)))
         olderr = numpy.seterr(divide='ignore', invalid='ignore')
-        self.assertTrue (eq(numpy.sqrt(abs(x)), sqrt(xm)))
-        self.assertTrue (eq(numpy.log(abs(x)), log(xm)))
-        self.assertTrue (eq(numpy.log10(abs(x)), log10(xm)))
-        numpy.seterr(**olderr)
+        try:
+            self.assertTrue (eq(numpy.sqrt(abs(x)), sqrt(xm)))
+            self.assertTrue (eq(numpy.log(abs(x)), log(xm)))
+            self.assertTrue (eq(numpy.log10(abs(x)), log10(xm)))
+        finally:
+            numpy.seterr(**olderr)
         self.assertTrue (eq(numpy.exp(x), exp(xm)))
         self.assertTrue (eq(numpy.arcsin(z), arcsin(zm)))
         self.assertTrue (eq(numpy.arccos(z), arccos(zm)))
@@ -658,25 +666,28 @@ class TestUfuncs(TestCase):
 
 
     def test_testUfuncRegression(self):
+        f_invalid_ignore = ['sqrt', 'arctanh', 'arcsin', 'arccos',
+                'arccosh', 'arctanh', 'log', 'log10','divide',
+                'true_divide', 'floor_divide', 'remainder', 'fmod']
         for f in ['sqrt', 'log', 'log10', 'exp', 'conjugate',
-                  'sin', 'cos', 'tan',
-                  'arcsin', 'arccos', 'arctan',
-                  'sinh', 'cosh', 'tanh',
-                  'arcsinh',
-                  'arccosh',
-                  'arctanh',
-                  'absolute', 'fabs', 'negative',
-                  # 'nonzero', 'around',
-                  'floor', 'ceil',
-                  # 'sometrue', 'alltrue',
-                  'logical_not',
-                  'add', 'subtract', 'multiply',
-                  'divide', 'true_divide', 'floor_divide',
-                  'remainder', 'fmod', 'hypot', 'arctan2',
-                  'equal', 'not_equal', 'less_equal', 'greater_equal',
-                  'less', 'greater',
-                  'logical_and', 'logical_or', 'logical_xor',
-                  ]:
+                'sin', 'cos', 'tan',
+                'arcsin', 'arccos', 'arctan',
+                'sinh', 'cosh', 'tanh',
+                'arcsinh',
+                'arccosh',
+                'arctanh',
+                'absolute', 'fabs', 'negative',
+                # 'nonzero', 'around',
+                'floor', 'ceil',
+                # 'sometrue', 'alltrue',
+                'logical_not',
+                'add', 'subtract', 'multiply',
+                'divide', 'true_divide', 'floor_divide',
+                'remainder', 'fmod', 'hypot', 'arctan2',
+                'equal', 'not_equal', 'less_equal', 'greater_equal',
+                'less', 'greater',
+                'logical_and', 'logical_or', 'logical_xor',
+                ]:
             try:
                 uf = getattr(umath, f)
             except AttributeError:
@@ -684,17 +695,15 @@ class TestUfuncs(TestCase):
             mf = getattr(numpy.ma, f)
             args = self.d[:uf.nin]
             olderr = numpy.geterr()
-            f_invalid_ignore = ['sqrt', 'arctanh', 'arcsin', 'arccos',
-                                'arccosh', 'arctanh', 'log', 'log10','divide',
-                                'true_divide', 'floor_divide', 'remainder',
-                                'fmod']
-            if f in f_invalid_ignore:
-                numpy.seterr(invalid='ignore')
-            if f in ['arctanh', 'log', 'log10']:
-                numpy.seterr(divide='ignore')
-            ur = uf(*args)
-            mr = mf(*args)
-            numpy.seterr(**olderr)
+            try:
+                if f in f_invalid_ignore:
+                    numpy.seterr(invalid='ignore')
+                if f in ['arctanh', 'log', 'log10']:
+                    numpy.seterr(divide='ignore')
+                ur = uf(*args)
+                mr = mf(*args)
+            finally:
+                numpy.seterr(**olderr)
             self.assertTrue(eq(ur.filled(0), mr.filled(0), f))
             self.assertTrue(eqmask(ur.mask, mr.mask))
 

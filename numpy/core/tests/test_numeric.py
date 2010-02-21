@@ -223,26 +223,32 @@ class TestBoolScalar(TestCase):
 class TestSeterr(TestCase):
     def test_set(self):
         err = seterr()
-        old = seterr(divide='warn')
-        self.assertTrue(err == old)
-        new = seterr()
-        self.assertTrue(new['divide'] == 'warn')
-        seterr(over='raise')
-        self.assertTrue(geterr()['over'] == 'raise')
-        self.assertTrue(new['divide'] == 'warn')
-        seterr(**old)
-        self.assertTrue(geterr() == old)
+        try:
+            old = seterr(divide='warn')
+            self.assertTrue(err == old)
+            new = seterr()
+            self.assertTrue(new['divide'] == 'warn')
+            seterr(over='raise')
+            self.assertTrue(geterr()['over'] == 'raise')
+            self.assertTrue(new['divide'] == 'warn')
+            seterr(**old)
+            self.assertTrue(geterr() == old)
+        finally:
+            seterr(**err)
 
     def test_divide_err(self):
-        seterr(divide='raise')
+        err = seterr(divide='raise')
         try:
+            try:
+                array([1.]) / array([0.])
+            except FloatingPointError:
+                pass
+            else:
+                self.fail()
+            seterr(divide='ignore')
             array([1.]) / array([0.])
-        except FloatingPointError:
-            pass
-        else:
-            self.fail()
-        seterr(divide='ignore')
-        array([1.]) / array([0.])
+        finally:
+            seterr(**err)
 
 
 class TestFromiter(TestCase):

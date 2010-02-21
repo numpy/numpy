@@ -465,12 +465,16 @@ def check_real_value(f, x1, y1, x, exact=True):
         assert_almost_equal(f(z1), x)
 
 def check_complex_value(f, x1, y1, x2, y2, exact=True):
+    err = np.seterr(invalid='ignore')
     z1 = np.array([complex(x1, y1)])
     z2 = np.complex(x2, y2)
-    if exact:
-        assert_equal(f(z1), z2)
-    else:
-        assert_almost_equal(f(z1), z2)
+    try:
+        if exact:
+            assert_equal(f(z1), z2)
+        else:
+            assert_almost_equal(f(z1), z2)
+    finally:
+        np.seterr(**err)
 
 if __name__ == "__main__":
     run_module_suite()
