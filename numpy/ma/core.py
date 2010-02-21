@@ -1057,9 +1057,6 @@ class _DomainedBinaryOperation:
         # Get the data and the mask
         (da, db) = (getdata(a, subok=False), getdata(b, subok=False))
         (ma, mb) = (getmask(a), getmask(b))
-        # Save the current error status
-        err_status_ini = np.geterr()
-        np.seterr(divide='ignore', invalid='ignore')
         # Get the result
         err_status_ini = np.geterr()
         try:
@@ -1067,8 +1064,6 @@ class _DomainedBinaryOperation:
             result = self.f(da, db, *args, **kwargs)
         finally:
             np.seterr(**err_status_ini)
-        # Reset the error status
-        np.seterr(**err_status_ini)
         # Get the mask as a combination of ma, mb and invalid
         m = ~umath.isfinite(result)
         m |= ma
