@@ -6,6 +6,8 @@ import numpy as np
 from numpy.linalg import lapack_lite
 from numpy.testing import TestCase, dec
 
+from numpy.compat import asbytes_nested
+
 class FindDependenciesLdd:
     def __init__(self):
         self.cmd = ['ldd']
@@ -41,7 +43,7 @@ class TestF77Mismatch(TestCase):
     def test_lapack(self):
         f = FindDependenciesLdd()
         deps = f.grep_dependencies(lapack_lite.__file__,
-                                   ['libg2c', 'libgfortran'])
+                                   asbytes_nested(['libg2c', 'libgfortran']))
         self.failIf(len(deps) > 1,
 """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
 cause random crashes and wrong results. See numpy INSTALL.txt for more

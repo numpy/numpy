@@ -1046,7 +1046,7 @@ def eig(a):
             w = wr+1j*wi
             v = array(vr, w.dtype)
             ind = flatnonzero(wi != 0.0)      # indices of complex e-vals
-            for i in range(len(ind)/2):
+            for i in range(len(ind)//2):
                 v[ind[2*i]] = vr[ind[2*i]] + 1j*vr[ind[2*i+1]]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
             result_t = _complexType(result_t)
