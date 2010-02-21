@@ -15,7 +15,7 @@ from datetime import datetime
 
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes, asbytes_nested, bytes
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -171,8 +171,9 @@ class TestSaveTxt(TestCase):
         np.savetxt(c, a, fmt=fmt)
         c.seek(0)
         assert_equal(c.readlines(),
-               [(fmt + ' ' + fmt + '\n') % (1, 2),
-                (fmt + ' ' + fmt + '\n') % (3, 4)])
+                     asbytes_nested(
+            [(fmt + ' ' + fmt + '\n') % (1, 2),
+             (fmt + ' ' + fmt + '\n') % (3, 4)]))
 
         a = np.array([[1, 2], [3, 4]], int)
         c = StringIO()
@@ -186,7 +187,7 @@ class TestSaveTxt(TestCase):
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, ['1\n', '2\n', '3\n', '4\n'])
+        assert_equal(lines, asbytes_nested(['1\n', '2\n', '3\n', '4\n']))
 
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
@@ -200,7 +201,7 @@ class TestSaveTxt(TestCase):
         c = StringIO()
         np.savetxt(c, a, delimiter=asbytes(','), fmt='%d')
         c.seek(0)
-        assert_equal(c.readlines(), ['1,2\n', '3,4\n'])
+        assert_equal(c.readlines(), asbytes_nested(['1,2\n', '3,4\n']))
 
     def test_format(self):
         a = np.array([(1, 2), (3, 4)])
@@ -667,7 +668,7 @@ M   33  21.99
     def test_dtype_with_converters(self):
         dstr = "2009; 23; 46"
         test = np.ndfromtxt(StringIO(dstr,),
-                            delimiter=";", dtype=float, converters={0:str})
+                            delimiter=";", dtype=float, converters={0:bytes})
         control = np.array([('2009', 23., 46)],
                            dtype=[('f0', '|S4'), ('f1', float), ('f2', float)])
         assert_equal(test, control)
@@ -709,7 +710,7 @@ M   33  21.99
         "Test user_converters w/ explicit (standard) dtype"
         data = StringIO('skip,skip,2001-01-01,1.0,skip')
         test = np.genfromtxt(data, delimiter=",", names=None, dtype=float,
-                             usecols=(2, 3), converters={2: str})
+                             usecols=(2, 3), converters={2: bytes})
         control = np.array([('2001-01-01', 1.)],
                            dtype=[('', '|S10'), ('', float)])
         assert_equal(test, control)

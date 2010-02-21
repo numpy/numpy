@@ -9,6 +9,7 @@ from numpy import ( arange, rot90, add, fliplr, flipud, zeros, ones, eye,
                     triu_indices_from, tril_indices, tril_indices_from )
 
 import numpy as np
+from numpy.compat import asbytes, asbytes_nested
 
 def get_mat(n):
     data = arange(n)
@@ -65,7 +66,8 @@ class TestEye(TestCase):
         assert_equal(eye(3, 2, -3), [[0, 0], [0, 0], [0, 0]])
 
     def test_strings(self):
-        assert_equal(eye(2, 2, dtype='S3'), [['1', ''], ['', '1']])
+        assert_equal(eye(2, 2, dtype='S3'),
+                     asbytes_nested([['1', ''], ['', '1']]))
 
     def test_bool(self):
         assert_equal(eye(2, 2, dtype=bool), [[True, False], [False, True]])
