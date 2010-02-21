@@ -125,6 +125,13 @@ There are some utility functions needed for 3K compatibility in
 More can be added as needed.
 
 
+Bytes vs. strings
+-----------------
+
+At many points in Numpy, bytes literals are needed. These can be created via
+numpy.compat.asbytes and asbytes_nested.
+
+
 Exception syntax
 ----------------
 
@@ -374,7 +381,7 @@ The Py2/Py3 compatible structure definition looks like::
 .. todo::
 
    We will also have to make sure the
-   *_true_divide variants are defined. This should also be done for
+   ``*_true_divide`` variants are defined. This should also be done for
    python < 3.x, but that introduces a requirement for the
    Py_TPFLAGS_HAVE_CLASS in the type flag.
 
@@ -408,11 +415,8 @@ There are a couple of places that need further attention:
 
 - VOID_getitem
 
-  In some cases, this returns a buffer object, built from scratch to
-  point to a region of memory. However, in Py3 there is no stand-alone
-  buffer object: the MemoryView always piggy-packs on some other object.
-
-  Should it actually return a Bytes object containing a copy of the data?
+  In some cases, this returns a buffer object on Python 2. On Python 3,
+  there is no stand-alone buffer object, so we return a byte array instead.
 
 - multiarray.int_asbuffer
 
@@ -420,6 +424,7 @@ There are a couple of places that need further attention:
 
   Should we just remove this for Py3? It doesn't seem like it is used
   anywhere, and it doesn't sound very useful.
+
 
 The Py2/Py3 compatible PyBufferMethods definition looks like::
 
@@ -449,19 +454,11 @@ The Py2/Py3 compatible PyBufferMethods definition looks like::
 
 .. todo::
 
-   Is there a cleaner way out of the ``bf_releasebuffer`` issue?  It
-   seems a bit that on Py2.6, the new buffer interface is a bit
-   troublesome, as apparently Numpy will be the first piece of code
-   exercising it more fully.
-
-   It seems we should submit patches to Python on this. At least "s#"
-   implementation on Py3 won't work at all, since the old buffer
-   interface is no more present. But perhaps Py3 users should just give
-   up using "s#" in ParseTuple, and use the 3118 interface instead.
+   Figure out what to do with int_asbuffer
 
 .. todo::
 
-   Make ndarray shape and strides natively Py_ssize_t?
+   There's stuff to clean up in numarray/_capi.c
 
 
 PyBuffer (consumer)
@@ -567,7 +564,7 @@ PyString is currently defined to PyBytes in npy_3kcompat.h, for making
 things to build. This definition will be removed when Py3 support is
 finished.
 
-Where *_AsStringAndSize is used, more care needs to be taken, as
+Where ``*_AsStringAndSize`` is used, more care needs to be taken, as
 encoding Unicode to Bytes may needed. If this cannot be avoided, the
 encoding should be ASCII, unless there is a very strong reason to do
 otherwise. Especially, I don't believe we should silently fall back to
@@ -644,9 +641,11 @@ comparison between Unicode and Bytes undefined.
 Fate of the 'S' dtype
 ---------------------
 
-"Strings" in Py3 are now Unicode, so it would make sense to
+"Strings" in Py3 are now Unicode, so it might make sense to
 re-associate Numpy's dtype letter 'S' with Unicode, and introduce
 a separate letter for Bytes.
+
+Already I changed str_ == unicode_.
 
 The Bytes dtype can probably not be wholly dropped -- there may be
 some use for 1-byte character strings in e.g. genetics?
@@ -657,7 +656,7 @@ some use for 1-byte character strings in e.g. genetics?
 
 .. todo::
 
-   All dtype code should be checked for usage of *_STRINGLTR.
+   All dtype code should be checked for usage of ``*_STRINGLTR``.
 
 .. todo::
 
@@ -776,6 +775,20 @@ to successfully read pickles created by Py2.
 
    If forward compatibility is not possible, aim to store also the endian
    character as Bytes...
+
+
+Module initialization
+---------------------
+
+The module initialization API changed in Python 3.1.
+
+Most Numpy modules are now converted.
+
+.. todo::
+
+   Except numarray/_capi.c and _blasdot.c show compilation warnings.
+   This indicates return values are not handled OK -- the init function
+   is not void any more.
 
 
 PyTypeObject
@@ -938,10 +951,10 @@ Most importantly, in Py3 there is no way to extract a FILE* pointer
 from the Python file object. There are, however, new PyFile_* functions
 for writing and reading data from the file.
 
-Temporary compatibility wrappers that return a `fdopen` file pointer
-are in private/npy_3kcompat.h.  However, this is an unsatisfactory
-approach, since the FILE* pointer returned by `fdopen` cannot be freed
-as `fclose` on it would also close the underlying file.
+Temporary compatibility wrappers that return a dup-ed `fdopen` file pointer are
+in private/npy_3kcompat.h. This causes more flushing to be necessary, but it
+appears there is no alternative solution. The FILE pointer so obtained must be
+closed with fclose after use.
 
 .. todo::
 
@@ -957,14 +970,6 @@ READONLY
 The RO alias for READONLY is no more.
 
 These were replaced, as READONLY is present also on Py2.
-
-
-Py_TPFLAGS_CHECKTYPES
----------------------
-
-This has vanished and is always on in Py3K.
-
-It is currently #ifdef'd out for Py3.
 
 
 PyOS
@@ -988,3 +993,17 @@ quite likely, not the correct thing to do.
 .. todo::
 
    Do the right thing for PyInstance checks.
+
+
+PyCObject / PyCapsule
+---------------------
+
+The PyCObject API is removed in Python 3.2, so we need to rewrite it
+using PyCapsule.
+
+.. todo::
+
+   This probably requires adding some backwards compatibility PyCapsule_*
+   definitions in npy_py3kcompat.h, and using only PyCapsule_* throughout
+   Numpy.
+
