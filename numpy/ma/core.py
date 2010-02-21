@@ -1068,6 +1068,10 @@ class _DomainedBinaryOperation:
         m = ~umath.isfinite(result)
         m |= ma
         m |= mb
+        # Apply the domain
+        domain = ufunc_domain.get(self.f, None)
+        if domain is not None:
+            m |= filled(domain(da, db), True)
         # Take care of the scalar case first
         if (not m.ndim):
             if m:
