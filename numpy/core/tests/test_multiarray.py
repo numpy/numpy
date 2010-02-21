@@ -1489,14 +1489,17 @@ if sys.version_info >= (2, 6):
                   ('g', 'I'),
                   ('h', 'L'),
                   ('hx', 'Q'),
-                  ('i', np.float),
+                  ('i', np.single),
                   ('j', np.double),
                   ('k', np.longdouble),
+                  ('ix', np.csingle),
+                  ('jx', np.cdouble),
+                  ('kx', np.clongdouble),
                   ('l', 'S4'),
                   ('m', 'U4'),
                   ('n', 'V3'),
                   ('o', '?')]
-            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                            asbytes('aaaa'), 'bbbb', asbytes('xxx'), True)],
                          dtype=dt)
             self._check_roundtrip(x)
@@ -1519,14 +1522,14 @@ if sys.version_info >= (2, 6):
             # Native-only data types can be passed through the buffer interface
             # only in native byte order
             if sys.byteorder == 'little':
-                x = np.array([1,2,3], dtype='>i8')
+                x = np.array([1,2,3], dtype='>q')
                 assert_raises(ValueError, self._check_roundtrip, x)
-                x = np.array([1,2,3], dtype='<i8')
+                x = np.array([1,2,3], dtype='<q')
                 self._check_roundtrip(x)
             else:
-                x = np.array([1,2,3], dtype='>i8')
+                x = np.array([1,2,3], dtype='>q')
                 self._check_roundtrip(x)
-                x = np.array([1,2,3], dtype='<i8')
+                x = np.array([1,2,3], dtype='<q')
                 assert_raises(ValueError, self._check_roundtrip, x)
 
         def test_export_simple_1d(self):
@@ -1570,27 +1573,31 @@ if sys.version_info >= (2, 6):
                   ('g', 'I'),
                   ('h', 'L'),
                   ('hx', 'Q'),
-                  ('i', np.float),
+                  ('i', np.single),
                   ('j', np.double),
                   ('k', np.longdouble),
+                  ('ix', np.csingle),
+                  ('jx', np.cdouble),
+                  ('kx', np.clongdouble),
                   ('l', 'S4'),
                   ('m', 'U4'),
                   ('n', 'V3'),
                   ('o', '?')]
-            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                            asbytes('aaaa'), 'bbbb', asbytes('   '), True)],
                          dtype=dt)
             y = memoryview(x)
-            assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=d:i:d:j:^g:k:4s:l:=4w:m:3x:n:?:o:}')
             assert_equal(y.shape, (1,))
             assert_equal(y.ndim, 1)
             assert_equal(y.suboffsets, None)
+
+            sz = sum([dtype(b).itemsize for a, b in dt])
             if dtype('l').itemsize == 4:
-                assert_equal(y.strides, (90,))
-                assert_equal(y.itemsize, 90)
+                assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:}')
             else:
-                assert_equal(y.strides, (102,))
-                assert_equal(y.itemsize, 102)
+                assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:}')
+            assert_equal(y.strides, (sz,))
+            assert_equal(y.itemsize, sz)
 
         def test_export_subarray(self):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', ('i', (2,2)))])
@@ -1603,19 +1610,19 @@ if sys.version_info >= (2, 6):
             assert_equal(y.itemsize, 16)
 
         def test_export_endian(self):
-            x = np.array([1,2,3], dtype='>l')
+            x = np.array([1,2,3], dtype='>i')
             y = memoryview(x)
             if sys.byteorder == 'little':
-                assert_equal(y.format, '>l')
+                assert_equal(y.format, '>i')
             else:
-                assert_equal(y.format, 'l')
+                assert_equal(y.format, 'i')
 
-            x = np.array([1,2,3], dtype='<l')
+            x = np.array([1,2,3], dtype='<i')
             y = memoryview(x)
             if sys.byteorder == 'little':
-                assert_equal(y.format, 'l')
+                assert_equal(y.format, 'i')
             else:
-                assert_equal(y.format, '<l')
+                assert_equal(y.format, '<i')
 
 if __name__ == "__main__":
     run_module_suite()
