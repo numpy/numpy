@@ -238,6 +238,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         }
 
         switch (descr->type_num) {
+        case NPY_BOOL:         if (_append_char(str, '?')) return -1; break;
         case NPY_BYTE:         if (_append_char(str, 'b')) return -1; break;
         case NPY_UBYTE:        if (_append_char(str, 'B')) return -1; break;
         case NPY_SHORT:        if (_append_char(str, 'h')) return -1; break;
@@ -254,6 +255,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_CFLOAT:       if (_append_str(str, "Zf")) return -1; break;
         case NPY_CDOUBLE:      if (_append_str(str, "Zd")) return -1; break;
         case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg")) return -1; break;
+        /* XXX: datetime */
+        /* XXX: timedelta */
+        case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
         case NPY_STRING: {
             char buf[128];
             PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);
@@ -268,9 +272,15 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             if (_append_str(str, buf)) return -1;
             break;
         }
-        case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
+        case NPY_VOID: {
+            /* Insert padding bytes */
+            char buf[128];
+            PyOS_snprintf(buf, sizeof(buf), "%dx", descr->elsize);
+            if (_append_str(str, buf)) return -1;
+            break;
+        }
         default:
-            PyErr_Format(PyExc_ValueError, "unknown dtype code %d",
+            PyErr_Format(PyExc_ValueError, "cannot convert dtype %d to buffer",
                          descr->type_num);
             return -1;
         }

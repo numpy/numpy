@@ -351,6 +351,7 @@ def _index_fields(ary, fields):
 # construct a Numpy dtype
 
 _pep3118_map = {
+    '?': '?',
     'b': 'b',
     'B': 'B',
     'h': 'h',
@@ -373,6 +374,7 @@ _pep3118_map = {
     'O': 'O',
     'x': 'V', # padding
 }
+_pep3118_typechars = ''.join(_pep3118_map.keys())
 
 def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
     from numpy.core.multiarray import dtype
@@ -421,10 +423,10 @@ def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
             if itemsize != 1:
                 # Not supported
                 raise ValueError("Non item-size 1 structures not supported")
-        elif spec[0].isalpha():
+        elif spec[0] in _pep3118_typechars:
             j = 1
             for j in xrange(1, len(spec)):
-                if not spec[j].isalpha():
+                if spec[j] not in _pep3118_typechars:
                     break
             typechar = spec[:j]
             spec = spec[j:]
@@ -446,16 +448,18 @@ def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
             value = dtype((value, shape))
 
         # Field name
+        this_explicit_name = False
         if spec and spec.startswith(':'):
             i = spec[1:].index(':') + 1
             name = spec[1:i]
             spec = spec[i+1:]
             explicit_name = True
+            this_explicit_name = True
         else:
             name = 'f%d' % findex
             findex += 1
 
-        if not is_padding:
+        if not is_padding or this_explicit_name:
             fields[name] = (value, offset)
         offset += value.itemsize
 

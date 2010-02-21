@@ -1491,9 +1491,11 @@ if sys.version_info >= (2, 6):
                   ('j', np.double),
                   ('k', np.longdouble),
                   ('l', 'S4'),
-                  ('m', 'U4')]
+                  ('m', 'U4'),
+                  ('n', 'V3'),
+                  ('o', '?')]
             x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                           asbytes('aaaa'), 'bbbb')],
+                           asbytes('aaaa'), 'bbbb', asbytes('xxx'), True)],
                          dtype=dt)
             self._check_roundtrip(x)
 
@@ -1549,17 +1551,19 @@ if sys.version_info >= (2, 6):
                   ('j', np.double),
                   ('k', np.longdouble),
                   ('l', 'S4'),
-                  ('m', 'U4')]
+                  ('m', 'U4'),
+                  ('n', 'V3'),
+                  ('o', '?')]
             x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                           asbytes('aaaa'), 'bbbb')],
+                           asbytes('aaaa'), 'bbbb', asbytes('   '), True)],
                          dtype=dt)
             y = memoryview(x)
-            assert y.format == 'T{b:a:=h:b:=l:c:=q:d:B:e:=H:f:=L:g:=Q:h:=d:i:=d:j:=g:k:4s:l:=4w:m:}'
+            assert y.format == 'T{b:a:=h:b:=l:c:=q:d:B:e:=H:f:=L:g:=Q:h:=d:i:=d:j:=g:k:4s:l:=4w:m:3x:n:?:o:}'
             assert y.shape == (1,)
             assert y.ndim == 1
-            assert y.strides == (78,)
+            assert y.strides == (82,)
             assert y.suboffsets is None
-            assert y.itemsize == 78
+            assert y.itemsize == 82
 
         def test_export_subarray(self):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
