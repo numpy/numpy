@@ -3667,13 +3667,25 @@ class MaskedArray(ndarray):
         "Divide other into self, and return a new masked array."
         return true_divide(self, other)
     #
+    def __rtruediv__(self, other):
+        "Divide other into self, and return a new masked array."
+        return true_divide(other, self)
+    #
     def __floordiv__(self, other):
         "Divide other into self, and return a new masked array."
         return floor_divide(self, other)
     #
+    def __rfloordiv__(self, other):
+        "Divide other into self, and return a new masked array."
+        return floor_divide(other, self)
+    #
     def __pow__(self, other):
         "Raise self to the power other, masking the potential NaNs/Infs"
         return power(self, other)
+    #
+    def __rpow__(self, other):
+        "Raise self to the power other, masking the potential NaNs/Infs"
+        return power(other, self)
     #............................................
     def __iadd__(self, other):
         "Add other to self in-place."
