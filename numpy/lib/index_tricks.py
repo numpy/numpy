@@ -78,7 +78,7 @@ def unravel_index(x,dims):
     # [dcb,dc,d,1]
     dim_prod = _nx.cumprod([1] + list(dims)[:0:-1])[::-1]
     # Indices become [x/dcb % a, x/dc % b, x/d % c, x/1 % d]
-    return tuple(x/dim_prod % dims)
+    return tuple(x//dim_prod % dims)
 
 def ix_(*args):
     """
