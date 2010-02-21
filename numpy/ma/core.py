@@ -3726,6 +3726,36 @@ class MaskedArray(ndarray):
         self._mask |= new_mask
         ndarray.__idiv__(self._data, np.where(self._mask, 1, other_data))
         return self
+    #....
+    def __ifloordiv__(self, other):
+        "Floor divide self by other in-place."
+        other_data = getdata(other)
+        dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
+        other_mask = getmask(other)
+        new_mask = mask_or(other_mask, dom_mask)
+        # The following 3 lines control the domain filling
+        if dom_mask.any():
+            (_, fval) = ufunc_fills[np.floor_divide]
+            other_data = np.where(dom_mask, fval, other_data)
+#        self._mask = mask_or(self._mask, new_mask)
+        self._mask |= new_mask
+        ndarray.__ifloordiv__(self._data, np.where(self._mask, 1, other_data))
+        return self
+    #....
+    def __itruediv__(self, other):
+        "True divide self by other in-place."
+        other_data = getdata(other)
+        dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
+        other_mask = getmask(other)
+        new_mask = mask_or(other_mask, dom_mask)
+        # The following 3 lines control the domain filling
+        if dom_mask.any():
+            (_, fval) = ufunc_fills[np.true_divide]
+            other_data = np.where(dom_mask, fval, other_data)
+#        self._mask = mask_or(self._mask, new_mask)
+        self._mask |= new_mask
+        ndarray.__itruediv__(self._data, np.where(self._mask, 1, other_data))
+        return self
     #...
     def __ipow__(self, other):
         "Raise self to the power other, in place."
