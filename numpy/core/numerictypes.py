@@ -99,10 +99,10 @@ import sys
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
+from numpy.compat import bytes
 
 if sys.version_info[0] >= 3:
     # Py3K
-    from builtins import bytes
     class long(int):
         # Placeholder class -- this will not escape outside numerictypes.py
         pass
@@ -542,15 +542,23 @@ _python_types = {int : 'int_',
                  float: 'float_',
                  complex: 'complex_',
                  bool: 'bool_',
-                 str: 'string_',
+                 bytes: 'bytes_',
                  unicode: 'unicode_',
                  buffer_type: 'void',
                 }
-def _python_type(t):
-    """returns the type corresponding to a certain Python type"""
-    if not isinstance(t, _types.TypeType):
-        t = type(t)
-    return allTypes[_python_types.get(t, 'object_')]
+
+if sys.version_info[0] >= 3:
+    def _python_type(t):
+        """returns the type corresponding to a certain Python type"""
+        if not isinstance(t, type):
+            t = type(t)
+        return allTypes[_python_types.get(t, 'object_')]
+else:
+    def _python_type(t):
+        """returns the type corresponding to a certain Python type"""
+        if not isinstance(t, _types.TypeType):
+            t = type(t)
+        return allTypes[_python_types.get(t, 'object_')]
 
 def issctype(rep):
     """
