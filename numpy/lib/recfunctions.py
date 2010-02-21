@@ -11,8 +11,6 @@ import sys
 import itertools
 import numpy as np
 import numpy.ma as ma
-from itertools import chain as iterchain
-from itertools import repeat as iterrepeat
 from numpy import ndarray, recarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
@@ -280,8 +278,8 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
         "Yields the fill_value or raises IndexError"
         yield counter()
     #
-    fillers = iterrepeat(fill_value)
-    iters = [iterchain(it, sentinel(), fillers) for it in seqarrays]
+    fillers = itertools.repeat(fill_value)
+    iters = [itertools.chain(it, sentinel(), fillers) for it in seqarrays]
     # Should we flatten the items, or just use a nested approach
     if flatten:
         zipfunc = _izip_fields_flat
@@ -414,8 +412,8 @@ def merge_arrays(seqarrays,
         else:
             fmsk = True
         nbmissing = (maxlength-len(a))
-        seqdata[i] = iterchain(a, [fval]*nbmissing)
-        seqmask[i] = iterchain(m, [fmsk]*nbmissing)
+        seqdata[i] = itertools.chain(a, [fval]*nbmissing)
+        seqmask[i] = itertools.chain(m, [fmsk]*nbmissing)
     #
     data = izip_records(seqdata, flatten=flatten)
     data = tuple(data)
