@@ -1504,16 +1504,35 @@ if sys.version_info >= (2, 6):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
             self._check_roundtrip(x)
 
+            x = np.array([1,2,3], dtype='>i2')
+            self._check_roundtrip(x)
+
+            x = np.array([1,2,3], dtype='<i2')
+            self._check_roundtrip(x)
+
             x = np.array([1,2,3], dtype='>i4')
             self._check_roundtrip(x)
 
             x = np.array([1,2,3], dtype='<i4')
             self._check_roundtrip(x)
 
+            # Native-only data types can be passed through the buffer interface
+            # only in native byte order
+            if sys.byteorder == 'little':
+                x = np.array([1,2,3], dtype='>i8')
+                assert_raises(ValueError, self._check_roundtrip, x)
+                x = np.array([1,2,3], dtype='<i8')
+                self._check_roundtrip(x)
+            else:
+                x = np.array([1,2,3], dtype='>i8')
+                self._check_roundtrip(x)
+                x = np.array([1,2,3], dtype='<i8')
+                assert_raises(ValueError, self._check_roundtrip, x)
+
         def test_export_simple_1d(self):
             x = np.array([1,2,3,4,5], dtype='i')
             y = memoryview(x)
-            assert_equal(y.format, '=i')
+            assert_equal(y.format, 'i')
             assert_equal(y.shape, (5,))
             assert_equal(y.ndim, 1)
             assert_equal(y.strides, (4,))
@@ -1523,7 +1542,7 @@ if sys.version_info >= (2, 6):
         def test_export_simple_nd(self):
             x = np.array([[1,2],[3,4]], dtype=np.float64)
             y = memoryview(x)
-            assert_equal(y.format, '=d')
+            assert_equal(y.format, 'd')
             assert_equal(y.shape, (2, 2))
             assert_equal(y.ndim, 2)
             assert_equal(y.strides, (16, 8))
@@ -1533,7 +1552,7 @@ if sys.version_info >= (2, 6):
         def test_export_discontiguous(self):
             x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
             y = memoryview(x)
-            assert_equal(y.format, '=f')
+            assert_equal(y.format, 'f')
             assert_equal(y.shape, (3, 3))
             assert_equal(y.ndim, 2)
             assert_equal(y.strides, (36, 4))
@@ -1562,7 +1581,7 @@ if sys.version_info >= (2, 6):
                            asbytes('aaaa'), 'bbbb', asbytes('   '), True)],
                          dtype=dt)
             y = memoryview(x)
-            assert_equal(y.format, 'T{b:a:=h:b:=i:c:=l:d:=q:dx:B:e:=H:f:=I:g:=L:h:=Q:hx:=d:i:=d:j:=g:k:4s:l:=4w:m:3x:n:?:o:}')
+            assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=d:i:d:j:^g:k:4s:l:=4w:m:3x:n:?:o:}')
             assert_equal(y.shape, (1,))
             assert_equal(y.ndim, 1)
             assert_equal(y.suboffsets, None)
@@ -1576,7 +1595,7 @@ if sys.version_info >= (2, 6):
         def test_export_subarray(self):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', ('i', (2,2)))])
             y = memoryview(x)
-            assert_equal(y.format, 'T{(2,2)=i:a:}')
+            assert_equal(y.format, 'T{(2,2)i:a:}')
             assert_equal(y.shape, None)
             assert_equal(y.ndim, 0)
             assert_equal(y.strides, None)
@@ -1589,12 +1608,12 @@ if sys.version_info >= (2, 6):
             if sys.byteorder == 'little':
                 assert_equal(y.format, '>l')
             else:
-                assert_equal(y.format, '=l')
+                assert_equal(y.format, 'l')
 
             x = np.array([1,2,3], dtype='<l')
             y = memoryview(x)
             if sys.byteorder == 'little':
-                assert_equal(y.format, '=l')
+                assert_equal(y.format, 'l')
             else:
                 assert_equal(y.format, '<l')
 

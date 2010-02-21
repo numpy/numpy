@@ -350,7 +350,7 @@ def _index_fields(ary, fields):
 # Given a string containing a PEP 3118 format specifier,
 # construct a Numpy dtype
 
-_pep3118_map = {
+_pep3118_native_map = {
     '?': '?',
     'b': 'b',
     'B': 'B',
@@ -365,7 +365,6 @@ _pep3118_map = {
     'f': 'f',
     'd': 'd',
     'g': 'g',
-    'Q': 'Q',
     'Zf': 'F',
     'Zd': 'D',
     'Zg': 'G',
@@ -374,9 +373,32 @@ _pep3118_map = {
     'O': 'O',
     'x': 'V', # padding
 }
-_pep3118_typechars = ''.join(_pep3118_map.keys())
+_pep3118_native_typechars = ''.join(_pep3118_native_map.keys())
 
-def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
+_pep3118_standard_map = {
+    '?': '?',
+    'b': 'b',
+    'B': 'B',
+    'h': 'i2',
+    'H': 'u2',
+    'i': 'i4',
+    'I': 'u4',
+    'l': 'i4',
+    'L': 'u4',
+    'q': 'i8',
+    'Q': 'u8',
+    'f': 'f',
+    'd': 'd',
+    'Zf': 'F',
+    'Zd': 'D',
+    's': 'S',
+    'w': 'U',
+    'O': 'O',
+    'x': 'V', # padding
+}
+_pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
+
+def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
     from numpy.core.multiarray import dtype
 
     fields = {}
@@ -400,9 +422,17 @@ def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
             spec = spec[j+1:]
 
         # Byte order
-        if spec[0] in ('=', '<', '>'):
+        if spec[0] in ('@', '=', '<', '>', '^'):
             byteorder = spec[0]
             spec = spec[1:]
+
+        # Byte order characters also control native vs. standard type sizes
+        if byteorder in ('@', '^'):
+            type_map = _pep3118_native_map
+            type_map_chars = _pep3118_native_typechars
+        else:
+            type_map = _pep3118_standard_map
+            type_map_chars = _pep3118_standard_typechars
 
         # Item sizes
         itemsize = 1
@@ -423,21 +453,40 @@ def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
             if itemsize != 1:
                 # Not supported
                 raise ValueError("Non item-size 1 structures not supported")
-        elif spec[0] in _pep3118_typechars:
+        elif spec[0] in type_map_chars:
             j = 1
             for j in xrange(1, len(spec)):
-                if spec[j] not in _pep3118_typechars:
+                if spec[j] not in type_map_chars:
                     break
             typechar = spec[:j]
             spec = spec[j:]
             is_padding = (typechar == 'x')
-            dtypechar = _pep3118_map[typechar]
+            dtypechar = type_map[typechar]
             if dtypechar in 'USV':
                 dtypechar += '%d' % itemsize
                 itemsize = 1
-            value = dtype(byteorder + dtypechar)
+            numpy_byteorder = {'@': '=', '^': '='}.get(byteorder, byteorder)
+            value = dtype(numpy_byteorder + dtypechar)
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % spec)
+
+        # Native alignment may require padding
+        #
+        # XXX: here we assume that the presence of a '@' character implies
+        #      that the start of the array is *also* aligned.
+        extra_offset = 0
+        if byteorder == '@':
+            start_padding = offset % value.alignment
+            intra_padding = value.itemsize % value.alignment
+
+            offset += start_padding
+
+            if intra_padding != 0:
+                if itemsize > 1 or shape is not None:
+                    value = dtype([('f0', value),
+                                   ('pad', '%dV' % intra_padding)])
+                else:
+                    extra_offset += intra_padding
 
         # Convert itemsize to sub-array
         if itemsize != 1:
@@ -462,7 +511,7 @@ def _dtype_from_pep3118(spec, byteorder='=', is_subdtype=False):
         if not is_padding or this_explicit_name:
             fields[name] = (value, offset)
         offset += value.itemsize
-
+        offset += extra_offset
 
     if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0:
         ret = fields['f0'][0]

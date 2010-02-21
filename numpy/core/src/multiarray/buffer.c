@@ -142,11 +142,55 @@ _append_str(_tmp_string_t *s, char *c)
     return 0;
 }
 
+/*
+ * Return non-zero if a type is aligned in each item in the given array,
+ * AND, the descr element size is a multiple of the alignment,
+ * AND, the array data is positioned to alignment granularity.
+ */
 static int
-_buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
-                      Py_ssize_t *offset)
+_is_natively_aligned_at(PyArray_Descr *descr,
+                        PyArrayObject *arr, Py_ssize_t offset)
 {
     int k;
+
+    if ((Py_ssize_t)(arr->data) % descr->alignment != 0) {
+        return 0;
+    }
+
+    if (offset % descr->alignment != 0) {
+        return 0;
+    }
+
+    if (descr->elsize % descr->alignment) {
+        return 0;
+    }
+
+    for (k = 0; k < arr->nd; ++k) {
+        if (arr->dimensions[k] > 1) {
+            if (arr->strides[k] % descr->alignment != 0) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+static int
+_buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
+                      PyArrayObject* arr, Py_ssize_t *offset,
+                      char *active_byteorder)
+{
+    int k;
+    char _active_byteorder = '@';
+    Py_ssize_t _offset = 0;
+
+    if (active_byteorder == NULL) {
+        active_byteorder = &_active_byteorder;
+    }
+    if (offset == NULL) {
+        offset = &_offset;
+    }
 
     if (descr->subarray) {
         PyObject *item, *repr;
@@ -170,7 +214,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         }
         _append_char(str, ')');
         old_offset = *offset;
-        ret = _buffer_format_string(descr->subarray->base, str, offset);
+        ret = _buffer_format_string(descr->subarray->base, str, arr, offset,
+                                    active_byteorder);
         *offset = old_offset + (*offset - old_offset) * total_count;
         return ret;
     }
@@ -198,7 +243,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             *offset += child->elsize;
 
             /* Insert child item */
-            _buffer_format_string(child, str, offset);
+            _buffer_format_string(child, str, arr, offset,
+                                  active_byteorder);
 
             /* Insert field name */
 #if defined(NPY_PY3K)
@@ -232,9 +278,48 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         _append_char(str, '}');
     }
     else {
-        if (descr->byteorder == '<' || descr->byteorder == '>' ||
-            descr->byteorder == '=') {
-            _append_char(str, descr->byteorder);
+        int is_standard_size = 1;
+        int is_native_only_type = (descr->type_num == NPY_LONGDOUBLE ||
+                                   descr->type_num == NPY_CLONGDOUBLE);
+#if NPY_SIZEOF_LONG_LONG != 8
+        is_native_only_type = is_native_only_type || (
+            descr->type_num == NPY_LONGLONG ||
+            descr->type_num == NPY_ULONGLONG);
+#endif
+
+        if (descr->byteorder == '=' &&
+                _is_natively_aligned_at(descr, arr, *offset)) {
+            /* Prefer native types, to cater for Cython */
+            is_standard_size = 0;
+            if (*active_byteorder != '@') {
+                _append_char(str, '@');
+                *active_byteorder = '@';
+            }
+        }
+        else if (descr->byteorder == '=' && is_native_only_type) {
+            /* Data types that have no standard size */
+            is_standard_size = 0;
+            if (*active_byteorder != '^') {
+                _append_char(str, '^');
+                *active_byteorder = '^';
+            }
+        }
+        else if (descr->byteorder == '<' || descr->byteorder == '>' ||
+                 descr->byteorder == '=') {
+            is_standard_size = 1;
+            if (*active_byteorder != descr->byteorder) {
+                _append_char(str, descr->byteorder);
+                *active_byteorder = descr->byteorder;
+            }
+
+            if (is_native_only_type) {
+                /* It's not possible to express native-only data types
+                   in non-native byte orders */
+                PyErr_Format(PyExc_ValueError,
+                             "cannot expose native-only dtype '%c' in "
+                             "non-native byte order '%c' via buffer interface",
+                             descr->type, descr->byteorder);
+            }
         }
 
         switch (descr->type_num) {
@@ -245,8 +330,22 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_USHORT:       if (_append_char(str, 'H')) return -1; break;
         case NPY_INT:          if (_append_char(str, 'i')) return -1; break;
         case NPY_UINT:         if (_append_char(str, 'I')) return -1; break;
-        case NPY_LONG:         if (_append_char(str, 'l')) return -1; break;
-        case NPY_ULONG:        if (_append_char(str, 'L')) return -1; break;
+        case NPY_LONG:
+            if (is_standard_size && (NPY_SIZEOF_LONG == 8)) {
+                if (_append_char(str, 'q')) return -1;
+            }
+            else {
+                if (_append_char(str, 'l')) return -1;
+            }
+            break;
+        case NPY_ULONG:
+            if (is_standard_size && (NPY_SIZEOF_LONG == 8)) {
+                if (_append_char(str, 'Q')) return -1;
+            }
+            else {
+                if (_append_char(str, 'L')) return -1;
+            }
+            break;
         case NPY_LONGLONG:     if (_append_char(str, 'q')) return -1; break;
         case NPY_ULONGLONG:    if (_append_char(str, 'Q')) return -1; break;
         case NPY_FLOAT:        if (_append_char(str, 'f')) return -1; break;
@@ -280,8 +379,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         }
         default:
-            PyErr_Format(PyExc_ValueError, "cannot convert dtype %d to buffer",
-                         descr->type_num);
+            PyErr_Format(PyExc_ValueError,
+                         "cannot include dtype '%c' in a buffer",
+                         descr->type);
             return -1;
         }
     }
@@ -322,14 +422,13 @@ static _buffer_info_t*
 _buffer_info_new(PyArrayObject *arr)
 {
     _buffer_info_t *info;
-    Py_ssize_t offset = 0;
     _tmp_string_t fmt = {0,0,0};
     int k;
 
     info = (_buffer_info_t*)malloc(sizeof(_buffer_info_t));
 
     /* Fill in format */
-    if (_buffer_format_string(PyArray_DESCR(arr), &fmt, &offset) != 0) {
+    if (_buffer_format_string(PyArray_DESCR(arr), &fmt, arr, NULL, NULL) != 0) {
         free(info);
         return NULL;
     }
