@@ -906,7 +906,7 @@ def fromregex(file, regexp, dtype):
     if seq and not isinstance(seq[0], tuple):
         # Only one group is in the regexp.
         # Create the new array as a single data-type and then
-        #   re-interpret as a single-field structured array. 
+        #   re-interpret as a single-field structured array.
         newdtype = np.dtype(dtype[dtype.names[0]])
         output = np.array(seq, dtype=newdtype)
         output.dtype = dtype
@@ -1601,4 +1601,3 @@ def recfromcsv(fname, **kwargs):
     else:
         output = output.view(np.recarray)
     return output
-
