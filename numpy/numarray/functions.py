@@ -54,6 +54,9 @@ import numpy as np
 
 from numerictypes import typefrom
 
+if sys.version_info[0] >= 3:
+    import copyreg as copy_reg
+
 isBigEndian = sys.byteorder != 'little'
 value = tcode = 'f'
 tname = 'Float32'
