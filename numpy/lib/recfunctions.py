@@ -7,12 +7,13 @@ They have been rewritten and extended for convenience.
 
 """
 
-
+import sys
 import itertools
-from itertools import chain as iterchain, repeat as iterrepeat, izip as iterizip
 import numpy as np
-from numpy import ndarray, recarray
 import numpy.ma as ma
+from itertools import chain as iterchain
+from itertools import repeat as iterrepeat
+from numpy import ndarray, recarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 
@@ -214,7 +215,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     >>> rfn.get_fieldstructure(ndtype)
     ... # XXX: possible regression, order of BBA and BBB is swapped
     {'A': [], 'B': [], 'BA': ['B'], 'BB': ['B'], 'BBA': ['B', 'BB'], 'BBB': ['B', 'BB']}
-    
+
     """
     if parents is None:
         parents = {}
@@ -276,8 +277,8 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
         Sequence of arrays.
     fill_value : {None, integer}
         Value used to pad shorter iterables.
-    flatten : {True, False}, 
-        Whether to 
+    flatten : {True, False},
+        Whether to
     """
     # OK, that's a complete ripoff from Python2.6 itertools.izip_longest
     def sentinel(counter = ([fill_value]*(len(seqarrays)-1)).pop):
@@ -285,7 +286,7 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
         yield counter()
     #
     fillers = iterrepeat(fill_value)
-    iters = [iterchain(it, sentinel(), fillers) for it in seqarrays] 
+    iters = [iterchain(it, sentinel(), fillers) for it in seqarrays]
     # Should we flatten the items, or just use a nested approach
     if flatten:
         zipfunc = _izip_fields_flat
@@ -293,7 +294,7 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
         zipfunc = _izip_fields
     #
     try:
-        for tup in iterizip(*iters):
+        for tup in itertools.izip(*iters):
             yield tuple(zipfunc(tup))
     except IndexError:
         pass
@@ -463,13 +464,13 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     >>> a = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
     ...   dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
     >>> rfn.drop_fields(a, 'a')
-    array([((2.0, 3),), ((5.0, 6),)], 
+    array([((2.0, 3),), ((5.0, 6),)],
           dtype=[('b', [('ba', '<f8'), ('bb', '<i4')])])
     >>> rfn.drop_fields(a, 'ba')
-    array([(1, (3,)), (4, (6,))], 
+    array([(1, (3,)), (4, (6,))],
           dtype=[('a', '<i4'), ('b', [('bb', '<i4')])])
     >>> rfn.drop_fields(a, ['ba', 'bb'])
-    array([(1,), (4,)], 
+    array([(1,), (4,)],
           dtype=[('a', '<i4')])
     """
     if _is_string_like(drop_names):
@@ -528,7 +529,7 @@ def rename_fields(base, namemapper):
     >>> a = np.array([(1, (2, [3.0, 30.])), (4, (5, [6.0, 60.]))],
     ...   dtype=[('a', int),('b', [('ba', float), ('bb', (float, 2))])])
     >>> rfn.rename_fields(a, {'a':'A', 'bb':'BB'})
-    array([(1, (2.0, [3.0, 30.0])), (4, (5.0, [6.0, 60.0]))], 
+    array([(1, (2.0, [3.0, 30.0])), (4, (5.0, [6.0, 60.0]))],
           dtype=[('A', '<i4'), ('b', [('ba', '<f8'), ('BB', '<f8', 2)])])
 
     """
@@ -547,7 +548,7 @@ def rename_fields(base, namemapper):
     return base.view(newdtype)
 
 
-def append_fields(base, names, data=None, dtypes=None, 
+def append_fields(base, names, data=None, dtypes=None,
                   fill_value=-1, usemask=True, asrecarray=False):
     """
     Add new fields to an existing array.
@@ -625,7 +626,7 @@ def rec_append_fields(base, names, data, dtypes=None):
     the corresponding values with the `data` arguments.
     If a single field is appended, `names`, `data` and `dtypes` do not have
     to be lists but just values.
-    
+
     Parameters
     ----------
     base : array
@@ -638,7 +639,7 @@ def rec_append_fields(base, names, data, dtypes=None):
     dtypes : sequence of datatypes, optional
         Datatype or sequence of datatypes.
         If None, the datatypes are estimated from the `data`.
-    
+
     See Also
     --------
     append_fields
@@ -763,7 +764,7 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> ndtype = [('a', int)]
-    >>> a = np.ma.array([1, 1, 1, 2, 2, 3, 3], 
+    >>> a = np.ma.array([1, 1, 1, 2, 2, 3, 3],
     ...         mask=[0, 0, 1, 0, 0, 0, 1]).view(ndtype)
     >>> rfn.find_duplicates(a, ignoremask=True, return_index=True)
     ... # XXX: judging by the output, the ignoremask flag has no effect
