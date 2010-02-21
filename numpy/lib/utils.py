@@ -791,11 +791,9 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         r += max(-index / 100, -100)
         return r
 
-    def relevance_sort(a, b):
-        dr = relevance(b, *cache[b]) - relevance(a, *cache[a])
-        if dr != 0: return dr
-        else: return cmp(a, b)
-    found.sort(relevance_sort)
+    def relevance_value(a):
+        return relevance(a, *cache[a])
+    found.sort(key=relevance_value)
 
     # Pretty-print
     s = "Search results for '%s'" % (' '.join(whats))
