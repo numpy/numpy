@@ -440,7 +440,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         temp = PyUnicode_AsASCIIString(op);
         if (temp == NULL) return -1;
     }
-    else if (PyBytes_Check(op)) {
+    else if (PyBytes_Check(op) || PyMemoryView_Check(op)) {
         temp = PyObject_Bytes(op);
         if (temp == NULL) {
             return -1;
@@ -616,31 +616,38 @@ finish:
         return NULL;
     }
     itemsize = ap->descr->elsize;
-    if (PyArray_ISWRITEABLE(ap)) {
 #if defined(NPY_PY3K)
-#warning XXX -- needs implementation
-        PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
-        u = NULL;
+    /*
+     * Return a byte array; there are no plain buffer objects on Py3
+     */
+    {
+        intp dims[1], strides[1];
+        PyArray_Descr *descr;
+        dims[0] = itemsize;
+        strides[0] = 1;
+        descr = PyArray_DescrNewFromType(PyArray_BYTE);
+        u = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides,
+                                 ip,
+                                 PyArray_ISWRITEABLE(ap) ? NPY_WRITEABLE : 0,
+                                 NULL);
+        ((PyArrayObject*)u)->base = ap;
+        Py_INCREF(ap);
+    }
 #else
-        u = PyBuffer_FromReadWriteMemory(ip, itemsize);
-#endif
-    }
-    else {
-#if defined(NPY_PY3K)
-#warning XXX -- needs implementation
-        PyErr_SetString(PyExc_RuntimeError, "XXX -- not implemented");
-        u = NULL;
-#else
-        u = PyBuffer_FromMemory(ip, itemsize);
-#endif
-    }
-    if (u == NULL) {
-        goto fail;
-    }
     /*
      * default is to return buffer object pointing to
      * current item a view of it
      */
+    if (PyArray_ISWRITEABLE(ap)) {
+        u = PyBuffer_FromReadWriteMemory(ip, itemsize);
+    }
+    else {
+        u = PyBuffer_FromMemory(ip, itemsize);
+    }
+#endif
+    if (u == NULL) {
+        goto fail;
+    }
     return u;
 
 fail:
