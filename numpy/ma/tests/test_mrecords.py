@@ -14,7 +14,7 @@ from numpy import recarray
 from numpy.core.records import fromrecords as recfromrecords, \
                                fromarrays as recfromarrays
 
-from numpy.compat import asbytes
+from numpy.compat import asbytes, asbytes_nested
 
 import numpy.ma.testutils
 from numpy.ma.testutils import *
@@ -68,7 +68,7 @@ class TestMRecords(TestCase):
         mbase_first = mbase[0]
         assert isinstance(mbase_first, mrecarray)
         assert_equal(mbase_first.dtype, mbase.dtype)
-        assert_equal(mbase_first.tolist(), (1,1.1,'one'))
+        assert_equal(mbase_first.tolist(), (1,1.1,asbytes('one')))
         # Used to be mask, now it's recordmask
         assert_equal(mbase_first.recordmask, nomask)
         assert_equal(mbase_first._mask.item(), (False, False, False))
@@ -222,7 +222,8 @@ class TestMRecords(TestCase):
         assert_equal(mbase.a._mask, [0,0,0,0,1])
         assert_equal(mbase.b._data, [5.,5.,3.3,4.4,5.5])
         assert_equal(mbase.b._mask, [0,0,0,0,1])
-        assert_equal(mbase.c._data, ['5','5','three','four','five'])
+        assert_equal(mbase.c._data,
+                     asbytes_nested(['5','5','three','four','five']))
         assert_equal(mbase.b._mask, [0,0,0,0,1])
         #
         mbase = base.view(mrecarray).copy()
@@ -231,7 +232,8 @@ class TestMRecords(TestCase):
         assert_equal(mbase.a._mask, [1,1,0,0,1])
         assert_equal(mbase.b._data, [1.1,2.2,3.3,4.4,5.5])
         assert_equal(mbase.b._mask, [1,1,0,0,1])
-        assert_equal(mbase.c._data, ['one','two','three','four','five'])
+        assert_equal(mbase.c._data,
+                     asbytes_nested(['one','two','three','four','five']))
         assert_equal(mbase.b._mask, [1,1,0,0,1])
     #
     def test_setslices_hardmask(self):
@@ -243,7 +245,8 @@ class TestMRecords(TestCase):
             mbase[-2:] = (5,5,5)
             assert_equal(mbase.a._data, [1,2,3,5,5])
             assert_equal(mbase.b._data, [1.1,2.2,3.3,5,5.5])
-            assert_equal(mbase.c._data, ['one','two','three','5','five'])
+            assert_equal(mbase.c._data,
+                         asbytes_nested(['one','two','three','5','five']))
             assert_equal(mbase.a._mask, [0,1,0,0,1])
             assert_equal(mbase.b._mask, mbase.a._mask)
             assert_equal(mbase.b._mask, mbase.c._mask)
@@ -315,7 +318,8 @@ class TestMRecords(TestCase):
                           fill_value=(99999,99999.,'N/A'))
         #
         assert_equal(mrec.tolist(),
-                     [(1,1.1,None),(2,2.2,'two'),(None,None,'three')])
+                     [(1,1.1,None),(2,2.2,asbytes('two')),
+                      (None,None,asbytes('three'))])
 
 
     #
@@ -329,7 +333,7 @@ class TestMRecords(TestCase):
         "Test that 'exotic' formats are processed properly"
         easy = mrecarray(1, dtype=[('i',int), ('s','|S8'), ('f',float)])
         easy[0] = masked
-        assert_equal(easy.filled(1).item(), (1,'1',1.))
+        assert_equal(easy.filled(1).item(), (1,asbytes('1'),1.))
         #
         solo = mrecarray(1, dtype=[('f0', '<f8', (2, 2))])
         solo[0] = masked
@@ -465,13 +469,13 @@ class TestMRecordsImport(TestCase):
 
     def test_fromtextfile(self):
         "Tests reading from a text file."
-        fcontent = """#
+        fcontent = asbytes("""#
 'One (S)','Two (I)','Three (F)','Four (M)','Five (-)','Six (C)'
 'strings',1,1.0,'mixed column',,1
 'with embedded "double quotes"',2,2.0,1.0,,1
 'strings',3,3.0E5,3,,1
 'strings',4,-1e-10,,,1
-"""
+""")
         import os
         import tempfile
         (tmp_fd,tmp_fl) = tempfile.mkstemp()

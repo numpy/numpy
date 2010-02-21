@@ -17,6 +17,8 @@ from numpy.ma.testutils import *
 import numpy.ma.core
 from numpy.ma.core import *
 
+from numpy.compat import asbytes, asbytes_nested
+
 pi = np.pi
 
 import sys
@@ -1292,7 +1294,7 @@ class TestFillingValues(TestCase):
         assert_equal(fval, default_fill_value(0))
         #
         fval = _check_fill_value(0, "|S3")
-        assert_equal(fval, "0")
+        assert_equal(fval, asbytes("0"))
         fval = _check_fill_value(None, "|S3")
         assert_equal(fval, default_fill_value("|S3"))
         #
@@ -1346,7 +1348,7 @@ class TestFillingValues(TestCase):
         "Tests the behavior of fill_value during conversion"
         # We had a tailored comment to make sure special attributes are properly
         # dealt with
-        a = array(['3', '4', '5'])
+        a = array(asbytes_nested(['3', '4', '5']))
         a._optinfo.update({'comment':"updated!"})
         #
         b = array(a, dtype=int)
@@ -1376,14 +1378,14 @@ class TestFillingValues(TestCase):
         mtype = [('f', float), ('s', '|S3')]
         x = array([(1, 'a'), (2, 'b'), (pi, 'pi')], dtype=mtype)
         x.fill_value = 999
-        assert_equal(x.fill_value.item(), [999., '999'])
+        assert_equal(x.fill_value.item(), [999., asbytes('999')])
         assert_equal(x['f'].fill_value, 999)
-        assert_equal(x['s'].fill_value, '999')
+        assert_equal(x['s'].fill_value, asbytes('999'))
         #
         x.fill_value = (9, '???')
-        assert_equal(x.fill_value.item(), (9, '???'))
+        assert_equal(x.fill_value.item(), (9, asbytes('???')))
         assert_equal(x['f'].fill_value, 9)
-        assert_equal(x['s'].fill_value, '???')
+        assert_equal(x['s'].fill_value, asbytes('???'))
         #
         x = array([1, 2, 3.1])
         x.fill_value = 999
@@ -2374,7 +2376,9 @@ class TestMaskedArrayMethods(TestCase):
                   dtype=[('a', int), ('b', float), ('c', '|S8')])
         x[-1] = masked
         assert_equal(x.tolist(),
-                     [(1, 1.1, 'one'), (2, 2.2, 'two'), (None, None, None)])
+                     [(1, 1.1, asbytes('one')),
+                      (2, 2.2, asbytes('two')),
+                      (None, None, None)])
         # ... on structured array w/ masked fields
         a = array([(1, 2,), (3, 4)], mask=[(0, 1), (0, 0)],
                   dtype=[('a', int), ('b', int)])
@@ -3215,7 +3219,8 @@ class TestMaskedFields(TestCase):
         assert_equal(base_b._data, [pi, 2.2, 3.3, 4.4, 5.5])
 
         assert_equal(base_c.dtype, '|S8')
-        assert_equal(base_c._data, ['pi', 'two', 'three', 'four', 'five'])
+        assert_equal(base_c._data,
+                     asbytes_nested(['pi', 'two', 'three', 'four', 'five']))
 
     def test_set_record_slice(self):
         base = self.data['base']
@@ -3229,7 +3234,8 @@ class TestMaskedFields(TestCase):
         assert_equal(base_b._data, [pi, pi, pi, 4.4, 5.5])
 
         assert_equal(base_c.dtype, '|S8')
-        assert_equal(base_c._data, ['pi', 'pi', 'pi', 'four', 'five'])
+        assert_equal(base_c._data,
+                     asbytes_nested(['pi', 'pi', 'pi', 'four', 'five']))
 
     def test_mask_element(self):
         "Check record access"
