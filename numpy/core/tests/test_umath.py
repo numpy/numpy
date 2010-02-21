@@ -75,10 +75,14 @@ class TestPower(TestCase):
             assert_array_equal(x.imag, y.imag)
 
         for z in [complex(0, np.inf), complex(1, np.inf)]:
+            err = np.seterr(invalid="ignore")
             z = np.array([z], dtype=np.complex_)
-            assert_complex_equal(z**1, z)
-            assert_complex_equal(z**2, z*z)
-            assert_complex_equal(z**3, z*z*z)
+            try:
+                assert_complex_equal(z**1, z)
+                assert_complex_equal(z**2, z*z)
+                assert_complex_equal(z**3, z*z*z)
+            finally:
+                np.seterr(**err)
 
 class TestLog2(TestCase):
     def test_log2_values(self) :
@@ -121,15 +125,19 @@ class TestLogAddExp2(object):
             assert_almost_equal(np.logaddexp2(logxf, logyf), logzf)
 
     def test_inf(self) :
+        err = np.seterr(invalid='ignore')
         inf = np.inf
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
-        for dt in ['f','d','g'] :
-            logxf = np.array(x, dtype=dt)
-            logyf = np.array(y, dtype=dt)
-            logzf = np.array(z, dtype=dt)
-            assert_equal(np.logaddexp2(logxf, logyf), logzf)
+        try:
+            for dt in ['f','d','g'] :
+                logxf = np.array(x, dtype=dt)
+                logyf = np.array(y, dtype=dt)
+                logzf = np.array(z, dtype=dt)
+                assert_equal(np.logaddexp2(logxf, logyf), logzf)
+        finally:
+            np.seterr(**err)
 
     def test_nan(self):
         assert np.isnan(np.logaddexp2(np.nan, np.inf))
@@ -180,15 +188,19 @@ class TestLogAddExp(object):
             assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
 
     def test_inf(self) :
+        err = np.seterr(invalid='ignore')
         inf = np.inf
         x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
         y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
-        for dt in ['f','d','g'] :
-            logxf = np.array(x, dtype=dt)
-            logyf = np.array(y, dtype=dt)
-            logzf = np.array(z, dtype=dt)
-            assert_equal(np.logaddexp(logxf, logyf), logzf)
+        try:
+            for dt in ['f','d','g'] :
+                logxf = np.array(x, dtype=dt)
+                logyf = np.array(y, dtype=dt)
+                logzf = np.array(z, dtype=dt)
+                assert_equal(np.logaddexp(logxf, logyf), logzf)
+        finally:
+            np.seterr(**err)
 
     def test_nan(self):
         assert np.isnan(np.logaddexp(np.nan, np.inf))
@@ -213,7 +225,11 @@ class TestHypot(TestCase, object):
         assert_almost_equal(ncu.hypot(0, 0), 0)
 
 def assert_hypot_isnan(x, y):
-    assert np.isnan(ncu.hypot(x, y)), "hypot(%s, %s) is %s, not nan" % (x, y, ncu.hypot(x, y))
+    err = np.seterr(invalid='ignore')
+    try:
+        assert np.isnan(ncu.hypot(x, y)), "hypot(%s, %s) is %s, not nan" % (x, y, ncu.hypot(x, y))
+    finally:
+        np.seterr(**err)
 
 def assert_hypot_isinf(x, y):
     assert np.isinf(ncu.hypot(x, y)), "hypot(%s, %s) is %s, not inf" % (x, y, ncu.hypot(x, y))
@@ -870,15 +886,19 @@ def test_nextafterl():
     return _test_nextafter(np.longdouble)
 
 def _test_spacing(t):
+    err = np.seterr(invalid='ignore')
     one = t(1)
     eps = np.finfo(t).eps
     nan = t(np.nan)
     inf = t(np.inf)
-    assert np.spacing(one) == eps
-    assert np.isnan(np.spacing(nan))
-    assert np.isnan(np.spacing(inf))
-    assert np.isnan(np.spacing(-inf))
-    assert np.spacing(t(1e30)) != 0
+    try:
+        assert np.spacing(one) == eps
+        assert np.isnan(np.spacing(nan))
+        assert np.isnan(np.spacing(inf))
+        assert np.isnan(np.spacing(-inf))
+        assert np.spacing(t(1e30)) != 0
+    finally:
+        np.seterr(**err)
 
 def test_spacing():
     return _test_spacing(np.float64)
