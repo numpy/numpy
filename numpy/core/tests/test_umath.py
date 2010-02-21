@@ -420,11 +420,11 @@ class TestSpecialMethods(TestCase):
         x = ncu.minimum(a, a)
         assert_equal(x.arr, np.zeros(1))
         func, args, i = x.context
-        self.failUnless(func is ncu.minimum)
-        self.failUnlessEqual(len(args), 2)
+        self.assertTrue(func is ncu.minimum)
+        self.assertEqual(len(args), 2)
         assert_equal(args[0], a)
         assert_equal(args[1], a)
-        self.failUnlessEqual(i, 0)
+        self.assertEqual(i, 0)
 
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
@@ -436,7 +436,7 @@ class TestSpecialMethods(TestCase):
                 return arr.view(type(self))
         a = with_wrap()
         x = ncu.multiply(a, (1, 2, 3))
-        self.failUnless(isinstance(x, with_wrap))
+        self.assertTrue(isinstance(x, with_wrap))
         assert_array_equal(x, np.array((1, 2, 3)))
 
     def test_priority_with_scalar(self):
@@ -447,7 +447,7 @@ class TestSpecialMethods(TestCase):
                 return np.asarray(1.0, 'float64').view(cls).copy()
         a = A()
         x = np.float64(1)*a
-        self.failUnless(isinstance(x, A))
+        self.assertTrue(isinstance(x, A))
         assert_array_equal(x, np.array(1))
 
     def test_old_wrap(self):
@@ -480,25 +480,25 @@ class TestSpecialMethods(TestCase):
         b = B()
         c = C()
         f = ncu.minimum
-        self.failUnless(type(f(x,x)) is np.ndarray)
-        self.failUnless(type(f(x,a)) is A)
-        self.failUnless(type(f(x,b)) is B)
-        self.failUnless(type(f(x,c)) is C)
-        self.failUnless(type(f(a,x)) is A)
-        self.failUnless(type(f(b,x)) is B)
-        self.failUnless(type(f(c,x)) is C)
+        self.assertTrue(type(f(x,x)) is np.ndarray)
+        self.assertTrue(type(f(x,a)) is A)
+        self.assertTrue(type(f(x,b)) is B)
+        self.assertTrue(type(f(x,c)) is C)
+        self.assertTrue(type(f(a,x)) is A)
+        self.assertTrue(type(f(b,x)) is B)
+        self.assertTrue(type(f(c,x)) is C)
 
-        self.failUnless(type(f(a,a)) is A)
-        self.failUnless(type(f(a,b)) is B)
-        self.failUnless(type(f(b,a)) is B)
-        self.failUnless(type(f(b,b)) is B)
-        self.failUnless(type(f(b,c)) is C)
-        self.failUnless(type(f(c,b)) is C)
-        self.failUnless(type(f(c,c)) is C)
+        self.assertTrue(type(f(a,a)) is A)
+        self.assertTrue(type(f(a,b)) is B)
+        self.assertTrue(type(f(b,a)) is B)
+        self.assertTrue(type(f(b,b)) is B)
+        self.assertTrue(type(f(b,c)) is C)
+        self.assertTrue(type(f(c,b)) is C)
+        self.assertTrue(type(f(c,c)) is C)
 
-        self.failUnless(type(ncu.exp(a) is A))
-        self.failUnless(type(ncu.exp(b) is B))
-        self.failUnless(type(ncu.exp(c) is C))
+        self.assertTrue(type(ncu.exp(a) is A))
+        self.assertTrue(type(ncu.exp(b) is B))
+        self.assertTrue(type(ncu.exp(c) is C))
 
     def test_failing_wrap(self):
         class A(object):
@@ -507,7 +507,7 @@ class TestSpecialMethods(TestCase):
             def __array_wrap__(self, arr, context):
                 raise RuntimeError
         a = A()
-        self.failUnlessRaises(RuntimeError, ncu.maximum, a, a)
+        self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
     def test_default_prepare(self):
         class with_wrap(object):
@@ -539,7 +539,7 @@ class TestSpecialMethods(TestCase):
             def __array_prepare__(self, arr, context=None):
                 raise RuntimeError
         a = A()
-        self.failUnlessRaises(RuntimeError, ncu.maximum, a, a)
+        self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
     def test_array_with_context(self):
         class A(object):
@@ -557,10 +557,10 @@ class TestSpecialMethods(TestCase):
                 return np.zeros(1)
         a = A()
         ncu.maximum(np.zeros(1), a)
-        self.failUnless(a.func is ncu.maximum)
+        self.assertTrue(a.func is ncu.maximum)
         assert_equal(a.args[0], 0)
-        self.failUnless(a.args[1] is a)
-        self.failUnless(a.i == 1)
+        self.assertTrue(a.args[1] is a)
+        self.assertTrue(a.i == 1)
         assert_equal(ncu.maximum(a, B()), 0)
         assert_equal(ncu.maximum(a, C()), 0)
 
@@ -771,8 +771,8 @@ class TestAttributes(TestCase):
         add = ncu.add
         assert_equal(add.__name__, 'add')
         assert add.__doc__.startswith('add(x1, x2[, out])\n\n')
-        self.failUnless(add.ntypes >= 18) # don't fail if types added
-        self.failUnless('ii->i' in add.types)
+        self.assertTrue(add.ntypes >= 18) # don't fail if types added
+        self.assertTrue('ii->i' in add.types)
         assert_equal(add.nin, 2)
         assert_equal(add.nout, 1)
         assert_equal(add.identity, 0)

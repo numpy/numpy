@@ -21,7 +21,7 @@ class TestBasic(TestCase):
     def test_from_object_array_unicode(self):
         A = np.array([['abc', u'Sigma \u03a3'],
                       ['long   ', '0123456789']], dtype='O')
-        self.failUnlessRaises(ValueError, np.char.array, (A,))
+        self.assertRaises(ValueError, np.char.array, (A,))
         B = np.char.array(A, **kw_unicode_true)
         assert_equal(B.dtype.itemsize, 10 * np.array('a', 'U').dtype.itemsize)
         assert_array_equal(B, [['abc', u'Sigma \u03a3'],
@@ -58,7 +58,7 @@ class TestBasic(TestCase):
         assert_equal(B.shape, A.shape)
         def fail():
             B = np.char.array(A, **kw_unicode_false)
-        self.failUnlessRaises(UnicodeEncodeError, fail)
+        self.assertRaises(UnicodeEncodeError, fail)
 
     def test_unicode_upconvert(self):
         A = np.char.array(['abc'])
@@ -82,37 +82,37 @@ class TestVecString(TestCase):
     def test_non_existent_method(self):
         def fail():
             _vec_string('a', np.string_, 'bogus')
-        self.failUnlessRaises(AttributeError, fail)
+        self.assertRaises(AttributeError, fail)
 
     def test_non_string_array(self):
         def fail():
             _vec_string(1, np.string_, 'strip')
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
     def test_invalid_args_tuple(self):
         def fail():
             _vec_string(['a'], np.string_, 'strip', 1)
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
     def test_invalid_type_descr(self):
         def fail():
             _vec_string(['a'], 'BOGUS', 'strip')
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
     def test_invalid_function_args(self):
         def fail():
             _vec_string(['a'], np.string_, 'strip', (1,))
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
     def test_invalid_result_type(self):
         def fail():
             _vec_string(['a'], np.integer, 'strip')
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
     def test_broadcast_error(self):
         def fail():
             _vec_string([['abc', 'def']], np.integer, 'find', (['a', 'd', 'j'],))
-        self.failUnlessRaises(ValueError, fail)
+        self.assertRaises(ValueError, fail)
 
 
 class TestWhitespace(TestCase):
@@ -210,7 +210,7 @@ class TestInformation(TestCase):
         assert_array_equal(self.A.endswith('3', 0, 3), [[0, 0], [1, 0], [1, 0]])
         def fail():
             self.A.endswith('3', 'fdjk')
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
     def test_find(self):
         assert issubclass(self.A.find('a').dtype.type, np.integer)
@@ -222,7 +222,7 @@ class TestInformation(TestCase):
     def test_index(self):
         def fail():
             self.A.index('a')
-        self.failUnlessRaises(ValueError, fail)
+        self.assertRaises(ValueError, fail)
         assert np.char.index('abcba', 'b') == 1
         assert issubclass(np.char.index('abcba', 'b').dtype.type, np.integer)
 
@@ -264,7 +264,7 @@ class TestInformation(TestCase):
     def test_rindex(self):
         def fail():
             self.A.rindex('a')
-        self.failUnlessRaises(ValueError, fail)
+        self.assertRaises(ValueError, fail)
         assert np.char.rindex('abcba', 'b') == 3
         assert issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer)
 
@@ -274,7 +274,7 @@ class TestInformation(TestCase):
         assert_array_equal(self.A.startswith('1', 0, 3), [[0, 0], [1, 0], [1, 0]])
         def fail():
             self.A.startswith('3', 'fdjk')
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
 
 
 class TestMethods(TestCase):
@@ -538,7 +538,7 @@ class TestMethods(TestCase):
     def test_isnumeric(self):
         def fail():
             self.A.isnumeric()
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
         assert issubclass(self.B.isnumeric().dtype.type, np.bool_)
         assert_array_equal(self.B.isnumeric(), [
                 [False, False], [True, False], [False, False]])
@@ -546,7 +546,7 @@ class TestMethods(TestCase):
     def test_isdecimal(self):
         def fail():
             self.A.isdecimal()
-        self.failUnlessRaises(TypeError, fail)
+        self.assertRaises(TypeError, fail)
         assert issubclass(self.B.isdecimal().dtype.type, np.bool_)
         assert_array_equal(self.B.isdecimal(), [
                 [False, False], [True, False], [False, False]])

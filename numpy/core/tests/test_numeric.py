@@ -192,46 +192,46 @@ class TestBoolScalar(TestCase):
         f = False_
         t = True_
         s = "xyz"
-        self.failUnless((t and s) is s)
-        self.failUnless((f and s) is f)
+        self.assertTrue((t and s) is s)
+        self.assertTrue((f and s) is f)
 
     def test_bitwise_or(self):
         f = False_
         t = True_
-        self.failUnless((t | t) is t)
-        self.failUnless((f | t) is t)
-        self.failUnless((t | f) is t)
-        self.failUnless((f | f) is f)
+        self.assertTrue((t | t) is t)
+        self.assertTrue((f | t) is t)
+        self.assertTrue((t | f) is t)
+        self.assertTrue((f | f) is f)
 
     def test_bitwise_and(self):
         f = False_
         t = True_
-        self.failUnless((t & t) is t)
-        self.failUnless((f & t) is f)
-        self.failUnless((t & f) is f)
-        self.failUnless((f & f) is f)
+        self.assertTrue((t & t) is t)
+        self.assertTrue((f & t) is f)
+        self.assertTrue((t & f) is f)
+        self.assertTrue((f & f) is f)
 
     def test_bitwise_xor(self):
         f = False_
         t = True_
-        self.failUnless((t ^ t) is f)
-        self.failUnless((f ^ t) is t)
-        self.failUnless((t ^ f) is t)
-        self.failUnless((f ^ f) is f)
+        self.assertTrue((t ^ t) is f)
+        self.assertTrue((f ^ t) is t)
+        self.assertTrue((t ^ f) is t)
+        self.assertTrue((f ^ f) is f)
 
 
 class TestSeterr(TestCase):
     def test_set(self):
         err = seterr()
         old = seterr(divide='warn')
-        self.failUnless(err == old)
+        self.assertTrue(err == old)
         new = seterr()
-        self.failUnless(new['divide'] == 'warn')
+        self.assertTrue(new['divide'] == 'warn')
         seterr(over='raise')
-        self.failUnless(geterr()['over'] == 'raise')
-        self.failUnless(new['divide'] == 'warn')
+        self.assertTrue(geterr()['over'] == 'raise')
+        self.assertTrue(new['divide'] == 'warn')
         seterr(**old)
-        self.failUnless(geterr() == old)
+        self.assertTrue(geterr() == old)
 
     def test_divide_err(self):
         seterr(divide='raise')
@@ -254,16 +254,16 @@ class TestFromiter(TestCase):
         ai32 = fromiter(self.makegen(), int32)
         ai64 = fromiter(self.makegen(), int64)
         af = fromiter(self.makegen(), float)
-        self.failUnless(ai32.dtype == dtype(int32))
-        self.failUnless(ai64.dtype == dtype(int64))
-        self.failUnless(af.dtype == dtype(float))
+        self.assertTrue(ai32.dtype == dtype(int32))
+        self.assertTrue(ai64.dtype == dtype(int64))
+        self.assertTrue(af.dtype == dtype(float))
 
     def test_lengths(self):
         expected = array(list(self.makegen()))
         a = fromiter(self.makegen(), int)
         a20 = fromiter(self.makegen(), int, 20)
-        self.failUnless(len(a) == len(expected))
-        self.failUnless(len(a20) == 20)
+        self.assertTrue(len(a) == len(expected))
+        self.assertTrue(len(a20) == 20)
         try:
             fromiter(self.makegen(), int, len(expected) + 10)
         except ValueError:
@@ -275,8 +275,8 @@ class TestFromiter(TestCase):
         expected = array(list(self.makegen()))
         a = fromiter(self.makegen(), int)
         a20 = fromiter(self.makegen(), int, 20)
-        self.failUnless(alltrue(a == expected,axis=0))
-        self.failUnless(alltrue(a20 == expected[:20],axis=0))
+        self.assertTrue(alltrue(a == expected,axis=0))
+        self.assertTrue(alltrue(a20 == expected[:20],axis=0))
 
 
 class TestIndex(TestCase):

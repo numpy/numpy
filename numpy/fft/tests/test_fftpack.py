@@ -9,7 +9,7 @@ def fft1(x):
 
 class TestFFTShift(TestCase):
     def test_fft_n(self):
-        self.failUnlessRaises(ValueError,np.fft.fft,[1,2,3],0)
+        self.assertRaises(ValueError,np.fft.fft,[1,2,3],0)
 
 
 class TestFFT1D(TestCase):

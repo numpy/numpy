@@ -46,10 +46,10 @@ class TestLibraryInfo(TestCase):
                 os.close(fd)
 
             out = read_config(pkg)
-            self.failUnless(out.cflags() == simple_d['cflags'])
-            self.failUnless(out.libs() == simple_d['libflags'])
-            self.failUnless(out.name == simple_d['name'])
-            self.failUnless(out.version == simple_d['version'])
+            self.assertTrue(out.cflags() == simple_d['cflags'])
+            self.assertTrue(out.libs() == simple_d['libflags'])
+            self.assertTrue(out.name == simple_d['name'])
+            self.assertTrue(out.version == simple_d['version'])
         finally:
             os.remove(filename)
 
@@ -63,34 +63,34 @@ class TestLibraryInfo(TestCase):
                 os.close(fd)
 
             out = read_config(pkg)
-            self.failUnless(out.cflags() == simple_variable_d['cflags'])
-            self.failUnless(out.libs() == simple_variable_d['libflags'])
-            self.failUnless(out.name == simple_variable_d['name'])
-            self.failUnless(out.version == simple_variable_d['version'])
+            self.assertTrue(out.cflags() == simple_variable_d['cflags'])
+            self.assertTrue(out.libs() == simple_variable_d['libflags'])
+            self.assertTrue(out.name == simple_variable_d['name'])
+            self.assertTrue(out.version == simple_variable_d['version'])
 
             out.vars['prefix'] = '/Users/david'
-            self.failUnless(out.cflags() == '-I/Users/david/include')
+            self.assertTrue(out.cflags() == '-I/Users/david/include')
         finally:
             os.remove(filename)
 
 class TestParseFlags(TestCase):
     def test_simple_cflags(self):
         d = parse_flags("-I/usr/include")
-        self.failUnless(d['include_dirs'] == ['/usr/include'])
+        self.assertTrue(d['include_dirs'] == ['/usr/include'])
 
         d = parse_flags("-I/usr/include -DFOO")
-        self.failUnless(d['include_dirs'] == ['/usr/include'])
-        self.failUnless(d['macros'] == ['FOO'])
+        self.assertTrue(d['include_dirs'] == ['/usr/include'])
+        self.assertTrue(d['macros'] == ['FOO'])
 
         d = parse_flags("-I /usr/include -DFOO")
-        self.failUnless(d['include_dirs'] == ['/usr/include'])
-        self.failUnless(d['macros'] == ['FOO'])
+        self.assertTrue(d['include_dirs'] == ['/usr/include'])
+        self.assertTrue(d['macros'] == ['FOO'])
 
     def test_simple_lflags(self):
         d = parse_flags("-L/usr/lib -lfoo -L/usr/lib -lbar")
-        self.failUnless(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
-        self.failUnless(d['libraries'] == ['foo', 'bar'])
+        self.assertTrue(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
+        self.assertTrue(d['libraries'] == ['foo', 'bar'])
 
         d = parse_flags("-L /usr/lib -lfoo -L/usr/lib -lbar")
-        self.failUnless(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
-        self.failUnless(d['libraries'] == ['foo', 'bar'])
+        self.assertTrue(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
+        self.assertTrue(d['libraries'] == ['foo', 'bar'])

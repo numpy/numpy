@@ -129,7 +129,7 @@ class TestRecord(TestCase):
         a = self.data
         def assign_invalid_column(x):
             x[0].col5 = 1
-        self.failUnlessRaises(AttributeError, assign_invalid_column, a)
+        self.assertRaises(AttributeError, assign_invalid_column, a)
 
 
 def test_find_duplicate():

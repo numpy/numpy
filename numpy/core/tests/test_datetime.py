@@ -52,8 +52,8 @@ class TestDateTime(TestCase):
 
     def test_divisor_conversion_fs(self):
         assert np.dtype('M8[fs/100]') == np.dtype('M8[10as]')
-        self.failUnlessRaises(ValueError, lambda : np.dtype('M8[3fs/10000]'))
+        self.assertRaises(ValueError, lambda : np.dtype('M8[3fs/10000]'))
 
     def test_divisor_conversion_as(self):
-        self.failUnlessRaises(ValueError, lambda : np.dtype('M8[as/10]'))
+        self.assertRaises(ValueError, lambda : np.dtype('M8[as/10]'))
 

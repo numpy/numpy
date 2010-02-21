@@ -66,7 +66,7 @@ class TestAttributes(TestCase):
         assert_equal(self.three.dtype, dtype(float_))
         assert_equal(self.one.dtype.char, 'l')
         assert_equal(self.three.dtype.char, 'd')
-        self.failUnless(self.three.dtype.str[0] in '<>')
+        self.assertTrue(self.three.dtype.str[0] in '<>')
         assert_equal(self.one.dtype.str[1], 'i')
         assert_equal(self.three.dtype.str[1], 'f')
 
@@ -77,11 +77,11 @@ class TestAttributes(TestCase):
                            offset=offset*x.itemsize,
                            strides=strides*x.itemsize)
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
-        self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
-        self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
-        self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
-        #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
-        #self.failUnlessRaises(ValueError, lambda: ndarray([1], strides=4))
+        self.assertRaises(ValueError, make_array, 4, 4, -2)
+        self.assertRaises(ValueError, make_array, 4, 2, -1)
+        self.assertRaises(ValueError, make_array, 8, 3, 1)
+        #self.assertRaises(ValueError, make_array, 8, 3, 0)
+        #self.assertRaises(ValueError, lambda: ndarray([1], strides=4))
 
 
     def test_set_stridesattr(self):
@@ -95,10 +95,10 @@ class TestAttributes(TestCase):
             return r
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
         assert_equal(make_array(7,3,1), array([3, 4, 5, 6, 7, 8, 9]))
-        self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
-        self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
-        self.failUnlessRaises(RuntimeError, make_array, 8, 3, 1)
-        #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+        self.assertRaises(ValueError, make_array, 4, 4, -2)
+        self.assertRaises(ValueError, make_array, 4, 2, -1)
+        self.assertRaises(RuntimeError, make_array, 8, 3, 1)
+        #self.assertRaises(ValueError, make_array, 8, 3, 0)
 
     def test_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
@@ -126,75 +126,75 @@ class TestZeroRank(TestCase):
 
     def test_ellipsis_subscript(self):
         a,b = self.d
-        self.failUnlessEqual(a[...], 0)
-        self.failUnlessEqual(b[...], 'x')
-        self.failUnless(a[...] is a)
-        self.failUnless(b[...] is b)
+        self.assertEqual(a[...], 0)
+        self.assertEqual(b[...], 'x')
+        self.assertTrue(a[...] is a)
+        self.assertTrue(b[...] is b)
 
     def test_empty_subscript(self):
         a,b = self.d
-        self.failUnlessEqual(a[()], 0)
-        self.failUnlessEqual(b[()], 'x')
-        self.failUnless(type(a[()]) is a.dtype.type)
-        self.failUnless(type(b[()]) is str)
+        self.assertEqual(a[()], 0)
+        self.assertEqual(b[()], 'x')
+        self.assertTrue(type(a[()]) is a.dtype.type)
+        self.assertTrue(type(b[()]) is str)
 
     def test_invalid_subscript(self):
         a,b = self.d
-        self.failUnlessRaises(IndexError, lambda x: x[0], a)
-        self.failUnlessRaises(IndexError, lambda x: x[0], b)
-        self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
-        self.failUnlessRaises(IndexError, lambda x: x[array([], int)], b)
+        self.assertRaises(IndexError, lambda x: x[0], a)
+        self.assertRaises(IndexError, lambda x: x[0], b)
+        self.assertRaises(IndexError, lambda x: x[array([], int)], a)
+        self.assertRaises(IndexError, lambda x: x[array([], int)], b)
 
     def test_ellipsis_subscript_assignment(self):
         a,b = self.d
         a[...] = 42
-        self.failUnlessEqual(a, 42)
+        self.assertEqual(a, 42)
         b[...] = ''
-        self.failUnlessEqual(b.item(), '')
+        self.assertEqual(b.item(), '')
 
     def test_empty_subscript_assignment(self):
         a,b = self.d
         a[()] = 42
-        self.failUnlessEqual(a, 42)
+        self.assertEqual(a, 42)
         b[()] = ''
-        self.failUnlessEqual(b.item(), '')
+        self.assertEqual(b.item(), '')
 
     def test_invalid_subscript_assignment(self):
         a,b = self.d
         def assign(x, i, v):
             x[i] = v
-        self.failUnlessRaises(IndexError, assign, a, 0, 42)
-        self.failUnlessRaises(IndexError, assign, b, 0, '')
-        self.failUnlessRaises(ValueError, assign, a, (), '')
+        self.assertRaises(IndexError, assign, a, 0, 42)
+        self.assertRaises(IndexError, assign, b, 0, '')
+        self.assertRaises(ValueError, assign, a, (), '')
 
     def test_newaxis(self):
         a,b = self.d
-        self.failUnlessEqual(a[newaxis].shape, (1,))
-        self.failUnlessEqual(a[..., newaxis].shape, (1,))
-        self.failUnlessEqual(a[newaxis, ...].shape, (1,))
-        self.failUnlessEqual(a[..., newaxis].shape, (1,))
-        self.failUnlessEqual(a[newaxis, ..., newaxis].shape, (1,1))
-        self.failUnlessEqual(a[..., newaxis, newaxis].shape, (1,1))
-        self.failUnlessEqual(a[newaxis, newaxis, ...].shape, (1,1))
-        self.failUnlessEqual(a[(newaxis,)*10].shape, (1,)*10)
+        self.assertEqual(a[newaxis].shape, (1,))
+        self.assertEqual(a[..., newaxis].shape, (1,))
+        self.assertEqual(a[newaxis, ...].shape, (1,))
+        self.assertEqual(a[..., newaxis].shape, (1,))
+        self.assertEqual(a[newaxis, ..., newaxis].shape, (1,1))
+        self.assertEqual(a[..., newaxis, newaxis].shape, (1,1))
+        self.assertEqual(a[newaxis, newaxis, ...].shape, (1,1))
+        self.assertEqual(a[(newaxis,)*10].shape, (1,)*10)
 
     def test_invalid_newaxis(self):
         a,b = self.d
         def subscript(x, i): x[i]
-        self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
-        self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
+        self.assertRaises(IndexError, subscript, a, (newaxis, 0))
+        self.assertRaises(IndexError, subscript, a, (newaxis,)*50)
 
     def test_constructor(self):
         x = ndarray(())
         x[()] = 5
-        self.failUnlessEqual(x[()], 5)
+        self.assertEqual(x[()], 5)
         y = ndarray((),buffer=x)
         y[()] = 6
-        self.failUnlessEqual(x[()], 6)
+        self.assertEqual(x[()], 6)
 
     def test_output(self):
         x = array(2)
-        self.failUnlessRaises(ValueError, add, x, [1], x)
+        self.assertRaises(ValueError, add, x, [1], x)
 
 
 class TestScalarIndexing(TestCase):
@@ -203,41 +203,41 @@ class TestScalarIndexing(TestCase):
 
     def test_ellipsis_subscript(self):
         a = self.d
-        self.failUnlessEqual(a[...], 0)
-        self.failUnlessEqual(a[...].shape,())
+        self.assertEqual(a[...], 0)
+        self.assertEqual(a[...].shape,())
 
     def test_empty_subscript(self):
         a = self.d
-        self.failUnlessEqual(a[()], 0)
-        self.failUnlessEqual(a[()].shape,())
+        self.assertEqual(a[()], 0)
+        self.assertEqual(a[()].shape,())
 
     def test_invalid_subscript(self):
         a = self.d
-        self.failUnlessRaises(IndexError, lambda x: x[0], a)
-        self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
+        self.assertRaises(IndexError, lambda x: x[0], a)
+        self.assertRaises(IndexError, lambda x: x[array([], int)], a)
 
     def test_invalid_subscript_assignment(self):
         a = self.d
         def assign(x, i, v):
             x[i] = v
-        self.failUnlessRaises(TypeError, assign, a, 0, 42)
+        self.assertRaises(TypeError, assign, a, 0, 42)
 
     def test_newaxis(self):
         a = self.d
-        self.failUnlessEqual(a[newaxis].shape, (1,))
-        self.failUnlessEqual(a[..., newaxis].shape, (1,))
-        self.failUnlessEqual(a[newaxis, ...].shape, (1,))
-        self.failUnlessEqual(a[..., newaxis].shape, (1,))
-        self.failUnlessEqual(a[newaxis, ..., newaxis].shape, (1,1))
-        self.failUnlessEqual(a[..., newaxis, newaxis].shape, (1,1))
-        self.failUnlessEqual(a[newaxis, newaxis, ...].shape, (1,1))
-        self.failUnlessEqual(a[(newaxis,)*10].shape, (1,)*10)
+        self.assertEqual(a[newaxis].shape, (1,))
+        self.assertEqual(a[..., newaxis].shape, (1,))
+        self.assertEqual(a[newaxis, ...].shape, (1,))
+        self.assertEqual(a[..., newaxis].shape, (1,))
+        self.assertEqual(a[newaxis, ..., newaxis].shape, (1,1))
+        self.assertEqual(a[..., newaxis, newaxis].shape, (1,1))
+        self.assertEqual(a[newaxis, newaxis, ...].shape, (1,1))
+        self.assertEqual(a[(newaxis,)*10].shape, (1,)*10)
 
     def test_invalid_newaxis(self):
         a = self.d
         def subscript(x, i): x[i]
-        self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
-        self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
+        self.assertRaises(IndexError, subscript, a, (newaxis, 0))
+        self.assertRaises(IndexError, subscript, a, (newaxis,)*50)
 
 
 class TestCreation(TestCase):
@@ -245,7 +245,7 @@ class TestCreation(TestCase):
         class x(object):
             def __array__(self, dtype=None):
                 pass
-        self.failUnlessRaises(ValueError, array, x())
+        self.assertRaises(ValueError, array, x())
 
     def test_from_string(self) :
         types = np.typecodes['AllInteger'] + np.typecodes['Float']
@@ -260,12 +260,12 @@ class TestBool(TestCase):
     def test_test_interning(self):
         a0 = bool_(0)
         b0 = bool_(False)
-        self.failUnless(a0 is b0)
+        self.assertTrue(a0 is b0)
         a1 = bool_(1)
         b1 = bool_(True)
-        self.failUnless(a1 is b1)
-        self.failUnless(array([True])[0] is a1)
-        self.failUnless(array(True)[()] is a1)
+        self.assertTrue(a1 is b1)
+        self.assertTrue(array([True])[0] is a1)
+        self.assertTrue(array(True)[()] is a1)
 
 
 class TestMethods(TestCase):
@@ -278,9 +278,9 @@ class TestMethods(TestCase):
     def test_transpose(self):
         a = array([[1,2],[3,4]])
         assert_equal(a.transpose(), [[1,3],[2,4]])
-        self.failUnlessRaises(ValueError, lambda: a.transpose(0))
-        self.failUnlessRaises(ValueError, lambda: a.transpose(0,0))
-        self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
+        self.assertRaises(ValueError, lambda: a.transpose(0))
+        self.assertRaises(ValueError, lambda: a.transpose(0,0))
+        self.assertRaises(ValueError, lambda: a.transpose(0,1,2))
 
     def test_sort(self):
         # test ordering for floats and complex containing nans. It is only
@@ -545,10 +545,10 @@ class TestMethods(TestCase):
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
         x = array([1,2,3])
-        self.failUnless(isinstance(x[0], np.int_))
+        self.assertTrue(isinstance(x[0], np.int_))
         if sys.version_info[0] < 3:
-            self.failUnless(isinstance(x[0], int))
-        self.failUnless(type(x[0, ...]) is ndarray)
+            self.assertTrue(isinstance(x[0], int))
+        self.assertTrue(type(x[0, ...]) is ndarray)
 
 
 class TestPickling(TestCase):
@@ -774,7 +774,7 @@ class TestPutmask(TestCase):
                         yield self.tst_basic,x.copy().astype(T),T,mask,val
 
     def test_mask_size(self):
-        self.failUnlessRaises(ValueError, np.putmask,
+        self.assertRaises(ValueError, np.putmask,
                               np.array([1,2,3]), [True], 5)
 
     def tst_byteorder(self,dtype):
@@ -820,8 +820,8 @@ class TestTake(TestCase):
     def test_raise(self):
         x = np.random.random(24)*100
         x.shape = 2,3,4
-        self.failUnlessRaises(IndexError, x.take, [0,1,2], axis=0)
-        self.failUnlessRaises(IndexError, x.take, [-3], axis=0)
+        self.assertRaises(IndexError, x.take, [0,1,2], axis=0)
+        self.assertRaises(IndexError, x.take, [-3], axis=0)
         assert_array_equal(x.take([-1], axis=0)[0], x[1])
 
     def test_clip(self):
@@ -1048,7 +1048,7 @@ class TestResize(TestCase):
     def test_check_reference(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
-        self.failUnlessRaises(ValueError,x.resize,(5,1))
+        self.assertRaises(ValueError,x.resize,(5,1))
 
 
 class TestRecord(TestCase):
@@ -1258,7 +1258,7 @@ class TestNeighborhoodIter(TestCase):
         r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
         l = test_neighborhood_iterator(x, [-2, 2], x[1], NEIGH_MODE['mirror'])
-        self.failUnless([i.dtype == dt for i in l])
+        self.assertTrue([i.dtype == dt for i in l])
         assert_array_equal(l, r)
 
     def test_mirror(self):

@@ -198,9 +198,9 @@ class TestProd(TestCase):
             a = array(ba,ctype)
             a2 = array(ba2,ctype)
             if ctype in ['1', 'b']:
-                self.failUnlessRaises(ArithmeticError, prod, a)
-                self.failUnlessRaises(ArithmeticError, prod, a2, 1)
-                self.failUnlessRaises(ArithmeticError, prod, a)
+                self.assertRaises(ArithmeticError, prod, a)
+                self.assertRaises(ArithmeticError, prod, a2, 1)
+                self.assertRaises(ArithmeticError, prod, a)
             else:
                 assert_equal(prod(a,axis=0),26400)
                 assert_array_equal(prod(a2,axis=0),
@@ -216,9 +216,9 @@ class TestCumprod(TestCase):
             a = array(ba,ctype)
             a2 = array(ba2,ctype)
             if ctype in ['1', 'b']:
-                self.failUnlessRaises(ArithmeticError, cumprod, a)
-                self.failUnlessRaises(ArithmeticError, cumprod, a2, 1)
-                self.failUnlessRaises(ArithmeticError, cumprod, a)
+                self.assertRaises(ArithmeticError, cumprod, a)
+                self.assertRaises(ArithmeticError, cumprod, a2, 1)
+                self.assertRaises(ArithmeticError, cumprod, a)
             else:
                 assert_array_equal(cumprod(a,axis=-1),
                                    array([1, 2, 20, 220,

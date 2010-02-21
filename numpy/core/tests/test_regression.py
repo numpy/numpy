@@ -84,7 +84,7 @@ class TestRegression(TestCase):
         b = a[:,:2,]
         def rs():
             b.shape = (10,)
-        self.failUnlessRaises(AttributeError,rs)
+        self.assertRaises(AttributeError,rs)
 
     def test_bool(self,level=rlevel):
         """Ticket #60"""
@@ -133,15 +133,15 @@ class TestRegression(TestCase):
 
     def test_mem_dtype_align(self,level=rlevel):
         """Ticket #93"""
-        self.failUnlessRaises(TypeError,np.dtype,
+        self.assertRaises(TypeError,np.dtype,
                               {'names':['a'],'formats':['foo']},align=1)
 
     def test_intp(self,level=rlevel):
         """Ticket #99"""
         i_width = np.int_(0).nbytes*2 - 1
         np.intp('0x' + 'f'*i_width,16)
-        self.failUnlessRaises(OverflowError,np.intp,'0x' + 'f'*(i_width+1),16)
-        self.failUnlessRaises(ValueError,np.intp,'0x1',32)
+        self.assertRaises(OverflowError,np.intp,'0x' + 'f'*(i_width+1),16)
+        self.assertRaises(ValueError,np.intp,'0x1',32)
         assert_equal(255,np.intp('0xFF',16))
         assert_equal(1024,np.intp(1024))
 
@@ -196,7 +196,7 @@ class TestRegression(TestCase):
         """Ticket #128"""
         x = np.arange(9).reshape((3,3))
         y = np.array([0,0,0])
-        self.failUnlessRaises(ValueError,np.hstack,(x,y))
+        self.assertRaises(ValueError,np.hstack,(x,y))
 
     def test_squeeze_type(self,level=rlevel):
         """Ticket #133"""
@@ -246,8 +246,8 @@ class TestRegression(TestCase):
         x = np.empty((3,1))
         def bfa(): x[:] = np.arange(3)
         def bfb(): x[:] = np.arange(3,dtype=float)
-        self.failUnlessRaises(ValueError, bfa)
-        self.failUnlessRaises(ValueError, bfb)
+        self.assertRaises(ValueError, bfa)
+        self.assertRaises(ValueError, bfb)
 
     def test_unpickle_dtype_with_object(self,level=rlevel):
         """Implemented in r2840"""
@@ -263,7 +263,7 @@ class TestRegression(TestCase):
         """Ticket #196"""
         dt = np.dtype([('x',int),('y',np.object_)])
         # Wrong way
-        self.failUnlessRaises(ValueError, np.array, [1,'object'], dt)
+        self.assertRaises(ValueError, np.array, [1,'object'], dt)
         # Correct way
         np.array([(1,'object')],dt)
 
@@ -279,7 +279,7 @@ class TestRegression(TestCase):
         """Ticket #205"""
         tmp = np.array([])
         def index_tmp(): tmp[np.array(10)]
-        self.failUnlessRaises(IndexError, index_tmp)
+        self.assertRaises(IndexError, index_tmp)
 
     def test_chararray_rstrip(self,level=rlevel):
         """Ticket #222"""
@@ -442,7 +442,7 @@ class TestRegression(TestCase):
 
     def test_string_array_size(self, level=rlevel):
         """Ticket #342"""
-        self.failUnlessRaises(ValueError,
+        self.assertRaises(ValueError,
                               np.array,[['X'],['X','X','X']],'|S1')
 
     def test_dtype_repr(self, level=rlevel):
@@ -513,8 +513,8 @@ class TestRegression(TestCase):
 
     def test_convolve_empty(self, level=rlevel):
         """Convolve should raise an error for empty input array."""
-        self.failUnlessRaises(ValueError,np.convolve,[],[1])
-        self.failUnlessRaises(ValueError,np.convolve,[1],[])
+        self.assertRaises(ValueError,np.convolve,[],[1])
+        self.assertRaises(ValueError,np.convolve,[1],[])
 
     def test_multidim_byteswap(self, level=rlevel):
         """Ticket #449"""
@@ -592,7 +592,7 @@ class TestRegression(TestCase):
 
     def test_mem_on_invalid_dtype(self):
         "Ticket #583"
-        self.failUnlessRaises(ValueError, np.fromiter, [['12',''],['13','']], str)
+        self.assertRaises(ValueError, np.fromiter, [['12',''],['13','']], str)
 
     def test_dot_negative_stride(self, level=rlevel):
         """Ticket #588"""
@@ -607,7 +607,7 @@ class TestRegression(TestCase):
             x = np.ones([484,286])
             y = np.zeros([484,286])
             x |= y
-        self.failUnlessRaises(TypeError,rs)
+        self.assertRaises(TypeError,rs)
 
     def test_unicode_scalar(self, level=rlevel):
         """Ticket #600"""
@@ -629,7 +629,7 @@ class TestRegression(TestCase):
         s = np.ones(10,dtype=float)
         x = np.array((15,),dtype=float)
         def ia(x,s): x[(s>0)]=1.0
-        self.failUnlessRaises(ValueError,ia,x,s)
+        self.assertRaises(ValueError,ia,x,s)
 
     def test_mem_scalar_indexing(self, level=rlevel):
         """Ticket #603"""
@@ -820,7 +820,7 @@ class TestRegression(TestCase):
 
     def test_mem_fromiter_invalid_dtype_string(self, level=rlevel):
         x = [1,2,3]
-        self.failUnlessRaises(ValueError,
+        self.assertRaises(ValueError,
                               np.fromiter, [xi for xi in x], dtype='S')
 
     def test_reduce_big_object_array(self, level=rlevel):
@@ -1033,7 +1033,7 @@ class TestRegression(TestCase):
     def test_for_zero_length_in_choose(self, level=rlevel):
         "Ticket #882"
         a = np.array(1)
-        self.failUnlessRaises(ValueError, lambda x: x.choose([]), a)
+        self.assertRaises(ValueError, lambda x: x.choose([]), a)
 
     def test_array_ndmin_overflow(self):
         "Ticket #947."
@@ -1095,7 +1095,7 @@ class TestRegression(TestCase):
         good = 'Maximum allowed size exceeded'
         try:
             a = np.arange(sz)
-            self.failUnless(np.size == sz)
+            self.assertTrue(np.size == sz)
         except ValueError, e:
             if not str(e) == good:
                 self.fail("Got msg '%s', expected '%s'" % (e, good))
@@ -1161,7 +1161,7 @@ class TestRegression(TestCase):
         a = np.array([[u'abc', u'\u03a3'], [u'asdf', u'erw']], dtype='U')
         def fail():
             b = np.array(a, 'S4')
-        self.failUnlessRaises(UnicodeEncodeError, fail)
+        self.assertRaises(UnicodeEncodeError, fail)
 
     def test_mixed_string_unicode_array_creation(self):
         a = np.array(['1234', u'123'])
@@ -1239,7 +1239,7 @@ class TestRegression(TestCase):
         """Ticket #1254"""
         def func():
             x = np.dtype([(('a', 'a'), 'i'), ('b', 'i')])
-        self.failUnlessRaises(ValueError, func)
+        self.assertRaises(ValueError, func)
 
     def test_signed_integer_division_overflow(self):
         """Ticket #1317."""
