@@ -6,7 +6,7 @@ import copy
 from os import path
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
-from numpy.compat import asbytes, asunicode
+from numpy.compat import asbytes, asunicode, asbytes_nested
 import numpy as np
 
 if sys.version_info[0] >= 3:
@@ -284,9 +284,9 @@ class TestRegression(TestCase):
     def test_chararray_rstrip(self,level=rlevel):
         """Ticket #222"""
         x = np.chararray((1,),5)
-        x[0] = 'a   '
+        x[0] = asbytes('a   ')
         x = x.rstrip()
-        assert_equal(x[0], 'a')
+        assert_equal(x[0], asbytes('a'))
 
     def test_object_array_shape(self,level=rlevel):
         """Ticket #239"""
@@ -438,7 +438,7 @@ class TestRegression(TestCase):
 
     def test_numeric_carray_compare(self, level=rlevel):
         """Ticket #341"""
-        assert_equal(np.array([ 'X' ], 'c'),'X')
+        assert_equal(np.array(['X'], 'c'), asbytes('X'))
 
     def test_string_array_size(self, level=rlevel):
         """Ticket #342"""
@@ -988,7 +988,7 @@ class TestRegression(TestCase):
 
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')
-        b = np.array(['1','2','3'])
+        b = np.array(asbytes_nested(['1','2','3']))
         assert_equal(a,b)
 
     def test_unaligned_unicode_access(self, level=rlevel) :
@@ -997,7 +997,10 @@ class TestRegression(TestCase):
             msg = 'unicode offset: %d chars'%i
             t = np.dtype([('a','S%d'%i),('b','U2')])
             x = np.array([(asbytes('a'),u'b')], dtype=t)
-            assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
+            if sys.version_info[0] >= 3:
+                assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
+            else:
+                assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
 
     def test_sign_for_complex_nan(self, level=rlevel):
         """Ticket 794."""
@@ -1146,13 +1149,13 @@ class TestRegression(TestCase):
     def test_object_array_to_fixed_string(self):
         """Ticket #1235."""
         a = np.array(['abcdefgh', 'ijklmnop'], dtype=np.object_)
-        b = np.array(a, dtype=(np.string_, 8))
+        b = np.array(a, dtype=(np.str_, 8))
         assert_equal(a, b)
-        c = np.array(a, dtype=(np.string_, 5))
+        c = np.array(a, dtype=(np.str_, 5))
         assert_equal(c, np.array(['abcde', 'ijklm']))
-        d = np.array(a, dtype=(np.string_, 12))
+        d = np.array(a, dtype=(np.str_, 12))
         assert_equal(a, d)
-        e = np.empty((2, ), dtype=(np.string_, 8))
+        e = np.empty((2, ), dtype=(np.str_, 8))
         e[:] = a[:]
         assert_equal(a, e)
 

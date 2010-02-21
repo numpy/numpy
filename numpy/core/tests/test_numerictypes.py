@@ -308,7 +308,10 @@ class read_values_nested(object):
         h = np.array(self._buffer, dtype=self._descr)
         self.assert_(h.dtype['Info']['value'].name == 'complex128')
         self.assert_(h.dtype['Info']['y2'].name == 'float64')
-        self.assert_(h.dtype['info']['Name'].name == 'unicode256')
+        if sys.version_info[0] >= 3:
+            self.assert_(h.dtype['info']['Name'].name == 'str256')
+        else:
+            self.assert_(h.dtype['info']['Name'].name == 'unicode256')
         self.assert_(h.dtype['info']['Value'].name == 'complex128')
 
     def test_nested2_descriptor(self):
