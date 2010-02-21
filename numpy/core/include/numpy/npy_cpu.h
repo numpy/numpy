@@ -32,10 +32,11 @@
      * _M_AMD64 defined by MS compiler
      */
     #define NPY_CPU_AMD64
-#elif defined(__ppc__) || defined(__powerpc__)
+#elif defined(__ppc__) || defined(__powerpc__) || defined(_ARCH_PPC)
     /*
      * __ppc__ is defined by gcc, I remember having seen __powerpc__ once,
      * but can't find it ATM
+     * _ARCH_PPC is used by at least gcc on AIX
      */
     #define NPY_CPU_PPC
 #elif defined(__ppc64__)
