@@ -225,6 +225,12 @@ InitOtherOperators(PyObject *dictionary) {
                                 "Compute y = x1 * 2**x2.",0);
     PyDict_SetItemString(dictionary, "ldexp", f);
     Py_DECREF(f);
+
+#if defined(NPY_PY3K)
+    f = PyDict_GetItemString(dictionary, "true_divide");
+    PyDict_SetItemString(dictionary, "divide", f);
+    Py_DECREF(f);
+#endif
     return;
 }
 

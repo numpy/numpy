@@ -682,7 +682,8 @@ defdict = {
 }
 
 if sys.version_info[0] >= 3:
-    defdict['divide'] = defdict['true_divide']
+    # Will be aliased to true_divide in umathmodule.c.src:InitOtherOperators
+    del defdict['divide']
 
 def indent(st,spaces):
     indention = ' '*spaces
