@@ -1147,6 +1147,8 @@ class poly1d(object):
             other = poly1d(other)
             return polydiv(self, other)
 
+    __truediv__ = __div__
+
     def __rdiv__(self, other):
         if isscalar(other):
             return poly1d(other/self.coeffs)

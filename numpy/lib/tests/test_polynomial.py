@@ -5,22 +5,22 @@
 >>> p = poly1d([1.,2,3])
 >>> p
 poly1d([ 1.,  2.,  3.])
->>> print p
+>>> print(p)
    2
 1 x + 2 x + 3
 >>> q = poly1d([3.,2,1])
 >>> q
 poly1d([ 3.,  2.,  1.])
->>> print q
+>>> print(q)
    2
 3 x + 2 x + 1
->>> print poly1d([1.89999+2j, -3j, -5.12345678, 2+1j])
+>>> print(poly1d([1.89999+2j, -3j, -5.12345678, 2+1j]))
             3      2
 (1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)
->>> print poly1d([100e-90, 1.234567e-9j+3, -1234.999e8])
+>>> print(poly1d([100e-90, 1.234567e-9j+3, -1234.999e8]))
        2
 1e-88 x + (3 + 1.235e-09j) x - 1.235e+11
->>> print poly1d([-3, -2, -1])
+>>> print(poly1d([-3, -2, -1]))
     2
 -3 x - 2 x - 1
 
@@ -70,11 +70,11 @@ poly1d([ 2.,  2.])
 poly1d([ 2.])
 
 >>> q = poly1d([1.,2,3], variable='y')
->>> print q
+>>> print(q)
    2
 1 y + 2 y + 3
 >>> q = poly1d([1.,2,3], variable='lambda')
->>> print q
+>>> print(q)
         2
 1 lambda + 2 lambda + 3
 
