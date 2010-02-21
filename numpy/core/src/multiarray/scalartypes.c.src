@@ -2438,7 +2438,7 @@ static long
 }
 /**end repeat**/
 
-#if SIZEOF_INT != SIZEOF_LONG
+#if (SIZEOF_INT != SIZEOF_LONG) || defined(NPY_PY3K)
 static long
 int_arrtype_hash(PyObject *obj)
 {
@@ -2480,14 +2480,12 @@ static long
     }
     return y;
 }
-#endif
-/**end repeat**/
+#else
 
-#if SIZEOF_LONG==SIZEOF_LONGLONG
 static long
-ulonglong_arrtype_hash(PyObject *obj)
+@char@longlong_arrtype_hash(PyObject *obj)
 {
-    long x = (long)(((PyULongLongScalarObject *)obj)->obval);
+    long x = (long)(((Py@Char@LongLongScalarObject *)obj)->obval);
     if (x == -1) {
         x = -2;
     }
@@ -2495,6 +2493,7 @@ ulonglong_arrtype_hash(PyObject *obj)
 }
 
 #endif
+/**end repeat**/
 
 
 /**begin repeat
@@ -3286,12 +3285,17 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
     /**end repeat**/
 
-#if SIZEOF_INT != SIZEOF_LONG
+#if (SIZEOF_INT != SIZEOF_LONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyIntArrType_Type.tp_hash = int_arrtype_hash;
 #endif
 
-#if SIZEOF_LONG != SIZEOF_LONGLONG
+#if defined(NPY_PY3K)
+    /* We won't be inheriting from Python Int type. */
+    PyLongArrType_Type.tp_hash = int_arrtype_hash;
+#endif
+
+#if (SIZEOF_LONG != SIZEOF_LONGLONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
 #endif
