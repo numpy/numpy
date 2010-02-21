@@ -1,7 +1,7 @@
 #include <Python.h>
 
 #define _libnumarray_MODULE
-#include "numpy/libnumarray.h"
+#include "include/numpy/libnumarray.h"
 #include "npy_config.h"
 #include <float.h>
 
