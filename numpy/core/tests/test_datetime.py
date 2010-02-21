@@ -6,12 +6,12 @@ class TestDateTime(TestCase):
     def test_creation(self):
         for unit in ['Y', 'M', 'W', 'B', 'D',
                      'h', 'm', 's', 'ms', 'us',
-                     'ns', 'ps', 'fs', 'as']:            
+                     'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]'%unit)
             assert dt1 == np.dtype('datetime64[750%s]' % unit)
             dt2 = np.dtype('m8[%s]' % unit)
             assert dt2 == np.dtype('timedelta64[%s]' % unit)
-        
+
     def test_divisor_conversion_year(self):
         assert np.dtype('M8[Y/4]') == np.dtype('M8[3M]')
         assert np.dtype('M8[Y/13]') == np.dtype('M8[4W]')
@@ -26,8 +26,8 @@ class TestDateTime(TestCase):
         assert np.dtype('m8[W/5]') == np.dtype('m8[B]')
         assert np.dtype('m8[W/7]') == np.dtype('m8[D]')
         assert np.dtype('m8[3W/14]') == np.dtype('m8[36h]')
-        assert np.dtype('m8[5W/140]') == np.dtype('m8[360m]') 
-        
+        assert np.dtype('m8[5W/140]') == np.dtype('m8[360m]')
+
     def test_divisor_conversion_bday(self):
         assert np.dtype('M8[B/12]') == np.dtype('M8[2h]')
         assert np.dtype('M8[B/120]') == np.dtype('M8[12m]')
@@ -56,4 +56,3 @@ class TestDateTime(TestCase):
 
     def test_divisor_conversion_as(self):
         self.assertRaises(ValueError, lambda : np.dtype('M8[as/10]'))
-
