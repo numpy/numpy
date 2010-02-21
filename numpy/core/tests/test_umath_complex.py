@@ -8,7 +8,7 @@ import numpy as np
 
 class TestCexp(object):
     def test_simple(self):
-        check = check_complex_value 
+        check = check_complex_value
         f = np.exp
 
         yield check, f, 1, 0, np.exp(1), 0, False
@@ -20,7 +20,7 @@ class TestCexp(object):
     def test_special_values(self):
         # C99: Section G 6.3.1
 
-        check = check_complex_value 
+        check = check_complex_value
         f = np.exp
 
         # cexp(+-0 + 0i) is 1 + 0i
@@ -52,38 +52,54 @@ class TestCexp(object):
 
         # cexp(-inf + inf i) is +-0 +- 0i (signs unspecified)
         def _check_ninf_inf(dummy):
-            z = f(np.array(np.complex(-np.inf, np.inf)))
-            if z.real != 0 or z.imag != 0:
-                raise AssertionError(
-                        "cexp(-inf, inf) is (%f, %f), expected (+-0, +-0)" \
-                        % (z.real, z.imag))
+            msgform = "cexp(-inf, inf) is (%f, %f), expected (+-0, +-0)"
+            err = np.seterr(invalid='ignore')
+            try:
+                z = f(np.array(np.complex(-np.inf, np.inf)))
+                if z.real != 0 or z.imag != 0:
+                    raise AssertionError(msgform %(z.real, z.imag))
+            finally:
+                np.seterr(**err)
+
         yield _check_ninf_inf, None
 
         # cexp(inf + inf i) is +-inf + NaNi and raised invalid FPU ex.
         def _check_inf_inf(dummy):
-            z = f(np.array(np.complex(np.inf, np.inf)))
-            if not np.isinf(z.real) or not np.isnan(z.imag):
-                raise AssertionError(
-                        "cexp(inf, inf) is (%f, %f), expected (+-inf, nan)" \
-                        % (z.real, z.imag))
+            msgform = "cexp(inf, inf) is (%f, %f), expected (+-inf, nan)"
+            err = np.seterr(invalid='ignore')
+            try:
+                z = f(np.array(np.complex(np.inf, np.inf)))
+                if not np.isinf(z.real) or not np.isnan(z.imag):
+                    raise AssertionError(msgform % (z.real, z.imag))
+            finally:
+                np.seterr(**err)
+
         yield _check_inf_inf, None
 
         # cexp(-inf + nan i) is +-0 +- 0i
         def _check_ninf_nan(dummy):
-            z = f(np.array(np.complex(-np.inf, np.nan)))
-            if z.real != 0 or z.imag != 0:
-                raise AssertionError(
-                        "cexp(-inf, nan) is (%f, %f), expected (+-0, +-0)" \
-                        % (z.real, z.imag))
+            msgform = "cexp(-inf, nan) is (%f, %f), expected (+-0, +-0)"
+            err = np.seterr(invalid='ignore')
+            try:
+                z = f(np.array(np.complex(-np.inf, np.nan)))
+                if z.real != 0 or z.imag != 0:
+                    raise AssertionError(msgform % (z.real, z.imag))
+            finally:
+                np.seterr(**err)
+
         yield _check_ninf_nan, None
 
         # cexp(inf + nan i) is +-inf + nan
         def _check_inf_nan(dummy):
-            z = f(np.array(np.complex(np.inf, np.nan)))
-            if not np.isinf(z.real) or not np.isnan(z.imag):
-                raise AssertionError(
-                        "cexp(-inf, nan) is (%f, %f), expected (+-inf, nan)" \
-                        % (z.real, z.imag))
+            msgform = "cexp(-inf, nan) is (%f, %f), expected (+-inf, nan)"
+            err = np.seterr(invalid='ignore')
+            try:
+                z = f(np.array(np.complex(np.inf, np.nan)))
+                if not np.isinf(z.real) or not np.isnan(z.imag):
+                    raise AssertionError(msgform % (z.real, z.imag))
+            finally:
+                np.seterr(**err)
+
         yield _check_inf_nan, None
 
         # cexp(nan + yi) is nan + nani for y != 0 (optional: raises invalid FPU
@@ -117,20 +133,35 @@ class TestClog(TestCase):
 
         # From C99 std (Sec 6.3.2)
         # XXX: check exceptions raised
+        # --- raise for invalid fails.
 
         # clog(-0 + i0) returns -inf + i pi and raises the 'divide-by-zero'
         # floating-point exception.
-        x = np.array([np.NZERO], dtype=np.complex)
-        y = np.complex(-np.inf, np.pi)
-        assert_almost_equal(np.log(x), y)
+        err = np.seterr(divide='raise')
+        try:
+            x = np.array([np.NZERO], dtype=np.complex)
+            y = np.complex(-np.inf, np.pi)
+            self.assertRaises(FloatingPointError, np.log, x)
+            np.seterr(divide='ignore')
+            assert_almost_equal(np.log(x), y)
+        finally:
+            np.seterr(**err)
+
         xl.append(x)
         yl.append(y)
 
         # clog(+0 + i0) returns -inf + i0 and raises the 'divide-by-zero'
         # floating-point exception.
-        x = np.array([0], dtype=np.complex)
-        y = np.complex(-np.inf, 0)
-        assert_almost_equal(np.log(x), y)
+        err = np.seterr(divide='raise')
+        try:
+            x = np.array([0], dtype=np.complex)
+            y = np.complex(-np.inf, 0)
+            self.assertRaises(FloatingPointError, np.log, x)
+            np.seterr(divide='ignore')
+            assert_almost_equal(np.log(x), y)
+        finally:
+            np.seterr(**err)
+
         xl.append(x)
         yl.append(y)
 
@@ -148,14 +179,28 @@ class TestClog(TestCase):
 
         # clog(x + iNaN) returns NaN + iNaN and optionally raises the
         # 'invalid' floating- point exception, for finite x.
-        x = np.array([complex(1., np.nan)], dtype=np.complex)
-        y = np.complex(np.nan, np.nan)
-        assert_almost_equal(np.log(x), y)
+        err = np.seterr(invalid='raise')
+        try:
+            x = np.array([complex(1., np.nan)], dtype=np.complex)
+            y = np.complex(np.nan, np.nan)
+            #self.assertRaises(FloatingPointError, np.log, x)
+            np.seterr(invalid='ignore')
+            assert_almost_equal(np.log(x), y)
+        finally:
+            np.seterr(**err)
+
         xl.append(x)
         yl.append(y)
 
-        x = np.array([np.inf + np.nan * 1j], dtype=np.complex)
-        assert_almost_equal(np.log(x), y)
+        err = np.seterr(invalid='raise')
+        try:
+            x = np.array([np.inf + 1j * np.nan], dtype=np.complex)
+            #self.assertRaises(FloatingPointError, np.log, x)
+            np.seterr(invalid='ignore')
+            assert_almost_equal(np.log(x), y)
+        finally:
+            np.seterr(**err)
+
         xl.append(x)
         yl.append(y)
 
@@ -224,10 +269,15 @@ class TestClog(TestCase):
         # clog(conj(z)) = conj(clog(z)).
         xa = np.array(xl, dtype=np.complex)
         ya = np.array(yl, dtype=np.complex)
-        for i in range(len(xa)):
-            assert_almost_equal(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
+        err = np.seterr(divide='ignore')
+        try:
+            for i in range(len(xa)):
+                assert_almost_equal(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
+        finally:
+            np.seterr(**err)
 
 class TestCsqrt(object):
+
     def test_simple(self):
         # sqrt(1)
         yield check_complex_value, np.sqrt, 1, 0, 1, 0
@@ -248,7 +298,7 @@ class TestCsqrt(object):
     #    _check_branch_cut(f, -1, 0, 1, -1)
 
     def test_special_values(self):
-        check = check_complex_value 
+        check = check_complex_value
         f = np.sqrt
 
         # C99: Sec G 6.4.2
@@ -281,11 +331,15 @@ class TestCsqrt(object):
 
         # csqrt(-inf + nani) is nan +- infi (both +i infi are valid)
         def _check_ninf_nan(dummy):
+            msgform = "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)"
             z = np.sqrt(np.array(np.complex(-np.inf, np.nan)))
-            if not np.isnan(z.real) or not np.isinf(z.imag):
-                raise AssertionError(
-                        "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)" \
-                        % (z.real, z.imag))
+            #Fixme: ugly workaround for isinf bug.
+            err = np.seterr(invalid='ignore')
+            try:
+                if not (np.isnan(z.real) and np.isinf(z.imag)):
+                    raise AssertionError(msgform % (z.real, z.imag))
+            finally:
+                np.seterr(**err)
 
         yield _check_ninf_nan, None
 
@@ -304,10 +358,14 @@ class TestCsqrt(object):
 class TestCpow(TestCase):
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
-        y_r = x ** 2
-        y = np.power(x, 2)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        err = np.seterr(invalid='ignore')
+        try:
+            y_r = x ** 2
+            y = np.power(x, 2)
+            for i in range(len(x)):
+                assert_almost_equal(y[i], y_r[i])
+        finally:
+            np.seterr(**err)
 
     def test_scalar(self):
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
@@ -318,9 +376,13 @@ class TestCpow(TestCase):
         # Substitute a result allowed by C99 standard
         p_r[4] = complex(np.inf, np.nan)
         # Do the same with numpy complex scalars
-        n_r = [x[i] ** y[i] for i in lx]
-        for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+        err = np.seterr(invalid='ignore')
+        try:
+            n_r = [x[i] ** y[i] for i in lx]
+            for i in lx:
+                assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+        finally:
+            np.seterr(**err)
 
     def test_array(self):
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
@@ -331,9 +393,13 @@ class TestCpow(TestCase):
         # Substitute a result allowed by C99 standard
         p_r[4] = complex(np.inf, np.nan)
         # Do the same with numpy arrays
-        n_r = x ** y
-        for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+        err = np.seterr(invalid='ignore')
+        try:
+            n_r = x ** y
+            for i in lx:
+                assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+        finally:
+            np.seterr(**err)
 
 class TestCabs(object):
     def test_simple(self):
