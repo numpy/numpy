@@ -36,11 +36,9 @@ class TestMRecords(TestCase):
         "Generic setup"
         ilist = [1,2,3,4,5]
         flist = [1.1,2.2,3.3,4.4,5.5]
-        slist = ['one','two','three','four','five']
+        slist = asbytes_nested(['one','two','three','four','five'])
         ddtype = [('a',int),('b',float),('c','|S8')]
         mask = [0,1,0,0,1]
-        if sys.version_info[0] >= 3:
-            slist = list(map(asbytes, slist))
         self.base = ma.array(list(zip(ilist,flist,slist)),
                              mask=mask, dtype=ddtype)
 
@@ -120,7 +118,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.c.mask, [1]*5)
         assert_equal(mbase.c.recordmask, [1]*5)
         assert_equal(ma.getmaskarray(mbase['c']), [1]*5)
-        assert_equal(ma.getdata(mbase['c']), ['N/A']*5)
+        assert_equal(ma.getdata(mbase['c']), [asbytes('N/A')]*5)
         assert_equal(mbase._mask.tolist(),
                      np.array([(0,0,1),(0,1,1),(0,0,1),(0,0,1),(0,1,1)],
                               dtype=bool))

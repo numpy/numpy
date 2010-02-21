@@ -803,13 +803,19 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_count_func (self):
         "Tests count"
         ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
-        self.assertTrue(isinstance(count(ott), int))
+        if sys.version_info[0] >= 3:
+            self.assertTrue(isinstance(count(ott), np.integer))
+        else:
+            self.assertTrue(isinstance(count(ott), int))
         assert_equal(3, count(ott))
         assert_equal(1, count(1))
         assert_equal(0, array(1, mask=[1]))
         ott = ott.reshape((2, 2))
         assert isinstance(count(ott, 0), ndarray)
-        assert isinstance(count(ott), types.IntType)
+        if sys.version_info[0] >= 3:
+            assert isinstance(count(ott), np.integer)
+        else:
+            assert isinstance(count(ott), types.IntType)
         assert_equal(3, count(ott))
         assert getmask(count(ott, 0)) is nomask
         assert_equal([1, 2], count(ott, 0))

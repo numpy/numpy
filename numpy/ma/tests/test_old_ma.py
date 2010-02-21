@@ -153,13 +153,19 @@ class TestMa(TestCase):
     def test_xtestCount (self):
         "Test count"
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
-        self.assertTrue( isinstance(count(ott), types.IntType))
+        if sys.version_info[0] >= 3:
+            self.assertTrue( isinstance(count(ott), numpy.integer))
+        else:
+            self.assertTrue( isinstance(count(ott), types.IntType))
         self.assertEqual(3, count(ott))
         self.assertEqual(1, count(1))
         self.assertTrue (eq(0, array(1,mask=[1])))
         ott=ott.reshape((2,2))
         assert isinstance(count(ott,0),numpy.ndarray)
-        assert isinstance(count(ott), types.IntType)
+        if sys.version_info[0] >= 3:
+            assert isinstance(count(ott), numpy.integer)
+        else:
+            assert isinstance(count(ott), types.IntType)
         self.assertTrue (eq(3, count(ott)))
         assert getmask(count(ott,0)) is nomask
         self.assertTrue (eq([1,2],count(ott,0)))
