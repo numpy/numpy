@@ -18,6 +18,10 @@ from numpy.ma.mrecords import MaskedRecords
 
 from numpy.lib._iotools import _is_string_like
 
+import sys
+if sys.version_info[0] >= 3:
+    iterizip = zip
+
 _check_fill_value = np.ma.core._check_fill_value
 
 __all__ = ['append_fields',
