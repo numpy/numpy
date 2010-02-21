@@ -35,5 +35,5 @@ def handleError(errorStatus, sourcemsg):
 
 def get_numarray_include_dirs():
     base = os.path.dirname(numpy.__file__)
-    newdirs = [os.path.join(base, 'numarray')]
+    newdirs = [os.path.join(base, 'numarray', 'include')]
     return newdirs

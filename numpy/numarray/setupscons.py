@@ -4,7 +4,7 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('numarray',parent_package,top_path)
 
-    config.add_data_files('numpy/')
+    config.add_data_files('include/numpy/')
     config.add_sconscript('SConstruct', source_files = ['_capi.c'])
 
     return config
