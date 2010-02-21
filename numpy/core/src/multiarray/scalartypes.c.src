@@ -410,7 +410,11 @@ format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
+#if PY_VERSION_HEX >= 0x03000000
+    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+#else
     if (val.real == 0.0) {
+#endif
         PyOS_snprintf(format, sizeof(format), _FMT1, prec);
         res = NumPyOS_ascii_format@type@(buf, buflen-1, format, val.imag, 0);
         if (res == NULL) {
