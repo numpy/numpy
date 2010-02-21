@@ -1464,9 +1464,9 @@ if sys.version_info >= (2, 6):
             y2 = np.array(x)
             assert not y.flags.owndata
             assert y2.flags.owndata
-            assert y.dtype == obj.dtype, (obj, y)
+            assert_equal(y.dtype, obj.dtype)
             assert_array_equal(obj, y)
-            assert y2.dtype == obj.dtype, (obj, y2)
+            assert_equal(y2.dtype, obj.dtype)
             assert_array_equal(obj, y2)
 
         def test_roundtrip(self):
@@ -1511,32 +1511,32 @@ if sys.version_info >= (2, 6):
         def test_export_simple_1d(self):
             x = np.array([1,2,3,4,5], dtype='i4')
             y = memoryview(x)
-            assert y.format == '=l'
-            assert y.shape == (5,)
-            assert y.ndim == 1
-            assert y.strides == (4,)
-            assert y.suboffsets is None
-            assert y.itemsize == 4
+            assert_equal(y.format, '=l')
+            assert_equal(y.shape, (5,))
+            assert_equal(y.ndim, 1)
+            assert_equal(y.strides, (4,))
+            assert_equal(y.suboffsets, None)
+            assert_equal(y.itemsize, 4)
 
         def test_export_simple_nd(self):
             x = np.array([[1,2],[3,4]], dtype=np.float64)
             y = memoryview(x)
-            assert y.format == '=d'
-            assert y.shape == (2, 2)
-            assert y.ndim == 2
-            assert y.strides == (16, 8)
-            assert y.suboffsets is None
-            assert y.itemsize == 8
+            assert_equal(y.format, '=d')
+            assert_equal(y.shape, (2, 2))
+            assert_equal(y.ndim, 2)
+            assert_equal(y.strides, (16, 8))
+            assert_equal(y.suboffsets, None)
+            assert_equal(y.itemsize, 8)
 
         def test_export_discontiguous(self):
             x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
             y = memoryview(x)
-            assert y.format == '=f'
-            assert y.shape == (3, 3)
-            assert y.ndim == 2
-            assert y.strides == (36, 4)
-            assert y.suboffsets is None
-            assert y.itemsize == 4
+            assert_equal(y.format, '=f')
+            assert_equal(y.shape, (3, 3))
+            assert_equal(y.ndim, 2)
+            assert_equal(y.strides, (36, 4))
+            assert_equal(y.suboffsets, None)
+            assert_equal(y.itemsize, 4)
 
         def test_export_record(self):
             dt = [('a', np.int8),
@@ -1558,37 +1558,37 @@ if sys.version_info >= (2, 6):
                            asbytes('aaaa'), 'bbbb', asbytes('   '), True)],
                          dtype=dt)
             y = memoryview(x)
-            assert y.format == 'T{b:a:=h:b:=l:c:=q:d:B:e:=H:f:=L:g:=Q:h:=d:i:=d:j:=g:k:4s:l:=4w:m:3x:n:?:o:}'
-            assert y.shape == (1,)
-            assert y.ndim == 1
-            assert y.strides == (82,)
-            assert y.suboffsets is None
-            assert y.itemsize == 82
+            assert_equal(y.format, 'T{b:a:=h:b:=l:c:=q:d:B:e:=H:f:=L:g:=Q:h:=d:i:=d:j:=g:k:4s:l:=4w:m:3x:n:?:o:}')
+            assert_equal(y.shape, (1,))
+            assert_equal(y.ndim, 1)
+            assert_equal(y.strides, (82,))
+            assert_equal(y.suboffsets, None)
+            assert_equal(y.itemsize, 82)
 
         def test_export_subarray(self):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
             y = memoryview(x)
-            assert y.format == 'T{(2,2)=l:a:}'
-            assert y.shape is None
-            assert y.ndim == 0
-            assert y.strides is None
-            assert y.suboffsets is None
-            assert y.itemsize == 16
+            assert_equal(y.format, 'T{(2,2)=l:a:}')
+            assert_equal(y.shape, None)
+            assert_equal(y.ndim, 0)
+            assert_equal(y.strides, None)
+            assert_equal(y.suboffsets, None)
+            assert_equal(y.itemsize, 16)
 
         def test_export_endian(self):
             x = np.array([1,2,3], dtype='>i4')
             y = memoryview(x)
             if sys.byteorder == 'little':
-                assert y.format in '>l'
+                assert_equal(y.format, '>l')
             else:
-                assert y.format == '=l'
+                assert_equal(y.format, '=l')
 
             x = np.array([1,2,3], dtype='<i4')
             y = memoryview(x)
             if sys.byteorder == 'little':
-                assert y.format in '=l'
+                assert_equal(y.format, '=l')
             else:
-                assert y.format == '<l'
+                assert_equal(y.format, '<l')
 
 if __name__ == "__main__":
     run_module_suite()
