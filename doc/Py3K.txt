@@ -263,6 +263,27 @@ ob_type, ob_size
 These use Py_SIZE, etc. macros now.  The macros are also defined in
 npy_3kcompat.h for the Python versions that don't have them natively.
 
+Py_TPFLAGS_CHECKTYPES
+---------------------
+
+Python 3 no longer supports type coercion in arithmetic.
+
+Py_TPFLAGS_CHECKTYPES is now on by default, and so the C-level
+interface, ``nb_*`` methods, still unconditionally receive whatever
+types as their two arguments.
+
+However, this will affect Python-level code: previously if you
+inherited from a Py_TPFLAGS_CHECKTYPES enabled class that implemented
+a ``__mul__`` method, the same ``__mul__`` method would still be
+called also as when a ``__rmul__`` was required, but with swapped
+arguments (see Python/Objects/typeobject.c:wrap_binaryfunc_r).
+However, on Python 3, arguments are swapped only if both are of same
+(sub-)type, and otherwise things fail.
+
+This means that ``ndarray``-derived subclasses must now implement all
+relevant ``__r*__`` methods, since they cannot any more automatically
+fall back to ndarray code.
+
 
 PyNumberMethods
 ---------------
