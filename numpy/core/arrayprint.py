@@ -18,6 +18,7 @@ from umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from multiarray import format_longfloat
 from fromnumeric import ravel
 
+
 def product(x, y): return x*y
 
 _summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
@@ -412,6 +413,7 @@ class FloatFormat(object):
                     self.exp_format = True
         finally:
             _nc.seterr(**errstate)
+
         if self.exp_format:
             self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
             self.max_str_len = 8 + self.precision
@@ -444,13 +446,19 @@ class FloatFormat(object):
         self.format = format
 
     def __call__(self, x, strip_zeros=True):
-        if isnan(x):
-            return self.special_fmt % (_nan_str,)
-        elif isinf(x):
-            if x > 0:
-                return self.special_fmt % (_inf_str,)
-            else:
-                return self.special_fmt % ('-' + _inf_str,)
+        import numeric as _nc
+        err = _nc.seterr(invalid='ignore')
+        try:
+            if isnan(x):
+                return self.special_fmt % (_nan_str,)
+            elif isinf(x):
+                if x > 0:
+                    return self.special_fmt % (_inf_str,)
+                else:
+                    return self.special_fmt % ('-' + _inf_str,)
+        finally:
+            _nc.seterr(**err)
+
         s = self.format % x
         if self.large_exponent:
             # 3-digit exponent
