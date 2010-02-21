@@ -18,6 +18,13 @@ import math
 import copy
 import copy_reg
 
+import sys
+if sys.version_info[0] >= 3:
+    import copyreg
+    import io
+    StringIO = io.BytesIO
+    copy_reg = copyreg
+
 from numpy import sort, clip, rank, sign, shape, putmask, allclose, size,\
      choose, swapaxes, array_str, array_repr, e, pi, put, \
      resize, around, concatenate, vdot, transpose, \

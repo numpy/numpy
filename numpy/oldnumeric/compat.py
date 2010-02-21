@@ -95,12 +95,20 @@ def _LoadArray(fp):
         return m
 
 import pickle, copy
-class Unpickler(pickle.Unpickler):
-    def load_array(self):
-        self.stack.append(_LoadArray(self))
+if sys.version_info[0] >= 3:
+    class Unpickler(pickle.Unpickler):
+        # XXX: should we implement this? It's not completely straightforward
+        #      to do.
+        def __init__(self, *a, **kw):
+            raise NotImplementedError(
+                "numpy.oldnumeric.Unpickler is not supported on Python 3")
+else:
+    class Unpickler(pickle.Unpickler):
+        def load_array(self):
+            self.stack.append(_LoadArray(self))
 
-    dispatch = copy.copy(pickle.Unpickler.dispatch)
-    dispatch['A'] = load_array
+        dispatch = copy.copy(pickle.Unpickler.dispatch)
+        dispatch['A'] = load_array
 
 class Pickler(pickle.Pickler):
     def __init__(self, *args, **kwds):
