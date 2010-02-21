@@ -6,7 +6,6 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import *
-from exceptions import TypeError, ValueError
 
 def trim(x) :
     return poly.polytrim(x, tol=1e-6)

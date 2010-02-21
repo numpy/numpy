@@ -6,7 +6,6 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.chebyshev as ch
 from numpy.testing import *
-from exceptions import TypeError, ValueError
 
 def trim(x) :
     return ch.chebtrim(x, tol=1e-6)

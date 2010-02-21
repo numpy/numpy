@@ -6,7 +6,6 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.polyutils as pu
 from numpy.testing import *
-from exceptions import TypeError, ValueError
 
 class TestMisc(TestCase) :
 
