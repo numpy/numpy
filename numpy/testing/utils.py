@@ -61,10 +61,14 @@ def gisfinite(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isfinite
-    st = isfinite(x)
-    if isinstance(st, types.NotImplementedType):
-        raise TypeError("isfinite not supported for this type")
+    from numpy.core import isfinite, seterr
+    err = seterr(invalid='ignore')
+    try:
+        st = isfinite(x)
+        if isinstance(st, types.NotImplementedType):
+            raise TypeError("isfinite not supported for this type")
+    finally:
+        seterr(**err)
     return st
 
 def gisinf(x):
@@ -78,10 +82,14 @@ def gisinf(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isinf
-    st = isinf(x)
-    if isinstance(st, types.NotImplementedType):
-        raise TypeError("isinf not supported for this type")
+    from numpy.core import isinf, seterr
+    err = seterr(invalid='ignore')
+    try:
+        st = isinf(x)
+        if isinstance(st, types.NotImplementedType):
+            raise TypeError("isinf not supported for this type")
+    finally:
+        seterr(**err)
     return st
 
 def rand(*args):

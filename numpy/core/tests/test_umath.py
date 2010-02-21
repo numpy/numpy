@@ -232,7 +232,11 @@ def assert_hypot_isnan(x, y):
         np.seterr(**err)
 
 def assert_hypot_isinf(x, y):
-    assert np.isinf(ncu.hypot(x, y)), "hypot(%s, %s) is %s, not inf" % (x, y, ncu.hypot(x, y))
+    err = np.seterr(invalid='ignore')
+    try:
+        assert np.isinf(ncu.hypot(x, y)), "hypot(%s, %s) is %s, not inf" % (x, y, ncu.hypot(x, y))
+    finally:
+        np.seterr(**err)
 
 class TestHypotSpecialValues(TestCase):
     def test_nan_outputs(self):
