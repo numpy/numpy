@@ -125,6 +125,18 @@ There are some utility functions needed for 3K compatibility in
 More can be added as needed.
 
 
+numpy.f2py
+----------
+
+F2py has not yet been ported to Py3.
+
+It imports, but it's not tested.
+
+.. todo::
+
+   Port f2py to Py3
+
+
 Bytes vs. strings
 -----------------
 
