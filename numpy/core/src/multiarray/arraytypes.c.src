@@ -3533,7 +3533,11 @@ _init_datetime_descr(PyArray_Descr *descr)
     dt_data->den = 1;
     dt_data->events = 1;
 
+#if defined(NPY_PY3K)
+    cobj = PyCapsule_New((void *)dt_data, NULL, simple_capsule_dtor);
+#else
     cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+#endif
     descr->metadata = PyDict_New();
     PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);
     Py_DECREF(cobj);

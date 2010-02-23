@@ -372,7 +372,11 @@ _find_matching_userloop(PyObject *obj, int *arg_types,
     PyUFunc_Loop1d *funcdata;
     int i;
 
+#if defined(NPY_PY3K)
+    funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(obj, NULL);
+#else
     funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
+#endif
     while (funcdata != NULL) {
         for (i = 0; i < nin; i++) {
             if (!PyArray_CanCoerceScalar(arg_types[i],
@@ -517,7 +521,11 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
          * extract the correct function
          * data and argtypes
          */
+#if defined(NPY_PY3K)
+        funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(obj, NULL);
+#else
         funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
+#endif
         while (funcdata != NULL) {
             if (n != 1) {
                 for (i = 0; i < nargs; i++) {
@@ -3876,6 +3884,22 @@ cmp_arg_types(int *arg1, int *arg2, int n)
  * This frees the linked-list structure when the CObject
  * is destroyed (removed from the internal dictionary)
 */
+#if defined(NPY_PY3K)
+static void
+_loop1d_list_free(PyObject *ptr)
+{
+    PyUFunc_Loop1d *funcdata;
+
+    funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(ptr, NULL);
+    if (funcdata == NULL) {
+        return;
+    }
+    _pya_free(funcdata->arg_types);
+    _loop1d_list_free(funcdata->next);
+    _pya_free(funcdata);
+}
+
+#else
 static void
 _loop1d_list_free(void *ptr)
 {
@@ -3891,6 +3915,7 @@ _loop1d_list_free(void *ptr)
     _loop1d_list_free(funcdata->next);
     _pya_free(funcdata);
 }
+#endif
 
 
 /*UFUNC_API*/
@@ -3949,7 +3974,11 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     cobj = PyDict_GetItem(ufunc->userloops, key);
     /* If it's not there, then make one and return. */
     if (cobj == NULL) {
+#if defined(NPY_PY3K)
+        cobj = PyCapsule_New((void *)funcdata, NULL, _loop1d_list_free);
+#else
         cobj = PyCObject_FromVoidPtr((void *)funcdata, _loop1d_list_free);
+#endif
         if (cobj == NULL) {
             goto fail;
         }
@@ -3967,7 +3996,11 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
          * is exactly like this one, then just replace.
          * Otherwise insert.
          */
+#if defined(NPY_PY3K)
+        current = (PyUFunc_Loop1d *)PyCapsule_GetPointer(cobj, NULL);
+#else
         current = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(cobj);
+#endif
         while (current != NULL) {
             cmp = cmp_arg_types(current->arg_types, newtypes, ufunc->nargs);
             if (cmp >= 0) {

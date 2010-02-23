@@ -212,4 +212,16 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
 }
 #endif
 
+/*
+ * A destructor is needed for PyCapsule objects to
+ * replace _pya_free.
+ */
+#if defined(NPY_PY3K)
+static void
+simple_capsule_dtor(PyObject *cap)
+{
+    PyArray_free(PyCapsule_GetPointer(cap, NULL));
+}
+#endif
+
 #endif /* _NPY_3KCOMPAT_H_ */

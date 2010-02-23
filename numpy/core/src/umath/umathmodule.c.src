@@ -263,6 +263,8 @@ static struct PyModuleDef moduledef = {
 };
 #endif
 
+#include <stdio.h>
+
 #if defined(NPY_PY3K)
 #define RETVAL m
 PyObject *PyInit_umath(void)
@@ -303,11 +305,19 @@ PyMODINIT_FUNC initumath(void)
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
+#if defined(NPY_PY3K)
+    c_api = PyCapsule_New((void *)PyUFunc_API, NULL, NULL);
+#else
     c_api = PyCObject_FromVoidPtr((void *)PyUFunc_API, NULL);
-    if (PyErr_Occurred()) goto err;
+#endif
+    if (PyErr_Occurred()) {
+        goto err;
+    }
     PyDict_SetItemString(d, "_UFUNC_API", c_api);
     Py_DECREF(c_api);
-    if (PyErr_Occurred()) goto err;
+    if (PyErr_Occurred()) {
+        goto err;
+    }
 
     s = PyString_FromString("0.4.0");
     PyDict_SetItemString(d, "__version__", s);

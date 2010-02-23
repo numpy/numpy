@@ -810,6 +810,21 @@ gentype_size_get(PyObject *NPY_UNUSED(self))
     return PyInt_FromLong(1);
 }
 
+#if defined(NPY_PY3K)
+NPY_NO_EXPORT void
+gentype_struct_free(PyObject *ptr)
+{
+    PyArrayInterface *arrif;
+    PyObject *context;
+
+    arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
+    context = (PyObject *)PyCapsule_GetContext(ptr);
+    Py_DECREF(context);
+    Py_XDECREF(arrif->descr);
+    _pya_free(arrif->shape);
+    _pya_free(arrif);
+}
+#else
 NPY_NO_EXPORT void
 gentype_struct_free(void *ptr, void *arg)
 {
@@ -819,12 +834,14 @@ gentype_struct_free(void *ptr, void *arg)
     _pya_free(arrif->shape);
     _pya_free(arrif);
 }
+#endif
 
 static PyObject *
 gentype_struct_get(PyObject *self)
 {
     PyArrayObject *arr;
     PyArrayInterface *inter;
+    PyObject *ret;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
     inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
@@ -840,7 +857,13 @@ gentype_struct_get(PyObject *self)
     inter->data = arr->data;
     inter->descr = NULL;
 
-    return PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
+#if defined(NPY_PY3K)
+    ret = PyCapsule_New(inter, NULL, gentype_struct_free);
+    PyCapsule_SetContext(ret, arr);
+#else
+    ret = PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
+#endif
+    return ret;
 }
 
 static PyObject *

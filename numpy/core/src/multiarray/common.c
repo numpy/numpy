@@ -257,14 +257,26 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     if ((ip=PyObject_GetAttrString(op, "__array_struct__")) != NULL) {
         PyArrayInterface *inter;
         char buf[40];
-        if (PyCObject_Check(ip)) {
-            inter=(PyArrayInterface *)PyCObject_AsVoidPtr(ip);
+
+#if defined(NPY_PY3K)
+        if (PyCapsule_CheckExact(ip)) {
+            inter = (PyArrayInterface *)PyCapsule_GetPointer(ip, NULL);
             if (inter->two == 2) {
                 PyOS_snprintf(buf, sizeof(buf),
                         "|%c%d", inter->typekind, inter->itemsize);
                 chktype = _array_typedescr_fromstr(buf);
             }
         }
+#else
+        if (PyCObject_Check(ip)) {
+            inter = (PyArrayInterface *)PyCObject_AsVoidPtr(ip);
+            if (inter->two == 2) {
+                PyOS_snprintf(buf, sizeof(buf),
+                        "|%c%d", inter->typekind, inter->itemsize);
+                chktype = _array_typedescr_fromstr(buf);
+            }
+        }
+#endif
         Py_DECREF(ip);
         if (chktype) {
             goto finish;

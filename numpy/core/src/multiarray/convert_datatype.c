@@ -102,9 +102,15 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             key = PyInt_FromLong(type_num);
             cobj = PyDict_GetItem(obj, key);
             Py_DECREF(key);
+#if defined(NPY_PY3K)
+            if (PyCapsule_CheckExact(cobj)) {
+                castfunc = PyCapsule_GetPointer(cobj, NULL);
+            }
+#else
             if (PyCObject_Check(cobj)) {
                 castfunc = PyCObject_AsVoidPtr(cobj);
             }
+#endif
         }
     }
     if (PyTypeNum_ISCOMPLEX(descr->type_num) &&

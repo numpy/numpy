@@ -44,9 +44,16 @@ _import_umath(void)
   if (numpy == NULL) return -1;
   c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
   if (c_api == NULL) {Py_DECREF(numpy); return -1;}
+
+#if PY_VERSION_HEX >= 0x03010000
+  if (PyCapsule_CheckExact(c_api)) {
+      PyUFunc_API = (void **)PyCapsule_GetPointer(c_api, NULL);
+  }
+#else
   if (PyCObject_Check(c_api)) {
       PyUFunc_API = (void **)PyCObject_AsVoidPtr(c_api);
   }
+#endif
   Py_DECREF(c_api);
   Py_DECREF(numpy);
   if (PyUFunc_API == NULL) return -1;

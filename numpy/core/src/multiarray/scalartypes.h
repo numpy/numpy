@@ -7,8 +7,13 @@ initialize_numeric_types(void);
 NPY_NO_EXPORT void
 format_longdouble(char *buf, size_t buflen, longdouble val, unsigned int prec);
 
+#if defined(NPY_PY3K)
+NPY_NO_EXPORT void
+gentype_struct_free(PyObject *ptr);
+#else
 NPY_NO_EXPORT void
 gentype_struct_free(void *ptr, void *arg);
+#endif
 
 NPY_NO_EXPORT int
 _typenum_fromtypeobj(PyObject *type, int user);

@@ -506,6 +506,7 @@ static PyObject *
 array_struct_get(PyArrayObject *self)
 {
     PyArrayInterface *inter;
+    PyObject *ret;
 
     inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
@@ -551,7 +552,13 @@ array_struct_get(PyArrayObject *self)
         inter->descr = NULL;
     }
     Py_INCREF(self);
-    return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
+#if defined(NPY_PY3K)
+    ret = PyCapsule_New(inter, NULL, gentype_struct_free);
+    PyCapsule_SetContext(ret, self);
+#else
+    ret = PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
+#endif
+    return ret;
 }
 
 static PyObject *

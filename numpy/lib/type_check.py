@@ -611,7 +611,7 @@ def datetime_data(dtype):
 
     if dtype.kind not in ['m','M']:
         raise ValueError, "Not a date-time dtype"
-    
+
     obj = dtype.metadata[METADATA_DTSTR]
     class DATETIMEMETA(ctypes.Structure):
         _fields_ = [('base', ctypes.c_int),
@@ -619,11 +619,16 @@ def datetime_data(dtype):
                     ('den', ctypes.c_int),
                     ('events', ctypes.c_int)]
 
-    func = ctypes.pythonapi.PyCObject_AsVoidPtr
-    func.argtypes = [ctypes.py_object]
-    func.restype = ctypes.c_void_p
-
-    result = func(ctypes.py_object(obj))
+    if sys.version_info[:2] >= (3,1):
+        func = ctypes.pythonapi.PyCapsule_GetPointer
+        func.argtypes = [ctypes.py_object, ctypes.c_char_p]
+        func.restype = ctypes.c_void_p
+        result = func(ctypes.py_object(obj), ctypes.c_char_p(None))
+    else:
+        func = ctypes.pythonapi.PyCObject_AsVoidPtr
+        func.argtypes = [ctypes.py_object]
+        func.restype = ctypes.c_void_p
+        result = func(ctypes.py_object(obj))
     result = ctypes.cast(ctypes.c_void_p(result), ctypes.POINTER(DATETIMEMETA))
 
     struct = result[0]
@@ -636,4 +641,4 @@ def datetime_data(dtype):
     _unitnum2name = ctypes.cast(ctypes.c_void_p(result), ctypes.POINTER(ctypes.c_char_p))
 
     return (_unitnum2name[base], struct.num, struct.den, struct.events)
-    
+

@@ -1350,8 +1350,13 @@ _equivalent_units(PyObject *meta1, PyObject *meta2)
         return 1;
     }
 
+#if defined(NPY_PY3K)
+    data1 = PyCapsule_GetPointer(cobj1, NULL);
+    data2 = PyCapsule_GetPointer(cobj2, NULL);
+#else
     data1 = PyCObject_AsVoidPtr(cobj1);
     data2 = PyCObject_AsVoidPtr(cobj2);
+#endif
     return ((data1->base == data2->base)
             && (data1->num == data2->num)
             && (data1->den == data2->den)
@@ -3045,7 +3050,11 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
         return RETVAL;
     }
+#if defined(NPY_PY3K)
+    c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
+#else
     c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
+#endif
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
     Py_DECREF(c_api);
     if (PyErr_Occurred()) {
@@ -3076,7 +3085,11 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "METADATA_DTSTR", s);
     Py_DECREF(s);
 
+#if defined(NPY_PY3K)
+    s = PyCapsule_New((void *)_datetime_strings, NULL, NULL);
+#else
     s = PyCObject_FromVoidPtr((void *)_datetime_strings, NULL);
+#endif
     PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 

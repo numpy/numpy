@@ -1,4 +1,4 @@
-/* Compatibility with numarray.  Do not use in new code. 
+/* Compatibility with numarray.  Do not use in new code.
  */
 
 #ifndef NUMPY_LIBNUMARRAY_H
@@ -29,7 +29,7 @@ leading to problems.  Looking around at "existing Python art", most
 extension modules are monolithic C files, and likely for good reason.
 */
 
-/* C API address pointer */ 
+/* C API address pointer */
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
 extern void **libnumarray_API;
 #else
@@ -40,29 +40,48 @@ static void **libnumarray_API;
 #endif
 #endif
 
-#define _import_libnumarray()                                           \
-        {                                                               \
-        PyObject *module = PyImport_ImportModule("numpy.numarray._capi"); \
-        if (module != NULL) {                                               \
-          PyObject *module_dict = PyModule_GetDict(module);                 \
-          PyObject *c_api_object =                                          \
-                 PyDict_GetItemString(module_dict, "_C_API");               \
-          if (c_api_object && PyCObject_Check(c_api_object)) {              \
-            libnumarray_API = (void **)PyCObject_AsVoidPtr(c_api_object);      \
-          } else {                                                          \
-            PyErr_Format(PyExc_ImportError,                                 \
-                         "Can't get API for module 'numpy.numarray._capi'");  \
-          }                                                                 \
-        }                                                                   \
+#if defined(NPY_PY3K)
+#define _import_libnumarray()                                                    \
+        {                                                                        \
+        PyObject *module = PyImport_ImportModule("numpy.numarray._capi");        \
+        if (module != NULL) {                                                    \
+          PyObject *module_dict = PyModule_GetDict(module);                      \
+          PyObject *c_api_object =                                               \
+                 PyDict_GetItemString(module_dict, "_C_API");                    \
+          if (c_api_object && PyCapsule_CheckExact(c_api_object)) {              \
+            libnumarray_API = (void **)PyCapsule_GetPointer(c_api_object, NULL); \
+          } else {                                                               \
+            PyErr_Format(PyExc_ImportError,                                      \
+                         "Can't get API for module 'numpy.numarray._capi'");     \
+          }                                                                      \
+        }                                                                        \
       }
-      
+
+#else
+#define _import_libnumarray()                                                   \
+        {                                                                       \
+        PyObject *module = PyImport_ImportModule("numpy.numarray._capi");       \
+        if (module != NULL) {                                                   \
+          PyObject *module_dict = PyModule_GetDict(module);                     \
+          PyObject *c_api_object =                                              \
+                 PyDict_GetItemString(module_dict, "_C_API");                   \
+          if (c_api_object && PyCObject_Check(c_api_object)) {                  \
+            libnumarray_API = (void **)PyCObject_AsVoidPtr(c_api_object);       \
+          } else {                                                              \
+            PyErr_Format(PyExc_ImportError,                                     \
+                         "Can't get API for module 'numpy.numarray._capi'");    \
+          }                                                                     \
+        }                                                                       \
+      }
+#endif
+
 #define import_libnumarray() _import_libnumarray(); if (PyErr_Occurred()) { PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.numarray._capi failed to import.\n"); return; }
-      
+
 #endif
 
 
 #define libnumarray_FatalApiError (Py_FatalError("Call to API function without first calling import_libnumarray() in " __FILE__), NULL)
-      
+
 
 /* Macros defining components of function prototypes */
 
@@ -70,7 +89,7 @@ static void **libnumarray_API;
   /* This section is used when compiling libnumarray */
 
 static PyObject *_Error;
-  
+
 static PyObject*  getBuffer  (PyObject*o);
 
 static int  isBuffer  (PyObject*o);
@@ -333,7 +352,7 @@ static int  NA_scipy_typestr  (NumarrayType t, int byteorder, char *typestr);
 
 static PyArrayObject *  NA_FromArrayStruct  (PyObject *a);
 
-  
+
 #else
   /* This section is used in modules that use libnumarray */
 

@@ -49,14 +49,25 @@ static int
 _import_array(void)
 {
   int st;
-  PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
+  PyObject *numpy = NULL;
   PyObject *c_api = NULL;
-  if (numpy == NULL) return -1;
-  c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
-  if (c_api == NULL) {Py_DECREF(numpy); return -1;}
+
+
+
+numpy = PyImport_ImportModule("numpy.core.multiarray");
+if (numpy == NULL) return -1;
+c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
+if (c_api == NULL) {Py_DECREF(numpy); return -1;}
+
+#if PY_VERSION_HEX >= 0x03010000
+  if (PyCapsule_CheckExact(c_api)) {
+      PyArray_API = (void **)PyCapsule_GetPointer(c_api, NULL);
+  }
+#else
   if (PyCObject_Check(c_api)) {
       PyArray_API = (void **)PyCObject_AsVoidPtr(c_api);
   }
+#endif
   Py_DECREF(c_api);
   Py_DECREF(numpy);
   if (PyArray_API == NULL) return -1;
@@ -73,10 +84,10 @@ _import_array(void)
         (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
     return -1;
   }
- 
-  /* 
+
+  /*
    * Perform runtime check of endianness and check it matches the one set by
-   * the headers (npy_endian.h) as a safeguard 
+   * the headers (npy_endian.h) as a safeguard
    */
   st = PyArray_GetEndianness();
   if (st == NPY_CPU_UNKNOWN_ENDIAN) {

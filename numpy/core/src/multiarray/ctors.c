@@ -1140,9 +1140,15 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 #endif
     if ((e = PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
         d = -1;
+#if defined(NPY_PY3K)
+        if (PyCapsule_CheckExact(e)) {
+            PyArrayInterface *inter;
+            inter = (PyArrayInterface *)PyCapsule_GetPointer(e, NULL);
+#else
         if (PyCObject_Check(e)) {
             PyArrayInterface *inter;
             inter = (PyArrayInterface *)PyCObject_AsVoidPtr(e);
+#endif
             if (inter->two == 2) {
                 d = inter->nd;
             }
@@ -1565,10 +1571,17 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                  */
                 PyArray_UpdateFlags(self, UPDATE_ALL);
             }
+#if defined(NPY_PY3K)
+            if PyCapsule_CheckExact(func) {
+                /* A C-function is stored here */
+                PyArray_FinalizeFunc *cfunc;
+                cfunc = PyCapsule_GetPointer(func, NULL);
+#else
             if PyCObject_Check(func) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
                 cfunc = PyCObject_AsVoidPtr(func);
+#endif
                 Py_DECREF(func);
                 if (cfunc(self, obj) < 0) {
                     goto fail;
@@ -2109,10 +2122,17 @@ PyArray_FromStructInterface(PyObject *input)
         PyErr_Clear();
         return Py_NotImplemented;
     }
+#if defined(NPY_PY3K)
+    if (!PyCapsule_CheckExact(attr)) {
+        goto fail;
+    }
+    inter = PyCapsule_GetPointer(attr, NULL);
+#else
     if (!PyCObject_Check(attr)) {
         goto fail;
     }
     inter = PyCObject_AsVoidPtr(attr);
+#endif
     if (inter->two != 2) {
         goto fail;
     }

@@ -646,7 +646,11 @@ _get_datetime_tuple_from_cobj(PyObject *cobj)
     PyArray_DatetimeMetaData *dt_data;
     PyObject *dt_tuple;
 
+#if defined(NPY_PY3K)
+    dt_data = PyCapsule_GetPointer(cobj, NULL);
+#else
     dt_data = PyCObject_AsVoidPtr(cobj);
+#endif
     dt_tuple = PyTuple_New(4);
 
     PyTuple_SET_ITEM(dt_tuple, 0,
@@ -681,7 +685,11 @@ _convert_datetime_tuple_to_cobj(PyObject *tuple)
         }
     }
 
+#if defined(NPY_PY3K)
+    return PyCapsule_New((void *)dt_data, NULL, simple_capsule_dtor);
+#else
     return PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+#endif
 }
 
 static PyArray_Descr *
@@ -1544,7 +1552,11 @@ _append_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
         return ret;
     }
     tmp = PyDict_GetItemString(self->metadata, NPY_METADATA_DTSTR);
+#if defined(NPY_PY3K)
+    dt_data = PyCapsule_GetPointer(tmp, NULL);
+#else
     dt_data = PyCObject_AsVoidPtr(tmp);
+#endif
     num = dt_data->num;
     den = dt_data->den;
     events = dt_data->events;

@@ -29,15 +29,15 @@ cdef extern from "Python.h":
     void Py_XINCREF(object obj)
 
     # CObject API
-    ctypedef void (*destructor1)(void* cobj)
-    ctypedef void (*destructor2)(void* cobj, void* desc)
-    int PyCObject_Check(object p)
-    object PyCObject_FromVoidPtr(void* cobj, destructor1 destr)
-    object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc, 
-        destructor2 destr)
-    void* PyCObject_AsVoidPtr(object self)
-    void* PyCObject_GetDesc(object self)
-    int PyCObject_SetVoidPtr(object self, void* cobj)  
+#    ctypedef void (*destructor1)(void* cobj)
+#    ctypedef void (*destructor2)(void* cobj, void* desc)
+#    int PyCObject_Check(object p)
+#    object PyCObject_FromVoidPtr(void* cobj, destructor1 destr)
+#    object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc,
+#        destructor2 destr)
+#    void* PyCObject_AsVoidPtr(object self)
+#    void* PyCObject_GetDesc(object self)
+#    int PyCObject_SetVoidPtr(object self, void* cobj)
 
     # TypeCheck API
     int PyFloat_Check(object obj)
@@ -46,7 +46,7 @@ cdef extern from "Python.h":
     # Error API
     int PyErr_Occurred()
     void PyErr_Clear()
- 
+
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 

@@ -3380,7 +3380,11 @@ PyMODINIT_FUNC init_capi(void)
     _Error = PyErr_NewException("numpy.numarray._capi.error", NULL, NULL);
 
     /* Create a CObject containing the API pointer array's address */
+#if defined(NPY_PY3K)
+    c_api_object = PyCapsule_New((void *)libnumarray_API, NULL, NULL);
+#else
     c_api_object = PyCObject_FromVoidPtr((void *)libnumarray_API, NULL);
+#endif
 
     if (c_api_object != NULL) {
         /* Create a name for this object in the module's namespace */
