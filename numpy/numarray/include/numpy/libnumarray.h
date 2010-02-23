@@ -40,7 +40,7 @@ static void **libnumarray_API;
 #endif
 #endif
 
-#if defined(NPY_PY3K)
+#if PY_VERSION_HEX >= 0x03010000
 #define _import_libnumarray()                                                    \
         {                                                                        \
         PyObject *module = PyImport_ImportModule("numpy.numarray._capi");        \
