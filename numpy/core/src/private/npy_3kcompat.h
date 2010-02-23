@@ -213,15 +213,89 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
 #endif
 
 /*
- * A destructor is needed for PyCapsule objects to
- * replace _pya_free.
+ * PyCObject functions adapted to PyCapsules.
+ *
+ * The main job here is to get rid of the improved error handling
+ * of PyCapsules. It's a shame...
  */
 #if defined(NPY_PY3K)
+
+static NPY_INLINE PyObject *
+NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
+{
+    PyObject *ret = PyCapsule_New(ptr, NULL, dtor);
+    if (ret == NULL) {
+        PyErr_Clear();
+    }
+    return ret;
+}
+
+static NPY_INLINE PyObject *
+NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context, void (*dtor)(PyObject *))
+{
+    PyObject *ret = NpyCapsule_New(ptr, dtor);
+    if (ret != NULL && PyCapsule_SetContext(ret, context) != 0) {
+        PyErr_Clear();
+        Py_DECREF(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+static NPY_INLINE void *
+NpyCapsule_AsVoidPtr(PyObject *obj)
+{
+    void *ret = PyCapsule_GetPointer(obj, NULL);
+    if (ret == NULL) {
+        PyErr_Clear();
+    }
+    return ret;
+}
+
+static NPY_INLINE int
+NpyCapsule_Check(PyObject *ptr)
+{
+    return PyCapsule_CheckExact(ptr);
+}
+
 static void
 simple_capsule_dtor(PyObject *cap)
 {
     PyArray_free(PyCapsule_GetPointer(cap, NULL));
 }
+
+#else
+
+static NPY_INLINE PyObject *
+NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *))
+{
+    return PyCObject_FromVoidPtr(ptr, dtor);
+}
+
+static NPY_INLINE PyObject *
+NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context, void (*dtor)(void *))
+{
+    return PyCObject_FromVoidPtrAndDesc(ptr, context, dtor);
+}
+
+static NPY_INLINE void *
+NpyCapsule_AsVoidPtr(PyObject *ptr)
+{
+    return PyCObject_AsVoidPtr(ptr);
+}
+
+static NPY_INLINE int
+NpyCapsule_Check(PyObject *ptr)
+{
+    return PyCObject_Check(ptr);
+}
+
+static void
+simple_capsule_dtor(void *ptr)
+{
+    PyArray_free(ptr);
+}
+
 #endif
 
 #endif /* _NPY_3KCOMPAT_H_ */
