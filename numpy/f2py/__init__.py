@@ -6,12 +6,14 @@ import os
 import sys
 import commands
 
+import f2py2e
+import f2py_testing
+import diagnose
+
 from info import __doc__
 
-import f2py2e
 run_main = f2py2e.run_main
 main = f2py2e.main
-import f2py_testing
 
 def compile(source,
             modulename = 'untitled',
