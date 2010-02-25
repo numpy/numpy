@@ -49,40 +49,57 @@ static int
 _import_array(void)
 {
   int st;
-  PyObject *numpy = NULL;
+  PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
   PyObject *c_api = NULL;
 
-
-
-numpy = PyImport_ImportModule("numpy.core.multiarray");
-if (numpy == NULL) return -1;
-c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
-if (c_api == NULL) {Py_DECREF(numpy); return -1;}
+  if (numpy == NULL) {
+      PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
+      return -1;
+  }
+  c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
+  if (c_api == NULL) {
+      PyErr_SetString(PyExc_AttributeError, "_ARRAY_API not found");
+      Py_DECREF(numpy);
+      return -1;
+  }
+  Py_DECREF(numpy);
 
 #if PY_VERSION_HEX >= 0x03010000
-  if (PyCapsule_CheckExact(c_api)) {
-      PyArray_API = (void **)PyCapsule_GetPointer(c_api, NULL);
+  if (!PyCapsule_CheckExact(c_api)) {
+      PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCapsule object");
+      Py_DECREF(c_api);
+      return -1;
+  }
+  PyArray_API = (void **)PyCapsule_GetPointer(c_api, NULL);
+  Py_DECREF(c_api);
+  if (PyArray_API == NULL) {
+      return -1;
   }
 #else
-  if (PyCObject_Check(c_api)) {
-      PyArray_API = (void **)PyCObject_AsVoidPtr(c_api);
+  if (!PyCObject_Check(c_api)) {
+      PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCObject object");
+      Py_DECREF(c_api);
+      return -1;
+  }
+  PyArray_API = (void **)PyCObject_AsVoidPtr(c_api);
+  Py_DECREF(c_api);
+  if (PyArray_API == NULL) {
+      PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is NULL pointer");
+      return -1;
   }
 #endif
-  Py_DECREF(c_api);
-  Py_DECREF(numpy);
-  if (PyArray_API == NULL) return -1;
   /* Perform runtime check of C API version */
   if (NPY_VERSION != PyArray_GetNDArrayCVersion()) {
-    PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-        "ABI version %%x but this version of numpy is %%x", \
-        (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
-    return -1;
+      PyErr_Format(PyExc_RuntimeError, "module compiled against "\
+             "ABI version %%x but this version of numpy is %%x", \
+             (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
+      return -1;
   }
   if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
-    PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-        "API version %%x but this version of numpy is %%x", \
-        (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
-    return -1;
+      PyErr_Format(PyExc_RuntimeError, "module compiled against "\
+             "API version %%x but this version of numpy is %%x", \
+             (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
+      return -1;
   }
 
   /*
@@ -91,20 +108,20 @@ if (c_api == NULL) {Py_DECREF(numpy); return -1;}
    */
   st = PyArray_GetEndianness();
   if (st == NPY_CPU_UNKNOWN_ENDIAN) {
-    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
-    return -1;
+      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
+      return -1;
   }
-#if NPY_BYTE_ORDER ==NPY_BIG_ENDIAN
+#if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
   if (st != NPY_CPU_BIG) {
-    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
-        "big endian, but detected different endianness at runtime");
-    return -1;
+      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
+             "big endian, but detected different endianness at runtime");
+      return -1;
   }
 #elif NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
   if (st != NPY_CPU_LITTLE) {
-    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
-        "little endian, but detected different endianness at runtime");
-    return -1;
+      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
+             "little endian, but detected different endianness at runtime");
+      return -1;
   }
 #endif
 
