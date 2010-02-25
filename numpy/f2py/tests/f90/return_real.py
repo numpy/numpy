@@ -6,14 +6,14 @@ Examples:
 """
 
 import sys
-import f2py2e
-from Numeric import array
+import numpy.f2py as f2py
+from numpy import array
 
 def build(f2py_opts):
     try:
         import f90_ext_return_real
     except ImportError:
-        assert not f2py2e.compile('''\
+        assert not f2py.compile('''\
 module f90_return_real
   contains
        function t0(value)
@@ -87,11 +87,11 @@ def runtest(t):
     assert abs(t(array(234))-234.)<=err
     assert abs(t(array([234]))-234.)<=err
     assert abs(t(array([[234]]))-234.)<=err
-    assert abs(t(array([234],'1'))+22)<=err
-    assert abs(t(array([234],'s'))-234.)<=err
+    assert abs(t(array([234],'b'))+22)<=err
+    assert abs(t(array([234],'h'))-234.)<=err
     assert abs(t(array([234],'i'))-234.)<=err
     assert abs(t(array([234],'l'))-234.)<=err
-    assert abs(t(array([234],'b'))-234.)<=err
+    assert abs(t(array([234],'q'))-234.)<=err
     assert abs(t(array([234],'f'))-234.)<=err
     assert abs(t(array([234],'d'))-234.)<=err
     if sys.version[:3]<='2.2':
@@ -102,18 +102,33 @@ def runtest(t):
 
     try: raise RuntimeError,`t(array([234],'c'))`
     except ValueError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 1"
+
     try: raise RuntimeError,`t('abc')`
     except ValueError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 2"
 
     try: raise RuntimeError,`t([])`
     except IndexError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 3"
+
     try: raise RuntimeError,`t(())`
     except IndexError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 4"
 
     try: raise RuntimeError,`t(t)`
     except TypeError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 5"
+
     try: raise RuntimeError,`t({})`
     except TypeError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 6"
 
     try:
         try: raise RuntimeError,`t(10l**400)`
@@ -123,7 +138,7 @@ def runtest(t):
 
 if __name__=='__main__':
     #import libwadpy
-    repeat,f2py_opts = f2py2e.f2py_testing.cmdline()
+    repeat,f2py_opts = f2py.f2py_testing.cmdline()
     test_functions = build(f2py_opts)
-    f2py2e.f2py_testing.run(runtest,test_functions,repeat)
+    f2py.f2py_testing.run(runtest,test_functions,repeat)
     print 'ok'

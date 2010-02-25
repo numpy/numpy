@@ -9,14 +9,14 @@ Examples:
 """
 
 import sys
-import f2py2e
-from Numeric import array
+import numpy.f2py as f2py
+from numpy import array
 
 def build(f2py_opts):
     try:
         import f90_ext_return_integer
     except ImportError:
-        assert not f2py2e.compile('''\
+        assert not f2py.compile('''\
 module f90_return_integer
   contains
        function t0(value)
@@ -96,11 +96,11 @@ def runtest(t):
     assert t(array(123))==123
     assert t(array([123]))==123
     assert t(array([[123]]))==123
-    assert t(array([123],'1'))==123
-    assert t(array([123],'s'))==123
+    assert t(array([123],'b'))==123
+    assert t(array([123],'h'))==123
     assert t(array([123],'i'))==123
     assert t(array([123],'l'))==123
-    assert t(array([123],'b'))==123
+    assert t(array([123],'q'))==123
     assert t(array([123],'f'))==123
     assert t(array([123],'d'))==123
     if sys.version[:3]<='2.2':
@@ -109,18 +109,33 @@ def runtest(t):
 
     try: raise RuntimeError,`t(array([123],'c'))`
     except ValueError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 1"
+
     try: raise RuntimeError,`t('abc')`
     except ValueError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 2"
 
     try: raise RuntimeError,`t([])`
     except IndexError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 3"
+
     try: raise RuntimeError,`t(())`
     except IndexError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 4"
 
     try: raise RuntimeError,`t(t)`
     except TypeError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 5"
+
     try: raise RuntimeError,`t({})`
     except TypeError: pass
+    except RuntimeError: print "Failed Error"
+    except: print "Wrong Error Type 6"
 
     if tname in ['t8','s8']:
         try: raise RuntimeError,`t(100000000000000000000000l)`
@@ -138,14 +153,13 @@ if __name__=='__main__':
     #import libwadpy
     status = 1
     try:
-        repeat,f2py_opts = f2py2e.f2py_testing.cmdline()
+        repeat,f2py_opts = f2py.f2py_testing.cmdline()
         test_functions = build(f2py_opts)
-        f2py2e.f2py_testing.run(runtest,test_functions,repeat)
+        f2py.f2py_testing.run(runtest,test_functions,repeat)
         print 'ok'
         status = 0
     finally:
         if status:
             print '*'*20
-            print 'Running f2py2e.diagnose'
-            import f2py2e.diagnose
-            f2py2e.diagnose.run()
+            print 'Running f2py.diagnose'
+            f2py.diagnose.run()

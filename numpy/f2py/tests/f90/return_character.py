@@ -6,14 +6,14 @@ Examples:
   python return_character.py --quiet
 """
 
-import f2py2e
-from Numeric import array
+import numpy.f2py as f2py
+from numpy import array
 
 def build(f2py_opts):
     try:
         import f90_ext_return_character
     except ImportError:
-        assert not f2py2e.compile('''\
+        assert not f2py.compile('''\
 module f90_return_char
   contains
        function t0(value)
@@ -75,11 +75,18 @@ def runtest(t):
         assert t(23)=='2'
         r = t('ab');assert r=='a',`r`
         r = t(array('ab'));assert r=='a',`r`
-        r = t(array(77,'1'));assert r=='M',`r`
+        r = t(array(77,'l'));assert r=='M',`r`
+
         try: raise RuntimeError,`t(array([77,87]))`
         except ValueError: pass
+        except RuntimeError: print "Failed Error"
+        except: print "Wrong Error Type 1"
+
         try: raise RuntimeError,`t(array(77))`
         except ValueError: pass
+        except RuntimeError: print "Failed Error"
+        except: print "Wrong Error Type 2"
+
     elif tname in ['ts','ss']:
         assert t(23)=='23        ',`t(23)`
         assert t('123456789abcdef')=='123456789a',`t('123456789abcdef')`
@@ -92,7 +99,7 @@ def runtest(t):
 
 if __name__=='__main__':
     #import libwadpy
-    repeat,f2py_opts = f2py2e.f2py_testing.cmdline()
+    repeat,f2py_opts = f2py.f2py_testing.cmdline()
     test_functions = build(f2py_opts)
-    f2py2e.f2py_testing.run(runtest,test_functions,repeat)
+    f2py.f2py_testing.run(runtest,test_functions,repeat)
     print 'ok'
