@@ -1144,6 +1144,9 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
         if (PyCapsule_CheckExact(e)) {
             PyArrayInterface *inter;
             inter = (PyArrayInterface *)PyCapsule_GetPointer(e, NULL);
+            if (inter == NULL) {
+                PyErr_Clear();
+            }
 #else
         if (PyCObject_Check(e)) {
             PyArrayInterface *inter;
@@ -1576,6 +1579,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
                 cfunc = PyCapsule_GetPointer(func, NULL);
+                if (cfunc == NULL) {
+                    PyErr_Clear();
+                }
 #else
             if PyCObject_Check(func) {
                 /* A C-function is stored here */
@@ -2127,6 +2133,9 @@ PyArray_FromStructInterface(PyObject *input)
         goto fail;
     }
     inter = PyCapsule_GetPointer(attr, NULL);
+    if (inter == NULL) {
+        PyErr_Clear();
+    }
 #else
     if (!PyCObject_Check(attr)) {
         goto fail;

@@ -3533,10 +3533,17 @@ _init_datetime_descr(PyArray_Descr *descr)
     dt_data->den = 1;
     dt_data->events = 1;
 
+/* FIXME
+ * There is no error check here and no way to indicate an error
+ * until the metadata turns up NULL.
+ */
 #if defined(NPY_PY3K)
     cobj = PyCapsule_New((void *)dt_data, NULL, simple_capsule_dtor);
+    if (cobj == NULL) {
+        PyErr_Clear();
+    }
 #else
-    cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+    cobj = PyCObject_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
 #endif
     descr->metadata = PyDict_New();
     PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);

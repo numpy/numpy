@@ -554,7 +554,14 @@ array_struct_get(PyArrayObject *self)
     Py_INCREF(self);
 #if defined(NPY_PY3K)
     ret = PyCapsule_New(inter, NULL, gentype_struct_free);
-    PyCapsule_SetContext(ret, self);
+    if (ret == NULL) {
+        PyErr_Clear();
+    }
+    else if (PyCapsule_SetContext(ret, self) != 0) {
+        PyErr_Clear();
+        Py_DECREF(ret);
+        ret = NULL;
+    }
 #else
     ret = PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
 #endif

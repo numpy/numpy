@@ -307,6 +307,9 @@ PyMODINIT_FUNC initumath(void)
 
 #if defined(NPY_PY3K)
     c_api = PyCapsule_New((void *)PyUFunc_API, NULL, NULL);
+    if (c_api == NULL) {
+        PyErr_Clear();
+    }
 #else
     c_api = PyCObject_FromVoidPtr((void *)PyUFunc_API, NULL);
 #endif

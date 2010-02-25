@@ -374,6 +374,9 @@ _find_matching_userloop(PyObject *obj, int *arg_types,
 
 #if defined(NPY_PY3K)
     funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(obj, NULL);
+    if (funcdata == NULL) {
+        PyErr_Clear();
+    }
 #else
     funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
 #endif
@@ -523,6 +526,9 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
          */
 #if defined(NPY_PY3K)
         funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(obj, NULL);
+        if (funcdata == NULL) {
+            PyErr_Clear();
+        }
 #else
         funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
 #endif
@@ -3976,6 +3982,9 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     if (cobj == NULL) {
 #if defined(NPY_PY3K)
         cobj = PyCapsule_New((void *)funcdata, NULL, _loop1d_list_free);
+        if (cobj == NULL) {
+            PyErr_Clear();
+        }
 #else
         cobj = PyCObject_FromVoidPtr((void *)funcdata, _loop1d_list_free);
 #endif
@@ -3998,6 +4007,9 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
          */
 #if defined(NPY_PY3K)
         current = (PyUFunc_Loop1d *)PyCapsule_GetPointer(cobj, NULL);
+        if (current == NULL) {
+            PyErr_Clear();
+        }
 #else
         current = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(cobj);
 #endif

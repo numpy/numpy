@@ -208,6 +208,9 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
     }
 #if defined(NPY_PY3K)
     cobj = PyCapsule_New((void *)castfunc, NULL, NULL);
+    if (cobj == NULL) {
+        PyErr_Clear();
+    }
 #else
     cobj = PyCObject_FromVoidPtr((void *)castfunc, NULL);
 #endif

@@ -859,7 +859,13 @@ gentype_struct_get(PyObject *self)
 
 #if defined(NPY_PY3K)
     ret = PyCapsule_New(inter, NULL, gentype_struct_free);
-    PyCapsule_SetContext(ret, arr);
+    if (ret == NULL) {
+        PyErr_Clear();
+    }
+    else if (PyCapsule_SetContext(ret, arr) != 0) {
+        PyErr_Clear();
+        ret == NULL;
+    }
 #else
     ret = PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
 #endif

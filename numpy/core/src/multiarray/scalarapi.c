@@ -536,8 +536,11 @@ PyArray_DescrFromScalar(PyObject *sc)
         }
 #if defined(NPY_PY3K)
         cobj = PyCapsule_New((void *)dt_data, NULL, simple_capsule_dtor);
+        if (cobj == NULL) {
+            PyErr_Clear();
+        }
 #else
-        cobj = PyCObject_FromVoidPtr((void *)dt_data, _pya_free);
+        cobj = PyCObject_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
 #endif
 
         /* Add correct meta-data to the data-type */
@@ -670,8 +673,15 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         PyObject *cobj;
         PyArray_DatetimeMetaData *dt_data;
         cobj = PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR);
+
+/* FIXME
+ * There is no error handling here.
+ */
 #if defined(NPY_PY3K)
         dt_data = PyCapsule_GetPointer(cobj, NULL);
+        if (dt_data == NULL) {
+            PyErr_Clear();
+        }
 #else
         dt_data = PyCObject_AsVoidPtr(cobj);
 #endif
