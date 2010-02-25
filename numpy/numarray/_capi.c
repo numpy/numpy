@@ -3367,22 +3367,49 @@ void *libnumarray_API[] = {
 
 #if (!defined(METHOD_TABLE_EXISTS))
 static PyMethodDef _libnumarrayMethods[] = {
-    {NULL,      NULL, 0, NULL}        /* Sentinel */
+    {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 #endif
 
 /* boiler plate API init */
+#if PY_VERSION_HEX >= 0x03010000
+
+#define RETVAL m
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_capi",
+        NULL,
+        -1,
+        _libnumarrayMethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+
+PyObject *PyInit___capi(void)
+#else
+
+#define RETVAL
+
 PyMODINIT_FUNC init_capi(void)
+#endif
 {
-    PyObject *m = Py_InitModule("_capi", _libnumarrayMethods);
+    PyObject *m;
     PyObject *c_api_object;
 
     _Error = PyErr_NewException("numpy.numarray._capi.error", NULL, NULL);
 
     /* Create a CObject containing the API pointer array's address */
-#if defined(NPY_PY3K)
+#if PY_VERSION_HEX >= 0x03010000
+    m = PyModule_Create(&moduledef);
     c_api_object = PyCapsule_New((void *)libnumarray_API, NULL, NULL);
+    if (c_api_object == NULL) {
+        PyErr_Clear();
+    }
 #else
+    m = Py_InitModule("_capi", _libnumarrayMethods);
     c_api_object = PyCObject_FromVoidPtr((void *)libnumarray_API, NULL);
 #endif
 
@@ -3393,13 +3420,16 @@ PyMODINIT_FUNC init_capi(void)
         PyDict_SetItemString(d, "_C_API", c_api_object);
         PyDict_SetItemString(d, "error", _Error);
         Py_DECREF(c_api_object);
-    } else {
-        return;
     }
-    if (PyModule_AddObject(m, "__version__",
-                PyString_FromString("0.9")) < 0) return;
-
-    if (_import_array() < 0) return;
+    else {
+        return RETVAL;
+    }
+    if (PyModule_AddObject(m, "__version__", PyString_FromString("0.9")) < 0) {
+        return RETVAL;
+    }
+    if (_import_array() < 0) {
+        return RETVAL;
+    }
     deferred_libnumarray_init();
-    return;
+    return RETVAL;
 }
