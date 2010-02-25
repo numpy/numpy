@@ -392,7 +392,7 @@ rout_rules=[
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      PyObject_SetAttrString(o,"_cpointer", PyCObject_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+      PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
     }
     '''},
     'need':{l_not(l_or(ismoduleroutine,isdummyroutine)):['F_WRAPPEDFUNC','F_FUNC']},
@@ -686,8 +686,8 @@ arg_rules=[
     },
     {
     'frompyobj':[{l_not(isintent_callback):"""\
-if(PyCObject_Check(#varname#_capi)) {
-  #varname#_cptr = PyCObject_AsVoidPtr(#varname#_capi);
+if(F2PyCapsule_Check(#varname#_capi)) {
+  #varname#_cptr = F2PyCapsule_AsVoidPtr(#varname#_capi);
 } else {
   #varname#_cptr = #cbname#;
 }

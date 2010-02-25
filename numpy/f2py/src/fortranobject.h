@@ -84,7 +84,7 @@ typedef struct {
 typedef struct {
   PyObject_HEAD
   int len;                   /* Number of attributes */
-  FortranDataDef *defs;      /* An array of FortranDataDef's */ 
+  FortranDataDef *defs;      /* An array of FortranDataDef's */
   PyObject       *dict;      /* Fortran object attribute dictionary */
 } PyFortranObject;
 
@@ -95,6 +95,20 @@ typedef struct {
   extern int F2PyDict_SetItemString(PyObject* dict, char *name, PyObject *obj);
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
+
+#if PY_VERSION_HEX >= 0X03010000
+
+PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
+void * F2PyCapsule_AsVoidPtr(PyObject *obj);
+int F2PyCapsule_Check(PyObject *ptr);
+
+#else
+
+PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *));
+void * F2PyCapsule_AsVoidPtr(PyObject *ptr);
+int F2PyCapsule_Check(PyObject *ptr);
+
+#endif
 
 #define ISCONTIGUOUS(m) ((m)->flags & NPY_CONTIGUOUS)
 #define F2PY_INTENT_IN 1

@@ -60,9 +60,9 @@ f2py_cb_start_clock();
 \t\tPyErr_SetString(#modulename#_error,\"cb: Callback #argname# not defined (as an argument or module #modulename# attribute).\\n\");
 \t\tgoto capi_fail;
 \t}
-\tif (PyCObject_Check(#name#_capi)) {
+\tif (F2PyCapsule_Check(#name#_capi)) {
 \t#name#_typedef #name#_cptr;
-\t#name#_cptr = PyCObject_AsVoidPtr(#name#_capi);
+\t#name#_cptr = F2PyCapsule_AsVoidPtr(#name#_capi);
 \t#returncptr#(*#name#_cptr)(#optargs_nm##args_nm##strarglens_nm#);
 \t#return#
 \t}

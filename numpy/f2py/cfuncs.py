@@ -999,7 +999,7 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
 \t\t\t\ttot += PyTuple_Size((PyObject *)xa);
 \t\t\ttmp_fun = fun;
 \t\t}
-\t\telse if (PyCObject_Check(fun)) {
+\t\telse if (F2PyCapsule_Check(fun)) {
 \t\t\ttot = maxnofargs;
 \t\t\tif (xa != NULL)
 \t\t\t\text = PyTuple_Size((PyObject *)xa);

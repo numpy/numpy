@@ -855,6 +855,61 @@ int copy_ND_array(const PyArrayObject *arr, PyArrayObject *out)
     return PyArray_CopyInto(out, (PyArrayObject *)arr);
 }
 
+/*******************************************/
+/* Compatibility functions for Python 3.1  */
+/*******************************************/
+
+#if PY_VERSION_HEX >= 0X03010000
+
+PyObject *
+F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
+{
+    PyObject *ret = PyCapsule_New(ptr, NULL, dtor);
+    if (ret == NULL) {
+        PyErr_Clear();
+    }
+    return ret;
+}
+
+void *
+F2PyCapsule_AsVoidPtr(PyObject *obj)
+{
+    void *ret = PyCapsule_GetPointer(obj, NULL);
+    if (ret == NULL) {
+        PyErr_Clear();
+    }
+    return ret;
+}
+
+int
+F2PyCapsule_Check(PyObject *ptr)
+{
+    return PyCapsule_CheckExact(ptr);
+}
+
+#else
+
+PyObject *
+F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *))
+{
+    return PyCObject_FromVoidPtr(ptr, dtor);
+}
+
+void *
+F2PyCapsule_AsVoidPtr(PyObject *ptr)
+{
+    return PyCObject_AsVoidPtr(ptr);
+}
+
+int
+F2PyCapsule_Check(PyObject *ptr)
+{
+    return PyCObject_Check(ptr);
+}
+
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
