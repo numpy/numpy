@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import os,sys,tempfile
+import os
+import sys
+import tempfile
 
 def run_command(cmd):
     print 'Running %r:' % (cmd)
@@ -22,30 +24,21 @@ def run():
     print '------'
     print 'sys.path=%r' % (':'.join(sys.path))
     print '------'
-    try:
-        import Numeric
-        has_Numeric = 1
-    except ImportError:
-        print 'Failed to import Numeric:',sys.exc_value
-        has_Numeric = 0
-    try:
-        import numarray
-        has_numarray = 1
-    except ImportError:
-        print 'Failed to import numarray:',sys.exc_value
-        has_numarray = 0
+
     try:
         import numpy
         has_newnumpy = 1
     except ImportError:
         print 'Failed to import new numpy:', sys.exc_value
         has_newnumpy = 0
+
     try:
-        import f2py2e
+        from numpy.f2py import f2py2e
         has_f2py2e = 1
     except ImportError:
         print 'Failed to import f2py2e:',sys.exc_value
         has_f2py2e = 0
+
     try:
         import numpy.distutils
         has_numpy_distutils = 2
@@ -56,20 +49,7 @@ def run():
         except ImportError:
             print 'Failed to import numpy_distutils:',sys.exc_value
             has_numpy_distutils = 0
-    if has_Numeric:
-        try:
-            print 'Found Numeric version %r in %s' % \
-                  (Numeric.__version__,Numeric.__file__)
-        except Exception,msg:
-            print 'error:',msg
-            print '------'
-    if has_numarray:
-        try:
-            print 'Found numarray version %r in %s' % \
-                  (numarray.__version__,numarray.__file__)
-        except Exception,msg:
-            print 'error:',msg
-            print '------'
+
     if has_newnumpy:
         try:
             print 'Found new numpy version %r in %s' % \
@@ -77,6 +57,7 @@ def run():
         except Exception,msg:
             print 'error:', msg
             print '------'
+
     if has_f2py2e:
         try:
             print 'Found f2py2e version %r in %s' % \
@@ -84,9 +65,10 @@ def run():
         except Exception,msg:
             print 'error:',msg
             print '------'
+
     if has_numpy_distutils:
         try:
-            if has_numpy_distutils==2:
+            if has_numpy_distutils == 2:
                 print 'Found numpy.distutils version %r in %r' % (\
             numpy.distutils.__version__,
             numpy.distutils.__file__)
@@ -99,7 +81,7 @@ def run():
             print 'error:',msg
             print '------'
         try:
-            if has_numpy_distutils==1:
+            if has_numpy_distutils == 1:
                 print 'Importing numpy_distutils.command.build_flib ...',
                 import numpy_distutils.command.build_flib as build_flib
                 print 'ok'
@@ -116,7 +98,7 @@ def run():
             print 'error:',msg,'(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)'
             print '------'
         try:
-            if has_numpy_distutils==2:
+            if has_numpy_distutils == 2:
                 print 'Importing numpy.distutils.fcompiler ...',
                 import numpy.distutils.fcompiler as fcompiler
             else:
@@ -135,7 +117,7 @@ def run():
             print 'error:',msg
             print '------'
         try:
-            if has_numpy_distutils==2:
+            if has_numpy_distutils == 2:
                 print 'Importing numpy.distutils.cpuinfo ...',
                 from numpy.distutils.cpuinfo import cpuinfo
                 print 'ok'
