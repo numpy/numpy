@@ -105,7 +105,7 @@ class TestArithmetic(TestCase) :
             return x*(x**2 - 1)
 
         #check empty input
-        assert_equal(ch.chebval([], 1).size, 0)
+        assert_equal(ch.chebval([], [1]).size, 0)
 
         #check normal input)
         for i in range(5) :
@@ -420,6 +420,8 @@ class TestChebyshevClass(TestCase) :
     def test_integ(self) :
         p = self.p2.integ()
         assert_almost_equal(p.coef, ch.chebint([1,2,3], 1, 0, scl=.5))
+        p = self.p2.integ(lbnd=0)
+        assert_almost_equal(p(0), 0)
         p = self.p2.integ(1, 1)
         assert_almost_equal(p.coef, ch.chebint([1,2,3], 1, 1, scl=.5))
         p = self.p2.integ(2, [1, 2])
