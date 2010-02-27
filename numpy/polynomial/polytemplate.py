@@ -455,12 +455,12 @@ class $name(pu.PolyBase) :
         `${nick}der` : similar function for derivative.
 
         """
-        off, scl = pu.mapparms($domain, self.domain)
+        off, scl = self.mapparms()
         if lbnd is None :
             lbnd = 0
         else :
-            lbnd = off + scl*x
-        coef = ${nick}int(self.coef, m, k, lbnd, scl)
+            lbnd = off + scl*lbnd
+        coef = ${nick}int(self.coef, m, k, lbnd, 1./scl)
         return self.__class__(coef, self.domain)
 
     def deriv(self, m=1):
@@ -486,7 +486,7 @@ class $name(pu.PolyBase) :
         `${nick}int` : similar function for integration.
 
         """
-        off, scl = pu.mapparms(self.domain, $domain)
+        off, scl = self.mapparms()
         coef = ${nick}der(self.coef, m, scl)
         return self.__class__(coef, self.domain)
 

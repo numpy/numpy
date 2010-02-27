@@ -393,6 +393,8 @@ class TestPolynomialClass(TestCase) :
     def test_integ(self) :
         p = self.p2.integ()
         assert_almost_equal(p.coef, poly.polyint([1,2,3], 1, 0, scl=.5))
+        p = self.p2.integ(lbnd=0)
+        assert_almost_equal(p(0), 0)
         p = self.p2.integ(1, 1)
         assert_almost_equal(p.coef, poly.polyint([1,2,3], 1, 1, scl=.5))
         p = self.p2.integ(2, [1, 2])
