@@ -363,15 +363,42 @@ if ctypes is not None:
 
         array_type.__array_interface__ = property(__array_interface__)
 
+    def prep_pointer(pointer_obj, shape):
+        """Given a ctypes pointer object, construct and
+        attach an __array_interface__ property to it if it does not
+        yet have one.
+        """
+        try: pointer_obj.__array_interface__
+        except AttributeError: pass
+        else: return
+
+        contents = pointer_obj.contents
+        dtype = _dtype(type(contents))
+
+        inter = {'version': 3,
+                 'typestr': dtype.str,
+                 'data': (ct.addressof(contents), False),
+                 'shape': shape}
+
+        pointer_obj.__array_interface__ = inter
+
     ################################################################
     # public functions
 
-    def as_array(obj):
-        """Create a numpy array from a ctypes array.  The numpy array
-        shares the memory with the ctypes object."""
+    def as_array(obj, shape=None):
+        """Create a numpy array from a ctypes array or a ctypes POINTER.  
+        The numpy array shares the memory with the ctypes object.
+
+        The size parameter must be given if converting from a ctypes POINTER.
+        The size parameter is ignored if converting from a ctypes array
+        """
         tp = type(obj)
         try: tp.__array_interface__
-        except AttributeError: prep_array(tp)
+        except AttributeError: 
+            if hasattr(obj, 'contents'):
+                prep_pointer(obj, shape)
+            else:
+                prep_array(tp)
         return array(obj, copy=False)
 
     def as_ctypes(obj):
