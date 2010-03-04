@@ -128,7 +128,9 @@ elif sys.platform == "win32":
         "2.6": ["C:\Python26\python.exe"],
         "2.5": ["C:\Python25\python.exe"],
     }
-    WINDOWS_ENV = {}
+    # XXX: find out which env variable is necessary to avoid the pb with python
+    # 2.6 and random module when importing tempfile
+    WINDOWS_ENV = os.environ
     MAKENSIS = ["makensis"]
 else:
     WINDOWS_PYTHON = {
