@@ -1154,7 +1154,8 @@ def get_needs():
                 else:
                     out.append(outneeds[n][0])
                     del outneeds[n][0]
-            if saveout and (0 not in map(lambda x,y:x==y,saveout,outneeds[n])):
+            if saveout and (0 not in map(lambda x,y:x==y,saveout,outneeds[n])) \
+                   and outneeds[n] != []:
                 print n,saveout
                 errmess('get_needs: no progress in sorting needs, probably circular dependence, skipping.\n')
                 out=out+saveout
