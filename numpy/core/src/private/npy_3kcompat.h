@@ -6,6 +6,7 @@
 
 #include "npy_config.h"
 #include "numpy/npy_common.h"
+#include "numpy/ndarrayobject.h"
 
 /*
  * PyInt -> PyLong
