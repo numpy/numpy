@@ -689,7 +689,7 @@ static int int_from_pyobj(int* v,PyObject *obj,const char *errmess) {
 \t}
 \tif (PyComplex_Check(obj))
 \t\ttmp = PyObject_GetAttrString(obj,\"real\");
-\telse if (PyString_Check(obj))
+\telse if (PyString_Check(obj) || PyUnicode_Check(obj))
 \t\t/*pass*/;
 \telse if (PySequence_Check(obj))
 \t\ttmp = PySequence_GetItem(obj,0);
@@ -721,7 +721,7 @@ static int long_from_pyobj(long* v,PyObject *obj,const char *errmess) {
 \t}
 \tif (PyComplex_Check(obj))
 \t\ttmp = PyObject_GetAttrString(obj,\"real\");
-\telse if (PyString_Check(obj))
+\telse if (PyString_Check(obj) || PyUnicode_Check(obj))
 \t\t/*pass*/;
 \telse if (PySequence_Check(obj))
 \t\ttmp = PySequence_GetItem(obj,0);
@@ -758,7 +758,7 @@ static int long_long_from_pyobj(long_long* v,PyObject *obj,const char *errmess) 
 \t}
 \tif (PyComplex_Check(obj))
 \t\ttmp = PyObject_GetAttrString(obj,\"real\");
-\telse if (PyString_Check(obj))
+\telse if (PyString_Check(obj) || PyUnicode_Check(obj))
 \t\t/*pass*/;
 \telse if (PySequence_Check(obj))
 \t\ttmp = PySequence_GetItem(obj,0);
@@ -819,7 +819,7 @@ static int double_from_pyobj(double* v,PyObject *obj,const char *errmess) {
 \t}
 \tif (PyComplex_Check(obj))
 \t\ttmp = PyObject_GetAttrString(obj,\"real\");
-\telse if (PyString_Check(obj))
+\telse if (PyString_Check(obj) || PyUnicode_Check(obj))
 \t\t/*pass*/;
 \telse if (PySequence_Check(obj))
 \t\ttmp = PySequence_GetItem(obj,0);
@@ -929,7 +929,7 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \t\t(*v).r = PyLong_AsDouble(obj);
 \t\treturn (!PyErr_Occurred());
 \t}
-\tif (PySequence_Check(obj) && (!PyString_Check(obj))) {
+\tif (PySequence_Check(obj) && !(PyString_Check(obj) || PyUnicode_Check(obj))) {
 \t\tPyObject *tmp = PySequence_GetItem(obj,0);
 \t\tif (tmp) {
 \t\t\tif (complex_double_from_pyobj(v,tmp,errmess)) {
