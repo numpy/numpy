@@ -285,21 +285,21 @@ def callcrackfortran(files,options):
             f.close()
     return postlist
 
-def buildmodules(list):
+def buildmodules(lst):
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
     modules,mnames,isusedby=[],[],{}
-    for i in range(len(list)):
-        if '__user__' in list[i]['name']:
-            cb_rules.buildcallbacks(list[i])
+    for i in range(len(lst)):
+        if '__user__' in lst[i]['name']:
+            cb_rules.buildcallbacks(lst[i])
         else:
-            if 'use' in list[i]:
-                for u in list[i]['use'].keys():
+            if 'use' in lst[i]:
+                for u in lst[i]['use'].keys():
                     if u not in isusedby:
                         isusedby[u]=[]
-                    isusedby[u].append(list[i]['name'])
-            modules.append(list[i])
-            mnames.append(list[i]['name'])
+                    isusedby[u].append(lst[i]['name'])
+            modules.append(lst[i])
+            mnames.append(lst[i]['name'])
     ret = {}
     for i in range(len(mnames)):
         if mnames[i] in isusedby:
@@ -329,7 +329,11 @@ def run_main(comline_list):
     """Run f2py as if string.join(comline_list,' ') is used as a command line.
     In case of using -h flag, return None.
     """
-    reload(crackfortran)
+    if sys.version_info[0] >= 3:
+        import imp
+        imp.reload(crackfortran)
+    else:
+        reload(crackfortran)
     f2pydir=os.path.dirname(os.path.abspath(cfuncs.__file__))
     fobjhsrc = os.path.join(f2pydir,'src','fortranobject.h')
     fobjcsrc = os.path.join(f2pydir,'src','fortranobject.c')

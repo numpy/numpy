@@ -18,7 +18,7 @@ import random
 
 import nose
 
-from numpy.compat import asbytes
+from numpy.compat import asbytes, asstr
 import numpy.f2py
 
 try:
@@ -125,7 +125,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         out, err = p.communicate()
         if p.returncode != 0:
             raise RuntimeError("Running f2py failed: %s\n%s"
-                               % (cmd[4:], out))
+                               % (cmd[4:], asstr(out)))
     finally:
         os.chdir(cwd)
 
@@ -203,7 +203,7 @@ sys.exit(99)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
-        m = re.search(r'COMPILERS:(\d+),(\d+),(\d+)', out)
+        m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
         if m:
             _compiler_status = (bool(m.group(1)), bool(m.group(2)),
                                 bool(m.group(3)))
@@ -281,7 +281,7 @@ if __name__ == "__main__":
         out, err = p.communicate()
         if p.returncode != 0:
             raise RuntimeError("Running distutils build failed: %s\n%s"
-                               % (cmd[4:], out))
+                               % (cmd[4:], asstr(out)))
     finally:
         os.chdir(cwd)
 

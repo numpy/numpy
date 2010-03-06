@@ -1075,7 +1075,7 @@ def append_needs(need,flag=1):
     if type(need)==types.ListType:
         for n in need:
             append_needs(n,flag)
-    elif type(need)==types.StringType:
+    elif type(need)==str:
         if not need: return
         if need in includes0:
             n = 'includes0'

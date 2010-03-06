@@ -515,7 +515,7 @@ def buildcallback(rout,um):
 
     ar=applyrules(cb_routine_rules,rd)
     cfuncs.callbacks[rd['name']]=ar['body']
-    if type(ar['need'])==types.StringType:
+    if type(ar['need'])==str:
         ar['need']=[ar['need']]
 
     if 'need' in rd:

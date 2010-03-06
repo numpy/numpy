@@ -590,22 +590,22 @@ def stripcomma(s):
     if s and s[-1]==',': return s[:-1]
     return s
 
-def replace(str,dict,defaultsep=''):
-    if type(dict)==types.ListType:
-        return map(lambda d,f=replace,sep=defaultsep,s=str:f(s,d,sep),dict)
+def replace(str,d,defaultsep=''):
+    if type(d)==types.ListType:
+        return map(lambda d,f=replace,sep=defaultsep,s=str:f(s,d,sep),d)
     if type(str)==types.ListType:
-        return map(lambda s,f=replace,sep=defaultsep,d=dict:f(s,d,sep),str)
-    for k in 2*dict.keys():
+        return map(lambda s,f=replace,sep=defaultsep,d=d:f(s,d,sep),str)
+    for k in 2*d.keys():
         if k=='separatorsfor':
             continue
-        if 'separatorsfor' in dict and k in dict['separatorsfor']:
-            sep=dict['separatorsfor'][k]
+        if 'separatorsfor' in d and k in d['separatorsfor']:
+            sep=d['separatorsfor'][k]
         else:
             sep=defaultsep
-        if type(dict[k])==types.ListType:
-            str=str.replace('#%s#'%(k),sep.join(flatlist(dict[k])))
+        if type(d[k])==types.ListType:
+            str=str.replace('#%s#'%(k),sep.join(flatlist(d[k])))
         else:
-            str=str.replace('#%s#'%(k),dict[k])
+            str=str.replace('#%s#'%(k),d[k])
     return str
 
 def dictappend(rd,ar):
@@ -617,7 +617,7 @@ def dictappend(rd,ar):
         if k[0]=='_':
             continue
         if k in rd:
-            if type(rd[k])==types.StringType:
+            if type(rd[k])==str:
                 rd[k]=[rd[k]]
             if type(rd[k])==types.ListType:
                 if type(ar[k])==types.ListType:
@@ -636,11 +636,11 @@ def dictappend(rd,ar):
             rd[k]=ar[k]
     return rd
 
-def applyrules(rules,dict,var={}):
+def applyrules(rules,d,var={}):
     ret={}
     if type(rules)==types.ListType:
         for r in rules:
-            rr=applyrules(r,dict,var)
+            rr=applyrules(r,d,var)
             ret=dictappend(ret,rr)
             if '_break' in rr:
                 break
@@ -648,19 +648,19 @@ def applyrules(rules,dict,var={}):
     if '_check' in rules and (not rules['_check'](var)):
         return ret
     if 'need' in rules:
-        res = applyrules({'needs':rules['need']},dict,var)
+        res = applyrules({'needs':rules['need']},d,var)
         if 'needs' in res:
             cfuncs.append_needs(res['needs'])
 
     for k in rules.keys():
         if k=='separatorsfor':
             ret[k]=rules[k]; continue
-        if type(rules[k])==types.StringType:
-            ret[k]=replace(rules[k],dict)
+        if type(rules[k])==str:
+            ret[k]=replace(rules[k],d)
         elif type(rules[k])==types.ListType:
             ret[k]=[]
             for i in rules[k]:
-                ar=applyrules({k:i},dict,var)
+                ar=applyrules({k:i},d,var)
                 if k in ar:
                     ret[k].append(ar[k])
         elif k[0]=='_':
@@ -672,19 +672,19 @@ def applyrules(rules,dict,var={}):
                     if type(rules[k][k1])==types.ListType:
                         for i in rules[k][k1]:
                             if type(i)==types.DictType:
-                                res=applyrules({'supertext':i},dict,var)
+                                res=applyrules({'supertext':i},d,var)
                                 if 'supertext' in res:
                                     i=res['supertext']
                                 else: i=''
-                            ret[k].append(replace(i,dict))
+                            ret[k].append(replace(i,d))
                     else:
                         i=rules[k][k1]
                         if type(i)==types.DictType:
-                            res=applyrules({'supertext':i},dict)
+                            res=applyrules({'supertext':i},d)
                             if 'supertext' in res:
                                 i=res['supertext']
                             else: i=''
-                        ret[k].append(replace(i,dict))
+                        ret[k].append(replace(i,d))
         else:
             errmess('applyrules: ignoring rule %s.\n'%`rules[k]`)
         if type(ret[k])==types.ListType:
