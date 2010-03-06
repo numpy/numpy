@@ -1032,14 +1032,24 @@ if (tmp_fun==NULL) {
 fprintf(stderr,\"Call-back argument must be function|instance|instance.__call__|f2py-function but got %s.\\n\",(fun==NULL?\"NULL\":Py_TYPE(fun)->tp_name));
 goto capi_fail;
 }
+#if PY_VERSION_HEX >= 0x03000000
+\tif (PyObject_HasAttrString(tmp_fun,\"__code__\")) {
+\t\tif (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"__code__\"),\"co_argcount\"))
+#else
 \tif (PyObject_HasAttrString(tmp_fun,\"func_code\")) {
 \t\tif (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"func_code\"),\"co_argcount\"))
+#endif
 \t\t\ttot = PyInt_AsLong(PyObject_GetAttrString(tmp,\"co_argcount\")) - di;
 \t\tPy_XDECREF(tmp);
 \t}
 \t/* Get the number of optional arguments */
+#if PY_VERSION_HEX >= 0x03000000
+\tif (PyObject_HasAttrString(tmp_fun,\"__defaults__\"))
+\t\tif (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"__defaults__\")))
+#else
 \tif (PyObject_HasAttrString(tmp_fun,\"func_defaults\"))
 \t\tif (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"func_defaults\")))
+#endif
 \t\t\topt = PyTuple_Size(tmp);
 \t\tPy_XDECREF(tmp);
 \t/* Get the number of extra arguments */
