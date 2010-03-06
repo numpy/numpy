@@ -529,6 +529,7 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
     (  (PyArray_ISINTEGER(arr) && PyTypeNum_ISINTEGER(type_num))        \
        ||(PyArray_ISFLOAT(arr) && PyTypeNum_ISFLOAT(type_num))          \
        ||(PyArray_ISCOMPLEX(arr) && PyTypeNum_ISCOMPLEX(type_num))      \
+       ||(PyArray_ISBOOL(arr) && PyTypeNum_ISBOOL(type_num))            \
        )
 
 extern
