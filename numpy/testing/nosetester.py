@@ -239,7 +239,6 @@ class NoseTester(object):
         argv += ['--exclude','gen_ext']
         argv += ['--exclude','pyrex_ext']
         argv += ['--exclude','swig_ext']
-        argv += ['--exclude','array_from_pyobj']
 
         nose = import_nose()
 
