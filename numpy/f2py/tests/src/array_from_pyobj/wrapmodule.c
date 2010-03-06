@@ -114,10 +114,34 @@ static PyMethodDef f2py_module_methods[] = {
   {NULL,NULL}
 };
 
+#if PY_VERSION_HEX >= 0x03000000
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "test_array_from_pyobj_ext",
+    NULL,
+    -1,
+    f2py_module_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+#endif
+
+#if PY_VERSION_HEX >= 0x03000000
+#define RETVAL m
+PyObject *PyInit_test_array_from_pyobj_ext(void) {
+#else
+#define RETVAL
 PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {
+#endif
   PyObject *m,*d, *s;
+#if PY_VERSION_HEX >= 0x03000000
+  m = wrap_module = PyModule_Create(&moduledef);
+#else
   m = wrap_module = Py_InitModule("test_array_from_pyobj_ext", f2py_module_methods);
-  PyFortran_Type.ob_type = &PyType_Type;
+#endif
+  Py_TYPE(&PyFortran_Type) = &PyType_Type;
   import_array();
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap (failed to import numpy)");
@@ -190,6 +214,7 @@ PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {
   on_exit(f2py_report_on_exit,(void*)"array_from_pyobj.wrap.call");
 #endif
 
+  return RETVAL;
 }
 #ifdef __cplusplus
 }

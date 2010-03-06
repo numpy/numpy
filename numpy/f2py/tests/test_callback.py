@@ -35,7 +35,7 @@ cf2py  intent(out) a
 
     def test_all(self):
         for name in "t,t2".split(","):
-            yield self.check_function, name
+            self.check_function(name)
 
     def check_function(self, name):
         t = getattr(self.module, name)
