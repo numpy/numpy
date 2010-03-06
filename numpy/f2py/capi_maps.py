@@ -19,6 +19,7 @@ f2py_version = __version__.version
 import copy
 import re
 import os
+import sys
 from auxfuncs import *
 from crackfortran import markoutercomma
 import cb_rules
@@ -137,6 +138,11 @@ c2buildvalue_map={'double':'d',
                   'complex_double':'N',
                   'complex_long_double':'N',
                   'string':'z'}
+
+if sys.version_info[0] >= 3:
+    # Bytes, not Unicode strings
+    c2buildvalue_map['string'] = 'y'
+
 if using_newcore:
     #c2buildvalue_map=???
     pass

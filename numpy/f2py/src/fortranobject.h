@@ -12,6 +12,31 @@ extern "C" {
 #define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "numpy/arrayobject.h"
 
+/*
+ * Python 3 support macros
+ */
+#if PY_VERSION_HEX >= 0x03000000
+#define PyString_Check PyBytes_Check
+#define PyString_GET_SIZE PyBytes_GET_SIZE
+#define PyString_AS_STRING PyBytes_AS_STRING
+#define PyString_FromString PyBytes_FromString
+#define PyString_ConcatAndDel PyBytes_ConcatAndDel
+#define PyString_AsString PyBytes_AsString
+
+#define PyInt_Check PyLong_Check
+#define PyInt_FromLong PyLong_FromLong
+#define PyInt_AS_LONG PyLong_AsLong
+#define PyInt_AsLong PyLong_AsLong
+
+#define PyNumber_Int PyNumber_Long
+#endif
+
+#if (PY_VERSION_HEX < 0x02060000)
+#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
+#define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
+#define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
+#endif
+
   /*
 #ifdef F2PY_REPORT_ATEXIT_DISABLE
 #undef F2PY_REPORT_ATEXIT
@@ -88,15 +113,15 @@ typedef struct {
   PyObject       *dict;      /* Fortran object attribute dictionary */
 } PyFortranObject;
 
-#define PyFortran_Check(op) ((op)->ob_type == &PyFortran_Type)
-#define PyFortran_Check1(op) (0==strcmp((op)->ob_type->tp_name,"fortran"))
+#define PyFortran_Check(op) (Py_TYPE(op) == &PyFortran_Type)
+#define PyFortran_Check1(op) (0==strcmp(Py_TYPE(op)->tp_name,"fortran"))
 
   extern PyTypeObject PyFortran_Type;
   extern int F2PyDict_SetItemString(PyObject* dict, char *name, PyObject *obj);
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
 
-#if PY_VERSION_HEX >= 0X03010000
+#if PY_VERSION_HEX >= 0x03010000
 
 PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
 void * F2PyCapsule_AsVoidPtr(PyObject *obj);
@@ -145,6 +170,7 @@ int F2PyCapsule_Check(PyObject *ptr);
 #ifdef DEBUG_COPY_ND_ARRAY
   extern void dump_attrs(const PyArrayObject* arr);
 #endif
+
 
 #ifdef __cplusplus
 }

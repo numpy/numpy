@@ -604,8 +604,26 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\ttmp = obj;
 \t\tPy_INCREF(tmp);
 \t}
-\telse
+#if PY_VERSION_HEX >= 0x03000000
+\telse if (PyUnicode_Check(obj)) {
+\t\ttmp = PyUnicode_AsASCIIString(obj);
+\t}
+\telse {
+\t\tPyObject *tmp2;
+\t\ttmp2 = PyObject_Str(obj);
+\t\tif (tmp2) {
+\t\t\ttmp = PyUnicode_AsASCIIString(tmp2);
+\t\t\tPy_DECREF(tmp2);
+\t\t}
+\t\telse {
+\t\t\ttmp = NULL;
+\t\t}
+\t}
+#else
+\telse {
 \t\ttmp = PyObject_Str(obj);
+\t}
+#endif
 \tif (tmp == NULL) goto capi_fail;
 \tif (*len == -1)
 \t\t*len = PyString_GET_SIZE(tmp);
@@ -1011,7 +1029,7 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
 \t\t}
 \t}
 if (tmp_fun==NULL) {
-fprintf(stderr,\"Call-back argument must be function|instance|instance.__call__|f2py-function but got %s.\\n\",(fun==NULL?\"NULL\":fun->ob_type->tp_name));
+fprintf(stderr,\"Call-back argument must be function|instance|instance.__call__|f2py-function but got %s.\\n\",(fun==NULL?\"NULL\":Py_TYPE(fun)->tp_name));
 goto capi_fail;
 }
 \tif (PyObject_HasAttrString(tmp_fun,\"func_code\")) {
@@ -1067,15 +1085,6 @@ def buildcfuncs():
     m='pyarr_from_p_%s1'%k
     cppmacros[m]='#define %s(v,dims) (PyArray_SimpleNewFromData(1,dims,PyArray_CHAR,(char *)v))'%(m)
 
-
-############ Automatic Python3 conversions ###################
-
-if sys.version_info[0] >= 3:
-    for key, value in cfuncs.items():
-        value = value.replace('PyString', 'PyBytes')
-        value = value.replace('PyInt_AS_LONG', 'PyLong_AsLong')
-        value = value.replace('PyInt', 'PyLong')
-        cfuncs[key] = value
 
 ############ Auxiliary functions for sorting needs ###################
 

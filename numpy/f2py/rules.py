@@ -170,18 +170,47 @@ static PyMethodDef f2py_module_methods[] = {
 \t{NULL,NULL}
 };
 
+#if PY_VERSION_HEX >= 0x03000000
+static struct PyModuleDef moduledef = {
+\tPyModuleDef_HEAD_INIT,
+\t"#modulename#",
+\tNULL,
+\t-1,
+\tf2py_module_methods,
+\tNULL,
+\tNULL,
+\tNULL,
+\tNULL
+};
+#endif
+
+#if PY_VERSION_HEX >= 0x03000000
+#define RETVAL m
+PyObject *PyInit_#modulename#(void) {
+#else
+#define RETVAL
 PyMODINIT_FUNC init#modulename#(void) {
+#endif
 \tint i;
 \tPyObject *m,*d, *s;
+#if PY_VERSION_HEX >= 0x03000000
+\tm = #modulename#_module = PyModule_Create(&moduledef);
+#else
 \tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
-\tPyFortran_Type.ob_type = &PyType_Type;
+#endif
+\tPy_TYPE(&PyFortran_Type) = &PyType_Type;
 \timport_array();
 \tif (PyErr_Occurred())
-\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return;}
+\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return RETVAL;}
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R"""+"""evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
-\ts = PyString_FromString(\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
+#if PY_VERSION_HEX >= 0x03000000
+\ts = PyUnicode_FromString(
+#else
+\ts = PyString_FromString(
+#endif
+\t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
 \t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \tPy_DECREF(s);
@@ -197,6 +226,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
 
+\treturn RETVAL;
 }
 #ifdef __cplusplus
 }
@@ -393,6 +423,11 @@ rout_rules=[
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
       PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+#if PY_VERSION_HEX >= 0x03000000
+      PyObject_SetAttrString(o,"__name__", PyUnicode_FromString("#name#"));
+#else
+      PyObject_SetAttrString(o,"__name__", PyString_FromString("#name#"));
+#endif
     }
     '''},
     'need':{l_not(l_or(ismoduleroutine,isdummyroutine)):['F_WRAPPEDFUNC','F_FUNC']},
