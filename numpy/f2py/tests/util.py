@@ -205,8 +205,8 @@ sys.exit(99)
         out, err = p.communicate()
         m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
         if m:
-            _compiler_status = (bool(m.group(1)), bool(m.group(2)),
-                                bool(m.group(3)))
+            _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
+                                bool(int(m.group(3))))
     finally:
         os.unlink(script)
 
