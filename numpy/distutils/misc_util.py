@@ -7,6 +7,7 @@ import glob
 import atexit
 import tempfile
 import subprocess
+import shutil
 
 from distutils.errors import DistutilsError
 
@@ -253,7 +254,7 @@ def clean_up_temporary_directory():
         return
     log.debug('removing %s', _temporary_directory)
     try:
-        os.rmdir(_temporary_directory)
+        shutil.rmtree(_temporary_directory)
     except OSError:
         pass
     _temporary_directory = None
