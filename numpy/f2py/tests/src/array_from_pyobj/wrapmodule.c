@@ -36,7 +36,7 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
 				     PyObject *capi_args) {
   PyObject * volatile capi_buildvalue = NULL;
   int type_num = 0;
-  intp *dims = NULL;
+  npy_intp *dims = NULL;
   PyObject *dims_capi = Py_None;
   int rank = 0;
   int intent = 0;
@@ -48,9 +48,9 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
 			&type_num,&dims_capi,&intent,&arr_capi))
     return NULL;
   rank = PySequence_Length(dims_capi);
-  dims = malloc(rank*sizeof(intp));
+  dims = malloc(rank*sizeof(npy_intp));
   for (i=0;i<rank;++i)
-    dims[i] = (intp)PyInt_AsLong(PySequence_GetItem(dims_capi,i));
+    dims[i] = (npy_intp)PyInt_AsLong(PySequence_GetItem(dims_capi,i));
 
   capi_arr_tmp = array_from_pyobj(type_num,dims,rank,intent|F2PY_INTENT_OUT,arr_capi);
   if (capi_arr_tmp == NULL)
@@ -114,9 +114,9 @@ static PyMethodDef f2py_module_methods[] = {
   {NULL,NULL}
 };
 
-PyMODINIT_FUNC initwrap(void) {
+PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {
   PyObject *m,*d, *s;
-  m = wrap_module = Py_InitModule("wrap", f2py_module_methods);
+  m = wrap_module = Py_InitModule("test_array_from_pyobj_ext", f2py_module_methods);
   PyFortran_Type.ob_type = &PyType_Type;
   import_array();
   if (PyErr_Occurred())
@@ -164,15 +164,15 @@ PyMODINIT_FUNC initwrap(void) {
   PyDict_SetItemString(d, "PyArray_NOTYPE", PyInt_FromLong(PyArray_NOTYPE));
   PyDict_SetItemString(d, "PyArray_UDERDEF", PyInt_FromLong(PyArray_USERDEF));
 
-  PyDict_SetItemString(d, "CONTIGUOUS", PyInt_FromLong(CONTIGUOUS));
-  PyDict_SetItemString(d, "FORTRAN", PyInt_FromLong(FORTRAN));
-  PyDict_SetItemString(d, "OWNDATA", PyInt_FromLong(OWNDATA));
-  PyDict_SetItemString(d, "FORCECAST", PyInt_FromLong(FORCECAST));
-  PyDict_SetItemString(d, "ENSURECOPY", PyInt_FromLong(ENSURECOPY));
-  PyDict_SetItemString(d, "ENSUREARRAY", PyInt_FromLong(ENSUREARRAY));
-  PyDict_SetItemString(d, "ALIGNED", PyInt_FromLong(ALIGNED));
-  PyDict_SetItemString(d, "WRITEABLE", PyInt_FromLong(WRITEABLE));
-  PyDict_SetItemString(d, "UPDATEIFCOPY", PyInt_FromLong(UPDATEIFCOPY));
+  PyDict_SetItemString(d, "CONTIGUOUS", PyInt_FromLong(NPY_CONTIGUOUS));
+  PyDict_SetItemString(d, "FORTRAN", PyInt_FromLong(NPY_FORTRAN));
+  PyDict_SetItemString(d, "OWNDATA", PyInt_FromLong(NPY_OWNDATA));
+  PyDict_SetItemString(d, "FORCECAST", PyInt_FromLong(NPY_FORCECAST));
+  PyDict_SetItemString(d, "ENSURECOPY", PyInt_FromLong(NPY_ENSURECOPY));
+  PyDict_SetItemString(d, "ENSUREARRAY", PyInt_FromLong(NPY_ENSUREARRAY));
+  PyDict_SetItemString(d, "ALIGNED", PyInt_FromLong(NPY_ALIGNED));
+  PyDict_SetItemString(d, "WRITEABLE", PyInt_FromLong(NPY_WRITEABLE));
+  PyDict_SetItemString(d, "UPDATEIFCOPY", PyInt_FromLong(NPY_UPDATEIFCOPY));
 
   PyDict_SetItemString(d, "BEHAVED", PyInt_FromLong(NPY_BEHAVED));
   PyDict_SetItemString(d, "BEHAVED_NS", PyInt_FromLong(NPY_BEHAVED_NS));

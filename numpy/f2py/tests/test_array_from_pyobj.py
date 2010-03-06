@@ -1,11 +1,33 @@
 import unittest
+import os
 import sys
 import copy
 
 from numpy.testing import *
 from numpy import array, alltrue, ndarray, asarray, can_cast,zeros, dtype
 from numpy.core.multiarray import typeinfo
-from array_from_pyobj import wrap
+
+import util
+
+wrap = None
+def setup():
+    """
+    Build the required testing extension module
+
+    """
+    global wrap
+    if wrap is None:
+        config_code = """
+        config.add_extension('test_array_from_pyobj_ext',
+                             sources=['wrapmodule.c', 'fortranobject.c'],
+                             define_macros=[])
+        """
+        d = os.path.dirname(__file__)
+        src = [os.path.join(d, 'src', 'array_from_pyobj', 'wrapmodule.c'),
+               os.path.join(d, '..', 'src', 'fortranobject.c'),
+               os.path.join(d, '..', 'src', 'fortranobject.h')]
+        wrap = util.build_module_distutils(src, config_code,
+                                           'test_array_from_pyobj_ext')
 
 def flags_info(arr):
     flags = wrap.array_attrs(arr)[6]
@@ -51,7 +73,6 @@ class Intent:
 intent = Intent()
 
 class Type(object):
-
     _type_names = ['BOOL','BYTE','UBYTE','SHORT','USHORT','INT','UINT',
                    'LONG','ULONG','LONGLONG','ULONGLONG',
                    'FLOAT','DOUBLE','LONGDOUBLE','CFLOAT','CDOUBLE',
@@ -170,15 +191,14 @@ class Array:
 
         if intent.is_intent('cache'):
             assert isinstance(obj,ndarray),`type(obj)`
-            self.pyarr = array(obj).reshape(*dims)
-
+            self.pyarr = array(obj).reshape(*dims).copy()
         else:
             self.pyarr = array(array(obj,
                                      dtype = typ.dtypechar).reshape(*dims),
-                               fortran=not self.intent.is_intent('c'))
-            assert self.pyarr.dtype.char==typ.dtypechar,\
-                   `self.pyarr.dtype.char,typ.dtypechar`
-        assert self.pyarr.flags['OWNDATA']
+                               order=self.intent.is_intent('c') and 'C' or 'F')
+            assert self.pyarr.dtype == typ, \
+                   `self.pyarr.dtype,typ`
+        assert self.pyarr.flags['OWNDATA'], (obj, intent)
         self.pyarr_attr = wrap.array_attrs(self.pyarr)
 
         if len(dims)>1:
@@ -275,12 +295,12 @@ class _test_shared_memory:
             raise SystemError,'intent(inout) should have failed on sequence'
 
     def test_f_inout_23seq(self):
-        obj = array(self.num23seq,dtype=self.type.dtype,fortran=1)
+        obj = array(self.num23seq,dtype=self.type.dtype,order='F')
         shape = (len(self.num23seq),len(self.num23seq[0]))
         a = self.array(shape,intent.in_.inout,obj)
         assert a.has_shared_memory()
 
-        obj = array(self.num23seq,dtype=self.type.dtype,fortran=0)
+        obj = array(self.num23seq,dtype=self.type.dtype,order='C')
         shape = (len(self.num23seq),len(self.num23seq[0]))
         try:
             a = self.array(shape,intent.in_.inout,obj)
@@ -316,7 +336,7 @@ class _test_shared_memory:
 
     def test_f_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq,dtype=t.dtype,fortran=1)
+            obj = array(self.num23seq,dtype=t.dtype,order='F')
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
                            intent.in_,obj)
             if t.elsize==self.type.elsize:
@@ -336,7 +356,7 @@ class _test_shared_memory:
 
     def test_f_copy_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq,dtype=t.dtype,fortran=1)
+            obj = array(self.num23seq,dtype=t.dtype,order='F')
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
                            intent.in_.copy,obj)
             assert not a.has_shared_memory(),`t.dtype`
@@ -360,7 +380,7 @@ class _test_shared_memory:
             a = self.array(shape,intent.in_.cache,obj)
             assert a.has_shared_memory(),`t.dtype`
 
-            obj = array(self.num2seq,dtype=t.dtype,fortran=1)
+            obj = array(self.num2seq,dtype=t.dtype,order='F')
             a = self.array(shape,intent.in_.c.cache,obj)
             assert a.has_shared_memory(),`t.dtype`
 
@@ -505,9 +525,11 @@ for t in Type._type_names:
 class test_%s_gen(unittest.TestCase,
               _test_shared_memory
               ):
-    type = Type(%r)
+    def setUp(self):
+        self.type = Type(%r)
     array = lambda self,dims,intent,obj: Array(Type(%r),dims,intent,obj)
 ''' % (t,t,t)
 
 if __name__ == "__main__":
-    run_module_suite()
+    import nose
+    nose.runmodule()
