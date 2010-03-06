@@ -3,6 +3,8 @@ import os
 import sys
 import copy
 
+import nose
+
 from numpy.testing import *
 from numpy import array, alltrue, ndarray, asarray, can_cast,zeros, dtype
 from numpy.core.multiarray import typeinfo
@@ -16,6 +18,11 @@ def setup():
 
     """
     global wrap
+
+    # Check compiler availability first
+    if not util.has_c_compiler():
+        raise nose.SkipTest("No C compiler available")
+
     if wrap is None:
         config_code = """
         config.add_extension('test_array_from_pyobj_ext',
