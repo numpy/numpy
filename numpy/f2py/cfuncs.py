@@ -1068,6 +1068,15 @@ def buildcfuncs():
     cppmacros[m]='#define %s(v,dims) (PyArray_SimpleNewFromData(1,dims,PyArray_CHAR,(char *)v))'%(m)
 
 
+############ Automatic Python3 conversions ###################
+
+if sys.version_info[0] >= 3:
+    for key, value in cfuncs.items():
+        value = value.replace('PyString', 'PyBytes')
+        value = value.replace('PyInt_AS_LONG', 'PyLong_AsLong')
+        value = value.replace('PyInt', 'PyLong')
+        cfuncs[key] = value
+
 ############ Auxiliary functions for sorting needs ###################
 
 def append_needs(need,flag=1):
