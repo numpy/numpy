@@ -3,7 +3,7 @@ from numpy import array
 import util
 
 class TestReturnLogical(util.F2PyTest):
-    def _check_function(self, t):
+    def check_function(self, t):
         assert t(True)==1,`t(True)`
         assert t(False)==0,`t(False)`
         assert t(0)==0
@@ -107,11 +107,7 @@ c       end
 
     def test_all(self):
         for name in "t0,t1,t2,t4,s0,s1,s2,s4".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module, name))
 
 class TestF90ReturnLogical(TestReturnLogical):
     suffix = ".f90"
@@ -179,11 +175,7 @@ end module f90_return_logical
 
     def test_all(self):
         for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module.f90_return_logical, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module.f90_return_logical, name))
 
 if __name__ == "__main__":
     import nose

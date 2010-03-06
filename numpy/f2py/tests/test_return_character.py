@@ -1,24 +1,25 @@
 from numpy.testing import *
 from numpy import array
+from numpy.compat import asbytes
 import util
 
 class TestReturnCharacter(util.F2PyTest):
-    def _check_function(self, t):
+    def check_function(self, t):
         tname = t.__doc__.split()[0]
         if tname in ['t0','t1','s0','s1']:
-            assert t(23)=='2'
-            r = t('ab');assert r=='a',`r`
-            r = t(array('ab'));assert r=='a',`r`
-            r = t(array(77,'u1'));assert r=='M',`r`
+            assert t(23)==asbytes('2')
+            r = t('ab');assert r==asbytes('a'),`r`
+            r = t(array('ab'));assert r==asbytes('a'),`r`
+            r = t(array(77,'u1'));assert r==asbytes('M'),`r`
             #assert_raises(ValueError, t, array([77,87]))
             #assert_raises(ValueError, t, array(77))
         elif tname in ['ts','ss']:
-            assert t(23)=='23        ',`t(23)`
-            assert t('123456789abcdef')=='123456789a'
+            assert t(23)==asbytes('23        '),`t(23)`
+            assert t('123456789abcdef')==asbytes('123456789a')
         elif tname in ['t5','s5']:
-            assert t(23)=='23   ',`t(23)`
-            assert t('ab')=='ab   ',`t('ab')`
-            assert t('123456789abcdef')=='12345'
+            assert t(23)==asbytes('23   '),`t(23)`
+            assert t('ab')==asbytes('ab   '),`t('ab')`
+            assert t('123456789abcdef')==asbytes('12345')
         else:
             raise NotImplementedError
 
@@ -73,12 +74,7 @@ cf2py    intent(out) ts
 
     def test_all(self):
         for name in "t0,t1,t5,s0,s1,s5,ss".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module, name)
-        self._check_function(t)
-
+            self.check_function(getattr(self.module, name))
 
 class TestF90ReturnCharacter(TestReturnCharacter):
     suffix = ".f90"
@@ -135,11 +131,7 @@ end module f90_return_char
 
     def test_all(self):
         for name in "t0,t1,t5,ts,s0,s1,s5,ss".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module.f90_return_char, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module.f90_return_char, name))
 
 if __name__ == "__main__":
     import nose

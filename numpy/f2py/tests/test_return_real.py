@@ -4,7 +4,7 @@ import math
 import util
 
 class TestReturnReal(util.F2PyTest):
-    def _check_function(self, t):
+    def check_function(self, t):
         if t.__doc__.split()[0] in ['t0','t4','s0','s4']:
             err = 1e-5
         else:
@@ -79,10 +79,7 @@ end python module c_ext_return_real
 
     def test_all(self):
         for name in "t4,t8,s4,s8".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        self._check_function(getattr(self.module, name))
+            self.check_function(getattr(self.module, name))
 
 class TestF77ReturnReal(TestReturnReal):
     code = """
@@ -135,10 +132,7 @@ cf2py    intent(out) td
 
     def test_all(self):
         for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        self._check_function(getattr(self.module, name))
+            self.check_function(getattr(self.module, name))
 
 class TestF90ReturnReal(TestReturnReal):
     suffix = ".f90"
@@ -195,10 +189,7 @@ end module f90_return_real
 
     def test_all(self):
         for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        self._check_function(getattr(self.module.f90_return_real, name))
+            self.check_function(getattr(self.module.f90_return_real, name))
 
 
 if __name__ == "__main__":

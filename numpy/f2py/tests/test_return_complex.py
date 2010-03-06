@@ -3,7 +3,7 @@ from numpy import array
 import util
 
 class TestReturnComplex(util.F2PyTest):
-    def _check_function(self, t):
+    def check_function(self, t):
         tname = t.__doc__.split()[0]
         if tname in ['t0','t8','s0','s8']:
             err = 1e-5
@@ -99,11 +99,7 @@ cf2py    intent(out) td
 
     def test_all(self):
         for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module, name))
 
 
 class TestF90ReturnComplex(TestReturnComplex):
@@ -161,11 +157,7 @@ end module f90_return_complex
 
     def test_all(self):
         for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module.f90_return_complex, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module.f90_return_complex, name))
 
 if __name__ == "__main__":
     import nose

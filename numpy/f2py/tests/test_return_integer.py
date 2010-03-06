@@ -3,7 +3,7 @@ from numpy import array
 import util
 
 class TestReturnInteger(util.F2PyTest):
-    def _check_function(self, t):
+    def check_function(self, t):
         assert t(123)==123,`t(123)`
         assert t(123.6)==123
         assert t(123l)==123
@@ -97,11 +97,7 @@ cf2py    intent(out) t8
 
     def test_all(self):
         for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module, name))
 
 
 class TestF90ReturnInteger(TestReturnInteger):
@@ -170,11 +166,7 @@ end module f90_return_integer
 
     def test_all(self):
         for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
-            yield self.check_function, name
-
-    def check_function(self, name):
-        t = getattr(self.module.f90_return_integer, name)
-        self._check_function(t)
+            self.check_function(getattr(self.module.f90_return_integer, name))
 
 if __name__ == "__main__":
     import nose
