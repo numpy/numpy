@@ -128,13 +128,15 @@ More can be added as needed.
 numpy.f2py
 ----------
 
-F2py has not yet been ported to Py3.
+F2py is now mostly ported to Py3.
 
-It imports, but it's not tested.
+Simple programs seem to work, as well as its test suite (which does
+not exercise all its features).
 
 .. todo::
 
-   Port f2py to Py3
+   Extend the test suite to more complicated cases, and fix bugs
+   encountered.
 
 
 Bytes vs. strings
@@ -1013,9 +1015,4 @@ PyCObject / PyCapsule
 The PyCObject API is removed in Python 3.2, so we need to rewrite it
 using PyCapsule.
 
-.. todo::
-
-   This probably requires adding some backwards compatibility PyCapsule_*
-   definitions in npy_py3kcompat.h, and using only PyCapsule_* throughout
-   Numpy.
-
+Numpy was changed to use the Capsule API.
