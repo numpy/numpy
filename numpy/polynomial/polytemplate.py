@@ -63,7 +63,10 @@ class $name(pu.PolyBase) :
     """
     # Limit runaway size. T_n^m has degree n*2^m
     maxpower = 16
+    # Default domain
     domain = np.array($domain)
+    # Don't let participate in array operations. Value doesn't matter.
+    __array_priority__ = 0
 
     def __init__(self, coef, domain=$domain) :
         [coef, domain] = pu.as_series([coef, domain], trim=False)
