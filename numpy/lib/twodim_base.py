@@ -851,7 +851,7 @@ def triu_indices(n,k=0):
 
 def triu_indices_from(arr,k=0):
     """
-    Return the indices for the lower-triangle of an (n, n) array.
+    Return the indices for the upper-triangle of an (n, n) array.
 
     See `triu_indices` for full details.
 
