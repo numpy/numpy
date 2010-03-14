@@ -41,10 +41,10 @@ def fix(x, y=None):
 
     """
     x = nx.asanyarray(x)
-    if y is None:
-        y = nx.zeros_like(x)
     y1 = nx.floor(x)
     y2 = nx.ceil(x)
+    if y is None:
+        y = y1
     y[...] = nx.where(x >= 0, y1, y2)
     return y
 
