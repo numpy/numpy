@@ -400,6 +400,9 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
 
     """
     def matcher(self, version_string):
+        # version string may appear in the second line, so getting rid
+        # of new lines:
+        version_string = version_string.replace('\n',' ')
         pos = 0
         if start:
             m = re.match(start, version_string)
