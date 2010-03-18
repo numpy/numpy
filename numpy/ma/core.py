@@ -2535,7 +2535,6 @@ class MaskedIterator(object):
         self.dataiter[index] = getdata(value)
         if self.maskiter is not None:
             self.maskiter[index] = getmaskarray(value)
-#        self.ma1d[index] = value
 
     def next(self):
         """
@@ -2803,10 +2802,6 @@ class MaskedArray(ndarray):
         return
 
 
-#    def __array_prepare__(self, obj, context=None):
-#        print "DEBUG: __array_prepare__ on obj", obj, " with context:", context
-
-
     def __array_wrap__(self, obj, context=None):
         """
         Special hook for ufuncs.
@@ -2885,7 +2880,7 @@ class MaskedArray(ndarray):
             except (AttributeError, TypeError):
                 pass
         # Make sure to reset the _fill_value if needed
-        if getattr(output, '_fill_value', None):
+        if getattr(output, '_fill_value', None) is not None:
             output._fill_value = None
         return output
     view.__doc__ = ndarray.view.__doc__
@@ -2952,6 +2947,8 @@ class MaskedArray(ndarray):
             # A record ................
             if isinstance(dout, np.void):
                 mask = _mask[indx]
+# If we can make mvoid a subclass of np.void, that'd be what we'd need
+#                return mvoid(dout, mask=mask)
                 if flatten_mask(mask).any():
                     dout = mvoid(dout, mask=mask)
                 else:
@@ -2989,17 +2986,16 @@ class MaskedArray(ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
+        _data = ndarray.view(self, ndarray.__getattribute__(self, '_baseclass'))
+        _mask = ndarray.__getattribute__(self, '_mask')
         if isinstance(indx, basestring):
-            ndarray.__setitem__(self._data, indx, value)
-            if self._mask is nomask:
-                self._mask = make_mask_none(self.shape, self.dtype)
-            ndarray.__setitem__(self._mask, indx, getmask(value))
+            ndarray.__setitem__(_data, indx, value)
+            if _mask is nomask:
+                self._mask = _mask = make_mask_none(self.shape, self.dtype)
+            _mask[indx] = getmask(value)
             return
         #........................................
-#        ndgetattr = ndarray.__getattribute__
-        _data = self._data
         _dtype = ndarray.__getattribute__(_data, 'dtype')
-        _mask = ndarray.__getattribute__(self, '_mask')
         nbfields = len(_dtype.names or ())
         #........................................
         if value is masked:
@@ -3773,7 +3769,12 @@ class MaskedArray(ndarray):
         "Raise self to the power other, in place."
         other_data = getdata(other)
         other_mask = getmask(other)
-        ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
+        err_status = np.geterr()
+        try:
+            np.seterr(divide='ignore', invalid='ignore')
+            ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
+        finally:
+            np.seterr(**err_status)
         invalid = np.logical_not(np.isfinite(self._data))
         if invalid.any():
             if self._mask is not nomask:
@@ -5212,11 +5213,34 @@ class MaskedArray(ndarray):
         out -= self.min(axis=axis, fill_value=fill_value)
         return out
 
+    def take(self, indices, axis=None, out=None, mode='raise'):
+        """
+        """
+        (_data, _mask) = (self._data, self._mask)
+        cls = type(self)
+        # Make sure the indices are not masked
+        maskindices = getattr(indices, '_mask', nomask)
+        if maskindices is not nomask:
+            indices = indices.filled(0)
+        # Get the data
+        if out is None:
+            out = _data.take(indices, axis=axis, mode=mode).view(cls)
+        else:
+            np.take(_data, indices, axis=axis, mode=mode, out=out)
+        # Get the mask
+        if isinstance(out, MaskedArray):
+            if _mask is nomask:
+                outmask = maskindices
+            else:
+                outmask = _mask.take(indices, axis=axis, mode=mode)
+                outmask |= maskindices
+            out.__setmask__(outmask)
+        return out
+
 
     # Array methods ---------------------------------------
     copy = _arraymethod('copy')
     diagonal = _arraymethod('diagonal')
-    take = _arraymethod('take')
     transpose = _arraymethod('transpose')
     T = property(fget=lambda self:self.transpose())
     swapaxes = _arraymethod('swapaxes')
@@ -5487,13 +5511,16 @@ class mvoid(MaskedArray):
         _data[()] = data
         _data = _data.view(self)
         if mask is not nomask:
-            try:
-                # Mask is already a 0D array
-                _data._mask = np.void(mask)
-            except TypeError:
-                # Transform the mask to a void
-                mdtype = make_mask_descr(dtype)
-                _data._mask = np.array(mask, dtype=mdtype)[()]
+            if isinstance(mask, np.void):
+                _data._mask = mask
+            else:
+                try:
+                    # Mask is already a 0D array
+                    _data._mask = np.void(mask)
+                except TypeError:
+                    # Transform the mask to a void
+                    mdtype = make_mask_descr(dtype)
+                    _data._mask = np.array(mask, dtype=mdtype)[()]
         if fill_value is not None:
             _data.fill_value = fill_value
         return _data
@@ -5510,6 +5537,10 @@ class mvoid(MaskedArray):
             return masked
         return self._data[indx]
 
+    def __setitem__(self, indx, value):
+        self._data[indx] = value
+        self._mask[indx] |= getattr(value, "_mask", False)
+
     def __str__(self):
         m = self._mask
         if (m is nomask):
@@ -5523,7 +5554,7 @@ class mvoid(MaskedArray):
             p = 'N/A'
         else:
             p = str(p)
-        r = [(str(_), p)[_m] for (_, _m) in zip(r, m)]
+        r = [(str(_), p)[int(_m)] for (_, _m) in zip(r, m)]
         return "(%s)" % ", ".join(r)
 
     def __repr__(self):
@@ -5537,7 +5568,7 @@ class mvoid(MaskedArray):
         if not p.enabled():
             return self.filled(self.fill_value).__repr__()
         p = str(p)
-        r = [(str(_), p)[_m] for (_, _m) in zip(r, m)]
+        r = [(str(_), p)[int(_m)] for (_, _m) in zip(self._data.tolist(), m)]
         return "(%s)" % ", ".join(r)
 
     def __iter__(self):
@@ -5907,9 +5938,16 @@ soften_mask = _frommethod('soften_mask')
 std = _frommethod('std')
 sum = _frommethod('sum')
 swapaxes = _frommethod('swapaxes')
-take = _frommethod('take')
+#take = _frommethod('take')
 trace = _frommethod('trace')
 var = _frommethod('var')
+
+def take(a, indices, axis=None, out=None, mode='raise'):
+    """
+    """
+    a = masked_array(a)
+    return a.take(indices, axis=axis, out=out, mode=mode)
+
 
 #..............................................................................
 def power(a, b, third=None):
@@ -5944,7 +5982,12 @@ def power(a, b, third=None):
     else:
         basetype = MaskedArray
     # Get the result and view it as a (subclass of) MaskedArray
-    result = np.where(m, fa, umath.power(fa, fb)).view(basetype)
+    err_status = np.geterr()
+    try:
+        np.seterr(divide='ignore', invalid='ignore')
+        result = np.where(m, fa, umath.power(fa, fb)).view(basetype)
+    finally:
+        np.seterr(**err_status)
     result._update_from(a)
     # Find where we're in trouble w/ NaNs and Infs
     invalid = np.logical_not(np.isfinite(result.view(ndarray)))
@@ -7047,7 +7090,8 @@ def fromflex(fxarray):
 
 
 class _convert2ma:
-    """Convert functions from numpy to numpy.ma.
+    """
+    Convert functions from numpy to numpy.ma.
 
     Parameters
     ----------
@@ -7056,9 +7100,11 @@ class _convert2ma:
 
     """
     __doc__ = None
-    def __init__(self, funcname):
+    #
+    def __init__(self, funcname, params=None):
         self._func = getattr(np, funcname)
         self.__doc__ = self.getdoc()
+        self._extras = params or {}
     #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
@@ -7072,19 +7118,33 @@ class _convert2ma:
         return doc
     #
     def __call__(self, a, *args, **params):
-        return self._func.__call__(a, *args, **params).view(MaskedArray)
+        # Find the common parameters to the call and the definition
+        _extras = self._extras
+        common_params = set(params).intersection(_extras)
+        # Drop the common parameters from the call
+        for p in common_params:
+            _extras[p] = params.pop(p)
+        # Get the result
+        result = self._func.__call__(a, *args, **params).view(MaskedArray)
+        if "fill_value" in common_params:
+            result.fill_value = _extras.get("fill_value", None)
+        if "hardmask" in common_params:
+            result._hardmask = bool(_extras.get("hard_mask", False))
+        return result
 
-arange = _convert2ma('arange')
+arange = _convert2ma('arange', params=dict(fill_value=None, hardmask=False))
 clip = np.clip
 diff = np.diff
-empty = _convert2ma('empty')
+empty = _convert2ma('empty', params=dict(fill_value=None, hardmask=False))
 empty_like = _convert2ma('empty_like')
 frombuffer = _convert2ma('frombuffer')
 fromfunction = _convert2ma('fromfunction')
-identity = _convert2ma('identity')
+identity = _convert2ma('identity', params=dict(fill_value=None, hardmask=False))
 indices = np.indices
-ones = _convert2ma('ones')
-zeros = _convert2ma('zeros')
+ones = _convert2ma('ones', params=dict(fill_value=None, hardmask=False))
+ones_like = np.ones_like
 squeeze = np.squeeze
+zeros = _convert2ma('zeros', params=dict(fill_value=None, hardmask=False))
+zeros_like = np.zeros_like
 
 ###############################################################################
