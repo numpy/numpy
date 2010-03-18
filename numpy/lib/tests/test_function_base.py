@@ -266,6 +266,11 @@ class TestGradient(TestCase):
         assert_raises(SyntaxError, gradient, x, array([1.,1.]),
                       array([1.,1.]), array([1.,1.]))
 
+    def test_masked(self):
+        # Make sure that gradient supports subclasses like masked arrays
+        x = np.ma.array([[1,1],[3,4]])
+        assert_equal(type(gradient(x)[0]), type(x))
+
 class TestAngle(TestCase):
     def test_basic(self):
         x = [1+3j,sqrt(2)/2.0+1j*sqrt(2)/2,1,1j,-1,-1j,1-3j,-1+3j]

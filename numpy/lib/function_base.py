@@ -808,7 +808,7 @@ def gradient(f, *varargs):
 
     for axis in range(N):
         # select out appropriate parts for this dimension
-        out = zeros(f.shape, f.dtype.char)
+        out = np.zeros_like(f).astype(otype)
         slice1[axis] = slice(1, -1)
         slice2[axis] = slice(2, None)
         slice3[axis] = slice(None, -2)
