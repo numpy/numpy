@@ -18,6 +18,8 @@
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
 
+#include "numpyconfig.h"
+
 #if defined( __i386__ ) || defined(i386) || defined(_M_IX86)
     /*
      * __i386__ is defined by gcc and Intel compiler on Linux,
@@ -96,6 +98,9 @@
             ((char*)(dst))[5] = ((char*)(src))[5]; \
             ((char*)(dst))[6] = ((char*)(src))[6]; \
             ((char*)(dst))[7] = ((char*)(src))[7];
+    #else
+        #error Unknown architecture, please report this to numpy maintainers with \
+        information about your platform (OS, CPU and compiler)
     #endif
 #endif
 
