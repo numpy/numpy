@@ -1281,5 +1281,9 @@ class TestRegression(TestCase):
             assert isinstance(path, (str, unicode))
             assert path != ''
 
+    def test_0d_string_scalar(self):
+        # Bug #1436; the following should succeed
+        np.asarray('x', '>c')
+
 if __name__ == "__main__":
     run_module_suite()

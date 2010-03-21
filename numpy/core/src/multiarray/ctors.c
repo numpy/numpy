@@ -1820,26 +1820,13 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                  * If object was explicitly requested,
                  * then try nested list object array creation
                  */
+                PyErr_Clear();
                 if (isobject) {
-                    PyErr_Clear();
                     Py_INCREF(newtype);
                     r = ObjectArray_FromNestedList
                         (op, newtype, flags & FORTRAN);
                     seq = TRUE;
                     Py_DECREF(newtype);
-                }
-                else if ((newtype->type_num == PyArray_STRING ||
-                          newtype->type_num == PyArray_UNICODE)
-                         && PySequence_Size(op) > 0)
-                {
-                    /* It is not possible to set a sequence into
-                     * a string/unicode 0-d array item -- bail out early
-                     * so that the error message is more clear.
-                     */
-                    seq = TRUE;
-                }
-                else {
-                    PyErr_Clear();
                 }
             }
             else {
