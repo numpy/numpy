@@ -2389,6 +2389,36 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(take(x, [0, 2], axis=1),
                       array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
 
+    def test_take_masked_indices(self):
+        "Test take w/ masked indices"
+        a = np.array((40, 18, 37, 9, 22))
+        indices = np.arange(3)[None, :] + np.arange(5)[:, None]
+        mindices = array(indices, mask=(indices >= len(a)))
+        # No mask
+        test = take(a, mindices, mode='clip')
+        ctrl = array([[40, 18, 37],
+                      [18, 37, 9],
+                      [37, 9, 22],
+                      [ 9, 22, 22],
+                      [22, 22, 22]])
+        assert_equal(test, ctrl)
+        # Masked indices
+        test = take(a, mindices)
+        ctrl = array([[40, 18, 37],
+                      [18, 37, 9],
+                      [37, 9, 22],
+                      [ 9, 22, 40],
+                      [22, 40, 40]])
+        ctrl[3, 2] = ctrl[4, 1] = ctrl[4, 2] = masked
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, ctrl.mask)
+        # Masked input + masked indices
+        a = array((40, 18, 37, 9, 22), mask=(0, 1, 0, 0, 0))
+        test = take(a, mindices)
+        ctrl[0, 1] = ctrl[1, 0] = masked
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, ctrl.mask)
+
 
     def test_tolist(self):
         "Tests to list"
