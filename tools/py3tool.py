@@ -141,7 +141,7 @@ def custom_mangling(filename):
         os.path.join('core', 'arrayprint.py'),
         os.path.join('core', 'fromnumeric.py'),
         os.path.join('numpy', '__init__.py'),
-        os.path.join('lib', 'io.py'),
+        os.path.join('lib', 'npyio.py'),
         os.path.join('lib', 'function_base.py'),
         os.path.join('fft', 'fftpack.py'),
         os.path.join('random', '__init__.py'),
@@ -166,7 +166,7 @@ def custom_mangling(filename):
         f.write(text)
         f.close()
 
-    if filename.endswith(os.path.join('lib', 'io.py')):
+    if filename.endswith(os.path.join('lib', 'npyio.py')):
         f = open(filename, 'r')
         text = f.read()
         f.close()

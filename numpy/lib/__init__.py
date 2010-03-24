@@ -14,7 +14,7 @@ from polynomial import *
 #import convertcode
 from utils import *
 from arraysetops import *
-from io import *
+from npyio import *
 from financial import *
 import math
 from arrayterator import *
@@ -30,7 +30,7 @@ __all__ += ufunclike.__all__
 __all__ += polynomial.__all__
 __all__ += utils.__all__
 __all__ += arraysetops.__all__
-__all__ += io.__all__
+__all__ += npyio.__all__
 __all__ += financial.__all__
 
 from numpy.testing import Tester
