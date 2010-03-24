@@ -234,7 +234,7 @@ NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
 static NPY_INLINE PyObject *
 NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context, void (*dtor)(PyObject *))
 {
-    PyObject *ret = NpyCapsule_New(ptr, dtor);
+    PyObject *ret = NpyCapsule_FromVoidPtr(ptr, dtor);
     if (ret != NULL && PyCapsule_SetContext(ret, context) != 0) {
         PyErr_Clear();
         Py_DECREF(ret);
