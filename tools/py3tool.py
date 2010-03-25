@@ -166,15 +166,6 @@ def custom_mangling(filename):
         f.write(text)
         f.close()
 
-    if filename.endswith(os.path.join('lib', 'npyio.py')):
-        f = open(filename, 'r')
-        text = f.read()
-        f.close()
-        text = text.replace('from . import io', 'import io')
-        f = open(filename, 'w')
-        f.write(text)
-        f.close()
-
 def walk_sync(dir1, dir2, _seen=None):
     if _seen is None:
         seen = {}
