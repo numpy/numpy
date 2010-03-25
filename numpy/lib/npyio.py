@@ -1,10 +1,6 @@
-__all__ = ['savetxt', 'loadtxt',
-           'genfromtxt', 'ndfromtxt', 'mafromtxt', 'recfromtxt', 'recfromcsv',
-           'load', 'loads',
-           'save', 'savez',
-           'packbits', 'unpackbits',
-           'fromregex',
-           'DataSource']
+__all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
+        'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+        'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
 import numpy as np
 import format
@@ -27,8 +23,7 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
 from numpy.compat import asbytes, asstr, asbytes_nested, bytes
 
 if sys.version_info[0] >= 3:
-    import io
-    BytesIO = io.BytesIO
+    from io import BytesIO
 else:
     from cStringIO import StringIO as BytesIO
 
@@ -93,7 +88,7 @@ class BagObj(object):
     ...         return key
     ...
     >>> demo_obj = BagDemo()
-    >>> bagobj = np.lib.io.BagObj(demo_obj)
+    >>> bagobj = np.lib.npyio.BagObj(demo_obj)
     >>> bagobj.some_item
     'some_item'
 
@@ -149,7 +144,7 @@ class NpzFile(object):
     >>> outfile.seek(0)
 
     >>> npz = np.load(outfile)
-    >>> isinstance(npz, np.lib.io.NpzFile)
+    >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
     >>> npz.files
     ['y', 'x']
