@@ -17,7 +17,7 @@ class TestRecFunctions(TestCase):
     """
     #
     def setUp(self):
-        x = np.array([1, 2,])
+        x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array([('A', 1.), ('B', 2.)],
                      dtype=[('A', '|S3'), ('B', float)])
@@ -41,7 +41,7 @@ class TestRecFunctions(TestCase):
         assert_equal(test,
                      np.dtype([('', int), ('A', '|S3'), ('B', float)]))
         test = zip_descr((x, z), flatten=False)
-        assert_equal(test, 
+        assert_equal(test,
                      np.dtype([('', int),
                                ('', [('A', '|S3'), ('B', float)])]))
         # Standard & nested dtype 
@@ -71,7 +71,7 @@ class TestRecFunctions(TestCase):
         control = np.array([(1,), (4,)], dtype=[('a', int)])
         assert_equal(test, control)
         # A nested sub-field
-        test = drop_fields(a, ['ba',])
+        test = drop_fields(a, ['ba', ])
         control = np.array([(1, (3.0,)), (4, (6.0,))],
                      dtype=[('a', int), ('b', [('bb', int)])])
         assert_equal(test, control)
@@ -127,13 +127,13 @@ class TestRecFunctions(TestCase):
         # One 1-nested field
         ndtype = np.dtype([('A', int), ('B', [('BA', float), ('BB', '|S1')])])
         test = get_fieldstructure(ndtype)
-        assert_equal(test, {'A': [], 'B': [], 'BA':['B',], 'BB':['B']})
+        assert_equal(test, {'A': [], 'B': [], 'BA':['B', ], 'BB':['B']})
         # One 2-nested fields
         ndtype = np.dtype([('A', int),
                            ('B', [('BA', int),
                                   ('BB', [('BBA', int), ('BBB', int)])])])
         test = get_fieldstructure(ndtype)
-        control = {'A': [], 'B': [], 'BA': ['B'], 'BB': ['B'], 
+        control = {'A': [], 'B': [], 'BA': ['B'], 'BB': ['B'],
                    'BBA': ['B', 'BB'], 'BBB': ['B', 'BB']}
         assert_equal(test, control)
 
@@ -173,7 +173,7 @@ class TestRecFunctions(TestCase):
     def test_find_duplicates_ignoremask(self):
         "Test the ignoremask option of find_duplicates"
         ndtype = [('a', int)]
-        a = ma.array([1, 1, 1, 2, 2, 3, 3], 
+        a = ma.array([1, 1, 1, 2, 2, 3, 3],
                 mask=[0, 0, 1, 0, 0, 0, 1]).view(ndtype)
         test = find_duplicates(a, ignoremask=True, return_index=True)
         control = [0, 1, 3, 4]
@@ -218,7 +218,7 @@ class TestMergeArrays(TestCase):
     Test merge_arrays
     """
     def setUp(self):
-        x = np.array([1, 2,])
+        x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array([('A', 1.), ('B', 2.)], dtype=[('A', '|S3'), ('B', float)])
         w = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
@@ -291,7 +291,7 @@ class TestMergeArrays(TestCase):
         assert_equal(test, control)
         #
         test = merge_arrays((x, w), flatten=False)
-        controldtype = dtype=[('f0', int),
+        controldtype = dtype = [('f0', int),
                               ('f1', [('a', int),
                                       ('b', [('ba', float), ('bb', int)])])]
         control = np.array([(1., (1, (2, 3.0))), (2, (4, (5, 6.0)))],
@@ -325,6 +325,15 @@ class TestMergeArrays(TestCase):
         test = merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
         control = np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
                            dtype=[('A', '|S3'), ('B', float), ('C', int)])
+    #
+    def test_singlerecord(self):
+        (_, x, y, z) = self.data
+        test = merge_arrays((x[0], y[0], z[0]), usemask=False)
+        control = np.array([(1, 10, ('A', 1))],
+                           dtype=[('f0', int),
+                                  ('f1', int),
+                                  ('f2', [('A', '|S3'), ('B', float)])])
+        assert_equal(test, control)
 
 
 
@@ -333,7 +342,7 @@ class TestAppendFields(TestCase):
     Test append_fields
     """
     def setUp(self):
-        x = np.array([1, 2,])
+        x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array([('A', 1.), ('B', 2.)], dtype=[('A', '|S3'), ('B', float)])
         w = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
@@ -387,7 +396,7 @@ class TestStackArrays(TestCase):
     Test stack_arrays
     """
     def setUp(self):
-        x = np.array([1, 2,])
+        x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array([('A', 1.), ('B', 2.)], dtype=[('A', '|S3'), ('B', float)])
         w = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
@@ -436,7 +445,7 @@ class TestStackArrays(TestCase):
         #
         test = stack_arrays((z, x))
         control = ma.array([('A', 1, -1), ('B', 2, -1),
-                            (-1, -1, 1), (-1, -1, 2),],
+                            (-1, -1, 1), (-1, -1, 2), ],
                       mask=[(0, 0, 1), (0, 0, 1),
                             (1, 1, 0), (1, 1, 0)],
                       dtype=[('A', '|S3'), ('B', float), ('f2', int)])
@@ -446,7 +455,7 @@ class TestStackArrays(TestCase):
         test = stack_arrays((z, z, x))
         control = ma.array([('A', 1, -1), ('B', 2, -1),
                             ('A', 1, -1), ('B', 2, -1),
-                            (-1, -1, 1), (-1, -1, 2),],
+                            (-1, -1, 1), (-1, -1, 2), ],
                       mask=[(0, 0, 1), (0, 0, 1),
                             (0, 0, 1), (0, 0, 1),
                             (1, 1, 0), (1, 1, 0)],
@@ -555,26 +564,26 @@ class TestJoinBy(TestCase):
                                   ('c', int), ('d', int)])
         #
         test = join_by(('a', 'b'), a, b, 'outer')
-        control = ma.array([( 0, 50, 100, -1),  ( 1, 51, 101,  -1),
-                            ( 2, 52, 102, -1),  ( 3, 53, 103,  -1),
-                            ( 4, 54, 104, -1),  ( 5, 55, 105,  -1),
-                            ( 5, 65,  -1, 100), ( 6, 56, 106,  -1),
-                            ( 6, 66,  -1, 101), ( 7, 57, 107,  -1),
-                            ( 7, 67,  -1, 102), ( 8, 58, 108,  -1),
-                            ( 8, 68,  -1, 103), ( 9, 59, 109,  -1),
-                            ( 9, 69,  -1, 104), (10, 70,  -1, 105),
-                            (11, 71,  -1, 106), (12, 72,  -1, 107),
-                            (13, 73,  -1, 108), (14, 74,  -1, 109)],
-                      mask=[( 0,  0,   0,   1), ( 0,  0,   0,   1),
-                            ( 0,  0,   0,   1), ( 0,  0,   0,   1),
-                            ( 0,  0,   0,   1), ( 0,  0,   0,   1),
-                            ( 0,  0,   1,   0), ( 0,  0,   0,   1),
-                            ( 0,  0,   1,   0), ( 0,  0,   0,   1),
-                            ( 0,  0,   1,   0), ( 0,  0,   0,   1),
-                            ( 0,  0,   1,   0), ( 0,  0,   0,   1),
-                            ( 0,  0,   1,   0), ( 0,  0,   1,   0),
-                            ( 0,  0,   1,   0), ( 0,  0,   1,   0),
-                            ( 0,  0,   1,   0), ( 0,  0,   1,   0)],
+        control = ma.array([(0, 50, 100, -1), (1, 51, 101, -1),
+                            (2, 52, 102, -1), (3, 53, 103, -1),
+                            (4, 54, 104, -1), (5, 55, 105, -1),
+                            (5, 65, -1, 100), (6, 56, 106, -1),
+                            (6, 66, -1, 101), (7, 57, 107, -1),
+                            (7, 67, -1, 102), (8, 58, 108, -1),
+                            (8, 68, -1, 103), (9, 59, 109, -1),
+                            (9, 69, -1, 104), (10, 70, -1, 105),
+                            (11, 71, -1, 106), (12, 72, -1, 107),
+                            (13, 73, -1, 108), (14, 74, -1, 109)],
+                      mask=[(0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 1, 0), (0, 0, 0, 1),
+                            (0, 0, 1, 0), (0, 0, 0, 1),
+                            (0, 0, 1, 0), (0, 0, 0, 1),
+                            (0, 0, 1, 0), (0, 0, 0, 1),
+                            (0, 0, 1, 0), (0, 0, 1, 0),
+                            (0, 0, 1, 0), (0, 0, 1, 0),
+                            (0, 0, 1, 0), (0, 0, 1, 0)],
                       dtype=[('a', int), ('b', int),
                              ('c', int), ('d', int)])
         assert_equal(test, control)
@@ -585,11 +594,11 @@ class TestJoinBy(TestCase):
                             (4, 54, 104, -1), (5, 55, 105, -1),
                             (6, 56, 106, -1), (7, 57, 107, -1),
                             (8, 58, 108, -1), (9, 59, 109, -1)],
-                      mask=[(0,  0,   0,  1), (0,  0,   0,  1),
-                            (0,  0,   0,  1), (0,  0,   0,  1),
-                            (0,  0,   0,  1), (0,  0,   0,  1),
-                            (0,  0,   0,  1), (0,  0,   0,  1),
-                            (0,  0,   0,  1), (0,  0,   0,  1)],
+                      mask=[(0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 0, 1), (0, 0, 0, 1),
+                            (0, 0, 0, 1), (0, 0, 0, 1)],
                       dtype=[('a', int), ('b', int), ('c', int), ('d', int)])
 
 
