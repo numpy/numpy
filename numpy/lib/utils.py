@@ -847,10 +847,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     global _lookfor_caches
     # Local import to speed up numpy's import time.
     import inspect
-    if sys.version_info[0] >= 3:
-        from io import BytesIO
-    else:
-        from cStringIO import StringIO as BytesIO
+    from cStringIO import StringIO
 
     if module is None:
         module = "numpy"
@@ -918,8 +915,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             old_stdout = sys.stdout
                             old_stderr = sys.stderr
                             try:
-                                sys.stdout = BytesIO()
-                                sys.stderr = BytesIO()
+                                sys.stdout = StringIO()
+                                sys.stderr = StringIO()
                                 __import__("%s.%s" % (name, to_import))
                             finally:
                                 sys.stdout = old_stdout
