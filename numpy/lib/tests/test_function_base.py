@@ -772,15 +772,15 @@ class Test_i0(TestCase):
 
 class TestKaiser(TestCase):
     def test_simple(self):
-        assert_almost_equal(kaiser(0,1.0), array([]))
-        assert isnan(kaiser(1,1.0))
-        assert_almost_equal(kaiser(2,1.0), array([ 0.78984831,  0.78984831]))
-        assert_almost_equal(kaiser(5,1.0),
-                            array([ 0.78984831,  0.94503323,  1.        ,
-                                    0.94503323,  0.78984831]))
-        assert_almost_equal(kaiser(5,1.56789),
-                            array([ 0.58285404,  0.88409679,  1.        ,
-                                    0.88409679,  0.58285404]))
+        assert_almost_equal(kaiser(0, 1.0), array([]))
+        assert isfinite(kaiser(1, 1.0))
+        assert_almost_equal(kaiser(2, 1.0), array([ 0.78984831, 0.78984831]))
+        assert_almost_equal(kaiser(5, 1.0),
+                            array([ 0.78984831, 0.94503323, 1.        ,
+                                    0.94503323, 0.78984831]))
+        assert_almost_equal(kaiser(5, 1.56789),
+                            array([ 0.58285404, 0.88409679, 1.        ,
+                                    0.88409679, 0.58285404]))
 
     def test_int_beta(self):
         kaiser(3, 4)

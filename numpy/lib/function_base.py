@@ -2612,6 +2612,8 @@ def kaiser(M,beta):
 
     """
     from numpy.dual import i0
+    if M == 1:
+        return np.array([1.])
     n = arange(0,M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
