@@ -170,5 +170,16 @@ class TestRegression(TestCase):
         """Ticket #1387: empty array as input for bincount."""
         assert_raises(ValueError, lambda : np.bincount(np.array([], dtype=np.intp)))
 
+    @dec.deprecated()
+    def test_include_dirs(self):
+        """As a sanity check, just test that get_include and
+        get_numarray_include include something reasonable.  Somewhat
+        related to ticket #1405."""
+        include_dirs = [np.get_include(), np.get_numarray_include(),
+                        np.get_numpy_include()]
+        for path in include_dirs:
+            assert isinstance(path, (str, unicode))
+            assert path != ''
+
 if __name__ == "__main__":
     run_module_suite()

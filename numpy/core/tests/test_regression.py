@@ -1279,16 +1279,6 @@ class TestRegression(TestCase):
         # Just make sure this doesn't throw an exception
         numarray.handleError(0, "")
 
-    def test_include_dirs(self):
-        """As a sanity check, just test that get_include and
-        get_numarray_include include something reasonable.  Somewhat
-        related to ticket #1405."""
-        include_dirs = [np.get_include(), np.get_numarray_include(),
-                        np.get_numpy_include()]
-        for path in include_dirs:
-            assert isinstance(path, (str, unicode))
-            assert path != ''
-
     def test_0d_string_scalar(self):
         # Bug #1436; the following should succeed
         np.asarray('x', '>c')
