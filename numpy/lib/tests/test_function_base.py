@@ -778,7 +778,7 @@ class Test_i0(TestCase):
 class TestKaiser(TestCase):
     def test_simple(self):
         assert_almost_equal(kaiser(0, 1.0), array([]))
-        assert isnan(kaiser(1, 1.0))
+        assert isfinite(kaiser(1, 1.0))
         assert_almost_equal(kaiser(2, 1.0), array([ 0.78984831, 0.78984831]))
         assert_almost_equal(kaiser(5, 1.0),
                             array([ 0.78984831, 0.94503323, 1.        ,
