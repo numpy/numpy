@@ -14,6 +14,7 @@ class TestMixed(util.F2PyTest):
                _path('src', 'mixed', 'foo_fixed.f90'),
                _path('src', 'mixed', 'foo_free.f90')]
 
+    @dec.slow
     def test_all(self):
         assert self.module.bar11() == 11
         assert self.module.foo_fixed.bar12() == 12

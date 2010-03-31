@@ -33,6 +33,7 @@ cf2py  intent(out) a
        end
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t,t2".split(","):
             self.check_function(name)

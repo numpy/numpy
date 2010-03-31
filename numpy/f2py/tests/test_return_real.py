@@ -77,6 +77,7 @@ end interface
 end python module c_ext_return_real
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t4,t8,s4,s8".split(","):
             self.check_function(getattr(self.module, name))
@@ -130,6 +131,7 @@ cf2py    intent(out) td
        end
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
             self.check_function(getattr(self.module, name))
@@ -187,6 +189,7 @@ module f90_return_real
 end module f90_return_real
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
             self.check_function(getattr(self.module.f90_return_real, name))

@@ -42,3 +42,7 @@ def compile(source,
         try: os.remove(fname)
         except OSError: pass
     return s
+
+from numpy.testing import Tester
+test = Tester().test
+bench = Tester().bench

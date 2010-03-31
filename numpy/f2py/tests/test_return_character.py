@@ -72,6 +72,7 @@ cf2py    intent(out) ts
        end
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t0,t1,t5,s0,s1,s5,ss".split(","):
             self.check_function(getattr(self.module, name))
@@ -129,6 +130,7 @@ module f90_return_char
 end module f90_return_char
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t0,t1,t5,ts,s0,s1,s5,ss".split(","):
             self.check_function(getattr(self.module.f90_return_char, name))

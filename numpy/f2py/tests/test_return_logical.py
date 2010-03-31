@@ -105,6 +105,7 @@ c         t8 = value
 c       end
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t0,t1,t2,t4,s0,s1,s2,s4".split(","):
             self.check_function(getattr(self.module, name))
@@ -173,6 +174,7 @@ module f90_return_logical
 end module f90_return_logical
     """
 
+    @dec.slow
     def test_all(self):
         for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
             self.check_function(getattr(self.module.f90_return_logical, name))
