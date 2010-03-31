@@ -255,15 +255,25 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     """
     when = _convert_when(when)
     rate, pmt, pv, fv, when = map(np.asarray, [rate, pmt, pv, fv, when])
+
+    use_zero_rate = False
+    old_err = np.seterr(divide="raise")
     try:
-        z = pmt*(1.0+rate*when)/rate
-    except ZeroDivisionError:
-        z = 0.0
-    A = -(fv + pv)/(pmt+0.0)
-    B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
-    miter = np.broadcast(rate, pmt, pv, fv, when)
-    zer = np.zeros(miter.shape)
-    return np.where(rate==zer, A+zer, B+zer) + 0.0
+        try:
+            z = pmt*(1.0+rate*when)/rate
+        except FloatingPointError:
+            use_zero_rate = True
+    finally:
+        np.seterr(**old_err)
+
+    if use_zero_rate:
+        return (-fv + pv) / (pmt + 0.0)
+    else:
+        A = -(fv + pv)/(pmt+0.0)
+        B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
+        miter = np.broadcast(rate, pmt, pv, fv, when)
+        zer = np.zeros(miter.shape)
+        return np.where(rate==zer, A+zer, B+zer) + 0.0
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
