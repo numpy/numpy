@@ -1047,15 +1047,19 @@ class TestRegression(TestCase):
 
     def test_errobj_reference_leak(self, level=rlevel):
         """Ticket #955"""
-        z = int(0)
-        p = np.int32(-1)
+        old_err = np.seterr(all="ignore")
+        try:
+            z = int(0)
+            p = np.int32(-1)
 
-        gc.collect()
-        n_before = len(gc.get_objects())
-        z**p  # this shouldn't leak a reference to errobj
-        gc.collect()
-        n_after = len(gc.get_objects())
-        assert n_before >= n_after, (n_before, n_after)
+            gc.collect()
+            n_before = len(gc.get_objects())
+            z**p  # this shouldn't leak a reference to errobj
+            gc.collect()
+            n_after = len(gc.get_objects())
+            assert n_before >= n_after, (n_before, n_after)
+        finally:
+            np.seterr(**old_err)
 
     def test_void_scalar_with_titles(self, level=rlevel):
         """No ticket"""
@@ -1253,8 +1257,12 @@ class TestRegression(TestCase):
             min = np.array([np.iinfo(t).min])
             min /= -1
 
-        for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
-            test_type(t)
+        old_err = np.seterr(divide="ignore")
+        try:
+            for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
+                test_type(t)
+        finally:
+            np.seterr(**old_err)
 
     def test_buffer_hashlib(self):
         try:

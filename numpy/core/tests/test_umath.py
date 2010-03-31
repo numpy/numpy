@@ -863,8 +863,12 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
 
 def test_copysign():
     assert np.copysign(1, -1) == -1
-    assert 1 / np.copysign(0, -1) < 0
-    assert 1 / np.copysign(0, 1) > 0
+    old_err = np.seterr(divide="ignore")
+    try:
+        assert 1 / np.copysign(0, -1) < 0
+        assert 1 / np.copysign(0, 1) > 0
+    finally:
+        np.seterr(**old_err)
     assert np.signbit(np.copysign(np.nan, -1))
     assert not np.signbit(np.copysign(np.nan, 1))
 
