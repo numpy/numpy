@@ -485,10 +485,12 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % spec)
 
+        #
         # Native alignment may require padding
         #
-        # XXX: here we assume that the presence of a '@' character implies
-        #      that the start of the array is *also* aligned.
+        # Here we assume that the presence of a '@' character implicitly implies
+        # that the start of the array is *already* aligned.
+        #
         extra_offset = 0
         if byteorder == '@':
             start_padding = (-offset) % align
@@ -497,10 +499,12 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
             offset += start_padding
 
             if intra_padding != 0:
-                if itemsize > 1 or shape is not None:
-                    value = dtype([('f0', value),
-                                   ('pad', '%dV' % intra_padding)])
+                if itemsize > 1 or (shape is not None and _prod(shape) > 1):
+                    # Inject internal padding to the end of the sub-item
+                    value = _add_trailing_padding(value, intra_padding)
                 else:
+                    # We can postpone the injection of internal padding,
+                    # as the item appears at most once
                     extra_offset += intra_padding
 
             # Update common alignment
@@ -531,30 +535,73 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
                 raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
                                    % name)
             fields[name] = (value, offset)
+            last_offset = offset
             if not this_explicit_name:
                 next_dummy_name()
 
-        last_offset = offset
         byteorder = next_byteorder
 
         offset += value.itemsize
         offset += extra_offset
 
-    if is_padding and not this_explicit_name:
-        # Trailing padding must be made explicit
-        name = get_dummy_name()
-        fields[name] = ('V%d' % (offset - last_offset), last_offset)
-
+    # Check if this was a simple 1-item type
     if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0 \
            and not is_subdtype:
         ret = fields['f0'][0]
     else:
         ret = dtype(fields)
 
+    # Trailing padding must be explicitly added
+    padding = offset - ret.itemsize
+    if byteorder == '@':
+        padding += (-offset) % common_alignment
+    if is_padding and not this_explicit_name:
+        ret = _add_trailing_padding(ret, padding)
+
+    # Finished
     if is_subdtype:
         return ret, spec, common_alignment, byteorder
     else:
         return ret
+
+def _add_trailing_padding(value, padding):
+    """Inject the specified number of padding bytes at the end of a dtype"""
+    from numpy.core.multiarray import dtype
+
+    if value.fields is None:
+        vfields = {'f0': (value, 0)}
+    else:
+        vfields = dict(value.fields)
+
+    if value.names and value.names[-1] == '' and \
+           value[''].char == 'V':
+        # A trailing padding field is already present
+        vfields[''] = ('V%d' % (vfields[''][0].itemsize + padding),
+                       vfields[''][1])
+        value = dtype(vfields)
+    else:
+        # Get a free name for the padding field
+        j = 0
+        while True:
+            name = 'pad%d' % j
+            if name not in vfields:
+                vfields[name] = ('V%d' % padding, value.itemsize)
+                break
+            j += 1
+
+        value = dtype(vfields)
+        if '' not in vfields:
+            # Strip out the name of the padding field
+            names = list(value.names)
+            names[-1] = ''
+            value.names = tuple(names)
+    return value
+
+def _prod(a):
+    p = 1
+    for x in a:
+        p *= x
+    return p
 
 def _gcd(a, b):
     """Calculate the greatest common divisor of a and b"""

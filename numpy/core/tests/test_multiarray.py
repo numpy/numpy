@@ -1460,7 +1460,13 @@ if sys.version_info >= (2, 6):
 
     class TestPEP3118Dtype(object):
         def _check(self, spec, wanted):
-            assert_equal(_dtype_from_pep3118(spec), np.dtype(wanted),
+            dt = np.dtype(wanted)
+            if isinstance(wanted, list) and isinstance(wanted[-1], tuple):
+                if wanted[-1][0] == '':
+                    names = list(dt.names)
+                    names[-1] = ''
+                    dt.names = tuple(names)
+            assert_equal(_dtype_from_pep3118(spec), dt,
                          err_msg="spec %r != dtype %r" % (spec, wanted))
 
         def test_native_padding(self):
@@ -1481,14 +1487,37 @@ if sys.version_info >= (2, 6):
             self._check('^x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
 
         def test_trailing_padding(self):
-            # Trailing padding should be included
-            self._check('ix', [('f0', 'i'), ('f1', 'V1')])
+            # Trailing padding should be included, *and*, the item size
+            # should match the alignment if in aligned mode
+            align = np.dtype('i').alignment
+            def VV(n):
+                return 'V%d' % (align*(1 + (n-1)//align))
+
+            self._check('ix', [('f0', 'i'), ('', VV(1))])
+            self._check('ixx', [('f0', 'i'), ('', VV(2))])
+            self._check('ixxx', [('f0', 'i'), ('', VV(3))])
+            self._check('ixxxx', [('f0', 'i'), ('', VV(4))])
+            self._check('i7x', [('f0', 'i'), ('', VV(7))])
+
+            self._check('^ix', [('f0', 'i'), ('', 'V1')])
+            self._check('^ixx', [('f0', 'i'), ('', 'V2')])
+            self._check('^ixxx', [('f0', 'i'), ('', 'V3')])
+            self._check('^ixxxx', [('f0', 'i'), ('', 'V4')])
+            self._check('^i7x', [('f0', 'i'), ('', 'V7')])
 
         def test_byteorder_inside_struct(self):
             # The byte order after @T{=i} should be '=', not '@'.
             # Check this by noting the absence of native alignment.
-            self._check('@T{^i}xi', {'f0': ({'f0': (np.int32, 0)}, 0),
-                                     'f1': (np.int32, 5)})
+            self._check('@T{^i}xi', {'f0': ({'f0': ('i', 0)}, 0),
+                                     'f1': ('i', 5)})
+
+        def test_intra_padding(self):
+            # Natively aligned sub-arrays may require some internal padding
+            align = np.dtype('i').alignment
+            def VV(n):
+                return 'V%d' % (align*(1 + (n-1)//align))
+
+            self._check('(3)T{ix}', ({'f0': ('i', 0), '': (VV(1), 4)}, (3,)))
 
     class TestNewBufferProtocol(object):
         def _check_roundtrip(self, obj):
