@@ -436,8 +436,10 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
             spec = spec[j+1:]
 
         # Byte order
-        if spec[0] in ('@', '=', '<', '>', '^'):
+        if spec[0] in ('@', '=', '<', '>', '^', '!'):
             byteorder = spec[0]
+            if byteorder == '!':
+                byteorder = '>'
             spec = spec[1:]
 
         # Byte order characters also control native vs. standard type sizes
@@ -462,10 +464,10 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         is_padding = False
 
         if spec[:2] == 'T{':
-            value, spec, align = _dtype_from_pep3118(spec[2:],
-                                                     byteorder=byteorder,
-                                                     is_subdtype=True)
+            value, spec, align, next_byteorder = _dtype_from_pep3118(
+                spec[2:], byteorder=byteorder, is_subdtype=True)
         elif spec[0] in type_map_chars:
+            next_byteorder = byteorder
             if spec[0] == 'Z':
                 j = 2
             else:
@@ -533,6 +535,8 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
                 next_dummy_name()
 
         last_offset = offset
+        byteorder = next_byteorder
+
         offset += value.itemsize
         offset += extra_offset
 
@@ -541,13 +545,14 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         name = get_dummy_name()
         fields[name] = ('V%d' % (offset - last_offset), last_offset)
 
-    if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0:
+    if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0 \
+           and not is_subdtype:
         ret = fields['f0'][0]
     else:
         ret = dtype(fields)
 
     if is_subdtype:
-        return ret, spec, common_alignment
+        return ret, spec, common_alignment, byteorder
     else:
         return ret
 

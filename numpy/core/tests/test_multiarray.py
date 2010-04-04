@@ -1476,11 +1476,19 @@ if sys.version_info >= (2, 6):
                                     'f1': ('i', 1+j)})
 
         def test_native_padding_2(self):
+            # Native padding should work also for structs and sub-arrays
             self._check('x3T{xi}', {'f0': (({'f0': ('i', 4)}, (3,)), 4)})
-            self._check('=x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
+            self._check('^x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
 
         def test_trailing_padding(self):
+            # Trailing padding should be included
             self._check('ix', [('f0', 'i'), ('f1', 'V1')])
+
+        def test_byteorder_inside_struct(self):
+            # The byte order after @T{=i} should be '=', not '@'.
+            # Check this by noting the absence of native alignment.
+            self._check('@T{^i}xi', {'f0': ({'f0': (np.int32, 0)}, 0),
+                                     'f1': (np.int32, 5)})
 
     class TestNewBufferProtocol(object):
         def _check_roundtrip(self, obj):
