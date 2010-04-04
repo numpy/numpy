@@ -1624,5 +1624,10 @@ if sys.version_info >= (2, 6):
             else:
                 assert_equal(y.format, '<i')
 
+        def test_padding(self):
+            for j in xrange(8):
+                x = np.array([(1,),(2,)], dtype={'f0': (int, j)})
+                self._check_roundtrip(x)
+
 if __name__ == "__main__":
     run_module_suite()

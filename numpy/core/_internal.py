@@ -454,10 +454,10 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
                 # Not supported
                 raise ValueError("Non item-size 1 structures not supported")
         elif spec[0] in type_map_chars:
-            j = 1
-            for j in xrange(1, len(spec)):
-                if spec[j] not in type_map_chars:
-                    break
+            if spec[0] == 'Z':
+                j = 2
+            else:
+                j = 1
             typechar = spec[:j]
             spec = spec[j:]
             is_padding = (typechar == 'x')
@@ -476,8 +476,8 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         #      that the start of the array is *also* aligned.
         extra_offset = 0
         if byteorder == '@':
-            start_padding = offset % value.alignment
-            intra_padding = value.itemsize % value.alignment
+            start_padding = (-offset) % value.alignment
+            intra_padding = (-value.itemsize) % value.alignment
 
             offset += start_padding
 
