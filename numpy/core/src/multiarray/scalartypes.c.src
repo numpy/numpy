@@ -1962,7 +1962,7 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     Py_ssize_t len;
     void *buf;
 
-#warning XXX: the format is not implemented! -- this needs more work
+    /* FIXME: XXX: the format is not implemented! -- this needs more work */
 
     len = gentype_getreadbuf(self, 0, &buf);
     return PyBuffer_FillInfo(view, self, buf, len, 1, flags);

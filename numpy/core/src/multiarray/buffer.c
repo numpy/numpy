@@ -248,7 +248,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
             /* Insert field name */
 #if defined(NPY_PY3K)
-#warning XXX -- should it use UTF-8 here?
+            /* FIXME: XXX -- should it use UTF-8 here? */
             tmp = PyUnicode_AsUTF8String(name);
 #else
             tmp = name;

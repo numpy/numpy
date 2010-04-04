@@ -1306,8 +1306,6 @@ alter_pyscalars(PyObject *NPY_UNUSED(dummy), PyObject *args)
             PyInt_Type.tp_richcompare = PyLongArrType_Type.tp_richcompare;
         }
         else
-#else
-#warning XXX -- is it important to do something with the integers here?
 #endif
         if (obj == (PyObject *)(&PyFloat_Type)) {
             PyFloat_Type.tp_as_number = PyDoubleArrType_Type.tp_as_number;
@@ -1350,8 +1348,6 @@ restore_pyscalars(PyObject *NPY_UNUSED(dummy), PyObject *args)
             PyInt_Type.tp_richcompare = saved_tables[2];
         }
         else
-#else
-#warning XXX -- is it important to do something with the integers here?
 #endif
         if (obj == (PyObject *)(&PyFloat_Type)) {
             PyFloat_Type.tp_as_number = saved_tables[3];
@@ -1393,8 +1389,6 @@ use_pythonmath(PyObject *NPY_UNUSED(dummy), PyObject *args)
             PyLongArrType_Type.tp_richcompare = saved_tables[2];
         }
         else
-#else
-#warning XXX -- is it important to do something with the integers here?
 #endif
         if (obj == (PyObject *)(&PyFloat_Type)) {
             PyDoubleArrType_Type.tp_as_number = saved_tables[3];
@@ -1436,8 +1430,6 @@ use_scalarmath(PyObject *NPY_UNUSED(dummy), PyObject *args)
             PyLongArrType_Type.tp_richcompare = saved_tables_arrtype[2];
         }
         else
-#else
-#warning XXX -- is it important to do something with the integers here?
 #endif
         if (obj == (PyObject *)(&PyFloat_Type)) {
             PyDoubleArrType_Type.tp_as_number = saved_tables_arrtype[3];
@@ -1520,8 +1512,6 @@ initscalarmath(void)
     saved_tables[0] = PyInt_Type.tp_as_number;
     saved_tables[1] = PyInt_Type.tp_compare;
     saved_tables[2] = PyInt_Type.tp_richcompare;
-#else
-#warning XXX -- is it important to do something with the integers here?
 #endif
     saved_tables[3] = PyFloat_Type.tp_as_number;
 #if !defined(NPY_PY3K)

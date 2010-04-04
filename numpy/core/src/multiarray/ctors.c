@@ -1096,7 +1096,7 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
     }
     if(!PySequence_Check(s) ||
 #if defined(NPY_PY3K)
-#warning XXX -- what is the correct thing to do here?
+       /* FIXME: XXX -- what is the correct thing to do here? */
 #else
        PyInstance_Check(s) ||
 #endif

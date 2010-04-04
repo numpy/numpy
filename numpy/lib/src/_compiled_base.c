@@ -559,7 +559,7 @@ static PyObject *
 arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
-    PyObject *str;
+    PyObject *str, *tmp;
     char *docstr;
     static char *msg = "already has a docstring";
 
@@ -573,8 +573,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    docstr = PyUnicode_AS_DATA(str);
-#warning XXX -- is this correct at all!?
+    tmp = PyUnicode_AsUTF8String(str);
+    docstr = PyBytes_AS_STRING(tmp);
 #else
     if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str)) {
         return NULL;

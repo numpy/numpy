@@ -308,7 +308,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     }
 
 #if defined(NPY_PY3K)
-#warning XXX -- what is the correct thing to do here?
+    /* FIXME: XXX -- what is the correct thing to do here? */
 #else
     if (PyInstance_Check(op)) {
         goto deflt;

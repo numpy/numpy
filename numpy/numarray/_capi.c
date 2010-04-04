@@ -90,7 +90,7 @@ static int
 getWriteBufferDataPtr(PyObject *buffobj, void **buff)
 {
 #if defined(NPY_PY3K)
-#warning XXX - needs implementation
+    /* FIXME: XXX - needs implementation */
     PyErr_SetString(PyExc_RuntimeError,
                     "XXX: getWriteBufferDataPtr is not implemented");
     return -1;
@@ -127,7 +127,7 @@ static int
 getReadBufferDataPtr(PyObject *buffobj, void **buff)
 {
 #if defined(NPY_PY3K)
-#warning XXX - needs implementation
+    /* FIXME: XXX - needs implementation */
     PyErr_SetString(PyExc_RuntimeError,
                     "XXX: getWriteBufferDataPtr is not implemented");
     return -1;
@@ -150,7 +150,7 @@ static int
 getBufferSize(PyObject *buffobj)
 {
 #if defined(NPY_PY3K)
-#warning XXX - needs implementation
+    /* FIXME: XXX - needs implementation */
     PyErr_SetString(PyExc_RuntimeError,
                     "XXX: getWriteBufferDataPtr is not implemented");
     return -1;
