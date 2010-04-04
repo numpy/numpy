@@ -1674,6 +1674,20 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     if (view->format != NULL) {
         descr = (PyObject*)_descriptor_from_pep3118_format(view->format);
         if (descr == NULL) {
+            PyObject *msg;
+            msg = PyBytes_FromFormat("Invalid PEP 3118 format string: '%s'",
+                                     view->format);
+            PyErr_WarnEx(PyExc_RuntimeWarning, PyBytes_AS_STRING(msg), 0);
+            Py_DECREF(msg);
+            goto fail;
+        }
+
+        /* Sanity check */
+        if (descr->elsize != view->itemsize) {
+            PyErr_WarnEx(PyExc_RuntimeWarning,
+                         "Item size computed from the PEP 3118 buffer format "
+                         "string does not match the actual item size.",
+                         0);
             goto fail;
         }
     }
