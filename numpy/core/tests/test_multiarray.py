@@ -1456,6 +1456,32 @@ if sys.version_info >= (2, 6):
     if sys.version_info[:2] == (2, 6):
         from numpy.core.multiarray import memorysimpleview as memoryview
 
+    from numpy.core._internal import _dtype_from_pep3118
+
+    class TestPEP3118Dtype(object):
+        def _check(self, spec, wanted):
+            assert_equal(_dtype_from_pep3118(spec), np.dtype(wanted),
+                         err_msg="spec %r != dtype %r" % (spec, wanted))
+
+        def test_native_padding(self):
+            align = np.dtype('i').alignment
+            for j in xrange(8):
+                if j == 0:
+                    s = 'bi'
+                else:
+                    s = 'b%dxi' % j
+                self._check('@'+s, {'f0': ('i1', 0),
+                                    'f1': ('i', align*(1 + j//align))})
+                self._check('='+s, {'f0': ('i1', 0),
+                                    'f1': ('i', 1+j)})
+
+        def test_native_padding_2(self):
+            self._check('x3T{xi}', {'f0': (({'f0': ('i', 4)}, (3,)), 4)})
+            self._check('=x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
+
+        def test_trailing_padding(self):
+            self._check('ix', [('f0', 'i'), ('f1', 'V1')])
+
     class TestNewBufferProtocol(object):
         def _check_roundtrip(self, obj):
             obj = np.asarray(obj)

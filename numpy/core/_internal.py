@@ -403,9 +403,23 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
 
     fields = {}
     offset = 0
-    findex = 0
     explicit_name = False
+    this_explicit_name = False
+    common_alignment = 1
+    is_padding = False
+    last_offset = 0
 
+    dummy_name_index = [0]
+    def next_dummy_name():
+        dummy_name_index[0] += 1
+    def get_dummy_name():
+        while True:
+            name = 'f%d' % dummy_name_index[0]
+            if name not in fields:
+                return name
+            next_dummy_name()
+
+    # Parse spec
     while spec:
         value = None
 
@@ -448,11 +462,9 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         is_padding = False
 
         if spec[:2] == 'T{':
-            value, spec = _dtype_from_pep3118(spec[2:], byteorder=byteorder,
-                                              is_subdtype=True)
-            if itemsize != 1:
-                # Not supported
-                raise ValueError("Non item-size 1 structures not supported")
+            value, spec, align = _dtype_from_pep3118(spec[2:],
+                                                     byteorder=byteorder,
+                                                     is_subdtype=True)
         elif spec[0] in type_map_chars:
             if spec[0] == 'Z':
                 j = 2
@@ -467,6 +479,7 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
                 itemsize = 1
             numpy_byteorder = {'@': '=', '^': '='}.get(byteorder, byteorder)
             value = dtype(numpy_byteorder + dtypechar)
+            align = value.alignment
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % spec)
 
@@ -476,8 +489,8 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         #      that the start of the array is *also* aligned.
         extra_offset = 0
         if byteorder == '@':
-            start_padding = (-offset) % value.alignment
-            intra_padding = (-value.itemsize) % value.alignment
+            start_padding = (-offset) % align
+            intra_padding = (-value.itemsize) % align
 
             offset += start_padding
 
@@ -487,6 +500,10 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
                                    ('pad', '%dV' % intra_padding)])
                 else:
                     extra_offset += intra_padding
+
+            # Update common alignment
+            common_alignment = (align*common_alignment
+                                / _gcd(align, common_alignment))
 
         # Convert itemsize to sub-array
         if itemsize != 1:
@@ -505,13 +522,24 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
             explicit_name = True
             this_explicit_name = True
         else:
-            name = 'f%d' % findex
-            findex += 1
+            name = get_dummy_name()
 
         if not is_padding or this_explicit_name:
+            if name in fields:
+                raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
+                                   % name)
             fields[name] = (value, offset)
+            if not this_explicit_name:
+                next_dummy_name()
+
+        last_offset = offset
         offset += value.itemsize
         offset += extra_offset
+
+    if is_padding and not this_explicit_name:
+        # Trailing padding must be made explicit
+        name = get_dummy_name()
+        fields[name] = ('V%d' % (offset - last_offset), last_offset)
 
     if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0:
         ret = fields['f0'][0]
@@ -519,6 +547,12 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         ret = dtype(fields)
 
     if is_subdtype:
-        return ret, spec
+        return ret, spec, common_alignment
     else:
         return ret
+
+def _gcd(a, b):
+    """Calculate the greatest common divisor of a and b"""
+    while b:
+        a, b = b, a%b
+    return a
