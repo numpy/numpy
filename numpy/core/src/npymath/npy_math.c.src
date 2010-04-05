@@ -65,13 +65,14 @@
 #ifndef HAVE_EXPM1
 double npy_expm1(double x)
 {
-    double u = npy_exp(x);
+    const double u = npy_exp(x);
+
     if (u == 1.0) {
         return x;
-    } else if (u-1.0 == -1.0) {
+    } else if (u - 1.0 == -1.0) {
         return -1;
     } else {
-        return (u-1.0) * x/npy_log(u);
+        return (u - 1.0) * x/npy_log(u);
     }
 }
 #endif
@@ -79,11 +80,13 @@ double npy_expm1(double x)
 #ifndef HAVE_LOG1P
 double npy_log1p(double x)
 {
-    double u = 1. + x;
-    if (u == 1.0) {
+    const double u = 1. + x;
+    const double d = u - 1.;
+
+    if (d == 0) {
         return x;
     } else {
-        return npy_log(u) * x / (u - 1);
+        return npy_log(u) * x / d;
     }
 }
 #endif
@@ -154,11 +157,11 @@ double npy_atan2(double y, double x)
     }
 
     /* compute y/x */
-    k = (iy - ix)>>20;
-    if(k > 60) {            /* |y/x| >  2**60 */
+    k = (iy - ix) >> 20;
+    if (k > 60) {            /* |y/x| >  2**60 */
         z = NPY_PI_2 + 0.5 * NPY_DBL_EPSILON;
         m &= 1;
-    } else if(hx < 0 && k < -60) {
+    } else if (hx < 0 && k < -60) {
         z = 0.0;    /* 0 > |y|/x > -2**-60 */
     } else {
         z = npy_atan(npy_fabs(y/x));        /* safe to do y/x */
@@ -209,7 +212,7 @@ double npy_hypot(double x, double y)
 #ifndef HAVE_ACOSH
 double npy_acosh(double x)
 {
-    return 2*npy_log(npy_sqrt((x+1.0)/2)+npy_sqrt((x-1.0)/2));
+    return 2*npy_log(npy_sqrt((x + 1.0)/2) + npy_sqrt((x - 1.0)/2));
 }
 #endif
 
@@ -255,14 +258,15 @@ double npy_rint(double x)
     y = npy_floor(x);
     r = x - y;
 
-    if (r > 0.5) goto rndup;
+    if (r > 0.5) {
+        y += 1.0;
+    }
 
     /* Round to nearest even */
-    if (r==0.5) {
+    if (r == 0.5) {
         r = y - 2.0*npy_floor(0.5*y);
-        if (r==1.0) {
-        rndup:
-            y+=1.0;
+        if (r == 1.0) {
+            y += 1.0;
         }
     }
     return y;
@@ -277,21 +281,17 @@ double npy_trunc(double x)
 #endif
 
 #ifndef HAVE_EXP2
-#define LOG2 0.69314718055994530943
 double npy_exp2(double x)
 {
-    return npy_exp(LOG2*x);
+    return npy_exp(NPY_LOGE2*x);
 }
-#undef LOG2
 #endif
 
 #ifndef HAVE_LOG2
-#define INVLOG2 1.4426950408889634074
 double npy_log2(double x)
 {
-    return INVLOG2*npy_log(x);
+    return NPY_LOG2E*npy_log(x);
 }
-#undef INVLOG2
 #endif
 
 /*
@@ -370,89 +370,6 @@ double npy_log2(double x)
 
 /**end repeat**/
 
-/*
- * Non standard functions
- */
-
-/**begin repeat
- * #type = float, double, npy_longdouble#
- * #c = f, ,l#
- * #C = F, ,L#
- */
-
-#define LOGE2    NPY_LOGE2@c@
-#define LOG2E    NPY_LOG2E@c@
-#define RAD2DEG  (180.0@c@/NPY_PI@c@)
-#define DEG2RAD  (NPY_PI@c@/180.0@c@)
-
-@type@ npy_rad2deg@c@(@type@ x)
-{
-    return x*RAD2DEG;
-}
-
-@type@ npy_deg2rad@c@(@type@ x)
-{
-    return x*DEG2RAD;
-}
-
-@type@ npy_log2_1p@c@(@type@ x)
-{
-    @type@ u = 1 + x;
-    if (u == 1) {
-        return LOG2E*x;
-    } else {
-        return npy_log2@c@(u) * x / (u - 1);
-    }
-}
-
-@type@ npy_exp2_1m@c@(@type@ x)
-{
-    @type@ u = npy_exp@c@(x);
-    if (u == 1.0) {
-        return LOGE2*x;
-    } else if (u - 1 == -1) {
-        return -LOGE2;
-    } else {
-        return (u - 1) * x/npy_log2@c@(u);
-    }
-}
-
-@type@ npy_logaddexp@c@(@type@ x, @type@ y)
-{
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + npy_log1p@c@(npy_exp@c@(-tmp));
-    }
-    else if (tmp <= 0) {
-        return y + npy_log1p@c@(npy_exp@c@(tmp));
-    }
-    else {
-        /* NaNs, or infinities of the same sign involved */
-        return x + y;
-    }
-}
-
-@type@ npy_logaddexp2@c@(@type@ x, @type@ y)
-{
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
-    }
-    else if (tmp <= 0) {
-        return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
-    }
-    else {
-        /* NaNs, or infinities of the same sign involved */
-        return x + y;
-    }
-}
-
-#undef LOGE2
-#undef LOG2E
-#undef RAD2DEG
-#undef DEG2RAD
-
-/**end repeat**/
 
 /*
  * Decorate all the math functions which are available on the current platform
@@ -496,5 +413,78 @@ double npy_log2(double x)
     return modf@c@(x, iptr);
 }
 #endif
+
+/**end repeat**/
+
+
+/*
+ * Non standard functions
+ */
+
+/**begin repeat
+ * #type = float, double, npy_longdouble#
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+
+#define LOGE2    NPY_LOGE2@c@
+#define LOG2E    NPY_LOG2E@c@
+#define RAD2DEG  (180.0@c@/NPY_PI@c@)
+#define DEG2RAD  (NPY_PI@c@/180.0@c@)
+
+@type@ npy_rad2deg@c@(@type@ x)
+{
+    return x*RAD2DEG;
+}
+
+@type@ npy_deg2rad@c@(@type@ x)
+{
+    return x*DEG2RAD;
+}
+
+@type@ npy_log2_1p@c@(@type@ x)
+{
+    return LOG2E*npy_log1p@c@(x);
+}
+
+@type@ npy_exp2_m1@c@(@type@ x)
+{
+    return npy_expm1@c@(LOGE2*x);
+}
+
+@type@ npy_logaddexp@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + npy_log1p@c@(npy_exp@c@(-tmp));
+    }
+    else if (tmp <= 0) {
+        return y + npy_log1p@c@(npy_exp@c@(tmp));
+    }
+    else {
+        /* NaNs, or infinities of the same sign involved */
+        return x + y;
+    }
+}
+
+@type@ npy_logaddexp2@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
+    }
+    else if (tmp <= 0) {
+        return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
+    }
+    else {
+        /* NaNs, or infinities of the same sign involved */
+        return x + y;
+    }
+}
+
+#undef LOGE2
+#undef LOG2E
+#undef RAD2DEG
+#undef DEG2RAD
 
 /**end repeat**/

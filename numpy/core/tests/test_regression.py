@@ -1220,7 +1220,7 @@ class TestRegression(TestCase):
         x[x.nonzero()] = x.ravel()[:1]
         assert sys.getrefcount(strb) == numb
         assert sys.getrefcount(stra) == numa + 2
-        
+
     def test_signed_integer_division_overflow(self):
         """Ticket #1317."""
         def test_type(t):
@@ -1229,6 +1229,10 @@ class TestRegression(TestCase):
 
         for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
             test_type(t)
+
+    def test_log1p_compiler_shenanigans(self):
+        # Check if log1p is behaving on 32 bit intel systems.
+        assert_(np.isfinite(np.log1p(np.exp2(-53))))
 
 
 if __name__ == "__main__":
