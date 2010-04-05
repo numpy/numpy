@@ -154,11 +154,11 @@ double npy_atan2(double y, double x)
     }
 
     /* compute y/x */
-    k = (iy - ix)>>20;
-    if(k > 60) {            /* |y/x| >  2**60 */
+    k = (iy - ix) >> 20;
+    if (k > 60) {            /* |y/x| >  2**60 */
         z = NPY_PI_2 + 0.5 * NPY_DBL_EPSILON;
         m &= 1;
-    } else if(hx < 0 && k < -60) {
+    } else if (hx < 0 && k < -60) {
         z = 0.0;    /* 0 > |y|/x > -2**-60 */
     } else {
         z = npy_atan(npy_fabs(y/x));        /* safe to do y/x */
@@ -209,7 +209,7 @@ double npy_hypot(double x, double y)
 #ifndef HAVE_ACOSH
 double npy_acosh(double x)
 {
-    return 2*npy_log(npy_sqrt((x+1.0)/2)+npy_sqrt((x-1.0)/2));
+    return 2*npy_log(npy_sqrt((x + 1.0)/2) + npy_sqrt((x - 1.0)/2));
 }
 #endif
 
@@ -255,14 +255,15 @@ double npy_rint(double x)
     y = npy_floor(x);
     r = x - y;
 
-    if (r > 0.5) goto rndup;
+    if (r > 0.5) {
+        y += 1.0;
+    }
 
     /* Round to nearest even */
-    if (r==0.5) {
+    if (r == 0.5) {
         r = y - 2.0*npy_floor(0.5*y);
-        if (r==1.0) {
-        rndup:
-            y+=1.0;
+        if (r == 1.0) {
+            y += 1.0;
         }
     }
     return y;
@@ -277,21 +278,17 @@ double npy_trunc(double x)
 #endif
 
 #ifndef HAVE_EXP2
-#define LOG2 0.69314718055994530943
 double npy_exp2(double x)
 {
-    return npy_exp(LOG2*x);
+    return npy_exp(NPY_LOGE2*x);
 }
-#undef LOG2
 #endif
 
 #ifndef HAVE_LOG2
-#define INVLOG2 1.4426950408889634074
 double npy_log2(double x)
 {
-    return INVLOG2*npy_log(x);
+    return NPY_LOG2E*npy_log(x);
 }
-#undef INVLOG2
 #endif
 
 /*
@@ -447,9 +444,9 @@ double npy_log2(double x)
     return LOG2E*npy_log1p@c@(x);
 }
 
-@type@ npy_exp2_1m@c@(@type@ x)
+@type@ npy_exp2_m1@c@(@type@ x)
 {
-    return npy_exp1m@c@(LOGE2*x);
+    return npy_expm1@c@(LOGE2*x);
 }
 
 @type@ npy_logaddexp@c@(@type@ x, @type@ y)
