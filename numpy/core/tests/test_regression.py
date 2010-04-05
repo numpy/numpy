@@ -1283,5 +1283,9 @@ class TestRegression(TestCase):
         # Bug #1436; the following should succeed
         np.asarray('x', '>c')
 
+    def test_log1p_compiler_shenanigans(self):
+        # Check if log1p is behaving on 32 bit intel systems.
+        assert_(np.isfinite(np.log1p(np.exp2(-53))))
+
 if __name__ == "__main__":
     run_module_suite()
