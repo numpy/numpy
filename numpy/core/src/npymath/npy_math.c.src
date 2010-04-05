@@ -65,13 +65,14 @@
 #ifndef HAVE_EXPM1
 double npy_expm1(double x)
 {
-    double u = npy_exp(x);
+    const double u = npy_exp(x);
+
     if (u == 1.0) {
         return x;
-    } else if (u-1.0 == -1.0) {
+    } else if (u - 1.0 == -1.0) {
         return -1;
     } else {
-        return (u-1.0) * x/npy_log(u);
+        return (u - 1.0) * x/npy_log(u);
     }
 }
 #endif
@@ -79,11 +80,13 @@ double npy_expm1(double x)
 #ifndef HAVE_LOG1P
 double npy_log1p(double x)
 {
-    double u = 1. + x;
-    if (u == 1.0) {
+    const double u = 1. + x;
+    const double d = u - 1.;
+
+    if (d == 0) {
         return x;
     } else {
-        return npy_log(u) * x / (u - 1);
+        return npy_log(u) * x / d;
     }
 }
 #endif
