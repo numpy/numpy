@@ -227,11 +227,13 @@ class memmap(ndarray):
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
             offset=offset, order=order)
         self._mmap = mm
+        self.filename = filename
         return self
 
     def __array_finalize__(self, obj):
         if hasattr(obj, '_mmap'):
             self._mmap = obj._mmap
+            self.filename = obj.filename
         else:
             self._mmap = None
 
