@@ -237,7 +237,7 @@ class memmap(ndarray):
         if isinstance(filename, basestring):
             self.filename = os.path.abspath(filename)
         elif hasattr(filename, "name"):
-            self.filename = filename.name
+            self.filename = os.path.abspath(filename.name)
 
         return self
 
