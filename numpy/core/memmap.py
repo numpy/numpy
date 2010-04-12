@@ -109,6 +109,9 @@ class memmap(ndarray):
             [  4.,   5.,   6.,   7.],
             [  8.,   9.,  10.,  11.]], dtype=float32)
 
+    >>> fp.filename == path.abspath(filename)
+    True
+
     Deletion flushes memory changes to disk before removing the object:
 
     >>> del fp
@@ -166,6 +169,7 @@ class memmap(ndarray):
                 shape=None, order='C'):
         # Import here to minimize 'import numpy' overhead
         import mmap
+        import os.path
         try:
             mode = mode_equivalents[mode]
         except KeyError:
@@ -227,13 +231,22 @@ class memmap(ndarray):
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
             offset=offset, order=order)
         self._mmap = mm
-        self.filename = filename
+        self.offset = offset
+        self.mode = mode
+
+        if isinstance(filename, basestring):
+            self.filename = os.path.abspath(filename)
+        elif hasattr(filename, "name"):
+            self.filename = filename.name
+
         return self
 
     def __array_finalize__(self, obj):
         if hasattr(obj, '_mmap'):
             self._mmap = obj._mmap
             self.filename = obj.filename
+            self.offset = obj.offset
+            self.mode = obj.mode
         else:
             self._mmap = None
 
