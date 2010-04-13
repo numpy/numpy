@@ -2,9 +2,10 @@
 Module of functions that are like ufuncs in acting on arrays and optionally
 storing results in an output array.
 """
-__all__ = ['fix', 'isneginf', 'isposinf', 'log2']
+__all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
+import warnings
 
 def fix(x, y=None):
     """
@@ -177,6 +178,7 @@ _log2 = nx.log(2)
 def log2(x, y=None):
     """
     Return the base 2 logarithm of the input array, element-wise.
+    This function is now deprecated, use the np.log2 ufunc instead.
 
     Parameters
     ----------
@@ -201,6 +203,9 @@ def log2(x, y=None):
     array([ NaN,   1.,   2.])
 
     """
+    msg = "numpy.lib.log2 is deprecated, use np.log2 instead."
+    warnings.warn(msg, DeprecationWarning)
+
     x = nx.asanyarray(x)
     if y is None:
         y = nx.log(x)
