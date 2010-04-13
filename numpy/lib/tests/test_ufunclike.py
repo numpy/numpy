@@ -31,13 +31,15 @@ class TestUfunclike(TestCase):
         a = nx.array([4.5, 2.3, 6.5])
         out = nx.zeros(a.shape, float)
         tgt = nx.array([2.169925, 1.20163386, 2.70043972])
-        with warnings.catch_warnings():
+        try:
             warnings.filterwarnings("ignore",category=DeprecationWarning)
             res = ufl.log2(a)
             assert_almost_equal(res, tgt)
             res = ufl.log2(a, out)
             assert_almost_equal(res, tgt)
             assert_almost_equal(out, tgt)
+        except DeprecationWarning:
+            pass
 
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
