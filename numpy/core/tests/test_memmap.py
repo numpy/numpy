@@ -38,17 +38,31 @@ class TestMemmap(TestCase):
         del fp
         os.unlink(tmpname)
 
+    def test_attributes(self):
+        offset = 1
+        mode = "w+"
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode=mode,
+                    shape=self.shape, offset=offset)
+        self.assertEquals(offset, fp.offset)
+        self.assertEquals(mode, fp.mode)
+        del fp
+
     def test_filename(self):
         tmpname = mktemp('','mmap')
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
+        abspath = os.path.abspath(tmpname)
         fp[:] = self.data[:]
-        self.assertEquals(tmpname, fp.filename)
+        self.assertEquals(abspath, fp.filename)
         b = fp[:1]
-        self.assertEquals(tmpname, b.filename)
+        self.assertEquals(abspath, b.filename)
         del fp
         os.unlink(tmpname)
 
+    def test_filename_fileobj(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",
+                    shape=self.shape)
+        self.assertEquals(fp.filename, self.tmpfp.name)
 
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
