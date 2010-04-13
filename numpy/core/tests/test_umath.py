@@ -4,6 +4,7 @@ from numpy.testing import *
 import numpy.core.umath as ncu
 import numpy as np
 
+
 class TestDivision(TestCase):
     def test_division_int(self):
         # int division should follow Python
@@ -38,6 +39,7 @@ class TestDivision(TestCase):
         x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
         y = np.floor_divide(x**2, x)
         assert_equal(y, [1.e+110, 0], err_msg=msg)
+
 
 class TestPower(TestCase):
     def test_power_float(self):
@@ -84,6 +86,7 @@ class TestPower(TestCase):
             finally:
                 np.seterr(**err)
 
+
 class TestLog2(TestCase):
     def test_log2_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
@@ -93,6 +96,7 @@ class TestLog2(TestCase):
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
 
+
 class TestExp2(TestCase):
     def test_exp2_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
@@ -101,6 +105,7 @@ class TestExp2(TestCase):
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.exp2(yf), xf)
+
 
 class TestLogAddExp2(object):
     # Need test for intermediate precisions
@@ -146,6 +151,7 @@ class TestLogAddExp2(object):
         assert np.isnan(np.logaddexp2(0, np.nan))
         assert np.isnan(np.logaddexp2(np.nan, np.nan))
 
+
 class TestLog(TestCase):
     def test_log_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
@@ -156,6 +162,7 @@ class TestLog(TestCase):
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.log(xf), yf)
 
+
 class TestExp(TestCase):
     def test_exp_values(self) :
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
@@ -165,6 +172,7 @@ class TestExp(TestCase):
             xf = np.array(x, dtype=dt)
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.exp(yf), xf)
+
 
 class TestLogAddExp(object):
     def test_logaddexp_values(self) :
@@ -209,20 +217,24 @@ class TestLogAddExp(object):
         assert np.isnan(np.logaddexp(0, np.nan))
         assert np.isnan(np.logaddexp(np.nan, np.nan))
 
+
 class TestLog1p(TestCase):
     def test_log1p(self):
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
+
 
 class TestExpm1(TestCase):
     def test_expm1(self):
         assert_almost_equal(ncu.expm1(0.2), ncu.exp(0.2)-1)
         assert_almost_equal(ncu.expm1(1e-6), ncu.exp(1e-6)-1)
 
+
 class TestHypot(TestCase, object):
     def test_simple(self):
         assert_almost_equal(ncu.hypot(1, 1), ncu.sqrt(2))
         assert_almost_equal(ncu.hypot(0, 0), 0)
+
 
 def assert_hypot_isnan(x, y):
     err = np.seterr(invalid='ignore')
@@ -231,12 +243,14 @@ def assert_hypot_isnan(x, y):
     finally:
         np.seterr(**err)
 
+
 def assert_hypot_isinf(x, y):
     err = np.seterr(invalid='ignore')
     try:
         assert np.isinf(ncu.hypot(x, y)), "hypot(%s, %s) is %s, not inf" % (x, y, ncu.hypot(x, y))
     finally:
         np.seterr(**err)
+
 
 class TestHypotSpecialValues(TestCase):
     def test_nan_outputs(self):
@@ -249,20 +263,26 @@ class TestHypotSpecialValues(TestCase):
         assert_hypot_isinf(np.inf, 0)
         assert_hypot_isinf(0, np.inf)
 
+
 def assert_arctan2_isnan(x, y):
     assert np.isnan(ncu.arctan2(x, y)), "arctan(%s, %s) is %s, not nan" % (x, y, ncu.arctan2(x, y))
+
 
 def assert_arctan2_ispinf(x, y):
     assert (np.isinf(ncu.arctan2(x, y)) and ncu.arctan2(x, y) > 0), "arctan(%s, %s) is %s, not +inf" % (x, y, ncu.arctan2(x, y))
 
+
 def assert_arctan2_isninf(x, y):
     assert (np.isinf(ncu.arctan2(x, y)) and ncu.arctan2(x, y) < 0), "arctan(%s, %s) is %s, not -inf" % (x, y, ncu.arctan2(x, y))
+
 
 def assert_arctan2_ispzero(x, y):
     assert (ncu.arctan2(x, y) == 0 and not np.signbit(ncu.arctan2(x, y))), "arctan(%s, %s) is %s, not +0" % (x, y, ncu.arctan2(x, y))
 
+
 def assert_arctan2_isnzero(x, y):
     assert (ncu.arctan2(x, y) == 0 and np.signbit(ncu.arctan2(x, y))), "arctan(%s, %s) is %s, not -0" % (x, y, ncu.arctan2(x, y))
+
 
 class TestArctan2SpecialValues(TestCase):
     def test_one_one(self):
@@ -332,6 +352,7 @@ class TestArctan2SpecialValues(TestCase):
         assert_arctan2_isnan(np.inf, np.nan)
         assert_arctan2_isnan(np.nan, np.nan)
 
+
 class TestMaximum(TestCase):
     def test_reduce_complex(self):
         assert_equal(np.maximum.reduce([1,2j]),1)
@@ -351,6 +372,7 @@ class TestMaximum(TestCase):
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
             out  = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.maximum(arg1, arg2), out)
+
 
 class TestMinimum(TestCase):
     def test_reduce_complex(self):
@@ -372,6 +394,7 @@ class TestMinimum(TestCase):
             out  = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.minimum(arg1, arg2), out)
 
+
 class TestFmax(TestCase):
     def test_reduce_complex(self):
         assert_equal(np.fmax.reduce([1,2j]),1)
@@ -391,6 +414,7 @@ class TestFmax(TestCase):
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
             out  = np.array([0,    0, nan], dtype=np.complex)
             assert_equal(np.fmax(arg1, arg2), out)
+
 
 class TestFmin(TestCase):
     def test_reduce_complex(self):
@@ -412,19 +436,40 @@ class TestFmin(TestCase):
             out  = np.array([0,    0, nan], dtype=np.complex)
             assert_equal(np.fmin(arg1, arg2), out)
 
+
 class TestFloatingPoint(TestCase):
     def test_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
+
 
 class TestDegrees(TestCase):
     def test_degrees(self):
         assert_almost_equal(ncu.degrees(np.pi), 180.0)
         assert_almost_equal(ncu.degrees(-0.5*np.pi), -90.0)
 
+
 class TestRadians(TestCase):
     def test_radians(self):
         assert_almost_equal(ncu.radians(180.0), np.pi)
         assert_almost_equal(ncu.radians(-90.0), -0.5*np.pi)
+
+
+class TestSign(TestCase):
+    def test_sign(self):
+        a = np.array([np.inf, -np.inf, np.nan, 0.0, 3.0, -3.0])
+        out = np.zeros(a.shape)
+        tgt = np.array([1., -1., np.nan, 0.0, 1.0, -1.0])
+
+        olderr = np.seterr(invalid='ignore')
+        try:
+            res = ncu.sign(a)
+            assert_equal(res, tgt)
+            res = ncu.sign(a, out)
+            assert_equal(res, tgt)
+            assert_equal(out, tgt)
+        finally:
+            np.seterr(**olderr)
+
 
 class TestSpecialMethods(TestCase):
     def test_wrap(self):
@@ -595,6 +640,7 @@ class TestChoose(TestCase):
 def is_longdouble_finfo_bogus():
     info = np.finfo(np.longcomplex)
     return not np.isfinite(np.log10(info.tiny/info.eps))
+
 
 class TestComplexFunctions(object):
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
@@ -786,6 +832,7 @@ class TestComplexFunctions(object):
     def test_loss_of_precision_longcomplex(self):
         self.check_loss_of_precision(np.longcomplex)
 
+
 class TestAttributes(TestCase):
     def test_attributes(self):
         add = ncu.add
@@ -796,6 +843,7 @@ class TestAttributes(TestCase):
         assert_equal(add.nin, 2)
         assert_equal(add.nout, 1)
         assert_equal(add.identity, 0)
+
 
 class TestSubclass(TestCase):
     def test_subclass_op(self):
