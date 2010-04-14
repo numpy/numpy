@@ -5,7 +5,6 @@ storing results in an output array.
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
-import warnings
 
 def fix(x, y=None):
     """
@@ -174,6 +173,7 @@ def isneginf(x, y=None):
     nx.logical_and(nx.isinf(x), nx.signbit(x), y)
     return y
 
+
 _log2 = nx.log(2)
 def log2(x, y=None):
     """
@@ -203,6 +203,7 @@ def log2(x, y=None):
     array([ NaN,   1.,   2.])
 
     """
+    import warnings
     msg = "numpy.lib.log2 is deprecated, use np.log2 instead."
     warnings.warn(msg, DeprecationWarning)
 

@@ -1,7 +1,7 @@
 from numpy.testing import *
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
-import warnings
+from numpy.testing.decorators import deprecated
 
 class TestUfunclike(TestCase):
 
@@ -27,19 +27,16 @@ class TestUfunclike(TestCase):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
+    @deprecated()
     def test_log2(self):
         a = nx.array([4.5, 2.3, 6.5])
         out = nx.zeros(a.shape, float)
         tgt = nx.array([2.169925, 1.20163386, 2.70043972])
-        try:
-            warnings.filterwarnings("ignore",category=DeprecationWarning)
-            res = ufl.log2(a)
-            assert_almost_equal(res, tgt)
-            res = ufl.log2(a, out)
-            assert_almost_equal(res, tgt)
-            assert_almost_equal(out, tgt)
-        except DeprecationWarning:
-            pass
+        res = ufl.log2(a)
+        assert_almost_equal(res, tgt)
+        res = ufl.log2(a, out)
+        assert_almost_equal(res, tgt)
+        assert_almost_equal(out, tgt)
 
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
