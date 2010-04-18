@@ -50,9 +50,9 @@ AUTHOR_EMAIL        = "oliphant@enthought.com"
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 4
-MICRO               = 0
+MICRO               = 1
 ISRELEASED          = True
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+VERSION             = '%d.%d.%drc1' % (MAJOR, MINOR, MICRO)
 
 # Return the svn version as a string, raise a ValueError otherwise
 def svn_version():
