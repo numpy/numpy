@@ -1,0 +1,17 @@
+=========================
+NumPy 1.4.1 Release Notes
+=========================
+
+This minor release removes datetime support, which fixes the binary
+incompatibility issues with SciPy and other packages. It also includes several
+bug fixes. No new features are introduced. 
+
+Bugs fixed
+----------
+- #1336: Fix for 1299 exposes Bus error on Sparc
+- #1379: CPU ID not set correctly on PARISC
+- #1388: frombuffer calls PyErr_Format without throwing an error
+- log1p 
+- kaiser for M=1
+- paver execution on Windows 7 for Python 2.6
+- several fixes to Chebyshev and Polynomial
