@@ -78,7 +78,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
           * False : the old behaviour is used and a DeprecationWarning
             is raised.
         As of NumPy 1.3, this keyword should not be used explicitly since it
-        will disappear in NumPy 1.4.
+        will disappear in NumPy 2.0.
 
     Returns
     -------
@@ -128,7 +128,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     if new == False:
         warnings.warn("""
         The histogram semantics being used is now deprecated and
-        will disappear in NumPy 1.4.  Please update your code to
+        will disappear in NumPy 2.0.  Please update your code to
         use the default semantics.
         """, DeprecationWarning)
 
@@ -181,7 +181,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
         if new is True:
             warnings.warn("""
             The new semantics of histogram is now the default and the `new`
-            keyword will be removed in NumPy 1.4.
+            keyword will be removed in NumPy 2.0.
             """, Warning)
         a = asarray(a)
         if weights is not None:
@@ -2051,7 +2051,7 @@ def blackman(M):
     >>> plt.ylabel("Amplitude")
     >>> plt.xlabel("Sample")
     >>> plt.show()
-    
+
     >>> plt.figure()
     >>> A = fft(window, 2048) / 25.5
     >>> mag = abs(fftshift(A))
@@ -2150,7 +2150,7 @@ def bartlett(M):
     >>> plt.ylabel("Amplitude")
     >>> plt.xlabel("Sample")
     >>> plt.show()
-    
+
     >>> plt.figure()
     >>> A = fft(window, 2048) / 25.5
     >>> mag = abs(fftshift(A))
