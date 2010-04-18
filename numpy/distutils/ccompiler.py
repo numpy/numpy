@@ -2,15 +2,20 @@ import re
 import os
 import sys
 import new
+from copy import copy
 
 from distutils.ccompiler import *
 from distutils import ccompiler
+from distutils.errors import DistutilsExecError, DistutilsModuleError, \
+                             DistutilsPlatformError
+
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, quote_args, msvc_on_amd64
+from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
+                                      quote_args, msvc_on_amd64
 
 # hack to set compiler optimizing options. Needs to integrated with something.
 import distutils.sysconfig
