@@ -48,6 +48,7 @@ class TestUfunclike(TestCase):
         res = ufl.fix(a, out)
         assert_equal(res, tgt)
         assert_equal(out, tgt)
+        assert_equal(ufl.fix(3.14), 3)
 
     def test_fix_with_subclass(self):
         class MyArray(nx.ndarray):

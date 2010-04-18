@@ -44,7 +44,7 @@ def fix(x, y=None):
     y1 = nx.floor(x)
     y2 = nx.ceil(x)
     if y is None:
-        y = y1
+        y = nx.asanyarray(y1)
     y[...] = nx.where(x >= 0, y1, y2)
     return y
 
