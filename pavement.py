@@ -142,8 +142,8 @@ else:
     MAKENSIS = ["wine", "makensis"]
 
 # Start/end of the log (from git)
-LOG_START = 'svn/tags/1.3.0'
-LOG_END = '1.4.x'
+LOG_START = 'svn/tags/1.4.0'
+LOG_END = 'svn/1.4.x'
 RELEASE_NOTES = 'doc/release/1.4.1-notes.rst'
 
 #-------------------
