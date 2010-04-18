@@ -110,9 +110,9 @@ MPKG_PYTHON = {
         "2.6": ["/Library/Frameworks/Python.framework/Versions/2.6/bin/python"]
 }
 
-SSE3_CFG = {'ATLAS': r'C:\local\lib\yop\sse3'}
-SSE2_CFG = {'ATLAS': r'C:\local\lib\yop\sse2'}
-NOSSE_CFG = {'BLAS': r'C:\local\lib\yop\nosse', 'LAPACK': r'C:\local\lib\yop\nosse'}
+SSE3_CFG = {'ATLAS': r'C:\local\lib\sse3'}
+SSE2_CFG = {'ATLAS': r'C:\local\lib\sse2'}
+NOSSE_CFG = {'BLAS': r'C:\local\lib\nosse', 'LAPACK': r'C:\local\lib\nosse'}
 
 SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
