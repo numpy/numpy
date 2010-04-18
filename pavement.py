@@ -118,8 +118,8 @@ SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
 if sys.platform =="darwin":
     WINDOWS_PYTHON = {
-        "2.6": ["wine", "/Users/david/.wine/drive_c/Python26/python.exe"],
-        "2.5": ["wine", "/Users/david/.wine/drive_c/Python25/python.exe"]
+        "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
+        "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
     WINDOWS_ENV = os.environ
     WINDOWS_ENV["DYLD_FALLBACK_LIBRARY_PATH"] = "/usr/X11/lib:/usr/lib"
@@ -135,8 +135,8 @@ elif sys.platform == "win32":
     MAKENSIS = ["makensis"]
 else:
     WINDOWS_PYTHON = {
-        "2.6": ["wine", "/home/david/.wine/drive_c/Python26/python.exe"],
-        "2.5": ["wine", "/home/david/.wine/drive_c/Python25/python.exe"]
+        "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
+        "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
     WINDOWS_ENV = os.environ
     MAKENSIS = ["wine", "makensis"]
