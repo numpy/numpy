@@ -88,12 +88,13 @@ SUPERPACK_BUILD = 'build-superpack'
 SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
 
 options(bootstrap=Bunch(bootstrap_dir="bootstrap"),
-        virtualenv=Bunch(packages_to_install=["sphinx", "numpydoc"], no_site_packages=True),
+        virtualenv=Bunch(packages_to_install=["sphinx", "numpydoc"],
+        no_site_packages=False),
         sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         superpack=Bunch(builddir="build-superpack"),
         installers=Bunch(releasedir="release",
                          installersdir=os.path.join("release", "installers")),
-        doc=Bunch(doc_root="doc", 
+        doc=Bunch(doc_root="doc",
             sdir=os.path.join("doc", "source"),
             bdir=os.path.join("doc", "build"),
             bdir_latex=os.path.join("doc", "build", "latex"),
@@ -208,7 +209,7 @@ def bdist_superpack(options):
     copy_bdist("sse2")
     bdist_wininst_arch(pyver, 'sse3')
     copy_bdist("sse3")
-    
+
     idirs = options.installers.installersdir
     pyver = options.python_version
     prepare_nsis_script(pyver, FULLVERSION)
@@ -275,8 +276,8 @@ def bootstrap(options):
 
     options.virtualenv.script_name = os.path.join(options.bootstrap_dir,
                                                   bscript)
-    options.virtualenv.no_site_packages = True
-    options.bootstrap.no_site_packages = True
+    options.virtualenv.no_site_packages = False
+    options.bootstrap.no_site_packages = False
     call_task('paver.virtual.bootstrap')
     sh('cd %s; %s %s' % (bdir, sys.executable, bscript))
 
