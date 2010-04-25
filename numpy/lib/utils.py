@@ -940,7 +940,10 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
             kind = "class"
             for n, v in _getmembers(item):
                 stack.append(("%s.%s" % (name, n), v))
-        elif callable(item):
+        # FIXME later: workaround python3.1 capsule callable bug
+        # by using old version of callable.
+        # elif callable(item):
+        elif hasattr(item, "__call__"):
             kind = "func"
 
         doc = inspect.getdoc(item)
