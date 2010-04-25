@@ -193,7 +193,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     }
 
     if (descr->subarray) {
-        PyObject *item, *repr;
+        PyObject *item;
         Py_ssize_t total_count = 1;
         Py_ssize_t dim_size;
         char buf[128];
@@ -758,7 +758,7 @@ _descriptor_from_pep3118_format(char *s)
     if (!PyArray_DescrCheck(descr)) {
         PyErr_Format(PyExc_RuntimeError,
                      "internal error: numpy.core._internal._dtype_from_pep3118 "
-                     "did not return a valid dtype", buf);
+                     "did not return a valid dtype, got %s", buf);
         return NULL;
     }
     return (PyArray_Descr*)descr;
