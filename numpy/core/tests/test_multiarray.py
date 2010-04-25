@@ -1059,6 +1059,25 @@ class TestResize(TestCase):
         x = np.eye(3)
         x.resize(None)
         assert_array_equal(x, np.eye(3))
+        x.resize()
+        assert_array_equal(x, np.eye(3))
+
+    def test_invalid_arguements(self):
+        self.assertRaises(TypeError, np.eye(3).resize, 'hi')
+        self.assertRaises(ValueError, np.eye(3).resize, -1)
+        self.assertRaises(TypeError, np.eye(3).resize, order=1)
+        self.assertRaises(TypeError, np.eye(3).resize, refcheck='hi')
+
+    def test_freeform_shape(self):
+        x = np.eye(3)
+        x.resize(3,2,1)
+        assert_(x.shape == (3,2,1))
+
+    def test_zeros_appended(self):
+        x = np.eye(3)
+        x.resize(2,3,3)
+        assert_array_equal(x[0], np.eye(3))
+        assert_array_equal(x[1], np.zeros((3,3)))
 
 
 class TestRecord(TestCase):
