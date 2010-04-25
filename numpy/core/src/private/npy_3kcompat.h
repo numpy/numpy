@@ -274,7 +274,8 @@ NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *))
 }
 
 static NPY_INLINE PyObject *
-NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context, void (*dtor)(void *))
+NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context,
+        void (*dtor)(void *, void *))
 {
     return PyCObject_FromVoidPtrAndDesc(ptr, context, dtor);
 }
