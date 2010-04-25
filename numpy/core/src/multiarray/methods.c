@@ -908,48 +908,20 @@ array_copy(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
+    static char *kwlist[] = {"refcheck", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
-    int n;
     int refcheck = 1;
-    PyArray_ORDER fortran = PyArray_ANYORDER;
 
-    if (kwds != NULL) {
-        PyObject *ref;
-        ref = PyDict_GetItemString(kwds, "refcheck");
-        if (ref) {
-            refcheck = PyInt_AsLong(ref);
-            if (refcheck==-1 && PyErr_Occurred()) {
-                return NULL;
-            }
-        }
-        ref = PyDict_GetItemString(kwds, "order");
-        if (ref != NULL ||
-            (PyArray_OrderConverter(ref, &fortran) == PY_FAIL)) {
-            return NULL;
-        }
+    if (PyTuple_GET_ITEM(args, 0) == Py_None) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
-    n = PyTuple_Size(args);
-    if (n <= 1) {
-        if (PyTuple_GET_ITEM(args, 0) == Py_None) {
-            Py_INCREF(Py_None);
-            return Py_None;
-        }
-        if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter,
-                              &newshape)) {
-            return NULL;
-        }
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i", kwlist,
+                PyArray_IntpConverter, &newshape, &refcheck)) {
+        return NULL;
     }
-    else {
-        if (!PyArray_IntpConverter(args, &newshape)) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_TypeError,
-                                "invalid shape");
-            }
-            return NULL;
-        }
-    }
-    ret = PyArray_Resize(self, &newshape, refcheck, fortran);
+    ret = PyArray_Resize(self, &newshape, refcheck, PyArray_CORDER);
     PyDimMem_FREE(newshape.ptr);
     if (ret == NULL) {
         return NULL;

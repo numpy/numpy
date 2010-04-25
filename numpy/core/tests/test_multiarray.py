@@ -1050,6 +1050,16 @@ class TestResize(TestCase):
         y = x
         self.assertRaises(ValueError,x.resize,(5,1))
 
+    def test_int_shape(self):
+        x = np.eye(3)
+        x.resize(3)
+        assert_array_equal(x, np.eye(3)[0,:])
+
+    def test_none_shape(self):
+        x = np.eye(3)
+        x.resize(None)
+        assert_array_equal(x, np.eye(3))
+
 
 class TestRecord(TestCase):
     def test_field_rename(self):

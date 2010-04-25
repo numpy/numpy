@@ -1036,6 +1036,11 @@ class TestRegression(TestCase):
         assert c.dtype == object
         assert d.dtype == object
 
+    def test_array_resize_method_system_error(self):
+        """Ticket #840 - order should be an invalid keyword."""
+        x = np.array([[0,1],[2,3]])
+        self.assertRaises(TypeError, x.resize, (2,2), order='C')
+
     def test_for_zero_length_in_choose(self, level=rlevel):
         "Ticket #882"
         a = np.array(1)

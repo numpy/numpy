@@ -54,30 +54,28 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
-                        "resize only works on single-segment arrays");
+                "resize only works on single-segment arrays");
         return NULL;
     }
 
-    if (fortran == PyArray_ANYORDER) {
-        fortran = PyArray_CORDER;
-    }
     if (self->descr->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError, "Bad data-type size.");
+        PyErr_SetString(PyExc_ValueError,
+                "Bad data-type size.");
         return NULL;
     }
     newsize = 1;
     largest = MAX_INTP / self->descr->elsize;
-    for(k=0; k<new_nd; k++) {
-        if (new_dimensions[k]==0) {
+    for(k = 0; k < new_nd; k++) {
+        if (new_dimensions[k] == 0) {
             break;
         }
         if (new_dimensions[k] < 0) {
             PyErr_SetString(PyExc_ValueError,
-                            "negative dimensions not allowed");
+                    "negative dimensions not allowed");
             return NULL;
         }
         newsize *= new_dimensions[k];
-        if (newsize <=0 || newsize > largest) {
+        if (newsize <= 0 || newsize > largest) {
             return PyErr_NoMemory();
         }
     }
@@ -86,8 +84,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     if (oldsize != newsize) {
         if (!(self->flags & OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
-                            "cannot resize this array:  "   \
-                            "it does not own its data");
+                    "cannot resize this array: it does not own its data");
             return NULL;
         }
 
@@ -97,13 +94,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         else {
             refcnt = 1;
         }
-        if ((refcnt > 2) || (self->base != NULL) ||
-            (self->weakreflist != NULL)) {
+        if ((refcnt > 2)
+                || (self->base != NULL)
+                || (self->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                            "cannot resize an array that has "\
-                            "been referenced or is referencing\n"\
-                            "another array in this way.  Use the "\
-                            "resize function");
+                    "cannot resize an array references or is referenced\n"\
+                    "by another array in this way.  Use the resize function");
             return NULL;
         }
 
@@ -117,7 +113,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         new_data = PyDataMem_RENEW(self->data, sd);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
-                            "cannot allocate memory for array");
+                    "cannot allocate memory for array");
             return NULL;
         }
         self->data = new_data;
@@ -149,8 +145,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         dimptr = PyDimMem_RENEW(self->dimensions, 2*new_nd);
         if (dimptr == NULL) {
             PyErr_SetString(PyExc_MemoryError,
-                            "cannot allocate memory for array " \
-                            "(array may be corrupted)");
+                    "cannot allocate memory for array");
             return NULL;
         }
         self->dimensions = dimptr;
@@ -160,7 +155,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     /* make new_strides variable */
     sd = (size_t) self->descr->elsize;
     sd = (size_t) _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-                                      self->flags, &(self->flags));
+            self->flags, &(self->flags));
     memmove(self->dimensions, new_dimensions, new_nd*sizeof(intp));
     memmove(self->strides, new_strides, new_nd*sizeof(intp));
     Py_INCREF(Py_None);

@@ -2851,7 +2851,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
     """
-    a.resize(new_shape, refcheck=True, order=False)
+    a.resize(new_shape, refcheck=True)
 
     Change shape and size of array in-place.
 
@@ -2861,8 +2861,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
         Shape of resized array.
     refcheck : bool, optional
         If False, reference count will not be checked. Default is True.
-    order : bool, do not use.
-        A SystemError is raised when this parameter is specified.
 
     Returns
     -------
@@ -2901,27 +2899,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
     Shrinking an array: array is flattened (in the order that the data are
     stored in memory), resized, and reshaped:
 
-    >>> a = np.array([[0, 1], [2, 3]])
-    >>> print a.flags
-    C_CONTIGUOUS : True
-    F_CONTIGUOUS : False
-    OWNDATA : True
-    WRITEABLE : True
-    ALIGNED : True
-    UPDATEIFCOPY : False
+    >>> a = np.array([[0, 1], [2, 3]], order='C')
     >>> a.resize((2, 1))
     >>> a
     array([[0],
            [1]])
 
     >>> a = np.array([[0, 1], [2, 3]], order='F')
-    >>> print a.flags
-    C_CONTIGUOUS : False
-    F_CONTIGUOUS : True
-    OWNDATA : True
-    WRITEABLE : True
-    ALIGNED : True
-    UPDATEIFCOPY : False
     >>> a.resize((2, 1))
     >>> a
     array([[0],
