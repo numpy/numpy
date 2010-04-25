@@ -1287,5 +1287,11 @@ class TestRegression(TestCase):
         # Check if log1p is behaving on 32 bit intel systems.
         assert_(np.isfinite(np.log1p(np.exp2(-53))))
 
+    def test_fromiter_comparison(self, level=rlevel):
+        a = np.fromiter(range(10), dtype='b')
+        b = np.fromiter(range(10), dtype='B')
+        assert np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9]))
+        assert np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9]))
+
 if __name__ == "__main__":
     run_module_suite()
