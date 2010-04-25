@@ -912,7 +912,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     intp size = PyTuple_Size(args);
     int refcheck = 1;
     PyArray_Dims newshape;
-    PyObject *ret;
+    PyObject *ret, *obj;
 
 
     if (kwds != NULL) {
@@ -929,15 +929,18 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return Py_None;
     }
     else if (size == 1) {
-        PyObject *obj = PyTuple_GET_ITEM(args, 0);
+        obj = PyTuple_GET_ITEM(args, 0);
         if (obj == Py_None) {
             Py_INCREF(Py_None);
             return Py_None;
         }
-        PyArray_IntpConverter(obj, &newshape);
+        args = obj;
     }
-    else {
-        PyArray_IntpConverter(args, &newshape);
+    if (!PyArray_IntpConverter(args, &newshape)) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError, "invalid shape");
+        }
+        return NULL;
     }
 
     ret = PyArray_Resize(self, &newshape, refcheck, PyArray_CORDER);
