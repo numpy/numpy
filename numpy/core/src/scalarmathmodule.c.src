@@ -1490,10 +1490,8 @@ PyMODINIT_FUNC
 initscalarmath(void)
 #endif
 {
-    PyObject *m;
-
 #if defined(NPY_PY3K)
-    m = PyModule_Create(&moduledef);
+    PyObject *m = PyModule_Create(&moduledef);
     if (!m) {
         return NULL;
     }

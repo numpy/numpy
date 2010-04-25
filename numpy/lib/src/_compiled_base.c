@@ -559,7 +559,7 @@ static PyObject *
 arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
-    PyObject *str, *tmp;
+    PyObject *str;
     char *docstr;
     static char *msg = "already has a docstring";
 
@@ -573,8 +573,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    tmp = PyUnicode_AsUTF8String(str);
-    docstr = PyBytes_AS_STRING(tmp);
+    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
 #else
     if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str)) {
         return NULL;
@@ -956,7 +955,7 @@ PyMODINIT_FUNC
 init_compiled_base(void)
 #endif
 {
-    PyObject *m, *d, *s;
+    PyObject *m, *d;
 
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);

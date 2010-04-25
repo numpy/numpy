@@ -1629,7 +1629,7 @@ arraydescr_typename_get(PyArray_Descr *self)
 {
     int len;
     PyTypeObject *typeobj = self->typeobj;
-    PyObject *res, *tmp;
+    PyObject *res;
     char *s;
     /* fixme: not reentrant */
     static int prefix_len = 0;
@@ -2800,10 +2800,9 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
     PyObject *retval;
 
     if (!self->names) {
-        PyObject *astr, *bstr;
-        astr = arraydescr_str(self);
+        PyObject *astr = arraydescr_str(self);
 #if defined(NPY_PY3K)
-        bstr = PyUnicode_AsUnicodeEscapeString(astr);
+        PyObject *bstr = PyUnicode_AsUnicodeEscapeString(astr);
         Py_DECREF(astr);
         astr = bstr;
 #endif
