@@ -904,23 +904,42 @@ array_copy(PyArrayObject *self, PyObject *args)
     return PyArray_NewCopy(self, fortran);
 }
 
-
+#include <stdio.h>
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"refcheck", NULL};
+    intp size = PyTuple_Size(args);
+    int refcheck = 1;
     PyArray_Dims newshape;
     PyObject *ret;
-    int refcheck = 1;
 
-    if (PyTuple_GET_ITEM(args, 0) == Py_None) {
+
+    if (kwds != NULL) {
+        PyObject *tmp = PyTuple_New(0);
+        if (!PyArg_ParseTupleAndKeywords(tmp, kwds, "|i", kwlist,  &refcheck)) {
+            Py_XDECREF(tmp);
+            return NULL;
+        }
+        Py_DECREF(tmp);
+    }
+
+    if (size == 0) {
         Py_INCREF(Py_None);
         return Py_None;
     }
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i", kwlist,
-                PyArray_IntpConverter, &newshape, &refcheck)) {
-        return NULL;
+    else if (size == 1) {
+        PyObject *obj = PyTuple_GET_ITEM(args, 0);
+        if (obj == Py_None) {
+            Py_INCREF(Py_None);
+            return Py_None;
+        }
+        PyArray_IntpConverter(obj, &newshape);
     }
+    else {
+        PyArray_IntpConverter(args, &newshape);
+    }
+
     ret = PyArray_Resize(self, &newshape, refcheck, PyArray_CORDER);
     PyDimMem_FREE(newshape.ptr);
     if (ret == NULL) {
