@@ -30,6 +30,7 @@ NPY_NO_EXPORT NumericOps n_ops; /* NB: static objects initialized to zero */
         if (!(PyCallable_Check(temp))) {                  \
             return -1;                                    \
         }                                                 \
+        Py_INCREF(temp);                                  \
         Py_XDECREF(n_ops.op);                             \
         n_ops.op = temp;                                  \
     }
