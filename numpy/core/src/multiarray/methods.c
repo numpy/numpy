@@ -100,22 +100,15 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
+    static char *keywords[] = {"order", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
     PyArray_ORDER order = PyArray_CORDER;
     int n;
 
-    if (kwds != NULL) {
-        PyObject *ref;
-        ref = PyDict_GetItemString(kwds, "order");
-        if (ref == NULL) {
-            PyErr_SetString(PyExc_TypeError,
-                            "invalid keyword argument");
-            return NULL;
-        }
-        if ((PyArray_OrderConverter(ref, &order) == PY_FAIL)) {
-            return NULL;
-        }
+    if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
+                PyArray_OrderConverter, &order)) {
+        return NULL;
     }
 
     n = PyTuple_Size(args);
@@ -942,13 +935,8 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *ret, *obj;
 
 
-    if (kwds != NULL) {
-        PyObject *tmp = PyTuple_New(0);
-        if (!PyArg_ParseTupleAndKeywords(tmp, kwds, "|i", kwlist,  &refcheck)) {
-            Py_XDECREF(tmp);
-            return NULL;
-        }
-        Py_DECREF(tmp);
+    if (!NpyArg_ParseKeywords(kwds, "|i", kwlist,  &refcheck)) {
+        return NULL;
     }
 
     if (size == 0) {
