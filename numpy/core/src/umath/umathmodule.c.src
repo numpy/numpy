@@ -229,7 +229,6 @@ InitOtherOperators(PyObject *dictionary) {
 #if defined(NPY_PY3K)
     f = PyDict_GetItemString(dictionary, "true_divide");
     PyDict_SetItemString(dictionary, "divide", f);
-    Py_DECREF(f);
 #endif
     return;
 }
