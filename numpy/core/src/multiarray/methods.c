@@ -1,4 +1,5 @@
 #define PY_SSIZE_T_CLEAN
+#include <stdarg.h>
 #include <Python.h>
 #include "structmember.h"
 
@@ -16,6 +17,32 @@
 #include "calculation.h"
 
 #include "methods.h"
+
+
+/* NpyArg_ParseKeywords
+ *
+ * Utility function that provides the keyword parsing functionality of
+ * PyArg_ParseTupleAndKeywords without having to have an args argument.
+ *
+ */
+static int
+NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
+{
+        PyObject *args = PyTuple_New(0);
+	int ret;
+	va_list va;
+
+	if (args == NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Failed to allocate new tuple");
+            return 0;
+	}
+	va_start(va, kwlist);
+	ret = PyArg_VaParseTupleAndKeywords(args, keys, format, kwlist, va);
+	va_end(va);
+        Py_DECREF(args);
+	return ret;
+}
 
 /* Should only be used if x is known to be an nd-array */
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
