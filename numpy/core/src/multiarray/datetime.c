@@ -153,7 +153,9 @@ days_from_ymd(int year, int month, int day)
 
 /* Returns absolute seconds from an hour, minute, and second
  */
-#define secs_from_hms(hour, min, sec) ((hour)*3600 + (min)*60 + (sec))
+#define secs_from_hms(hour, min, sec, multiplier) (\
+  ((hour)*3600 + (min)*60 + (sec)) * (npy_int64)(multiplier)\
+)
 
 /*
  * Takes a number of days since Jan 1, 1970 (positive or negative)
@@ -314,55 +316,58 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
         ret = days * 1440 + d->hour * 60 + d->min;
     }
     else if (fr == NPY_FR_s) {
-        ret = days * 86400 + secs_from_hms(d->hour, d->min, d->sec);
+        ret = days * (npy_int64)(86400) +
+            secs_from_hms(d->hour, d->min, d->sec, 1);
     }
     else if (fr == NPY_FR_ms) {
-        ret = days * 86400000 + secs_from_hms(d->hour, d->min, d->sec) * 1000
+        ret = days * (npy_int64)(86400000)
+            + secs_from_hms(d->hour, d->min, d->sec, 1000)
             + (d->us / 1000);
     }
     else if (fr == NPY_FR_us) {
         npy_int64 num = 86400 * 1000;
-        num *= 1000;
-        ret = days * num + secs_from_hms(d->hour, d->min, d->sec) * 1000000
+        num *= (npy_int64)(1000);
+        ret = days * num + secs_from_hms(d->hour, d->min, d->sec, 1000000)
             + d->us;
     }
     else if (fr == NPY_FR_ns) {
         npy_int64 num = 86400 * 1000;
-        num *= 1000 * 1000;
-        ret = days * num + secs_from_hms(d->hour, d->min, d->sec) * 1000000000
-            + d->us * 1000 + (d->ps / 1000);
+        num *= (npy_int64)(1000 * 1000);
+        ret = days * num + secs_from_hms(d->hour, d->min, d->sec, 1000000000)
+            + d->us * (npy_int64)(1000) + (d->ps / 1000);
     }
     else if (fr == NPY_FR_ps) {
         npy_int64 num2 = 1000 * 1000;
         npy_int64 num1;
 
-        num2 *= 1000 * 1000;
-        num1 = 86400 * num2;
-        ret = days * num1 + secs_from_hms(d->hour, d->min, d->sec) * num2
-            + d->us * 1000000 + d->ps;
+        num2 *= (npy_int64)(1000 * 1000);
+        num1 = (npy_int64)(86400) * num2;
+        ret = days * num1 + secs_from_hms(d->hour, d->min, d->sec, num2)
+            + d->us * (npy_int64)(1000000) + d->ps;
     }
     else if (fr == NPY_FR_fs) {
         /* only 2.6 hours */
         npy_int64 num2 = 1000000;
-        num2 *= 1000000;
-        num2 *= 1000;
+        num2 *= (npy_int64)(1000000);
+        num2 *= (npy_int64)(1000);
 
         /* get number of seconds as a postive or negative number */
         if (days >= 0) {
-            ret = secs_from_hms(d->hour, d->min, d->sec);
+            ret = secs_from_hms(d->hour, d->min, d->sec, 1);
         }
         else {
             ret = ((d->hour - 24)*3600 + d->min*60 + d->sec);
         }
-        ret = ret * num2 + d->us * 1000000000 + d->ps * 1000 + (d->as / 1000);
+        ret = ret * num2 + d->us * (npy_int64)(1000000000)
+            + d->ps * (npy_int64)(1000) + (d->as / 1000);
     }
     else if (fr == NPY_FR_as) {
         /* only 9.2 secs */
         npy_int64 num1, num2;
 
         num1 = 1000000;
-        num1 *= 1000000;
-        num2 = num1 * 1000000;
+        num1 *= (npy_int64)(1000000);
+        num2 = num1 * (npy_int64)(1000000);
 
         if (days >= 0) {
             ret = d->sec;
@@ -370,7 +375,8 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
         else {
             ret = d->sec - 60;
         }
-        ret = ret * num2 + d->us * num1 + d->ps * 1000000 + d->as;
+        ret = ret * num2 + d->us * num1 + d->ps * (npy_int64)(1000000)
+            + d->as;
     }
     else {
         /* Shouldn't get here */
@@ -425,47 +431,51 @@ PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
         ret = d->day + d->sec / 3600;
     }
     else if (fr == NPY_FR_m) {
-        ret = d->day * 1440 + d->sec / 60;
+        ret = d->day * (npy_int64)(1440) + d->sec / 60;
     }
     else if (fr == NPY_FR_s) {
-        ret = d->day * 86400 + d->sec;
+        ret = d->day * (npy_int64)(86400) + d->sec;
     }
     else if (fr == NPY_FR_ms) {
-        ret = d->day * 86400000 + d->sec * 1000 + d->us / 1000;
+        ret = d->day * (npy_int64)(86400000) + d->sec * 1000 + d->us / 1000;
     }
     else if (fr == NPY_FR_us) {
         npy_int64 num = 86400000;
-        num *= 1000;
-        ret = d->day * num + d->sec * 1000000 + d->us;
+        num *= (npy_int64)(1000);
+        ret = d->day * num + d->sec * (npy_int64)(1000000) + d->us;
     }
     else if (fr == NPY_FR_ns) {
         npy_int64 num = 86400000;
-        num *= 1000000;
-        ret = d->day * num + d->sec * 1000000000 + d->us * 1000 + (d->ps / 1000);
+        num *= (npy_int64)(1000000);
+        ret = d->day * num + d->sec * (npy_int64)(1000000000)
+            + d->us * (npy_int64)(1000) + (d->ps / 1000);
     }
     else if (fr == NPY_FR_ps) {
         npy_int64 num2, num1;
 
         num2 = 1000000;
-        num2 *= 1000000;
-        num1 = 86400 * num2;
+        num2 *= (npy_int64)(1000000);
+        num1 = (npy_int64)(86400) * num2;
 
-        ret = d->day * num1 + d->sec * num2 + d->us * 1000000 + d->ps;
+        ret = d->day * num1 + d->sec * num2 + d->us * (npy_int64)(1000000)
+            + d->ps;
     }
     else if (fr == NPY_FR_fs) {
         /* only 2.6 hours */
         npy_int64 num2 = 1000000000;
-        num2 *= 1000000;
-        ret = d->sec * num2 + d->us * 1000000000 + d->ps * 1000 + (d->as / 1000);
+        num2 *= (npy_int64)(1000000);
+        ret = d->sec * num2 + d->us * (npy_int64)(1000000000)
+            + d->ps * (npy_int64)(1000) + (d->as / 1000);
     }
     else if (fr == NPY_FR_as) {
         /* only 9.2 secs */
         npy_int64 num1, num2;
 
         num1 = 1000000;
-        num1 *= 1000000;
-        num2 = num1 * 1000000;
-        ret = d->sec * num2 + d->us * num1 + d->ps * 1000000 + d->as;
+        num1 *= (npy_int64)(1000000);
+        num2 = num1 * (npy_int64)(1000000);
+        ret = d->sec * num2 + d->us * num1 + d->ps * (npy_int64)(1000000)
+            + d->as;
     }
     else {
         /* Shouldn't get here */
@@ -652,7 +662,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
         hms = seconds_to_hmsstruct(tmp / 1000000000);
         tmp = tmp % 1000000000;
         us = tmp / 1000;
-        ps = (tmp % 1000) * 1000;
+        ps = (tmp % 1000) * (npy_int64)(1000);
         year    = ymd.year;
         month   = ymd.month;
         day     = ymd.day;
@@ -663,8 +673,8 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
     else if (fr == NPY_FR_ps) {
         npy_int64 num1, num2, num3;
         num3 = 1000000000;
-        num3 *= 1000;
-        num1 = 86400 * num3;
+        num3 *= (npy_int64)(1000);
+        num1 = (npy_int64)(86400) * num3;
         num2 = num1 - 1;
 
         if (val >= 0) {
@@ -672,7 +682,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
             tmp = val % num1;
         }
         else {
-            ymd = days_to_ymdstruct((val - num2)/ num1);
+            ymd = days_to_ymdstruct((val - num2) / num1);
             tmp = num2 + (val + 1) % num1;
         }
         hms = seconds_to_hmsstruct(tmp / num3);
@@ -690,8 +700,8 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
         /* entire range is only += 2.6 hours */
         npy_int64 num1, num2;
         num1 = 1000000000;
-        num1 *= 1000;
-        num2 = num1 * 1000;
+        num1 *= (npy_int64)(1000);
+        num2 = num1 * (npy_int64)(1000);
 
         if (val >= 0) {
             sec = val / num2;
@@ -724,14 +734,14 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
         us = tmp / 1000000000;
         tmp = tmp % 1000000000;
         ps = tmp / 1000;
-        as = (tmp % 1000) * 1000;
+        as = (tmp % 1000) * (npy_int64)(1000);
     }
     else if (fr == NPY_FR_as) {
         /* entire range is only += 9.2 seconds */
         npy_int64 num1, num2, num3;
         num1 = 1000000;
-        num2 = num1 * 1000000;
-        num3 = num2 * 1000000;
+        num2 = num1 * (npy_int64)(1000000);
+        num3 = num2 * (npy_int64)(1000000);
         if (val >= 0) {
             hour = 0;
             min = 0;
@@ -820,7 +830,7 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
         sec = (val % 1440)*60;
     }
     else if (fr == NPY_FR_s) {
-        day = val / 86400;
+        day = val / (86400);
         sec = val % 86400;
     }
     else if (fr == NPY_FR_ms) {
@@ -847,13 +857,13 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
         sec = val / 1000000000;
         val = val % 1000000000;
         us  = val / 1000;
-        ps  = (val % 1000) * 1000;
+        ps  = (val % 1000) * (npy_int64)(1000);
     }
     else if (fr == NPY_FR_ps) {
         npy_int64 num1, num2;
         num2 = 1000000000;
-        num2 *= 1000;
-        num1 = 86400 * num2;
+        num2 *= (npy_int64)(1000);
+        num1 = (npy_int64)(86400) * num2;
 
         day = val / num1;
         ps = val % num1;
@@ -866,7 +876,7 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
         /* entire range is only += 9.2 hours */
         npy_int64 num1, num2;
         num1 = 1000000000;
-        num2 = num1 * 1000000;
+        num2 = num1 * (npy_int64)(1000000);
 
         day = 0;
         sec = val / num2;
@@ -874,14 +884,14 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
         us = val / num1;
         val = val % num1;
         ps = val / 1000;
-        as = (val % 1000) * 1000;
+        as = (val % 1000) * (npy_int64)(1000);
     }
     else if (fr == NPY_FR_as) {
         /* entire range is only += 2.6 seconds */
         npy_int64 num1, num2, num3;
         num1 = 1000000;
-        num2 = num1 * 1000000;
-        num3 = num2 * 1000000;
+        num2 = num1 * (npy_int64)(1000000);
+        num3 = num2 * (npy_int64)(1000000);
         day = 0;
         sec = val / num3;
         as = val % num3;

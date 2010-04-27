@@ -762,7 +762,7 @@ fail:
 }
 
 /*
- * Acknowledgment:  Example code contributed by Marty Fuhr sponsored by
+ * Acknowledgement:  Example code contributed by Marty Fuhr sponsored by
  * Google Summer of Code 2009 was used to integrate and adapt the mxDateTime
  * parser
  */

@@ -56,3 +56,18 @@ class TestDateTime(TestCase):
 
     def test_divisor_conversion_as(self):
         self.assertRaises(ValueError, lambda : np.dtype('M8[as/10]'))
+
+    def test_creation_overflow(self):
+        date = '1980-03-23 20:00:00'
+        timesteps = np.array([date], dtype='datetime64[s]')[0].astype(int)
+        for unit in ['ms', 'us', 'ns']:
+            timesteps *= 1000
+            x = np.array([date], dtype='datetime64[%s]' % unit)
+
+            assert_equal(timesteps, x[0].astype(np.int64),
+                         err_msg='Datetime conversion error for unit %s' % unit)
+
+        assert_equal(x[0].astype(int), 322689600000000000)
+
+if __name__ == "__main__":
+    run_module_suite()
