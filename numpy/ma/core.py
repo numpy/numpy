@@ -4743,7 +4743,7 @@ class MaskedArray(ndarray):
         dvar = divide(danom.sum(axis), cnt).view(type(self))
         # Apply the mask if it's not a scalar
         if dvar.ndim:
-            dvar._mask = mask_or(self._mask.all(axis), (cnt <= ddof))
+            dvar._mask = mask_or(self._mask.all(axis), (cnt <= 0))
             dvar._update_from(self)
         elif getattr(dvar, '_mask', False):
         # Make sure that masked is returned when the scalar is masked.

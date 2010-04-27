@@ -199,7 +199,7 @@ class TestMaskedArray(TestCase):
         err_status_ini = np.geterr()
         try:
             np.seterr(invalid='ignore')
-            data = masked_array(np.sqrt([-1., 0., 1.]), mask=[0, 0, 1])
+            data = masked_array([np.nan, 0., 1.], mask=[0, 0, 1])
             data_fixed = fix_invalid(data)
             assert_equal(data_fixed._data, [data.fill_value, 0., 1.])
             assert_equal(data_fixed._mask, [1., 0., 1.])
@@ -2705,6 +2705,19 @@ class TestMaskedArrayMathMethods(TestCase):
             # Using a ndarray as explicit output
             _ = method(out=nout, ddof=1)
             self.assertTrue(np.isnan(nout))
+
+
+    def test_varstd_ddof(self):
+        a = array([[1, 1, 0], [1, 1, 0]], mask=[[0, 0, 1], [0, 0, 1]])
+        test = a.std(axis=0, ddof=0)
+        assert_equal(test.filled(0), [0, 0, 0])
+        assert_equal(test.mask, [0, 0, 1])
+        test = a.std(axis=0, ddof=1)
+        assert_equal(test.filled(0), [0, 0, 0])
+        assert_equal(test.mask, [0, 0, 1])
+        test = a.std(axis=0, ddof=2)
+        assert_equal(test.filled(0), [0, 0, 0])
+        assert_equal(test.mask, [1, 1, 1])
 
 
     def test_diag(self):
