@@ -619,6 +619,7 @@ def datetime_data(dtype):
                     ('den', ctypes.c_int),
                     ('events', ctypes.c_int)]
 
+    import sys
     if sys.version_info[:2] >= (3,1):
         func = ctypes.pythonapi.PyCapsule_GetPointer
         func.argtypes = [ctypes.py_object, ctypes.c_char_p]

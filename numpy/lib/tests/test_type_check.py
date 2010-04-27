@@ -375,5 +375,12 @@ class TestArrayConversion(TestCase):
         assert issubdtype(a.dtype,float)
 
 
+class TestDateTimeData:
+
+    def test_basic(self):
+        a = array(['1980-03-23'], dtype=datetime64)
+        assert_equal(datetime_data(a.dtype), ('us', 1, 1, 1))
+
+
 if __name__ == "__main__":
     run_module_suite()
