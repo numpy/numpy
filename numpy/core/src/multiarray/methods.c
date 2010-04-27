@@ -999,6 +999,7 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
     else {
         choices = args;
     }
+    /*FIXME: use NpyArg_ParseKeywords*/
     if (kwds && PyDict_Check(kwds)) {
         if (PyArray_OutputConverter(PyDict_GetItemString(kwds, "out"),
                                     &out) == PY_FAIL) {
