@@ -1,5 +1,5 @@
 =========================
-NumPy 1.5.0 Release Notes
+NumPy 2.0.0 Release Notes
 =========================
 
 
