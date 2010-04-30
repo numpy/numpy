@@ -541,6 +541,13 @@ class TestMethods(TestCase):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
+    def test_dot(self):
+        a = np.array([[1, 0], [0, 1]])
+        b = np.array([[0, 1], [1, 0]])
+        c = np.array([[9, 1], [1, -9]])
+
+        assert_equal(np.dot(a, b), a.dot(b))
+        assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
 
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):

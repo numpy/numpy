@@ -254,7 +254,8 @@ class TestMatrixReturn(TestCase):
             'compress' : ([1],),
             'repeat' : (1,),
             'reshape' : (1,),
-            'swapaxes' : (0,0)
+            'swapaxes' : (0,0),
+            'dot': np.array([1.0]),
             }
         excluded_methods = [
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
@@ -267,7 +268,7 @@ class TestMatrixReturn(TestCase):
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
-            f = eval('a.%s' % attrib)
+            f = getattr(a, attrib)
             if callable(f):
                 # reset contents of a
                 a.astype('f8')

@@ -35,3 +35,16 @@ turned off in the standard way:
 
     >>> import warnings
     >>> warnings.simplefilter("ignore", np.ComplexWarning)
+
+Dot method for ndarrays
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Ndarrays now have the dot product also as a method, which allows writing
+chains of matrix products as
+
+    >>> a.dot(b).dot(c)
+
+instead of the longer alternative
+
+    >>> np.dot(a, np.dot(b, c))
+

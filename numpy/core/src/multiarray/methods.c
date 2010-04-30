@@ -1793,6 +1793,29 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
+array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    PyObject *b;
+    static PyObject *numpycore = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &b)) {
+        return NULL;
+    }
+
+    /* Since blas-dot is exposed only on the Python side, we need to grab it
+     * from there */
+    if (numpycore == NULL) {
+        numpycore = PyImport_ImportModule("numpy.core");
+        if (numpycore == NULL) {
+            return NULL;
+        }
+    }
+
+    return PyObject_CallMethod(numpycore, "dot", "OO", self, b);
+}
+
+
+static PyObject *
 array_any(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis = MAX_DIMS;
@@ -2192,6 +2215,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"diagonal",
         (PyCFunction)array_diagonal,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"dot",
+        (PyCFunction)array_dot,
+        METH_VARARGS, NULL},
     {"fill",
         (PyCFunction)array_fill,
         METH_VARARGS, NULL},
