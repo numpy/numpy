@@ -403,6 +403,16 @@ class TestLoadTxt(TestCase):
                            dtype=ndtype)
         assert_equal(test, control)
 
+    def test_universal_newline(self):
+        f, name = mkstemp()
+        os.write(f, asbytes('1 21\r3 42\r'))
+        os.close(f)
+
+        try:
+            data = np.loadtxt(name)
+            assert_array_equal(data, [[1, 21], [3, 42]])
+        finally:
+            os.unlink(name)
 
 
 class Testfromregex(TestCase):
