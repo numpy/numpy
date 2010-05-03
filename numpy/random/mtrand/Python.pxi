@@ -29,6 +29,9 @@ cdef extern from "Python.h":
     void Py_XINCREF(object obj)
 
     # CObject API
+# If this is uncommented it needs to be fixed to use PyCapsule
+# for Python >= 2.7
+#
 #    ctypedef void (*destructor1)(void* cobj)
 #    ctypedef void (*destructor2)(void* cobj, void* desc)
 #    int PyCObject_Check(object p)

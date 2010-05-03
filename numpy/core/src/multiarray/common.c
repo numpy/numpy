@@ -258,25 +258,14 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         PyArrayInterface *inter;
         char buf[40];
 
-#if defined(NPY_PY3K)
-        if (PyCapsule_CheckExact(ip)) {
-            inter = (PyArrayInterface *)PyCapsule_GetPointer(ip, NULL);
+        if (NpyCapsule_Check(ip)) {
+            inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(ip);
             if (inter->two == 2) {
                 PyOS_snprintf(buf, sizeof(buf),
                         "|%c%d", inter->typekind, inter->itemsize);
                 chktype = _array_typedescr_fromstr(buf);
             }
         }
-#else
-        if (PyCObject_Check(ip)) {
-            inter = (PyArrayInterface *)PyCObject_AsVoidPtr(ip);
-            if (inter->two == 2) {
-                PyOS_snprintf(buf, sizeof(buf),
-                        "|%c%d", inter->typekind, inter->itemsize);
-                chktype = _array_typedescr_fromstr(buf);
-            }
-        }
-#endif
         Py_DECREF(ip);
         if (chktype) {
             goto finish;

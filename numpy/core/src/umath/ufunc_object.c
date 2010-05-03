@@ -372,14 +372,7 @@ _find_matching_userloop(PyObject *obj, int *arg_types,
     PyUFunc_Loop1d *funcdata;
     int i;
 
-#if defined(NPY_PY3K)
-    funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(obj, NULL);
-    if (funcdata == NULL) {
-        PyErr_Clear();
-    }
-#else
-    funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
-#endif
+    funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
     while (funcdata != NULL) {
         for (i = 0; i < nin; i++) {
             if (!PyArray_CanCoerceScalar(arg_types[i],
@@ -524,14 +517,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
          * extract the correct function
          * data and argtypes
          */
-#if defined(NPY_PY3K)
-        funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(obj, NULL);
-        if (funcdata == NULL) {
-            PyErr_Clear();
-        }
-#else
-        funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
-#endif
+        funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
         while (funcdata != NULL) {
             if (n != 1) {
                 for (i = 0; i < nargs; i++) {
@@ -3890,36 +3876,31 @@ cmp_arg_types(int *arg1, int *arg2, int n)
  * This frees the linked-list structure when the CObject
  * is destroyed (removed from the internal dictionary)
 */
-#if defined(NPY_PY3K)
+static void
+_free_loop1d_list(PyUFunc_Loop1d *data)
+{
+    if (data == NULL) {
+        return;
+    }
+    _pya_free(data->arg_types);
+    _free_loop1d_list(data->next);
+    _pya_free(data);
+}
+
+#if PY_VERSION_HEX >= 0x02070000
 static void
 _loop1d_list_free(PyObject *ptr)
 {
-    PyUFunc_Loop1d *funcdata;
-
-    funcdata = (PyUFunc_Loop1d *)PyCapsule_GetPointer(ptr, NULL);
-    if (funcdata == NULL) {
-        return;
-    }
-    _pya_free(funcdata->arg_types);
-    _loop1d_list_free(funcdata->next);
-    _pya_free(funcdata);
+    PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)PyCapsule_GetPointer(ptr, NULL);
+    _free_loop1d_list(data);
 }
 
 #else
 static void
 _loop1d_list_free(void *ptr)
 {
-    PyUFunc_Loop1d *funcdata;
-    if (ptr == NULL) {
-        return;
-    }
-    funcdata = (PyUFunc_Loop1d *)ptr;
-    if (funcdata == NULL) {
-        return;
-    }
-    _pya_free(funcdata->arg_types);
-    _loop1d_list_free(funcdata->next);
-    _pya_free(funcdata);
+    PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)ptr;
+    _free_loop1d_list(data);
 }
 #endif
 
@@ -3980,14 +3961,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     cobj = PyDict_GetItem(ufunc->userloops, key);
     /* If it's not there, then make one and return. */
     if (cobj == NULL) {
-#if defined(NPY_PY3K)
-        cobj = PyCapsule_New((void *)funcdata, NULL, _loop1d_list_free);
-        if (cobj == NULL) {
-            PyErr_Clear();
-        }
-#else
-        cobj = PyCObject_FromVoidPtr((void *)funcdata, _loop1d_list_free);
-#endif
+        cobj = NpyCapsule_FromVoidPtr((void *)funcdata, _loop1d_list_free);
         if (cobj == NULL) {
             goto fail;
         }
@@ -4005,14 +3979,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
          * is exactly like this one, then just replace.
          * Otherwise insert.
          */
-#if defined(NPY_PY3K)
-        current = (PyUFunc_Loop1d *)PyCapsule_GetPointer(cobj, NULL);
-        if (current == NULL) {
-            PyErr_Clear();
-        }
-#else
-        current = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(cobj);
-#endif
+        current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
         while (current != NULL) {
             cmp = cmp_arg_types(current->arg_types, newtypes, ufunc->nargs);
             if (cmp >= 0) {

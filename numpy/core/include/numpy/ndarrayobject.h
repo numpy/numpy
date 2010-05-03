@@ -598,8 +598,18 @@ typedef struct {
         int sec, us, ps, as;
 } npy_timedeltastruct;
 
-
-#define PyDataType_GetDatetimeMetaData(descr) ((descr->metadata == NULL) ? NULL : ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
+#if PY_VERSION_HEX >= 0x02070000
+#define PyDataType_GetDatetimeMetaData(descr)                                 \
+    ((descr->metadata == NULL) ? NULL :                                       \
+        ((PyArray_DatetimeMetaData *)(PyCapsule_GetPointer(                   \
+                PyDict_GetItemString(                                         \
+                    descr->metadata, NPY_METADATA_DTSTR), NULL))))
+#else
+#define PyDataType_GetDatetimeMetaData(descr)                                 \
+    ((descr->metadata == NULL) ? NULL :                                       \
+        ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(                    \
+                PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
+#endif
 
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 

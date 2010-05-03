@@ -64,7 +64,7 @@ _import_array(void)
   }
   Py_DECREF(numpy);
 
-#if PY_VERSION_HEX >= 0x03010000
+#if PY_VERSION_HEX >= 0x02070000
   if (!PyCapsule_CheckExact(c_api)) {
       PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCapsule object");
       Py_DECREF(c_api);

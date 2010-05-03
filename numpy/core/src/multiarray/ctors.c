@@ -1140,18 +1140,9 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 #endif
     if ((e = PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
         d = -1;
-#if defined(NPY_PY3K)
-        if (PyCapsule_CheckExact(e)) {
+        if (NpyCapsule_Check(e)) {
             PyArrayInterface *inter;
-            inter = (PyArrayInterface *)PyCapsule_GetPointer(e, NULL);
-            if (inter == NULL) {
-                PyErr_Clear();
-            }
-#else
-        if (PyCObject_Check(e)) {
-            PyArrayInterface *inter;
-            inter = (PyArrayInterface *)PyCObject_AsVoidPtr(e);
-#endif
+            inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
             if (inter->two == 2) {
                 d = inter->nd;
             }
@@ -1574,20 +1565,10 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                  */
                 PyArray_UpdateFlags(self, UPDATE_ALL);
             }
-#if defined(NPY_PY3K)
-            if PyCapsule_CheckExact(func) {
+            if (NpyCapsule_Check(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
-                cfunc = PyCapsule_GetPointer(func, NULL);
-                if (cfunc == NULL) {
-                    PyErr_Clear();
-                }
-#else
-            if PyCObject_Check(func) {
-                /* A C-function is stored here */
-                PyArray_FinalizeFunc *cfunc;
-                cfunc = PyCObject_AsVoidPtr(func);
-#endif
+                cfunc = NpyCapsule_AsVoidPtr(func);
                 Py_DECREF(func);
                 if (cfunc(self, obj) < 0) {
                     goto fail;
@@ -2129,20 +2110,10 @@ PyArray_FromStructInterface(PyObject *input)
         PyErr_Clear();
         return Py_NotImplemented;
     }
-#if defined(NPY_PY3K)
-    if (!PyCapsule_CheckExact(attr)) {
+    if (!NpyCapsule_Check(attr)) {
         goto fail;
     }
-    inter = PyCapsule_GetPointer(attr, NULL);
-    if (inter == NULL) {
-        PyErr_Clear();
-    }
-#else
-    if (!PyCObject_Check(attr)) {
-        goto fail;
-    }
-    inter = PyCObject_AsVoidPtr(attr);
-#endif
+    inter = NpyCapsule_AsVoidPtr(attr);
     if (inter->two != 2) {
         goto fail;
     }

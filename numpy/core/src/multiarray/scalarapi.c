@@ -534,14 +534,7 @@ PyArray_DescrFromScalar(PyObject *sc)
             memcpy(dt_data, &((PyTimedeltaScalarObject *)sc)->obmeta,
                    sizeof(PyArray_DatetimeMetaData));
         }
-#if defined(NPY_PY3K)
-        cobj = PyCapsule_New((void *)dt_data, NULL, simple_capsule_dtor);
-        if (cobj == NULL) {
-            PyErr_Clear();
-        }
-#else
-        cobj = PyCObject_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
-#endif
+        cobj = NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
 
         /* Add correct meta-data to the data-type */
         if (descr == NULL) {
@@ -677,14 +670,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 /* FIXME
  * There is no error handling here.
  */
-#if defined(NPY_PY3K)
-        dt_data = PyCapsule_GetPointer(cobj, NULL);
-        if (dt_data == NULL) {
-            PyErr_Clear();
-        }
-#else
-        dt_data = PyCObject_AsVoidPtr(cobj);
-#endif
+        dt_data = NpyCapsule_AsVoidPtr(cobj);
         memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
                sizeof(PyArray_DatetimeMetaData));
     }

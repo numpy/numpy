@@ -1353,19 +1353,8 @@ _equivalent_units(PyObject *meta1, PyObject *meta2)
 /* FIXME
  * There is no err handling here.
  */
-#if defined(NPY_PY3K)
-    data1 = PyCapsule_GetPointer(cobj1, NULL);
-    if (data1 == NULL) {
-        PyErr_Clear();
-    }
-    data2 = PyCapsule_GetPointer(cobj2, NULL);
-    if (data2 == NULL) {
-        PyErr_Clear();
-    }
-#else
-    data1 = PyCObject_AsVoidPtr(cobj1);
-    data2 = PyCObject_AsVoidPtr(cobj2);
-#endif
+    data1 = NpyCapsule_AsVoidPtr(cobj1);
+    data2 = NpyCapsule_AsVoidPtr(cobj2);
     return ((data1->base == data2->base)
             && (data1->num == data2->num)
             && (data1->den == data2->den)
@@ -3062,14 +3051,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 /* FIXME
  * There is no error handling here
  */
-#if defined(NPY_PY3K)
-    c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
-    if (c_api == NULL) {
-        PyErr_Clear();
-    }
-#else
-    c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
-#endif
+    c_api = NpyCapsule_FromVoidPtr((void *)PyArray_API, NULL);
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
     Py_DECREF(c_api);
     if (PyErr_Occurred()) {
@@ -3103,14 +3085,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 /* FIXME
  * There is no error handling here
  */
-#if defined(NPY_PY3K)
-    s = PyCapsule_New((void *)_datetime_strings, NULL, NULL);
-    if (s == NULL) {
-        PyErr_Clear();
-    }
-#else
-    s = PyCObject_FromVoidPtr((void *)_datetime_strings, NULL);
-#endif
+    s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
     PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 

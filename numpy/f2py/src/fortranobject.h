@@ -76,7 +76,7 @@ extern "C" {
 123456789-123456789-123456789-123456789-123456789-123456789-123456789-12
 
 PyFortranObject represents various Fortran objects:
-Fortran (module) routines, COMMON blocks, module data. 
+Fortran (module) routines, COMMON blocks, module data.
 
 Author: Pearu Peterson <pearu@cens.ioc.ee>
 */
@@ -121,7 +121,7 @@ typedef struct {
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
 
-#if PY_VERSION_HEX >= 0x03010000
+#if PY_VERSION_HEX >= 0x02070000
 
 PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
 void * F2PyCapsule_AsVoidPtr(PyObject *obj);

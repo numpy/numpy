@@ -913,11 +913,11 @@ int copy_ND_array(const PyArrayObject *arr, PyArrayObject *out)
     return PyArray_CopyInto(out, (PyArrayObject *)arr);
 }
 
-/*******************************************/
-/* Compatibility functions for Python 3.1  */
-/*******************************************/
+/*********************************************/
+/* Compatibility functions for Python >= 2.7 */
+/*********************************************/
 
-#if PY_VERSION_HEX >= 0X03010000
+#if PY_VERSION_HEX >= 0X02070000
 
 PyObject *
 F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
