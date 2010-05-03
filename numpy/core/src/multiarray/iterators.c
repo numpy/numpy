@@ -1532,7 +1532,7 @@ static PyObject *
 arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
 {
 
-    int n, i;
+    Py_ssize_t n, i;
     PyArrayMultiIterObject *multi;
     PyObject *arr;
 
