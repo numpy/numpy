@@ -584,7 +584,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             import bz2
             fh = bz2.BZ2File(fname)
         else:
-            fh = file(fname, 'U')
+            fh = open(fname, 'U')
     elif hasattr(fname, 'readline'):
         fh = fname
     else:
