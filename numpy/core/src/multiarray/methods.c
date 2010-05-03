@@ -104,14 +104,13 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyArray_Dims newshape;
     PyObject *ret;
     PyArray_ORDER order = PyArray_CORDER;
-    int n;
+    Py_ssize_t n = PyTuple_Size(args);
 
     if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
                 PyArray_OrderConverter, &order)) {
         return NULL;
     }
 
-    n = PyTuple_Size(args);
     if (n <= 1) {
         if (PyTuple_GET_ITEM(args, 0) == Py_None) {
             return PyArray_View(self, NULL, NULL);
@@ -929,7 +928,7 @@ static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"refcheck", NULL};
-    intp size = PyTuple_Size(args);
+    Py_ssize_t size = PyTuple_Size(args);
     int refcheck = 1;
     PyArray_Dims newshape;
     PyObject *ret, *obj;
@@ -985,12 +984,12 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
+    static char *keywords[] = {"out", "mode"};
     PyObject *choices;
-    int n;
     PyArrayObject *out = NULL;
     NPY_CLIPMODE clipmode = NPY_RAISE;
+    Py_ssize_t n = PyTuple_Size(args);
 
-    n = PyTuple_Size(args);
     if (n <= 1) {
         if (!PyArg_ParseTuple(args, "O", &choices)) {
             return NULL;
@@ -999,16 +998,11 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
     else {
         choices = args;
     }
-    /*FIXME: use NpyArg_ParseKeywords*/
-    if (kwds && PyDict_Check(kwds)) {
-        if (PyArray_OutputConverter(PyDict_GetItemString(kwds, "out"),
-                                    &out) == PY_FAIL) {
-            return NULL;
-        }
-        if (PyArray_ClipmodeConverter(PyDict_GetItemString(kwds, "mode"),
-                                      &clipmode) == PY_FAIL) {
-            return NULL;
-        }
+
+    if (!NpyArg_ParseKeywords(kwds, "|O&O&", keywords,
+                PyArray_OutputConverter, &out,
+                PyArray_ClipmodeConverter, &clipmode)) {
+        return NULL;
     }
 
     return _ARET(PyArray_Choose(self, choices, out, clipmode));
@@ -1623,11 +1617,10 @@ static PyObject *
 array_transpose(PyArrayObject *self, PyObject *args)
 {
     PyObject *shape = Py_None;
-    int n;
+    Py_ssize_t n = PyTuple_Size(args);
     PyArray_Dims permute;
     PyObject *ret;
 
-    n = PyTuple_Size(args);
     if (n > 1) {
         shape = args;
     }
