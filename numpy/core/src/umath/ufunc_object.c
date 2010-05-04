@@ -3876,15 +3876,15 @@ cmp_arg_types(int *arg1, int *arg2, int n)
  * This frees the linked-list structure when the CObject
  * is destroyed (removed from the internal dictionary)
 */
-static void
+static NPY_INLINE void
 _free_loop1d_list(PyUFunc_Loop1d *data)
 {
-    if (data == NULL) {
-        return;
+    while (data != NULL) {
+        PyUFunc_Loop1d *next = data->next;
+        _pya_free(data->arg_types);
+        _pya_free(data);
+        data = next;
     }
-    _pya_free(data->arg_types);
-    _free_loop1d_list(data->next);
-    _pya_free(data);
 }
 
 #if PY_VERSION_HEX >= 0x02070000
