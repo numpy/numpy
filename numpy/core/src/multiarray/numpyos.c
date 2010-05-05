@@ -508,7 +508,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
             }
             memcpy(buffer, s, n);
             buffer[n] = '\0';
-#if defined(NPY_PY3K)
+#if PY_VERSION_HEX >= 0x02070000
             result = PyOS_string_to_double(buffer, &q, NULL);
 #else
             result = PyOS_ascii_strtod(buffer, &q);
@@ -521,7 +521,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     }
     /* End of ##2 */
 
-#if defined(NPY_PY3K)
+#if PY_VERSION_HEX >= 0x02070000
     return PyOS_string_to_double(s, endptr, NULL);
 #else
     return PyOS_ascii_strtod(s, endptr);
