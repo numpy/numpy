@@ -45,6 +45,7 @@ Norms and other numbers
    linalg.norm
    linalg.cond
    linalg.det
+   linalg.slogdet
    trace
 
 Solving equations and inverting matrices

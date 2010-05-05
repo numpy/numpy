@@ -1564,6 +1564,8 @@ def slogdet(a):
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
 
+    .. versionadded:: 2.0.0.
+
     Examples
     --------
     The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
