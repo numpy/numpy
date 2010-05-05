@@ -984,7 +984,7 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *keywords[] = {"out", "mode"};
+    static char *keywords[] = {"out", "mode", NULL};
     PyObject *choices;
     PyArrayObject *out = NULL;
     NPY_CLIPMODE clipmode = NPY_RAISE;
