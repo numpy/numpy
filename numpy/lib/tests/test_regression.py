@@ -181,5 +181,13 @@ class TestRegression(TestCase):
             assert isinstance(path, (str, unicode))
             assert path != ''
 
+    def test_polyder_return_type(self):
+        """Ticket #1249"""
+        assert_(isinstance(np.polyder(np.poly1d([1]), 0), np.poly1d))
+        assert_(isinstance(np.polyder([1], 0), np.ndarray))
+        assert_(isinstance(np.polyder(np.poly1d([1]), 1), np.poly1d))
+        assert_(isinstance(np.polyder([1], 1), np.ndarray))
+
+
 if __name__ == "__main__":
     run_module_suite()
