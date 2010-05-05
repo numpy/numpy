@@ -10,15 +10,15 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 """
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
-           'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'det', 'svd',
-           'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
+           'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
+           'svd', 'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError']
 
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        isfinite, size, finfo
+        isfinite, size, finfo, absolute, log, exp
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
 from numpy.matrixlib.defmatrix import matrix_power
@@ -1533,6 +1533,85 @@ def pinv(a, rcond=1e-15 ):
 
 # Determinant
 
+def slogdet(a):
+    """
+    Compute the sign and (natural) logarithm of the determinant of an array.
+
+    If an array has a very small or very large determinant, than a call to
+    `det` may overflow or underflow. This routine is more robust against such
+    issues, because it computes the logarithm of the determinant rather than
+    the determinant itself.
+
+    Parameters
+    ----------
+    a : array_like, shape (M, M)
+        Input array.
+
+    Returns
+    -------
+    sign : float or complex
+        A number representing the sign of the determinant. For a real matrix,
+        this is 1, 0, or -1. For a complex matrix, this is a complex number
+        with absolute value 1 (i.e., it is on the unit circle), or else 0.
+    logdet : float
+        The natural log of the absolute value of the determinant.
+
+    If the determinant is zero, then `sign` will be 0 and `logdet` will be
+    -Inf. In all cases, the determinant is equal to `sign * np.exp(logdet)`.
+
+    Notes
+    -----
+    The determinant is computed via LU factorization using the LAPACK
+    routine z/dgetrf.
+
+    Examples
+    --------
+    The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
+
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> (sign, logdet) = np.linalg.slogdet(a)
+    >>> (sign, logdet)
+    (-1, 0.69314718055994529)
+    >>> sign * np.exp(logdet)
+    -2.0
+
+    This routine succeeds where ordinary `det` does not:
+
+    >>> np.linalg.det(np.eye(500) * 0.1)
+    0.0
+    >>> np.linalg.slogdet(np.eye(500) * 0.1)
+    (1, -1151.2925464970228)
+
+    See Also
+    --------
+    det
+
+    """
+    a = asarray(a)
+    _assertRank2(a)
+    _assertSquareness(a)
+    t, result_t = _commonType(a)
+    a = _fastCopyAndTranspose(t, a)
+    n = a.shape[0]
+    if isComplexType(t):
+        lapack_routine = lapack_lite.zgetrf
+    else:
+        lapack_routine = lapack_lite.dgetrf
+    pivots = zeros((n,), fortran_int)
+    results = lapack_routine(n, n, a, n, pivots, 0)
+    info = results['info']
+    if (info < 0):
+        raise TypeError, "Illegal input to Fortran routine"
+    elif (info > 0):
+        return (t(0.0), _realType(t)(-Inf))
+    sign = 1. - 2. * (add.reduce(pivots != arange(1, n + 1)) % 2)
+    d = diagonal(a)
+    absd = absolute(d)
+    sign *= multiply.reduce(d / absd)
+    log(absd, absd)
+    logdet = add.reduce(absd, axis=-1)
+    return sign, logdet
+
 def det(a):
     """
     Compute the determinant of an array.
@@ -1560,27 +1639,14 @@ def det(a):
     >>> np.linalg.det(a)
     -2.0
 
-    """
-    a = asarray(a)
-    _assertRank2(a)
-    _assertSquareness(a)
-    t, result_t = _commonType(a)
-    a = _fastCopyAndTranspose(t, a)
-    n = a.shape[0]
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgetrf
-    else:
-        lapack_routine = lapack_lite.dgetrf
-    pivots = zeros((n,), fortran_int)
-    results = lapack_routine(n, n, a, n, pivots, 0)
-    info = results['info']
-    if (info < 0):
-        raise TypeError, "Illegal input to Fortran routine"
-    elif (info > 0):
-        return 0.0
-    sign = add.reduce(pivots != arange(1, n+1)) % 2
-    return (1.-2.*sign)*multiply.reduce(diagonal(a), axis=-1)
+    See Also
+    --------
+    slogdet : Another way to representing the determinant, more suitable
+      for large matrices where underflow/overflow may occur.
 
+    """
+    sign, logdet = slogdet(a)
+    return sign * exp(logdet)
 
 # Linear Least Squares
 

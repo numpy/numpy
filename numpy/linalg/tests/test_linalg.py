@@ -127,12 +127,31 @@ class TestPinv(LinalgTestCase, TestCase):
 class TestDet(LinalgTestCase, TestCase):
     def do(self, a, b):
         d = linalg.det(a)
+        (s, ld) = linalg.slogdet(a)
         if asarray(a).dtype.type in (single, double):
             ad = asarray(a).astype(double)
         else:
             ad = asarray(a).astype(cdouble)
         ev = linalg.eigvals(ad)
         assert_almost_equal(d, multiply.reduce(ev))
+        assert_almost_equal(s * np.exp(ld), multiply.reduce(ev))
+        if s != 0:
+            assert_almost_equal(np.abs(s), 1)
+        else:
+            assert_equal(ld, -inf)
+
+    def test_zero(self):
+        assert_equal(linalg.det([[0.0]]), 0.0)
+        assert_equal(type(linalg.det([[0.0]])), double)
+        assert_equal(linalg.det([[0.0j]]), 0.0)
+        assert_equal(type(linalg.det([[0.0j]])), cdouble)
+
+        assert_equal(linalg.slogdet([[0.0]]), (0.0, -inf))
+        assert_equal(type(linalg.slogdet([[0.0]])[0]), double)
+        assert_equal(type(linalg.slogdet([[0.0]])[1]), double)
+        assert_equal(linalg.slogdet([[0.0j]]), (0.0j, -inf))
+        assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
+        assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
 
 class TestLstsq(LinalgTestCase, TestCase):
     def do(self, a, b):

@@ -9,6 +9,7 @@ norm            Vector or matrix norm
 inv             Inverse of a square matrix
 solve           Solve a linear system of equations
 det             Determinant of a square matrix
+slogdet         Logarithm of the determinant of a square matrix
 lstsq           Solve linear least-squares problem
 pinv            Pseudo-inverse (Moore-Penrose) calculated using a singular
                 value decomposition
