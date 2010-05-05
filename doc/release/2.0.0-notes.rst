@@ -48,3 +48,10 @@ instead of the longer alternative
 
     >>> np.dot(a, np.dot(b, c))
 
+linalg.slogdet function
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The slogdet function returns the sign and logarithm of the determinant
+of a matrix. Because the determinant may involve the product of many
+small/large values, the result is often more accurate than that obtained
+by simple multiplication.
