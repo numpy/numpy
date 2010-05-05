@@ -378,19 +378,20 @@ def polyder(p, m=1):
 
     """
     m = int(m)
-    truepoly = isinstance(p, poly1d)
-    p = NX.asarray(p)
-    n = len(p)-1
-    y = p[:-1] * NX.arange(n, 0, -1)
     if m < 0:
         raise ValueError, "Order of derivative must be positive (see polyint)"
+
+    truepoly = isinstance(p, poly1d)
+    p = NX.asarray(p)
+    n = len(p) - 1
+    y = p[:-1] * NX.arange(n, 0, -1)
     if m == 0:
-        return p
+        val = p
     else:
-        val = polyder(y, m-1)
-        if truepoly:
-            val = poly1d(val)
-        return val
+        val = polyder(y, m - 1)
+    if truepoly:
+        val = poly1d(val)
+    return val
 
 def polyfit(x, y, deg, rcond=None, full=False):
     """
