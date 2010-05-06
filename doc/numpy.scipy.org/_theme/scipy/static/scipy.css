@@ -13,6 +13,12 @@ div.bodywrapper {
   width: 100%;
 }
 
+div.documentwrapper {
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
 div.body p, div.body dd, div.body li {
   line-height: 125%;
 }
@@ -181,9 +187,10 @@ table.footnote td, table.footnote th {
  */
 body div.top-logo-header {
     text-align: left; 
-    background-color: #8CAAE6;
+    background-color: #a2bae8;
     border-bottom: 8px solid #003399;
-    border-top: 10px solid #6487dc;
+    margin-top: 10px;
+    border-top: 1px solid #bbb;
 }
 
 /**

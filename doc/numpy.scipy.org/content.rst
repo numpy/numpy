@@ -5,3 +5,5 @@ Numerical Python
        :maxdepth: 2
 
        old_array_packages.rst
+       license.rst
+
