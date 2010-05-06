@@ -23,6 +23,7 @@ class TestAny(TestCase):
         assert_array_equal(sometrue(y1, axis=0), [1, 1, 0])
         assert_array_equal(sometrue(y1, axis=1), [0, 1, 1])
 
+
 class TestAll(TestCase):
     def test_basic(self):
         y1 = [0, 1, 1, 0]
@@ -38,6 +39,7 @@ class TestAll(TestCase):
         assert(not all(y1))
         assert_array_equal(alltrue(y1, axis=0), [0, 0, 1])
         assert_array_equal(alltrue(y1, axis=1), [0, 0, 1])
+
 
 class TestAverage(TestCase):
     def test_basic(self):
@@ -64,30 +66,29 @@ class TestAverage(TestCase):
     def test_weights(self):
         y = arange(10)
         w = arange(10)
-        assert_almost_equal(average(y, weights=w), (arange(10) ** 2).sum()*1. / arange(10).sum())
-
+        actual = average(y, weights=w)
+        desired = (arange(10) ** 2).sum()*1. / arange(10).sum()
+        assert_almost_equal(actual, desired)
+        
         y1 = array([[1, 2, 3], [4, 5, 6]])
         w0 = [1, 2]
         actual = average(y1, weights=w0, axis=0)
         desired = array([3., 4., 5.])
         assert_almost_equal(actual, desired)
 
-
         w1 = [0, 0, 1]
+        actual = average(y1, weights=w1, axis=1)
         desired = array([3., 6.])
-        assert_almost_equal(average(y1, weights=w1, axis=1), desired)
+        assert_almost_equal(actual, desired)
 
         # This should raise an error. Can we test for that ?
         # assert_equal(average(y1, weights=w1), 9./2.)
-
 
         # 2D Case
         w2 = [[0, 0, 1], [0, 0, 2]]
         desired = array([3., 6.])
         assert_array_equal(average(y1, weights=w2, axis=1), desired)
-
         assert_equal(average(y1, weights=w2), 5.)
-
 
     def test_returned(self):
         y = array([[1, 2, 3], [4, 5, 6]])
@@ -136,12 +137,14 @@ class TestSelect(TestCase):
         assert_equal(len(choices), 3)
         assert_equal(len(conditions), 3)
 
+
 class TestInsert(TestCase):
     def test_basic(self):
         a = [1, 2, 3]
         assert_equal(insert(a, 0, 1), [1, 1, 2, 3])
         assert_equal(insert(a, 3, 1), [1, 2, 3, 1])
         assert_equal(insert(a, [1, 1, 1], [1, 2, 3]), [1, 1, 2, 3, 2, 3])
+
 
 class TestAmax(TestCase):
     def test_basic(self):
@@ -153,6 +156,7 @@ class TestAmax(TestCase):
         assert_equal(amax(b, axis=0), [8.0, 10.0, 9.0])
         assert_equal(amax(b, axis=1), [9.0, 10.0, 8.0])
 
+
 class TestAmin(TestCase):
     def test_basic(self):
         a = [3, 4, 5, 10, -3, -5, 6.0]
@@ -163,6 +167,7 @@ class TestAmin(TestCase):
         assert_equal(amin(b, axis=0), [3.0, 3.0, 2.0])
         assert_equal(amin(b, axis=1), [3.0, 4.0, 2.0])
 
+
 class TestPtp(TestCase):
     def test_basic(self):
         a = [3, 4, 5, 10, -3, -5, 6.0]
@@ -172,6 +177,7 @@ class TestPtp(TestCase):
              [8, 3.0, 2.0]]
         assert_equal(ptp(b, axis=0), [5.0, 7.0, 7.0])
         assert_equal(ptp(b, axis= -1), [6.0, 6.0, 6.0])
+
 
 class TestCumsum(TestCase):
     def test_basic(self):
@@ -188,6 +194,7 @@ class TestCumsum(TestCase):
                                array([[1, 3, 6, 10],
                                       [5, 11, 18, 27],
                                       [10, 13, 17, 22]], ctype))
+
 
 class TestProd(TestCase):
     def test_basic(self):
@@ -206,6 +213,7 @@ class TestProd(TestCase):
                 assert_array_equal(prod(a2, axis=0),
                                    array([50, 36, 84, 180], ctype))
                 assert_array_equal(prod(a2, axis= -1), array([24, 1890, 600], ctype))
+
 
 class TestCumprod(TestCase):
     def test_basic(self):
@@ -232,6 +240,7 @@ class TestCumprod(TestCase):
                                           [ 5, 30, 210, 1890],
                                           [10, 30, 120, 600]], ctype))
 
+
 class TestDiff(TestCase):
     def test_basic(self):
         x = [1, 4, 6, 7, 12]
@@ -253,6 +262,7 @@ class TestDiff(TestCase):
         assert_array_equal(diff(x, axis=0), out3)
         assert_array_equal(diff(x, n=2, axis=0), out4)
 
+
 class TestGradient(TestCase):
     def test_basic(self):
         x = array([[1, 1], [3, 4]])
@@ -271,6 +281,7 @@ class TestGradient(TestCase):
         x = np.ma.array([[1, 1], [3, 4]])
         assert_equal(type(gradient(x)[0]), type(x))
 
+
 class TestAngle(TestCase):
     def test_basic(self):
         x = [1 + 3j, sqrt(2) / 2.0 + 1j * sqrt(2) / 2, 1, 1j, -1, -1j, 1 - 3j, -1 + 3j]
@@ -282,6 +293,7 @@ class TestAngle(TestCase):
         assert_array_almost_equal(y, yo, 11)
         assert_array_almost_equal(z, zo, 11)
 
+
 class TestTrimZeros(TestCase):
     """ only testing for integer splits.
     """
@@ -289,10 +301,12 @@ class TestTrimZeros(TestCase):
         a = array([0, 0, 1, 2, 3, 4, 0])
         res = trim_zeros(a)
         assert_array_equal(res, array([1, 2, 3, 4]))
+
     def test_leading_skip(self):
         a = array([0, 0, 1, 0, 2, 3, 4, 0])
         res = trim_zeros(a)
         assert_array_equal(res, array([1, 0, 2, 3, 4]))
+
     def test_trailing_skip(self):
         a = array([0, 0, 1, 0, 2, 3, 0, 4, 0])
         res = trim_zeros(a)
@@ -304,10 +318,12 @@ class TestExtins(TestCase):
         a = array([1, 3, 2, 1, 2, 3, 3])
         b = extract(a > 1, a)
         assert_array_equal(b, [3, 2, 2, 3, 3])
+
     def test_place(self):
         a = array([1, 4, 3, 2, 5, 8, 7])
         place(a, [0, 1, 0, 1, 0, 1, 0], [2, 4, 6])
         assert_array_equal(a, [1, 2, 3, 4, 5, 6, 7])
+
     def test_both(self):
         a = rand(10)
         mask = a > 0.5
@@ -316,6 +332,7 @@ class TestExtins(TestCase):
         place(a, mask, 0)
         place(a, mask, c)
         assert_array_equal(a, ac)
+
 
 class TestVectorize(TestCase):
     def test_simple(self):
@@ -327,6 +344,7 @@ class TestVectorize(TestCase):
         f = vectorize(addsubtract)
         r = f([0, 3, 6, 9], [1, 3, 5, 7])
         assert_array_equal(r, [1, 6, 1, 2])
+
     def test_scalar(self):
         def addsubtract(a, b):
             if a > b:
@@ -336,11 +354,44 @@ class TestVectorize(TestCase):
         f = vectorize(addsubtract)
         r = f([0, 3, 6, 9], 5)
         assert_array_equal(r, [5, 8, 1, 4])
+
     def test_large(self):
         x = linspace(-3, 2, 10000)
         f = vectorize(lambda x: x)
         y = f(x)
         assert_array_equal(y, x)
+
+    def test_ufunc(self):
+        import math
+        f = vectorize(math.cos)
+        args = array([0, 0.5*pi, pi, 1.5*pi, 2*pi])
+        r1 = f(args)
+        r2 = cos(args)
+        assert_array_equal(r1, r2)
+
+    def test_keywords(self):
+        import math
+        def foo(a, b=1):
+            return a + b
+        f = vectorize(foo)
+        args = array([1,2,3])
+        r1 = f(args)
+        r2 = array([2,3,4])
+        assert_array_equal(r1, r2)
+        r1 = f(args, 2)
+        r2 = array([3,4,5])
+        assert_array_equal(r1, r2)
+
+    def test_keywords_no_func_code(self):
+        # This needs to test a function that has keywords but
+        # no func_code attribute, since otherwise vectorize will
+        # inspect the func_code.
+        import random
+        try:
+            f = vectorize(random.randrange)
+        except:
+            raise AssertionError()
+
 
 class TestDigitize(TestCase):
     def test_forward(self):
@@ -357,6 +408,7 @@ class TestDigitize(TestCase):
         x = rand(10)
         bin = linspace(x.min(), x.max(), 10)
         assert all(digitize(x, bin) != 0)
+
 
 class TestUnwrap(TestCase):
     def test_simple(self):
@@ -447,6 +499,7 @@ class TestSinc(TestCase):
         #check symmetry
         assert_array_almost_equal(w, flipud(w), 7)
 
+
 class TestHistogram(TestCase):
     def setUp(self):
         pass
@@ -486,7 +539,6 @@ class TestHistogram(TestCase):
         area = sum(a * diff(b))
         assert_almost_equal(area, 1)
 
-
     def test_outliers(self):
         # Check that outliers are not tallied
         a = arange(10) + .5
@@ -511,7 +563,6 @@ class TestHistogram(TestCase):
         h, b = histogram(a, bins=8, range=[1, 9], weights=w)
         assert_equal(h, w[1:-1])
 
-
     def test_type(self):
         # Check the type of the returned histogram
         a = arange(10) + .5
@@ -526,7 +577,6 @@ class TestHistogram(TestCase):
 
         h, b = histogram(a, weights=ones(10, float))
         assert(issubdtype(h.dtype, float))
-
 
     def test_weights(self):
         v = rand(100)
@@ -549,6 +599,7 @@ class TestHistogram(TestCase):
         assert_array_equal(wa, [4, 5, 0, 1])
         wa, wb = histogram([1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], normed=True)
         assert_array_equal(wa, array([4, 5, 0, 1]) / 10. / 3. * 4)
+
 
 class TestHistogramdd(TestCase):
     def test_simple(self):
@@ -622,6 +673,7 @@ class TestHistogramdd(TestCase):
         hist, edges = histogramdd(x, bins=2)
         assert_array_equal(edges[0], array([-0.5, 0. , 0.5]))
 
+
 class TestUnique(TestCase):
     def test_simple(self):
         x = array([4, 3, 2, 1, 1, 2, 3, 4, 0])
@@ -641,6 +693,7 @@ class TestCheckFinite(TestCase):
         numpy.lib.asarray_chkfinite(a)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, b)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, c)
+
 
 class TestNaNFuncts(TestCase):
     def setUp(self):
@@ -728,7 +781,6 @@ class TestNaNFuncts(TestCase):
         assert_equal(np.isinf(a), np.zeros((2, 4), dtype=bool))
 
 
-
 class TestCorrCoef(TestCase):
     def test_simple(self):
         A = array([[ 0.15391142, 0.18045767, 0.14197213],
@@ -756,7 +808,6 @@ class TestCorrCoef(TestCase):
                                      - 0.66173113, 0.98317823, 1.        ]]))
 
 
-
 class Test_i0(TestCase):
     def test_simple(self):
         assert_almost_equal(i0(0.5), array(1.0634833707413234))
@@ -775,6 +826,7 @@ class Test_i0(TestCase):
                                    [ 1.03352052, 1.13557954],
                                    [ 1.0588429 , 1.06432317]]))
 
+
 class TestKaiser(TestCase):
     def test_simple(self):
         assert_almost_equal(kaiser(0, 1.0), array([]))
@@ -790,6 +842,7 @@ class TestKaiser(TestCase):
     def test_int_beta(self):
         kaiser(3, 4)
 
+
 class TestMsort(TestCase):
     def test_simple(self):
         A = array([[ 0.44567325, 0.79115165, 0.5490053 ],
@@ -799,6 +852,7 @@ class TestMsort(TestCase):
                             array([[ 0.36844147, 0.37325583, 0.39172155],
                                    [ 0.44567325, 0.52929049, 0.5490053 ],
                                    [ 0.64864341, 0.79115165, 0.96098397]]))
+
 
 class TestMeshgrid(TestCase):
     def test_simple(self):
@@ -857,6 +911,7 @@ class TestPiecewise(TestCase):
         assert y.ndim == 0
         assert y == 0
 
+
 class TestBincount(TestCase):
     def test_simple(self):
         y = np.bincount(np.arange(4))
@@ -878,9 +933,11 @@ class TestBincount(TestCase):
         y = np.bincount(x, w)
         assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1]))
 
+
 def compare_results(res, desired):
     for i in range(len(desired)):
         assert_array_equal(res[i], desired[i])
+
 
 if __name__ == "__main__":
     run_module_suite()

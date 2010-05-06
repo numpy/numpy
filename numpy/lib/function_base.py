@@ -117,15 +117,16 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
     if weights is not None:
         weights = asarray(weights)
         if np.any(weights.shape != a.shape):
-            raise ValueError, 'weights should have the same shape as a.'
+            raise ValueError(
+                    'weights should have the same shape as a.')
         weights = weights.ravel()
     a =  a.ravel()
 
     if (range is not None):
         mn, mx = range
         if (mn > mx):
-            raise AttributeError, \
-                'max must be larger than min in range parameter.'
+            raise AttributeError(
+                'max must be larger than min in range parameter.')
 
     if not iterable(bins):
         if range is None:
@@ -138,7 +139,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
     else:
         bins = asarray(bins)
         if (np.diff(bins) < 0).any():
-            raise AttributeError, 'bins must increase monotonically.'
+            raise AttributeError(
+                    'bins must increase monotonically.')
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -244,8 +246,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     try:
         M = len(bins)
         if M != D:
-            raise AttributeError, 'The dimension of bins must be equal ' \
-                                  'to the dimension of the sample x.'
+            raise AttributeError(
+                    'The dimension of bins must be equal'\
+                    ' to the dimension of the sample x.')
     except TypeError:
         bins = D*[bins]
 
@@ -334,12 +337,13 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         s = hist.sum()
         for i in arange(D):
             shape = ones(D, int)
-            shape[i] = nbin[i]-2
+            shape[i] = nbin[i] - 2
             hist = hist / dedges[i].reshape(shape)
         hist /= s
 
-    if (hist.shape != nbin-2).any():
-        raise RuntimeError('Internal Shape Error')
+    if (hist.shape != nbin - 2).any():
+        raise RuntimeError(
+                "Internal Shape Error")
     return hist, edges
 
 
@@ -429,23 +433,30 @@ def average(a, axis=None, weights=None, returned=False):
         # Sanity checks
         if a.shape != wgt.shape :
             if axis is None :
-                raise TypeError, "Axis must be specified when shapes of a and weights differ."
+                raise TypeError(
+                        "Axis must be specified when shapes of a "\
+                        "and weights differ.")
             if wgt.ndim != 1 :
-                raise TypeError, "1D weights expected when shapes of a and weights differ."
+                raise TypeError(
+                        "1D weights expected when shapes of a and "\
+                        "weights differ.")
             if wgt.shape[0] != a.shape[axis] :
-                raise ValueError, "Length of weights not compatible with specified axis."
+                raise ValueError(
+                        "Length of weights not compatible with "\
+                        "specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1,axis)
+            wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis)
         if (scl == 0.0).any():
-            raise ZeroDivisionError, "Weights sum to zero, can't be normalized"
+            raise ZeroDivisionError(
+                    "Weights sum to zero, can't be normalized")
 
-        avg = np.multiply(a,wgt).sum(axis)/scl
+        avg = np.multiply(a, wgt).sum(axis)/scl
 
     if returned:
-        scl = np.multiply(avg,0) + scl
+        scl = np.multiply(avg, 0) + scl
         return avg, scl
     else:
         return avg
@@ -513,7 +524,8 @@ def asarray_chkfinite(a):
     a = asarray(a)
     if (a.dtype.char in typecodes['AllFloat']) \
            and (_nx.isnan(a).any() or _nx.isinf(a).any()):
-        raise ValueError, "array must not contain infs or NaNs"
+        raise ValueError(
+                "array must not contain infs or NaNs")
     return a
 
 def piecewise(x, condlist, funclist, *args, **kw):
@@ -612,8 +624,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condlist.append(~totlist)
         n += 1
     if (n != n2):
-        raise ValueError, "function list and condition list " \
-                          "must be the same"
+        raise ValueError(
+                "function list and condition list must be the same")
     zerod = False
     # This is a hack to work around problems with NumPy's
     #  handling of 0-d arrays and boolean indexing with
@@ -683,7 +695,8 @@ def select(condlist, choicelist, default=0):
     n = len(condlist)
     n2 = len(choicelist)
     if n2 != n:
-        raise ValueError, "list of cases must be same length as list of conditions"
+        raise ValueError(
+                "list of cases must be same length as list of conditions")
     choicelist = [default] + choicelist
     S = 0
     pfac = 1
@@ -791,7 +804,8 @@ def gradient(f, *varargs):
     elif n == N:
         dx = list(varargs)
     else:
-        raise SyntaxError, "invalid number of arguments"
+        raise SyntaxError(
+                "invalid number of arguments")
 
     # use central differences on interior and first differences on endpoints
 
@@ -885,7 +899,8 @@ def diff(a, n=1, axis=-1):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError, 'order must be non-negative but got ' + repr(n)
+        raise ValueError(
+                "order must be non-negative but got " + repr(n))
     a = asanyarray(a)
     nd = len(a.shape)
     slice1 = [slice(None)]*nd
@@ -1596,22 +1611,49 @@ def disp(mesg, device=None, linefeed=True):
 
 # return number of input arguments and
 #  number of default arguments
-import re
+
 def _get_nargs(obj):
+    import re
+
+    terr = re.compile(r'.*? takes (exactly|at least) (?P<exargs>(\d+)|(\w+))' +
+            r' argument(s|) \((?P<gargs>(\d+)|(\w+)) given\)')
+    def _convert_to_int(strval):
+        try:
+            result = int(strval)
+        except ValueError:
+            if strval=='zero':
+                result = 0
+            elif strval=='one':
+                result = 1
+            elif strval=='two':
+                result = 2
+            # How high to go? English only?
+            else:
+                raise
+        return result
+
     if not callable(obj):
-        raise TypeError, "Object is not callable."
+        raise TypeError(
+                "Object is not callable.")
     if sys.version_info[0] >= 3:
+        # inspect currently fails for binary extensions
+        # like math.cos. So fall back to other methods if
+        # it fails.
         import inspect
-        spec = inspect.getargspec(obj)
-        nargs = len(spec.args)
-        if spec.defaults:
-            ndefaults = len(spec.defaults)
-        else:
-            ndefaults = 0
-        if inspect.ismethod(obj):
-            nargs -= 1
-        return nargs, ndefaults
-    elif hasattr(obj,'func_code'):
+        try:
+            spec = inspect.getargspec(obj)
+            nargs = len(spec.args)
+            if spec.defaults:
+                ndefaults = len(spec.defaults)
+            else:
+                ndefaults = 0
+            if inspect.ismethod(obj):
+                nargs -= 1
+            return nargs, ndefaults
+        except:
+            pass
+
+    if hasattr(obj,'func_code'):
         fcode = obj.func_code
         nargs = fcode.co_argcount
         if obj.func_defaults is not None:
@@ -1621,19 +1663,21 @@ def _get_nargs(obj):
         if isinstance(obj, types.MethodType):
             nargs -= 1
         return nargs, ndefaults
-    terr = re.compile(r'.*? takes exactly (?P<exargs>\d+) argument(s|) \((?P<gargs>\d+) given\)')
+
     try:
         obj()
         return 0, 0
     except TypeError, msg:
         m = terr.match(str(msg))
         if m:
-            nargs = int(m.group('exargs'))
-            ndefaults = int(m.group('gargs'))
+            nargs = _convert_to_int(m.group('exargs'))
+            ndefaults = _convert_to_int(m.group('gargs'))
             if isinstance(obj, types.MethodType):
                 nargs -= 1
             return nargs, ndefaults
-    raise ValueError, 'failed to determine the number of arguments for %s' % (obj)
+
+    raise ValueError(
+            "failed to determine the number of arguments for %s" % (obj))
 
 
 class vectorize(object):
@@ -1717,11 +1761,13 @@ class vectorize(object):
             self.otypes = otypes
             for char in self.otypes:
                 if char not in typecodes['All']:
-                    raise ValueError, "invalid otype specified"
+                    raise ValueError(
+                            "invalid otype specified")
         elif iterable(otypes):
             self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
         else:
-            raise ValueError, "output types must be a string of typecode characters or a list of data-types"
+            raise ValueError(
+                    "Invalid otype specification")
         self.lastcallargs = 0
 
     def __call__(self, *args):
@@ -1730,8 +1776,8 @@ class vectorize(object):
         nargs = len(args)
         if self.nin:
             if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
-                raise ValueError, "mismatch between python function inputs"\
-                      " and received arguments"
+                raise ValueError(
+                        "Invalid number of arguments")
 
         # we need a new ufunc if this is being called with more arguments.
         if (self.lastcallargs != nargs):
@@ -3052,7 +3098,8 @@ def delete(arr, obj, axis=None):
     if isinstance(obj, (int, long, integer)):
         if (obj < 0): obj += N
         if (obj < 0 or obj >=N):
-            raise ValueError, "invalid entry"
+            raise ValueError(
+                    "invalid entry")
         newshape[axis]-=1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, obj)
@@ -3197,8 +3244,9 @@ def insert(arr, obj, values, axis=None):
     if isinstance(obj, (int, long, integer)):
         if (obj < 0): obj += N
         if obj < 0 or obj > N:
-            raise ValueError, "index (%d) out of range (0<=index<=%d) "\
-                  "in dimension %d" % (obj, N, axis)
+            raise ValueError(
+                    "index (%d) out of range (0<=index<=%d) "\
+                    "in dimension %d" % (obj, N, axis))
         newshape[axis] += 1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, obj)
