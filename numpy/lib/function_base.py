@@ -55,7 +55,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
     range : (float, float), optional
         The lower and upper range of the bins.  If not provided, range
         is simply ``(a.min(), a.max())``.  Values outside the range are
-        ignored. 
+        ignored.
     normed : bool, optional
         If False, the result will contain the number of samples
         in each bin.  If True, the result is the value of the
@@ -68,7 +68,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
         only contributes its associated weight towards the bin count
         (instead of 1).  If `normed` is True, the weights are normalized,
         so that the integral of the density over the range remains 1
- 
+
     Returns
     -------
     hist : array
@@ -76,7 +76,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
         description of the possible semantics.
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
-        
+
 
     See Also
     --------
@@ -112,7 +112,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
     1.0
 
     """
- 
+
     a = asarray(a)
     if weights is not None:
         weights = asarray(weights)
@@ -984,6 +984,8 @@ def interp(x, xp, fp, left=None, right=None):
 
     """
     if isinstance(x, (float, int, number)):
+        return compiled_interp([x], xp, fp, left, right).item()
+    elif isinstance(x, np.ndarray) and x.ndim == 0:
         return compiled_interp([x], xp, fp, left, right).item()
     else:
         return compiled_interp(x, xp, fp, left, right)
@@ -2043,7 +2045,7 @@ def blackman(M):
     >>> plt.xlabel("Sample")
     <matplotlib.text.Text object at 0x...>
     >>> plt.show()
-    
+
     >>> plt.figure()
     <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
@@ -2152,7 +2154,7 @@ def bartlett(M):
     >>> plt.xlabel("Sample")
     <matplotlib.text.Text object at 0x...>
     >>> plt.show()
-    
+
     >>> plt.figure()
     <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5

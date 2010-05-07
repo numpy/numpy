@@ -69,7 +69,7 @@ class TestAverage(TestCase):
         actual = average(y, weights=w)
         desired = (arange(10) ** 2).sum()*1. / arange(10).sum()
         assert_almost_equal(actual, desired)
-        
+
         y1 = array([[1, 2, 3], [4, 5, 6]])
         w0 = [1, 2]
         actual = average(y1, weights=w0, axis=0)
@@ -932,6 +932,34 @@ class TestBincount(TestCase):
         w = np.array([0.2, 0.3, 0.5, 0.1, 0.2])
         y = np.bincount(x, w)
         assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1]))
+
+
+class TestInterp(TestCase):
+    def test_basic(self):
+        x = np.linspace(0, 1, 5)
+        y = np.linspace(0, 1, 5)
+        x0 = np.linspace(0, 1, 50)
+        assert_almost_equal(np.interp(x0, x, y), x0)
+
+    def test_scalar_interpolation_point(self):
+        x = np.linspace(0, 1, 5)
+        y = np.linspace(0, 1, 5)
+        x0 = 0
+        assert_almost_equal(np.interp(x0, x, y), x0)
+        x0 = .3
+        assert_almost_equal(np.interp(x0, x, y), x0)
+        x0 = np.float32(.3)
+        assert_almost_equal(np.interp(x0, x, y), x0)
+        x0 = np.float64(.3)
+        assert_almost_equal(np.interp(x0, x, y), x0)
+
+    def test_zero_dimensional_interpolation_point(self):
+        x = np.linspace(0, 1, 5)
+        y = np.linspace(0, 1, 5)
+        x0 = np.array(.3)
+        assert_almost_equal(np.interp(x0, x, y), x0)
+        x0 = np.array(.3, dtype=object)
+        assert_almost_equal(np.interp(x0, x, y), .3)
 
 
 def compare_results(res, desired):
