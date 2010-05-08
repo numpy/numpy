@@ -1,6 +1,7 @@
 from numpy.testing import *
 from numpy.lib import *
 from numpy.core import *
+from numpy.compat import asbytes
 
 def assert_all(x):
     assert(all(x)), x
@@ -379,7 +380,7 @@ class TestDateTimeData:
 
     def test_basic(self):
         a = array(['1980-03-23'], dtype=datetime64)
-        assert_equal(datetime_data(a.dtype), ('us', 1, 1, 1))
+        assert_equal(datetime_data(a.dtype), (asbytes('us'), 1, 1, 1))
 
 
 if __name__ == "__main__":
