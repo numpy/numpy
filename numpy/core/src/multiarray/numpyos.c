@@ -420,6 +420,32 @@ NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
     return 0;
 }
 
+/*
+ * _NumPyOS_ascii_strtod_plain:
+ * 
+ * PyOS_ascii_strtod work-alike, with no enhanced features,
+ * for forward compatibility with Python >= 2.7
+ */
+static double
+NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
+{
+    double result;
+#if PY_VERSION_HEX >= 0x02070000
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API
+    result = PyOS_string_to_double(s, endptr, NULL);
+    if (PyErr_Occurred()) {
+        if (endptr) {
+            *endptr = (char*)s;
+        }
+        PyErr_Clear();
+    }
+    NPY_DISABLE_C_API
+#else
+    result = PyOS_ascii_strtod(s, endptr);
+#endif
+    return result;
+}
 
 /*
  * NumPyOS_ascii_strtod:
@@ -508,11 +534,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
             }
             memcpy(buffer, s, n);
             buffer[n] = '\0';
-#if PY_VERSION_HEX >= 0x02070000
-            result = PyOS_string_to_double(buffer, &q, NULL);
-#else
-            result = PyOS_ascii_strtod(buffer, &q);
-#endif
+            result = NumPyOS_ascii_strtod_plain(buffer, &q);
             if (endptr != NULL) {
                 *endptr = (char*)(s + (q - buffer));
             }
@@ -521,11 +543,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     }
     /* End of ##2 */
 
-#if PY_VERSION_HEX >= 0x02070000
-    return PyOS_string_to_double(s, endptr, NULL);
-#else
-    return PyOS_ascii_strtod(s, endptr);
-#endif
+    return NumPyOS_ascii_strtod_plain(s, endptr);
 }
 
 

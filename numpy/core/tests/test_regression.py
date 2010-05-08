@@ -1298,5 +1298,9 @@ class TestRegression(TestCase):
         assert np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9]))
         assert np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9]))
 
+    def test_fromstring_crash(self):
+        # Ticket #1345: the following should not cause a crash
+        np.fromstring(asbytes('aa, aa, 1.0'), sep=',')
+
 if __name__ == "__main__":
     run_module_suite()
