@@ -608,7 +608,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def split_line(line):
         """Chop off comments, strip, and split at delimiter."""
-        line = line.split(comments)[0].strip()
+        line = asbytes(line).split(comments)[0].strip()
         if line:
             return line.split(delimiter)
         else:
