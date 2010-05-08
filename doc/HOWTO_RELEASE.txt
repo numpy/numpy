@@ -218,7 +218,8 @@ Make the release
 The tar-files and binary releases for distribution should be uploaded to SourceForge, 
 together with the Release Notes and the Changelog. Uploading can be done
 through a web interface or, more efficiently, through scp/sftp/rsync as
-described `here <https://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download>`_.
+described in the SourceForge 
+`upload guide <https://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download>`_.
 For example::
 
   scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/ 
