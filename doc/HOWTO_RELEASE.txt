@@ -1,0 +1,248 @@
+This file gives an overview of what is necessary to build binary releases for
+NumPy on OS X. Windows binaries are built here using Wine, they can of course
+also be built on Windows itself. Building OS X binaries on another platform is
+not possible.
+
+Current build and release info
+==============================
+The current info on building and releasing NumPy and SciPy is scattered in
+several places. It should be summarized in one place, updated and where
+necessary described in more detail. The sections below list all places where
+useful info can be found.
+
+Source tree
+-----------
+* INSTALL.txt
+* release.sh
+* pavement.py
+
+NumPy Trac
+----------
+* http://projects.scipy.org/numpy/wiki/MakingReleases
+* http://projects.scipy.org/numpy/wiki/MicrosoftToolchainSupport
+* http://projects.scipy.org/numpy/wiki/ApiDeprecation
+
+SciPy.org wiki
+--------------
+* http://www.scipy.org/Installing_SciPy and links on that page.
+* http://new.scipy.org/building/windows.html
+
+Doc wiki
+--------
+* http://docs.scipy.org/numpy/docs/numpy-docs/user/install.rst/
+
+
+Supported platforms and versions
+================================
+Python 2.4-2.6  are the currently supported versions on all platforms. 
+NumPy 2.0 should include support for Python >=3.1.
+
+OS X
+----
+OS X 10.4 (Tiger), 10.5 (Leopard) and 10.6 (Snow Leopard) are supported for the 1.4.x
+releases. Note that only the Python from `python.org <http://python.org>`_ is
+supported. Binaries do *not* support Apple Python.
+
+Windows
+-------
+Windows XP and Windows Vista are supported by the 1.3.0 release, the 1.4.x
+releases also support Windows 7.
+
+Linux
+-----
+Many distributions include NumPy. Building from source is also relatively
+straightforward. Only tarballs are created for Linux, no specific binary
+installers are provided (yet).
+
+BSD / Solaris
+-------------
+No binaries are provided, but succesful builds on Solaris and BSD have been
+reported.
+
+
+Tool chain
+==========
+Compilers
+---------
+The same gcc version is used as the one with which Python itself is built on
+each platform. At the moment this means:
+
+* OS X uses gcc 4.0
+* Windows build uses latest released version from MinGW, now at 3.4.5.
+
+Cython >= 0.12 is needed.
+
+Fortran: on OS X gfortran from `this site <http://r.research.att.com/tools/>`_ 
+is used. On Windows g77 (included in MinGW) is the current default, in the future 
+this may shift to gfortran as well.
+
+Python
+------
+* Python from `python.org <http://python.org>`_
+* virtualenv
+* paver
+* bdist_mpkg
+* `numpy-macosx-installer <http://github.com/cournape/numpy-macosx-installer>`_
+
+Building docs
+-------------
+* Sphinx
+* numpydoc
+* Matplotlib
+* Texlive (or MikTeX on Windows)
+
+Wine
+----
+For building Windows binaries on OS X Wine can be used. In Wine the following
+needs to be installed:
+
+* Python 2.5
+* Python 2.6
+* MakeNsis
+* CpuId plugin for MakeNsis : this can be found in the NumPy source tree under
+  tools/win32build/cpucaps and has to be built with MinGW (see SConstruct file in 
+  that dir for details)
+* MinGW
+* ATLAS, 3x ([No SSE, SSE2, SSE3] for superpack installer) : ATLAS does not
+  compile under wine or on Windows out of the box. Binaries for ATLAS can be
+  found in svn under vendor/.
+
+To install Wine on OS X Snow Leopard the current options are to compile a
+current unstable version ,`<http://wiki.winehq.org/MacOSX/Building>`_, or to use
+an install script from `here <http://code.google.com/p/osxwinebuilder/>`_. For
+me, the former option did not work (everything compiled, but after installing
+Python the command ``import tempfile`` resulted in an exception. The latter
+option did work.
+
+After successful installation and an invocation of the wine executable, a
+~/.wine folder exists - new programs will be installed there in
+~/.wine/drive_c. Installing Windows programs with .exe executables is done by
+running
+
+  $ wine yourprog.exe
+
+and MSI installers can be installed with
+
+  $ msiexec /i yourprog.msi
+
+For the above to work you probably need to put the wine-1.x.x/bin directory in
+your PATH. 
+
+To install MinGW, the easiest option is to use the automated installer on the
+MinGW download page. This will give you (at this moment) GCC 3.4.5; GCC 4.x is
+still not supported officially by MinGW.
+
+To be able to use gcc and MakeNsis in Wine, the locations of gcc.exe and
+makensis.exe should be added to the Windows environment variable PATH. This can
+easily be done by running
+
+  $ wine regedit
+
+add adding a PATH variable in HKEY_CURRENT_USER/Environment.
+
+Virtualenv
+----------
+Virtualenv is a very useful tool to keep several versions of packages around.
+It is also used in the Paver script to build the docs. The use of the 
+``--no-site-packages`` option in the Paver script is probably not necessary, 
+and may prevent successful building of the docs. If doc building fails because
+Matplotlib can not be found, remove this option.
+
+
+What is released
+================
+
+Binaries
+--------
+Windows binaries in "superpack" form for Python 2.5 and 2.6. A superpack
+contains three builds, for SSE2, SSE3 and no SSE.
+
+OS X binaries are made in dmg format, targeting only the Python from
+`python.org <http://python.org>`_
+
+For Python 2.4 binaries are not built. It should be checked however
+that the source release works with Python 2.4.
+
+Other
+-----
+* Release Notes
+* Changelog
+
+Source distribution
+-------------------
+A source release in both .zip and .tar.gz formats is released.
+
+
+Release process
+===============
+
+Check the buildbot
+------------------
+The buildbot is located at `<http://buildbot.scipy.org/>`_.
+
+Make sure current trunk builds a package correctly
+--------------------------------------------------
+::
+
+    python setup.py bdist
+    python setup.py sdist
+
+To actually build the binaries after everything is set up correctly, the
+release.sh script can be used. For details of the build process itself it is
+best to read the pavement.py script.
+
+.. note:: The following steps are repeated for the beta(s), release
+   candidates(s) and the final release.
+
+Create the release "tag"
+------------------------
+::
+
+    svn cp http://svn.scipy.org/svn/numpy/trunk http://svn.scipy.org/svn/numpy/tags/<version>
+
+Update the version of the trunk
+-------------------------------
+Increment the release number in setup.py. Release candidates should have "rc1"
+(or "rc2", "rcN") appended to the X.Y.Z format.
+
+Update the version of the tag
+-----------------------------
+Switch to the tag::
+
+  svn switch http://svn.scipy.org/svn/numpy/tags/<version>
+
+Set ``release=True`` in setup.py. 
+
+Make the release
+----------------
+The tar-files and binary releases for distribution should be uploaded to SourceForge, 
+together with the Release Notes and the Changelog. Uploading can be done
+through a web interface or, more efficiently, through scp/sftp/rsync as
+described `here <https://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download>`_.
+For example::
+
+  scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/ 
+
+Update PyPi
+-----------
+There are two ways to update PyPi, the first one is::
+
+  $ python setup.py sdist upload
+
+and the second one is to upload the PKG_INFO file inside the sdist dir in the
+web interface of PyPi. The source tarball can also be uploaded through this
+interface.
+
+Update scipy.org
+----------------
+A release announcement with a link to the download site should be placed in the
+sidebar of the front page of scipy.org.
+
+Announce to the lists 
+---------------------
+The release should be announced on the mailing lists of
+NumPy and SciPy, and possibly also those of Matplotlib,IPython and/or Pygame.
+
+During the beta/RC phase an explicit request for testing the binaries with
+several other libraries (SciPy/Matplotlib/Pygame) should be posted on the
+mailing list.
