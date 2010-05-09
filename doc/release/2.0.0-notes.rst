@@ -55,3 +55,10 @@ The slogdet function returns the sign and logarithm of the determinant
 of a matrix. Because the determinant may involve the product of many
 small/large values, the result is often more accurate than that obtained
 by simple multiplication.
+
+new header
+~~~~~~~~~~
+
+There is a new header ndarraytypes.h that provides needed ndarray types
+that don't reference the ndarray c-api. Some folks might find this useful.
+
