@@ -59,7 +59,7 @@ static int days_in_month[2][12] = {
 
 /* Return 1/0 iff year points to a leap year in calendar. */
 static int
-is_leapyear(register long year)
+is_leapyear(long year)
 {
     return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
 }
@@ -88,7 +88,7 @@ day_of_week(npy_longlong absdate)
  * 31.12.(year-1) since 31.12.1969 in the proleptic Gregorian calendar.
  */
 static npy_longlong
-year_offset(register npy_longlong year)
+year_offset(npy_longlong year)
 {
     /* Note that 477 == 1969/4 - 1969/100 + 1969/400 */
     year--;
@@ -173,7 +173,7 @@ static ymdstruct
 days_to_ymdstruct(npy_datetime dlong)
 {
     ymdstruct ymd;
-    register long year;
+    long year;
     npy_longlong yearoffset;
     int leap, dayoffset;
     int month = 1, day = 1;
