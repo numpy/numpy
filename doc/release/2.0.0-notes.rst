@@ -59,6 +59,11 @@ by simple multiplication.
 new header
 ~~~~~~~~~~
 
-There is a new header ndarraytypes.h that provides needed ndarray types
-that don't reference the ndarray c-api. Some folks might find this useful.
+ The new header file ndarraytypes.h contains the symbols from
+ ndarrayobject.h that no not depend on the PY_ARRAY_UNIQUE_SYMBOL and
+ NO_IMPORT/_ARRAY macros. Broadly, these symbols are types, typedefs, and
+ enumerations; the array function calls are left in ndarrayobject.h. This
+ allows users to include array-related types and enumerations without
+ needing to concern themselves with the macro expansions and their side-
+ effects.
 
