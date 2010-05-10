@@ -26,6 +26,14 @@ class TestFFTShift(TestCase):
         for n in [1,4,9,100,211]:
             x = random((n,))
             assert_array_almost_equal(ifftshift(fftshift(x)),x)
+            
+    def test_axes_keyword(self):
+        freqs = [[ 0,  1,  2], [ 3,  4, -4], [-3, -2, -1]]
+        shifted = [[-1, -3, -2], [ 2,  0,  1], [-4,  3,  4]]
+        assert_array_almost_equal(fftshift(freqs, axes=(0, 1)), shifted)
+        assert_array_almost_equal(fftshift(freqs, axes=0), fftshift(freqs, axes=(0,)))
+        assert_array_almost_equal(ifftshift(shifted, axes=(0, 1)), freqs)
+        assert_array_almost_equal(ifftshift(shifted, axes=0), ifftshift(shifted, axes=(0,)))
 
 
 class TestFFTFreq(TestCase):

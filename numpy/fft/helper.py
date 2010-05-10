@@ -7,6 +7,7 @@ __all__ = ['fftshift','ifftshift','fftfreq']
 
 from numpy.core import asarray, concatenate, arange, take, \
     integer, empty
+import numpy.core.numerictypes as nt
 import types
 
 def fftshift(x,axes=None):
@@ -57,6 +58,8 @@ def fftshift(x,axes=None):
     ndim = len(tmp.shape)
     if axes is None:
         axes = range(ndim)
+    elif isinstance(axes, (int, nt.integer)):
+        axes = (axes,)
     y = tmp
     for k in axes:
         n = tmp.shape[k]
@@ -103,6 +106,8 @@ def ifftshift(x,axes=None):
     ndim = len(tmp.shape)
     if axes is None:
         axes = range(ndim)
+    elif isinstance(axes, (int, nt.integer)):
+        axes = (axes,)
     y = tmp
     for k in axes:
         n = tmp.shape[k]
