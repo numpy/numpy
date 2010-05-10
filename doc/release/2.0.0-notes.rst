@@ -59,11 +59,11 @@ by simple multiplication.
 new header
 ~~~~~~~~~~
 
- The new header file ndarraytypes.h contains the symbols from
- ndarrayobject.h that no not depend on the PY_ARRAY_UNIQUE_SYMBOL and
- NO_IMPORT/_ARRAY macros. Broadly, these symbols are types, typedefs, and
- enumerations; the array function calls are left in ndarrayobject.h. This
- allows users to include array-related types and enumerations without
- needing to concern themselves with the macro expansions and their side-
- effects.
+The new header file ndarraytypes.h contains the symbols from
+ndarrayobject.h that do not depend on the PY_ARRAY_UNIQUE_SYMBOL and
+NO_IMPORT/_ARRAY macros. Broadly, these symbols are types, typedefs,
+and enumerations; the array function calls are left in
+ndarrayobject.h. This allows users to include array-related types and
+enumerations without needing to concern themselves with the macro
+expansions and their side- effects.
 
