@@ -55,6 +55,8 @@ from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
 from numpy.distutils.compat import get_exception
 
+from numpy.compat import open_latin1
+
 def temp_file_name():
     fo, name = make_temp_file()
     fo.close()
@@ -248,13 +250,13 @@ def _exec_command_posix( command,
             return _exec_command(command, use_shell=use_shell, **env)
 
     if stsfile is not None:
-        f = open(stsfile,'r')
+        f = open_latin1(stsfile,'r')
         status_text = f.read()
         status = int(status_text)
         f.close()
         os.remove(stsfile)
 
-    f = open(tmpfile,'r')
+    f = open_latin1(tmpfile,'r')
     text = f.read()
     f.close()
     os.remove(tmpfile)
@@ -293,12 +295,12 @@ def _exec_command_python(command,
         raise RuntimeError("%r failed" % (cmd,))
     os.remove(cmdfile)
 
-    f = open(stsfile,'r')
+    f = open_latin1(stsfile,'r')
     status = int(f.read())
     f.close()
     os.remove(stsfile)
 
-    f = open(outfile,'r')
+    f = open_latin1(outfile,'r')
     text = f.read()
     f.close()
     os.remove(outfile)
@@ -390,14 +392,14 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     os.dup2(se_dup,se_fileno)
 
     fout.close()
-    fout = open(outfile,'r')
+    fout = open_latin1(outfile,'r')
     text = fout.read()
     fout.close()
     os.remove(outfile)
 
     if using_command:
         ferr.close()
-        ferr = open(errfile,'r')
+        ferr = open_latin1(errfile,'r')
         errmess = ferr.read()
         ferr.close()
         os.remove(errfile)
