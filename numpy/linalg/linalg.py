@@ -124,6 +124,18 @@ def _commonType(*arrays):
 
 _fastCT = fastCopyAndTranspose
 
+def _to_native_byte_order(*arrays):
+    ret = []
+    for arr in arrays:
+        if arr.dtype.byteorder not in ('=', '|'):
+            ret.append(asarray(arr, dtype=arr.dtype.newbyteorder('=')))
+        else:
+            ret.append(arr)
+    if len(ret) == 1:
+        return ret[0]
+    else:
+        return ret
+
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
@@ -309,6 +321,7 @@ def solve(a, b):
     else:
         lapack_routine = lapack_lite.dgesv
     a, b = _fastCopyAndTranspose(t, a, b)
+    a, b = _to_native_byte_order(a, b)
     pivots = zeros(n_eq, fortran_int)
     results = lapack_routine(n_eq, n_rhs, a, n_eq, pivots, b, n_eq, 0)
     if results['info'] > 0:
@@ -505,6 +518,7 @@ def cholesky(a):
     _assertSquareness(a)
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     m = a.shape[0]
     n = a.shape[1]
     if isComplexType(t):
@@ -623,6 +637,7 @@ def qr(a, mode='full'):
     m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     mn = min(m, n)
     tau = zeros((mn,), t)
     if isComplexType(t):
@@ -762,6 +777,7 @@ def eigvals(a):
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     n = a.shape[0]
     dummy = zeros((1,), t)
     if isComplexType(t):
@@ -853,6 +869,7 @@ def eigvalsh(a, UPLO='L'):
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     n = a.shape[0]
     liwork = 5*n+3
     iwork = zeros((liwork,), fortran_int)
@@ -1008,6 +1025,7 @@ def eig(a):
     _assertSquareness(a)
     _assertFinite(a)
     a, t, result_t = _convertarray(a) # convert to double or cdouble type
+    a = _to_native_byte_order(a)
     real_t = _linalgRealType(t)
     n = a.shape[0]
     dummy = zeros((1,), t)
@@ -1144,6 +1162,7 @@ def eigh(a, UPLO='L'):
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     n = a.shape[0]
     liwork = 5*n+3
     iwork = zeros((liwork,), fortran_int)
@@ -1254,6 +1273,7 @@ def svd(a, full_matrices=1, compute_uv=1):
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     s = zeros((min(n, m),), real_t)
     if compute_uv:
         if full_matrices:
@@ -1594,6 +1614,7 @@ def slogdet(a):
     _assertSquareness(a)
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
+    a = _to_native_byte_order(a)
     n = a.shape[0]
     if isComplexType(t):
         lapack_routine = lapack_lite.zgetrf
@@ -1752,6 +1773,7 @@ def lstsq(a, b, rcond=-1):
     bstar = zeros((ldb, n_rhs), t)
     bstar[:b.shape[0],:n_rhs] = b.copy()
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
+    a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
     nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
     iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)

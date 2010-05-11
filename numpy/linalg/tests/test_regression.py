@@ -57,6 +57,15 @@ class TestRegression(TestCase):
         TypeError."""
         self.assertRaises(ValueError, linalg.norm, array([1., 2., 3.]), 'fro')
 
+    def test_lapack_endian(self):
+        # For bug #1482
+        a = array([[5.7998084,  -2.1825367 ],
+                   [-2.1825367,   9.85910595]], dtype='>f8')
+        b = array(a, dtype='<f8')
+
+        ap = linalg.cholesky(a)
+        bp = linalg.cholesky(b)
+        assert_array_equal(ap, bp)
 
 if __name__ == '__main__':
     run_module_suite()
