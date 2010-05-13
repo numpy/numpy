@@ -25,7 +25,7 @@ if sys.version_info[0] >= 3:
     def isfileobj(f):
         return isinstance(f, io.FileIO)
     def open_latin1(filename, mode='r'):
-        return open(f, mode=mode, encoding='iso-8859-1')
+        return open(filename, mode=mode, encoding='iso-8859-1')
     strchar = 'U'
 else:
     bytes = str
