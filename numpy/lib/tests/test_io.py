@@ -225,6 +225,17 @@ class TestSaveTxt(TestCase):
         lines = c.readlines()
         assert_equal(lines, asbytes_nested(['01 : 2.0\n', '03 : 4.0\n']))
 
+    def test_file_roundtrip(self):
+        f, name = mkstemp()
+        os.close(f)
+        try:
+            a = np.array([(1, 2), (3, 4)])
+            np.savetxt(name, a)
+            b = np.loadtxt(name)
+            assert_array_equal(a, b)
+        finally:
+            os.unlink(name)
+
 
 class TestLoadTxt(TestCase):
     def test_record(self):

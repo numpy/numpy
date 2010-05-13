@@ -27,7 +27,6 @@ if sys.version_info[0] >= 3:
 else:
     from cStringIO import StringIO as BytesIO
 
-_file = open
 _string_like = _is_string_like
 
 def seek_gzip_factory(f):
@@ -285,7 +284,7 @@ def load(file, mmap_mode=None):
     import gzip
 
     if isinstance(file, basestring):
-        fid = _file(file, "rb")
+        fid = open(file, "rb")
     elif isinstance(file, gzip.GzipFile):
         fid = seek_gzip_factory(file)
     else:
@@ -792,9 +791,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
             fh = gzip.open(fname, 'wb')
         else:
             if sys.version_info[0] >= 3:
-                fh = file(fname, 'wb')
+                fh = open(fname, 'wb')
             else:
-                fh = file(fname, 'w')
+                fh = open(fname, 'w')
     elif hasattr(fname, 'seek'):
         fh = fname
     else:
