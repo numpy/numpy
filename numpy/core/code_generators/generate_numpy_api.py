@@ -57,12 +57,11 @@ _import_array(void)
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
+  Py_DECREF(numpy);
   if (c_api == NULL) {
       PyErr_SetString(PyExc_AttributeError, "_ARRAY_API not found");
-      Py_DECREF(numpy);
       return -1;
   }
-  Py_DECREF(numpy);
 
 #if PY_VERSION_HEX >= 0x02070000
   if (!PyCapsule_CheckExact(c_api)) {
@@ -71,10 +70,6 @@ _import_array(void)
       return -1;
   }
   PyArray_API = (void **)PyCapsule_GetPointer(c_api, NULL);
-  Py_DECREF(c_api);
-  if (PyArray_API == NULL) {
-      return -1;
-  }
 #else
   if (!PyCObject_Check(c_api)) {
       PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCObject object");
@@ -82,12 +77,13 @@ _import_array(void)
       return -1;
   }
   PyArray_API = (void **)PyCObject_AsVoidPtr(c_api);
+#endif
   Py_DECREF(c_api);
   if (PyArray_API == NULL) {
       PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is NULL pointer");
       return -1;
   }
-#endif
+
   /* Perform runtime check of C API version */
   if (NPY_VERSION != PyArray_GetNDArrayCVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
