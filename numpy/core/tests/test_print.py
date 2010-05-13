@@ -200,19 +200,26 @@ def test_complex_type_print():
 
 # Locale tests: scalar types formatting should be independent of the locale
 def in_foreign_locale(func):
-    # XXX: How to query locale on a given system ?
+    """
+    Swap LC_NUMERIC locale to one in which the decimal point is ',' and not '.'
+    If not possible, raise nose.SkipTest
 
-    # French is one language where the decimal is ',' not '.', and should be
-    # relatively common on many systems
+    """
+    if sys.platform == 'win32':
+        locales = ['FRENCH']
+    else:
+        locales = ['fr_FR', 'fr_FR.UTF-8', 'fi_FI', 'fi_FI.UTF-8']
+
     def wrapper(*args, **kwargs):
         curloc = locale.getlocale(locale.LC_NUMERIC)
         try:
-            try:
-                if not sys.platform == 'win32':
-                    locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
-                else:
-                    locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
-            except locale.Error:
+            for loc in locales:
+                try:
+                    locale.setlocale(locale.LC_NUMERIC, loc)
+                    break
+                except locale.Error:
+                    pass
+            else:
                 raise nose.SkipTest("Skipping locale test, because "
                                     "French locale not found")
             return func(*args, **kwargs)
