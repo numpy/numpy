@@ -72,7 +72,6 @@ _import_umath(void)
   }
   PyUFunc_API = (void **)PyCObject_AsVoidPtr(c_api);
   Py_DECREF(c_api);
-  Py_DECREF(numpy);
   if (PyUFunc_API == NULL) {
       PyErr_SetString(PyExc_RuntimeError, "_UFUNC_API is NULL pointer");
       return -1;
