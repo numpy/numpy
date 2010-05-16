@@ -69,6 +69,8 @@ def seek_gzip_factory(f):
 
     return f
 
+
+
 class BagObj(object):
     """
     BagObj(obj)
@@ -99,6 +101,8 @@ class BagObj(object):
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
             raise AttributeError, key
+
+
 
 class NpzFile(object):
     """
@@ -921,7 +925,8 @@ def fromregex(file, regexp, dtype):
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skiprows=0, skip_header=0, skip_footer=0, converters=None,
                missing='', missing_values=None, filling_values=None,
-               usecols=None, names=None, excludelist=None, deletechars=None,
+               usecols=None, names=None,
+               excludelist=None, deletechars=None, replace_space='_',
                autostrip=False, case_sensitive=True, defaultfmt="f%i",
                unpack=None, usemask=False, loose=True, invalid_raise=True):
     """
@@ -978,6 +983,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         A format used to define default field names, such as "f%i" or "f_%02i".
     autostrip : bool, optional
         Whether to automatically strip white spaces from the variables.
+    replace_space : char, optional
+        Character(s) used in replacement of white spaces in the variables names.
+        By default, use a '_'.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
         If True, field names are case sensitive.
         If False or 'upper', field names are converted to upper case.
@@ -1076,7 +1084,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     if isinstance(fname, basestring):
-        fhd = np.lib._datasource.open(fname)
+        fhd = np.lib._datasource.open(fname, 'U')
     elif not hasattr(fname, 'read'):
         raise TypeError("The input should be a string or a filehandle. "\
                         "(got %s instead)" % type(fname))
@@ -1086,7 +1094,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                               autostrip=autostrip)._handyman
     validate_names = NameValidator(excludelist=excludelist,
                                    deletechars=deletechars,
-                                   case_sensitive=case_sensitive)
+                                   case_sensitive=case_sensitive,
+                                   replace_space=replace_space)
 
     # Get the first valid lines after the first skiprows ones ..
     if skiprows:

@@ -1062,6 +1062,30 @@ M   33  21.99
                         dtype=[('f0', '|S10'), ('f1', float), ('f2', '|S5')])
         assert_equal(mtest, ctrl)
 
+    def test_replace_space(self):
+        "Test the 'replace_space' option"
+        txt = "A.A, B (B), C:C\n1, 2, 3.14"
+        # Test default: replace ' ' by '_' and delete non-alphanum chars
+        test = np.genfromtxt(StringIO(txt),
+                             delimiter=",", names=True, dtype=None)
+        ctrl_dtype = [("AA", int), ("B_B", int), ("CC", float)]
+        ctrl = np.array((1, 2, 3.14), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no replace, no delete
+        test = np.genfromtxt(StringIO(txt),
+                             delimiter=",", names=True, dtype=None,
+                             replace_space='', deletechars='')
+        ctrl_dtype = [("A.A", int), ("B (B)", int), ("C:C", float)]
+        ctrl = np.array((1, 2, 3.14), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+        # Test: no delete (spaces are replaced by _)
+        test = np.genfromtxt(StringIO(txt),
+                             delimiter=",", names=True, dtype=None,
+                             deletechars='')
+        ctrl_dtype = [("A.A", int), ("B_(B)", int), ("C:C", float)]
+        ctrl = np.array((1, 2, 3.14), dtype=ctrl_dtype)
+        assert_equal(test, ctrl)
+
     def test_incomplete_names(self):
         "Test w/ incomplete names"
         data = "A,,C\n0,1,2\n3,4,5"

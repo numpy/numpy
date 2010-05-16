@@ -258,6 +258,8 @@ class NameValidator:
         * If 'lower', field names are converted to lower case.
 
         The default value is True.
+    replace_space: '_', optional
+        Character(s) used in replacement of white spaces.
 
     Notes
     -----
@@ -281,7 +283,8 @@ class NameValidator:
     defaultexcludelist = ['return', 'file', 'print']
     defaultdeletechars = set("""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
     #
-    def __init__(self, excludelist=None, deletechars=None, case_sensitive=None):
+    def __init__(self, excludelist=None, deletechars=None,
+                 case_sensitive=None, replace_space='_'):
         # Process the exclusion list ..
         if excludelist is None:
             excludelist = []
@@ -303,6 +306,8 @@ class NameValidator:
             self.case_converter = lambda x: x.lower()
         else:
             self.case_converter = lambda x: x
+        #
+        self.replace_space = replace_space
 
     def validate(self, names, defaultfmt="f%i", nbfields=None):
         """
@@ -347,14 +352,16 @@ class NameValidator:
         deletechars = self.deletechars
         excludelist = self.excludelist
         case_converter = self.case_converter
+        replace_space = self.replace_space
         # Initializes some variables ...
         validatednames = []
         seen = dict()
         nbempty = 0
         #
         for item in names:
-            item = case_converter(item)
-            item = item.strip().replace(' ', '_')
+            item = case_converter(item).strip()
+            if replace_space:
+                item = item.replace(' ', replace_space)
             item = ''.join([c for c in item if c not in deletechars])
             if item == '':
                 item = defaultfmt % nbempty
