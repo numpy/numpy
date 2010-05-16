@@ -968,7 +968,26 @@ def compare_results(res, desired):
 
 
 def test_percentile_list():
-    assert_equal(np.percentile([1,2,3], 0), 1)
+    assert_equal(np.percentile([1, 2, 3], 0), 1)
+
+def test_percentile_out():
+    x = np.array([1, 2, 3])
+    y = np.zeros((3,))
+    p = (1, 2, 3)
+    np.percentile(x, p, out=y)
+    assert_equal(y, np.percentile(x, p))
+
+    x = np.array([[1, 2, 3],
+                  [4, 5, 6]])
+
+    y = np.zeros((3, 3))
+    np.percentile(x, p, axis=0, out=y)
+    assert_equal(y, np.percentile(x, p, axis=0))
+
+    y = np.zeros((3, 2))
+    np.percentile(x, p, axis=1, out=y)
+    assert_equal(y, np.percentile(x, p, axis=1))
+
 
 if __name__ == "__main__":
     run_module_suite()

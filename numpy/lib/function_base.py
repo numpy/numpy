@@ -2964,9 +2964,15 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
 # handle sequence of q's without calling sort multiple times
 def _compute_qth_percentile(sorted, q, axis, out):
     if not isscalar(q):
-        return [_compute_qth_percentile(sorted, qi, axis, out) 
-                    for qi in q]
-    q = q / 100.0    
+        p = [_compute_qth_percentile(sorted, qi, axis, None)
+             for qi in q]
+
+        if out is not None:
+            out.flat = p
+
+        return p
+
+    q = q / 100.0
     if (q < 0) or (q > 1):
         raise ValueError, "percentile must be either in the range [0,100]"
 
