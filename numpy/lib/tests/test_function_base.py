@@ -967,5 +967,8 @@ def compare_results(res, desired):
         assert_array_equal(res[i], desired[i])
 
 
+def test_percentile_list():
+    assert_equal(np.percentile([1,2,3], 0), 1)
+
 if __name__ == "__main__":
     run_module_suite()

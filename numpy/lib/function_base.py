@@ -2940,6 +2940,8 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     >>> assert not np.all(a==b)
 
     """
+    a = np.asarray(a)
+
     if q == 0:
         return a.min(axis=axis, out=out)
     elif q == 100:
