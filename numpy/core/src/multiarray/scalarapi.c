@@ -658,7 +658,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (obj == NULL) {
         return NULL;
     }
-    if PyTypeNum_ISDATETIME(type_num) {
+    if (PyTypeNum_ISDATETIME(type_num)) {
         /*
          * We need to copy the resolution information over to the scalar
          * Get the void * from the metadata dictionary
@@ -674,7 +674,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
                sizeof(PyArray_DatetimeMetaData));
     }
-    if PyTypeNum_ISFLEXIBLE(type_num) {
+    if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == PyArray_STRING) {
             destptr = PyString_AS_STRING(obj);
             ((PyStringObject *)obj)->ob_shash = -1;

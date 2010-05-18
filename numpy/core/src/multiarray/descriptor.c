@@ -209,7 +209,7 @@ _convert_from_tuple(PyObject *obj)
             type->elsize = itemsize;
         }
     }
-    else if PyDict_Check(val) {
+    else if (PyDict_Check(val)) {
         /* Assume it's a metadata dictionary */
         if (PyDict_Merge(type->metadata, val, 0) == -1) {
             Py_DECREF(type);

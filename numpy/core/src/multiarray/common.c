@@ -602,7 +602,7 @@ _IsWriteable(PyArrayObject *ap)
      * and unpickled array can be set and reset writeable
      * -- could be abused --
      */
-    if PyString_Check(base) {
+    if (PyString_Check(base)) {
         return TRUE;
     }
     if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {

@@ -416,7 +416,7 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
         if (result == NULL) {
             return;
         }
-        if PyTuple_Check(result) {
+        if (PyTuple_Check(result)) {
             if (nout != PyTuple_Size(result)) {
                 Py_DECREF(result);
                 return;
