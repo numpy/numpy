@@ -391,19 +391,20 @@ class $name(pu.PolyBase) :
         """
         return self.__class__(pu.trimcoef(self.coef, tol), self.domain)
 
-    def truncate(self, size) :
-        """Truncate series by discarding trailing coefficients.
+    def truncate(self, deg) :
+        """Truncate series to degree `deg`.
 
-        Reduce the $name series to length `size` by removing trailing
-        coefficients. The value of `size` must be greater than zero.  This
-        is most likely to be useful in least squares fits when the high
-        order coefficients are very small.
+        Return a $name series obtained from the current instance by discarding
+        all terms of degree greater than `deg`.  The value of `deg` must be
+        non-negative. This operation is most likely to be useful in least squares
+        fits when the high order coefficients are very small.
 
         Parameters:
         -----------
-        size : int
-            The series is reduced to length `size` by discarding trailing
-            coefficients. The value of `size` must be greater than zero.
+        deg : non-negative int
+            The series is reduced to degree `deg` by discarding the
+            coefficients of the higher degree terms. The value of `deg`
+            must be non-negative.
 
         Returns:
         -------
@@ -411,9 +412,10 @@ class $name(pu.PolyBase) :
             New instance of $name with truncated coefficients.
 
         """
-        if size < 1 :
-            raise ValueError("size must be > 0")
-        if size >= len(self.coef) :
+        size = int(deg) + 1
+        if size != deg + 1 or size < 1 :
+            raise ValueError("deg must be a non-negative integer")
+        if size  >= len(self) :
             return self.__class__(self.coef, self.domain)
         else :
             return self.__class__(self.coef[:size], self.domain)
