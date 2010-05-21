@@ -463,7 +463,13 @@ class TestChebyshevClass(TestCase) :
             return x*(x - 1)*(x - 2)
         x = np.linspace(0,3)
         y = f(x)
+
+        # test default value of domain
         p = ch.Chebyshev.fit(x, y, 3)
+        assert_almost_equal(p.domain, [0,3])
+
+        # test that fit works in given domains
+        p = ch.Chebyshev.fit(x, y, 3, 'default')
         assert_almost_equal(p(x), y)
         p = ch.Chebyshev.fit(x, y, 3, None)
         assert_almost_equal(p(x), y)

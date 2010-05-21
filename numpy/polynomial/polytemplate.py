@@ -514,7 +514,7 @@ class $name(pu.PolyBase) :
         return pu.mapdomain(roots, $domain, self.domain)
 
     @staticmethod
-    def fit(x, y, deg, domain=$domain, rcond=None, full=False) :
+    def fit(x, y, deg, domain=None, rcond=None, full=False) :
         """Least squares fit to data.
 
         Return a `$name` instance that is the least squares fit to the data
@@ -533,10 +533,11 @@ class $name(pu.PolyBase) :
             passing in a 2D-array that contains one dataset per column.
         deg : int
             Degree of the fitting polynomial
-        domain : {None, [beg, end]}, optional
+        domain : {None, [beg, end], 'default'}, optional
             Domain to use for the returned $name instance. If ``None``,
-            then a minimal domain that covers the points `x` is chosen. The
-            default value is ``$domain``.
+            then a minimal domain that covers the points `x` is chosen.
+            If ``'default'`` the default domain ``$domain`` is used. The
+            default value is ``None``.
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
             than this relative to the largest singular value will be
@@ -568,6 +569,8 @@ class $name(pu.PolyBase) :
         """
         if domain is None :
             domain = pu.getdomain(x)
+        elif domain == 'default' :
+            domain = $domain
         xnew = pu.mapdomain(x, domain, $domain)
         res = ${nick}fit(xnew, y, deg, rcond=None, full=full)
         if full :
