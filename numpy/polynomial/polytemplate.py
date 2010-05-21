@@ -442,7 +442,7 @@ class $name(pu.PolyBase) :
 
         Parameters:
         -----------
-        m : positive integer
+        m : non-negative integer
             The number of integrations to perform.
         k : array_like
             Integration constants. The first constant is applied to the
@@ -455,8 +455,7 @@ class $name(pu.PolyBase) :
         Returns:
         --------
         integral : $name
-            The integral of the original series defined with the same
-            domain.
+            The integral of the original series with the same domain.
 
         See Also
         --------
@@ -480,14 +479,13 @@ class $name(pu.PolyBase) :
 
         Parameters:
         -----------
-        m : positive integer
+        m : non-negative integer
             The number of integrations to perform.
 
         Returns:
         --------
         derivative : $name
-            The derivative of the original series defined with the same
-            domain.
+            The derivative of the original series with the same domain.
 
         See Also
         --------
