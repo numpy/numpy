@@ -399,6 +399,9 @@ class TestChebyshevClass(TestCase) :
         xx = 2*x - 1
         assert_almost_equal(self.p2(x), self.p1(xx))
 
+    def test_degree(self) :
+        assert_equal(self.p1.degree(), 2)
+
     def test_convert(self) :
         x = np.linspace(-1,1)
         p = self.p1.convert(domain=[0,1])
