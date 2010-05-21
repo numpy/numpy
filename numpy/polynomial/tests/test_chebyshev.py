@@ -136,6 +136,7 @@ class TestCalculus(TestCase) :
 
     def test_chebint(self) :
         # check exceptions
+        assert_raises(ValueError, ch.chebint, [0], .5)
         assert_raises(ValueError, ch.chebint, [0], -1)
         assert_raises(ValueError, ch.chebint, [0], 1, [0,0])
         assert_raises(ValueError, ch.chebint, [0], 1, lbnd=[0,0])
@@ -211,18 +212,22 @@ class TestCalculus(TestCase) :
 
     def test_chebder(self) :
         # check exceptions
+        assert_raises(ValueError, ch.chebder, [0], .5)
         assert_raises(ValueError, ch.chebder, [0], -1)
+
         # check that zeroth deriviative does nothing
         for i in range(5) :
             tgt = [1] + [0]*i
             res = ch.chebder(tgt, m=0)
             assert_equal(trim(res), trim(tgt))
+
         # check that derivation is the inverse of integration
         for i in range(5) :
             for j in range(2,5) :
                 tgt = [1] + [0]*i
                 res = ch.chebder(ch.chebint(tgt, m=j), m=j)
                 assert_almost_equal(trim(res), trim(tgt))
+
         # check derivation with scaling
         for i in range(5) :
             for j in range(2,5) :
@@ -258,6 +263,7 @@ class TestMisc(TestCase) :
         for i in range(4) :
             coef = [0]*i + [1]
             assert_almost_equal(v[...,i], ch.chebval(x, coef))
+
         # check for 2d x
         x = np.array([[1,2],[3,4],[5,6]])
         v = ch.chebvander(x, 3)
@@ -269,6 +275,7 @@ class TestMisc(TestCase) :
     def test_chebfit(self) :
         def f(x) :
             return x*(x - 1)*(x - 2)
+
         # Test exceptions
         assert_raises(ValueError, ch.chebfit, [1],    [1],     -1)
         assert_raises(TypeError,  ch.chebfit, [[1]],  [1],      0)
@@ -276,6 +283,7 @@ class TestMisc(TestCase) :
         assert_raises(TypeError,  ch.chebfit, [1],    [[[1]]],  0)
         assert_raises(TypeError,  ch.chebfit, [1, 2], [1],      0)
         assert_raises(TypeError,  ch.chebfit, [1],    [1, 2],   0)
+
         # Test fit
         x = np.linspace(0,2)
         y = f(x)
@@ -290,8 +298,10 @@ class TestMisc(TestCase) :
 
     def test_chebtrim(self) :
         coef = [2, -1, 1, 0]
+
         # Test exceptions
         assert_raises(ValueError, ch.chebtrim, coef, -1)
+
         # Test results
         assert_equal(ch.chebtrim(coef), coef[:-1])
         assert_equal(ch.chebtrim(coef, 1), coef[:-3])

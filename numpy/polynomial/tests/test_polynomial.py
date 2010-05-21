@@ -121,6 +121,7 @@ class TestCalculus(TestCase) :
 
     def test_polyint(self) :
         # check exceptions
+        assert_raises(ValueError, poly.polyint, [0], .5)
         assert_raises(ValueError, poly.polyint, [0], -1)
         assert_raises(ValueError, poly.polyint, [0], 1, [0,0])
         assert_raises(ValueError, poly.polyint, [0], 1, lbnd=[0,0])
@@ -191,6 +192,7 @@ class TestCalculus(TestCase) :
 
     def test_polyder(self) :
         # check exceptions
+        assert_raises(ValueError, poly.polyder, [0], .5)
         assert_raises(ValueError, poly.polyder, [0], -1)
 
         # check that zeroth deriviative does nothing
@@ -241,6 +243,7 @@ class TestMisc(TestCase) :
         for i in range(4) :
             coef = [0]*i + [1]
             assert_almost_equal(v[...,i], poly.polyval(x, coef))
+
         # check for 2d x
         x = np.array([[1,2],[3,4],[5,6]])
         v = poly.polyvander(x, 3)
@@ -252,6 +255,7 @@ class TestMisc(TestCase) :
     def test_polyfit(self) :
         def f(x) :
             return x*(x - 1)*(x - 2)
+
         # Test exceptions
         assert_raises(ValueError, poly.polyfit, [1],    [1],     -1)
         assert_raises(TypeError,  poly.polyfit, [[1]],  [1],      0)
@@ -259,6 +263,7 @@ class TestMisc(TestCase) :
         assert_raises(TypeError,  poly.polyfit, [1],    [[[1]]],  0)
         assert_raises(TypeError,  poly.polyfit, [1, 2], [1],      0)
         assert_raises(TypeError,  poly.polyfit, [1],    [1, 2],   0)
+
         # Test fit
         x = np.linspace(0,2)
         y = f(x)
@@ -273,8 +278,10 @@ class TestMisc(TestCase) :
 
     def test_polytrim(self) :
         coef = [2, -1, 1, 0]
+
         # Test exceptions
         assert_raises(ValueError, poly.polytrim, coef, -1)
+
         # Test results
         assert_equal(poly.polytrim(coef), coef[:-1])
         assert_equal(poly.polytrim(coef, 1), coef[:-3])

@@ -410,7 +410,7 @@ def polypow(cs, pow, maxpower=None) :
             prd = np.convolve(prd, cs)
         return prd
 
-def polyder(cs, m=1, scl=1) :
+def polyder(cs, m=1, scl=1):
     """
     Differentiate a polynomial.
 
@@ -454,25 +454,29 @@ def polyder(cs, m=1, scl=1) :
     array([  6.,  24.])
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if m < 0 :
-        raise ValueError, "The order of derivation must be positive"
-    if not np.isscalar(scl) :
+    cnt = int(m)
+
+    if cnt != m:
+        raise ValueError, "The order of derivation must be integer"
+    if cnt < 0:
+        raise ValueError, "The order of derivation must be non-negative"
+    if not np.isscalar(scl):
         raise ValueError, "The scl parameter must be a scalar"
 
-    if m == 0 :
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if cnt == 0:
         return cs
-    elif m >= len(cs) :
+    elif cnt >= len(cs):
         return cs[:1]*0
     else :
         n = len(cs)
         d = np.arange(n)*scl
-        for i in range(m) :
+        for i in range(cnt):
             cs[i:] *= d[:n-i]
         return cs[i+1:].copy()
 
-def polyint(cs, m=1, k=[], lbnd=0, scl=1) :
+def polyint(cs, m=1, k=[], lbnd=0, scl=1):
     """
     Integrate a polynomial.
 
@@ -544,11 +548,15 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1) :
     array([ 0., -2., -2., -2.])
 
     """
+    cnt = int(m)
     if np.isscalar(k) :
         k = [k]
-    if m < 1 :
-        raise ValueError, "The order of integration must be positive"
-    if len(k) > m :
+
+    if cnt != m:
+        raise ValueError, "The order of integration must be integer"
+    if cnt < 0 :
+        raise ValueError, "The order of integration must be non-negative"
+    if len(k) > cnt :
         raise ValueError, "Too many integration constants"
     if not np.isscalar(lbnd) :
         raise ValueError, "The lbnd parameter must be a scalar"
@@ -557,14 +565,17 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1) :
 
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
-    k = list(k) + [0]*(m - len(k))
-    fac = np.arange(1, len(cs) + m)/scl
-    ret = np.zeros(len(cs) + m, dtype=cs.dtype)
-    ret[m:] = cs
-    for i in range(m) :
-        ret[m - i:] /= fac[:len(cs) + i]
-        ret[m - i - 1] += k[i] - polyval(lbnd, ret[m - i - 1:])
-    return ret
+    if cnt == 0:
+        return cs
+    else:
+        k = list(k) + [0]*(cnt - len(k))
+        fac = np.arange(1, len(cs) + cnt)/scl
+        ret = np.zeros(len(cs) + cnt, dtype=cs.dtype)
+        ret[cnt:] = cs
+        for i in range(cnt) :
+            ret[cnt - i:] /= fac[:len(cs) + i]
+            ret[cnt - i - 1] += k[i] - polyval(lbnd, ret[cnt - i - 1:])
+        return ret
 
 def polyval(x, cs):
     """
