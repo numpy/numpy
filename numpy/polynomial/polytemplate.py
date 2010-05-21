@@ -303,6 +303,10 @@ class $name(pu.PolyBase) :
     # Extra numeric functions.
     #
 
+    def degree(self) :
+        """The degree of the series."""
+        return len(self) - 1
+
     def convert(self, domain=None, kind=None) :
         """Convert to different class and/or domain.
 
