@@ -304,8 +304,41 @@ class $name(pu.PolyBase) :
     #
 
     def degree(self) :
-        """The degree of the series."""
+        """The degree of the series.
+
+        Notes
+        -----
+        .. versionadded:: 2.0.0
+
+        """
         return len(self) - 1
+
+    def reduce(self, deg) :
+        """Reduce the degree of the series.
+
+        Reduce the degree of the $name series to `deg` by discarding the
+        high order terms. If `deg` is greater than the current degree a
+        copy of the current series is returned. This can be useful in least
+        squares where the coefficients of the high degree terms may be very
+        small.
+
+        Parameters:
+        -----------
+        deg : non-negative int
+            The series is reduced to degree `deg` by discarding the high
+            order terms. The value of `deg` must be a non-negative integer.
+
+        Returns:
+        -------
+        new_instance : $name
+            New instance of $name with reduced degree.
+
+        Notes
+        -----
+        .. versionadded:: 2.0.0
+
+        """
+        return self.truncate(deg + 1)
 
     def convert(self, domain=None, kind=None) :
         """Convert to different class and/or domain.

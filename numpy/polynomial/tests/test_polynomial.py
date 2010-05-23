@@ -373,6 +373,14 @@ class TestPolynomialClass(TestCase) :
     def test_degree(self) :
         assert_equal(self.p1.degree(), 2)
 
+    def test_reduce(self) :
+        assert_raises(ValueError, self.p1.reduce, .5)
+        assert_raises(ValueError, self.p1.reduce, -1)
+        assert_equal(len(self.p1.reduce(3)), 3)
+        assert_equal(len(self.p1.reduce(2)), 3)
+        assert_equal(len(self.p1.reduce(1)), 2)
+        assert_equal(len(self.p1.reduce(0)), 1)
+
     def test_convert(self) :
         x = np.linspace(-1,1)
         p = self.p1.convert(domain=[0,1])
