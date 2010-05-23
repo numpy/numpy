@@ -391,20 +391,19 @@ class $name(pu.PolyBase) :
         """
         return self.__class__(pu.trimcoef(self.coef, tol), self.domain)
 
-    def truncate(self, deg) :
-        """Truncate series to degree `deg`.
+    def truncate(self, size) :
+        """Truncate series to length `size`.
 
-        Return a $name series obtained from the current instance by discarding
-        all terms of degree greater than `deg`.  The value of `deg` must be
-        non-negative. This operation is most likely to be useful in least squares
-        fits when the high order coefficients are very small.
+        Reduce the $name series to length `size` by discarding the high
+        degree terms. The value of `size` must be a positive integer. This
+        can be useful in least squares where the coefficients of the
+        high degree terms may be very small.
 
         Parameters:
         -----------
-        deg : non-negative int
-            The series is reduced to degree `deg` by discarding the
-            coefficients of the higher degree terms. The value of `deg`
-            must be non-negative.
+        size : positive int
+            The series is reduced to length `size` by discarding the high
+            degree terms. The value of `size` must be a positive integer.
 
         Returns:
         -------
@@ -412,13 +411,13 @@ class $name(pu.PolyBase) :
             New instance of $name with truncated coefficients.
 
         """
-        size = int(deg) + 1
-        if size != deg + 1 or size < 1 :
-            raise ValueError("deg must be a non-negative integer")
-        if size  >= len(self) :
+        isize = int(size)
+        if isize != size or isize < 1 :
+            raise ValueError("size must be a positive integer")
+        if isize >= len(self.coef) :
             return self.__class__(self.coef, self.domain)
         else :
-            return self.__class__(self.coef[:size], self.domain)
+            return self.__class__(self.coef[:isize], self.domain)
 
     def copy(self) :
         """Return a copy.
@@ -442,7 +441,7 @@ class $name(pu.PolyBase) :
 
         Parameters:
         -----------
-        m : non-negative integer
+        m : non-negative int
             The number of integrations to perform.
         k : array_like
             Integration constants. The first constant is applied to the
@@ -455,7 +454,7 @@ class $name(pu.PolyBase) :
         Returns:
         --------
         integral : $name
-            The integral of the original series with the same domain.
+            The integral of the series using the same domain.
 
         See Also
         --------
@@ -479,13 +478,13 @@ class $name(pu.PolyBase) :
 
         Parameters:
         -----------
-        m : non-negative integer
+        m : non-negative int
             The number of integrations to perform.
 
         Returns:
         --------
         derivative : $name
-            The derivative of the original series with the same domain.
+            The derivative of the series using the same domain.
 
         See Also
         --------

@@ -420,11 +420,11 @@ class TestChebyshevClass(TestCase) :
 
     def test_truncate(self) :
         assert_raises(ValueError, self.p1.truncate, .5)
-        assert_raises(ValueError, self.p1.truncate, -1)
+        assert_raises(ValueError, self.p1.truncate, 0)
+        assert_equal(len(self.p1.truncate(4)), 3)
         assert_equal(len(self.p1.truncate(3)), 3)
-        assert_equal(len(self.p1.truncate(2)), 3)
-        assert_equal(len(self.p1.truncate(1)), 2)
-        assert_equal(len(self.p1.truncate(0)), 1)
+        assert_equal(len(self.p1.truncate(2)), 2)
+        assert_equal(len(self.p1.truncate(1)), 1)
 
     def test_copy(self) :
         p = self.p1.copy()
