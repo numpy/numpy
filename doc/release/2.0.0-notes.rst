@@ -77,9 +77,12 @@ polynomial.polynomial
   derivations is a non-negative integer. The number 0 is a valid value for both
   functions.
 * A degree method has been added to the Polynomial class.
+* A reduce method has been added to the Polynomial class. It operates like
+  truncate except that the argument is the desired degree of the result,
+  not the number of coefficients.
 * The fit class function of the Polynomial class now uses None as the default
-  domain for the fit. The domain can be specified as 'default' to use the
-  Polynomial default domain [-1, 1].
+  domain for the fit. The default Polynomial domain can be specified by using
+  [] as the domain value.
 
 polynomial.chebyshev
 --------------------
@@ -88,7 +91,10 @@ polynomial.chebyshev
   derivations is a non-negative integer. The number 0 is a valid value for both
   functions.
 * A degree method has been added to the Chebyshev class.
+* A reduce method has been added to the Chebyshev class. It operates like
+  truncate except that the argument is the desired degree of the result,
+  not the number of coefficients.
 * The fit class function of the Chebyshev class now uses None as the default
-  domain for the fit. The domain can be specified as 'default' to use the
-  Chebyshev default domain [-1, 1].
+  domain for the fit. The default Chebyshev domain can be specified by using
+  [] as the domain value.
 
