@@ -448,11 +448,12 @@ class TestPolynomialClass(TestCase) :
         assert_almost_equal(p.domain, [0,3])
 
         # test that fit works in given domains
-        p = poly.Polynomial.fit(x, y, 3, 'default')
-        assert_almost_equal(p(x), y)
         p = poly.Polynomial.fit(x, y, 3, None)
         assert_almost_equal(p(x), y)
         assert_almost_equal(p.domain, [0,3])
+        p = poly.Polynomial.fit(x, y, 3, [])
+        assert_almost_equal(p(x), y)
+        assert_almost_equal(p.domain, [-1, 1])
 
     def test_identity(self) :
         x = np.linspace(0,3)

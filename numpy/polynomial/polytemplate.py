@@ -565,11 +565,12 @@ class $name(pu.PolyBase) :
             passing in a 2D-array that contains one dataset per column.
         deg : int
             Degree of the fitting polynomial
-        domain : {None, [beg, end], 'default'}, optional
+        domain : {None, [], [beg, end]}, optional
             Domain to use for the returned $name instance. If ``None``,
             then a minimal domain that covers the points `x` is chosen.
-            If ``'default'`` the default domain ``$domain`` is used. The
-            default value is ``None``.
+            If ``[]`` the default domain ``$domain`` is used. The
+            default value is $domain in numpy 1.4.x and ``None`` in
+            numpy 2.0.0. The keyword value ``[]`` was added in numpy 2.0.0.
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
             than this relative to the largest singular value will be
@@ -601,7 +602,7 @@ class $name(pu.PolyBase) :
         """
         if domain is None :
             domain = pu.getdomain(x)
-        elif domain == 'default' :
+        elif domain == [] :
             domain = $domain
         xnew = pu.mapdomain(x, domain, $domain)
         res = ${nick}fit(xnew, y, deg, rcond=None, full=full)
