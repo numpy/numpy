@@ -1387,7 +1387,7 @@ local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
         intp imin = 0;
         intp imax = nelts;
         while (imin < imax) {
-            intp imid = imin + ((imax - imin) >> 2);
+            intp imid = imin + ((imax - imin) >> 1);
             if (compare(parr + elsize*imid, pkey, key) < 0) {
                 imin = imid + 1;
             }
@@ -1430,7 +1430,7 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
         intp imin = 0;
         intp imax = nelts;
         while (imin < imax) {
-            intp imid = imin + ((imax - imin) >> 2);
+            intp imid = imin + ((imax - imin) >> 1);
             if (compare(parr + elsize*imid, pkey, key) <= 0) {
                 imin = imid + 1;
             }
