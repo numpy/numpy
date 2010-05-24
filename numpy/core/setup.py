@@ -252,7 +252,7 @@ def check_types(config_cmd, ext, build_dir):
     result = config_cmd.check_header('Python.h')
     if not result:
         raise SystemError(
-                "Cannot compiler 'Python.h'. Perhaps you need to "\
+                "Cannot compile 'Python.h'. Perhaps you need to "\
                 "install python-dev|python-devel.")
 
     # Check basic types sizes
