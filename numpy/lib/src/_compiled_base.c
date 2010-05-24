@@ -407,45 +407,39 @@ fail:
     return NULL;
 }
 
-/*
- * binary_search accepts three arguments: a numeric value and
- * a numeric array and its length. It assumes that the array is sorted in
- * increasing order. It returns the index of the array's
- * largest element which is <= the value. It will return -1 if
- * the value is less than the least element of the array.
- * self is not used
+/** @brief Use bisection on a sorted array to find first entry > key.
+ *
+ * Use bisection to find an index i s.t. arr[i] <= key < arr[i + 1]. If there is
+ * no such i the error returns are:
+ *     key < arr[0] -- -1
+ *     key == arr[len - 1] -- len - 1
+ *     key > arr[len - 1] -- len
+ * The array is assumed contiguous and sorted in ascending order.
+ *
+ * @param key key value.
+ * @param arr contiguous sorted array to be searched.
+ * @param len length of the array.
+ * @return index
  */
 static npy_intp
-binary_search(double dval, double dlist [], npy_intp len)
+binary_search(double key, double arr [], npy_intp len)
 {
-    npy_intp bottom , top , middle, result;
+    npy_intp imin = 0;
+    npy_intp imax = len;
 
-    if (dval < dlist [0]) {
-        result = -1;
+    if (key > arr[len - 1]) {
+        return len;
     }
-    else {
-        bottom = 0;
-        top = len - 1;
-        while (bottom < top) {
-            middle = (top + bottom) / 2;
-            if (dlist [middle] < dval) {
-                bottom = middle + 1;
-            }
-            else if (dlist [middle] > dval) {
-                top = middle - 1;
-            }
-            else {
-                return middle;
-            }
-        }
-        if (dlist [bottom] > dval) {
-            result = bottom - 1;
+    while (imin < imax) {
+        npy_intp imid = imin + ((imax - imin) >> 1);
+        if (key >= arr[imid]) {
+            imin = imid + 1;
         }
         else {
-            result = bottom;
+            imax = imid;
         }
     }
-    return result;
+    return imin - 1;
 }
 
 static PyObject *
@@ -478,8 +472,12 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     if (ax == NULL) {
         goto fail;
     }
-
     lenxp = axp->dimensions[0];
+    if (lenxp == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "array of sample points is empty");
+        goto fail;
+    }
     if (afp->dimensions[0] != lenxp) {
         PyErr_SetString(PyExc_ValueError,
                 "fp and xp are not of the same length.");
@@ -517,20 +515,23 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
-    slopes = (double *) PyDataMem_NEW((lenxp-1)*sizeof(double));
+    slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
     for (i = 0; i < lenxp - 1; i++) {
         slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
     }
     for (i = 0; i < lenx; i++) {
         indx = binary_search(dz[i], dx, lenxp);
-        if (indx < 0) {
+        if (indx == -1) {
             dres[i] = lval;
         }
-        else if (indx >= lenxp - 1) {
+        else if (indx == lenxp - 1) {
+            dres[i] = dy[indx];
+        }
+        else if (indx == lenxp) {
             dres[i] = rval;
         }
         else {
-            dres[i] = slopes[indx]*(dz[i]-dx[indx]) + dy[indx];
+            dres[i] = slopes[indx]*(dz[i] - dx[indx]) + dy[indx];
         }
     }
 
