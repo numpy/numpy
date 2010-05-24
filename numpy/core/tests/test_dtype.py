@@ -33,6 +33,15 @@ class TestRecord(TestCase):
         self.assertTrue(hash(a) != hash(b),
                 "%s and %s hash the same !" % (a, b))
 
+    def test_not_lists(self):
+        """Test if an appropriate exception is raised when passing bad values to
+        the dtype constructor.
+        """
+        self.assertRaises(TypeError, np.dtype,
+            dict(names=set(['A', 'B']), formats=['f8', 'i4']))
+        self.assertRaises(TypeError, np.dtype,
+            dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
+
 class TestSubarray(TestCase):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))

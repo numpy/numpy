@@ -1010,6 +1010,9 @@ _convert_from_dict(PyObject *obj, int align)
         }
         tup = PyTuple_New(len);
         descr = PyObject_GetItem(descrs, index);
+        if (!descr) {
+            goto fail;
+        }
         ret = PyArray_DescrConverter(descr, &newdescr);
         Py_DECREF(descr);
         if (ret == PY_FAIL) {
@@ -1025,6 +1028,9 @@ _convert_from_dict(PyObject *obj, int align)
         if (offsets) {
             long offset;
             off = PyObject_GetItem(offsets, index);
+            if (!off) {
+                goto fail;
+            }
             offset = PyInt_AsLong(off);
             PyTuple_SET_ITEM(tup, 1, off);
             if (offset < totalsize) {
@@ -1046,6 +1052,9 @@ _convert_from_dict(PyObject *obj, int align)
             PyTuple_SET_ITEM(tup, 2, item);
         }
         name = PyObject_GetItem(names, index);
+        if (!name) {
+            goto fail;
+        }
         Py_DECREF(index);
 #if defined(NPY_PY3K)
         if (!PyUString_Check(name)) {
