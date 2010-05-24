@@ -935,11 +935,21 @@ class TestBincount(TestCase):
 
 
 class TestInterp(TestCase):
+    def test_exceptions(self):
+        assert_raises(ValueError, interp, 0, [], [])
+        assert_raises(ValueError, interp, 0, [0], [1, 2])
+
     def test_basic(self):
         x = np.linspace(0, 1, 5)
         y = np.linspace(0, 1, 5)
         x0 = np.linspace(0, 1, 50)
         assert_almost_equal(np.interp(x0, x, y), x0)
+
+    def test_right_left_behavior(self):
+        assert_equal(interp([-1, 0, 1], [0], [1]), [1,1,1])
+        assert_equal(interp([-1, 0, 1], [0], [1], left=0), [0,1,1])
+        assert_equal(interp([-1, 0, 1], [0], [1], right=0), [1,1,0])
+        assert_equal(interp([-1, 0, 1], [0], [1], left=0, right=0), [0,1,0])
 
     def test_scalar_interpolation_point(self):
         x = np.linspace(0, 1, 5)
