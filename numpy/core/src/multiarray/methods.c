@@ -28,20 +28,20 @@
 static int
 NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
 {
-        PyObject *args = PyTuple_New(0);
-	int ret;
-	va_list va;
+    PyObject *args = PyTuple_New(0);
+    int ret;
+    va_list va;
 
-	if (args == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "Failed to allocate new tuple");
-            return 0;
-	}
-	va_start(va, kwlist);
-	ret = PyArg_VaParseTupleAndKeywords(args, keys, format, kwlist, va);
-	va_end(va);
-        Py_DECREF(args);
-	return ret;
+    if (args == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Failed to allocate new tuple");
+        return 0;
+    }
+    va_start(va, kwlist);
+    ret = PyArg_VaParseTupleAndKeywords(args, keys, format, kwlist, va);
+    va_end(va);
+    Py_DECREF(args);
+    return ret;
 }
 
 /* Should only be used if x is known to be an nd-array */
