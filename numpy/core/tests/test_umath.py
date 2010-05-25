@@ -360,8 +360,8 @@ class TestLdexp(TestCase):
         assert_almost_equal(ncu.ldexp(np.array(2., np.float32), np.array(3, np.int32)), 16.)
         assert_almost_equal(ncu.ldexp(np.array(2., np.float64), np.array(3, np.int16)), 16.)
         assert_almost_equal(ncu.ldexp(np.array(2., np.float64), np.array(3, np.int32)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.float96), np.array(3, np.int16)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.float96), np.array(3, np.int32)), 16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.longdouble), np.array(3, np.int16)), 16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.longdouble), np.array(3, np.int32)), 16.)
 
 
 class TestMaximum(TestCase):
