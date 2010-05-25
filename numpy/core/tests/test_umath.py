@@ -353,6 +353,13 @@ class TestArctan2SpecialValues(TestCase):
         assert_arctan2_isnan(np.nan, np.nan)
 
 
+class TestLdexp(TestCase):
+    def test_ldexp(self):
+        assert_almost_equal(ncu.ldexp(2., 3),  16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.float32), np.array(3, np.int16)), 16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.float32), np.array(3, np.int32)), 16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.float64), np.array(3, np.int32)), 16.)
+
 class TestMaximum(TestCase):
     def test_reduce_complex(self):
         assert_equal(np.maximum.reduce([1,2j]),1)

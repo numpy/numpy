@@ -188,9 +188,9 @@ static char ldexp_signatures[] = {
 #ifdef HAVE_LDEXPF
     PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
 #endif
-    PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE
+    PyArray_DOUBLE, PyArray_LONG, PyArray_DOUBLE
 #ifdef HAVE_LDEXPL
-    ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
+    ,PyArray_LONGDOUBLE, PyArray_LONG, PyArray_LONGDOUBLE
 #endif
 };
 
