@@ -1532,6 +1532,13 @@ class _numpy_info(system_info):
                 if name=='lib':
                     break
                 prefix.append(name)
+
+            # Ask numpy for its own include path before attempting anything else
+            try:
+                include_dirs.append(getattr(module, 'get_include')())
+            except AttributeError:
+                pass
+
             include_dirs.append(distutils.sysconfig.get_python_inc(
                                         prefix=os.sep.join(prefix)))
         except ImportError:
