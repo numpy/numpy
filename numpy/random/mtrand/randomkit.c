@@ -127,8 +127,8 @@
 
 char *rk_strerror[RK_ERR_MAX] =
 {
-        "no error",
-        "random device unvavailable"
+    "no error",
+    "random device unvavailable"
 };
 
 /* static functions */
@@ -137,17 +137,18 @@ static unsigned long rk_hash(unsigned long key);
 void
 rk_seed(unsigned long seed, rk_state *state)
 {
-        int pos;
-        seed &= 0xffffffffUL;
+    int pos;
+    seed &= 0xffffffffUL;
 
-        /* Knuth's PRNG as used in the Mersenne Twister reference implementation */
-        for (pos = 0; pos < RK_STATE_LEN; pos++) {
-            state->key[pos] = seed;
-            seed = (1812433253UL * (seed ^ (seed >> 30)) + pos + 1) & 0xffffffffUL;
-        }
-        state->pos = RK_STATE_LEN;
-        state->has_gauss = 0;
-        state->has_binomial = 0;
+    /* Knuth's PRNG as used in the Mersenne Twister reference implementation */
+    for (pos = 0; pos < RK_STATE_LEN; pos++) {
+        state->key[pos] = seed;
+        seed = (1812433253UL * (seed ^ (seed >> 30)) + pos + 1) & 0xffffffffUL;
+    }
+    state->pos = RK_STATE_LEN;
+    state->gauss = 0;
+    state->has_gauss = 0;
+    state->has_binomial = 0;
 }
 
 /* Thomas Wang 32 bits integer hash function */
@@ -177,6 +178,7 @@ rk_randomseed(rk_state *state)
         /* ensures non-zero key */
         state->key[0] |= 0x80000000UL;
         state->pos = RK_STATE_LEN;
+        state->gauss = 0;
         state->has_gauss = 0;
         state->has_binomial = 0;
 
@@ -375,8 +377,10 @@ double
 rk_gauss(rk_state *state)
 {
     if (state->has_gauss) {
+        const double tmp = state->gauss;
+        state->gauss = 0;
         state->has_gauss = 0;
-        return state->gauss;
+        return tmp;
     }
     else {
         double f, x1, x2, r2;
@@ -390,9 +394,9 @@ rk_gauss(rk_state *state)
 
         /* Box-Muller transform */
         f = sqrt(-2.0*log(r2)/r2);
-        state->has_gauss = 1;
         /* Keep for next call */
         state->gauss = f*x1;
+        state->has_gauss = 1;
         return f*x2;
     }
 }

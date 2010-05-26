@@ -145,6 +145,7 @@ init_by_array(rk_state *self, unsigned long init_key[], unsigned long key_length
     }
 
     mt[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
+    self->gauss = 0;
     self->has_gauss = 0;
     self->has_binomial = 0;
 }
