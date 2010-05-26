@@ -98,6 +98,7 @@
 #include <sys/timeb.h>
 #define _FTIME(x) _ftime((x))
 #endif
+
 #ifndef RK_NO_WINCRYPT
 /* Windows crypto */
 #ifndef _WIN32_WINNT
@@ -106,6 +107,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 #endif
+
 #else
 /* Unix */
 #include <time.h>
@@ -132,7 +134,8 @@ char *rk_strerror[RK_ERR_MAX] =
 /* static functions */
 static unsigned long rk_hash(unsigned long key);
 
-void rk_seed(unsigned long seed, rk_state *state)
+void
+rk_seed(unsigned long seed, rk_state *state)
 {
         int pos;
         seed &= 0xffffffffUL;
@@ -148,7 +151,8 @@ void rk_seed(unsigned long seed, rk_state *state)
 }
 
 /* Thomas Wang 32 bits integer hash function */
-unsigned long rk_hash(unsigned long key)
+unsigned long
+rk_hash(unsigned long key)
 {
     key += ~(key << 15);
     key ^=  (key >> 10);
@@ -159,7 +163,8 @@ unsigned long rk_hash(unsigned long key)
     return key;
 }
 
-rk_error rk_randomseed(rk_state *state)
+rk_error
+rk_randomseed(rk_state *state)
 {
 #ifndef _WIN32
     struct timeval tv;
@@ -201,7 +206,8 @@ rk_error rk_randomseed(rk_state *state)
 #define LOWER_MASK 0x7fffffffUL
 
 /* Slightly optimised reference implementation of the Mersenne Twister */
-unsigned long rk_random(rk_state *state)
+unsigned long
+rk_random(rk_state *state)
 {
     unsigned long y;
 
@@ -232,12 +238,14 @@ unsigned long rk_random(rk_state *state)
     return y;
 }
 
-long rk_long(rk_state *state)
+long
+rk_long(rk_state *state)
 {
     return rk_ulong(state) >> 1;
 }
 
-unsigned long rk_ulong(rk_state *state)
+unsigned long
+rk_ulong(rk_state *state)
 {
 #if ULONG_MAX <= 0xffffffffUL
     return rk_random(state);
@@ -246,7 +254,8 @@ unsigned long rk_ulong(rk_state *state)
 #endif
 }
 
-unsigned long rk_interval(unsigned long max, rk_state *state)
+unsigned long
+rk_interval(unsigned long max, rk_state *state)
 {
     unsigned long mask = max, value;
 
@@ -277,14 +286,16 @@ unsigned long rk_interval(unsigned long max, rk_state *state)
     return value;
 }
 
-double rk_double(rk_state *state)
+double
+rk_double(rk_state *state)
 {
     /* shifts : 67108864 = 0x4000000, 9007199254740992 = 0x20000000000000 */
     long a = rk_random(state) >> 5, b = rk_random(state) >> 6;
     return (a * 67108864.0 + b) / 9007199254740992.0;
 }
 
-void rk_fill(void *buffer, size_t size, rk_state *state)
+void
+rk_fill(void *buffer, size_t size, rk_state *state)
 {
     unsigned long r;
     unsigned char *buf = buffer;
