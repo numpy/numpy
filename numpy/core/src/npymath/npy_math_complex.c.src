@@ -242,7 +242,7 @@
 
 /**begin repeat1
  * #kind = cabs,carg#
- * #KIND = CABS,carg#
+ * #KIND = CABS,CARG#
  */
 #ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@ctype@ z)
