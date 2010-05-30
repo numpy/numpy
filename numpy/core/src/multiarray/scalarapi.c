@@ -371,10 +371,8 @@ PyArray_ScalarFromObject(PyObject *object)
         if (ret == NULL) {
             return NULL;
         }
-        PyArrayScalar_VAL(ret, CDouble).real =
-                ((PyComplexObject *)object)->cval.real;
-        PyArrayScalar_VAL(ret, CDouble).imag =
-                ((PyComplexObject *)object)->cval.imag;
+        PyArrayScalar_VAL(ret, CDouble).real = PyComplex_RealAsDouble(object);
+        PyArrayScalar_VAL(ret, CDouble).imag = PyComplex_ImagAsDouble(object);
     }
     else if (PyLong_Check(object)) {
         longlong val;
