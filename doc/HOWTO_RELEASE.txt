@@ -232,7 +232,9 @@ There are two ways to update PyPi, the first one is::
 
 and the second one is to upload the PKG_INFO file inside the sdist dir in the
 web interface of PyPi. The source tarball can also be uploaded through this
-interface.
+interface. A simple binary installer for windows, created with
+``bdist_wininst``, should also be uploaded to PyPi so ``easy_install numpy``
+works.
 
 Update scipy.org
 ----------------
