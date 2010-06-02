@@ -104,14 +104,14 @@ class GnuFCompiler(FCompiler):
         if sys.platform=='darwin':
             target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
             # If MACOSX_DEPLOYMENT_TARGET is set, we simply trust the value
-            # and leave it alone.  But, distutils will complain if the 
-            # environment's value is different from the one in the Python 
-            # Makefile used to build Python.  We let disutils handle this 
+            # and leave it alone.  But, distutils will complain if the
+            # environment's value is different from the one in the Python
+            # Makefile used to build Python.  We let disutils handle this
             # error checking.
             if not target:
-                # If MACOSX_DEPLOYMENT_TARGET is not set in the environment, 
-                # we try to get it first from the Python Makefile and then we 
-                # fall back to setting it to 10.3 to maximize the set of 
+                # If MACOSX_DEPLOYMENT_TARGET is not set in the environment,
+                # we try to get it first from the Python Makefile and then we
+                # fall back to setting it to 10.3 to maximize the set of
                 # versions we can work with.  This is a reasonable default
                 # even when using the official Python dist and those derived
                 # from it.
@@ -124,7 +124,7 @@ class GnuFCompiler(FCompiler):
                 if target == '10.3':
                     s = 'Env. variable MACOSX_DEPLOYMENT_TARGET set to 10.3'
                     warnings.warn(s)
-            
+
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -254,7 +254,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not sys.platform == 'darwin':
             return []
         arch_flags = []
-        for arch in ["ppc", "i686", "x86_64"]:
+        for arch in ["ppc", "i686", "x86_64", "ppc64"]:
             if _can_target(cmd, arch):
                 arch_flags.extend(["-arch", arch])
         return arch_flags
