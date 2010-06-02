@@ -75,23 +75,29 @@ class BagObj(object):
     """
     BagObj(obj)
 
-    Convert attribute lookups to getitems on the object passed in.
+    Convert attribute look-ups to getitems on the object passed in.
 
     Parameters
     ----------
     obj : class instance
-        Object on which attribute lookup is performed.
+        Object on which attribute look-up is performed.
 
     Examples
     --------
+    >>> from numpy.lib.npyio import BagObj as BO
     >>> class BagDemo(object):
-    ...     def __getitem__(self, key):
-    ...         return key
+    ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
+    ...                                 # will call this method when any
+    ...                                 # attribute look-up is required
+    ...         result = "Doesn't matter what you want, "
+    ...         return result + "you're gonna get this"
     ...
     >>> demo_obj = BagDemo()
-    >>> bagobj = np.lib.npyio.BagObj(demo_obj)
-    >>> bagobj.some_item
-    'some_item'
+    >>> bagobj = BO(demo_obj)
+    >>> bagobj.hello_there
+    "Doesn't matter what you want, you're gonna get this"
+    >>> bagobj.I_can_be_anything
+    "Doesn't matter what you want, you're gonna get this"
 
     """
     def __init__(self, obj):
@@ -147,7 +153,7 @@ class NpzFile(object):
     >>> outfile.seek(0)
 
     >>> npz = np.load(outfile)
-    >>> isinstance(npz, np.lib.npyio.NpzFile)
+    >>> isinstance(npz, np.lib.io.NpzFile)
     True
     >>> npz.files
     ['y', 'x']
