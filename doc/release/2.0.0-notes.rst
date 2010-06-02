@@ -98,3 +98,7 @@ polynomial.chebyshev
   domain for the fit. The default Chebyshev domain can be specified by using
   [] as the domain value.
 
+histogram
+---------
+After a two years transition period, the old behavior of the histogram function
+has been phased out, and the "new" keyword has been removed.
