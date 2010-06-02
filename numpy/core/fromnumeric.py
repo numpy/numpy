@@ -2371,7 +2371,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     The standard deviation is the square root of the average of the squared
     deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
 
-    The mean is normally calculated as ``x.sum() / N``, where
+    The average squared deviation is normally calculated as ``x.sum() / N``, where
     ``N = len(x)``.  If, however, `ddof` is specified, the divisor ``N - ddof``
     is used instead. In standard statistical practice, ``ddof=1`` provides an
     unbiased estimator of the variance of the infinite population. ``ddof=0``

@@ -61,6 +61,16 @@ class memmap(ndarray):
         Fortran (column-major).  This only has an effect if the shape is
         greater than 1-D.  The default order is 'C'.
 
+    Attributes
+    ----------
+    filename : str
+        Path to the mapped file.
+    offset : int
+        Offset position in the file.
+    mode : str
+        File mode.
+
+
     Methods
     -------
     close

@@ -285,7 +285,7 @@ class recarray(ndarray):
     """
     Construct an ndarray that allows field access using attributes.
 
-    Arrays may have a data-types containing fields, analagous
+    Arrays may have a data-types containing fields, analogous
     to columns in a spread sheet.  An example is ``[(x, int), (y, float)]``,
     where each entry in the array is a pair of ``(int, float)``.  Normally,
     these attributes are accessed using dictionary lookups such as ``arr['x']``
@@ -346,7 +346,7 @@ class recarray(ndarray):
     Notes
     -----
     This constructor can be compared to ``empty``: it creates a new record
-    array but does not fill it with data.  To create a reccord array from data,
+    array but does not fill it with data.  To create a record array from data,
     use one of the following methods:
 
     1. Create a standard ndarray and convert it to a record array,

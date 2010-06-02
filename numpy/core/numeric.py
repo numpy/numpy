@@ -35,10 +35,10 @@ if sys.version_info[0] < 3:
 
 class ComplexWarning(RuntimeWarning):
     """
-    Warning that is raised when casting complex numbers to real.
+    The warning raised when casting a complex dtype to a real dtype.
 
-    Casting a complex number to real discards its imaginary part, and
-    this behavior may not be what is intended in all cases.
+    As implemented, casting a complex number to a real discards its imaginary
+    part, but this behavior may not be what the user actually wants.
 
     """
     pass
@@ -743,15 +743,15 @@ def convolve(a,v,mode='full'):
 
     See Also
     --------
-    scipy.signal.fftconv : Convolve two arrays using the Fast Fourier
-                           Transform.
+    scipy.signal.fftconvolve : Convolve two arrays using the Fast Fourier
+                               Transform.
     scipy.linalg.toeplitz : Used to construct the convolution operator.
 
     Notes
     -----
     The discrete convolution operation is defined as
 
-    .. math:: (f * g)[n] = \\sum_{m = -\\infty}^{\\infty} f[m] f[n - m]
+    .. math:: (f * g)[n] = \\sum_{m = -\\infty}^{\\infty} f[m] g[n - m]
 
     It can be shown that a convolution :math:`x(t) * y(t)` in time/space
     is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
