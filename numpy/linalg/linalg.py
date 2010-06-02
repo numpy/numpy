@@ -540,38 +540,29 @@ def qr(a, mode='full'):
     """
     Compute the qr factorization of a matrix.
 
-    Factor the matrix `a` as `qr`, where `q` is orthonormal
-    (:math:`dot( q_{:,i}, q_{:,j}) = \\delta_{ij}`, the Kronecker delta) and
-    `r` is upper-triangular.
+    Factor the matrix `a` as *qr*, where `q` is orthonormal and `r` is
+    upper-triangular.
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
-        Matrix to be factored.
-    mode : {'full', 'r', 'economic'}
-        Specifies the information to be returned. 'full' is the default.
-        mode='r' returns a "true" `r`, while 'economic' returns a "polluted"
-        `r` (albeit slightly faster; see Returns below).
+    a : array_like
+        Matrix to be factored, of shape (M, N).
+    mode : {'full', 'r', 'economic'}, optional
+        Specifies the values to be returned. 'full' is the default.
+        Economic mode is slightly faster then 'r' mode if only `r` is needed.
 
     Returns
     -------
-    * If mode = 'full':
-
-        * q : ndarray of float or complex, shape (M, K)
-        * r : ndarray of float or complex, shape (K, N)
-
-      Size K = min(M, N)
-
-    * If mode = 'r':
-
-      * r : ndarray of float or complex, shape (K, N)
-
-    * If mode = 'economic':
-
-      * a2 : ndarray of float or complex, shape (M, N)
-
-      The diagonal and the upper triangle of a2 contains r,
-      while the rest of the matrix is undefined.
+    q : ndarray of float or complex, optional
+        The orthonormal matrix, of shape (M, K). Only returned if
+        ``mode='full'``.
+    r : ndarray of float or complex, optional
+        The upper-triangular matrix, of shape (K, N) with K = min(M, N).
+        Only returned when ``mode='full'`` or ``mode='r'``.
+    a2 : ndarray of float or complex, optional
+        Array of shape (M, N), only returned when ``mode='economic``'.
+        The  diagonal and the upper triangle of `a2` contains `r`, while
+        the rest of the matrix is undefined.
 
     Raises
     ------
@@ -1204,38 +1195,32 @@ def svd(a, full_matrices=1, compute_uv=1):
     """
     Singular Value Decomposition.
 
-    Factors the matrix ``a`` into ``u * np.diag(s) * v``, where ``u`` and
-    ``v`` are unitary (i.e., ``u.H = inv(u)`` and similarly for ``v``) and
-    ``s`` is a 1-D array of ``a``'s singular values.  Note that, in the
-    literature, it is common to see this decomposition expressed as (in
-    NumPy notation) ``a = u * np.diag(s) * v.H``, whereas the ``v`` this
-    function returns is such that ``a`` would be reconstructed as above; in
-    other words, "our" ``v`` is the Hermitian (conjugate transpose) of that
-    commonly seen in the literature.
+    Factors the matrix `a` as ``u * np.diag(s) * v``, where `u` and `v`
+    are unitary and `s` is a 1-d array of `a`'s singular values.
 
     Parameters
     ----------
     a : array_like
-        Matrix of shape ``(M, N)`` to decompose.
+        A real or complex matrix of shape (`M`, `N`) .
     full_matrices : bool, optional
-        If True (default), ``u`` and ``v`` have the shapes ``(M, M)``
-        and ``(N, N)``, respectively.  Otherwise, the shapes are ``(M, K)``
-        and ``(K, N)``, resp., where ``K = min(M, N)``.
+        If True (default), `u` and `v` have the shapes (`M`, `M`) and
+        (`N`, `N`), respectively.  Otherwise, the shapes are (`M`, `K`)
+        and (`K`, `N`), respectively, where `K` = min(`M`, `N`).
     compute_uv : bool, optional
-        Whether or not to compute ``u`` and ``v`` in addition to ``s``.
-        True by default.
+        Whether or not to compute `u` and `v` in addition to `s`.  True
+        by default.
 
     Returns
     -------
     u : ndarray
-        Unitary matrix. The shape of ``U`` is ``(M, M)`` or ``(M, K)``
+        Unitary matrix.  The shape of `u` is (`M`, `M`) or (`M`, `K`)
         depending on value of ``full_matrices``.
     s : ndarray
-        The singular values, sorted so that ``s[i] >= s[i+1]``.
-        ``S`` is a 1-D array of length ``min(M, N)``
+        The singular values, sorted so that ``s[i] >= s[i+1]``.  `s` is
+        a 1-d array of length min(`M`, `N`).
     v : ndarray
-        Unitary matrix of shape ``(N, N)`` or ``(K, N)``, depending
-        on ``full_matrices``.
+        Unitary matrix of shape (`N`, `N`) or (`K`, `N`), depending on
+        ``full_matrices``.
 
     Raises
     ------
@@ -1244,25 +1229,41 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     Notes
     -----
-    If ``a`` is a matrix object (as opposed to an `ndarray`), then so are
-    all the return values.
+    The SVD is commonly written as ``a = U S V.H``.  The `v` returned
+    by this function is ``V.H`` and ``u = U``.
+
+    If ``U`` is a unitary matrix, it means that it
+    satisfies ``U.H = inv(U)``.
+
+    The rows of `v` are the eigenvectors of ``a.H a``. The columns
+    of `u` are the eigenvectors of ``a a.H``.  For row ``i`` in
+    `v` and column ``i`` in `u`, the corresponding eigenvalue is
+    ``s[i]**2``.
+
+    If `a` is a `matrix` object (as opposed to an `ndarray`), then so
+    are all the return values.
 
     Examples
     --------
     >>> a = np.random.randn(9, 6) + 1j*np.random.randn(9, 6)
-    >>> U, s, V = np.linalg.svd(a)
+
+    Reconstruction based on full SVD:
+
+    >>> U, s, V = np.linalg.svd(a, full_matrices=True)
     >>> U.shape, V.shape, s.shape
-    ((9, 9), (6, 6), (6,))
+    ((9, 6), (6, 6), (6,))
+    >>> S = np.zeros((9, 6), dtype=complex)
+    >>> S[:6, :6] = np.diag(s)
+    >>> np.allclose(a, np.dot(U, np.dot(S, V)))
+    True
+
+    Reconstruction based on reduced SVD:
 
     >>> U, s, V = np.linalg.svd(a, full_matrices=False)
     >>> U.shape, V.shape, s.shape
     ((9, 6), (6, 6), (6,))
     >>> S = np.diag(s)
     >>> np.allclose(a, np.dot(U, np.dot(S, V)))
-    True
-
-    >>> s2 = np.linalg.svd(a, compute_uv=False)
-    >>> np.allclose(s, s2)
     True
 
     """
@@ -1413,32 +1414,21 @@ def cond(x, p=None):
 
 
 def matrix_rank(M, tol=None):
-    ''' Return matrix rank of array using SVD method
+    """
+    Return matrix rank of array using SVD method
 
     Rank of the array is the number of SVD singular values of the
     array that are greater than `tol`.
-    
+
     Parameters
     ----------
-    M : array-like
+    M : array_like
         array of <=2 dimensions
     tol : {None, float}
        threshold below which SVD values are considered zero. If `tol` is
        None, and ``S`` is an array with singular values for `M`, and
-       ``eps`` is the epsilon value for datatype of ``S``, then `tol`
+       ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
        set to ``S.max() * eps``.
-
-    Examples
-    --------
-    >>> matrix_rank(np.eye(4)) # Full rank matrix
-    4
-    >>> I=np.eye(4); I[-1,-1] = 0. # rank deficient matrix
-    >>> matrix_rank(I)
-    3
-    >>> matrix_rank(np.ones((4,))) # 1 dimension - rank 1 unless all 0
-    1
-    >>> matrix_rank(np.zeros((4,)))
-    0
 
     Notes
     -----
@@ -1457,9 +1447,22 @@ def matrix_rank(M, tol=None):
 
     References
     ----------
-    .. [1] G. H. Golub and C. F. Van Loan, _Matrix Computations_.
-    Baltimore: Johns Hopkins University Press, 1996.
-    '''
+    .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*.
+       Baltimore: Johns Hopkins University Press, 1996.
+
+    Examples
+    --------
+    >>> matrix_rank(np.eye(4)) # Full rank matrix
+    4
+    >>> I=np.eye(4); I[-1,-1] = 0. # rank deficient matrix
+    >>> matrix_rank(I)
+    3
+    >>> matrix_rank(np.ones((4,))) # 1 dimension - rank 1 unless all 0
+    1
+    >>> matrix_rank(np.zeros((4,)))
+    0
+
+    """
     M = asarray(M)
     if M.ndim > 2:
         raise TypeError('array should have 2 or fewer dimensions')
