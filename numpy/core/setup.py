@@ -204,6 +204,10 @@ def check_ieee_macros(config):
 
     macros = []
 
+    def _add_decl(f):
+        priv.append(fname2def("decl_%s" % f))
+        pub.append('NPY_%s' % fname2def("decl_%s" % f))
+
     # XXX: hack to circumvent cpp pollution from python: python put its
     # config.h in the public namespace, so we have a clash for the common
     # functions we test. We remove every function tested by python's
@@ -215,6 +219,8 @@ def check_ieee_macros(config):
                     headers=["Python.h", "math.h"])
             if not st:
                 macros.append(f)
+            else:
+                _add_decl(f)
     else:
         macros = _macros[:]
     # Normally, isnan and isinf are macro (C99), but some platforms only have
@@ -225,8 +231,7 @@ def check_ieee_macros(config):
     for f in macros:
         st = config.check_decl(f, headers = ["Python.h", "math.h"])
         if st:
-            priv.append(fname2def("decl_%s" % f))
-            pub.append('NPY_%s' % fname2def("decl_%s" % f))
+            _add_decl(f)
 
     return priv, pub
 
