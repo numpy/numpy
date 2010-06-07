@@ -313,8 +313,8 @@ class $name(pu.PolyBase) :
         """
         return len(self) - 1
 
-    def reduce(self, deg) :
-        """Reduce the degree of the series.
+    def cutdeg(self, deg) :
+        """Truncate series to the given degree.
 
         Reduce the degree of the $name series to `deg` by discarding the
         high order terms. If `deg` is greater than the current degree a

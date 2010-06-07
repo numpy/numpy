@@ -402,13 +402,13 @@ class TestChebyshevClass(TestCase) :
     def test_degree(self) :
         assert_equal(self.p1.degree(), 2)
 
-    def test_reduce(self) :
-        assert_raises(ValueError, self.p1.reduce, .5)
-        assert_raises(ValueError, self.p1.reduce, -1)
-        assert_equal(len(self.p1.reduce(3)), 3)
-        assert_equal(len(self.p1.reduce(2)), 3)
-        assert_equal(len(self.p1.reduce(1)), 2)
-        assert_equal(len(self.p1.reduce(0)), 1)
+    def test_cutdeg(self) :
+        assert_raises(ValueError, self.p1.cutdeg, .5)
+        assert_raises(ValueError, self.p1.cutdeg, -1)
+        assert_equal(len(self.p1.cutdeg(3)), 3)
+        assert_equal(len(self.p1.cutdeg(2)), 3)
+        assert_equal(len(self.p1.cutdeg(1)), 2)
+        assert_equal(len(self.p1.cutdeg(0)), 1)
 
     def test_convert(self) :
         x = np.linspace(-1,1)

@@ -77,7 +77,7 @@ polynomial.polynomial
   derivations is a non-negative integer. The number 0 is a valid value for both
   functions.
 * A degree method has been added to the Polynomial class.
-* A reduce method has been added to the Polynomial class. It operates like
+* A cutdeg method has been added to the Polynomial class. It operates like
   truncate except that the argument is the desired degree of the result,
   not the number of coefficients.
 * The fit class function of the Polynomial class now uses None as the default
@@ -91,7 +91,7 @@ polynomial.chebyshev
   derivations is a non-negative integer. The number 0 is a valid value for both
   functions.
 * A degree method has been added to the Chebyshev class.
-* A reduce method has been added to the Chebyshev class. It operates like
+* A cutdeg method has been added to the Chebyshev class. It operates like
   truncate except that the argument is the desired degree of the result,
   not the number of coefficients.
 * The fit class function of the Chebyshev class now uses None as the default
