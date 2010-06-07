@@ -194,6 +194,16 @@ best to read the pavement.py script.
 .. note:: The following steps are repeated for the beta(s), release
    candidates(s) and the final release.
 
+Check the release notes
+-----------------------
+Check that the release notes are up-to-date, and mention at least the
+following:
+- major new features
+- deprecated and removed features
+- supported Python versions
+- for SciPy, supported NumPy version(s)
+- outlook for the near future
+
 Create the release "tag"
 ------------------------
 ::
