@@ -1295,15 +1295,15 @@ def _nanop(op, fill, a, axis=None):
 
     """
     y = array(a, subok=True)
-    mask = isnan(a)
 
     # We only need to take care of NaN's in floating point arrays
-    if not np.issubdtype(y.dtype, np.integer):
-        # y[mask] = fill
-        # We can't use fancy indexing here as it'll mess w/ MaskedArrays
-        # Instead, let's fill the array directly...
-        np.putmask(y, mask, fill)
-
+    if np.issubdtype(y.dtype, np.integer):
+        return op(y, axis=axis)
+    mask = isnan(a)
+    # y[mask] = fill
+    # We can't use fancy indexing here as it'll mess w/ MaskedArrays
+    # Instead, let's fill the array directly...
+    np.putmask(y, mask, fill)
     res = op(y, axis=axis)
     mask_all_along_axis = mask.all(axis=axis)
 
