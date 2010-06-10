@@ -595,6 +595,9 @@ def get_masked_subclass(*arrays):
         for cls in arrcls[1:]:
             if issubclass(cls, rcls):
                 rcls = cls
+    # Don't return MaskedConstant as result: revert to MaskedArray
+    if rcls.__name__ == 'MaskedConstant':
+        return MaskedArray
     return rcls
 
 #####--------------------------------------------------------------------------
@@ -4680,7 +4683,10 @@ class MaskedArray(ndarray):
         else:
             dsum = self.sum(axis=axis, dtype=dtype)
             cnt = self.count(axis=axis)
-            result = dsum * 1. / cnt
+            if cnt.shape == () and (cnt == 0):
+                result = masked
+            else:
+                result = dsum * 1. / cnt
         if out is not None:
             out.flat = result
             if isinstance(out, MaskedArray):
@@ -5004,6 +5010,8 @@ class MaskedArray(ndarray):
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
         else:
+            if self is masked:
+                return self
             if fill_value is None:
                 if endwith:
                     filler = minimum_fill_value(self)
@@ -5686,10 +5694,37 @@ def isMaskedArray(x):
     return isinstance(x, MaskedArray)
 isarray = isMaskedArray
 isMA = isMaskedArray  #backward compatibility
+
 # We define the masked singleton as a float for higher precedence...
 # Note that it can be tricky sometimes w/ type comparison
-masked_singleton = MaskedArray(0, dtype=np.float_, mask=True)
-masked = masked_singleton
+
+class MaskedConstant(MaskedArray):
+    #
+    _data = data = np.array(0.)
+    _mask = mask = np.array(True)
+    _baseclass = ndarray
+    #
+    def __new__(self):
+        return self._data.view(self)
+    #
+    def __array_finalize__(self, obj):
+        return
+    #
+    def __array_wrap__(self, obj):
+        return self
+    #
+    def __str__(self):
+        return str(masked_print_option._display)
+    #
+    def __repr__(self):
+        return 'masked'
+    #
+    def flatten(self):
+        return masked_array([self._data], dtype=float, mask=[True])
+
+masked = masked_singleton = MaskedConstant()
+
+
 
 masked_array = MaskedArray
 
