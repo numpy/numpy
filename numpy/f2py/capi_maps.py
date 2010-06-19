@@ -435,7 +435,8 @@ def getinit(a,var):
                 else:
                     v = eval(v,{},{})
                     ret['init.r'],ret['init.i']=str(v.real),str(v.imag)
-            except: raise 'sign2map: expected complex number `(r,i)\' but got `%s\' as initial value of %s.'%(init,`a`)
+            except:
+                raise ValueError('sign2map: expected complex number `(r,i)\' but got `%s\' as initial value of %r.' % (init, a))
             if isarray(var):
                 init='(capi_c.r=%s,capi_c.i=%s,capi_c)'%(ret['init.r'],ret['init.i'])
         elif isstring(var):
