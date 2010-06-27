@@ -2737,6 +2737,7 @@ def sinc(x):
     <matplotlib.image.AxesImage object at 0x...>
 
     """
+    x = np.asanyarray(x)
     y = pi* where(x == 0, 1.0e-20, x)
     return sin(y)/y
 
