@@ -438,7 +438,15 @@ class TestSinc(TestCase):
         assert(sinc(0)==1)
         w=sinc(linspace(-1,1,100))
         #check symmetry
-        assert_array_almost_equal(w,flipud(w),7)
+        assert_array_almost_equal(w, flipud(w), 7)
+
+    def test_array_like(self):
+        x = [0, 0.5]
+        y1 = sinc(array(x))
+        y2 = sinc(list(x))
+        y3 = sinc(tuple(x))
+        assert_array_equal(y1, y2)
+        assert_array_equal(y1, y3)
 
 class TestHistogram(TestCase):
     def setUp(self):

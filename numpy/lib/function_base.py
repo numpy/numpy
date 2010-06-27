@@ -2688,6 +2688,7 @@ def sinc(x):
     >>> plt.imshow(np.sinc(xx))
 
     """
+    x = np.asanyarray(x)
     y = pi* where(x == 0, 1.0e-20, x)
     return sin(y)/y
 
