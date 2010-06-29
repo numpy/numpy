@@ -1149,6 +1149,21 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test.mask, [False, False])
 
 
+    def test_eq_w_None(self):
+        a = array([1, 2], mask=False)
+        assert_equal(a == None, False)
+        assert_equal(a != None, True)
+        a = masked
+        assert_equal(a == None, masked)
+
+    def test_eq_w_scalar(self):
+        a = array(1)
+        assert_equal(a == 1, True)
+        assert_equal(a == 0, False)
+        assert_equal(a != 1, False)
+        assert_equal(a != 0, True)
+
+
     def test_numpyarithmetics(self):
         "Check that the mask is not back-propagated when using numpy functions"
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])

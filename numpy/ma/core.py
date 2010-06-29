@@ -3584,8 +3584,13 @@ class MaskedArray(ndarray):
             return masked
         omask = getattr(other, '_mask', nomask)
         if omask is nomask:
-            check = ndarray.__eq__(self.filled(0), other).view(type(self))
-            check._mask = self._mask
+            check = ndarray.__eq__(self.filled(0), other)
+            try:
+                check = check.view(type(self))
+                check._mask = self._mask
+            except AttributeError:
+                # Dang, we have a bool instead of an array: return the bool
+                return check
         else:
             odata = filled(other, 0)
             check = ndarray.__eq__(self.filled(0), odata).view(type(self))
@@ -3612,8 +3617,13 @@ class MaskedArray(ndarray):
             return masked
         omask = getattr(other, '_mask', nomask)
         if omask is nomask:
-            check = ndarray.__ne__(self.filled(0), other).view(type(self))
-            check._mask = self._mask
+            check = ndarray.__ne__(self.filled(0), other)
+            try:
+                check = check.view(type(self))
+                check._mask = self._mask
+            except AttributeError:
+                # In case check is a boolean (or a numpy.bool)
+                return check
         else:
             odata = filled(other, 0)
             check = ndarray.__ne__(self.filled(0), odata).view(type(self))
