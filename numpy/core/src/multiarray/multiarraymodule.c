@@ -1863,7 +1863,7 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 static PyObject *
 array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
-    PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL;
+    PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
     PyArray_Descr *typecode = NULL;
 
@@ -1873,7 +1873,9 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
         Py_XDECREF(typecode);
         return NULL;
     }
-    return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
+    range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
+    Py_XDECREF(typecode);
+    return range; 
 }
 
 /*NUMPY_API
