@@ -1728,5 +1728,14 @@ if sys.version_info >= (2, 6):
                 x = np.array([(1,),(2,)], dtype={'f0': (int, j)})
                 self._check_roundtrip(x)
 
+        def test_reference_leak(self):
+            count_1 = sys.getrefcount(np.core._internal)
+            a = np.zeros(4)
+            b = memoryview(a)
+            c = np.asarray(b)
+            count_2 = sys.getrefcount(np.core._internal)
+            assert_equal(count_1, count_2)
+
+
 if __name__ == "__main__":
     run_module_suite()

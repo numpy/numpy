@@ -740,16 +740,22 @@ _descriptor_from_pep3118_format(char *s)
     }
     *p = '\0';
 
+    str = PyUString_FromStringAndSize(buf, strlen(buf));
+    free(buf);
+    if (str == NULL) {
+        return NULL;
+    }
+
     /* Convert */
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
     if (_numpy_internal == NULL) {
+        Py_DECREF(str);
         return NULL;
     }
-    str = PyUString_FromStringAndSize(buf, strlen(buf));
-    free(buf);
     descr = (PyArray_Descr*)PyObject_CallMethod(
         _numpy_internal, "_dtype_from_pep3118", "O", str);
     Py_DECREF(str);
+    Py_DECREF(_numpy_internal);
     if (descr == NULL) {
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
