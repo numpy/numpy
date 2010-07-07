@@ -14,8 +14,8 @@ class TestRegression(TestCase):
         """Ticket #91"""
         x = np.random.random((3,3))
         y = x.copy()
-        np.cov(x, rowvar=1, ddof=1)
-        np.cov(y, rowvar=0, ddof=1)
+        np.cov(x, rowvar=1)
+        np.cov(y, rowvar=0)
         assert_array_equal(x,y)
 
     def test_mem_digitize(self,level=rlevel):

@@ -92,7 +92,7 @@ def cov(m, y=None, rowvar=0, bias=0):
 
 from numpy import sqrt, multiply
 def corrcoef(x, y=None):
-    c = cov(x, y, ddof=1)
+    c = cov(x, y)
     d = diag(c)
     return c/sqrt(multiply.outer(d,d))
 

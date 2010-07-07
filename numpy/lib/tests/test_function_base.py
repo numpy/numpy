@@ -828,11 +828,11 @@ class TestCorrCoef(TestCase):
         B = array([[ 0.10377691, 0.5417086 , 0.49807457],
                    [ 0.82872117, 0.77801674, 0.39226705],
                    [ 0.9314666 , 0.66800209, 0.03538394]])
-        assert_almost_equal(corrcoef(A, ddof=1),
+        assert_almost_equal(corrcoef(A),
                             array([[ 1.        , 0.9379533 , -0.04931983],
                                    [ 0.9379533 , 1.        , 0.30007991],
                                    [-0.04931983, 0.30007991, 1.        ]]))
-        assert_almost_equal(corrcoef(A, B, ddof=1),
+        assert_almost_equal(corrcoef(A, B),
                             array([[ 1.        , 0.9379533 , -0.04931983,
                                      0.30151751, 0.66318558, 0.51532523],
                                    [ 0.9379533 , 1.        , 0.30007991,

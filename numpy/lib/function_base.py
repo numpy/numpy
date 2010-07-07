@@ -1839,15 +1839,15 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : int, optional
-        Default normalization is by ``(N-1)``, where ``N`` is the number of
+        Default normalization is by ``(N - 1)``, where ``N`` is the number of
         observations given (unbiased estimate). If `bias` is 1, then
-        normalization is by ``N``. Deprecated in numpy 1.5, use ddof
-        instead.
+        normalization is by ``N``. These values can be overridden by using
+        the keyword ``ddof`` in numpy versions >= 1.5.
     ddof : int, optional
-        Normalization is by ``(N - ddof)``, where ``N`` is the number of
-        observations. Setting ddof=1 gives the usual unbiased estimate.
-        Default will be ``None`` until the `bias` keyword is removed and
-        will be 0 thereafter.
+        .. versionadded:: 1.5
+        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
+        the number of observations. When defined, ``ddof`` overrides the
+        value implied by ``bias``. The default value is ``None``.
 
     Returns
     -------
@@ -1871,7 +1871,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     Note how :math:`x_0` increases while :math:`x_1` decreases. The covariance
     matrix shows this clearly:
 
-    >>> np.cov(x, ddof=1)
+    >>> np.cov(x)
     array([[ 1., -1.],
            [-1.,  1.]])
 
@@ -1883,17 +1883,16 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     >>> x = [-2.1, -1,  4.3]
     >>> y = [3,  1.1,  0.12]
     >>> X = np.vstack((x,y))
-    >>> print np.cov(X, ddof=1)
+    >>> print np.cov(X)
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
-    >>> print np.cov(x, y, ddof=1)
+    >>> print np.cov(x, y)
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
-    >>> print np.cov(x, ddof=1)
+    >>> print np.cov(x)
     11.71
 
     """
-
     X = array(m, ndmin=2, dtype=float)
     if X.shape[0] == 1:
         rowvar = 1
@@ -1916,16 +1915,11 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         N = X.shape[0]
 
     if ddof is None:
-        if bias:
-            msg = "The bias keyword is deprecated, "\
-                    "use ddof=0 instead of bias=1"
-            ddof = 0
-        else:
-            msg = "The bias keyword is deprecated, "\
-                    "use ddof=1 instead of bias=0"
+        if bias == 0:
             ddof = 1
-        warnings.warn(msg, DeprecationWarning)
-    fact = N - ddof
+        else:
+            ddof = 0
+    fact = float(N - ddof)
 
     if not rowvar:
         return (dot(X.T, X.conj()) / fact).squeeze()
@@ -1960,15 +1954,15 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         is transposed: each column represents a variable, while the rows
         contain observations.
     bias : int, optional
-        Default normalization is by ``(N-1)``, where ``N`` is the number of
-        observations given (unbiased estimate). If `bias` is 1, then
-        normalization is by ``N``. Deprecated in numpy 1.5, use ddof
-        instead.
-    ddof : int, optional
-        Normalization is by ``(N - ddof)``, where ``N`` is the number of
-        observations. Setting ddof=1 gives the usual unbiased estimate.
-        Default will be ``None`` until the `bias` keyword is removed and
-        will be 0 thereafter.
+        Default normalization is by ``(N - 1)``, where ``N`` is the number of
+        observations (unbiased estimate). If `bias` is 1, then
+        normalization is by ``N``. These values can be overridden by using
+        the keyword ``ddof`` in numpy versions >= 1.5.
+    ddof : {None, int}, optional
+        .. versionadded:: 1.5
+        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
+        the number of observations. When defined, ``ddof`` overrides the
+        value implied by ``bias``. The default value is ``None``.
 
     Returns
     -------
@@ -1980,17 +1974,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     cov : Covariance matrix
 
     """
-    if ddof is None:
-        if bias:
-            msg = "The bias keyword is deprecated, "\
-                    "use ddof=0 instead of bias=1"
-            ddof = 0
-        else:
-            msg = "The bias keyword is deprecated, "\
-                    "use ddof=1 instead of bias=0"
-            ddof = 1
-        warnings.warn(msg, DeprecationWarning)
-    c = cov(x, y, ddof=ddof)
+    c = cov(x, y, bias=bias, ddof=ddof)
     try:
         d = diag(c)
     except ValueError: # scalar covariance
