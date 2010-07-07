@@ -528,6 +528,12 @@ class TestCorrcoef(TestCase):
     def setUp(self):
         self.data = array(np.random.rand(12))
 
+    def test_ddof(self):
+        "Test ddof keyword"
+        x = self.data
+        assert_almost_equal(np.corrcoef(x, ddof=0), corrcoef(x, ddof=0))
+
+
     def test_1d_wo_missing(self):
         "Test cov on 1D variable w/o missing values"
         x = self.data

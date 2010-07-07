@@ -1846,8 +1846,8 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     ddof : int, optional
         .. versionadded:: 1.5
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
-        the number of observations. When defined, ``ddof`` overrides the
-        value implied by ``bias``. The default value is ``None``.
+        the number of observations; this overrides the value implied by
+        ``bias``. The default value is ``None``.
 
     Returns
     -------
@@ -1893,6 +1893,10 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     11.71
 
     """
+    # Check inputs
+    if ddof is not None and ddof != int(ddof):
+        raise ValueError("ddof must be integer")
+
     X = array(m, ndmin=2, dtype=float)
     if X.shape[0] == 1:
         rowvar = 1
@@ -1961,8 +1965,8 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     ddof : {None, int}, optional
         .. versionadded:: 1.5
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
-        the number of observations. When defined, ``ddof`` overrides the
-        value implied by ``bias``. The default value is ``None``.
+        the number of observations; this overrides the value implied by
+        ``bias``. The default value is ``None``.
 
     Returns
     -------

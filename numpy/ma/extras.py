@@ -1299,7 +1299,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
     return (x, xnotmask, rowvar)
 
 
-def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
+def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     """
     Estimate the covariance matrix.
 
@@ -1329,11 +1329,18 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
     bias : bool, optional
         Default normalization (False) is by ``(N-1)``, where ``N`` is the
         number of observations given (unbiased estimate). If `bias` is True,
-        then normalization is by ``N``.
+        then normalization is by ``N``. This keyword can be overridden by
+        the keyword ``ddof`` in numpy versions >= 1.5.
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
         If False, raises a `ValueError` exception when some values are missing.
+    ddof : {None, int}, optional
+        .. versionadded:: 1.5
+        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
+        the number of observations; this overrides the value implied by
+        ``bias``. The default value is ``None``.
+
 
     Raises
     ------
@@ -1345,17 +1352,27 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
     numpy.cov
 
     """
+    # Check inputs
+    if ddof is not None and ddof != int(ddof):
+        raise ValueError("ddof must be an integer")
+    # Set up ddof
+    if ddof is None:
+        if bias:
+            ddof = 0
+        else:
+            ddof = 1
+
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1. - (1 - bool(bias))
+        fact = np.dot(xnotmask.T, xnotmask) * 1. - ddof
         result = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1. - (1 - bool(bias))
+        fact = np.dot(xnotmask, xnotmask.T) * 1. - ddof
         result = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
     return result
 
 
-def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
+def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     """
     Return correlation coefficients of the input array.
 
@@ -1379,11 +1396,17 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
     bias : bool, optional
         Default normalization (False) is by ``(N-1)``, where ``N`` is the
         number of observations given (unbiased estimate). If `bias` is 1,
-        then normalization is by ``N``.
+        then normalization is by ``N``. This keyword can be overridden by
+        the keyword ``ddof`` in numpy versions >= 1.5.
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
         If False, raises an exception.
+    ddof : {None, int}, optional
+        .. versionadded:: 1.5
+        If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
+        the number of observations; this overrides the value implied by
+        ``bias``. The default value is ``None``.
 
     See Also
     --------
@@ -1391,14 +1414,24 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
     cov : Estimate the covariance matrix.
 
     """
+    # Check inputs
+    if ddof is not None and ddof != int(ddof):
+        raise ValueError("ddof must be an integer")
+    # Set up ddof
+    if ddof is None:
+        if bias:
+            ddof = 0
+        else:
+            ddof = 1
+
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix
     if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) * 1. - (1 - bool(bias))
+        fact = np.dot(xnotmask.T, xnotmask) * 1. - ddof
         c = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
     else:
-        fact = np.dot(xnotmask, xnotmask.T) * 1. - (1 - bool(bias))
+        fact = np.dot(xnotmask, xnotmask.T) * 1. - ddof
         c = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
     # Check whether we have a scalar
     try:
