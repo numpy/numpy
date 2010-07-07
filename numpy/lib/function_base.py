@@ -1,27 +1,24 @@
 __docformat__ = "restructuredtext en"
-__all__ = ['select', 'piecewise', 'trim_zeros',
-           'copy', 'iterable', 'percentile',
-           'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
-           'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
-           'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
-           'histogram', 'histogramdd', 'bincount', 'digitize', 'cov',
-           'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning',
-           'bartlett', 'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc',
-           'add_docstring', 'meshgrid', 'delete', 'insert', 'append',
-           'interp'
-           ]
-import warnings
+__all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
+        'percentile', 'diff', 'gradient', 'angle', 'unwrap', 'sort_complex',
+        'disp', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
+        'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
+        'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
+        'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+        'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
+        'meshgrid', 'delete', 'insert', 'append', 'interp']
 
+import warnings
 import types
 import sys
 import numpy.core.numeric as _nx
 from numpy.core import linspace
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-     asarray, asanyarray, empty, empty_like, ndarray, around
+        asarray, asanyarray, empty, empty_like, ndarray, around
 from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
-     integer, isscalar
+        integer, isscalar
 from numpy.core.umath import pi, multiply, add, arctan2,  \
-     frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
+        frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
 from numpy.core.fromnumeric import ravel, nonzero, choose, sort, mean
 from numpy.core.numerictypes import typecodes, number
 from numpy.core import atleast_1d, atleast_2d
@@ -1817,7 +1814,7 @@ class vectorize(object):
                           for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
-def cov(m, y=None, rowvar=1, bias=0):
+def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     """
     Estimate a covariance matrix, given data.
 
@@ -1844,7 +1841,13 @@ def cov(m, y=None, rowvar=1, bias=0):
     bias : int, optional
         Default normalization is by ``(N-1)``, where ``N`` is the number of
         observations given (unbiased estimate). If `bias` is 1, then
-        normalization is by ``N``.
+        normalization is by ``N``. Deprecated in numpy 1.5, use ddof
+        instead.
+    ddof : int, optional
+        Normalization is by ``(N - ddof)``, where ``N`` is the number of
+        observations. Setting ddof=1 gives the usual unbiased estimate.
+        Default will be ``None`` until the `bias` keyword is removed and
+        will be 0 thereafter.
 
     Returns
     -------
@@ -1868,7 +1871,7 @@ def cov(m, y=None, rowvar=1, bias=0):
     Note how :math:`x_0` increases while :math:`x_1` decreases. The covariance
     matrix shows this clearly:
 
-    >>> np.cov(x)
+    >>> np.cov(x, ddof=1)
     array([[ 1., -1.],
            [-1.,  1.]])
 
@@ -1880,13 +1883,13 @@ def cov(m, y=None, rowvar=1, bias=0):
     >>> x = [-2.1, -1,  4.3]
     >>> y = [3,  1.1,  0.12]
     >>> X = np.vstack((x,y))
-    >>> print np.cov(X)
+    >>> print np.cov(X, ddof=1)
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
-    >>> print np.cov(x, y)
+    >>> print np.cov(x, y, ddof=1)
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
-    >>> print np.cov(x)
+    >>> print np.cov(x, ddof=1)
     11.71
 
     """
@@ -1904,7 +1907,7 @@ def cov(m, y=None, rowvar=1, bias=0):
 
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=float)
-        X = concatenate((X,y),axis)
+        X = concatenate((X,y), axis)
 
     X -= X.mean(axis=1-axis)[tup]
     if rowvar:
@@ -1912,17 +1915,25 @@ def cov(m, y=None, rowvar=1, bias=0):
     else:
         N = X.shape[0]
 
-    if bias:
-        fact = N*1.0
-    else:
-        fact = N-1.0
+    if ddof is None:
+        if bias:
+            msg = "The bias keyword is deprecated, "\
+                    "use ddof=0 instead of bias=1"
+            ddof = 0
+        else:
+            msg = "The bias keyword is deprecated, "\
+                    "use ddof=1 instead of bias=0"
+            ddof = 1
+        warnings.warn(msg, DeprecationWarning)
+    fact = N - ddof
 
     if not rowvar:
         return (dot(X.T, X.conj()) / fact).squeeze()
     else:
         return (dot(X, X.T.conj()) / fact).squeeze()
 
-def corrcoef(x, y=None, rowvar=1, bias=0):
+
+def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     """
     Return correlation coefficients.
 
@@ -1951,7 +1962,13 @@ def corrcoef(x, y=None, rowvar=1, bias=0):
     bias : int, optional
         Default normalization is by ``(N-1)``, where ``N`` is the number of
         observations given (unbiased estimate). If `bias` is 1, then
-        normalization is by ``N``.
+        normalization is by ``N``. Deprecated in numpy 1.5, use ddof
+        instead.
+    ddof : int, optional
+        Normalization is by ``(N - ddof)``, where ``N`` is the number of
+        observations. Setting ddof=1 gives the usual unbiased estimate.
+        Default will be ``None`` until the `bias` keyword is removed and
+        will be 0 thereafter.
 
     Returns
     -------
@@ -1963,7 +1980,17 @@ def corrcoef(x, y=None, rowvar=1, bias=0):
     cov : Covariance matrix
 
     """
-    c = cov(x, y, rowvar, bias)
+    if ddof is None:
+        if bias:
+            msg = "The bias keyword is deprecated, "\
+                    "use ddof=0 instead of bias=1"
+            ddof = 0
+        else:
+            msg = "The bias keyword is deprecated, "\
+                    "use ddof=1 instead of bias=0"
+            ddof = 1
+        warnings.warn(msg, DeprecationWarning)
+    c = cov(x, y, ddof=ddof)
     try:
         d = diag(c)
     except ValueError: # scalar covariance
