@@ -1974,7 +1974,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     cov : Covariance matrix
 
     """
-    c = cov(x, y, bias=bias, ddof=ddof)
+    c = cov(x, y, rowvar, bias, ddof)
     try:
         d = diag(c)
     except ValueError: # scalar covariance
