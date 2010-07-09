@@ -1302,5 +1302,23 @@ class TestRegression(TestCase):
         # Ticket #1345: the following should not cause a crash
         np.fromstring(asbytes('aa, aa, 1.0'), sep=',')
 
+    def test_issue1539(self):
+        dtypes = [x for x in np.typeDict.values()
+                  if (issubclass(x, np.number)
+                      and not issubclass(x, np.timeinteger))]
+        a = np.array([], dtypes[0])
+        failures = []
+        for x in dtypes:
+            b = a.astype(x)
+            for y in dtypes:
+                c = a.astype(y)
+                try:
+                    np.dot(b, c)
+                except TypeError, e:
+                    failures.append((x, y))
+        if failures:
+            raise AssertionError("Failures: %r" % failures)
+
+
 if __name__ == "__main__":
     run_module_suite()

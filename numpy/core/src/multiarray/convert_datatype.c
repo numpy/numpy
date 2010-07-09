@@ -634,13 +634,23 @@ PyArray_CanCastSafely(int fromtype, int totype)
         if (PyTypeNum_ISCOMPLEX(totype)) {
             return (telsize >> 1) >= felsize;
         }
+        else if (PyTypeNum_ISFLOAT(totype) && (telsize == felsize)) {
+            /* On some systems, double == longdouble */
+            return 1;
+        }
         else {
             return totype > fromtype;
         }
     case PyArray_CFLOAT:
     case PyArray_CDOUBLE:
     case PyArray_CLONGDOUBLE:
-        return totype > fromtype;
+        if (PyTypeNum_ISCOMPLEX(totype) && (telsize == felsize)) {
+            /* On some systems, double == longdouble */
+            return 1;
+        }
+        else {
+            return totype > fromtype;
+        }
     case PyArray_STRING:
     case PyArray_UNICODE:
         return totype > fromtype;
