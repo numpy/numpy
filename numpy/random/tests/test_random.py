@@ -34,6 +34,12 @@ class TestRegression(TestCase):
         msg = "Frequency was %f, should be < 0.23" % freq
         assert_(freq < 0.23, msg)
 
+    def test_permutation_longs(self):
+        np.random.seed(1234)
+        a = np.random.permutation(12)
+        np.random.seed(1234)
+        b = np.random.permutation(12L)
+        assert_array_equal(a, b)
 
 class TestMultinomial(TestCase):
     def test_basic(self):

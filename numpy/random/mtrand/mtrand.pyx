@@ -4226,7 +4226,7 @@ cdef class RandomState:
         array([15,  1,  9,  4, 12])
 
         """
-        if isinstance(x, (int, np.integer)):
+        if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
         else:
             arr = np.array(x)
