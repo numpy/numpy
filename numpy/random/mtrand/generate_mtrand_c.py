@@ -20,6 +20,7 @@ if __name__ == '__main__':
     processed = open('mtrand_pp.c', 'w')
     unused_funcs_str = '(' + '|'.join(unused_internal_funcs) + ')'
     uifpat = re.compile(r'static \w+ \*?'+unused_funcs_str+r'.*/\*proto\*/')
+    linepat = re.compile(r'/\* ".*/mtrand.pyx":')
     for linenum, line in enumerate(mtrand_c):
         m = re.match(r'^(\s+arrayObject\w*\s*=\s*[(])[(]PyObject\s*[*][)]',
                      line)
@@ -33,6 +34,7 @@ if __name__ == '__main__':
             print >>sys.stderr, \
                 "%s was declared unused, but is used at line %d" % (m.group(),
                                                                     linenum+1)
+        line = linepat.sub(r'/* "mtrand.pyx":', line)
         processed.write(line)
     mtrand_c.close()
     processed.close()
