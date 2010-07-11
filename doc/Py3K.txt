@@ -4,7 +4,7 @@
 Developer notes on the transition to Python 3
 *********************************************
 
-:date: 2009-12-05
+:date: 2010-07-11
 :author: Charles R. Harris
 :author: Pauli Virtanen
 
@@ -45,7 +45,7 @@ Known semantic changes on Py2
 As a side effect, the Py3 adaptation has caused the following semantic
 changes that are visible on Py2.
 
-* Objects (non-string, non-unicode) that implement the PEP 3118 array interface
+* Objects (except bytes and str) that implement the PEP 3118 array interface
   will behave as ndarrays in `array(...)` and `asarray(...)`; the same way
   as if they had ``__array_interface__`` defined.
 
@@ -72,10 +72,6 @@ The following semantic changes have been made on Py3:
   ``__array_interface__`` attribute, ie., they behave as if they were
   an ndarray view on the data.
 
-.. todo::
-
-   Check for any other changes ... This we want in the end to include
-   in the release notes, and also in a "how to port" document.
 
 
 Python code
@@ -93,8 +89,8 @@ to Python 3 ones, and stores the results under::
 Only changed files will be re-converted when setup.py is called a second
 time, making development much faster.
 
-Currently, this seems to handle most (all?) of the necessary Python
-code conversion.
+Currently, this seems to handle all of the necessary Python code
+conversion.
 
 Not all of the 2to3 transformations are appropriate for all files.
 Especially, 2to3 seems to be quite trigger-happy in replacing e.g.
@@ -102,13 +98,6 @@ Especially, 2to3 seems to be quite trigger-happy in replacing e.g.
 For files that need special handling, add entries to
 ``tools/py3tool.py``.
 
-.. todo::
-
-   Should we be a good citizen and use ``lib2to3`` instead?
-
-.. todo::
-
-   Do we want to get rid of this hack in the long run?
 
 
 numpy.compat.py3k
@@ -117,10 +106,16 @@ numpy.compat.py3k
 There are some utility functions needed for 3K compatibility in
 ``numpy.compat.py3k`` -- they can be imported from ``numpy.compat``:
 
-- bytes: bytes constructor
+- bytes, unicode: bytes and unicode constructors
 - asbytes: convert string to bytes (no-op on Py2)
+- asbytes_nested: convert strings in lists to Bytes
+- asunicode: convert string to unicode
+- asunicode_nested: convert strings in lists to Unicode
+- asstr: convert item to the str type
 - getexception: get current exception (see below)
 - isfileobj: detect Python file objects
+- strchar: character for Unicode (Py3) or Strings (Py2)
+- open_latin1: open file in the latin1 text mode
 
 More can be added as needed.
 
@@ -128,15 +123,7 @@ More can be added as needed.
 numpy.f2py
 ----------
 
-F2py is now mostly ported to Py3.
-
-Simple programs seem to work, as well as its test suite (which does
-not exercise all its features).
-
-.. todo::
-
-   Extend the test suite to more complicated cases, and fix bugs
-   encountered.
+F2py is ported to Py3.
 
 
 Bytes vs. strings
@@ -151,14 +138,7 @@ Exception syntax
 
 Syntax change: "except FooException, bar:" -> "except FooException as bar:"
 
-Code that wants to cater both for Py2 and Py3 should do something like::
-
-    try:
-       spam
-    except SpamException:
-       exc = getexception()
-
-This is taken care also by 2to3, however.
+This is taken care by 2to3, however.
 
 
 Relative imports
@@ -174,7 +154,7 @@ Using absolute imports everywhere is probably OK, if they just happen
 to work.
 
 2to3, however, converts the old syntax to new syntax, so as long as we
-use the hack, it takes care of most parts.
+use the converter, it takes care of most parts.
 
 
 Print
@@ -182,13 +162,7 @@ Print
 
 The Print statement changed to a builtin function in Py3.
 
-Probably can generally be replaced by something like::
-
-    print("%s %s %s" % (a, b, c))
-
-and in any case, there shouldn't be many print() statements in a
-library as low-level as Numpy is. When writing to a file, `file.write`
-should also be preferred to print.
+Also this is taken care of by 2to3.
 
 types module
 ------------
@@ -208,10 +182,6 @@ The following items were removed from `types` module in Py3:
 In ``numerictypes.py``, the "common" types were replaced by their
 plain equivalents, and `IntType` was dropped.
 
-.. todo::
-
-   BufferType should probably be replaced with `memoryview` in most places.
-   This was currently changed in a couple of places.
 
 numpy.core.numerictypes
 -----------------------
@@ -227,10 +197,6 @@ string_       bytes_ alias
 unicode_      str_ alias
 ===========   ============
 
-.. todo::
-
-   Check if I missed something here.
-
 
 numpy.loadtxt et al
 -------------------
@@ -238,7 +204,7 @@ numpy.loadtxt et al
 These routines are difficult to duck-type to read both Unicode and
 Bytes input.
 
-I assume they are meant for reading Bytes streams -- this is probably
+I assumed they are meant for reading Bytes streams -- this is probably
 the far more common use case with scientific data.
 
 
@@ -254,7 +220,7 @@ A #define in config.h, defined when building for Py3.
 .. todo::
 
    Currently, this is generated as a part of the config.
-   Is this sensible (we could also use PY_MAJOR_VERSION)?
+   Is this sensible (we could also use Py_VERSION_HEX)?
 
 
 private/npy_3kcompat.h
@@ -265,10 +231,12 @@ Convenience macros for Python 3 support:
 - PyInt -> PyLong on Py3
 - PyString -> PyBytes on Py3
 - PyUString -> PyUnicode on Py3 and PyString on Py2
-- PyBytes on Py3
+- PyBytes on Py2
+- PyUnicode_ConcatAndDel, PyUnicode_Concat2
 - Py_SIZE et al., for older Python versions
-- PyFile compatibility on Py3
+- npy_PyFile_Dup, etc. to get FILE* from Py3 file objects
 - PyObject_Cmp, convenience comparison function on Py3
+- NpyCapsule_* helpers: PyCObject
 
 Any new ones that need to be added should be added in this file.
 
@@ -283,6 +251,7 @@ ob_type, ob_size
 
 These use Py_SIZE, etc. macros now.  The macros are also defined in
 npy_3kcompat.h for the Python versions that don't have them natively.
+
 
 Py_TPFLAGS_CHECKTYPES
 ---------------------
@@ -388,16 +357,6 @@ The Py2/Py3 compatible structure definition looks like::
     #endif
     };
 
-.. todo::
-
-   Check if semantics of the methods have changed
-
-.. todo::
-
-   We will also have to make sure the
-   ``*_true_divide`` variants are defined. This should also be done for
-   python < 3.x, but that introduces a requirement for the
-   Py_TPFLAGS_HAVE_CLASS in the type flag.
 
 
 PyBuffer (provider)
@@ -616,17 +575,16 @@ Some specific decisions that have been made so far:
    tp_doc -- it's a char* pointer, but what is the encoding?
    Check esp. lib/src/_compiled_base
 
+   Currently, UTF-8 is assumed.
+
 .. todo::
 
    ufunc names -- again, what's the encoding?
 
 .. todo::
 
-   Replace all occurrences of PyString by PyBytes, PyUnicode, or PyUString.
-
-.. todo::
-
-   Finally, remove the convenience PyString #define from npy_3kcompat.h
+   Cleanup to do later on: Replace all occurrences of PyString by
+   PyBytes, PyUnicode, or PyUString.
 
 .. todo::
 
@@ -655,40 +613,11 @@ comparison between Unicode and Bytes undefined.
 Fate of the 'S' dtype
 ---------------------
 
-"Strings" in Py3 are now Unicode, so it might make sense to
-re-associate Numpy's dtype letter 'S' with Unicode, and introduce
-a separate letter for Bytes.
+On Python 3, the 'S' dtype will still be Bytes.
 
-Already I changed str_ == unicode_.
+However,::
 
-The Bytes dtype can probably not be wholly dropped -- there may be
-some use for 1-byte character strings in e.g. genetics?
-
-.. todo::
-
-   'S' dtype should be aliased to 'U'. One of the two should be deprecated.
-
-.. todo::
-
-   All dtype code should be checked for usage of ``*_STRINGLTR``.
-
-.. todo::
-
-   A new 'bytes' dtype? Should the type code be 'y'
-
-.. todo::
-
-   Catch all worms that come out of the can because of this change.
-   In any case, I guess many of the current failures in our test suite
-   are because code 'S' does not correspond to the `str` type.
-
-.. todo::
-
-   Currently, in parts of the code, both Bytes and Unicode strings
-   are classified as "strings", and share some of the code paths.
-
-   It should probably be checked if preferring Unicode for Py3 requires
-   changing some of these parts.
+	str, str_ == unicode_
 
 
 PyInt
@@ -708,23 +637,7 @@ PyInt methods are currently replaced by PyLong, via macros in npy_3kcompat.h.
 Dtype decision rules were changed accordingly, so that Numpy understands
 Py3 int translate to NPY_LONG as far as dtypes are concerned.
 
-.. todo::
-
-   Decide on
-
-   * what is: array([1]).dtype
-   * what is: array([2**40]).dtype
-   * what is: array([2**256]).dtype
-   * what is: array([1]) + 2**40
-   * what is: array([1]) + 2**256
-
-   ie. dtype casting rules. It seems to <pv> that we will want to
-   fix the dtype of Python 3 int to be the machine integer size,
-   despite the fact that the actual Python 3 object is not fixed-size.
-
-.. todo::
-
-   Audit the automatic dtype decision -- did I plug all the cases?
+array([1]).dtype will be the default NPY_LONG integer.
 
 .. todo::
 
@@ -756,11 +669,6 @@ New richcompare methods were implemented for:
 
 On the consumer side, we have a convenience wrapper in npy_3kcompat.h
 providing PyObject_Cmp also on Py3.
-
-.. todo::
-
-   Ensure that all types that had only tp_compare have also
-   tp_richcompare.
 
 
 Pickling
@@ -797,12 +705,6 @@ Module initialization
 The module initialization API changed in Python 3.1.
 
 Most Numpy modules are now converted.
-
-.. todo::
-
-   Except numarray/_capi.c and _blasdot.c show compilation warnings.
-   This indicates return values are not handled OK -- the init function
-   is not void any more.
 
 
 PyTypeObject
@@ -922,10 +824,6 @@ PySequenceMethods foo_sequence_methods = {
     (ssizeargfunc)0                             /* sq_inplace_repeat */
 };
 
-.. todo::
-
-   Check semantics of the PySequence methods.
-
 
 PyMappingMethods
 ----------------
@@ -947,10 +845,6 @@ PyMappingMethods foo_mapping_methods = {
     (objobjargproc)0                        /* mp_ass_subscript */
 };
 
-.. todo::
-
-   Check semantics of the PyMapping methods.
-
 
 PyFile
 ------
@@ -965,12 +859,14 @@ Most importantly, in Py3 there is no way to extract a FILE* pointer
 from the Python file object. There are, however, new PyFile_* functions
 for writing and reading data from the file.
 
-Temporary compatibility wrappers that return a dup-ed `fdopen` file pointer are
-in private/npy_3kcompat.h. This causes more flushing to be necessary, but it
-appears there is no alternative solution. The FILE pointer so obtained must be
-closed with fclose after use.
+Compatibility wrappers that return a dup-ed `fdopen` file pointer are
+in private/npy_3kcompat.h. This causes more flushing to be necessary,
+but it appears there is no alternative solution. The FILE pointer so
+obtained must be closed with fclose after use.
 
 .. todo::
+
+   Should probably be done much later on...
 
    Adapt all Numpy I/O to use the PyFile_* methods or the low-level
    IO routines. In any case, it's unlikely that C stdio can be used any more.
@@ -1002,7 +898,7 @@ PyInstance
 There are some checks for PyInstance in ``common.c`` and ``ctors.c``.
 
 Currently, ``PyInstance_Check`` is just #ifdef'd out for Py3. This is,
-quite likely, not the correct thing to do.
+possibly, not the correct thing to do.
 
 .. todo::
 
@@ -1015,4 +911,4 @@ PyCObject / PyCapsule
 The PyCObject API is removed in Python 3.2, so we need to rewrite it
 using PyCapsule.
 
-Numpy was changed to use the Capsule API.
+Numpy was changed to use the Capsule API, using NpyCapsule* wrappers.
