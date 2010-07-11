@@ -342,10 +342,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
                 case PyArray_SHORT: *(short *)(arr->data)=(*v).r; break;\\
                 case PyArray_UBYTE: *(unsigned char *)(arr->data)=(*v).r; break;\\
                 case PyArray_BYTE: *(signed char *)(arr->data)=(*v).r; break;\\
-                case PyArray_BOOL: *(npy_bool *)(arr->data)=((*v).r!=0 && (*v).i!=0)); break;\\
-                case PyArray_UBYTE: *(unsigned char *)(arr->data)=(*v).r; break;\\
-                case PyArray_BYTE: *(signed char *)(arr->data)=(*v).r; break;\\
-                case PyArray_SHORT: *(short *)(arr->data)=(*v).r; break;\\
+                case PyArray_BOOL: *(npy_bool *)(arr->data)=((*v).r!=0 && (*v).i!=0); break;\\
                 case PyArray_USHORT: *(npy_ushort *)(arr->data)=(*v).r; break;\\
                 case PyArray_UINT: *(npy_uint *)(arr->data)=(*v).r; break;\\
                 case PyArray_ULONG: *(npy_ulong *)(arr->data)=(*v).r; break;\\
