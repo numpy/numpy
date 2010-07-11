@@ -11,7 +11,11 @@ Developer notes on the transition to Python 3
 General
 =======
 
-If you work on Py3 transition, please try to keep this document up-to-date.
+Numpy has now been ported to Python 3.
+
+Some glitches may still be present; however, we are not aware of any
+significant ones, the test suite passes.
+
 
 Resources
 ---------
@@ -20,14 +24,6 @@ Information on porting to 3K:
 
 - http://wiki.python.org/moin/cporting
 - http://wiki.python.org/moin/PortingExtensionModulesToPy3k
-
-
-Git trees
----------
-
-- http://github.com/pv/numpy-work/commits/py3k
-- http://github.com/cournape/numpy/commits/py3_bootstrap
-- http://github.com/illume/numpy3k/commits/work
 
 
 Prerequisites
@@ -206,6 +202,13 @@ Bytes input.
 
 I assumed they are meant for reading Bytes streams -- this is probably
 the far more common use case with scientific data.
+
+
+Cyclic imports
+--------------
+
+Python 3 is less forgiving about cyclic imports than Python 2.  Cycles
+need to be broken to have the same code work both on Python 2 and 3.
 
 
 C Code
