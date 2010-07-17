@@ -39,10 +39,6 @@ Exported symbols include:
     longfloat, clongfloat,
 
 
-    datetime_, timedelta_,  (these inherit from timeinteger which inherits
-    from signedinteger)
-
-
    As part of the type-hierarchy:    xx -- is bit-width
 
    generic
@@ -396,9 +392,7 @@ def _set_up_aliases():
                   ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
                   ('unicode_', 'unicode'),
-                  ('object_', 'object'),
-                  ('timedelta_', 'timedelta'),
-                  ('datetime_', 'datetime')]
+                  ('object_', 'object')]
     if sys.version_info[0] >= 3:
         type_pairs.extend([('bytes_', 'string'),
                            ('str_', 'unicode'),
@@ -412,7 +406,7 @@ def _set_up_aliases():
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
     to_remove = ['ulong', 'object', 'unicode', 'int', 'long', 'float',
-                 'complex', 'bool', 'string', 'datetime', 'timedelta']
+                 'complex', 'bool', 'string']
     if sys.version_info[0] >= 3:
         # Py3K
         to_remove.append('bytes')
@@ -832,8 +826,7 @@ typecodes = {'Character':'c',
              'Complex':'FDG',
              'AllInteger':'bBhHiIlLqQpP',
              'AllFloat':'fdgFDG',
-             'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPfdgFDGSUVOMm'}
+             'All':'?bhilqpBHILQPfdgFDGSUVO'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
@@ -844,13 +837,11 @@ typeNA = sctypeNA
 # i -> signed integer
 # f -> floating point
 # c -> complex
-# M -> datetime
-# m -> timedelta
 # S -> string
 # U -> Unicode string
 # V -> record
 # O -> Python object
-_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
+_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O']
 
 __test_types = typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
 __len_test_types = len(__test_types)

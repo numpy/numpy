@@ -1,4 +1,4 @@
-major = 2
+major = 1
 
 try:
     from __svn_version__ import version

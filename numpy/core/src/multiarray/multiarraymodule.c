@@ -43,6 +43,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "scalartypes.h"
 #include "numpymemoryview.h"
 
+NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
+
 /*NUMPY_API
  * Get Priority from object
  */
@@ -1328,39 +1330,6 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
     return same;
 }
 
-/*
- * compare the metadata for two date-times
- * return 1 if they are the same
- * or 0 if not
- */
-static int
-_equivalent_units(PyObject *meta1, PyObject *meta2)
-{
-    PyObject *cobj1, *cobj2;
-    PyArray_DatetimeMetaData *data1, *data2;
-
-    /* Same meta object */
-    if (meta1 == meta2) {
-        return 1;
-    }
-
-    cobj1 = PyDict_GetItemString(meta1, NPY_METADATA_DTSTR);
-    cobj2 = PyDict_GetItemString(meta2, NPY_METADATA_DTSTR);
-    if (cobj1 == cobj2) {
-        return 1;
-    }
-
-/* FIXME
- * There is no err handling here.
- */
-    data1 = NpyCapsule_AsVoidPtr(cobj1);
-    data2 = NpyCapsule_AsVoidPtr(cobj2);
-    return ((data1->base == data2->base)
-            && (data1->num == data2->num)
-            && (data1->den == data2->den)
-            && (data1->events == data2->events));
-}
-
 
 /*NUMPY_API
  *
@@ -1386,13 +1355,7 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
         return ((typenum1 == typenum2)
                 && _equivalent_fields(typ1->fields, typ2->fields));
     }
-    if (typenum1 == PyArray_DATETIME
-            || typenum1 == PyArray_DATETIME
-            || typenum2 == PyArray_TIMEDELTA
-            || typenum2 == PyArray_TIMEDELTA) {
-        return ((typenum1 == typenum2)
-                && _equivalent_units(typ1->metadata, typ2->metadata));
-    }
+
     return typ1->kind == typ2->kind;
 }
 
@@ -2010,39 +1973,6 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
         return NULL;
     }
     return oldops;
-}
-
-static PyObject *
-array_set_datetimeparse_function(PyObject *NPY_UNUSED(self), PyObject *args,
-        PyObject *kwds)
-{
-    PyObject *op = NULL;
-    static char *kwlist[] = {"f", NULL};
-    PyObject *_numpy_internal;
-
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &op)) {
-        return NULL;
-    }
-    /* reset the array_repr function to built-in */
-    if (op == Py_None) {
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        op = PyObject_GetAttrString(_numpy_internal, "datetime_from_string");
-    }
-    else { /* Must balance reference count increment in both branches */
-        if (!PyCallable_Check(op)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "Argument must be callable.");
-            return NULL;
-        }
-        Py_INCREF(op);
-    }
-    PyArray_SetDatetimeParseFunction(op);
-    Py_DECREF(op);
-    Py_INCREF(Py_None);
-    return Py_None;
 }
 
 
@@ -2684,9 +2614,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"set_numeric_ops",
         (PyCFunction)array_set_ops_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
-    {"set_datetimeparse_function",
-        (PyCFunction)array_set_datetimeparse_function,
-        METH_VARARGS|METH_KEYWORDS, NULL},
     {"set_typeDict",
         (PyCFunction)array_set_typeDict,
         METH_VARARGS, NULL},
@@ -2891,10 +2818,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    SINGLE_INHERIT(TimeInteger, SignedInteger);
-    SINGLE_INHERIT(Datetime, TimeInteger);
-    SINGLE_INHERIT(Timedelta, TimeInteger);
-
     /*
        fprintf(stderr,
         "tp_free = %p, PyObject_Del = %p, int_tp_free = %p, base.tp_free = %p\n",
@@ -3082,13 +3005,6 @@ PyMODINIT_FUNC initmultiarray(void) {
 
     s = PyUString_InternFromString(NPY_METADATA_DTSTR);
     PyDict_SetItemString(d, "METADATA_DTSTR", s);
-    Py_DECREF(s);
-
-/* FIXME
- * There is no error handling here
- */
-    s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
-    PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 
 #define ADDCONST(NAME)                          \

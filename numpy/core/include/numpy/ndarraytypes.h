@@ -66,8 +66,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_LONGLONG, NPY_ULONGLONG,
                     NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
                     NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-                    NPY_DATETIME, NPY_TIMEDELTA,
-                    NPY_OBJECT=19,
+                    NPY_OBJECT=17,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
                     NPY_NTYPES,
@@ -203,6 +202,7 @@ typedef enum {
 
 #define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
 #define NPY_DATETIME_DEFAULTUNIT NPY_FR_us
+
 
 #define NPY_STR_Y "Y"
 #define NPY_STR_M "M"
@@ -387,6 +387,10 @@ typedef struct {
 } PyArray_Dims;
 
 typedef struct {
+        /* Functions to cast to all other standard types*/
+        /* Can have some NULL entries */
+        PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
+
         /* The next four functions *cannot* be NULL */
 
         /*
@@ -480,23 +484,8 @@ typedef struct {
         PyArray_FastClipFunc *fastclip;
         PyArray_FastPutmaskFunc *fastputmask;
         PyArray_FastTakeFunc *fasttake;
-
-        /*
-         * A little room to grow --- should use generic function
-         * interface for most additions
-         */
-        void *pad1;
-        void *pad2;
-        void *pad3;
-        void *pad4;
-
-        /*
-         * Functions to cast to all other standard types
-         * Can have some NULL entries
-         */
-        PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
-
 } PyArray_ArrFuncs;
+
 
 /* The item must be reference counted when it is inserted or extracted. */
 #define NPY_ITEM_REFCOUNT   0x01
@@ -528,50 +517,41 @@ typedef struct {
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
 #define PyDataType_FLAGCHK(dtype, flag)                                   \
-        (((dtype)->flags & (flag)) == (flag))
+        (((dtype)->hasobject & (flag)) == (flag))
 
 #define PyDataType_REFCHK(dtype)                                          \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
+/* Change dtype hasobject to 32-bit in 1.1 and change its name */
 typedef struct _PyArray_Descr {
         PyObject_HEAD
-        PyTypeObject *typeobj;  /*
-                                 * the type object representing an
-                                 * instance of this type -- should not
-                                 * be two type_numbers with the same type
-                                 * object.
-                                 */
+        PyTypeObject *typeobj;  /* the type object representing an
+                                   instance of this type -- should not
+                                   be two type_numbers with the same type
+                                   object. */
         char kind;              /* kind for this type */
         char type;              /* unique-character representing this type */
-        char byteorder;         /*
-                                 * '>' (big), '<' (little), '|'
-                                 * (not-applicable), or '=' (native).
-                                 */
-        char unused;
-        int flags;              /* flag describing data type */
-        int type_num;           /* number representing this type */
+        char byteorder;         /* '>' (big), '<' (little), '|'
+                                   (not-applicable), or '=' (native). */
+        char hasobject;         /* non-zero if it has object arrays
+                                   in fields */
+        int type_num;          /* number representing this type */
         int elsize;             /* element size for this type */
         int alignment;          /* alignment needed for this type */
         struct _arr_descr                                       \
-        *subarray;              /*
-                                 * Non-NULL if this type is
-                                 * is an array (C-contiguous)
-                                 * of some other type
-                                 */
-        PyObject *fields;       /* The fields dictionary for this type
-                                 * For statically defined descr this
-                                 * is always Py_None
-                                 */
+        *subarray;              /* Non-NULL if this type is
+                                   is an array (C-contiguous)
+                                   of some other type
+                                */
+        PyObject *fields;       /* The fields dictionary for this type */
+                                /* For statically defined descr this
+                                   is always Py_None */
 
-        PyObject *names;        /*
-                                 * An ordered tuple of field names or NULL
-                                 * if no fields are defined
-                                 */
+        PyObject *names;        /* An ordered tuple of field names or NULL
+                                   if no fields are defined */
 
-        PyArray_ArrFuncs *f;     /*
-                                  * a table of functions specific for each
-                                  * basic data descriptor
-                                  */
+        PyArray_ArrFuncs *f;     /* a table of functions specific for each
+                                    basic data descriptor */
 
         PyObject *metadata;     /* Metadata about this dtype */
 } PyArray_Descr;
@@ -637,39 +617,6 @@ typedef struct {
         int flags;
 } PyArray_Chunk;
 
-
-typedef struct {
-        NPY_DATETIMEUNIT base;
-        int num;
-        int den;      /*
-                       * Converted to 1 on input for now -- an
-                       * input-only mechanism
-                       */
-        int events;
-} PyArray_DatetimeMetaData;
-
-typedef struct {
-        npy_longlong year;
-        int month, day, hour, min, sec, us, ps, as;
-} npy_datetimestruct;
-
-typedef struct {
-        npy_longlong day;
-        int sec, us, ps, as;
-} npy_timedeltastruct;
-
-#if PY_VERSION_HEX >= 0x03000000
-#define PyDataType_GetDatetimeMetaData(descr)                                 \
-    ((descr->metadata == NULL) ? NULL :                                       \
-        ((PyArray_DatetimeMetaData *)(PyCapsule_GetPointer(                   \
-                PyDict_GetItemString(                                         \
-                    descr->metadata, NPY_METADATA_DTSTR), NULL))))
-#else
-#define PyDataType_GetDatetimeMetaData(descr)                                 \
-    ((descr->metadata == NULL) ? NULL :                                       \
-        ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(                    \
-                PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
-#endif
 
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
@@ -1245,9 +1192,6 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
                                     ((type) <=NPY_VOID))
 
-#define PyTypeNum_ISDATETIME(type) (((type) >=NPY_DATETIME) &&  \
-                                    ((type) <=NPY_TIMEDELTA))
-
 #define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
                                    ((type) < NPY_USERDEF+     \
                                     NPY_NUMUSERTYPES))
@@ -1268,7 +1212,6 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
@@ -1284,7 +1227,6 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
 #define PyArray_ISPYTHON(obj) PyTypeNum_ISPYTHON(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
-#define PyArray_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyArray_TYPE(obj))
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
