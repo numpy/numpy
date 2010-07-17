@@ -30,7 +30,7 @@ cdef extern from "Python.h":
 
     # CObject API
 # If this is uncommented it needs to be fixed to use PyCapsule
-# for Python >= 2.7
+# for Python >= 3.0
 #
 #    ctypedef void (*destructor1)(void* cobj)
 #    ctypedef void (*destructor2)(void* cobj, void* desc)

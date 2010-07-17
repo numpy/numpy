@@ -658,7 +658,7 @@ typedef struct {
         int sec, us, ps, as;
 } npy_timedeltastruct;
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
 #define PyDataType_GetDatetimeMetaData(descr)                                 \
     ((descr->metadata == NULL) ? NULL :                                       \
         ((PyArray_DatetimeMetaData *)(PyCapsule_GetPointer(                   \

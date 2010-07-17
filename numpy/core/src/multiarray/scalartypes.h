@@ -7,7 +7,7 @@ initialize_numeric_types(void);
 NPY_NO_EXPORT void
 format_longdouble(char *buf, size_t buflen, longdouble val, unsigned int prec);
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr);
 #else

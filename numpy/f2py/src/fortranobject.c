@@ -914,10 +914,10 @@ int copy_ND_array(const PyArrayObject *arr, PyArrayObject *out)
 }
 
 /*********************************************/
-/* Compatibility functions for Python >= 2.7 */
+/* Compatibility functions for Python >= 3.0 */
 /*********************************************/
 
-#if PY_VERSION_HEX >= 0X02070000
+#if PY_VERSION_HEX >= 0x03000000
 
 PyObject *
 F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))

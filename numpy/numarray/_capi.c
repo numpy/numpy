@@ -3408,7 +3408,7 @@ PyMODINIT_FUNC init_capi(void)
     m = Py_InitModule("_capi", _libnumarrayMethods);
 #endif
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
     c_api_object = PyCapsule_New((void *)libnumarray_API, NULL, NULL);
     if (c_api_object == NULL) {
         PyErr_Clear();

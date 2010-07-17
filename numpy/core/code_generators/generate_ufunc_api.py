@@ -52,7 +52,7 @@ _import_umath(void)
       return -1;
   }
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
   if (!PyCapsule_CheckExact(c_api)) {
       PyErr_SetString(PyExc_RuntimeError, "_UFUNC_API is not PyCapsule object");
       Py_DECREF(c_api);

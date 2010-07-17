@@ -3887,14 +3887,13 @@ _free_loop1d_list(PyUFunc_Loop1d *data)
     }
 }
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
 static void
 _loop1d_list_free(PyObject *ptr)
 {
     PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)PyCapsule_GetPointer(ptr, NULL);
     _free_loop1d_list(data);
 }
-
 #else
 static void
 _loop1d_list_free(void *ptr)

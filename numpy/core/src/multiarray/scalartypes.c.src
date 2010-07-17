@@ -810,7 +810,7 @@ gentype_size_get(PyObject *NPY_UNUSED(self))
     return PyInt_FromLong(1);
 }
 
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {

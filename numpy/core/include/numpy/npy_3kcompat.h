@@ -237,7 +237,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
  * The main job here is to get rid of the improved error handling
  * of PyCapsules. It's a shame...
  */
-#if PY_VERSION_HEX >= 0x02070000
+#if PY_VERSION_HEX >= 0x03000000
 
 static NPY_INLINE PyObject *
 NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
