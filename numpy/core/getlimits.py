@@ -145,7 +145,7 @@ class finfo(object):
                      'machep']:
             setattr(self,word,getattr(machar, word))
         for word in ['tiny','resolution','epsneg']:
-            setattr(self,word,getattr(machar, word).squeeze())
+            setattr(self,word,getattr(machar, word).flat[0])
         self.max = machar.huge.flat[0]
         self.min = -self.max
         self.eps = machar.eps.flat[0]

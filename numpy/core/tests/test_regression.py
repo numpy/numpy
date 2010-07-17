@@ -1302,7 +1302,7 @@ class TestRegression(TestCase):
         # Ticket #1345: the following should not cause a crash
         np.fromstring(asbytes('aa, aa, 1.0'), sep=',')
 
-    def test_issue1539(self):
+    def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timeinteger))]
@@ -1319,6 +1319,11 @@ class TestRegression(TestCase):
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
+    def test_ticket_1538(self):
+        x = np.finfo(np.float32)
+        for name in 'eps epsneg max min resolution tiny'.split():
+            assert_equal(type(getattr(x, name)), np.float32,
+                         err_msg=name)
 
 if __name__ == "__main__":
     run_module_suite()
