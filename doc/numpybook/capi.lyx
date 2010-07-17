@@ -599,15 +599,7 @@ char
 \emph on
 char
 \emph default
- unused;
-\end_layout
-
-\begin_layout LyX-Code
-
-\emph on
-int
-\emph default
- flags;
+ hasobject;
 \end_layout
 
 \begin_layout LyX-Code
@@ -682,9 +674,9 @@ NPY_USE_SETITEM
 \family default
  flags should be set in the 
 \family typewriter
-flags
+hasobject 
 \family default
- member.
+ flag.
 \end_layout
 
 \begin_layout Description
@@ -710,7 +702,7 @@ ndian), '=' (native), '|' (irrelevant, ignore).
 \end_layout
 
 \begin_layout Description
-flags A data-type bit-flag that determines if the data-type exhibits
+hasobject A data-type bit-flag that determines if the data-type exhibits
  object-array like behavior.
  Each bit in this member is a flag which are named as:
 \end_layout
