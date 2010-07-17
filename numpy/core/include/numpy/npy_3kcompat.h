@@ -269,6 +269,12 @@ NpyCapsule_AsVoidPtr(PyObject *obj)
     return ret;
 }
 
+static NPY_INLINE void *
+NpyCapsule_GetDesc(PyObject *obj)
+{
+    return PyCapsule_GetContext(obj);
+}
+
 static NPY_INLINE int
 NpyCapsule_Check(PyObject *ptr)
 {
@@ -300,6 +306,12 @@ static NPY_INLINE void *
 NpyCapsule_AsVoidPtr(PyObject *ptr)
 {
     return PyCObject_AsVoidPtr(ptr);
+}
+
+static NPY_INLINE void *
+NpyCapsule_GetDesc(PyObject *obj)
+{
+    return PyCObject_GetDesc(obj);
 }
 
 static NPY_INLINE int
