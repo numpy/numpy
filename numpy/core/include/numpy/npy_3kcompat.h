@@ -1,10 +1,22 @@
+/*
+ * This is a convenience header file providing compatibility utilities
+ * for supporting Python 2 and Python 3 in the same code base.
+ *
+ * If you want to use this for your own projects, it's recommended to make a
+ * copy of it. Although the stuff below is unlikely to change, we don't provide
+ * strong backwards compatibility guarantees at the moment.
+ */
+
 #ifndef _NPY_3KCOMPAT_H_
 #define _NPY_3KCOMPAT_H_
 
 #include <Python.h>
 #include <stdio.h>
 
-#include "npy_config.h"
+#if PY_VERSION_HEX >= 0x03000000
+#define NPY_PY3K
+#endif
+
 #include "numpy/npy_common.h"
 #include "numpy/ndarrayobject.h"
 

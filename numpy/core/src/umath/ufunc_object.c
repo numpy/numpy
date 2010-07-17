@@ -33,7 +33,7 @@
 #define NO_IMPORT_ARRAY
 #endif
 
-#include "npy_3kcompat.h"
+#include "numpy/npy_3kcompat.h"
 
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"

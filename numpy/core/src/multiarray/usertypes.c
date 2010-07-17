@@ -34,7 +34,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "common.h"
 
-#include "npy_3kcompat.h"
+#include "numpy/npy_3kcompat.h"
 
 #include "usertypes.h"
 

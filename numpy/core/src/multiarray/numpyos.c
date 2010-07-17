@@ -11,7 +11,7 @@
 
 #include "npy_config.h"
 
-#include "npy_3kcompat.h"
+#include "numpy/npy_3kcompat.h"
 
 /*
  * From the C99 standard, section 7.19.6: The exponent always contains at least

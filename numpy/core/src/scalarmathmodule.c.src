@@ -11,7 +11,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
 
-#include "npy_3kcompat.h"
+#include "numpy/npy_3kcompat.h"
 
 /** numarray adapted routines.... **/
 

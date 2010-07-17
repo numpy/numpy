@@ -16,7 +16,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-#include "npy_3kcompat.h"
+#include "numpy/npy_3kcompat.h"
 
 #include "numpymemoryview.h"
 

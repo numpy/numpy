@@ -32,7 +32,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "npy_config.h"
 
-#include "npy_3kcompat.h"
+#include "numpy/npy_3kcompat.h"
 
 #include "common.h"
 
