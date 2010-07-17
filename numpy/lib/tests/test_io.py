@@ -23,6 +23,7 @@ if sys.version_info[0] >= 3:
         return BytesIO(asbytes(s))
 else:
     from StringIO import StringIO
+    BytesIO = StringIO
 
 MAJVER, MINVER = sys.version_info[:2]
 
@@ -76,7 +77,7 @@ class RoundtripTest(object):
         target_file.flush()
         target_file.seek(0)
 
-        if sys.platform == 'win32' and not isinstance(target_file, StringIO):
+        if sys.platform == 'win32' and not isinstance(target_file, BytesIO):
             target_file.close()
 
         arr_reloaded = np.load(load_file, **load_kwds)
