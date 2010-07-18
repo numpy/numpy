@@ -1299,10 +1299,14 @@ NPY_NO_EXPORT void
  *****************************************************************************
  */
 
-#define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
-#define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
-#define CGT(xr,xi,yr,yi) (xr > yr || (xr == yr && xi > yi))
-#define CLT(xr,xi,yr,yi) (xr < yr || (xr == yr && xi < yi))
+#define CGE(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi >= yi))
+#define CLE(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi <= yi))
+#define CGT(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi > yi))
+#define CLT(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi < yi))
 #define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi)
 #define CNE(xr,xi,yr,yi) (xr != yr || xi != yi)
 

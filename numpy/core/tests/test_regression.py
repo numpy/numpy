@@ -1338,5 +1338,9 @@ class TestRegression(TestCase):
         assert_(ret is out)
         assert_array_equal(ret, data.std(axis=1))
 
+    def test_complex_nan_maximum(self):
+        cnan = complex(0, np.nan)
+        assert_equal(np.maximum(1, cnan), cnan)
+
 if __name__ == "__main__":
     run_module_suite()
