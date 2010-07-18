@@ -1325,5 +1325,18 @@ class TestRegression(TestCase):
             assert_equal(type(getattr(x, name)), np.float32,
                          err_msg=name)
 
+    def test_ticket_1434(self):
+        # Check that the out= argument in var and std has an effect
+        data = np.array(((1,2,3),(4,5,6),(7,8,9)))
+        out = np.zeros((3,))
+
+        ret = data.var(axis=1, out=out)
+        assert_(ret is out)
+        assert_array_equal(ret, data.var(axis=1))
+
+        ret = data.std(axis=1, out=out)
+        assert_(ret is out)
+        assert_array_equal(ret, data.std(axis=1))
+
 if __name__ == "__main__":
     run_module_suite()

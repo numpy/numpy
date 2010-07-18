@@ -393,11 +393,14 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         ret = PyArray_GenericUnaryFunction((PyAO *)obj1, n_ops.sqrt);
         Py_DECREF(obj1);
     }
-    if (ret == NULL || PyArray_CheckExact(self)) {
-        return ret;
+    if (ret == NULL) {
+        return NULL;
+    }
+    if (PyArray_CheckExact(self)) {
+        goto finish;
     }
     if (PyArray_Check(self) && Py_TYPE(self) == Py_TYPE(ret)) {
-        return ret;
+        goto finish;
     }
     obj1 = PyArray_EnsureArray(ret);
     if (obj1 == NULL) {
@@ -405,6 +408,8 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     }
     ret = PyArray_View((PyAO *)obj1, NULL, Py_TYPE(self));
     Py_DECREF(obj1);
+
+finish:
     if (out) {
         if (PyArray_CopyAnyInto(out, (PyArrayObject *)ret) < 0) {
             Py_DECREF(ret);
