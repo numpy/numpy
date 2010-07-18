@@ -960,5 +960,18 @@ class TestArgwhere:
     def test_list(self):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
 
+class TestStringFunction:
+    def test_set_string_function(self):
+        a = np.array([1])
+        np.set_string_function(lambda x: "FOO", repr=True)
+        assert_equal(repr(a), "FOO")
+        np.set_string_function(None, repr=True)
+        assert_equal(repr(a), "array([1])")
+
+        np.set_string_function(lambda x: "FOO", repr=False)
+        assert_equal(str(a), "FOO")
+        np.set_string_function(None, repr=False)
+        assert_equal(str(a), "[1]")
+
 if __name__ == "__main__":
     run_module_suite()
