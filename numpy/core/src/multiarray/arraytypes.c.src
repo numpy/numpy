@@ -2735,6 +2735,8 @@ finish:
  * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *         longlong, ulonglong, float, double, longdouble,
  *         float, double, longdouble, datetime, timedelta#
+ * #isfloat = 0*11, 1*6, 0*2#
+ * #iscomplex = 0*14, 1*3, 0*2#
  * #incr = ip++*14, ip+=2*3, ip++*2#
  */
 static int
@@ -2742,14 +2744,54 @@ static int
 {
     intp i;
     @type@ mp = *ip;
+#if @iscomplex@
+    @type@ mp_im = ip[1];
+#endif
 
     *max_ind = 0;
+
+#if @isfloat@
+    if (npy_isnan(mp)) {
+        /* nan encountered; it's maximal */
+        return 0;
+    }
+#endif
+#if @iscomplex@
+    if (npy_isnan(mp_im)) {
+        /* nan encountered; it's maximal */
+        return 0;
+    }
+#endif
+
     for (i = 1; i < n; i++) {
         @incr@;
-        if (*ip > mp) {
+        /*
+         * Propagate nans, similarly as max() and min()
+         */
+#if @iscomplex@
+        /* Lexical order for complex numbers */
+        if ((ip[0] > mp) || ((ip[0] == mp) && (ip[1] > mp_im))
+                || npy_isnan(ip[0]) || npy_isnan(ip[1])) {
+            mp = ip[0];
+            mp_im = ip[1];
+            *max_ind = i;
+            if (npy_isnan(mp) || npy_isnan(mp_im)) {
+                /* nan encountered, it's maximal */
+                break;
+            }
+        }
+#else
+        if (!(*ip <= mp)) {  /* negated, for correct nan handling */
             mp = *ip;
             *max_ind = i;
+#if @isfloat@
+            if (npy_isnan(mp)) {
+                /* nan encountered, it's maximal */
+                break;
+            }
+#endif
         }
+#endif
     }
     return 0;
 }

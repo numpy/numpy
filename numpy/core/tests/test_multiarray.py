@@ -671,6 +671,27 @@ class TestStringCompare(TestCase):
 
 
 class TestArgmax(TestCase):
+
+    nan_arr = [
+        ([0, 1, 2, 3, np.nan], 4),
+        ([0, 1, 2, np.nan, 3], 3),
+        ([np.nan, 0, 1, 2, 3], 0),
+        ([np.nan, 0, np.nan, 2, 3], 0),
+        ([0, 1, 2, 3, complex(0,np.nan)], 4),
+        ([0, 1, 2, 3, complex(np.nan,0)], 4),
+        ([0, 1, 2, complex(np.nan,0), 3], 3),
+        ([0, 1, 2, complex(0,np.nan), 3], 3),
+        ([complex(0,np.nan), 0, 1, 2, 3], 0),
+        ([complex(np.nan, np.nan), 0, 1, 2, 3], 0),
+        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, 1)], 0),
+        ([complex(np.nan, np.nan), complex(np.nan, 2), complex(np.nan, 1)], 0),
+        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, np.nan)], 0),
+
+        ([complex(0, 0), complex(0, 2), complex(0, 1)], 1),
+        ([complex(1, 0), complex(0, 2), complex(0, 1)], 0),
+        ([complex(1, 0), complex(0, 2), complex(1, 1)], 2),
+    ]
+
     def test_all(self):
         a = np.random.normal(0,1,(4,5,6,7,8))
         for i in xrange(a.ndim):
@@ -679,6 +700,12 @@ class TestArgmax(TestCase):
             axes = range(a.ndim)
             axes.remove(i)
             assert all(amax == aargmax.choose(*a.transpose(i,*axes)))
+
+    def test_combinations(self):
+        for arr, pos in self.nan_arr:
+            assert_equal(np.argmax(arr), pos, err_msg="%r"%arr)
+            assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r"%arr)
+
 
 class TestMinMax(TestCase):
     def test_scalar(self):
