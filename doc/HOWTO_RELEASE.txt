@@ -35,7 +35,7 @@ Doc wiki
 Supported platforms and versions
 ================================
 Python 2.4-2.6  are the currently supported versions on all platforms. 
-NumPy 2.0 should include support for Python >=3.1.
+NumPy 1.5 and 2.0 should include support for Python 2.7 and >=3.1.
 
 OS X
 ----
@@ -193,6 +193,13 @@ best to read the pavement.py script.
 
 .. note:: The following steps are repeated for the beta(s), release
    candidates(s) and the final release.
+
+Check deprecations
+------------------
+Before the release branch is made, it should be checked that all deprecated
+code that should be removed is actually removed, and all new deprecations say
+in the dostring or deprecation warning at what version the code will be
+removed.
 
 Check the release notes
 -----------------------
