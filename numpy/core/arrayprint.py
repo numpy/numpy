@@ -27,8 +27,8 @@ _summaryThreshold = 1000 # total items > triggers array summarization
 _float_output_precision = 8
 _float_output_suppress_small = False
 _line_width = 75
-_nan_str = 'NaN'
-_inf_str = 'Inf'
+_nan_str = 'nan'
+_inf_str = 'inf'
 
 if sys.version_info[0] >= 3:
     from functools import reduce
@@ -59,9 +59,9 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         Whether or not suppress printing of small floating point values
         using scientific notation (default False).
     nanstr : str, optional
-        String representation of floating point not-a-number (default NaN).
+        String representation of floating point not-a-number (default nan).
     infstr : str, optional
-        String representation of floating point infinity (default Inf).
+        String representation of floating point infinity (default inf).
 
     See Also
     --------
