@@ -322,13 +322,13 @@ class $name(pu.PolyBase) :
         squares where the coefficients of the high degree terms may be very
         small.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         deg : non-negative int
             The series is reduced to degree `deg` by discarding the high
             order terms. The value of `deg` must be a non-negative integer.
 
-        Returns:
+        Returns
         -------
         new_instance : $name
             New instance of $name with reduced degree.
@@ -343,8 +343,8 @@ class $name(pu.PolyBase) :
     def convert(self, domain=None, kind=None) :
         """Convert to different class and/or domain.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         domain : {None, array_like}
             The domain of the new series type instance. If the value is is
             ``None``, then the default domain of `kind` is used.
@@ -353,17 +353,17 @@ class $name(pu.PolyBase) :
             should be converted. If kind is ``None``, then the class of the
             current instance is used.
 
-        Returns:
-        --------
+        Returns
+        -------
         new_series_instance : `kind`
             The returned class can be of different type than the current
             instance and/or have a different domain.
 
-        Examples:
-        ---------
+        Examples
+        --------
 
-        Notes:
-        ------
+        Notes
+        -----
         Conversion between domains and class types can result in
         numerically ill defined series.
 
@@ -385,8 +385,8 @@ class $name(pu.PolyBase) :
         separately, then the linear function must be substituted for the
         ``x`` in the standard representation of the base polynomials.
 
-        Returns:
-        --------
+        Returns
+        -------
         off, scl : floats or complex
             The mapping function is defined by ``off + scl*x``.
 
@@ -411,12 +411,12 @@ class $name(pu.PolyBase) :
         ``[0]``. A new $name instance is returned with the new coefficients.
         The current instance remains unchanged.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         tol : non-negative number.
             All trailing coefficients less than `tol` will be removed.
 
-        Returns:
+        Returns
         -------
         new_instance : $name
             Contains the new set of coefficients.
@@ -432,13 +432,13 @@ class $name(pu.PolyBase) :
         can be useful in least squares where the coefficients of the
         high degree terms may be very small.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         size : positive int
             The series is reduced to length `size` by discarding the high
             degree terms. The value of `size` must be a positive integer.
 
-        Returns:
+        Returns
         -------
         new_instance : $name
             New instance of $name with truncated coefficients.
@@ -458,8 +458,8 @@ class $name(pu.PolyBase) :
         A new instance of $name is returned that has the same
         coefficients and domain as the current instance.
 
-        Returns:
-        --------
+        Returns
+        -------
         new_instance : $name
             New instance of $name with the same coefficients and domain.
 
@@ -472,8 +472,8 @@ class $name(pu.PolyBase) :
         Return an instance of $name that is the definite integral of the
         current series. Refer to `${nick}int` for full documentation.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         m : non-negative int
             The number of integrations to perform.
         k : array_like
@@ -484,8 +484,8 @@ class $name(pu.PolyBase) :
         lbnd : Scalar
             The lower bound of the definite integral.
 
-        Returns:
-        --------
+        Returns
+        -------
         integral : $name
             The integral of the series using the same domain.
 
@@ -509,13 +509,13 @@ class $name(pu.PolyBase) :
         Return an instance of $name that is the derivative of the current
         series.  Refer to `${nick}der` for full documentation.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         m : non-negative int
             The number of integrations to perform.
 
-        Returns:
-        --------
+        Returns
+        -------
         derivative : $name
             The derivative of the series using the same domain.
 
@@ -545,8 +545,35 @@ class $name(pu.PolyBase) :
         roots = ${nick}roots(self.coef)
         return pu.mapdomain(roots, $domain, self.domain)
 
+    def linspace(self, n):
+        """Return x,y values at equally spaced points in domain.
+
+        Returns x, y values at `n` equally spaced points across domain.
+        Here y is the value of the polynomial at the points x.  This is
+        intended as a plotting aid.
+
+        Paramters
+        ---------
+        n : int
+            Number of point pairs to return.
+
+        Returns
+        -------
+        x, y : ndarrays
+            ``x`` is equal to linspace(self.domain[0], self.domain[1], n)
+            ``y`` is the polynomial evaluated at ``x``.
+
+        .. versionadded:: 1.5.0
+
+        """
+        x = np.linspace(self.domain[0], self.domain[1], n)
+        y = self(x)
+        return x, y
+
+
+
     @staticmethod
-    def fit(x, y, deg, domain=None, rcond=None, full=False) :
+    def fit(x, y, deg, domain=None, rcond=None, full=False, w=None) :
         """Least squares fit to data.
 
         Return a `$name` instance that is the least squares fit to the data
@@ -565,12 +592,12 @@ class $name(pu.PolyBase) :
             passing in a 2D-array that contains one dataset per column.
         deg : int
             Degree of the fitting polynomial
-        domain : {None, [], [beg, end]}, optional
+        domain : {None, [beg, end], []}, optional
             Domain to use for the returned $name instance. If ``None``,
-            then a minimal domain that covers the points `x` is chosen.
-            If ``[]`` the default domain ``$domain`` is used. The
-            default value is $domain in numpy 1.4.x and ``None`` in
-            numpy 2.0.0. The keyword value ``[]`` was added in numpy 2.0.0.
+            then a minimal domain that covers the points `x` is chosen.  If
+            ``[]`` the default domain ``$domain`` is used. The default
+            value is $domain in numpy 1.4.x and ``None`` in later versions.
+            The ``'[]`` value was added in numpy 1.5.0.
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
             than this relative to the largest singular value will be
@@ -582,6 +609,13 @@ class $name(pu.PolyBase) :
             (the default) just the coefficients are returned, when True
             diagnostic information from the singular value decomposition is
             also returned.
+        w : array_like, shape (M,), optional
+            Weights. If not None the contribution of each point
+            ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+            weights are chosen so that the errors of the products
+            ``w[i]*y[i]`` all have the same variance.  The default value is
+            None.
+            .. versionadded:: 1.5.0
 
         Returns
         -------
@@ -605,7 +639,7 @@ class $name(pu.PolyBase) :
         elif domain == [] :
             domain = $domain
         xnew = pu.mapdomain(x, domain, $domain)
-        res = ${nick}fit(xnew, y, deg, rcond=None, full=full)
+        res = ${nick}fit(xnew, y, deg, w=w, rcond=rcond, full=full)
         if full :
             [coef, status] = res
             return $name(coef, domain=domain), status

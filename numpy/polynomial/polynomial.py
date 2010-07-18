@@ -646,14 +646,14 @@ def polyvander(x, deg) :
     """
     x = np.asarray(x) + 0.0
     order = int(deg) + 1
-    v = np.ones(x.shape + (order,), dtype=x.dtype)
+    v = np.ones((order,) + x.shape, dtype=x.dtype)
     if order > 1 :
-        v[...,1] = x
+        v[1] = x
         for i in range(2, order) :
-            v[...,i] = x*v[...,i-1]
-    return v
+            v[i] = v[i-1]*x
+    return np.rollaxis(v, 0, v.ndim)
 
-def polyfit(x, y, deg, rcond=None, full=False):
+def polyfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least-squares fit of a polynomial to data.
 
@@ -684,6 +684,12 @@ def polyfit(x, y, deg, rcond=None, full=False):
         (the default) just the coefficients are returned; when ``True``,
         diagnostic information from the singular value decomposition (used
         to solve the fit's matrix equation) is also returned.
+    w : array_like, shape (`M`,), optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*y[i]``
+        all have the same variance.  The default value is None.
+        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -787,17 +793,33 @@ def polyfit(x, y, deg, rcond=None, full=False):
         raise TypeError, "expected non-empty vector for x"
     if y.ndim < 1 or y.ndim > 2 :
         raise TypeError, "expected 1D or 2D array for y"
-    if x.shape[0] != y.shape[0] :
+    if len(x) != len(y):
         raise TypeError, "expected x and y to have same length"
+
+    # set up the least squares matrices
+    lhs = polyvander(x, deg)
+    rhs = y
+    if w is not None:
+        w = np.asarray(w) + 0.0
+        if w.ndim != 1:
+            raise TypeError, "expected 1D vector for w"
+        if len(x) != len(w):
+            raise TypeError, "expected x and w to have same length"
+        # apply weights
+        if rhs.ndim == 2:
+            lhs *= w[:, np.newaxis]
+            rhs *= w[:, np.newaxis]
+        else:
+            lhs *= w[:, np.newaxis]
+            rhs *= w
 
     # set rcond
     if rcond is None :
         rcond = len(x)*np.finfo(x.dtype).eps
 
-    # set up the design matrix and solve the least squares equation
-    A = polyvander(x, deg)
-    scl = np.sqrt((A*A).sum(0))
-    c, resids, rank, s = la.lstsq(A/scl, y, rcond)
+    # scale the design matrix and solve the least squares equation
+    scl = np.sqrt((lhs*lhs).sum(0))
+    c, resids, rank, s = la.lstsq(lhs/scl, rhs, rcond)
     c = (c.T/scl).T
 
     # warn on rank reduction

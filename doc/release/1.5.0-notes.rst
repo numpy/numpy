@@ -1,5 +1,5 @@
 =========================
-NumPy 2.0.0 Release Notes
+NumPy 1.5.0 Release Notes
 =========================
 
 
@@ -73,30 +73,32 @@ Changes
 polynomial.polynomial
 ---------------------
 
-* The polyint and polyder functions now check that the specified number integrations or
-  derivations is a non-negative integer. The number 0 is a valid value for both
-  functions.
+* The polyint and polyder functions now check that the specified number
+  integrations or derivations is a non-negative integer. The number 0 is
+  a valid value for both functions.
 * A degree method has been added to the Polynomial class.
-* A cutdeg method has been added to the Polynomial class. It operates like
+* A trimdeg method has been added to the Polynomial class. It operates like
   truncate except that the argument is the desired degree of the result,
   not the number of coefficients.
-* The fit class function of the Polynomial class now uses None as the default
-  domain for the fit. The default Polynomial domain can be specified by using
-  [] as the domain value.
+* Polynomial.fit now uses None as the default domain for the fit. The default
+  Polynomial domain can be specified by using [] as the domain value.
+* Weights can be used in both polyfit and Polynomial.fit
+* A linspace method has been added to the Polynomial class to ease plotting.
 
 polynomial.chebyshev
 --------------------
 
-* The chebint and chebder functions now check that the specified number integrations or
-  derivations is a non-negative integer. The number 0 is a valid value for both
-  functions.
+* The chebint and chebder functions now check that the specified number
+  integrations or derivations is a non-negative integer. The number 0 is
+  a valid value for both functions.
 * A degree method has been added to the Chebyshev class.
-* A cutdeg method has been added to the Chebyshev class. It operates like
+* A trimdeg method has been added to the Chebyshev class. It operates like
   truncate except that the argument is the desired degree of the result,
   not the number of coefficients.
-* The fit class function of the Chebyshev class now uses None as the default
-  domain for the fit. The default Chebyshev domain can be specified by using
-  [] as the domain value.
+* Chebyshev.fit now uses None as the default domain for the fit. The default
+  Chebyshev domain can be specified by using [] as the domain value.
+* Weights can be used in both chebfit and Chebyshev.fit
+* A linspace method has been added to the Chebyshev class to ease plotting.
 
 histogram
 ---------
