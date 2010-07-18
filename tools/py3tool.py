@@ -26,6 +26,9 @@ import re
 import subprocess
 import fnmatch
 
+if os.environ.get('USE_2TO3CACHE'):
+    import lib2to3cache
+
 BASE = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 TEMP = os.path.normpath(os.path.join(BASE, '_py3k'))
 
