@@ -283,18 +283,33 @@ class TestMisc(TestCase) :
         assert_raises(TypeError,  ch.chebfit, [1],    [[[1]]],  0)
         assert_raises(TypeError,  ch.chebfit, [1, 2], [1],      0)
         assert_raises(TypeError,  ch.chebfit, [1],    [1, 2],   0)
+        assert_raises(TypeError,  ch.chebfit, [1],    [1],   0, w=[[1]])
+        assert_raises(TypeError,  ch.chebfit, [1],    [1],   0, w=[1,1])
 
         # Test fit
         x = np.linspace(0,2)
         y = f(x)
-        coef = ch.chebfit(x, y, 3)
-        assert_equal(len(coef), 4)
-        assert_almost_equal(ch.chebval(x, coef), y)
-        coef = ch.chebfit(x, y, 4)
-        assert_equal(len(coef), 5)
-        assert_almost_equal(ch.chebval(x, coef), y)
-        coef2d = ch.chebfit(x, np.array([y,y]).T, 4)
-        assert_almost_equal(coef2d, np.array([coef,coef]).T)
+        #
+        coef3 = ch.chebfit(x, y, 3)
+        assert_equal(len(coef3), 4)
+        assert_almost_equal(ch.chebval(x, coef3), y)
+        #
+        coef4 = ch.chebfit(x, y, 4)
+        assert_equal(len(coef4), 5)
+        assert_almost_equal(ch.chebval(x, coef4), y)
+        #
+        coef2d = ch.chebfit(x, np.array([y,y]).T, 3)
+        assert_almost_equal(coef2d, np.array([coef3,coef3]).T)
+        # test weighting
+        w = np.zeros_like(x)
+        yw = y.copy()
+        w[1::2] = 1
+        y[0::2] = 0
+        wcoef3 = ch.chebfit(x, yw, 3, w=w)
+        assert_almost_equal(wcoef3, coef3)
+        #
+        wcoef2d = ch.chebfit(x, np.array([yw,yw]).T, 3, w=w)
+        assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
     def test_chebtrim(self) :
         coef = [2, -1, 1, 0]
@@ -402,7 +417,7 @@ class TestChebyshevClass(TestCase) :
     def test_degree(self) :
         assert_equal(self.p1.degree(), 2)
 
-    def test_cutdeg(self) :
+    def test_trimdeg(self) :
         assert_raises(ValueError, self.p1.cutdeg, .5)
         assert_raises(ValueError, self.p1.cutdeg, -1)
         assert_equal(len(self.p1.cutdeg(3)), 3)
@@ -459,6 +474,13 @@ class TestChebyshevClass(TestCase) :
         tgt = [0, .5, 1]
         assert_almost_equal(res, tgt)
 
+    def test_linspace(self):
+        xdes = np.linspace(0, 1, 20)
+        ydes = self.p2(xdes)
+        xres, yres = self.p2.linspace(20)
+        assert_almost_equal(xres, xdes)
+        assert_almost_equal(yres, ydes)
+
     def test_fromroots(self) :
         roots = [0, .5, 1]
         p = ch.Chebyshev.fromroots(roots, domain=[0, 1])
@@ -483,6 +505,13 @@ class TestChebyshevClass(TestCase) :
         p = ch.Chebyshev.fit(x, y, 3, [])
         assert_almost_equal(p(x), y)
         assert_almost_equal(p.domain, [-1, 1])
+        # test that fit accepts weights.
+        w = np.zeros_like(x)
+        yw = y.copy()
+        w[1::2] = 1
+        yw[0::2] = 0
+        p = ch.Chebyshev.fit(x, yw, 3, w=w)
+        assert_almost_equal(p(x), y)
 
     def test_identity(self) :
         x = np.linspace(0,3)
