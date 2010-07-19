@@ -428,7 +428,8 @@ def configuration(parent_package='',top_path=None):
                 if rep in ['INTEL_EXTENDED_12_BYTES_LE',
                            'INTEL_EXTENDED_16_BYTES_LE',
                            'IEEE_QUAD_LE', 'IEEE_QUAD_BE',
-                           'IEEE_DOUBLE_LE', 'IEEE_DOUBLE_BE']:
+                           'IEEE_DOUBLE_LE', 'IEEE_DOUBLE_BE',
+                           'DOUBLE_DOUBLE_BE']:
                     moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
                 else:
                     raise ValueError("Unrecognized long double format: %s" % rep)

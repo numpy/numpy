@@ -363,6 +363,7 @@ do {                                                            \
     typedef npy_uint32 ldouble_sign_t;
 #endif
 
+#ifndef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
 /* Get the sign bit of x. x should be of type IEEEl2bitsrep */
 #define GET_LDOUBLE_SIGN(x) \
     (((x).a[LDBL_SIGN_INDEX] & LDBL_SIGN_MASK) >> LDBL_SIGN_SHIFT)
@@ -402,6 +403,8 @@ do {                                                            \
     ((x).a[LDBL_MANH_INDEX] = \
      ((x).a[LDBL_MANH_INDEX] & ~LDBL_MANH_MASK) |                       \
      (((IEEEl2bitsrep_part)(v) << LDBL_MANH_SHIFT) & LDBL_MANH_MASK))
+
+#endif /* #ifndef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE */
 
 /*
  * Those unions are used to convert a pointer of npy_cdouble to native C99
