@@ -126,6 +126,129 @@ float _nextf(float x, int p)
     return x;
 }
 
+#ifdef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
+
+/* 
+ * FIXME: this is ugly and untested. The asm part only works with gcc, and we
+ * should consolidate the GET_LDOUBLE* / SET_LDOUBLE macros
+ */
+#define math_opt_barrier(x) \
+        ({ __typeof (x) __x = x; __asm ("" : "+m" (__x)); __x; })
+#define math_force_eval(x) __asm __volatile ("" : : "m" (x))
+
+/* only works for big endian */
+typedef union
+{
+    npy_longdouble value;
+    struct
+    {
+        npy_uint64 msw;
+        npy_uint64 lsw;
+    } parts64;
+    struct
+    {
+        npy_uint32 w0, w1, w2, w3;
+    } parts32;
+} ieee854_long_double_shape_type;
+
+/* Get two 64 bit ints from a long double.  */
+
+#define GET_LDOUBLE_WORDS64(ix0,ix1,d)				\
+do {								\
+  ieee854_long_double_shape_type qw_u;				\
+  qw_u.value = (d);						\
+  (ix0) = qw_u.parts64.msw;					\
+  (ix1) = qw_u.parts64.lsw;					\
+} while (0)
+
+/* Set a long double from two 64 bit ints.  */
+
+#define SET_LDOUBLE_WORDS64(d,ix0,ix1)				\
+do {								\
+  ieee854_long_double_shape_type qw_u;				\
+  qw_u.parts64.msw = (ix0);					\
+  qw_u.parts64.lsw = (ix1);					\
+  (d) = qw_u.value;						\
+} while (0)
+
+npy_longdouble _nextl(npy_longdouble x, int p)
+{
+    npy_int64 hx,ihx,ilx;
+    npy_uint64 lx;
+
+    GET_LDOUBLE_WORDS64(hx, lx, x);
+    ihx = hx & 0x7fffffffffffffffLL;      /* |hx| */
+    ilx = lx & 0x7fffffffffffffffLL;      /* |lx| */
+
+    if(((ihx & 0x7ff0000000000000LL)==0x7ff0000000000000LL)&&
+       ((ihx & 0x000fffffffffffffLL)!=0)) {
+        return x; /* signal the nan */
+    }
+    if(ihx == 0 && ilx == 0) {          /* x == 0 */
+        npy_longdouble u;
+        SET_LDOUBLE_WORDS64(x, p, 0ULL);/* return +-minsubnormal */
+        u = x * x;
+        if (u == x) {
+            return u;
+        } else {
+            return x;           /* raise underflow flag */
+        }
+    }
+
+    npy_longdouble u;
+    if(p < 0) { /* p < 0, x -= ulp */
+        if((hx==0xffefffffffffffffLL)&&(lx==0xfc8ffffffffffffeLL))
+            return x+x; /* overflow, return -inf */
+        if (hx >= 0x7ff0000000000000LL) {
+            SET_LDOUBLE_WORDS64(u,0x7fefffffffffffffLL,0x7c8ffffffffffffeLL);
+            return u;
+        }
+        if(ihx <= 0x0360000000000000LL) {  /* x <= LDBL_MIN */
+            u = math_opt_barrier (x);
+            x -= __LDBL_DENORM_MIN__;
+            if (ihx < 0x0360000000000000LL
+                    || (hx > 0 && (npy_int64) lx <= 0)
+                    || (hx < 0 && (npy_int64) lx > 1)) {
+                u = u * u;
+                math_force_eval (u);        /* raise underflow flag */
+            }
+            return x;
+        }
+        if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
+            SET_LDOUBLE_WORDS64(u,(hx&0x7ff0000000000000LL),0ULL);
+            u *= 0x1.0000000000000p-105L;
+        } else
+            SET_LDOUBLE_WORDS64(u,(hx&0x7ff0000000000000LL)-0x0690000000000000LL,0ULL);
+        return x - u;
+    } else {                /* p >= 0, x += ulp */
+        if((hx==0x7fefffffffffffffLL)&&(lx==0x7c8ffffffffffffeLL))
+            return x+x; /* overflow, return +inf */
+        if ((npy_uint64) hx >= 0xfff0000000000000ULL) {
+            SET_LDOUBLE_WORDS64(u,0xffefffffffffffffLL,0xfc8ffffffffffffeLL);
+            return u;
+        }
+        if(ihx <= 0x0360000000000000LL) {  /* x <= LDBL_MIN */
+            u = math_opt_barrier (x);
+            x += __LDBL_DENORM_MIN__;
+            if (ihx < 0x0360000000000000LL
+                    || (hx > 0 && (npy_int64) lx < 0 && lx != 0x8000000000000001LL)
+                    || (hx < 0 && (npy_int64) lx >= 0)) {
+                u = u * u;
+                math_force_eval (u);        /* raise underflow flag */
+            }
+            if (x == 0.0L)  /* handle negative __LDBL_DENORM_MIN__ case */
+                x = -0.0L;
+            return x;
+        }
+        if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
+            SET_LDOUBLE_WORDS64(u,(hx&0x7ff0000000000000LL),0ULL);
+            u *= 0x1.0000000000000p-105L;
+        } else
+            SET_LDOUBLE_WORDS64(u,(hx&0x7ff0000000000000LL)-0x0690000000000000LL,0ULL);
+        return x + u;
+    }
+}
+#else
 npy_longdouble _nextl(npy_longdouble x, int p)
 {
     volatile npy_longdouble t;
@@ -188,6 +311,7 @@ npy_longdouble _nextl(npy_longdouble x, int p)
 
     return ux.e;
 }
+#endif
 
 /*
  * nextafter code taken from BSD math lib, the code contains the following
