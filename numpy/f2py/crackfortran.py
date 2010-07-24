@@ -589,7 +589,7 @@ def crackline(line,reset=0):
                         return
                     analyzeline(m,'callfun',line)
                     return
-        if verbose>1:
+        if verbose>1 or (verbose==1 and currentfilename.lower().endswith('.pyf')):
             previous_context = None
             outmess('crackline:%d: No pattern for line\n'%(groupcounter))
         return
