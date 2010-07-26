@@ -762,15 +762,17 @@ cdef class RandomState:
         """
         tomaxint(size=None)
 
-        Uniformly sample discrete random integers `x` such that
-        ``0 <= x <= sys.maxint``.
+        Random integers between 0 and ``sys.maxint``, inclusive.
+
+        Return a sample of uniformly distributed random integers in the interval
+        [0, ``sys.maxint``].
 
         Parameters
         ----------
         size : tuple of ints, int, optional
-            Shape of output.  If the given size is, for example, (m,n,k),
-            m*n*k samples are generated.  If no shape is specified, a single sample
-            is returned.
+            Shape of output.  If this is, for example, (m,n,k), m*n*k samples
+            are generated.  If no shape is specified, a single sample is
+            returned.
 
         Returns
         -------
@@ -782,6 +784,23 @@ cdef class RandomState:
         randint : Uniform sampling over a given half-open interval of integers.
         random_integers : Uniform sampling over a given closed interval of
             integers.
+
+        Examples
+        --------
+        >>> RS = np.random.mtrand.RandomState() # need a RandomState object
+        >>> RS.tomaxint((2,2,2))
+        array([[[1170048599, 1600360186],
+                [ 739731006, 1947757578]],
+               [[1871712945,  752307660],
+                [1601631370, 1479324245]]])
+        >>> import sys
+        >>> sys.maxint
+        2147483647
+        >>> RS.tomaxint((2,2,2)) < sys.maxint
+        array([[[ True,  True],
+                [ True,  True]],
+               [[ True,  True],
+                [ True,  True]]], dtype=bool)
 
         """
         return disc0_array(self.internal_state, rk_long, size)
@@ -1805,10 +1824,10 @@ cdef class RandomState:
 
         Draw samples from a chi-square distribution.
 
-        When `df` independent random variables, each with standard
-        normal distributions (mean 0, variance 1), are squared and summed,
-        the resulting distribution is chi-square (see Notes).  This
-        distribution is often used in hypothesis testing.
+        When `df` independent random variables, each with standard normal
+        distributions (mean 0, variance 1), are squared and summed, the
+        resulting distribution is chi-square (see Notes).  This distribution
+        is often used in hypothesis testing.
 
         Parameters
         ----------
@@ -1852,10 +1871,8 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] NIST/SEMATECH e-Handbook of Statistical Methods,
-               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
-        .. [2] Wikipedia, "Chi-square distribution",
-               http://en.wikipedia.org/wiki/Chi-square_distribution
+        `NIST/SEMATECH e-Handbook of Statistical Methods
+        <http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm>`_
 
         Examples
         --------
@@ -2135,36 +2152,37 @@ cdef class RandomState:
 
     def vonmises(self, mu, kappa, size=None):
         """
-        vonmises(mu=0.0, kappa=1.0, size=None)
+        vonmises(mu, kappa, size=None)
 
         Draw samples from a von Mises distribution.
 
-        Samples are drawn from a von Mises distribution with specified mode (mu)
-        and dispersion (kappa), on the interval [-pi, pi].
+        Samples are drawn from a von Mises distribution with specified mode
+        (mu) and dispersion (kappa), on the interval [-pi, pi].
 
         The von Mises distribution (also known as the circular normal
-        distribution) is a continuous probability distribution on the circle. It
-        may be thought of as the circular analogue of the normal distribution.
+        distribution) is a continuous probability distribution on the unit
+        circle.  It may be thought of as the circular analogue of the normal
+        distribution.
 
         Parameters
         ----------
         mu : float
             Mode ("center") of the distribution.
-        kappa : float, >= 0.
-            Dispersion of the distribution.
-        size : {tuple, int}
+        kappa : float
+            Dispersion of the distribution, has to be >=0.
+        size : int or tuple of int
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.
 
         Returns
         -------
-        samples : {ndarray, scalar}
-            The returned samples live on the unit circle [-\\pi, \\pi].
+        samples : scalar or ndarray
+            The returned samples, which are in the interval [-pi, pi].
 
         See Also
         --------
         scipy.stats.distributions.vonmises : probability density function,
-            distribution or cumulative density function, etc.
+            distribution, or cumulative density function, etc.
 
         Notes
         -----
@@ -2175,21 +2193,19 @@ cdef class RandomState:
         where :math:`\\mu` is the mode and :math:`\\kappa` the dispersion,
         and :math:`I_0(\\kappa)` is the modified Bessel function of order 0.
 
-        The von Mises, named for Richard Edler von Mises, born in
-        Austria-Hungary, in what is now the Ukraine. He fled to the United
-        States in 1939 and became a professor at Harvard. He worked in
+        The von Mises is named for Richard Edler von Mises, who was born in
+        Austria-Hungary, in what is now the Ukraine.  He fled to the United
+        States in 1939 and became a professor at Harvard.  He worked in
         probability theory, aerodynamics, fluid mechanics, and philosophy of
         science.
 
         References
         ----------
-        .. [1] Abramowitz, M. and Stegun, I. A. (ed.), Handbook of Mathematical
-               Functions, National Bureau of Standards, 1964; reprinted Dover
-               Publications, 1965.
-        .. [2] von Mises, Richard, 1964, Mathematical Theory of Probability
-               and Statistics (New York: Academic Press).
-        .. [3] Wikipedia, "Von Mises distribution",
-               http://en.wikipedia.org/wiki/Von_Mises_distribution
+        Abramowitz, M. and Stegun, I. A. (ed.), *Handbook of Mathematical
+        Functions*, New York: Dover, 1965.
+
+        von Mises, R., *Mathematical Theory of Probability and Statistics*,
+        New York: Academic Press, 1964.
 
         Examples
         --------
@@ -3477,31 +3493,34 @@ cdef class RandomState:
 
         Draw samples from a Zipf distribution.
 
-        Samples are drawn from a Zipf distribution with specified parameter (a),
-        where a > 1.
+        Samples are drawn from a Zipf distribution with specified parameter
+        `a` > 1.
 
-        The zipf distribution (also known as the zeta
-        distribution) is a continuous probability distribution that satisfies
-        Zipf's law, where the frequency of an item is inversely proportional to
-        its rank in a frequency table.
+        The Zipf distribution (also known as the zeta distribution) is a
+        continuous probability distribution that satisfies Zipf's law: the
+        frequency of an item is inversely proportional to its rank in a
+        frequency table.
 
         Parameters
         ----------
-        a : float
-            parameter, > 1.
-        size : {tuple, int}
+        a : float > 1
+            Distribution parameter.
+        size : int or tuple of int, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.
+            ``m * n * k`` samples are drawn; a single integer is equivalent in
+            its result to providing a mono-tuple, i.e., a 1-D array of length
+            *size* is returned.  The default is None, in which case a single
+            scalar is returned.
 
         Returns
         -------
-        samples : {ndarray, scalar}
+        samples : scalar or ndarray
             The returned samples are greater than or equal to one.
 
         See Also
         --------
         scipy.stats.distributions.zipf : probability density function,
-            distribution or cumulative density function, etc.
+            distribution, or cumulative density function, etc.
 
         Notes
         -----
@@ -3511,21 +3530,14 @@ cdef class RandomState:
 
         where :math:`\\zeta` is the Riemann Zeta function.
 
-        Named after the American linguist George Kingsley Zipf, who noted that
-        the frequency of any word in a sample of a language is inversely
+        It is named for the American linguist George Kingsley Zipf, who noted
+        that the frequency of any word in a sample of a language is inversely
         proportional to its rank in the frequency table.
-
 
         References
         ----------
-        .. [1] Weisstein, Eric W. "Zipf Distribution." From MathWorld--A Wolfram
-               Web Resource. http://mathworld.wolfram.com/ZipfDistribution.html
-        .. [2] Wikipedia, "Zeta distribution",
-               http://en.wikipedia.org/wiki/Zeta_distribution
-        .. [3] Wikipedia, "Zipf's Law",
-               http://en.wikipedia.org/wiki/Zipf%27s_law
-        .. [4] Zipf, George Kingsley (1932): Selected Studies of the Principle
-               of Relative Frequency in Language. Cambridge (Mass.).
+        Zipf, G. K., *Selected Studies of the Principle of Relative Frequency
+        in Language*, Cambridge, MA: Harvard Univ. Press, 1932.
 
         Examples
         --------
