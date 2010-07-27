@@ -361,6 +361,41 @@ do {                                                            \
     typedef npy_uint64 ldouble_man_t;
     typedef npy_uint64 ldouble_exp_t;
     typedef npy_uint32 ldouble_sign_t;
+#elif defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
+    /*
+     * IEEE quad precision, Little Endian. Bit representation is
+     *          |  s  |eeeeeeeeeee|mmmmmmmm................mmmmmmm|
+     *          |1 bit|  15 bits  |            112 bits           |
+     *          |          a[1]         |           a[0]          |
+     */
+    typedef npy_uint64 IEEEl2bitsrep_part;
+
+    union IEEEl2bitsrep {
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[2];
+    };
+
+    #define LDBL_MANL_INDEX     0
+    #define LDBL_MANL_MASK      0xFFFFFFFFFFFFFFFF
+    #define LDBL_MANL_SHIFT     0
+
+    #define LDBL_MANH_INDEX     1
+    #define LDBL_MANH_MASK      0x0000FFFFFFFFFFFF
+    #define LDBL_MANH_SHIFT     0
+
+    #define LDBL_EXP_INDEX      1
+    #define LDBL_EXP_MASK       0x7FFF000000000000
+    #define LDBL_EXP_SHIFT      48
+
+    #define LDBL_SIGN_INDEX     1
+    #define LDBL_SIGN_MASK      0x8000000000000000
+    #define LDBL_SIGN_SHIFT     63
+
+    #define LDBL_NBIT           0
+
+    typedef npy_uint64 ldouble_man_t;
+    typedef npy_uint64 ldouble_exp_t;
+    typedef npy_uint32 ldouble_sign_t;
 #endif
 
 /* Get the sign bit of x. x should be of type IEEEl2bitsrep */
