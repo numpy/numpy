@@ -1810,14 +1810,17 @@ class Configuration(object):
         """
         revision = None
         m = None
+        cwd =  os.getcwd()
         try:
+            os.chdir(path or '.')
             p = subprocess.Popen(['svnversion'], shell=True,
-                    stdout=subprocess.PIPE, stderr=STDOUT,
+                    stdout=subprocess.PIPE, stderr=None,
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
         except:
             pass
+        os.chdir(cwd)
         if m:
             revision = int(m.group('revision'))
             return revision
@@ -1838,6 +1841,49 @@ class Configuration(object):
                 if m:
                     revision = int(m.group('revision'))
         return revision
+
+    def _get_hg_revision(self,path):
+        """Return path's Mercurial revision number.
+        """
+        revision = None
+        m = None
+        cwd =  os.getcwd()
+        try:
+            os.chdir(path or '.')
+            p = subprocess.Popen(['hg identify --num'], shell=True,
+                    stdout=subprocess.PIPE, stderr=None,
+                    close_fds=True)
+            sout = p.stdout
+            m = re.match(r'(?P<revision>\d+)', sout.read())
+        except:
+            pass
+        os.chdir(cwd)
+        if m:
+            revision = int(m.group('revision'))
+            return revision
+        branch_fn = njoin(path,'.hg','branch')
+        branch_cache_fn = njoin(path,'.hg','branch.cache')
+        
+        if os.path.isfile(branch_fn):
+            branch0 = None
+            f = open(branch_fn)
+            revision0 = f.read().strip()
+            f.close()
+
+            branch_map = {}
+            for line in file(branch_cache_fn, 'r'):
+                branch1, revision1  = line.split()[:2]
+                if revision1==revision0:
+                    branch0 = branch1
+                try:
+                    revision1 = int(revision1)
+                except ValueError:
+                    continue
+                branch_map[branch1] = revision1
+
+            revision = branch_map.get(branch0)
+        return revision
+
 
     def get_version(self, version_file=None, version_variable=None):
         """Try to get version string of a package.
@@ -1861,7 +1907,8 @@ class Configuration(object):
             files = ['__version__.py',
                      self.name.split('.')[-1]+'_version.py',
                      'version.py',
-                     '__svn_version__.py']
+                     '__svn_version__.py',
+                     '__hg_version__.py']
         else:
             files = [version_file]
         if version_variable is None:
@@ -1896,8 +1943,11 @@ class Configuration(object):
             self.version = version
             return version
 
-        # Get version as SVN revision number
+        # Get version as SVN or Mercurial revision number
         revision = self._get_svn_revision(self.local_path)
+        if revision is None:
+            revision = self._get_hg_revision(self.local_path)
+
         if revision is not None:
             version = str(revision)
             self.version = version
@@ -1946,6 +1996,48 @@ class Configuration(object):
                 return target
 
             self.add_data_files(('', generate_svn_version_py()))
+
+    def make_hg_version_py(self, delete=True):
+        """Appends a data function to the data_files list that will generate
+        __hg_version__.py file to the current package directory. 
+        
+        Generate package __hg_version__.py file from Mercurial revision,
+        it will be removed after python exits but will be available
+        when sdist, etc commands are executed.
+
+        Notes
+        -----
+        If __hg_version__.py existed before, nothing is done.
+
+        This is intended for working with source directories that are
+        in an Mercurial repository.
+        """
+        target = njoin(self.local_path,'__hg_version__.py')
+        revision = self._get_hg_revision(self.local_path)
+        if os.path.isfile(target) or revision is None:
+            return
+        else:
+            def generate_hg_version_py():
+                if not os.path.isfile(target):
+                    version = str(revision)
+                    self.info('Creating %s (version=%r)' % (target,version))
+                    f = open(target,'w')
+                    f.write('version = %r\n' % (version))
+                    f.close()
+
+                import atexit
+                def rm_file(f=target,p=self.info):
+                    if delete:
+                        try: os.remove(f); p('removed '+f)
+                        except OSError: pass
+                        try: os.remove(f+'c'); p('removed '+f+'c')
+                        except OSError: pass
+
+                atexit.register(rm_file)
+
+                return target
+
+            self.add_data_files(('', generate_hg_version_py()))
 
     def make_config_py(self,name='__config__'):
         """Generate package __config__.py file containing system_info
