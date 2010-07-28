@@ -336,6 +336,29 @@ class TestWarns(unittest.TestCase):
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
 
+class TestAssertAllclose(unittest.TestCase):
+    def test_simple(self):
+        x = 1e-3
+        y = 1e-9
+
+        assert_allclose(x, y, atol=1)
+        self.assertRaises(AssertionError, assert_allclose, x, y)
+
+        a = np.array([x, y, x, y])
+        b = np.array([x, y, x, x])
+
+        assert_allclose(a, b, atol=1)
+        self.assertRaises(AssertionError, assert_allclose, a, b)
+
+        b[-1] = y * (1 + 1e-8)
+        assert_allclose(a, b)
+        self.assertRaises(AssertionError, assert_allclose, a, b,
+                          rtol=1e-9)
+
+        assert_allclose(6, 10, rtol=0.5)
+        self.assertRaises(AssertionError, assert_allclose, 10, 6, rtol=0.5)
+
+
 class TestArrayAlmostEqualNulp(unittest.TestCase):
     def test_simple(self):
         dev = np.random.randn(10)

@@ -16,7 +16,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp',
-           'assert_array_max_ulp', 'assert_warns']
+           'assert_array_max_ulp', 'assert_warns', 'assert_allclose']
 
 verbose = 0
 
@@ -1092,6 +1092,42 @@ def _assert_valid_refcount(op):
         d = op(b,c)
 
     assert(sys.getrefcount(i) >= rc)
+
+def assert_allclose(actual, desired, rtol=1e-7, atol=0,
+                    err_msg='', verbose=True):
+    """
+    Raise an assertion if two objects are not equal up to desired tolerance.
+
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)``
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired
+    rtol : float, optional
+        Relative tolerance
+    atol : float, optional
+        Absolute tolerance
+    err_msg : string
+        The error message to be printed in case of failure.
+    verbose : bool
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are not equal up to specified precision.
+
+    """
+    import numpy as np
+    def compare(x, y):
+        return np.allclose(x, y, rtol=rtol, atol=atol)
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    header = 'Not equal to tolerance rtol=%g, atol=%g' % (rtol, atol)
+    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
+                         verbose=verbose, header=header)
 
 def assert_array_almost_equal_nulp(x, y, nulp=1):
     """
