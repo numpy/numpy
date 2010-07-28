@@ -271,7 +271,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
     if (PyDataType_REFCHK(in->descr)) {
         obptr = buffers[1];
         for (i = 0; i < N; i++, obptr+=selsize) {
-            PyArray_Item_XDECREF(obptr, out->descr);
+            PyArray_Item_XDECREF(obptr, in->descr);
         }
     }
     if (PyDataType_REFCHK(out->descr)) {
