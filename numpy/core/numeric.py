@@ -695,7 +695,7 @@ def correlate(a,v,mode='valid',old_behavior=True):
         warnings.warn("""
 The current behavior of correlate is deprecated for 1.4.0, and will be removed
 for NumPy 1.5.0.
-    
+
 The new behavior fits the conventional definition of correlation: inputs are
 never swapped, and the second argument is conjugated for complex arrays.""",
             DeprecationWarning)
@@ -1752,13 +1752,13 @@ def binary_repr(num, width=None):
         bin = bin.zfill(width)
     return sign + bin
 
-def base_repr (number, base=2, padding=0):
+def base_repr(number, base=2, padding=0):
     """
     Return a string representation of a number in the given base system.
 
     Parameters
     ----------
-    number : scalar
+    number : int
         The value to convert. Only positive values are handled.
     base : int, optional
         Convert `number` to the `base` number system. The valid range is 2-36,
@@ -1773,8 +1773,7 @@ def base_repr (number, base=2, padding=0):
 
     See Also
     --------
-    binary_repr : Faster version of `base_repr` for base 2 that also handles
-        negative numbers.
+    binary_repr : Faster version of `base_repr` for base 2.
 
     Examples
     --------
@@ -1791,25 +1790,20 @@ def base_repr (number, base=2, padding=0):
     '20'
 
     """
-    if number < 0:
-        raise ValueError("negative numbers not handled in base_repr")
-    if base > 36:
-        raise ValueError("bases greater than 36 not handled in base_repr")
+    digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    if base > len(digits):
+        raise ValueError("Bases greater than 36 not handled in base_repr.")
 
-    chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    import math
-    lnb = math.log(base)
-    res = padding*chars[0]
-    if number == 0:
-        return res + chars[0]
-    exponent = int (math.log (number)/lnb)
-    while(exponent >= 0):
-        term = long(base)**exponent
-        lead_digit = int(number / term)
-        res += chars[lead_digit]
-        number -= term*lead_digit
-        exponent -= 1
-    return res
+    num = abs(number)
+    res = []
+    while num:
+        res.append(digits[num % base])
+        num /= base
+    if padding:
+        res.append('0' * padding)
+    if number < 0:
+        res.append('-')
+    return ''.join(reversed(res or '0'))
 
 from cPickle import load, loads
 _cload = load

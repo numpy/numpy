@@ -306,6 +306,20 @@ class TestBinaryRepr(TestCase):
         assert_equal(binary_repr(-1), '-1')
         assert_equal(binary_repr(-1, width=8), '11111111')
 
+class TestBaseRepr(TestCase):
+    def test_base3(self):
+        assert_equal(base_repr(3**5, 3), '100000')
+
+    def test_positive(self):
+        assert_equal(base_repr(12, 10), '12')
+        assert_equal(base_repr(12, 10, 4), '000012')
+        assert_equal(base_repr(12, 4), '30')
+        assert_equal(base_repr(3731624803700888, 36), '10QR0ROFCEW')
+
+    def test_negative(self):
+        assert_equal(base_repr(-12, 10), '-12')
+        assert_equal(base_repr(-12, 10, 4), '-000012')
+        assert_equal(base_repr(-12, 4), '-30')
 
 class TestArrayComparisons(TestCase):
     def test_array_equal(self):
