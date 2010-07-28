@@ -1342,5 +1342,14 @@ class TestRegression(TestCase):
         cnan = complex(0, np.nan)
         assert_equal(np.maximum(1, cnan), cnan)
 
+    def test_subclass_int_tuple_assignment(self):
+        # ticket #1563
+        class Subclass(np.ndarray):
+            def __new__(cls,i):
+                return np.ones((i,)).view(cls)
+        x = Subclass(5)
+        x[(0,)] = 2 # shouldn't raise an exception
+        assert_equal(x[0], 2)
+
 if __name__ == "__main__":
     run_module_suite()
