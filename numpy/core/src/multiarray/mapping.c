@@ -709,6 +709,12 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
     }
     else {
         PyObject *tmp0;
+
+        /*
+         * Note: this code path should never be reached with an index that
+         *       produces scalars -- those are handled earlier in array_ass_sub
+         */
+
         tmp0 = PyObject_GetItem((PyObject *)self, index);
         if (tmp0 == NULL) {
             return -1;
@@ -841,9 +847,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         return -1;
     }
 
-    /* optimization for integer-tuple */
-    if (self->nd > 1 &&
-        (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd))
+    /* Integer-tuple */
+    if (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd)
         && (_tuple_of_integers(index, vals, self->nd) >= 0)) {
         int i;
         char *item;
