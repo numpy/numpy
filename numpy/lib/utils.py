@@ -4,7 +4,7 @@ import types
 import re
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core import product, ndarray
+from numpy.core import product, ndarray, ufunc
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype', 'issubdtype',
         'deprecate', 'deprecate_with_doc', 'get_numarray_include',
@@ -695,7 +695,7 @@ def source(object, output=sys.stdout):
 _lookfor_caches = {}
 
 # regexp whose match indicates that the string may contain a function signature
-_function_signature_re = re.compile(r"[a-z_]+\(.*[,=].*\)", re.I)
+_function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
 
 def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
@@ -797,7 +797,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     # Pretty-print
     s = "Search results for '%s'" % (' '.join(whats))
     help_text = [s, "-"*len(s)]
-    for name in found:
+    for name in found[::-1]:
         doc, kind, ix = cache[name]
 
         doclines = [line.strip() for line in doc.strip().split("\n")
@@ -931,8 +931,12 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                     item_name = "%s.%s" % (mod_name, item_name)
 
                 if not item_name.startswith(name + '.'):
-                    # don't crawl foreign objects
-                    continue
+                    # don't crawl "foreign" objects
+                    if isinstance(v, ufunc):
+                        # ... unless they are ufuncs
+                        pass
+                    else:
+                        continue
                 elif not (inspect.ismodule(v) or _all is None or n in _all):
                     continue
                 stack.append(("%s.%s" % (name, n), v))
@@ -940,9 +944,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
             kind = "class"
             for n, v in _getmembers(item):
                 stack.append(("%s.%s" % (name, n), v))
-        # FIXME later: workaround python3.1 capsule callable bug
-        # by using old version of callable.
-        # elif callable(item):
         elif hasattr(item, "__call__"):
             kind = "func"
 
