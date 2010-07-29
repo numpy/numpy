@@ -31,6 +31,7 @@ extern "C" CONFUSE_EMACS
 #endif
 
 #include "npy_endian.h"
+#include "npy_cpu.h"
 
 #include "utils.h"
 
