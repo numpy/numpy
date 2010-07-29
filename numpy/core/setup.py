@@ -245,6 +245,10 @@ def check_types(config_cmd, ext, build_dir):
         raise SystemError(
                 "Cannot compiler 'Python.h'. Perhaps you need to "\
                 "install python-dev|python-devel.")
+    res = config_cmd.check_header("endian.h")
+    if res:
+        private_defines.append(('HAVE_ENDIAN_H', 1))
+        public_defines.append(('NPY_HAVE_ENDIAN_H', 1))
 
     # Check basic types sizes
     for type in ('short', 'int', 'long'):
