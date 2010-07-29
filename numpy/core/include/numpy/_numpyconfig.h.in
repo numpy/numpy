@@ -40,6 +40,8 @@
 #define NPY_ABI_VERSION @NPY_ABI_VERSION@
 #define NPY_API_VERSION @NPY_API_VERSION@
 
+@DEFINE_NPY_HAVE_ENDIAN_H@
+
 /* Ugly, but we can't test this in a proper manner without requiring a C++
  * compiler at the configuration stage of numpy ? */
 #ifndef __STDC_FORMAT_MACROS
