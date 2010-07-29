@@ -9,7 +9,7 @@ of them in third-party projects.
 The following extensions are available:
 
   - ``numpydoc``: support for the Numpy docstring format in Sphinx, and add
-    the code description directives ``np-function``, ``np-cfunction``, etc.
+    the code description directives ``np:function``, ``np-c:function``, etc.
     that support the Numpy docstring syntax.
 
   - ``numpydoc.traitsdoc``: For gathering documentation about Traits attributes.
