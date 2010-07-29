@@ -6,6 +6,7 @@
 
 #include "npy_common.h"
 #include "npy_endian.h"
+#include "npy_cpu.h"
 #include "utils.h"
 
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
