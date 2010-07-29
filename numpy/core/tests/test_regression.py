@@ -1351,5 +1351,13 @@ class TestRegression(TestCase):
         x[(0,)] = 2 # shouldn't raise an exception
         assert_equal(x[0], 2)
 
+    def test_ufunc_no_unnecessary_views(self):
+        # ticket #1548
+        class Subclass(np.ndarray):
+            pass
+        x = np.array([1,2,3]).view(Subclass)
+        y = np.add(x, x, x)
+        assert_equal(id(x), id(y))
+
 if __name__ == "__main__":
     run_module_suite()
