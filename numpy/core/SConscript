@@ -81,6 +81,8 @@ Configuration error log says: \n\n%s""" % ''.join(errmsg)
 st = config.CheckHeader("endian.h")
 if st:
     numpyconfig_sym.append(('DEFINE_NPY_HAVE_ENDIAN_H', '#define NPY_HAVE_ENDIAN_H 1'))
+else:
+     numpyconfig_sym.append(('DEFINE_NPY_HAVE_ENDIAN_H', ''))
 
 def check_type(type, include = None):
     st = config.CheckTypeSize(type, includes = include)
