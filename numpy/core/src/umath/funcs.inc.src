@@ -238,7 +238,22 @@ nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
         return;
     }
     if (ar == 0. && ai == 0.) {
-        *r = npy_cpack@c@(0., 0.);
+        if (br > 0 && bi == 0) {
+            *r = npy_cpack@c@(0., 0.);
+        }
+        else {
+            /* NB: there are four complex zeros; c0 = (+-0, +-0), so that unlike
+             *     for reals, c0**p, with `p` negative is in general
+             *     ill-defined.
+             *
+             *     c0**z with z complex is also ill-defined.
+             */
+            *r = npy_cpack@c@(NPY_NAN, NPY_NAN);
+
+            /* Raise invalid */
+            ar = NPY_INFINITY;
+            ar = ar - ar;
+        }
         return;
     }
     if (bi == 0 && (n=(intp)br) == br) {
