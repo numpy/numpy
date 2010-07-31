@@ -33,16 +33,16 @@ def broadcast_arrays(*args):
 
     Parameters
     ----------
-    `*args` : arrays
+    `*args` : array_likes
         The arrays to broadcast.
 
     Returns
     -------
     broadcasted : list of arrays
-        These arrays are views on the original arrays. They are typically not
-        contiguous. Furthermore, more than one element of a broadcasted array
-        may refer to a single memory location. If you need to write to the
-        arrays, make copies first.
+        These arrays are views on the original arrays.  They are typically
+        not contiguous.  Furthermore, more than one element of a
+        broadcasted array may refer to a single memory location.  If you
+        need to write to the arrays, make copies first.
 
     Examples
     --------
