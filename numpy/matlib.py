@@ -160,10 +160,10 @@ def identity(n,dtype=None):
     Examples
     --------
     >>> import numpy.matlib
-    >>> np.identity(3, dtype=int)
-    array([[1, 0, 0],
-           [0, 1, 0],
-           [0, 0, 1]])
+    >>> np.matlib.identity(3, dtype=int)
+    matrix([[1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]])
 
     """
     a = array([1]+n*[0],dtype=dtype)
