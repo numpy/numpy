@@ -2748,7 +2748,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
     """
     a.put(indices, values, mode='raise')
 
-    Set a.flat[n] = values[n] for all n in indices.
+    Set ``a.flat[n] = values[n]`` for all `n` in indices.
 
     Refer to `numpy.put` for full documentation.
 
@@ -2942,7 +2942,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
     """
     a.round(decimals=0, out=None)
 
-    Return an array rounded a to the given number of decimals.
+    Return `a` with each element rounded to the given number of decimals.
 
     Refer to `numpy.around` for full documentation.
 
@@ -3208,7 +3208,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('take',
     """
     a.take(indices, axis=None, out=None, mode='raise')
 
-    Return an array formed from the elements of a at the given indices.
+    Return an array formed from the elements of `a` at the given indices.
 
     Refer to `numpy.take` for full documentation.
 
@@ -3418,24 +3418,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     Parameters
     ----------
-    dtype : data-type
-        Data-type descriptor of the returned view, e.g. float32 or int16.
-    type : python type
-        Type of the returned view, e.g. ndarray or matrix.
-
+    dtype : data-type, optional
+        Data-type descriptor of the returned view, e.g., float32 or int16.
+        The default, None, results in the view having the same data-type
+        as `a`.
+    type : Python type, optional
+        Type of the returned view, e.g., ndarray or matrix.  Again, the
+        default None results in type preservation.
 
     Notes
     -----
+    ``a.view()`` is used two different ways:
 
-    `a.view()` is used two different ways.
-
-    `a.view(some_dtype)` or `a.view(dtype=some_dtype)` constructs a view of
-    the array's memory with a different dtype. This can cause a
+    ``a.view(some_dtype)`` or ``a.view(dtype=some_dtype)`` constructs a view
+    of the array's memory with a different data-type.  This can cause a
     reinterpretation of the bytes of memory.
 
-    `a.view(ndarray_subclass)`, or `a.view(type=ndarray_subclass)`, just
-    returns an instance of ndarray_subclass that looks at the same array (same
-    shape, dtype, etc.). This does not cause a reinterpretation of the memory.
+    ``a.view(ndarray_subclass)`` or ``a.view(type=ndarray_subclass)`` just
+    returns an instance of `ndarray_subclass` that looks at the same array
+    (same shape, dtype, etc.)  This does not cause a reinterpretation of the
+    memory.
 
 
     Examples
