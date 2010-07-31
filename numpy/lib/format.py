@@ -366,19 +366,19 @@ def write_array(fp, array, version=(1,0)):
     """
     Write an array to an NPY file, including a header.
 
-    If the array is neither C-contiguous or Fortran-contiguous AND if the
-    filelike object is not a real file object, then this function will have
-    to copy data in memory.
+    If the array is neither C-contiguous nor Fortran-contiguous AND the
+    file_like object is not a real file object, this function will have to
+    copy data in memory.
 
     Parameters
     ----------
-    fp : filelike object
-        An open, writable file object or similar object with a `.write()`
+    fp : file_like object
+        An open, writable file object, or similar object with a ``.write()``
         method.
-    array : numpy.ndarray
+    array : ndarray
         The array to write to disk.
     version : (int, int), optional
-        The version number of the format.
+        The version number of the format.  Default: (1, 0)
 
     Raises
     ------
@@ -386,7 +386,7 @@ def write_array(fp, array, version=(1,0)):
         If the array cannot be persisted.
     Various other errors
         If the array contains Python objects as part of its dtype, the
-        process of pickling them may raise arbitrary errors if the objects
+        process of pickling them may raise various errors if the objects
         are not picklable.
 
     """
@@ -418,13 +418,13 @@ def read_array(fp):
 
     Parameters
     ----------
-    fp : filelike object
-        If this is not a real file object, then this may take extra memory and
-        time.
+    fp : file_like object
+        If this is not a real file object, then this may take extra memory
+        and time.
 
     Returns
     -------
-    array : numpy.ndarray
+    array : ndarray
         The array from the data on disk.
 
     Raises
@@ -477,27 +477,31 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     Parameters
     ----------
     filename : str
-        The name of the file on disk. This may not be a file-like object.
+        The name of the file on disk.  This may *not* be a file-like
+        object.
     mode : str, optional
-        The mode to open the file with. In addition to the standard file modes,
-        'c' is also accepted to mean "copy on write". See `numpy.memmap` for
-        the available mode strings.
-    dtype : dtype, optional
+        The mode in which to open the file; the default is 'r+'.  In
+        addition to the standard file modes, 'c' is also accepted to
+        mean "copy on write."  See `memmap` for the available mode strings.
+    dtype : data-type, optional
         The data type of the array if we are creating a new file in "write"
-        mode.
-    shape : tuple of int, optional
+        mode, if not, `dtype` is ignored.  The default value is None,
+        which results in a data-type of `float64`.
+    shape : tuple of int
         The shape of the array if we are creating a new file in "write"
-        mode.
+        mode, in which case this parameter is required.  Otherwise, this
+        parameter is ignored and is thus optional.
     fortran_order : bool, optional
         Whether the array should be Fortran-contiguous (True) or
-        C-contiguous (False) if we are creating a new file in "write" mode.
+        C-contiguous (False, the default) if we are creating a new file
+        in "write" mode.
     version : tuple of int (major, minor)
         If the mode is a "write" mode, then this is the version of the file
-        format used to create the file.
+        format used to create the file.  Default: (1,0)
 
     Returns
     -------
-    marray : numpy.memmap
+    marray : memmap
         The memory-mapped array.
 
     Raises
@@ -509,7 +513,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     See Also
     --------
-    numpy.memmap
+    memmap
 
     """
     if not isinstance(filename, basestring):

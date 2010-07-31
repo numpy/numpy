@@ -29,9 +29,31 @@ from arraysetops import setdiff1d
 from utils import deprecate
 import numpy as np
 
-#end Fernando's utilities
 
 def iterable(y):
+    """
+    Check whether or not an object can be iterated over.
+
+    Parameters
+    ----------
+    y : object
+      Input object.
+
+    Returns
+    -------
+    b : {0, 1}
+      Return 1 if the object has an iterator method or is a sequence,
+      and 0 otherwise.
+
+
+    Examples
+    --------
+    >>> np.iterable([1, 2, 3])
+    1
+    >>> np.iterable(2)
+    0
+
+    """
     try: iter(y)
     except: return 0
     return 1
@@ -1237,7 +1259,7 @@ def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
 
-    Similar to ``np.putmask(a, mask, vals)``, the difference is that `place`
+    Similar to ``np.putmask(arr, mask, vals)``, the difference is that `place`
     uses the first N elements of `vals`, where N is the number of True values
     in `mask`, while `putmask` uses the elements where `mask` is True.
 
@@ -1245,7 +1267,7 @@ def place(arr, mask, vals):
 
     Parameters
     ----------
-    a : array_like
+    arr : array_like
         Array to put data into.
     mask : array_like
         Boolean mask array. Must have the same size as `a`.
@@ -1260,9 +1282,9 @@ def place(arr, mask, vals):
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2, 3)
-    >>> np.place(x, x>2, [44, 55])
-    >>> x
+    >>> arr = np.arange(6).reshape(2, 3)
+    >>> np.place(arr, arr>2, [44, 55])
+    >>> arr
     array([[ 0,  1,  2],
            [44, 55, 44]])
 
@@ -1936,12 +1958,12 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     Return correlation coefficients.
 
     Please refer to the documentation for `cov` for more detail.  The
-    relationship between the correlation coefficient matrix, P, and the
-    covariance matrix, C, is
+    relationship between the correlation coefficient matrix, `P`, and the
+    covariance matrix, `C`, is
 
     .. math:: P_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} * C_{jj} } }
 
-    The values of P are between -1 and 1.
+    The values of `P` are between -1 and 1, inclusive.
 
     Parameters
     ----------
@@ -1989,22 +2011,22 @@ def blackman(M):
     """
     Return the Blackman window.
 
-    The Blackman window is a taper formed by using the the first
-    three terms of a summation of cosines. It was designed to have close
-    to the minimal leakage possible.
-    It is close to optimal, only slightly worse than a Kaiser window.
+    The Blackman window is a taper formed by using the the first three
+    terms of a summation of cosines. It was designed to have close to the
+    minimal leakage possible.  It is close to optimal, only slightly worse
+    than a Kaiser window.
 
     Parameters
     ----------
     M : int
-        Number of points in the output window. If zero or less, an
-        empty array is returned.
+        Number of points in the output window. If zero or less, an empty
+        array is returned.
 
     Returns
     -------
-    out : array
-        The window, normalized to one (the value one
-        appears only if the number of samples is odd).
+    out : ndarray
+        The window, normalized to one (the value one appears only if the
+        number of samples is odd).
 
     See Also
     --------
@@ -2016,7 +2038,6 @@ def blackman(M):
 
     .. math::  w(n) = 0.42 - 0.5 \\cos(2\\pi n/M) + 0.08 \\cos(4\\pi n/M)
 
-
     Most references to the Blackman window come from the signal processing
     literature, where it is used as one of many windowing functions for
     smoothing values.  It is also known as an apodization (which means
@@ -2027,12 +2048,11 @@ def blackman(M):
 
     References
     ----------
-    .. [1] Blackman, R.B. and Tukey, J.W., (1958) The measurement of power
-           spectra, Dover Publications, New York.
-    .. [2] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
-    .. [3] Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
-           Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
+    Blackman, R.B. and Tukey, J.W., (1958) The measurement of power spectra,
+    Dover Publications, New York.
+
+    Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
+    Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
 
     Examples
     --------
