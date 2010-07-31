@@ -69,13 +69,13 @@ def zeros_like(a):
     Parameters
     ----------
     a : array_like
-        The shape and data-type of `a` define the parameters of
+        The shape and data-type of `a` define these same attributes of
         the returned array.
 
     Returns
     -------
     out : ndarray
-        Array of zeros with same shape and type as `a`.
+        Array of zeros with the same shape and type as `a`.
 
     See Also
     --------
@@ -124,7 +124,7 @@ def empty_like(a):
     Parameters
     ----------
     a : array_like
-        The shape and data-type of `a` define the parameters of the
+        The shape and data-type of `a` define these same attributes of the
         returned array.
 
     Returns
@@ -143,8 +143,8 @@ def empty_like(a):
     Notes
     -----
     This function does *not* initialize the returned array; to do that use
-    `zeros_like` or `ones_like` instead. It may be marginally faster than the
-    functions that do set the array values.
+    `zeros_like` or `ones_like` instead.  It may be marginally faster than
+    the functions that do set the array values.
 
     Examples
     --------
@@ -154,7 +154,7 @@ def empty_like(a):
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], #random
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],#random
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
@@ -285,14 +285,14 @@ def asarray(a, dtype=None, order=None):
 
 def asanyarray(a, dtype=None, order=None):
     """
-    Convert the input to a ndarray, but pass ndarray subclasses through.
+    Convert the input to an ndarray, but pass ndarray subclasses through.
 
     Parameters
     ----------
     a : array_like
         Input data, in any form that can be converted to an array.  This
         includes scalars, lists, lists of tuples, tuples, tuples of tuples,
-        tuples of lists and ndarrays.
+        tuples of lists, and ndarrays.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F'}, optional
@@ -312,7 +312,8 @@ def asanyarray(a, dtype=None, order=None):
     asfarray : Convert input to a floating point ndarray.
     asfortranarray : Convert input to an ndarray with column-major
                      memory order.
-    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
+    asarray_chkfinite : Similar function which checks input for NaNs and
+                        Infs.
     fromiter : Create an array from an iterator.
     fromfunction : Construct an array by executing a function on grid
                    positions.
@@ -1133,7 +1134,8 @@ def rollaxis(a, axis, start=0):
         The axis to roll backwards.  The positions of the other axes do not
         change relative to one another.
     start : int, optional
-        The axis is rolled until it lies before this position.
+        The axis is rolled until it lies before this position.  The default,
+        0, results in a "complete" roll.
 
     Returns
     -------
@@ -1143,7 +1145,7 @@ def rollaxis(a, axis, start=0):
     See Also
     --------
     roll : Roll the elements of an array by a number of positions along a
-           given axis.
+        given axis.
 
     Examples
     --------
@@ -1400,23 +1402,25 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
     Return a string representation of the data in an array.
 
-    The data in the array is returned as a single string. This function
-    is similar to `array_repr`, the difference is that `array_repr` also
-    returns information on the type of array and data type.
+    The data in the array is returned as a single string.  This function is
+    similar to `array_repr`, the difference being that `array_repr` also
+    returns information on the kind of array and its data type.
 
     Parameters
     ----------
     a : ndarray
         Input array.
     max_line_width : int, optional
-        Inserts newlines if text is longer than `max_line_width`.
+        Inserts newlines if text is longer than `max_line_width`.  The
+        default is, indirectly, 75.
     precision : int, optional
-        Floating point precision. Default is the current printing precision
-        (usually 8), which can be altered using set_printoptions.
+        Floating point precision.  Default is the current printing precision
+        (usually 8), which can be altered using `set_printoptions`.
     suppress_small : bool, optional
-        Represent very small numbers as zero, default is False. Very small is
-        defined by precision, if the precision is 8 then numbers smaller than
-        5e-9 are represented as zero.
+        Represent numbers "very close" to zero as zero; default is False.
+        Very close is defined by precision: if the precision is 8, e.g.,
+        numbers smaller (in absolute value) than 5e-9 are represented as
+        zero.
 
     See Also
     --------
@@ -1844,11 +1848,11 @@ def ones(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
 
-    Please refer to the documentation for `zeros`.
+    Please refer to the documentation for `zeros` for further details.
 
     See Also
     --------
-    zeros
+    zeros, ones_like
 
     Examples
     --------
