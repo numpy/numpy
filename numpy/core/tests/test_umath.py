@@ -86,6 +86,31 @@ class TestPower(TestCase):
             finally:
                 np.seterr(**err)
 
+    def test_power_zero(self):
+        # ticket #1271
+        zero = np.array([0j])
+        one = np.array([1+0j])
+        cinf = np.array([complex(np.inf, 0)])
+        cnan = np.array([complex(np.nan, np.nan)])
+
+        def assert_complex_equal(x, y):
+            x, y = np.asarray(x), np.asarray(y)
+            assert_array_equal(x.real, y.real)
+            assert_array_equal(x.imag, y.imag)
+
+        # positive powers
+        for p in [0.33, 0.5, 1, 1.5, 2, 3, 4, 5, 6.6]:
+            assert_complex_equal(np.power(zero, p), zero)
+
+        # zero power
+        assert_complex_equal(np.power(zero, 0), one)
+        assert_complex_equal(np.power(zero, 0+1j), cnan)
+
+        # negative power
+        for p in [0.33, 0.5, 1, 1.5, 2, 3, 4, 5, 6.6]:
+            assert_complex_equal(np.power(zero, -p), cnan)
+        assert_complex_equal(np.power(zero, -1+0.2j), cnan)
+
 
 class TestLog2(TestCase):
     def test_log2_values(self) :
