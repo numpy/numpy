@@ -20,7 +20,7 @@ add_newdoc('numpy.core.umath', 'absolute',
 
     Returns
     -------
-    res : ndarray
+    absolute : ndarray
         An ndarray containing the absolute value of
         each element in `x`.  For complex input, ``a + ib``, the
         absolute value is :math:`\\sqrt{ a^2 + b^2 }`.
@@ -56,12 +56,14 @@ add_newdoc('numpy.core.umath', 'add',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays to be added.
+        The arrays to be added.  If ``x1.shape != x2.shape``, they must be
+        broadcastable to a common shape (which may be the shape of one or
+        the other).
 
     Returns
     -------
-    y : {ndarray, scalar}
-        The sum of `x1` and `x2`, element-wise.  Returns scalar if
+    y : ndarray or scalar
+        The sum of `x1` and `x2`, element-wise.  Returns a scalar if
         both  `x1` and `x2` are scalars.
 
     Notes
@@ -112,25 +114,23 @@ add_newdoc('numpy.core.umath', 'arccos',
     Notes
     -----
     `arccos` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `cos(z) = x`. The convention is to return the
-    angle `z` whose real part lies in `[0, pi]`.
+    many numbers `z` such that `cos(z) = x`. The convention is to return
+    the angle `z` whose real part lies in `[0, pi]`.
 
     For real-valued input data types, `arccos` always returns real output.
-    For each value that cannot be expressed as a real number or infinity, it
-    yields ``nan`` and sets the `invalid` floating point error flag.
+    For each value that cannot be expressed as a real number or infinity,
+    it yields ``nan`` and sets the `invalid` floating point error flag.
 
-    For complex-valued input, `arccos` is a complex analytical function that
-    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from above
-    on the former and from below on the latter.
+    For complex-valued input, `arccos` is a complex analytic function that
+    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from
+    above on the former and from below on the latter.
 
     The inverse `cos` is also known as `acos` or cos^-1.
 
     References
     ----------
-    .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 79. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Inverse trigonometric function",
-           http://en.wikipedia.org/wiki/Inverse_trigonometric_function
+    M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
+    10th printing, 1964, pp. 79. http://www.math.sfu.ca/~cbm/aands/
 
     Examples
     --------
@@ -204,23 +204,23 @@ add_newdoc('numpy.core.umath', 'arccosh',
 
 add_newdoc('numpy.core.umath', 'arcsin',
     """
-    Inverse sine elementwise.
+    Inverse sine, element-wise.
 
     Parameters
     ----------
     x : array_like
-      `y`-coordinate on the unit circle.
+        `y`-coordinate on the unit circle.
 
     out : ndarray, optional
-        Array of the same shape as `x`, to store results in. See
-        `doc.ufuncs` (Section "Output arguments") for more details.
+        Array of the same shape as `x`, in which to store the results.
+        See `doc.ufuncs` (Section "Output arguments") for more details.
 
     Returns
     -------
     angle : ndarray
-      The angle of the ray intersecting the unit circle at the given
-      `y`-coordinate in radians ``[-pi, pi]``. If `x` is a scalar then
-      a scalar is returned, otherwise an array is returned.
+        The inverse sine of each element in `x`, in radians and in the
+        closed interval ``[-pi/2, pi/2]``.  If `x` is a scalar, a scalar
+        is returned, otherwise an array.
 
     See Also
     --------
@@ -229,25 +229,24 @@ add_newdoc('numpy.core.umath', 'arcsin',
     Notes
     -----
     `arcsin` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `sin(z) = x`. The convention is to return the
-    angle `z` whose real part lies in `[-pi/2, pi/2]`.
+    many numbers `z` such that :math:`sin(z) = x`.  The convention is to
+    return the angle `z` whose real part lies in [-pi/2, pi/2].
 
-    For real-valued input data types, `arcsin` always returns real output.
-    For each value that cannot be expressed as a real number or infinity, it
-    yields ``nan`` and sets the `invalid` floating point error flag.
+    For real-valued input data types, *arcsin* always returns real output.
+    For each value that cannot be expressed as a real number or infinity,
+    it yields ``nan`` and sets the `invalid` floating point error flag.
 
-    For complex-valued input, `arcsin` is a complex analytical function that
-    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from above
-    on the former and from below on the latter.
+    For complex-valued input, `arcsin` is a complex analytic function that
+    has, by convention, the branch cuts [-inf, -1] and [1, inf]  and is
+    continuous from above on the former and from below on the latter.
 
-    The inverse sine is also known as `asin` or ``sin^-1``.
+    The inverse sine is also known as `asin` or sin^{-1}.
 
     References
     ----------
-    .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 79. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Inverse trigonometric function",
-           http://en.wikipedia.org/wiki/Inverse_trigonometric_function
+    Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
+    10th printing, New York: Dover, 1964, pp. 79ff.
+    http://www.math.sfu.ca/~cbm/aands/
 
     Examples
     --------
@@ -311,8 +310,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     """
     Trigonometric inverse tangent, element-wise.
 
-    The inverse of tan, so that if ``y = tan(x)`` then
-    ``x = arctan(y)``.
+    The inverse of tan, so that if ``y = tan(x)`` then ``x = arctan(y)``.
 
     Parameters
     ----------
@@ -322,39 +320,41 @@ add_newdoc('numpy.core.umath', 'arctan',
     Returns
     -------
     out : ndarray
-        Out has the same shape as `x`.  Its real part is
-        in ``[-pi/2, pi/2]``. It is a scalar if `x` is a scalar.
+        Out has the same shape as `x`.  Its real part is in
+        ``[-pi/2, pi/2]`` (``arctan(+/-inf)`` returns ``+/-pi/2``).
+        It is a scalar if `x` is a scalar.
 
     See Also
     --------
-    arctan2 : Calculate the arctan of y/x.
+    arctan2 : The "four quadrant" arctan of the angle formed by (`x`, `y`)
+        and the positive `x`-axis.
+    angle : Argument of complex values.
 
     Notes
     -----
-    `arctan` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `tan(z) = x`. The convention is to return the
-    angle `z` whose real part lies in `[-pi/2, pi/2]`.
+    `arctan` is a multi-valued function: for each `x` there are infinitely
+    many numbers `z` such that tan(`z`) = `x`.  The convention is to return
+    the angle `z` whose real part lies in [-pi/2, pi/2].
 
     For real-valued input data types, `arctan` always returns real output.
-    For each value that cannot be expressed as a real number or infinity, it
-    yields ``nan`` and sets the `invalid` floating point error flag.
+    For each value that cannot be expressed as a real number or infinity,
+    it yields ``nan`` and sets the `invalid` floating point error flag.
 
-    For complex-valued input, `arctan` is a complex analytical function that
-    has branch cuts `[1j, infj]` and `[-1j, -infj]` and is continuous from the
-    left on the former and from the right on the latter.
+    For complex-valued input, `arctan` is a complex analytic function that
+    has [`1j, infj`] and [`-1j, -infj`] as branch cuts, and is continuous
+    from the left on the former and from the right on the latter.
 
-    The inverse tangent is also known as `atan` or ``tan^-1``.
+    The inverse tangent is also known as `atan` or tan^{-1}.
 
     References
     ----------
-    .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 79. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Inverse trigonometric function",
-           http://en.wikipedia.org/wiki/Arctan
+    Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
+    10th printing, New York: Dover, 1964, pp. 79.
+    http://www.math.sfu.ca/~cbm/aands/
 
     Examples
     --------
-    We expect the arctan of 0 to be 0, and of 1 to be :math:`\\pi/4`:
+    We expect the arctan of 0 to be 0, and of 1 to be pi/4:
 
     >>> np.arctan([0, 1])
     array([ 0.        ,  0.78539816])
@@ -374,22 +374,27 @@ add_newdoc('numpy.core.umath', 'arctan',
 
 add_newdoc('numpy.core.umath', 'arctan2',
     """
-    Elementwise arc tangent of ``x1/x2`` choosing the quadrant correctly.
+    Element-wise arc tangent of ``x1/x2`` choosing the quadrant correctly.
 
-    The quadrant (ie. branch) is chosen so that ``arctan2(x1, x2)``
-    is the signed angle in radians between the line segments
-    ``(0,0) - (1,0)`` and ``(0,0) - (x2,x1)``. This function is defined
-    also for `x2` = 0.
+    The quadrant (i.e., branch) is chosen so that ``arctan2(x1, x2)`` is
+    the signed angle in radians between the ray ending at the origin and
+    passing through the point (1,0), and the ray ending at the origin and
+    passing through the point (`x2`, `x1`).  (Note the role reversal: the
+    "`y`-coordinate" is the first function parameter, the "`x`-coordinate"
+    is the second.)  By IEEE convention, this function is defined for
+    `x2` = +/-0 and for either or both of `x1` and `x2` = +/-inf (see
+    Notes for specific values).
 
-    `arctan2` is not defined for complex-valued arguments.
+    This function is not defined for complex-valued arguments; for the
+    so-called argument of complex values, use `angle`.
 
     Parameters
     ----------
     x1 : array_like, real-valued
-        y-coordinates.
+        `y`-coordinates.
     x2 : array_like, real-valued
-        x-coordinates. `x2` must be broadcastable to match the shape of `x1`,
-        or vice versa.
+        `x`-coordinates. `x2` must be broadcastable to match the shape of
+        `x1` or vice versa.
 
     Returns
     -------
@@ -398,12 +403,13 @@ add_newdoc('numpy.core.umath', 'arctan2',
 
     See Also
     --------
-    arctan, tan
+    arctan, tan, angle
 
     Notes
     -----
-    `arctan2` is identical to the `atan2` function of the underlying
-    C library. The following special values are defined in the C standard [2]:
+    *arctan2* is identical to the `atan2` function of the underlying
+    C library.  The following special values are defined in the C
+    standard: [1]_
 
     ====== ====== ================
     `x1`   `x2`   `arctan2(x1,x2)`
@@ -416,13 +422,12 @@ add_newdoc('numpy.core.umath', 'arctan2',
     +/-inf -inf   +/- (3*pi/4)
     ====== ====== ================
 
-    Note that +0 and -0 are distinct floating point numbers.
+    Note that +0 and -0 are distinct floating point numbers, as are +inf
+    and -inf.
 
     References
     ----------
-    .. [1] Wikipedia, "atan2",
-           http://en.wikipedia.org/wiki/Atan2
-    .. [2] ISO/IEC standard 9899:1999, "Programming language C", 1999.
+    .. [1] ISO/IEC standard 9899:1999, "Programming language C."
 
     Examples
     --------
@@ -841,7 +846,8 @@ add_newdoc('numpy.core.umath', 'degrees',
     Returns
     -------
     y : ndarray of floats
-        The corresponding degree values.
+        The corresponding degree values; if `out` was supplied this is a
+        reference to it.
 
     See Also
     --------
@@ -1291,17 +1297,20 @@ add_newdoc('numpy.core.umath', 'fmod',
 
 add_newdoc('numpy.core.umath', 'greater',
     """
-    Return (x1 > x2) element-wise.
+    Return the truth value of (x1 > x2) element-wise.
 
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.
+        Input arrays.  If ``x1.shape != x2.shape``, they must be
+        broadcastable to a common shape (which may be the shape of one or
+        the other).
 
     Returns
     -------
-    Out : {ndarray, bool}
-        Output array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : bool or ndarray of bool
+        Array of bools, or a single bool if `x1` and `x2` are scalars.
+
 
     See Also
     --------
@@ -1323,17 +1332,19 @@ add_newdoc('numpy.core.umath', 'greater',
 
 add_newdoc('numpy.core.umath', 'greater_equal',
     """
-    Return (x1 >= x2) element-wise.
+    Return the truth value of (x1 >= x2) element-wise.
 
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.
+        Input arrays.  If ``x1.shape != x2.shape``, they must be
+        broadcastable to a common shape (which may be the shape of one or
+        the other).
 
     Returns
     -------
-    out : {ndarray, bool}
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : bool or ndarray of bool
+        Array of bools, or a single bool if `x1` and `x2` are scalars.
 
     See Also
     --------
@@ -1532,30 +1543,33 @@ add_newdoc('numpy.core.umath', 'isfinite',
 
 add_newdoc('numpy.core.umath', 'isinf',
     """
-    Test element-wise for positive or negative infinity, return result as bool
-    array.
+    Test element-wise for positive or negative infinity.
+
+    Return a bool-type array, the same shape as `x`, True where ``x ==
+    +/-inf``, False everywhere else.
 
     Parameters
     ----------
     x : array_like
         Input values
-    y : array_like, optional
+    out : array_like, optional
         An array with the same shape as `x` to store the result.
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : bool (scalar) or bool-type ndarray
         For scalar input, the result is a new boolean with value True
         if the input is positive or negative infinity; otherwise the value
         is False.
 
         For array input, the result is a boolean array with the same
-        dimensions as the input and the values are True if the corresponding
-        element of the input is positive or negative infinity; otherwise the
-        values are False.  If a second argument is supplied the result is
-        stored there. If the type of that array is a numeric type the result
-        is represented as zeros and ones, if the type is boolean then as
-        False and True. The return value `y` is then a reference to that array.
+        shape as the input and the values are True where the
+        corresponding element of the input is positive or negative
+        infinity; elsewhere the values are False.  If a second argument
+        was supplied the result is stored there.  If the type of that array
+        is a numeric type the result is represented as zeros and ones, if
+        the type is boolean then as False and True, respectively.
+        The return value `y` is then a reference to that array.
 
     See Also
     --------
@@ -1566,8 +1580,9 @@ add_newdoc('numpy.core.umath', 'isinf',
     Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754).
 
-    Errors result if second argument is also supplied with scalar input or
-    if first and second arguments have different shapes.
+    Errors result if the second argument is supplied when the first
+    argument is a scalar, or if the first and second arguments have
+    different shapes.
 
     Examples
     --------
@@ -1670,21 +1685,23 @@ add_newdoc('numpy.core.umath', 'left_shift',
 
 add_newdoc('numpy.core.umath', 'less',
     """
-    Return (x1 < x2) element-wise.
+    Return the truth value of (x1 < x2) element-wise.
 
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.
+        Input arrays.  If ``x1.shape != x2.shape``, they must be
+        broadcastable to a common shape (which may be the shape of one or
+        the other).
 
     Returns
     -------
-    Out : ndarray of bools
-        Output array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : bool or ndarray of bool
+        Array of bools, or a single bool if `x1` and `x2` are scalars.
 
     See Also
     --------
-    less_equal, greater, greater_equal, equal, not_equal
+    greater, less_equal, greater_equal, equal, not_equal
 
     Examples
     --------
@@ -1695,26 +1712,28 @@ add_newdoc('numpy.core.umath', 'less',
 
 add_newdoc('numpy.core.umath', 'less_equal',
     """
-    Return (x1 <= x2) element-wise.
+    Return the truth value of (x1 =< x2) element-wise.
 
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.
+        Input arrays.  If ``x1.shape != x2.shape``, they must be
+        broadcastable to a common shape (which may be the shape of one or
+        the other).
 
     Returns
     -------
-    Out : {ndarray, bool}
-        Output array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : bool or ndarray of bool
+        Array of bools, or a single bool if `x1` and `x2` are scalars.
 
     See Also
     --------
-    less, greater_equal, greater, equal, not_equal
+    greater, less, greater_equal, equal, not_equal
 
     Examples
     --------
-    >>> np.less_equal([1, 2, 3], [2, 2, 2])
-    array([ True,  True, False], dtype=bool)
+    >>> np.less_equal([4, 2, 1], [2, 2, 2])
+    array([False,  True,  True], dtype=bool)
 
     """)
 
@@ -2041,7 +2060,7 @@ add_newdoc('numpy.core.umath', 'logical_not',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : bool or ndarray of bool
         Boolean result with the same shape as `x` of the NOT operation
         on elements of `x`.
 
@@ -2098,24 +2117,24 @@ add_newdoc('numpy.core.umath', 'logical_or',
 
 add_newdoc('numpy.core.umath', 'logical_xor',
     """
-    Compute the truth value of x1 XOR x2 elementwise.
+    Compute the truth value of x1 XOR x2, element-wise.
 
     Parameters
     ----------
     x1, x2 : array_like
-        Logical XOR is applied to the elements of `x1` and `x2`.
-        They have to be of the same shape.
+        Logical XOR is applied to the elements of `x1` and `x2`.  They must
+        be broadcastable to the same shape.
 
     Returns
     -------
-    y : {ndarray, bool}
-        Boolean result with the same shape as `x1` and `x2` of the logical
-        XOR operation on elements of `x1` and `x2`.
+    y : bool or ndarray of bool
+        Boolean result of the logical XOR operation applied to the elements
+        of `x1` and `x2`; the shape is determined by whether or not
+        broadcasting of one or both arrays was required.
 
     See Also
     --------
-    logical_and, logical_or, logical_not
-    bitwise_xor
+    logical_and, logical_or, logical_not, bitwise_xor
 
     Examples
     --------
@@ -2127,6 +2146,12 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     >>> x = np.arange(5)
     >>> np.logical_xor(x < 1, x > 3)
     array([ True, False, False, False,  True], dtype=bool)
+
+    Simple example showing support of broadcasting
+
+    >>> np.logical_xor(0, np.eye(2))
+    array([[ True, False],
+           [False,  True]], dtype=bool)
 
     """)
 
@@ -2417,13 +2442,13 @@ add_newdoc('numpy.core.umath', 'negative',
 
     Parameters
     ----------
-    x : {array_like, scalar}
+    x : array_like or scalar
         Input array.
 
     Returns
     -------
-    y : {ndarray, scalar}
-        Returned array or scalar `y=-x`.
+    y : ndarray or scalar
+        Returned array or scalar: `y = -x`.
 
     Examples
     --------
@@ -2471,11 +2496,11 @@ add_newdoc('numpy.core.umath', 'ones_like',
 
     Equivalent to ``a.copy().fill(1)``.
 
-    Please refer to the documentation for `zeros_like`.
+    Please refer to the documentation for `zeros_like` for further details.
 
     See Also
     --------
-    zeros_like
+    zeros_like, ones
 
     Examples
     --------
@@ -2488,10 +2513,10 @@ add_newdoc('numpy.core.umath', 'ones_like',
 
 add_newdoc('numpy.core.umath', 'power',
     """
-    Returns element-wise base array raised to power from second array.
+    First array elements raised to powers from second array, element-wise.
 
-    Raise each base in `x1` to the power of the exponents in `x2`. This
-    requires that `x1` and `x2` must be broadcastable to the same shape.
+    Raise each base in `x1` to the positionally-corresponding power in
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
 
     Parameters
     ----------
@@ -2542,7 +2567,7 @@ add_newdoc('numpy.core.umath', 'radians',
     x : array_like
         Input array in degrees.
     out : ndarray, optional
-        Output array of same shape as x.
+        Output array of same shape as `x`.
 
     Returns
     -------
@@ -2776,12 +2801,13 @@ add_newdoc('numpy.core.umath', 'signbit',
         The input value(s).
     out : ndarray, optional
         Array into which the output is placed. Its type is preserved
-        and it must be of the right shape to hold the output. See doc.ufuncs.
+        and it must be of the right shape to hold the output.
+        See `doc.ufuncs`.
 
     Returns
     -------
-    out : array_like, bool
-        Output array.
+    result : ndarray of bool
+        Output array, or reference to `out` if that was supplied.
 
     Examples
     --------
@@ -3011,24 +3037,32 @@ add_newdoc('numpy.core.umath', 'sqrt',
     Parameters
     ----------
     x : array_like
-        The square root of each element in this array is calculated.
+        The values whose square-roots are required.
+    out : ndarray, optional
+        Alternate array object in which to put the result; if provided, it
+        must have the same shape as `x`
 
     Returns
     -------
     y : ndarray
-        An array of the same shape as `x`, containing the square-root of
-        each element in `x`.  If any element in `x`
-        is complex, a complex array is returned.  If all of the elements
-        of `x` are real, negative elements return numpy.nan elements.
+        An array of the same shape as `x`, containing the positive
+        square-root of each element in `x`.  If any element in `x` is
+        complex, a complex array is returned (and the square-roots of
+        negative reals are calculated).  If all of the elements in `x`
+        are real, so is `y`, with negative elements returning ``nan``.
+        If `out` was provided, `y` is a reference to it.
 
     See Also
     --------
-    numpy.lib.scimath.sqrt
+    lib.scimath.sqrt
         A version which returns complex numbers when given negative reals.
 
     Notes
     -----
-    `sqrt` has a branch cut ``[-inf, 0)`` and is continuous from above on it.
+    *sqrt* has--consistent with common convention--as its branch cut the
+    real "interval" [`-inf`, 0), and is continuous from above on it.
+    (A branch cut is a curve in the complex plane across which a given
+    complex function fails to be continuous.)
 
     Examples
     --------
