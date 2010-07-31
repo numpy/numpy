@@ -43,6 +43,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                                                          PyArray_INTP,
                                                          1, 0);
     if (indices == NULL) {
+        Py_XINCREF(ret);
         goto fail;
     }
     n = m = chunk = 1;

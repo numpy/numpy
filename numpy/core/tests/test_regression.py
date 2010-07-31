@@ -1359,5 +1359,19 @@ class TestRegression(TestCase):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
+    def test_take_refcount(self):
+        # ticket #939
+        a = np.arange(16, dtype=np.float)
+        a.shape = (4,4)
+        lut = np.ones((5 + 3, 4), np.float)
+        rgba = np.empty(shape=a.shape + (4,), dtype=lut.dtype)
+        c1 = sys.getrefcount(rgba)
+        try:
+            lut.take(a, axis=0, mode='clip', out=rgba)
+        except TypeError:
+            pass
+        c2 = sys.getrefcount(rgba)
+        assert_equal(c1, c2)
+
 if __name__ == "__main__":
     run_module_suite()
