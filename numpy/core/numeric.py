@@ -1798,7 +1798,7 @@ def base_repr(number, base=2, padding=0):
     res = []
     while num:
         res.append(digits[num % base])
-        num /= base
+        num //= base
     if padding:
         res.append('0' * padding)
     if number < 0:
