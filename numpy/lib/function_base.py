@@ -2924,7 +2924,7 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     -----
     Given a vector V of length N, the qth percentile of V is the qth ranked
     value in a sorted copy of V.  A weighted average of the two nearest neighbors
-    is used if the normalized ranking does not match q exactly. 
+    is used if the normalized ranking does not match q exactly.
     The same as the median if q is 0.5; the same as the min if q is 0;
     and the same as the max if q is 1
 
@@ -2962,7 +2962,7 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
         return a.min(axis=axis, out=out)
     elif q == 100:
         return a.max(axis=axis, out=out)
-        
+
     if overwrite_input:
         if axis is None:
             sorted = a.ravel()
@@ -3072,11 +3072,11 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     array([ 2.,  8.])
 
     """
-    y = asarray(y)
+    y = asanyarray(y)
     if x is None:
         d = dx
     else:
-        x = asarray(x)
+        x = asanyarray(x)
         if x.ndim == 1:
             d = diff(x)
             # reshape to correct shape
@@ -3090,7 +3090,13 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice2 = [slice(None)]*nd
     slice1[axis] = slice(1,None)
     slice2[axis] = slice(None,-1)
-    return add.reduce(d * (y[slice1]+y[slice2])/2.0,axis)
+    try:
+        ret = (d * (y[slice1] +y [slice2]) / 2.0).sum(axis)
+    except ValueError: # Operations didn't work, cast to ndarray
+        d = np.asarray(d)
+        y = np.asarray(y)
+        ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
+    return ret
 
 #always succeed
 def add_newdoc(place, obj, doc):

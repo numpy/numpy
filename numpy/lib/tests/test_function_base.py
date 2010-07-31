@@ -491,6 +491,32 @@ class TestTrapz(TestCase):
         r = trapz(q, x=z, axis=2)
         assert_almost_equal(r, qz)
 
+    def test_masked(self):
+        #Testing that masked arrays behave as if the function is 0 where
+        #masked
+        x = arange(5)
+        y = x * x
+        mask = x == 2
+        ym = np.ma.array(y, mask=mask)
+        r = 13.0 # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
+        assert_almost_equal(trapz(ym, x), r)
+
+        xm = np.ma.array(x, mask=mask)
+        assert_almost_equal(trapz(ym, xm), r)
+
+        xm = np.ma.array(x, mask=mask)
+        assert_almost_equal(trapz(y, xm), r)
+
+    def test_matrix(self):
+        #Test to make sure matrices give the same answer as ndarrays
+        x = linspace(0, 5)
+        y = x * x
+        r = trapz(y, x)
+        mx = matrix(x)
+        my = matrix(y)
+        mr = trapz(my, mx)
+        assert_almost_equal(mr, r)
+
 
 class TestSinc(TestCase):
     def test_simple(self):
