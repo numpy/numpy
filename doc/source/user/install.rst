@@ -15,10 +15,20 @@ Good solutions for Windows are, The Enthought Python Distribution `(EPD)
 <http://www.enthought.com/products/epd.php>`_ (which provides binary
 installers for Windows, OS X and Redhat) and `Python (x, y)
 <http://www.pythonxy.com>`_. Both of these packages include Python, NumPy and
-many additional packages. A lightweight alternative is to download the Python
+many additional packages.
+
+A lightweight alternative is to download the Python
 installer from `www.python.org <http://www.python.org>`_ and the NumPy
 installer for your Python version from the Sourceforge `download site <http://
 sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_
+
+The NumPy installer includes binaries for different CPU's (without SSE
+instructions, with SSE2 or with SSE3) and installs the correct one
+automatically. If needed, this can be bypassed from the command line with ::
+
+  numpy-<1.y.z>-superpack-win32.exe /arch nosse
+
+or 'sse2' or 'sse3' instead of 'nosse'.
 
 Linux
 -----
@@ -95,15 +105,15 @@ where different FORTRAN compilers might have been used.
 Choosing the fortran compiler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To build with g77:
+To build with g77::
 
     python setup.py build --fcompiler=gnu
 
-To build with gfortran:
+To build with gfortran::
 
     python setup.py build --fcompiler=gnu95
 
-For more information see:
+For more information see::
 
     python setup.py build --help-fcompiler
 
@@ -116,19 +126,27 @@ means that g77 has been used. If libgfortran.so is a a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 
+Disabling ATLAS and other accelerater libraries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Usage of ATLAS and other accelerated libraries in Numpy can be disabled
+via::
+
+    BLAS=None LAPACK=None ATLAS=None python setup.py build
+
 Building with ATLAS support
 ---------------------------
 
 Ubuntu 8.10 (Intrepid) and 9.04 (Jaunty)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can install the necessary packages for optimized ATLAS with this command:
+You can install the necessary packages for optimized ATLAS with this command::
 
     sudo apt-get install libatlas-base-dev
 
 If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
 also install the corresponding package for optimal performances. For example,
-for SSE2:
+for SSE2::
 
     sudo apt-get install libatlas3gf-sse2
 
@@ -142,12 +160,12 @@ scratch, including lapack.
 Ubuntu 8.04 and lower
 ~~~~~~~~~~~~~~~~~~~~~
 
-You can install the necessary packages for optimized ATLAS with this command:
+You can install the necessary packages for optimized ATLAS with this command::
 
     sudo apt-get install atlas3-base-dev
 
 If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
 also install the corresponding package for optimal performances. For example,
-for SSE2:
+for SSE2::
 
     sudo apt-get install atlas3-sse2

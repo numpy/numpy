@@ -1,5 +1,5 @@
-************
-Broadcasting
-************
+*************
+Byte-swapping
+*************
 
 .. automodule:: numpy.doc.byteswapping
