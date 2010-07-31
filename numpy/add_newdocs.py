@@ -2566,6 +2566,52 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('item',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
+    """
+    a.itemset(*args)
+
+    Insert scalar into an array (scalar is cast to array's dtype, if possible)
+
+    There must be at least 1 argument, and define the last argument
+    as *item*.  Then, ``a.itemset(*args)`` is equivalent to but faster
+    than ``a[args] = item``.  The item should be a scalar value and `args`
+    must select a single item in the array `a`.
+
+    Parameters
+    ----------
+    \*args : Arguments
+        If one argument: a scalar, only used in case `a` is of size 1.
+        If two arguments: the last argument is the value to be set
+        and must be a scalar, the first argument specifies a single array
+        element location. It is either an int or a tuple.
+
+    Notes
+    -----
+    Compared to indexing syntax, `itemset` provides some speed increase
+    for placing a scalar into a particular location in an `ndarray`,
+    if you must do this.  However, generally this is discouraged:
+    among other problems, it complicates the appearance of the code.
+    Also, when using `itemset` (and `item`) inside a loop, be sure
+    to assign the methods to a local variable to avoid the attribute
+    look-up at each loop iteration.
+
+    Examples
+    --------
+    >>> x = np.random.randint(9, size=(3, 3))
+    >>> x
+    array([[3, 1, 7],
+           [2, 8, 3],
+           [8, 5, 3]])
+    >>> x.itemset(4, 0)
+    >>> x.itemset((2, 2), 9)
+    >>> x
+    array([[3, 1, 7],
+           [2, 0, 3],
+           [8, 5, 9]])
+
+    """))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
     a.max(axis=None, out=None)
@@ -3990,10 +4036,10 @@ add_newdoc('numpy.core', 'ufunc',
 add_newdoc('numpy.core', 'ufunc', ('identity',
     """
     The identity value.
-    
+
     Data attribute containing the identity element for the ufunc, if it has one.
     If it does not, the attribute value is None.
-    
+
     Examples
     --------
     >>> np.add.identity
@@ -4009,15 +4055,15 @@ add_newdoc('numpy.core', 'ufunc', ('identity',
 add_newdoc('numpy.core', 'ufunc', ('nargs',
     """
     The number of arguments.
-    
+
     Data attribute containing the number of arguments the ufunc takes, including
     optional ones.
-    
+
     Notes
     -----
     Typically this value will be one more than what you might expect because all
     ufuncs take  the optional "out" argument.
-    
+
     Examples
     --------
     >>> np.add.nargs
@@ -4033,9 +4079,9 @@ add_newdoc('numpy.core', 'ufunc', ('nargs',
 add_newdoc('numpy.core', 'ufunc', ('nin',
     """
     The number of inputs.
-    
+
     Data attribute containing the number of arguments the ufunc treats as input.
-    
+
     Examples
     --------
     >>> np.add.nin
@@ -4051,13 +4097,13 @@ add_newdoc('numpy.core', 'ufunc', ('nin',
 add_newdoc('numpy.core', 'ufunc', ('nout',
     """
     The number of outputs.
-    
+
     Data attribute containing the number of arguments the ufunc treats as output.
-    
+
     Notes
     -----
     Since all ufuncs can take output arguments, this will always be (at least) 1.
-    
+
     Examples
     --------
     >>> np.add.nout
@@ -4074,14 +4120,14 @@ add_newdoc('numpy.core', 'ufunc', ('nout',
 add_newdoc('numpy.core', 'ufunc', ('ntypes',
     """
     The number of types.
-    
+
     The number of numerical NumPy types - of which there are 18 total - on which
     the ufunc can operate.
-    
+
     See Also
     --------
     numpy.ufunc.types
-    
+
     Examples
     --------
     >>> np.add.ntypes
