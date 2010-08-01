@@ -126,27 +126,26 @@ def apply_over_axes(func, a, axes):
 
     `func` is called as `res = func(a, axis)`, where `axis` is the first
     element of `axes`.  The result `res` of the function call must have
-    either the same dimensions as `a` or one less dimension. If `res` has one
-    less dimension than `a`, a dimension is inserted before `axis`.
-    The call to `func` is then repeated for each axis in  `axes`,
+    either the same dimensions as `a` or one less dimension.  If `res`
+    has one less dimension than `a`, a dimension is inserted before
+    `axis`.  The call to `func` is then repeated for each axis in `axes`,
     with `res` as the first argument.
 
     Parameters
     ----------
     func : function
         This function must take two arguments, `func(a, axis)`.
-    a : ndarray
+    a : array_like
         Input array.
     axes : array_like
-        Axes over which `func` is applied, the elements must be
-        integers.
+        Axes over which `func` is applied; the elements must be integers.
 
     Returns
     -------
     val : ndarray
-        The output array. The number of dimensions is the same as `a`, but
-        the shape can be different. This depends on whether `func` changes
-        the shape of its output with respect to its input.
+        The output array.  The number of dimensions is the same as `a`,
+        but the shape can be different.  This depends on whether `func`
+        changes the shape of its output with respect to its input.
 
     See Also
     --------

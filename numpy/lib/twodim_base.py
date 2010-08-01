@@ -172,20 +172,22 @@ def eye(N, M=None, k=0, dtype=float):
     M : int, optional
       Number of columns in the output. If None, defaults to `N`.
     k : int, optional
-      Index of the diagonal: 0 refers to the main diagonal, a positive value
-      refers to an upper diagonal, and a negative value to a lower diagonal.
-    dtype : dtype, optional
+      Index of the diagonal: 0 (the default) refers to the main diagonal,
+      a positive value refers to an upper diagonal, and a negative value
+      to a lower diagonal.
+    dtype : data-type, optional
       Data-type of the returned array.
 
     Returns
     -------
-    I : ndarray (N,M)
+    I : ndarray of shape (N,M)
       An array where all elements are equal to zero, except for the `k`-th
       diagonal, whose values are equal to one.
 
     See Also
     --------
-    diag : Return a diagonal 2-D array using a 1-D array specified by the user.
+    identity : (almost) equivalent function
+    diag : diagonal 2-D array from a 1-D array specified by the user.
 
     Examples
     --------
@@ -294,7 +296,9 @@ def diagflat(v,k=0):
         Input data, which is flattened and set as the `k`-th
         diagonal of the output.
     k : int, optional
-        Diagonal to set.  The default is 0.
+        Diagonal to set; 0, the default, corresponds to the "main" diagonal,
+        a positive (negative) `k` giving the number of the diagonal above
+        (below) the main.
 
     Returns
     -------
@@ -303,7 +307,7 @@ def diagflat(v,k=0):
 
     See Also
     --------
-    diag : Matlab workalike for 1-D and 2-D arrays.
+    diag : MATLAB work-alike for 1-D and 2-D arrays.
     diagonal : Return specified diagonals.
     trace : Sum along diagonals.
 
@@ -342,7 +346,7 @@ def diagflat(v,k=0):
 
 def tri(N, M=None, k=0, dtype=float):
     """
-    Construct an array filled with ones at and below the given diagonal.
+    An array with ones at and below the given diagonal and zeros elsewhere.
 
     Parameters
     ----------
@@ -352,7 +356,7 @@ def tri(N, M=None, k=0, dtype=float):
         Number of columns in the array.
         By default, `M` is taken equal to `N`.
     k : int, optional
-        The sub-diagonal below which the array is filled.
+        The sub-diagonal at and below which the array is filled.
         `k` = 0 is the main diagonal, while `k` < 0 is below it,
         and `k` > 0 is above.  The default is 0.
     dtype : dtype, optional
@@ -360,9 +364,9 @@ def tri(N, M=None, k=0, dtype=float):
 
     Returns
     -------
-    T : (N,M) ndarray
-        Array with a lower triangle filled with ones, in other words
-        ``T[i,j] == 1`` for ``i <= j + k``.
+    T : ndarray of shape (N, M)
+        Array with its lower triangle filled with ones and zero elsewhere;
+        in other words ``T[i,j] == 1`` for ``i <= j + k``, 0 otherwise.
 
     Examples
     --------
@@ -391,9 +395,9 @@ def tril(m, k=0):
     ----------
     m : array_like, shape (M, N)
         Input array.
-    k : int
-        Diagonal above which to zero elements.
-        `k = 0` is the main diagonal, `k < 0` is below it and `k > 0` is above.
+    k : int, optional
+        Diagonal above which to zero elements.  `k = 0` (the default) is the
+        main diagonal, `k < 0` is below it and `k > 0` is above.
 
     Returns
     -------
@@ -402,7 +406,7 @@ def tril(m, k=0):
 
     See Also
     --------
-    triu
+    triu : same thing, only for the upper triangle
 
     Examples
     --------
@@ -421,13 +425,14 @@ def triu(m, k=0):
     """
     Upper triangle of an array.
 
-    Construct a copy of a matrix with elements below the k-th diagonal zeroed.
+    Return a copy of a matrix with the elements below the `k`-th diagonal
+    zeroed.
 
-    Please refer to the documentation for `tril`.
+    Please refer to the documentation for `tril` for further details.
 
     See Also
     --------
-    tril
+    tril : lower triangle of an array
 
     Examples
     --------
@@ -448,17 +453,17 @@ def vander(x, N=None):
     Generate a Van der Monde matrix.
 
     The columns of the output matrix are decreasing powers of the input
-    vector.  Specifically, the i-th output column is the input vector to
-    the power of ``N - i - 1``. Such a matrix with a geometric progression
-    in each row is named Van Der Monde, or Vandermonde matrix, from
-    Alexandre-Theophile Vandermonde.
+    vector.  Specifically, the `i`-th output column is the input vector
+    raised element-wise to the power of ``N - i - 1``.  Such a matrix with
+    a geometric progression in each row is named for Alexandre-Theophile
+    Vandermonde.
 
     Parameters
     ----------
     x : array_like
         1-D input array.
     N : int, optional
-        Order of (number of columns in) the output. If `N` is not specified,
+        Order of (number of columns in) the output.  If `N` is not specified,
         a square array is returned (``N = len(x)``).
 
     Returns
@@ -466,11 +471,6 @@ def vander(x, N=None):
     out : ndarray
         Van der Monde matrix of order `N`.  The first column is ``x^(N-1)``,
         the second ``x^(N-2)`` and so forth.
-
-    References
-    ----------
-    .. [1] Wikipedia, "Vandermonde matrix",
-           http://en.wikipedia.org/wiki/Vandermonde_matrix
 
     Examples
     --------
@@ -586,10 +586,12 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
 
     We can now use the Matplotlib to visualize this 2-dimensional histogram:
 
-    >>> extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+    >>> extent = [yedges[0], yedges[-1], xedges[-1], xedges[0]]
     >>> import matplotlib.pyplot as plt
-    >>> plt.imshow(H, extent=extent)
+    >>> plt.imshow(H, extent=extent, interpolation='nearest')
     <matplotlib.image.AxesImage object at ...>
+    >>> plt.colorbar()
+    <matplotlib.colorbar.Colorbar instance at ...>
     >>> plt.show()
 
     """
