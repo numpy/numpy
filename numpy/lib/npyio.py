@@ -367,7 +367,7 @@ def save(file, arr):
 
 def savez(file, *args, **kwds):
     """
-    Save several arrays into a single, compressed file in ``.npz`` format.
+    Save several arrays into a single, archive file in ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the .npz file, are 'arr_0', 'arr_1', etc. If keyword arguments
@@ -401,8 +401,9 @@ def savez(file, *args, **kwds):
     Notes
     -----
     The ``.npz`` file format is a zipped archive of files named after the
-    variables they contain.  Each file contains one variable in ``.npy``
-    format. For a description of the ``.npy`` format, see `format`.
+    variables they contain.  The archive is not compressed and each file
+    in the archive contains one variable in ``.npy`` format. For a
+    description of the ``.npy`` format, see `format`.
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -509,30 +510,32 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file or str
         File or filename to read.  If the filename extension is ``.gz`` or
         ``.bz2``, the file is first decompressed.
-    dtype : dtype, optional
-        Data type of the resulting array.  If this is a record data-type,
-        the resulting array will be 1-dimensional, and each row will be
-        interpreted as an element of the array.   In this case, the number
-        of columns used must match the number of fields in the data-type.
+    dtype : data-type, optional
+        Data-type of the resulting array; default: float.  If this is a record
+        data-type, the resulting array will be 1-dimensional, and each row
+        will be interpreted as an element of the array.  In this case, the
+        number of columns used must match the number of fields in the
+        data-type.
     comments : str, optional
-        The character used to indicate the start of a comment.
+        The character used to indicate the start of a comment; default: '#'.
     delimiter : str, optional
         The string used to separate values.  By default, this is any
         whitespace.
     converters : dict, optional
         A dictionary mapping column number to a function that will convert
         that column to a float.  E.g., if column 0 is a date string:
-        ``converters = {0: datestr2num}``. Converters can also be used to
+        ``converters = {0: datestr2num}``.  Converters can also be used to
         provide a default value for missing data:
-        ``converters = {3: lambda s: float(s or 0)}``.
+        ``converters = {3: lambda s: float(s or 0)}``.  Default: None.
     skiprows : int, optional
-        Skip the first `skiprows` lines.
+        Skip the first `skiprows` lines; default: 0.
     usecols : sequence, optional
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
+        The default, None, results in all columns being read.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``. Default is False.
+        unpacked using ``x, y, z = loadtxt(...)``.  The default is False.
 
     Returns
     -------
@@ -543,11 +546,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     --------
     load, fromstring, fromregex
     genfromtxt : Load data with missing values handled as specified.
-    scipy.io.loadmat : reads Matlab(R) data files
+    scipy.io.loadmat : reads MATLAB data files
 
     Notes
     -----
-    This function aims to be a fast reader for simply formatted files. The
+    This function aims to be a fast reader for simply formatted files.  The
     `genfromtxt` function provides more sophisticated handling of, e.g.,
     lines with missing values.
 
