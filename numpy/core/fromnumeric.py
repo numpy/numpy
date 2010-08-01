@@ -810,25 +810,25 @@ def resize(a, new_shape):
     """
     Return a new array with the specified shape.
 
-    If the new array is larger than the original array, then the new array
-    is filled with repeated copied of `a`. Note that this behavior is different
-    from a.resize(new_shape) which fills with zeros instead of repeated
-    copies of `a`.
+    If the new array is larger than the original array, then the new
+    array is filled with repeated copies of `a`.  Note that this behavior
+    is different from a.resize(new_shape) which fills with zeros instead
+    of repeated copies of `a`.
 
     Parameters
     ----------
     a : array_like
         Array to be resized.
 
-    new_shape : {tuple, int}
+    new_shape : int or tuple of int
         Shape of resized array.
 
     Returns
     -------
     reshaped_array : ndarray
         The new array is formed from the data in the old array, repeated
-        if necessary to fill out the required number of elements. The data
-        are repeated in the order that the data are stored in memory.
+        if necessary to fill out the required number of elements.  The
+        data are repeated in the order that they are stored in memory.
 
     See Also
     --------
@@ -903,33 +903,34 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Return specified diagonals.
 
     If `a` is 2-D, returns the diagonal of `a` with the given offset,
-    i.e., the collection of elements of the form `a[i,i+offset]`.
-    If `a` has more than two dimensions, then the axes specified
-    by `axis1` and `axis2` are used to determine the 2-D subarray
-    whose diagonal is returned. The shape of the resulting array
-    can be determined by removing `axis1` and `axis2` and appending
-    an index to the right equal to the size of the resulting diagonals.
+    i.e., the collection of elements of the form ``a[i, i+offset]``.  If
+    `a` has more than two dimensions, then the axes specified by `axis1`
+    and `axis2` are used to determine the 2-D sub-array whose diagonal is
+    returned.  The shape of the resulting array can be determined by
+    removing `axis1` and `axis2` and appending an index to the right equal
+    to the size of the resulting diagonals.
 
     Parameters
     ----------
     a : array_like
         Array from which the diagonals are taken.
     offset : int, optional
-        Offset of the diagonal from the main diagonal. Can be both positive
-        and negative. Defaults to main diagonal (0).
+        Offset of the diagonal from the main diagonal.  Can be positive or
+        negative.  Defaults to main diagonal (0).
     axis1 : int, optional
-        Axis to be used as the first axis of the 2-D subarrays from which
-        the diagonals should be taken. Defaults to first axis (0).
+        Axis to be used as the first axis of the 2-D sub-arrays from which
+        the diagonals should be taken.  Defaults to first axis (0).
     axis2 : int, optional
-        Axis to be used as the second axis of the 2-D subarrays from which
-        the diagonals should be taken. Defaults to second axis (1).
+        Axis to be used as the second axis of the 2-D sub-arrays from
+        which the diagonals should be taken. Defaults to second axis (1).
 
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D, a 1-D array containing the diagonal is
-        returned.  If `a` has larger dimensions, then an array of
-        diagonals is returned.
+        If `a` is 2-D, a 1-D array containing the diagonal is returned.
+        If the dimension of `a` is larger, then an array of diagonals is
+        returned, "packed" from left-most dimension to right-most (e.g.,
+        if `a` is 3-D, then the diagonals are "packed" along rows).
 
     Raises
     ------
@@ -938,7 +939,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
     See Also
     --------
-    diag : Matlab workalike for 1-D and 2-D arrays.
+    diag : MATLAB work-a-like for 1-D and 2-D arrays.
     diagflat : Create diagonal arrays.
     trace : Sum along diagonals.
 
@@ -953,15 +954,29 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     >>> a.diagonal(1)
     array([1])
 
-    >>> a = np.arange(8).reshape(2,2,2)
-    >>> a
+    A 3-D example:
+
+    >>> a = np.arange(8).reshape(2,2,2); a
     array([[[0, 1],
             [2, 3]],
            [[4, 5],
             [6, 7]]])
-    >>> a.diagonal(0,-2,-1)
-    array([[0, 3],
-           [4, 7]])
+    >>> a.diagonal(0, # Main diagonals of two arrays created by skipping
+    ...            0, # across the outer(left)-most axis last and
+    ...            1) # the "middle" (row) axis first.
+    array([[0, 6],
+           [1, 7]])
+
+    The sub-arrays whose main diagonals we just obtained; note that each
+    corresponds to fixing the right-most (column) axis, and that the
+    diagonals are "packed" in rows.
+
+    >>> a[:,:,0] # main diagonal is [0 6]
+    array([[0, 2],
+           [4, 6]])
+    >>> a[:,:,1] # main diagonal is [1 7]
+    array([[1, 3],
+           [5, 7]])
 
     """
     return asarray(a).diagonal(offset, axis1, axis2)
@@ -1470,33 +1485,33 @@ def any(a,axis=None, out=None):
     a : array_like
         Input array or object that can be converted to an array.
     axis : int, optional
-        Axis along which a logical OR is performed.
-        The default (`axis` = `None`) is to perform a logical OR
-        over a flattened input array. `axis` may be negative, in which
-        case it counts from the last to the first axis.
+        Axis along which a logical OR is performed.  The default
+        (`axis` = `None`) is to perform a logical OR over a flattened
+        input array. `axis` may be negative, in which case it counts
+        from the last to the first axis.
     out : ndarray, optional
-        Alternative output array in which to place the result.
-        It must have the same shape as the expected output and
-        the type is preserved. See `doc.ufuncs` (Section
-        "Output arguments") for details.
+        Alternate output array in which to place the result.  It must have
+        the same shape as the expected output and its type is preserved
+        (e.g., if it is of type float, then it will remain so, returning
+        1.0 for True and 0.0 for False, regardless of the type of `a`).
+        See `doc.ufuncs` (Section "Output arguments") for details.
 
     Returns
     -------
-    any : bool, ndarray
-        A new boolean or `ndarray` is returned unless `out` is
-        specified, in which case a reference to `out` is returned.
+    any : bool or ndarray
+        A new boolean or `ndarray` is returned unless `out` is specified,
+        in which case a reference to `out` is returned.
 
     See Also
     --------
     ndarray.any : equivalent method
 
-    all : Test whether all array elements along a given axis evaluate
-        to True.
+    all : Test whether all elements along a given axis evaluate to True.
 
     Notes
     -----
-    Not a Number (NaN), positive infinity and negative infinity
-    evaluate to `True` because these are not equal to zero.
+    Not a Number (NaN), positive infinity and negative infinity evaluate
+    to `True` because these are not equal to zero.
 
     Examples
     --------
@@ -1541,25 +1556,26 @@ def all(a,axis=None, out=None):
     axis : int, optional
         Axis along which a logical AND is performed.
         The default (`axis` = `None`) is to perform a logical AND
-        over a flattened input array. `axis` may be negative, in which
+        over a flattened input array.  `axis` may be negative, in which
         case it counts from the last to the first axis.
     out : ndarray, optional
-        Alternative output array in which to place the result.
-        It must have the same shape as the expected output and
-        the type is preserved. See `doc.ufuncs` (Section "Output
-        arguments") for more details.
+        Alternate output array in which to place the result.
+        It must have the same shape as the expected output and its
+        type is preserved (e.g., if ``dtype(out)`` is float, the result
+        will consist of 0.0's and 1.0's).  See `doc.ufuncs` (Section
+        "Output arguments") for more details.
 
     Returns
     -------
     all : ndarray, bool
-        A new boolean or array is returned unless `out` is
-        specified, in which case a reference to `out` is returned.
+        A new boolean or array is returned unless `out` is specified,
+        in which case a reference to `out` is returned.
 
     See Also
     --------
     ndarray.all : equivalent method
 
-    any : Test whether any array element along a given axis evaluates to True.
+    any : Test whether any element along a given axis evaluates to True.
 
     Notes
     -----
@@ -1735,26 +1751,26 @@ def amax(a, axis=None, out=None):
     axis : int, optional
         Axis along which to operate.  By default flattened input is used.
     out : ndarray, optional
-        Alternative output array in which to place the result.  Must
-        be of the same shape and buffer length as the expected output.
-        See `doc.ufuncs` (Section "Output arguments") for more details.
+        Alternate output array in which to place the result.  Must be of
+        the same shape and buffer length as the expected output.  See
+        `doc.ufuncs` (Section "Output arguments") for more details.
 
     Returns
     -------
     amax : ndarray
-        A new array or a scalar array with the result.
+        A new array or scalar array with the result.
 
     See Also
     --------
-    nanmax : nan values are ignored instead of being propagated
-    fmax : same behavior as the C99 fmax function
-    argmax : Indices of the maximum values.
+    nanmax : NaN values are ignored instead of being propagated.
+    fmax : same behavior as the C99 fmax function.
+    argmax : indices of the maximum values.
 
     Notes
     -----
-    NaN values are propagated, that is if at least one item is nan, the
-    corresponding max value will be nan as well. To ignore NaN values (matlab
-    behavior), please use nanmax.
+    NaN values are propagated, that is if at least one item is NaN, the
+    corresponding max value will be NaN as well.  To ignore NaN values
+    (MATLAB behavior), please use nanmax.
 
     Examples
     --------
@@ -1969,14 +1985,14 @@ def cumprod(a, axis=None, dtype=None, out=None):
     a : array_like
         Input array.
     axis : int, optional
-        Axis along which the cumulative product is computed.  By default the
-        input is flattened.
+        Axis along which the cumulative product is computed.  By default
+        the input is flattened.
     dtype : dtype, optional
         Type of the returned array, as well as of the accumulator in which
-        the elements are multiplied.  If dtype is not specified, it defaults
-        to the dtype of `a`, unless `a` has an integer dtype with a precision
-        less than that of the default platform integer.  In that case, the
-        default platform integer is used instead.
+        the elements are multiplied.  If *dtype* is not specified, it
+        defaults to the dtype of `a`, unless `a` has an integer dtype with
+        a precision less than that of the default platform integer.  In
+        that case, the default platform integer is used instead.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
@@ -2007,15 +2023,13 @@ def cumprod(a, axis=None, dtype=None, out=None):
     >>> np.cumprod(a, dtype=float) # specify type of output
     array([   1.,    2.,    6.,   24.,  120.,  720.])
 
-    The cumulative product for each column (i.e., over the rows of)
-    `a`:
+    The cumulative product for each column (i.e., over the rows) of `a`:
 
     >>> np.cumprod(a, axis=0)
     array([[ 1,  2,  3],
            [ 4, 10, 18]])
 
-    The cumulative product for each row (i.e. over the columns of)
-    `a`:
+    The cumulative product for each row (i.e. over the columns) of `a`:
 
     >>> np.cumprod(a,axis=1)
     array([[  1,   2,   6],
@@ -2253,10 +2267,9 @@ def mean(a, axis=None, dtype=None, out=None):
     """
     Compute the arithmetic mean along the specified axis.
 
-    Returns the average of the array elements.  The average is taken
-    over the flattened array by default, otherwise over the specified
-    axis. float64 intermediate and return values are used for integer
-    inputs.
+    Returns the average of the array elements.  The average is taken over
+    the flattened array by default, otherwise over the specified axis.
+    `float64` intermediate and return values are used for integer inputs.
 
     Parameters
     ----------
@@ -2266,14 +2279,15 @@ def mean(a, axis=None, dtype=None, out=None):
     axis : int, optional
         Axis along which the means are computed. The default is to compute
         the mean of the flattened array.
-    dtype : dtype, optional
-        Type to use in computing the mean. For integer inputs, the default
-        is float64; for floating point, inputs it is the same as the input
-        dtype.
+    dtype : data-type, optional
+        Type to use in computing the mean.  For integer inputs, the default
+        is `float64`; for floating point inputs, it is the same as the
+        input dtype.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must have
-        the same shape as the expected output but the type will be cast if
-        necessary. See `doc.ufuncs` for details.
+        Alternate output array in which to place the result.  The default
+        is ``None``; if provided, it must have the same shape as the
+        expected output, but the type will be cast if necessary.
+        See `doc.ufuncs` for details.
 
     Returns
     -------
@@ -2290,11 +2304,11 @@ def mean(a, axis=None, dtype=None, out=None):
     The arithmetic mean is the sum of the elements along the axis divided
     by the number of elements.
 
-    Note that for floating-point input, the mean is computed using the same
-    precision the input has. Depending on the input data, this can cause
-    the results to be inaccurate, especially for float32 (see example below).
-    Specifying a higher-accuracy accumulator using the `dtype` keyword can
-    alleviate this issue.
+    Note that for floating-point input, the mean is computed using the
+    same precision the input has.  Depending on the input data, this can
+    cause the results to be inaccurate, especially for `float32` (see
+    example below).  Specifying a higher-precision accumulator using the
+    `dtype` keyword can alleviate this issue.
 
     Examples
     --------
@@ -2425,35 +2439,35 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     Compute the variance along the specified axis.
 
     Returns the variance of the array elements, a measure of the spread of a
-    distribution. The variance is computed for the flattened array by default,
-    otherwise over the specified axis.
+    distribution.  The variance is computed for the flattened array by
+    default, otherwise over the specified axis.
 
     Parameters
     ----------
     a : array_like
-        Array containing numbers whose variance is desired. If `a` is not an
+        Array containing numbers whose variance is desired.  If `a` is not an
         array, a conversion is attempted.
     axis : int, optional
-        Axis along which the variance is computed. The default is to compute
+        Axis along which the variance is computed.  The default is to compute
         the variance of the flattened array.
-    dtype : dtype, optional
-        Type to use in computing the variance. For arrays of integer type
-        the default is float32; for arrays of float types it is the same as
+    dtype : data-type, optional
+        Type to use in computing the variance.  For arrays of integer type
+        the default is `float32`; for arrays of float types it is the same as
         the array type.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must have
-        the same shape as the expected output but the type is cast if
+        Alternate output array in which to place the result.  It must have
+        the same shape as the expected output, but the type is cast if
         necessary.
     ddof : int, optional
-        "Delta Degrees of Freedom": the divisor used in calculation is
+        "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
         default `ddof` is zero.
 
     Returns
     -------
     variance : ndarray, see dtype parameter above
-        If out=None, returns a new array containing the variance; otherwise
-        a reference to the output array is returned.
+        If ``out=None``, returns a new array containing the variance;
+        otherwise, a reference to the output array is returned.
 
     See Also
     --------
@@ -2468,19 +2482,19 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
 
     The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
     If, however, `ddof` is specified, the divisor ``N - ddof`` is used
-    instead. In standard statistical practice, ``ddof=1`` provides an
-    unbiased estimator of the variance of the infinite population. ``ddof=0``
-    provides a maximum likelihood estimate of the variance for normally
-    distributed variables.
+    instead.  In standard statistical practice, ``ddof=1`` provides an
+    unbiased estimator of the variance of a hypothetical infinite population.
+    ``ddof=0`` provides a maximum likelihood estimate of the variance for
+    normally distributed variables.
 
     Note that for complex numbers, the absolute value is taken before
     squaring, so that the result is always real and nonnegative.
 
     For floating-point input, the variance is computed using the same
-    precision the input has. Depending on the input data, this can cause
-    the results to be inaccurate, especially for float32 (see example below).
-    Specifying a higher-accuracy accumulator using the `dtype` keyword can
-    alleviate this issue.
+    precision the input has.  Depending on the input data, this can cause
+    the results to be inaccurate, especially for `float32` (see example
+    below).  Specifying a higher-accuracy accumulator using the ``dtype``
+    keyword can alleviate this issue.
 
     Examples
     --------
