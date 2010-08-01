@@ -246,7 +246,7 @@ String with comma-separated fields
    on the shape if it is greater than 1-d. NumPy allows a modification
    on the format in that any string that can uniquely identify the
    type can be used to specify the data-type in a field.
-   The generated data-type fields are named ``'f0'``, ``'f2'``, ...,
+   The generated data-type fields are named ``'f0'``, ``'f1'``, ...,
    ``'f<N-1>'`` where N (>1) is the number of comma-separated basic
    formats in the string. If the optional shape specifier is provided,
    then the data-type for the corresponding field describes a sub-array.
