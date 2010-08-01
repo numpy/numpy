@@ -325,12 +325,12 @@ def _read_config_imp(filenames, dirs=None):
     if not vars.has_key("pkgdir") and vars.has_key("pkgname"):
         pkgname = vars["pkgname"]
         if not pkgname in sys.modules:
-            raise ValueError("You should import %s to get information on %s" % 
+            raise ValueError("You should import %s to get information on %s" %
                              (pkgname, meta["name"]))
 
         mod = sys.modules[pkgname]
         vars["pkgdir"] = _escape_backslash(os.path.dirname(mod.__file__))
-            
+
     return LibraryInfo(name=meta["name"], description=meta["description"],
             version=meta["version"], sections=sections, vars=VariableSet(vars))
 
@@ -340,6 +340,44 @@ def _read_config_imp(filenames, dirs=None):
 # problem in practice
 _CACHE = {}
 def read_config(pkgname, dirs=None):
+    """
+    Return library info for a package from its configuration file.
+
+    Parameters
+    ----------
+    pkgname : str
+        Name of the package (should match the name of the .ini file, without
+        the extension, e.g. foo for the file foo.ini).
+    dirs : sequence, optional
+        If given, should be a sequence of directories - usually including
+        the NumPy base directory - where to look for npy-pkg-config files.
+
+    Returns
+    -------
+    pkginfo : class instance
+        The `LibraryInfo` instance containing the build information.
+
+    Raises
+    ------
+    PkgNotFound
+        If the package is not found.
+
+    See Also
+    --------
+    misc_util.get_info, misc_util.get_pkg_info
+
+    Examples
+    --------
+    >>> npymath_info = np.distutils.npy_pkg_config.read_config('npymath')
+    >>> type(npymath_info)
+    <class 'numpy.distutils.npy_pkg_config.LibraryInfo'>
+    >>> print npymath_info
+    Name: npymath
+    Description: Portable, core math library implementing C99 standard
+    Requires:
+    Version: 0.1  #random
+
+    """
     try:
         return _CACHE[pkgname]
     except KeyError:
