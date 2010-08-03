@@ -113,7 +113,7 @@ import string
 if sys.version_info[0] < 3:
     UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 else:
-    UPPER_TABLE = string.maketrans(bytes(string.ascii_lowercase, "ascii"), 
+    UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"), 
             bytes(string.ascii_uppercase, "ascii"))
 
 def english_upper(s):
