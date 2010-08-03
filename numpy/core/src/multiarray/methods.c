@@ -843,6 +843,12 @@ array_preparearray(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
+    if (Py_TYPE(self) == Py_TYPE(arr)) {
+        /* No need to create a new view */
+        Py_INCREF(arr);
+        return arr;
+    }
+
     Py_INCREF(PyArray_DESCR(arr));
     ret = PyArray_NewFromDescr(Py_TYPE(self),
                                PyArray_DESCR(arr),
