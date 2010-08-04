@@ -152,7 +152,8 @@ def configuration(parent_package='',top_path=None):
 
     config.add_data_files(('numpy','*.txt'),
                           ('numpy','COMPATIBILITY'),
-                          ('numpy','site.cfg.example'))
+                          ('numpy','site.cfg.example'),
+                          ('numpy/tools', 'tools/py3tool.py'))
 
     config.get_version('numpy/version.py') # sets config.version
 
