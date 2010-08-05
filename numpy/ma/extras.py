@@ -22,14 +22,14 @@ __all__ = ['apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
            'ediff1d',
            'flatnotmasked_contiguous', 'flatnotmasked_edges',
            'hsplit', 'hstack',
-           'in1d', 'intersect1d', 'intersect1d_nu',
+           'in1d', 'intersect1d',
            'mask_cols', 'mask_rowcols', 'mask_rows', 'masked_all',
            'masked_all_like', 'median', 'mr_',
            'notmasked_contiguous', 'notmasked_edges',
            'polyfit',
            'row_stack',
-           'setdiff1d', 'setmember1d', 'setxor1d',
-           'unique', 'unique1d', 'union1d',
+           'setdiff1d', 'setxor1d',
+           'unique', 'union1d',
            'vander', 'vstack',
            ]
 
@@ -48,7 +48,6 @@ import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
 from numpy.linalg import lstsq
 
-from numpy.lib.utils import deprecate
 
 #...............................................................................
 def issequence(seq):
@@ -1198,55 +1197,6 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         return aux
     else:
         return ma.asarray(ar1)[aux == 0]
-
-@deprecate
-def unique1d(ar1, return_index=False, return_inverse=False):
-    """ This function is deprecated. Use ma.unique() instead. """
-    output = np.unique1d(ar1,
-                         return_index=return_index,
-                         return_inverse=return_inverse)
-    if isinstance(output, tuple):
-        output = list(output)
-        output[0] = output[0].view(MaskedArray)
-        output = tuple(output)
-    else:
-        output = output.view(MaskedArray)
-    return output
-
-@deprecate
-def intersect1d_nu(ar1, ar2):
-    """ This function is deprecated. Use ma.intersect1d() instead."""
-    # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
-    aux = ma.concatenate((unique1d(ar1), unique1d(ar2)))
-    aux.sort()
-    return aux[aux[1:] == aux[:-1]]
-
-@deprecate
-def setmember1d(ar1, ar2):
-    """ This function is deprecated. Use ma.in1d() instead."""
-    ar1 = ma.asanyarray(ar1)
-    ar2 = ma.asanyarray(ar2)
-    ar = ma.concatenate((ar1, ar2))
-    b1 = ma.zeros(ar1.shape, dtype=np.int8)
-    b2 = ma.ones(ar2.shape, dtype=np.int8)
-    tt = ma.concatenate((b1, b2))
-
-    # We need this to be a stable sort, so always use 'mergesort' here. The
-    # values from the first array should always come before the values from the
-    # second array.
-    perm = ar.argsort(kind='mergesort')
-    aux = ar[perm]
-    aux2 = tt[perm]
-#    flag = ediff1d( aux, 1 ) == 0
-    flag = ma.concatenate((aux[1:] == aux[:-1], [False]))
-    ii = ma.where(flag * aux2)[0]
-    aux = perm[ii + 1]
-    perm[ii + 1] = perm[ii]
-    perm[ii] = aux
-    #
-    indx = perm.argsort(kind='mergesort')[:len(ar1)]
-    #
-    return flag[indx]
 
 
 #####--------------------------------------------------------------------------
