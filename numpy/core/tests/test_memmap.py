@@ -56,6 +56,7 @@ class TestMemmap(TestCase):
         self.assertEquals(abspath, fp.filename)
         b = fp[:1]
         self.assertEquals(abspath, b.filename)
+        del b
         del fp
         os.unlink(tmpname)
 
