@@ -164,39 +164,37 @@ TEMPLATE = """
 
 {{ only_html }}
 
-   {% if source_code %}
-   (`Source code <{{ source_link }}>`__)
-
-   .. admonition:: Output
-      :class: plot-output
-
+   {% if source_link or (html_show_formats and not multi_image) %}
+   (
+   {%- if source_link -%}
+   `Source code <{{ source_link }}>`__
+   {%- endif -%}
+   {%- if html_show_formats and not multi_image -%}
+     {%- for img in images -%}
+       {%- for fmt in img.formats -%}
+         {%- if source_link or not loop.first -%}, {% endif -%}
+         `{{ fmt }} <{{ dest_dir }}/{{ img.basename }}.{{ fmt }}>`__
+       {%- endfor -%}
+     {%- endfor -%}
+   {%- endif -%}
+   )
    {% endif %}
 
-       {% for img in images %}
-       .. figure:: {{ build_dir }}/{{ img.basename }}.png
-          {%- for option in options %}
-          {{ option }}
-          {% endfor %}
-    
-          {%- if not source_code -%}
-            (`Source code <{{source_link}}>`__
-            {%- if html_show_formats -%}
-            {%- for fmt in img.formats -%} 
-            , `{{ fmt }} <{{ dest_dir }}/{{ img.basename }}.{{ fmt }}>`__
-            {%- endfor -%}
-            {%- endif -%}
-            )
-          {%- else -%}
-            {%- if html_show_formats -%}
-            (
-            {%- for fmt in img.formats -%} 
-            {%- if not loop.first -%}, {% endif -%}
-            `{{ fmt }} <{{ dest_dir }}/{{ img.basename }}.{{ fmt }}>`__
-            {%- endfor -%}
-            )
-            {%- endif -%}
-          {%- endif -%}
-       {% endfor %}
+   {% for img in images %}
+   .. figure:: {{ build_dir }}/{{ img.basename }}.png
+      {%- for option in options %}
+      {{ option }}
+      {% endfor %}
+
+      {% if html_show_formats and multi_image -%}
+        (
+        {%- for fmt in img.formats -%}
+        {%- if not loop.first -%}, {% endif -%}
+        `{{ fmt }} <{{ dest_dir }}/{{ img.basename }}.{{ fmt }}>`__
+        {%- endfor -%}
+        )
+      {%- endif -%}
+   {% endfor %}
 
 {{ only_latex }}
 
@@ -290,60 +288,75 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # make figures
     try:
-        images = makefig(code, source_file_name, build_dir, output_base,
-                         config)
+        results = makefig(code, source_file_name, build_dir, output_base,
+                          config)
+        errors = []
     except PlotError, err:
         reporter = state.memo.reporter
         sm = reporter.system_message(
-            3, "Exception occurred in plotting %s: %s" % (output_base, err),
+            2, "Exception occurred in plotting %s: %s" % (output_base, err),
             line=lineno)
-        return [sm]
+        results = [(code, [])]
+        errors = [sm]
 
     # generate output restructuredtext
-    if options['include-source']:
-        if is_doctest:
-            lines = ['']
-            lines += [row.rstrip() for row in code.split('\n')]
+    total_lines = []
+    for j, (code_piece, images) in enumerate(results):
+        if options['include-source']:
+            if is_doctest:
+                lines = ['']
+                lines += [row.rstrip() for row in code_piece.split('\n')]
+            else:
+                lines = ['.. code-block:: python', '']
+                lines += ['    %s' % row.rstrip()
+                          for row in code_piece.split('\n')]
+            source_code = "\n".join(lines)
         else:
-            lines = ['.. code-block:: python', '']
-            lines += ['    %s' % row.rstrip() for row in code.split('\n')]
-        source_code = "\n".join(lines)
-    else:
-        source_code = ""
+            source_code = ""
 
-    opts = [':%s: %s' % (key, val) for key, val in options.items()
-            if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
+        opts = [':%s: %s' % (key, val) for key, val in options.items()
+                if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
 
-    if sphinx.__version__ >= "0.6":
-        only_html = ".. only:: html"
-        only_latex = ".. only:: latex"
-    else:
-        only_html = ".. htmlonly::"
-        only_latex = ".. latexonly::"
+        if sphinx.__version__ >= "0.6":
+            only_html = ".. only:: html"
+            only_latex = ".. only:: latex"
+        else:
+            only_html = ".. htmlonly::"
+            only_latex = ".. latexonly::"
 
-    result = format_template(
-        TEMPLATE,
-        dest_dir=dest_dir_link,
-        build_dir=build_dir_link,
-        source_link=source_link,
-        only_html=only_html,
-        only_latex=only_latex,
-        options=opts,
-        images=images,
-        source_code=source_code,
-        html_show_formats=config.plot_html_show_formats)
+        if j == 0:
+            src_link = source_link
+        else:
+            src_link = None
 
-    lines = result.split("\n")
-    if len(lines):
-        state_machine.insert_input(lines, source=source_file_name)
+        result = format_template(
+            TEMPLATE,
+            dest_dir=dest_dir_link,
+            build_dir=build_dir_link,
+            source_link=src_link,
+            multi_image=len(images) > 1,
+            only_html=only_html,
+            only_latex=only_latex,
+            options=opts,
+            images=images,
+            source_code=source_code,
+            html_show_formats=config.plot_html_show_formats)
+
+        total_lines.extend(result.split("\n"))
+        total_lines.extend("\n")
+
+    if total_lines:
+        state_machine.insert_input(total_lines, source=source_file_name)
 
     # copy image files to builder's output directory
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
 
-    for img in images:
-        for fn in img.filenames():
-            shutil.copyfile(fn, os.path.join(dest_dir, os.path.basename(fn)))
+    for code_piece, images in results:
+        for img in images:
+            for fn in img.filenames():
+                shutil.copyfile(fn, os.path.join(dest_dir,
+                                                 os.path.basename(fn)))
 
     # copy script (if necessary)
     if source_file_name == rst_file:
@@ -352,7 +365,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         f.write(unescape_doctest(code))
         f.close()
 
-    return []
+    return errors
 
 
 #------------------------------------------------------------------------------
@@ -398,10 +411,32 @@ def unescape_doctest(text):
             code += "\n"
     return code
 
+def split_code_at_show(text):
+    """
+    Split code at plt.show()
+
+    """
+
+    parts = []
+    is_doctest = contains_doctest(text)
+
+    part = []
+    for line in text.split("\n"):
+        if (not is_doctest and line.strip() == 'plt.show()') or \
+               (is_doctest and line.strip() == '>>> plt.show()'):
+            part.append(line)
+            parts.append("\n".join(part))
+            part = []
+        else:
+            part.append(line)
+    if "\n".join(part).strip():
+        parts.append("\n".join(part))
+    return parts
+
 class PlotError(RuntimeError):
     pass
 
-def run_code(code, code_path):
+def run_code(code, code_path, ns=None):
     # Change the working directory to the directory of the example, so
     # it can get at its data files, if any.
     pwd = os.getcwd()
@@ -422,8 +457,10 @@ def run_code(code, code_path):
     try:
         try:
             code = unescape_doctest(code)
-            ns = {}
-            exec setup.config.plot_pre_code in ns
+            if ns is None:
+                ns = {}
+            if not ns:
+                exec setup.config.plot_pre_code in ns
             exec code in ns
         except (Exception, SystemExit), err:
             raise PlotError(traceback.format_exc())
@@ -468,6 +505,8 @@ def makefig(code, code_path, output_dir, output_base, config):
 
     # -- Try to determine if all images already exist
 
+    code_pieces = split_code_at_show(code)
+
     # Look for single-figure output files first
     all_exists = True
     img = ImageFile(output_base, output_dir)
@@ -478,54 +517,66 @@ def makefig(code, code_path, output_dir, output_base, config):
         img.formats.append(format)
 
     if all_exists:
-        return [img]
+        return [(code, [img])]
 
     # Then look for multi-figure output files
-    images = []
+    results = []
     all_exists = True
-    for i in xrange(1000):
-        img = ImageFile('%s_%02d' % (output_base, i), output_dir)
-        for format, dpi in formats:
-            if out_of_date(code_path, img.filename(format)):
-                all_exists = False
+    for i, code_piece in enumerate(code_pieces):
+        images = []
+        for j in xrange(1000):
+            img = ImageFile('%s_%02d_%02d' % (output_base, i, j), output_dir)
+            for format, dpi in formats:
+                if out_of_date(code_path, img.filename(format)):
+                    all_exists = False
+                    break
+                img.formats.append(format)
+
+            # assume that if we have one, we have them all
+            if not all_exists:
+                all_exists = (j > 0)
                 break
-            img.formats.append(format)
-        
-        # assume that if we have one, we have them all
+            images.append(img)
         if not all_exists:
-            all_exists = (i > 0)
             break
-        images.append(img)
+        results.append((code_piece, images))
 
     if all_exists:
-        return images
+        return results
 
     # -- We didn't find the files, so build them
 
-    # Clear between runs
-    plt.close('all')
+    results = []
+    ns = {}
 
-    # Run code
-    run_code(code, code_path)
+    for i, code_piece in enumerate(code_pieces):
+        # Clear between runs
+        plt.close('all')
 
-    # Collect images
-    images = []
+        # Run code
+        run_code(code_piece, code_path, ns)
 
-    fig_managers = _pylab_helpers.Gcf.get_all_fig_managers()
-    for i, figman in enumerate(fig_managers):
-        if len(fig_managers) == 1:
-            img = ImageFile(output_base, output_dir)
-        else:
-            img = ImageFile("%s_%02d" % (output_base, i), output_dir)
-        images.append(img)
-        for format, dpi in formats:
-            try:
-                figman.canvas.figure.savefig(img.filename(format), dpi=dpi)
-            except exceptions.BaseException, err:
-                raise PlotError(traceback.format_exc())
-            img.formats.append(format)
+        # Collect images
+        images = []
+        fig_managers = _pylab_helpers.Gcf.get_all_fig_managers()
+        for j, figman in enumerate(fig_managers):
+            if len(fig_managers) == 1 and len(code_pieces) == 1:
+                img = ImageFile(output_base, output_dir)
+            else:
+                img = ImageFile("%s_%02d_%02d" % (output_base, i, j),
+                                output_dir)
+            images.append(img)
+            for format, dpi in formats:
+                try:
+                    figman.canvas.figure.savefig(img.filename(format), dpi=dpi)
+                except exceptions.BaseException, err:
+                    raise PlotError(traceback.format_exc())
+                img.formats.append(format)
 
-    return images
+        # Results
+        results.append((code_piece, images))
+
+    return results
 
 
 #------------------------------------------------------------------------------
