@@ -9,6 +9,8 @@ SPHINXOPTS    =
 SPHINXBUILD   = LANG=C sphinx-build
 PAPER         =
 
+FILES=
+
 NEED_AUTOSUMMARY = $(shell $(PYTHON) -c 'import sphinx; print sphinx.__version__ < "0.7" and "1" or ""')
 
 # Internal variables.
@@ -106,14 +108,14 @@ endif
 
 html: generate
 	mkdir -p build/html build/doctrees
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
 	@echo
 	@echo "Build finished. The HTML pages are in build/html."
 
 pickle: generate
 	mkdir -p build/pickle build/doctrees
-	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) build/pickle
+	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) build/pickle $(FILES)
 	@echo
 	@echo "Build finished; now you can process the pickle files or run"
 	@echo "  sphinx-web build/pickle"
@@ -123,7 +125,7 @@ web: pickle
 
 htmlhelp: generate
 	mkdir -p build/htmlhelp build/doctrees
-	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) build/htmlhelp
+	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) build/htmlhelp $(FILES)
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in build/htmlhelp."
@@ -134,11 +136,11 @@ htmlhelp-build: htmlhelp build/htmlhelp/numpy.chm
 
 qthelp: generate
 	mkdir -p build/qthelp build/doctrees
-	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp
+	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp $(FILES)
 
 latex: generate
 	mkdir -p build/latex build/doctrees
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex
 	perl -pi -e 's/\t(latex.*|pdflatex) (.*)/\t-$$1 -interaction batchmode $$2/' build/latex/Makefile
 	@echo
@@ -148,18 +150,18 @@ latex: generate
 
 coverage: build
 	mkdir -p build/coverage build/doctrees
-	$(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) build/coverage
+	$(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) build/coverage $(FILES)
 	@echo "Coverage finished; see c.txt and python.txt in build/coverage"
 
 changes: generate
 	mkdir -p build/changes build/doctrees
-	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) build/changes
+	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) build/changes $(FILES)
 	@echo
 	@echo "The overview file is in build/changes."
 
 linkcheck: generate
 	mkdir -p build/linkcheck build/doctrees
-	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) build/linkcheck
+	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) build/linkcheck $(FILES)
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in build/linkcheck/output.txt."
