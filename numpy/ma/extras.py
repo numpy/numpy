@@ -1644,16 +1644,14 @@ def flatnotmasked_contiguous(a):
     """
     m = getmask(a)
     if m is nomask:
-        return (a.size, [0, -1])
-    unmasked = np.flatnonzero(~m)
-    if len(unmasked) == 0:
-        return None
+        return slice(0, a.size, None)
+    i = 0
     result = []
-    for (k, group) in itertools.groupby(enumerate(unmasked), lambda (i, x):i - x):
-        tmp = np.array([g[1] for g in group], int)
-#        result.append((tmp.size, tuple(tmp[[0,-1]])))
-        result.append(slice(tmp[0], tmp[-1]))
-    result.sort()
+    for (k, g) in itertools.groupby(m.ravel()):
+        n = len(list(g))
+        if not k:
+            result.append(slice(i, i + n))
+        i += n
     return result
 
 def notmasked_contiguous(a, axis=None):
@@ -1711,7 +1709,7 @@ def notmasked_contiguous(a, axis=None):
     #
     for i in range(a.shape[other]):
         idx[other] = i
-        result.append(flatnotmasked_contiguous(a[idx]))
+        result.append(flatnotmasked_contiguous(a[idx]) or None)
     return result
 
 
