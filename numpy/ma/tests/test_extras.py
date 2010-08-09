@@ -88,6 +88,20 @@ class TestGeneric(TestCase):
         control = [slice(3, 6), slice(7, 8), ]
         assert_equal(test, control)
 
+    def test_flatnotmasked_contiguous(self):
+        "Test flatnotmasked_contiguous"
+        a = arange(10)
+        # No mask
+        test = flatnotmasked_contiguous(a)
+        assert_equal(test, slice(0, a.size))
+        # Some mask
+        a[(a < 3) | (a > 8) | (a == 5)] = masked
+        test = flatnotmasked_contiguous(a)
+        assert_equal(test, [slice(3, 5), slice(6, 9)])
+        #
+        a[:] = masked
+        test = flatnotmasked_contiguous(a)
+        assert_equal(test, [])
 
 
 class TestAverage(TestCase):
@@ -261,9 +275,9 @@ class TestNotMasked(TestCase):
                                [1, 1, 1, 1, 1, 1, 1, 1],
                                [0, 0, 0, 0, 0, 0, 1, 0], ])
         tmp = notmasked_contiguous(a, None)
-        assert_equal(tmp[-1], slice(23, 23, None))
-        assert_equal(tmp[-2], slice(16, 21, None))
-        assert_equal(tmp[-3], slice(0, 3, None))
+        assert_equal(tmp[-1], slice(23, 24, None))
+        assert_equal(tmp[-2], slice(16, 22, None))
+        assert_equal(tmp[-3], slice(0, 4, None))
         #
         tmp = notmasked_contiguous(a, 0)
         self.assertTrue(len(tmp[-1]) == 1)
@@ -272,10 +286,10 @@ class TestNotMasked(TestCase):
         self.assertTrue(len(tmp[0]) == 2)
         #
         tmp = notmasked_contiguous(a, 1)
-        assert_equal(tmp[0][-1], slice(0, 3, None))
+        assert_equal(tmp[0][-1], slice(0, 4, None))
         self.assertTrue(tmp[1] is None)
-        assert_equal(tmp[2][-1], slice(7, 7, None))
-        assert_equal(tmp[2][-2], slice(0, 5, None))
+        assert_equal(tmp[2][-1], slice(7, 8, None))
+        assert_equal(tmp[2][-2], slice(0, 6, None))
 
 
 

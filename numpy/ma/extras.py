@@ -1522,7 +1522,8 @@ def flatnotmasked_edges(a):
 
     See Also
     --------
-    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges
+    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges, 
+    clump_masked, clump_unmasked
 
     Notes
     -----
@@ -1530,24 +1531,26 @@ def flatnotmasked_edges(a):
 
     Examples
     --------
-    >>> a = np.arange(10)
-    >>> mask = (a < 3) | (a > 8) | (a == 5)
+    >>> a = np.ma.arange(10)
+    >>> flatnotmasked_edges(a)
+    [0,-1]
 
-    >>> ma = np.ma.array(a, mask=m)
-    >>> np.array(ma[~ma.mask])
+    >>> mask = (a < 3) | (a > 8) | (a == 5)
+    >>> a[mask] = np.ma.masked
+    >>> np.array(a[~a.mask])
     array([3, 4, 6, 7, 8])
 
-    >>> flatnotmasked_edges(ma)
+    >>> flatnotmasked_edges(a)
     array([3, 8])
 
-    >>> ma = np.ma.array(a, mask=np.ones_like(a))
+    >>> a[:] = np.ma.masked
     >>> print flatnotmasked_edges(ma)
     None
 
     """
     m = getmask(a)
     if m is nomask or not np.any(m):
-        return [0, -1]
+        return np.array([0, a.size - 1])
     unmasked = np.flatnonzero(~m)
     if len(unmasked) > 0:
         return unmasked[[0, -1]]
@@ -1580,7 +1583,8 @@ def notmasked_edges(a, axis=None):
 
     See Also
     --------
-    flatnotmasked_contiguous, flatnotmasked_edges, notmasked_contiguous
+    flatnotmasked_contiguous, flatnotmasked_edges, notmasked_contiguous,
+    clump_masked, clump_unmasked
 
     Examples
     --------
@@ -1588,8 +1592,8 @@ def notmasked_edges(a, axis=None):
     >>> m = np.zeros_like(a)
     >>> m[1:, 1:] = 1
 
-    >>> ma = np.ma.array(a, mask=m)
-    >>> np.array(ma[~ma.mask])
+    >>> am = np.ma.array(a, mask=m)
+    >>> np.array(am[~am.mask])
     array([0, 1, 2, 3, 6])
 
     >>> np.ma.extras.notmasked_edges(ma)
@@ -1621,7 +1625,8 @@ def flatnotmasked_contiguous(a):
 
     See Also
     --------
-    flatnotmasked_edges, notmasked_contiguous, notmasked_edges
+    flatnotmasked_edges, notmasked_contiguous, notmasked_edges,
+    clump_masked, clump_unmasked
 
     Notes
     -----
@@ -1629,16 +1634,19 @@ def flatnotmasked_contiguous(a):
 
     Examples
     --------
-    >>> a = np.arange(10)
+    >>> a = np.ma.arange(10)
+    >>> np.ma.extras.flatnotmasked_contiguous(a)
+    slice(0, 10, None)
+    
     >>> mask = (a < 3) | (a > 8) | (a == 5)
-    >>> ma = np.ma.array(a, mask=mask)
-    >>> np.array(ma[~ma.mask])
+    >>> a[mask] = np.ma.masked
+    >>> np.array(a[~a.mask])
     array([3, 4, 6, 7, 8])
 
-    >>> np.ma.extras.flatnotmasked_contiguous(ma)
-    [slice(3, 4, None), slice(6, 8, None)]
-    >>> ma = np.ma.array(a, mask=np.ones_like(a))
-    >>> print np.ma.extras.flatnotmasked_edges(ma)
+    >>> np.ma.extras.flatnotmasked_contiguous(a)
+    [slice(3, 5, None), slice(6, 9, None)]
+    >>> a[:] = np.ma.masked
+    >>> print np.ma.extras.flatnotmasked_edges(a)
     None
 
     """
@@ -1652,7 +1660,7 @@ def flatnotmasked_contiguous(a):
         if not k:
             result.append(slice(i, i + n))
         i += n
-    return result
+    return result or None
 
 def notmasked_contiguous(a, axis=None):
     """
@@ -1674,7 +1682,8 @@ def notmasked_contiguous(a, axis=None):
 
     See Also
     --------
-    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges,
+    clump_masked, clump_unmasked
 
     Notes
     -----
@@ -1691,7 +1700,7 @@ def notmasked_contiguous(a, axis=None):
     array([0, 1, 2, 3, 6])
 
     >>> np.ma.extras.notmasked_contiguous(ma)
-    [slice(0, 3, None), slice(6, 6, None)]
+    [slice(0, 4, None), slice(6, 7, None)]
 
     """
     a = asarray(a)
@@ -1792,7 +1801,7 @@ def clump_masked(a):
     >>> a = np.ma.masked_array(np.arange(10))
     >>> a[[0, 1, 2, 6, 8, 9]] = np.ma.masked
     >>> np.ma.extras.clump_masked(a)
-    [slice(0, 3, None), slice(6, 7, None), slice(8, None, None)]
+    [slice(0, 3, None), slice(6, 7, None), slice(8, 10, None)]
 
     """
     mask = ma.getmask(a)
