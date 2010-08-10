@@ -244,7 +244,7 @@ class TestMaskIndices(TestCase):
 
 
 class TestTrilIndices(TestCase):
-    def test_tril_indices():
+    def test_tril_indices(self):
         # indices without and with offset
         il1 = tril_indices(4)
         il2 = tril_indices(4, 2)
@@ -284,7 +284,7 @@ class TestTrilIndicesFrom(TestCase):
 
 
 class TestTriuIndices(TestCase):
-    def test_triu_indices():
+    def test_triu_indices(self):
         iu1 = triu_indices(4)
         iu2 = triu_indices(4, 2)
 
