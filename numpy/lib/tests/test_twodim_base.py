@@ -232,75 +232,94 @@ class TestTri(TestCase):
         assert_array_equal(tri(3,dtype=bool),out.astype(bool))
 
 
-def test_mask_indices():
-    # simple test without offset
-    iu = mask_indices(3, np.triu)
-    a = np.arange(9).reshape(3, 3)
-    yield (assert_array_equal, a[iu], array([0, 1, 2, 4, 5, 8]))
-    # Now with an offset
-    iu1 = mask_indices(3, np.triu, 1)
-    yield (assert_array_equal, a[iu1], array([1, 2, 5]))
+class TestMaskIndices(TestCase):
+    def test_mask_indices(self):
+        # simple test without offset
+        iu = mask_indices(3, np.triu)
+        a = np.arange(9).reshape(3, 3)
+        yield (assert_array_equal, a[iu], array([0, 1, 2, 4, 5, 8]))
+        # Now with an offset
+        iu1 = mask_indices(3, np.triu, 1)
+        yield (assert_array_equal, a[iu1], array([1, 2, 5]))
 
 
-def test_tril_indices():
-    # indices without and with offset
-    il1 = tril_indices(4)
-    il2 = tril_indices(4, 2)
+class TestTrilIndices(TestCase):
+    def test_tril_indices(self):
+        # indices without and with offset
+        il1 = tril_indices(4)
+        il2 = tril_indices(4, 2)
 
-    a = np.array([[1, 2, 3, 4],
-                  [5, 6, 7, 8],
-                  [9, 10, 11, 12],
-                  [13, 14, 15, 16]])
+        a = np.array([[1, 2, 3, 4],
+                      [5, 6, 7, 8],
+                      [9, 10, 11, 12],
+                      [13, 14, 15, 16]])
 
-    # indexing:
-    yield (assert_array_equal, a[il1],
-           array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16]) )
+        # indexing:
+        yield (assert_array_equal, a[il1],
+               array([ 1,  5,  6,  9, 10, 11, 13, 14, 15, 16]) )
 
-    # And for assigning values:
-    a[il1] = -1
-    yield (assert_array_equal, a,
-    array([[-1,  2,  3,  4],
-           [-1, -1,  7,  8],
-           [-1, -1, -1, 12],
-           [-1, -1, -1, -1]]) )
+        # And for assigning values:
+        a[il1] = -1
+        yield (assert_array_equal, a,
+        array([[-1,  2,  3,  4],
+               [-1, -1,  7,  8],
+               [-1, -1, -1, 12],
+               [-1, -1, -1, -1]]) )
 
-    # These cover almost the whole array (two diagonals right of the main one):
-    a[il2] = -10
-    yield (assert_array_equal, a,
-    array([[-10, -10, -10,   4],
-           [-10, -10, -10, -10],
-           [-10, -10, -10, -10],
-           [-10, -10, -10, -10]]) )
+        # These cover almost the whole array (two diagonals right of the main one):
+        a[il2] = -10
+        yield (assert_array_equal, a,
+        array([[-10, -10, -10,   4],
+               [-10, -10, -10, -10],
+               [-10, -10, -10, -10],
+               [-10, -10, -10, -10]]) )
 
 
-def test_triu_indices():
-    iu1 = triu_indices(4)
-    iu2 = triu_indices(4, 2)
+class TestTrilIndicesFrom(TestCase):
 
-    a = np.array([[1, 2, 3, 4],
-                  [5, 6, 7, 8],
-                  [9, 10, 11, 12],
-                  [13, 14, 15, 16]])
+    def test_exceptions(self):
+        yield assert_raises(ValueError, tril_indices_from, np.ones((2,)))
+        yield assert_raises(ValueError, tril_indices_from, np.ones((2,2,2)))
+        yield assert_raises(ValueError, tril_indices_from, np.ones((2,3)))
 
-    # Both for indexing:
-    yield (assert_array_equal, a[iu1],
-           array([1, 2,  3,  4,  6, 7, 8, 11, 12, 16]))
 
-    # And for assigning values:
-    a[iu1] = -1
-    yield (assert_array_equal, a,
-    array([[-1, -1, -1, -1],
-           [ 5, -1, -1, -1],
-           [ 9, 10, -1, -1],
-           [13, 14, 15, -1]])  )
+class TestTriuIndices(TestCase):
+    def test_triu_indices(self):
+        iu1 = triu_indices(4)
+        iu2 = triu_indices(4, 2)
 
-    # These cover almost the whole array (two diagonals right of the main one):
-    a[iu2] = -10
-    yield ( assert_array_equal, a,
-    array([[ -1,  -1, -10, -10],
-           [  5,  -1,  -1, -10],
-           [  9,  10,  -1,  -1],
-           [ 13,  14,  15,  -1]]) )
+        a = np.array([[1, 2, 3, 4],
+                      [5, 6, 7, 8],
+                      [9, 10, 11, 12],
+                      [13, 14, 15, 16]])
+
+        # Both for indexing:
+        yield (assert_array_equal, a[iu1],
+               array([1, 2,  3,  4,  6, 7, 8, 11, 12, 16]))
+
+        # And for assigning values:
+        a[iu1] = -1
+        yield (assert_array_equal, a,
+        array([[-1, -1, -1, -1],
+               [ 5, -1, -1, -1],
+               [ 9, 10, -1, -1],
+               [13, 14, 15, -1]])  )
+
+        # These cover almost the whole array (two diagonals right of the main one):
+        a[iu2] = -10
+        yield ( assert_array_equal, a,
+        array([[ -1,  -1, -10, -10],
+               [  5,  -1,  -1, -10],
+               [  9,  10,  -1,  -1],
+               [ 13,  14,  15,  -1]]) )
+
+
+class TestTriuIndicesFrom(TestCase):
+
+    def test_exceptions(self):
+        yield assert_raises(ValueError, triu_indices_from, np.ones((2,)))
+        yield assert_raises(ValueError, triu_indices_from, np.ones((2,2,2)))
+        yield assert_raises(ValueError, triu_indices_from, np.ones((2,3)))
 
 
 if __name__ == "__main__":
