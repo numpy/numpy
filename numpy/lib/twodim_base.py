@@ -58,7 +58,7 @@ def fliplr(m):
     """
     m = asanyarray(m)
     if m.ndim < 2:
-        raise ValueError, "Input must be >= 2-d."
+        raise ValueError("Input must be >= 2-d.")
     return m[:, ::-1]
 
 def flipud(m):
@@ -111,7 +111,7 @@ def flipud(m):
     """
     m = asanyarray(m)
     if m.ndim < 1:
-        raise ValueError, "Input must be >= 1-d."
+        raise ValueError("Input must be >= 1-d.")
     return m[::-1,...]
 
 def rot90(m, k=1):
@@ -154,12 +154,17 @@ def rot90(m, k=1):
     """
     m = asanyarray(m)
     if m.ndim < 2:
-        raise ValueError, "Input must >= 2-d."
+        raise ValueError("Input must >= 2-d.")
     k = k % 4
-    if k == 0: return m
-    elif k == 1: return fliplr(m).swapaxes(0,1)
-    elif k == 2: return fliplr(flipud(m))
-    else: return fliplr(m.swapaxes(0,1))  # k==3
+    if k == 0:
+        return m
+    elif k == 1:
+        return fliplr(m).swapaxes(0,1)
+    elif k == 2:
+        return fliplr(flipud(m))
+    else:
+        # k == 3
+        return fliplr(m.swapaxes(0,1))
 
 def eye(N, M=None, k=0, dtype=float):
     """
@@ -284,9 +289,9 @@ def diag(v, k=0):
             i = (-k) * s[1]
         return v[:s[1]-k].flat[i::s[1]+1]
     else:
-        raise ValueError, "Input must be 1- or 2-d."
+        raise ValueError("Input must be 1- or 2-d.")
 
-def diagflat(v,k=0):
+def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
 
@@ -333,7 +338,7 @@ def diagflat(v,k=0):
     s = len(v)
     n = s + abs(k)
     res = zeros((n,n), v.dtype)
-    if (k>=0):
+    if (k >= 0):
         i = arange(0,n-k)
         fi = i+k+i*n
     else:
@@ -381,7 +386,8 @@ def tri(N, M=None, k=0, dtype=float):
            [ 1.,  1.,  0.,  0.,  0.]])
 
     """
-    if M is None: M = N
+    if M is None:
+        M = N
     m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
     return m.astype(dtype)
 
@@ -444,7 +450,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    out = multiply((1-tri(m.shape[0], m.shape[1], k-1, int)),m)
+    out = multiply((1 - tri(m.shape[0], m.shape[1], k - 1, int)), m)
     return out
 
 # borrowed from John Hunter and matplotlib
@@ -505,14 +511,15 @@ def vander(x, N=None):
 
     """
     x = asarray(x)
-    if N is None: N=len(x)
+    if N is None:
+        N=len(x)
     X = ones( (len(x),N), x.dtype)
-    for i in range(N-1):
-        X[:,i] = x**(N-i-1)
+    for i in range(N - 1):
+        X[:,i] = x**(N - i - 1)
     return X
 
 
-def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
+def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     """
     Compute the bi-dimensional histogram of two data samples.
 
@@ -608,8 +615,8 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
     hist, edges = histogramdd([x,y], bins, range, normed, weights)
     return hist, edges[0], edges[1]
 
-    
-def mask_indices(n,mask_func,k=0):
+
+def mask_indices(n, mask_func, k=0):
     """
     Return the indices to access (n, n) arrays, given a masking function.
 
@@ -674,21 +681,22 @@ def mask_indices(n,mask_func,k=0):
     array([1, 2, 5])
 
     """
-    m = ones((n,n),int)
-    a = mask_func(m,k)
+    m = ones((n,n), int)
+    a = mask_func(m, k)
     return where(a != 0)
 
 
-def tril_indices(n,k=0):
+def tril_indices(n, k=0):
     """
     Return the indices for the lower-triangle of an (n, n) array.
 
     Parameters
     ----------
     n : int
-      Sets the size of the arrays for which the returned indices will be valid.
+        The row dimension of the square arrays for which the returned
+        indices will be valid.
     k : int, optional
-      Diagonal offset (see `tril` for details).
+        Diagonal offset (see `tril` for details).
 
     Returns
     -------
@@ -748,21 +756,22 @@ def tril_indices(n,k=0):
            [-10, -10, -10, -10]])
 
     """
-    return mask_indices(n,tril,k)
+    return mask_indices(n, tril, k)
 
 
-def tril_indices_from(arr,k=0):
+def tril_indices_from(arr, k=0):
     """
-    Return the indices for the lower-triangle of an (n, n) array.
+    Return the indices for the lower-triangle of arr.
 
     See `tril_indices` for full details.
 
     Parameters
     ----------
-    n : int
-      Sets the size of the arrays for which the returned indices will be valid.
+    arr : array_like
+        The indices will be valid for square arrays whose dimensions are
+        the same as arr.
     k : int, optional
-      Diagonal offset (see `tril` for details).
+        Diagonal offset (see `tril` for details).
 
     See Also
     --------
@@ -773,21 +782,22 @@ def tril_indices_from(arr,k=0):
     .. versionadded:: 1.4.0
 
     """
-    if not arr.ndim==2 and arr.shape[0] == arr.shape[1]:
+    if not (arr.ndim == 2 and arr.shape[0] == arr.shape[1]):
         raise ValueError("input array must be 2-d and square")
-    return tril_indices(arr.shape[0],k)
+    return tril_indices(arr.shape[0], k)
 
-    
-def triu_indices(n,k=0):
+
+def triu_indices(n, k=0):
     """
     Return the indices for the upper-triangle of an (n, n) array.
 
     Parameters
     ----------
     n : int
-      Sets the size of the arrays for which the returned indices will be valid.
+        The size of the arrays for which the returned indices will
+        be valid.
     k : int, optional
-      Diagonal offset (see `triu` for details).
+        Diagonal offset (see `triu` for details).
 
     Returns
     -------
@@ -848,10 +858,10 @@ def triu_indices(n,k=0):
            [ 12,  13,  14,  -1]])
 
     """
-    return mask_indices(n,triu,k)
+    return mask_indices(n, triu, k)
 
 
-def triu_indices_from(arr,k=0):
+def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of an (n, n) array.
 
@@ -859,8 +869,9 @@ def triu_indices_from(arr,k=0):
 
     Parameters
     ----------
-    n : int
-      Sets the size of the arrays for which the returned indices will be valid.
+    arr : array_like
+        The indices will be valid for square arrays whose dimensions are
+        the same as arr.
     k : int, optional
       Diagonal offset (see `triu` for details).
 
@@ -873,7 +884,7 @@ def triu_indices_from(arr,k=0):
     .. versionadded:: 1.4.0
 
     """
-    if not arr.ndim==2 and arr.shape[0] == arr.shape[1]:
+    if not (arr.ndim == 2 and arr.shape[0] == arr.shape[1]):
         raise ValueError("input array must be 2-d and square")
     return triu_indices(arr.shape[0],k)
 
