@@ -273,7 +273,7 @@ class _fromnxfunction:
         if len(args) == 1:
             x = args[0]
             if isinstance(x, ndarray):
-                _d = func(np.asarray(x), **params)
+                _d = func(x.__array__(), **params)
                 _m = func(getmaskarray(x), **params)
                 return masked_array(_d, mask=_m)
             elif isinstance(x, tuple) or isinstance(x, list):
@@ -292,12 +292,12 @@ class _fromnxfunction:
                 res.append(masked_array(_d, mask=_m))
             return res
 
-#atleast_1d = _fromnxfunction('atleast_1d')
-#atleast_2d = _fromnxfunction('atleast_2d')
-#atleast_3d = _fromnxfunction('atleast_3d')
-atleast_1d = np.atleast_1d
-atleast_2d = np.atleast_2d
-atleast_3d = np.atleast_3d
+atleast_1d = _fromnxfunction('atleast_1d')
+atleast_2d = _fromnxfunction('atleast_2d')
+atleast_3d = _fromnxfunction('atleast_3d')
+#atleast_1d = np.atleast_1d
+#atleast_2d = np.atleast_2d
+#atleast_3d = np.atleast_3d
 
 vstack = row_stack = _fromnxfunction('vstack')
 hstack = _fromnxfunction('hstack')
@@ -1742,6 +1742,7 @@ def _ezclump(mask):
 def clump_unmasked(a):
     """
     Return list of slices corresponding to the unmasked clumps of a 1-D array.
+    (A "clump" is defined as a contiguous region of the array).
 
     Parameters
     ----------
@@ -1757,6 +1758,11 @@ def clump_unmasked(a):
     Notes
     -----
     .. versionadded:: 1.4.0
+
+    See Also
+    --------
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges, 
+    notmasked_contiguous, clump_masked
 
     Examples
     --------
@@ -1780,6 +1786,7 @@ def clump_unmasked(a):
 def clump_masked(a):
     """
     Returns a list of slices corresponding to the masked clumps of a 1-D array.
+    (A "clump" is defined as a contiguous region of the array).
 
     Parameters
     ----------
@@ -1795,6 +1802,11 @@ def clump_masked(a):
     Notes
     -----
     .. versionadded:: 1.4.0
+
+    See Also
+    --------
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges, 
+    notmasked_contiguous, clump_unmasked
 
     Examples
     --------
