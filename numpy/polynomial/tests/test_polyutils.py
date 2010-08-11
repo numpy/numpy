@@ -67,8 +67,24 @@ class TestDomain(TestCase) :
         dom1 = [0 - 1j, 2 + 1j]
         dom2 = [-2, 2]
         tgt = dom2
-        res = pu.mapdomain(dom1, dom1, dom2)
+        x = dom1
+        res = pu.mapdomain(x, dom1, dom2)
         assert_almost_equal(res, tgt)
+
+        # test for multidimensional arrays
+        dom1 = [0,4]
+        dom2 = [1,3]
+        tgt = np.array([dom2, dom2])
+        x = np.array([dom1, dom1])
+        res = pu.mapdomain(x, dom1, dom2)
+        assert_almost_equal(res, tgt)
+
+        # test that subtypes are preserved.
+        dom1 = [0,4]
+        dom2 = [1,3]
+        x = np.matrix([dom1, dom1])
+        res = pu.mapdomain(x, dom1, dom2)
+        assert_(isinstance(res, np.matrix))
 
     def test_mapparms(self) :
         # test for real values
