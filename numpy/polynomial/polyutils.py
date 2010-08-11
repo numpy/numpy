@@ -289,8 +289,8 @@ def mapparms(old, new) :
     Parameters
     ----------
     old, new : array_like
-        Each domain must (successfully) convert to a 1-d array containing
-        precisely two values.
+        Domains. Each domain must (successfully) convert to a 1-d array
+        containing precisely two values.
 
     Returns
     -------
@@ -330,13 +330,14 @@ def mapdomain(x, old, new) :
     """
     Apply linear map to input points.
 
-    The linear map ``offset + scale*x`` that maps `old` to `new` is applied
-    to the points `x`.
+    The linear map ``offset + scale*x`` that maps the domain `old` to
+    the domain `new` is applied to the points `x`.
 
     Parameters
     ----------
     x : array_like
-        Points to be mapped.
+        Points to be mapped. If `x` is a subtype of ndarray the subtype
+        will be preserved.
     old, new : array_like
         The two domains that determine the map.  Each must (successfully)
         convert to 1-d arrays containing precisely two values.
@@ -388,6 +389,6 @@ def mapdomain(x, old, new) :
     array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ])
 
     """
-    [x] = as_series([x], trim=False)
+    x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
