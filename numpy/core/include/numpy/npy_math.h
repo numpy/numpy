@@ -147,11 +147,19 @@ double npy_spacing(double x);
 #ifndef NPY_HAVE_DECL_ISNAN
     #define npy_isnan(x) ((x) != (x))
 #else
-    #define npy_isnan(x) isnan((x))
+    #ifdef _MSC_VER
+        #define npy_isnan(x) _isnan((x))
+    #else
+        #define npy_isnan(x) isnan((x))
+    #endif
 #endif
 
 #ifndef NPY_HAVE_DECL_ISFINITE
-    #define npy_isfinite(x) !npy_isnan((x) + (-x))
+    #ifdef _MSC_VER
+        #define npy_isfinite(x) _finite((x))
+    #else
+        #define npy_isfinite(x) !npy_isnan((x) + (-x))
+    #endif
 #else
     #define npy_isfinite(x) isfinite((x))
 #endif
@@ -159,7 +167,11 @@ double npy_spacing(double x);
 #ifndef NPY_HAVE_DECL_ISINF
     #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
 #else
-    #define npy_isinf(x) isinf((x))
+    #ifdef _MSC_VER
+        #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
+    #else
+        #define npy_isinf(x) isinf((x))
+    #endif
 #endif
 
 #ifndef NPY_HAVE_DECL_SIGNBIT
