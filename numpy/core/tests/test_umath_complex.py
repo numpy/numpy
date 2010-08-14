@@ -1,3 +1,5 @@
+import sys
+
 from numpy.testing import *
 import numpy.core.umath as ncu
 import numpy as np
@@ -5,6 +7,20 @@ import numpy as np
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
 # TODO: FPU exceptions
+
+# At least on Windows the results of many complex functions are not conforming
+# to the C99 standard. See ticket 1574.
+functions_seem_flaky = (np.exp(complex(np.inf, 0)).imag != 0)
+# TODO: replace with a check on whether platform-provided C99 funcs are used
+have_platform_functions = (sys.platform == 'win32')
+skip_complex_tests = have_platform_functions and functions_seem_flaky
+
+def platform_skip(func):
+    return dec.skipif(skip_complex_tests,
+        "Numpy is using complex functions (e.g. sqrt) provided by your"
+        "platform's C library. However, they do not seem to behave according"
+        "to C99 -- so C99 tests are skipped.")(func)
+
 
 class TestCexp(object):
     def test_simple(self):
@@ -17,6 +33,7 @@ class TestCexp(object):
         ref = np.exp(1) * np.complex(np.cos(1), np.sin(1))
         yield check, f, 1, 1, ref.real, ref.imag, False
 
+    @platform_skip
     def test_special_values(self):
         # C99: Section G 6.3.1
 
@@ -127,6 +144,7 @@ class TestClog(TestCase):
         for i in range(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
+    @platform_skip
     def test_special_values(self):
         xl = []
         yl = []
@@ -297,6 +315,7 @@ class TestCsqrt(object):
     #def test_branch_cut(self):
     #    _check_branch_cut(f, -1, 0, 1, -1)
 
+    @platform_skip
     def test_special_values(self):
         check = check_complex_value
         f = np.sqrt
