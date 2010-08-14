@@ -3,6 +3,7 @@
 
 import re
 import sys
+import warnings
 
 from numpy.compat import asbytes, bytes
 
@@ -335,18 +336,24 @@ def _index_fields(ary, fields):
     from multiarray import empty, dtype
     dt = ary.dtype
     new_dtype = [(name, dt[name]) for name in dt.names if name in fields]
+    future_dtype = [(name, dt[name]) for name in fields if name in dt.names]
+    if not new_dtype == future_dtype:
+        depdoc = "Out of order field selection on recarrays currently returns \
+fields in order. This behavior is deprecated in numpy 1.5 and will change in \
+2.0. See ticket #1431."
+        warnings.warn(depdoc, DeprecationWarning)
     if ary.flags.f_contiguous:
         order = 'F'
     else:
         order = 'C'
 
-    newarray = empty(ary.shape, dtype=new_dtype, order=order) 
-   
+    newarray = empty(ary.shape, dtype=new_dtype, order=order)
+
     for name in fields:
         newarray[name] = ary[name]
 
     return newarray
-    
+
 # Given a string containing a PEP 3118 format specifier,
 # construct a Numpy dtype
 
