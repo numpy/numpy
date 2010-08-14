@@ -275,7 +275,11 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONGLONG
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
+#ifdef _MSC_VER
+        #define NPY_INTP_FMT "lld"
+#else
         #define NPY_INTP_FMT "Ld"
+#endif
 #endif
 
 /*
