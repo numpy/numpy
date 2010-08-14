@@ -640,16 +640,17 @@ def _mode_from_name(mode):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
 
-def correlate(a,v,mode='valid',old_behavior=True):
+def correlate(a, v, mode='valid', old_behavior=False):
     """
-    Discrete, linear correlation of two 1-dimensional sequences.
+    Cross-correlation of two 1-dimensional sequences.
 
-    This function is equivalent to
+    This function computes the correlation as generally defined in signal
+    processing texts::
 
-    >>> np.convolve(a, v[::-1], mode=mode)
-    ... #doctest: +SKIP
+        z[k] = sum_n a[n] * conj(v[n+k])
 
-    where ``v[::-1]`` is the reverse of `v`.
+    with a and v sequences being zero-padded where necessary and conj being
+    the conjugate.
 
     Parameters
     ----------
@@ -659,27 +660,13 @@ def correlate(a,v,mode='valid',old_behavior=True):
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
     old_behavior : bool
-        If True, uses the old, numeric behavior (correlate(a,v) == correlate(v,
+        If True, uses the old behavior from Numeric, (correlate(a,v) == correlate(v,
         a), and the conjugate is not taken for complex arrays). If False, uses
         the conventional signal processing definition (see note).
 
     See Also
     --------
-    convolve : Discrete, linear convolution of two
-               one-dimensional sequences.
-    acorrelate : Discrete correlation following the usual signal processing
-               definition for complex arrays, and without assuming that
-               ``correlate(a, b) == correlate(b, a)``.
-
-    Notes
-    -----
-    If `old_behavior` is False, this function computes the correlation as
-    generally defined in signal processing texts::
-
-        z[k] = sum_n a[n] * conj(v[n+k])
-
-    with a and v sequences being zero-padded where necessary and conj being
-    the conjugate.
+    convolve : Discrete, linear convolution of two one-dimensional sequences.
 
     Examples
     --------
@@ -692,10 +679,12 @@ def correlate(a,v,mode='valid',old_behavior=True):
 
     """
     mode = _mode_from_name(mode)
+# the old behavior should be made available under a different name, see thread
+# http://thread.gmane.org/gmane.comp.python.numeric.general/12609/focus=12630
     if old_behavior:
         warnings.warn("""
-The current behavior of correlate is deprecated for 1.4.0, and will be removed
-for NumPy 1.5.0.
+The old behavior of correlate was deprecated for 1.4.0, and will be completely removed
+for NumPy 2.0.
 
 The new behavior fits the conventional definition of correlation: inputs are
 never swapped, and the second argument is conjugated for complex arrays.""",
