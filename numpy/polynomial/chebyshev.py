@@ -36,6 +36,8 @@ Misc Functions
 - `chebroots` -- find the roots of a Chebyshev series.
 - `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
 - `chebfit` -- least-squares fit returning a Chebyshev series.
+- `chebpts1` -- Chebyshev points of the first kind.
+- `chebpts2` -- Chebyshev points of the second kind.
 - `chebtrim` -- trim leading coefficients from a Chebyshev series.
 - `chebline` -- Chebyshev series of given straight line.
 - `cheb2poly` -- convert a Chebyshev series to a polynomial.
@@ -78,7 +80,8 @@ from __future__ import division
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
         'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebval',
         'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
-        'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'Chebyshev']
+        'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
+        'chebpts2', 'Chebyshev']
 
 import numpy as np
 import numpy.linalg as la
@@ -1330,6 +1333,68 @@ def chebroots(cs):
     roots = la.eigvals(cmat)
     roots.sort()
     return roots
+
+
+def chebpts1(npts):
+    """Chebyshev points of the first kind.
+
+    Chebyshev points of the first kind are the set ``{cos(x_k)}``,
+    where ``x_k = pi*(k + .5)/npts`` for k in ``range(npts}``.
+
+    Parameters
+    ----------
+    npts: int
+        Number of sample points desired.
+
+    Returns
+    -------
+    pts: ndarray
+        The Chebyshev points of the second kind.
+
+    Notes
+    -----
+    .. versionadded:: 1.5.0
+
+    """
+    _npts = int(npts)
+    if _npts != npts:
+        raise ValueError("npts must be integer")
+    if _npts < 1:
+        raise ValueError("npts must be >= 1")
+
+    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
+    return np.cos(x)
+
+
+def chebpts2(npts):
+    """Chebyshev points of the second kind.
+
+    Chebyshev points of the second kind are the set ``{cos(x_k)}``,
+    where ``x_k = pi*/(npts - 1)`` for k in ``range(npts}``.
+
+    Parameters
+    ----------
+    npts: int
+        Number of sample points desired.
+
+    Returns
+    -------
+    pts: ndarray
+        The Chebyshev points of the second kind.
+
+    Notes
+    -----
+    .. versionadded:: 1.5.0
+
+    """
+    _npts = int(npts)
+    if _npts != npts:
+        raise ValueError("npts must be integer")
+    if _npts < 2:
+        raise ValueError("npts must be >= 2")
+
+    x = np.linspace(-np.pi, 0, _npts)
+    return np.cos(x)
 
 
 #
