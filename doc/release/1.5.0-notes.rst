@@ -111,6 +111,7 @@ polynomial.chebyshev
 * Weights can be used in both chebfit and Chebyshev.fit
 * A linspace method has been added to the Chebyshev class to ease plotting.
 * The chebmulx function was added.
+* Added functions for the Chebyshev points of the first and second kind.
 
 
 histogram
