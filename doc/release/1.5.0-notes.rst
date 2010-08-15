@@ -94,6 +94,7 @@ polynomial.polynomial
   Polynomial domain can be specified by using [] as the domain value.
 * Weights can be used in both polyfit and Polynomial.fit
 * A linspace method has been added to the Polynomial class to ease plotting.
+* The polymulx function was added.
 
 polynomial.chebyshev
 --------------------
@@ -109,6 +110,8 @@ polynomial.chebyshev
   Chebyshev domain can be specified by using [] as the domain value.
 * Weights can be used in both chebfit and Chebyshev.fit
 * A linspace method has been added to the Chebyshev class to ease plotting.
+* The chebmulx function was added.
+
 
 histogram
 ---------

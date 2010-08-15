@@ -722,7 +722,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
     delimiter : str
         Character separating columns.
     newline : str
-        .. versionadded:: 2.0
+        .. versionadded:: 1.5.0
 
         Character separating lines.
 

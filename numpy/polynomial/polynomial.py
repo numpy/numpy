@@ -283,6 +283,10 @@ def polymulx(cs):
     out : ndarray
         Array representing the result of the multiplication.
 
+    Notes
+    -----
+    .. versionadded:: 1.5.0
+
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
@@ -544,8 +548,7 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1):
     Raises
     ------
     ValueError
-        If ``m < 1``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
-        ``np.isscalar(scl) == False``.
+        If ``m < 1``, ``len(k) > m``.
 
     See Also
     --------
@@ -577,7 +580,7 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1):
 
     """
     cnt = int(m)
-    if np.isscalar(k) :
+    if not np.iterable(k):
         k = [k]
 
     if cnt != m:
