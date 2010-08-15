@@ -647,13 +647,10 @@ def chebmulx(cs):
     out : ndarray
         Array representing the result of the multiplication.
 
-<<<<<<< HEAD
-=======
     Notes
     -----
     .. versionadded:: 1.5.0
 
->>>>>>> poly
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
