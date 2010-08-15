@@ -124,8 +124,12 @@ class TestCalculus(TestCase) :
         assert_raises(ValueError, poly.polyint, [0], .5)
         assert_raises(ValueError, poly.polyint, [0], -1)
         assert_raises(ValueError, poly.polyint, [0], 1, [0,0])
-        assert_raises(ValueError, poly.polyint, [0], 1, lbnd=[0,0])
-        assert_raises(ValueError, poly.polyint, [0], 1, scl=[0,0])
+
+        # test integration of zero polynomial
+        for i in range(2, 5):
+            k = [0]*(i - 2) + [1]
+            res = poly.polyint([0], m=i, k=k)
+            assert_almost_equal(res, [0, 1])
 
         # check single integration with integration constant
         for i in range(5) :
