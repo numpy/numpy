@@ -460,8 +460,6 @@ def polyder(cs, m=1, scl=1):
         raise ValueError, "The order of derivation must be integer"
     if cnt < 0:
         raise ValueError, "The order of derivation must be non-negative"
-    if not np.isscalar(scl):
-        raise ValueError, "The scl parameter must be a scalar"
 
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
@@ -558,24 +556,25 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1):
         raise ValueError, "The order of integration must be non-negative"
     if len(k) > cnt :
         raise ValueError, "Too many integration constants"
-    if not np.isscalar(lbnd) :
-        raise ValueError, "The lbnd parameter must be a scalar"
-    if not np.isscalar(scl) :
-        raise ValueError, "The scl parameter must be a scalar"
 
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
     if cnt == 0:
         return cs
-    else:
-        k = list(k) + [0]*(cnt - len(k))
-        fac = np.arange(1, len(cs) + cnt)/scl
-        ret = np.zeros(len(cs) + cnt, dtype=cs.dtype)
-        ret[cnt:] = cs
-        for i in range(cnt) :
-            ret[cnt - i:] /= fac[:len(cs) + i]
-            ret[cnt - i - 1] += k[i] - polyval(lbnd, ret[cnt - i - 1:])
-        return ret
+
+    k = list(k) + [0]*(cnt - len(k))
+    for i in range(cnt):
+        n = len(cs)
+        cs *= scl
+        if n == 1 and cs[0] == 0:
+            cs[0] += k[i]
+        else:
+            tmp = np.empty(n + 1, dtype=cs.dtype)
+            tmp[0] = cs[0]*0
+            tmp[1:] = cs/np.arange(1, n + 1)
+            tmp[0] += k[i] - polyval(lbnd, tmp) 
+            cs = tmp
+    return cs
 
 def polyval(x, cs):
     """
