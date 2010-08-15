@@ -48,8 +48,8 @@ See also
 """
 from __future__ import division
 
-__all__ = ['polyzero', 'polyone', 'polyx', 'polydomain',
-        'polyline','polyadd', 'polysub', 'polymul', 'polydiv', 'polyval',
+__all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
+        'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polyval',
         'polyder', 'polyint', 'polyfromroots', 'polyvander', 'polyfit',
         'polytrim', 'polyroots', 'Polynomial']
 
@@ -169,10 +169,9 @@ def polyfromroots(roots) :
         return np.ones(1)
     else :
         [roots] = pu.as_series([roots], trim=False)
-        prd = np.zeros(len(roots) + 1, dtype=roots.dtype)
-        prd[-1] = 1
-        for i in range(len(roots)) :
-            prd[-(i+2):-1] -= roots[i]*prd[-(i+1):]
+        prd = np.array([1], dtype=roots.dtype)
+        for r in roots:
+            prd = polysub(polymulx(prd), r*prd)
         return prd
 
 
@@ -264,6 +263,37 @@ def polysub(c1, c2):
         c2[:c1.size] += c1
         ret = c2
     return pu.trimseq(ret)
+
+
+def polymulx(cs):
+    """Multiply a polynomial by x.
+
+    Multiply the polynomial `cs` by x, where x is the independent
+    variable.
+
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of polynomial coefficients ordered from low to
+        high.
+
+    Returns
+    -------
+    out : ndarray
+        Array representing the result of the multiplication.
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    # The zero series needs special treatment
+    if len(cs) == 1 and cs[0] == 0:
+        return cs
+
+    prd = np.empty(len(cs) + 1, dtype=cs.dtype)
+    prd[0] = cs[0]*0
+    prd[1:] = cs
+    return prd
 
 
 def polymul(c1, c2):
@@ -632,7 +662,8 @@ def polyvander(x, deg) :
     Parameters
     ----------
     x : array_like
-        Array of points. The values are converted to double or complex doubles.
+        Array of points. The values are converted to double or complex
+        doubles. If x is scalar it is converted to a 1D array.
     deg : integer
         Degree of the resulting matrix.
 
@@ -643,12 +674,18 @@ def polyvander(x, deg) :
         index is the degree.
 
     """
-    x = np.asarray(x) + 0.0
-    order = int(deg) + 1
-    v = np.ones((order,) + x.shape, dtype=x.dtype)
-    if order > 1 :
+    ideg = int(deg)
+    if ideg != deg:
+        raise ValueError("deg must be integer")
+    if ideg < 0:
+        raise ValueError("deg must be non-negative")
+
+    x = np.array(x, copy=0, ndmin=1) + 0.0
+    v = np.empty((ideg + 1,) + x.shape, dtype=x.dtype)
+    v[0] = x*0 + 1
+    if ideg > 0 :
         v[1] = x
-        for i in range(2, order) :
+        for i in range(2, ideg + 1) :
             v[i] = v[i-1]*x
     return np.rollaxis(v, 0, v.ndim)
 
@@ -874,6 +911,7 @@ def polyroots(cs):
         return np.array([], dtype=cs.dtype)
     if len(cs) == 2 :
         return np.array([-cs[0]/cs[1]])
+
     n = len(cs) - 1
     cmat = np.zeros((n,n), dtype=cs.dtype)
     cmat.flat[n::n+1] = 1

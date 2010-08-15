@@ -78,6 +78,14 @@ class TestArithmetic(TestCase) :
                 res = ch.chebsub([0]*i + [1], [0]*j + [1])
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+    def test_chebmulx(self):
+        assert_equal(ch.chebmulx([0]), [0])
+        assert_equal(ch.chebmulx([1]), [0,1])
+        for i in range(1, 5):
+            ser = [0]*i + [1]
+            tgt = [0]*(i - 1) + [.5, 0, .5]
+            assert_equal(ch.chebmulx(ser), tgt)
+
     def test_chebmul(self) :
         for i in range(5) :
             for j in range(5) :

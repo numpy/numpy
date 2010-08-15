@@ -61,6 +61,14 @@ class TestArithmetic(TestCase) :
                 res = poly.polysub([0]*i + [1], [0]*j + [1])
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+    def test_polymulx(self):
+        assert_equal(poly.polymulx([0]), [0])
+        assert_equal(poly.polymulx([1]), [0, 1])
+        for i in range(1, 5):
+            ser = [0]*i + [1]
+            tgt = [0]*(i + 1) + [1]
+            assert_equal(poly.polymulx(ser), tgt)
+
     def test_polymul(self) :
         for i in range(5) :
             for j in range(5) :
