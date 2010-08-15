@@ -308,7 +308,7 @@ class $name(pu.PolyBase) :
 
         Notes
         -----
-        .. versionadded:: 2.0.0
+        .. versionadded:: 1.5.0
 
         """
         return len(self) - 1
@@ -335,7 +335,7 @@ class $name(pu.PolyBase) :
 
         Notes
         -----
-        .. versionadded:: 2.0.0
+        .. versionadded:: 1.5.0
 
         """
         return self.truncate(deg + 1)

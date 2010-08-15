@@ -76,9 +76,9 @@ References
 from __future__ import division
 
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
-        'chebadd', 'chebsub', 'chebmul', 'chebdiv', 'chebval', 'chebder',
-        'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots', 'chebvander',
-        'chebfit', 'chebtrim', 'chebroots', 'Chebyshev']
+        'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebval',
+        'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
+        'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'Chebyshev']
 
 import numpy as np
 import numpy.linalg as la
@@ -304,8 +304,6 @@ def _zseries_int(zs) :
 
 def poly2cheb(pol) :
     """
-    poly2cheb(pol)
-
     Convert a polynomial to a Chebyshev series.
 
     Convert an array representing the coefficients of a polynomial (relative
@@ -330,36 +328,32 @@ def poly2cheb(pol) :
 
     Notes
     -----
-    Note that a consequence of the input needing to be array_like and that
-    the output is an ndarray, is that if one is going to use this function
-    to convert a Polynomial instance, P, to a Chebyshev instance, T, the
-    usage is ``T = Chebyshev(poly2cheb(P.coef))``; see Examples below.
+    The easy way to do conversions between polynomial basis sets
+    is to use the convert method of a class instance.
 
     Examples
     --------
     >>> from numpy import polynomial as P
-    >>> p = P.Polynomial(np.arange(4))
+    >>> p = P.Polynomial(range(4))
     >>> p
     Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> c = P.Chebyshev(P.poly2cheb(p.coef))
+    >>> c = p.convert(kind=P.Chebyshev)
     >>> c
     Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    >>> P.poly2cheb(range(4))
+    array([ 1.  ,  3.25,  1.  ,  0.75])
 
     """
     [pol] = pu.as_series([pol])
-    pol = pol[::-1]
-    zs = pol[:1].copy()
-    x = np.array([.5, 0, .5], dtype=pol.dtype)
-    for i in range(1, len(pol)) :
-        zs = _zseries_mul(zs, x)
-        zs[i] += pol[i]
-    return _zseries_to_cseries(zs)
+    deg = len(pol) - 1
+    res = 0
+    for i in range(deg, -1, -1) :
+        res = chebadd(chebmulx(res), pol[i])
+    return res
 
 
 def cheb2poly(cs) :
     """
-    cheb2poly(cs)
-
     Convert a Chebyshev series to a polynomial.
 
     Convert an array representing the coefficients of a Chebyshev series,
@@ -386,31 +380,37 @@ def cheb2poly(cs) :
 
     Notes
     -----
-    Note that a consequence of the input needing to be array_like and that
-    the output is an ndarray, is that if one is going to use this function
-    to convert a Chebyshev instance, T, to a Polynomial instance, P, the
-    usage is ``P = Polynomial(cheb2poly(T.coef))``; see Examples below.
+    The easy way to do conversions between polynomial basis sets
+    is to use the convert method of a class instance.
 
     Examples
     --------
     >>> from numpy import polynomial as P
-    >>> c = P.Chebyshev(np.arange(4))
+    >>> c = P.Chebyshev(range(4))
     >>> c
     Chebyshev([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> p = P.Polynomial(P.cheb2poly(c.coef))
+    >>> p = c.convert(kind=P.Polynomial)
     >>> p
     Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
+    >>> P.cheb2poly(range(4))
+    array([ -2.,  -8.,   4.,  12.])
 
     """
+    from polynomial import polyadd, polysub, polymulx
+
     [cs] = pu.as_series([cs])
-    pol = np.zeros(len(cs), dtype=cs.dtype)
-    quo = _cseries_to_zseries(cs)
-    x = np.array([.5, 0, .5], dtype=pol.dtype)
-    for i in range(0, len(cs) - 1) :
-        quo, rem = _zseries_div(quo, x)
-        pol[i] = rem[0]
-    pol[-1] = quo[0]
-    return pol
+    n = len(cs)
+    if n < 3:
+        return cs
+    else:
+        c0 = cs[-2]
+        c1 = cs[-1]
+        for i in range(n - 3, -1, -1) :
+            tmp = c0
+            c0 = polysub(cs[i], c1)
+            c1 = polyadd(tmp, polymulx(c1)*2)
+        return polyadd(c0, polymulx(c1))
+
 
 #
 # These are constant arrays are of integer type so as to be compatible
@@ -521,10 +521,9 @@ def chebfromroots(roots) :
     else :
         [roots] = pu.as_series([roots], trim=False)
         prd = np.array([1], dtype=roots.dtype)
-        for r in roots :
-            fac = np.array([.5, -r, .5], dtype=roots.dtype)
-            prd = _zseries_mul(fac, prd)
-        return _zseries_to_cseries(prd)
+        for r in roots:
+            prd = chebsub(chebmulx(prd), r*prd)
+        return prd
 
 
 def chebadd(c1, c2):
@@ -628,6 +627,45 @@ def chebsub(c1, c2):
         c2[:c1.size] += c1
         ret = c2
     return pu.trimseq(ret)
+
+
+def chebmulx(cs):
+    """Multiply a Chebyshev series by x.
+
+    Multiply the polynomial `cs` by x, where x is the independent
+    variable.
+
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Chebyshev series coefficients ordered from low to
+        high.
+
+    Returns
+    -------
+    out : ndarray
+        Array representing the result of the multiplication.
+
+    Notes
+    -----
+    .. versionadded:: 1.5.0
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    # The zero series needs special treatment
+    if len(cs) == 1 and cs[0] == 0:
+        return cs
+
+    prd = np.empty(len(cs) + 1, dtype=cs.dtype)
+    prd[0] = cs[0]*0
+    prd[1] = cs[0]
+    if len(cs) > 1:
+        tmp = cs[1:]/2
+        prd[2:] = tmp
+        prd[0:-2] += tmp
+    return prd
 
 
 def chebmul(c1, c2):
@@ -944,7 +982,7 @@ def chebint(cs, m=1, k=[], lbnd=0, scl=1):
 
     """
     cnt = int(m)
-    if np.isscalar(k) :
+    if not np.iterable(k):
         k = [k]
 
     if cnt != m:
@@ -1046,7 +1084,7 @@ def chebvander(x, deg) :
     ----------
     x : array_like
         Array of points. The values are converted to double or complex
-        doubles.
+        doubles. If x is scalar it is converted to a 1D array.
     deg : integer
         Degree of the resulting matrix.
 
@@ -1057,15 +1095,23 @@ def chebvander(x, deg) :
         index is the degree.
 
     """
-    x = np.asarray(x) + 0.0
-    order = int(deg) + 1
-    v = np.ones((order,) + x.shape, dtype=x.dtype)
-    if order > 1 :
+    ideg = int(deg)
+    if ideg != deg:
+        raise ValueError("deg must be integer")
+    if ideg < 0:
+        raise ValueError("deg must be non-negative")
+
+    x = np.array(x, copy=0, ndmin=1) + 0.0
+    v = np.empty((ideg + 1,) + x.shape, dtype=x.dtype)
+    # Use forward recursion to generate the entries.
+    v[0] = x*0 + 1
+    if ideg > 0 :
         x2 = 2*x
         v[1] = x
-        for i in range(2, order) :
+        for i in range(2, ideg + 1) :
             v[i] = v[i-1]*x2 - v[i-2]
     return np.rollaxis(v, 0, v.ndim)
+
 
 def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
@@ -1270,12 +1316,17 @@ def chebroots(cs):
         return np.array([], dtype=cs.dtype)
     if len(cs) == 2 :
         return np.array([-cs[0]/cs[1]])
+
     n = len(cs) - 1
+    cs /= cs[-1]
     cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat.flat[1::n+1] = .5
-    cmat.flat[n::n+1] = .5
     cmat[1, 0] = 1
-    cmat[:,-1] -= cs[:-1]*(.5/cs[-1])
+    for i in range(1, n):
+        cmat[i - 1, i] = .5
+        if i != n - 1:
+            cmat[i + 1, i] = .5
+        else:
+            cmat[:, i] -= cs[:-1]*.5
     roots = la.eigvals(cmat)
     roots.sort()
     return roots
@@ -1286,4 +1337,3 @@ def chebroots(cs):
 #
 
 exec polytemplate.substitute(name='Chebyshev', nick='cheb', domain='[-1,1]')
-
