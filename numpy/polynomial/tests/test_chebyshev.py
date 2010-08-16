@@ -347,34 +347,34 @@ class TestMisc(TestCase) :
 
     def test_chebpts1(self):
         #test exceptions
-        yield assert_raises(ValueError, ch.chebpts1, 1.5)
-        yield assert_raises(ValueError, ch.chebpts1, 0)
+        assert_raises(ValueError, ch.chebpts1, 1.5)
+        assert_raises(ValueError, ch.chebpts1, 0)
 
         #test points
         tgt = [0]
-        yield assert_almost_equal(ch.chebpts1(1), tgt)
+        assert_almost_equal(ch.chebpts1(1), tgt)
         tgt = [-0.70710678118654746, 0.70710678118654746]
-        yield assert_almost_equal(ch.chebpts1(2), tgt)
+        assert_almost_equal(ch.chebpts1(2), tgt)
         tgt = [-0.86602540378443871, 0, 0.86602540378443871]
-        yield assert_almost_equal(ch.chebpts1(3), tgt)
+        assert_almost_equal(ch.chebpts1(3), tgt)
         tgt = [-0.9238795325, -0.3826834323,  0.3826834323,  0.9238795325]
-        yield assert_almost_equal(ch.chebpts1(4), tgt)
+        assert_almost_equal(ch.chebpts1(4), tgt)
 
 
     def test_chebpts2(self):
         #test exceptions
-        yield assert_raises(ValueError, ch.chebpts2, 1.5)
-        yield assert_raises(ValueError, ch.chebpts2, 1)
+        assert_raises(ValueError, ch.chebpts2, 1.5)
+        assert_raises(ValueError, ch.chebpts2, 1)
 
         #test points
         tgt = [-1, 1]
-        yield assert_almost_equal(ch.chebpts2(2), tgt)
+        assert_almost_equal(ch.chebpts2(2), tgt)
         tgt = [-1, 0, 1]
-        yield assert_almost_equal(ch.chebpts2(3), tgt)
-        tgt = [-1 -0.5, .5, 1]
-        yield assert_almost_equal(ch.chebpts2(4), tgt)
+        assert_almost_equal(ch.chebpts2(3), tgt)
+        tgt = [-1, -0.5, .5, 1]
+        assert_almost_equal(ch.chebpts2(4), tgt)
         tgt = [-1.0, -0.707106781187, 0, 0.707106781187, 1.0]
-        yield assert_almost_equal(ch.chebpts2(5), tgt)
+        assert_almost_equal(ch.chebpts2(5), tgt)
 
 
 
