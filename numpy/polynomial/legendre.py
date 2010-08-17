@@ -1,51 +1,47 @@
 """
-Objects for dealing with Chebyshev series.
+Objects for dealing with Legendre series.
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Chebyshev series, including a `Chebyshev` class that
+dealing with Legendre series, including a `Legendre` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `chebdomain` -- Chebyshev series default domain, [-1,1].
-- `chebzero` -- (Coefficients of the) Chebyshev series that evaluates
-  identically to 0.
-- `chebone` -- (Coefficients of the) Chebyshev series that evaluates
-  identically to 1.
-- `chebx` -- (Coefficients of the) Chebyshev series for the identity map,
-  ``f(x) = x``.
+- `legdomain` -- Legendre series default domain, [-1,1].
+- `legzero` -- Legendre series that evaluates identically to 0.
+- `legone` -- Legendre series that evaluates identically to 1.
+- `legx` -- Legendre series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `chebadd` -- add two Chebyshev series.
-- `chebsub` -- subtract one Chebyshev series from another.
-- `chebmul` -- multiply two Chebyshev series.
-- `chebdiv` -- divide one Chebyshev series by another.
-- `chebval` -- evaluate a Chebyshev series at given points.
+- `legmulx` -- multiply a Legendre series in ``P_i(x)`` by ``x``.
+- `legadd` -- add two Legendre series.
+- `legsub` -- subtract one Legendre series from another.
+- `legmul` -- multiply two Legendre series.
+- `legdiv` -- divide one Legendre series by another.
+- `legval` -- evaluate a Legendre series at given points.
 
 Calculus
 --------
-- `chebder` -- differentiate a Chebyshev series.
-- `chebint` -- integrate a Chebyshev series.
+- `legder` -- differentiate a Legendre series.
+- `legint` -- integrate a Legendre series.
 
 Misc Functions
 --------------
-- `chebfromroots` -- create a Chebyshev series with specified roots.
-- `chebroots` -- find the roots of a Chebyshev series.
-- `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
-- `chebfit` -- least-squares fit returning a Chebyshev series.
-- `chebpts1` -- Chebyshev points of the first kind.
-- `chebpts2` -- Chebyshev points of the second kind.
-- `chebtrim` -- trim leading coefficients from a Chebyshev series.
-- `chebline` -- Chebyshev series of given straight line.
-- `cheb2poly` -- convert a Chebyshev series to a polynomial.
-- `poly2cheb` -- convert a polynomial to a Chebyshev series.
+- `legfromroots` -- create a Legendre series with specified roots.
+- `legroots` -- find the roots of a Legendre series.
+- `legvander` -- Vandermonde-like matrix for Legendre polynomials.
+- `legfit` -- least-squares fit returning a Legendre series.
+- `legtrim` -- trim leading coefficients from a Legendre series.
+- `legline` -- Legendre series of given straight line.
+- `leg2poly` -- convert a Legendre series to a polynomial.
+- `poly2leg` -- convert a polynomial to a Legendre series.
 
 Classes
 -------
-- `Chebyshev` -- A Chebyshev series class.
+- `Legendre` -- A Legendre series class.
 
 See also
 --------
@@ -77,11 +73,10 @@ References
 """
 from __future__ import division
 
-__all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
-        'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebval',
-        'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
-        'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
-        'chebpts2', 'Chebyshev']
+__all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
+        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legval',
+        'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
+        'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre']
 
 import numpy as np
 import numpy.linalg as la
@@ -89,229 +84,17 @@ import polyutils as pu
 import warnings
 from polytemplate import polytemplate
 
-chebtrim = pu.trimcoef
+legtrim = pu.trimcoef
 
-#
-# A collection of functions for manipulating z-series. These are private
-# functions and do minimal error checking.
-#
-
-def _cseries_to_zseries(cs) :
-    """Covert Chebyshev series to z-series.
-
-    Covert a Chebyshev series to the equivalent z-series. The result is
-    never an empty array. The dtype of the return is the same as that of
-    the input. No checks are run on the arguments as this routine is for
-    internal use.
-
-    Parameters
-    ----------
-    cs : 1-d ndarray
-        Chebyshev coefficients, ordered from low to high
-
-    Returns
-    -------
-    zs : 1-d ndarray
-        Odd length symmetric z-series, ordered from  low to high.
-
+def poly2leg(pol) :
     """
-    n = cs.size
-    zs = np.zeros(2*n-1, dtype=cs.dtype)
-    zs[n-1:] = cs/2
-    return zs + zs[::-1]
+    poly2leg(pol)
 
-def _zseries_to_cseries(zs) :
-    """Covert z-series to a Chebyshev series.
-
-    Covert a z series to the equivalent Chebyshev series. The result is
-    never an empty array. The dtype of the return is the same as that of
-    the input. No checks are run on the arguments as this routine is for
-    internal use.
-
-    Parameters
-    ----------
-    zs : 1-d ndarray
-        Odd length symmetric z-series, ordered from  low to high.
-
-    Returns
-    -------
-    cs : 1-d ndarray
-        Chebyshev coefficients, ordered from  low to high.
-
-    """
-    n = (zs.size + 1)//2
-    cs = zs[n-1:].copy()
-    cs[1:n] *= 2
-    return cs
-
-def _zseries_mul(z1, z2) :
-    """Multiply two z-series.
-
-    Multiply two z-series to produce a z-series.
-
-    Parameters
-    ----------
-    z1, z2 : 1-d ndarray
-        The arrays must be 1-d but this is not checked.
-
-    Returns
-    -------
-    product : 1-d ndarray
-        The product z-series.
-
-    Notes
-    -----
-    This is simply convolution. If symmetic/anti-symmetric z-series are
-    denoted by S/A then the following rules apply:
-
-    S*S, A*A -> S
-    S*A, A*S -> A
-
-    """
-    return np.convolve(z1, z2)
-
-def _zseries_div(z1, z2) :
-    """Divide the first z-series by the second.
-
-    Divide `z1` by `z2` and return the quotient and remainder as z-series.
-    Warning: this implementation only applies when both z1 and z2 have the
-    same symmetry, which is sufficient for present purposes.
-
-    Parameters
-    ----------
-    z1, z2 : 1-d ndarray
-        The arrays must be 1-d and have the same symmetry, but this is not
-        checked.
-
-    Returns
-    -------
-
-    (quotient, remainder) : 1-d ndarrays
-        Quotient and remainder as z-series.
-
-    Notes
-    -----
-    This is not the same as polynomial division on account of the desired form
-    of the remainder. If symmetic/anti-symmetric z-series are denoted by S/A
-    then the following rules apply:
-
-    S/S -> S,S
-    A/A -> S,A
-
-    The restriction to types of the same symmetry could be fixed but seems like
-    uneeded generality. There is no natural form for the remainder in the case
-    where there is no symmetry.
-
-    """
-    z1 = z1.copy()
-    z2 = z2.copy()
-    len1 = len(z1)
-    len2 = len(z2)
-    if len2 == 1 :
-        z1 /= z2
-        return z1, z1[:1]*0
-    elif len1 < len2 :
-        return z1[:1]*0, z1
-    else :
-        dlen = len1 - len2
-        scl = z2[0]
-        z2 /= scl
-        quo = np.empty(dlen + 1, dtype=z1.dtype)
-        i = 0
-        j = dlen
-        while i < j :
-            r = z1[i]
-            quo[i] = z1[i]
-            quo[dlen - i] = r
-            tmp = r*z2
-            z1[i:i+len2] -= tmp
-            z1[j:j+len2] -= tmp
-            i += 1
-            j -= 1
-        r = z1[i]
-        quo[i] = r
-        tmp = r*z2
-        z1[i:i+len2] -= tmp
-        quo /= scl
-        rem = z1[i+1:i-1+len2].copy()
-        return quo, rem
-
-def _zseries_der(zs) :
-    """Differentiate a z-series.
-
-    The derivative is with respect to x, not z. This is achieved using the
-    chain rule and the value of dx/dz given in the module notes.
-
-    Parameters
-    ----------
-    zs : z-series
-        The z-series to differentiate.
-
-    Returns
-    -------
-    derivative : z-series
-        The derivative
-
-    Notes
-    -----
-    The zseries for x (ns) has been multiplied by two in order to avoid
-    using floats that are incompatible with Decimal and likely other
-    specialized scalar types. This scaling has been compensated by
-    multiplying the value of zs by two also so that the two cancels in the
-    division.
-
-    """
-    n = len(zs)//2
-    ns = np.array([-1, 0, 1], dtype=zs.dtype)
-    zs *= np.arange(-n, n+1)*2
-    d, r = _zseries_div(zs, ns)
-    return d
-
-def _zseries_int(zs) :
-    """Integrate a z-series.
-
-    The integral is with respect to x, not z. This is achieved by a change
-    of variable using dx/dz given in the module notes.
-
-    Parameters
-    ----------
-    zs : z-series
-        The z-series to integrate
-
-    Returns
-    -------
-    integral : z-series
-        The indefinite integral
-
-    Notes
-    -----
-    The zseries for x (ns) has been multiplied by two in order to avoid
-    using floats that are incompatible with Decimal and likely other
-    specialized scalar types. This scaling has been compensated by
-    dividing the resulting zs by two.
-
-    """
-    n = 1 + len(zs)//2
-    ns = np.array([-1, 0, 1], dtype=zs.dtype)
-    zs = _zseries_mul(zs, ns)
-    div = np.arange(-n, n+1)*2
-    zs[:n] /= div[:n]
-    zs[n+1:] /= div[n+1:]
-    zs[n] = 0
-    return zs
-
-#
-# Chebyshev series functions
-#
-
-
-def poly2cheb(pol) :
-    """
-    Convert a polynomial to a Chebyshev series.
+    Convert a polynomial to a Legendre series.
 
     Convert an array representing the coefficients of a polynomial (relative
     to the "standard" basis) ordered from lowest degree to highest, to an
-    array of the coefficients of the equivalent Chebyshev series, ordered
+    array of the coefficients of the equivalent Legendre series, ordered
     from lowest to highest degree.
 
     Parameters
@@ -322,12 +105,12 @@ def poly2cheb(pol) :
     Returns
     -------
     cs : ndarray
-        1-d array containing the coefficients of the equivalent Chebyshev
+        1-d array containing the coefficients of the equivalent Legendre
         series.
 
     See Also
     --------
-    cheb2poly
+    leg2poly
 
     Notes
     -----
@@ -337,29 +120,27 @@ def poly2cheb(pol) :
     Examples
     --------
     >>> from numpy import polynomial as P
-    >>> p = P.Polynomial(range(4))
+    >>> p = P.Polynomial(np.arange(4))
     >>> p
     Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> c = p.convert(kind=P.Chebyshev)
+    >>> c = P.Legendre(P.poly2leg(p.coef))
     >>> c
-    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
-    >>> P.poly2cheb(range(4))
-    array([ 1.  ,  3.25,  1.  ,  0.75])
+    Legendre([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
 
     """
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
     for i in range(deg, -1, -1) :
-        res = chebadd(chebmulx(res), pol[i])
+        res = legadd(legmulx(res), pol[i])
     return res
 
 
-def cheb2poly(cs) :
+def leg2poly(cs) :
     """
-    Convert a Chebyshev series to a polynomial.
+    Convert a Legendre series to a polynomial.
 
-    Convert an array representing the coefficients of a Chebyshev series,
+    Convert an array representing the coefficients of a Legendre series,
     ordered from lowest degree to highest, to an array of the coefficients
     of the equivalent polynomial (relative to the "standard" basis) ordered
     from lowest to highest degree.
@@ -367,7 +148,7 @@ def cheb2poly(cs) :
     Parameters
     ----------
     cs : array_like
-        1-d array containing the Chebyshev series coefficients, ordered
+        1-d array containing the Legendre series coefficients, ordered
         from lowest order term to highest.
 
     Returns
@@ -379,7 +160,7 @@ def cheb2poly(cs) :
 
     See Also
     --------
-    poly2cheb
+    poly2leg
 
     Notes
     -----
@@ -389,14 +170,12 @@ def cheb2poly(cs) :
     Examples
     --------
     >>> from numpy import polynomial as P
-    >>> c = P.Chebyshev(range(4))
+    >>> c = P.Chebyshev(np.arange(4))
     >>> c
     Chebyshev([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> p = c.convert(kind=P.Polynomial)
+    >>> p = P.Polynomial(P.cheb2poly(c.coef))
     >>> p
     Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
-    >>> P.cheb2poly(range(4))
-    array([ -2.,  -8.,   4.,  12.])
 
     """
     from polynomial import polyadd, polysub, polymulx
@@ -411,27 +190,109 @@ def cheb2poly(cs) :
         # i is the current degree of c1
         for i in range(n - 1, 1, -1) :
             tmp = c0
-            c0 = polysub(cs[i - 2], c1)
-            c1 = polyadd(tmp, polymulx(c1)*2)
+            c0 = polysub(cs[i - 2], (c1*(i - 1))/i)
+            c1 = polyadd(tmp, (polymulx(c1)*(2*i - 1))/i)
         return polyadd(c0, polymulx(c1))
-
 
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
-# Chebyshev default domain.
-chebdomain = np.array([-1,1])
+# Legendre
+legdomain = np.array([-1,1])
 
-# Chebyshev coefficients representing zero.
-chebzero = np.array([0])
+# Legendre coefficients representing zero.
+legzero = np.array([0])
 
-# Chebyshev coefficients representing one.
-chebone = np.array([1])
+# Legendre coefficients representing one.
+legone = np.array([1])
 
-# Chebyshev coefficients representing the identity x.
-chebx = np.array([0,1])
+# Legendre coefficients representing the identity x.
+legx = np.array([0,1])
+
+
+def legline(off, scl) :
+    """
+    Legendre series whose graph is a straight line.
+
+
+
+    Parameters
+    ----------
+    off, scl : scalars
+        The specified line is given by ``off + scl*x``.
+
+    Returns
+    -------
+    y : ndarray
+        This module's representation of the Legendre series for
+        ``off + scl*x``.
+
+    See Also
+    --------
+    polyline, chebline
+
+    Examples
+    --------
+    >>> import numpy.polynomial.legendre as L
+    >>> L.legline(3,2)
+    array([3, 2])
+    >>> L.legval(-3, L.chebline(3,2)) # should be -3
+    -3.0
+
+    """
+    if scl != 0 :
+        return np.array([off,scl])
+    else :
+        return np.array([off])
+
+
+def legtimesx(cs):
+    """Multiply a Legendre series by x.
+
+    Multiply the Legendre series `cs` by x, where x is the independent
+    variable.
+
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Legendre series coefficients ordered from low to
+        high.
+
+    Returns
+    -------
+    out : ndarray
+        Array representing the result of the multiplication.
+
+    Notes
+    -----
+    The multiplication uses the recursion relationship for Legendre
+    polynomials in the form
+
+    .. math::
+
+    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    # The zero series needs special treatment
+    if len(cs) == 1 and cs[0] == 0:
+        return cs
+
+    prd = np.empty(len(cs) + 1, dtype=cs.dtype)
+    prd[0] = cs[0]*0
+    prd[1] = cs[0]
+    for i in range(1, len(cs)):
+        j = i + 1
+        k = i - 1
+        s = i + j
+        prd[j] = (cs[i]*j)/s
+        prd[k] += (cs[i]*i)/s
+    return prd
+
 
 def chebline(off, scl) :
     """
@@ -468,11 +329,12 @@ def chebline(off, scl) :
     else :
         return np.array([off])
 
-def chebfromroots(roots) :
-    """
-    Generate a Chebyshev series with the given roots.
 
-    Return the array of coefficients for the C-series whose roots (a.k.a.
+def legfromroots(roots) :
+    """
+    Generate a Legendre series with the given roots.
+
+    Return the array of coefficients for the P-series whose roots (a.k.a.
     "zeros") are given by *roots*.  The returned array of coefficients is
     ordered from lowest order "term" to highest, and zeros of multiplicity
     greater than one must be included in *roots* a number of times equal
@@ -487,14 +349,14 @@ def chebfromroots(roots) :
     Returns
     -------
     out : ndarray
-        1-d array of the C-series' coefficients, ordered from low to
+        1-d array of the Legendre series coefficients, ordered from low to
         high.  If all roots are real, ``out.dtype`` is a float type;
         otherwise, ``out.dtype`` is a complex type, even if all the
         coefficients in the result are real (see Examples below).
 
     See Also
     --------
-    polyfromroots
+    polyfromroots, chebfromroots
 
     Notes
     -----
@@ -502,22 +364,22 @@ def chebfromroots(roots) :
 
     .. math::
 
-        \\sum_{i=0}^{n} c_i*T_i(x) = \\prod_{i=0}^{n} (x - roots[i])
+        \\sum_{i=0}^{n} c_i*P_i(x) = \\prod_{i=0}^{n} (x - roots[i])
 
-    where ``n == len(roots)`` and :math:`T_i(x)` is the `i`-th Chebyshev
+    where ``n == len(roots)`` and :math:`P_i(x)` is the `i`-th Legendre
     (basis) polynomial over the domain `[-1,1]`.  Note that, unlike
-    `polyfromroots`, due to the nature of the C-series basis set, the
+    `polyfromroots`, due to the nature of the Legendre basis set, the
     above identity *does not* imply :math:`c_n = 1` identically (see
     Examples).
 
     Examples
     --------
-    >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebfromroots((-1,0,1)) # x^3 - x relative to the standard basis
-    array([ 0.  , -0.25,  0.  ,  0.25])
+    >>> import numpy.polynomial.legendre as L
+    >>> L.legfromroots((-1,0,1)) # x^3 - x relative to the standard basis
+    array([ 0. , -0.4,  0. ,  0.4])
     >>> j = complex(0,1)
-    >>> C.chebfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.5+0.j,  0.0+0.j,  0.5+0.j])
+    >>> L.legfromroots((-j,j)) # x^2 + 1 relative to the standard basis
+    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j])
 
     """
     if len(roots) == 0 :
@@ -526,46 +388,46 @@ def chebfromroots(roots) :
         [roots] = pu.as_series([roots], trim=False)
         prd = np.array([1], dtype=roots.dtype)
         for r in roots:
-            prd = chebsub(chebmulx(prd), r*prd)
+            prd = legsub(legmulx(prd), r*prd)
         return prd
 
 
-def chebadd(c1, c2):
+def legadd(c1, c2):
     """
-    Add one Chebyshev series to another.
+    Add one Legendre series to another.
 
-    Returns the sum of two Chebyshev series `c1` + `c2`.  The arguments
+    Returns the sum of two Legendre series `c1` + `c2`.  The arguments
     are sequences of coefficients ordered from lowest order term to
-    highest, i.e., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
+    highest, i.e., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-d arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Array representing the Chebyshev series of their sum.
+        Array representing the Legendre series of their sum.
 
     See Also
     --------
-    chebsub, chebmul, chebdiv, chebpow
+    legsub, legmul, legdiv, legpow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the sum of two Chebyshev series
-    is a Chebyshev series (without having to "reproject" the result onto
+    Unlike multiplication, division, etc., the sum of two Legendre series
+    is a Legendre series (without having to "reproject" the result onto
     the basis set) so addition, just like that of "standard" polynomials,
     is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial import chebyshev as C
+    >>> from numpy.polynomial import legendre as L
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
-    >>> C.chebadd(c1,c2)
+    >>> L.legadd(c1,c2)
     array([ 4.,  4.,  4.])
 
     """
@@ -580,44 +442,44 @@ def chebadd(c1, c2):
     return pu.trimseq(ret)
 
 
-def chebsub(c1, c2):
+def legsub(c1, c2):
     """
-    Subtract one Chebyshev series from another.
+    Subtract one Legendre series from another.
 
-    Returns the difference of two Chebyshev series `c1` - `c2`.  The
+    Returns the difference of two Legendre series `c1` - `c2`.  The
     sequences of coefficients are from lowest order term to highest, i.e.,
-    [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
+    [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-d arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Chebyshev series coefficients representing their difference.
+        Of Legendre series coefficients representing their difference.
 
     See Also
     --------
-    chebadd, chebmul, chebdiv, chebpow
+    legadd, legmul, legdiv, legpow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the difference of two Chebyshev
-    series is a Chebyshev series (without having to "reproject" the result
+    Unlike multiplication, division, etc., the difference of two Legendre
+    series is a Legendre series (without having to "reproject" the result
     onto the basis set) so subtraction, just like that of "standard"
     polynomials, is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial import chebyshev as C
+    >>> from numpy.polynomial import legendre as L
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
-    >>> C.chebsub(c1,c2)
+    >>> L.legsub(c1,c2)
     array([-2.,  0.,  2.])
-    >>> C.chebsub(c2,c1) # -C.chebsub(c1,c2)
+    >>> L.legsub(c2,c1) # -C.legsub(c1,c2)
     array([ 2.,  0., -2.])
 
     """
@@ -633,17 +495,17 @@ def chebsub(c1, c2):
     return pu.trimseq(ret)
 
 
-def chebmulx(cs):
-    """Multiply a Chebyshev series by x.
+def legmulx(cs):
+    """Multiply a Legendre series by x.
 
-    Multiply the polynomial `cs` by x, where x is the independent
+    Multiply the Legendre series `cs` by x, where x is the independent
     variable.
 
 
     Parameters
     ----------
     cs : array_like
-        1-d array of Chebyshev series coefficients ordered from low to
+        1-d array of Legendre series coefficients ordered from low to
         high.
 
     Returns
@@ -653,7 +515,12 @@ def chebmulx(cs):
 
     Notes
     -----
-    .. versionadded:: 1.5.0
+    The multiplication uses the recursion relationship for Legendre
+    polynomials in the form
+
+    .. math::
+
+    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
 
     """
     # cs is a trimmed copy
@@ -665,35 +532,37 @@ def chebmulx(cs):
     prd = np.empty(len(cs) + 1, dtype=cs.dtype)
     prd[0] = cs[0]*0
     prd[1] = cs[0]
-    if len(cs) > 1:
-        tmp = cs[1:]/2
-        prd[2:] = tmp
-        prd[0:-2] += tmp
+    for i in range(1, len(cs)):
+        j = i + 1
+        k = i - 1
+        s = i + j
+        prd[j] = (cs[i]*j)/s
+        prd[k] += (cs[i]*i)/s
     return prd
 
 
-def chebmul(c1, c2):
+def legmul(c1, c2):
     """
-    Multiply one Chebyshev series by another.
+    Multiply one Legendre series by another.
 
-    Returns the product of two Chebyshev series `c1` * `c2`.  The arguments
+    Returns the product of two Legendre series `c1` * `c2`.  The arguments
     are sequences of coefficients, from lowest order "term" to highest,
-    e.g., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
+    e.g., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-d arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Chebyshev series coefficients representing their product.
+        Of Legendre series coefficients representing their product.
 
     See Also
     --------
-    chebadd, chebsub, chebdiv, chebpow
+    legadd, legsub, legdiv, legpow
 
     Notes
     -----
@@ -705,66 +574,85 @@ def chebmul(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import chebyshev as C
+    >>> from numpy.polynomial import legendre as P
     >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> C.chebmul(c1,c2) # multiplication requires "reprojection"
-    array([  6.5,  12. ,  12. ,   4. ,   1.5])
+    >>> c2 = (3,2)
+    >>> P.legmul(c1,c2) # multiplication requires "reprojection"
+    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ])
 
     """
-    # c1, c2 are trimmed copies
+    # s1, s2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    z1 = _cseries_to_zseries(c1)
-    z2 = _cseries_to_zseries(c2)
-    prd = _zseries_mul(z1, z2)
-    ret = _zseries_to_cseries(prd)
-    return pu.trimseq(ret)
+
+    if len(c1) > len(c2):
+        cs = c2
+        xs = c1
+    else:
+        cs = c1
+        xs = c2
+
+    if len(cs) == 1:
+        c0 = cs[0]*xs
+        c1 = 0
+    elif len(cs) == 2:
+        c0 = cs[0]*xs
+        c1 = cs[1]*xs
+    else :
+        nd = len(cs)
+        c0 = cs[-2]*xs
+        c1 = cs[-1]*xs
+        for i in range(3, len(cs) + 1) :
+            tmp = c0
+            nd =  nd - 1
+            c0 = legsub(cs[-i]*xs, (c1*(nd - 1))/nd)
+            c1 = legadd(tmp, (legmulx(c1)*(2*nd - 1))/nd)
+    return legadd(c0, legmulx(c1))
 
 
-def chebdiv(c1, c2):
+def legdiv(c1, c2):
     """
-    Divide one Chebyshev series by another.
+    Divide one Legendre series by another.
 
-    Returns the quotient-with-remainder of two Chebyshev series
+    Returns the quotient-with-remainder of two Legendre series
     `c1` / `c2`.  The arguments are sequences of coefficients from lowest
     order "term" to highest, e.g., [1,2,3] represents the series
-    ``T_0 + 2*T_1 + 3*T_2``.
+    ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-d arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
     -------
     [quo, rem] : ndarrays
-        Of Chebyshev series coefficients representing the quotient and
+        Of Legendre series coefficients representing the quotient and
         remainder.
 
     See Also
     --------
-    chebadd, chebsub, chebmul, chebpow
+    legadd, legsub, legmul, legpow
 
     Notes
     -----
-    In general, the (polynomial) division of one C-series by another
-    results in quotient and remainder terms that are not in the Chebyshev
-    polynomial basis set.  Thus, to express these results as C-series, it
-    is typically necessary to "re-project" the results onto said basis
-    set, which typically produces "un-intuitive" (but correct) results;
-    see Examples section below.
+    In general, the (polynomial) division of one Legendre series by another
+    results in quotient and remainder terms that are not in the Legendre
+    polynomial basis set.  Thus, to express these results as a Legendre
+    series, it is necessary to "re-project" the results onto the Legendre
+    basis set, which may produce "un-intuitive" (but correct) results; see
+    Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial import chebyshev as C
+    >>> from numpy.polynomial import legendre as L
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
-    >>> C.chebdiv(c1,c2) # quotient "intuitive," remainder not
+    >>> L.legdiv(c1,c2) # quotient "intuitive," remainder not
     (array([ 3.]), array([-8., -4.]))
     >>> c2 = (0,1,2,3)
-    >>> C.chebdiv(c2,c1) # neither "intuitive"
-    (array([ 0.,  2.]), array([-2., -4.]))
+    >>> L.legdiv(c2,c1) # neither "intuitive"
+    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852]))
 
     """
     # c1, c2 are trimmed copies
@@ -779,24 +667,27 @@ def chebdiv(c1, c2):
     elif lc2 == 1 :
         return c1/c2[-1], c1[:1]*0
     else :
-        z1 = _cseries_to_zseries(c1)
-        z2 = _cseries_to_zseries(c2)
-        quo, rem = _zseries_div(z1, z2)
-        quo = pu.trimseq(_zseries_to_cseries(quo))
-        rem = pu.trimseq(_zseries_to_cseries(rem))
-        return quo, rem
+        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
+        rem = c1
+        for i in range(lc1 - lc2, - 1, -1):
+            p = legmul([0]*i + [1], c2)
+            q = rem[-1]/p[-1]
+            rem = rem[:-1] - q*p[:-1]
+            quo[i] = q
+        return quo, pu.trimseq(rem)
 
-def chebpow(cs, pow, maxpower=16) :
-    """Raise a Chebyshev series to a power.
 
-    Returns the Chebyshev series `cs` raised to the power `pow`. The
+def legpow(cs, pow, maxpower=16) :
+    """Raise a Legendre series to a power.
+
+    Returns the Legendre series `cs` raised to the power `pow`. The
     arguement `cs` is a sequence of coefficients ordered from low to high.
-    i.e., [1,2,3] is the series  ``T_0 + 2*T_1 + 3*T_2.``
+    i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters
     ----------
     cs : array_like
-        1d array of chebyshev series coefficients ordered from low to
+        1d array of Legendre series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
@@ -807,11 +698,11 @@ def chebpow(cs, pow, maxpower=16) :
     Returns
     -------
     coef : ndarray
-        Chebyshev series of power.
+        Legendre series of power.
 
     See Also
     --------
-    chebadd, chebsub, chebmul, chebdiv
+    legadd, legsub, legmul, legdiv
 
     Examples
     --------
@@ -831,26 +722,26 @@ def chebpow(cs, pow, maxpower=16) :
     else :
         # This can be made more efficient by using powers of two
         # in the usual way.
-        zs = _cseries_to_zseries(cs)
-        prd = zs
+        prd = cs
         for i in range(2, power + 1) :
-            prd = np.convolve(prd, zs)
-        return _zseries_to_cseries(prd)
+            prd = legmul(prd, cs)
+        return prd
 
-def chebder(cs, m=1, scl=1) :
+
+def legder(cs, m=1, scl=1) :
     """
-    Differentiate a Chebyshev series.
+    Differentiate a Legendre series.
 
     Returns the series `cs` differentiated `m` times.  At each iteration the
     result is multiplied by `scl` (the scaling factor is for use in a linear
     change of variable).  The argument `cs` is the sequence of coefficients
     from lowest order "term" to highest, e.g., [1,2,3] represents the series
-    ``T_0 + 2*T_1 + 3*T_2``.
+    ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     cs: array_like
-        1-d array of Chebyshev series coefficients ordered from low to high.
+        1-d array of Legendre series coefficients ordered from low to high.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
@@ -861,31 +752,31 @@ def chebder(cs, m=1, scl=1) :
     Returns
     -------
     der : ndarray
-        Chebyshev series of the derivative.
+        Legendre series of the derivative.
 
     See Also
     --------
-    chebint
+    legint
 
     Notes
     -----
-    In general, the result of differentiating a C-series needs to be
-    "re-projected" onto the C-series basis set. Thus, typically, the
-    result of this function is "un-intuitive," albeit correct; see Examples
-    section below.
+    In general, the result of differentiating a Legendre series does not
+    resemble the same operation on a power series. Thus the result of this
+    function may be "un-intuitive," albeit correct; see Examples section
+    below.
 
     Examples
     --------
-    >>> from numpy.polynomial import chebyshev as C
+    >>> from numpy.polynomial import legendre as L
     >>> cs = (1,2,3,4)
-    >>> C.chebder(cs)
-    array([ 14.,  12.,  24.])
-    >>> C.chebder(cs,3)
-    array([ 96.])
-    >>> C.chebder(cs,scl=-1)
-    array([-14., -12., -24.])
-    >>> C.chebder(cs,2,-1)
-    array([ 12.,  96.])
+    >>> L.legder(cs)
+    array([  6.,   9.,  20.])
+    >>> L.legder(cs,3)
+    array([ 60.])
+    >>> L.legder(cs,scl=-1)
+    array([ -6.,  -9., -20.])
+    >>> L.legder(cs,2,-1)
+    array([  9.,  60.])
 
     """
     cnt = int(m)
@@ -902,38 +793,43 @@ def chebder(cs, m=1, scl=1) :
     elif cnt >= len(cs):
         return cs[:1]*0
     else :
-        zs = _cseries_to_zseries(cs)
         for i in range(cnt):
-            zs = _zseries_der(zs)*scl
-        return _zseries_to_cseries(zs)
+            n = len(cs) - 1
+            cs *= scl
+            der = np.empty(n, dtype=cs.dtype)
+            for j in range(n, 0, -1):
+                der[j - 1] = (2*j - 1)*cs[j]
+                cs[j - 2] += cs[j]
+            cs = der
+        return cs
 
 
-def chebint(cs, m=1, k=[], lbnd=0, scl=1):
+def legint(cs, m=1, k=[], lbnd=0, scl=1):
     """
-    Integrate a Chebyshev series.
+    Integrate a Legendre series.
 
-    Returns, as a C-series, the input C-series `cs`, integrated `m` times
-    from `lbnd` to `x`.  At each iteration the resulting series is
-    **multiplied** by `scl` and an integration constant, `k`, is added.
+    Returns a Legendre series that is the Legendre series `cs`, integrated
+    `m` times from `lbnd` to `x`.  At each iteration the resulting series
+    is **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `cs` is a sequence of
-    coefficients, from lowest order C-series "term" to highest, e.g.,
-    [1,2,3] represents the series :math:`T_0(x) + 2T_1(x) + 3T_2(x)`.
+    coefficients, from lowest order Legendre series "term" to highest,
+    e.g., [1,2,3] represents the series :math:`P_0(x) + 2P_1(x) + 3P_2(x)`.
 
     Parameters
     ----------
     cs : array_like
-        1-d array of C-series coefficients, ordered from low to high.
+        1-d array of Legendre series coefficients, ordered from low to high.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
-        Integration constant(s).  The value of the first integral at zero
-        is the first value in the list, the value of the second integral
-        at zero is the second value, etc.  If ``k == []`` (the default),
-        all constants are set to zero.  If ``m == 1``, a single scalar can
-        be given instead of a list.
+        Integration constant(s).  The value of the first integral at
+        ``lbnd`` is the first value in the list, the value of the second
+        integral at ``lbnd`` is the second value, etc.  If ``k == []`` (the
+        default), all constants are set to zero.  If ``m == 1``, a single
+        scalar can be given instead of a list.
     lbnd : scalar, optional
         The lower bound of the integral. (Default: 0)
     scl : scalar, optional
@@ -943,17 +839,17 @@ def chebint(cs, m=1, k=[], lbnd=0, scl=1):
     Returns
     -------
     S : ndarray
-        C-series coefficients of the integral.
+        Legendre series coefficients of the integral.
 
     Raises
     ------
     ValueError
-        If ``m < 1``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
+        If ``m < 0``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
         ``np.isscalar(scl) == False``.
 
     See Also
     --------
-    chebder
+    legder
 
     Notes
     -----
@@ -970,23 +866,23 @@ def chebint(cs, m=1, k=[], lbnd=0, scl=1):
 
     Examples
     --------
-    >>> from numpy.polynomial import chebyshev as C
+    >>> from numpy.polynomial import legyshev as L
     >>> cs = (1,2,3)
-    >>> C.chebint(cs)
+    >>> L.legint(cs)
     array([ 0.5, -0.5,  0.5,  0.5])
-    >>> C.chebint(cs,3)
+    >>> L.legint(cs,3)
     array([ 0.03125   , -0.1875    ,  0.04166667, -0.05208333,  0.01041667,
             0.00625   ])
-    >>> C.chebint(cs, k=3)
+    >>> L.legint(cs, k=3)
     array([ 3.5, -0.5,  0.5,  0.5])
-    >>> C.chebint(cs,lbnd=-2)
+    >>> L.legint(cs,lbnd=-2)
     array([ 8.5, -0.5,  0.5,  0.5])
-    >>> C.chebint(cs,scl=-2)
+    >>> L.legint(cs,scl=-2)
     array([-1.,  1., -1., -1.])
 
     """
     cnt = int(m)
-    if not np.iterable(k):
+    if np.isscalar(k) :
         k = [k]
 
     if cnt != m:
@@ -1008,18 +904,24 @@ def chebint(cs, m=1, k=[], lbnd=0, scl=1):
         if n == 1 and cs[0] == 0:
             cs[0] += k[i]
         else:
-            zs = _cseries_to_zseries(cs)
-            zs = _zseries_int(zs)
-            cs = _zseries_to_cseries(zs)
-            cs[0] += k[i] - chebval(lbnd, cs)
+            tmp = np.empty(n + 1, dtype=cs.dtype)
+            tmp[0] = cs[0]*0
+            tmp[1] = cs[0]
+            for j in range(1, n):
+                t = cs[j]/(2*j + 1)
+                tmp[j + 1] = t
+                tmp[j - 1] -= t
+            tmp[0] += k[i] - legval(lbnd, tmp)
+            cs = tmp
     return cs
 
-def chebval(x, cs):
-    """Evaluate a Chebyshev series.
+
+def legval(x, cs):
+    """Evaluate a Legendre series.
 
     If `cs` is of length `n`, this function returns :
 
-    ``p(x) = cs[0]*T_0(x) + cs[1]*T_1(x) + ... + cs[n-1]*T_{n-1}(x)``
+    ``p(x) = cs[0]*P_0(x) + cs[1]*P_1(x) + ... + cs[n-1]*P_{n-1}(x)``
 
     If x is a sequence or array then p(x) will have the same shape as x.
     If r is a ring_like object that supports multiplication and addition
@@ -1040,7 +942,7 @@ def chebval(x, cs):
 
     See Also
     --------
-    chebfit
+    legfit
 
     Examples
     --------
@@ -1065,23 +967,25 @@ def chebval(x, cs):
         c0 = cs[0]
         c1 = cs[1]
     else :
-        x2 = 2*x
+        nd = len(cs)
         c0 = cs[-2]
         c1 = cs[-1]
         for i in range(3, len(cs) + 1) :
             tmp = c0
-            c0 = cs[-i] - c1
-            c1 = tmp + c1*x2
+            nd =  nd - 1
+            c0 = cs[-i] - (c1*(nd - 1))/nd
+            c1 = tmp + (c1*x*(2*nd - 1))/nd
     return c0 + c1*x
 
-def chebvander(x, deg) :
+
+def legvander(x, deg) :
     """Vandermonde matrix of given degree.
 
     Returns the Vandermonde matrix of degree `deg` and sample points `x`.
     This isn't a true Vandermonde matrix because `x` can be an arbitrary
-    ndarray and the Chebyshev polynomials aren't powers. If ``V`` is the
+    ndarray and the Legendre polynomials aren't powers. If ``V`` is the
     returned matrix and `x` is a 2d array, then the elements of ``V`` are
-    ``V[i,j,k] = T_k(x[i,j])``, where ``T_k`` is the Chebyshev polynomial
+    ``V[i,j,k] = P_k(x[i,j])``, where ``P_k`` is the Legendre polynomial
     of degree ``k``.
 
     Parameters
@@ -1107,22 +1011,22 @@ def chebvander(x, deg) :
 
     x = np.array(x, copy=0, ndmin=1) + 0.0
     v = np.empty((ideg + 1,) + x.shape, dtype=x.dtype)
-    # Use forward recursion to generate the entries.
+    # Use forward recursion to generate the entries. This is not as accurate
+    # as reverse recursion in this application but it is more efficient.
     v[0] = x*0 + 1
     if ideg > 0 :
-        x2 = 2*x
         v[1] = x
         for i in range(2, ideg + 1) :
-            v[i] = v[i-1]*x2 - v[i-2]
+            v[i] = (v[i-1]*x*(2*i - 1) - v[i-2]*(i - 1))/i
     return np.rollaxis(v, 0, v.ndim)
 
 
-def chebfit(x, y, deg, rcond=None, full=False, w=None):
+def legfit(x, y, deg, rcond=None, full=False, w=None):
     """
-    Least squares fit of Chebyshev series to data.
+    Least squares fit of Legendre series to data.
 
-    Fit a Chebyshev series ``p(x) = p[0] * T_{0}(x) + ... + p[deg] *
-    T_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
+    Fit a Legendre series ``p(x) = p[0] * P_{0}(x) + ... + p[deg] *
+    P_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
     coefficients `p` that minimises the squared error.
 
     Parameters
@@ -1149,12 +1053,11 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
-        .. versionadded:: 1.5.0
 
     Returns
     -------
     coef : ndarray, shape (M,) or (M, K)
-        Chebyshev coefficients ordered from low to high. If `y` was 2-D,
+        Legendre coefficients ordered from low to high. If `y` was 2-D,
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
@@ -1175,18 +1078,19 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebval : Evaluates a Chebyshev series.
-    chebvander : Vandermonde matrix of Chebyshev series.
+    legval : Evaluates a Legendre series.
+    legvander : Vandermonde matrix of Legendre series.
     polyfit : least squares fit using polynomials.
+    chebfit : least squares fit using Chebyshev series.
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution are the coefficients ``c[i]`` of the Chebyshev series
-    ``T(x)`` that minimizes the squared error
+    The solution are the coefficients ``c[i]`` of the Legendre series
+    ``P(x)`` that minimizes the squared error
 
-    ``E = \\sum_j |y_j - T(x_j)|^2``.
+    ``E = \\sum_j |y_j - P(x_j)|^2``.
 
     This problem is solved by setting up as the overdetermined matrix
     equation
@@ -1205,7 +1109,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
 
-    Fits using Chebyshev series are usually better conditioned than fits
+    Fits using Legendre series are usually better conditioned than fits
     using power series, but much can depend on the distribution of the
     sample points and the smoothness of the data. If the quality of the fit
     is inadequate splines may be a good alternative.
@@ -1236,7 +1140,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         raise TypeError, "expected x and y to have same length"
 
     # set up the least squares matrices
-    lhs = chebvander(x, deg)
+    lhs = legvander(x, deg)
     rhs = y
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1272,19 +1176,19 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def chebroots(cs):
+def legroots(cs):
     """
     Compute the roots of a Chebyshev series.
 
-    Return the roots (a.k.a "zeros") of the C-series represented by `cs`,
-    which is the sequence of the C-series' coefficients from lowest order
-    "term" to highest, e.g., [1,2,3] represents the C-series
-    ``T_0 + 2*T_1 + 3*T_2``.
+    Return the roots (a.k.a "zeros") of the Legendre series represented by
+    `cs`, which is the sequence of the C-series' coefficients from lowest
+    order "term" to highest, e.g., [1,2,3] represents the Legendre series
+    ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     cs : array_like
-        1-d array of C-series coefficients ordered from low to high.
+        1-d array of Legendre series coefficients ordered from low to high.
 
     Returns
     -------
@@ -1295,22 +1199,23 @@ def chebroots(cs):
     See Also
     --------
     polyroots
+    chebroots
 
     Notes
     -----
     Algorithm(s) used:
 
-    Remember: because the C-series basis set is different from the
+    Remember: because the Legendre series basis set is different from the
     "standard" basis set, the results of this function *may* not be what
     one is expecting.
 
     Examples
     --------
     >>> import numpy.polynomial as P
-    >>> import numpy.polynomial.chebyshev as C
+    >>> import numpy.polynomial.Legendre as L
     >>> P.polyroots((-1,1,-1,1)) # x^3 - x^2 + x - 1 has two complex roots
     array([ -4.99600361e-16-1.j,  -4.99600361e-16+1.j,   1.00000e+00+0.j])
-    >>> C.chebroots((-1,1,-1,1)) # T3 - T2 + T1 - T0 has only real roots
+    >>> L.legroots((-1,1,-1,1)) # T3 - T2 + T1 - T0 has only real roots
     array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
 
     """
@@ -1326,80 +1231,19 @@ def chebroots(cs):
     cmat = np.zeros((n,n), dtype=cs.dtype)
     cmat[1, 0] = 1
     for i in range(1, n):
-        cmat[i - 1, i] = .5
+        tmp = 2*i + 1
+        cmat[i - 1, i] = i/tmp
         if i != n - 1:
-            cmat[i + 1, i] = .5
+            cmat[i + 1, i] = (i + 1)/tmp
         else:
-            cmat[:, i] -= cs[:-1]*.5
+            cmat[:, i] -= cs[:-1]*(i + 1)/tmp
     roots = la.eigvals(cmat)
     roots.sort()
     return roots
 
 
-def chebpts1(npts):
-    """Chebyshev points of the first kind.
-
-    Chebyshev points of the first kind are the set ``{cos(x_k)}``,
-    where ``x_k = pi*(k + .5)/npts`` for k in ``range(npts}``.
-
-    Parameters
-    ----------
-    npts: int
-        Number of sample points desired.
-
-    Returns
-    -------
-    pts: ndarray
-        The Chebyshev points of the second kind.
-
-    Notes
-    -----
-    .. versionadded:: 1.5.0
-
-    """
-    _npts = int(npts)
-    if _npts != npts:
-        raise ValueError("npts must be integer")
-    if _npts < 1:
-        raise ValueError("npts must be >= 1")
-
-    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
-    return np.cos(x)
-
-
-def chebpts2(npts):
-    """Chebyshev points of the second kind.
-
-    Chebyshev points of the second kind are the set ``{cos(x_k)}``,
-    where ``x_k = pi*/(npts - 1)`` for k in ``range(npts}``.
-
-    Parameters
-    ----------
-    npts: int
-        Number of sample points desired.
-
-    Returns
-    -------
-    pts: ndarray
-        The Chebyshev points of the second kind.
-
-    Notes
-    -----
-    .. versionadded:: 1.5.0
-
-    """
-    _npts = int(npts)
-    if _npts != npts:
-        raise ValueError("npts must be integer")
-    if _npts < 2:
-        raise ValueError("npts must be >= 2")
-
-    x = np.linspace(-np.pi, 0, _npts)
-    return np.cos(x)
-
-
 #
-# Chebyshev series class
+# Legendre series class
 #
 
-exec polytemplate.substitute(name='Chebyshev', nick='cheb', domain='[-1,1]')
+exec polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]')

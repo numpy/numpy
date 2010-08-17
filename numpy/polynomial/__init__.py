@@ -15,6 +15,7 @@ information can be found in the docstring for the module of interest.
 """
 from polynomial import *
 from chebyshev import *
+from legendre import *
 from polyutils import *
 
 from numpy.testing import Tester
