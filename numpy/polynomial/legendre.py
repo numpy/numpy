@@ -47,29 +47,6 @@ See also
 --------
 `numpy.polynomial`
 
-Notes
------
-The implementations of multiplication, division, integration, and
-differentiation use the algebraic identities [1]_:
-
-.. math ::
-    T_n(x) = \\frac{z^n + z^{-n}}{2} \\\\
-    z\\frac{dx}{dz} = \\frac{z - z^{-1}}{2}.
-
-where
-
-.. math :: x = \\frac{z + z^{-1}}{2}.
-
-These identities allow a Chebyshev series to be expressed as a finite,
-symmetric Laurent series.  In this module, this sort of Laurent series
-is referred to as a "z-series."
-
-References
-----------
-.. [1] A. T. Benjamin, et al., "Combinatorial Trigonometry with Chebyshev
-  Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
-  (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
-
 """
 from __future__ import division
 
@@ -169,13 +146,15 @@ def leg2poly(cs) :
 
     Examples
     --------
-    >>> from numpy import polynomial as P
-    >>> c = P.Chebyshev(np.arange(4))
+    >>> c = P.Legendre(range(4))
     >>> c
-    Chebyshev([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> p = P.Polynomial(P.cheb2poly(c.coef))
+    Legendre([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    >>> p = c.convert(kind=P.Polynomial)
     >>> p
-    Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
+    Polynomial([-1. , -3.5,  3. ,  7.5], [-1.,  1.])
+    >>> P.leg2poly(range(4))
+    array([-1. , -3.5,  3. ,  7.5])
+
 
     """
     from polynomial import polyadd, polysub, polymulx
@@ -238,7 +217,7 @@ def legline(off, scl) :
     >>> import numpy.polynomial.legendre as L
     >>> L.legline(3,2)
     array([3, 2])
-    >>> L.legval(-3, L.chebline(3,2)) # should be -3
+    >>> L.legval(-3, L.legline(3,2)) # should be -3
     -3.0
 
     """
@@ -292,42 +271,6 @@ def legtimesx(cs):
         prd[j] = (cs[i]*j)/s
         prd[k] += (cs[i]*i)/s
     return prd
-
-
-def chebline(off, scl) :
-    """
-    Chebyshev series whose graph is a straight line.
-
-
-
-    Parameters
-    ----------
-    off, scl : scalars
-        The specified line is given by ``off + scl*x``.
-
-    Returns
-    -------
-    y : ndarray
-        This module's representation of the Chebyshev series for
-        ``off + scl*x``.
-
-    See Also
-    --------
-    polyline
-
-    Examples
-    --------
-    >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebline(3,2)
-    array([3, 2])
-    >>> C.chebval(-3, C.chebline(3,2)) # should be -3
-    -3.0
-
-    """
-    if scl != 0 :
-        return np.array([off,scl])
-    else :
-        return np.array([off])
 
 
 def legfromroots(roots) :
@@ -567,14 +510,14 @@ def legmul(c1, c2):
     Notes
     -----
     In general, the (polynomial) product of two C-series results in terms
-    that are not in the Chebyshev polynomial basis set.  Thus, to express
-    the product as a C-series, it is typically necessary to "re-project"
-    the product onto said basis set, which typically produces
-    "un-intuitive" (but correct) results; see Examples section below.
+    that are not in the Legendre polynomial basis set.  Thus, to express
+    the product as a Legendre series, it is necessary to "re-project" the
+    product onto said basis set, which may produce "un-intuitive" (but
+    correct) results; see Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as P
+    >>> from numpy.polynomial import legendre as L
     >>> c1 = (1,2,3)
     >>> c2 = (3,2)
     >>> P.legmul(c1,c2) # multiplication requires "reprojection"
@@ -866,19 +809,19 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
 
     Examples
     --------
-    >>> from numpy.polynomial import legyshev as L
+    >>> from numpy.polynomial import legendre as L
     >>> cs = (1,2,3)
     >>> L.legint(cs)
-    array([ 0.5, -0.5,  0.5,  0.5])
+    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
     >>> L.legint(cs,3)
-    array([ 0.03125   , -0.1875    ,  0.04166667, -0.05208333,  0.01041667,
-            0.00625   ])
+    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
+            -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
     >>> L.legint(cs, k=3)
-    array([ 3.5, -0.5,  0.5,  0.5])
-    >>> L.legint(cs,lbnd=-2)
-    array([ 8.5, -0.5,  0.5,  0.5])
-    >>> L.legint(cs,scl=-2)
-    array([-1.,  1., -1., -1.])
+    array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
+    >>> L.legint(cs, lbnd=-2)
+    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
+    >>> L.legint(cs, scl=2)
+    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
 
     """
     cnt = int(m)
@@ -933,7 +876,7 @@ def legval(x, cs):
         Array of numbers or objects that support multiplication and
         addition with themselves and with the elements of `cs`.
     cs : array_like
-        1-d array of Chebyshev coefficients ordered from low to high.
+        1-d array of Legendre coefficients ordered from low to high.
 
     Returns
     -------
@@ -1178,12 +1121,11 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
 def legroots(cs):
     """
-    Compute the roots of a Chebyshev series.
+    Compute the roots of a Legendre series.
 
     Return the roots (a.k.a "zeros") of the Legendre series represented by
-    `cs`, which is the sequence of the C-series' coefficients from lowest
-    order "term" to highest, e.g., [1,2,3] represents the Legendre series
-    ``P_0 + 2*P_1 + 3*P_2``.
+    `cs`, which is the sequence of coefficients from lowest order "term"
+    to highest, e.g., [1,2,3] is the series ``L_0 + 2*L_1 + 3*L_2``.
 
     Parameters
     ----------
@@ -1212,11 +1154,11 @@ def legroots(cs):
     Examples
     --------
     >>> import numpy.polynomial as P
-    >>> import numpy.polynomial.Legendre as L
-    >>> P.polyroots((-1,1,-1,1)) # x^3 - x^2 + x - 1 has two complex roots
-    array([ -4.99600361e-16-1.j,  -4.99600361e-16+1.j,   1.00000e+00+0.j])
-    >>> L.legroots((-1,1,-1,1)) # T3 - T2 + T1 - T0 has only real roots
-    array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
+    >>> P.polyroots((1, 2, 3, 4)) # 4x^3 + 3x^2 + 2x + 1 has two complex roots
+    array([-0.60582959+0.j        , -0.07208521-0.63832674j,
+           -0.07208521+0.63832674j])
+    >>> P.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
+    array([-0.85099543, -0.11407192,  0.51506735])
 
     """
     # cs is a trimmed copy
