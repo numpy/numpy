@@ -202,7 +202,7 @@ def bdist_superpack(options):
     pyver = options.python_version
     def copy_bdist(arch):
         # Copy the wininst in dist into the release directory
-        if pyver[0] >= 3:
+        if int(pyver[0]) >= 3:
             source = os.path.join('build', 'py3k', 'dist', wininst_name(pyver))
         else:
             source = os.path.join('dist', wininst_name(pyver))
