@@ -56,7 +56,7 @@ PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 5
 MICRO               = 0
-ISRELEASED          = True
+ISRELEASED          = False
 VERSION             = '%d.%d.%db2' % (MAJOR, MINOR, MICRO)
 
 # Return the svn version as a string, raise a ValueError otherwise
