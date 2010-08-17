@@ -545,7 +545,7 @@ class $name(pu.PolyBase) :
         roots = ${nick}roots(self.coef)
         return pu.mapdomain(roots, $domain, self.domain)
 
-    def linspace(self, n):
+    def linspace(self, n=100):
         """Return x,y values at equally spaced points in domain.
 
         Returns x, y values at `n` equally spaced points across domain.
@@ -554,8 +554,8 @@ class $name(pu.PolyBase) :
 
         Paramters
         ---------
-        n : int
-            Number of point pairs to return.
+        n : int, optional
+            Number of point pairs to return. The default value is 100.
 
         Returns
         -------
