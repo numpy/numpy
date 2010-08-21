@@ -215,12 +215,12 @@ def check_ieee_macros(config):
     _macros = ["isnan", "isinf", "signbit", "isfinite"]
     if sys.version_info[:2] >= (2, 6):
         for f in _macros:
-            st = config.check_decl(fname2def("decl_%s" % f),
+            already_declared = config.check_decl(fname2def("decl_%s" % f),
                     headers=["Python.h", "math.h"])
-            if not st:
-                macros.append(f)
+            if already_declared:
+                pub.append('NPY_%s' % fname2def("decl_%s" % f))
             else:
-                _add_decl(f)
+                macros.append(f)
     else:
         macros = _macros[:]
     # Normally, isnan and isinf are macro (C99), but some platforms only have
