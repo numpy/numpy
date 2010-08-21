@@ -243,6 +243,7 @@ For example::
 
 Update PyPi
 -----------
+The final release (not betas or release candidates) should be uploaded to PyPi.
 There are two ways to update PyPi, the first one is::
 
   $ python setup.py sdist upload
@@ -261,7 +262,8 @@ sidebar of the front page of scipy.org.
 Announce to the lists 
 ---------------------
 The release should be announced on the mailing lists of
-NumPy and SciPy, and possibly also those of Matplotlib,IPython and/or Pygame.
+NumPy and SciPy, to python-announce, and possibly also those of
+Matplotlib,IPython and/or Pygame.
 
 During the beta/RC phase an explicit request for testing the binaries with
 several other libraries (SciPy/Matplotlib/Pygame) should be posted on the
