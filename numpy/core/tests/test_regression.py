@@ -1008,7 +1008,11 @@ class TestRegression(TestCase):
     def test_sign_for_complex_nan(self, level=rlevel):
         """Ticket 794."""
         C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
-        have = np.sign(C)
+        err = np.seterr(invalid="ignore")
+        try:
+            have = np.sign(C)
+        finally:
+            np.seterr(**err)        
         want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
         assert_equal(have, want)
 

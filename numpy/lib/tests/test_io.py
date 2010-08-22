@@ -849,7 +849,11 @@ M   33  21.99
     def test_withmissing(self):
         data = StringIO('A,B\n0,1\n2,N/A')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-        test = np.mafromtxt(data, dtype=None, **kwargs)
+        err = np.seterr(invalid='ignore')
+        try:
+            test = np.mafromtxt(data, dtype=None, **kwargs)
+        finally:
+            np.seterr(**err)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', np.int), ('B', np.int)])
@@ -857,7 +861,11 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
         #
         data.seek(0)
-        test = np.mafromtxt(data, **kwargs)
+        err = np.seterr(invalid='ignore')
+        try:
+            test = np.mafromtxt(data, **kwargs)
+        finally:
+            np.seterr(**err)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', np.float), ('B', np.float)])
@@ -870,8 +878,12 @@ M   33  21.99
         basekwargs = dict(dtype=None, delimiter=",", names=True,)
         mdtype = [('A', int), ('B', float), ('C', complex)]
         #
-        test = np.mafromtxt(StringIO(data), missing_values="N/A",
-                            **basekwargs)
+        err = np.seterr(invalid='ignore')
+        try:
+            test = np.mafromtxt(StringIO(data), missing_values="N/A",
+                                **basekwargs)
+        finally:
+            np.seterr(**err)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (0, 0, 1), (0, 0, 0)],
@@ -879,17 +891,26 @@ M   33  21.99
         assert_equal(test, control)
         #
         basekwargs['dtype'] = mdtype
-        test = np.mafromtxt(StringIO(data),
-                            missing_values={0:-9, 1:-99, 2:-999j}, **basekwargs)
+        err = np.seterr(invalid='ignore')
+        try:
+            test = np.mafromtxt(StringIO(data),
+                                missing_values={0:-9, 1:-99, 2:-999j},
+                                **basekwargs)
+        finally:
+            np.seterr(**err)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
                             dtype=mdtype)
         assert_equal(test, control)
         #
-        test = np.mafromtxt(StringIO(data),
-                            missing_values={0:-9, 'B':-99, 'C':-999j},
-                            **basekwargs)
+        err = np.seterr(invalid='ignore')
+        try:
+            test = np.mafromtxt(StringIO(data),
+                                missing_values={0:-9, 'B':-99, 'C':-999j},
+                                **basekwargs)
+        finally:
+            np.seterr(**err)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
                             mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],

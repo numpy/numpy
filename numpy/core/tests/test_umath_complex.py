@@ -239,7 +239,11 @@ class TestClog(TestCase):
         # clog(- inf + i inf) returns +inf + i3pi /4.
         x = np.array([complex(-np.inf, np.inf)], dtype=np.complex)
         y = np.complex(np.inf, 0.75 * np.pi)
-        assert_almost_equal(np.log(x), y)
+        err = np.seterr(invalid="ignore")
+        try:
+            assert_almost_equal(np.log(x), y)
+        finally:
+            np.seterr(**err)
         xl.append(x)
         yl.append(y)
 
@@ -424,9 +428,13 @@ class TestCabs(object):
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
+        err = np.seterr(invalid="ignore")
         y = np.abs(x)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        try:
+            for i in range(len(x)):
+                assert_almost_equal(y[i], y_r[i])
+        finally:
+            np.seterr(**err)
 
     def test_fabs(self):
         # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
@@ -437,7 +445,11 @@ class TestCabs(object):
         assert_array_equal(np.abs(x), np.real(x))
 
         x = np.array([complex(np.inf, np.NZERO)], dtype=np.complex)
-        assert_array_equal(np.abs(x), np.real(x))
+        err = np.seterr(invalid="ignore")
+        try:
+            assert_array_equal(np.abs(x), np.real(x))
+        finally:
+            np.seterr(**err)
 
         x = np.array([complex(np.nan, np.NZERO)], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))

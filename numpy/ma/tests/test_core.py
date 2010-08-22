@@ -2702,8 +2702,12 @@ class TestMaskedArrayMathMethods(TestCase):
             _ = method(out=mout)
             self.assertTrue(mout is not masked)
             assert_equal(mout.mask, True)
-            # Using a ndarray as explicit output
-            _ = method(out=nout)
+            err = np.seterr(invalid="ignore")
+            try:
+                # Using a ndarray as explicit output
+                _ = method(out=nout)
+            finally:
+                np.seterr(**err)
             self.assertTrue(np.isnan(nout))
         #
         x = array(arange(10), mask=True)
@@ -2717,8 +2721,12 @@ class TestMaskedArrayMathMethods(TestCase):
             _ = method(out=mout, ddof=1)
             self.assertTrue(mout is not masked)
             assert_equal(mout.mask, True)
-            # Using a ndarray as explicit output
-            _ = method(out=nout, ddof=1)
+            err = np.seterr(invalid="ignore")
+            try:
+                # Using a ndarray as explicit output
+                _ = method(out=nout, ddof=1)
+            finally:
+                np.seterr(**err)
             self.assertTrue(np.isnan(nout))
 
 

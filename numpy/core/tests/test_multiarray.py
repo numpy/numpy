@@ -702,9 +702,13 @@ class TestArgmax(TestCase):
             assert all(amax == aargmax.choose(*a.transpose(i,*axes)))
 
     def test_combinations(self):
-        for arr, pos in self.nan_arr:
-            assert_equal(np.argmax(arr), pos, err_msg="%r"%arr)
-            assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r"%arr)
+        err = np.seterr(invalid="ignore")
+        try:
+            for arr, pos in self.nan_arr:
+                assert_equal(np.argmax(arr), pos, err_msg="%r"%arr)
+                assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r"%arr)
+        finally:
+            np.seterr(**err)
 
 
 class TestMinMax(TestCase):

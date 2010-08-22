@@ -170,11 +170,15 @@ class TestLogAddExp2(object):
             np.seterr(**err)
 
     def test_nan(self):
-        assert np.isnan(np.logaddexp2(np.nan, np.inf))
-        assert np.isnan(np.logaddexp2(np.inf, np.nan))
-        assert np.isnan(np.logaddexp2(np.nan, 0))
-        assert np.isnan(np.logaddexp2(0, np.nan))
-        assert np.isnan(np.logaddexp2(np.nan, np.nan))
+        err = np.seterr(invalid="ignore")
+        try:
+            assert np.isnan(np.logaddexp2(np.nan, np.inf))
+            assert np.isnan(np.logaddexp2(np.inf, np.nan))
+            assert np.isnan(np.logaddexp2(np.nan, 0))
+            assert np.isnan(np.logaddexp2(0, np.nan))
+            assert np.isnan(np.logaddexp2(np.nan, np.nan))
+        finally:
+            np.seterr(**err)
 
 
 class TestLog(TestCase):
@@ -236,11 +240,15 @@ class TestLogAddExp(object):
             np.seterr(**err)
 
     def test_nan(self):
-        assert np.isnan(np.logaddexp(np.nan, np.inf))
-        assert np.isnan(np.logaddexp(np.inf, np.nan))
-        assert np.isnan(np.logaddexp(np.nan, 0))
-        assert np.isnan(np.logaddexp(0, np.nan))
-        assert np.isnan(np.logaddexp(np.nan, np.nan))
+        err = np.seterr(invalid="ignore")
+        try:
+            assert np.isnan(np.logaddexp(np.nan, np.inf))
+            assert np.isnan(np.logaddexp(np.inf, np.nan))
+            assert np.isnan(np.logaddexp(np.nan, 0))
+            assert np.isnan(np.logaddexp(0, np.nan))
+            assert np.isnan(np.logaddexp(np.nan, np.nan))
+        finally:
+            np.seterr(**err)
 
 
 class TestLog1p(TestCase):
@@ -399,15 +407,23 @@ class TestMaximum(TestCase):
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
         out  = np.array([nan, nan, nan])
-        assert_equal(np.maximum(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            assert_equal(np.maximum(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([nan, nan, nan], dtype=np.complex)
-            assert_equal(np.maximum(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
+                arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+                arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+                out  = np.array([nan, nan, nan], dtype=np.complex)
+                assert_equal(np.maximum(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
 
 class TestMinimum(TestCase):
@@ -420,15 +436,23 @@ class TestMinimum(TestCase):
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
         out  = np.array([nan, nan, nan])
-        assert_equal(np.minimum(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            assert_equal(np.minimum(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([nan, nan, nan], dtype=np.complex)
-            assert_equal(np.minimum(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
+                arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+                arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+                out  = np.array([nan, nan, nan], dtype=np.complex)
+                assert_equal(np.minimum(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
 
 class TestFmax(TestCase):
@@ -441,15 +465,23 @@ class TestFmax(TestCase):
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
         out  = np.array([0,   0,   nan])
-        assert_equal(np.fmax(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            assert_equal(np.fmax(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([0,    0, nan], dtype=np.complex)
-            assert_equal(np.fmax(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
+                arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+                arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+                out  = np.array([0,    0, nan], dtype=np.complex)
+                assert_equal(np.fmax(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
 
 class TestFmin(TestCase):
@@ -462,15 +494,23 @@ class TestFmin(TestCase):
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
         out  = np.array([0,   0,   nan])
-        assert_equal(np.fmin(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            assert_equal(np.fmin(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
     def test_complex_nans(self):
         nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)] :
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out  = np.array([0,    0, nan], dtype=np.complex)
-            assert_equal(np.fmin(arg1, arg2), out)
+        err = np.seterr(invalid="ignore")
+        try:
+            for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
+                arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+                arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+                out  = np.array([0,    0, nan], dtype=np.complex)
+                assert_equal(np.fmin(arg1, arg2), out)
+        finally:
+            np.seterr(**err)
 
 
 class TestFloatingPoint(TestCase):
@@ -1080,19 +1120,23 @@ def test_complex_nan_comparisons():
     fins = [complex(1, 0), complex(-1, 0), complex(0, 1), complex(0, -1),
             complex(1, 1), complex(-1, -1), complex(0, 0)]
 
-    for x in nans + fins:
-        x = np.array([x])
-        for y in nans + fins:
-            y = np.array([y])
-
-            if np.isfinite(x) and np.isfinite(y):
-                continue
-
-            assert_equal(x < y, False, err_msg="%r < %r" % (x, y))
-            assert_equal(x > y, False, err_msg="%r > %r" % (x, y))
-            assert_equal(x <= y, False, err_msg="%r <= %r" % (x, y))
-            assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
-            assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
+    err = np.seterr(invalid="ignore")
+    try:
+        for x in nans + fins:
+            x = np.array([x])
+            for y in nans + fins:
+                y = np.array([y])
+    
+                if np.isfinite(x) and np.isfinite(y):
+                    continue
+    
+                assert_equal(x < y, False, err_msg="%r < %r" % (x, y))
+                assert_equal(x > y, False, err_msg="%r > %r" % (x, y))
+                assert_equal(x <= y, False, err_msg="%r <= %r" % (x, y))
+                assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
+                assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
+    finally:
+        np.seterr(**err)
 
 if __name__ == "__main__":
     run_module_suite()
