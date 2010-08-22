@@ -144,7 +144,12 @@ class TestClog(TestCase):
         for i in range(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
-    @platform_skip
+    #@platform_skip
+    # Clog tests have been failing for a long time on Windows, so always skip
+    # on that platform. In 1.5.x the platform_skip decorator is Windows-only
+    # anyway.
+    @dec.knownfailureif(sys.platform == 'win32',
+                        "clog(- inf + i inf) fails on Windows.")
     def test_special_values(self):
         xl = []
         yl = []
