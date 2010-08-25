@@ -640,7 +640,11 @@ class build_src(build_ext.build_ext):
         target_dirs = []
         py_files = []     # swig generated .py files
         target_ext = '.c'
-        if self.swig_cpp:
+        if '-c++' in extension.swig_opts:
+            typ = 'c++'
+            is_cpp = True
+            extension.swig_opts.remove('-c++')
+        elif self.swig_cpp:
             typ = 'c++'
             is_cpp = True
         else:
@@ -716,7 +720,7 @@ class build_src(build_ext.build_ext):
             self.mkpath(d)
 
         swig = self.swig or self.find_swig()
-        swig_cmd = [swig, "-python"]
+        swig_cmd = [swig, "-python"] + extension.swig_opts
         if is_cpp:
             swig_cmd.append('-c++')
         for d in extension.include_dirs:
