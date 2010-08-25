@@ -656,6 +656,8 @@ class build_src(build_ext.build_ext):
         for source in sources:
             (base, ext) = os.path.splitext(source)
             if ext == '.i': # SWIG interface file
+                # the code below assumes that the sources list
+                # contains not more than one .i SWIG interface file
                 if self.inplace:
                     target_dir = os.path.dirname(base)
                     py_target_dir = self.ext_target_dir
@@ -671,10 +673,16 @@ class build_src(build_ext.build_ext):
                     if typ is None:
                         typ = get_swig_target(source)
                         is_cpp = typ=='c++'
-                        if is_cpp: target_ext = '.cpp'
+                        if is_cpp: 
+                            target_ext = '.cpp'
                     else:
                         typ2 = get_swig_target(source)
-                        if typ!=typ2:
+                        if typ2 is None:
+                            log.warn('source %r does not define swig target, assuming %s swig target' \
+                                     % (source, typ))
+                            if is_cpp: 
+                                target_ext = '.cpp'
+                        elif typ!=typ2:
                             log.warn('expected %r but source %r defines %r swig target' \
                                      % (typ, source, typ2))
                             if typ2=='c++':
@@ -750,7 +758,7 @@ _has_cpp_header = re.compile(r'-[*]-\s*c[+][+]\s*-[*]-',re.I).search
 
 def get_swig_target(source):
     f = open(source,'r')
-    result = 'c'
+    result = None
     line = f.readline()
     if _has_cpp_header(line):
         result = 'c++'
