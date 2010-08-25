@@ -178,7 +178,11 @@ npy_PyFile_Dup(PyObject *file, char *mode)
     }
     fd2 = PyNumber_AsSsize_t(ret, NULL);
     Py_DECREF(ret);
+#ifdef _WIN32
+    return _fdopen(fd2, mode);
+#else
     return fdopen(fd2, mode);
+#endif
 }
 #endif
 
