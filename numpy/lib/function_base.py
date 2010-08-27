@@ -191,7 +191,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
 
     if normed:
         db = array(np.diff(bins), float)
-        return n/(n*db).sum(), bins
+        return n/db/n.sum(), bins
     else:
         return n, bins
 

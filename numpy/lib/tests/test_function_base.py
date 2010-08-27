@@ -565,13 +565,25 @@ class TestHistogram(TestCase):
         area = sum(a * diff(b))
         assert_almost_equal(area, 1)
 
-        # Check with non constant bin width
-        v = rand(n) * 10
-        bins = [0, 1, 5, 9, 10]
+        # Check with non-constant bin widths
+        v = np.arange(10)
+        bins = [0,1,3,6,10]
         a, b = histogram(v, bins, normed=True)
-        area = sum(a * diff(b))
-        assert_almost_equal(area, 1)
-
+        assert_array_equal(a, .1)
+        assert_equal(sum(a*diff(b)), 1)
+    
+        # Variale bin widths are especially useful to deal with
+        # infinities.
+        v = np.arange(10)
+        bins = [0,1,3,6,np.inf]
+        a, b = histogram(v, bins, normed=True)
+        assert_array_equal(a, [.1,.1,.1,0.])
+        
+        # Taken from a bug report from N. Becker on the numpy-discussion
+        # mailing list Aug. 6, 2010. 
+        counts, dmy = np.histogram([1,2,3,4], [0.5,1.5,np.inf], normed=True)
+        assert_equal(counts, [.25, 0])
+        
     def test_outliers(self):
         # Check that outliers are not tallied
         a = arange(10) + .5
@@ -631,7 +643,12 @@ class TestHistogram(TestCase):
         wa, wb = histogram([1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1])
         assert_array_equal(wa, [4, 5, 0, 1])
         wa, wb = histogram([1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], normed=True)
-        assert_array_equal(wa, array([4, 5, 0, 1]) / 10. / 3. * 4)
+        assert_array_almost_equal(wa, array([4, 5, 0, 1]) / 10. / 3. * 4)
+
+        # Check weights with non-uniform bin widths
+        a,b = histogram(np.arange(9), [0,1,3,6,10], \
+                        weights=[2,1,1,1,1,1,1,1,1], normed=True)
+        assert_almost_equal(a, [.2, .1, .1, .075])
 
 
 class TestHistogramdd(TestCase):
