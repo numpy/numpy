@@ -565,6 +565,7 @@ class TestHistogram(TestCase):
         area = sum(a * diff(b))
         assert_almost_equal(area, 1)
 
+        warnings.simplefilter('ignore', Warning)
         # Check with non-constant bin widths
         v = np.arange(10)
         bins = [0,1,3,6,10]
@@ -583,6 +584,7 @@ class TestHistogram(TestCase):
         # mailing list Aug. 6, 2010. 
         counts, dmy = np.histogram([1,2,3,4], [0.5,1.5,np.inf], normed=True)
         assert_equal(counts, [.25, 0])
+        warnings.resetwarnings()
         
     def test_outliers(self):
         # Check that outliers are not tallied
@@ -645,11 +647,12 @@ class TestHistogram(TestCase):
         wa, wb = histogram([1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], normed=True)
         assert_array_almost_equal(wa, array([4, 5, 0, 1]) / 10. / 3. * 4)
 
+        warnings.simplefilter('ignore', Warning)
         # Check weights with non-uniform bin widths
         a,b = histogram(np.arange(9), [0,1,3,6,10], \
                         weights=[2,1,1,1,1,1,1,1,1], normed=True)
         assert_almost_equal(a, [.2, .1, .1, .075])
-
+        warnings.resetwarnings()
 
 class TestHistogramdd(TestCase):
     def test_simple(self):

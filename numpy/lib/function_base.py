@@ -155,8 +155,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
             mn -= 0.5
             mx += 0.5
         bins = linspace(mn, mx, bins+1, endpoint=True)
+        uniform = True
     else:
         bins = asarray(bins)
+        uniform = False
         if (np.diff(bins) < 0).any():
             raise AttributeError(
                     'bins must increase monotonically.')
@@ -191,7 +193,16 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
 
     if normed:
         db = array(np.diff(bins), float)
+        if not uniform:
+            warnings.warn("""
+            This release of NumPy fixes a normalization bug in histogram
+            function occuring with non-uniform bin widths. The returned 
+            value is now a density: n / (N * bin width), where n is the 
+            bin count and N the total number of points. 
+            """)
         return n/db/n.sum(), bins
+        
+        
     else:
         return n, bins
 
