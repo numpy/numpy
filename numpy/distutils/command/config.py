@@ -399,8 +399,15 @@ int main ()
         self._check_compiler()
         exitcode, output = 255, ''
         try:
-            src, obj, exe = self._link(body, headers, include_dirs,
-                                       libraries, library_dirs, lang)
+            grabber = GrabStdout()
+            try:
+                src, obj, exe = self._link(body, headers, include_dirs,
+                                           libraries, library_dirs, lang)
+                grabber.restore()
+            except:
+                output = grabber.data
+                grabber.restore()
+                raise
             exe = os.path.join('.', exe)
             exitstatus, output = exec_command(exe, execute_in='.')
             if hasattr(os, 'WEXITSTATUS'):
@@ -416,6 +423,22 @@ int main ()
             log.info("success!")
         except (CompileError, LinkError):
             log.info("failure.")
-
         self._clean()
         return exitcode, output
+
+class GrabStdout(object):
+
+    def __init__(self):
+        self.sys_stdout = sys.stdout
+        self.data = ''
+        sys.stdout = self
+
+    def write (self, data):
+        self.sys_stdout.write(data)
+        self.data += data
+
+    def flush (self):
+        self.sys_stdout.flush()
+
+    def restore(self):
+        sys.stdout = self.sys_stdout

@@ -1011,6 +1011,9 @@ class atlas_info(system_info):
             else:
                 info['language'] = 'f77'
 
+        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
+        dict_append(info, **atlas_extra_info)
+
         self.set_info(**info)
 
 class atlas_blas_info(atlas_info):
@@ -1034,6 +1037,9 @@ class atlas_blas_info(atlas_info):
             h = os.path.dirname(h)
             dict_append(info,include_dirs=[h])
         info['language'] = 'c'
+
+        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
+        dict_append(atlas, **atlas_extra_info)
 
         dict_append(info,**atlas)
 
@@ -1209,22 +1215,44 @@ def get_atlas_version(**config):
         return _cached_atlas_version[key]
     c = cmd_config(Distribution())
     atlas_version = None
+    info = {}
     try:
         s, o = c.get_output(atlas_version_c_text,
                             libraries=libraries, library_dirs=library_dirs)
-    except: # failed to get version from file -- maybe on Windows
+        if s and re.search (r'undefined reference to `_gfortran', o, re.M):
+            s, o = c.get_output(atlas_version_c_text,
+                                libraries=libraries + ['gfortran'], library_dirs=library_dirs)
+            if not s:
+                warnings.warn("""
+*****************************************************
+Linkage with ATLAS requires gfortran. Use
+
+  python setup.py config_fc --fcompiler=gnu95 ...
+
+when building extension libraries that use ATLAS.
+Make sure that -lgfortran is used for C++ extensions.
+*****************************************************
+""")
+                dict_append(info, language='f90',
+                            define_macros = [('ATLAS_REQUIRES_GFORTRAN', None)])
+    except Exception, msg: # failed to get version from file -- maybe on Windows
         # look at directory name
         for o in library_dirs:
             m = re.search(r'ATLAS_(?P<version>\d+[.]\d+[.]\d+)_',o)
             if m:
                 atlas_version = m.group('version')
             if atlas_version is not None:
+
                 break
         # final choice --- look at ATLAS_VERSION environment
         #   variable
         if atlas_version is None:
             atlas_version = os.environ.get('ATLAS_VERSION',None)
-        return atlas_version or '?.?.?'
+        if atlas_version:
+            dict_append(info, define_macros = [('ATLAS_INFO','"\\"%s\\""' % atlas_version)])
+        else:
+            dict_append(info, define_macros = [('NO_ATLAS_INFO',-1)])
+        return atlas_version or '?.?.?', info
 
     if not s:
         m = re.search(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
@@ -1236,8 +1264,13 @@ def get_atlas_version(**config):
         else:
             log.info('Status: %d', s)
             log.info('Output: %s', o)
-    _cached_atlas_version[key] = atlas_version
-    return atlas_version
+
+    if atlas_version=='3.2.1_pre3.3.6':
+        dict_append(info, define_macros = [('NO_ATLAS_INFO',-2)])
+    else:
+        dict_append(info, define_macros = [('ATLAS_INFO','"\\"%s\\""' % atlas_version)])
+    result = _cached_atlas_version[key] = atlas_version, info
+    return result
 
 from distutils.util import get_platform
 
@@ -1286,22 +1319,12 @@ class lapack_opt_info(system_info):
         need_blas = 0
         info = {}
         if atlas_info:
-            version_info = atlas_info.copy()
-            atlas_version = get_atlas_version(**version_info)
-            if 'define_macros' not in atlas_info:
-                atlas_info['define_macros'] = []
-            if atlas_version is None:
-                atlas_info['define_macros'].append(('NO_ATLAS_INFO',2))
-            else:
-                atlas_info['define_macros'].append(('ATLAS_INFO',
-                                                    '"\\"%s\\""' % atlas_version))
-            if atlas_version=='3.2.1_pre3.3.6':
-                atlas_info['define_macros'].append(('NO_ATLAS_INFO',4))
-            l = atlas_info.get('define_macros',[])
+            l = atlas_info.get ('define_macros', [])
             if ('ATLAS_WITH_LAPACK_ATLAS',None) in l \
                    or ('ATLAS_WITHOUT_LAPACK',None) in l:
                 need_lapack = 1
             info = atlas_info
+            
         else:
             warnings.warn(AtlasNotFoundError.__doc__)
             need_blas = 1
@@ -1385,15 +1408,6 @@ class blas_opt_info(system_info):
         need_blas = 0
         info = {}
         if atlas_info:
-            version_info = atlas_info.copy()
-            atlas_version = get_atlas_version(**version_info)
-            if 'define_macros' not in atlas_info:
-                atlas_info['define_macros'] = []
-            if atlas_version is None:
-                atlas_info['define_macros'].append(('NO_ATLAS_INFO',2))
-            else:
-                atlas_info['define_macros'].append(('ATLAS_INFO',
-                                                    '"\\"%s\\""' % atlas_version))
             info = atlas_info
         else:
             warnings.warn(AtlasNotFoundError.__doc__)
