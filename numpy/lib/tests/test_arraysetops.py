@@ -16,18 +16,16 @@ class TestAso(TestCase):
         c = unique( a )
         assert_array_equal( c, ec )
 
-        warnings.simplefilter('ignore', Warning)
         vals, indices = unique( a, return_index=True )
-        warnings.resetwarnings()
+        
 
         ed = np.array( [2, 3, 0, 1] )
         assert_array_equal(vals, ec)
         assert_array_equal(indices, ed)
 
-        warnings.simplefilter('ignore', Warning)
         vals, ind0, ind1 = unique( a, return_index=True,
                                      return_inverse=True )
-        warnings.resetwarnings()
+        
 
         ee = np.array( [2, 3, 0, 1, 0, 2, 3] )
         assert_array_equal(vals, ec)
@@ -61,12 +59,14 @@ class TestAso(TestCase):
         b = np.array( [2, 1, 4, 3, 3, 1, 5] )
 
         ec = np.array( [1, 2, 5] )
-        warnings.simplefilter('ignore', Warning)
-        c = intersect1d_nu( a, b )
-        warnings.resetwarnings()
+        warnings.filterwarnings('ignore', message='\s*`intersect1d_nu` is deprecated!')
+        warnings.filterwarnings('ignore', message='\s*`unique1d` is deprecated!')
+        c = intersect1d_nu( a, b )        
         assert_array_equal( c, ec )
-
         assert_array_equal([], intersect1d_nu([],[]))
+        warnings.filters.pop(0)
+        warnings.filters.pop(0)
+
 
     def test_setxor1d( self ):
         a = np.array( [5, 7, 1, 2] )
@@ -110,9 +110,9 @@ class TestAso(TestCase):
         b = np.array( [2, 4, 3, 1, 5] )
 
         ec = np.array( [True, False, True, True] )
-        warnings.simplefilter('ignore', Warning)
+        warnings.filterwarnings('ignore', '\s*`setmember1d` is deprecated!')
         c = setmember1d( a, b )
-        warnings.resetwarnings()
+        
         assert_array_equal( c, ec )
 
         a[0] = 8
@@ -126,6 +126,7 @@ class TestAso(TestCase):
         assert_array_equal( c, ec )
 
         assert_array_equal([], setmember1d([],[]))
+        warnings.filters.pop(0)
 
     def test_in1d(self):
         a = np.array( [5, 7, 1, 2] )
