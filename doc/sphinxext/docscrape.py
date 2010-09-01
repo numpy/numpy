@@ -232,7 +232,8 @@ class NumpyDocString(object):
                 current_func = None
                 if ',' in line:
                     for func in line.split(','):
-                        push_item(func, [])
+                        if func.strip():
+                            push_item(func, [])
                 elif line.strip():
                     current_func = line
             elif current_func is not None:
