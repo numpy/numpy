@@ -64,6 +64,9 @@ The plot directive has the following configuration options:
         that determine the file format and the DPI. For entries whose
         DPI was omitted, sensible defaults are chosen.
 
+    plot_html_show_formats
+        Whether to show links to the files in HTML.
+
 TODO
 ----
 
@@ -96,6 +99,7 @@ def setup(app):
     app.add_config_value('plot_include_source', False, True)
     app.add_config_value('plot_formats', ['png', 'hires.png', 'pdf'], True)
     app.add_config_value('plot_basedir', None, True)
+    app.add_config_value('plot_html_show_formats', True, True)
 
     app.add_directive('plot', plot_directive, True, (0, 1, False),
                       **plot_directive_options)
@@ -174,19 +178,24 @@ TEMPLATE = """
           {{ option }}
           {% endfor %}
     
-          (
           {%- if not source_code -%}
-            `Source code <{{source_link}}>`__
+            (`Source code <{{source_link}}>`__
+            {%- if html_show_formats -%}
             {%- for fmt in img.formats -%} 
             , `{{ fmt }} <{{ dest_dir }}/{{ img.basename }}.{{ fmt }}>`__
             {%- endfor -%}
+            {%- endif -%}
+            )
           {%- else -%}
+            {%- if html_show_formats -%}
+            (
             {%- for fmt in img.formats -%} 
             {%- if not loop.first -%}, {% endif -%}
             `{{ fmt }} <{{ dest_dir }}/{{ img.basename }}.{{ fmt }}>`__
             {%- endfor -%}
+            )
+            {%- endif -%}
           {%- endif -%}
-          )
        {% endfor %}
 
 {{ only_latex }}
@@ -321,12 +330,12 @@ def run(arguments, content, options, state_machine, state, lineno):
         only_latex=only_latex,
         options=opts,
         images=images,
-        source_code=source_code)
+        source_code=source_code,
+        html_show_formats=config.plot_html_show_formats)
 
     lines = result.split("\n")
     if len(lines):
-        state_machine.insert_input(
-            lines, state_machine.input_lines.source(0))
+        state_machine.insert_input(lines, source=source_file_name)
 
     # copy image files to builder's output directory
     if not os.path.exists(dest_dir):
