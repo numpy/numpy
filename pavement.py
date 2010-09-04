@@ -106,7 +106,9 @@ options(bootstrap=Bunch(bootstrap_dir="bootstrap"),
 
 MPKG_PYTHON = {
         "2.5": ["/Library/Frameworks/Python.framework/Versions/2.5/bin/python"],
-        "2.6": ["/Library/Frameworks/Python.framework/Versions/2.6/bin/python"]
+        "2.6": ["/Library/Frameworks/Python.framework/Versions/2.6/bin/python"],
+        "2.7": ["/Library/Frameworks/Python.framework/Versions/2.7/bin/python"],
+        "3.1": ["/Library/Frameworks/Python.framework/Versions/3.1/bin/python3"],
 }
 
 SSE3_CFG = {'ATLAS': r'C:\local\lib\yop\sse3'}
@@ -117,6 +119,8 @@ SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
 if sys.platform =="darwin":
     WINDOWS_PYTHON = {
+        "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
+        "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
         "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
@@ -125,6 +129,8 @@ if sys.platform =="darwin":
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
+        "3.1": ["C:\Python31\python3.exe"],
+        "2.7": ["C:\Python27\python.exe"],
         "2.6": ["C:\Python26\python.exe"],
         "2.5": ["C:\Python25\python.exe"],
     }
@@ -134,6 +140,8 @@ elif sys.platform == "win32":
     MAKENSIS = ["makensis"]
 else:
     WINDOWS_PYTHON = {
+        "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
+        "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
         "2.5": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python25/python.exe"]
     }
@@ -194,7 +202,7 @@ def bdist_superpack(options):
     pyver = options.python_version
     def copy_bdist(arch):
         # Copy the wininst in dist into the release directory
-        if pyver[0] >= 3:
+        if int(pyver[0]) >= 3:
             source = os.path.join('build', 'py3k', 'dist', wininst_name(pyver))
         else:
             source = os.path.join('dist', wininst_name(pyver))
