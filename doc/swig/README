@@ -9,23 +9,8 @@ distribution.
 
 Documentation
 -------------
-Documentation for how to use numpy.i is in the doc directory.  The
-primary source file here is numpy_swig.txt, a restructured text file
-that documents how to use numpy.i.  The Makefile in doc allows for the
-conversion of numpy_swig.txt to HTML (if you have docutils installed)
-and to PDF (if you have docutils and latex/pdftex installed).  This
-should not be necessary, however, as numpy_swig.html and
-numpy_swig.pdf are stored in the repository.
-
-The same is true for a file called doc/testing.txt, which describes
-the testing system used here.
-
-If you have the prerequisites installed and wish to build the HTML and
-PDF documentation, this can be achieved by calling::
-
-    $ make doc
-
-from the shell.
+Documentation for how to use numpy.i, as well as for the testing system
+used here, can be found in the NumPy reference guide.  
 
 Testing
 -------

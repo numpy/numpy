@@ -20,11 +20,6 @@ all: $(SUBDIRS)
 test:
 	cd $@ && make $@
 
-# Target doc
-.PHONY : doc
-doc:
-	cd $@ && make
-
 # Target clean
 .PHONY : clean
 clean:
