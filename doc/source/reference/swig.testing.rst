@@ -1,15 +1,8 @@
-============================
 Testing the numpy.i Typemaps
 ============================
 
-:Author:      Bill Spotz
-:Institution: Sandia National Laboratories
-:Date:        6 April, 2007
-
-.. contents::
-
 Introduction
-============
+------------
 
 Writing tests for the ``numpy.i`` `SWIG <http://www.swig.org>`_
 interface file is a combinatorial headache.  At present, 12 different
@@ -22,13 +15,12 @@ this results in 1,020 individual unit tests that are performed when
 
 To facilitate this many similar unit tests, some high-level
 programming techniques are employed, including C and `SWIG`_ macros,
-as well as  `python <http://www.python.org>`_ inheritance.  The
-purpose of this document is to describe the testing infrastructure
-employed to verify that the ``numpy.i`` typemaps are working as
-expected.
+as well as Python inheritance.  The purpose of this document is to describe 
+the testing infrastructure employed to verify that the ``numpy.i`` 
+typemaps are working as expected.
 
 Testing Organization
-====================
+--------------------
 
 There are three indepedent testing frameworks supported, for one-,
 two-, and three-dimensional arrays respectively.  For one-dimensional
@@ -53,11 +45,11 @@ compiles ``Vector_wrap.cxx`` and links together the extension module
 extension module and the proxy file ``Vector.py`` are both placed in a
 subdirectory under the ``build`` directory.
 
-The actual testing takes place with a `python`_ script named::
+The actual testing takes place with a Python script named::
 
     testVector.py
 
-that uses the standard `python`_ library module ``unittest``, which
+that uses the standard Python library module ``unittest``, which
 performs several tests of each function defined in ``Vector.h`` for
 each data type supported.
 
@@ -72,7 +64,7 @@ The command ``make test`` will ensure that all of the test software is
 built and then run all three test scripts.
 
 Testing Header Files
-====================
+--------------------
 
 ``Vector.h`` is a C++ header file that defines a C macro called
 ``TEST_FUNC_PROTOS`` that takes two arguments: ``TYPE``, which is a
@@ -100,7 +92,7 @@ supported by ``numpy.i``:
   * ``double``
 
 Testing Source Files
-====================
+--------------------
 
 ``Vector.cxx`` is a C++ source file that implements compilable code
 for each of the function prototypes specified in ``Vector.h``.  It
@@ -109,14 +101,13 @@ in the same way as ``TEST_FUNC_PROTOS`` does in ``Vector.h``.
 ``TEST_FUNCS`` is implemented for each of the 12 data types as above.
 
 Testing SWIG Interface Files
-============================
+----------------------------
 
 ``Vector.i`` is a `SWIG`_ interface file that defines python module
 ``Vector``.  It follows the conventions for using ``numpy.i`` as
-described in the `numpy.i documentation <numpy_swig.html>`_.  It
-defines a `SWIG`_ macro ``%apply_numpy_typemaps`` that has a single
-argument ``TYPE``.  It uses the `SWIG`_ directive ``%apply`` as
-described in the `numpy.i documentation`_ to apply the provided
+described in this chapter.  It defines a `SWIG`_ macro
+``%apply_numpy_typemaps`` that has a single argument ``TYPE``.  
+It uses the `SWIG`_ directive ``%apply`` to apply the provided
 typemaps to the argument signatures found in ``Vector.h``.  This macro
 is then implemented for all of the data types supported by
 ``numpy.i``.  It then does a ``%include "Vector.h"`` to wrap all of
@@ -124,7 +115,7 @@ the function prototypes in ``Vector.h`` using the typemaps in
 ``numpy.i``.
 
 Testing Python Scripts
-======================
+----------------------
 
 After ``make`` is used to build the testing extension modules,
 ``testVector.py`` can be run to execute the tests.  As with other

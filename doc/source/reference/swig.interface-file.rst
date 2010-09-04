@@ -1,15 +1,8 @@
-==========================================
- numpy.i: a SWIG Interface File for NumPy
-==========================================
-
-:Author:      Bill Spotz
-:Institution: Sandia National Laboratories
-:Date:        1 December, 2007
-
-.. contents::
+Numpy.i: a SWIG Interface File for NumPy
+========================================
 
 Introduction
-============
+------------
 
 The Simple Wrapper and Interface Generator (or `SWIG
 <http://www.swig.org>`_) is a powerful tool for generating wrapper
@@ -32,12 +25,11 @@ however, will be to create a wrapper function that compiles, but is
 nearly impossible to use from the scripting language in the way the C
 routine was intended.
 
-For `python <http://www.python.org>`_, the preferred way of handling
-contiguous (or technically, *strided*) blocks of homogeneous data is
-with the module `NumPy <http://numpy.scipy.org>`_, which provides full
-object-oriented access to multidimensial arrays of data.  Therefore,
-the most logical `python`_ interface for the ``rms`` function would be
-(including doc string)::
+For Python, the preferred way of handling contiguous (or technically,
+*strided*) blocks of homogeneous data is with NumPy, which provides full
+object-oriented access to multidimensial arrays of data.  Therefore, the most
+logical Python interface for the ``rms`` function would be (including doc
+string)::
 
     def rms(seq):
         """
@@ -47,13 +39,13 @@ the most logical `python`_ interface for the ``rms`` function would be
         rms(tuple) -> double
         """
 
-where ``seq`` would be a `NumPy`_ array of ``double`` values, and its
+where ``seq`` would be a NumPy array of ``double`` values, and its
 length ``n`` would be extracted from ``seq`` internally before being
-passed to the C routine.  Even better, since `NumPy`_ supports
-construction of arrays from arbitrary `python`_ sequences, ``seq``
+passed to the C routine.  Even better, since NumPy supports
+construction of arrays from arbitrary Python sequences, ``seq``
 itself could be a nearly arbitrary sequence (so long as each element
 can be converted to a ``double``) and the wrapper code would
-internally convert it to a `NumPy`_ array before extracting its data
+internally convert it to a NumPy array before extracting its data
 and length.
 
 `SWIG`_ allows these types of conversions to be defined via a
@@ -62,7 +54,7 @@ to use ``numpy.i``, a `SWIG`_ interface file that defines a series of
 typemaps intended to make the type of array-related conversions
 described above relatively simple to implement.  For example, suppose
 that the ``rms`` function prototype defined above was in a header file
-named ``rms.h``.  To obtain the `python`_ interface discussed above,
+named ``rms.h``.  To obtain the Python interface discussed above,
 your `SWIG`_ interface file would need the following::
 
     %{
@@ -135,13 +127,13 @@ above will produce wrapper code that looks something like::
 The typemaps from ``numpy.i`` are responsible for the following lines
 of code: 12--20, 25 and 30.  Line 10 parses the input to the ``rms``
 function.  From the format string ``"O:rms"``, we can see that the
-argument list is expected to be a single `python`_ object (specified
+argument list is expected to be a single Python object (specified
 by the ``O`` before the colon) and whose pointer is stored in
 ``obj0``.  A number of functions, supplied by ``numpy.i``, are called
-to make and check the (possible) conversion from a generic `python`_
-object to a `NumPy`_ array.  These functions are explained in the
+to make and check the (possible) conversion from a generic Python
+object to a NumPy array.  These functions are explained in the
 section `Helper Functions`_, but hopefully their names are
-self-explanatory.  At line 12 we use ``obj0`` to construct a `NumPy`_
+self-explanatory.  At line 12 we use ``obj0`` to construct a NumPy
 array.  At line 17, we check the validity of the result: that it is
 non-null and that it has a single dimension of arbitrary length.  Once
 these states are verified, we extract the data buffer and length in
@@ -152,7 +144,7 @@ created a new array that is no longer needed.
 This code has a significant amount of error handling.  Note the
 ``SWIG_fail`` is a macro for ``goto fail``, refering to the label at
 line 28.  If the user provides the wrong number of arguments, this
-will be caught at line 10.  If construction of the `NumPy`_ array
+will be caught at line 10.  If construction of the NumPy array
 fails or produces an array with the wrong number of dimensions, these
 errors are caught at line 17.  And finally, if an error is detected,
 memory is still managed correctly at line 30.
@@ -172,7 +164,7 @@ and ``arg2`` in lines 3 and 4 of the generated code above, and their
 assignments in lines 19 and 20.
 
 Using numpy.i
-=============
+-------------
 
 The ``numpy.i`` file is currently located in the ``numpy/docs/swig``
 sub-directory under the ``numpy`` installation directory.  Typically,
@@ -191,7 +183,7 @@ include the following::
     import_array();
     %}
 
-Within a compiled `python`_ module, ``import_array()`` should only get
+Within a compiled Python module, ``import_array()`` should only get
 called once.  This could be in a C/C++ file that you have written and
 is linked to the module.  If this is the case, then none of your
 interface files should ``#define SWIG_FILE_WITH_INIT`` or call
@@ -202,12 +194,12 @@ one `SWIG`_ interface file, then only one interface file should
 ``#define SWIG_FILE_WITH_INIT`` and call ``import_array()``.
 
 Available Typemaps
-==================
+------------------
 
 The typemap directives provided by ``numpy.i`` for arrays of different
 data types, say ``double`` and ``int``, and dimensions of different
 types, say ``int`` or ``long``, are identical to one another except
-for the C and `NumPy`_ type specifications.  The typemaps are
+for the C and NumPy type specifications.  The typemaps are
 therefore implemented (typically behind the scenes) via a macro::
 
     %numpy_typemaps(DATA_TYPE, DATA_TYPECODE, DIM_TYPE)
@@ -244,11 +236,11 @@ the buffer pointer.  Names with ``FARRAY`` are for FORTRAN-ordered
 arrays, and names with ``ARRAY`` are for C-ordered (or 1D arrays).
 
 Input Arrays
-------------
+````````````
 
 Input arrays are defined as arrays of data that are passed into a
 routine but are not altered in-place or returned to the user.  The
-`python`_ input array is therefore allowed to be almost any `python`_
+Python input array is therefore allowed to be almost any Python
 sequence (such as a list) that can be converted to the requested type
 of array.  The input array signatures are
 
@@ -280,12 +272,12 @@ one-dimensional arrays with hard-coded dimensions.  Likewise,
 with hard-coded dimensions, and similarly for three-dimensional.
 
 In-Place Arrays
----------------
+```````````````
 
 In-place arrays are defined as arrays that are modified in-place.  The
 input values may or may not be used, but the values at the time the
-function returns are significant.  The provided `python`_ argument
-must therefore be a `NumPy`_ array of the required type.  The in-place
+function returns are significant.  The provided Python argument
+must therefore be a NumPy array of the required type.  The in-place
 signatures are
 
 1D:
@@ -314,17 +306,17 @@ These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
 
 Argout Arrays
--------------
+`````````````
 
 Argout arrays are arrays that appear in the input arguments in C, but
 are in fact output arrays.  This pattern occurs often when there is
 more than one output variable and the single return argument is
-therefore not sufficient.  In `python`_, the convential way to return
+therefore not sufficient.  In Python, the convential way to return
 multiple arguments is to pack them into a sequence (tuple, list, etc.)
 and return the sequence.  This is what the argout typemaps do.  If a
 wrapped function that uses these argout typemaps has more than one
 return argument, they are packed into a tuple or list, depending on
-the version of `python`_.  The `python`_ user does not pass these
+the version of Python.  The Python user does not pass these
 arrays in, they simply get returned.  For the case where a dimension
 is specified, the python user must provide that dimension as an
 argument.  The argout signatures are
@@ -345,24 +337,24 @@ argument.  The argout signatures are
 
 These are typically used in situations where in C/C++, you would
 allocate a(n) array(s) on the heap, and call the function to fill the
-array(s) values.  In `python`_, the arrays are allocated for you and
+array(s) values.  In Python, the arrays are allocated for you and
 returned as new array objects.
 
 Note that we support ``DATA_TYPE*`` argout typemaps in 1D, but not 2D
 or 3D.  This is because of a quirk with the `SWIG`_ typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
-`python`_ function will take a single argument representing ``DIM1``.
+Python function will take a single argument representing ``DIM1``.
 
 Argoutview Arrays
------------------
+`````````````````
 
 Argoutview arrays are for when your C code provides you with a view of
 its internal data and does not require any memory to be allocated by
 the user.  This can be dangerous.  There is almost no way to guarantee
 that the internal data from the C code will remain in existence for
-the entire lifetime of the `NumPy`_ array that encapsulates it.  If
+the entire lifetime of the NumPy array that encapsulates it.  If
 the user destroys the object that provides the view of the data before
-destroying the `NumPy`_ array, then using that array my result in bad
+destroying the NumPy array, then using that array my result in bad
 memory references or segmentation faults.  Nevertheless, there are
 situations, working with large data sets, where you simply have no
 other choice.
@@ -395,7 +387,7 @@ Note that arrays with hard-coded dimensions are not supported.  These
 cannot follow the double pointer signatures of these typemaps.
 
 Output Arrays
--------------
+`````````````
 
 The ``numpy.i`` interface file does not support typemaps for output
 arrays, for several reasons.  First, C/C++ return arguments are
@@ -416,7 +408,7 @@ function to be wrapped, either with ``%extend`` for the case of class
 methods or ``%ignore`` and ``%rename`` for the case of functions.
 
 Other Common Types: bool
-------------------------
+````````````````````````
 
 Note that C++ type ``bool`` is not supported in the list in the
 `Available Typemaps`_ section.  NumPy bools are a single byte, while
@@ -434,12 +426,12 @@ to fix the data length problem, and `Input Arrays`_ will work fine,
 but `In-Place Arrays`_ might fail type-checking.
 
 Other Common Types: complex
----------------------------
+```````````````````````````
 
 Typemap conversions for complex floating-point types is also not
-supported automatically.  This is because `python`_ and `NumPy`_ are
+supported automatically.  This is because Python and NumPy are
 written in C, which does not have native complex types.  Both
-`python`_ and `NumPy`_ implement their own (essentially equivalent)
+Python and NumPy implement their own (essentially equivalent)
 ``struct`` definitions for complex variables::
 
     /* Python */
@@ -457,40 +449,40 @@ We could have implemented::
 
 which would have provided automatic type conversions for arrays of
 type ``Py_complex``, ``npy_cfloat`` and ``npy_cdouble``.  However, it
-seemed unlikely that there would be any independent (non-`python`_,
-non-`NumPy`_) application code that people would be using `SWIG`_ to
-generate a `python`_ interface to, that also used these definitions
+seemed unlikely that there would be any independent (non-Python,
+non-NumPy) application code that people would be using `SWIG`_ to
+generate a Python interface to, that also used these definitions
 for complex types.  More likely, these application codes will define
 their own complex types, or in the case of C++, use ``std::complex``.
-Assuming these data structures are compatible with `python`_ and
-`NumPy`_ complex types, ``%numpy_typemap`` expansions as above (with
+Assuming these data structures are compatible with Python and
+NumPy complex types, ``%numpy_typemap`` expansions as above (with
 the user's complex type substituted for the first argument) should
 work.
 
 NumPy Array Scalars and SWIG
-============================
+----------------------------
 
 `SWIG`_ has sophisticated type checking for numerical types.  For
 example, if your C/C++ routine expects an integer as input, the code
-generated by `SWIG`_ will check for both `python`_ integers and
-`python`_ long integers, and raise an overflow error if the provided
-`python`_ integer is too big to cast down to a C integer.  With the
-introduction of `NumPy`_ scalar arrays into your `python`_ code, you
-might conceivably extract an integer from a `NumPy`_ array and attempt
+generated by `SWIG`_ will check for both Python integers and
+Python long integers, and raise an overflow error if the provided
+Python integer is too big to cast down to a C integer.  With the
+introduction of NumPy scalar arrays into your Python code, you
+might conceivably extract an integer from a NumPy array and attempt
 to pass this to a `SWIG`_-wrapped C/C++ function that expects an
-``int``, but the `SWIG`_ type checking will not recognize the `NumPy`_
+``int``, but the `SWIG`_ type checking will not recognize the NumPy
 array scalar as an integer.  (Often, this does in fact work -- it
-depends on whether `NumPy`_ recognizes the integer type you are using
-as inheriting from the `python`_ integer type on the platform you are
+depends on whether NumPy recognizes the integer type you are using
+as inheriting from the Python integer type on the platform you are
 using.  Sometimes, this means that code that works on a 32-bit machine
 will fail on a 64-bit machine.)
 
-If you get a `python`_ error that looks like the following::
+If you get a Python error that looks like the following::
 
     TypeError: in method 'MyClass_MyMethod', argument 2 of type 'int'
 
 and the argument you are passing is an integer extracted from a
-`NumPy`_ array, then you have stumbled upon this problem.  The
+NumPy array, then you have stumbled upon this problem.  The
 solution is to modify the `SWIG`_ type conversion system to accept
 `Numpy`_ array scalars in addition to the standard integer types.
 Fortunately, this capabilitiy has been provided for you.  Simply copy
@@ -500,10 +492,10 @@ the file::
 
 to the working build directory for you project, and this problem will
 be fixed.  It is suggested that you do this anyway, as it only
-increases the capabilities of your `python`_ interface.
+increases the capabilities of your Python interface.
 
 Why is There a Second File?
----------------------------
+```````````````````````````
 
 The `SWIG`_ type checking and conversion system is a complicated
 combination of C macros, `SWIG`_ macros, `SWIG`_ typemaps and `SWIG`_
@@ -512,8 +504,8 @@ wrapper file if it is needed, and not insert it if not needed.  If
 multiple typemaps require the same fragment, the fragment only gets
 inserted into your wrapper code once.
 
-There is a fragment for converting a `python`_ integer to a C
-``long``.  There is a different fragment that converts a `python`_
+There is a fragment for converting a Python integer to a C
+``long``.  There is a different fragment that converts a Python
 integer to a C ``int``, that calls the rountine defined in the
 ``long`` fragment.  We can make the changes we want here by changing
 the definition for the ``long`` fragment.  `SWIG`_ determines the
@@ -525,7 +517,7 @@ to do this by putting our fragment definitions in the file
 in ``numpy.i``, they would be ignored.
 
 Helper Functions
-================
+----------------
 
 The ``numpy.i`` file containes several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
@@ -541,7 +533,7 @@ in your code using::
 in your `SWIG`_ interface file.
 
 Macros
-------
+``````
 
   **is_array(a)**
     Evaluates as true if ``a`` is non-``NULL`` and can be cast to a
@@ -580,7 +572,7 @@ Macros
     Evaluates as true if ``a`` is FORTRAN ordered.
 
 Routines
---------
+````````
 
   **pytype_string()**
 
@@ -588,7 +580,7 @@ Routines
 
     Arguments:
 
-    * ``PyObject* py_obj``, a general `python`_ object.
+    * ``PyObject* py_obj``, a general Python object.
 
     Return a string describing the type of ``py_obj``.
 
@@ -599,9 +591,9 @@ Routines
 
     Arguments:
 
-    * ``int typecode``, a `NumPy`_ integer typecode.
+    * ``int typecode``, a NumPy integer typecode.
 
-    Return a string describing the type corresponding to the `NumPy`_
+    Return a string describing the type corresponding to the NumPy
     ``typecode``.
 
   **type_match()**
@@ -610,9 +602,9 @@ Routines
 
     Arguments:
 
-    * ``int actual_type``, the `NumPy`_ typecode of a `NumPy`_ array.
+    * ``int actual_type``, the NumPy typecode of a NumPy array.
 
-    * ``int desired_type``, the desired `NumPy`_ typecode.
+    * ``int desired_type``, the desired NumPy typecode.
 
     Make sure that ``actual_type`` is compatible with
     ``desired_type``.  For example, this allows character and
@@ -626,13 +618,13 @@ Routines
 
     Arguments:
 
-    * ``PyObject* input``, a general `python`_ object.
+    * ``PyObject* input``, a general Python object.
 
-    * ``int typecode``, the desired `NumPy`_ typecode.
+    * ``int typecode``, the desired NumPy typecode.
 
     Cast ``input`` to a ``PyArrayObject*`` if legal, and ensure that
     it is of type ``typecode``.  If ``input`` cannot be cast, or the
-    ``typecode`` is wrong, set a `python`_ error and return ``NULL``.
+    ``typecode`` is wrong, set a Python error and return ``NULL``.
 
 
   **obj_to_array_allow_conversion()**
@@ -641,17 +633,17 @@ Routines
 
     Arguments:
 
-    * ``PyObject* input``, a general `python`_ object.
+    * ``PyObject* input``, a general Python object.
 
-    * ``int typecode``, the desired `NumPy`_ typecode of the resulting
+    * ``int typecode``, the desired NumPy typecode of the resulting
       array.
 
     * ``int* is_new_object``, returns a value of 0 if no conversion
       performed, else 1.
 
-    Convert ``input`` to a `NumPy`_ array with the given ``typecode``.
+    Convert ``input`` to a NumPy array with the given ``typecode``.
     On success, return a valid ``PyArrayObject*`` with the correct
-    type.  On failure, the `python`_ error string will be set and the
+    type.  On failure, the Python error string will be set and the
     routine returns ``NULL``.
 
 
@@ -661,7 +653,7 @@ Routines
 
     Arguments:
 
-    * ``PyArrayObject* ary``, a `NumPy`_ array.
+    * ``PyArrayObject* ary``, a NumPy array.
 
     * ``int* is_new_object``, returns a value of 0 if no conversion
       performed, else 1.
@@ -682,9 +674,9 @@ Routines
 
     Arguments:
 
-    * ``PyObject* input``, a general `python`_ object.
+    * ``PyObject* input``, a general Python object.
 
-    * ``int typecode``, the desired `NumPy`_ typecode of the resulting
+    * ``int typecode``, the desired NumPy typecode of the resulting
       array.
 
     * ``int* is_new_object``, returns a value of 0 if no conversion
@@ -702,10 +694,10 @@ Routines
 
     Arguments:
 
-    * ``PyArrayObject* ary``, a `NumPy`_ array.
+    * ``PyArrayObject* ary``, a NumPy array.
 
     Test whether ``ary`` is contiguous.  If so, return 1.  Otherwise,
-    set a `python`_ error and return 0.
+    set a Python error and return 0.
 
 
   **require_native()**
@@ -714,10 +706,10 @@ Routines
 
     Arguments:
 
-    * ``PyArray_Object* ary``, a `NumPy`_ array.
+    * ``PyArray_Object* ary``, a NumPy array.
 
     Require that ``ary`` is not byte-swapped.  If the array is not
-    byte-swapped, return 1.  Otherwise, set a `python`_ error and
+    byte-swapped, return 1.  Otherwise, set a Python error and
     return 0.
 
   **require_dimensions()**
@@ -726,13 +718,13 @@ Routines
 
     Arguments:
 
-    * ``PyArrayObject* ary``, a `NumPy`_ array.
+    * ``PyArrayObject* ary``, a NumPy array.
 
     * ``int exact_dimensions``, the desired number of dimensions.
 
     Require ``ary`` to have a specified number of dimensions.  If the
     array has the specified number of dimensions, return 1.
-    Otherwise, set a `python`_ error and return 0.
+    Otherwise, set a Python error and return 0.
 
 
   **require_dimensions_n()**
@@ -741,7 +733,7 @@ Routines
 
     Arguments:
 
-    * ``PyArrayObject* ary``, a `NumPy`_ array.
+    * ``PyArrayObject* ary``, a NumPy array.
 
     * ``int* exact_dimensions``, an array of integers representing
       acceptable numbers of dimensions.
@@ -750,7 +742,7 @@ Routines
 
     Require ``ary`` to have one of a list of specified number of
     dimensions.  If the array has one of the specified number of
-    dimensions, return 1.  Otherwise, set the `python`_ error string
+    dimensions, return 1.  Otherwise, set the Python error string
     and return 0.
 
 
@@ -760,7 +752,7 @@ Routines
 
     Arguments:
 
-    * ``PyArrayObject* ary``, a `NumPy`_ array.
+    * ``PyArrayObject* ary``, a NumPy array.
 
     * ``npy_int* size``, an array representing the desired lengths of
       each dimension.
@@ -768,7 +760,7 @@ Routines
     * ``int n``, the length of ``size``.
 
     Require ``ary`` to have a specified shape.  If the array has the
-    specified shape, return 1.  Otherwise, set the `python`_ error
+    specified shape, return 1.  Otherwise, set the Python error
     string and return 0.
 
 
@@ -778,7 +770,7 @@ Routines
 
     Arguments:
 
-    * ``PyArrayObject* ary``, a `NumPy`_ array.
+    * ``PyArrayObject* ary``, a NumPy array.
 
     Require the given ``PyArrayObject`` to to be FORTRAN ordered.  If
     the the ``PyArrayObject`` is already FORTRAN ordered, do nothing.
@@ -786,19 +778,19 @@ Routines
 
 
 Beyond the Provided Typemaps
-============================
+----------------------------
 
-There are many C or C++ array/`NumPy`_ array situations not covered by
+There are many C or C++ array/NumPy array situations not covered by
 a simple ``%include "numpy.i"`` and subsequent ``%apply`` directives.
 
 A Common Example
-----------------
+````````````````
 
 Consider a reasonable prototype for a dot product function::
 
     double dot(int len, double* vec1, double* vec2);
 
-The `python`_ interface that we want is::
+The Python interface that we want is::
 
     def dot(vec1, vec2):
         """
@@ -808,7 +800,7 @@ The `python`_ interface that we want is::
 The problem here is that there is one dimension argument and two array
 arguments, and our typemaps are set up for dimensions that apply to a
 single array (in fact, `SWIG`_ does not provide a mechanism for
-associating ``len`` with ``vec2`` that takes two `python`_ input
+associating ``len`` with ``vec2`` that takes two Python input
 arguments).  The recommended solution is the following::
 
     %apply (int DIM1, double* IN_ARRAY1) {(int len1, double* vec1),
@@ -839,10 +831,10 @@ method, you will want to use ``%extend`` rather than ``%inline`` in
 addition to ``%ignore``.
 
 **A note on error handling:** Note that ``my_dot`` returns a
-``double`` but that it can also raise a `python`_ error.  The
-resulting wrapper function will return a `python`_ float
+``double`` but that it can also raise a Python error.  The
+resulting wrapper function will return a Python float
 representation of 0.0 when the vector lengths do not match.  Since
-this is not ``NULL``, the `python`_ interpreter will not know to check
+this is not ``NULL``, the Python interpreter will not know to check
 for an error.  For this reason, we add the ``%exception`` directive
 above for ``my_dot`` to get the behavior we want (note that
 ``$action`` is a macro that gets expanded to a valid call to
@@ -850,7 +842,7 @@ above for ``my_dot`` to get the behavior we want (note that
 macro to perform this task.
 
 Other Situations
-----------------
+````````````````
 
 There are other wrapping situations in which ``numpy.i`` may be
 helpful when you encounter them.
@@ -877,13 +869,13 @@ helpful when you encounter them.
     case, the helper routines in ``numpy.i`` can be very useful.
 
   * Writing typemaps can be a bit nonintuitive.  If you have specific
-    questions about writing `SWIG`_ typemaps for `NumPy`_, the
+    questions about writing `SWIG`_ typemaps for NumPy, the
     developers of ``numpy.i`` do monitor the
     `Numpy-discussion <mailto:Numpy-discussion@scipy.org>`_ and
     `Swig-user <mailto:Swig-user@lists.sourceforge.net>`_ mail lists.
 
 A Final Note
-------------
+````````````
 
 When you use the ``%apply`` directive, as is usually necessary to use
 ``numpy.i``, it will remain in effect until you tell `SWIG`_ that it
@@ -901,10 +893,10 @@ In general, you should target these typemap signatures specifically
 where you want them, and then clear them after you are done.
 
 Summary
-=======
+-------
 
 Out of the box, ``numpy.i`` provides typemaps that support conversion
-between `NumPy`_ arrays and C arrays:
+between NumPy arrays and C arrays:
 
   * That can be one of 12 different scalar types: ``signed char``,
     ``unsigned char``, ``short``, ``unsigned short``, ``int``,
@@ -929,22 +921,10 @@ wrapper developers, including:
 
   * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
     implementing the 41 argument signatures for the user's choice of
-    (1) C data type, (2) `NumPy`_ data type (assuming they match), and
+    (1) C data type, (2) NumPy data type (assuming they match), and
     (3) dimension type.
 
   * Nine C macros and 13 C functions that can be used to write
     specialized typemaps, extensions, or inlined functions that handle
     cases not covered by the provided typemaps.
 
-Acknowledgements
-================
-
-Many people have worked to glue `SWIG`_ and `NumPy`_ together (as well
-as `SWIG`_ and the predecessors of `NumPy`_, Numeric and numarray).
-The effort to standardize this work into ``numpy.i`` began at the 2005
-`SciPy <http://scipy.org>`_ Conference with a conversation between
-Fernando Perez and myself.  Fernando collected helper functions and
-typemaps from Eric Jones, Michael Hunter, Anna Omelchenko and Michael
-Sanner.  Sebastian Hasse and Georg Holzmann have also provided
-additional error checking and use cases.  The work of these
-contributors has made this end result possible.
