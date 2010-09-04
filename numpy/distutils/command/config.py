@@ -271,7 +271,7 @@ int main ()
         high = mid
         # Binary search:
         while low != high:
-            mid = (high - low) / 2 + low
+            mid = (high - low) // 2 + low
             try:
                 self._compile(body % {'type': type_name, 'size': mid},
                         headers, include_dirs, 'c')
