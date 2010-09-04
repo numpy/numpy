@@ -1134,7 +1134,7 @@ class TestRegression(TestCase):
         t = ((1,), np.array(1))
         assert_raises(ValueError, lambda: np.array(t))
 
-    @dec.knownfailureif(True, "Fix this for 1.5.0.")
+    @dec.knownfailureif(True, "This is a corner case, see ticket #1081.")
     def test_array_from_sequence_scalar_array2(self):
         """Ticket #1081: weird array with strange input..."""
         t = np.array([np.array([]), np.array(0, object)])
