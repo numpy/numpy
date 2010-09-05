@@ -313,7 +313,8 @@ def _read_config_imp(filenames, dirs=None):
 
             # Update sec dict
             for oname, ovalue in nsections[rname].items():
-                sections[rname][oname] += ' %s' % ovalue
+                if ovalue:
+                    sections[rname][oname] += ' %s' % ovalue
 
         return meta, vars, sections, reqs
 
