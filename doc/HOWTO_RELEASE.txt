@@ -194,6 +194,12 @@ best to read the pavement.py script.
 .. note:: The following steps are repeated for the beta(s), release
    candidates(s) and the final release.
 
+Merge doc wiki edits
+--------------------
+The edits in the documentation wiki suitable for merging should be merged,
+ideally just before making the release branch. How to do this is described in
+detail in doc/HOWTO_MERGE_WIKI_DOCS.txt.
+
 Check deprecations
 ------------------
 Before the release branch is made, it should be checked that all deprecated
@@ -210,6 +216,9 @@ following:
 - supported Python versions
 - for SciPy, supported NumPy version(s)
 - outlook for the near future
+
+Also make sure that as soon as the branch is made, there is a new release notes
+file in trunk for the next release.
 
 Create the release "tag"
 ------------------------
@@ -268,3 +277,12 @@ Matplotlib,IPython and/or Pygame.
 During the beta/RC phase an explicit request for testing the binaries with
 several other libraries (SciPy/Matplotlib/Pygame) should be posted on the
 mailing list.
+
+After the final release
+-----------------------
+After the final release is announced, a few administrative tasks are left to be
+done:
+
+  - Forward port changes in the release branch to release notes and release
+    scripts, if any, to trunk.
+  - Update the Milestones in Trac.
