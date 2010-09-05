@@ -586,38 +586,55 @@ def makefig(code, code_path, output_dir, output_base, config):
 try:
     from os.path import relpath
 except ImportError:
-    def relpath(target, base=os.curdir):
-        """
-        Return a relative path to the target from either the current
-        dir or an optional base dir.  Base can be a directory
-        specified either as absolute or relative to current dir.
-        """
+    # Copied from Python 2.7
+    if 'posix' in sys.builtin_module_names:
+        def relpath(path, start=os.path.curdir):
+            """Return a relative version of a path"""
+            from os.path import sep, curdir, join, abspath, commonprefix, \
+                 pardir
 
-        if not os.path.exists(target):
-            raise OSError, 'Target does not exist: '+target
+            if not path:
+                raise ValueError("no path specified")
 
-        if not os.path.isdir(base):
-            raise OSError, 'Base is not a directory or does not exist: '+base
+            start_list = abspath(start).split(sep)
+            path_list = abspath(path).split(sep)
 
-        base_list = (os.path.abspath(base)).split(os.sep)
-        target_list = (os.path.abspath(target)).split(os.sep)
+            # Work out how much of the filepath is shared by start and path.
+            i = len(commonprefix([start_list, path_list]))
 
-        # On the windows platform the target may be on a completely
-        # different drive from the base.
-        if os.name in ['nt','dos','os2'] and base_list[0] <> target_list[0]:
-            raise OSError, 'Target is on a different drive to base. Target: '+target_list[0].upper()+', base: '+base_list[0].upper()
+            rel_list = [pardir] * (len(start_list)-i) + path_list[i:]
+            if not rel_list:
+                return curdir
+            return join(*rel_list)
+    elif 'nt' in sys.builtin_module_names:
+        def relpath(path, start=os.path.curdir):
+            """Return a relative version of a path"""
+            from os.path import sep, curdir, join, abspath, commonprefix, \
+                 pardir, splitunc
 
-        # Starting from the filepath root, work out how much of the
-        # filepath is shared by base and target.
-        for i in range(min(len(base_list), len(target_list))):
-            if base_list[i] <> target_list[i]: break
-        else:
-            # If we broke out of the loop, i is pointing to the first
-            # differing path elements.  If we didn't break out of the
-            # loop, i is pointing to identical path elements.
-            # Increment i so that in all cases it points to the first
-            # differing path elements.
-            i+=1
+            if not path:
+                raise ValueError("no path specified")
+            start_list = abspath(start).split(sep)
+            path_list = abspath(path).split(sep)
+            if start_list[0].lower() != path_list[0].lower():
+                unc_path, rest = splitunc(path)
+                unc_start, rest = splitunc(start)
+                if bool(unc_path) ^ bool(unc_start):
+                    raise ValueError("Cannot mix UNC and non-UNC paths (%s and %s)"
+                                                                        % (path, start))
+                else:
+                    raise ValueError("path is on drive %s, start on drive %s"
+                                                        % (path_list[0], start_list[0]))
+            # Work out how much of the filepath is shared by start and path.
+            for i in range(min(len(start_list), len(path_list))):
+                if start_list[i].lower() != path_list[i].lower():
+                    break
+            else:
+                i += 1
 
-        rel_list = [os.pardir] * (len(base_list)-i) + target_list[i:]
-        return os.path.join(*rel_list)
+            rel_list = [pardir] * (len(start_list)-i) + path_list[i:]
+            if not rel_list:
+                return curdir
+            return join(*rel_list)
+    else:
+        raise RuntimeError("Unsupported platform (no relpath available!)")
