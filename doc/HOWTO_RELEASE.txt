@@ -200,6 +200,15 @@ The edits in the documentation wiki suitable for merging should be merged,
 ideally just before making the release branch. How to do this is described in
 detail in doc/HOWTO_MERGE_WIKI_DOCS.txt.
 
+Check that docs can be built
+----------------------------
+Do::
+
+    cd doc/
+    make dist
+
+to check that the documentation is in a buildable state.
+
 Check deprecations
 ------------------
 Before the release branch is made, it should be checked that all deprecated
@@ -262,6 +271,35 @@ web interface of PyPi. The source tarball can also be uploaded through this
 interface. A simple binary installer for windows, created with
 ``bdist_wininst``, should also be uploaded to PyPi so ``easy_install numpy``
 works.
+
+Update docs.scipy.org
+---------------------
+Do the following (or ask the doc people to take care of it):
+
+Rebuild and upload documentation:
+
+- ``cd numpy/doc``
+- ``make dist``
+- Check that the built documentation is OK.
+- ``touch output-is-fine``
+- ``make upload UPLOAD_TARGET=USERNAME@docs.scipy.org:/home/docserver/www-root/doc/numpy-1.5.x/``
+
+where USERNAME should be replaced by your account on
+``docs.scipy.org``, and ``numpy-1.5.x`` by the version number of the
+*release series*. For instance, for Numpy 1.5.1, it should be
+``numpy-1.5.x`` and for Numpy 2.0.0 ``numpy-2.0.x``.
+
+Rebuild and upload ``docs.scipy.org`` front page, if the release
+series is a new one. The front page sources are located in the Scipy
+repository:
+
+- ``cd scipy/doc/frontpage``
+- Edit ``_templates/indexcontent.html`` to add links to the new release series.
+- ``make dist``
+- Check that the built documentation is OK.
+- ``touch output-is-fine``
+- ``make upload USER=USERNAME``
+
 
 Update scipy.org
 ----------------
