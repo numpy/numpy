@@ -671,7 +671,23 @@ fail:
 NPY_NO_EXPORT void
 _array_dealloc_buffer_info(PyArrayObject *self)
 {
+    int reset_error_state = 0;
+    PyObject *ptype, *pvalue, *ptraceback;
+
+    /* This function may be called when processing an exception --
+     * we need to stash the error state to avoid confusing PyDict
+     */
+
+    if (PyErr_Occurred()) {
+        reset_error_state = 1;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    }
+
     _buffer_clear_info((PyObject*)self);
+
+    if (reset_error_state) {
+        PyErr_Restore(ptype, pvalue, ptraceback);
+    }
 }
 
 #else
