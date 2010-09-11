@@ -149,14 +149,19 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
 #endif
 
 /*
- * PyFile_AsFile
+ * PyFile_* compatibility
  */
 #if defined(NPY_PY3K)
+
+/*
+ * Get a FILE* handle to the file represented by the Python object
+ */
 static NPY_INLINE FILE*
 npy_PyFile_Dup(PyObject *file, char *mode)
 {
     int fd, fd2;
     PyObject *ret, *os;
+    FILE *handle;
     /* Flush first to ensure things end up in the file in the correct order */
     ret = PyObject_CallMethod(file, "flush", "");
     if (ret == NULL) {
@@ -179,11 +184,62 @@ npy_PyFile_Dup(PyObject *file, char *mode)
     fd2 = PyNumber_AsSsize_t(ret, NULL);
     Py_DECREF(ret);
 #ifdef _WIN32
-    return _fdopen(fd2, mode);
+    handle = _fdopen(fd2, mode);
 #else
-    return fdopen(fd2, mode);
+    handle = fdopen(fd2, mode);
 #endif
+    if (handle == NULL) {
+        PyErr_SetString(PyExc_IOError,
+                        "Getting a FILE* from a Python file object failed");
+    }
+    return handle;
 }
+
+/*
+ * Close the dup-ed file handle, and seek the Python one to the current position
+ */
+static NPY_INLINE int
+npy_PyFile_DupClose(PyObject *file, FILE* handle)
+{
+    PyObject *ret;
+    long position;
+    position = ftell(handle);
+    fclose(handle);
+
+    ret = PyObject_CallMethod(file, "seek", "li", position, 0);
+    if (ret == NULL) {
+        return -1;
+    }
+    Py_DECREF(ret);
+    return 0;
+}
+
+static int
+npy_PyFile_Check(PyObject *file)
+{
+    static PyTypeObject *fileio = NULL;
+
+    if (fileio == NULL) {
+        PyObject *mod;
+        mod = PyImport_ImportModule("io");
+        if (mod == NULL) {
+            return 0;
+        }
+        fileio = (PyTypeObject*)PyObject_GetAttrString(mod, "FileIO");
+        Py_DECREF(mod);
+    }
+
+    if (fileio != NULL) {
+        return PyObject_TypeCheck(file, fileio);
+    }
+}
+
+#else
+
+#define npy_PyFile_Dup(file, mode) PyFile_AsFile(file)
+#define npy_PyFile_DupClose(file, handle) (0)
+#define npy_PyFile_Check PyFile_Check
+
 #endif
 
 static NPY_INLINE PyObject*

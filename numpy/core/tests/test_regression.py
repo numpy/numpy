@@ -7,6 +7,7 @@ from os import path
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
 from numpy.compat import asbytes, asunicode, asbytes_nested
+import tempfile
 import numpy as np
 
 if sys.version_info[0] >= 3:
@@ -1372,6 +1373,27 @@ class TestRegression(TestCase):
             pass
         c2 = sys.getrefcount(rgba)
         assert_equal(c1, c2)
+
+    def test_fromfile_tofile_seeks(self):
+        # On Python 3, tofile/fromfile used to get (#1610) the Python
+        # file handle out of sync
+        f = tempfile.TemporaryFile()
+        f.write(np.arange(255, dtype='u1').tostring())
+
+        f.seek(20)
+        ret = np.fromfile(f, count=4, dtype='u1')
+        assert_equal(ret, np.array([20, 21, 22, 23], dtype='u1'))
+        assert_equal(f.tell(), 24)
+
+        f.seek(40)
+        np.array([1, 2, 3], dtype='u1').tofile(f)
+        assert_equal(f.tell(), 43)
+
+        f.seek(40)
+        data = f.read(3)
+        assert_equal(data, asbytes("\x01\x02\x03"))
+
+        f.close()
 
 if __name__ == "__main__":
     run_module_suite()
