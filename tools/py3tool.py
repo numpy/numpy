@@ -157,7 +157,7 @@ def custom_mangling(filename):
         for mod in ['multiarray', 'scalarmath', 'umath', '_sort',
                     '_compiled_base', 'core', 'lib', 'testing', 'fft',
                     'polynomial', 'random', 'ma', 'linalg', 'compat',
-                    'mtrand']:
+                    'mtrand', '_dotblas']:
             text = re.sub(r'^(\s*)import %s' % mod,
                           r'\1from . import %s' % mod,
                           text, flags=re.M)
