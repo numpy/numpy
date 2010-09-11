@@ -1393,6 +1393,11 @@ class TestRegression(TestCase):
         data = f.read(3)
         assert_equal(data, asbytes("\x01\x02\x03"))
 
+        f.seek(80)
+        f.read(4)
+        data = np.fromfile(f, dtype='u1', count=4)
+        assert_equal(data, np.array([84, 85, 86, 87], dtype='u1'))
+
         f.close()
 
 if __name__ == "__main__":
