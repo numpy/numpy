@@ -161,6 +161,7 @@ npy_PyFile_Dup(PyObject *file, char *mode)
 {
     int fd, fd2;
     PyObject *ret, *os;
+    Py_ssize_t pos;
     FILE *handle;
     /* Flush first to ensure things end up in the file in the correct order */
     ret = PyObject_CallMethod(file, "flush", "");
@@ -192,6 +193,18 @@ npy_PyFile_Dup(PyObject *file, char *mode)
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object failed");
     }
+    ret = PyObject_CallMethod(file, "tell", "");
+    if (ret == NULL) {
+        fclose(handle);
+        return NULL;
+    }
+    pos = PyNumber_AsSsize_t(ret, PyExc_OverflowError);
+    Py_DECREF(ret);
+    if (PyErr_Occurred()) {
+        fclose(handle);
+        return NULL;
+    }
+    fseek(handle, pos, SEEK_SET);
     return handle;
 }
 
