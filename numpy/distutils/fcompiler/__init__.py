@@ -25,6 +25,8 @@ try:
 except NameError:
     from sets import Set as set
 
+from numpy.compat import open_latin1
+
 from distutils.sysconfig import get_config_var, get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError, \
@@ -911,7 +913,7 @@ def is_free_format(file):
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    f = open(file,'r')
+    f = open_latin1(file,'r')
     line = f.readline()
     n = 10000 # the number of non-comment lines to scan for hints
     if _has_f_header(line):
@@ -931,7 +933,7 @@ def is_free_format(file):
     return result
 
 def has_f90_header(src):
-    f = open(src,'r')
+    f = open_latin1(src,'r')
     line = f.readline()
     f.close()
     return _has_f90_header(line) or _has_fix_header(line)
@@ -944,7 +946,7 @@ def get_f77flags(src):
     Return a dictionary {<fcompiler type>:<f77 flags>}.
     """
     flags = {}
-    f = open(src,'r')
+    f = open_latin1(src,'r')
     i = 0
     for line in f.readlines():
         i += 1
