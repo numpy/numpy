@@ -230,9 +230,6 @@ class NoseTester(object):
             argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
                    '--cover-tests', '--cover-inclusive', '--cover-erase']
 
-        # enable assert introspection
-        argv += ['--detailed-errors']
-
         # bypass these samples under distutils
         argv += ['--exclude','f2py_ext']
         argv += ['--exclude','f2py_f90_ext']
