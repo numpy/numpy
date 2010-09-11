@@ -232,6 +232,7 @@ npy_PyFile_Check(PyObject *file)
     if (fileio != NULL) {
         return PyObject_TypeCheck(file, fileio);
     }
+    return 0;
 }
 
 #else
