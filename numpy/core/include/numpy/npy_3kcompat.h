@@ -227,25 +227,16 @@ npy_PyFile_DupClose(PyObject *file, FILE* handle)
     return 0;
 }
 
-static int
+static NPY_INLINE int
 npy_PyFile_Check(PyObject *file)
 {
-    static PyTypeObject *fileio = NULL;
-
-    if (fileio == NULL) {
-        PyObject *mod;
-        mod = PyImport_ImportModule("io");
-        if (mod == NULL) {
-            return 0;
-        }
-        fileio = (PyTypeObject*)PyObject_GetAttrString(mod, "FileIO");
-        Py_DECREF(mod);
+    int fd;
+    fd = PyObject_AsFileDescriptor(file);
+    if (fd == -1) {
+        PyErr_Clear();
+        return 0;
     }
-
-    if (fileio != NULL) {
-        return PyObject_TypeCheck(file, fileio);
-    }
-    return 0;
+    return 1;
 }
 
 #else
