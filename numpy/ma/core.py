@@ -2296,14 +2296,14 @@ def _recursive_printoption(result, mask, printopt):
             np.putmask(curdata, curmask, printopt)
     return
 
-_print_templates = dict(long="""\
+_print_templates = dict(long_std="""\
 masked_%(name)s(data =
  %(data)s,
        %(nlen)s mask =
  %(mask)s,
  %(nlen)s fill_value = %(fill)s)
 """,
-                        short="""\
+                        short_std="""\
 masked_%(name)s(data = %(data)s,
        %(nlen)s mask = %(mask)s,
 %(nlen)s  fill_value = %(fill)s)
@@ -3574,8 +3574,8 @@ class MaskedArray(ndarray):
                 return _print_templates['short_flx'] % parameters
             return  _print_templates['long_flx'] % parameters
         elif n <= 1:
-            return _print_templates['short'] % parameters
-        return _print_templates['long'] % parameters
+            return _print_templates['short_std'] % parameters
+        return _print_templates['long_std'] % parameters
 
 
     def __eq__(self, other):
@@ -5972,7 +5972,7 @@ harden_mask = _frommethod('harden_mask')
 ids = _frommethod('ids')
 maximum = _maximum_operation()
 mean = _frommethod('mean')
-minimum = _minimum_operation ()
+minimum = _minimum_operation()
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
 product = _frommethod('prod')
@@ -6040,8 +6040,7 @@ def power(a, b, third=None):
     if m is not nomask:
         if not (result.ndim):
             return masked
-        m |= invalid
-        result._mask = m
+        result._mask = np.logical_or(m, invalid)
     # Fix the invalid parts
     if invalid.any():
         if not result.ndim:

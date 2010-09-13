@@ -2975,6 +2975,39 @@ class TestMaskedArrayFunctions(TestCase):
         assert_almost_equal(x, y)
         assert_almost_equal(x._data, y._data)
 
+    def test_power_w_broadcasting(self):
+        "Test power w/ broadcasting"
+        a2 = np.array([[1., 2., 3.], [4., 5., 6.]])
+        a2m = array(a2, mask=[[1, 0, 0], [0, 0, 1]])
+        b1 = np.array([2, 4, 3])
+        b1m = array(b1, mask=[0, 1, 0])
+        b2 = np.array([b1, b1])
+        b2m = array(b2, mask=[[0, 1, 0], [0, 1, 0]])
+        #
+        ctrl = array([[1 ** 2, 2 ** 4, 3 ** 3], [4 ** 2, 5 ** 4, 6 ** 3]],
+                mask=[[1, 1, 0], [0, 1, 1]])
+        # No broadcasting, base & exp w/ mask
+        test = a2m ** b2m
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, ctrl.mask)
+        # No broadcasting, base w/ mask, exp w/o mask
+        test = a2m ** b2
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, a2m.mask)
+        # No broadcasting, base w/o mask, exp w/ mask
+        test = a2 ** b2m
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, b2m.mask)
+        #
+        ctrl = array([[2 ** 2, 4 ** 4, 3 ** 3], [2 ** 2, 4 ** 4, 3 ** 3]],
+                mask=[[0, 1, 0], [0, 1, 0]])
+        test = b1 ** b2m
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, ctrl.mask)
+        test = b2m ** b1
+        assert_equal(test, ctrl)
+        assert_equal(test.mask, ctrl.mask)
+
 
     def test_where(self):
         "Test the where function"
