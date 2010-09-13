@@ -132,8 +132,8 @@ def flatten_dtype(ndtype, flatten_base=False):
     else:
         types = []
         for field in names:
-            (typ, _) = ndtype.fields[field]
-            flat_dt = flatten_dtype(typ, flatten_base)
+            info = ndtype.fields[field]
+            flat_dt = flatten_dtype(info[0], flatten_base)
             types.extend(flat_dt)
         return types
 
