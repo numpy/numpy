@@ -227,52 +227,6 @@ def legline(off, scl) :
         return np.array([off])
 
 
-def legtimesx(cs):
-    """Multiply a Legendre series by x.
-
-    Multiply the Legendre series `cs` by x, where x is the independent
-    variable.
-
-
-    Parameters
-    ----------
-    cs : array_like
-        1-d array of Legendre series coefficients ordered from low to
-        high.
-
-    Returns
-    -------
-    out : ndarray
-        Array representing the result of the multiplication.
-
-    Notes
-    -----
-    The multiplication uses the recursion relationship for Legendre
-    polynomials in the form
-
-    .. math::
-
-    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
-
-    """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    # The zero series needs special treatment
-    if len(cs) == 1 and cs[0] == 0:
-        return cs
-
-    prd = np.empty(len(cs) + 1, dtype=cs.dtype)
-    prd[0] = cs[0]*0
-    prd[1] = cs[0]
-    for i in range(1, len(cs)):
-        j = i + 1
-        k = i - 1
-        s = i + j
-        prd[j] = (cs[i]*j)/s
-        prd[k] += (cs[i]*i)/s
-    return prd
-
-
 def legfromroots(roots) :
     """
     Generate a Legendre series with the given roots.
