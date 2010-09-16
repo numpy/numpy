@@ -17,7 +17,8 @@ After installation, tests can be run with:
 python -c 'import numpy; numpy.test()'
 
 The most current development version is always available from our
-subversion repository:
+git repository:
 
-http://svn.scipy.org/svn/numpy/trunk
+http://github.com/numpy/numpy
+
 
