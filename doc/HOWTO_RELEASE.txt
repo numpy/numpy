@@ -105,7 +105,7 @@ needs to be installed:
 * MinGW
 * ATLAS, 3x ([No SSE, SSE2, SSE3] for superpack installer) : ATLAS does not
   compile under wine or on Windows out of the box. Binaries for ATLAS can be
-  found in svn under vendor/.
+  found in the vendor repository on GitHub (http://github.com/numpy/vendor).
 
 To install Wine on OS X Snow Leopard the current options are to compile a
 current unstable version ,`<http://wiki.winehq.org/MacOSX/Building>`_, or to use
@@ -229,24 +229,25 @@ following:
 Also make sure that as soon as the branch is made, there is a new release notes
 file in trunk for the next release.
 
-Create the release "tag"
-------------------------
+Update the release status and create a release "tag"
+----------------------------------------------------
+Identify the commit hash of the release, e.g. 1b2e1d63ff.
+
+::
+    git co 1b2e1d63ff # gives warning about detached head
+
+Now, set ``release=True`` in setup.py, then
+
 ::
 
-    svn cp http://svn.scipy.org/svn/numpy/trunk http://svn.scipy.org/svn/numpy/tags/<version>
+    git commit -m "REL: Release." setup.py
+    git tag <version>
+    git push origin <version>
 
 Update the version of the trunk
 -------------------------------
 Increment the release number in setup.py. Release candidates should have "rc1"
 (or "rc2", "rcN") appended to the X.Y.Z format.
-
-Update the version of the tag
------------------------------
-Switch to the tag::
-
-  svn switch http://svn.scipy.org/svn/numpy/tags/<version>
-
-Set ``release=True`` in setup.py. 
 
 Make the release
 ----------------
