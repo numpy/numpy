@@ -263,10 +263,9 @@ Alternatives
 
 Implementation
 
-    The current implementation is in the trunk of the numpy SVN
-    repository and will be part of the 1.0.5 release.
+    The current implementation is included in the 1.0.5 release of numpy.
 
-        http://svn.scipy.org/svn/numpy/trunk
+        http://github.com/numpy/numpy/blob/v1.5.0/numpy/lib/format.py
 
     Specifically, the file format.py in this directory implements the
     format as described here.
