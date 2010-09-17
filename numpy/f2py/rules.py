@@ -1216,12 +1216,12 @@ def buildmodule(m,um):
             rd=dictappend(rd,ar)
     ar=applyrules(module_rules,rd)
 
-    fn = os.path.join(options['buildpath'],vrd['modulename']+'module.c')
+    fn = os.path.join(options['buildpath'],vrd['coutput'])
     ret['csrc'] = fn
     f=open(fn,'w')
     f.write(ar['modulebody'].replace('\t',2*' '))
     f.close()
-    outmess('\tWrote C/API module "%s" to file "%s/%smodule.c"\n'%(m['name'],options['buildpath'],vrd['modulename']))
+    outmess('\tWrote C/API module "%s" to file "%s"\n'%(m['name'],fn))
 
     if options['dorestdoc']:
         fn = os.path.join(options['buildpath'],vrd['modulename']+'module.rest')
@@ -1243,7 +1243,7 @@ def buildmodule(m,um):
         f.close()
         outmess('\tDocumentation is saved to file "%s/%smodule.tex"\n'%(options['buildpath'],vrd['modulename']))
     if funcwrappers:
-        wn = os.path.join(options['buildpath'],'%s-f2pywrappers.f'%(vrd['modulename']))
+        wn = os.path.join(options['buildpath'],vrd['f2py_wrapper_output'])
         ret['fsrc'] = wn
         f=open(wn,'w')
         f.write('C     -*- fortran -*-\n')

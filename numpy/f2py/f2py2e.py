@@ -173,10 +173,9 @@ License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2005 Pearu Peterson all rights reserved.
 http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, numpy_version)
 
-
 def scaninputline(inputline):
     files,funcs,skipfuncs,onlyfuncs,debug=[],[],[],[],[]
-    f,f2,f3,f4,f5,f6,f7=1,0,0,0,0,0,0
+    f,f2,f3,f4,f5,f6,f7,f8,f9=1,0,0,0,0,0,0,0,0
     verbose = 1
     dolc=-1
     dolatexdoc = 0
@@ -185,7 +184,9 @@ def scaninputline(inputline):
     buildpath = '.'
     include_paths = []
     signsfile,modulename=None,None
-    options = {'buildpath':buildpath}
+    options = {'buildpath':buildpath,
+               'coutput': None,
+               'f2py_wrapper_output': None}
     for l in inputline:
         if l=='': pass
         elif l=='only:': f=0
@@ -204,6 +205,8 @@ def scaninputline(inputline):
         elif l=='--wrap-functions': wrapfuncs=1
         elif l=='--no-wrap-functions': wrapfuncs=0
         elif l=='--short-latex': options['shortlatex']=1
+        elif l=='--coutput': f8=1
+        elif l=='--f2py-wrapper-output': f9=1
         elif l=='--overwrite-signature': options['h-overwrite']=1
         elif l=='-h': f2=1
         elif l=='-m': f3=1
@@ -224,6 +227,8 @@ def scaninputline(inputline):
         elif f3: f3=0;modulename=l
         elif f6: f6=0;buildpath=l
         elif f7: f7=0;include_paths.extend(l.split(os.pathsep))
+        elif f8: f8=0;options["coutput"]=l
+        elif f9: f9=0;options["f2py_wrapper_output"]=l
         elif f==1:
             try:
                 open(l).close()
@@ -283,6 +288,18 @@ def callcrackfortran(files,options):
             f=open(options['signsfile'],'w')
             f.write(pyf)
             f.close()
+    if options["coutput"] is None:
+        for mod in postlist:
+            mod["coutput"] = "%smodule.c" % mod["name"]
+    else:
+        for mod in postlist:
+            mod["coutput"] = options["coutput"]
+    if options["f2py_wrapper_output"] is None:
+        for mod in postlist:
+            mod["f2py_wrapper_output"] = "%s-f2pywrappers.f" % mod["name"]
+    else:
+        for mod in postlist:
+            mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
     return postlist
 
 def buildmodules(lst):
