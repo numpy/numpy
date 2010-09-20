@@ -973,11 +973,35 @@ NONZERO_NAME(@name@_,)(PyObject *a)
 }
 /**end repeat**/
 
+
+static void
+emit_complexwarning()
+{
+    static PyObject *cls = NULL;
+    if (cls == NULL) {
+        PyObject *mod;
+        mod = PyImport_ImportModule("numpy.core");
+        assert(mod != NULL);
+        cls = PyObject_GetAttrString(mod, "ComplexWarning");
+        assert(cls != NULL);
+        Py_DECREF(mod);
+    }
+#if PY_VERSION_HEX >= 0x02050000
+    PyErr_WarnEx(cls,
+                 "Casting complex values to real discards the imaginary "
+                 "part", 0);
+#else
+    PyErr_Warn(cls,
+               "Casting complex values to real discards the imaginary "
+               "part");
+#endif
+}
+
 /**begin repeat
  *
  * #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
  * #Name=Byte,UByte,Short,UShort,Int,UInt,Long,ULong,LongLong,ULongLong,Float,Double,LongDouble,CFloat,CDouble,CLongDouble#
- * #cmplx=,,,,,,,,,,,,,.real,.real,.real#
+ * #cmplx=0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1#
  * #sign=(signed,unsigned)*5,,,,,,#
  * #unsigntyp=0,1,0,1,0,1,0,1,0,1,1*6#
  * #ctype=long*8,PY_LONG_LONG*2,double*6#
@@ -987,11 +1011,18 @@ NONZERO_NAME(@name@_,)(PyObject *a)
 static PyObject *
 @name@_int(PyObject *obj)
 {
-    @sign@ @ctype@ x= PyArrayScalar_VAL(obj, @Name@)@cmplx@;
+#if @cmplx@
+    @sign@ @ctype@ x= PyArrayScalar_VAL(obj, @Name@).real;
+#else
+    @sign@ @ctype@ x= PyArrayScalar_VAL(obj, @Name@);
+#endif
 #if @realtyp@
     double ix;
     modf(x, &ix);
     x = ix;
+#endif
+#if @cmplx@
+    emit_complexwarning();
 #endif
 
 /*
@@ -1013,14 +1044,19 @@ static PyObject *
  *
  * #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*2#
  * #Name=(Byte,UByte,Short,UShort,Int,UInt,Long,ULong,LongLong,ULongLong,Float,Double,LongDouble,CFloat,CDouble,CLongDouble)*2#
- * #cmplx=(,,,,,,,,,,,,,.real,.real,.real)*2#
+ * #cmplx=(0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1)*2#
  * #which=long*16,float*16#
  * #func=(PyLong_FromLongLong, PyLong_FromUnsignedLongLong)*5,PyLong_FromDouble*6,PyFloat_FromDouble*16#
  */
 static PyObject *
 @name@_@which@(PyObject *obj)
 {
-    return @func@((PyArrayScalar_VAL(obj, @Name@))@cmplx@);
+#if @cmplx@
+    emit_complexwarning();
+    return @func@((PyArrayScalar_VAL(obj, @Name@)).real);
+#else
+    return @func@((PyArrayScalar_VAL(obj, @Name@)));
+#endif
 }
 /**end repeat**/
 
