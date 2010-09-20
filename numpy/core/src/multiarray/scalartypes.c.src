@@ -1468,6 +1468,22 @@ gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
     return Py_None;
 }
 
+/* casting complex numbers (that don't inherit from Python complex)
+ * to Python complex */
+
+/**begin repeat
+ * #name=cfloat,clongdouble#
+ * #Name=CFloat,CLongDouble#
+ */
+static PyObject *
+@name@_complex(PyObject *self, PyObject *NPY_UNUSED(args),
+               PyObject *NPY_UNUSED(kwds))
+{
+    return PyComplex_FromDoubles(PyArrayScalar_VAL(self, @Name@).real,
+                                 PyArrayScalar_VAL(self, @Name@).imag);
+}
+/**end repeat**/
+
 /* need to fill in doc-strings for these methods on import -- copy from
    array docstrings
 */
@@ -1686,6 +1702,17 @@ static PyMethodDef voidtype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}
 };
+
+/**begin repeat
+ * #name=cfloat,clongdouble#
+ */
+static PyMethodDef @name@type_methods[] = {
+    {"__complex__",
+        (PyCFunction)@name@_complex,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL}
+};
+/**end repeat**/
 
 /************* As_mapping functions for void array scalar ************/
 
@@ -3259,6 +3286,13 @@ initialize_numeric_types(void)
      *         Float, LongDouble, CFloat, CLongDouble, Void, Object#
      */
     Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
+    /**end repeat**/
+
+    /**begin repeat
+     * #name = cfloat, clongdouble#
+     * #NAME = CFloat, CLongDouble#
+     */
+    Py@NAME@ArrType_Type.tp_methods = @name@type_methods;
     /**end repeat**/
 
 #if (SIZEOF_INT != SIZEOF_LONG) || defined(NPY_PY3K)
