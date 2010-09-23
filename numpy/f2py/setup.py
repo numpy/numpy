@@ -62,7 +62,7 @@ for mode in ["g3-numpy", "2e-numeric", "2e-numarray", "2e-numpy"]:
     except ValueError: pass
 os.environ["NO_SCIPY_IMPORT"]="f2py"
 if mode=="g3-numpy":
-    print >> sys.stderr, "G3 f2py support is not implemented, yet."
+    sys.stderr.write("G3 f2py support is not implemented, yet.\n")
     sys.exit(1)
 elif mode=="2e-numeric":
     from f2py2e import main
@@ -72,7 +72,7 @@ elif mode=="2e-numarray":
 elif mode=="2e-numpy":
     from numpy.f2py import main
 else:
-    print >> sys.stderr, "Unknown mode:",`mode`
+    sys.stderr.write("Unknown mode: '%s'\n" % mode)
     sys.exit(1)
 main()
 '''%(os.path.basename(sys.executable)))
