@@ -72,7 +72,7 @@ elif mode=="2e-numarray":
 elif mode=="2e-numpy":
     from numpy.f2py import main
 else:
-    sys.stderr.write("Unknown mode: '%s'\n" % mode)
+    sys.stderr.write("Unknown mode: " + repr(mode))
     sys.exit(1)
 main()
 '''%(os.path.basename(sys.executable)))
