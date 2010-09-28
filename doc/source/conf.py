@@ -4,8 +4,10 @@ import sys, os, re
 
 # Check Sphinx version
 import sphinx
-if sphinx.__version__ < "0.5":
-    raise RuntimeError("Sphinx 0.5.dev or newer required")
+if sphinx.__version__ < "1.0.1":
+    raise RuntimeError("Sphinx 1.0.1 or newer required")
+
+needs_sphinx = '1.0'
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -18,14 +20,8 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest',
+              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
               'plot_directive']
-
-if sphinx.__version__ >= "0.7":
-    extensions.append('sphinx.ext.autosummary')
-else:
-    extensions.append('autosummary')
-    extensions.append('only_directives')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -222,9 +218,8 @@ numpydoc_use_plots = True
 # Autosummary
 # -----------------------------------------------------------------------------
 
-if sphinx.__version__ >= "0.7": 
-    import glob
-    autosummary_generate = glob.glob("reference/*.rst")
+import glob
+autosummary_generate = glob.glob("reference/*.rst")
 
 # -----------------------------------------------------------------------------
 # Coverage checker
