@@ -8,7 +8,7 @@ from docscrape_sphinx import SphinxDocString, SphinxClassDoc
 from nose.tools import *
 
 doc_txt = '''\
-  numpy.multivariate_normal(mean, cov, shape=None)
+  numpy.multivariate_normal(mean, cov, shape=None, spam=None)
 
   Draw values from a multivariate normal distribution with specified
   mean and covariance.
@@ -41,6 +41,21 @@ doc_txt = '''\
 
       In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
       value drawn from the distribution.
+
+  Other Parameters
+  ----------------
+  spam : parrot
+      A parrot off its mortal coil.
+
+  Raises
+  ------
+  RuntimeError
+      Some error
+
+  Warns
+  -----
+  RuntimeWarning
+      Some warning
 
   Warnings
   --------
@@ -102,7 +117,7 @@ doc = NumpyDocString(doc_txt)
 
 def test_signature():
     assert doc['Signature'].startswith('numpy.multivariate_normal(')
-    assert doc['Signature'].endswith('shape=None)')
+    assert doc['Signature'].endswith('spam=None)')
 
 def test_summary():
     assert doc['Summary'][0].startswith('Draw values')
@@ -119,6 +134,13 @@ def test_parameters():
     assert_equal(arg_type, '(N,N) ndarray')
     assert desc[0].startswith('Covariance matrix')
     assert doc['Parameters'][0][-1][-2] == '   (1+2+3)/3'
+
+def test_other_parameters():
+    assert_equal(len(doc['Other Parameters']), 1)
+    assert_equal([n for n,_,_ in doc['Other Parameters']], ['spam'])
+    arg, arg_type, desc = doc['Other Parameters'][0]
+    assert_equal(arg_type, 'parrot')
+    assert desc[0].startswith('A parrot off its mortal coil')
 
 def test_returns():
     assert_equal(len(doc['Returns']), 1)
@@ -157,7 +179,7 @@ def non_blank_line_by_line_compare(a,b):
                                  (n,line,b[n]))
 def test_str():
     non_blank_line_by_line_compare(str(doc),
-"""numpy.multivariate_normal(mean, cov, shape=None)
+"""numpy.multivariate_normal(mean, cov, shape=None, spam=None)
 
 Draw values from a multivariate normal distribution with specified
 mean and covariance.
@@ -190,6 +212,21 @@ out : ndarray
 
     In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
     value drawn from the distribution.
+
+Other Parameters
+----------------
+spam : parrot
+    A parrot off its mortal coil.
+
+Raises
+------
+RuntimeError : 
+    Some error
+
+Warns
+-----
+RuntimeWarning : 
+    Some warning
 
 Warnings
 --------
@@ -291,6 +328,24 @@ of the one-dimensional normal distribution to higher dimensions.
         In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
         value drawn from the distribution.
 
+:Other Parameters:
+
+    **spam** : parrot
+
+        A parrot off its mortal coil.
+ 
+:Raises:
+
+    **RuntimeError** : 
+
+        Some error
+
+:Warns:
+
+    **RuntimeWarning** : 
+
+        Some warning
+
 .. warning::
 
     Certain warnings apply.
@@ -390,6 +445,10 @@ doc5 = NumpyDocString(
     LinAlgException
         If array is singular.
 
+    Warns
+    -----
+    SomeWarning
+        If needed
     """)
 
 def test_raises():
@@ -397,6 +456,12 @@ def test_raises():
     name,_,desc = doc5['Raises'][0]
     assert_equal(name,'LinAlgException')
     assert_equal(desc,['If array is singular.'])
+
+def test_warns():
+    assert_equal(len(doc5['Warns']), 1)
+    name,_,desc = doc5['Warns'][0]
+    assert_equal(name,'SomeWarning')
+    assert_equal(desc,['If needed'])
 
 def test_see_also():
     doc6 = NumpyDocString(
@@ -543,3 +608,8 @@ def test_class_members():
 
         if cls is SphinxClassDoc:
             assert '.. autosummary::' in str(doc), str(doc)
+
+if __name__ == "__main__":
+    import nose
+    nose.run()
+
