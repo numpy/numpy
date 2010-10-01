@@ -317,12 +317,8 @@ def run(arguments, content, options, state_machine, state, lineno):
         opts = [':%s: %s' % (key, val) for key, val in options.items()
                 if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
 
-        if sphinx.__version__ >= "0.6":
-            only_html = ".. only:: html"
-            only_latex = ".. only:: latex"
-        else:
-            only_html = ".. htmlonly::"
-            only_latex = ".. latexonly::"
+        only_html = ".. only:: html"
+        only_latex = ".. only:: latex"
 
         if j == 0:
             src_link = source_link
