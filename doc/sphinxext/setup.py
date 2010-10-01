@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 import sys, os
 
-version = "0.3.dev"
+version = "0.4"
 
 setup(
     name="numpydoc",
@@ -18,10 +18,10 @@ setup(
     keywords="sphinx numpy",
     author="Pauli Virtanen and others",
     author_email="pav@iki.fi",
-    url="http://projects.scipy.org/numpy/browser/trunk/doc/sphinxext",
+    url="http://github.com/numpy/numpy/tree/master/doc/sphinxext",
     license="BSD",
     zip_safe=False,
-    install_requires=["Sphinx >= 0.5"],
+    install_requires=["Sphinx >= 1.0.1"],
     package_data={'numpydoc': 'tests', '': ''},
     entry_points={
         "console_scripts": [
