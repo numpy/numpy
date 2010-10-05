@@ -215,10 +215,13 @@ def check_ieee_macros(config):
     _macros = ["isnan", "isinf", "signbit", "isfinite"]
     if sys.version_info[:2] >= (2, 6):
         for f in _macros:
-            already_declared = config.check_decl(fname2def("decl_%s" % f),
+            py_symbol = fname2def("decl_%s" % f)
+            already_declared = config.check_decl(py_symbol,
                     headers=["Python.h", "math.h"])
             if already_declared:
-                pub.append('NPY_%s' % fname2def("decl_%s" % f))
+                if config.check_macro_true(py_symbol,
+                        headers=["Python.h", "math.h"]):
+                    pub.append('NPY_%s' % fname2def("decl_%s" % f))
             else:
                 macros.append(f)
     else:
