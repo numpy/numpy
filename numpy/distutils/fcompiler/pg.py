@@ -2,6 +2,7 @@
 # http://www.pgroup.com
 
 from numpy.distutils.fcompiler import FCompiler
+from sys import platform
 
 compilers = ['PGroupFCompiler']
 
@@ -11,7 +12,19 @@ class PGroupFCompiler(FCompiler):
     description = 'Portland Group Fortran Compiler'
     version_pattern =  r'\s*pg(f77|f90|hpf) (?P<version>[\d.-]+).*'
 
-    executables = {
+    if platform == 'darwin':
+        executables = {
+        'version_cmd'  : ["<F77>", "-V 2>/dev/null"],
+        'compiler_f77' : ["pgf77", "-dynamiclib"],
+        'compiler_fix' : ["pgf90", "-Mfixed", "-dynamiclib"],
+        'compiler_f90' : ["pgf90", "-dynamiclib"],
+        'linker_so'    : ["libtool"],
+        'archiver'     : ["ar", "-cr"],
+        'ranlib'       : ["ranlib"]
+        }
+        pic_flags = ['']
+    else:
+        executables = {
         'version_cmd'  : ["<F77>", "-V 2>/dev/null"],
         'compiler_f77' : ["pgf77"],
         'compiler_fix' : ["pgf90", "-Mfixed"],
@@ -20,7 +33,9 @@ class PGroupFCompiler(FCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
-    pic_flags = ['-fpic']
+        pic_flags = ['-fpic']
+
+    
     module_dir_switch = '-module '
     module_include_switch = '-I'
 
@@ -31,6 +46,10 @@ class PGroupFCompiler(FCompiler):
         return ['-fast']
     def get_flags_debug(self):
         return ['-g']
+    
+    if platform == 'darwin':
+        def get_flags_linker_so(self):
+            return ["-dynamic", '-undefined', 'dynamic_lookup']
 
 if __name__ == '__main__':
     from distutils import log
