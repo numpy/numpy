@@ -643,8 +643,10 @@ def modsign2map(m):
     else:
         ret['interface_usercode'] = ''
     ret['pymethoddef'] = getpymethoddef(m) or ''
-    ret['coutput'] = m['coutput']
-    ret['f2py_wrapper_output'] = m['f2py_wrapper_output']
+    if 'coutput' in m:
+        ret['coutput'] = m['coutput']
+    if 'f2py_wrapper_output' in m:
+        ret['f2py_wrapper_output'] = m['f2py_wrapper_output']
     return ret
 
 def cb_sign2map(a,var,index=None):
