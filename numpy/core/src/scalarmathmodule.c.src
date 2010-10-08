@@ -974,10 +974,11 @@ NONZERO_NAME(@name@_,)(PyObject *a)
 /**end repeat**/
 
 
-static void
+static int
 emit_complexwarning()
 {
     static PyObject *cls = NULL;
+    int ret;
     if (cls == NULL) {
         PyObject *mod;
         mod = PyImport_ImportModule("numpy.core");
@@ -987,13 +988,13 @@ emit_complexwarning()
         Py_DECREF(mod);
     }
 #if PY_VERSION_HEX >= 0x02050000
-    PyErr_WarnEx(cls,
-                 "Casting complex values to real discards the imaginary "
-                 "part", 0);
+    return PyErr_WarnEx(cls,
+                        "Casting complex values to real discards the imaginary "
+                        "part", 0);
 #else
-    PyErr_Warn(cls,
-               "Casting complex values to real discards the imaginary "
-               "part");
+    return PyErr_Warn(cls,
+                      "Casting complex values to real discards the imaginary "
+                      "part");
 #endif
 }
 
@@ -1013,6 +1014,7 @@ static PyObject *
 {
 #if @cmplx@
     @sign@ @ctype@ x= PyArrayScalar_VAL(obj, @Name@).real;
+    int ret;
 #else
     @sign@ @ctype@ x= PyArrayScalar_VAL(obj, @Name@);
 #endif
@@ -1022,7 +1024,10 @@ static PyObject *
     x = ix;
 #endif
 #if @cmplx@
-    emit_complexwarning();
+    ret = emit_complexwarning();
+    if (ret < 0) {
+        return NULL;
+    }
 #endif
 
 /*
@@ -1052,7 +1057,11 @@ static PyObject *
 @name@_@which@(PyObject *obj)
 {
 #if @cmplx@
-    emit_complexwarning();
+    int ret;
+    ret = emit_complexwarning();
+    if (ret < 0) {
+        return NULL;
+    }
     return @func@((PyArrayScalar_VAL(obj, @Name@)).real);
 #else
     return @func@((PyArrayScalar_VAL(obj, @Name@)));
