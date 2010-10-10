@@ -1493,6 +1493,7 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     int N = 0;
     int i;
     PyObject *new_names;
+    PyObject *new_fields;
     if (self->names == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "there are no fields defined");
@@ -1522,25 +1523,37 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     }
     /* Update dictionary keys in fields */
     new_names = PySequence_Tuple(val);
+    new_fields = PyDict_New();
     for (i = 0; i < N; i++) {
         PyObject *key;
         PyObject *item;
         PyObject *new_key;
+        int ret;
         key = PyTuple_GET_ITEM(self->names, i);
-        /* Borrowed reference to item */
+        /* Borrowed references to item and new_key */
         item = PyDict_GetItem(self->fields, key);
-        /* Hold on to it even through DelItem */
-        Py_INCREF(item);
         new_key = PyTuple_GET_ITEM(new_names, i);
-        PyDict_DelItem(self->fields, key);
-        PyDict_SetItem(self->fields, new_key, item);
-        /* self->fields now holds reference */
-        Py_DECREF(item);
+        /* Check for duplicates */
+        ret = PyDict_Contains(new_fields, new_key);
+        if (ret != 0) {
+            if (ret < 0) {
+                PyErr_Clear();
+            }
+            PyErr_SetString(PyExc_ValueError, "Duplicate field names given.");
+            Py_DECREF(new_names);
+            Py_DECREF(new_fields);
+            return -1;
+        }
+        PyDict_SetItem(new_fields, new_key, item);
     }
 
     /* Replace names */
     Py_DECREF(self->names);
     self->names = new_names;
+
+    /* Replace fields */
+    Py_DECREF(self->fields);
+    self->fields = new_fields;
 
     return 0;
 }
