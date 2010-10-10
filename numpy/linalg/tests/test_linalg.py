@@ -33,6 +33,11 @@ class LinalgTestCase:
         b = array([2., 1.], dtype=double)
         self.do(a, b)
 
+    def test_double_2(self):
+        a = array([[1.,2.], [3.,4.]], dtype=double)
+        b = array([[2., 1., 4.], [3., 4., 6.]], dtype=double)
+        self.do(a, b)
+
     def test_csingle(self):
         a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=csingle)
         b = array([2.+1j, 1.+2j], dtype=csingle)
@@ -41,6 +46,11 @@ class LinalgTestCase:
     def test_cdouble(self):
         a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=cdouble)
         b = array([2.+1j, 1.+2j], dtype=cdouble)
+        self.do(a, b)
+
+    def test_cdouble_2(self):
+        a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=cdouble)
+        b = array([[2.+1j, 1.+2j, 1+3j], [1-2j, 1-3j, 1-6j]], dtype=cdouble)
         self.do(a, b)
 
     def test_empty(self):
@@ -67,6 +77,58 @@ class LinalgTestCase:
         """Check that matrix type is preserved."""
         a = matrix([[1.,2.], [3.,4.]])
         b = matrix([2., 1.]).T
+        self.do(a, b)
+
+
+class LinalgNonsquareTestCase:
+    def test_single_nsq_1(self):
+        a = array([[1.,2.,3.], [3.,4.,6.]], dtype=single)
+        b = array([2., 1.], dtype=single)
+        self.do(a, b)
+
+    def test_single_nsq_2(self):
+        a = array([[1.,2.], [3.,4.], [5.,6.]], dtype=single)
+        b = array([2., 1., 3.], dtype=single)
+        self.do(a, b)
+
+    def test_double_nsq_1(self):
+        a = array([[1.,2.,3.], [3.,4.,6.]], dtype=double)
+        b = array([2., 1.], dtype=double)
+        self.do(a, b)
+
+    def test_double_nsq_2(self):
+        a = array([[1.,2.], [3.,4.], [5.,6.]], dtype=double)
+        b = array([2., 1., 3.], dtype=double)
+        self.do(a, b)
+
+    def test_csingle_nsq_1(self):
+        a = array([[1.+1j,2.+2j,3.-3j], [3.-5j,4.+9j,6.+2j]], dtype=csingle)
+        b = array([2.+1j, 1.+2j], dtype=csingle)
+        self.do(a, b)
+
+    def test_csingle_nsq_2(self):
+        a = array([[1.+1j,2.+2j], [3.-3j,4.-9j], [5.-4j,6.+8j]], dtype=csingle)
+        b = array([2.+1j, 1.+2j, 3.-3j], dtype=csingle)
+        self.do(a, b)
+
+    def test_cdouble_nsq_1(self):
+        a = array([[1.+1j,2.+2j,3.-3j], [3.-5j,4.+9j,6.+2j]], dtype=cdouble)
+        b = array([2.+1j, 1.+2j], dtype=cdouble)
+        self.do(a, b)
+
+    def test_cdouble_nsq_2(self):
+        a = array([[1.+1j,2.+2j], [3.-3j,4.-9j], [5.-4j,6.+8j]], dtype=cdouble)
+        b = array([2.+1j, 1.+2j, 3.-3j], dtype=cdouble)
+        self.do(a, b)
+
+    def test_cdouble_nsq_1_2(self):
+        a = array([[1.+1j,2.+2j,3.-3j], [3.-5j,4.+9j,6.+2j]], dtype=cdouble)
+        b = array([[2.+1j, 1.+2j], [1-1j, 2-2j]], dtype=cdouble)
+        self.do(a, b)
+
+    def test_cdouble_nsq_2_2(self):
+        a = array([[1.+1j,2.+2j], [3.-3j,4.-9j], [5.-4j,6.+8j]], dtype=cdouble)
+        b = array([[2.+1j, 1.+2j], [1-1j, 2-2j], [1-1j, 2-2j]], dtype=cdouble)
         self.do(a, b)
 
 
@@ -153,13 +215,28 @@ class TestDet(LinalgTestCase, TestCase):
         assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
         assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
 
-class TestLstsq(LinalgTestCase, TestCase):
+class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
     def do(self, a, b):
+        arr = np.asarray(a)
+        m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
         x, residuals, rank, sv = linalg.lstsq(a, b)
-        assert_almost_equal(b, dot(a, x))
-        assert_equal(rank, asarray(a).shape[0])
+        if m <= n:
+            assert_almost_equal(b, dot(a, x))
+            assert_equal(rank, m)
+        else:
+            assert_equal(rank, n)
         assert_almost_equal(sv, sv.__array_wrap__(s))
+        if rank == n and m > n:
+            expect_resids = (np.asarray(abs(np.dot(a, x) - b))**2).sum(axis=0)
+            expect_resids = np.asarray(expect_resids)
+            if len(np.asarray(b).shape) == 1:
+                expect_resids.shape = (1,)
+                assert_equal(residuals.shape, expect_resids.shape)
+        else:
+            expect_resids = type(x)([])
+        assert_almost_equal(residuals, expect_resids)
+        assert_(np.issubdtype(residuals.dtype, np.floating))
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
 
