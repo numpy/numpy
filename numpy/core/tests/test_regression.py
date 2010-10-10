@@ -1430,5 +1430,13 @@ class TestRegression(TestCase):
         rep = repr(ra) # should not cause a segmentation fault
         assert_raises(ValueError, setattr, ra.dtype, 'names', ('f1', 'f1'))
 
+    def test_eq_string_and_object_array(self):
+        # From e-mail thread "__eq__ with str and object" (Keith Goodman)
+        a1 = np.array(['a', 'b'], dtype=object)
+        a2 = np.array(['a', 'c'])
+        assert_array_equal(a1 == a2, [True, False])
+        assert_array_equal(a2 == a1, [True, False])
+
+
 if __name__ == "__main__":
     run_module_suite()

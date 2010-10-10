@@ -891,16 +891,15 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             array_other = PyArray_FromObject(other,
                     typenum, 0, 0);
             /*
-             * If not successful, then return False. This fixes code
-             * that used to allow equality comparisons between arrays
-             * and other objects which would give a result of False.
+             * If not successful, indicate that the items cannot be compared
+             * this way.
              */
             if ((array_other == NULL) ||
                     (array_other == Py_None)) {
                 Py_XDECREF(array_other);
                 PyErr_Clear();
-                Py_INCREF(Py_False);
-                return Py_False;
+                Py_INCREF(Py_NotImplemented);
+                return Py_NotImplemented;
             }
         }
         else {
@@ -936,14 +935,14 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         /*
          * If the comparison results in NULL, then the
-         * two array objects can not be compared together so
-         * return zero
+         * two array objects can not be compared together;
+         * indicate that
          */
         Py_DECREF(array_other);
         if (result == NULL) {
             PyErr_Clear();
-            Py_INCREF(Py_False);
-            return Py_False;
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
         break;
     case Py_NE:
@@ -960,14 +959,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             array_other = PyArray_FromObject(other, typenum, 0, 0);
             /*
              * If not successful, then objects cannot be
-             * compared and cannot be equal, therefore,
-             * return True;
+             * compared this way
              */
             if ((array_other == NULL) || (array_other == Py_None)) {
                 Py_XDECREF(array_other);
                 PyErr_Clear();
-                Py_INCREF(Py_True);
-                return Py_True;
+                Py_INCREF(Py_NotImplemented);
+                return Py_NotImplemented;
             }
         }
         else {
@@ -1005,8 +1003,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         Py_DECREF(array_other);
         if (result == NULL) {
             PyErr_Clear();
-            Py_INCREF(Py_True);
-            return Py_True;
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
         break;
     case Py_GT:
