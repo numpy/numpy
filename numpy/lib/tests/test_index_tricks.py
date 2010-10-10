@@ -2,7 +2,7 @@ from numpy.testing import *
 import numpy as np
 from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,
                     ndenumerate, fill_diagonal, diag_indices,
-                    diag_indices_from )
+                    diag_indices_from, s_, index_exp )
 
 class TestUnravelIndex(TestCase):
     def test_basic(self):
@@ -76,6 +76,19 @@ class TestNdenumerate(TestCase):
         assert_equal(list(ndenumerate(a)),
                      [((0,0), 1), ((0,1), 2), ((1,0), 3), ((1,1), 4)])
 
+
+class TestIndexExpression(TestCase):
+    def test_regression_1(self):
+        # ticket #1196
+        a = np.arange(2)
+        assert_equal(a[:-1], a[s_[:-1]])
+        assert_equal(a[:-1], a[index_exp[:-1]])
+
+    def test_simple_1(self):
+        a = np.random.rand(4,5,6)
+
+        assert_equal(a[:,:3,[1,2]], a[index_exp[:,:3,[1,2]]])
+        assert_equal(a[:,:3,[1,2]], a[s_[:,:3,[1,2]]])
 
 def test_fill_diagonal():
     a = zeros((3, 3),int)
