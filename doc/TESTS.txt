@@ -41,7 +41,6 @@ follows::
   >>> import numpy
   >>> numpy.test()
 
-
 The test method may take two or more arguments; the first is a string
 label specifying what should be tested and the second is an integer
 giving the level of output verbosity. See the docstring for numpy.test
@@ -86,25 +85,27 @@ module called ``test_yyy.py``.  If you only need to test one aspect of
 ``zzz``, you can simply add a test function::
 
   def test_zzz():
-      assert zzz() == 'Hello from zzz'
+      assert_(zzz() == 'Hello from zzz')
 
 More often, we need to group a number of tests together, so we create
 a test class::
 
-  from numpy.testing import *
+  from numpy.testing import assert_, assert_raises
 
   # import xxx symbols
   from scipy.xxx.yyy import zzz
 
   class TestZzz:
       def test_simple(self):
-          assert zzz() == 'Hello from zzz'
+          assert_(zzz() == 'Hello from zzz')
 
       def test_invalid_parameter(self):
           assert_raises(...)
 
-Within these test methods, ``assert()`` is used to test whether a
-certain assumption is valid. If the assert fails, the test fails.
+Within these test methods, ``assert_()`` and related functions are used to test
+whether a certain assumption is valid. If the assertion fails, the test fails.
+Note that the Python builtin ``assert`` should not be used, because it is
+stripped during compilation with ``-O``.
 
 Sometimes it is convenient to run ``test_yyy.py`` by itself, so we add
 
@@ -124,7 +125,7 @@ therefore reserved for a full ``scipy.test(label='full')`` run, you
 can label it with a nose decorator::
 
   # numpy.testing module includes 'import decorators as dec'
-  from numpy.testing import *
+  from numpy.testing import dec, assert_
 
   @dec.slow
   def test_big(self):
@@ -135,7 +136,7 @@ Similarly for methods::
   class test_zzz:
       @dec.slow
       def test_simple(self):
-          assert zzz() == 'Hello from zzz'
+          assert_(zzz() == 'Hello from zzz')
 
 Easier setup and teardown functions / methods
 ---------------------------------------------
@@ -156,7 +157,9 @@ You can add setup and teardown functions to functions and methods with
 nose decorators::
 
   import nose
-  from numpy.testing import *
+  # import all functions from numpy.testing that are needed
+  from numpy.testing import assert_, assert_array_almost_equal
+
   def setup_func():
       """A trivial setup function."""
       global helpful_variable
@@ -185,7 +188,7 @@ with test generators::
 
   def check_even(n, nn):
       """A check function to be used in a test generator."""
-      assert n % 2 == 0 or nn % 2 == 0
+      assert_(n % 2 == 0 or nn % 2 == 0)
 
   def test_evens():
       for i in range(0,4,2):
@@ -306,13 +309,13 @@ from one in `numpy/linalg/tests/test_linalg.py
       def do(self, a, b):
           x = linalg.solve(a, b)
           assert_almost_equal(b, dot(a, x))
-          assert imply(isinstance(b, matrix), isinstance(x, matrix))
+          assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
 
   class TestInv(LinalgTestCase):
       def do(self, a, b):
           a_inv = linalg.inv(a)
           assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
-          assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
+          assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
 
 In this case, we wanted to test solving a linear algebra problem using
 matrices of several data types, using ``linalg.solve`` and
@@ -329,7 +332,7 @@ The decorators from numpy.testing.dec can be used to do this.
 
 To skip a test, simply use ``skipif``::
 
-  from numpy.testing import *
+  from numpy.testing import dec
 
   @dec.skipif(SkipMyTest, "Skipping this test because...")
   def test_something(foo):
@@ -340,7 +343,7 @@ and the message in verbose test output is the second argument given to
 ``skipif``.  Similarly, a test can be marked as a known failure by
 using ``knownfailureif``::
 
-  from numpy.testing import *
+  from numpy.testing import dec
 
   @dec.knownfailureif(MyTestFails, "This test is known to fail because...")
   def test_something_else(foo):
