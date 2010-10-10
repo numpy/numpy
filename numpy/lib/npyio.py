@@ -1,6 +1,6 @@
 __all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-        'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-        'packbits', 'unpackbits', 'fromregex', 'DataSource']
+           'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+           'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
 import numpy as np
 import format
@@ -365,7 +365,7 @@ def save(file, arr):
 
     See Also
     --------
-    savez : Save several arrays into a ``.npz`` compressed archive
+    savez : Save several arrays into a ``.npz`` archive
     savetxt, load
 
     Notes
@@ -403,7 +403,7 @@ def save(file, arr):
 
 def savez(file, *args, **kwds):
     """
-    Save several arrays into a single, archive file in ``.npz`` format.
+    Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the .npz file, are 'arr_0', 'arr_1', etc. If keyword arguments
@@ -474,8 +474,38 @@ def savez(file, *args, **kwds):
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    """
+    See Also
+    --------
+    numpy.savez_compressed : Save several arrays into a compressed .npz file format
 
+    """
+    _savez(file, args, kwds, False)
+
+def savez_compressed(file, *args, **kwds):
+    """
+    Save several arrays into a single file in compressed ``.npz`` format.
+
+    If keyword arguments are given, then filenames are taken from the keywords.
+    If arguments are passed in with no keywords, then stored file names are
+    arr_0, arr_1, etc.
+
+    Parameters
+    ----------
+    file : string
+        File name of .npz file.
+    args : Arguments
+        Function arguments.
+    kwds : Keyword arguments
+        Keywords.
+
+    See Also
+    --------
+    numpy.savez : Save several arrays into an uncompressed .npz file format
+
+    """
+    _savez(file, args, kwds, True)
+
+def _savez(file, args, kwds, compress):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
@@ -493,7 +523,12 @@ def savez(file, *args, **kwds):
             raise ValueError, "Cannot use un-named variables and keyword %s" % key
         namedict[key] = val
 
-    zip = zipfile.ZipFile(file, mode="w")
+    if compress:
+        compression = zipfile.ZIP_DEFLATED
+    else:
+        compression = zipfile.ZIP_STORED
+
+    zip = zipfile.ZipFile(file, mode="w", compression=compression)
 
     # Stage arrays in a temporary file on disk, before writing to zip.
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
