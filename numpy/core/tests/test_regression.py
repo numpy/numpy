@@ -1420,5 +1420,9 @@ class TestRegression(TestCase):
             x = tp(1+2j)
             assert_equal(complex(x), 1+2j)
 
+    def test_uint_int_conversion(self):
+        x = 2**64 - 1
+        assert_equal(int(np.uint64(x)), x)
+
 if __name__ == "__main__":
     run_module_suite()
