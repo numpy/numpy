@@ -108,7 +108,11 @@ class BagObj(object):
         except KeyError:
             raise AttributeError, key
 
-
+def zipfile_factory(*args, **kwargs):
+    import zipfile
+    if sys.version_info >= (2, 5):
+        kwargs['allowZip64'] = True
+    return zipfile.ZipFile(*args, **kwargs)
 
 class NpzFile(object):
     """
@@ -169,8 +173,7 @@ class NpzFile(object):
     def __init__(self, fid, own_fid=False):
         # Import is postponed to here since zipfile depends on gzip, an optional
         # component of the so-called standard library.
-        import zipfile
-        _zip = zipfile.ZipFile(fid)
+        _zip = zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
         for x in self._files:
@@ -528,7 +531,7 @@ def _savez(file, args, kwds, compress):
     else:
         compression = zipfile.ZIP_STORED
 
-    zip = zipfile.ZipFile(file, mode="w", compression=compression)
+    zip = zipfile_factory(file, mode="w", compression=compression)
 
     # Stage arrays in a temporary file on disk, before writing to zip.
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
