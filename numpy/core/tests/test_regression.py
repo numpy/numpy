@@ -1420,5 +1420,11 @@ class TestRegression(TestCase):
         x = 2**64 - 1
         assert_equal(int(np.uint64(x)), x)
 
+    def test_duplicate_field_names_assign(self):
+        ra = np.fromiter(((i*3, i*2) for i in xrange(10)), dtype='i8,f8')
+        ra.dtype.names = ('f1', 'f2')
+        rep = repr(ra) # should not cause a segmentation fault
+        assert_raises(ValueError, setattr, ra.dtype, 'names', ('f1', 'f1'))
+
 if __name__ == "__main__":
     run_module_suite()
