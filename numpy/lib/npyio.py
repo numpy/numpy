@@ -1,6 +1,6 @@
 __all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-        'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-        'packbits', 'unpackbits', 'fromregex', 'DataSource']
+           'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+           'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
 import numpy as np
 import format
@@ -108,7 +108,11 @@ class BagObj(object):
         except KeyError:
             raise AttributeError, key
 
-
+def zipfile_factory(*args, **kwargs):
+    import zipfile
+    if sys.version_info >= (2, 5):
+        kwargs['allowZip64'] = True
+    return zipfile.ZipFile(*args, **kwargs)
 
 class NpzFile(object):
     """
@@ -142,6 +146,9 @@ class NpzFile(object):
     fid : file or str
         The zipped archive to open. This is either a file-like object
         or a string containing the path to the archive.
+    own_fid : bool, optional
+        Whether NpzFile should close the file handle.
+        Requires that `fid` is a file-like object.
 
     Examples
     --------
@@ -163,11 +170,10 @@ class NpzFile(object):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
-    def __init__(self, fid):
+    def __init__(self, fid, own_fid=False):
         # Import is postponed to here since zipfile depends on gzip, an optional
         # component of the so-called standard library.
-        import zipfile
-        _zip = zipfile.ZipFile(fid)
+        _zip = zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
         for x in self._files:
@@ -177,6 +183,25 @@ class NpzFile(object):
                 self.files.append(x)
         self.zip = _zip
         self.f = BagObj(self)
+        if own_fid:
+            self.fid = fid
+        else:
+            self.fid = None
+
+    def close(self):
+        """
+        Close the file.
+
+        """
+        if self.zip is not None:
+            self.zip.close()
+            self.zip = None
+        if self.fid is not None:
+            self.fid.close()
+            self.fid = None
+
+    def __del__(self):
+        self.close()
 
     def __getitem__(self, key):
         # FIXME: This seems like it will copy strings around
@@ -293,31 +318,39 @@ def load(file, mmap_mode=None):
     """
     import gzip
 
+    own_fid = False
     if isinstance(file, basestring):
         fid = open(file, "rb")
+        own_fid = True
     elif isinstance(file, gzip.GzipFile):
         fid = seek_gzip_factory(file)
+        own_fid = True
     else:
         fid = file
 
-    # Code to distinguish from NumPy binary files and pickles.
-    _ZIP_PREFIX = asbytes('PK\x03\x04')
-    N = len(format.MAGIC_PREFIX)
-    magic = fid.read(N)
-    fid.seek(-N, 1) # back-up
-    if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
-        return NpzFile(fid)
-    elif magic == format.MAGIC_PREFIX: # .npy file
-        if mmap_mode:
-            return format.open_memmap(file, mode=mmap_mode)
-        else:
-            return format.read_array(fid)
-    else:  # Try a pickle
-        try:
-            return _cload(fid)
-        except:
-            raise IOError, \
-                "Failed to interpret file %s as a pickle" % repr(file)
+    try:
+        # Code to distinguish from NumPy binary files and pickles.
+        _ZIP_PREFIX = asbytes('PK\x03\x04')
+        N = len(format.MAGIC_PREFIX)
+        magic = fid.read(N)
+        fid.seek(-N, 1) # back-up
+        if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
+            own_fid = False
+            return NpzFile(fid, own_fid=True)
+        elif magic == format.MAGIC_PREFIX: # .npy file
+            if mmap_mode:
+                return format.open_memmap(file, mode=mmap_mode)
+            else:
+                return format.read_array(fid)
+        else:  # Try a pickle
+            try:
+                return _cload(fid)
+            except:
+                raise IOError, \
+                    "Failed to interpret file %s as a pickle" % repr(file)
+    finally:
+        if own_fid:
+            fid.close()
 
 def save(file, arr):
     """
@@ -335,7 +368,7 @@ def save(file, arr):
 
     See Also
     --------
-    savez : Save several arrays into a ``.npz`` compressed archive
+    savez : Save several arrays into a ``.npz`` archive
     savetxt, load
 
     Notes
@@ -355,19 +388,25 @@ def save(file, arr):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
+    own_fid = False
     if isinstance(file, basestring):
         if not file.endswith('.npy'):
             file = file + '.npy'
         fid = open(file, "wb")
+        own_fid = True
     else:
         fid = file
 
-    arr = np.asanyarray(arr)
-    format.write_array(fid, arr)
+    try:
+        arr = np.asanyarray(arr)
+        format.write_array(fid, arr)
+    finally:
+        if own_fid:
+            fid.close()
 
 def savez(file, *args, **kwds):
     """
-    Save several arrays into a single, archive file in ``.npz`` format.
+    Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the .npz file, are 'arr_0', 'arr_1', etc. If keyword arguments
@@ -380,12 +419,12 @@ def savez(file, *args, **kwds):
         Either the file name (string) or an open file (file-like object)
         where the data will be saved. If file is a string, the ``.npz``
         extension will be appended to the file name if it is not already there.
-    \\*args : Arguments, optional
+    *args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
         know the names of the arrays outside `savez`, the arrays will be saved
         with names "arr_0", "arr_1", and so on. These arguments can be any
         expression.
-    \\*\\*kwds : Keyword arguments, optional
+    **kwds : Keyword arguments, optional
         Arrays to save to the file. Arrays will be saved in the file with the
         keyword names.
 
@@ -417,7 +456,7 @@ def savez(file, *args, **kwds):
     >>> x = np.arange(10)
     >>> y = np.sin(x)
 
-    Using `savez` with \\*args, the arrays are saved with default names.
+    Using `savez` with *args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
     >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
@@ -427,7 +466,7 @@ def savez(file, *args, **kwds):
     >>> npzfile['arr_0']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    Using `savez` with \\*\\*kwds, the arrays are saved with the keyword names.
+    Using `savez` with **kwds, the arrays are saved with the keyword names.
 
     >>> outfile = TemporaryFile()
     >>> np.savez(outfile, x=x, y=y)
@@ -438,8 +477,38 @@ def savez(file, *args, **kwds):
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    """
+    See Also
+    --------
+    numpy.savez_compressed : Save several arrays into a compressed .npz file format
 
+    """
+    _savez(file, args, kwds, False)
+
+def savez_compressed(file, *args, **kwds):
+    """
+    Save several arrays into a single file in compressed ``.npz`` format.
+
+    If keyword arguments are given, then filenames are taken from the keywords.
+    If arguments are passed in with no keywords, then stored file names are
+    arr_0, arr_1, etc.
+
+    Parameters
+    ----------
+    file : string
+        File name of .npz file.
+    args : Arguments
+        Function arguments.
+    kwds : Keyword arguments
+        Keywords.
+
+    See Also
+    --------
+    numpy.savez : Save several arrays into an uncompressed .npz file format
+
+    """
+    _savez(file, args, kwds, True)
+
+def _savez(file, args, kwds, compress):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
@@ -457,7 +526,12 @@ def savez(file, *args, **kwds):
             raise ValueError, "Cannot use un-named variables and keyword %s" % key
         namedict[key] = val
 
-    zip = zipfile.ZipFile(file, mode="w")
+    if compress:
+        compression = zipfile.ZIP_DEFLATED
+    else:
+        compression = zipfile.ZIP_STORED
+
+    zip = zipfile_factory(file, mode="w", compression=compression)
 
     # Stage arrays in a temporary file on disk, before writing to zip.
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
@@ -586,9 +660,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if usecols is not None:
         usecols = list(usecols)
 
-    isstring = False
+    own_fh = False
     if _is_string_like(fname):
-        isstring = True
+        own_fh = True
         if fname.endswith('.gz'):
             import gzip
             fh = seek_gzip_factory(fname)
@@ -676,7 +750,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # Convert each value according to its column and store
             X.append(tuple([conv(val) for (conv, val) in zip(converters, vals)]))
     finally:
-        if isstring:
+        if own_fh:
             fh.close()
 
     if len(dtype_types) > 1:
@@ -798,7 +872,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         fmt = asstr(fmt)
     delimiter = asstr(delimiter)
 
+    own_fh = False
     if _is_string_like(fname):
+        own_fh = True
         if fname.endswith('.gz'):
             import gzip
             fh = gzip.open(fname, 'wb')
@@ -812,39 +888,43 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
     else:
         raise ValueError('fname must be a string or file handle')
 
-    X = np.asarray(X)
+    try:
+        X = np.asarray(X)
 
-    # Handle 1-dimensional arrays
-    if X.ndim == 1:
-        # Common case -- 1d array of numbers
-        if X.dtype.names is None:
-            X = np.atleast_2d(X).T
-            ncol = 1
+        # Handle 1-dimensional arrays
+        if X.ndim == 1:
+            # Common case -- 1d array of numbers
+            if X.dtype.names is None:
+                X = np.atleast_2d(X).T
+                ncol = 1
 
-        # Complex dtype -- each field indicates a separate column
+            # Complex dtype -- each field indicates a separate column
+            else:
+                ncol = len(X.dtype.descr)
         else:
-            ncol = len(X.dtype.descr)
-    else:
-        ncol = X.shape[1]
+            ncol = X.shape[1]
 
-    # `fmt` can be a string with multiple insertion points or a list of formats.
-    # E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
-    if type(fmt) in (list, tuple):
-        if len(fmt) != ncol:
-            raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
-        format = asstr(delimiter).join(map(asstr, fmt))
-    elif type(fmt) is str:
-        if fmt.count('%') == 1:
-            fmt = [fmt, ]*ncol
-            format = delimiter.join(fmt)
-        elif fmt.count('%') != ncol:
-            raise AttributeError('fmt has wrong number of %% formats.  %s'
-                                 % fmt)
-        else:
-            format = fmt
+        # `fmt` can be a string with multiple insertion points or a
+        # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
+        if type(fmt) in (list, tuple):
+            if len(fmt) != ncol:
+                raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
+            format = asstr(delimiter).join(map(asstr, fmt))
+        elif type(fmt) is str:
+            if fmt.count('%') == 1:
+                fmt = [fmt, ]*ncol
+                format = delimiter.join(fmt)
+            elif fmt.count('%') != ncol:
+                raise AttributeError('fmt has wrong number of %% formats.  %s'
+                                     % fmt)
+            else:
+                format = fmt
 
-    for row in X:
-        fh.write(asbytes(format % tuple(row) + newline))
+        for row in X:
+            fh.write(asbytes(format % tuple(row) + newline))
+    finally:
+        if own_fh:
+            fh.close()
 
 import re
 def fromregex(file, regexp, dtype):
@@ -902,25 +982,32 @@ def fromregex(file, regexp, dtype):
     array([1312, 1534,  444], dtype=int64)
 
     """
+    own_fh = False
     if not hasattr(file, "read"):
         file = open(file, 'rb')
-    if not hasattr(regexp, 'match'):
-        regexp = re.compile(asbytes(regexp))
-    if not isinstance(dtype, np.dtype):
-        dtype = np.dtype(dtype)
+        own_fh = True
 
-    seq = regexp.findall(file.read())
-    if seq and not isinstance(seq[0], tuple):
-        # Only one group is in the regexp.
-        # Create the new array as a single data-type and then
-        #   re-interpret as a single-field structured array.
-        newdtype = np.dtype(dtype[dtype.names[0]])
-        output = np.array(seq, dtype=newdtype)
-        output.dtype = dtype
-    else:
-        output = np.array(seq, dtype=dtype)
+    try:
+        if not hasattr(regexp, 'match'):
+            regexp = re.compile(asbytes(regexp))
+        if not isinstance(dtype, np.dtype):
+            dtype = np.dtype(dtype)
 
-    return output
+        seq = regexp.findall(file.read())
+        if seq and not isinstance(seq[0], tuple):
+            # Only one group is in the regexp.
+            # Create the new array as a single data-type and then
+            #   re-interpret as a single-field structured array.
+            newdtype = np.dtype(dtype[dtype.names[0]])
+            output = np.array(seq, dtype=newdtype)
+            output.dtype = dtype
+        else:
+            output = np.array(seq, dtype=dtype)
+
+        return output
+    finally:
+        if own_fh:
+            fh.close()
 
 
 
@@ -1092,8 +1179,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         raise TypeError(errmsg % type(user_converters))
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
+    own_fhd = False
     if isinstance(fname, basestring):
         fhd = np.lib._datasource.open(fname, 'U')
+        own_fhd = True
     elif not hasattr(fname, 'read'):
         raise TypeError("The input should be a string or a filehandle. "\
                         "(got %s instead)" % type(fname))
@@ -1354,6 +1443,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             append_to_masks(tuple([v.strip() in m
                                    for (v, m) in zip(values, missing_values)]))
 
+    if own_fhd:
+        fhd.close()
 
     # Upgrade the converters (if needed)
     if dtype is None:

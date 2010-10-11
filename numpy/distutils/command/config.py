@@ -169,6 +169,22 @@ int main()
 
         return self.try_compile(body, headers, include_dirs)
 
+    def check_macro_true(self, symbol,
+                         headers=None, include_dirs=None):
+        self._check_compiler()
+        body = """
+int main()
+{
+#if %s
+#else
+#error false or undefined macro
+#endif
+    ;
+    return 0;
+}""" % (symbol,)
+
+        return self.try_compile(body, headers, include_dirs)
+
     def check_type(self, type_name, headers=None, include_dirs=None,
             library_dirs=None):
         """Check type availability. Return True if the type can be compiled,

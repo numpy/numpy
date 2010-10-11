@@ -1680,12 +1680,13 @@ def lstsq(a, b, rcond=-1):
     """
     Return the least-squares solution to a linear matrix equation.
 
-    Solves the equation `a x = b` by computing a vector `x` that minimizes
-    the norm `|| b - a x ||`.  The equation may be under-, well-, or over-
-    determined (i.e., the number of linearly independent rows of `a` can be
-    less than, equal to, or greater than its number of linearly independent
-    columns).  If `a` is square and of full rank, then `x` (but for round-off
-    error) is the "exact" solution of the equation.
+    Solves the equation `a x = b` by computing a vector `x` that
+    minimizes the Euclidean 2-norm `|| b - a x ||^2`.  The equation may
+    be under-, well-, or over- determined (i.e., the number of
+    linearly independent rows of `a` can be less than, equal to, or
+    greater than its number of linearly independent columns).  If `a`
+    is square and of full rank, then `x` (but for round-off error) is
+    the "exact" solution of the equation.
 
     Parameters
     ----------
@@ -1706,7 +1707,7 @@ def lstsq(a, b, rcond=-1):
         Least-squares solution.  The shape of `x` depends on the shape of
         `b`.
     residues : ndarray, shape (), (1,), or (K,)
-        Sums of residues; squared Euclidean norm for each column in
+        Sums of residues; squared Euclidean 2-norm for each column in
         ``b - a*x``.
         If the rank of `a` is < N or > M, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
@@ -1772,6 +1773,7 @@ def lstsq(a, b, rcond=-1):
     if m != b.shape[0]:
         raise LinAlgError, 'Incompatible dimensions'
     t, result_t = _commonType(a, b)
+    result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
     bstar[:b.shape[0],:n_rhs] = b.copy()
@@ -1811,16 +1813,27 @@ def lstsq(a, b, rcond=-1):
                                  0, work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge in Linear Least Squares'
-    resids = array([], t)
+    resids = array([], result_real_t)
     if is_1d:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
-            resids = array([sum((ravel(bstar)[n:])**2)], dtype=result_t)
+            if isComplexType(t):
+                resids = array([sum(abs(ravel(bstar)[n:])**2)],
+                               dtype=result_real_t)
+            else:
+                resids = array([sum((ravel(bstar)[n:])**2)],
+                               dtype=result_real_t)
     else:
         x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
-            resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(result_t)
-    st = s[:min(n, m)].copy().astype(_realType(result_t))
+            if isComplexType(t):
+                resids = sum(abs(transpose(bstar)[n:,:])**2, axis=0).astype(
+                    result_real_t)
+            else:
+                resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(
+                    result_real_t)
+
+    st = s[:min(n, m)].copy().astype(result_real_t)
     return wrap(x), wrap(resids), results['rank'], st
 
 def norm(x, ord=None):

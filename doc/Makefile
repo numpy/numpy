@@ -11,15 +11,13 @@ PAPER         =
 
 FILES=
 
-NEED_AUTOSUMMARY = $(shell $(PYTHON) -c 'import sphinx; print sphinx.__version__ < "0.7" and "1" or ""')
-
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build
+        dist dist-build gitwash-update
 
 #------------------------------------------------------------------------------
 
@@ -33,10 +31,18 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  dist PYVER=... to make a distribution-ready tree"
 	@echo "  upload USER=...  to upload results to docs.scipy.org"
+	@echo "  gitwash-update GITWASH=path/to/gitwash  update gitwash developer docs"
 
 clean:
 	-rm -rf build/* source/reference/generated
 
+gitwash-update:
+	rm -rf source/dev/gitwash
+	install -d source/dev/gitwash
+	python $(GITWASH)/gitwash_dumper.py source/dev NumPy \
+	    --repo-name=numpy \
+	    --github-user=numpy
+	cat source/dev/gitwash_links.txt >> source/dev/gitwash/git_links.inc
 
 #------------------------------------------------------------------------------
 # Automated generation of all documents
@@ -99,11 +105,6 @@ dist-build:
 generate: build/generate-stamp
 build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
-ifeq ($(NEED_AUTOSUMMARY),1)
-	$(PYTHON) \
-		./sphinxext/autosummary_generate.py source/reference/*.rst \
-		-p dump.xml -o source/reference/generated 
-endif
 	touch build/generate-stamp
 
 html: generate

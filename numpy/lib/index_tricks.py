@@ -700,23 +700,14 @@ class IndexExpression(object):
     array([2, 4])
 
     """
-    maxint = sys.maxint
     def __init__(self, maketuple):
         self.maketuple = maketuple
 
     def __getitem__(self, item):
-        if self.maketuple and type(item) != type(()):
+        if self.maketuple and type(item) != tuple:
             return (item,)
         else:
             return item
-
-    def __len__(self):
-        return self.maxint
-
-    def __getslice__(self, start, stop):
-        if stop == self.maxint:
-            stop = None
-        return self[start:stop:None]
 
 index_exp = IndexExpression(maketuple=True)
 s_ = IndexExpression(maketuple=False)

@@ -333,6 +333,13 @@ The sections of the docstring are:
      >>> np.add([1, 2], [3, 4])
      array([4, 6])
 
+   For tests with a result that is random or platform-dependent, mark the
+   output as such::
+
+     >>> import numpy.random
+     >>> np.random.rand(2)
+     array([ 0.35773152,  0.38568979])  #random     
+
    You can run examples using::
 
      >>> np.test(doctests=True)

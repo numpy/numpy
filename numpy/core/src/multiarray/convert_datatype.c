@@ -112,21 +112,25 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
         PyTypeNum_ISNUMBER(type_num) &&
         !PyTypeNum_ISBOOL(type_num)) {
         PyObject *cls = NULL, *obj = NULL;
+        int ret;
         obj = PyImport_ImportModule("numpy.core");
         if (obj) {
             cls = PyObject_GetAttrString(obj, "ComplexWarning");
             Py_DECREF(obj);
         }
 #if PY_VERSION_HEX >= 0x02050000
-        PyErr_WarnEx(cls,
-                     "Casting complex values to real discards the imaginary "
-                     "part", 0);
+        ret = PyErr_WarnEx(cls,
+                           "Casting complex values to real discards the imaginary "
+                           "part", 0);
 #else
-        PyErr_Warn(cls,
-                   "Casting complex values to real discards the imaginary "
-                   "part");
+        ret = PyErr_Warn(cls,
+                         "Casting complex values to real discards the imaginary "
+                         "part");
 #endif
         Py_XDECREF(cls);
+        if (ret < 0) {
+            return NULL;
+	}
     }
     if (castfunc) {
         return castfunc;
