@@ -1,0 +1,47 @@
+=========================
+NumPy 1.5.1 Release Notes
+=========================
+
+Numpy 1.5.1 is a bug-fix release with no new features compared to 1.5.0.
+
+
+Numpy source code location changed
+==================================
+
+Numpy has stopped using SVN as the version control system, and moved
+to Git. The development source code for Numpy can from now on be found
+at
+
+    http://github.com/numpy/numpy
+
+
+Note on GCC versions
+====================
+
+On non-x86 platforms, Numpy can trigger a bug in the recent GCC compiler
+versions 4.5.0 and 4.5.1: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=45967
+We recommend not using these versions of GCC for compiling Numpy 
+on these platforms.
+
+
+Bugs fixed
+==========
+
+Of the following, #1605 is important for Cython modules.
+
+- #937:  linalg: lstsq should always return real residual
+- #1196: lib: fix negative indices in s_ and index_exp
+- #1287: core: fix uint64 -> Python int cast
+- #1491: core: richcompare should return Py_NotImplemented when undefined
+- #1517: lib: close file handles after use in numpy.lib.npyio.*
+- #1605: core: ensure PEP 3118 buffers can be released in exception handler
+- #1617: core: fix clongdouble cast to Python complex()
+- #1625: core: fix detection for ``isfinite`` routine
+- #1626: core: fix compilation with Solaris 10 / Sun Studio 12.1
+
+Python 3 specific; #1610 is important for any I/O:
+
+- #----: f2py: make f2py script runnable on Python 3
+- #1604: distutils: potential infinite loop in numpy.distutils
+- #1609: core: use accelerated BLAS, when available
+- #1610: core: ensure tofile and fromfile maintain file handle positions
