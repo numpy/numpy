@@ -1675,6 +1675,8 @@ FLOAT_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #ifdef HAVE_LDEXPF
 NPY_NO_EXPORT void
 FLOAT_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+NPY_NO_EXPORT void
+FLOAT_ldexp_long(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #endif
 
 #define FLOAT_true_divide FLOAT_divide
@@ -1827,6 +1829,8 @@ DOUBLE_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 #ifdef HAVE_LDEXP
 NPY_NO_EXPORT void
 DOUBLE_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+NPY_NO_EXPORT void
+DOUBLE_ldexp_long(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #endif
 
 #define DOUBLE_true_divide DOUBLE_divide
@@ -1979,6 +1983,8 @@ LONGDOUBLE_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 #ifdef HAVE_LDEXPL
 NPY_NO_EXPORT void
 LONGDOUBLE_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+NPY_NO_EXPORT void
+LONGDOUBLE_ldexp_long(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #endif
 
 #define LONGDOUBLE_true_divide LONGDOUBLE_divide
