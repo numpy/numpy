@@ -1150,9 +1150,21 @@ class TestMaskedArrayArithmetic(TestCase):
 
 
     def test_eq_w_None(self):
+        # With partial mask
+        a = array([1, 2], mask=[0, 1])
+        assert_equal(a == None, False)
+        assert_equal(a.data == None, False)
+        assert_equal(a.mask == None, False)
+        assert_equal(a != None, True)
+        # With nomask
         a = array([1, 2], mask=False)
         assert_equal(a == None, False)
         assert_equal(a != None, True)
+        # With complete mask
+        a = array([1, 2], mask=True)
+        assert_equal(a == None, False)
+        assert_equal(a != None, True)
+        # With masked
         a = masked
         assert_equal(a == None, masked)
 
