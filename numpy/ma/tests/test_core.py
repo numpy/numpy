@@ -101,8 +101,8 @@ class TestMaskedArray(TestCase):
             self.assertTrue(isMaskedArray(xm))
             assert_equal(shape(xm), s)
             assert_equal(xm.shape, s)
-            assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-            assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+            assert_equal(xm.size , reduce(lambda x, y:x * y, s))
+            assert_equal(count(xm) , len(m1) - reduce(lambda x, y:x + y, m1))
             assert_equal(xm, xf)
             assert_equal(filled(xm, 1.e20), xf)
             assert_equal(x, xm)
@@ -1150,19 +1150,9 @@ class TestMaskedArrayArithmetic(TestCase):
 
 
     def test_eq_w_None(self):
-        # With no mask
         a = array([1, 2], mask=False)
         assert_equal(a == None, False)
         assert_equal(a != None, True)
-        # With a partial mask
-        a = array([1, 2], mask=[0, 1])
-        assert_equal(a == None, False)
-        assert_equal(a != None, True)
-        # With total mask
-        a = array([1, 2], mask=True)
-        assert_equal(a == None, False)
-        assert_equal(a != None, True)
-        # As masked
         a = masked
         assert_equal(a == None, masked)
 
