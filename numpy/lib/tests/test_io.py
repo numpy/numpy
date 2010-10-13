@@ -1133,6 +1133,27 @@ M   33  21.99
                         dtype=[('a', int), ('f0', float), ('f1', int)])
         assert_equal(test, ctrl)
 
+    def test_names_with_usecols_bug1636(self):
+        "Make sure we pick up the right names w/ usecols"
+        data = "A,B,C,D,E\n0,1,2,3,4\n0,1,2,3,4\n0,1,2,3,4"
+        ctrl_names = ("A", "C", "E")
+        test = np.genfromtxt(StringIO(data),
+                             dtype=(int, int, int), delimiter=",",
+                             usecols=(0, 2, 4), names=True)
+        assert_equal(test.dtype.names, ctrl_names)
+        #
+        test = np.genfromtxt(StringIO(data),
+                             dtype=(int, int, int), delimiter=",",
+                             usecols=("A", "C", "E"), names=True)
+        assert_equal(test.dtype.names, ctrl_names)
+        #
+        test = np.genfromtxt(StringIO(data),
+                             dtype=int, delimiter=",",
+                             usecols=("A", "C", "E"), names=True)
+        assert_equal(test.dtype.names, ctrl_names)
+
+
+
     def test_fixed_width_names(self):
         "Test fix-width w/ names"
         data = "    A    B   C\n    0    1 2.3\n   45   67   9."

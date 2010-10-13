@@ -1220,7 +1220,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if fval in comments:
             del first_values[0]
 
-    # Check the columns to use
+    # Check the columns to use: make sure `usecols` is a list
     if usecols is not None:
         try:
             usecols = [_.strip() for _ in usecols.split(",")]
@@ -1243,7 +1243,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Get the dtype
     if dtype is not None:
         dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names)
-        names = dtype.names
     # Make sure the names is a list (for 2.5)
     if names is not None:
         names = list(names)
@@ -1264,6 +1263,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # If `names` is not None, update the names
         elif (names is not None) and (len(names) > nbcols):
             names = [names[_] for _ in usecols]
+    elif (names is not None) and (dtype is not None):
+        names = dtype.names
 
 
     # Process the missing values ...............................
