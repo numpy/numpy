@@ -121,7 +121,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 #if PY_VERSION_HEX >= 0x02050000
         ret = PyErr_WarnEx(cls,
                            "Casting complex values to real discards the imaginary "
-                           "part", 0);
+                           "part", 1);
 #else
         ret = PyErr_Warn(cls,
                          "Casting complex values to real discards the imaginary "
