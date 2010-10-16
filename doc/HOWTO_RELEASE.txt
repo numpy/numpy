@@ -34,13 +34,12 @@ Doc wiki
 
 Supported platforms and versions
 ================================
-Python 2.4-2.6  are the currently supported versions on all platforms. 
-NumPy 1.5 and 2.0 should include support for Python 2.7 and >=3.1.
+Python 2.4-2.7 and >=3.1 are the currently supported versions on all platforms. 
 
 OS X
 ----
-OS X 10.4 (Tiger), 10.5 (Leopard) and 10.6 (Snow Leopard) are supported for the 1.4.x
-releases. Note that only the Python from `python.org <http://python.org>`_ is
+OS X 10.4 (Tiger), 10.5 (Leopard) and 10.6 (Snow Leopard) are supported. 
+Note that only the Python from `python.org <http://python.org>`_ is
 supported. Binaries do *not* support Apple Python.
 
 Windows
@@ -67,10 +66,13 @@ Compilers
 The same gcc version is used as the one with which Python itself is built on
 each platform. At the moment this means:
 
-* OS X uses gcc 4.0
+* OS X uses gcc-4.0 (since that is what Python itself is built with).
 * Windows build uses latest released version from MinGW, now at 3.4.5.
 
-Cython >= 0.12 is needed.
+Cython is not needed for building the binaries, because generated C files from
+Cython sources are checked in at the moment. It is worth keeping an eye on what
+Cython versions have been used to generate all current C files, it should be
+the same and most recent version (0.12.1 as of now).
 
 Fortran: on OS X gfortran from `this site <http://r.research.att.com/tools/>`_ 
 is used. On Windows g77 (included in MinGW) is the current default, in the future 
@@ -78,11 +80,15 @@ this may shift to gfortran as well.
 
 Python
 ------
-* Python from `python.org <http://python.org>`_
+* Python(s) from `python.org <http://python.org>`_
 * virtualenv
 * paver
 * bdist_mpkg
-* `numpy-macosx-installer <http://github.com/cournape/numpy-macosx-installer>`_
+
+Python itself should be installed multiple times - each version a binary is
+built for should be installed. The other dependencies only have to be installed
+for the default Python version on the system. The same applies to the doc-build
+dependencies below.
 
 Building docs
 -------------
@@ -154,7 +160,7 @@ What is released
 
 Binaries
 --------
-Windows binaries in "superpack" form for Python 2.5 and 2.6. A superpack
+Windows binaries in "superpack" form for Python 2.5/2.6/2.7/3.1. A superpack
 contains three builds, for SSE2, SSE3 and no SSE.
 
 OS X binaries are made in dmg format, targeting only the Python from
