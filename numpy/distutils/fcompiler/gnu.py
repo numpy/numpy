@@ -224,7 +224,17 @@ class Gnu95FCompiler(GnuFCompiler):
         v = self.gnu_version_match(version_string)
         if not v or v[0] != 'gfortran':
             return None
-        return v[1]
+        v = v[1]
+        if v>='4.':
+            # gcc-4 series releases do not support -mno-cygwin option
+            pass
+        else:
+            # use -mno-cygwin flag for gfortran when Python is not Cygwin-Python
+            if sys.platform == 'win32':
+                for key in ['version_cmd', 'compiler_f77', 'compiler_f90',
+                            'compiler_fix', 'linker_so', 'linker_exe']:
+                    self.executables[key].append('-mno-cygwin')
+        return v
 
     # 'gfortran --version' results:
     # XXX is the below right?
@@ -247,12 +257,6 @@ class Gnu95FCompiler(GnuFCompiler):
         'ranlib'       : ["ranlib"],
         'linker_exe'   : [None, "-Wall"]
         }
-
-    # use -mno-cygwin flag for g77 when Python is not Cygwin-Python
-    if sys.platform == 'win32':
-        for key in ['version_cmd', 'compiler_f77', 'compiler_f90',
-                    'compiler_fix', 'linker_so', 'linker_exe']:
-            executables[key].append('-mno-cygwin')
 
     module_dir_switch = '-J'
     module_include_switch = '-I'
