@@ -16,6 +16,12 @@ After installation, tests can be run with:
 
 python -c 'import numpy; numpy.test()'
 
+When installing a new version of numpy for the first time or before upgrading
+to a newer version, it is recommended to turn on deprecation warnings when
+running the tests:
+
+python -Wd -c 'import numpy; numpy.test()'
+
 The most current development version is always available from our
 git repository:
 
