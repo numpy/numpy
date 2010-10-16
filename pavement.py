@@ -362,8 +362,22 @@ def pdf():
 #------------------
 # Mac OS X targets
 #------------------
-def dmg_name(fullversion, pyver):
-    return "numpy-%s-py%s-python.org.dmg" % (fullversion, pyver)
+def dmg_name(fullversion, pyver, osxver=None):
+    """Return name for dmg installer.
+
+    Notes
+    -----
+    Python 2.7 has two binaries, one for 10.3 (ppc, i386) and one for 10.5
+    (ppc, i386, x86_64). All other Python versions at python.org at the moment
+    have binaries for 10.3 only. The "macosx%s" part of the dmg name should
+    correspond to the python.org naming scheme.
+    """
+    # assume that for the py2.7/osx10.5 build the deployment target is set
+    # (should be done in the release script).
+    if not osxver:
+        osxver = os.environ.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
+    return "numpy-%s-py%s-python.org-macosx%s.dmg" % (fullversion, pyver,
+                                                      osxver)
 
 def macosx_version():
     if not sys.platform == 'darwin':
@@ -381,8 +395,13 @@ def mpkg_name(pyver):
     return "numpy-%s-py%s-macosx%s.%s.mpkg" % (FULLVERSION, pyver, maj, min)
 
 def _build_mpkg(pyver):
-    ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
+    if pyver == "2.7" and os.environ.get('MACOSX_DEPLOYMENT_TARGET') == "10.5":
+        ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc \
+                   -arch x86_64 -Wl,-search_paths_first"
+    else:
+        ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
     ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
+
     if pyver == "2.5":
         sh("CC=gcc-4.0 LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
     else:

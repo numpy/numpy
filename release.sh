@@ -6,7 +6,7 @@ python setupsconsegg.py install
 paver sdist
 paver dmg -p 2.6
 paver dmg -p 2.5
-export MACOSX_DEPLOYMENT_TARGET=10.6
+export MACOSX_DEPLOYMENT_TARGET=10.5
 paver dmg -p 2.7
 
 paver bdist_superpack -p 3.1
