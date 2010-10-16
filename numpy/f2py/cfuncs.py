@@ -282,6 +282,8 @@ needs['pyobj_from_complex_float1']=['complex_float']
 cppmacros['pyobj_from_complex_float1']='#define pyobj_from_complex_float1(v) (PyComplex_FromDoubles(v.r,v.i))'
 needs['pyobj_from_string1']=['string']
 cppmacros['pyobj_from_string1']='#define pyobj_from_string1(v) (PyString_FromString((char *)v))'
+needs['pyobj_from_string1size']=['string']
+cppmacros['pyobj_from_string1size']='#define pyobj_from_string1size(v,len) (PyString_FromStringAndSize((char *)v, len))'
 needs['TRYPYARRAYTEMPLATE']=['PRINTPYOBJERR']
 cppmacros['TRYPYARRAYTEMPLATE']="""\
 /* New SciPy */

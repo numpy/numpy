@@ -333,7 +333,7 @@ cb_arg_rules=[
     'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
                  {isintent_in:"""\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1(#varname_i#)))
+\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
 \t\t\tgoto capi_fail;"""},
                  {isintent_inout:"""\
 \tif (#name#_nofargs>capi_i) {
@@ -341,7 +341,7 @@ cb_arg_rules=[
 \t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname_i#,#varname_i#_cb_dims)))
 \t\t\tgoto capi_fail;
 \t}"""}],
-    'need':[{isintent_in:'pyobj_from_#ctype#1'},
+    'need':[{isintent_in:'pyobj_from_#ctype#1size'},
             {isintent_inout:'pyarr_from_p_#ctype#1'}],
     '_check':l_and(isstring,isintent_nothide),
     '_optional':''
