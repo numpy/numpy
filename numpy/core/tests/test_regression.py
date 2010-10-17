@@ -1382,7 +1382,8 @@ class TestRegression(TestCase):
     def test_fromfile_tofile_seeks(self):
         # On Python 3, tofile/fromfile used to get (#1610) the Python
         # file handle out of sync
-        f = tempfile.TemporaryFile()
+        f0 = tempfile.NamedTemporaryFile()
+        f = f0.file
         f.write(np.arange(255, dtype='u1').tostring())
 
         f.seek(20)
