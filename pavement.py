@@ -150,7 +150,7 @@ else:
 
 # Start/end of the log (from git)
 LOG_START = 'v1.5.0'
-LOG_END = 'v1.5.1'
+LOG_END = 'v1.5.1rc1'
 RELEASE_NOTES = 'doc/release/1.5.1-notes.rst'
 
 #-------------------
@@ -551,7 +551,7 @@ Checksums
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
-            ['git', 'svn', 'log',  '%s..%s' % (LOG_START, LOG_END)],
+            ['git', 'log',  '%s..%s' % (LOG_START, LOG_END)],
             stdout=subprocess.PIPE)
 
     out = st.communicate()[0]
