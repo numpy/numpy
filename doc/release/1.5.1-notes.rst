@@ -39,6 +39,11 @@ Of the following, #1605 is important for Cython modules.
 - #1625: core: fix detection for ``isfinite`` routine
 - #1626: core: fix compilation with Solaris 10 / Sun Studio 12.1
 
+Scipy could not be built against Numpy 1.5.0 on OS X due to a numpy.distutils
+bug, #1399. This issue is fixed now.
+
+- #1399: distutils: use C arch flags for Fortran compilation on OS X.
+
 Python 3 specific; #1610 is important for any I/O:
 
 - #----: f2py: make f2py script runnable on Python 3
