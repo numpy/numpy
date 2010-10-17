@@ -149,9 +149,9 @@ else:
     MAKENSIS = ["wine", "makensis"]
 
 # Start/end of the log (from git)
-LOG_START = 'svn/tags/1.4.0'
-LOG_END = 'master'
-RELEASE_NOTES = 'doc/release/1.5.0-notes.rst'
+LOG_START = 'v1.5.0'
+LOG_END = 'v1.5.1'
+RELEASE_NOTES = 'doc/release/1.5.1-notes.rst'
 
 #-------------------
 # Windows installers
