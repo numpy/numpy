@@ -387,14 +387,29 @@ class TestArctan2SpecialValues(TestCase):
 
 
 class TestLdexp(TestCase):
+    def _check_ldexp(self, tp):
+        assert_almost_equal(ncu.ldexp(np.array(2., np.float32),
+                                      np.array(3, tp)), 16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.float64),
+                                      np.array(3, tp)), 16.)
+        assert_almost_equal(ncu.ldexp(np.array(2., np.longdouble),
+                                      np.array(3, tp)), 16.)
+
     def test_ldexp(self):
+        # The default Python int type should work
         assert_almost_equal(ncu.ldexp(2., 3),  16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.float32), np.array(3, np.int16)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.float32), np.array(3, np.int32)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.float64), np.array(3, np.int16)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.float64), np.array(3, np.int32)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.longdouble), np.array(3, np.int16)), 16.)
-        assert_almost_equal(ncu.ldexp(np.array(2., np.longdouble), np.array(3, np.int32)), 16.)
+        # The following int types should all be accepted
+        self._check_ldexp(np.int8)
+        self._check_ldexp(np.int16)
+        self._check_ldexp(np.int32)
+        self._check_ldexp('i')
+        self._check_ldexp('l')
+
+    def test_ldexp_overflow(self):
+        imax = np.iinfo(np.dtype('l')).max
+        imin = np.iinfo(np.dtype('l')).min
+        assert_equal(ncu.ldexp(2., imax), np.inf)
+        assert_equal(ncu.ldexp(2., imin), 0)
 
 
 class TestMaximum(TestCase):

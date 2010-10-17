@@ -1295,12 +1295,9 @@ add_newdoc('numpy.core', 'vdot',
     dot(`a`, `b`).  If the first argument is complex the complex conjugate
     of the first argument is used for the calculation of the dot product.
 
-    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D
-    arrays to inner product of vectors (with complex conjugation of `a`).
-    For N dimensions it is a sum product over the last axis of `a` and
-    the second-to-last of `b`::
-
-        dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+    Note that `vdot` handles multidimensional arrays differently than `dot`:
+    it does *not* perform a matrix product, but flattens input arguments
+    to 1-D vectors first. Consequently, it should only be used for vectors.
 
     Parameters
     ----------
@@ -1313,20 +1310,13 @@ add_newdoc('numpy.core', 'vdot',
     Returns
     -------
     output : ndarray
-        Returns dot product of `a` and `b`.  Can be an int, float, or
+        Dot product of `a` and `b`.  Can be an int, float, or
         complex depending on the types of `a` and `b`.
 
     See Also
     --------
     dot : Return the dot product without using the complex conjugate of the
           first argument.
-
-    Notes
-    -----
-    The dot product is the summation of element wise multiplication.
-
-    .. math::
-     a \\cdot b = \\sum_{i=1}^n a_i^*b_i = a_1^*b_1+a_2^*b_2+\\cdots+a_n^*b_n
 
     Examples
     --------
@@ -1336,11 +1326,16 @@ add_newdoc('numpy.core', 'vdot',
     (70-8j)
     >>> np.vdot(b, a)
     (70+8j)
+
+    Note that higher-dimensional arrays are flattened!
+
     >>> a = np.array([[1, 4], [5, 6]])
     >>> b = np.array([[4, 1], [2, 2]])
     >>> np.vdot(a, b)
     30
     >>> np.vdot(b, a)
+    30
+    >>> 1*4 + 4*1 + 5*2 + 6*2
     30
 
     """)
