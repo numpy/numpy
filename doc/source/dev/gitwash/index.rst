@@ -9,7 +9,6 @@ Contents:
    :maxdepth: 2
 
    git_intro
-   git_install
    following_latest
    patching
    git_development

@@ -5,24 +5,71 @@ Development workflow
 ====================
 
 You already have your own forked copy of the NumPy_ repository, by
-following :ref:`forking`, :ref:`set-up-fork`, and you have configured
-git_ by following :ref:`configure-git`.
+following :ref:`forking`, :ref:`set-up-fork`, you have configured git_
+by following :ref:`configure-git`, and have linked the upstream
+repository as explained in :ref:`linking-to-upstream`.
 
-Workflow summary
-================
+What is described below is a recommended workflow with Git.
 
-* Keep your ``master`` branch clean of edits that have not been merged
-  to the main NumPy_ development repo.  Your ``master`` then will follow
-  the main NumPy_ repository.
-* Start a new *feature branch* for each set of edits that you do.
-* If you can avoid it, try not to merge other branches into your feature
-  branch while you are working.
-* Ask for review!
+Basic workflow
+##############
 
-This way of working really helps to keep work well organized, and in
-keeping history as clear as possible.
+In short:
 
-See - for example - `linux git workflow`_. 
+1. Start a new *feature branch* for each set of edits that you do.
+   See :ref:`below <making-a-new-feature-branch>`.
+
+   Avoid putting new commits in your ``master`` branch.
+
+2. Hack away! See :ref:`below <editing-workflow>`
+
+3. Avoid merging other branches into your feature branch while you are
+   working.
+
+   You can optionally rebase if really needed,
+   see :ref:`below <rebasing-on-master>`.
+
+4. When finished:
+
+   - *Contributors*: push your feature branch to your own Github repo, and
+     :ref:`ask for code review or make a pull request <asking-for-merging>`.
+
+   - *Core developers* (if you want to push changes without
+     further review)::
+
+         # First, either (i) rebase on upstream -- if you have only few commits
+         git fetch upstream
+         git rebase upstream/master
+
+         # or, (ii) merge to upstream -- if you have many related commits
+         git fetch upstream
+	 git merge --no-ff upstream/master
+
+         # Recheck that what is there is sensible
+         git log --oneline --graph
+         git log -p upstream/master..
+
+         # Finally, push branch to upstream master
+	 git push upstream my-new-feature:master
+
+     See :ref:`below <pushing-to-main>`.
+
+This way of working helps to keep work well organized and the history
+as clear as possible.
+
+.. note::
+
+   Do not use ``git pull`` --- this avoids common mistakes if you are
+   new to Git. Instead, always do ``git fetch`` followed by ``git
+   rebase``, ``git merge --ff-only`` or ``git merge --no-ff``,
+   depending on what you intend.
+
+.. seealso::
+
+   See discussions on `linux git workflow`_,
+   and `ipython git workflow <http://mail.scipy.org/pipermail/ipython-dev/2010-October/006746.html>`__.
+
+.. _making-a-new-feature-branch:
 
 Making a new feature branch
 ===========================
@@ -32,6 +79,10 @@ Making a new feature branch
    git branch my-new-feature
    git checkout my-new-feature
 
+or just::
+
+   git checkout -b my-new-feature upstream/master
+
 Generally, you will want to keep this also on your public github_ fork
 of NumPy_.  To do this, you `git push`_ this new branch up to your github_
 repo.  Generally (if you followed the instructions in these pages, and
@@ -40,13 +91,16 @@ by default), git will have a link to your github_ repo, called
 
    git push origin my-new-feature
 
-In git >1.7 you can ensure that the link is correctly set by using the
+In git >= 1.7 you can ensure that the link is correctly set by using the
 ``--set-upstream`` option::
 
    git push --set-upstream origin my-new-feature
    
 From now on git_ will know that ``my-new-feature`` is related to the
-``my-new-feature`` branch in the github_ repo.
+``my-new-feature`` branch in your own github_ repo.
+
+
+.. _editing-workflow:
 
 The editing workflow
 ====================
@@ -58,7 +112,9 @@ Overview
 
    # hack hack
    git add my_new_file
-   git commit -am 'NF - some message'
+   git commit -am 'ENH: some message'
+
+   # push the branch to your own Github repo
    git push
 
 In more detail
@@ -68,7 +124,7 @@ In more detail
 #. See which files have changed with ``git status`` (see `git status`_).
    You'll see a listing like this one::
 
-     # On branch ny-new-feature
+     # On branch my-new-feature
      # Changed but not updated:
      #   (use "git add <file>..." to update what will be committed)
      #   (use "git checkout -- <file>..." to discard changes in working directory)
@@ -94,8 +150,83 @@ In more detail
 #. To push the changes up to your forked repo on github_, do a ``git
    push`` (see `git push`). 
 
+
+.. _rebasing-on-master:
+
+Rebasing on master
+==================
+
+This updates your feature branch with changes from the upstream `NumPy
+github`_ repo. If you do not absolutely need to do this, try to avoid
+doing it, except perhaps when you are finished.
+
+First, it can be useful to update your master branch::
+
+   # go to the master branch
+   git checkout master
+   # pull changes from github
+   git fetch upstream
+   # update the master branch
+   git rebase upstream/master
+   # push it to your Github repo
+   git push
+
+Then, the feature branch::
+
+   # go to the feature branch
+   git checkout my-new-feature
+   # make a backup in case you mess up
+   git branch tmp my-new-feature
+   # rebase on master
+   git rebase master
+
+If you have made changes to files that have changed also upstream,
+this may generate merge conflicts that you need to resolve.::
+
+   # delete backup branch
+   git branch -D tmp
+
+.. _recovering-from-mess-up:
+
+Recovering from mess-ups
+------------------------
+
+Sometimes, you mess up merges or rebases. Luckily, in Git it is
+relatively straightforward to recover from such mistakes.
+
+If you mess up during a rebase::
+
+   git rebase --abort
+
+If you notice you messed up after the rebase::
+
+   # reset branch back to the saved point
+   git reset --hard tmp
+
+If you forgot to make a backup branch::
+
+   # look at the reflog of the branch
+   git reflog show my-feature-branch
+
+   8630830 my-feature-branch@{0}: commit: BUG: io: close file handles immediately
+   278dd2a my-feature-branch@{1}: rebase finished: refs/heads/my-feature-branch onto 11ee694744f2552d
+   26aa21a my-feature-branch@{2}: commit: BUG: lib: make seek_gzip_factory not leak gzip obj
+   ...
+
+   # reset the branch to where it was before the botched rebase
+   git reset --hard my-feature-branch@{2}
+
+
+.. _asking-for-merging:
+
+Asking for your changes to be merged with the main repo
+=======================================================
+
+When you feel your work is finished, you can ask for code review, or
+directly file a pull request.
+
 Asking for code review
-======================
+----------------------
 
 #. Go to your repo URL - e.g. ``http://github.com/your-user-name/numpy``.
 #. Click on the *Branch list* button:
@@ -125,8 +256,8 @@ without interfering with the output from the comparison.  More detail?
 Note the three dots in the URL above (``master...my-new-feature``) and
 see :ref:`dot2-dot3`.
 
-Asking for your changes to be merged with the main repo
-=======================================================
+Filing a pull request
+---------------------
 
 When you are ready to ask for the merge of your code:
 
@@ -137,45 +268,135 @@ When you are ready to ask for the merge of your code:
    .. image:: pull_button.png
 
    Enter a message; we suggest you select only ``NumPy`` as the
-   recipient.  The message will go to the `NumPy mailing list`_.  Please
+   recipient.  The message will go to the NumPy core developers.  Please
    feel free to add others from the list as you like.
 
-Merging from trunk
-==================
 
-This updates your code from the upstream `NumPy github`_  repo. 
+.. _pushing-to-main:
 
-Overview
---------
+Pushing changes to the main repo
+================================
 
-::
+When you have a set of "ready" changes in a feature branch ready for
+Numpy's ``master`` or ``maintenance/1.5.x`` branches, you can push
+them to ``upstream`` as follows:
 
-   # go to your master branch
-   git checkout master
-   # pull changes from github
-   git fetch upstream
-   # merge from upstream
-   git merge upstream/master
+1. First, merge or rebase on the target branch.
 
-In detail
----------
+   a) Only a few commits: prefer rebasing::
 
-We suggest that you do this only for your ``master`` branch, and leave
-your 'feature' branches unmerged, to keep their history as clean as
-possible.  This makes code review easier::
+          git fetch upstream
+	  git rebase upstream/master
 
-   git checkout master
+      See :ref:`above <rebasing-on-master>`.
 
-Make sure you have done :ref:`linking-to-upstream`.
+   b) Many related commits: consider creating a merge commit::
 
-Merge the upstream code into your current development by first pulling
-the upstream repo to a copy on your local machine::
+          git fetch upstream
+	  git merge --no-ff upstream/master
 
-   git fetch upstream
+2. Check that what you are going to push looks sensible::
 
-then merging into your current branch::
+       git log -p upstream/master..
+       git log --oneline --graph
 
-   git merge upstream/master
+3. Push to upstream::
+
+       git push upstream my-feature-branch:master
+
+.. note::
+
+   Avoid using ``git pull`` here.
+
+Additional things you might want to do
+######################################
+
+.. _rewriting-commit-history:
+
+Rewriting commit history
+========================
+
+.. note::
+
+   Do this only for your own feature branches.
+
+There's an embarassing typo in a commit you made? Or perhaps the you
+made several false starts you would like the posterity not to see.
+
+This can be done via *interactive rebasing*.
+
+Suppose that the commit history looks like this::
+
+    git log --oneline
+    eadc391 Fix some remaining bugs
+    a815645 Modify it so that it works
+    2dec1ac Fix a few bugs + disable
+    13d7934 First implementation
+    6ad92e5 * masked is now an instance of a new object, MaskedConstant
+    29001ed Add pre-nep for a copule of structured_array_extensions.
+    ...
+
+and ``6ad92e5`` is the last commit in the ``master`` branch. Suppose we
+want to make the following changes:
+
+* Rewrite the commit message for ``13d7934`` to something more sensible.
+* Combine the commits ``2dec1ac``, ``a815645``, ``eadc391`` into a single one.
+
+We do as follows::
+
+    # make a backup of the current state
+    git branch tmp HEAD
+    # interactive rebase
+    git rebase -i 6ad92e5
+
+This will open an editor with the following text in it::
+
+    pick 13d7934 First implementation
+    pick 2dec1ac Fix a few bugs + disable
+    pick a815645 Modify it so that it works
+    pick eadc391 Fix some remaining bugs
+
+    # Rebase 6ad92e5..eadc391 onto 6ad92e5
+    #
+    # Commands:
+    #  p, pick = use commit
+    #  r, reword = use commit, but edit the commit message
+    #  e, edit = use commit, but stop for amending
+    #  s, squash = use commit, but meld into previous commit
+    #  f, fixup = like "squash", but discard this commit's log message
+    #
+    # If you remove a line here THAT COMMIT WILL BE LOST.
+    # However, if you remove everything, the rebase will be aborted.
+    #
+
+To achieve what we want, we will make the following changes to it::
+
+    r 13d7934 First implementation
+    pick 2dec1ac Fix a few bugs + disable
+    f a815645 Modify it so that it works
+    f eadc391 Fix some remaining bugs
+
+This means that (i) we want to edit the commit message for
+``13d7934``, and (ii) collapse the last three commits into one. Now we
+save and quit the editor.
+
+Git will then immediately bring up an editor for editing the commit
+message. After revising it, we get the output::
+
+    [detached HEAD 721fc64] FOO: First implementation
+     2 files changed, 199 insertions(+), 66 deletions(-)
+    [detached HEAD 0f22701] Fix a few bugs + disable
+     1 files changed, 79 insertions(+), 61 deletions(-)
+    Successfully rebased and updated refs/heads/my-feature-branch.
+
+and the history looks now like this::
+
+     0f22701 Fix a few bugs + disable
+     721fc64 ENH: Sophisticated feature
+     6ad92e5 * masked is now an instance of a new object, MaskedConstant
+
+If it went wrong, recovery is again possible as explained :ref:`above
+<recovering-from-mess-up>`.
 
 Deleting a branch on github_
 ============================
@@ -190,6 +411,7 @@ Deleting a branch on github_
 
 (Note the colon ``:`` before ``test-branch``.  See also:
 http://github.com/guides/remove-a-remote-branch
+
 
 Several people sharing a single repository
 ==========================================

@@ -28,7 +28,8 @@ Updating the code
 From time to time you may want to pull down the latest code.  Do this with::
 
    cd numpy
-   git pull
+   git fetch
+   git merge --ff-only
 
 The tree in ``numpy`` will now have the latest changes from the initial
 repository.

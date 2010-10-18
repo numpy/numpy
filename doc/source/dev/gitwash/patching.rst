@@ -2,7 +2,8 @@
  Making a patch
 ================
 
-You've discovered a bug or something else you want to change in NumPy_ - excellent!
+You've discovered a bug or something else you want to change in
+NumPy_ - excellent!
 
 You've worked out a way to fix it - even better!
 
@@ -42,7 +43,8 @@ Overview
    # make the patch files
    git format-patch -M -C master
 
-Then, send the generated patch files to the `NumPy mailing list`_ - where we will thank you warmly.
+Then, send the generated patch files to the `NumPy mailing list`_ - 
+where we will thank you warmly.
 
 In detail
 ---------
@@ -110,7 +112,8 @@ Fork the NumPy_ repository on github_ - :ref:`forking`.  Then::
 
    # checkout and refresh master branch from main repo
    git checkout master
-   git pull origin master
+   git fetch origin
+   git merge --ff-only origin/master
    # rename pointer to main repository to 'upstream'
    git remote rename origin upstream
    # point your repo to default read / write to your fork on github

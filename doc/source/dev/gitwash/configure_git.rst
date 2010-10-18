@@ -1,8 +1,8 @@
 .. _configure-git:
 
-===============
- Configure git
-===============
+=================
+Git configuration
+=================
 
 .. _git-config-basic:
 
