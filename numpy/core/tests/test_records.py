@@ -108,6 +108,30 @@ class TestFromrecords(TestCase):
         assert_equal(a.b, ['a', 'bbb'])
         assert_equal(a[-1].b, 'bbb')
 
+    def test_record_comparison(self):
+        # Check that comparisons between record arrays with
+        # multi-dimensional field types work properly
+        a = np.rec.fromrecords([([1,2,3],'a', [[1,2],[3,4]]),([3,3,3],'b',[[0,0],[0,0]])],
+                                dtype=[('a', ('f4',3)), ('b', np.object), ('c', ('i4',(2,2)))])
+        b = a.copy()
+        assert_equal(a==b, [True,True])
+        assert_equal(a!=b, [False,False])
+        b[1].b = 'c'
+        assert_equal(a==b, [True,False])
+        assert_equal(a!=b, [False,True])
+        for i in range(3):
+            b[0].a = a[0].a
+            b[0].a[i] = 5
+            assert_equal(a==b, [False,False])
+            assert_equal(a!=b, [True,True])
+        for i in range(2):
+            for j in range(2):
+                b = a.copy()
+                b[0].c[i,j] = 10
+                assert_equal(a==b, [False,True])
+                assert_equal(a!=b, [True,False])
+
+
 
 class TestRecord(TestCase):
     def setUp(self):

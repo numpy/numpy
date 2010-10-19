@@ -851,6 +851,40 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 Py_XDECREF(res);
                 return NULL;
             }
+            /*
+             * If the field type has a non-trivial shape, additional
+             * dimensions will have been appended to `a` and `b`.
+             * In that case, reduce them using `op`.
+             */
+            if(PyArray_NDIM(temp) > PyArray_NDIM(self)) {
+                /* If the type was multidimensional, collapse that part to 1-D */
+                if(PyArray_NDIM(temp) != PyArray_NDIM(self)+1) {
+                    intp dimensions[NPY_MAXDIMS];
+                    PyArray_Dims newdims;
+
+                    newdims.ptr = dimensions;
+                    newdims.len = PyArray_NDIM(self)+1;
+                    memcpy(dimensions, PyArray_DIMS(self), sizeof(intp)*PyArray_NDIM(self));
+                    dimensions[PyArray_NDIM(self)] = -1;
+                    temp2 = PyArray_Newshape(temp, &newdims, PyArray_ANYORDER);
+                    if (temp2 == NULL) {
+                        Py_DECREF(temp);
+                        Py_XDECREF(res);
+                        return NULL;
+                    }
+                    Py_DECREF(temp);
+                    temp = temp2;
+                }
+                /* Reduce the extra dimension of `temp` using `op` */
+                temp2 = PyArray_GenericReduceFunction(temp, op, PyArray_NDIM(self), PyArray_BOOL, NULL);
+                if (temp2 == NULL) {
+                    Py_DECREF(temp);
+                    Py_XDECREF(res);
+                    return NULL;
+                }
+                Py_DECREF(temp);
+                temp = temp2;
+            }
             if (res == NULL) {
                 res = temp;
             }
