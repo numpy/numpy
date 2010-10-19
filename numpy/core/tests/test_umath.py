@@ -405,6 +405,9 @@ class TestLdexp(TestCase):
         self._check_ldexp('i')
         self._check_ldexp('l')
 
+    @dec.knownfailureif(sys.platform == 'win32' and sys.version_info < (2, 6),
+                        "python.org < 2.6 binaries have broken ldexp in the "
+                        "C runtime")
     def test_ldexp_overflow(self):
         imax = np.iinfo(np.dtype('l')).max
         imin = np.iinfo(np.dtype('l')).min
