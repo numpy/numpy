@@ -216,7 +216,7 @@ class GnuFCompiler(FCompiler):
         return arch_flags
 
     def get_flags_arch(self):
-        return self._c_arch_flags()
+        return []
 
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
@@ -265,6 +265,36 @@ class Gnu95FCompiler(GnuFCompiler):
     module_include_switch = '-I'
 
     g2c = 'gfortran'
+
+    def _universal_flags(self, cmd):
+        """Return a list of -arch flags for every supported architecture."""
+        if not sys.platform == 'darwin':
+            return []
+        arch_flags = []
+        # get arches the C compiler gets.
+        c_archs = self._c_arch_flags()
+        if "i386" in c_archs:
+            c_archs[c_archs.index("i386")] = "i686"
+        # check the arches the Fortran compiler supports, and compare with
+        # arch flags from C compiler
+        for arch in ["ppc", "i686", "x86_64", "ppc64"]:
+            if _can_target(cmd, arch) and arch in c_archs:
+                arch_flags.extend(["-arch", arch])
+        return arch_flags
+
+    def get_flags(self):
+        flags = GnuFCompiler.get_flags(self)
+        arch_flags = self._universal_flags(self.compiler_f90)
+        if arch_flags:
+            flags[:0] = arch_flags
+        return flags
+
+    def get_flags_linker_so(self):
+        flags = GnuFCompiler.get_flags_linker_so(self)
+        arch_flags = self._universal_flags(self.linker_so)
+        if arch_flags:
+            flags[:0] = arch_flags
+        return flags
 
     def get_library_dirs(self):
         opt = GnuFCompiler.get_library_dirs(self)
