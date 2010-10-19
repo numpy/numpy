@@ -269,6 +269,61 @@ class TestStructured(TestCase):
         assert_equal(a['a'].shape, b['a'].shape)
         assert_equal(a.T['a'].shape, a.T.copy()['a'].shape)
 
+
+    def test_subarray_comparison(self):
+        # Check that comparisons between record arrays with
+        # multi-dimensional field types work properly
+        a = np.rec.fromrecords(
+            [([1,2,3],'a', [[1,2],[3,4]]),([3,3,3],'b',[[0,0],[0,0]])],
+            dtype=[('a', ('f4',3)), ('b', np.object), ('c', ('i4',(2,2)))])
+        b = a.copy()
+        assert_equal(a==b, [True,True])
+        assert_equal(a!=b, [False,False])
+        b[1].b = 'c'
+        assert_equal(a==b, [True,False])
+        assert_equal(a!=b, [False,True])
+        for i in range(3):
+            b[0].a = a[0].a
+            b[0].a[i] = 5
+            assert_equal(a==b, [False,False])
+            assert_equal(a!=b, [True,True])
+        for i in range(2):
+            for j in range(2):
+                b = a.copy()
+                b[0].c[i,j] = 10
+                assert_equal(a==b, [False,True])
+                assert_equal(a!=b, [True,False])
+
+        # Check that broadcasting with a subarray works
+        a = np.array([[(0,)],[(1,)]],dtype=[('a','f8')])
+        b = np.array([(0,),(0,),(1,)],dtype=[('a','f8')])
+        assert_equal(a==b, [[True, True, False], [False, False, True]])
+        assert_equal(b==a, [[True, True, False], [False, False, True]])
+        a = np.array([[(0,)],[(1,)]],dtype=[('a','f8',(1,))])
+        b = np.array([(0,),(0,),(1,)],dtype=[('a','f8',(1,))])
+        assert_equal(a==b, [[True, True, False], [False, False, True]])
+        assert_equal(b==a, [[True, True, False], [False, False, True]])
+        a = np.array([[([0,0],)],[([1,1],)]],dtype=[('a','f8',(2,))])
+        b = np.array([([0,0],),([0,1],),([1,1],)],dtype=[('a','f8',(2,))])
+        assert_equal(a==b, [[True, False, False], [False, False, True]])
+        assert_equal(b==a, [[True, False, False], [False, False, True]])
+
+        # Check that broadcasting Fortran-style arrays with a subarray work
+        a = np.array([[([0,0],)],[([1,1],)]],dtype=[('a','f8',(2,))], order='F')
+        b = np.array([([0,0],),([0,1],),([1,1],)],dtype=[('a','f8',(2,))])
+        assert_equal(a==b, [[True, False, False], [False, False, True]])
+        assert_equal(b==a, [[True, False, False], [False, False, True]])
+
+        # Check that incompatible sub-array shapes don't result to broadcasting
+        x = np.zeros((1,), dtype=[('a', ('f4', (1,2))), ('b', 'i1')])
+        y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
+        assert_equal(x == y, False)
+
+        x = np.zeros((1,), dtype=[('a', ('f4', (2,1))), ('b', 'i1')])
+        y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
+        assert_equal(x == y, False)
+
+
 class TestBool(TestCase):
     def test_test_interning(self):
         a0 = bool_(0)
