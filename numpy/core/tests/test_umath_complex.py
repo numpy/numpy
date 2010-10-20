@@ -10,13 +10,16 @@ import numpy as np
 
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
-err = np.seterr(invalid='ignore')
+# Ditto for Solaris (ticket 1642).
+err = np.seterr(invalid='ignore', divide='ignore')
 try:
-    functions_seem_flaky = (np.exp(complex(np.inf, 0)).imag != 0)
+    functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
+                            or (np.log(complex(np.NZERO, 0)).imag != np.pi))
 finally:
     np.seterr(**err)
 # TODO: replace with a check on whether platform-provided C99 funcs are used
-have_platform_functions = (sys.platform == 'win32')
+have_platform_functions = (sys.platform.startswith('win')
+                           or sys.platform.startswith('sunos'))
 skip_complex_tests = have_platform_functions and functions_seem_flaky
 
 def platform_skip(func):
