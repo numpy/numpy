@@ -252,14 +252,25 @@ _convert_from_tuple(PyObject *obj)
         newdescr->elsize *= PyArray_MultiplyList(shape.ptr, shape.len);
         PyDimMem_FREE(shape.ptr);
         newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
-        newdescr->subarray->base = type;
         newdescr->flags = type->flags;
-        Py_INCREF(val);
-        newdescr->subarray->shape = val;
+        newdescr->subarray->base = type;
+        type = NULL;
         Py_XDECREF(newdescr->fields);
         Py_XDECREF(newdescr->names);
         newdescr->fields = NULL;
         newdescr->names = NULL;
+        /* Force subarray->shape to always be a tuple */
+        if (PyTuple_Check(val)) {
+            Py_INCREF(val);
+            newdescr->subarray->shape = val;
+        } else {
+            newdescr->subarray->shape =
+                        Py_BuildValue("(O)", val);
+            if (newdescr->subarray->shape == NULL) {
+                Py_DECREF(newdescr);
+                goto fail;
+            }
+        }
         type = newdescr;
     }
     return type;
@@ -1672,6 +1683,10 @@ arraydescr_shape_get(PyArray_Descr *self)
     if (self->subarray == NULL) {
         return PyTuple_New(0);
     }
+    /*TODO
+     * self->subarray->shape should always be a tuple,
+     * so this check should be unnecessary
+     */
     if (PyTuple_Check(self->subarray->shape)) {
         Py_INCREF(self->subarray->shape);
         return (PyObject *)(self->subarray->shape);
@@ -2339,6 +2354,19 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         return NULL;
     }
 
+    /*
+     * Ensure that subarray[0] is an ArrayDescr and
+     * that subarray[1] is a tuple of integers.
+     */
+    if (subarray != Py_None && (!PyTuple_Check(subarray) ||
+                PyTuple_Size(subarray) != 2 ||
+                !PyArray_DescrCheck(PyTuple_GET_ITEM(subarray, 0) ||
+                !_is_tuple_of_integers(PyTuple_GET_ITEM(subarray, 1))))) {
+       PyErr_Format(PyExc_ValueError,
+                "incorrect subarray parameter");
+       return NULL;
+    }
+
     if (endian != '|' && PyArray_IsNativeByteOrder(endian)) {
         endian = '=';
     }
@@ -2354,6 +2382,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
         self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
         Py_INCREF(self->subarray->base);
+        /* self->subarray->shape is always a tuple, as enforced above */
         self->subarray->shape = PyTuple_GET_ITEM(subarray, 1);
         Py_INCREF(self->subarray->shape);
     }
@@ -2648,6 +2677,10 @@ arraydescr_str(PyArray_Descr *self)
         }
         PyUString_ConcatAndDel(&t, p);
         PyUString_ConcatAndDel(&t, PyUString_FromString(","));
+        /*TODO
+         * self->subarray->shape should always be a tuple,
+         * so this check should be unnecessary
+         */
         if (!PyTuple_Check(self->subarray->shape)) {
             sh = Py_BuildValue("(O)", self->subarray->shape);
         }

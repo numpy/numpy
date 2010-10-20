@@ -1361,6 +1361,37 @@ _equivalent_units(PyObject *meta1, PyObject *meta2)
             && (data1->events == data2->events));
 }
 
+/*
+ * Compare the subarray data for two types.
+ * Return 1 if they are the same, 0 if not.
+ */
+static int
+_equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
+{
+    int val;
+
+    if(sub1 == sub2) {
+        return 1;
+
+    }
+    if(sub1 == NULL || sub2 == NULL) {
+        return 0;
+    }
+
+#if defined(NPY_PY3K)
+    val = PyObject_RichCompareBool(sub1->shape, sub2->shape, Py_EQ);
+    if (val != 1 || PyErr_Occurred()) {
+#else
+    val = PyObject_Compare(sub1->shape, sub2->shape);
+    if (val != 0 || PyErr_Occurred()) {
+#endif
+        PyErr_Clear();
+        return 0;
+    }
+
+    return PyArray_EquivTypes(sub1->base, sub2->base);
+}
+
 
 /*NUMPY_API
  *
@@ -1380,6 +1411,10 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
     }
     if (PyArray_ISNBO(typ1->byteorder) != PyArray_ISNBO(typ2->byteorder)) {
         return FALSE;
+    }
+    if (typ1->subarray || typ2->subarray) {
+        return ((typenum1 == typenum2)
+                && _equivalent_subarrays(typ1->subarray, typ2->subarray));
     }
     if (typenum1 == PyArray_VOID
         || typenum2 == PyArray_VOID) {

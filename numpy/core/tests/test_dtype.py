@@ -42,6 +42,33 @@ class TestRecord(TestCase):
         self.assertRaises(TypeError, np.dtype,
             dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
 
+class TestShape(TestCase):
+    def test_equal(self):
+        """Test some data types that are equal"""
+        self.assertEqual(np.dtype('f8'), np.dtype(('f8',tuple())))
+        self.assertEqual(np.dtype('f8'), np.dtype(('f8',1)))
+        self.assertEqual(np.dtype((np.int,2)), np.dtype((np.int,(2,))))
+        self.assertEqual(np.dtype(('<f4',(3,2))), np.dtype(('<f4',(3,2))))
+        d = ([('a','f4',(1,2)),('b','f8',(3,1))],(3,2))
+        self.assertEqual(np.dtype(d), np.dtype(d))
+
+    def test_simple(self):
+        """Test some simple cases that shouldn't be equal"""
+        self.assertNotEqual(np.dtype('f8'), np.dtype(('f8',(1,))))
+        self.assertNotEqual(np.dtype(('f8',(1,))), np.dtype(('f8',(1,1))))
+        self.assertNotEqual(np.dtype(('f4',(3,2))), np.dtype(('f4',(2,3))))
+    
+    def test_monster(self):
+        """Test some more complicated cases that shouldn't be equal"""
+        self.assertNotEqual(np.dtype(([('a','f4',(2,1)), ('b','f8',(1,3))],(2,2))),
+                        np.dtype(([('a','f4',(1,2)), ('b','f8',(1,3))],(2,2))))
+        self.assertNotEqual(np.dtype(([('a','f4',(2,1)), ('b','f8',(1,3))],(2,2))),
+                        np.dtype(([('a','f4',(2,1)), ('b','i8',(1,3))],(2,2))))
+        self.assertNotEqual(np.dtype(([('a','f4',(2,1)), ('b','f8',(1,3))],(2,2))),
+                        np.dtype(([('e','f8',(1,3)), ('d','f4',(2,1))],(2,2))))
+        self.assertNotEqual(np.dtype(([('a',[('a','i4',6)],(2,1)), ('b','f8',(1,3))],(2,2))),
+                        np.dtype(([('a',[('a','u4',6)],(2,1)), ('b','f8',(1,3))],(2,2))))
+
 class TestSubarray(TestCase):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))
