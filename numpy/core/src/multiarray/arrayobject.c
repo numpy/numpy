@@ -827,6 +827,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         PyObject *key, *value, *temp2;
         PyObject *op;
         Py_ssize_t pos = 0;
+        intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
+                            PyArray_NDIM(self) : PyArray_NDIM(other);
 
         op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
         while (PyDict_Next(self->descr->fields, &pos, &key, &value)) {
@@ -856,16 +858,16 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
              * dimensions will have been appended to `a` and `b`.
              * In that case, reduce them using `op`.
              */
-            if(PyArray_NDIM(temp) > PyArray_NDIM(self)) {
+            if(PyArray_NDIM(temp) > result_ndim) {
                 /* If the type was multidimensional, collapse that part to 1-D */
-                if(PyArray_NDIM(temp) != PyArray_NDIM(self)+1) {
+                if(PyArray_NDIM(temp) != result_ndim+1) {
                     intp dimensions[NPY_MAXDIMS];
                     PyArray_Dims newdims;
 
                     newdims.ptr = dimensions;
-                    newdims.len = PyArray_NDIM(self)+1;
-                    memcpy(dimensions, PyArray_DIMS(self), sizeof(intp)*PyArray_NDIM(self));
-                    dimensions[PyArray_NDIM(self)] = -1;
+                    newdims.len = result_ndim+1;
+                    memcpy(dimensions, PyArray_DIMS(temp), sizeof(intp)*result_ndim);
+                    dimensions[result_ndim] = -1;
                     temp2 = PyArray_Newshape(temp, &newdims, PyArray_ANYORDER);
                     if (temp2 == NULL) {
                         Py_DECREF(temp);
@@ -876,7 +878,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     temp = temp2;
                 }
                 /* Reduce the extra dimension of `temp` using `op` */
-                temp2 = PyArray_GenericReduceFunction(temp, op, PyArray_NDIM(self), PyArray_BOOL, NULL);
+                temp2 = PyArray_GenericReduceFunction(temp, op, result_ndim, PyArray_BOOL, NULL);
                 if (temp2 == NULL) {
                     Py_DECREF(temp);
                     Py_XDECREF(res);

@@ -130,7 +130,24 @@ class TestFromrecords(TestCase):
                 b[0].c[i,j] = 10
                 assert_equal(a==b, [False,True])
                 assert_equal(a!=b, [True,False])
-
+        # Check that broadcasting with a subarray works
+        a = np.array([[(0,)],[(1,)]],dtype=[('a','f8')])
+        b = np.array([(0,),(0,),(1,)],dtype=[('a','f8')])
+        assert_equal(a==b, [[True, True, False], [False, False, True]])
+        assert_equal(b==a, [[True, True, False], [False, False, True]])
+        a = np.array([[(0,)],[(1,)]],dtype=[('a','f8',(1,))])
+        b = np.array([(0,),(0,),(1,)],dtype=[('a','f8',(1,))])
+        assert_equal(a==b, [[True, True, False], [False, False, True]])
+        assert_equal(b==a, [[True, True, False], [False, False, True]])
+        a = np.array([[([0,0],)],[([1,1],)]],dtype=[('a','f8',(2,))])
+        b = np.array([([0,0],),([0,1],),([1,1],)],dtype=[('a','f8',(2,))])
+        assert_equal(a==b, [[True, False, False], [False, False, True]])
+        assert_equal(b==a, [[True, False, False], [False, False, True]])
+        # Check that broadcasting Fortran-style arrays with a subarray work
+        a = np.array([[([0,0],)],[([1,1],)]],dtype=[('a','f8',(2,))], order='F')
+        b = np.array([([0,0],),([0,1],),([1,1],)],dtype=[('a','f8',(2,))])
+        assert_equal(a==b, [[True, False, False], [False, False, True]])
+        assert_equal(b==a, [[True, False, False], [False, False, True]])
 
 
 class TestRecord(TestCase):
