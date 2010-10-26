@@ -2421,8 +2421,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
 
     Parameters
     ----------
-    order : {'C', 'F'}, optional
-        Whether to flatten in C (row-major) or Fortran (column-major) order.
+    order : {'C', 'F', 'A'}, optional
+        Whether to flatten in C (row-major), Fortran (column-major) order,
+        or preserve the C/Fortran ordering from `a`.
         The default is 'C'.
 
     Returns
