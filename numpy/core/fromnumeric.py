@@ -117,9 +117,10 @@ def reshape(a, newshape, order='C'):
         an integer, then the result will be a 1-D array of that length.
         One shape dimension can be -1. In this case, the value is inferred
         from the length of the array and remaining dimensions.
-    order : {'C', 'F'}, optional
+    order : {'C', 'F', 'A'}, optional
         Determines whether the array data should be viewed as in C
-        (row-major) order or FORTRAN (column-major) order.
+        (row-major) order, FORTRAN (column-major) order, or the C/FORTRAN
+        order should be preserved.
 
     Returns
     -------
@@ -1052,9 +1053,10 @@ def ravel(a, order='C'):
     a : array_like
         Input array.  The elements in `a` are read in the order specified by
         `order`, and packed as a 1-D array.
-    order : {'C','F'}, optional
-        The elements of `a` are read in this order.  It can be either
-        'C' for row-major order, or `F` for column-major order.
+    order : {'C','F', 'A'}, optional
+        The elements of `a` are read in this order.  It can be
+        'C' for row-major order, `F` for column-major order, or
+        'A' to preserve the order of `a` when possible.
         By default, row-major order is used.
 
     Returns
@@ -1078,21 +1080,24 @@ def ravel(a, order='C'):
 
     Examples
     --------
-    If an array is in C-order (default), then `ravel` is equivalent
-    to ``reshape(-1)``:
+    It is equivalent to ``reshape(-1, order=order)``.
 
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> print x.reshape(-1)
-    [1  2  3  4  5  6]
-
     >>> print np.ravel(x)
-    [1  2  3  4  5  6]
+    [1 2 3 4 5 6]
 
-    When flattening using Fortran-order, however, we see
+    >>> print x.reshape(-1)
+    [1 2 3 4 5 6]
 
     >>> print np.ravel(x, order='F')
     [1 4 2 5 3 6]
 
+    When `order` is 'A', it will preserve the array's 'C' or 'F' ordering:
+
+    >>> print np.ravel(x.T)
+    [1 4 2 5 3 6]
+    >>> print np.ravel(x.T, order='A')
+    [1 2 3 4 5 6]
     """
     return asarray(a).ravel(order)
 

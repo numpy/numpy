@@ -549,6 +549,22 @@ class TestMethods(TestCase):
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
 
+    def test_ravel(self):
+        a = np.array([[0,1],[2,3]])
+        assert_equal(a.ravel(), [0,1,2,3])
+        assert_equal(a.ravel('F'), [0,2,1,3])
+        assert_equal(a.ravel(order='C'), [0,1,2,3])
+        assert_equal(a.ravel(order='F'), [0,2,1,3])
+        assert_equal(a.ravel(order='A'), [0,1,2,3])
+        assert_equal(a.ravel(), a.reshape(-1))
+
+        a = np.array([[0,1],[2,3]], order='F')
+        assert_equal(a.ravel(), [0,1,2,3])
+        assert_equal(a.ravel(order='A'), [0,2,1,3])
+        assert_equal(a.ravel(), a.reshape(-1))
+        assert_equal(a.ravel(order='A'), a.reshape(-1, order='A'))
+
+
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
         x = array([1,2,3])
