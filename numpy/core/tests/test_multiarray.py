@@ -255,6 +255,19 @@ class TestCreation(TestCase):
             msg = 'String conversion for %s' % type
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
+class TestStructured(TestCase):
+    def test_subarray_field_access(self):
+        a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
+        a['a'] = np.arange(60).reshape(3, 5, 2, 2)
+
+        # Since the subarray is always in C-order, these aren't equal
+        assert_(np.any(a['a'].T != a.T['a']))
+
+        # In Fortran order, the subarray gets appended
+        # like in all other cases, not prepended as a special case
+        b = a.copy(order='F')
+        assert_equal(a['a'].shape, b['a'].shape)
+        assert_equal(a.T['a'].shape, a.T.copy()['a'].shape)
 
 class TestBool(TestCase):
     def test_test_interning(self):
