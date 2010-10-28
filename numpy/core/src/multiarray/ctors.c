@@ -199,17 +199,15 @@ fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data
 
 /*
  * Change a sub-array field to the base descriptor
- *
  * and update the dimensions and strides
  * appropriately.  Dimensions and strides are added
- * to the end unless we have a FORTRAN array
- * and then they are added to the beginning
+ * to the end.
  *
  * Strides are only added if given (because data is given).
  */
 static int
 _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
-                             intp *newstrides, int oldnd, int isfortran)
+                             intp *newstrides, int oldnd)
 {
     PyArray_Descr *old;
     int newnd;
@@ -236,10 +234,6 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
     if (newnd > MAX_DIMS) {
         goto finish;
     }
-    if (isfortran) {
-        memmove(newdims+numnew, newdims, oldnd*sizeof(intp));
-        mydim = newdims;
-    }
     if (tuple) {
         for (i = 0; i < numnew; i++) {
             mydim[i] = (intp) PyInt_AsLong(
@@ -255,10 +249,6 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
         intp *mystrides;
 
         mystrides = newstrides + oldnd;
-        if (isfortran) {
-            memmove(newstrides+numnew, newstrides, oldnd*sizeof(intp));
-            mystrides = newstrides;
-        }
         /* Make new strides -- alwasy C-contiguous */
         tempsize = (*des)->elsize;
         for (i = numnew - 1; i >= 0; i--) {
@@ -1390,16 +1380,13 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         PyObject *ret;
         intp newdims[2*MAX_DIMS];
         intp *newstrides = NULL;
-        int isfortran = 0;
-        isfortran = (data && (flags & FORTRAN) && !(flags & CONTIGUOUS)) ||
-            (!data && flags);
         memcpy(newdims, dims, nd*sizeof(intp));
         if (strides) {
             newstrides = newdims + MAX_DIMS;
             memcpy(newstrides, strides, nd*sizeof(intp));
         }
         nd =_update_descr_and_dimensions(&descr, newdims,
-                                         newstrides, nd, isfortran);
+                                         newstrides, nd);
         ret = PyArray_NewFromDescr(subtype, descr, nd, newdims,
                                    newstrides,
                                    data, flags, obj);

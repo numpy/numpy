@@ -108,6 +108,23 @@ class TestFromrecords(TestCase):
         assert_equal(a.b, ['a', 'bbb'])
         assert_equal(a[-1].b, 'bbb')
 
+    def test_record_subarray(self):
+        a = np.rec.recarray((3,5,), dtype=[('a',('i4',(2,2)))])
+        a['a'] = np.array(range(60)).reshape(3,5,2,2)
+
+        # Since the subarray is always in C-order, these aren't equal
+        assert a['a'].T != a.T['a']
+
+        b = a.copy(order='F')
+        assert_equal(a['a'].shape, b['a'].shape)
+        assert_equal(a, b)
+
+        c = np.rec.recarray((3,5,), dtype=[('a',('i4',(2,2)))], order='F')
+        # In Fortran order, the subarray gets appended
+        # like in all other cases, not prepended as a special case
+        c['a'] = np.array(range(60)).reshape(3,5,2,2)
+        assert_equal(b, c)
+
     def test_record_comparison(self):
         # Check that comparisons between record arrays with
         # multi-dimensional field types work properly
