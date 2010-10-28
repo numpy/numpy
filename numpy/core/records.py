@@ -331,6 +331,8 @@ class recarray(ndarray):
         occupy in memory).
     offset : int, optional
         Start reading buffer (`buf`) from this offset onwards.
+    order : {'C', 'F'}, optional
+        Row-major or column-major order.
 
     Returns
     -------
@@ -387,7 +389,7 @@ class recarray(ndarray):
     """
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
-                byteorder=None, aligned=False):
+                byteorder=None, aligned=False, order='C'):
 
         if dtype is not None:
             descr = sb.dtype(dtype)
@@ -395,11 +397,11 @@ class recarray(ndarray):
             descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
         if buf is None:
-            self = ndarray.__new__(subtype, shape, (record, descr))
+            self = ndarray.__new__(subtype, shape, (record, descr), order=order)
         else:
             self = ndarray.__new__(subtype, shape, (record, descr),
                                       buffer=buf, offset=offset,
-                                      strides=strides)
+                                      strides=strides, order=order)
         return self
 
     def __getattribute__(self, attr):
