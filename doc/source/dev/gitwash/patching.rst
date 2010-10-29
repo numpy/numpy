@@ -94,7 +94,12 @@ In detail
       0001-BF-added-tests-for-Funny-bug.patch
       0002-BF-added-fix-for-Funny-bug.patch
 
-   Send these files to the `NumPy mailing list`_.
+   The recommended way to proceed is either to attach these files to 
+   an enhancement ticket in the `Numpy Trac <http://projects.scipy.org/numpy/>`__
+   and send a mail about the enhancement to the `NumPy mailing list`_.
+
+   You can also consider sending your changes via Github, see below and in
+   :ref:`asking-for-merging`.
 
 When you are done, to switch back to the main copy of the code, just
 return to the ``master`` branch::
