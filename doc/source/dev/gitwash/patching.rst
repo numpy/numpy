@@ -43,8 +43,9 @@ Overview
    # make the patch files
    git format-patch -M -C master
 
-Then, send the generated patch files to the `NumPy mailing list`_ - 
-where we will thank you warmly.
+Then, create a ticket in the `Numpy Trac <http://projects.scipy.org/numpy/>`__,
+attach the generated patch files there, and notify the `NumPy mailing list`_
+about your contribution.
 
 In detail
 ---------
