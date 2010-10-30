@@ -89,6 +89,9 @@ class TestSubarray(TestCase):
         self.assertTrue(hash(a) == hash(b), 
                 "two equivalent types do not hash to the same value !")
 
+        assert_equal(type(a.subdtype[1]), tuple)
+        assert_equal(type(b.subdtype[1]), tuple)
+
     def test_equivalent_record(self):
         """Test whether equivalent subarray dtypes hash the same."""
         a = np.dtype((np.int, (2, 3)))

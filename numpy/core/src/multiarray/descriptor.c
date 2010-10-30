@@ -252,14 +252,24 @@ _convert_from_tuple(PyObject *obj)
         newdescr->elsize *= PyArray_MultiplyList(shape.ptr, shape.len);
         PyDimMem_FREE(shape.ptr);
         newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
-        newdescr->subarray->base = type;
         newdescr->flags = type->flags;
-        Py_INCREF(val);
-        newdescr->subarray->shape = val;
+        newdescr->subarray->base = type;
+        type = NULL;
         Py_XDECREF(newdescr->fields);
         Py_XDECREF(newdescr->names);
         newdescr->fields = NULL;
         newdescr->names = NULL;
+        /* Force subarray->shape to always be a tuple */
+        if (PyTuple_Check(val)) {
+            Py_INCREF(val);
+            newdescr->subarray->shape = val;
+        } else {
+            newdescr->subarray->shape = Py_BuildValue("(O)", val);
+            if (newdescr->subarray->shape == NULL) {
+                Py_DECREF(newdescr);
+                goto fail;
+            }
+        }
         type = newdescr;
     }
     return type;
@@ -1499,7 +1509,7 @@ arraydescr_dealloc(PyArray_Descr *self)
     Py_XDECREF(self->names);
     Py_XDECREF(self->fields);
     if (self->subarray) {
-        Py_DECREF(self->subarray->shape);
+        Py_XDECREF(self->subarray->shape);
         Py_DECREF(self->subarray->base);
         _pya_free(self->subarray);
     }
@@ -1672,6 +1682,10 @@ arraydescr_shape_get(PyArray_Descr *self)
     if (self->subarray == NULL) {
         return PyTuple_New(0);
     }
+    /*TODO
+     * self->subarray->shape should always be a tuple,
+     * so this check should be unnecessary
+     */
     if (PyTuple_Check(self->subarray->shape)) {
         Py_INCREF(self->subarray->shape);
         return (PyObject *)(self->subarray->shape);
@@ -2351,11 +2365,49 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     self->subarray = NULL;
 
     if (subarray != Py_None) {
+        PyObject *subarray_shape;
+
+        /*
+         * Ensure that subarray[0] is an ArrayDescr and
+         * that subarray_shape obtained from subarray[1] is a tuple of integers.
+         */
+        if (!(PyTuple_Check(subarray) &&
+              PyTuple_Size(subarray) == 2 &&
+              PyArray_DescrCheck(PyTuple_GET_ITEM(subarray, 0)))) {
+            PyErr_Format(PyExc_ValueError,
+                         "incorrect subarray in __setstate__");
+            return NULL;
+        }
+        subarray_shape = PyTuple_GET_ITEM(subarray, 1);
+        if (PyNumber_Check(subarray_shape)) {
+            PyObject *tmp;
+#if defined(NPY_PY3K)
+            tmp = PyNumber_Long(subarray_shape);
+#else
+            tmp = PyNumber_Int(subarray_shape);
+#endif
+            if (tmp == NULL) {
+                return NULL;
+            }
+            subarray_shape = Py_BuildValue("(O)", tmp);
+            Py_DECREF(tmp);
+            if (subarray_shape == NULL) {
+                return NULL;
+            }
+        }
+        else if (_is_tuple_of_integers(subarray_shape)) {
+            Py_INCREF(subarray_shape);
+        }
+        else {
+            PyErr_Format(PyExc_ValueError,
+                         "incorrect subarray shape in __setstate__");
+            return NULL;
+        }
+
         self->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
         self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
         Py_INCREF(self->subarray->base);
-        self->subarray->shape = PyTuple_GET_ITEM(subarray, 1);
-        Py_INCREF(self->subarray->shape);
+        self->subarray->shape = subarray_shape;
     }
 
     if (fields != Py_None) {
@@ -2648,6 +2700,10 @@ arraydescr_str(PyArray_Descr *self)
         }
         PyUString_ConcatAndDel(&t, p);
         PyUString_ConcatAndDel(&t, PyUString_FromString(","));
+        /*TODO
+         * self->subarray->shape should always be a tuple,
+         * so this check should be unnecessary
+         */
         if (!PyTuple_Check(self->subarray->shape)) {
             sh = Py_BuildValue("(O)", self->subarray->shape);
         }
