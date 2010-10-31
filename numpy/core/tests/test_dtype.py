@@ -9,6 +9,19 @@ class TestBuiltin(TestCase):
             dt = np.dtype(t)
             hash(dt)
 
+    def test_dtype(self):
+        # Make sure equivalent byte order char hash the same (e.g. < and = on
+        # little endian)
+        for t in [np.int, np.float]:
+            dt = np.dtype(t)
+            dt2 = dt.newbyteorder("<")
+            dt3 = dt.newbyteorder(">")
+            if dt == dt2:
+                self.assertTrue(dt.byteorder != dt2.byteorder, "bogus test")
+                self.assertTrue(hash(dt) == hash(dt2), "equivalent bytorders do not hash the same")
+            else:
+                self.assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
+                self.assertTrue(hash(dt) == hash(dt3), "equivalent bytorders do not hash the same")
 class TestRecord(TestCase):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""

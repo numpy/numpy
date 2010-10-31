@@ -31,6 +31,23 @@ static int _array_descr_walk_fields(PyObject* fields, PyObject* l);
 static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l);
 
 /*
+ * normalize endian character: always return 'I', '<' or '>'
+ */
+ static char _normalize_byteorder(char byteorder)
+ {
+	switch(byteorder) {
+	case '=':
+		if (PyArray_GetEndianness() == NPY_CPU_BIG) {
+			return '>';
+		} else {
+			return '<';
+		}
+	default:
+		return byteorder;
+	}
+ }
+
+/*
  * Return true if descr is a builtin type
  */
 static int _is_array_descr_builtin(PyArray_Descr* descr)
@@ -51,12 +68,13 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
 {
     Py_ssize_t i;
     PyObject *t, *item;
+    char nbyteorder = _normalize_byteorder(descr->byteorder);
 
     /*
      * For builtin type, hash relies on : kind + byteorder + flags +
      * type_num + elsize + alignment
      */
-    t = Py_BuildValue("(cciiii)", descr->kind, descr->byteorder,
+    t = Py_BuildValue("(cciiii)", descr->kind, nbyteorder,
             descr->flags, descr->type_num, descr->elsize,
             descr->alignment);
 
