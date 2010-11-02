@@ -1,4 +1,5 @@
 import sys
+import platform
 
 from numpy.testing import *
 import numpy.core.umath as ncu
@@ -401,10 +402,15 @@ class TestLdexp(TestCase):
                         "python.org < 2.6 binaries have broken ldexp in the "
                         "C runtime")
     def test_ldexp_overflow(self):
-        imax = np.iinfo(np.dtype('l')).max
-        imin = np.iinfo(np.dtype('l')).min
-        assert_equal(ncu.ldexp(2., imax), np.inf)
-        assert_equal(ncu.ldexp(2., imin), 0)
+        # silence warning emitted on overflow
+        err = np.seterr(over="ignore")
+        try:
+            imax = np.iinfo(np.dtype('l')).max
+            imin = np.iinfo(np.dtype('l')).min
+            assert_equal(ncu.ldexp(2., imax), np.inf)
+            assert_equal(ncu.ldexp(2., imin), 0)
+        finally:
+            np.seterr(**err)
 
 
 class TestMaximum(TestCase):
@@ -644,7 +650,7 @@ class TestSpecialMethods(TestCase):
         class with_prepare(np.ndarray):
             __array_priority__ = 10
             def __array_prepare__(self, arr, context):
-                # make sure we can return a new 
+                # make sure we can return a new
                 return np.array(arr).view(type=with_prepare)
         a = np.array(1).view(type=with_prepare)
         x = np.add(a, a)
@@ -991,7 +997,9 @@ def test_nextafter():
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32', "Long double support buggy on win32")
+@dec.knownfailureif(sys.platform == 'win32' or
+                    (sys.platform == "darwin" and "powerpc" in platform.processor()),
+                    "Long double support buggy on win32 and OS X on PPC.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
 
@@ -1016,7 +1024,9 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32', "Long double support buggy on win32")
+@dec.knownfailureif(sys.platform == 'win32' or
+                    (sys.platform == "darwin" and "powerpc" in platform.processor()),
+                    "Long double support buggy on win32 and OS X on PPC.")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 
@@ -1082,16 +1092,16 @@ def test_reduceat():
     h2 = np.array(h2)
 
     # test buffered -- this should work
-    h1 = np.add.reduceat(a['value'], indx)    
+    h1 = np.add.reduceat(a['value'], indx)
     assert_array_almost_equal(h1, h2)
 
     # This is when the error occurs.
     # test no buffer
     res = np.setbufsize(32)
     h1 = np.add.reduceat(a['value'], indx)
-    np.setbufsize(np.UFUNC_BUFSIZE_DEFAULT)    
+    np.setbufsize(np.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
-        
+
 
 def test_complex_nan_comparisons():
     nans = [complex(np.nan, 0), complex(0, np.nan), complex(np.nan, np.nan)]
