@@ -1434,6 +1434,12 @@ class TestRegression(TestCase):
         assert_array_equal(a1 == a2, [True, False])
         assert_array_equal(a2 == a1, [True, False])
 
+    def test_nonzero_byteswap(self):
+        a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
+        a.dtype = np.float32
+        assert_equal(a.nonzero()[0], [1])
+        a = a.byteswap().newbyteorder()
+        assert_equal(a.nonzero()[0], [1]) # [0] if nonzero() ignores swap
 
 if __name__ == "__main__":
     run_module_suite()
