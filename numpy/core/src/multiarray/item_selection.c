@@ -1697,6 +1697,7 @@ PyArray_Nonzero(PyArrayObject *self)
     if (it == NULL) {
         return NULL;
     }
+    /* One pass through 'self', counting the non-zero elements */
     size = it->size;
     for (i = 0; i < size; i++) {
         if (self->descr->f->nonzero(it->dataptr, self)) {
@@ -1706,6 +1707,7 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     PyArray_ITER_RESET(it);
+    /* Allocate the tuple of coordinates */
     ret = PyTuple_New(n);
     if (ret == NULL) {
         goto fail;
@@ -1720,6 +1722,7 @@ PyArray_Nonzero(PyArrayObject *self)
         PyTuple_SET_ITEM(ret, j, item);
         dptr[j] = (intp *)PyArray_DATA(item);
     }
+    /* A second pass through 'self', recording the indices */
     if (n == 1) {
         for (i = 0; i < size; i++) {
             if (self->descr->f->nonzero(it->dataptr, self)) {
