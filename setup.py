@@ -56,8 +56,8 @@ PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 5
 MICRO               = 1
-ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+ISRELEASED          = True
+VERSION             = '%d.%d.%drc2' % (MAJOR, MINOR, MICRO)
 
 # Return the svn version as a string, raise a ValueError otherwise
 def svn_version():
