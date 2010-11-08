@@ -1,4 +1,5 @@
 import sys
+import platform
 
 from numpy.testing import *
 import numpy.core.umath as ncu
@@ -1036,7 +1037,9 @@ def test_nextafter():
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32', "Long double support buggy on win32")
+@dec.knownfailureif(sys.platform == 'win32' or
+                    (sys.platform == "darwin" and "powerpc" in platform.processor()),
+                    "Long double support buggy on win32 and OS X on PPC.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
 
@@ -1061,7 +1064,9 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32', "Long double support buggy on win32")
+@dec.knownfailureif(sys.platform == 'win32' or
+                    (sys.platform == "darwin" and "powerpc" in platform.processor()),
+                    "Long double support buggy on win32 and OS X on PPC.")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 
