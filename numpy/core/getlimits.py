@@ -131,6 +131,10 @@ class finfo(object):
             itype = ntypes.longlong
             fmt = '%s'
             precname = 'long double'
+        elif dtype is ntypes.half:
+            itype = ntypes.int16
+            fmt = '%12.5e'
+            precname = 'half'
         else:
             raise ValueError, repr(dtype)
 
