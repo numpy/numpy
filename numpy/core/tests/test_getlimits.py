@@ -4,7 +4,7 @@
 from numpy.testing import *
 
 from numpy.core import finfo, iinfo
-from numpy import single,double,longdouble
+from numpy import half, single, double, longdouble
 import numpy as np
 
 ##################################################
@@ -13,6 +13,12 @@ class TestPythonFloat(TestCase):
     def test_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
+        assert_equal(id(ftype),id(ftype2))
+
+class TestHalf(TestCase):
+    def test_singleton(self):
+        ftype = finfo(half)
+        ftype2 = finfo(half)
         assert_equal(id(ftype),id(ftype2))
 
 class TestSingle(TestCase):
