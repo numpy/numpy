@@ -107,7 +107,6 @@ if not release:
 """
     FULL_VERSION = VERSION
     if not ISRELEASED:
-        FULL_VERSION += '.dev'
         if os.path.exists('.git'):
             GIT_REVISION = git_version()
         elif os.path.exists(filename):
@@ -116,7 +115,7 @@ if not release:
         else:
             GIT_REVISION = "Unknown"
 
-        FULL_VERSION += GIT_REVISION[:7]
+        FULL_VERSION += '.dev-' + GIT_REVISION[:7]
 
     a = open(filename, 'w')
     try:
