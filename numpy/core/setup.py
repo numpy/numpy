@@ -610,6 +610,8 @@ def configuration(parent_package='',top_path=None):
         from numpy.distutils.misc_util import get_cmd
 
         subpath = join('src', 'umath')
+        # NOTE: For manual template conversion of loops.h.src, read the note
+        #       in that file.
         sources = [join(local_dir, subpath, 'loops.c.src'),
                    join(local_dir, subpath, 'umathmodule.c.src')]
 
@@ -692,6 +694,7 @@ def configuration(parent_package='',top_path=None):
             sources=[join('src', 'npymath', 'npy_math.c.src'),
                      join('src', 'npymath', 'ieee754.c.src'),
                      join('src', 'npymath', 'npy_math_complex.c.src'),
+                     join('src', 'npymath', 'halffloat.c'),
                      get_mathlib_info],
             install_dir='lib')
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
@@ -802,6 +805,7 @@ def configuration(parent_package='',top_path=None):
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
                                   generate_ufunc_api],
+                         libraries=['npymath'],
                          )
 
     # Configure blasdot

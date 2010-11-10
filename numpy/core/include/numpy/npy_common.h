@@ -31,8 +31,10 @@ enum {
 #define NPY_UINT_FMT "u"
 #define NPY_LONG_FMT "ld"
 #define NPY_ULONG_FMT "lu"
+#define NPY_HALF_FMT "g"
 #define NPY_FLOAT_FMT "g"
 #define NPY_DOUBLE_FMT "g"
+
 
 #ifdef PY_LONG_LONG
 typedef PY_LONG_LONG npy_longlong;
@@ -195,6 +197,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_MIN_LONG  LONG_MIN
 #define NPY_MAX_ULONG  ULONG_MAX
 
+#define NPY_SIZEOF_HALF 2
 #define NPY_SIZEOF_DATETIME 8
 #define NPY_SIZEOF_TIMEDELTA 8
 
@@ -204,6 +207,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_BITSOF_INT (NPY_SIZEOF_INT * CHAR_BIT)
 #define NPY_BITSOF_LONG (NPY_SIZEOF_LONG * CHAR_BIT)
 #define NPY_BITSOF_LONGLONG (NPY_SIZEOF_LONGLONG * CHAR_BIT)
+#define NPY_BITSOF_HALF (NPY_SIZEOF_HALF * CHAR_BIT)
 #define NPY_BITSOF_FLOAT (NPY_SIZEOF_FLOAT * CHAR_BIT)
 #define NPY_BITSOF_DOUBLE (NPY_SIZEOF_DOUBLE * CHAR_BIT)
 #define NPY_BITSOF_LONGDOUBLE (NPY_SIZEOF_LONGDOUBLE * CHAR_BIT)
@@ -582,20 +586,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 
 
 
-#if NPY_BITSOF_DOUBLE == 16
-#ifndef NPY_FLOAT16
-#define NPY_FLOAT16 NPY_DOUBLE
-#define NPY_COMPLEX32 NPY_CDOUBLE
-        typedef  double npy_float16;
-        typedef npy_cdouble npy_complex32;
-#    define PyFloat16ScalarObject PyDoubleScalarObject
-#    define PyComplex32ScalarObject PyCDoubleScalarObject
-#    define PyFloat16ArrType_Type PyDoubleArrType_Type
-#    define PyComplex32ArrType_Type PyCDoubleArrType_Type
-#define NPY_FLOAT16_FMT NPY_DOUBLE_FMT
-#define NPY_COMPLEX32_FMT NPY_CDOUBLE_FMT
-#endif
-#elif NPY_BITSOF_DOUBLE == 32
+#if NPY_BITSOF_DOUBLE == 32
 #ifndef NPY_FLOAT32
 #define NPY_FLOAT32 NPY_DOUBLE
 #define NPY_COMPLEX64 NPY_CDOUBLE
@@ -664,20 +655,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 
 
 
-#if NPY_BITSOF_FLOAT == 16
-#ifndef NPY_FLOAT16
-#define NPY_FLOAT16 NPY_FLOAT
-#define NPY_COMPLEX32 NPY_CFLOAT
-        typedef float npy_float16;
-        typedef npy_cfloat npy_complex32;
-#    define PyFloat16ScalarObject PyFloatScalarObject
-#    define PyComplex32ScalarObject PyCFloatScalarObject
-#    define PyFloat16ArrType_Type PyFloatArrType_Type
-#    define PyComplex32ArrType_Type PyCFloatArrType_Type
-#define NPY_FLOAT16_FMT NPY_FLOAT_FMT
-#define NPY_COMPLEX32_FMT NPY_CFLOAT_FMT
-#endif
-#elif NPY_BITSOF_FLOAT == 32
+#if NPY_BITSOF_FLOAT == 32
 #ifndef NPY_FLOAT32
 #define NPY_FLOAT32 NPY_FLOAT
 #define NPY_COMPLEX64 NPY_CFLOAT
@@ -744,21 +722,12 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #endif
 #endif
 
+/* half/float16 isn't a floating-point type in C */
+#define NPY_FLOAT16 NPY_HALF
+typedef npy_uint16 npy_half;
+typedef npy_half npy_float16;
 
-#if NPY_BITSOF_LONGDOUBLE == 16
-#ifndef NPY_FLOAT16
-#define NPY_FLOAT16 NPY_LONGDOUBLE
-#define NPY_COMPLEX32 NPY_CLONGDOUBLE
-        typedef npy_longdouble npy_float16;
-        typedef npy_clongdouble npy_complex32;
-#    define PyFloat16ScalarObject PyLongDoubleScalarObject
-#    define PyComplex32ScalarObject PyCLongDoubleScalarObject
-#    define PyFloat16ArrType_Type PyLongDoubleArrType_Type
-#    define PyComplex32ArrType_Type PyCLongDoubleArrType_Type
-#define NPY_FLOAT16_FMT NPY_LONGDOUBLE_FMT
-#define NPY_COMPLEX32_FMT NPY_CLONGDOUBLE_FMT
-#endif
-#elif NPY_BITSOF_LONGDOUBLE == 32
+#if NPY_BITSOF_LONGDOUBLE == 32
 #ifndef NPY_FLOAT32
 #define NPY_FLOAT32 NPY_LONGDOUBLE
 #define NPY_COMPLEX64 NPY_CLONGDOUBLE

@@ -65,6 +65,7 @@ Exported symbols include:
      |     ulonglong
      +-> inexact
      |   +-> floating           (floatxx)       (kind=f)
+     |   |     half
      |   |     single
      |   |     float_  (double)
      |   |     longfloat
