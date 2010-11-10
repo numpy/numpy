@@ -60,7 +60,7 @@ def test_half_values():
                   2.0, -2.0,
                   0.0999755859375, 0.333251953125, # 1/10, 1/3
                   65504, -65504,           # Maximum magnitude
-                  2.0**(-14), -2.0**(-14), # Minimum normalized
+                  2.0**(-14), -2.0**(-14), # Minimum normal
                   2.0**(-24), -2.0**(-24), # Minimum subnormal
                   0, -1/1e1000,            # Signed zeros
                   np.inf, -np.inf])
@@ -247,6 +247,7 @@ def test_half_ufuncs():
     assert_equal(np.spacing(all_f16[1:]), all_f16[:-1]-all_f16[1:])
     assert_equal(np.spacing(all_f16[0]), np.spacing(all_f16[1])) # Also check -0
     assert_equal(np.nextafter(all_f16[1:], hinf), all_f16[:-1])
+    assert_equal(np.nextafter(all_f16[0], hinf), -all_f16[1]) # Also check -0
     
     assert_equal(np.maximum(a,b), [0,5,2,4,3])
     x = np.maximum(b,c)
@@ -302,4 +303,79 @@ def test_half_coercion():
     assert_equal(np.power(b32,a16).dtype, float16)
     assert_equal(np.power(b32,b16).dtype, float32)
 
+def assert_raises_fpe(strmatch, callable, *args, **kwargs):
+    try:
+        callable(*args, **kwargs)
+    except FloatingPointError, exc:
+        assert_(str(exc).find(strmatch) >= 0,
+                "Did not raise floating point %s error" % strmatch)
+    else:
+        assert_(False,
+                "Did not raise floating point %s error" % strmatch)
 
+def test_half_fpe():
+    """Test that half raises the correct underflows and overflows"""
+    oldsettings = np.seterr(all='raise')
+    try:
+        sx16 = np.array((1e-4,),dtype=float16)
+        bx16 = np.array((1e4,),dtype=float16)
+        sy16 = float16(1e-4)
+        by16 = float16(1e4)
+        
+        # Underflow errors
+        assert_raises_fpe('underflow', lambda a,b:a*b, sx16, sx16)
+        assert_raises_fpe('underflow', lambda a,b:a*b, sx16, sy16)
+        assert_raises_fpe('underflow', lambda a,b:a*b, sy16, sx16)
+        assert_raises_fpe('underflow', lambda a,b:a*b, sy16, sy16)
+        assert_raises_fpe('underflow', lambda a,b:a/b, sx16, bx16)
+        assert_raises_fpe('underflow', lambda a,b:a/b, sx16, by16)
+        assert_raises_fpe('underflow', lambda a,b:a/b, sy16, bx16)
+        assert_raises_fpe('underflow', lambda a,b:a/b, sy16, by16)
+        assert_raises_fpe('underflow', lambda a,b:a/b,
+                                         float16(2.**-14), float16(2**11))
+        assert_raises_fpe('underflow', lambda a,b:a/b,
+                                         float16(-2.**-14), float16(2**11))
+        assert_raises_fpe('underflow', lambda a,b:a/b,
+                                         float16(2.**-14+2**-24), float16(2))
+        assert_raises_fpe('underflow', lambda a,b:a/b,
+                                         float16(-2.**-14-2**-24), float16(2))
+        assert_raises_fpe('underflow', lambda a,b:a/b,
+                                         float16(2.**-14+2**-23), float16(4))
+
+        # Overflow errors
+        assert_raises_fpe('overflow', lambda a,b:a*b, bx16, bx16)
+        assert_raises_fpe('overflow', lambda a,b:a*b, bx16, by16)
+        assert_raises_fpe('overflow', lambda a,b:a*b, by16, bx16)
+        assert_raises_fpe('overflow', lambda a,b:a*b, by16, by16)
+        assert_raises_fpe('overflow', lambda a,b:a/b, bx16, sx16)
+        assert_raises_fpe('overflow', lambda a,b:a/b, bx16, sy16)
+        assert_raises_fpe('overflow', lambda a,b:a/b, by16, sx16)
+        assert_raises_fpe('overflow', lambda a,b:a/b, by16, sy16)
+        assert_raises_fpe('overflow', lambda a,b:a+b,
+                                         float16(65504), float16(17))
+        assert_raises_fpe('overflow', lambda a,b:a-b,
+                                         float16(-65504), float16(17))
+        assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
+        assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
+
+        # Invalid value errors
+        assert_raises_fpe('invalid', np.spacing, float16(65504))
+        assert_raises_fpe('invalid', np.spacing, float16(np.inf))
+        assert_raises_fpe('invalid', np.spacing, float16(np.nan))
+        assert_raises_fpe('invalid', np.nextafter, float16(np.inf), float16(0))
+        assert_raises_fpe('invalid', np.nextafter, float16(-np.inf), float16(0))
+        assert_raises_fpe('invalid', np.nextafter, float16(0), float16(np.nan))
+
+        # These should not raise
+        float16(65472)+float16(32)
+        float16(2**-13)/float16(2)
+        float16(2**-14)/float16(2**10)
+        np.spacing(float16(-65504))
+        np.nextafter(float16(65504), float16(-np.inf))
+        np.nextafter(float16(-65504), float16(np.inf))
+        float16(2**-14)/float16(2**10)
+        float16(-2**-14)/float16(2**10)
+        float16(2**-14+2**-23)/float16(2)
+        float16(-2**-14-2**-23)/float16(2)
+    finally:
+        np.seterr(**oldsettings)
