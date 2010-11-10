@@ -1,12 +1,17 @@
 #include "numpy/halffloat.h"
 #include "numpy/ufuncobject.h"
 
-/*TODO
- * Should the conversion routines query the CPU float rounding flags?
- * The routine currently does 'round to nearest', and the following
- * define chooses between 'ties to even' and 'ties away from zero'.
+/*
+ * This chooses between 'ties to even' and 'ties away from zero'.
  */
 #define NPY_HALF_ROUND_TIES_TO_EVEN 1
+/*
+ * If these are 1, the conversions try to trigger underflow,
+ * overflow, and invalid exceptions in the FP system when needed.
+ */
+#define NPY_HALF_GENERATE_OVERFLOW 1
+#define NPY_HALF_GENERATE_UNDERFLOW 1
+#define NPY_HALF_GENERATE_INVALID 1
 
 /*
  ********************************************************************
@@ -73,6 +78,9 @@ npy_half npy_half_spacing(npy_half h)
     npy_uint16 h_exp = h&0x7c00u;
     npy_uint16 h_sig = h&0x03ffu;
     if (h_exp == 0x7c00u || h == 0x7bffu) {
+#if NPY_HALF_GENERATE_INVALID
+        generate_invalid_error();
+#endif
         ret = NPY_HALF_NAN;
     } else if ((h&0x8000u) && h_sig == 0) { /* Negative boundary case */
         if (h_exp > 0x2c00u) { /* If result is normalized */
@@ -103,6 +111,9 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
     npy_half ret;
 
     if (!npy_half_isfinite(x) || npy_half_isnan(y)) {
+#if NPY_HALF_GENERATE_INVALID
+        generate_invalid_error();
+#endif
         ret = NPY_HALF_NAN;
     } else if (npy_half_eq_nonan(x, y)) {
         ret = x;
@@ -121,6 +132,11 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
             ret = x+1;
         }
     }
+#ifdef NPY_HALF_GENERATE_OVERFLOW
+    if (npy_half_isinf(ret)) {
+        generate_overflow_error();
+    }
+#endif
 
     return ret;
 }
@@ -222,6 +238,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
     /* Exponent overflow/NaN converts to signed inf/NaN */
     if (f_exp >= 0x47800000u) {
         if (f_exp == 0x7f800000u) {
+            /* Inf or NaN */
             f_sig = (f&0x007fffffu);
             if (f_sig != 0) {
                 /* NaN - propagate the flag in the significand... */
@@ -236,7 +253,10 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
                 return (npy_uint16) (h_sgn + 0x7c00u);
             }
         } else {
-            /* signed inf */
+            /* overflow to signed inf */
+#if NPY_HALF_GENERATE_OVERFLOW
+            generate_overflow_error();
+#endif
             return (npy_uint16) (h_sgn + 0x7c00u);
         }
     }
@@ -248,11 +268,23 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
          * exponents all convert to signed zero halfs.
          */
         if (f_exp < 0x33000000u) {
+#if NPY_HALF_GENERATE_UNDERFLOW 
+            /* If f != 0, it underflowed to 0 */
+            if ((f&0x7fffffff) != 0) {
+                generate_underflow_error();
+            }
+#endif
             return h_sgn;
         }
         /* Make the subnormal significand */
         f_exp >>= 23;
         f_sig = (0x00800000u + (f&0x007fffffu));
+#if NPY_HALF_GENERATE_UNDERFLOW 
+        /* If it's not exactly represented, it underflowed */
+        if ((f_sig&(((npy_uint32)1 << (126 - f_exp)) - 1)) != 0) {
+            generate_underflow_error();
+        }
+#endif
         f_sig >>= (113 - f_exp);
         /* Handle rounding by adding 1 to the bit beyond half precision */
 #if NPY_HALF_ROUND_TIES_TO_EVEN 
@@ -299,7 +331,15 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
      * correct result.  h_exp may increment to 15, at greatest, in
      * which case the result overflows to a signed inf.
      */
+#if NPY_HALF_GENERATE_OVERFLOW
+    h_sig += h_exp;
+    if (h_sig == 0x7c00u) {
+        generate_overflow_error();
+    }
+    return h_sgn + h_sig;
+#else
     return h_sgn + h_exp + h_sig;
+#endif
 }
 
 npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
@@ -313,6 +353,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
     /* Exponent overflow/NaN converts to signed inf/NaN */
     if (d_exp >= 0x40f0000000000000u) {
         if (d_exp == 0x7ff0000000000000u) {
+            /* Inf or NaN */
             d_sig = (d&0x000fffffffffffffu);
             if (d_sig != 0) {
                 /* NaN - propagate the flag in the significand... */
@@ -324,10 +365,13 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
                 return h_sgn + ret;
             } else {
                 /* signed inf */
-                return (npy_uint16) (h_sgn + 0x7c00u);
+                return h_sgn + 0x7c00u;
             }
         } else {
-            /* signed inf */
+            /* overflow to signed inf */
+#if NPY_HALF_GENERATE_OVERFLOW
+            generate_overflow_error();
+#endif
             return h_sgn + 0x7c00u;
         }
     }
@@ -339,11 +383,23 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
          * exponents all convert to signed zero halfs.
          */
         if (d_exp < 0x3e60000000000000u) {
+#if NPY_HALF_GENERATE_UNDERFLOW 
+            /* If d != 0, it underflowed to 0 */
+            if ((d&0x7fffffffffffffff) != 0) {
+                generate_underflow_error();
+            }
+#endif
             return h_sgn;
         }
         /* Make the subnormal significand */
         d_exp >>= 52;
         d_sig = (0x0010000000000000u + (d&0x000fffffffffffffu));
+#if NPY_HALF_GENERATE_UNDERFLOW 
+        /* If it's not exactly represented, it underflowed */
+        if ((d_sig&(((npy_uint64)1 << (1051 - d_exp)) - 1)) != 0) {
+            generate_underflow_error();
+        }
+#endif
         d_sig >>= (1009 - d_exp);
         /* Handle rounding by adding 1 to the bit beyond half precision */
 #if NPY_HALF_ROUND_TIES_TO_EVEN 
@@ -364,7 +420,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
          * increment h_exp from zero to one and h_sig will be zero.
          * This is the correct result.
          */
-        return (npy_uint16) (h_sgn + h_sig);
+        return h_sgn + h_sig;
     }
 
     /* Regular case with no overflow or underflow */
@@ -391,7 +447,15 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
      * correct result.  h_exp may increment to 15, at greatest, in
      * which case the result overflows to a signed inf.
      */
+#if NPY_HALF_GENERATE_OVERFLOW
+    h_sig += h_exp;
+    if (h_sig == 0x7c00u) {
+        generate_overflow_error();
+    }
+    return h_sgn + h_sig;
+#else
     return h_sgn + h_exp + h_sig;
+#endif
 }
 
 npy_uint32 npy_halfbits_to_floatbits(npy_uint16 h)
