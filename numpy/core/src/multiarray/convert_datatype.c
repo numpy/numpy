@@ -567,7 +567,6 @@ PyArray_CanCastSafely(int fromtype, int totype)
             }
         }
     }
-
     return 0;
 }
 
