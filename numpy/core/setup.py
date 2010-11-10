@@ -662,7 +662,7 @@ def configuration(parent_package='',top_path=None):
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
                                   ],
-                         )
+                         libraries=['npymath'])
 
     # npymath needs the config.h and numpyconfig.h files to be generated, but
     # build_clib cannot handle generate_config_h and generate_numpyconfig_h
