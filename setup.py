@@ -79,7 +79,7 @@ def git_version():
         out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         GIT_REVISION = out.strip()
     except OSError:
-        GIT_REVISION = "Unknwn"
+        GIT_REVISION = "Unknown"
 
     return GIT_REVISION
 
@@ -114,9 +114,9 @@ if not release:
             # must be a source distribution, use existing version file
             from numpy.version import git_revision as GIT_REVISION
         else:
-            GIT_REVISION = "Unknwn"
+            GIT_REVISION = "Unknown"
 
-        FULL_VERSION += GIT_REVISION[:6]
+        FULL_VERSION += GIT_REVISION[:7]
 
     a = open(filename, 'w')
     try:
