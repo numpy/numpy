@@ -65,10 +65,10 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_INT, NPY_UINT,
                     NPY_LONG, NPY_ULONG,
                     NPY_LONGLONG, NPY_ULONGLONG,
-                    NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+                    NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
                     NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
                     NPY_DATETIME, NPY_TIMEDELTA,
-                    NPY_OBJECT=19,
+                    NPY_OBJECT=20,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
                     NPY_NTYPES,
@@ -88,6 +88,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
 /* default scalar priority */
 #define NPY_SCALAR_PRIORITY -1000000.0
 
+/*TODO HALF - This is used as how many complex floating point types in the code */
 /* How many floating point types are there */
 #define NPY_NUM_FLOATTYPE 3
 
@@ -115,6 +116,7 @@ enum NPY_TYPECHAR { NPY_BOOLLTR = '?',
                         NPY_ULONGLTR = 'L',
                         NPY_LONGLONGLTR = 'q',
                         NPY_ULONGLONGLTR = 'Q',
+                        NPY_HALFLTR = 'j',
                         NPY_FLOATLTR = 'f',
                         NPY_DOUBLELTR = 'd',
                         NPY_LONGDOUBLELTR = 'g',
@@ -1230,7 +1232,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&     \
                                 ((type) <= NPY_ULONGLONG))
 
-#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_FLOAT) &&      \
+#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_HALF) &&      \
                               ((type) <= NPY_LONGDOUBLE))
 
 #define PyTypeNum_ISNUMBER(type) ((type) <= NPY_CLONGDOUBLE)

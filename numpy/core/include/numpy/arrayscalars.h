@@ -71,6 +71,12 @@ typedef struct {
 
 typedef struct {
         PyObject_HEAD
+        npy_half obval;
+} PyHalfScalarObject;
+
+
+typedef struct {
+        PyObject_HEAD
         float obval;
 } PyFloatScalarObject;
 

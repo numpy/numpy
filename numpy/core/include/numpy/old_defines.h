@@ -23,6 +23,7 @@
 #define PyArray_ULONG       NPY_ULONG
 #define PyArray_LONGLONG    NPY_LONGLONG
 #define PyArray_ULONGLONG   NPY_ULONGLONG
+#define PyArray_HALF        NPY_HALF
 #define PyArray_FLOAT       NPY_FLOAT
 #define PyArray_DOUBLE      NPY_DOUBLE
 #define PyArray_LONGDOUBLE  NPY_LONGDOUBLE
@@ -99,6 +100,7 @@
 #define PyArray_ULONGLTR        NPY_ULONGLTR
 #define PyArray_LONGLONGLTR     NPY_LONGLONGLTR
 #define PyArray_ULONGLONGLTR    NPY_ULONGLONGLTR
+#define PyArray_HALFLTR         NPY_HALFLTR
 #define PyArray_FLOATLTR        NPY_FLOATLTR
 #define PyArray_DOUBLELTR       NPY_DOUBLELTR
 #define PyArray_LONGDOUBLELTR   NPY_LONGDOUBLELTR
