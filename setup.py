@@ -59,8 +59,8 @@ MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
-# Return the svn version as a string, raise a ValueError otherwise
-def svn_version():
+# Return the git revision as a string
+def git_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
@@ -76,25 +76,12 @@ def svn_version():
         return out
 
     try:
-        out = _minimal_ext_cmd(['svn', 'info'])
+        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
+        GIT_REVISION = out.strip()
     except OSError:
-        print(" --- Could not run svn info --- ")
-        return ""
+        GIT_REVISION = "Unknown"
 
-    r = re.compile('Revision: ([0-9]+)')
-    svnver = ""
-
-    out = out.decode()
-
-    for line in out.split('\n'):
-        m = r.match(line.strip())
-        if m:
-            svnver = m.group(1)
-
-    if not svnver:
-        print("Error while parsing svn version")
-
-    return svnver
+    return GIT_REVISION
 
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
@@ -106,36 +93,37 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # a lot more robust than what was previously being used.
 builtins.__NUMPY_SETUP__ = True
 
-FULLVERSION = VERSION
-if not ISRELEASED:
-    FULLVERSION += '.dev'
-    # If in git or something, bypass the svn rev
-    if os.path.exists('.svn'):
-        FULLVERSION += svn_version()
-
 def write_version_py(filename='numpy/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM NUMPY SETUP.PY
-short_version='%(version)s'
-version='%(version)s'
-release=%(isrelease)s
+short_version = '%(version)s'
+version = '%(version)s'
+full_version = '%(full_version)s'
+git_revision = '%(git_revision)s'
+release = %(isrelease)s
 
 if not release:
-    version += '.dev'
-    import os
-    svn_version_file = os.path.join(os.path.dirname(__file__),
-                                   'core','__svn_version__.py')
-    if os.path.isfile(svn_version_file):
-        import imp
-        svn = imp.load_module('numpy.core.__svn_version__',
-                              open(svn_version_file),
-                              svn_version_file,
-                              ('.py','U',1))
-        version += svn.version
+    version = full_version
 """
+    FULL_VERSION = VERSION
+    if not ISRELEASED:
+        FULL_VERSION += '.dev'
+        if os.path.exists('.git'):
+            GIT_REVISION = git_version()
+        elif os.path.exists(filename):
+            # must be a source distribution, use existing version file
+            from numpy.version import git_revision as GIT_REVISION
+        else:
+            GIT_REVISION = "Unknown"
+
+        FULL_VERSION += GIT_REVISION[:7]
+
     a = open(filename, 'w')
     try:
-        a.write(cnt % {'version': VERSION, 'isrelease': str(ISRELEASED)})
+        a.write(cnt % {'version': VERSION,
+                       'full_version' : FULL_VERSION,
+                       'git_revision' : GIT_REVISION,
+                       'isrelease': str(ISRELEASED)})
     finally:
         a.close()
 
@@ -163,7 +151,6 @@ def configuration(parent_package='',top_path=None):
 def setup_package():
 
     # Rewrite the version file everytime
-    if os.path.exists('numpy/version.py'): os.remove('numpy/version.py')
     write_version_py()
 
     # Perform 2to3 if needed
