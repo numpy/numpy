@@ -96,11 +96,11 @@ builtins.__NUMPY_SETUP__ = True
 def write_version_py(filename='numpy/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM NUMPY SETUP.PY
-short_version='%(version)s'
-version='%(version)s'
-full_version='%(full_version)s'
-git_revision='%(git_revision)s'
-release=%(isrelease)s
+short_version = '%(version)s'
+version = '%(version)s'
+full_version = '%(full_version)s'
+git_revision = '%(git_revision)s'
+release = %(isrelease)s
 
 if not release:
     version = full_version
