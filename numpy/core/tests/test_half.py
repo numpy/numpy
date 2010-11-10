@@ -276,3 +276,30 @@ def test_half_ufuncs():
     assert_equal(np.frexp(b), ([-0.5,0.625,0.5,0.5,0.75],[2,3,1,3,2]))
     assert_equal(np.ldexp(b,[0,1,2,4,2]), [-2,10,4,64,12])
 
+def test_half_coercion():
+    """Test that half gets coerced properly with the other types"""
+    a16 = np.array((1,),dtype=float16)
+    a32 = np.array((1,),dtype=float32)
+    b16 = float16(1)
+    b32 = float32(1)
+
+    assert_equal(np.power(a16,2).dtype, float16)
+    assert_equal(np.power(a16,2.0).dtype, float16)
+    assert_equal(np.power(a16,b16).dtype, float16)
+    assert_equal(np.power(a16,b32).dtype, float16)
+    assert_equal(np.power(a16,a16).dtype, float16)
+    assert_equal(np.power(a16,a32).dtype, float32)
+
+    assert_equal(np.power(b16,2).dtype, float64)
+    assert_equal(np.power(b16,2.0).dtype, float64)
+    assert_equal(np.power(b16,b16).dtype, float16)
+    assert_equal(np.power(b16,b32).dtype, float32)
+    assert_equal(np.power(b16,a16).dtype, float16)
+    assert_equal(np.power(b16,a32).dtype, float32)
+
+    assert_equal(np.power(a32,a16).dtype, float32)
+    assert_equal(np.power(a32,b16).dtype, float32)
+    assert_equal(np.power(b32,a16).dtype, float16)
+    assert_equal(np.power(b32,b16).dtype, float32)
+
+
