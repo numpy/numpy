@@ -12,7 +12,7 @@ convenient in applications that don't need to be concerned with all
 the ways data can be represented in a computer.  For scientific
 computing, however, more control is often needed.
 
-In NumPy, there are 21 new fundamental Python types to describe
+In NumPy, there are 24 new fundamental Python types to describe
 different types of scalars. These type descriptors are mostly based on
 the types available in the C language that CPython is written in, with
 several additional types compatible with Python's types.
@@ -138,10 +138,12 @@ Unsigned integers:
 Floating-point numbers:
 
 ===================  =============================  ===============
+:class:`half`                                       ``'j'``
 :class:`single`      compatible: C float            ``'f'``
 :class:`double`      compatible: C double
 :class:`float_`      compatible: Python float       ``'d'``
 :class:`longfloat`   compatible: C long float       ``'g'``
+:class:`float16`     16 bits
 :class:`float32`     32 bits
 :class:`float64`     64 bits
 :class:`float96`     96 bits, platform?

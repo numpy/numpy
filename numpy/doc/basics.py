@@ -23,6 +23,8 @@ uint16      Unsigned integer (0 to 65535)
 uint32      Unsigned integer (0 to 4294967295)
 uint64      Unsigned integer (0 to 18446744073709551615)
 float       Shorthand for ``float64``.
+float16     Half precision float: sign bit, 5 bits exponent,
+            10 bits mantissa
 float32     Single precision float: sign bit, 8 bits exponent,
             23 bits mantissa
 float64     Double precision float: sign bit, 11 bits exponent,
