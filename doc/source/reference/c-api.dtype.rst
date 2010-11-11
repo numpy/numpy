@@ -3,7 +3,7 @@ Data Type API
 
 .. sectionauthor:: Travis E. Oliphant
 
-The standard array can have 21 different data types (and has some
+The standard array can have 24 different data types (and has some
 support for adding your own types). These data types all have an
 enumerated type, an enumerated type-character, and a corresponding
 array scalar Python type object (placed in a hierarchy). There are
@@ -25,15 +25,16 @@ select the precision desired.
 Enumerated Types
 ----------------
 
-There is a list of enumerated types defined providing the basic 21
+There is a list of enumerated types defined providing the basic 24
 data types plus some useful generic names. Whenever the code requires
 a type number, one of these enumerated types is requested. The types
 are all called :cdata:`NPY_{NAME}` where ``{NAME}`` can be
 
     **BOOL**, **BYTE**, **UBYTE**, **SHORT**, **USHORT**, **INT**,
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
-    **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**, **CDOUBLE**,
-    **CLONGDOUBLE**, **OBJECT**, **STRING**, **UNICODE**, **VOID**
+    **HALF**, **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**,
+    **CDOUBLE**, **CLONGDOUBLE**, **DATETIME**, **TIMEDELTA**,
+    **OBJECT**, **STRING**, **UNICODE**, **VOID**
 
     **NTYPES**, **NOTYPE**, **USERDEF**, **DEFAULT_TYPE**
 
@@ -44,8 +45,9 @@ is :cdata:`NPY_{NAME}LTR` where ``{NAME}`` can be
 
     **BOOL**, **BYTE**, **UBYTE**, **SHORT**, **USHORT**, **INT**,
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
-    **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**, **CDOUBLE**,
-    **CLONGDOUBLE**, **OBJECT**, **STRING**, **VOID**
+    **HALF**, **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**,
+    **CDOUBLE**, **CLONGDOUBLE**, **DATETIME**, **TIMEDELTA**,
+    **OBJECT**, **STRING**, **VOID**
 
     **INTP**, **UINTP**
 

@@ -389,7 +389,7 @@ register ufuncs for user-defined data-types.
 User-defined data-types
 =======================
 
-NumPy comes with 21 builtin data-types. While this covers a large
+NumPy comes with 24 builtin data-types. While this covers a large
 majority of possible use cases, it is conceivable that a user may have
 a need for an additional data-type. There is some support for adding
 an additional data-type into the NumPy system. This additional data-

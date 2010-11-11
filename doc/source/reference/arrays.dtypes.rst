@@ -137,7 +137,7 @@ What can be converted to a data-type object is described below:
 
 Array-scalar types
 
-    The 21 built-in :ref:`array scalar type objects
+    The 24 built-in :ref:`array scalar type objects
     <arrays.scalars.built-in>` all convert to an associated data-type object.
     This is true for their sub-classes as well.
 
