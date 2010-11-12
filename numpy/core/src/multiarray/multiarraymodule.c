@@ -583,7 +583,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
  * priority of ap1 and ap2 into account.
  */
 static PyArrayObject *
-new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum)
 {
     PyArrayObject *ret;
@@ -601,6 +601,28 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
     else {
         prior1 = prior2 = 0.0;
         subtype = Py_TYPE(ap1);
+    }
+    if (out) {
+        int d;
+        /* verify that out is usable */
+        if (Py_TYPE(out) != subtype ||
+            PyArray_NDIM(out) != nd ||
+            PyArray_TYPE(out) != typenum ||
+            !PyArray_ISCARRAY(out)) {
+            PyErr_SetString(PyExc_ValueError,
+                "output array is not acceptable "
+                "(must have the right type, nr dimensions, and be a C-Array)");
+            return 0;
+        }
+        for (d = 0; d < nd; ++d) {
+            if (dimensions[d] != PyArray_DIM(out, d)) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array has wrong dimensions");
+                return 0;
+            }
+        }
+        Py_INCREF(out);
+        return out;
     }
 
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
@@ -671,7 +693,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    ret = new_array_for_sum(ap1, ap2, nd, dimensions, typenum);
+    ret = new_array_for_sum(ap1, ap2, NULL, nd, dimensions, typenum);
     if (ret == NULL) {
         goto fail;
     }
@@ -718,13 +740,12 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     return NULL;
 }
 
-
 /*NUMPY_API
- *Numeric.matrixproduct(a,v)
+ * Numeric.matrixproduct(a,v,out)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
+PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyObject* out)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     PyArrayIterObject *it1, *it2;
@@ -794,7 +815,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 
     is1 = ap1->strides[ap1->nd-1]; is2 = ap2->strides[matchDim];
     /* Choose which subtype to return */
-    ret = new_array_for_sum(ap1, ap2, nd, dimensions, typenum);
+    ret = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum);
     if (ret == NULL) {
         goto fail;
     }
@@ -849,6 +870,16 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
     return NULL;
+}
+
+/*NUMPY_API
+ *Numeric.matrixproduct(a,v)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
+{
+    return PyArray_MatrixProduct2(op1, op2, NULL);
 }
 
 /*NUMPY_API
@@ -974,7 +1005,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    ret = new_array_for_sum(ap1, ap2, 1, &length, typenum);
+    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum);
     if (ret == NULL) {
         return NULL;
     }
@@ -1990,14 +2021,18 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
-array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
-    PyObject *v, *a;
+    PyObject *v, *a, *o = NULL;
+    char* kwlist[] = {"a", "b", "out", NULL };
 
-    if (!PyArg_ParseTuple(args, "OO", &a, &v)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist, &a, &v, &o)) {
         return NULL;
     }
-    return _ARET(PyArray_MatrixProduct(a, v));
+    if (o == Py_None) {
+        o = NULL;
+    }
+    return _ARET(PyArray_MatrixProduct2(a, v, o));
 }
 
 static int
@@ -3408,7 +3443,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"dot",
         (PyCFunction)array_matrixproduct,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},

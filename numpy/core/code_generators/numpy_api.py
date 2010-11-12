@@ -314,6 +314,8 @@ multiarray_funcs_api = {
     'PyArray_NewLikeArray':                 277,
     'PyArray_GetArrayParamsFromObject':     278,
     'PyArray_ConvertClipmodeSequence':      279,
+    #
+    'PyArray_MatrixProduct2':               280,
 }
 
 ufunc_types_api = {

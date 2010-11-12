@@ -213,10 +213,10 @@ _bad_strides(PyArrayObject *ap)
  * NB: The first argument is not conjugated.;
  */
 static PyObject *
-dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
+dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwargs)
 {
     PyObject *op1, *op2;
-    PyArrayObject *ap1 = NULL, *ap2 = NULL, *ret = NULL;
+    PyArrayObject *ap1 = NULL, *ap2 = NULL, *out = NULL, *ret = NULL;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
     npy_intp ap1stride = 0;
@@ -230,9 +230,14 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyTypeObject *subtype;
     PyArray_Descr *dtype;
     MatrixShape ap1shape, ap2shape;
+    char* kwords[] = {"a", "b", "out", NULL };
 
-    if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|O", kwords,
+                                    &op1, &op2, &out)) {
         return NULL;
+    }
+    if (out == Py_None) {
+        out = NULL;
     }
 
     /*
@@ -246,7 +251,10 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     /* This function doesn't handle other types */
     if ((typenum != PyArray_DOUBLE && typenum != PyArray_CDOUBLE &&
          typenum != PyArray_FLOAT && typenum != PyArray_CFLOAT)) {
-        return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct(op1, op2));
+        return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct2(
+                                                    (PyObject *)op1,
+                                                    (PyObject *)op2,
+                                                    (PyObject *)out));
     }
 
     dtype = PyArray_DescrFromType(typenum);
@@ -279,8 +287,9 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
             Py_DECREF(tmp1);
             Py_DECREF(tmp2);
         }
-        ret = (PyArrayObject *)PyArray_MatrixProduct((PyObject *)ap1,
-                                                     (PyObject *)ap2);
+        ret = (PyArrayObject *)PyArray_MatrixProduct2((PyObject *)ap1,
+                                                      (PyObject *)ap2,
+                                                      (PyObject *)out);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return PyArray_Return(ret);
@@ -418,10 +427,34 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
         subtype = Py_TYPE(ap1);
     }
 
-    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                       typenum, NULL, NULL, 0, 0,
-                                       (PyObject *)
-                                       (prior2 > prior1 ? ap2 : ap1));
+    if (out) {
+        int d;
+        /* verify that out is usable */
+        if (Py_TYPE(out) != subtype ||
+            PyArray_NDIM(out) != nd ||
+            PyArray_TYPE(out) != typenum ||
+            !PyArray_ISCARRAY(out)) {
+
+            PyErr_SetString(PyExc_ValueError,
+                "output array is not acceptable "
+                "(must have the right type, nr dimensions, and be a C-Array)");
+            goto fail;
+        }
+        for (d = 0; d < nd; ++d) {
+            if (dimensions[d] != PyArray_DIM(out, d)) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array has wrong dimensions");
+                goto fail;
+            }
+        }
+        Py_INCREF(out);
+        ret = out;
+    } else {
+        ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                           typenum, NULL, NULL, 0, 0,
+                                           (PyObject *)
+                                           (prior2 > prior1 ? ap2 : ap1));
+    }
 
     if (ret == NULL) {
         goto fail;
@@ -433,7 +466,6 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
             Py_DECREF(ap2);
             return PyArray_Return(ret);
     }
-
 
     if (ap2shape == _scalar) {
         /*
@@ -1167,7 +1199,7 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
 }
 
 static struct PyMethodDef dotblas_module_methods[] = {
-    {"dot",  (PyCFunction)dotblas_matrixproduct, 1, NULL},
+    {"dot",  (PyCFunction)dotblas_matrixproduct, METH_VARARGS|METH_KEYWORDS, NULL},
     {"inner",   (PyCFunction)dotblas_innerproduct,  1, NULL},
     {"vdot", (PyCFunction)dotblas_vdot, 1, NULL},
     {"alterdot", (PyCFunction)dotblas_alterdot, 1, NULL},

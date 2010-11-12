@@ -1447,7 +1447,7 @@ add_newdoc('numpy.core.multiarray', 'getbuffer',
 
 add_newdoc('numpy.core', 'dot',
     """
-    dot(a, b)
+    dot(a, b, out=None)
 
     Dot product of two arrays.
 
@@ -1464,6 +1464,13 @@ add_newdoc('numpy.core', 'dot',
         First argument.
     b : array_like
         Second argument.
+    out : ndarray, optional
+        Output argument. This must have the exact kind that would be returned
+        if it was not used. In particular, it must have the right type, must be
+        C-contiguous, and its dtype must be the dtype that would be returned
+        for `dot(a,b)`. This is a performance feature. Therefore, if these
+        conditions are not met, an exception is raised, instead of attempting
+        to be flexible.
 
     Returns
     -------
@@ -1471,6 +1478,7 @@ add_newdoc('numpy.core', 'dot',
         Returns the dot product of `a` and `b`.  If `a` and `b` are both
         scalars or both 1-D arrays then a scalar is returned; otherwise
         an array is returned.
+        If `out` is given, then it is returned.
 
     Raises
     ------

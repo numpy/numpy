@@ -864,7 +864,7 @@ Converting data types
 
     Deprecated, PyArray_CanCastTypeTo subsumes its functionality in
     NumPy 1.6 and later.
-    
+
     Equivalent to PyArray_CanCastTypeTo(fromtype, totype, NPY_SAFE_CASTING).
 
 .. cfunction:: int PyArray_CanCastTypeTo(PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING casting)
@@ -1812,6 +1812,14 @@ Array Functions
     Compute a product-sum over the last dimension of *obj1* and the
     second-to-last dimension of *obj2*. For 2-d arrays this is a
     matrix-product. Neither array is conjugated.
+
+.. cfunction:: PyObject* PyArray_MatrixProduct2(PyObject* obj1, PyObject* obj, PyObject *out)
+
+    .. versionadded:: 1.6
+
+    Same as PyArray_MatrixProduct, but store the result in *out*.  The
+    output array must have the correct shape, type, and be
+    C-contiguous, or an exception is raised.
 
 .. cfunction:: PyObject* PyArray_CopyAndTranspose(PyObject \* op)
 
