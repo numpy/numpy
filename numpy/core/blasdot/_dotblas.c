@@ -216,7 +216,7 @@ static PyObject *
 dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *op1, *op2;
-    PyArrayObject *ap1 = NULL, *ap2 = NULL, *ret = NULL;
+    PyArrayObject *ap1 = NULL, *ap2 = NULL, *out = NULL, *ret = NULL;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
     npy_intp ap1stride = 0;
@@ -231,7 +231,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Descr *dtype;
     MatrixShape ap1shape, ap2shape;
 
-    if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if (!PyArg_ParseTuple(args, "OO|O", &op1, &op2, &out)) {
         return NULL;
     }
 
@@ -418,10 +418,27 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
         subtype = Py_TYPE(ap1);
     }
 
-    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                       typenum, NULL, NULL, 0, 0,
-                                       (PyObject *)
-                                       (prior2 > prior1 ? ap2 : ap1));
+    if (out) {
+        /* verify that it is usable */
+        if (Py_Type(out) != subtype || PyArray_NDIM(out) != nd || PyArray_TYPE(out) != typenum || !PyArray_ISCARRAY(out)) {
+            PyErr_SetString(PyExc_ValueError, "output array is not acceptable (must have the right type, nr dimensions, and be a C-Array(");
+            goto fail;
+        }
+        int d;
+        for (d = 0; d != nd; ++d) {
+            if (dimensions[d] != PyArray_DIM(out, d)) {
+                PyErr_SetString(PyExc_ValueError, "output array has wrong dimensions");
+                goto fail;
+            }
+        }
+        Py_INCREF(out);
+        ret = out;
+    } else {
+        ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                           typenum, NULL, NULL, 0, 0,
+                                           (PyObject *)
+                                           (prior2 > prior1 ? ap2 : ap1));
+    }
 
     if (ret == NULL) {
         goto fail;
