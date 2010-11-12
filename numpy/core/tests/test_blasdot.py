@@ -26,3 +26,19 @@ def test_blasdot_used():
     assert_(inner is _dotblas.inner)
     assert_(alterdot is _dotblas.alterdot)
     assert_(restoredot is _dotblas.restoredot)
+
+
+def test_dot_3args():
+    import numpy as np
+    import sys
+    np.random.seed(22)
+    f = np.random.rand(1024*128, 16)
+    v = np.random.rand(16,32)
+
+    r = np.empty((1024*128, 32))
+    for i in xrange(12):
+        np.dot(v,f,r)
+    assert sys.getrefcount(r) == 2
+    r2 = np.dot(f,v)
+    assert np.all(r2 == r)
+    assert r is np.dot(f,v, r)
