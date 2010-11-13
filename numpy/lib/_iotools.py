@@ -209,7 +209,7 @@ class LineSplitter:
         return line.split(self.delimiter)
     #
     def _fixedwidth_splitter(self, line):
-        line = line.split(self.comments)[0]
+        line = line.split(self.comments)[0].strip(asbytes("\r\n"))
         if not line:
             return []
         fixed = self.delimiter

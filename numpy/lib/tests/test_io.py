@@ -769,6 +769,13 @@ M   33  21.99
                             [ 6., 7., 8., 9., 10.]])
         assert_equal(test, control)
 
+    def test_integer_delimiter(self):
+        "Test using an integer for delimiter"
+        data = "  1  2  3\n  4  5 67\n890123  4"
+        test = np.genfromtxt(StringIO(data), delimiter=3)
+        control = np.array([[1, 2, 3], [4, 5, 67], [890, 123, 4]])
+        assert_equal(test, control)
+
 
     def test_missing(self):
         data = StringIO('1,2,3,,5\n')
