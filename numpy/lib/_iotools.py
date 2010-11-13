@@ -707,8 +707,8 @@ class StringConverter:
             self._status = _status
             self.iterupgrade(value)
 
-    def update(self, func, default=None, missing_values=asbytes(''),
-               locked=False):
+    def update(self, func, default=None, testing_value=None,
+               missing_values=asbytes(''), locked=False):
         """
         Set StringConverter attributes directly.
 
@@ -720,6 +720,9 @@ class StringConverter:
             Value to return by default, that is, when the string to be converted
             is flagged as missing. If not given, `StringConverter` tries to supply
             a reasonable default value.
+        testing_value : str, optional
+            A string representing a standard input value of the converter.
+            This string is used to help defining a reasonable default value.
         missing_values : sequence of str, optional
             Sequence of strings indicating a missing value.
         locked : bool, optional
@@ -741,7 +744,7 @@ class StringConverter:
             self.type = self._getsubdtype(default)
         else:
             try:
-                tester = func(asbytes('1'))
+                tester = func(testing_value or asbytes('1'))
             except (TypeError, ValueError):
                 tester = None
             self.type = self._getsubdtype(tester)

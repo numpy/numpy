@@ -709,6 +709,15 @@ M   33  21.99
                       dtype=None)
         assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
 
+    def test_tricky_converter_bug1666(self):
+        "Test some corner case"
+        s = StringIO('q1,2\nq3,4')
+        cnv = lambda s:float(s[1:])
+        test = np.genfromtxt(s, delimiter=',', converters={0:cnv})
+        control = np.array([[1., 2.], [3., 4.]])
+        assert_equal(test, control)
+
+
 
     def test_dtype_with_converters(self):
         dstr = "2009; 23; 46"

@@ -1399,7 +1399,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             except ValueError:
                 # Unused converter specified
                 continue
+        # Find the value to test:
+        if len(first_line):
+            testing_value = first_values[i]
+        else:
+            testing_value = None
         converters[i].update(conv, locked=True,
+                             testing_value=testing_value,
                              default=filling_values[i],
                              missing_values=missing_values[i],)
         uc_update.append((i, conv))
