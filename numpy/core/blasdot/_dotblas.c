@@ -420,14 +420,21 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     if (out) {
         /* verify that it is usable */
-        if (Py_Type(out) != subtype || PyArray_NDIM(out) != nd || PyArray_TYPE(out) != typenum || !PyArray_ISCARRAY(out)) {
-            PyErr_SetString(PyExc_ValueError, "output array is not acceptable (must have the right type, nr dimensions, and be a C-Array(");
+        if (Py_Type(out) != subtype ||
+            PyArray_NDIM(out) != nd ||
+            PyArray_TYPE(out) != typenum ||
+            !PyArray_ISCARRAY(out)) {
+
+            PyErr_SetString(PyExc_ValueError,
+                "output array is not acceptable "
+                "(must have the right type, nr dimensions, and be a C-Array)");
             goto fail;
         }
         int d;
         for (d = 0; d != nd; ++d) {
             if (dimensions[d] != PyArray_DIM(out, d)) {
-                PyErr_SetString(PyExc_ValueError, "output array has wrong dimensions");
+                PyErr_SetString(PyExc_ValueError,
+                    "output array has wrong dimensions");
                 goto fail;
             }
         }
