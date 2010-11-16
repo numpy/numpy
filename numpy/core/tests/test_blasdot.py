@@ -1,5 +1,5 @@
 from numpy.core import zeros, float64
-from numpy.testing import dec, TestCase, assert_almost_equal, assert_
+from numpy.testing import dec, TestCase, assert_almost_equal, assert_, assert_raises
 from numpy.core.multiarray import inner as inner_
 
 DECPREC = 14
@@ -48,4 +48,34 @@ def test_dot_3args():
     r2 = np.dot(f,v)
     assert r is np.dot(f,v,r)
     assert np.all(r2 == r)
+
+def test_dot_3args_errors():
+    import numpy as np
+    np.random.seed(22)
+    f = np.random.random_sample((1024, 16))
+    v = np.random.random_sample((16, 32))
+
+    r = np.empty((1024, 31))
+    assert_raises(ValueError, np.dot, f, v, r)
+
+    r = np.empty((1024,))
+    assert_raises(ValueError, np.dot, f, v, r)
+
+    r = np.empty((32,))
+    assert_raises(ValueError, np.dot, f, v, r)
+
+    r = np.empty((32, 1024))
+    assert_raises(ValueError, np.dot, f, v, r)
+    assert_raises(ValueError, np.dot, f, v, r.T)
+
+    r = np.empty((1024, 64))
+    assert_raises(ValueError, np.dot, f, v, r[:,::2])
+    assert_raises(ValueError, np.dot, f, v, r[:,:32])
+
+    r = np.empty((1024, 32), dtype=np.float32)
+    assert_raises(ValueError, np.dot, f, v, r)
+
+    r = np.empty((1024, 32), dtype=int)
+    assert_raises(ValueError, np.dot, f, v, r)
+
 
