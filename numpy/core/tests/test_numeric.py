@@ -251,6 +251,86 @@ class TestSeterr(TestCase):
             seterr(**err)
 
 
+class TestFloatExceptions(TestCase):
+    def assert_raises_fpe(self, fpeerr, flop, x, y):
+        ftype = type(x)
+        try:
+            flop(x, y)
+            assert_(False,
+                    "Type %s did not raise fpe error '%s'." % (ftype, fpeerr))
+        except FloatingPointError, exc:
+            assert_(str(exc).find(fpeerr) >= 0,
+                    "Type %s raised wrong fpe error '%s'." % (ftype, exc))
+
+    def assert_op_raises_fpe(self, fpeerr, flop, sc1, sc2):
+        """Check that fpe exception is raised.
+
+       Given a floating operation `flop` and two scalar values, check that
+       the operation raises the floating point exception specified by
+       `fpeerr`. Tests all variants with 0-d array scalars as well.
+
+        """
+        self.assert_raises_fpe(fpeerr, flop, sc1, sc2);
+        self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2);
+        self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()]);
+        self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()]);
+
+    def test_floating_exceptions(self):
+        """Test basic arithmetic function errors"""
+        oldsettings = np.seterr(all='raise')
+        try:
+            # Test for all real and complex float types
+            for typecode in np.typecodes['AllFloat']:
+                ftype = np.obj2sctype(typecode)
+                if np.dtype(ftype).kind == 'f':
+                    # Get some extreme values for the type
+                    fi = np.finfo(ftype)
+                    ft_tiny = fi.tiny
+                    ft_max = fi.max
+                    ft_eps = fi.eps
+                    underflow = 'underflow'
+                    divbyzero = 'divide by zero'
+                else:
+                    # 'c', complex, corresponding real dtype
+                    rtype = type(ftype(0).real)
+                    fi = np.finfo(rtype)
+                    ft_tiny = ftype(fi.tiny)
+                    ft_max = ftype(fi.max)
+                    ft_eps = ftype(fi.eps)
+                    # The complex types raise different exceptions
+                    underflow = ''
+                    divbyzero = ''
+                overflow = 'overflow'
+                invalid = 'invalid'
+
+                self.assert_raises_fpe(underflow,
+                        lambda a,b:a/b, ft_tiny, ft_max)
+                self.assert_raises_fpe(underflow,
+                        lambda a,b:a*b, ft_tiny, ft_tiny)
+                self.assert_raises_fpe(overflow,
+                        lambda a,b:a*b, ft_max, ftype(2))
+                self.assert_raises_fpe(overflow,
+                        lambda a,b:a/b, ft_max, ftype(0.5))
+                self.assert_raises_fpe(overflow,
+                        lambda a,b:a+b, ft_max, ft_max*ft_eps)
+                self.assert_raises_fpe(overflow,
+                        lambda a,b:a-b, -ft_max, ft_max*ft_eps)
+                self.assert_raises_fpe(divbyzero,
+                        lambda a,b:a/b, ftype(1), ftype(0))
+                self.assert_raises_fpe(invalid,
+                        lambda a,b:a/b, ftype(0), ftype(0))
+                self.assert_raises_fpe(invalid,
+                        lambda a,b:a-b, ftype(np.inf), ftype(np.inf))
+                self.assert_raises_fpe(invalid,
+                        lambda a,b:a+b, ftype(np.inf), ftype(-np.inf))
+                self.assert_raises_fpe(invalid,
+                        lambda a,b:a*b, ftype(0), ftype(np.inf))
+                self.assert_raises_fpe(overflow,
+                        np.power, ftype(2), ftype(2**fi.nexp))
+        finally:
+            np.seterr(**oldsettings)
+
+
 class TestFromiter(TestCase):
     def makegen(self):
         for x in xrange(24):
