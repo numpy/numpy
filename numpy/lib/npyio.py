@@ -36,36 +36,35 @@ def seek_gzip_factory(f):
     """
     import gzip
 
-    def seek(self, offset, whence=0):
-        # figure out new position (we can only seek forwards)
-        if whence == 1:
-            offset = self.offset + offset
+    class GzipFile(gzip.GzipFile):
 
-        if whence not in [0, 1]:
-            raise IOError, "Illegal argument"
+        def seek(self, offset, whence=0):
+            # figure out new position (we can only seek forwards)
+            if whence == 1:
+                offset = self.offset + offset
 
-        if offset < self.offset:
-            # for negative seek, rewind and do positive seek
-            self.rewind()
-            count = offset - self.offset
-            for i in range(count // 1024):
-                self.read(1024)
-            self.read(count % 1024)
+            if whence not in [0, 1]:
+                raise IOError, "Illegal argument"
 
-    def tell(self):
-        return self.offset
+            if offset < self.offset:
+                # for negative seek, rewind and do positive seek
+                self.rewind()
+                count = offset - self.offset
+                for i in range(count // 1024):
+                    self.read(1024)
+                self.read(count % 1024)
+
+        def tell(self):
+            return self.offset
+
 
     if isinstance(f, str):
-        f = gzip.GzipFile(f)
-
-    if sys.version_info[0] >= 3:
-        import types
-        f.seek = types.MethodType(seek, f)
-        f.tell = types.MethodType(tell, f)
-    else:
-        import new
-        f.seek = new.instancemethod(seek, f)
-        f.tell = new.instancemethod(tell, f)
+        f = GzipFile(f)
+    elif isinstance(f, gzip.GzipFile):
+        # cast if its a gzip.GzipFile
+        mode = f.mode
+        f = GzipFile(filename=f.filename, fileobj=f.fileobj)
+        f.mode = mode
 
     return f
 
@@ -664,7 +663,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if _is_string_like(fname):
         own_fh = True
         if fname.endswith('.gz'):
-            import gzip
             fh = seek_gzip_factory(fname)
         elif fname.endswith('.bz2'):
             import bz2
