@@ -61,10 +61,12 @@ def seek_gzip_factory(f):
     if isinstance(f, str):
         f = GzipFile(f)
     elif isinstance(f, gzip.GzipFile):
-        # cast if its a gzip.GzipFile
-        mode = f.mode
-        f = GzipFile(filename=f.filename, fileobj=f.fileobj)
-        f.mode = mode
+        # cast to our GzipFile if its already a gzip.GzipFile
+        g = GzipFile(fileobj=f.fileobj)
+        g.name = f.name
+        g.mode = f.mode
+
+        f = g
 
     return f
 
