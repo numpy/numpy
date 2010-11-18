@@ -150,7 +150,7 @@ else:
 
 # Start/end of the log (from git)
 LOG_START = 'v1.5.0'
-LOG_END = 'v1.5.1rc1'
+LOG_END = 'v1.5.1'
 RELEASE_NOTES = 'doc/release/1.5.1-notes.rst'
 
 #-------------------
