@@ -41,7 +41,6 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 sys.path.insert(0, os.path.dirname(__file__))
 try:
     setup_py = __import__("setup")
-    FULLVERSION = setup_py.FULLVERSION
     write_version_py = setup_py.write_version_py
 finally:
     sys.path.pop(0)
