@@ -860,13 +860,18 @@ add_newdoc('numpy.core.multiarray', 'arange',
     `range <http://docs.python.org/lib/built-in-funcs.html>`_ function,
     but returns a ndarray rather than a list.
 
+    When using a non-integer step, such as 0.1, the results will often not
+    be consistent.  It is better to use ``linspace`` for these cases.
+
     Parameters
     ----------
     start : number, optional
         Start of interval.  The interval includes this value.  The default
         start value is 0.
     stop : number
-        End of interval.  The interval does not include this value.
+        End of interval.  The interval does not include this value, except
+        in some cases where `step` is not an integer and floating point
+        round-off affects the length of `out`.
     step : number, optional
         Spacing between values.  For any output `out`, this is the distance
         between two adjacent values, ``out[i+1] - out[i]``.  The default
