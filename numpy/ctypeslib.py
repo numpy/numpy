@@ -93,7 +93,6 @@ else:
                           "with ctypes < 1.0.1")
 
         ext = os.path.splitext(libname)[1]
-
         if not ext:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
@@ -112,14 +111,15 @@ else:
         else:
             libdir = loader_path
 
+        # Need to save exception when using Python 3k, see PEP 3110.
+        exc = None
         for ln in libname_ext:
             try:
                 libpath = os.path.join(libdir, ln)
                 return ctypes.cdll[libpath]
             except OSError, e:
-                pass
-
-        raise e
+                exc = e
+        raise exc
 
     ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
                                     'load_library')
