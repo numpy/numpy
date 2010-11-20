@@ -683,10 +683,19 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((@s@@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@s@@type@) {
+            const @s@@type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2) ? io1 : in2;
+        }
+        *((@s@@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @s@@type@ in1 = *(@s@@type@ *)ip1;
+            const @s@@type@ in2 = *(@s@@type@ *)ip2;
+            *((@s@@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+        }
     }
 }
 /**end repeat2**/
@@ -921,10 +930,19 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            const @type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2) ? io1 : in2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+    }
     }
 }
 /**end repeat1**/
@@ -949,7 +967,7 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
-/* FIXME: implement the following correctly using the metadata:  data is the 
+/* FIXME: implement the following correctly using the metadata:  data is the
    sequence of ndarrays in the same order as args.
  */
 NPY_NO_EXPORT void
@@ -1141,10 +1159,19 @@ NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            const @type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+        }
     }
 }
 /**end repeat1**/
@@ -1157,10 +1184,19 @@ NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            const @type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2 || npy_isnan(in2)) ? io1 : in2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
+        }
     }
 }
 /**end repeat1**/
