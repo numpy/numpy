@@ -413,6 +413,27 @@ class TestLdexp(TestCase):
 
 
 class TestMaximum(TestCase):
+    def test_reduce(self):
+        dflt = np.typecodes['AllFloat']
+        dint = np.typecodes['AllInteger']
+        seq1 = np.arange(11)
+        seq2 = seq1[::-1]
+        func = np.maximum.reduce
+        for dt in dint:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 10)
+            assert_equal(func(tmp2), 10)
+        for dt in dflt:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 10)
+            assert_equal(func(tmp2), 10)
+            tmp1[::2] = np.nan
+            tmp2[::2] = np.nan
+            assert_equal(func(tmp1), np.nan)
+            assert_equal(func(tmp2), np.nan)
+
     def test_reduce_complex(self):
         assert_equal(np.maximum.reduce([1,2j]),1)
         assert_equal(np.maximum.reduce([1+3j,2j]),1+3j)
@@ -434,6 +455,27 @@ class TestMaximum(TestCase):
 
 
 class TestMinimum(TestCase):
+    def test_reduce(self):
+        dflt = np.typecodes['AllFloat']
+        dint = np.typecodes['AllInteger']
+        seq1 = np.arange(11)
+        seq2 = seq1[::-1]
+        func = np.minimum.reduce
+        for dt in dint:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 0)
+            assert_equal(func(tmp2), 0)
+        for dt in dflt:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 0)
+            assert_equal(func(tmp2), 0)
+            tmp1[::2] = np.nan
+            tmp2[::2] = np.nan
+            assert_equal(func(tmp1), np.nan)
+            assert_equal(func(tmp2), np.nan)
+
     def test_reduce_complex(self):
         assert_equal(np.minimum.reduce([1,2j]),2j)
         assert_equal(np.minimum.reduce([1+3j,2j]),2j)
@@ -455,6 +497,27 @@ class TestMinimum(TestCase):
 
 
 class TestFmax(TestCase):
+    def test_reduce(self):
+        dflt = np.typecodes['AllFloat']
+        dint = np.typecodes['AllInteger']
+        seq1 = np.arange(11)
+        seq2 = seq1[::-1]
+        func = np.fmax.reduce
+        for dt in dint:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 10)
+            assert_equal(func(tmp2), 10)
+        for dt in dflt:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 10)
+            assert_equal(func(tmp2), 10)
+            tmp1[::2] = np.nan
+            tmp2[::2] = np.nan
+            assert_equal(func(tmp1), 9)
+            assert_equal(func(tmp2), 9)
+
     def test_reduce_complex(self):
         assert_equal(np.fmax.reduce([1,2j]),1)
         assert_equal(np.fmax.reduce([1+3j,2j]),1+3j)
@@ -476,6 +539,27 @@ class TestFmax(TestCase):
 
 
 class TestFmin(TestCase):
+    def test_reduce(self):
+        dflt = np.typecodes['AllFloat']
+        dint = np.typecodes['AllInteger']
+        seq1 = np.arange(11)
+        seq2 = seq1[::-1]
+        func = np.fmin.reduce
+        for dt in dint:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 0)
+            assert_equal(func(tmp2), 0)
+        for dt in dflt:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            assert_equal(func(tmp1), 0)
+            assert_equal(func(tmp2), 0)
+            tmp1[::2] = np.nan
+            tmp2[::2] = np.nan
+            assert_equal(func(tmp1), 1)
+            assert_equal(func(tmp2), 1)
+
     def test_reduce_complex(self):
         assert_equal(np.fmin.reduce([1,2j]),2j)
         assert_equal(np.fmin.reduce([1+3j,2j]),2j)
