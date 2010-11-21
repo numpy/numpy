@@ -598,6 +598,8 @@ new_array_for_sum(PyArrayObject* out, PyArrayObject *ap1, PyArrayObject *ap2,
         subtype = Py_TYPE(ap1);
     }
     if (out) {
+        int d;
+        /* verify that out is usable */
         if (Py_TYPE(out) != subtype ||
             PyArray_NDIM(out) != nd ||
             PyArray_TYPE(out) != typenum ||
@@ -607,7 +609,6 @@ new_array_for_sum(PyArrayObject* out, PyArrayObject *ap1, PyArrayObject *ap2,
                 "(must have the right type, nr dimensions, and be a C-Array)");
             return 0;
         }
-        int d;
         for (d = 0; d != nd; ++d) {
             if (dimensions[d] != PyArray_DIM(out, d)) {
                 PyErr_SetString(PyExc_ValueError,
