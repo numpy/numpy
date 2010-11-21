@@ -13,13 +13,13 @@ class TestAny(TestCase):
         y1 = [0, 0, 1, 0]
         y2 = [0, 0, 0, 0]
         y3 = [1, 0, 1, 0]
-        assert(any(y1))
-        assert(any(y3))
-        assert(not any(y2))
+        assert_(any(y1))
+        assert_(any(y3))
+        assert_(not any(y2))
 
     def test_nd(self):
         y1 = [[0, 0, 0], [0, 1, 0], [1, 1, 0]]
-        assert(any(y1))
+        assert_(any(y1))
         assert_array_equal(sometrue(y1, axis=0), [1, 1, 0])
         assert_array_equal(sometrue(y1, axis=1), [0, 1, 1])
 
@@ -29,14 +29,14 @@ class TestAll(TestCase):
         y1 = [0, 1, 1, 0]
         y2 = [0, 0, 0, 0]
         y3 = [1, 1, 1, 1]
-        assert(not all(y1))
-        assert(all(y3))
-        assert(not all(y2))
-        assert(all(~array(y2)))
+        assert_(not all(y1))
+        assert_(all(y3))
+        assert_(not all(y2))
+        assert_(all(~array(y2)))
 
     def test_nd(self):
         y1 = [[0, 0, 1], [0, 1, 1], [1, 1, 1]]
-        assert(not all(y1))
+        assert_(not all(y1))
         assert_array_equal(alltrue(y1, axis=0), [0, 0, 1])
         assert_array_equal(alltrue(y1, axis=1), [0, 0, 1])
 
@@ -44,11 +44,11 @@ class TestAll(TestCase):
 class TestAverage(TestCase):
     def test_basic(self):
         y1 = array([1, 2, 3])
-        assert(average(y1, axis=0) == 2.)
+        assert_(average(y1, axis=0) == 2.)
         y2 = array([1., 2., 3.])
-        assert(average(y2, axis=0) == 2.)
+        assert_(average(y2, axis=0) == 2.)
         y3 = [0., 0., 0.]
-        assert(average(y3, axis=0) == 0.)
+        assert_(average(y3, axis=0) == 0.)
 
         y4 = ones((4, 4))
         y4[0, 1] = 0
@@ -407,7 +407,7 @@ class TestDigitize(TestCase):
     def test_random(self):
         x = rand(10)
         bin = linspace(x.min(), x.max(), 10)
-        assert all(digitize(x, bin) != 0)
+        assert_(all(digitize(x, bin) != 0))
 
 
 class TestUnwrap(TestCase):
@@ -415,7 +415,7 @@ class TestUnwrap(TestCase):
                 #check that unwrap removes jumps greather that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * pi]), [1, 1])
         #check that unwrap maintans continuity
-        assert(all(diff(unwrap(rand(10) * 100)) < pi))
+        assert_(all(diff(unwrap(rand(10) * 100)) < pi))
 
 
 class TestFilterwindows(TestCase):
@@ -520,7 +520,7 @@ class TestTrapz(TestCase):
 
 class TestSinc(TestCase):
     def test_simple(self):
-        assert(sinc(0) == 1)
+        assert_(sinc(0) == 1)
         w = sinc(linspace(-1, 1, 100))
         #check symmetry
         assert_array_almost_equal(w, flipud(w), 7)
@@ -565,7 +565,7 @@ class TestHistogram(TestCase):
         area = sum(a * diff(b))
         assert_almost_equal(area, 1)
 
-        warnings.filterwarnings('ignore', 
+        warnings.filterwarnings('ignore',
             message="\s*This release of NumPy fixes a normalization bug")
         # Check with non-constant bin widths
         v = np.arange(10)
@@ -573,20 +573,20 @@ class TestHistogram(TestCase):
         a, b = histogram(v, bins, normed=True)
         assert_array_equal(a, .1)
         assert_equal(sum(a*diff(b)), 1)
-    
+
         # Variale bin widths are especially useful to deal with
         # infinities.
         v = np.arange(10)
         bins = [0,1,3,6,np.inf]
         a, b = histogram(v, bins, normed=True)
         assert_array_equal(a, [.1,.1,.1,0.])
-        
+
         # Taken from a bug report from N. Becker on the numpy-discussion
-        # mailing list Aug. 6, 2010. 
+        # mailing list Aug. 6, 2010.
         counts, dmy = np.histogram([1,2,3,4], [0.5,1.5,np.inf], normed=True)
         assert_equal(counts, [.25, 0])
         warnings.filters.pop(0)
-        
+
     def test_outliers(self):
         # Check that outliers are not tallied
         a = arange(10) + .5
@@ -615,16 +615,16 @@ class TestHistogram(TestCase):
         # Check the type of the returned histogram
         a = arange(10) + .5
         h, b = histogram(a)
-        assert(issubdtype(h.dtype, int))
+        assert_(issubdtype(h.dtype, int))
 
         h, b = histogram(a, normed=True)
-        assert(issubdtype(h.dtype, float))
+        assert_(issubdtype(h.dtype, float))
 
         h, b = histogram(a, weights=ones(10, int))
-        assert(issubdtype(h.dtype, int))
+        assert_(issubdtype(h.dtype, int))
 
         h, b = histogram(a, weights=ones(10, float))
-        assert(issubdtype(h.dtype, float))
+        assert_(issubdtype(h.dtype, float))
 
     def test_weights(self):
         v = rand(100)
@@ -655,7 +655,7 @@ class TestHistogram(TestCase):
                         weights=[2,1,1,1,1,1,1,1,1], normed=True)
         assert_almost_equal(a, [.2, .1, .1, .075])
         warnings.filters.pop(0)
-        
+
 
 class TestHistogramdd(TestCase):
     def test_simple(self):
@@ -668,7 +668,7 @@ class TestHistogramdd(TestCase):
         # Check normalization
         ed = [[-2, 0, 2], [0, 1, 2, 3], [0, 1, 2, 3]]
         H, edges = histogramdd(x, bins=ed, normed=True)
-        assert(all(H == answer / 12.))
+        assert_(all(H == answer / 12.))
         # Check that H has the correct shape.
         H, edges = histogramdd(x, (2, 3, 4), range=[[-1, 1], [0, 3], [0, 4]],
             normed=True)
@@ -697,7 +697,7 @@ class TestHistogramdd(TestCase):
         r = rand(10, 3)
         for b in bins:
             H, edges = histogramdd(r, b)
-            assert(H.shape == b)
+            assert_(H.shape == b)
 
     def test_shape_4d(self):
         # All possible permutations for bins of different lengths in 4D.
@@ -711,7 +711,7 @@ class TestHistogramdd(TestCase):
         r = rand(10, 4)
         for b in bins:
             H, edges = histogramdd(r, b)
-            assert(H.shape == b)
+            assert_(H.shape == b)
 
     def test_weights(self):
         v = rand(100, 2)
@@ -733,12 +733,12 @@ class TestHistogramdd(TestCase):
 class TestUnique(TestCase):
     def test_simple(self):
         x = array([4, 3, 2, 1, 1, 2, 3, 4, 0])
-        assert(all(unique(x) == [0, 1, 2, 3, 4]))
-        assert(unique(array([1, 1, 1, 1, 1])) == array([1]))
+        assert_(all(unique(x) == [0, 1, 2, 3, 4]))
+        assert_(unique(array([1, 1, 1, 1, 1])) == array([1]))
         x = ['widget', 'ham', 'foo', 'bar', 'foo', 'ham']
-        assert(all(unique(x) == ['bar', 'foo', 'ham', 'widget']))
+        assert_(all(unique(x) == ['bar', 'foo', 'ham', 'widget']))
         x = array([5 + 6j, 1 + 1j, 1 + 10j, 10, 5 + 6j])
-        assert(all(unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
+        assert_(all(unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
 
 
 class TestCheckFinite(TestCase):
@@ -792,7 +792,7 @@ class TestNaNFuncts(TestCase):
                             array([[ 0.01319214, 0.11704017, 0.1630199 ],
                                    [ 0.37910852, 0.87964135, 0.34306596],
                                    [ 0.72687499, 0.23913896, 0.33850425]]))
-        assert nanmin([nan, nan]) is nan
+        assert_(np.isnan(nanmin([nan, nan])))
 
     def test_nanargmin(self):
         assert_almost_equal(nanargmin(self.A), 1)
@@ -823,6 +823,7 @@ class TestNaNFuncts(TestCase):
                             array([[ 0.01620964, 0.75157887, 0.28333658],
                                    [ 0.59541557, 0.87964135, 0.70543747],
                                    [ 0.91084584, 0.84386844, 0.37068164]]))
+        assert_(np.isnan(nanmax([nan, nan])))
 
     def test_nanmin_allnan_on_axis(self):
         assert_array_equal(isnan(nanmin([[nan] * 2] * 3, axis=1)),
@@ -923,7 +924,7 @@ class Test_i0(TestCase):
 class TestKaiser(TestCase):
     def test_simple(self):
         assert_almost_equal(kaiser(0, 1.0), array([]))
-        assert isfinite(kaiser(1, 1.0))
+        assert_(isfinite(kaiser(1, 1.0)))
         assert_almost_equal(kaiser(2, 1.0), array([ 0.78984831, 0.78984831]))
         assert_almost_equal(kaiser(5, 1.0),
                             array([ 0.78984831, 0.94503323, 1.        ,
@@ -950,14 +951,14 @@ class TestMsort(TestCase):
 class TestMeshgrid(TestCase):
     def test_simple(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7])
-        assert all(X == array([[1, 2, 3],
+        assert_(all(X == array([[1, 2, 3],
                                [1, 2, 3],
                                [1, 2, 3],
-                               [1, 2, 3]]))
-        assert all(Y == array([[4, 4, 4],
+                               [1, 2, 3]])))
+        assert_(all(Y == array([[4, 4, 4],
                                [5, 5, 5],
                                [6, 6, 6],
-                               [7, 7, 7]]))
+                               [7, 7, 7]])))
 
 
 class TestPiecewise(TestCase):
@@ -1001,8 +1002,8 @@ class TestPiecewise(TestCase):
     def test_0d(self):
         x = array(3)
         y = piecewise(x, x > 3, [4, 0])
-        assert y.ndim == 0
-        assert y == 0
+        assert_(y.ndim == 0)
+        assert_(y == 0)
 
 
 class TestBincount(TestCase):
