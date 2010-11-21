@@ -1447,8 +1447,7 @@ def nanmin(a, axis=None):
     Positive infinity is treated as a very large number and negative infinity
     is treated as a very small (i.e. negative) number.
 
-    If the input has a integer type, an integer type is returned unless
-    the input contains NaNs and infinity.
+    If the input has a integer type the function is equivalent to np.min.
 
 
     Examples
@@ -1469,7 +1468,12 @@ def nanmin(a, axis=None):
     -inf
 
     """
-    return _nanop(np.min, np.inf, a, axis)
+    #return _nanop(np.min, np.inf, a, axis)
+    a = np.asanyarray(a)
+    if axis is not None:
+        return np.fmin.reduce(a, axis)
+    else:
+        return np.fmin.reduce(a.flat)
 
 def nanargmin(a, axis=None):
     """
@@ -1541,8 +1545,7 @@ def nanmax(a, axis=None):
     Positive infinity is treated as a very large number and negative infinity
     is treated as a very small (i.e. negative) number.
 
-    If the input has a integer type, an integer type is returned unless
-    the input contains NaNs and infinity.
+    If the input has a integer type the function is equivalent to np.max.
 
     Examples
     --------
@@ -1562,7 +1565,12 @@ def nanmax(a, axis=None):
     inf
 
     """
-    return _nanop(np.max, -np.inf, a, axis)
+    #return _nanop(np.max, -np.inf, a, axis)
+    a = np.asanyarray(a)
+    if axis is not None:
+        return np.fmax.reduce(a, axis)
+    else:
+        return np.fmax.reduce(a.flat)
 
 def nanargmax(a, axis=None):
     """
