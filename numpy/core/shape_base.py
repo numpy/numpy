@@ -44,7 +44,12 @@ def atleast_1d(*arys):
     """
     res = []
     for ary in arys:
-        res.append(array(ary,copy=False,subok=True,ndmin=1))
+        ary = asanyarray(ary)
+        if len(ary.shape) == 0 :
+            result = ary.reshape(1)
+        else :
+            result = ary
+        res.append(result)
     if len(res) == 1:
         return res[0]
     else:
@@ -89,7 +94,14 @@ def atleast_2d(*arys):
     """
     res = []
     for ary in arys:
-        res.append(array(ary,copy=False,subok=True,ndmin=2))
+        ary = asanyarray(ary)
+        if len(ary.shape) == 0 :
+            result = ary.reshape(1, 1)
+        elif len(ary.shape) == 1 :
+            result = ary[newaxis, :]
+        else :
+            result = ary
+        res.append(result)
     if len(res) == 1:
         return res[0]
     else:
