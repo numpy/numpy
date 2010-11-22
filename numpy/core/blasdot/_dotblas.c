@@ -213,7 +213,7 @@ _bad_strides(PyArrayObject *ap)
  * NB: The first argument is not conjugated.;
  */
 static PyObject *
-dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
+dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwargs)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *out = NULL, *ret = NULL;
@@ -230,8 +230,10 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyTypeObject *subtype;
     PyArray_Descr *dtype;
     MatrixShape ap1shape, ap2shape;
+    char* kwords[] = {"a", "b", "out", NULL };
 
-    if (!PyArg_ParseTuple(args, "OO|O", &op1, &op2, &out)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|O", kwords,
+                                    &op1, &op2, &out)) {
         return NULL;
     }
 
@@ -1195,7 +1197,7 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
 }
 
 static struct PyMethodDef dotblas_module_methods[] = {
-    {"dot",  (PyCFunction)dotblas_matrixproduct, 1, NULL},
+    {"dot",  (PyCFunction)dotblas_matrixproduct, METH_VARARGS|METH_KEYWORDS, NULL},
     {"inner",   (PyCFunction)dotblas_innerproduct,  1, NULL},
     {"vdot", (PyCFunction)dotblas_vdot, 1, NULL},
     {"alterdot", (PyCFunction)dotblas_alterdot, 1, NULL},

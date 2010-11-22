@@ -1871,11 +1871,12 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
-array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
     PyObject *v, *a, *o = NULL;
+    char* kwlist[] = {"a", "b", "out", NULL };
 
-    if (!PyArg_ParseTuple(args, "OO|O", &a, &v, &o)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist, &a, &v, &o)) {
         return NULL;
     }
     return _ARET(PyArray_MatrixProduct(a, v, o));
@@ -2787,7 +2788,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"dot",
         (PyCFunction)array_matrixproduct,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"_fastCopyAndTranspose",
         (PyCFunction)array_fastCopyAndTranspose,
         METH_VARARGS, NULL},
