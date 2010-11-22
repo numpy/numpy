@@ -614,8 +614,10 @@ def append_fields(base, names, data=None, dtypes=None,
     if dtypes is None:
         data = [np.array(a, copy=False, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
-    elif not hasattr(dtypes, '__iter__'):
-        dtypes = [dtypes, ]
+    else :
+        if not hasattr(dtypes, '__iter__'):
+            dtypes = [dtypes, ]
+
         if len(data) != len(dtypes):
             if len(dtypes) == 1:
                 dtypes = dtypes * len(data)
