@@ -246,7 +246,10 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     /* This function doesn't handle other types */
     if ((typenum != PyArray_DOUBLE && typenum != PyArray_CDOUBLE &&
          typenum != PyArray_FLOAT && typenum != PyArray_CFLOAT)) {
-        return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct(op1, op2));
+        return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct(
+                                                    (PyObject *)op1,
+                                                    (PyObject *)op2,
+                                                    (PyObject *)out));
     }
 
     dtype = PyArray_DescrFromType(typenum);
@@ -280,7 +283,8 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
             Py_DECREF(tmp2);
         }
         ret = (PyArrayObject *)PyArray_MatrixProduct((PyObject *)ap1,
-                                                     (PyObject *)ap2);
+                                                     (PyObject *)ap2,
+                                                     (PyObject *)out);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return PyArray_Return(ret);
@@ -421,7 +425,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (out) {
         int d;
         /* verify that out is usable */
-        if (Py_Type(out) != subtype ||
+        if (Py_TYPE(out) != subtype ||
             PyArray_NDIM(out) != nd ||
             PyArray_TYPE(out) != typenum ||
             !PyArray_ISCARRAY(out)) {
