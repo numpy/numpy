@@ -62,11 +62,16 @@ def seek_gzip_factory(f):
         f = GzipFile(f)
     elif isinstance(f, gzip.GzipFile):
         # cast to our GzipFile if its already a gzip.GzipFile
-        g = GzipFile(fileobj=f.fileobj)
-        g.name = f.name
-        g.mode = f.mode
 
-        f = g
+        try:
+            name = f.name
+        except AttributeError:
+            # Backward compatibility for <= 2.5
+            name = f.filename
+        mode = f.mode
+
+        f = GzipFile(fileobj=f.fileobj, filename=name)
+        f.mode = mode
 
     return f
 
