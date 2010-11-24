@@ -572,7 +572,7 @@ def rename_fields(base, namemapper):
     return base.view(newdtype)
 
 
-def append_fields(base, names, data=None, dtypes=None,
+def append_fields(base, names, data, dtypes=None,
                   fill_value= -1, usemask=True, asrecarray=False):
     """
     Add new fields to an existing array.
@@ -591,7 +591,7 @@ def append_fields(base, names, data=None, dtypes=None,
         of the new fields.
     data : array or sequence of arrays
         Array or sequence of arrays storing the fields to add to the base.
-    dtypes : sequence of datatypes
+    dtypes : sequence of datatypes, optional
         Datatype or sequence of datatypes.
         If None, the datatypes are estimated from the `data`.
     fill_value : {float}, optional
@@ -605,8 +605,8 @@ def append_fields(base, names, data=None, dtypes=None,
     # Check the names
     if isinstance(names, (tuple, list)):
         if len(names) != len(data):
-            err_msg = "The number of arrays does not match the number of names"
-            raise ValueError(err_msg)
+            msg = "The number of arrays does not match the number of names"
+            raise ValueError(msg)
     elif isinstance(names, basestring):
         names = [names, ]
         data = [data, ]
@@ -615,15 +615,13 @@ def append_fields(base, names, data=None, dtypes=None,
         data = [np.array(a, copy=False, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
     else :
-        if not hasattr(dtypes, '__iter__'):
+        if not isinstance(dtypes, (tuple, list)):
             dtypes = [dtypes, ]
-
         if len(data) != len(dtypes):
             if len(dtypes) == 1:
                 dtypes = dtypes * len(data)
             else:
-                msg = "The dtypes argument must be None, "\
-                      "a single dtype or a list."
+                msg = "The dtypes argument must be None, a dtype, or a list."
                 raise ValueError(msg)
         data = [np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
                 for (a, n, d) in zip(data, names, dtypes)]
