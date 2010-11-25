@@ -188,6 +188,18 @@ class TestRegression(TestCase):
         assert_(isinstance(np.polyder(np.poly1d([1]), 1), np.poly1d))
         assert_(isinstance(np.polyder([1], 1), np.ndarray))
 
+    def test_append_fields_dtype_list(self):
+        """Ticket #1676"""
+        from numpy.lib.recfunctions import append_fields
+        F = False
+        base = np.array([1,2,3], dtype=np.int32)
+        data = np.eye(3).astype(np.int32)
+        names = ['a','b','c']
+        dlist = [np.float64, np.int32, np.int32]
+        try:
+            a = append_fields(base, names, data, dlist)
+        except:
+            raise AssertionError()
 
 if __name__ == "__main__":
     run_module_suite()
