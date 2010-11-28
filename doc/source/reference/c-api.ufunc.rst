@@ -234,20 +234,20 @@ structure.
 .. cfunction:: void PyUFunc_G_G(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_j_j(char** args, npy_intp* dimensions,
+.. cfunction:: void PyUFunc_e_e(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_j_j_As_f_f(char** args, npy_intp* dimensions,
+.. cfunction:: void PyUFunc_e_e_As_f_f(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_j_j_As_d_d(char** args, npy_intp* dimensions,
+.. cfunction:: void PyUFunc_e_e_As_d_d(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
     Type specific, core 1-d functions for ufuncs where each
     calculation is obtained by calling a function taking one input
     argument and returning one output. This function is passed in
     ``func``. The letters correspond to dtypechar's of the supported
-    data types ( ``j`` - half, ``f`` - float, ``d`` - double,
+    data types ( ``e`` - half, ``f`` - float, ``d`` - double,
     ``g`` - long double, ``F`` - cfloat, ``D`` - cdouble,
     ``G`` - clongdouble). The argument *func* must support the same
     signature. The _As_X_X variants assume ndarray's of one data type
@@ -280,13 +280,13 @@ structure.
 .. cfunction:: void PyUFunc_GG_G(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_jj_j(char** args, npy_intp* dimensions,
+.. cfunction:: void PyUFunc_ee_e(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_jj_j_As_ff_f(char** args, npy_intp* dimensions,
+.. cfunction:: void PyUFunc_ee_e_As_ff_f(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
-.. cfunction:: void PyUFunc_jj_j_As_dd_d(char** args, npy_intp* dimensions,
+.. cfunction:: void PyUFunc_ee_e_As_dd_d(char** args, npy_intp* dimensions,
    npy_intp* steps, void* func)
 
     Type specific, core 1-d functions for ufuncs where each

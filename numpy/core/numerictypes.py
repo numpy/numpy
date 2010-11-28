@@ -829,12 +829,12 @@ del key
 typecodes = {'Character':'c',
              'Integer':'bhilqp',
              'UnsignedInteger':'BHILQP',
-             'Float':'jfdg',
+             'Float':'efdg',
              'Complex':'FDG',
              'AllInteger':'bBhHiIlLqQpP',
-             'AllFloat':'jfdgFDG',
+             'AllFloat':'efdgFDG',
              'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPjfdgFDGSUVOMm'}
+             'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
