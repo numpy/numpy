@@ -138,7 +138,7 @@ Unsigned integers:
 Floating-point numbers:
 
 ===================  =============================  ===============
-:class:`half`                                       ``'j'``
+:class:`half`                                       ``'e'``
 :class:`single`      compatible: C float            ``'f'``
 :class:`double`      compatible: C double
 :class:`float_`      compatible: Python float       ``'d'``

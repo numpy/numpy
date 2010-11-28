@@ -94,7 +94,7 @@ typedef longdouble longdoubleBinaryFunc(longdouble x, longdouble y);
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_j_j(char **args, intp *dimensions, intp *steps, void *func)
+PyUFunc_e_e(char **args, intp *dimensions, intp *steps, void *func)
 {
     halfUnaryFunc *f = (halfUnaryFunc *)func;
     UNARY_LOOP {
@@ -105,7 +105,7 @@ PyUFunc_j_j(char **args, intp *dimensions, intp *steps, void *func)
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_j_j_As_f_f(char **args, intp *dimensions, intp *steps, void *func)
+PyUFunc_e_e_As_f_f(char **args, intp *dimensions, intp *steps, void *func)
 {
     floatUnaryFunc *f = (floatUnaryFunc *)func;
     UNARY_LOOP {
@@ -116,7 +116,7 @@ PyUFunc_j_j_As_f_f(char **args, intp *dimensions, intp *steps, void *func)
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_j_j_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
+PyUFunc_e_e_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 {
     doubleUnaryFunc *f = (doubleUnaryFunc *)func;
     UNARY_LOOP {
@@ -149,7 +149,7 @@ PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_jj_j(char **args, intp *dimensions, intp *steps, void *func)
+PyUFunc_ee_e(char **args, intp *dimensions, intp *steps, void *func)
 {
     halfBinaryFunc *f = (halfBinaryFunc *)func;
     BINARY_LOOP {
@@ -161,7 +161,7 @@ PyUFunc_jj_j(char **args, intp *dimensions, intp *steps, void *func)
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_jj_j_As_ff_f(char **args, intp *dimensions, intp *steps, void *func)
+PyUFunc_ee_e_As_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 {
     floatBinaryFunc *f = (floatBinaryFunc *)func;
     BINARY_LOOP {
@@ -173,7 +173,7 @@ PyUFunc_jj_j_As_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_jj_j_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
+PyUFunc_ee_e_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
     doubleBinaryFunc *f = (doubleBinaryFunc *)func;
     BINARY_LOOP {
