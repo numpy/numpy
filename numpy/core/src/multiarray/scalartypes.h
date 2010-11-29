@@ -1,6 +1,22 @@
 #ifndef _NPY_SCALARTYPES_H_
 #define _NPY_SCALARTYPES_H_
 
+/* Internal look-up tables */
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+extern NPY_NO_EXPORT unsigned char
+_npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
+extern NPY_NO_EXPORT char
+_npy_scalar_kinds_table[NPY_NTYPES];
+#else
+NPY_NO_EXPORT unsigned char
+_npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
+NPY_NO_EXPORT char
+_npy_scalar_kinds_table[NPY_NTYPES];
+#endif
+
+NPY_NO_EXPORT void
+initialize_casting_tables(void);
+
 NPY_NO_EXPORT void
 initialize_numeric_types(void);
 

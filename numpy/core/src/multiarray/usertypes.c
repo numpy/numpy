@@ -225,6 +225,19 @@ NPY_NO_EXPORT int
 PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
                         NPY_SCALARKIND scalar)
 {
+    /*
+     * If we were to allow this, the casting lookup table for
+     * built-in types needs to be modified, as cancastto is
+     * not checked for them.
+     */
+    if (!PyTypeNum_ISUSERDEF(descr->type_num) &&
+                                        !PyTypeNum_ISUSERDEF(totype)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "At least one of the types provided to"
+                        "RegisterCanCast must be user-defined.");
+        return -1;
+    }
+
     if (scalar == PyArray_NOSCALAR) {
         /*
          * register with cancastto
