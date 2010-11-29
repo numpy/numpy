@@ -576,12 +576,30 @@ array_base_get(PyArrayObject *self)
 static PyArrayObject *
 _get_part(PyArrayObject *self, int imag)
 {
+    int float_type_num;
     PyArray_Descr *type;
     PyArrayObject *ret;
     int offset;
 
-    type = PyArray_DescrFromType(self->descr->type_num -
-                                 PyArray_NUM_FLOATTYPE);
+    switch (self->descr->type_num) {
+        case PyArray_CFLOAT:
+            float_type_num = PyArray_FLOAT;
+            break;
+        case PyArray_CDOUBLE:
+            float_type_num = PyArray_DOUBLE;
+            break;
+        case PyArray_CLONGDOUBLE:
+            float_type_num = PyArray_LONGDOUBLE;
+            break;
+        default:
+            PyErr_Format(PyExc_ValueError,
+                     "Cannot convert complex type number %d to float",
+                     self->descr->type_num);
+            return NULL;
+            
+    }
+    type = PyArray_DescrFromType(float_type_num);
+
     offset = (imag ? type->elsize : 0);
 
     if (!PyArray_ISNBO(self->descr->byteorder)) {

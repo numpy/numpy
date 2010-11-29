@@ -330,6 +330,49 @@ class TestFloatExceptions(TestCase):
         finally:
             np.seterr(**oldsettings)
 
+class TestCoercion(TestCase):
+    def test_coercion(self):
+        """Tests that the scalars get coerced correctly."""
+        i8, i16, i32, i64 = int8(0), int16(0), int32(0), int64(0)
+        u8, u16, u32, u64 = uint8(0), uint16(0), uint32(0), uint64(0)
+        f32, f64, fld = float32(0), float64(0), longdouble(0)
+        c64, c128, cld = complex64(0), complex128(0), clongdouble(0)
+
+        # coercion within the same type
+        assert_equal(np.add(i8,i16).dtype, int16)
+        assert_equal(np.add(i32,i8).dtype, int32)
+        assert_equal(np.add(i16,i64).dtype, int64)
+        assert_equal(np.add(u8,u32).dtype, uint32)
+        assert_equal(np.add(f32,f64).dtype, float64)
+        assert_equal(np.add(fld,f32).dtype, longdouble)
+        assert_equal(np.add(f64,fld).dtype, longdouble)
+        assert_equal(np.add(c128,c64).dtype, complex128)
+        assert_equal(np.add(cld,c128).dtype, clongdouble)
+        assert_equal(np.add(c64,fld).dtype, clongdouble)
+
+        # coercion between types
+        assert_equal(np.add(i8,u8).dtype, int16)
+        assert_equal(np.add(u8,i32).dtype, int32)
+        assert_equal(np.add(i64,u32).dtype, int64)
+        assert_equal(np.add(u64,i32).dtype, float64)
+        assert_equal(np.add(i32,f32).dtype, float64)
+        assert_equal(np.add(i64,f32).dtype, float64)
+        assert_equal(np.add(f32,i16).dtype, float32)
+        assert_equal(np.add(f32,u32).dtype, float64)
+        assert_equal(np.add(f32,c64).dtype, complex64)
+        assert_equal(np.add(c128,f32).dtype, complex128)
+        assert_equal(np.add(cld,f64).dtype, clongdouble)
+
+        # coercion between scalars and 1-D arrays
+        assert_equal(np.add(array([i8]),i64).dtype, int8)
+        assert_equal(np.add(u64,array([i32])).dtype, int32)
+        assert_equal(np.add(i64,array([u32])).dtype, uint32)
+        assert_equal(np.add(int32(-1),array([u64])).dtype, float64)
+        assert_equal(np.add(f64,array([f32])).dtype, float32)
+        assert_equal(np.add(fld,array([f32])).dtype, float32)
+        assert_equal(np.add(array([f64]),fld).dtype, float64)
+        assert_equal(np.add(fld,array([c64])).dtype, complex64)
+        assert_equal(np.add(c64,array([f64])).dtype, complex128)
 
 class TestFromiter(TestCase):
     def makegen(self):

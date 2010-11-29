@@ -3248,6 +3248,192 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 
 /**end repeat**/
 
+/*
+ * This table maps the built-in type numbers to their scalar
+ * type numbers.  Note that signed integers are mapped to INTNEG_SCALAR,
+ * which is different than what PyArray_ScalarKind returns.
+ */
+NPY_VISIBILITY_HIDDEN char
+_npy_scalar_kinds[NPY_NTYPES];
+/*
+ * This table describes safe casting for small type numbers,
+ * and is used by PyArray_CanCastSafely.
+ */
+NPY_VISIBILITY_HIDDEN unsigned char
+_npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
+
+NPY_NO_EXPORT void
+initialize_casting_tables(void)
+{
+    int i;
+
+    /* Default for built-in types is object scalar */
+    memset(_npy_scalar_kinds, PyArray_OBJECT_SCALAR, sizeof(_npy_scalar_kinds));
+
+    /* Compile-time loop of scalar kinds */
+/**begin repeat
+ * #NAME = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         DATETIME, TIMEDELTA, OBJECT, STRING, UNICODE, VOID#
+ * #SCKIND = BOOL, (INTNEG, INTPOS)*5, FLOAT, FLOAT, FLOAT,
+ *           COMPLEX, COMPLEX, COMPLEX,
+ *           OBJECT*6#
+ */
+    _npy_scalar_kinds[PyArray_@NAME@] = PyArray_@SCKIND@_SCALAR;
+/**end repeat**/
+
+    memset(_npy_can_cast_safely_table, 0, sizeof(_npy_can_cast_safely_table));
+
+    for (i = 0; i < NPY_NTYPES; ++i) {
+        /* Identity */
+        _npy_can_cast_safely_table[i][i] = 1;
+        /* Bool -> <Anything> */
+        _npy_can_cast_safely_table[PyArray_BOOL][i] = 1;
+        /* DateTime sits out for these... */
+        if (i != PyArray_DATETIME && i != PyArray_TIMEDELTA) {
+            /* <Anything> -> Object */
+            _npy_can_cast_safely_table[i][PyArray_OBJECT] = 1;
+            /* <Anything> -> Void */
+            _npy_can_cast_safely_table[i][PyArray_VOID] = 1;
+        }
+    }
+
+    _npy_can_cast_safely_table[PyArray_STRING][PyArray_UNICODE] = 1;
+
+#ifndef NPY_SIZEOF_BYTE
+#define NPY_SIZEOF_BYTE 1
+#endif
+
+    /* Compile-time loop of casting rules */
+/**begin repeat
+ * #FROM_NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *              LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *              CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #FROM_BASENAME = BYTE, BYTE, SHORT, SHORT, INT, INT, LONG, LONG,
+ *                  LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *                  FLOAT, DOUBLE, LONGDOUBLE#
+ * #from_isint = 1, 0, 1, 0, 1, 0, 1, 0,
+ *               1, 0, 0, 0, 0,
+ *               0, 0, 0#
+ * #from_isuint = 0, 1, 0, 1, 0, 1, 0, 1,
+ *                0, 1, 0, 0, 0,
+ *                0, 0, 0#
+ * #from_isfloat = 0, 0, 0, 0, 0, 0, 0, 0,
+ *                 0, 0, 1, 1, 1,
+ *                 0, 0, 0#
+ * #from_iscomplex = 0, 0, 0, 0, 0, 0, 0, 0,
+ *                   0, 0, 0, 0, 0,
+ *                   1, 1, 1#
+ */
+#define _FROM_BSIZE NPY_SIZEOF_@FROM_BASENAME@
+#define _FROM_NUM   (PyArray_@FROM_NAME@)
+
+    _npy_can_cast_safely_table[_FROM_NUM][PyArray_STRING] = 1;
+    _npy_can_cast_safely_table[_FROM_NUM][PyArray_UNICODE] = 1;
+
+/**begin repeat1
+ * #TO_NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *            LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *            CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #TO_BASENAME = BYTE, BYTE, SHORT, SHORT, INT, INT, LONG, LONG,
+ *                LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *                FLOAT, DOUBLE, LONGDOUBLE#
+ * #to_isint = 1, 0, 1, 0, 1, 0, 1, 0,
+ *             1, 0, 0, 0, 0,
+ *             0, 0, 0#
+ * #to_isuint = 0, 1, 0, 1, 0, 1, 0, 1,
+ *              0, 1, 0, 0, 0,
+ *              0, 0, 0#
+ * #to_isfloat = 0, 0, 0, 0, 0, 0, 0, 0,
+ *               0, 0, 1, 1, 1,
+ *               0, 0, 0#
+ * #to_iscomplex = 0, 0, 0, 0, 0, 0, 0, 0,
+ *                 0, 0, 0, 0, 0,
+ *                 1, 1, 1#
+ */
+#define _TO_BSIZE NPY_SIZEOF_@TO_BASENAME@
+#define _TO_NUM   (PyArray_@TO_NAME@)
+
+/*
+ * NOTE: _FROM_BSIZE and _TO_BSIZE are the sizes of the "base type"
+ *       which is the same as the size of the type except for
+ *       complex, where it is the size of the real type.
+ */
+
+#if @from_isint@
+
+#  if @to_isint@ && (_TO_BSIZE >= _FROM_BSIZE)
+    /* int -> int */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_isfloat@ && (_FROM_BSIZE < 8) && (_TO_BSIZE > _FROM_BSIZE)
+    /* int -> float */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_isfloat@ && (_FROM_BSIZE >= 8) && (_TO_BSIZE >= _FROM_BSIZE)
+    /* int -> float */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_iscomplex@ && (_FROM_BSIZE < 8) && (_TO_BSIZE > _FROM_BSIZE)
+    /* int -> complex */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_iscomplex@ && (_FROM_BSIZE >= 8) && (_TO_BSIZE >= _FROM_BSIZE)
+    /* int -> complex */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  endif
+
+#elif @from_isuint@
+
+#  if @to_isint@ && (_TO_BSIZE > _FROM_BSIZE)
+    /* uint -> int */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_isuint@ && (_TO_BSIZE >= _FROM_BSIZE)
+    /* uint -> uint */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_isfloat@ && (_FROM_BSIZE < 8) && (_TO_BSIZE > _FROM_BSIZE)
+    /* uint -> float */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_isfloat@ && (_FROM_BSIZE >= 8) && (_TO_BSIZE >= _FROM_BSIZE)
+    /* uint -> float */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_iscomplex@ && (_FROM_BSIZE < 8) && (_TO_BSIZE > _FROM_BSIZE)
+    /* uint -> complex */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_iscomplex@ && (_FROM_BSIZE >= 8) && (_TO_BSIZE >= _FROM_BSIZE)
+    /* uint -> complex */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  endif
+
+
+#elif @from_isfloat@
+
+#  if @to_isfloat@ && (_TO_BSIZE >= _FROM_BSIZE)
+    /* float -> float */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  elif @to_iscomplex@ && (_TO_BSIZE >= _FROM_BSIZE)
+    /* float -> complex */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  endif
+
+#elif @from_iscomplex@
+
+#  if @to_iscomplex@ && (_TO_BSIZE >= _FROM_BSIZE)
+    /* complex -> complex */
+    _npy_can_cast_safely_table[_FROM_NUM][_TO_NUM] = 1;
+#  endif
+
+#endif
+
+#undef _TO_NUM
+#undef _TO_BSIZE
+
+/**end repeat1**/
+
+#undef _FROM_NUM
+#undef _FROM_BSIZE
+
+/**end repeat**/
+
+}
+
 
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;

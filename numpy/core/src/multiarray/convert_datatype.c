@@ -522,145 +522,53 @@ PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
 NPY_NO_EXPORT int
 PyArray_CanCastSafely(int fromtype, int totype)
 {
-    PyArray_Descr *from, *to;
-    int felsize, telsize;
+    PyArray_Descr *from;
 
+    /* Fast table lookup for small type numbers */
+    if ((unsigned int)fromtype < NPY_NTYPES && (unsigned int)totype < NPY_NTYPES) {
+        return _npy_can_cast_safely_table[fromtype][totype];
+    }
+
+    /* Identity */
     if (fromtype == totype) {
         return 1;
     }
-    if (fromtype == PyArray_BOOL) {
-        return 1;
+    /* Special-cases for some types */
+    switch (fromtype) {
+        case PyArray_DATETIME:
+        case PyArray_TIMEDELTA:
+        case PyArray_OBJECT:
+        case PyArray_VOID:
+            return 0;
+        case PyArray_BOOL:
+            return 1;
     }
-    if (totype == PyArray_BOOL) {
-        return 0;
+    switch (totype) {
+        case PyArray_BOOL:
+        case PyArray_DATETIME:
+        case PyArray_TIMEDELTA:
+            return 0;
+        case PyArray_OBJECT:
+        case PyArray_VOID:
+            return 1;
     }
-    if (fromtype == PyArray_DATETIME || fromtype == PyArray_TIMEDELTA ||
-            totype == PyArray_DATETIME || totype == PyArray_TIMEDELTA) {
-        return 0;
-    }
-    if (totype == PyArray_OBJECT || totype == PyArray_VOID) {
-        return 1;
-    }
-    if (fromtype == PyArray_OBJECT || fromtype == PyArray_VOID) {
-        return 0;
-    }
+
     from = PyArray_DescrFromType(fromtype);
     /*
      * cancastto is a PyArray_NOTYPE terminated C-int-array of types that
      * the data-type can be cast to safely.
      */
     if (from->f->cancastto) {
-        int *curtype;
-        curtype = from->f->cancastto;
+        int *curtype = from->f->cancastto;
+
         while (*curtype != PyArray_NOTYPE) {
             if (*curtype++ == totype) {
                 return 1;
             }
         }
     }
-    if (PyTypeNum_ISUSERDEF(totype)) {
-        return 0;
-    }
-    to = PyArray_DescrFromType(totype);
-    telsize = to->elsize;
-    felsize = from->elsize;
-    Py_DECREF(from);
-    Py_DECREF(to);
 
-    switch(fromtype) {
-    case PyArray_BYTE:
-    case PyArray_SHORT:
-    case PyArray_INT:
-    case PyArray_LONG:
-    case PyArray_LONGLONG:
-        if (PyTypeNum_ISINTEGER(totype)) {
-            if (PyTypeNum_ISUNSIGNED(totype)) {
-                return 0;
-            }
-            else {
-                return telsize >= felsize;
-            }
-        }
-        else if (PyTypeNum_ISFLOAT(totype)) {
-            if (felsize < 8) {
-                return telsize > felsize;
-            }
-            else {
-                return telsize >= felsize;
-            }
-        }
-        else if (PyTypeNum_ISCOMPLEX(totype)) {
-            if (felsize < 8) {
-                return (telsize >> 1) > felsize;
-            }
-            else {
-                return (telsize >> 1) >= felsize;
-            }
-        }
-        else {
-            return totype > fromtype;
-        }
-    case PyArray_UBYTE:
-    case PyArray_USHORT:
-    case PyArray_UINT:
-    case PyArray_ULONG:
-    case PyArray_ULONGLONG:
-        if (PyTypeNum_ISINTEGER(totype)) {
-            if (PyTypeNum_ISSIGNED(totype)) {
-                return telsize > felsize;
-            }
-            else {
-                return telsize >= felsize;
-            }
-        }
-        else if (PyTypeNum_ISFLOAT(totype)) {
-            if (felsize < 8) {
-                return telsize > felsize;
-            }
-            else {
-                return telsize >= felsize;
-            }
-        }
-        else if (PyTypeNum_ISCOMPLEX(totype)) {
-            if (felsize < 8) {
-                return (telsize >> 1) > felsize;
-            }
-            else {
-                return (telsize >> 1) >= felsize;
-            }
-        }
-        else {
-            return totype > fromtype;
-        }
-    case PyArray_FLOAT:
-    case PyArray_DOUBLE:
-    case PyArray_LONGDOUBLE:
-        if (PyTypeNum_ISCOMPLEX(totype)) {
-            return (telsize >> 1) >= felsize;
-        }
-        else if (PyTypeNum_ISFLOAT(totype) && (telsize == felsize)) {
-            /* On some systems, double == longdouble */
-            return 1;
-        }
-        else {
-            return totype > fromtype;
-        }
-    case PyArray_CFLOAT:
-    case PyArray_CDOUBLE:
-    case PyArray_CLONGDOUBLE:
-        if (PyTypeNum_ISCOMPLEX(totype) && (telsize == felsize)) {
-            /* On some systems, double == longdouble */
-            return 1;
-        }
-        else {
-            return totype > fromtype;
-        }
-    case PyArray_STRING:
-    case PyArray_UNICODE:
-        return totype > fromtype;
-    default:
-        return 0;
-    }
+    return 0;
 }
 
 /*NUMPY_API

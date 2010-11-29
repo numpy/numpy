@@ -480,48 +480,44 @@ _signbit_set(PyArrayObject *arr)
 
 /*NUMPY_API
  * ScalarKind
+ *
+ * Returns the scalar kind of a type number, with an
+ * optional tweak based on the scalar value itself.
+ * If no scalar is provided, it returns INTPOS_SCALAR
+ * for both signed and unsigned integers, otherwise
+ * it checks the sign of any signed integer to choose
+ * INTNEG_SCALAR when appropriate.
  */
 NPY_NO_EXPORT NPY_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 {
-    if (PyTypeNum_ISSIGNED(typenum)) {
-        if (arr && _signbit_set(*arr)) {
-            return PyArray_INTNEG_SCALAR;
-        }
-        else {
-            return PyArray_INTPOS_SCALAR;
-        }
-    }
-    if (PyTypeNum_ISFLOAT(typenum)) {
-        return PyArray_FLOAT_SCALAR;
-    }
-    if (PyTypeNum_ISUNSIGNED(typenum)) {
-        return PyArray_INTPOS_SCALAR;
-    }
-    if (PyTypeNum_ISCOMPLEX(typenum)) {
-        return PyArray_COMPLEX_SCALAR;
-    }
-    if (PyTypeNum_ISBOOL(typenum)) {
-        return PyArray_BOOL_SCALAR;
-    }
+    NPY_SCALARKIND ret = PyArray_NOSCALAR;
 
-    if (PyTypeNum_ISUSERDEF(typenum)) {
-        NPY_SCALARKIND retval;
+    if ((unsigned int)typenum < NPY_NTYPES) {
+        ret = _npy_scalar_kinds[typenum];
+        /* Signed integer types are INTNEG in the table */
+        if (ret == PyArray_INTNEG_SCALAR) {
+            if (!arr || !_signbit_set(*arr)) {
+                ret = PyArray_INTPOS_SCALAR;
+            }
+        }
+    } else if (PyTypeNum_ISUSERDEF(typenum)) {
         PyArray_Descr* descr = PyArray_DescrFromType(typenum);
 
         if (descr->f->scalarkind) {
-            retval = descr->f->scalarkind((arr ? *arr : NULL));
-        }
-        else {
-            retval = PyArray_NOSCALAR;
+            ret = descr->f->scalarkind((arr ? *arr : NULL));
         }
         Py_DECREF(descr);
-        return retval;
     }
-    return PyArray_OBJECT_SCALAR;
+
+    return ret;
 }
 
-/*NUMPY_API*/
+/*NUMPY_API
+ *
+ * Determines whether the data type 'thistype', with
+ * scalar kind 'kind', can be coerced into 'neededtype'.
+ */
 NPY_NO_EXPORT int
 PyArray_CanCoerceScalar(int thistype, int neededtype,
                         NPY_SCALARKIND scalar)
@@ -529,9 +525,31 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     PyArray_Descr* from;
     int *castlist;
 
+    /* If 'thistype' is not a scalar, it must be safely castable */
     if (scalar == PyArray_NOSCALAR) {
         return PyArray_CanCastSafely(thistype, neededtype);
     }
+    if ((unsigned int)neededtype < NPY_NTYPES) {
+        NPY_SCALARKIND neededscalar;
+
+        if (scalar == PyArray_OBJECT_SCALAR) {
+            return PyArray_CanCastSafely(thistype, neededtype);
+        }
+
+        /*
+         * This is not quite what PyArray_ScalarKind() returns,
+         * since signed ints are classified as INTNEG, but this
+         * works for our purposes here.
+         */
+        neededscalar = _npy_scalar_kinds[neededtype];
+        if (neededscalar >= scalar) {
+            return 1;
+        }
+        if (!PyTypeNum_ISUSERDEF(thistype)) {
+            return 0;
+        }
+    }
+
     from = PyArray_DescrFromType(thistype);
     if (from->f->cancastscalarkindto
         && (castlist = from->f->cancastscalarkindto[scalar])) {
@@ -544,29 +562,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     }
     Py_DECREF(from);
 
-    switch(scalar) {
-    case PyArray_BOOL_SCALAR:
-    case PyArray_OBJECT_SCALAR:
-        return PyArray_CanCastSafely(thistype, neededtype);
-    default:
-        if (PyTypeNum_ISUSERDEF(neededtype)) {
-            return FALSE;
-        }
-        switch(scalar) {
-        case PyArray_INTPOS_SCALAR:
-            return (neededtype >= PyArray_BYTE);
-        case PyArray_INTNEG_SCALAR:
-            return (neededtype >= PyArray_BYTE)
-                && !(PyTypeNum_ISUNSIGNED(neededtype));
-        case PyArray_FLOAT_SCALAR:
-            return (neededtype >= PyArray_FLOAT);
-        case PyArray_COMPLEX_SCALAR:
-            return (neededtype >= PyArray_CFLOAT);
-        default:
-            /* should never get here... */
-            return 1;
-        }
-    }
+    return 0;
 }
 
 /*
@@ -2821,6 +2817,7 @@ static struct PyMethodDef array_module_methods[] = {
 static int
 setup_scalartypes(PyObject *NPY_UNUSED(dict))
 {
+    initialize_casting_tables();
     initialize_numeric_types();
 
     if (PyType_Ready(&PyBool_Type) < 0) {
