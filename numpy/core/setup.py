@@ -169,6 +169,14 @@ def check_complex(config, mathlibs):
     priv = []
     pub = []
 
+    try:
+        if os.uname()[0] == "Interix":
+            warnings.warn("Disabling broken complex support. See #1365")
+            return priv, pub
+    except:
+        # os.uname not available on all platforms. blanket except ugly but safe
+        pass
+
     # Check for complex support
     st = config.check_header('complex.h')
     if st:
@@ -425,7 +433,7 @@ def configuration(parent_package='',top_path=None):
                 PYTHON_HAS_UNICODE_WIDE = True
             else:
                 PYTHON_HAS_UNICODE_WIDE = False
-                
+
             if ENABLE_SEPARATE_COMPILATION:
                 moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
 
@@ -698,7 +706,7 @@ def configuration(parent_package='',top_path=None):
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
             subst_dict)
-   
+
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
@@ -770,7 +778,7 @@ def configuration(parent_package='',top_path=None):
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
         multiarray_src.append(generate_multiarray_templated_sources)
- 
+
         umath_deps.extend(umath_src)
         umath_src = [join('src', 'umath', 'umathmodule_onefile.c')]
         umath_src.append(generate_umath_templated_sources)
