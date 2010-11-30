@@ -516,7 +516,7 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 /*NUMPY_API
  *
  * Determines whether the data type 'thistype', with
- * scalar kind 'kind', can be coerced into 'neededtype'.
+ * scalar kind 'scalar', can be coerced into 'neededtype'.
  */
 NPY_NO_EXPORT int
 PyArray_CanCoerceScalar(int thistype, int neededtype,
@@ -537,9 +537,17 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
         }
 
         /*
-         * This is not quite what PyArray_ScalarKind() returns,
-         * since signed ints are classified as INTNEG, but this
-         * works for our purposes here.
+         * The lookup table gives us exactly what we need for
+         * this comparison, which PyArray_ScalarKind would not.
+         *
+         * The rule is that positive scalars can be coerced
+         * to a signed ints, but negative scalars cannot be coerced
+         * to unsigned ints.
+         *   _npy_scalar_kinds[int]==NEGINT > POSINT,
+         *      so 1 is returned, but
+         *   _npy_scalar_kinds[uint]==POSINT < NEGINT,
+         *      so 0 is returned, as required.
+         * 
          */
         neededscalar = _npy_scalar_kinds[neededtype];
         if (neededscalar >= scalar) {

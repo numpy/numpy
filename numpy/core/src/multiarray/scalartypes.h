@@ -2,10 +2,17 @@
 #define _NPY_SCALARTYPES_H_
 
 /* Internal look-up tables */
-extern unsigned char
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+extern NPY_NO_EXPORT unsigned char
 _npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
-extern char
+extern NPY_NO_EXPORT char
 _npy_scalar_kinds[NPY_NTYPES];
+#else
+NPY_NO_EXPORT unsigned char
+_npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
+NPY_NO_EXPORT char
+_npy_scalar_kinds[NPY_NTYPES];
+#endif
 
 NPY_NO_EXPORT void
 initialize_casting_tables(void);
