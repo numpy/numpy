@@ -506,7 +506,11 @@ compiler_class['intel'] = ('intelccompiler','IntelCCompiler',
                            "Intel C Compiler for 32-bit applications")
 compiler_class['intele'] = ('intelccompiler','IntelItaniumCCompiler',
                            "Intel C Itanium Compiler for Itanium-based applications")
-ccompiler._default_compilers += (('linux.*','intel'),('linux.*','intele'))
+compiler_class['pathcc'] = ('pathccompiler','PathScaleCCompiler',
+                            "PathScale Compiler for SiCortex-based applications")
+ccompiler._default_compilers += (('linux.*','intel'),
+                                 ('linux.*','intele'),
+                                 ('linux.*','pathcc'))
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',

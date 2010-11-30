@@ -694,7 +694,7 @@ _default_compilers = (
                'intelvem', 'intelem')),
     ('cygwin.*', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
     ('linux.*', ('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
-                'intele','intelem','gnu95','g95')),
+                'intele','intelem','gnu95','g95','pathf95')),
     ('darwin.*', ('nag', 'absoft', 'ibm', 'intel', 'gnu', 'gnu95', 'g95', 'pg')),
     ('sunos.*', ('sun','gnu','gnu95','g95')),
     ('irix.*', ('mips','gnu','gnu95',)),
