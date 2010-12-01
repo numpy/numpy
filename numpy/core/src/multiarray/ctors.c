@@ -1978,6 +1978,9 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     /* Don't copy if sizes are compatible */
     if ((flags & ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
         arrflags = arr->flags;
+        if (arr->nd <= 1 && (flags & FORTRAN)) {
+            flags |= CONTIGUOUS;
+        }
         copy = (flags & ENSURECOPY) ||
             ((flags & CONTIGUOUS) && (!(arrflags & CONTIGUOUS)))
             || ((flags & ALIGNED) && (!(arrflags & ALIGNED)))
