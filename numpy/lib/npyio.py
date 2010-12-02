@@ -1269,7 +1269,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         elif (names is not None) and (len(names) > nbcols):
             names = [names[_] for _ in usecols]
     elif (names is not None) and (dtype is not None):
-        names = dtype.names
+        names = list(dtype.names)
 
 
     # Process the missing values ...............................
