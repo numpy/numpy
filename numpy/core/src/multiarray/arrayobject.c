@@ -859,7 +859,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
              * dimensions will have been appended to `a` and `b`.
              * In that case, reduce them using `op`.
              */
-            if (PyArray_NDIM(temp) > result_ndim) {
+            if (PyArray_Check(temp) && PyArray_NDIM(temp) > result_ndim) {
                 /* If the type was multidimensional, collapse that part to 1-D
                  */
                 if (PyArray_NDIM(temp) != result_ndim+1) {
