@@ -32,6 +32,12 @@ def test_half_consistency():
     b.dtype = uint16
     assert_equal(a,b)
 
+    # Check some of the ufuncs
+    assert_equal(np.isnan(a_f16), np.isnan(a_f32))
+    assert_equal(np.isinf(a_f16), np.isinf(a_f32))
+    assert_equal(np.isfinite(a_f16), np.isfinite(a_f32))
+    assert_equal(np.signbit(a_f16), np.signbit(a_f32))
+
     # Check the range for which all integers can be represented
     a = np.arange(-2048,2049)
     a_f16 = np.array(a, dtype=float16)
@@ -46,6 +52,7 @@ def test_half_consistency():
     assert_(not (a <= nan).any())
     assert_(not (a > nan).any())
     assert_(not (a >= nan).any())
+
 
 def test_half_values():
     """Confirms a small number of known half values"""
@@ -135,6 +142,8 @@ def test_half_correctness():
              "First non-equal is half value %x -> %g != %g" %
                         (a[bad_index], a_f64[bad_index], a_manual[bad_index]))
 
+
+
 def test_half_ordering():
     """Make sure comparisons are working right"""
 
@@ -198,3 +207,72 @@ def test_half_funcs():
     a = np.arange(10, dtype=float16)
     for i in range(10):
         assert_equal(a.item(i),i)
+
+def test_half_ufuncs():
+    """Test the various ufuncs"""
+
+    a = np.array([0,1,2,4,2], dtype=float16)
+    b = np.array([-2,5,1,4,3], dtype=float16)
+    c = np.array([0,-1,-np.inf,np.nan,6], dtype=float16)
+
+    assert_equal(np.add(a,b), [-2,6,3,8,5])
+    assert_equal(np.subtract(a,b), [2,-4,1,0,-1])
+    assert_equal(np.multiply(a,b), [0,5,2,16,6])
+    assert_equal(np.divide(a,b), [0,0.199951171875,2,1,0.66650390625])
+
+    assert_equal(np.equal(a,b), [False,False,False,True,False])
+    assert_equal(np.not_equal(a,b), [True,True,True,False,True])
+    assert_equal(np.less(a,b), [False,True,False,False,True])
+    assert_equal(np.less_equal(a,b), [False,True,False,True,True])
+    assert_equal(np.greater(a,b), [True,False,True,False,False])
+    assert_equal(np.greater_equal(a,b), [True,False,True,True,False])
+    assert_equal(np.logical_and(a,b), [False,True,True,True,True])
+    assert_equal(np.logical_or(a,b), [True,True,True,True,True])
+    assert_equal(np.logical_xor(a,b), [True,False,False,False,False])
+    assert_equal(np.logical_not(a), [True,False,False,False,False])
+
+    assert_equal(np.isnan(c), [False,False,False,True,False])
+    assert_equal(np.isinf(c), [False,False,True,False,False])
+    assert_equal(np.isfinite(c), [True,True,False,False,True])
+    assert_equal(np.signbit(b), [True,False,False,False,False])
+
+    assert_equal(np.copysign(b,a), [2,5,1,4,3])
+    
+    all = np.arange(0x7c00, dtype=uint16) # All positive finite #'s
+    hinf = np.array((np.inf,), dtype=float16)
+    all_f16 = all.view(dtype=float16)
+    assert_equal(np.spacing(all_f16[:-1]), all_f16[1:]-all_f16[:-1])
+    assert_equal(np.nextafter(all_f16[:-1], hinf), all_f16[1:])
+    all |= 0x8000 # switch to negatives
+    assert_equal(np.spacing(all_f16[1:]), all_f16[:-1]-all_f16[1:])
+    assert_equal(np.spacing(all_f16[0]), np.spacing(all_f16[1])) # Also check -0
+    assert_equal(np.nextafter(all_f16[1:], hinf), all_f16[:-1])
+    
+    assert_equal(np.maximum(a,b), [0,5,2,4,3])
+    x = np.maximum(b,c)
+    assert_(np.isnan(x[3]))
+    x[3] = 0
+    assert_equal(x, [0,5,1,0,6])
+    assert_equal(np.minimum(a,b), [-2,1,1,4,2])
+    x = np.minimum(b,c)
+    assert_(np.isnan(x[3]))
+    x[3] = 0
+    assert_equal(x, [-2,-1,-np.inf,0,3])
+    assert_equal(np.fmax(a,b), [0,5,2,4,3])
+    assert_equal(np.fmax(b,c), [0,5,1,4,6])
+    assert_equal(np.fmin(a,b), [-2,1,1,4,2])
+    assert_equal(np.fmin(b,c), [-2,-1,-np.inf,4,3])
+
+    assert_equal(np.floor_divide(a,b), [0,0,2,1,0])
+    assert_equal(np.remainder(a,b), [0,1,0,0,2])
+    assert_equal(np.square(b), [4,25,1,16,9])
+    assert_equal(np.reciprocal(b), [-0.5,0.199951171875,1,0.25,0.333251953125])
+    assert_equal(np.ones_like(b), [1,1,1,1,1])
+    assert_equal(np.conjugate(b), b)
+    assert_equal(np.absolute(b), [2,5,1,4,3])
+    assert_equal(np.negative(b), [2,-5,-1,-4,-3])
+    assert_equal(np.sign(b), [-1,1,1,1,1])
+    assert_equal(np.modf(b), ([0,0,0,0,0],b))
+    assert_equal(np.frexp(b), ([-0.5,0.625,0.5,0.5,0.75],[2,3,1,3,2]))
+    assert_equal(np.ldexp(b,[0,1,2,4,2]), [-2,10,4,64,12])
+
