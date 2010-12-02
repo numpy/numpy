@@ -3,6 +3,20 @@
  * vim:syntax=c
  */
 
+/*
+ *****************************************************************************
+ **               IMPORTANT NOTE for loops.h.src -> loops.h                 **
+ *****************************************************************************
+ *  The template file loops.h.src is not automatically converted into
+ *  loops.h by the build system.  If you edit this file, you must manually
+ *  do the conversion using numpy/distutils/conv_template.py from the
+ *  command line as follows:
+ *
+ *  $ cd <NumPy source root directory>
+ *  $ python  numpy/distutils/conv_template.py numpy/core/src/umath/loops.h.src 
+ *  $
+ */
+
 #ifndef _NPY_UMATH_LOOPS_H_
 #define _NPY_UMATH_LOOPS_H_
 
@@ -172,10 +186,10 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
 
 /**begin repeat
  * Float types
- *  #type = float, double, longdouble#
- *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
- *  #c = f, , l#
- *  #C = F, , L#
+ *  #type = npy_half, float, double, longdouble#
+ *  #TYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ *  #c = f, f, , l#
+ *  #C = F, F, , L#
  */
 
 

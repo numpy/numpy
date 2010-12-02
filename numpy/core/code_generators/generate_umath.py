@@ -31,10 +31,16 @@ class TypeDescription(object):
         The typecode(s) of the inputs.
     out : str or None, optional
         The typecode(s) of the outputs.
+    astype : dict or None, optional
+        If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
+        instead of PyUFunc_x_x/PyUFunc_xx_x.
     """
-    def __init__(self, type, f=None, in_=None, out=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None):
         self.type = type
         self.func_data = f
+        if astype is None:
+            astype = {}
+        self.astype_dict = astype
         if in_ is not None:
             in_ = in_.replace('P', type)
         self.in_ = in_
@@ -49,8 +55,9 @@ class TypeDescription(object):
         if self.out is None:
             self.out = self.type * nout
         assert len(self.out) == nout
+        self.astype = self.astype_dict.get(self.type, None)
 
-_fdata_map = dict(f='npy_%sf', d='npy_%s', g='npy_%sl',
+_fdata_map = dict(j='npy_%sf', f='npy_%sf', d='npy_%s', g='npy_%sl',
                   F='nc_%sf', D='nc_%s', G='nc_%sl')
 def build_func_data(types, f):
     func_data = []
@@ -59,7 +66,7 @@ def build_func_data(types, f):
         func_data.append(d)
     return func_data
 
-def TD(types, f=None, in_=None, out=None):
+def TD(types, f=None, astype=None, in_=None, out=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -78,7 +85,7 @@ def TD(types, f=None, in_=None, out=None):
         out = (None,) * len(types)
     tds = []
     for t, fd, i, o in zip(types, func_data, in_, out):
-        tds.append(TypeDescription(t, f=fd, in_=i, out=o))
+        tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype))
     return tds
 
 class Ufunc(object):
@@ -166,6 +173,7 @@ chartoname = {'?': 'bool',
               'L': 'ulong',
               'q': 'longlong',
               'Q': 'ulonglong',
+              'j': 'half',
               'f': 'float',
               'd': 'double',
               'g': 'longdouble',
@@ -180,7 +188,7 @@ chartoname = {'?': 'bool',
               'P': 'OBJECT',
               }
 
-all = '?bBhHiIlLqQfdgFDGOMm'
+all = '?bBhHiIlLqQjfdgFDGOMm'
 O = 'O'
 P = 'P'
 ints = 'bBhHiIlLqQ'
@@ -188,7 +196,7 @@ times = 'Mm'
 intsO = ints + O
 bints = '?' + ints
 bintsO = bints + O
-flts = 'fdg'
+flts = 'jfdg'
 fltsO = flts + O
 fltsP = flts + P
 cmplx = 'FDG'
@@ -217,6 +225,10 @@ for code in 'bhilq':
         uint64 = english_upper(code)
         break
 
+# This dictionary describes all the ufunc implementations, generating
+# all the function names and their corresponding ufunc signatures.  TD is
+# an object which expands a list of character codes into an array of
+# TypeDescriptions.
 defdict = {
 'add' :
     Ufunc(2, 1, Zero,
@@ -274,7 +286,7 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.fmod'),
           TD(ints),
-          TD(flts, f='fmod'),
+          TD(flts, f='fmod', astype={'j':'f'}),
           TD(P, f='fmod'),
           ),
 'square' :
@@ -299,7 +311,7 @@ defdict = {
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.power'),
           TD(ints),
-          TD(inexact, f='pow'),
+          TD(inexact, f='pow', astype={'j':'f'}),
           TD(O, f='npy_ObjectPower'),
           ),
 'absolute' :
@@ -407,12 +419,12 @@ defdict = {
 'logaddexp' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.logaddexp'),
-          TD(flts, f="logaddexp")
+          TD(flts, f="logaddexp", astype={'j':'f'})
           ),
 'logaddexp2' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.logaddexp2'),
-          TD(flts, f="logaddexp2")
+          TD(flts, f="logaddexp2", astype={'j':'f'})
           ),
 # FIXME: decide if the times should have the bitwise operations.
 'bitwise_and' :
@@ -454,177 +466,177 @@ defdict = {
 'degrees' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.degrees'),
-          TD(fltsP, f='degrees'),
+          TD(fltsP, f='degrees', astype={'j':'f'}),
           ),
 'rad2deg' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.rad2deg'),
-          TD(fltsP, f='rad2deg'),
+          TD(fltsP, f='rad2deg', astype={'j':'f'}),
           ),
 'radians' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.radians'),
-          TD(fltsP, f='radians'),
+          TD(fltsP, f='radians', astype={'j':'f'}),
           ),
 'deg2rad' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.deg2rad'),
-          TD(fltsP, f='deg2rad'),
+          TD(fltsP, f='deg2rad', astype={'j':'f'}),
           ),
 'arccos' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arccos'),
-          TD(inexact, f='acos'),
+          TD(inexact, f='acos', astype={'j':'f'}),
           TD(P, f='arccos'),
           ),
 'arccosh' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arccosh'),
-          TD(inexact, f='acosh'),
+          TD(inexact, f='acosh', astype={'j':'f'}),
           TD(P, f='arccosh'),
           ),
 'arcsin' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arcsin'),
-          TD(inexact, f='asin'),
+          TD(inexact, f='asin', astype={'j':'f'}),
           TD(P, f='arcsin'),
           ),
 'arcsinh' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arcsinh'),
-          TD(inexact, f='asinh'),
+          TD(inexact, f='asinh', astype={'j':'f'}),
           TD(P, f='arcsinh'),
           ),
 'arctan' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arctan'),
-          TD(inexact, f='atan'),
+          TD(inexact, f='atan', astype={'j':'f'}),
           TD(P, f='arctan'),
           ),
 'arctanh' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arctanh'),
-          TD(inexact, f='atanh'),
+          TD(inexact, f='atanh', astype={'j':'f'}),
           TD(P, f='arctanh'),
           ),
 'cos' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.cos'),
-          TD(inexact, f='cos'),
+          TD(inexact, f='cos', astype={'j':'f'}),
           TD(P, f='cos'),
           ),
 'sin' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sin'),
-          TD(inexact, f='sin'),
+          TD(inexact, f='sin', astype={'j':'f'}),
           TD(P, f='sin'),
           ),
 'tan' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.tan'),
-          TD(inexact, f='tan'),
+          TD(inexact, f='tan', astype={'j':'f'}),
           TD(P, f='tan'),
           ),
 'cosh' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.cosh'),
-          TD(inexact, f='cosh'),
+          TD(inexact, f='cosh', astype={'j':'f'}),
           TD(P, f='cosh'),
           ),
 'sinh' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sinh'),
-          TD(inexact, f='sinh'),
+          TD(inexact, f='sinh', astype={'j':'f'}),
           TD(P, f='sinh'),
           ),
 'tanh' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.tanh'),
-          TD(inexact, f='tanh'),
+          TD(inexact, f='tanh', astype={'j':'f'}),
           TD(P, f='tanh'),
           ),
 'exp' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.exp'),
-          TD(inexact, f='exp'),
+          TD(inexact, f='exp', astype={'j':'f'}),
           TD(P, f='exp'),
           ),
 'exp2' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.exp2'),
-          TD(inexact, f='exp2'),
+          TD(inexact, f='exp2', astype={'j':'f'}),
           TD(P, f='exp2'),
           ),
 'expm1' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.expm1'),
-          TD(inexact, f='expm1'),
+          TD(inexact, f='expm1', astype={'j':'f'}),
           TD(P, f='expm1'),
           ),
 'log' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log'),
-          TD(inexact, f='log'),
+          TD(inexact, f='log', astype={'j':'f'}),
           TD(P, f='log'),
           ),
 'log2' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log2'),
-          TD(inexact, f='log2'),
+          TD(inexact, f='log2', astype={'j':'f'}),
           TD(P, f='log2'),
           ),
 'log10' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log10'),
-          TD(inexact, f='log10'),
+          TD(inexact, f='log10', astype={'j':'f'}),
           TD(P, f='log10'),
           ),
 'log1p' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log1p'),
-          TD(inexact, f='log1p'),
+          TD(inexact, f='log1p', astype={'j':'f'}),
           TD(P, f='log1p'),
           ),
 'sqrt' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sqrt'),
-          TD(inexact, f='sqrt'),
+          TD(inexact, f='sqrt', astype={'j':'f'}),
           TD(P, f='sqrt'),
           ),
 'ceil' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.ceil'),
-          TD(flts, f='ceil'),
+          TD(flts, f='ceil', astype={'j':'f'}),
           TD(P, f='ceil'),
           ),
 'trunc' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.trunc'),
-          TD(flts, f='trunc'),
+          TD(flts, f='trunc', astype={'j':'f'}),
           TD(P, f='trunc'),
           ),
 'fabs' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.fabs'),
-          TD(flts, f='fabs'),
+          TD(flts, f='fabs', astype={'j':'f'}),
           TD(P, f='fabs'),
        ),
 'floor' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.floor'),
-          TD(flts, f='floor'),
+          TD(flts, f='floor', astype={'j':'f'}),
           TD(P, f='floor'),
           ),
 'rint' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.rint'),
-          TD(inexact, f='rint'),
+          TD(inexact, f='rint', astype={'j':'f'}),
           TD(P, f='rint'),
           ),
 'arctan2' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.arctan2'),
-          TD(flts, f='atan2'),
+          TD(flts, f='atan2', astype={'j':'f'}),
           TD(P, f='arctan2'),
           ),
 'remainder' :
@@ -636,7 +648,7 @@ defdict = {
 'hypot' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.hypot'),
-          TD(flts, f='hypot'),
+          TD(flts, f='hypot', astype={'j':'f'}),
           TD(P, f='hypot'),
           ),
 'isnan' :
@@ -692,7 +704,8 @@ def indent(st,spaces):
     indented = re.sub(r' +$',r'',indented)
     return indented
 
-chartotype1 = {'f': 'f_f',
+chartotype1 = {'j': 'j_j',
+               'f': 'f_f',
                'd': 'd_d',
                'g': 'g_g',
                'F': 'F_F',
@@ -701,7 +714,8 @@ chartotype1 = {'f': 'f_f',
                'O': 'O_O',
                'P': 'O_O_method'}
 
-chartotype2 = {'f': 'ff_f',
+chartotype2 = {'j': 'jj_j',
+               'f': 'ff_f',
                'd': 'dd_d',
                'g': 'gg_g',
                'F': 'FF_F',
@@ -739,8 +753,11 @@ def make_arrays(funcdict):
         for t in uf.type_descriptions:
             if t.func_data not in (None, UsesArraysAsData):
                 funclist.append('NULL')
-                astr = '%s_functions[%d] = PyUFunc_%s;' % \
-                       (name, k, thedict[t.type])
+                astype = ''
+                if not t.astype is None:
+                    astype = '_As_%s' % thedict[t.astype]
+                astr = '%s_functions[%d] = PyUFunc_%s%s;' % \
+                       (name, k, thedict[t.type], astype)
                 code2list.append(astr)
                 if t.type == 'O':
                     astr = '%s_data[%d] = (void *) %s;' % \

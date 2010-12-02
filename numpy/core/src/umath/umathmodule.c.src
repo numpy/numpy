@@ -155,6 +155,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 
 static PyUFuncGenericFunction frexp_functions[] = {
 #ifdef HAVE_FREXPF
+    HALF_frexp,
     FLOAT_frexp,
 #endif
     DOUBLE_frexp
@@ -168,6 +169,7 @@ static void * blank6_data[] = { (void *)NULL, (void *)NULL, (void *)NULL,
                                 (void *)NULL, (void *)NULL, (void *)NULL};
 static char frexp_signatures[] = {
 #ifdef HAVE_FREXPF
+    PyArray_HALF, PyArray_HALF, PyArray_INT,
     PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
 #endif
     PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
@@ -184,7 +186,9 @@ static char frexp_signatures[] = {
 
 static PyUFuncGenericFunction ldexp_functions[] = {
 #ifdef HAVE_LDEXPF
+    HALF_ldexp,
     FLOAT_ldexp,
+    LDEXP_LONG(HALF),
     LDEXP_LONG(FLOAT),
 #endif
     DOUBLE_ldexp,
@@ -198,7 +202,9 @@ static PyUFuncGenericFunction ldexp_functions[] = {
 
 static char ldexp_signatures[] = {
 #ifdef HAVE_LDEXPF
+    PyArray_HALF, PyArray_INT, PyArray_HALF,
     PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
+    PyArray_HALF, PyArray_LONG, PyArray_HALF,
     PyArray_FLOAT, PyArray_LONG, PyArray_FLOAT,
 #endif
     PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE,
@@ -212,14 +218,9 @@ static char ldexp_signatures[] = {
 static void
 InitOtherOperators(PyObject *dictionary) {
     PyObject *f;
-    int num=1;
+    int num;
 
-#ifdef HAVE_FREXPL
-    num += 1;
-#endif
-#ifdef HAVE_FREXPF
-    num += 1;
-#endif
+    num = sizeof(frexp_functions) / sizeof(frexp_functions[0]);
     f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
                                 frexp_signatures, num,
                                 1, 2, PyUFunc_None, "frexp",
@@ -228,13 +229,7 @@ InitOtherOperators(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "frexp", f);
     Py_DECREF(f);
 
-    num = 2;
-#ifdef HAVE_LDEXPL
-    num += 2;
-#endif
-#ifdef HAVE_LDEXPF
-    num += 2;
-#endif
+    num = sizeof(ldexp_functions) / sizeof(ldexp_functions[0]);
     f = PyUFunc_FromFuncAndData(ldexp_functions, blank6_data, ldexp_signatures, num,
                                 2, 1, PyUFunc_None, "ldexp",
                                 "Compute y = x1 * 2**x2.",0);
