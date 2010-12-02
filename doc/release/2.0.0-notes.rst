@@ -10,6 +10,13 @@ Highlights
 New features
 ============
 
+New 16-bit floating point type
+------------------------------
+
+This release adds support for the IEEE 754-2008 binary16
+format, available as the data type `numpy.half`.  Within Python,
+the type behaves similarly to `float` or `double`, and C extensions
+can add support for it with the exposed half-float API.
 
 Changes
 =======
