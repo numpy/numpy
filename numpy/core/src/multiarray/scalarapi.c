@@ -57,6 +57,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         CASE(ULONG, ULong);
         CASE(LONGLONG, LongLong);
         CASE(ULONGLONG, ULongLong);
+        CASE(HALF, Half);
         CASE(FLOAT, Float);
         CASE(DOUBLE, Double);
         CASE(LONGDOUBLE, LongDouble);
@@ -110,6 +111,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         else {
             /* Inexact */
             if _CHK(Floating) {
+                _IFCASE(Half);
                 _IFCASE(Float);
                 _IFCASE(Double);
                 _IFCASE(LongDouble);

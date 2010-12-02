@@ -9,6 +9,7 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
+#include "numpy/halffloat.h"
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_3kcompat.h"
@@ -478,6 +479,12 @@ format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
 
 /**end repeat**/
 
+NPY_NO_EXPORT void
+format_half(char *buf, size_t buflen, npy_half val, unsigned int prec)
+{
+    format_float(buf, buflen, npy_half_to_float(val), prec);
+}
+
 /*
  * over-ride repr and str of array-scalar strings and unicode to
  * remove NULL bytes and then call the corresponding functions
@@ -516,7 +523,9 @@ static PyObject *
 }
 /**end repeat**/
 
-/* These values are finfo.precision + 2 */
+/* The REPR values are finfo.precision + 2 */
+#define HALFPREC_REPR 5
+#define HALFPREC_STR 5
 #define FLOATPREC_REPR 8
 #define FLOATPREC_STR 6
 #define DOUBLEPREC_REPR 17
@@ -536,9 +545,10 @@ static PyObject *
  */
 
 /**begin repeat
- * #name = float, double, longdouble#
- * #Name = Float, Double, LongDouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #name = half, float, double, longdouble#
+ * #Name = Half, Float, Double, LongDouble#
+ * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #hascomplex = 0, 1, 1, 1#
  */
 /**begin repeat1
  * #kind = str, repr#
@@ -551,12 +561,13 @@ static PyObject *
 @name@type_@kind@(PyObject *self)
 {
     char buf[100];
-    @name@ val = ((Py@Name@ScalarObject *)self)->obval;
+    npy_@name@ val = ((Py@Name@ScalarObject *)self)->obval;
 
     format_@name@(buf, sizeof(buf), val, PREC);
     return PyUString_FromString(buf);
 }
 
+#if @hascomplex@
 static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
@@ -566,6 +577,7 @@ c@name@type_@kind@(PyObject *self)
     format_c@name@(buf, sizeof(buf), val, PREC);
     return PyUString_FromString(buf);
 }
+#endif
 
 #undef PREC
 
@@ -576,16 +588,17 @@ c@name@type_@kind@(PyObject *self)
  * float type print (control print a, where a is a float type instance)
  */
 /**begin repeat
- * #name = float, double, longdouble#
- * #Name = Float, Double, LongDouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #name = half, float, double, longdouble#
+ * #Name = Half, Float, Double, LongDouble#
+ * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #hascomplex = 0, 1, 1, 1#
  */
 
 static int
 @name@type_print(PyObject *v, FILE *fp, int flags)
 {
         char buf[100];
-        @name@ val = ((Py@Name@ScalarObject *)v)->obval;
+        npy_@name@ val = ((Py@Name@ScalarObject *)v)->obval;
 
         format_@name@(buf, sizeof(buf), val,
                       (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
@@ -595,6 +608,7 @@ static int
         return 0;
 }
 
+#if @hascomplex@
 static int
 c@name@type_print(PyObject *v, FILE *fp, int flags)
 {
@@ -609,6 +623,7 @@ c@name@type_print(PyObject *v, FILE *fp, int flags)
         Py_END_ALLOW_THREADS
         return 0;
 }
+#endif
 
 /**end repeat**/
 
@@ -2117,13 +2132,13 @@ object_arrtype_dealloc(PyObject *v)
 
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
- *         ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble,
- *         string, unicode, object, datetime, timedelta#
+ *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
+ *         clongdouble, string, unicode, object, datetime, timedelta#
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
- *         ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE,
- *         STRING, UNICODE, OBJECT, DATETIME, TIMEDELTA#
- * #work = 0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0,0,0#
- * #default = 0*16,1*2,2,0*2#
+ *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
+ *         CLONGDOUBLE, STRING, UNICODE, OBJECT, DATETIME, TIMEDELTA#
+ * #work = 0,0,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0,0,0#
+ * #default = 0*17,1*2,2,0*2#
  */
 
 #define _NPY_UNUSED2_1
@@ -2161,9 +2176,9 @@ static PyObject *
      */
     if (obj == NULL) {
 #if @default@ == 0
-        char *mem = malloc(sizeof(@name@));
+        char *mem = malloc(sizeof(npy_@name@));
 
-        memset(mem, 0, sizeof(@name@));
+        memset(mem, 0, sizeof(npy_@name@));
         robj = PyArray_Scalar(mem, typecode, NULL);
         free(mem);
 #elif @default@ == 1
@@ -2625,6 +2640,12 @@ c@lname@_arrtype_hash(PyObject *obj)
 /**end repeat**/
 
 static long
+half_arrtype_hash(PyObject *obj)
+{
+    return _Py_HashDouble(npy_half_to_double(((PyHalfScalarObject *)obj)->obval));
+}
+
+static long
 object_arrtype_hash(PyObject *obj)
 {
     return PyObject_Hash(((PyObjectScalarObject *)obj)->obval);
@@ -3058,10 +3079,10 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 
 /**begin repeat
  * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
- *         ULongLong, Float, Double, LongDouble, Datetime, Timedelta#
- * #name = int*5, uint*5, float*3, datetime, timedelta#
- * #CNAME = (CHAR, SHORT, INT, LONG, LONGLONG)*2, FLOAT, DOUBLE, LONGDOUBLE,
- *          DATETIME, TIMEDELTA#
+ *         ULongLong, Half, Float, Double, LongDouble, Datetime, Timedelta#
+ * #name = int*5, uint*5, float*4, datetime, timedelta#
+ * #CNAME = (CHAR, SHORT, INT, LONG, LONGLONG)*2, HALF, FLOAT, DOUBLE,
+ *          LONGDOUBLE, DATETIME, TIMEDELTA#
  */
 #if BITSOF_@CNAME@ == 8
 #define _THIS_SIZE "8"
@@ -3276,10 +3297,10 @@ initialize_casting_tables(void)
     /* Compile-time loop of scalar kinds */
 /**begin repeat
  * #NAME = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #SCKIND = BOOL, (INTNEG, INTPOS)*5, FLOAT, FLOAT, FLOAT,
- *           COMPLEX, COMPLEX, COMPLEX#
+ * #SCKIND = BOOL, (INTNEG, INTPOS)*5, FLOAT*4,
+ *           COMPLEX*3#
  */
     _npy_scalar_kinds_table[PyArray_@NAME@] = PyArray_@SCKIND@_SCALAR;
 /**end repeat**/
@@ -3309,22 +3330,22 @@ initialize_casting_tables(void)
     /* Compile-time loop of casting rules */
 /**begin repeat
  * #FROM_NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *              LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *              LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *              CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #FROM_BASENAME = BYTE, BYTE, SHORT, SHORT, INT, INT, LONG, LONG,
- *                  LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *                  LONGLONG, LONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *                  FLOAT, DOUBLE, LONGDOUBLE#
  * #from_isint = 1, 0, 1, 0, 1, 0, 1, 0,
- *               1, 0, 0, 0, 0,
+ *               1, 0, 0, 0, 0, 0,
  *               0, 0, 0#
  * #from_isuint = 0, 1, 0, 1, 0, 1, 0, 1,
- *                0, 1, 0, 0, 0,
+ *                0, 1, 0, 0, 0, 0,
  *                0, 0, 0#
  * #from_isfloat = 0, 0, 0, 0, 0, 0, 0, 0,
- *                 0, 0, 1, 1, 1,
+ *                 0, 0, 1, 1, 1, 1,
  *                 0, 0, 0#
  * #from_iscomplex = 0, 0, 0, 0, 0, 0, 0, 0,
- *                   0, 0, 0, 0, 0,
+ *                   0, 0, 0, 0, 0, 0,
  *                   1, 1, 1#
  */
 #define _FROM_BSIZE NPY_SIZEOF_@FROM_BASENAME@
@@ -3335,22 +3356,22 @@ initialize_casting_tables(void)
 
 /**begin repeat1
  * #TO_NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *            LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *            LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *            CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #TO_BASENAME = BYTE, BYTE, SHORT, SHORT, INT, INT, LONG, LONG,
- *                LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *                LONGLONG, LONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *                FLOAT, DOUBLE, LONGDOUBLE#
  * #to_isint = 1, 0, 1, 0, 1, 0, 1, 0,
- *             1, 0, 0, 0, 0,
+ *             1, 0, 0, 0, 0, 0,
  *             0, 0, 0#
  * #to_isuint = 0, 1, 0, 1, 0, 1, 0, 1,
- *              0, 1, 0, 0, 0,
+ *              0, 1, 0, 0, 0, 0,
  *              0, 0, 0#
  * #to_isfloat = 0, 0, 0, 0, 0, 0, 0, 0,
- *               0, 0, 1, 1, 1,
+ *               0, 0, 1, 1, 1, 1,
  *               0, 0, 0#
  * #to_iscomplex = 0, 0, 0, 0, 0, 0, 0, 0,
- *                 0, 0, 0, 0, 0,
+ *                 0, 0, 0, 0, 0, 0,
  *                 1, 1, 1#
  */
 #define _TO_BSIZE NPY_SIZEOF_@TO_BASENAME@
@@ -3499,11 +3520,13 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint,
-     *         ulong, ulonglong, float, double, longdouble, cfloat, cdouble,
-     *         clongdouble, string, unicode, void, object, datetime, timedelta#
+     *         ulong, ulonglong, half, float, double, longdouble, cfloat,
+     *         cdouble, clongdouble, string, unicode, void, object, datetime,
+     *         timedelta#
      * #NAME = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt,
-     *         ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble,
-     *         CLongDouble, String, Unicode, Void, Object, Datetime, Timedelta#
+     *         ULong, ULongLong, Half, Float, Double, LongDouble, CFloat,
+     *         CDouble, CLongDouble, String, Unicode, Void, Object, Datetime,
+     *         Timedelta#
      */
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
     Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
@@ -3512,11 +3535,11 @@ initialize_numeric_types(void)
 
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
-     *         float, longdouble, cfloat, clongdouble, void, object, datetime,
-     *         timedelta#
+     *         half, float, longdouble, cfloat, clongdouble, void, object,
+     *         datetime, timedelta#
      * #NAME = Bool, Byte, Short, UByte, UShort, UInt, ULong, ULongLong,
-     *         Float, LongDouble, CFloat, CLongDouble, Void, Object, Datetime,
-     *         Timedelta#
+     *         Half, Float, LongDouble, CFloat, CLongDouble, Void, Object,
+     *         Datetime, Timedelta#
      */
     Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
     /**end repeat**/
@@ -3546,6 +3569,8 @@ initialize_numeric_types(void)
     /**begin repeat
      * #name = repr, str#
      */
+    PyHalfArrType_Type.tp_@name@ = halftype_@name@;
+
     PyFloatArrType_Type.tp_@name@ = floattype_@name@;
     PyCFloatArrType_Type.tp_@name@ = cfloattype_@name@;
 
@@ -3553,6 +3578,7 @@ initialize_numeric_types(void)
     PyCDoubleArrType_Type.tp_@name@  = cdoubletype_@name@;
     /**end repeat**/
 
+    PyHalfArrType_Type.tp_print = halftype_print;
     PyFloatArrType_Type.tp_print = floattype_print;
     PyDoubleArrType_Type.tp_print = doubletype_print;
     PyLongDoubleArrType_Type.tp_print = longdoubletype_print;
@@ -3608,6 +3634,7 @@ static PyTypeObject *typeobjects[] = {
     &PyULongArrType_Type,
     &PyLongLongArrType_Type,
     &PyULongLongArrType_Type,
+    &PyHalfArrType_Type,
     &PyFloatArrType_Type,
     &PyDoubleArrType_Type,
     &PyLongDoubleArrType_Type,

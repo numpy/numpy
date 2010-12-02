@@ -687,6 +687,9 @@ PyArray_TypestrConvert(int itemsize, int gentype)
     }
     else if (gentype == PyArray_FLOATINGLTR) {
         switch(itemsize) {
+        case 2:
+            newtype = PyArray_FLOAT16;
+            break;
         case 4:
             newtype = PyArray_FLOAT32;
             break;

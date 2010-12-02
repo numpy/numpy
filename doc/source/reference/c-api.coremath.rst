@@ -18,7 +18,7 @@ library contains most math-related C99 functionality, which can be used on
 platforms where C99 is not well supported. The core math functions have the
 same API as the C99 ones, except for the npy_* prefix.
 
-The available functions are defined in npy_math.h - please refer to this header
+The available functions are defined in <numpy/npy_math.h> - please refer to this header when
 in doubt.
 
 Floating point classification
@@ -55,7 +55,7 @@ Floating point classification
 
     This is a macro, and is equivalent to C99 isfinite: works for single,
     double and extended precision, and return a non 0 value is x is neither a
-    NaN or a infinity.
+    NaN nor an infinity.
 
 .. cfunction:: int npy_isinf(x)
 
@@ -181,3 +181,200 @@ compile and link options to your extension in your setup.py:
 
 In other words, the usage of info is exactly the same as when using blas_info
 and co.
+
+Half-precision functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 2.0.0
+
+The header file <numpy/halffloat.h> provides functions to work with
+IEEE 754-2008 16-bit floating point values. While this format is
+not typically used for numerical computations, it is useful for
+storing values which require floating point but do not need much precision.
+It can also be used as an educational tool to understand the nature
+of floating point round-off error.
+
+Like for other types, NumPy includes a typedef npy_half for the 16 bit
+float.  Unlike for most of the other types, you cannot use this as a
+normal type in C, since is is a typedef for npy_uint16.  For example,
+1.0 looks like 0x3c00 to C, and if you do an equality comparison
+between the different signed zeros, you will get -0.0 != 0.0
+(0x8000 != 0x0000), which is incorrect.
+
+For these reasons, NumPy provides an API to work with npy_half values
+accessible by including <numpy/halffloat.h> and linking to 'npymath'.
+For functions that are not provided directly, such as the arithmetic
+operations, the preferred method is to convert to float
+or double and back again, as in the following example.
+
+.. code-block:: c
+
+        npy_half sum(int n, npy_half *array) {
+            float ret = 0;
+            while(n--) {
+                ret += npy_half_to_float(*array++);
+            }
+            return npy_float_to_half(ret);
+        }
+
+External Links:
+
+* `754-2008 IEEE Standard for Floating-Point Arithmetic`__
+* `Half-precision Float Wikipedia Article`__.
+* `OpenGL Half Float Pixel Support`__
+* `The OpenEXR image format`__.
+
+__ http://ieeexplore.ieee.org/servlet/opac?punumber=4610933
+__ http://en.wikipedia.org/wiki/Half_precision_floating-point_format
+__ http://www.opengl.org/registry/specs/ARB/half_float_pixel.txt
+__ http://www.openexr.com/about.html
+
+.. cvar:: NPY_HALF_ZERO
+
+    This macro is defined to positive zero.
+
+.. cvar:: NPY_HALF_PZERO
+
+    This macro is defined to positive zero.
+
+.. cvar:: NPY_HALF_NZERO
+
+    This macro is defined to negative zero.
+
+.. cvar:: NPY_HALF_ONE
+
+    This macro is defined to 1.0.
+
+.. cvar:: NPY_HALF_NEGONE
+
+    This macro is defined to -1.0.
+
+.. cvar:: NPY_HALF_PINF
+
+    This macro is defined to +inf.
+
+.. cvar:: NPY_HALF_NINF
+
+    This macro is defined to -inf.
+
+.. cvar:: NPY_HALF_NAN
+
+    This macro is defined to a NaN value, guaranteed to have its sign bit unset.
+
+.. cfunction:: float npy_half_to_float(npy_half h)
+
+   Converts a half-precision float to a single-precision float.
+
+.. cfunction:: double npy_half_to_double(npy_half h)
+
+   Converts a half-precision float to a double-precision float.
+
+.. cfunction:: npy_half npy_float_to_half(float f)
+
+   Converts a single-precision float to a half-precision float.  The
+   value is rounded to the nearest representable half, with ties going
+   to the nearest even.  If the value is too small or too big, the
+   system's floating point underflow or overflow bit will be set.
+
+.. cfunction:: npy_half npy_double_to_half(double d)
+
+   Converts a double-precision float to a half-precision float.  The
+   value is rounded to the nearest representable half, with ties going
+   to the nearest even.  If the value is too small or too big, the
+   system's floating point underflow or overflow bit will be set.
+
+.. cfunction:: int npy_half_eq(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats (h1 == h2).
+
+.. cfunction:: int npy_half_ne(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats (h1 != h2).
+
+.. cfunction:: int npy_half_le(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats (h1 <= h2).
+
+.. cfunction:: int npy_half_lt(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats (h1 < h2).
+
+.. cfunction:: int npy_half_ge(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats (h1 >= h2).
+
+.. cfunction:: int npy_half_gt(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats (h1 > h2).
+
+.. cfunction:: int npy_half_eq_nonan(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats that are known to not be NaN (h1 == h2).  If
+   a value is NaN, the result is undefined.
+
+.. cfunction:: int npy_half_lt_nonan(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats that are known to not be NaN (h1 < h2).  If
+   a value is NaN, the result is undefined.
+
+.. cfunction:: int npy_half_le_nonan(npy_half h1, npy_half h2)
+
+   Compares two half-precision floats that are known to not be NaN (h1 <= h2).  If
+   a value is NaN, the result is undefined.
+
+.. cfunction:: int npy_half_iszero(npy_half h)
+
+   Tests whether the half-precision float has a value equal to zero.  This may be slightly
+   faster than calling npy_half_eq(h, NPY_ZERO).
+
+.. cfunction:: int npy_half_isnan(npy_half h)
+
+   Tests whether the half-precision float is a NaN.
+
+.. cfunction:: int npy_half_isinf(npy_half h)
+
+   Tests whether the half-precision float is plus or minus Inf.
+
+.. cfunction:: int npy_half_isfinite(npy_half h)
+
+   Tests whether the half-precision float is finite (not NaN or Inf).
+
+.. cfunction:: int npy_half_signbit(npy_half h)
+
+   Returns 1 is h is negative, 0 otherwise.
+
+.. cfunction:: npy_half npy_half_copysign(npy_half x, npy_half y)
+
+    Returns the value of x with the sign bit copied from y.  Works for any value,
+    including Inf and NaN.
+    
+.. cfunction:: npy_half npy_half_spacing(npy_half h)
+
+    This is the same for half-precision float as npy_spacing and npy_spacingf
+    described in the low-level floating point section.
+
+.. cfunction:: npy_half npy_half_nextafter(npy_half x, npy_half y)
+
+    This is the same for half-precision float as npy_nextafter and npy_nextafterf
+    described in the low-level floating point section.
+
+.. cfunction:: npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
+
+   Low-level function which converts a 32-bit single-precision float, stored
+   as a uint32, into a 16-bit half-precision float.
+
+.. cfunction:: npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
+
+   Low-level function which converts a 64-bit double-precision float, stored
+   as a uint64, into a 16-bit half-precision float.
+
+.. cfunction:: npy_uint32 npy_halfbits_to_floatbits(npy_uint16 h)
+
+   Low-level function which converts a 16-bit half-precision float
+   into a 32-bit single-precision float, stored as a uint32.
+
+.. cfunction:: npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
+
+   Low-level function which converts a 16-bit half-precision float
+   into a 64-bit double-precision float, stored as a uint64. 
+

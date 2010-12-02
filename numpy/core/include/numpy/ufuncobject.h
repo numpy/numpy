@@ -324,6 +324,8 @@ typedef struct _loop1d_info {
 
 #define generate_divbyzero_error() feraiseexcept(FE_DIVBYZERO)
 #define generate_overflow_error() feraiseexcept(FE_OVERFLOW)
+#define generate_underflow_error() feraiseexcept(FE_UNDERFLOW)
+#define generate_invalid_error() feraiseexcept(FE_INVALID)
 
 #elif defined(_AIX)
 
@@ -343,6 +345,8 @@ typedef struct _loop1d_info {
 
 #define generate_divbyzero_error() fp_raise_xcp(FP_DIV_BY_ZERO)
 #define generate_overflow_error() fp_raise_xcp(FP_OVERFLOW)
+#define generate_underflow_error() fp_raise_xcp(FP_UNDERFLOW)
+#define generate_invalid_error() fp_raise_xcp(FP_INVALID)
 
 #else
 
@@ -381,6 +385,32 @@ static void generate_overflow_error(void) {
         else
            numeric_two += 0.1;
         return;
+        return;
+}
+#endif
+
+#if !defined(generate_underflow_error)
+static double numeric_small = 1e-300;
+static void generate_underflow_error(void) {
+        double dummy;
+        dummy = numeric_small * 1e-300;
+        if (!dummy)
+           return;
+        else
+           numeric_small += 1e-300;
+        return;
+}
+#endif
+
+#if !defined(generate_invalid_error)
+static double numeric_inv_inf = NPY_INF;
+static void generate_invalid_error(void) {
+        double dummy;
+        dummy = numeric_inv_inf - NPY_INF;
+        if (!dummy)
+           return;
+        else
+           numeric_inv_inf += 1.0;
         return;
 }
 #endif

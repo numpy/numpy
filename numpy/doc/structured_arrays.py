@@ -70,10 +70,10 @@ In this case, the constructor expects a comma-separated list of type
 specifiers, optionally with extra shape information.
 The type specifiers can take 4 different forms: ::
 
-  a) b1, i1, i2, i4, i8, u1, u2, u4, u8, f4, f8, c8, c16, a<n>
+  a) b1, i1, i2, i4, i8, u1, u2, u4, u8, f2, f4, f8, c8, c16, a<n>
      (representing bytes, ints, unsigned ints, floats, complex and
       fixed length strings of specified byte lengths)
-  b) int8,...,uint8,...,float32, float64, complex64, complex128
+  b) int8,...,uint8,...,float16, float32, float64, complex64, complex128
      (this time with bit sizes)
   c) older Numeric/numarray type specifications (e.g. Float32).
      Don't use these in new code!

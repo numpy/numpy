@@ -64,6 +64,7 @@ multiarray_types_api = {
     'PyTimeIntegerArrType_Type':        39,
     'PyDatetimeArrType_Type':           40,
     'PyTimedeltaArrType_Type':          41,
+    'PyHalfArrType_Type':               221,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -290,6 +291,12 @@ ufunc_funcs_api = {
     'PyUFunc_ReplaceLoopBySignature':           30,
     'PyUFunc_FromFuncAndDataAndSignature':      31,
     'PyUFunc_SetUsesArraysAsData':              32,
+    'PyUFunc_e_e':                              33,
+    'PyUFunc_e_e_As_f_f':                       34,
+    'PyUFunc_e_e_As_d_d':                       35,
+    'PyUFunc_ee_e':                             36,
+    'PyUFunc_ee_e_As_ff_f':                     37,
+    'PyUFunc_ee_e_As_dd_d':                     38,
 }
 
 # List of all the dicts which define the C API

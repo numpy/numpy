@@ -65,6 +65,7 @@ Exported symbols include:
      |     ulonglong
      +-> inexact
      |   +-> floating           (floatxx)       (kind=f)
+     |   |     half
      |   |     single
      |   |     float_  (double)
      |   |     longfloat
@@ -828,12 +829,12 @@ del key
 typecodes = {'Character':'c',
              'Integer':'bhilqp',
              'UnsignedInteger':'BHILQP',
-             'Float':'fdg',
+             'Float':'efdg',
              'Complex':'FDG',
              'AllInteger':'bBhHiIlLqQpP',
-             'AllFloat':'fdgFDG',
+             'AllFloat':'efdgFDG',
              'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPfdgFDGSUVOMm'}
+             'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict

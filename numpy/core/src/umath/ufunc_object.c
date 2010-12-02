@@ -224,10 +224,11 @@ _lowest_type(char intype)
     case PyArray_ULONG:
     case PyArray_ULONGLONG:
         return PyArray_UBYTE;
-    /* case PyArray_FLOAT:*/
+    /* case PyArray_HALF: */
+    case PyArray_FLOAT:
     case PyArray_DOUBLE:
     case PyArray_LONGDOUBLE:
-        return PyArray_FLOAT;
+        return PyArray_HALF;
     /* case PyArray_CFLOAT:*/
     case PyArray_CDOUBLE:
     case PyArray_CLONGDOUBLE:
@@ -3328,7 +3329,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
          * is used for add and multiply reduction to avoid overflow
          */
         int typenum = PyArray_TYPE(mp);
-        if ((typenum < NPY_FLOAT)
+        if ((typenum < NPY_HALF)
             && ((strcmp(self->name,"add") == 0)
                 || (strcmp(self->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
