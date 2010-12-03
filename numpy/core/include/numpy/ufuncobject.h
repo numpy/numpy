@@ -292,7 +292,9 @@ typedef struct _loop1d_info {
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
-#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || defined(__NetBSD__)
+#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || \
+      (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || \
+      defined(__NetBSD__)
 #include <ieeefp.h>
 
 #define UFUNC_CHECK_STATUS(ret) {                               \
@@ -306,9 +308,12 @@ typedef struct _loop1d_info {
         (void) fpsetsticky(0);                                          \
         }
 
-#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
+#elif defined(__GLIBC__) || defined(__APPLE__) || \
+      defined(__CYGWIN__) || defined(__MINGW32__) || \
+      (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 
-#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__) || defined(__FreeBSD__)
+#if defined(__GLIBC__) || defined(__APPLE__) || \
+    defined(__MINGW32__) || defined(__FreeBSD__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
 #include "fenv/fenv.c"
