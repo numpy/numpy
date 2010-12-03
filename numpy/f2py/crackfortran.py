@@ -828,7 +828,9 @@ def analyzeline(m,case,line):
             else:
                 groupcache[groupcounter]['from']='%s:%s'%(groupcache[groupcounter-1]['from'],groupcache[groupcounter-1]['name'])
         for k in groupcache[groupcounter].keys():
-            if not groupcache[groupcounter][k]: del groupcache[groupcounter][k]
+            if not groupcache[groupcounter][k]:
+                del groupcache[groupcounter][k]
+
         groupcache[groupcounter]['args']=args
         groupcache[groupcounter]['body']=[]
         groupcache[groupcounter]['externals']=[]
@@ -862,6 +864,7 @@ def analyzeline(m,case,line):
             if t:
                 typespec,selector,attr,edecl=cracktypespec0(t.group('this'),t.group('after'))
                 updatevars(typespec,selector,attr,edecl)
+
         if case in ['call','callfun']:
             grouplist[groupcounter-1].append(groupcache[groupcounter])
             grouplist[groupcounter-1][-1]['body']=grouplist[groupcounter]
@@ -871,6 +874,7 @@ def analyzeline(m,case,line):
             grouplist[groupcounter-1][-1]['body']=grouplist[groupcounter]
             del grouplist[groupcounter]
             groupcounter=groupcounter-1 # end interface
+
     elif case=='entry':
         name,args,result,bind=_resolvenameargspattern(m.group('after'))
         if name is not None:
@@ -923,11 +927,12 @@ def analyzeline(m,case,line):
                 if _intentcallbackpattern.match(ap):
                     if k not in groupcache[groupcounter]['args']:
                         if groupcounter>1:
-                            outmess('analyzeline: appending intent(callback) %s'\
-                                    ' to %s arguments\n' % (k,groupcache[groupcounter]['name']))
                             if '__user__' not in groupcache[groupcounter-2]['name']:
                                 outmess('analyzeline: missing __user__ module (could be nothing)\n')
-                            groupcache[groupcounter]['args'].append(k)
+                            if k!=groupcache[groupcounter]['name']: # fixes ticket 1693
+                                outmess('analyzeline: appending intent(callback) %s'\
+                                        ' to %s arguments\n' % (k,groupcache[groupcounter]['name']))
+                                groupcache[groupcounter]['args'].append(k)
                         else:
                             errmess('analyzeline: intent(callback) %s is ignored' % (k))
                     else:
