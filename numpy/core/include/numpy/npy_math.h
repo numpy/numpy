@@ -422,4 +422,14 @@ npy_clongdouble npy_csqrtl(npy_clongdouble z);
 npy_clongdouble npy_ccosl(npy_clongdouble z);
 npy_clongdouble npy_csinl(npy_clongdouble z);
 
+/*
+ * Functions that set the floating point error
+ * status word.
+ */
+
+void npy_set_floatstatus_divbyzero(void);
+void npy_set_floatstatus_overflow(void);
+void npy_set_floatstatus_underflow(void);
+void npy_set_floatstatus_invalid(void);
+
 #endif

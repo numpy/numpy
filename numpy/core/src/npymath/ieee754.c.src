@@ -548,3 +548,122 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
     return nextafterl(x, y);
 }
 #endif
+
+/*
+ * Functions to set the floating point status word.
+ */
+
+#if defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || defined(__NetBSD__)
+#include <ieeefp.h>
+
+void npy_set_floatstatus_divbyzero(void)
+{
+    fpsetsticky(FP_X_DZ);
+} 
+
+void npy_set_floatstatus_overflow(void)
+{
+    fpsetsticky(FP_X_OFL);
+}
+
+void npy_set_floatstatus_underflow(void)
+{
+    fpsetsticky(FP_X_UFL);
+}
+
+void npy_set_floatstatus_invalid(void)
+{
+    fpsetsticky(FP_X_INV);
+}
+
+
+#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
+
+# if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__) || defined(__FreeBSD__)
+#  include <fenv.h>
+# elif defined(__CYGWIN__)
+#  include "fenv/fenv.c"
+# endif
+
+void npy_set_floatstatus_divbyzero(void)
+{
+    feraiseexcept(FE_DIVBYZERO);
+} 
+
+void npy_set_floatstatus_overflow(void)
+{
+    feraiseexcept(FE_OVERFLOW);
+}
+
+void npy_set_floatstatus_underflow(void)
+{
+    feraiseexcept(FE_UNDERFLOW);
+}
+
+void npy_set_floatstatus_invalid(void)
+{
+    feraiseexcept(FE_INVALID);
+}
+
+#elif defined(_AIX)
+#include <float.h>
+#include <fpxcp.h>
+
+void npy_set_floatstatus_divbyzero(void)
+{
+    fp_raise_xcp(FP_DIV_BY_ZERO);
+} 
+
+void npy_set_floatstatus_overflow(void)
+{
+    fp_raise_xcp(FP_OVERFLOW);
+}
+
+void npy_set_floatstatus_underflow(void)
+{
+    fp_raise_xcp(FP_UNDERFLOW);
+}
+
+void npy_set_floatstatus_invalid(void)
+{
+    fp_raise_xcp(FP_INVALID);
+}
+
+#else
+
+/*
+ * By using a volatile floating point value,
+ * the compiler is forced to actually do the requested
+ * operations because of potential concurrency.
+ *
+ * We shouldn't write multiple values to a single
+ * global here, because that would cause
+ * a race condition.
+ */
+static volatile double _npy_floatstatus_x,
+    _npy_floatstatus_zero = 0.0, _npy_floatstatus_big = 1e300,
+    _npy_floatstatus_small = 1e-300, _npy_floatstatus_inf;
+
+void npy_set_floatstatus_divbyzero(void)
+{
+    _npy_floatstatus_x = 1.0 / _npy_floatstatus_zero;
+}
+
+void npy_set_floatstatus_overflow(void)
+{
+    _npy_floatstatus_x = _npy_floatstatus_big * 1e300;
+}
+
+void npy_set_floatstatus_underflow(void)
+{
+    _npy_floatstatus_x = _npy_floatstatus_small * 1e-300;
+}
+
+void npy_set_floatstatus_invalid(void)
+{
+    _npy_floatstatus_inf = NPY_INFINITY;
+    _npy_floatstatus_x = _npy_floatstatus_inf - NPY_INFINITY;
+}
+
+#endif
+

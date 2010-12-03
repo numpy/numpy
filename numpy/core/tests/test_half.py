@@ -67,32 +67,37 @@ class TestHalf(TestCase):
         assert_equal(i_int,j)
 
     def test_nans_infs(self):
-        # Check some of the ufuncs
-        assert_equal(np.isnan(self.all_f16), np.isnan(self.all_f32))
-        assert_equal(np.isinf(self.all_f16), np.isinf(self.all_f32))
-        assert_equal(np.isfinite(self.all_f16), np.isfinite(self.all_f32))
-        assert_equal(np.signbit(self.all_f16), np.signbit(self.all_f32))
+        oldsettings = np.seterr(all='ignore')
+        try:
+            # Check some of the ufuncs
+            assert_equal(np.isnan(self.all_f16), np.isnan(self.all_f32))
+            assert_equal(np.isinf(self.all_f16), np.isinf(self.all_f32))
+            assert_equal(np.isfinite(self.all_f16), np.isfinite(self.all_f32))
+            assert_equal(np.signbit(self.all_f16), np.signbit(self.all_f32))
+            assert_equal(np.spacing(float16(65504)), np.inf)
 
-        # Check comparisons of all values with NaN
-        nan = float16(np.nan)
+            # Check comparisons of all values with NaN
+            nan = float16(np.nan)
 
-        assert_(not (self.all_f16 == nan).any())
-        assert_(not (nan == self.all_f16).any())
+            assert_(not (self.all_f16 == nan).any())
+            assert_(not (nan == self.all_f16).any())
 
-        assert_((self.all_f16 != nan).all())
-        assert_((nan != self.all_f16).all())
+            assert_((self.all_f16 != nan).all())
+            assert_((nan != self.all_f16).all())
 
-        assert_(not (self.all_f16 < nan).any())
-        assert_(not (nan < self.all_f16).any())
+            assert_(not (self.all_f16 < nan).any())
+            assert_(not (nan < self.all_f16).any())
 
-        assert_(not (self.all_f16 <= nan).any())
-        assert_(not (nan <= self.all_f16).any())
+            assert_(not (self.all_f16 <= nan).any())
+            assert_(not (nan <= self.all_f16).any())
 
-        assert_(not (self.all_f16 > nan).any())
-        assert_(not (nan > self.all_f16).any())
+            assert_(not (self.all_f16 > nan).any())
+            assert_(not (nan > self.all_f16).any())
 
-        assert_(not (self.all_f16 >= nan).any())
-        assert_(not (nan >= self.all_f16).any())
+            assert_(not (self.all_f16 >= nan).any())
+            assert_(not (nan >= self.all_f16).any())
+        finally:
+            np.seterr(**oldsettings)
 
 
     def test_half_values(self):
@@ -396,10 +401,10 @@ class TestHalf(TestCase):
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
             assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
+            assert_raises_fpe('overflow', np.spacing, float16(65504))
 
             # Invalid value errors
             assert_raises_fpe('invalid', np.divide, float16(np.inf), float16(np.inf))
-            assert_raises_fpe('invalid', np.spacing, float16(65504))
             assert_raises_fpe('invalid', np.spacing, float16(np.inf))
             assert_raises_fpe('invalid', np.spacing, float16(np.nan))
             assert_raises_fpe('invalid', np.nextafter, float16(np.inf), float16(0))

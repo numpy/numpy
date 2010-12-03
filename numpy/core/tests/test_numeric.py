@@ -315,8 +315,12 @@ class TestFloatExceptions(TestCase):
                         lambda a,b:a+b, ft_max, ft_max*ft_eps)
                 self.assert_raises_fpe(overflow,
                         lambda a,b:a-b, -ft_max, ft_max*ft_eps)
+                self.assert_raises_fpe(overflow,
+                        np.power, ftype(2), ftype(2**fi.nexp))
                 self.assert_raises_fpe(divbyzero,
                         lambda a,b:a/b, ftype(1), ftype(0))
+                self.assert_raises_fpe(invalid,
+                        lambda a,b:a/b, ftype(np.inf), ftype(np.inf))
                 self.assert_raises_fpe(invalid,
                         lambda a,b:a/b, ftype(0), ftype(0))
                 self.assert_raises_fpe(invalid,
@@ -325,8 +329,6 @@ class TestFloatExceptions(TestCase):
                         lambda a,b:a+b, ftype(np.inf), ftype(-np.inf))
                 self.assert_raises_fpe(invalid,
                         lambda a,b:a*b, ftype(0), ftype(np.inf))
-                self.assert_raises_fpe(overflow,
-                        np.power, ftype(2), ftype(2**fi.nexp))
         finally:
             np.seterr(**oldsettings)
 

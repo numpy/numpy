@@ -77,11 +77,16 @@ npy_half npy_half_spacing(npy_half h)
     npy_half ret;
     npy_uint16 h_exp = h&0x7c00u;
     npy_uint16 h_sig = h&0x03ffu;
-    if (h_exp == 0x7c00u || h == 0x7bffu) {
+    if (h_exp == 0x7c00u) {
 #if NPY_HALF_GENERATE_INVALID
-        generate_invalid_error();
+        npy_set_floatstatus_invalid();
 #endif
         ret = NPY_HALF_NAN;
+    } else if (h == 0x7bffu) {
+#if NPY_HALF_GENERATE_OVERFLOW
+        npy_set_floatstatus_overflow();
+#endif
+        ret = NPY_HALF_PINF;
     } else if ((h&0x8000u) && h_sig == 0) { /* Negative boundary case */
         if (h_exp > 0x2c00u) { /* If result is normalized */
             ret = h_exp - 0x2c00u;
@@ -112,7 +117,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
 
     if (!npy_half_isfinite(x) || npy_half_isnan(y)) {
 #if NPY_HALF_GENERATE_INVALID
-        generate_invalid_error();
+        npy_set_floatstatus_invalid();
 #endif
         ret = NPY_HALF_NAN;
     } else if (npy_half_eq_nonan(x, y)) {
@@ -134,7 +139,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
     }
 #ifdef NPY_HALF_GENERATE_OVERFLOW
     if (npy_half_isinf(ret)) {
-        generate_overflow_error();
+        npy_set_floatstatus_overflow();
     }
 #endif
 
@@ -255,7 +260,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
         } else {
             /* overflow to signed inf */
 #if NPY_HALF_GENERATE_OVERFLOW
-            generate_overflow_error();
+            npy_set_floatstatus_overflow();
 #endif
             return (npy_uint16) (h_sgn + 0x7c00u);
         }
@@ -271,7 +276,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 #if NPY_HALF_GENERATE_UNDERFLOW 
             /* If f != 0, it underflowed to 0 */
             if ((f&0x7fffffff) != 0) {
-                generate_underflow_error();
+                npy_set_floatstatus_underflow();
             }
 #endif
             return h_sgn;
@@ -282,7 +287,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 #if NPY_HALF_GENERATE_UNDERFLOW 
         /* If it's not exactly represented, it underflowed */
         if ((f_sig&(((npy_uint32)1 << (126 - f_exp)) - 1)) != 0) {
-            generate_underflow_error();
+            npy_set_floatstatus_underflow();
         }
 #endif
         f_sig >>= (113 - f_exp);
@@ -334,7 +339,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 #if NPY_HALF_GENERATE_OVERFLOW
     h_sig += h_exp;
     if (h_sig == 0x7c00u) {
-        generate_overflow_error();
+        npy_set_floatstatus_overflow();
     }
     return h_sgn + h_sig;
 #else
@@ -370,7 +375,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
         } else {
             /* overflow to signed inf */
 #if NPY_HALF_GENERATE_OVERFLOW
-            generate_overflow_error();
+            npy_set_floatstatus_overflow();
 #endif
             return h_sgn + 0x7c00u;
         }
@@ -385,8 +390,8 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
         if (d_exp < 0x3e60000000000000u) {
 #if NPY_HALF_GENERATE_UNDERFLOW 
             /* If d != 0, it underflowed to 0 */
-            if ((d&0x7fffffffffffffff) != 0) {
-                generate_underflow_error();
+            if ((d&0x7fffffffffffffffu) != 0) {
+                npy_set_floatstatus_underflow();
             }
 #endif
             return h_sgn;
@@ -397,7 +402,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
 #if NPY_HALF_GENERATE_UNDERFLOW 
         /* If it's not exactly represented, it underflowed */
         if ((d_sig&(((npy_uint64)1 << (1051 - d_exp)) - 1)) != 0) {
-            generate_underflow_error();
+            npy_set_floatstatus_underflow();
         }
 #endif
         d_sig >>= (1009 - d_exp);
@@ -450,7 +455,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
 #if NPY_HALF_GENERATE_OVERFLOW
     h_sig += h_exp;
     if (h_sig == 0x7c00u) {
-        generate_overflow_error();
+        npy_set_floatstatus_overflow();
     }
     return h_sgn + h_sig;
 #else
