@@ -1,5 +1,8 @@
 #ifndef Py_UFUNCOBJECT_H
 #define Py_UFUNCOBJECT_H
+
+#include <numpy/npy_math.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -322,11 +325,6 @@ typedef struct _loop1d_info {
                              FE_UNDERFLOW | FE_INVALID);                \
 }
 
-#define generate_divbyzero_error() feraiseexcept(FE_DIVBYZERO)
-#define generate_overflow_error() feraiseexcept(FE_OVERFLOW)
-#define generate_underflow_error() feraiseexcept(FE_UNDERFLOW)
-#define generate_invalid_error() feraiseexcept(FE_INVALID)
-
 #elif defined(_AIX)
 
 #include <float.h>
@@ -334,7 +332,7 @@ typedef struct _loop1d_info {
 
 #define UFUNC_CHECK_STATUS(ret) { \
         fpflag_t fpstatus; \
-                                                \
+ \
         fpstatus = fp_read_flag(); \
         ret = ((FP_DIV_BY_ZERO & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
                 | ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)   \
@@ -343,77 +341,21 @@ typedef struct _loop1d_info {
         fp_swap_flag(0); \
 }
 
-#define generate_divbyzero_error() fp_raise_xcp(FP_DIV_BY_ZERO)
-#define generate_overflow_error() fp_raise_xcp(FP_OVERFLOW)
-#define generate_underflow_error() fp_raise_xcp(FP_UNDERFLOW)
-#define generate_invalid_error() fp_raise_xcp(FP_INVALID)
-
 #else
 
 #define NO_FLOATING_POINT_SUPPORT
 #define UFUNC_CHECK_STATUS(ret) { \
-    ret = 0;                                                         \
+    ret = 0; \
   }
 
 #endif
 
-/* These should really be altered to just set the corresponding bit
-   in the floating point status flag.  Need to figure out how to do that
-   on all the platforms...
-*/
-
-#if !defined(generate_divbyzero_error)
-static int numeric_zero2 = 0;
-static void generate_divbyzero_error(void) {
-        double dummy;
-        dummy = 1./numeric_zero2;
-        if (dummy) /* to prevent optimizer from eliminating expression */
-           return;
-        else /* should never be called */
-           numeric_zero2 += 1;
-        return;
-}
-#endif
-
-#if !defined(generate_overflow_error)
-static double numeric_two = 2.0;
-static void generate_overflow_error(void) {
-        double dummy;
-        dummy = pow(numeric_two,1000);
-        if (dummy)
-           return;
-        else
-           numeric_two += 0.1;
-        return;
-        return;
-}
-#endif
-
-#if !defined(generate_underflow_error)
-static double numeric_small = 1e-300;
-static void generate_underflow_error(void) {
-        double dummy;
-        dummy = numeric_small * 1e-300;
-        if (!dummy)
-           return;
-        else
-           numeric_small += 1e-300;
-        return;
-}
-#endif
-
-#if !defined(generate_invalid_error)
-static double numeric_inv_inf = NPY_INF;
-static void generate_invalid_error(void) {
-        double dummy;
-        dummy = numeric_inv_inf - NPY_INF;
-        if (!dummy)
-           return;
-        else
-           numeric_inv_inf += 1.0;
-        return;
-}
-#endif
+/*
+ * THESE MACROS ARE DEPRECATED.
+ * Use npy_set_floatstatus_* in the npymath library.
+ */
+#define generate_divbyzero_error() npy_set_floatstatus_divbyzero()
+#define generate_overflow_error() npy_set_floatstatus_overflow()
 
   /* Make sure it gets defined if it isn't already */
 #ifndef UFUNC_NOFPE

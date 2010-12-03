@@ -145,7 +145,7 @@ static void
     if ((*out^a) >= 0 || (*out^b) >= 0) {
         return;
     }
-    generate_overflow_error();
+    npy_set_floatstatus_overflow();
     return;
 }
 static void
@@ -154,7 +154,7 @@ static void
     if ((*out^a) >= 0 || (*out^~b) >= 0) {
         return;
     }
-    generate_overflow_error();
+    npy_set_floatstatus_overflow();
     return;
 }
 /**end repeat**/
@@ -168,7 +168,7 @@ static void
     if (*out >= a && *out >= b) {
         return;
     }
-    generate_overflow_error();
+    npy_set_floatstatus_overflow();
     return;
 }
 static void
@@ -177,7 +177,7 @@ static void
     if (a >= b) {
         return;
     }
-    generate_overflow_error();
+    npy_set_floatstatus_overflow();
     return;
 }
 /**end repeat**/
@@ -206,7 +206,7 @@ static void
 #else
         if (temp > MAX_@NAME@)
 #endif
-            generate_overflow_error();
+            npy_set_floatstatus_overflow();
     return;
 }
 #endif
@@ -223,7 +223,7 @@ static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
     *out = a * b;
     if (@char@longlong_overflow(a, b)) {
-        generate_overflow_error();
+        npy_set_floatstatus_overflow();
     }
     return;
 }
@@ -239,12 +239,12 @@ static void
 static void
 @name@_ctype_divide(@name@ a, @name@ b, @name@ *out) {
     if (b == 0) {
-        generate_divbyzero_error();
+        npy_set_floatstatus_divbyzero();
         *out = 0;
     }
 #if @neg@
     else if (b == -1 && a < 0 && a == -a) {
-        generate_overflow_error();
+        npy_set_floatstatus_overflow();
         *out = a / b;
     }
 #endif
@@ -266,7 +266,7 @@ static void
 static void
 @name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) {
     if (a == 0 || b == 0) {
-        if (b == 0) generate_divbyzero_error();
+        if (b == 0) npy_set_floatstatus_divbyzero();
         *out = 0;
         return;
     }
@@ -450,7 +450,7 @@ static void
 @name@_ctype_negative(npy_@name@ a, npy_@name@ *out)
 {
 #if @uns@
-    generate_overflow_error();
+    npy_set_floatstatus_overflow();
 #endif
     *out = -a;
 }

@@ -25,7 +25,7 @@ class TestErrstate(TestCase):
             except FloatingPointError:
                 pass
             else:
-                self.fail()
+                self.fail("Did not raise an invalid error")
 
     def test_divide(self):
         with errstate(all='raise', under='ignore'):
@@ -39,7 +39,7 @@ class TestErrstate(TestCase):
             except FloatingPointError:
                 pass
             else:
-                self.fail()
+                self.fail("Did not raise divide by zero error")
 
     def test_errcall(self):
         def foo(*args):

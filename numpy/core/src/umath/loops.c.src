@@ -795,7 +795,7 @@ NPY_NO_EXPORT void
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@s@@type@ *)op1) = 0;
         }
         else {
@@ -854,10 +854,10 @@ NPY_NO_EXPORT void
          * by -1 causes a SIFGPE (division overflow). We treat this case here
          * (to avoid a SIGFPE crash at python level), but a good solution would
          * be to treat integer division problems separately from FPU exceptions
-         * (i.e. fixing generate_divbyzero_error()).
+         * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
          */
         if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
         else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
@@ -876,7 +876,7 @@ U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const u@type@ in1 = *(u@type@ *)ip1;
         const u@type@ in2 = *(u@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((u@type@ *)op1) = 0;
         }
         else {
@@ -892,7 +892,7 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
         else {
@@ -915,7 +915,7 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
         const u@type@ in1 = *(u@type@ *)ip1;
         const u@type@ in2 = *(u@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
         else {
