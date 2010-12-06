@@ -600,7 +600,8 @@ def configuration(parent_package='',top_path=None):
 
         subpath = join('src', 'multiarray')
         sources = [join(local_dir, subpath, 'scalartypes.c.src'),
-                   join(local_dir, subpath, 'arraytypes.c.src')]
+                   join(local_dir, subpath, 'arraytypes.c.src'),
+                   join(local_dir, subpath, 'new_iterator.c.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
@@ -766,7 +767,7 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'refcount.c'),
         join('src', 'multiarray', 'arraytypes.c.src'),
         join('src', 'multiarray', 'scalartypes.c.src'),
-        join('src', 'multiarray', 'new_iterator.c')]
+        join('src', 'multiarray', 'new_iterator.c.src')]
 
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))

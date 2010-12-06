@@ -2716,28 +2716,41 @@ test_new_iterator(PyObject *self, PyObject *args)
     PyObject *op;
     void* iter;
     char** dataptrs;
+    npy_intp* indexptr;
     npy_intp itemsize;
+    npy_int32 flags;
     NpyIter_IterNext_Fn iternext;
 
     if (!PyArg_ParseTuple(args, "O", &op)) {
         return NULL;
     }
 
-    iter = NpyIter_New(op, 0, NULL, 1, 1);
+    //flags = 0;
+    flags = NPY_ITER_CORDER_INDEX;
+    //flags = NPY_ITER_FORTRANORDER_INDEX;
+    iter = NpyIter_New(op, flags, NULL, 1, 2);
     if (!iter) {
         return NULL;
     }
     iternext = NpyIter_GetIterNext(iter);
     dataptrs = NpyIter_GetDataPtrArray(iter);
     itemsize = *NpyIter_GetItemSizeArray(iter);
+    indexptr = NpyIter_GetIndexPtr(iter);
+
+    //printf("%p %p %p\n", dataptrs, indexptr, *dataptrs);
 
     do {
         char* data = *dataptrs;
         int i;
-        for(i = 0; i < itemsize; ++i) {
-            printf("%02x", ((int)data[i])&0xff);
+        if (indexptr != NULL) {
+            npy_intp index = *indexptr;
+            printf("%d ", (int)index);
         }
-        printf(" ");
+        for(i = 0; i < itemsize; ++i) {
+            int v = ((int)data[i])&0xff;
+            printf("%02x", v);
+        }
+        printf("\n");
     } while(iternext(iter));
     printf("\n");
 
