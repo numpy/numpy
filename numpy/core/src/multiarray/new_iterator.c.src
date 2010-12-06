@@ -8,9 +8,9 @@
 #include "new_iterator.h"
 
 
-#define NPY_ITER_FLAGS_HASPERM  0x001
-#define NPY_ITER_FLAGS_HASINDEX 0x002
-#define NPY_ITER_FLAGS_HASCOORD 0x004
+#define NPY_ITER_FLAGS_HASPERM   0x001
+#define NPY_ITER_FLAGS_HASINDEX  0x002
+#define NPY_ITER_FLAGS_HASCOORDS 0x004
 
 /*
  * The data layout of the iterator is fully specified by
@@ -132,6 +132,13 @@ void* NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
         }
         itflags |= NPY_ITER_FLAGS_HASINDEX;
     }
+    if (flags&NPY_ITER_COORDS) {
+        /*
+         * This flag primarily disables dimension manipulations that
+         * would produce a different set of coordinates.
+         */
+        itflags |= NPY_ITER_FLAGS_HASCOORDS;
+    }
 
     /* Allocate memory for the iterator */
     iter = malloc(NIT_SIZEOF_ITERATOR());
@@ -182,7 +189,9 @@ void* NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
 int NpyIter_Deallocate(void* iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    npy_intp ndim = NIT_NDIM(iter), niter = NIT_NITER(iter);
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
     npy_intp i;
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
     PyObject **arrays = NIT_OBJECTS(iter);
@@ -199,11 +208,13 @@ int NpyIter_Deallocate(void* iter)
     return NPY_SUCCEED;
 }
 
+
 /* SPECIALIZED iternext functions */
 
 /**begin repeat
- * #const_itflags = 0, NPY_ITER_FLAGS_HASINDEX#
- * #tag_itflags = 0, IND#
+ * #const_itflags = 0, NPY_ITER_FLAGS_HASINDEX, NPY_ITER_FLAGS_HASCOORDS,
+ *                  NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_HASCOORDS #
+ * #tag_itflags = 0, IND, COORD, INDwCOORD#
  */
 /**begin repeat1
  * #const_ndims = 1, 2#
@@ -220,7 +231,9 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
                                                                 void *iter)
 {
     const npy_uint32 itflags = @const_itflags@;
-    const npy_intp ndim = @const_ndims@, niter = @const_niter@;
+    const npy_intp ndim = @const_ndims@;
+    const npy_intp niter = @const_niter@;
+
     npy_intp istrides, nstrides;
 #if @const_ndims@ > 0
     char* axisdata0;
@@ -286,13 +299,15 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
 NpyIter_IterNext_Fn NpyIter_GetIterNext(void *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    npy_intp ndim = NIT_NDIM(iter), niter = NIT_NITER(iter);
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
 
     /* Switch statements let the compiler optimize this most effectively */
     switch (itflags) {
 /**begin repeat
- * #const_itflags = 0, NPY_ITER_FLAGS_HASINDEX#
- * #tag_itflags = 0, IND#
+ * #const_itflags = 0, NPY_ITER_FLAGS_HASINDEX, NPY_ITER_FLAGS_HASCOORDS,
+ *                  NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_HASCOORDS #
+ * #tag_itflags = 0, IND, COORD, INDwCOORD#
  */
         case @const_itflags@:
             switch (ndim) {
@@ -318,10 +333,64 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(void *iter)
     return NULL; /* TODO: return generic version */
 }
 
+
+/* SPECIALIZED getcoord functions */
+
+/**begin repeat
+ * #const_itflags = 0, NPY_ITER_FLAGS_HASINDEX, NPY_ITER_FLAGS_HASCOORDS,
+ *                  NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_HASCOORDS #
+ * #tag_itflags = 0, IND, COORD, INDwCOORD#
+ */
+NPY_NO_EXPORT void
+npyiter_getcoord_itflags@tag_itflags@(void *iter, npy_intp *outcoord)
+{
+    const npy_uint32 itflags = @const_itflags@;
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    npy_intp idim, sizeof_axisdata;
+    char* axisdata;
+
+    outcoord += ndim-1;
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA();
+    for(idim = 0; idim < ndim; ++idim, --outcoord,
+                                    axisdata += sizeof_axisdata) {
+        *outcoord = NAD_COORD(axisdata);
+    }
+}
+/**end repeat**/
+
+/* Returns a specialized getcoord function */
+NpyIter_GetCoords_Fn NpyIter_GetGetCoords(void *iter)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    
+    switch (itflags) {
+/**begin repeat
+ * #const_itflags = 0, NPY_ITER_FLAGS_HASINDEX, NPY_ITER_FLAGS_HASCOORDS,
+ *                  NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_HASCOORDS #
+ * #tag_itflags = 0, IND, COORD, INDwCOORD#
+ */
+        case @const_itflags@:
+            return npyiter_getcoord_itflags@tag_itflags@;
+/**end repeat**/
+    }
+    return NULL; /* TODO: return generic version */
+
+}
+
+npy_intp NpyIter_GetNDim(void *iter)
+{
+    return NIT_NDIM(iter);
+}
+
 char **NpyIter_GetDataPtrArray(void *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    npy_intp ndim = NIT_NDIM(iter), niter = NIT_NITER(iter);
+    /*npy_intp ndim = NIT_NDIM(iter);*/
+    npy_intp niter = NIT_NITER(iter);
+
     char* axisdata = NIT_AXISDATA(iter);
 
     return NAD_PTRS(axisdata);
@@ -330,7 +399,9 @@ char **NpyIter_GetDataPtrArray(void *iter)
 npy_intp *NpyIter_GetIndexPtr(void *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    npy_intp ndim = NIT_NDIM(iter), niter = NIT_NITER(iter);
+    /*npy_intp ndim = NIT_NDIM(iter);*/
+    npy_intp niter = NIT_NITER(iter);
+
     char* axisdata = NIT_AXISDATA(iter);
 
     if (itflags&NPY_ITER_FLAGS_HASINDEX) {
@@ -344,8 +415,9 @@ npy_intp *NpyIter_GetIndexPtr(void *iter)
 
 npy_intp *NpyIter_GetItemSizeArray(void *iter)
 {
-    npy_uint32 itflags = NIT_ITFLAGS(iter);
-    npy_intp ndim = NIT_NDIM(iter), niter = NIT_NITER(iter);
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
+    /*npy_intp ndim = NIT_NDIM(iter);*/
+    npy_intp niter = NIT_NITER(iter);
     
     return NIT_ITEMSIZES(iter);
 }

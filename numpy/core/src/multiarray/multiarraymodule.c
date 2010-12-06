@@ -2717,25 +2717,28 @@ test_new_iterator(PyObject *self, PyObject *args)
     void* iter;
     char** dataptrs;
     npy_intp* indexptr;
-    npy_intp itemsize;
+    npy_intp itemsize, ndim, coords[NPY_MAXDIMS];
     npy_int32 flags;
     NpyIter_IterNext_Fn iternext;
+    NpyIter_GetCoords_Fn getcoords;
 
     if (!PyArg_ParseTuple(args, "O", &op)) {
         return NULL;
     }
 
     //flags = 0;
-    flags = NPY_ITER_CORDER_INDEX;
-    //flags = NPY_ITER_FORTRANORDER_INDEX;
+    //flags = NPY_ITER_CORDER_INDEX | NPY_ITER_COORDS;
+    flags = NPY_ITER_FORTRANORDER_INDEX | NPY_ITER_COORDS;
     iter = NpyIter_New(op, flags, NULL, 1, 2);
     if (!iter) {
         return NULL;
     }
     iternext = NpyIter_GetIterNext(iter);
+    getcoords = NpyIter_GetGetCoords(iter);
     dataptrs = NpyIter_GetDataPtrArray(iter);
     itemsize = *NpyIter_GetItemSizeArray(iter);
     indexptr = NpyIter_GetIndexPtr(iter);
+    ndim = NpyIter_GetNDim(iter);
 
     //printf("%p %p %p\n", dataptrs, indexptr, *dataptrs);
 
@@ -2745,6 +2748,14 @@ test_new_iterator(PyObject *self, PyObject *args)
         if (indexptr != NULL) {
             npy_intp index = *indexptr;
             printf("%d ", (int)index);
+        }
+        if (getcoords != NULL) {
+            getcoords(iter, coords);
+            printf("(");
+            for (i = 0; i < ndim; ++i) {
+                printf("%d%s", (int)coords[i], i==ndim-1 ? "" : ", ");
+            }
+            printf(") ");
         }
         for(i = 0; i < itemsize; ++i) {
             int v = ((int)data[i])&0xff;
