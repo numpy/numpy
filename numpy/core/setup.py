@@ -735,7 +735,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'sequence.h'),
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
-            join('src', 'multiarray', 'usertypes.h')]
+            join('src', 'multiarray', 'usertypes.h'),
+            join('src', 'multiarray', 'new_iterator.h')]
 
     multiarray_src = [join('src', 'multiarray', 'multiarraymodule.c'),
         join('src', 'multiarray', 'hashdescr.c'),
@@ -764,7 +765,8 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'scalarapi.c'),
         join('src', 'multiarray', 'refcount.c'),
         join('src', 'multiarray', 'arraytypes.c.src'),
-        join('src', 'multiarray', 'scalartypes.c.src')]
+        join('src', 'multiarray', 'scalartypes.c.src'),
+        join('src', 'multiarray', 'new_iterator.c')]
 
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))

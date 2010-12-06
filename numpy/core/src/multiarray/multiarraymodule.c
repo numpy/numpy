@@ -2709,7 +2709,45 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
+#include "new_iterator.h"
+static PyObject *
+test_new_iterator(PyObject *self, PyObject *args)
+{
+    PyObject *op;
+    void* iter;
+    char** dataptrs;
+    npy_intp itemsize;
+    NpyIter_IterNext_Fn iternext;
+
+    if (!PyArg_ParseTuple(args, "O", &op)) {
+        return NULL;
+    }
+
+    iter = NpyIter_New(op, 0, NULL, 1, 1);
+    if (!iter) {
+        return NULL;
+    }
+    iternext = NpyIter_GetIterNext(iter);
+    dataptrs = NpyIter_GetDataPtrArray(iter);
+    itemsize = *NpyIter_GetItemSizeArray(iter);
+
+    do {
+        char* data = *dataptrs;
+        int i;
+        for(i = 0; i < itemsize; ++i) {
+            printf("%02x", ((int)data[i])&0xff);
+        }
+        printf(" ");
+    } while(iternext(iter));
+    printf("\n");
+
+    Py_RETURN_NONE;
+}
+
 static struct PyMethodDef array_module_methods[] = {
+    {"test_ni",
+        (PyCFunction)test_new_iterator,
+        METH_VARARGS, NULL},
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
         METH_VARARGS|METH_KEYWORDS, NULL},
