@@ -15,7 +15,8 @@ typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter, npy_intp *outcoords
 
 
 /* Allocate a new iterator */
-PyArray_NpyIter* NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
+PyArray_NpyIter*
+NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
                   int min_depth, int max_depth);
 /* Deallocate an iterator */
 int NpyIter_Deallocate(PyArray_NpyIter* iter);

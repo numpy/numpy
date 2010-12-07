@@ -2727,7 +2727,7 @@ test_new_iterator(PyObject *self, PyObject *args)
     }
 
     flags = 0;
-    //flags |= NPY_ITER_COORDS;
+    flags |= NPY_ITER_COORDS;
     flags |= NPY_ITER_C_ORDER_INDEX;
     //flags |= NPY_ITER_F_ORDER_INDEX;
     //flags |= NPY_ITER_FORCE_F_ORDER;
@@ -2757,13 +2757,13 @@ test_new_iterator(PyObject *self, PyObject *args)
         int i;
         if (indexptr != NULL) {
             npy_intp index = *indexptr;
-            printf("%d ", (int)index);
+            printf("%3d ", (int)index);
         }
         if (getcoords != NULL) {
             getcoords(iter, coords);
             printf("(");
             for (i = 0; i < ndim; ++i) {
-                printf("%d%s", (int)coords[i], i==ndim-1 ? "" : ", ");
+                printf("%3d%s", (int)coords[i], i==ndim-1 ? "" : ",");
             }
             printf(") ");
         }
