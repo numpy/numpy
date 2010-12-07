@@ -4,30 +4,35 @@
 #include <Python.h>
 #include <numpy/ndarraytypes.h>
 
+/* The actual structure of the iterator is an internal detail */
+typedef struct {
+    npy_intp internal_only;
+} PyArray_NpyIter;
+
 /* Iterator function pointers that may be specialized */
-typedef int (*NpyIter_IterNext_Fn )(void *iter);
-typedef void (*NpyIter_GetCoords_Fn )(void *iter, npy_intp *outcoords);
+typedef int (*NpyIter_IterNext_Fn )(PyArray_NpyIter *iter);
+typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter, npy_intp *outcoords);
 
 
 /* Allocate a new iterator */
-void* NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
+PyArray_NpyIter* NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
                   int min_depth, int max_depth);
 /* Deallocate an iterator */
-int NpyIter_Deallocate(void* iter);
+int NpyIter_Deallocate(PyArray_NpyIter* iter);
 
 /* Compute a specialized iteration function for an iterator */
-NpyIter_IterNext_Fn NpyIter_GetIterNext(void *iter);
+NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter);
 /* Compute a specialized getcoords function for an iterator */
-NpyIter_GetCoords_Fn NpyIter_GetGetCoords(void *iter);
+NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter);
 
 /* Gets the number of dimension being iterated */
-npy_intp NpyIter_GetNDim(void *iter);
+npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter);
 /* Get the array of data pointers (1 per object being iterated) */
-char **NpyIter_GetDataPtrArray(void *iter);
+char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter);
 /* Get a pointer to the index, if it is being tracked */
-npy_intp *NpyIter_GetIndexPtr(void *iter);
+npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
 /* Get the array of item sizes (1 per object being iterated) */
-npy_intp *NpyIter_GetItemSizeArray(void *iter);
+npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter);
 
 /* Flags that may be passed to the iterator constructors */
 #define NPY_ITER_C_ORDER_INDEX        0x0001

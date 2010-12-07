@@ -2720,25 +2720,31 @@ test_new_iterator(PyObject *self, PyObject *args)
     npy_intp itemsize, ndim, coords[NPY_MAXDIMS];
     npy_int32 flags;
     NpyIter_IterNext_Fn iternext;
-    NpyIter_GetCoords_Fn getcoords;
+    NpyIter_GetCoords_Fn getcoords = 0;
 
     if (!PyArg_ParseTuple(args, "O", &op)) {
         return NULL;
     }
 
     flags = 0;
-    flags |= NPY_ITER_COORDS;
-    //flags |= NPY_ITER_C_ORDER_INDEX;
-    flags |= NPY_ITER_F_ORDER_INDEX;
+    //flags |= NPY_ITER_COORDS;
+    flags |= NPY_ITER_C_ORDER_INDEX;
+    //flags |= NPY_ITER_F_ORDER_INDEX;
     //flags |= NPY_ITER_FORCE_F_ORDER;
     //flags |= NPY_ITER_FORCE_C_ORDER;
-    flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
+    //flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
     iter = NpyIter_New(op, flags, NULL, 1, 10);
     if (!iter) {
         return NULL;
     }
     iternext = NpyIter_GetIterNext(iter);
-    getcoords = NpyIter_GetGetCoords(iter);
+    if (flags&NPY_ITER_COORDS) {
+        getcoords = NpyIter_GetGetCoords(iter);
+        if (getcoords == NULL) {
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
+    }
     dataptrs = NpyIter_GetDataPtrArray(iter);
     itemsize = *NpyIter_GetItemSizeArray(iter);
     indexptr = NpyIter_GetIndexPtr(iter);
@@ -2768,6 +2774,8 @@ test_new_iterator(PyObject *self, PyObject *args)
         printf("\n");
     } while(iternext(iter));
     printf("\n");
+
+    NpyIter_Deallocate(iter);
 
     Py_RETURN_NONE;
 }
