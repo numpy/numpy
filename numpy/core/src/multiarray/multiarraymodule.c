@@ -2727,13 +2727,13 @@ test_new_iterator(PyObject *self, PyObject *args)
     }
 
     flags = 0;
-    flags |= NPY_ITER_COORDS;
+    //flags |= NPY_ITER_COORDS;
     flags |= NPY_ITER_C_ORDER_INDEX;
     //flags |= NPY_ITER_F_ORDER_INDEX;
     //flags |= NPY_ITER_FORCE_F_ORDER;
     //flags |= NPY_ITER_FORCE_C_ORDER;
     //flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
-    iter = NpyIter_New(op, flags, NULL, 1, 10);
+    iter = NpyIter_New(op, flags, NULL, 0, 10);
     if (!iter) {
         return NULL;
     }
