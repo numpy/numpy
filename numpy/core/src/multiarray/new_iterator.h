@@ -30,8 +30,11 @@ npy_intp *NpyIter_GetIndexPtr(void *iter);
 npy_intp *NpyIter_GetItemSizeArray(void *iter);
 
 /* Flags that may be passed to the iterator constructors */
-#define NPY_ITER_CORDER_INDEX       0x0001
-#define NPY_ITER_FORTRANORDER_INDEX 0x0002
-#define NPY_ITER_COORDS             0x0004
+#define NPY_ITER_C_ORDER_INDEX        0x0001
+#define NPY_ITER_F_ORDER_INDEX        0x0002
+#define NPY_ITER_COORDS               0x0004
+#define NPY_ITER_FORCE_C_ORDER        0x0008
+#define NPY_ITER_FORCE_F_ORDER        0x0010
+#define NPY_ITER_FORCE_ANY_CONTIGUOUS 0x0020
 
 #endif
