@@ -35,6 +35,13 @@ npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
 /* Get the array of item sizes (1 per object being iterated) */
 npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter);
 
+/* Get the array of strides for the inner loop */
+npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);
+/* Get the stride for the index, if it is being tracked */
+npy_intp NpyIter_GetInnerIndexStride(PyArray_NpyIter *iter);
+/* Get the size of the inner loop */
+npy_intp NpyIter_GetInnerLoopSize(PyArray_NpyIter *iter);
+
 /* Flags that may be passed to the iterator constructors */
 #define NPY_ITER_C_ORDER_INDEX        0x0001
 #define NPY_ITER_F_ORDER_INDEX        0x0002
@@ -42,5 +49,6 @@ npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter);
 #define NPY_ITER_FORCE_C_ORDER        0x0008
 #define NPY_ITER_FORCE_F_ORDER        0x0010
 #define NPY_ITER_FORCE_ANY_CONTIGUOUS 0x0020
+#define NPY_ITER_NO_INNER_ITERATION   0x0040
 
 #endif
