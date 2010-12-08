@@ -121,7 +121,7 @@ npyiter_flip_negative_strides(PyArray_NpyIter *iter);
 static void
 npyiter_reverse_axis_ordering(PyArray_NpyIter *iter);
 static void 
-npyiter_find_best_ordering(PyArray_NpyIter *iter);
+npyiter_find_best_axis_ordering(PyArray_NpyIter *iter);
 static void 
 npyiter_coalesce_axes(PyArray_NpyIter *iter);
 static void
@@ -130,6 +130,7 @@ static void
 print_iterator(PyArray_NpyIter *iter);
 
 
+/* The constructor for an iterator over one object */
 PyArray_NpyIter*
 NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
                   int min_depth, int max_depth)
@@ -200,6 +201,13 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
         itflags |= NPY_ITER_FLAGS_HASCOORDS;
     }
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
+        if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator flags NPY_ITER_(C|F)_ORDER_INDEX and "
+                    "NPY_ITER_NO_INNER_ITERATION cannot be used "
+                    "together");
+            return NULL;
+        }
         if (itflags&NPY_ITER_FLAGS_HASCOORDS) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flags NPY_ITER_COORDS and "
@@ -208,6 +216,35 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
             return NULL;
         }
         itflags |= NPY_ITER_FLAGS_NOINNER;
+    }
+    if (flags&NPY_ITER_READONLY) {
+        if (flags&NPY_ITER_WRITEONLY) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator flags NPY_ITER_READONLY and "
+                    "NPY_ITER_WRITEONLY cannot both be specified");
+            return NULL;
+        }
+    } else {
+        /* If read-only wasn't specified, make sure the array is writeable */
+        if (!PyArray_CHKFLAGS(op, NPY_WRITEABLE)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Tried to construct an iterator for a non-writeable "
+                    "array without specifying the NPY_ITER_READONLY flag.");
+            return NULL;
+        }
+        /*
+         * Also make sure that if the type is a Python reference,
+         * ALLOW_WRITEABLE_REFERENCES was specified.
+         */
+        if (!(flags&NPY_ITER_ALLOW_WRITEABLE_REFERENCES)) {
+            if (PyDataType_REFCHK(opdtype)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Tried to construct an iterator for a writeable "
+                        "array of references without specifying the "
+                        "NPY_ITER_ALLOW_WRITEABLE_REFERENCES flag.");
+                return NULL;
+            }
+        }
     }
 
     /*
@@ -238,6 +275,7 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
     /* In the zero dimensional case, fill things in manually */
     if (zerodim) {
         axisdata = NIT_AXISDATA(iter);
+        NIT_PERM(iter)[0] = 0;
         NAD_SHAPE(axisdata) = 1;
         NAD_COORD(axisdata) = 0;
         NAD_STRIDES(axisdata)[0] = 0;
@@ -250,10 +288,10 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
         return iter;
     }
 
-    /* Fill in the axis data (in reverse of C order)*/
+    /* Fill in the axis data (in reverse of C order) */
     sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
     axisdata = NIT_AXISDATA(iter);
-    for(idim = ndim-1; idim >= 0; --idim, axisdata += sizeof_axisdata) {
+    for (idim = ndim-1; idim >= 0; --idim, axisdata += sizeof_axisdata) {
         npy_intp shape = PyArray_DIM(op, idim);
 
         NIT_ITERSIZE(iter) *= shape;
@@ -273,8 +311,15 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
      * to do further fancy iterator manipulation.
      */
     if (NIT_ITERSIZE(iter) == 1) {
+        npy_intp *perm = NIT_PERM(iter);
+
+        /* Set the perm to the identity */
+        for(idim = 0; idim < ndim; ++idim, ++perm) {
+            *perm = idim;
+        }
         /* If an index is tracked, it's just zero */
         if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+            axisdata = NIT_AXISDATA(iter);
             NAD_STRIDES(axisdata)[1] = 0;
             NAD_PTRS(axisdata)[1] = 0;
         }
@@ -331,7 +376,7 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
          * If the ordering is not forced, reorder the axes
          * and flip negative strides to find the best one.
          */
-        npyiter_find_best_ordering(iter);
+        npyiter_find_best_axis_ordering(iter);
         npyiter_flip_negative_strides(iter);
         itflags = NIT_ITFLAGS(iter);
     }
@@ -369,16 +414,15 @@ int NpyIter_Deallocate(PyArray_NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
-    npy_intp niter = NIT_NITER(iter);
+    npy_intp iiter, niter = NIT_NITER(iter);
 
-    npy_intp i;
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
-    PyObject **arrays = NIT_OBJECTS(iter);
+    PyObject **objects = NIT_OBJECTS(iter);
 
     /* Deallocate all the dtypes and objects that were iterated */
-    for(i = 0; i < niter; ++i) {
-        Py_XDECREF(dtypes[i]);
-        Py_XDECREF(arrays[i]);
+    for(iiter = 0; iiter < niter; ++iiter) {
+        Py_XDECREF(dtypes[iiter]);
+        Py_XDECREF(objects[iiter]);
     }
 
     /* Deallocate the iterator memory */
@@ -453,8 +497,11 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
     /* Finished when the coordinate equals the shape */
     return NAD_COORD(axisdata0) < NAD_SHAPE(axisdata0);
 #  else
+    /* Get rid of unused variable warning */
+    istrides = 0;
+
     return 0;
-#endif
+#  endif
 
 #else
 
@@ -622,8 +669,9 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter)
     }
     /* The switch above should have caught all the possibilities. */
     PyErr_Format(PyExc_ValueError,
-            "Internal iterator error - unexpected itflags/ndim/niter "
-            " combination (%04x/%d/%d)", (int)itflags, (int)ndim, (int)niter);
+            "GetIterNext internal iterator error - unexpected "
+            "itflags/ndim/niter combination (%04x/%d/%d)",
+            (int)itflags, (int)ndim, (int)niter);
     return NULL;
 }
 
@@ -684,6 +732,8 @@ npyiter_getcoord_itflags@tag_itflags@(PyArray_NpyIter *iter, npy_intp *outcoord)
 NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
 
     if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
@@ -715,7 +765,12 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
             return npyiter_getcoord_itflags@tag_itflags@;
 /**end repeat**/
     }
-    return NULL; /* TODO: return generic version */
+    /* The switch above should have caught all the possibilities. */
+    PyErr_Format(PyExc_ValueError,
+            "GetGetCoords internal iterator error - unexpected "
+            "itflags/ndim/niter combination (%04x/%d/%d)",
+            (int)itflags, (int)ndim, (int)niter);
+    return NULL;
 
 }
 
@@ -762,7 +817,7 @@ npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter)
 
 npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter)
 {
-    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
@@ -787,7 +842,7 @@ npy_intp NpyIter_GetInnerIndexStride(PyArray_NpyIter *iter)
 
 npy_intp NpyIter_GetInnerLoopSize(PyArray_NpyIter *iter)
 {
-    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
@@ -912,7 +967,7 @@ static npy_intp intp_abs(npy_intp x)
 }
 
 static void 
-npyiter_find_best_ordering(PyArray_NpyIter *iter)
+npyiter_find_best_axis_ordering(PyArray_NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1053,7 +1108,6 @@ npyiter_coalesce_axes(PyArray_NpyIter *iter)
     npy_intp idim, ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
-    int any_coalesced = 0;
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     char *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
@@ -1215,7 +1269,7 @@ print_iterator(PyArray_NpyIter *iter)
         printf("\n");
         if (itflags&NPY_ITER_FLAGS_HASINDEX) {
             printf("  Index Value: %d\n",
-                                    (int)((npy_intp*)NAD_PTRS(axisdata))[niter]);
+                               (int)((npy_intp*)NAD_PTRS(axisdata))[niter]);
         }
     }
 

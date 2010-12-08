@@ -43,12 +43,15 @@ npy_intp NpyIter_GetInnerIndexStride(PyArray_NpyIter *iter);
 npy_intp NpyIter_GetInnerLoopSize(PyArray_NpyIter *iter);
 
 /* Flags that may be passed to the iterator constructors */
-#define NPY_ITER_C_ORDER_INDEX        0x0001
-#define NPY_ITER_F_ORDER_INDEX        0x0002
-#define NPY_ITER_COORDS               0x0004
-#define NPY_ITER_FORCE_C_ORDER        0x0008
-#define NPY_ITER_FORCE_F_ORDER        0x0010
-#define NPY_ITER_FORCE_ANY_CONTIGUOUS 0x0020
-#define NPY_ITER_NO_INNER_ITERATION   0x0040
+#define NPY_ITER_C_ORDER_INDEX              0x0001
+#define NPY_ITER_F_ORDER_INDEX              0x0002
+#define NPY_ITER_COORDS                     0x0004
+#define NPY_ITER_FORCE_C_ORDER              0x0008
+#define NPY_ITER_FORCE_F_ORDER              0x0010
+#define NPY_ITER_FORCE_ANY_CONTIGUOUS       0x0020
+#define NPY_ITER_NO_INNER_ITERATION         0x0040
+#define NPY_ITER_READONLY                   0x0080
+#define NPY_ITER_WRITEONLY                  0x0100
+#define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x0200
 
 #endif
