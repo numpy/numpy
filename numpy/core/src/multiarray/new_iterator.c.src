@@ -200,6 +200,13 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
         itflags |= NPY_ITER_FLAGS_HASCOORDS;
     }
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
+        if (itflags&NPY_ITER_FLAGS_HASCOORDS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator flags NPY_ITER_COORDS and "
+                    "NPY_ITER_NO_INNER_ITERATION cannot be used "
+                    "together");
+            return NULL;
+        }
         itflags |= NPY_ITER_FLAGS_NOINNER;
     }
 
@@ -1050,83 +1057,61 @@ npyiter_coalesce_axes(PyArray_NpyIter *iter)
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     char *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    char *ad_compress;
+    npy_intp new_ndim = 1;
 
     /* The HASCOORDS or IDENTPERM flags do not apply after coalescing */
     NIT_ITFLAGS(iter) &= ~(NPY_ITER_FLAGS_IDENTPERM|NPY_ITER_FLAGS_HASCOORDS);
 
-    /*
-     * This uses the COORD entry in AXISDATA as the can_coalesce
-     * array.  Because this is creation time, these are already
-     * set to all zeros.
-     */
+    axisdata = NIT_AXISDATA(iter);
+    ad_compress = axisdata;
 
-    for (idim = 0; idim < ndim-1; ++idim, axisdata += sizeof_axisdata) {
+    for (idim = 0; idim < ndim-1; ++idim) {
         int can_coalesce = 1;
-        npy_intp shape0 = NAD_SHAPE(axisdata);
+        npy_intp shape0 = NAD_SHAPE(ad_compress);
         npy_intp shape1 = NAD_SHAPE(axisdata + sizeof_axisdata);
-        npy_intp *strides0 = NAD_STRIDES(axisdata);
+        npy_intp *strides0 = NAD_STRIDES(ad_compress);
         npy_intp *strides1 = NAD_STRIDES(axisdata + sizeof_axisdata);
 
-        /*
-         * If the strides for all the inputs and index can be coalesced,
-         * mark this axis.
-         */
+        /* Check that all the axes can be coalesced */
         for (istrides = 0; istrides < nstrides; ++istrides) {
             if (!((shape0 == 1 && strides0[istrides] == 0) ||
                   (shape1 == 1 && strides1[istrides] == 0)) &&
-                        (strides0[istrides]*shape0 != strides1[istrides])) {
+                     (strides0[istrides]*shape0 != strides1[istrides])) {
                 can_coalesce = 0;
                 break;
             }
         }
+
         if (can_coalesce) {
-            NAD_COORD(axisdata) = 1;
-            any_coalesced = 1;
+            npy_intp *strides = NAD_STRIDES(ad_compress);
+
+            axisdata += sizeof_axisdata;
+            NAD_SHAPE(ad_compress) *= NAD_SHAPE(axisdata);
+            for (istrides = 0; istrides < nstrides; ++istrides) {
+                if (strides[istrides] == 0) {
+                    strides[istrides] = NAD_STRIDES(axisdata)[istrides];
+                }
+            }
+        } else {
+            axisdata += sizeof_axisdata;
+            ad_compress += sizeof_axisdata;
+            if (ad_compress != axisdata) {
+                memcpy(ad_compress, axisdata, sizeof_axisdata);
+            }
+            ++new_ndim;
         }
     }
 
     /*
-     * If we found any axes to coalesce, go through and coalesce
-     * the AXISDATA array.
+     * Because changing ndim affects the memory layout, we need
+     * to compress the data into the new layout.
      */
-    if (any_coalesced) {
-        char *ad_compress;
-        npy_intp new_ndim = 1;
-
-        axisdata = NIT_AXISDATA(iter);
-        ad_compress = axisdata;
-
-        for (idim = 0; idim < ndim-1; ++idim) {
-            if (NAD_COORD(axisdata)) {
-                npy_intp *strides = NAD_STRIDES(ad_compress);
-
-                NAD_COORD(axisdata) = 0;
-                axisdata += sizeof_axisdata;
-                NAD_SHAPE(ad_compress) *= NAD_SHAPE(axisdata);
-                for (istrides = 0; istrides < nstrides; ++istrides) {
-                    if (strides[istrides] == 0) {
-                        strides[istrides] = NAD_STRIDES(axisdata)[istrides];
-                    }
-                }
-            } else {
-                axisdata += sizeof_axisdata;
-                ad_compress += sizeof_axisdata;
-                if (ad_compress != axisdata) {
-                    memcpy(ad_compress, axisdata, sizeof_axisdata);
-                }
-                ++new_ndim;
-            }
-        }
-
-        /* Might as well reset it to an identity perm, not that it matters */
+    if (new_ndim < ndim) {
+        /* Reset to an identity perm */
         for (idim = 0; idim < new_ndim; ++idim) {
             NIT_PERM(iter)[idim] = idim;
         }
-        
-        /*
-         * Because changing ndim affects the memory layout, we need
-         * to compress the data into the new layout.
-         */
         npyiter_shrink_ndim(iter, new_ndim);
     }
 }
