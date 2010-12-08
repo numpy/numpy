@@ -2728,7 +2728,7 @@ test_new_iterator(PyObject *self, PyObject *args)
 
     flags = 0;
     //flags |= NPY_ITER_COORDS;
-    flags |= NPY_ITER_C_ORDER_INDEX;
+    //flags |= NPY_ITER_C_ORDER_INDEX;
     //flags |= NPY_ITER_F_ORDER_INDEX;
     //flags |= NPY_ITER_FORCE_F_ORDER;
     //flags |= NPY_ITER_FORCE_C_ORDER;
