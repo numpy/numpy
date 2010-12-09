@@ -120,6 +120,9 @@
         ((niter) + ((itflags&NPY_ITER_FLAGS_HASINDEX) ? 1 : 0))
 
 /* Internal helper functions */
+static int
+pyiter_prepare_operand(PyObject** op, PyArray_Descr** opdtype,
+                       int* optype, npy_intp* ndim);
 static void
 npyiter_flip_negative_strides(PyArray_NpyIter *iter);
 static void
@@ -198,61 +201,17 @@ NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
      */
     Py_INCREF(op);
 
-    /* If it's a Python number, convert it into an array scalar */
-    if (PyArray_IsPythonNumber(op)) {
-        PyObject *new_op = PyArray_ScalarFromObject(op);
-        Py_DECREF(op);
-        if (new_op == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator input failed to convert to array scalar");
-            return NULL;
-        }
-        op = new_op;
-    }
-
-    if (PyArray_Check(op)) {
-        optype = NPY_ITER_OP_ARRAY;
-        ndim = PyArray_NDIM(op);
-        /* PyArray_DESCR does not give us a reference */
-        opdtype = PyArray_DESCR(op);
-        if (opdtype == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator input array object has no dtype descr");
-            Py_DECREF(op);
-            return NULL;
-        }
-        Py_INCREF(opdtype);
-    } else if(PyArray_CheckScalar(op)) {
-        optype = NPY_ITER_OP_ARRAY_SCALAR;
-        ndim = 0;
-        /*PyArray_DescrFromScalar does give us a reference */
-        opdtype = PyArray_DescrFromScalar(op);
-        if (opdtype == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator input array scalar has no dtype descr");
-            Py_DECREF(op);
-            return NULL;
-        }
-        if (PyDataType_FLAGCHK(opdtype, NPY_ITEM_HASOBJECT) ||
-                    PyDataType_FLAGCHK(opdtype, NPY_ITEM_IS_POINTER)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator input array scalars which require "
-                    "reference/pointer tracking are not supported");
-            Py_DECREF(op);
-            Py_DECREF(opdtype);
-            return NULL;
-        }
-        /*
-         * The memory gets copied into a temporary buffer at
-         * the end of the iterator.  Add 16 so it can be
-         * 16-byte aligned.
-         */
-        bufferspace += opdtype->elsize + 16;
-    } else {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator input must be an array or a scalar");
-        Py_DECREF(op);
+    /* Prepare the operand.  This eats the op reference on an error */
+    if (!pyiter_prepare_operand(&op, &opdtype, &optype, &ndim)) {
         return NULL;
+    }
+    /*
+     * For array scalars, the memory gets copied into a temporary
+     * buffer at the end of the iterator.  16 is added so it can be
+     * 16-byte aligned.
+     */
+    if (optype == NPY_ITER_OP_ARRAY_SCALAR) {
+        bufferspace += opdtype->elsize + 16;
     }
 
     if ((min_depth >= 0 && ndim < min_depth) ||
@@ -933,6 +892,71 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter)
 
     char* axisdata = NIT_AXISDATA(iter);
     return &NAD_SHAPE(axisdata);
+}
+
+/*
+ * Prepares a a constructor operand.  Assumes a reference to 'op'
+ * is owned, and that 'op' may be replaced.  Fills in 'opdtype',
+ * 'optype' and 'ndim'.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+pyiter_prepare_operand(PyObject** op, PyArray_Descr** opdtype,
+                       int* optype, npy_intp* ndim)
+{
+    /* If it's a Python number, convert it into an array scalar */
+    if (PyArray_IsPythonNumber(*op)) {
+        PyObject *new_op = PyArray_ScalarFromObject(*op);
+        Py_DECREF(*op);
+        if (new_op == NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input failed to convert to array scalar");
+            return 0;
+        }
+        *op = new_op;
+    }
+
+    if (PyArray_Check(*op)) {
+        *optype = NPY_ITER_OP_ARRAY;
+        *ndim = PyArray_NDIM(*op);
+        /* PyArray_DESCR does not give us a reference */
+        *opdtype = PyArray_DESCR(*op);
+        if (*opdtype == NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input array object has no dtype descr");
+            Py_DECREF(*op);
+            return 0;
+        }
+        Py_INCREF(*opdtype);
+    } else if(PyArray_CheckScalar(*op)) {
+        *optype = NPY_ITER_OP_ARRAY_SCALAR;
+        *ndim = 0;
+        /*PyArray_DescrFromScalar does give us a reference */
+        *opdtype = PyArray_DescrFromScalar(*op);
+        if (*opdtype == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input array scalar has no dtype descr");
+            Py_DECREF(*op);
+            return 0;
+        }
+        if (PyDataType_FLAGCHK(*opdtype, NPY_ITEM_HASOBJECT) ||
+                    PyDataType_FLAGCHK(*opdtype, NPY_ITEM_IS_POINTER)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input array scalars which require "
+                    "reference/pointer tracking are not supported");
+            Py_DECREF(*op);
+            Py_DECREF(*opdtype);
+            return 0;
+        }
+    } else {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator input must be an array or a scalar");
+        Py_DECREF(*op);
+        return 0;
+    }
+
+    return 1;
 }
 
 /*
