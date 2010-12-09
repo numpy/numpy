@@ -2721,7 +2721,7 @@ test_new_iterator(PyObject *self, PyObject *args)
     npy_int32 flags;
     NpyIter_IterNext_Fn iternext;
     NpyIter_GetCoords_Fn getcoords = 0;
-    npy_intp innerindex, innerstride, innerindexstride, inner, innersize;
+    npy_intp innerstride, inner, *innersizeptr;
 
     if (!PyArg_ParseTuple(args, "O", &op)) {
         return NULL;
@@ -2735,6 +2735,7 @@ test_new_iterator(PyObject *self, PyObject *args)
     //flags |= NPY_ITER_FORCE_C_ORDER;
     //flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
     //flags |= NPY_ITER_NO_INNER_ITERATION;
+    flags |= NPY_ITER_READONLY;
     iter = NpyIter_New(op, flags, NULL, 0, 10);
     if (!iter) {
         return NULL;
@@ -2749,12 +2750,11 @@ test_new_iterator(PyObject *self, PyObject *args)
     }
     dataptrs = NpyIter_GetDataPtrArray(iter);
     itemsize = *NpyIter_GetItemSizeArray(iter);
-    indexptr = NpyIter_GetIndexPtr(iter);
     ndim = NpyIter_GetNDim(iter);
+    indexptr = NpyIter_GetIndexPtr(iter);
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
         innerstride = NpyIter_GetInnerStrideArray(iter)[0];
-        innerindexstride = NpyIter_GetInnerIndexStride(iter);
-        innersize = NpyIter_GetInnerLoopSize(iter);
+        innersizeptr = NpyIter_GetInnerLoopSize(iter);
     }
 
     //printf("%p %p %p\n", dataptrs, indexptr, *dataptrs);
@@ -2775,22 +2775,16 @@ test_new_iterator(PyObject *self, PyObject *args)
             printf(") ");
         }
         if (flags&NPY_ITER_NO_INNER_ITERATION) {
+            npy_intp innersize = *innersizeptr;
             printf("inner loop:\n");
-            if (indexptr != NULL) {
-                innerindex = *indexptr;
-            }
             for(inner = 0; inner < innersize; ++inner) {
                 printf("  ");
-                if (indexptr != NULL) {
-                    printf("%3d ", (int)innerindex);
-                }
                 for(i = 0; i < itemsize; ++i) {
                     int v = ((int)data[i])&0xff;
                     printf("%02x", v);
                 }
                 printf("\n");
                 data += innerstride;
-                innerindex += innerindexstride;
             }
         } else {
             for(i = 0; i < itemsize; ++i) {

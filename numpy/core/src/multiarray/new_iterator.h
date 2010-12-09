@@ -37,10 +37,8 @@ npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter);
 
 /* Get the array of strides for the inner loop */
 npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);
-/* Get the stride for the index, if it is being tracked */
-npy_intp NpyIter_GetInnerIndexStride(PyArray_NpyIter *iter);
-/* Get the size of the inner loop */
-npy_intp NpyIter_GetInnerLoopSize(PyArray_NpyIter *iter);
+/* Get a pointer to the size of the inner loop */
+npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 
 /* Flags that may be passed to the iterator constructors */
 #define NPY_ITER_C_ORDER_INDEX              0x0001
