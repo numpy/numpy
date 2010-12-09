@@ -6,12 +6,13 @@
 
 /* The actual structure of the iterator is an internal detail */
 typedef struct {
-    npy_intp internal_only;
+    npy_intp internal;
 } PyArray_NpyIter;
 
 /* Iterator function pointers that may be specialized */
 typedef int (*NpyIter_IterNext_Fn )(PyArray_NpyIter *iter);
-typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter, npy_intp *outcoords);
+typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter,
+                                      npy_intp *outcoords);
 
 
 /* Allocate a new iterator */
@@ -40,7 +41,7 @@ npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);
 /* Get a pointer to the size of the inner loop */
 npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 
-/* Flags that may be passed to the iterator constructors */
+/* Global flags that may be passed to the iterator constructors */
 #define NPY_ITER_C_ORDER_INDEX              0x0001
 #define NPY_ITER_F_ORDER_INDEX              0x0002
 #define NPY_ITER_COORDS                     0x0004
@@ -48,6 +49,7 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 #define NPY_ITER_FORCE_F_ORDER              0x0010
 #define NPY_ITER_FORCE_ANY_CONTIGUOUS       0x0020
 #define NPY_ITER_NO_INNER_ITERATION         0x0040
+/* Per-operand flags that may be passed to the iterator constructors */
 #define NPY_ITER_READONLY                   0x0080
 #define NPY_ITER_WRITEONLY                  0x0100
 #define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x0200
