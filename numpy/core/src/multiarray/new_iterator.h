@@ -15,10 +15,15 @@ typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter,
                                       npy_intp *outcoords);
 
 
-/* Allocate a new iterator */
+/* Allocate a new iterator over one object */
 PyArray_NpyIter*
 NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
                   int min_depth, int max_depth);
+/* Allocate a new iterator over multiple objects */
+PyArray_NpyIter*
+NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
+                 npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
+                 int min_depth, int max_depth);
 /* Deallocate an iterator */
 int NpyIter_Deallocate(PyArray_NpyIter* iter);
 
@@ -54,4 +59,15 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 #define NPY_ITER_WRITEONLY                  0x0100
 #define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x0200
 
+#define NPY_ITER_GLOBAL_FLAGS  (NPY_ITER_C_ORDER_INDEX | \
+                                NPY_ITER_F_ORDER_INDEX | \
+                                NPY_ITER_COORDS | \
+                                NPY_ITER_FORCE_C_ORDER | \
+                                NPY_ITER_FORCE_F_ORDER | \
+                                NPY_ITER_FORCE_ANY_CONTIGUOUS | \
+                                NPY_ITER_NO_INNER_ITERATION)
+
+#define NPY_ITER_PER_OP_FLAGS  (NPY_ITER_READONLY | \
+                                NPY_ITER_WRITEONLY | \
+                                NPY_ITER_ALLOW_WRITEABLE_REFERENCES)
 #endif

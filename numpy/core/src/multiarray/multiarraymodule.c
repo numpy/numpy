@@ -2713,19 +2713,18 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
 static PyObject *
 test_new_iterator(PyObject *self, PyObject *args)
 {
-    PyObject *op;
     void* iter;
     char** dataptrs;
     npy_intp* indexptr;
-    npy_intp itemsize, ndim, coords[NPY_MAXDIMS];
+    npy_intp *itemsizes, ndim, coords[NPY_MAXDIMS];
     npy_int32 flags;
     NpyIter_IterNext_Fn iternext;
     NpyIter_GetCoords_Fn getcoords = 0;
     npy_intp innerstride, inner, *innersizeptr;
 
-    if (!PyArg_ParseTuple(args, "O", &op)) {
-        return NULL;
-    }
+    int i, nop;
+    PyObject *op[NPY_MAXARGS];
+    npy_uint32 op_flags[NPY_MAXARGS];
 
     flags = 0;
     flags |= NPY_ITER_COORDS;
@@ -2735,8 +2734,19 @@ test_new_iterator(PyObject *self, PyObject *args)
     //flags |= NPY_ITER_FORCE_C_ORDER;
     //flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
     //flags |= NPY_ITER_NO_INNER_ITERATION;
-    flags |= NPY_ITER_READONLY;
-    iter = NpyIter_New(op, flags, NULL, 0, 10);
+
+    nop = PySequence_Size(args);
+    for(i = 0; i < nop; ++i) {
+        op[i] = PySequence_GetItem(args, i);
+        op_flags[i] = 0;
+        op_flags[i] |= NPY_ITER_READONLY;
+    }
+
+    if (nop == 1) {
+        iter = NpyIter_New(op[0], flags|op_flags[0], NULL, 0, 10);
+    } else {
+        iter = NpyIter_MultiNew(nop, op, flags, op_flags, NULL, 0, 10);
+    }
     if (!iter) {
         return NULL;
     }
@@ -2749,7 +2759,7 @@ test_new_iterator(PyObject *self, PyObject *args)
         }
     }
     dataptrs = NpyIter_GetDataPtrArray(iter);
-    itemsize = *NpyIter_GetItemSizeArray(iter);
+    itemsizes = NpyIter_GetItemSizeArray(iter);
     ndim = NpyIter_GetNDim(iter);
     indexptr = NpyIter_GetIndexPtr(iter);
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
@@ -2760,7 +2770,6 @@ test_new_iterator(PyObject *self, PyObject *args)
     //printf("%p %p %p\n", dataptrs, indexptr, *dataptrs);
 
     do {
-        char* data = *dataptrs;
         int i;
         if (indexptr != NULL) {
             npy_intp index = *indexptr;
@@ -2778,18 +2787,32 @@ test_new_iterator(PyObject *self, PyObject *args)
             npy_intp innersize = *innersizeptr;
             printf("inner loop:\n");
             for(inner = 0; inner < innersize; ++inner) {
+                npy_intp j;
+                char* data;
+
                 printf("  ");
-                for(i = 0; i < itemsize; ++i) {
-                    int v = ((int)data[i])&0xff;
-                    printf("%02x", v);
+                for(j = 0; j < nop; ++j) {
+                    data = dataptrs[j];
+                    for(i = 0; i < itemsizes[j]; ++i) {
+                        int v = ((int)data[i])&0xff;
+                        printf("%02x", v);
+                    }
+                    printf("  ");
                 }
                 printf("\n");
                 data += innerstride;
             }
         } else {
-            for(i = 0; i < itemsize; ++i) {
-                int v = ((int)data[i])&0xff;
-                printf("%02x", v);
+            npy_intp j;
+            char* data;
+
+            for(j = 0; j < nop; ++j) {
+                data = dataptrs[j];
+                for(i = 0; i < itemsizes[j]; ++i) {
+                    int v = ((int)data[i])&0xff;
+                    printf("%02x", v);
+                }
+                printf("  ");
             }
             printf("\n");
         }
