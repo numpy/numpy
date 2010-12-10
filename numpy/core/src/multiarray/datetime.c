@@ -596,7 +596,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
             ymd = days_to_ymdstruct((val - 86399) / 86400);
             sec = 86399 + (val + 1) % 86400;
         }
-        hms = seconds_to_hmsstruct(val);
+        hms = seconds_to_hmsstruct(sec);
         year   = ymd.year;
         month  = ymd.month;
         day    = ymd.day;
