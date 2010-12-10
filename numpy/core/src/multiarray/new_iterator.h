@@ -55,27 +55,19 @@ npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);
 npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 
 /* Global flags that may be passed to the iterator constructors */
-#define NPY_ITER_C_ORDER_INDEX              0x0001
-#define NPY_ITER_F_ORDER_INDEX              0x0002
-#define NPY_ITER_COORDS                     0x0004
-#define NPY_ITER_FORCE_C_ORDER              0x0008
-#define NPY_ITER_FORCE_F_ORDER              0x0010
-#define NPY_ITER_FORCE_ANY_CONTIGUOUS       0x0020
-#define NPY_ITER_NO_INNER_ITERATION         0x0040
+#define NPY_ITER_C_ORDER_INDEX              0x00000001
+#define NPY_ITER_F_ORDER_INDEX              0x00000002
+#define NPY_ITER_COORDS                     0x00000004
+#define NPY_ITER_FORCE_C_ORDER              0x00000008
+#define NPY_ITER_FORCE_F_ORDER              0x00000010
+#define NPY_ITER_FORCE_ANY_CONTIGUOUS       0x00000020
+#define NPY_ITER_NO_INNER_ITERATION         0x00000040
 /* Per-operand flags that may be passed to the iterator constructors */
-#define NPY_ITER_READONLY                   0x0080
-#define NPY_ITER_WRITEONLY                  0x0100
-#define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x0200
+#define NPY_ITER_READWRITE                  0x00010000
+#define NPY_ITER_READONLY                   0x00020000
+#define NPY_ITER_WRITEONLY                  0x00040000
+#define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x00080000
 
-#define NPY_ITER_GLOBAL_FLAGS  (NPY_ITER_C_ORDER_INDEX | \
-                                NPY_ITER_F_ORDER_INDEX | \
-                                NPY_ITER_COORDS | \
-                                NPY_ITER_FORCE_C_ORDER | \
-                                NPY_ITER_FORCE_F_ORDER | \
-                                NPY_ITER_FORCE_ANY_CONTIGUOUS | \
-                                NPY_ITER_NO_INNER_ITERATION)
-
-#define NPY_ITER_PER_OP_FLAGS  (NPY_ITER_READONLY | \
-                                NPY_ITER_WRITEONLY | \
-                                NPY_ITER_ALLOW_WRITEABLE_REFERENCES)
+#define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
+#define NPY_ITER_PER_OP_FLAGS               0xffff0000
 #endif

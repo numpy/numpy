@@ -1196,15 +1196,52 @@ npyiter_check_flags_readwrite(PyObject* op, PyArray_Descr* op_dtype,
 
     /* Error check the read/write flags */
     if (flags&NPY_ITER_READONLY) {
-        if (flags&NPY_ITER_WRITEONLY) {
+        /* The read/write flags are mutually exclusive */
+        if (flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator flags NPY_ITER_READONLY and "
-                    "NPY_ITER_WRITEONLY cannot both be specified");
+                    "Only one of the iterator flags NPY_ITER_READWRITE, "
+                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
+                    "specified for an operand");
+            return 0;
+        }
+        /* NULL operands must be write-only */
+        if (op_type == NPY_ITER_OP_NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Automatic allocation was requested for an iterator "
+                    "operand, but was set to NPY_ITER_READONLY instead of "
+                    "NPY_ITER_WRITEONLY");
             return 0;
         }
     }
     else {
-        /* If read-only wasn't specified, make sure the array is writeable */
+        /* The read/write flags are mutually exclusive */
+        if ((flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) ==
+                     (NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Only one of the iterator flags NPY_ITER_READWRITE, "
+                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
+                    "specified for an operand");
+            return 0;
+        }
+        /* Must specify a read/write flag */
+        if (!(flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "None of the iterator flags NPY_ITER_READWRITE, "
+                    "NPY_ITER_READONLY, or NPY_ITER_WRITEONLY were "
+                    "specified for an operand");
+            return 0;
+        }
+        /* NULL operands must be write-only */
+        if (op_type == NPY_ITER_OP_NULL &&
+                    !(flags&NPY_ITER_WRITEONLY)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Automatic allocation was requested for an iterator "
+                    "operand, but was set to NPY_ITER_READWRITE instead of "
+                    "NPY_ITER_WRITEONLY");
+            return 0;
+        }
+        
+        /* Since write was specified, make sure the array is writeable */
         if (op_type == NPY_ITER_OP_ARRAY_SCALAR) {
             PyErr_SetString(PyExc_ValueError,
                     "Tried to construct an iterator for a "
