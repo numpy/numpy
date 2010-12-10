@@ -12,6 +12,12 @@ class TestDateTime(TestCase):
             dt2 = np.dtype('m8[%s]' % unit)
             assert dt2 == np.dtype('timedelta64[%s]' % unit)
 
+
+    def test_hours(self):
+        t = np.ones(3, dtype='M8[s]')
+        t[0] = 60*60*24 + 60*60*10
+        assert t[0].item().hour == 10 
+
     def test_divisor_conversion_year(self):
         assert np.dtype('M8[Y/4]') == np.dtype('M8[3M]')
         assert np.dtype('M8[Y/13]') == np.dtype('M8[4W]')
