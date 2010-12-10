@@ -43,38 +43,6 @@
  * needs to be changed as well.
  */
 
-/* Size of all the data before the AXISDATA starts */
-#define NIT_SIZEOF_BASEDATA(itflags, ndim, niter) ( \
-        /* uint32 itflags AND uint16 ndim AND uint16 niter */ \
-        8 + \
-        /* npy_intp itersize */ \
-        NPY_SIZEOF_INTP + \
-        /* npy_intp perm[ndim] */ \
-        (NPY_SIZEOF_INTP)*(ndim) + \
-        /* PyArray_Descr* dtypes[niter] */ \
-        /* npy_intp itemsizes[niter] */ \
-        2*(NPY_SIZEOF_INTP)*(niter) \
-        )
-
-/* Size of one AXISDATA struct within the iterator */
-#define NIT_SIZEOF_AXISDATA(itflags, ndim, niter) (( \
-        /* intp shape */ \
-        1 + \
-        /* intp coord */ \
-        1 + \
-        /* intp stride[niter] AND char* ptr[niter] */ \
-        2*(niter) + \
-        /* intp indexstride AND intp index (when index is provided) */ \
-        ((itflags&NPY_ITER_FLAGS_HASINDEX) ? 2 : 0) \
-        )*NPY_SIZEOF_INTP ) \
-
-/* Size of the whole iterator */
-#define NIT_SIZEOF_ITERATOR(itflags, ndim, niter) ( \
-        NIT_SIZEOF_BASEDATA(itflags, ndim, niter) + \
-        NIT_SIZEOF_AXISDATA(itflags, ndim, niter)*(ndim) + \
-        NPY_SIZEOF_INTP*(ndim) + \
-        NPY_SIZEOF_INTP*(niter))
-
 /* Byte offsets of the iterator members */
 #define NIT_ITERSIZE_OFFSET() \
         (8)
@@ -87,9 +55,12 @@
 #define NIT_ITEMSIZES_OFFSET(itflags, ndim, niter) \
         (NIT_DTYPES_OFFSET(itflags, ndim, niter) + \
          (NPY_SIZEOF_INTP)*(niter))
-#define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
+#define NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) \
         (NIT_ITEMSIZES_OFFSET(itflags, ndim, niter) + \
          (NPY_SIZEOF_INTP)*(niter))
+#define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
+        (NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) + \
+         (NPY_SIZEOF_INTP)*(niter+1))
 #define NIT_AXISDATA_OFFSET(itflags, ndim, niter) \
         (NIT_OBJECTS_OFFSET(itflags, ndim, niter) + \
          (NPY_SIZEOF_INTP)*(niter))
@@ -109,6 +80,8 @@
         (char*)(iter) + NIT_DTYPES_OFFSET(itflags, ndim, niter)))
 #define NIT_ITEMSIZES(iter) ((npy_intp*)( \
         (char*)(iter) + NIT_ITEMSIZES_OFFSET(itflags, ndim, niter)))
+#define NIT_RESETDATAPTR(iter) ((char**)( \
+        (char*)(iter) + NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter)))
 #define NIT_OBJECTS(iter) ((PyObject**)( \
         (char*)(iter) + NIT_OBJECTS_OFFSET(itflags, ndim, niter)))
 #define NIT_AXISDATA(iter) \
@@ -122,6 +95,23 @@
         ((char**)(axisdata) + 2 + NAD_NSTRIDES())
 #define NAD_NSTRIDES() \
         ((niter) + ((itflags&NPY_ITER_FLAGS_HASINDEX) ? 1 : 0))
+
+/* Size of one AXISDATA struct within the iterator */
+#define NIT_SIZEOF_AXISDATA(itflags, ndim, niter) (( \
+        /* intp shape */ \
+        1 + \
+        /* intp coord */ \
+        1 + \
+        /* intp stride[niter] AND char* ptr[niter] */ \
+        2*(niter) + \
+        /* intp indexstride AND intp index (when index is provided) */ \
+        ((itflags&NPY_ITER_FLAGS_HASINDEX) ? 2 : 0) \
+        )*NPY_SIZEOF_INTP ) \
+
+/* Size of the whole iterator */
+#define NIT_SIZEOF_ITERATOR(itflags, ndim, niter) ( \
+        NIT_AXISDATA_OFFSET(itflags, ndim, niter) + \
+        NIT_SIZEOF_AXISDATA(itflags, ndim, niter)*(ndim))
 
 /* Internal helper functions */
 static int
@@ -177,7 +167,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     PyArray_Descr *op_dtype[NPY_MAXARGS];
     int op_type[NPY_MAXARGS];
     npy_intp op_ndim[NPY_MAXARGS];
-    char *op_dataptr[NPY_MAXARGS];
+    char **op_dataptr;
 
     if (niter > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -314,6 +304,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     NIT_ITERSIZE(iter) = 1;
     /* The iterator takes over ownership of the function's 'op_dtype'
      * and 'op' references */
+    op_dataptr = NIT_RESETDATAPTR(iter);
     for (iiter = 0; iiter < niter; ++iiter) {
         NIT_DTYPES(iter)[iiter] = op_dtype[iiter];
         NIT_ITEMSIZES(iter)[iiter] = op_dtype[iiter]->elsize;
@@ -341,9 +332,20 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                 break;
         }
     }
+    /* Set resetindex to zero as well (it's just after the resetdataptr) */
+    op_dataptr[niter] = 0;
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
-    npyiter_fill_axisdata(iter, op, op_ndim, op_dataptr);
+    if (!npyiter_fill_axisdata(iter, op, op_ndim, op_dataptr)) {
+        npy_intp i;
+
+        for (i = 0; i < niter; ++i) {
+            Py_XDECREF(op[i]);
+            Py_XDECREF(op_dtype[i]);
+        }
+        PyArray_free(iter);
+        return NULL;
+    }
 
     /*
      * If an index was requested, compute the strides for it.
@@ -448,6 +450,186 @@ int NpyIter_Deallocate(PyArray_NpyIter *iter)
     return NPY_SUCCEED;
 }
 
+/* Resets the iterator to its initial state */
+void NpyIter_Reset(PyArray_NpyIter *iter)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    char **resetdataptr;
+    char *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp istrides, nstrides;
+
+    resetdataptr = NIT_RESETDATAPTR(iter);
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    nstrides = NAD_NSTRIDES();
+    
+    for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
+        char **ptrs;
+        NAD_COORD(axisdata) = 0;
+        ptrs = NAD_PTRS(axisdata);
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            ptrs[istrides] = resetdataptr[istrides];
+        }
+    }
+}
+
+/*
+ * Sets the iterator to the specified coordinates, which must have the
+ * correct number of entries for 'ndim'.  It is only valid
+ * when NPY_ITER_COORDS was passed to the constructor.  This operation
+ * fails if the coordinates are out of bounds.
+ *
+ * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
+ */
+int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    char **dataptr;
+    char *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp istrides, nstrides;
+    npy_intp *perm, perm_coords[NPY_MAXDIMS];
+
+    if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot call GotoCoord on an iterator without "
+                "the constructor flag NPY_ITER_COORDS.");
+        return NPY_FAIL;
+    }
+
+    perm = NIT_PERM(iter);
+    dataptr = NIT_RESETDATAPTR(iter);
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+
+    /* Permute the input coordinates to match the iterator */
+    char *ad = axisdata;
+    for (idim = 0; idim < ndim; ++idim, ad += sizeof_axisdata) {
+        npy_intp p = perm[idim], i, shape;
+        if (p < 0) {
+            /* If the perm entry is negative, reverse the coordinate */
+            shape = NAD_SHAPE(ad);
+            i = shape - coords[ndim+p] - 1;
+        } else {
+            shape = NAD_SHAPE(ad);
+            i = coords[ndim-p-1];
+        }
+
+        /* Bounds-check this coordinate */
+        if (i >= 0 && i < shape) {
+            perm_coords[idim] = i;
+        } else {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator GotoCoord called with out-of-bounds "
+                    "coordinates.");
+            return NPY_FAIL;
+        }
+    }
+
+    nstrides = NAD_NSTRIDES();
+
+    /*
+     * Set the coordinates, from the slowest-changing to the
+     * fastest-changing.  The successive pointers accumulate
+     * the offsets, starting from the original data pointers.
+     */
+    axisdata += (ndim-1)*sizeof_axisdata;
+    for (idim = ndim-1; idim >= 0; --idim, axisdata -= sizeof_axisdata) {
+        npy_intp i, *strides;
+        char **ptrs;
+
+        NAD_COORD(axisdata) = i = perm_coords[idim];
+        strides = NAD_STRIDES(axisdata);
+        ptrs = NAD_PTRS(axisdata);
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            ptrs[istrides] = dataptr[istrides] + i*strides[istrides];
+        }
+
+        dataptr = ptrs;
+    }
+
+    return NPY_SUCCEED;
+}
+
+/* If the iterator is tracking an index, sets the iterator
+ * to the specified index.
+ *
+ * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
+ */
+int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    char **dataptr;
+    char *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp istrides, nstrides;
+
+    if (!(itflags&NPY_ITER_FLAGS_HASINDEX)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot call GotoIndex on an iterator without "
+                "the constructor flag NPY_ITER_(C|F)_ORDER_INDEX.");
+        return NPY_FAIL;
+    }
+
+    if (index < 0 || index >= NIT_ITERSIZE(iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator GotoIndex called with out-of-bounds "
+                "index.");
+        return NPY_FAIL;
+    }
+
+    dataptr = NIT_RESETDATAPTR(iter);
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    nstrides = NAD_NSTRIDES();
+
+    /*
+     * Set the coordinates, from the slowest-changing to the
+     * fastest-changing.  The successive pointers accumulate
+     * the offsets, starting from the original data pointers.
+     */
+    axisdata += (ndim-1)*sizeof_axisdata;
+    for (idim = 0; idim < ndim; ++idim, axisdata -= sizeof_axisdata) {
+        npy_intp i, shape, iterstride, *strides;
+        char **ptrs;
+
+        shape = NAD_SHAPE(axisdata);
+        strides = NAD_STRIDES(axisdata);
+        ptrs = NAD_PTRS(axisdata);
+        iterstride = strides[niter];
+
+        /* Extract the coordinate from the index */
+        if (iterstride == 0) {
+            i = 0;
+        }
+        else if (iterstride < 0) {
+            i = shape - (index/(-iterstride))%shape - 1;
+        }
+        else {
+            i = (index/iterstride)%shape;
+        }
+
+        NAD_COORD(axisdata) = i;
+
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            ptrs[istrides] = dataptr[istrides] + i*strides[istrides];
+        }
+
+        dataptr = ptrs;
+    }
+
+    return NPY_SUCCEED;
+}
 
 /* SPECIALIZED iternext functions */
 
@@ -717,28 +899,28 @@ npyiter_getcoord_itflags@tag_itflags@(PyArray_NpyIter *iter, npy_intp *outcoord)
     npy_intp* perm = NIT_PERM(iter);
 #endif
 
-    outcoord += ndim-1;
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
 #if ((@const_itflags@)&NPY_ITER_FLAGS_IDENTPERM)
+    outcoord += ndim-1;
     for(idim = 0; idim < ndim; ++idim, --outcoord,
                                     axisdata += sizeof_axisdata) {
         *outcoord = NAD_COORD(axisdata);
     }
 #elif !((@const_itflags@)&NPY_ITER_FLAGS_NEGPERM)
-    for(idim = 0; idim < ndim; ++idim, --outcoord) {
-        *outcoord = NAD_COORD(axisdata + sizeof_axisdata*perm[idim]);
+    for(idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
+        npy_intp p = perm[idim];
+        outcoord[ndim-p-1] = NAD_COORD(axisdata);
     }
 #else
-    for(idim = 0; idim < ndim; ++idim, --outcoord) {
+    for(idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
         npy_intp p = perm[idim];
         if (p < 0) {
             /* If the perm entry is negative, reverse the coordinate */
-            char *ad = axisdata + sizeof_axisdata*(-p-1);
-            *outcoord = NAD_SHAPE(ad) - NAD_COORD(ad) - 1;
+            outcoord[ndim+p] = NAD_SHAPE(axisdata) - NAD_COORD(axisdata) - 1;
         }
         else {
-            *outcoord = NAD_COORD(axisdata + sizeof_axisdata*p);
+            outcoord[ndim-p-1] = NAD_COORD(axisdata);
         }
     }
 #endif /* not ident perm */
@@ -794,6 +976,11 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter)
 {
     return NIT_NDIM(iter);
+}
+
+npy_intp NpyIter_GetNIter(PyArray_NpyIter *iter)
+{
+    return NIT_NITER(iter);
 }
 
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter)
@@ -1323,6 +1510,11 @@ npyiter_flip_negative_strides(PyArray_NpyIter *iter)
      * in the first AXISDATA, and need to be copied to all the rest
      */
     if (any_flipped) {
+        npy_intp *resetdataptr = (npy_intp*)NIT_RESETDATAPTR(iter);
+
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            resetdataptr[istrides] = ptrs0[istrides];
+        }
         axisdata = axisdata0;
         for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
             npy_intp *ptrs = (npy_intp*)NAD_PTRS(axisdata);
@@ -1670,6 +1862,15 @@ npyiter_debug_print(PyArray_NpyIter *iter)
         printf("%d ", (int)NIT_ITEMSIZES(iter)[iiter]);
     }
     printf("\n");
+    printf("InitDataPtrs: ");
+    for (iiter = 0; iiter < niter; ++iiter) {
+        printf("%p ", NIT_RESETDATAPTR(iter)[iiter]);
+    }
+    printf("\n");
+    if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+        printf("InitIndex: %d\n",
+                        (int)(npy_intp)NIT_RESETDATAPTR(iter)[niter]);
+    }
     printf("Objects: ");
     for (iiter = 0; iiter < niter; ++iiter) {
         printf("%p ", NIT_OBJECTS(iter)[iiter]);
@@ -1704,3 +1905,4 @@ npyiter_debug_print(PyArray_NpyIter *iter)
 
     printf("------- END ITERATOR DUMP -------\n");
 }
+

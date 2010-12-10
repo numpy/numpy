@@ -2721,6 +2721,7 @@ test_new_iterator(PyObject *self, PyObject *args)
     NpyIter_IterNext_Fn iternext;
     NpyIter_GetCoords_Fn getcoords = 0;
     npy_intp innerstride, inner, *innersizeptr;
+    npy_intp test_coord[] = {1,2,3,4,5,6,7,8,9,10};
 
     int i, nop;
     PyObject *op[NPY_MAXARGS];
@@ -2730,7 +2731,7 @@ test_new_iterator(PyObject *self, PyObject *args)
     flags |= NPY_ITER_COORDS;
     flags |= NPY_ITER_C_ORDER_INDEX;
     //flags |= NPY_ITER_F_ORDER_INDEX;
-    flags |= NPY_ITER_FORCE_F_ORDER;
+    //flags |= NPY_ITER_FORCE_F_ORDER;
     //flags |= NPY_ITER_FORCE_C_ORDER;
     //flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
     //flags |= NPY_ITER_NO_INNER_ITERATION;
@@ -2767,7 +2768,20 @@ test_new_iterator(PyObject *self, PyObject *args)
         innersizeptr = NpyIter_GetInnerLoopSize(iter);
     }
 
+    //NpyIter_Deallocate(iter);
+    //Py_RETURN_NONE;
+
     //printf("%p %p %p\n", dataptrs, indexptr, *dataptrs);
+    if (NpyIter_GotoCoords(iter, test_coord) != NPY_SUCCEED) {
+        NpyIter_Deallocate(iter);
+        return NULL;
+    }
+    /*
+    if (NpyIter_GotoIndex(iter, 9) != NPY_SUCCEED) {
+        NpyIter_Deallocate(iter);
+        return NULL;
+    }
+    */
 
     do {
         int i;
@@ -2818,6 +2832,8 @@ test_new_iterator(PyObject *self, PyObject *args)
         }
     } while(iternext(iter));
     printf("\n");
+
+    NpyIter_Reset(iter);
 
     NpyIter_Deallocate(iter);
 

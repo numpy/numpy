@@ -26,14 +26,22 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                  int min_depth, int max_depth);
 /* Deallocate an iterator */
 int NpyIter_Deallocate(PyArray_NpyIter* iter);
+/* Resets the iterator back to its initial state */
+void NpyIter_Reset(PyArray_NpyIter *iter);
+/* Sets the iterator to point at the coordinates in 'coords' */
+int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords);
+/* Sets the iterator to point at the given index */
+int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index);
 
 /* Compute a specialized iteration function for an iterator */
 NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter);
 /* Compute a specialized getcoords function for an iterator */
 NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter);
 
-/* Gets the number of dimension being iterated */
+/* Gets the number of dimensions being iterated */
 npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter);
+/* Gets the number of objects being iterated */
+npy_intp NpyIter_GetNIter(PyArray_NpyIter *iter);
 /* Get the array of data pointers (1 per object being iterated) */
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter);
 /* Get a pointer to the index, if it is being tracked */
