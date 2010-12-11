@@ -1275,6 +1275,16 @@ class TestStats(TestCase):
         assert res.info == dat.info
 
 class TestDot(TestCase):
+    def test_dot_2args(self):
+        from numpy.core.multiarray import dot
+
+        a = np.array([[1, 2], [3, 4]], dtype=float)
+        b = np.array([[1, 0], [1, 1]], dtype=float)
+        c = np.array([[3, 2], [7, 4]], dtype=float)
+
+        d = dot(a, b)
+        assert_allclose(c, d)
+
     def test_dot_3args(self):
         from numpy.core.multiarray import dot
 
