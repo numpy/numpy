@@ -125,7 +125,8 @@ npyiter_check_flags_readwrite(PyObject* op, PyArray_Descr* op_dtype,
                               int op_type, npy_uint32 flags);
 static int
 npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
-                      npy_intp *op_ndim, char **op_dataptr);
+                      npy_intp *op_ndim, char **op_dataptr,
+                      npy_intp **op_axes);
 static void
 npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags);
 static void
@@ -149,7 +150,8 @@ npyiter_debug_print(PyArray_NpyIter *iter);
 PyArray_NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
-                 int min_depth, int max_depth)
+                 int min_ndim, int max_ndim,
+                 npy_intp oa_ndim, npy_intp **op_axes)
 {
     npy_uint32 itflags = NPY_ITER_FLAGS_IDENTPERM;
     npy_intp idim, ndim = 1;
@@ -169,11 +171,59 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     npy_intp op_ndim[NPY_MAXARGS];
     char **op_dataptr;
 
+    char axes_dupcheck[NPY_MAXDIMS];
+
     if (niter > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
             "Cannot construct an iterator with more than %d operands "
             "(%d were requested)", (int)NPY_MAXARGS, (int)niter);
         return NULL;
+    }
+
+    /* Error check 'oa_ndim' and 'op_axes', which must be used together */
+    if (oa_ndim == 0 && op_axes != NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "If 'op_axes' is not NULL in the iterator constructor, "
+                "'oa_ndim' must be greater than zero");
+        return NULL;
+    } else if (oa_ndim > 0) {
+        if (oa_ndim > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError,
+                "Cannot construct an iterator with more than %d dimensions "
+                "(%d were requested for op_axes)",
+                (int)NPY_MAXDIMS, (int)oa_ndim);
+            return NULL;
+        }
+        else if (op_axes == NULL) {
+            PyErr_Format(PyExc_ValueError,
+                    "If 'oa_ndim' is greater than zero in the iterator "
+                    "constructor, then op_axes cannot be NULL");
+            return NULL;
+        }
+
+        /* Check that there are no duplicates in op_axes */
+        for (iiter = 0; iiter < niter; ++iiter) {
+            npy_intp *axes = op_axes[iiter];
+            if (axes != NULL) {
+                memset(axes_dupcheck, 0, oa_ndim);
+                for (idim = 0; idim < oa_ndim; ++idim) {
+                    npy_intp i = axes[idim];
+                    if (i >= 0) {
+                        if (i >= NPY_MAXDIMS ||
+                                axes_dupcheck[i] == 1) {
+                            PyErr_Format(PyExc_ValueError,
+                                    "The 'op_axes' provided to the iterator "
+                                    "constructor contained duplicate "
+                                    "or invalid values");
+                            return NULL;
+                        }
+                        else {
+                            axes_dupcheck[i] = 1;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /* Checks the flags (C|F)_ORDER_INDEX, COORDS, and NO_INNER_ITERATION */
@@ -220,6 +270,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         }
     }
 
+
     /* For now, disallow any NULL operands */
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op_type[iiter] == NPY_ITER_OP_NULL) {
@@ -247,15 +298,20 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         }
     }
 
+    /* If 'op_axes' is being used, force 'ndim' */
+    if (oa_ndim > 0) {
+        ndim = oa_ndim;
+    }
+
     /* Make sure the number of dimensions matches the requirements */
-    if ((min_depth >= 0 && ndim < min_depth) ||
-            (max_depth >= 0 && ndim > max_depth)) {
+    if ((min_ndim >= 0 && ndim < min_ndim) ||
+            (max_ndim >= 0 && ndim > max_ndim)) {
         npy_intp i;
 
         PyErr_Format(PyExc_ValueError,
                 "Requested an iterator with %d <= ndim <= %d, "
                 "but input ndim is %d",
-                min_depth, max_depth, (int)ndim);
+                min_ndim, max_ndim, (int)ndim);
         for (i = 0; i < niter; ++i) {
             Py_XDECREF(op[i]);
             Py_XDECREF(op_dtype[i]);
@@ -266,19 +322,34 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     /* Confirm the data types of the array */
     if (op_request_dtypes != NULL) {
         for (iiter = 0; iiter < niter; ++iiter) {
-            if (op_request_dtypes[iiter] != NULL &&
-                        !PyArray_EquivTypes(op_request_dtypes[iiter],
-                                            op_dtype[iiter])) {
-                npy_intp i;
+            if (op_request_dtypes[iiter] != NULL) {
+                if (!PyObject_TypeCheck(op_request_dtypes[iiter],
+                                                &PyArrayDescr_Type)) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Iterator requested dtypes must be "
+                            "array descrs.");
+                    npy_intp i;
 
-                PyErr_SetString(PyExc_ValueError,
-                        "Iterator doesn't support automatic dtype "
-                        "conversions yet");
-                for (i = 0; i < niter; ++i) {
-                    Py_XDECREF(op[i]);
-                    Py_XDECREF(op_dtype[i]);
+                    for (i = 0; i < niter; ++i) {
+                        Py_XDECREF(op[i]);
+                        Py_XDECREF(op_dtype[i]);
+                    }
+                    return NULL;
                 }
-                return NULL;
+
+                if (!PyArray_EquivTypes(op_request_dtypes[iiter],
+                                            op_dtype[iiter])) {
+                    npy_intp i;
+
+                    PyErr_SetString(PyExc_ValueError,
+                            "Iterator doesn't support automatic dtype "
+                            "conversions yet");
+                    for (i = 0; i < niter; ++i) {
+                        Py_XDECREF(op[i]);
+                        Py_XDECREF(op_dtype[i]);
+                    }
+                    return NULL;
+                }
             }
         }
     }
@@ -336,7 +407,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     op_dataptr[niter] = 0;
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
-    if (!npyiter_fill_axisdata(iter, op, op_ndim, op_dataptr)) {
+    if (!npyiter_fill_axisdata(iter, op, op_ndim, op_dataptr, op_axes)) {
         npy_intp i;
 
         for (i = 0; i < niter; ++i) {
@@ -419,14 +490,21 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
 /* The constructor for an iterator over one object */
 PyArray_NpyIter*
 NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
-                  int min_depth, int max_depth)
+                  int min_ndim, int max_ndim,
+                  npy_intp a_ndim, npy_intp *axes)
 {
     /* Split the flags into separate global and op flags */
     npy_uint32 op_flags = flags&NPY_ITER_PER_OP_FLAGS;
     flags &= NPY_ITER_GLOBAL_FLAGS;
 
-    return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
-                            min_depth, max_depth);
+    if (a_ndim > 0) {
+        return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
+                                min_ndim, max_ndim, a_ndim, &axes);
+    }
+    else {
+        return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
+                                min_ndim, max_ndim, 0, NULL);
+    }
 }
 
 int NpyIter_Deallocate(PyArray_NpyIter *iter)
@@ -526,7 +604,7 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
         if (i >= 0 && i < shape) {
             perm_coords[idim] = i;
         } else {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_IndexError,
                     "Iterator GotoCoord called with out-of-bounds "
                     "coordinates.");
             return NPY_FAIL;
@@ -582,7 +660,7 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
     }
 
     if (index < 0 || index >= NIT_ITERSIZE(iter)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_IndexError,
                 "Iterator GotoIndex called with out-of-bounds "
                 "index.");
         return NPY_FAIL;
@@ -641,39 +719,39 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
  * #tag_itflags = 0, IND, NOINN#
  */
 /**begin repeat1
- * #const_ndims = 1, 2, 100#
- * #tag_ndims = 1, 2, ANY#
+ * #const_ndim = 1, 2, 100#
+ * #tag_ndim = 1, 2, ANY#
  */
 /**begin repeat2
  * #const_niter = 1, 2, 100#
  * #tag_niter = 1, 2, ANY#
  */
 
-/* Specialized iternext (@const_itflags@,@const_ndims@,@const_niter@) */
+/* Specialized iternext (@const_itflags@,@const_ndim@,@const_niter@) */
 NPY_NO_EXPORT int
-npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
+npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
                                                       PyArray_NpyIter *iter)
 {
     const npy_uint32 itflags = @const_itflags@;
-#if @const_ndims@ < 100
-    const npy_intp ndim = @const_ndims@;
+#if @const_ndim@ < 100
+    const npy_intp ndim = @const_ndim@;
 #else
     npy_intp idim, ndim = NIT_NDIM(iter);
 #endif
-#if @const_ndims@ < 100
+#if @const_ndim@ < 100
     const npy_intp niter = @const_niter@;
 #else
     npy_intp niter = NIT_NITER(iter);
 #endif
 
     npy_intp istrides, nstrides, sizeof_axisdata;
-#if @const_ndims@ > 0
+#if @const_ndim@ > 0
     char* axisdata0;
 #endif
-#if @const_ndims@ > 1
+#if @const_ndim@ > 1
     char* axisdata1;
 #endif
-#if @const_ndims@ > 2
+#if @const_ndim@ > 2
     char* axisdata2;
 #endif
 
@@ -690,7 +768,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
     }
 #  endif
 
-#if @const_ndims@ == 1
+#if @const_ndim@ == 1
 
 #  if !(@const_itflags@&NPY_ITER_FLAGS_NOINNER)
     /* Finished when the coordinate equals the shape */
@@ -728,7 +806,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
         return 1;
     }
 
-# if @const_ndims@ == 2
+# if @const_ndim@ == 2
     return 0;
 # else
     
@@ -782,9 +860,9 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@(
 
     return 0;
 
-# endif /* ndims != 2 */
+# endif /* ndim != 2 */
     
-#endif /* ndims != 1 */
+#endif /* ndim != 1 */
 }
 
 /**end repeat2**/
@@ -832,21 +910,21 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter)
         case @const_itflags@:
             switch (ndim) {
 /**begin repeat1
- * #const_ndims = 1, 2#
- * #tag_ndims = 1, 2#
+ * #const_ndim = 1, 2#
+ * #tag_ndim = 1, 2#
  */
-                case @const_ndims@:
+                case @const_ndim@:
                     switch (niter) {
 /**begin repeat2
  * #const_niter = 1, 2#
  * #tag_niter = 1, 2#
  */
                         case @const_niter@:
-                            return &npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_iters@tag_niter@;
+                            return &npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@;
 /**end repeat2**/
                         /* Not specialized on niter */
                         default:
-                            return &npyiter_iternext_itflags@tag_itflags@_dims@tag_ndims@_itersANY;
+                            return &npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_itersANY;
                     }
 /**end repeat1**/
                 /* Not specialized on ndim */
@@ -973,6 +1051,16 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 
 }
 
+int NpyIter_HasCoords(PyArray_NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITER_FLAGS_HASCOORDS) != 0;
+}
+
+int NpyIter_HasIndex(PyArray_NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITER_FLAGS_HASINDEX) != 0;
+}
+
 npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter)
 {
     return NIT_NDIM(iter);
@@ -981,6 +1069,11 @@ npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter)
 npy_intp NpyIter_GetNIter(PyArray_NpyIter *iter)
 {
     return NIT_NITER(iter);
+}
+
+npy_intp NpyIter_GetIterSize(PyArray_NpyIter *iter)
+{
+    return NIT_ITERSIZE(iter);
 }
 
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter)
@@ -992,6 +1085,15 @@ char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter)
     char* axisdata = NIT_AXISDATA(iter);
 
     return NAD_PTRS(axisdata);
+}
+
+PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter)
+{
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
+    npy_intp ndim = NIT_NDIM(iter);
+    /*npy_intp niter = NIT_NITER(iter);*/
+
+    return NIT_DTYPES(iter);
 }
 
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
@@ -1280,11 +1382,15 @@ npyiter_check_flags_readwrite(PyObject* op, PyArray_Descr* op_dtype,
  * the dimensionas as necessary.  Also fills
  * in the ITERSIZE data member.
  *
+ * If op_axes is not NULL, it should point to an array of ndim-sized
+ * arrays, one for each op.
+ *
  * Return 1 on success, 0 on failure.
  */
 static int
 npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
-                      npy_intp *op_ndim, char **op_dataptr)
+                      npy_intp *op_ndim, char **op_dataptr,
+                      npy_intp **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1298,31 +1404,80 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
     sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
 
     /* Process the first operand */
-    axisdata = axisdata0;
-    ondim = op_ndim[0];
-    odataptr = op_dataptr[0];
-    for (idim = 0; idim < ondim; ++idim) {
-        npy_intp shape = PyArray_DIM(op[0], ondim-idim-1);
+    if (op_axes == NULL || op_axes[0] == NULL) {
+        /* Default broadcasting rules if op_axes is not specified */
+        axisdata = axisdata0;
+        ondim = op_ndim[0];
+        odataptr = op_dataptr[0];
+        /* Possible if op_axes are being used, but op_axes[0] is NULL */
+        if (ondim > ndim) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input has more dimensions than allowed "
+                    "by the 'op_axes' specified");
+            return 0;
+        }
+        for (idim = 0; idim < ondim; ++idim) {
+            npy_intp shape = PyArray_DIM(op[0], ondim-idim-1);
 
-        NAD_SHAPE(axisdata) = shape;
-        NAD_COORD(axisdata) = 0;
-        if (shape == 1) {
+            NAD_SHAPE(axisdata) = shape;
+            NAD_COORD(axisdata) = 0;
+            if (shape == 1) {
+                NAD_STRIDES(axisdata)[0] = 0;
+            }
+            else {
+                NAD_STRIDES(axisdata)[0] = PyArray_STRIDE(op[0], ondim-idim-1);
+            }
+            NAD_PTRS(axisdata)[0] = odataptr;
+
+            axisdata += sizeof_axisdata;
+        }
+        for (idim = ondim; idim < ndim; ++idim) {
+            NAD_SHAPE(axisdata) = 1;
+            NAD_COORD(axisdata) = 0;
             NAD_STRIDES(axisdata)[0] = 0;
-        }
-        else {
-            NAD_STRIDES(axisdata)[0] = PyArray_STRIDE(op[0], ondim-idim-1);
-        }
-        NAD_PTRS(axisdata)[0] = odataptr;
+            NAD_PTRS(axisdata)[0] = odataptr;
 
-        axisdata += sizeof_axisdata;
+            axisdata += sizeof_axisdata;
+        }
     }
-    for (idim = ondim; idim < ndim; ++idim) {
-        NAD_SHAPE(axisdata) = 1;
-        NAD_COORD(axisdata) = 0;
-        NAD_STRIDES(axisdata)[0] = 0;
-        NAD_PTRS(axisdata)[0] = odataptr;
+    else {
+        npy_intp *axes = op_axes[0];
 
-        axisdata += sizeof_axisdata;
+        /* Use op_axes to choose the axes */
+        axisdata = axisdata0;
+        ondim = op_ndim[0];
+        odataptr = op_dataptr[0];
+        for (idim = 0; idim < ndim; ++idim) {
+            npy_intp i = axes[ndim-idim-1];
+            if (i < 0) {
+                NAD_SHAPE(axisdata) = 1;
+                NAD_COORD(axisdata) = 0;
+                NAD_STRIDES(axisdata)[0] = 0;
+                NAD_PTRS(axisdata)[0] = odataptr;
+            }
+            else if (i < ondim) {
+                npy_intp shape = PyArray_DIM(op[0], i);
+
+                NAD_SHAPE(axisdata) = shape;
+                NAD_COORD(axisdata) = 0;
+                if (shape == 1) {
+                    NAD_STRIDES(axisdata)[0] = 0;
+                }
+                else {
+                    NAD_STRIDES(axisdata)[0] = PyArray_STRIDE(op[0], i);
+                }
+                NAD_PTRS(axisdata)[0] = odataptr;
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                        "Iterator input op_axes[0][%d] (==%d) is not a valid "
+                        "axis of op[0], which has %d dimensions",
+                        (int)(ndim-idim-1), (int)i, (int)ondim);
+                return 0;
+            }
+
+            axisdata += sizeof_axisdata;
+        }
     }
 
     /*
@@ -1330,37 +1485,92 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
      * to combine them.
      */
     for (iiter = 1; iiter < niter; ++iiter) {
-        axisdata = axisdata0;
-        ondim = op_ndim[iiter];
-        odataptr = op_dataptr[iiter];
-        for (idim = 0; idim < ondim; ++idim) {
-            npy_intp shape = PyArray_DIM(op[iiter], ondim-idim-1);
-
-            if (shape == 1) {
-                NAD_STRIDES(axisdata)[iiter] = 0;
+        if (op_axes == NULL || op_axes[iiter] == NULL) {
+            axisdata = axisdata0;
+            ondim = op_ndim[iiter];
+            odataptr = op_dataptr[iiter];
+            /* Possible if op_axes are being used, but op_axes[iiter] is NULL */
+            if (ondim > ndim) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Iterator input has more dimensions than allowed "
+                        "by the 'op_axes' specified");
+                return 0;
             }
-            else {
-                if (NAD_SHAPE(axisdata) == 1) {
-                    NAD_SHAPE(axisdata) = shape;
+            for (idim = 0; idim < ondim; ++idim) {
+                npy_intp shape = PyArray_DIM(op[iiter], ondim-idim-1);
+
+                if (shape == 1) {
+                    NAD_STRIDES(axisdata)[iiter] = 0;
                 }
-                else if (NAD_SHAPE(axisdata) != shape) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Iterator input objects cannot be broadcast "
-                            "to a single shape");
+                else {
+                    if (NAD_SHAPE(axisdata) == 1) {
+                        NAD_SHAPE(axisdata) = shape;
+                    }
+                    else if (NAD_SHAPE(axisdata) != shape) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "Iterator input objects cannot be broadcast "
+                                "to a single shape");
+                        return 0;
+                    }
+                    NAD_STRIDES(axisdata)[iiter] = PyArray_STRIDE(
+                                                      op[iiter], ondim-idim-1);
+                }
+                NAD_PTRS(axisdata)[iiter] = odataptr;
+
+                axisdata += sizeof_axisdata;
+            }
+            for (idim = ondim; idim < ndim; ++idim) {
+                NAD_STRIDES(axisdata)[iiter] = 0;
+                NAD_PTRS(axisdata)[iiter] = odataptr;
+
+                axisdata += sizeof_axisdata;
+            }
+        }
+        else {
+            npy_intp *axes = op_axes[iiter];
+
+            /* Use op_axes to choose the axes */
+            axisdata = axisdata0;
+            ondim = op_ndim[iiter];
+            odataptr = op_dataptr[iiter];
+            for (idim = 0; idim < ndim; ++idim) {
+                npy_intp i = axes[ndim-idim-1];
+                if (i < 0) {
+                    NAD_STRIDES(axisdata)[iiter] = 0;
+                    NAD_PTRS(axisdata)[iiter] = odataptr;
+                }
+                else if (i < ondim) {
+                    npy_intp shape = PyArray_DIM(op[iiter], i);
+
+                    if (shape == 1) {
+                        NAD_STRIDES(axisdata)[iiter] = 0;
+                    }
+                    else {
+                        if (NAD_SHAPE(axisdata) == 1) {
+                            NAD_SHAPE(axisdata) = shape;
+                        }
+                        else if (NAD_SHAPE(axisdata) != shape) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "Iterator input objects cannot be "
+                                    "broadcast to a single shape");
+                            return 0;
+                        }
+                        NAD_STRIDES(axisdata)[iiter] =
+                                                PyArray_STRIDE(op[iiter], i);
+                    }
+                    NAD_PTRS(axisdata)[iiter] = odataptr;
+                }
+                else {
+                    PyErr_Format(PyExc_ValueError,
+                            "Iterator input op_axes[%d][%d] (==%d) is not a "
+                            "valid axis of op[%d], which has %d dimensions ",
+                            (int)iiter, (int)(ndim-idim-1), (int)i,
+                            (int)iiter, (int)ondim);
                     return 0;
                 }
-                NAD_STRIDES(axisdata)[iiter] = PyArray_STRIDE(
-                                                    op[iiter], ondim-idim-1);
+
+                axisdata += sizeof_axisdata;
             }
-            NAD_PTRS(axisdata)[iiter] = odataptr;
-
-            axisdata += sizeof_axisdata;
-        }
-        for (idim = ondim; idim < ndim; ++idim) {
-            NAD_STRIDES(axisdata)[iiter] = 0;
-            NAD_PTRS(axisdata)[iiter] = odataptr;
-
-            axisdata += sizeof_axisdata;
         }
     }
 

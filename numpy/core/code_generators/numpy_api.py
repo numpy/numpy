@@ -65,6 +65,7 @@ multiarray_types_api = {
     'PyDatetimeArrType_Type':           40,
     'PyTimedeltaArrType_Type':          41,
     'PyHalfArrType_Type':               221,
+    'NpyIter_Type':                     222,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])

@@ -1,4 +1,4 @@
-__all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
+__all__ = ['newaxis', 'ndarray', 'flatiter', 'newiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer',
            'int_asbuffer', 'where', 'argwhere',
@@ -54,6 +54,7 @@ BUFSIZE = multiarray.BUFSIZE
 
 ndarray = multiarray.ndarray
 flatiter = multiarray.flatiter
+newiter = multiarray.newiter
 broadcast = multiarray.broadcast
 dtype = multiarray.dtype
 ufunc = type(sin)

@@ -5,9 +5,7 @@
 #include <numpy/ndarraytypes.h>
 
 /* The actual structure of the iterator is an internal detail */
-typedef struct {
-    npy_intp internal;
-} PyArray_NpyIter;
+typedef struct PyArray_NpyIter_InternalOnly PyArray_NpyIter;
 
 /* Iterator function pointers that may be specialized */
 typedef int (*NpyIter_IterNext_Fn )(PyArray_NpyIter *iter);
@@ -18,12 +16,16 @@ typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter,
 /* Allocate a new iterator over one object */
 PyArray_NpyIter*
 NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
-                  int min_depth, int max_depth);
+                  int min_depth, int max_depth,
+                  npy_intp a_ndim, npy_intp *axes);
+
 /* Allocate a new iterator over multiple objects */
 PyArray_NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
-                 int min_depth, int max_depth);
+                 int min_depth, int max_depth,
+                 npy_intp oa_ndim, npy_intp **op_axes);
+
 /* Deallocate an iterator */
 int NpyIter_Deallocate(PyArray_NpyIter* iter);
 /* Resets the iterator back to its initial state */
@@ -32,6 +34,11 @@ void NpyIter_Reset(PyArray_NpyIter *iter);
 int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords);
 /* Sets the iterator to point at the given index */
 int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index);
+
+/* Whether the iterator is tracking coordinates */
+int NpyIter_HasCoords(PyArray_NpyIter *iter);
+/* Whether the iterator is tracking an index */
+int NpyIter_HasIndex(PyArray_NpyIter *iter);
 
 /* Compute a specialized iteration function for an iterator */
 NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter);
@@ -42,8 +49,12 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter);
 npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter);
 /* Gets the number of objects being iterated */
 npy_intp NpyIter_GetNIter(PyArray_NpyIter *iter);
+/* Gets the number of times the iterator iterates */
+npy_intp NpyIter_GetIterSize(PyArray_NpyIter *iter);
 /* Get the array of data pointers (1 per object being iterated) */
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter);
+/* Get the array of data type pointers (1 per object being iterated) */
+PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter);
 /* Get a pointer to the index, if it is being tracked */
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
 /* Get the array of item sizes (1 per object being iterated) */

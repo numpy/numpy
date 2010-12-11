@@ -2744,9 +2744,17 @@ test_new_iterator(PyObject *self, PyObject *args)
     }
 
     if (nop == 1) {
-        iter = NpyIter_New(op[0], flags|op_flags[0], NULL, 0, 10);
+        iter = NpyIter_New(op[0], flags|op_flags[0], NULL, 0, 10, 0, NULL);
     } else {
-        iter = NpyIter_MultiNew(nop, op, flags, op_flags, NULL, 0, 10);
+        //iter = NpyIter_MultiNew(nop, op, flags, op_flags, NULL, 0, 10, 0, NULL);
+        npy_intp oa_ndim = 3;
+        npy_intp op0_axes[3] = {0, 1, 2};    /* 3-D operand */
+        npy_intp op1_axes[3] = {0, 1, -1};   /* 2-D operand */
+        npy_intp op2_axes[3] = {0, 0, -1};  /* 1-D operand */
+        npy_intp op3_axes[3] = {-1, -1, -1};  /* 0-D (scalar) operand */
+        npy_intp *op_axes[4] = {op0_axes, op1_axes, op2_axes};
+ 
+        iter = NpyIter_MultiNew(nop, op, flags, op_flags, NULL, 0, 10, oa_ndim, op_axes);
     }
     if (!iter) {
         return NULL;
@@ -2765,17 +2773,19 @@ test_new_iterator(PyObject *self, PyObject *args)
     indexptr = NpyIter_GetIndexPtr(iter);
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
         innerstride = NpyIter_GetInnerStrideArray(iter)[0];
-        innersizeptr = NpyIter_GetInnerLoopSize(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
     }
 
     //NpyIter_Deallocate(iter);
     //Py_RETURN_NONE;
 
     //printf("%p %p %p\n", dataptrs, indexptr, *dataptrs);
+    /*
     if (NpyIter_GotoCoords(iter, test_coord) != NPY_SUCCEED) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
+    */
     /*
     if (NpyIter_GotoIndex(iter, 9) != NPY_SUCCEED) {
         NpyIter_Deallocate(iter);
@@ -3216,6 +3226,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
         return RETVAL;
     }
+    if (PyType_Ready(&NpyIter_Type) < 0) {
+        return RETVAL;
+    }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
@@ -3293,6 +3306,8 @@ PyMODINIT_FUNC initmultiarray(void) {
     Py_INCREF(&PyArrayIter_Type);
     PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
     Py_INCREF(&PyArrayMultiIter_Type);
+    PyDict_SetItemString(d, "newiter", (PyObject *)&NpyIter_Type);
+    Py_INCREF(&NpyIter_Type);
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
     Py_INCREF(&PyArrayDescr_Type);

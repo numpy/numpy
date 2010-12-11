@@ -767,7 +767,8 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'refcount.c'),
         join('src', 'multiarray', 'arraytypes.c.src'),
         join('src', 'multiarray', 'scalartypes.c.src'),
-        join('src', 'multiarray', 'new_iterator.c.src')]
+        join('src', 'multiarray', 'new_iterator.c.src'),
+        join('src', 'multiarray', 'new_iterator_pywrap.c')]
 
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))
