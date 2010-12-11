@@ -143,9 +143,6 @@ npyiter_coalesce_axes(PyArray_NpyIter *iter);
 static void
 npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim);
 
-static void
-npyiter_debug_print(PyArray_NpyIter *iter);
-
 /* The constructor for an iterator over multiple objects */
 PyArray_NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
@@ -171,6 +168,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     npy_intp op_ndim[NPY_MAXARGS];
     char **op_dataptr;
 
+    npy_intp *perm;
     char axes_dupcheck[NPY_MAXDIMS];
 
     if (niter > NPY_MAXARGS) {
@@ -425,18 +423,17 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
      */
     npyiter_compute_index_strides(iter, flags);
 
+    /* Initialize the perm to the identity */
+    perm = NIT_PERM(iter);
+    for(idim = 0; idim < ndim; ++idim) {
+        perm[idim] = idim;
+    }
+
     /*
      * If there's only one element to iterate, there's no need
      * to do any further iterator manipulation.
      */
     if (NIT_ITERSIZE(iter) == 1) {
-        npy_intp *perm = NIT_PERM(iter);
-
-        /* Set the perm to the identity */
-        for(idim = 0; idim < ndim; ++idim, ++perm) {
-            *perm = idim;
-        }
-        npyiter_debug_print(iter);
         return iter;
     }
  
@@ -458,15 +455,6 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         itflags = NIT_ITFLAGS(iter);
     }
 
-    /* Store the identity perm if the ident flag is still set */
-    if (itflags&NPY_ITER_FLAGS_IDENTPERM) {
-        npy_intp *perm = NIT_PERM(iter);
-
-        for(idim = 0; idim < ndim; ++idim, ++perm) {
-            *perm = idim;
-        }
-    }
-
     /*
      * Finally, if coords weren't requested,
      * it may be possible to coalesce some axes together.
@@ -483,7 +471,6 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata);
     }
 
-    npyiter_debug_print(iter);
     return iter;
 }
 
@@ -1600,7 +1587,7 @@ npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags)
     npy_intp idim, ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
-    npy_intp indexstride = 1;
+    npy_intp indexstride;
     char* axisdata;
     npy_intp sizeof_axisdata;
 
@@ -1620,8 +1607,9 @@ npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags)
     }
 
     if (flags&NPY_ITER_C_ORDER_INDEX) {
-        axisdata = NIT_AXISDATA(iter);
         sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+        axisdata = NIT_AXISDATA(iter);
+        indexstride = 1;
         for(idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
             npy_intp shape = NAD_SHAPE(axisdata);
 
@@ -1636,8 +1624,9 @@ npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags)
         }
     }
     else if (flags&NPY_ITER_F_ORDER_INDEX) {
-        axisdata = NIT_AXISDATA(iter) + (ndim-1)*sizeof_axisdata;
         sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+        axisdata = NIT_AXISDATA(iter) + (ndim-1)*sizeof_axisdata;
+        indexstride = 1;
         for(idim = 0; idim < ndim; ++idim, axisdata -= sizeof_axisdata) {
             npy_intp shape = NAD_SHAPE(axisdata);
 
@@ -1831,16 +1820,13 @@ npyiter_find_best_axis_ordering(PyArray_NpyIter *iter)
     npy_intp iiter, niter = NIT_NITER(iter);
 
     npy_intp i0, i1, ipos, j0, j1;
-    npy_intp *perm = NIT_PERM(iter);
+    npy_intp *perm;
     char *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
     int permuted = 0;
-    
-    /* Initialize the perm to the identity */
-    for(idim = 0; idim < ndim; ++idim) {
-        perm[idim] = idim;
-    }
 
+    perm = NIT_PERM(iter);
+    
     /*
      * Do a custom stable insertion sort.  Note that because
      * the AXISDATA has been reversed from C order, this
@@ -2022,9 +2008,11 @@ npyiter_coalesce_axes(PyArray_NpyIter *iter)
      * compress the data into the new layout.
      */
     if (new_ndim < ndim) {
+        npy_intp *perm = NIT_PERM(iter);
+
         /* Reset to an identity perm */
         for (idim = 0; idim < new_ndim; ++idim) {
-            NIT_PERM(iter)[idim] = idim;
+            perm[idim] = idim;
         }
         npyiter_shrink_ndim(iter, new_ndim);
     }
@@ -2054,8 +2042,8 @@ npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim)
 }
 
 /* For debugging */
-static void
-npyiter_debug_print(PyArray_NpyIter *iter)
+NPY_NO_EXPORT void
+NpyIter_DebugPrint(PyArray_NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);

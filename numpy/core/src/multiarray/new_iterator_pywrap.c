@@ -348,19 +348,35 @@ npyiter_iternext(NewNpyArrayIterObject *self)
     }
 }
 
+static PyObject *
+npyiter_debug_print(NewNpyArrayIterObject *self)
+{
+    if (self->iter != NULL) {
+        NpyIter_DebugPrint(self->iter);
+    } else {
+        printf("Iterator: (nil)\n");
+    }
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
 {
     PyObject *ret;
 
-    npy_intp iiter, niter = NpyIter_GetNIter(self->iter);
-    char **dataptrs = NpyIter_GetDataPtrArray(self->iter);
-    PyArray_Descr **dtypes = NpyIter_GetDescrArray(self->iter);
+    npy_intp iiter, niter;
+    char **dataptrs;
+    PyArray_Descr **dtypes;
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is past the end");
         return NULL;
     }
+
+    niter = NpyIter_GetNIter(self->iter);
+    dataptrs = NpyIter_GetDataPtrArray(self->iter);
+    dtypes = NpyIter_GetDescrArray(self->iter);
 
     if (niter == 1) {
         ret = PyArray_Scalar(dataptrs[0], dtypes[0], NULL);
@@ -404,9 +420,9 @@ static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
     PyObject *ret;
     npy_intp idim, ndim, coords[NPY_MAXDIMS];
 
-    if (self->iter == NULL) {
+    if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is past the end");
         return NULL;
     }
 
@@ -477,9 +493,9 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
 
 static PyObject *npyiter_index_get(NewNpyArrayIterObject *self)
 {
-    if (self->iter == NULL) {
+    if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is past the end");
         return NULL;
     }
 
@@ -559,6 +575,39 @@ static PyObject *npyiter_hasindex_get(NewNpyArrayIterObject *self)
     }
 }
 
+static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
+{
+    PyObject *ret;
+
+    npy_intp iiter, niter;
+    PyArray_Descr **dtypes;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was not constructed correctly");
+        return NULL;
+    }
+
+    niter = NpyIter_GetNIter(self->iter);
+    dtypes = NpyIter_GetDescrArray(self->iter);
+
+    if (niter == 1) {
+        Py_INCREF(dtypes[0]);
+        ret = (PyObject *)dtypes[0];
+    } else {
+        ret = PyTuple_New(niter);
+        if (ret == NULL) {
+            return NULL;
+        }
+        for (iiter = 0; iiter < niter; ++iiter) {
+            Py_INCREF(dtypes[iiter]);
+            PyTuple_SET_ITEM(ret, iiter, (PyObject *)dtypes[iiter]);
+        }
+    }
+
+    return ret;
+}
+
 static PyObject *npyiter_ndim_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
@@ -595,6 +644,7 @@ static PyObject *npyiter_itersize_get(NewNpyArrayIterObject *self)
 static PyMethodDef npyiter_methods[] = {
     {"reset", (PyCFunction)npyiter_reset, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
+    {"debug_print", (PyCFunction)npyiter_debug_print, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 
@@ -619,6 +669,9 @@ static PyGetSetDef npyiter_getsets[] = {
         NULL, NULL, NULL},
     {"hasindex",
         (getter)npyiter_hasindex_get,
+        NULL, NULL, NULL},
+    {"dtypes",
+        (getter)npyiter_dtypes_get,
         NULL, NULL, NULL},
     {"ndim",
         (getter)npyiter_ndim_get,

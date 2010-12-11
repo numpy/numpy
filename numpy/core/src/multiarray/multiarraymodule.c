@@ -3211,6 +3211,7 @@ PyMODINIT_FUNC initmultiarray(void) {
         goto err;
     }
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
+    NpyIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_free = _pya_free;
     if (PyType_Ready(&PyArrayIter_Type) < 0) {

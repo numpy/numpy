@@ -65,6 +65,10 @@ npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);
 /* Get a pointer to the size of the inner loop */
 npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 
+/* For debugging */
+NPY_NO_EXPORT void NpyIter_DebugPrint(PyArray_NpyIter *iter);
+
+
 /* Global flags that may be passed to the iterator constructors */
 #define NPY_ITER_C_ORDER_INDEX              0x00000001
 #define NPY_ITER_F_ORDER_INDEX              0x00000002
@@ -81,4 +85,5 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
+
 #endif
