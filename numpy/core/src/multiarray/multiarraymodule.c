@@ -616,6 +616,7 @@ new_array_for_sum(PyArrayObject* out, PyArrayObject *ap1, PyArrayObject *ap2,
                 return 0;
             }
         }
+        Py_INCREF(out);
         return out;
     }
 
