@@ -1,7 +1,8 @@
 import numpy as np
+import sys
 from numpy.core import zeros, float64
 from numpy.testing import dec, TestCase, assert_almost_equal, assert_, \
-     assert_raises, assert_array_equal, assert_allclose
+     assert_raises, assert_array_equal, assert_allclose, assert_equal
 from numpy.core.multiarray import inner as inner_
 
 DECPREC = 14
@@ -30,7 +31,7 @@ def test_blasdot_used():
     assert_(restoredot is _dotblas.restoredot)
 
 
-def test_dot_2args(self):
+def test_dot_2args():
     from numpy.core import dot
 
     a = np.array([[1, 2], [3, 4]], dtype=float)
