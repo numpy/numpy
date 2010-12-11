@@ -1,5 +1,7 @@
+import numpy as np
 from numpy.core import zeros, float64
-from numpy.testing import dec, TestCase, assert_almost_equal, assert_, assert_raises
+from numpy.testing import dec, TestCase, assert_almost_equal, assert_, \
+     assert_raises, assert_array_equal
 from numpy.core.multiarray import inner as inner_
 
 DECPREC = 14
@@ -29,8 +31,6 @@ def test_blasdot_used():
 
 
 def test_dot_3args():
-    import numpy as np
-    import sys
     np.random.seed(22)
     f = np.random.random_sample((1024, 16))
     v = np.random.random_sample((16, 32))
@@ -38,19 +38,18 @@ def test_dot_3args():
     r = np.empty((1024, 32))
     for i in xrange(12):
         np.dot(f,v,r)
-    assert sys.getrefcount(r) == 2
+    assert_equal(sys.getrefcount(r), 2)
     r2 = np.dot(f,v)
-    assert np.all(r2 == r)
-    assert r is np.dot(f,v,r)
+    assert_array_equal(r2, r)
+    assert_(r is np.dot(f,v,r))
 
     v = v[:,0].copy() # v.shape == (16,)
     r = r[:,0].copy() # r.shape == (1024,)
     r2 = np.dot(f,v)
-    assert r is np.dot(f,v,r)
-    assert np.all(r2 == r)
+    assert_(r is np.dot(f,v,r))
+    assert_array_equal(r2, r)
 
 def test_dot_3args_errors():
-    import numpy as np
     np.random.seed(22)
     f = np.random.random_sample((1024, 16))
     v = np.random.random_sample((16, 32))

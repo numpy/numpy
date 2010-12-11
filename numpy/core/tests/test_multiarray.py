@@ -1274,6 +1274,58 @@ class TestStats(TestCase):
         res = dat.var(1)
         assert res.info == dat.info
 
+class TestDot(TestCase):
+    def test_dot_3args(self):
+        from numpy.core.multiarray import dot
+
+        np.random.seed(22)
+        f = np.random.random_sample((1024, 16))
+        v = np.random.random_sample((16, 32))
+
+        r = np.empty((1024, 32))
+        for i in xrange(12):
+            dot(f,v,r)
+        assert_equal(sys.getrefcount(r), 2)
+        r2 = dot(f,v)
+        assert_array_equal(r2, r)
+        assert_(r is dot(f,v,r))
+
+        v = v[:,0].copy() # v.shape == (16,)
+        r = r[:,0].copy() # r.shape == (1024,)
+        r2 = dot(f,v)
+        assert_(r is dot(f,v,r))
+        assert_array_equal(r2, r)
+
+    def test_dot_3args_errors(self):
+        from numpy.core.multiarray import dot
+
+        np.random.seed(22)
+        f = np.random.random_sample((1024, 16))
+        v = np.random.random_sample((16, 32))
+
+        r = np.empty((1024, 31))
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((1024,))
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((32,))
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((32, 1024))
+        assert_raises(ValueError, dot, f, v, r)
+        assert_raises(ValueError, dot, f, v, r.T)
+
+        r = np.empty((1024, 64))
+        assert_raises(ValueError, dot, f, v, r[:,::2])
+        assert_raises(ValueError, dot, f, v, r[:,:32])
+
+        r = np.empty((1024, 32), dtype=np.float32)
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((1024, 32), dtype=int)
+        assert_raises(ValueError, dot, f, v, r)
+
 
 class TestSummarization(TestCase):
     def test_1d(self):
@@ -1329,23 +1381,23 @@ class TestNeighborhoodIter(TestCase):
     def _test_simple2d(self, dt):
         # Test zero and one padding for simple data type
         x = np.array([[0, 1], [2, 3]], dtype=dt)
-        r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt), 
-             np.array([[0, 0, 0], [0, 1, 0]], dtype=dt), 
-             np.array([[0, 0, 1], [0, 2, 3]], dtype=dt), 
+        r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt),
+             np.array([[0, 0, 0], [0, 1, 0]], dtype=dt),
+             np.array([[0, 0, 1], [0, 2, 3]], dtype=dt),
              np.array([[0, 1, 0], [2, 3, 0]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
-        r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt), 
-             np.array([[1, 1, 1], [0, 1, 1]], dtype=dt), 
-             np.array([[1, 0, 1], [1, 2, 3]], dtype=dt), 
+        r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt),
+             np.array([[1, 1, 1], [0, 1, 1]], dtype=dt),
+             np.array([[1, 0, 1], [1, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 1]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
-        r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt), 
-             np.array([[4, 4, 4], [0, 1, 4]], dtype=dt), 
-             np.array([[4, 0, 1], [4, 2, 3]], dtype=dt), 
+        r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt),
+             np.array([[4, 4, 4], [0, 1, 4]], dtype=dt),
+             np.array([[4, 0, 1], [4, 2, 3]], dtype=dt),
              np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
@@ -1362,9 +1414,9 @@ class TestNeighborhoodIter(TestCase):
 
     def _test_mirror2d(self, dt):
         x = np.array([[0, 1], [2, 3]], dtype=dt)
-        r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt), 
-             np.array([[0, 1, 1], [0, 1, 1]], dtype=dt), 
-             np.array([[0, 0, 1], [2, 2, 3]], dtype=dt), 
+        r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt),
+             np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
+             np.array([[0, 0, 1], [2, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 3]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)

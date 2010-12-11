@@ -734,13 +734,12 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     return NULL;
 }
 
-
 /*NUMPY_API
- *Numeric.matrixproduct(a,v)
+ * Numeric.matrixproduct(a,v,out)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct(PyObject *op1, PyObject *op2, PyObject* out)
+PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyObject* out)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     PyArrayIterObject *it1, *it2;
@@ -864,6 +863,16 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2, PyObject* out)
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
     return NULL;
+}
+
+/*NUMPY_API
+ *Numeric.matrixproduct(a,v)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
+{
+    return PyArray_MatrixProduct2(op1, op2, NULL);
 }
 
 /*NUMPY_API
@@ -1879,7 +1888,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist, &a, &v, &o)) {
         return NULL;
     }
-    return _ARET(PyArray_MatrixProduct(a, v, o));
+    return _ARET(PyArray_MatrixProduct2(a, v, o));
 }
 
 static PyObject *
