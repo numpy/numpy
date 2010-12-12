@@ -7,18 +7,16 @@ import warnings
 
 def iter_coords(i):
     ret = []
-    while True:
+    while not i.finished:
         ret.append(i.coords)
-        if not i.iternext():
-            break
+        i.iternext()
     return ret
 
 def iter_indices(i):
     ret = []
-    while True:
+    while not i.finished:
         ret.append(i.index)
-        if not i.iternext():
-            break
+        i.iternext()
     return ret
 
 def test_iter_best_order():
@@ -28,7 +26,7 @@ def test_iter_best_order():
     # Test the ordering for 1-D to 5-D shapes
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
-        # Test each combination of forward and backwards indexing
+        # Test each combination of positive and negative strides
         for dirs in range(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
             for bit in range(len(shape)):
@@ -54,7 +52,7 @@ def test_iter_c_order():
     # Test the ordering for 1-D to 5-D shapes
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
-        # Test each combination of forward and backwards indexing
+        # Test each combination of positive and negative strides
         for dirs in range(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
             for bit in range(len(shape)):
@@ -82,7 +80,7 @@ def test_iter_f_order():
     # Test the ordering for 1-D to 5-D shapes
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
-        # Test each combination of forward and backwards indexing
+        # Test each combination of positive and negative strides
         for dirs in range(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
             for bit in range(len(shape)):
@@ -110,7 +108,7 @@ def test_iter_any_contiguous_order():
     # Test the ordering for 1-D to 5-D shapes
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
-        # Test each combination of forward and backwards indexing
+        # Test each combination of positive and negative strides
         for dirs in range(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
             for bit in range(len(shape)):
@@ -380,7 +378,7 @@ def test_iter_no_inner_full_coalesce():
                 assert_equal(i.itersize, 1)
 
 def test_iter_no_inner_dim_coalescing():
-    # Check no_inner iterators whose dimensions can't coalesce completely
+    # Check no_inner iterators whose dimensions may not coalesce completely
 
     # Skipping the last element in a dimension prevents coalescing
     # with the next-bigger dimension
@@ -415,5 +413,68 @@ def test_iter_dim_coalescing():
     assert_equal(i.ndim, 3)
     i = newiter(a3d.T, ['f_order_index'], [('readonly',)])
     assert_equal(i.ndim, 1)
+    i = newiter(a3d.T.swapaxes(0,1), ['f_order_index'], [('readonly',)])
+    assert_equal(i.ndim, 3)
 
+    # When C or F order is forced, coalescing may still occur
+    a3d = arange(24).reshape(2,3,4)
+    i = newiter(a3d, ['force_c_order'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+    i = newiter(a3d.T, ['force_c_order'], [('readonly',)])
+    assert_equal(i.ndim, 3)
+    i = newiter(a3d, ['force_f_order'], [('readonly',)])
+    assert_equal(i.ndim, 3)
+    i = newiter(a3d.T, ['force_f_order'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+    i = newiter(a3d, ['force_any_contiguous'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+    i = newiter(a3d.T, ['force_any_contiguous'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+
+def test_iter_flags_errors():
+    # Check that bad combinations of flags produce errors
+
+    a = arange(6)
+
+    # Not enough operands
+    assert_raises(ValueError, newiter, [], [], [])
+    # Too many operands
+    assert_raises(ValueError, newiter, [a]*100, [], [('readonly',)]*100)
+    # op_flags must match ops
+    assert_raises(ValueError, newiter, [a]*3, [], [('readonly',)]*2)
+    # Can only force one order
+    assert_raises(ValueError, newiter, a,
+                ['force_c_order','force_f_order'], [('readonly',)])
+    assert_raises(ValueError, newiter, a,
+                ['force_c_order','force_any_contiguous'], [('readonly',)])
+    assert_raises(ValueError, newiter, a,
+                ['force_f_order','force_any_contiguous'], [('readonly',)])
+    assert_raises(ValueError, newiter, a,
+                ['force_c_order','force_f_order','force_any_contiguous'],
+                [('readonly',)])
+    # Cannot track both a C and an F index
+    assert_raises(ValueError, newiter, a,
+                ['c_order_index','f_order_index'], [('readonly',)])
+    # Inner iteration and coords/indices are incompatible
+    assert_raises(ValueError, newiter, a,
+                ['no_inner_iteration','coords'], [('readonly',)])
+    assert_raises(ValueError, newiter, a,
+                ['no_inner_iteration','c_order_index'], [('readonly',)])
+    assert_raises(ValueError, newiter, a,
+                ['no_inner_iteration','f_order_index'], [('readonly',)])
+    # Must specify exactly one of readwrite/readonly/writeonly per operand
+    assert_raises(ValueError, newiter, a, [], [[]])
+    assert_raises(ValueError, newiter, a, [], [('readonly','writeonly')])
+    assert_raises(ValueError, newiter, a, [], [('readonly','readwrite')])
+    assert_raises(ValueError, newiter, a, [], [('writeonly','readwrite')])
+    assert_raises(ValueError, newiter, a,
+                [], [('readonly','writeonly','readwrite')])
+    # Scalars are always readonly
+    assert_raises(ValueError, newiter, np.int32(1), [], [('writeonly',)])
+    assert_raises(ValueError, newiter, np.int32(1), [], [('readwrite',)])
+    # Check readonly array
+    a.flags.writeable = False
+    assert_raises(ValueError, newiter, a, [], [('writeonly',)])
+    assert_raises(ValueError, newiter, a, [], [('readwrite',)])
+    a.flags.writeable = True
 

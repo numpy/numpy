@@ -73,11 +73,11 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         if (niter == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Must provide at least one op");
-            goto fail;
+            return -1;
         }
         if (niter > NPY_MAXARGS) {
             PyErr_SetString(PyExc_ValueError, "Too many ops");
-            goto fail;
+            return -1;
         }
         /* Initialize the ops and dtypes to NULL */
         for (iiter = 0; iiter < niter; ++iiter) {
@@ -91,7 +91,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 goto fail;
             }
         }
-    } else {
+    }
+    else {
         niter = 1;
         op[0] = op_in;
         Py_INCREF(op[0]);
@@ -129,7 +130,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             }
             else if (strcmp(str, "no_inner_iteration") == 0) {
                 flags |= NPY_ITER_NO_INNER_ITERATION;
-            } else {
+            }
+            else {
                 PyErr_Format(PyExc_ValueError,
                         "Unexpected flag \"%s\"", str);
                 Py_DECREF(f);
@@ -137,7 +139,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             }
             Py_DECREF(f);
         }
-    } else {
+    }
+    else {
         PyErr_SetString(PyExc_ValueError,
                 "Must provide a tuple of flags");
         goto fail;
@@ -181,7 +184,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 }
                 else if (strcmp(str, "allow_writeable_references") == 0) {
                     op_flags[iiter] |= NPY_ITER_ALLOW_WRITEABLE_REFERENCES;
-                } else {
+                }
+                else {
                     PyErr_Format(PyExc_ValueError,
                             "Unexpected flag \"%s\"", str);
                     Py_DECREF(f2);
@@ -192,7 +196,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             }
             Py_DECREF(f);
         }
-    } else {
+    }
+    else {
         PyErr_SetString(PyExc_ValueError,
                 "Must provide a tuple of flag-tuples in op_flags");
         goto fail;
@@ -202,7 +207,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         for (iiter = 0; iiter < niter; ++iiter) {
             op_request_dtypes[iiter] = NULL;
         }
-    } else {
+    }
+    else {
         if (!PyTuple_Check(op_dtypes_in) && !PyList_Check(op_dtypes_in)) {
             PyErr_SetString(PyExc_ValueError,
                     "Must provide a tuple in op_dtypes");
@@ -301,7 +307,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     self->iternext = NpyIter_GetIterNext(self->iter);
     if (NpyIter_HasCoords(self->iter)) {
         self->getcoords = NpyIter_GetGetCoords(self->iter);
-    } else {
+    }
+    else {
         self->getcoords = NULL;
     }
 
@@ -353,7 +360,8 @@ npyiter_debug_print(NewNpyArrayIterObject *self)
 {
     if (self->iter != NULL) {
         NpyIter_DebugPrint(self->iter);
-    } else {
+    }
+    else {
         printf("Iterator: (nil)\n");
     }
 
@@ -380,7 +388,8 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
 
     if (niter == 1) {
         ret = PyArray_Scalar(dataptrs[0], dtypes[0], NULL);
-    } else {
+    }
+    else {
         ret = PyTuple_New(niter);
         if (ret == NULL) {
             return NULL;
@@ -484,7 +493,8 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
         self->finished = 0;
         
         return 0;
-    } else {
+    }
+    else {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator does not have coordinates");
         return -1;
@@ -594,7 +604,8 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
     if (niter == 1) {
         Py_INCREF(dtypes[0]);
         ret = (PyObject *)dtypes[0];
-    } else {
+    }
+    else {
         ret = PyTuple_New(niter);
         if (ret == NULL) {
             return NULL;
@@ -641,6 +652,16 @@ static PyObject *npyiter_itersize_get(NewNpyArrayIterObject *self)
     return PyInt_FromLong(NpyIter_GetIterSize(self->iter));
 }
 
+static PyObject *npyiter_finished_get(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL || !self->finished) {
+        Py_RETURN_FALSE;
+    }
+    else {
+        Py_RETURN_TRUE;
+    }
+}
+
 static PyMethodDef npyiter_methods[] = {
     {"reset", (PyCFunction)npyiter_reset, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
@@ -681,6 +702,9 @@ static PyGetSetDef npyiter_getsets[] = {
         NULL, NULL, NULL},
     {"itersize",
         (getter)npyiter_itersize_get,
+        NULL, NULL, NULL},
+    {"finished",
+        (getter)npyiter_finished_get,
         NULL, NULL, NULL},
 
     {NULL, NULL, NULL, NULL, NULL},

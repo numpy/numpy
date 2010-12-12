@@ -115,8 +115,7 @@
 
 /* Internal helper functions */
 static int
-pyiter_check_flags_index_coords_noinner(
-                                npy_uint32 flags, npy_uint32* itflags);
+pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags);
 static int
 pyiter_prepare_operand(PyObject** op, PyArray_Descr** op_dtype,
                        int* op_type, npy_intp* op_ndim, npy_intp* ndim);
@@ -184,7 +183,8 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                 "If 'op_axes' is not NULL in the iterator constructor, "
                 "'oa_ndim' must be greater than zero");
         return NULL;
-    } else if (oa_ndim > 0) {
+    }
+    else if (oa_ndim > 0) {
         if (oa_ndim > NPY_MAXDIMS) {
             PyErr_Format(PyExc_ValueError,
                 "Cannot construct an iterator with more than %d dimensions "
@@ -225,7 +225,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     }
 
     /* Checks the flags (C|F)_ORDER_INDEX, COORDS, and NO_INNER_ITERATION */
-    if (!pyiter_check_flags_index_coords_noinner(flags, &itflags)) {
+    if (!pyiter_check_global_flags(flags, &itflags)) {
         return NULL;
     }
 
@@ -582,7 +582,8 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
             /* If the perm entry is negative, reverse the coordinate */
             shape = NAD_SHAPE(ad);
             i = shape - coords[ndim+p] - 1;
-        } else {
+        }
+        else {
             shape = NAD_SHAPE(ad);
             i = coords[ndim-p-1];
         }
@@ -590,7 +591,8 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
         /* Bounds-check this coordinate */
         if (i >= 0 && i < shape) {
             perm_coords[idim] = i;
-        } else {
+        }
+        else {
             PyErr_SetString(PyExc_IndexError,
                     "Iterator GotoCoord called with out-of-bounds "
                     "coordinates.");
@@ -1135,8 +1137,7 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter)
  * Returns 1 on success, 0 on error.
  */
 static int
-pyiter_check_flags_index_coords_noinner(
-                                npy_uint32 flags, npy_uint32* itflags)
+pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
 {
     if ((flags&NPY_ITER_PER_OP_FLAGS) != 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -1145,7 +1146,7 @@ pyiter_check_flags_index_coords_noinner(
         return 0;
     }
 
-    /* Check for a forced ordering */
+    /* Check for an index */
     if (flags&(NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) {
         if ((flags&(NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) ==
                     (NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) {
@@ -1163,6 +1164,24 @@ pyiter_check_flags_index_coords_noinner(
          * would produce a different set of coordinates.
          */
         (*itflags) |= NPY_ITER_FLAGS_HASCOORDS;
+    }
+    /* Check that at most one forced ordering is specified */
+    if (flags&(NPY_ITER_FORCE_C_ORDER|
+                        NPY_ITER_FORCE_F_ORDER|
+                        NPY_ITER_FORCE_ANY_CONTIGUOUS)) {
+        if (((flags&NPY_ITER_FORCE_C_ORDER) &&
+                            (flags&(NPY_ITER_FORCE_F_ORDER|
+                                    NPY_ITER_FORCE_ANY_CONTIGUOUS))) ||
+                        ((flags&(NPY_ITER_FORCE_F_ORDER|
+                                 NPY_ITER_FORCE_ANY_CONTIGUOUS)) ==
+                            (NPY_ITER_FORCE_F_ORDER|
+                             NPY_ITER_FORCE_ANY_CONTIGUOUS))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Only one of NPY_ITER_FORCE_C_ORDER, "
+                    "NPY_ITER_FORCE_F_ORDER, and "
+                    "NPY_ITER_FORCE_ANY_CONTIGUOUS may be specified");
+            return 0;
+        }
     }
     /* Check if the caller wants to handle inner iteration */
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
