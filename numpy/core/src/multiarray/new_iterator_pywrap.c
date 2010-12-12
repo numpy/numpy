@@ -128,7 +128,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
             }
             else if (strcmp(str, "no_inner_iteration") == 0) {
-                flags |= NPY_ITER_FORCE_ANY_CONTIGUOUS;
+                flags |= NPY_ITER_NO_INNER_ITERATION;
             } else {
                 PyErr_Format(PyExc_ValueError,
                         "Unexpected flag \"%s\"", str);

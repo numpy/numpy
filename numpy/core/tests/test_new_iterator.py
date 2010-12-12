@@ -350,3 +350,70 @@ def test_iter_best_order_f_order_index():
     assert_equal(iter_indices(i),
                             [6,7,8,9,10,11,0,1,2,3,4,5])
 
+def test_iter_no_inner_full_coalesce():
+    # Check no_inner iterators which coalesce into a single inner loop
+
+    for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
+        a = arange(np.prod(shape))
+        # Test each combination of forward and backwards indexing
+        for dirs in range(2**len(shape)):
+            dirs_index = [slice(None)]*len(shape)
+            for bit in range(len(shape)):
+                if ((2**bit)&dirs):
+                    dirs_index[bit] = slice(None,None,-1)
+            dirs_index = tuple(dirs_index)
+
+            aview = a.reshape(shape)[dirs_index]
+            # C-order
+            i = newiter(aview, ['no_inner_iteration'], [('readonly',)])
+            assert_equal(i.ndim, 1)
+            assert_equal(i.itersize, 1)
+            # Fortran-order
+            i = newiter(aview.T, ['no_inner_iteration'], [('readonly',)])
+            assert_equal(i.ndim, 1)
+            assert_equal(i.itersize, 1)
+            # Other order
+            if len(shape) > 2:
+                i = newiter(aview.swapaxes(0,1),
+                                    ['no_inner_iteration'], [('readonly',)])
+                assert_equal(i.ndim, 1)
+                assert_equal(i.itersize, 1)
+
+def test_iter_no_inner_dim_coalescing():
+    # Check no_inner iterators whose dimensions can't coalesce completely
+
+    # Skipping the last element in a dimension prevents coalescing
+    # with the next-bigger dimension
+    a = arange(24).reshape(2,3,4)[:,:,:-1]
+    i = newiter(a, ['no_inner_iteration'], [('readonly',)])
+    assert_equal(i.ndim, 2)
+    assert_equal(i.itersize, 6)
+    a = arange(24).reshape(2,3,4)[:,:-1,:]
+    i = newiter(a, ['no_inner_iteration'], [('readonly',)])
+    assert_equal(i.ndim, 2)
+    assert_equal(i.itersize, 2)
+    a = arange(24).reshape(2,3,4)[:-1,:,:]
+    i = newiter(a, ['no_inner_iteration'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+    assert_equal(i.itersize, 1)
+
+def test_iter_dim_coalescing():
+    # Check that the correct number of dimensions are coalesced
+
+    # Tracking coordinates disables coalescing
+    a = arange(24).reshape(2,3,4)
+    i = newiter(a, ['coords'], [('readonly',)])
+    assert_equal(i.ndim, 3)
+
+    # A tracked index can allow coalescing if it's compatible with the array
+    a3d = arange(24).reshape(2,3,4)
+    i = newiter(a3d, ['c_order_index'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+    i = newiter(a3d.swapaxes(0,1), ['c_order_index'], [('readonly',)])
+    assert_equal(i.ndim, 3)
+    i = newiter(a3d.T, ['c_order_index'], [('readonly',)])
+    assert_equal(i.ndim, 3)
+    i = newiter(a3d.T, ['f_order_index'], [('readonly',)])
+    assert_equal(i.ndim, 1)
+
+
