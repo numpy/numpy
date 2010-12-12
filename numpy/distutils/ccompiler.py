@@ -17,13 +17,6 @@ from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       quote_args, msvc_on_amd64
 from numpy.distutils.compat import get_exception
 
-# hack to set compiler optimizing options. Needs to integrated with something.
-import distutils.sysconfig
-_old_init_posix = distutils.sysconfig._init_posix
-def _new_init_posix():
-    _old_init_posix()
-    distutils.sysconfig._config_vars['OPT'] = '-Wall -g -O0'
-#distutils.sysconfig._init_posix = _new_init_posix
 
 def replace_method(klass, method_name, func):
     if sys.version_info[0] < 3:
@@ -346,12 +339,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
     if need_cxx:
         # In general, distutils uses -Wstrict-prototypes, but this option is
         # not valid for C++ code, only for C.  Remove it if it's there to
-        # avoid a spurious warning on every compilation.  All the default
-        # options used by distutils can be extracted with:
-
-        # from distutils import sysconfig
-        # sysconfig.get_config_vars('CC', 'CXX', 'OPT', 'BASECFLAGS',
-        # 'CCSHARED', 'LDSHARED', 'SO')
+        # avoid a spurious warning on every compilation.
         try:
             self.compiler_so.remove('-Wstrict-prototypes')
         except (AttributeError, ValueError):
