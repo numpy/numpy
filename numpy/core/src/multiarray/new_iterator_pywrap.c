@@ -149,7 +149,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     if (PyTuple_Check(op_flags_in) || PyList_Check(op_flags_in)) {
         if (PySequence_Size(op_flags_in) != niter) {
             PyErr_SetString(PyExc_ValueError,
-                    "op_flags must be a tuple matching the number of ops");
+                    "op_flags must be a tuple/list matching the number of ops");
             goto fail;
         }
         for (iiter = 0; iiter < niter; ++iiter) {
@@ -159,7 +159,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 PyObject_Print(f, stderr, 0);
                 Py_XDECREF(f);
                 PyErr_SetString(PyExc_ValueError,
-                        "Each entry of op_flags must be a tuple");
+                        "Each entry of op_flags must be a tuple/list");
                 goto fail;
             }
             
@@ -216,7 +216,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
         if (PySequence_Size(op_dtypes_in) != niter) {
             PyErr_SetString(PyExc_ValueError,
-                    "op_dtypes must be a tuple matching the number of ops");
+                   "op_dtypes must be a tuple/list matching the number of ops");
             goto fail;
         }
         for (iiter = 0; iiter < niter; ++iiter) {
@@ -235,26 +235,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     "Must provide a tuple in op_axes");
             goto fail;
         }
-        if (PySequence_Size(op_dtypes_in) != niter) {
+        if (PySequence_Size(op_axes_in) != niter) {
             PyErr_SetString(PyExc_ValueError,
-                    "op_axes must be a tuple matching the number of ops");
-            goto fail;
-        }
-        /* Get the first item to find its size */
-        a = PySequence_GetItem(op_axes_in, 0);
-        if (a == NULL) {
-            goto fail;
-        }
-        if (!PyTuple_Check(a) && !PyList_Check(a)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Each entry of op_axes must be a tuple");
-            Py_DECREF(a);
-            goto fail;
-        }
-        oa_ndim = PySequence_Size(a);
-        Py_DECREF(a);
-        if (oa_ndim > NPY_MAXDIMS) {
-            PyErr_SetString(PyExc_ValueError, "Too many dimensions");
+                    "op_axes must be a tuple/list matching the number of ops");
             goto fail;
         }
         /* Copy the tuples into op_axes */
@@ -264,34 +247,67 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             if (a == NULL) {
                 goto fail;
             }
-            if (!PyTuple_Check(a) && !PyList_Check(a)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Each entry of op_axes must be a tuple");
-                Py_DECREF(a);
-                goto fail;
-            }
-            if (PySequence_Size(a) != oa_ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Each entry of op_axes must have the same size");
-                Py_DECREF(a);
-                goto fail;
-            }
-            for (idim = 0; idim < oa_ndim; ++idim) {
-                PyObject *v = PySequence_GetItem(a, idim);
-                if (v == NULL) {
+            if (a == Py_None) {
+                op_axes[iiter] = NULL;
+            } else {
+                if (!PyTuple_Check(a) && !PyList_Check(a)) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Each entry of op_axes must be None "
+                            "or a tuple/list");
                     Py_DECREF(a);
                     goto fail;
                 }
-                op_axes_arrays[iiter][idim] = PyInt_AsLong(v);
-                if (op_axes_arrays[iiter][idim]==-1 && PyErr_Occurred()) {
+                if (oa_ndim == 0) {
+                    oa_ndim = PySequence_Size(a);
+                    if (oa_ndim == 0) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "Must have at least one  dimension "
+                                "in op_axes");
+                        goto fail;
+                    }
+                    if (oa_ndim > NPY_MAXDIMS) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "Too many dimensions in op_axes");
+                        goto fail;
+                    }
+                }
+                if (PySequence_Size(a) != oa_ndim) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Each entry of op_axes must have the same size");
                     Py_DECREF(a);
+                    goto fail;
+                }
+                for (idim = 0; idim < oa_ndim; ++idim) {
+                    PyObject *v = PySequence_GetItem(a, idim);
+                    if (v == NULL) {
+                        Py_DECREF(a);
+                        goto fail;
+                    }
+                    /* numpy.newaxis is None */
+                    if (v == Py_None) {
+                        op_axes_arrays[iiter][idim] = -1;
+                    }
+                    else {
+                        op_axes_arrays[iiter][idim] = PyInt_AsLong(v);
+                        if (op_axes_arrays[iiter][idim]==-1 &&
+                                                    PyErr_Occurred()) {
+                            Py_DECREF(a);
+                            Py_DECREF(v);
+                            goto fail;
+                        }
+                    }
                     Py_DECREF(v);
-                    goto fail;
                 }
+                Py_DECREF(a);
+                op_axes[iiter] = op_axes_arrays[iiter];
             }
+        }
 
-
-            op_axes[iiter] = op_axes_arrays[iiter];
+        if (oa_ndim == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "If op_axes is provided, at least one list of axes "
+                    "must be within it");
+            goto fail;
         }
     }
 
@@ -423,6 +439,32 @@ npyiter_next(NewNpyArrayIterObject *self)
     
     return ret;
 };
+
+static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
+{
+    PyObject *ret;
+    npy_intp idim, ndim, shape[NPY_MAXDIMS];
+
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return NULL;
+    }
+
+    if (NpyIter_GetShape(self->iter, shape) == NPY_SUCCEED) {
+        ndim = NpyIter_GetNDim(self->iter);
+        ret = PyTuple_New(ndim);
+        if (ret != NULL) {
+            for (idim = 0; idim < ndim; ++idim) {
+                PyTuple_SET_ITEM(ret, idim,
+                        PyInt_FromLong(shape[idim]));
+            }
+            return ret;
+        }
+    }
+
+    return NULL;
+}
 
 static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
 {
@@ -676,6 +718,9 @@ static PyMemberDef npyiter_members[] = {
 static PyGetSetDef npyiter_getsets[] = {
     {"value",
         (getter)npyiter_value_get,
+        NULL, NULL, NULL},
+    {"shape",
+        (getter)npyiter_shape_get,
         NULL, NULL, NULL},
     {"coords",
         (getter)npyiter_coords_get,

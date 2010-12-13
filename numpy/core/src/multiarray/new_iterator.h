@@ -51,6 +51,8 @@ npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter);
 npy_intp NpyIter_GetNIter(PyArray_NpyIter *iter);
 /* Gets the number of times the iterator iterates */
 npy_intp NpyIter_GetIterSize(PyArray_NpyIter *iter);
+/* Gets the broadcast shape (if coords are enabled) */
+int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape);
 /* Get the array of data pointers (1 per object being iterated) */
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter);
 /* Get the array of data type pointers (1 per object being iterated) */

@@ -1065,6 +1065,39 @@ npy_intp NpyIter_GetIterSize(PyArray_NpyIter *iter)
     return NIT_ITERSIZE(iter);
 }
 
+int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape)
+{
+    const npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    npy_intp idim, sizeof_axisdata;
+    char* axisdata;
+    npy_intp* perm;
+
+    if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot get the shape of an iterator constructed "
+                "without the NPY_ITER_COORDS flag set");
+        return NPY_FAIL;
+    }
+
+    perm = NIT_PERM(iter);
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    for(idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
+        npy_intp p = perm[idim];
+        if (p < 0) {
+            outshape[ndim+p] = NAD_SHAPE(axisdata);
+        }
+        else {
+            outshape[ndim-p-1] = NAD_SHAPE(axisdata);
+        }
+    }
+
+    return NPY_SUCCEED;
+}
+
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
