@@ -131,6 +131,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             else if (strcmp(str, "no_inner_iteration") == 0) {
                 flags |= NPY_ITER_NO_INNER_ITERATION;
             }
+            else if (strcmp(str, "offsets") == 0) {
+                flags |= NPY_ITER_OFFSETS;
+            }
             else {
                 PyErr_Format(PyExc_ValueError,
                         "Unexpected flag \"%s\"", str);
@@ -402,17 +405,30 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     dataptrs = NpyIter_GetDataPtrArray(self->iter);
     dtypes = NpyIter_GetDescrArray(self->iter);
 
-    if (niter == 1) {
-        ret = PyArray_Scalar(dataptrs[0], dtypes[0], NULL);
-    }
-    else {
+    if (NpyIter_HasOffsets(self->iter)) {
+        npy_intp *offsets = (npy_intp *)dataptrs;
+        /* Return an array with all the offsets */
         ret = PyTuple_New(niter);
         if (ret == NULL) {
             return NULL;
         }
         for (iiter = 0; iiter < niter; ++iiter) {
-            PyTuple_SET_ITEM(ret, iiter,
-                    PyArray_Scalar(dataptrs[iiter], dtypes[iiter], NULL));
+            PyTuple_SET_ITEM(ret, iiter, PyInt_FromLong(offsets[iiter]));
+        }
+    } else {
+        /* Return a scalar or tuple of scalars with the values */
+        if (niter == 1) {
+            ret = PyArray_Scalar(dataptrs[0], dtypes[0], NULL);
+        }
+        else {
+            ret = PyTuple_New(niter);
+            if (ret == NULL) {
+                return NULL;
+            }
+            for (iiter = 0; iiter < niter; ++iiter) {
+                PyTuple_SET_ITEM(ret, iiter,
+                        PyArray_Scalar(dataptrs[iiter], dtypes[iiter], NULL));
+            }
         }
     }
 

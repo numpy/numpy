@@ -39,6 +39,8 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index);
 int NpyIter_HasCoords(PyArray_NpyIter *iter);
 /* Whether the iterator is tracking an index */
 int NpyIter_HasIndex(PyArray_NpyIter *iter);
+/* Whether the iterator gives back offsets instead of pointers */
+int NpyIter_HasOffsets(PyArray_NpyIter *iter);
 
 /* Compute a specialized iteration function for an iterator */
 NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter);
@@ -79,11 +81,18 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(PyArray_NpyIter *iter);
 #define NPY_ITER_FORCE_F_ORDER              0x00000010
 #define NPY_ITER_FORCE_ANY_CONTIGUOUS       0x00000020
 #define NPY_ITER_NO_INNER_ITERATION         0x00000040
+#define NPY_ITER_OFFSETS                    0x00000080
 /* Per-operand flags that may be passed to the iterator constructors */
 #define NPY_ITER_READWRITE                  0x00010000
 #define NPY_ITER_READONLY                   0x00020000
 #define NPY_ITER_WRITEONLY                  0x00040000
-#define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x00080000
+#define NPY_ITER_NBO_ALIGNED                0x00080000
+#define NPY_ITER_ALLOW_COPY                 0x00100000
+#define NPY_ITER_ALLOW_UPDATEIFCOPY         0x00200000
+#define NPY_ITER_ALLOW_SAFE_CASTS           0x00400000
+#define NPY_ITER_ALLOW_SAME_KIND_CASTS      0x00800000
+#define NPY_ITER_ALLOW_UNSAFE_CASTS         0x01000000
+#define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x02000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

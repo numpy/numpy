@@ -649,3 +649,11 @@ def test_iter_op_axes_errors():
     # Non-broadcastable dimensions in the result
     assert_raises(ValueError, newiter, [a,a], [], [['readonly']]*2,
                                     op_axes=[[0,1],[1,0]])
+
+def test_iter_offsets():
+    # Check that offsets get returned when requested
+
+    a = arange(6, dtype='f4').reshape(2,3)
+    b = arange(6, dtype='i2').reshape(3,2).T
+    i = newiter([a,b], ['offsets'], [['readonly']]*2)
+    assert_equal([x for x in i], [(0,0),(4,4),(8,8),(12,2),(16,6),(20,10)])
