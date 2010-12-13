@@ -49,7 +49,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     PyObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0;
     npy_uint32 op_flags[NPY_MAXARGS];
-    PyObject *op_request_dtypes[NPY_MAXARGS];
+    PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
     int min_ndim = -1, max_ndim = -1;
     npy_intp oa_ndim = 0;
     npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
@@ -223,10 +223,20 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             goto fail;
         }
         for (iiter = 0; iiter < niter; ++iiter) {
-            op_request_dtypes[iiter] = PySequence_GetItem(op_dtypes_in, iiter);
-            if (op_request_dtypes[iiter] == Py_None) {
-                Py_DECREF(op_request_dtypes[iiter]);
+            PyObject *dtype = PySequence_GetItem(op_dtypes_in, iiter);
+            /* Make sure the entry is an array descr */
+            if (PyObject_TypeCheck(dtype, &PyArrayDescr_Type)) {
+                op_request_dtypes[iiter] = dtype;
+            }
+            else if (op_request_dtypes[iiter] == Py_None) {
+                Py_DECREF(dtype);
                 op_request_dtypes[iiter] = NULL;
+            }
+            else {
+                Py_DECREF(dtype);
+                PyErr_SetString(PyExc_ValueError,
+                        "Iterator requested dtypes must be array descrs.");
+                goto fail;
             }
         }
     }

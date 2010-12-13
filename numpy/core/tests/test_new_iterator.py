@@ -571,7 +571,10 @@ def test_iter_flags_errors():
     assert_raises(ValueError, newiter, a, [], [['writeonly','readwrite']])
     assert_raises(ValueError, newiter, a,
                 [], [['readonly','writeonly','readwrite']])
-    # Scalars are always readonly
+    # Python scalars are always readonly
+    assert_raises(ValueError, newiter, 1.5, [], [['writeonly']])
+    assert_raises(ValueError, newiter, 1.5, [], [['readwrite']])
+    # Array scalars are always readonly
     assert_raises(ValueError, newiter, np.int32(1), [], [['writeonly']])
     assert_raises(ValueError, newiter, np.int32(1), [], [['readwrite']])
     # Check readonly array

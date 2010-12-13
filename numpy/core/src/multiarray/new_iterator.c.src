@@ -11,22 +11,38 @@
 #define NPY_INC_BUFFERPTR(ptr, amount) \
             ptr = ((char*)(((npy_intp)(ptr)+(amount)+0xf)&(-0x10)))
 
+/* Rounds up a number of bytes to be divisible by sizeof intp */
+#if NPY_SIZEOF_INTP == 4
+#define NPY_INTP_ALIGNED(size) ((size + 0x3)&(-0x4))
+#else
+#define NPY_INTP_ALIGNED(size) ((size + 0x7)&(-0x8))
+#endif
+
 /* Internal iterator flags */
 
 /* The perm is the identity */
-#define NPY_ITER_FLAGS_IDENTPERM   0x001
+#define NPY_ITFLAG_IDENTPERM   0x001
 /* The perm has negative entries (indicating flipped axes) */
-#define NPY_ITER_FLAGS_NEGPERM     0x002
+#define NPY_ITFLAG_NEGPERM     0x002
 /* The iterator is tracking an index */
-#define NPY_ITER_FLAGS_HASINDEX    0x004
+#define NPY_ITFLAG_HASINDEX    0x004
 /* The iterator is tracking coordinates */
-#define NPY_ITER_FLAGS_HASCOORDS   0x008
+#define NPY_ITFLAG_HASCOORDS   0x008
 /* The iterator returns offsets instead of pointers */
-#define NPY_ITER_FLAGS_HASOFFSETS  0x010
+#define NPY_ITFLAG_HASOFFSETS  0x010
 /* The iteration order was forced on construction */
-#define NPY_ITER_FLAGS_FORCEDORDER 0x020
+#define NPY_ITFLAG_FORCEDORDER 0x020
 /* The inner loop is handled outside the iterator */
-#define NPY_ITER_FLAGS_NOINNER     0x040
+#define NPY_ITFLAG_NOINNER     0x040
+
+/* Internal iterator per-operand iterator flags */
+
+/* Write is 0x1 so GetWriteableFlagArray is trivial */
+#define NPY_OP_ITFLAG_WRITE        0x001
+#define NPY_OP_ITFLAG_READ         0x002
+#define NPY_OP_ITFLAG_BUFFER       0x004
+#define NPY_OP_ITFLAG_COPY         0x008
+#define NPY_OP_ITFLAG_UPDATEIFCOPY 0x010
 
 /* Internal flag, for the type of operands */
 #define NPY_ITER_OP_ARRAY         0
@@ -45,27 +61,46 @@
  * needs to be changed as well.
  */
 
+/* Byte sizes of the iterator members */
+#define NIT_ITERSIZE_SIZEOF() \
+        (NPY_SIZEOF_INTP)
+#define NIT_PERM_SIZEOF(itflags, ndim, niter) \
+        ((NPY_SIZEOF_INTP)*(ndim))
+#define NIT_DTYPES_SIZEOF(itflags, ndim, niter) \
+        ((NPY_SIZEOF_INTP)*(niter))
+#define NIT_ITEMSIZES_SIZEOF(itflags, ndim, niter) \
+        ((NPY_SIZEOF_INTP)*(niter))
+#define NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter) \
+        ((NPY_SIZEOF_INTP)*(niter+1))
+#define NIT_OBJECTS_SIZEOF(itflags, ndim, niter) \
+        ((NPY_SIZEOF_INTP)*(niter))
+#define NIT_OPITFLAGS_SIZEOF(itflags, ndim, niter) \
+        (NPY_INTP_ALIGNED(niter))
+
 /* Byte offsets of the iterator members */
 #define NIT_ITERSIZE_OFFSET() \
         (8)
 #define NIT_PERM_OFFSET() \
         (NIT_ITERSIZE_OFFSET() + \
-         (NPY_SIZEOF_INTP))
+         NIT_ITERSIZE_SIZEOF())
 #define NIT_DTYPES_OFFSET(itflags, ndim, niter) \
         (NIT_PERM_OFFSET() + \
-         (NPY_SIZEOF_INTP)*(ndim))
+         NIT_PERM_SIZEOF(itflags, ndim, niter))
 #define NIT_ITEMSIZES_OFFSET(itflags, ndim, niter) \
         (NIT_DTYPES_OFFSET(itflags, ndim, niter) + \
-         (NPY_SIZEOF_INTP)*(niter))
+         NIT_DTYPES_SIZEOF(itflags, ndim, niter))
 #define NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) \
         (NIT_ITEMSIZES_OFFSET(itflags, ndim, niter) + \
-         (NPY_SIZEOF_INTP)*(niter))
+         NIT_ITEMSIZES_SIZEOF(itflags, ndim, niter))
 #define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
         (NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) + \
-         (NPY_SIZEOF_INTP)*(niter+1))
-#define NIT_AXISDATA_OFFSET(itflags, ndim, niter) \
+         NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter))
+#define NIT_OPITFLAGS_OFFSET(itflags, ndim, niter) \
         (NIT_OBJECTS_OFFSET(itflags, ndim, niter) + \
-         (NPY_SIZEOF_INTP)*(niter))
+         NIT_OBJECTS_SIZEOF(itflags, ndim, niter))
+#define NIT_AXISDATA_OFFSET(itflags, ndim, niter) \
+        (NIT_OPITFLAGS_OFFSET(itflags, ndim, niter) + \
+         NIT_OPITFLAGS_SIZEOF(itflags, ndim, niter))
 
 /* Internal-only ITERATOR DATA MEMBER ACCESS */
 #define NIT_ITFLAGS(iter) \
@@ -96,7 +131,7 @@
 #define NAD_PTRS(axisdata) \
         ((char**)(axisdata) + 2 + NAD_NSTRIDES())
 #define NAD_NSTRIDES() \
-        ((niter) + ((itflags&NPY_ITER_FLAGS_HASINDEX) ? 1 : 0))
+        ((niter) + ((itflags&NPY_ITFLAG_HASINDEX) ? 1 : 0))
 
 /* Size of one AXISDATA struct within the iterator */
 #define NIT_SIZEOF_AXISDATA(itflags, ndim, niter) (( \
@@ -107,7 +142,7 @@
         /* intp stride[niter] AND char* ptr[niter] */ \
         2*(niter) + \
         /* intp indexstride AND intp index (when index is provided) */ \
-        ((itflags&NPY_ITER_FLAGS_HASINDEX) ? 2 : 0) \
+        ((itflags&NPY_ITFLAG_HASINDEX) ? 2 : 0) \
         )*NPY_SIZEOF_INTP ) \
 
 /* Size of the whole iterator */
@@ -119,11 +154,12 @@
 static int
 pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags);
 static int
+npyiter_check_per_op_flags(npy_uint32 flags, char *op_itflags);
+static int
 pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                        PyArray_Descr** op_dtype, int* op_type,
-                       npy_intp* op_ndim, npy_intp* ndim)
-npyiter_check_flags_readwrite(PyObject* op, PyArray_Descr* op_dtype,
-                              int op_type, npy_uint32 flags);
+                       npy_intp* op_ndim, npy_intp* ndim,
+                       npy_uint32 op_flags, char *op_itflags);
 static int
 npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
                       npy_intp *op_ndim, char **op_dataptr,
@@ -151,7 +187,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                  int min_ndim, int max_ndim,
                  npy_intp oa_ndim, npy_intp **op_axes)
 {
-    npy_uint32 itflags = NPY_ITER_FLAGS_IDENTPERM;
+    npy_uint32 itflags = NPY_ITFLAG_IDENTPERM;
     npy_intp idim, ndim = 1;
     npy_intp iiter;
 
@@ -166,6 +202,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     PyObject *op[NPY_MAXARGS];
     PyArray_Descr *op_dtype[NPY_MAXARGS];
     int op_type[NPY_MAXARGS];
+    char op_itflags[NPY_MAXARGS];
     npy_intp op_ndim[NPY_MAXARGS];
     char **op_dataptr;
 
@@ -232,7 +269,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     }
 
     /* If offsets were requested, make sure copying/buffering is disabled */
-    if (itflags&NPY_ITER_FLAGS_HASOFFSETS) {
+    if (itflags&NPY_ITFLAG_HASOFFSETS) {
         for (iiter = 0; iiter < niter; ++iiter) {
             if (op_flags[iiter]&(NPY_ITER_ALLOW_COPY|
                         NPY_ITER_ALLOW_UPDATEIFCOPY)) {
@@ -254,15 +291,27 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         op[iiter] = op_in[iiter];
         Py_XINCREF(op[iiter]);
 
+        /* Check the readonly/writeonly flags, and fill in op_itflags */
+        if (!npyiter_check_per_op_flags(op_flags[iiter], &op_itflags[iiter])) {
+            npy_intp i;
+
+            for (i = 0; i <= iiter; ++i) {
+                Py_XDECREF(op[i]);
+                Py_XDECREF(op_dtype[i]);
+            }
+            return NULL;
+        }
+
         /*
          * Prepare the operand.  This eats the op[iiter] reference
-         * on an error, and gives an op_dtype[iiter] reference
+         * on an error, and produces an op_dtype[iiter] reference
          * on success.
          */
         if (!pyiter_prepare_operand(&op[iiter],
                         op_request_dtypes ? op_request_dtypes[iiter] : NULL,
                         &op_dtype[iiter], &op_type[iiter],
-                        &op_ndim[iiter], &ndim)) {
+                        &op_ndim[iiter], &ndim,
+                        op_flags[iiter], &op_itflags[iiter])) {
             npy_intp i;
 
             for (i = 0; i < iiter; ++i) {
@@ -272,17 +321,6 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
             return NULL;
         }
 
-        /* Check the readonly/writeonly flags against the operand */
-        if (!npyiter_check_flags_readwrite(op[iiter], op_dtype[iiter],
-                            op_type[iiter], op_flags[iiter])) {
-            npy_intp i;
-
-            for (i = 0; i <= iiter; ++i) {
-                Py_XDECREF(op[i]);
-                Py_XDECREF(op_dtype[i]);
-            }
-            return NULL;
-        }
     }
 
 
@@ -361,7 +399,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         NIT_ITEMSIZES(iter)[iiter] = op_dtype[iiter]->elsize;
         NIT_OBJECTS(iter)[iiter] = op[iiter];
 
-        if (itflags&NPY_ITER_FLAGS_HASOFFSETS) {
+        if (itflags&NPY_ITFLAG_HASOFFSETS) {
             /* If offsets were requested, set the data pointers to zero */
             op_dataptr[iiter] = 0;
         }
@@ -435,7 +473,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
      * If the ordering was not forced, reorder the axes
      * and flip negative strides to find the best one.
      */
-    if (!(itflags&NPY_ITER_FLAGS_FORCEDORDER)) {
+    if (!(itflags&NPY_ITFLAG_FORCEDORDER)) {
         if (ndim > 1) {
             npyiter_find_best_axis_ordering(iter);
         }
@@ -447,14 +485,14 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
      * Finally, if coords weren't requested,
      * it may be possible to coalesce some axes together.
      */
-    if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
+    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         npyiter_coalesce_axes(iter);
         itflags = NIT_ITFLAGS(iter);
         ndim = NIT_NDIM(iter);
     }
 
     /* Now that the axes are finished, adjust ITERSIZE if necessary */
-    if (itflags&NPY_ITER_FLAGS_NOINNER) {
+    if (itflags&NPY_ITFLAG_NOINNER) {
         char *axisdata = NIT_AXISDATA(iter);
         NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata);
     }
@@ -550,7 +588,7 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
     npy_intp istrides, nstrides;
     npy_intp *perm, perm_coords[NPY_MAXDIMS];
 
-    if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
+    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoCoord on an iterator without "
                 "the constructor flag NPY_ITER_COORDS.");
@@ -629,7 +667,7 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
     npy_intp sizeof_axisdata;
     npy_intp istrides, nstrides;
 
-    if (!(itflags&NPY_ITER_FLAGS_HASINDEX)) {
+    if (!(itflags&NPY_ITFLAG_HASINDEX)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoIndex on an iterator without "
                 "the constructor flag NPY_ITER_(C|F)_ORDER_INDEX.");
@@ -691,8 +729,8 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
     /* The combination HASINDEX | NOINNER is excluded in the New functions */
 /**begin repeat
  * #const_itflags = 0,
- *                  NPY_ITER_FLAGS_HASINDEX,
- *                  NPY_ITER_FLAGS_NOINNER#
+ *                  NPY_ITFLAG_HASINDEX,
+ *                  NPY_ITFLAG_NOINNER#
  * #tag_itflags = 0, IND, NOINN#
  */
 /**begin repeat1
@@ -736,7 +774,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
     sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
 
     axisdata0 = NIT_AXISDATA(iter);
-#  if !(@const_itflags@&NPY_ITER_FLAGS_NOINNER)
+#  if !(@const_itflags@&NPY_ITFLAG_NOINNER)
     /* Increment coordinate 0 */
     NAD_COORD(axisdata0)++;
     /* Increment pointer 0 */
@@ -747,7 +785,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 
 #if @const_ndim@ == 1
 
-#  if !(@const_itflags@&NPY_ITER_FLAGS_NOINNER)
+#  if !(@const_itflags@&NPY_ITFLAG_NOINNER)
     /* Finished when the coordinate equals the shape */
     return NAD_COORD(axisdata0) < NAD_SHAPE(axisdata0);
 #  else
@@ -759,7 +797,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 
 #else
 
-#  if !(@const_itflags@&NPY_ITER_FLAGS_NOINNER)
+#  if !(@const_itflags@&NPY_ITFLAG_NOINNER)
     if (NAD_COORD(axisdata0) < NAD_SHAPE(axisdata0)) {
         return 1;
     }
@@ -873,15 +911,15 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter)
      * layout or the iternext function.  Currently only HASINDEX
      * and NOINNER affect them.
      */
-    itflags &= (NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_NOINNER);
+    itflags &= (NPY_ITFLAG_HASINDEX|NPY_ITFLAG_NOINNER);
 
     /* Switch statements let the compiler optimize this most effectively */
     switch (itflags) {
     /* The combination HASINDEX | NOINNER is excluded in the New functions */
 /**begin repeat
  * #const_itflags = 0,
- *                  NPY_ITER_FLAGS_HASINDEX,
- *                  NPY_ITER_FLAGS_NOINNER#
+ *                  NPY_ITFLAG_HASINDEX,
+ *                  NPY_ITFLAG_NOINNER#
  * #tag_itflags = 0, IND, NOINN#
  */
         case @const_itflags@:
@@ -934,11 +972,11 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter)
 
 /**begin repeat
  * #const_itflags = 0,
- *    NPY_ITER_FLAGS_HASINDEX,
- *    NPY_ITER_FLAGS_IDENTPERM,
- *    NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_IDENTPERM,
- *    NPY_ITER_FLAGS_NEGPERM,
- *    NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_NEGPERM#
+ *    NPY_ITFLAG_HASINDEX,
+ *    NPY_ITFLAG_IDENTPERM,
+ *    NPY_ITFLAG_HASINDEX|NPY_ITFLAG_IDENTPERM,
+ *    NPY_ITFLAG_NEGPERM,
+ *    NPY_ITFLAG_HASINDEX|NPY_ITFLAG_NEGPERM#
  * #tag_itflags = 0, IND, IDP, INDuIDP, NEGP, INDuNEGP#
  */
 NPY_NO_EXPORT void
@@ -950,19 +988,19 @@ npyiter_getcoord_itflags@tag_itflags@(PyArray_NpyIter *iter, npy_intp *outcoord)
 
     npy_intp idim, sizeof_axisdata;
     char* axisdata;
-#if !((@const_itflags@)&NPY_ITER_FLAGS_IDENTPERM)
+#if !((@const_itflags@)&NPY_ITFLAG_IDENTPERM)
     npy_intp* perm = NIT_PERM(iter);
 #endif
 
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
-#if ((@const_itflags@)&NPY_ITER_FLAGS_IDENTPERM)
+#if ((@const_itflags@)&NPY_ITFLAG_IDENTPERM)
     outcoord += ndim-1;
     for(idim = 0; idim < ndim; ++idim, --outcoord,
                                     axisdata += sizeof_axisdata) {
         *outcoord = NAD_COORD(axisdata);
     }
-#elif !((@const_itflags@)&NPY_ITER_FLAGS_NEGPERM)
+#elif !((@const_itflags@)&NPY_ITFLAG_NEGPERM)
     for(idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
         npy_intp p = perm[idim];
         outcoord[ndim-p-1] = NAD_COORD(axisdata);
@@ -989,7 +1027,7 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
     npy_intp ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
-    if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
+    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot get a GetCoords function for an iterator "
                 "that doesn't track coordinates.");
@@ -1001,18 +1039,18 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
      * the getcoords behavior. IDENTPERM and NEGPERM are mutually
      * exclusive, so that reduces the number of cases slightly.
      */
-    itflags &= (NPY_ITER_FLAGS_HASINDEX |
-                NPY_ITER_FLAGS_IDENTPERM |
-                NPY_ITER_FLAGS_NEGPERM);
+    itflags &= (NPY_ITFLAG_HASINDEX |
+                NPY_ITFLAG_IDENTPERM |
+                NPY_ITFLAG_NEGPERM);
     
     switch (itflags) {
 /**begin repeat
  * #const_itflags = 0,
- *    NPY_ITER_FLAGS_HASINDEX,
- *    NPY_ITER_FLAGS_IDENTPERM,
- *    NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_IDENTPERM,
- *    NPY_ITER_FLAGS_NEGPERM,
- *    NPY_ITER_FLAGS_HASINDEX|NPY_ITER_FLAGS_NEGPERM#
+ *    NPY_ITFLAG_HASINDEX,
+ *    NPY_ITFLAG_IDENTPERM,
+ *    NPY_ITFLAG_HASINDEX|NPY_ITFLAG_IDENTPERM,
+ *    NPY_ITFLAG_NEGPERM,
+ *    NPY_ITFLAG_HASINDEX|NPY_ITFLAG_NEGPERM#
  * #tag_itflags = 0, IND, IDP, INDuIDP, NEGP, INDuNEGP#
  */
         case @const_itflags@:
@@ -1030,17 +1068,17 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 
 int NpyIter_HasCoords(PyArray_NpyIter *iter)
 {
-    return (NIT_ITFLAGS(iter)&NPY_ITER_FLAGS_HASCOORDS) != 0;
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASCOORDS) != 0;
 }
 
 int NpyIter_HasIndex(PyArray_NpyIter *iter)
 {
-    return (NIT_ITFLAGS(iter)&NPY_ITER_FLAGS_HASINDEX) != 0;
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASINDEX) != 0;
 }
 
 int NpyIter_HasOffsets(PyArray_NpyIter *iter)
 {
-    return (NIT_ITFLAGS(iter)&NPY_ITER_FLAGS_HASOFFSETS) != 0;
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASOFFSETS) != 0;
 }
 
 npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter)
@@ -1068,7 +1106,7 @@ int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape)
     char* axisdata;
     npy_intp* perm;
 
-    if (!(itflags&NPY_ITER_FLAGS_HASCOORDS)) {
+    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot get the shape of an iterator constructed "
                 "without the NPY_ITER_COORDS flag set");
@@ -1119,7 +1157,7 @@ npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
 
     char* axisdata = NIT_AXISDATA(iter);
 
-    if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+    if (itflags&NPY_ITFLAG_HASINDEX) {
         /* The index is just after the data pointers */
         return (npy_intp*)NAD_PTRS(axisdata) + niter;
     }
@@ -1181,7 +1219,7 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
                     "NPY_ITER_F_ORDER_INDEX cannot both be specified");
             return 0;
         }
-        (*itflags) |= NPY_ITER_FLAGS_HASINDEX;
+        (*itflags) |= NPY_ITFLAG_HASINDEX;
     }
     /* Check if coordinates were requested */
     if (flags&NPY_ITER_COORDS) {
@@ -1189,7 +1227,7 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
          * This flag primarily disables dimension manipulations that
          * would produce a different set of coordinates.
          */
-        (*itflags) |= NPY_ITER_FLAGS_HASCOORDS;
+        (*itflags) |= NPY_ITFLAG_HASCOORDS;
     }
     /* Check that at most one forced ordering is specified */
     if (flags&(NPY_ITER_FORCE_C_ORDER|
@@ -1211,27 +1249,96 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
     }
     /* Check if offsets were requested instead of pointers */
     if (flags&NPY_ITER_OFFSETS) {
-        (*itflags) |= NPY_ITER_FLAGS_HASOFFSETS;
+        (*itflags) |= NPY_ITFLAG_HASOFFSETS;
     }
     /* Check if the caller wants to handle inner iteration */
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
-        if ((*itflags)&NPY_ITER_FLAGS_HASINDEX) {
+        if ((*itflags)&NPY_ITFLAG_HASINDEX) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flags NPY_ITER_(C|F)_ORDER_INDEX and "
                     "NPY_ITER_NO_INNER_ITERATION cannot be used "
                     "together");
             return 0;
         }
-        if ((*itflags)&NPY_ITER_FLAGS_HASCOORDS) {
+        if ((*itflags)&NPY_ITFLAG_HASCOORDS) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flags NPY_ITER_COORDS and "
                     "NPY_ITER_NO_INNER_ITERATION cannot be used "
                     "together");
             return 0;
         }
-        (*itflags) |= NPY_ITER_FLAGS_NOINNER;
+        (*itflags) |= NPY_ITFLAG_NOINNER;
     }
 
+    return 1;
+}
+
+/*
+ * Checks the per-operand input flags, and fills in op_itflags.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
+{
+    if ((op_flags&NPY_ITER_GLOBAL_FLAGS) != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                    "A global flag was passed as a per-operand flag "
+                    "to the iterator constructor");
+        return 0;
+    }
+
+    /* Check the read/write flags */
+    if (op_flags&NPY_ITER_READONLY) {
+        /* The read/write flags are mutually exclusive */
+        if (op_flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Only one of the iterator flags NPY_ITER_READWRITE, "
+                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
+                    "specified for an operand");
+            return 0;
+        }
+
+        *op_itflags = NPY_OP_ITFLAG_READ;
+    }
+    else if (op_flags&NPY_ITER_READWRITE) {
+        /* The read/write flags are mutually exclusive */
+        if (op_flags&NPY_ITER_WRITEONLY) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Only one of the iterator flags NPY_ITER_READWRITE, "
+                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
+                    "specified for an operand");
+            return 0;
+        }
+
+        *op_itflags = NPY_OP_ITFLAG_READ|NPY_OP_ITFLAG_WRITE;
+    }
+    else if(op_flags&NPY_ITER_WRITEONLY) {
+        *op_itflags = NPY_OP_ITFLAG_WRITE;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                "None of the iterator flags NPY_ITER_READWRITE, "
+                "NPY_ITER_READONLY, or NPY_ITER_WRITEONLY were "
+                "specified for an operand");
+        return 0;
+    }
+
+    /* Check the flags for temporary copies */
+    if (op_flags&(NPY_ITER_ALLOW_COPY|NPY_ITER_ALLOW_UPDATEIFCOPY)) {
+        *op_itflags |= NPY_OP_ITFLAG_COPY;
+        if ((*op_itflags)&NPY_OP_ITFLAG_WRITE) {
+            if (op_flags&NPY_ITER_ALLOW_UPDATEIFCOPY) {
+                *op_itflags |= NPY_OP_ITFLAG_UPDATEIFCOPY;
+            } else {
+                PyErr_SetString(PyExc_ValueError,
+                        "If an operand is writeable, must use "
+                        "NPY_ITER_ALLOW_UPDATEIFCOPY instead of "
+                        "NPY_ITER_ALLOW_COPY");
+                return 0;
+            }
+        }
+    }
     return 1;
 }
 
@@ -1245,39 +1352,59 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
 static int
 pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                        PyArray_Descr** op_dtype, int* op_type,
-                       npy_intp* op_ndim, npy_intp* ndim)
+                       npy_intp* op_ndim, npy_intp* ndim,
+                       npy_uint32 op_flags, char *op_itflags)
 {
     /* NULL operands may be automatically allocated outputs */
     if (*op == NULL) {
+        /* Reading should be disabled */
+        if ((*op_itflags)&NPY_OP_ITFLAG_READ) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Automatic allocation was requested for an iterator "
+                    "operand, but wasn't flagged as write only");
+            return 0;
+        }
         *op_dtype = NULL;
         *op_type = NPY_ITER_OP_NULL;
         *op_ndim = 0;
+        /* No copying/buffering of NULL operands */
+        *op_itflags &= ~(NPY_OP_ITFLAG_COPY|NPY_OP_ITFLAG_UPDATEIFCOPY);
         return 1;
     }
 
     /* If it's a Python number, convert it into an array scalar */
     if (PyArray_IsPythonNumber(*op)) {
-        PyObject *new_op = PyArray_ScalarFromObject(*op);
-        Py_DECREF(*op);
+        PyObject *new_op;
+
+        /* Python numbers are not writeable */
+        if ((*op_itflags)&NPY_OP_ITFLAG_WRITE) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input was an immutable Python scalar, but was "
+                    "flagged as writeable");
+            Py_DECREF(*op);
+            return 0;
+        }
+        new_op = PyArray_ScalarFromObject(*op);
         if (new_op == NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input failed to convert to array scalar");
+            Py_DECREF(*op);
             return 0;
         }
+        Py_DECREF(*op);
         *op = new_op;
     }
 
-    /* Confirm the data types of the array */
-    if (op_request_dtype != NULL) {
-        if (!PyObject_TypeCheck(op_request_dtypes[iiter],
-                                        &PyArrayDescr_Type)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator requested dtypes must be array descrs.");
-            return 0;
-        }
-    }
-
     if (PyArray_Check(*op)) {
+        if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
+                    !PyArray_CHKFLAGS(op, NPY_WRITEABLE)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input was a non-writeable array, but was "
+                    "flagged as writeable");
+            Py_DECREF(*op);
+            return 0;
+
+        }
         *op_type = NPY_ITER_OP_ARRAY;
         *op_ndim = PyArray_NDIM(*op);
         /* PyArray_DESCR does not give us a reference */
@@ -1288,6 +1415,22 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             Py_DECREF(*op);
             return 0;
         }
+        /*
+         * Also make sure that if the data type has a Python reference or
+         * other pointer, ALLOW_WRITEABLE_REFERENCES was specified.
+         */
+        if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
+                        !(op_flags&NPY_ITER_ALLOW_WRITEABLE_REFERENCES)) {
+            if (PyDataType_FLAGCHK(*op_dtype, NPY_ITEM_HASOBJECT) ||
+                        PyDataType_FLAGCHK(*op_dtype, NPY_ITEM_IS_POINTER)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Tried to construct an iterator for a writeable "
+                        "array of references/pointers without specifying the "
+                        "NPY_ITER_ALLOW_WRITEABLE_REFERENCES flag.");
+                return 0;
+            }
+        }
+        /* If a particular dtype was requested handle allowed casting */
         if (op_request_dtype != NULL) {
             if (PyArray_EquivTypes(op_request_dtype, *op_dtype)) {
                 *op_dtype = op_request_dtype;
@@ -1297,6 +1440,7 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                 PyErr_SetString(PyExc_ValueError,
                         "Iterator doesn't support automatic dtype "
                         "conversions yet");
+                Py_DECREF(*op);
                 return 0;
             }
             
@@ -1304,6 +1448,14 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
         Py_INCREF(*op_dtype);
     }
     else if(PyArray_CheckScalar(*op)) {
+        /* Array scalars are not writeable */
+        if ((*op_itflags)&NPY_OP_ITFLAG_WRITE) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input was an immutable array scalar, but was "
+                    "flagged as writeable");
+            Py_DECREF(*op);
+            return 0;
+        }
         *op_type = NPY_ITER_OP_ARRAY_SCALAR;
         *op_ndim = 0;
         /*PyArray_DescrFromScalar does give us a reference */
@@ -1334,104 +1486,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
     /* 'ndim' is the maximum of all the 'op_ndim' */
     if (*op_ndim > *ndim) {
         *ndim = *op_ndim;
-    }
-
-    return 1;
-}
-
-/*
- * Checks that the operand satisfies the READONLY/WRITEONLY properties
- * specified in 'flags'.
- *
- * Returns 1 on success, 0 on failure.
- */
-static int
-npyiter_check_flags_readwrite(PyObject* op, PyArray_Descr* op_dtype,
-                              int op_type, npy_uint32 flags)
-{
-    if ((flags&NPY_ITER_GLOBAL_FLAGS) != 0) {
-        PyErr_SetString(PyExc_ValueError,
-                    "A global flag was passed as a per-operand flag "
-                    "to the iterator constructor");
-        return 0;
-    }
-
-    /* Error check the read/write flags */
-    if (flags&NPY_ITER_READONLY) {
-        /* The read/write flags are mutually exclusive */
-        if (flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Only one of the iterator flags NPY_ITER_READWRITE, "
-                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
-                    "specified for an operand");
-            return 0;
-        }
-        /* NULL operands must be write-only */
-        if (op_type == NPY_ITER_OP_NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Automatic allocation was requested for an iterator "
-                    "operand, but was set to NPY_ITER_READONLY instead of "
-                    "NPY_ITER_WRITEONLY");
-            return 0;
-        }
-    }
-    else {
-        /* The read/write flags are mutually exclusive */
-        if ((flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) ==
-                     (NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Only one of the iterator flags NPY_ITER_READWRITE, "
-                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
-                    "specified for an operand");
-            return 0;
-        }
-        /* Must specify a read/write flag */
-        if (!(flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "None of the iterator flags NPY_ITER_READWRITE, "
-                    "NPY_ITER_READONLY, or NPY_ITER_WRITEONLY were "
-                    "specified for an operand");
-            return 0;
-        }
-        /* NULL operands must be write-only */
-        if (op_type == NPY_ITER_OP_NULL &&
-                    !(flags&NPY_ITER_WRITEONLY)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Automatic allocation was requested for an iterator "
-                    "operand, but was set to NPY_ITER_READWRITE instead of "
-                    "NPY_ITER_WRITEONLY");
-            return 0;
-        }
-        
-        /* Since write was specified, make sure the array is writeable */
-        if (op_type == NPY_ITER_OP_ARRAY_SCALAR) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Tried to construct an iterator for a "
-                    "scalar without specifying the "
-                    "NPY_ITER_READONLY flag.");
-            return 0;
-        }
-        else if ((op_type == NPY_ITER_OP_ARRAY) &&
-                            !PyArray_CHKFLAGS(op, NPY_WRITEABLE)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Tried to construct an iterator for a non-writeable "
-                    "array without specifying the NPY_ITER_READONLY flag.");
-            return 0;
-        }
-        /*
-         * Also make sure that if the data type has a Python reference or
-         * other pointer, ALLOW_WRITEABLE_REFERENCES was specified.
-         */
-        if (!(flags&NPY_ITER_ALLOW_WRITEABLE_REFERENCES)) {
-            if (PyDataType_FLAGCHK(op_dtype, NPY_ITEM_HASOBJECT) ||
-                        PyDataType_FLAGCHK(op_dtype, NPY_ITEM_IS_POINTER)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Tried to construct an iterator for a writeable "
-                        "array of references/pointers without specifying the "
-                        "NPY_ITER_ALLOW_WRITEABLE_REFERENCES flag.");
-                return 0;
-            }
-        }
     }
 
     return 1;
@@ -1670,7 +1724,7 @@ npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags)
      * incremented.
      */
     if (NIT_ITERSIZE(iter) == 1) {
-        if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+        if (itflags&NPY_ITFLAG_HASINDEX) {
             axisdata = NIT_AXISDATA(iter);
 
             NAD_STRIDES(axisdata)[niter] = 0;
@@ -1728,11 +1782,11 @@ npyiter_apply_forced_iteration_order(npy_uint32 flags, PyArray_NpyIter *iter)
     npy_intp iiter, niter = NIT_NITER(iter);
 
     if (flags&NPY_ITER_FORCE_C_ORDER) {
-        NIT_ITFLAGS(iter) |= NPY_ITER_FLAGS_FORCEDORDER;
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
     }
     else if (flags&NPY_ITER_FORCE_F_ORDER) {
         npyiter_reverse_axis_ordering(iter);
-        NIT_ITFLAGS(iter) |= NPY_ITER_FLAGS_FORCEDORDER;
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
     }
     else if(flags&NPY_ITER_FORCE_ANY_CONTIGUOUS) {
         PyObject **op = NIT_OBJECTS(iter);
@@ -1750,7 +1804,7 @@ npyiter_apply_forced_iteration_order(npy_uint32 flags, PyArray_NpyIter *iter)
         if (forder) {
             npyiter_reverse_axis_ordering(iter);
         }
-        NIT_ITFLAGS(iter) |= NPY_ITER_FLAGS_FORCEDORDER;
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
     }
 }
 
@@ -1835,8 +1889,8 @@ npyiter_flip_negative_strides(PyArray_NpyIter *iter)
          * Indicate that some of the perm entries are negative,
          * and that it's not (strictly speaking) the identity perm.
          */
-        NIT_ITFLAGS(iter) = (NIT_ITFLAGS(iter)|NPY_ITER_FLAGS_NEGPERM) &
-                            ~NPY_ITER_FLAGS_IDENTPERM;
+        NIT_ITFLAGS(iter) = (NIT_ITFLAGS(iter)|NPY_ITFLAG_NEGPERM) &
+                            ~NPY_ITFLAG_IDENTPERM;
     }
 }
 
@@ -1877,7 +1931,7 @@ npyiter_reverse_axis_ordering(PyArray_NpyIter *iter)
         *first = i;
     }
 
-    NIT_ITFLAGS(iter) &= ~NPY_ITER_FLAGS_IDENTPERM;
+    NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_IDENTPERM;
 }
 
 static npy_intp intp_abs(npy_intp x)
@@ -2015,7 +2069,7 @@ npyiter_find_best_axis_ordering(PyArray_NpyIter *iter)
             }
         }
         /* Clear the identity perm flag */
-        NIT_ITFLAGS(iter) &= ~NPY_ITER_FLAGS_IDENTPERM;
+        NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_IDENTPERM;
     }
 }
 
@@ -2033,7 +2087,7 @@ npyiter_coalesce_axes(PyArray_NpyIter *iter)
     npy_intp new_ndim = 1;
 
     /* The HASCOORDS or IDENTPERM flags do not apply after coalescing */
-    NIT_ITFLAGS(iter) &= ~(NPY_ITER_FLAGS_IDENTPERM|NPY_ITER_FLAGS_HASCOORDS);
+    NIT_ITFLAGS(iter) &= ~(NPY_ITFLAG_IDENTPERM|NPY_ITFLAG_HASCOORDS);
 
     axisdata = NIT_AXISDATA(iter);
     ad_compress = axisdata;
@@ -2127,17 +2181,17 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
 
     printf("\n------ BEGIN ITERATOR DUMP ------\n");
     printf("Flags: ");
-    if (itflags&NPY_ITER_FLAGS_IDENTPERM)
+    if (itflags&NPY_ITFLAG_IDENTPERM)
         printf("IDENTPERM ");
-    if (itflags&NPY_ITER_FLAGS_NEGPERM)
+    if (itflags&NPY_ITFLAG_NEGPERM)
         printf("NEGPERM ");
-    if (itflags&NPY_ITER_FLAGS_HASINDEX)
+    if (itflags&NPY_ITFLAG_HASINDEX)
         printf("HASINDEX ");
-    if (itflags&NPY_ITER_FLAGS_HASCOORDS)
+    if (itflags&NPY_ITFLAG_HASCOORDS)
         printf("HASCOORDS ");
-    if (itflags&NPY_ITER_FLAGS_FORCEDORDER)
+    if (itflags&NPY_ITFLAG_FORCEDORDER)
         printf("FORCEDORDER ");
-    if (itflags&NPY_ITER_FLAGS_NOINNER)
+    if (itflags&NPY_ITFLAG_NOINNER)
         printf("NOINNER ");
     printf("\n");
     printf("NDim: %d\n", (int)ndim);
@@ -2175,7 +2229,7 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
         printf("%p ", NIT_RESETDATAPTR(iter)[iiter]);
     }
     printf("\n");
-    if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+    if (itflags&NPY_ITFLAG_HASINDEX) {
         printf("InitIndex: %d\n",
                         (int)(npy_intp)NIT_RESETDATAPTR(iter)[niter]);
     }
@@ -2197,7 +2251,7 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
             printf("%d ", (int)NAD_STRIDES(axisdata)[iiter]);
         }
         printf("\n");
-        if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+        if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("  Index Stride: %d\n", (int)NAD_STRIDES(axisdata)[niter]);
         }
         printf("  Ptrs: ");
@@ -2205,7 +2259,7 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
             printf("%p ", NAD_PTRS(axisdata)[iiter]);
         }
         printf("\n");
-        if (itflags&NPY_ITER_FLAGS_HASINDEX) {
+        if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("  Index Value: %d\n",
                                (int)((npy_intp*)NAD_PTRS(axisdata))[niter]);
         }
