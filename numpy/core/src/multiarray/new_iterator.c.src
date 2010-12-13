@@ -49,6 +49,8 @@
 #define NPY_OP_ITFLAG_UPDATEIFCOPY 0x010
 /* The operand needs casting */
 #define NPY_OP_ITFLAG_CAST         0x020
+/* The operand needs a byte swap and/or alignment operation */
+#define NPY_OP_ITFLAG_NBO_ALIGN    0x040
 
 /* Internal flag, for the type of operands */
 #define NPY_ITER_OP_ARRAY         0
@@ -351,8 +353,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
      * 16-byte aligned.
      */
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_type[iiter] == NPY_ITER_OP_ARRAY_SCALAR &&
-                    !PyTypeNum_ISEXTENDED(op_dtype[iiter]->type_num)) {
+        if (op_type[iiter] == NPY_ITER_OP_ARRAY_SCALAR) {
             bufferspace += op_dtype[iiter]->elsize + 16;
         }
     }
@@ -416,19 +417,36 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                     op_dataptr[iiter] = PyArray_DATA(op[iiter]);
                     break;
                 case NPY_ITER_OP_ARRAY_SCALAR:
-                    /*
-                     * If ISEXTENDED is true (a flexible type), 
-                     * ScalarAsCtype fills in a pointer to the data, otherwise
-                     * it copies the data itself.
-                     */
-                    if (PyTypeNum_ISEXTENDED(op_dtype[iiter]->type_num)) {
-                        PyArray_ScalarAsCtype(op[iiter], &op_dataptr[iiter]);
+                    if (op_itflags[iiter]&NPY_OP_ITFLAG_CAST) {
+                        /* Cast the scalar to the desired type */
+                        if (PyArray_CastScalarToCtype(op[iiter], bufferptr,
+                                            op_dtype[iiter]) != 0) {
+                            npy_intp i;
+
+                            for (i = 0; i < niter; ++i) {
+                                Py_XDECREF(op[i]);
+                                Py_XDECREF(op_dtype[i]);
+                            }
+                            PyArray_free(iter);
+                            return NULL;
+                        }
+                    } else {
+                        /*
+                         * If ISEXTENDED is true (a flexible type), 
+                         * ScalarAsCtype fills in a pointer to the data,
+                         * otherwise it copies the data itself.
+                         */
+                        if (PyTypeNum_ISEXTENDED(op_dtype[iiter]->type_num)) {
+                            void **addr = 0;
+                            PyArray_ScalarAsCtype(op[iiter], addr);
+                            memcpy(bufferptr, addr, op_dtype[iiter]->elsize);
+                        }
+                        else {
+                            PyArray_ScalarAsCtype(op[iiter], bufferptr);
+                        }
                     }
-                    else {
-                        PyArray_ScalarAsCtype(op[iiter], bufferptr);
-                        op_dataptr[iiter] = bufferptr;
-                        NPY_INC_BUFFERPTR(bufferptr, op_dtype[iiter]->elsize);
-                    }
+                    op_dataptr[iiter] = bufferptr;
+                    NPY_INC_BUFFERPTR(bufferptr, op_dtype[iiter]->elsize);
                     break;
             }
         }
@@ -1453,8 +1471,9 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             Py_DECREF(*op);
             return 0;
         }
+        Py_INCREF(*op_dtype);
         /*
-         * Also make sure that if the data type has a Python reference or
+         * Make sure that if the data type has a Python reference or
          * other pointer, ALLOW_WRITEABLE_REFERENCES was specified.
          */
         if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
@@ -1465,20 +1484,15 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                         "Tried to construct an iterator for a writeable "
                         "array of references/pointers without specifying the "
                         "NPY_ITER_ALLOW_WRITEABLE_REFERENCES flag.");
+                Py_DECREF(*op);
+                Py_DECREF(*op_dtype);
                 return 0;
             }
         }
         /* If a particular dtype was requested handle allowed casting */
         if (op_request_dtype != NULL) {
-            if (PyArray_EquivTypes(op_request_dtype, *op_dtype)) {
-                /*
-                 * Store the requested dtype, because while equivalent,
-                 * it may not be identical to the array's in all respects.
-                 * (e.g. if sizeof(int) == sizeof(long), then equivalent)
-                 */
-                *op_dtype = op_request_dtype;
-            }
-            else {
+            /* If the types aren't equivalent, a cast is necessary */
+            if (!PyArray_EquivTypes(op_request_dtype, *op_dtype)) {
                 /* Copying or buffering must be enabled for casting */
                 if (!((*op_itflags)&
                             (NPY_OP_ITFLAG_COPY|NPY_OP_ITFLAG_BUFFER))) {
@@ -1486,6 +1500,8 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                             "Iterator input dtype did not match "
                             "the requested dtype, but no copying or "
                             "buffering was enabled");
+                    Py_DECREF(*op);
+                    Py_DECREF(*op_dtype);
                     return 0;
                 }
                 /* Check read (op -> temp) casting */
@@ -1496,6 +1512,8 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                             "Iterator input dtype could not be cast "
                             "to the requested dtype, according to "
                             "the casting flags given");
+                    Py_DECREF(*op);
+                    Py_DECREF(*op_dtype);
                     return 0;
                 }
                 /* Check write (temp -> op) casting */
@@ -1506,15 +1524,19 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                             "Iterator requested dtype could not be cast "
                             "to the input dtype, according to "
                             "the casting flags given");
+                    Py_DECREF(*op);
+                    Py_DECREF(*op_dtype);
                     return 0;
                 }
 
                 /* Indicate that this operand needs casting */
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
             }
-            
+            /* Store the requested dtype */
+            Py_DECREF(*op_dtype);
+            *op_dtype = op_request_dtype;
+            Py_INCREF(*op_dtype);
         }
-        Py_INCREF(*op_dtype);
     }
     else if(PyArray_CheckScalar(*op)) {
         /* Array scalars are not writeable */
@@ -1527,7 +1549,7 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
         }
         *op_type = NPY_ITER_OP_ARRAY_SCALAR;
         *op_ndim = 0;
-        /*PyArray_DescrFromScalar does give us a reference */
+        /*PyArray_DescrFromScalar gives us a reference */
         *op_dtype = PyArray_DescrFromScalar(*op);
         if (*op_dtype == 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -1543,6 +1565,33 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             Py_DECREF(*op);
             Py_DECREF(*op_dtype);
             return 0;
+        }
+        /* If a particular dtype was requested handle allowed casting */
+        if (op_request_dtype != NULL) {
+            /* If the types aren't equivalent, a cast is necessary */
+            if (!PyArray_EquivTypes(op_request_dtype, *op_dtype)) {
+                /*
+                 * Casting scalars does not require copying/buffering.
+                 * Check read (op -> temp) casting
+                 */
+                if (!npyiter_can_cast(op_flags, *op_dtype, op_request_dtype)) {
+                    PyErr_SetString(PyExc_TypeError,
+                            "Iterator scalar input dtype could not be cast "
+                            "to the requested dtype, according to "
+                            "the casting flags given");
+                    Py_DECREF(*op);
+                    Py_DECREF(*op_dtype);
+                    return 0;
+                }
+
+                /* Indicate that this operand needs casting */
+                *op_itflags |= NPY_OP_ITFLAG_CAST;
+            }
+            /* Store the requested dtype */
+            Py_DECREF(*op_dtype);
+            *op_dtype = op_request_dtype;
+            Py_INCREF(*op_dtype);
+            
         }
 
         /* No copy/update/buffer for scalars */

@@ -687,19 +687,13 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
     niter = NpyIter_GetNIter(self->iter);
     dtypes = NpyIter_GetDescrArray(self->iter);
 
-    if (niter == 1) {
-        Py_INCREF(dtypes[0]);
-        ret = (PyObject *)dtypes[0];
+    ret = PyTuple_New(niter);
+    if (ret == NULL) {
+        return NULL;
     }
-    else {
-        ret = PyTuple_New(niter);
-        if (ret == NULL) {
-            return NULL;
-        }
-        for (iiter = 0; iiter < niter; ++iiter) {
-            Py_INCREF(dtypes[iiter]);
-            PyTuple_SET_ITEM(ret, iiter, (PyObject *)dtypes[iiter]);
-        }
+    for (iiter = 0; iiter < niter; ++iiter) {
+        Py_INCREF(dtypes[iiter]);
+        PyTuple_SET_ITEM(ret, iiter, (PyObject *)dtypes[iiter]);
     }
 
     return ret;

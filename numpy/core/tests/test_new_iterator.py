@@ -589,13 +589,13 @@ def test_iter_flags_errors():
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
 
-def test_iter_cast_errors():
+def test_iter_array_cast_errors():
     # Check that invalid casts are caught
 
-    # Need to enable copying for casts to happen
+    # Need to enable copying for casts to occur
     assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
                 [['readonly']], op_dtypes=[np.dtype('f8')])
-    # Also need to allow casting for casts to happen
+    # Also need to allow casting for casts to occur
     assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
                 [['readonly','allow_copy']], op_dtypes=[np.dtype('f8')])
     assert_raises(TypeError, newiter, arange(2,dtype='f8'), [],
@@ -615,6 +615,51 @@ def test_iter_cast_errors():
     assert_raises(TypeError, newiter, arange(2,dtype='i4'), [],
                 [['writeonly','allow_updateifcopy','allow_same_kind_casts']],
                 op_dtypes=[np.dtype('f4')])
+
+def test_iter_scalar_cast():
+    # Check that scalars are cast as requested
+
+    # No cast 'f4' -> 'f4'
+    i = newiter(np.float32(2.5), [], [['readonly']],
+                    op_dtypes=[np.dtype('f4')])
+    assert_equal(i.dtypes[0], np.dtype('f4'))
+    assert_equal(i.value.dtype, np.dtype('f4'))
+    assert_equal(i.value, 2.5)
+    # Safe cast 'f4' -> 'f8'
+    i = newiter(np.float32(2.5), [], [['readonly','allow_safe_casts']],
+                    op_dtypes=[np.dtype('f8')])
+    assert_equal(i.dtypes[0], np.dtype('f8'))
+    assert_equal(i.value.dtype, np.dtype('f8'))
+    assert_equal(i.value, 2.5)
+    # Same-kind cast 'f8' -> 'f4'
+    i = newiter(np.float64(2.5), [], [['readonly','allow_same_kind_casts']],
+                    op_dtypes=[np.dtype('f4')])
+    assert_equal(i.dtypes[0], np.dtype('f4'))
+    assert_equal(i.value.dtype, np.dtype('f4'))
+    assert_equal(i.value, 2.5)
+    # Unsafe cast 'f8' -> 'i4'
+    i = newiter(np.float64(3.0), [], [['readonly','allow_unsafe_casts']],
+                    op_dtypes=[np.dtype('i4')])
+    assert_equal(i.dtypes[0], np.dtype('i4'))
+    assert_equal(i.value.dtype, np.dtype('i4'))
+    assert_equal(i.value, 3)
+
+def test_iter_scalar_cast_errors():
+    # Check that invalid casts are caught
+
+    # Need to allow casting for casts to occur
+    assert_raises(TypeError, newiter, np.float32(2), [],
+                [['readonly']], op_dtypes=[np.dtype('f8')])
+    assert_raises(TypeError, newiter, 2.5, [],
+                [['readonly']], op_dtypes=[np.dtype('f4')])
+    # 'f8' -> 'f4' isn't a safe cast
+    assert_raises(TypeError, newiter, np.float64(2), [],
+                [['readonly','allow_safe_casts']],
+                op_dtypes=[np.dtype('f4')])
+    # 'f4' -> 'i4' is neither a safe nor a same-kind cast
+    assert_raises(TypeError, newiter, np.float32(2), [],
+                [['readonly','allow_same_kind_casts']],
+                op_dtypes=[np.dtype('i4')])
 
 def test_iter_op_axes():
     # Check that custom axes work
