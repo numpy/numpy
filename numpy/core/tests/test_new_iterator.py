@@ -589,6 +589,33 @@ def test_iter_flags_errors():
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
 
+def test_iter_cast_errors():
+    # Check that invalid casts are caught
+
+    # Need to enable copying for casts to happen
+    assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
+                [['readonly']], op_dtypes=[np.dtype('f8')])
+    # Also need to allow casting for casts to happen
+    assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
+                [['readonly','allow_copy']], op_dtypes=[np.dtype('f8')])
+    assert_raises(TypeError, newiter, arange(2,dtype='f8'), [],
+                [['writeonly','allow_updateifcopy']],
+                op_dtypes=[np.dtype('f4')])
+    # 'f4' -> 'f8' is a safe cast, but 'f8' -> 'f4' isn't
+    assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
+                [['readwrite','allow_updateifcopy','allow_safe_casts']],
+                op_dtypes=[np.dtype('f8')])
+    assert_raises(TypeError, newiter, arange(2,dtype='f8'), [],
+                [['readwrite','allow_updateifcopy','allow_safe_casts']],
+                op_dtypes=[np.dtype('f4')])
+    # 'f4' -> 'i4' is neither a safe nor a same-kind cast
+    assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
+                [['readonly','allow_copy','allow_same_kind_casts']],
+                op_dtypes=[np.dtype('i4')])
+    assert_raises(TypeError, newiter, arange(2,dtype='i4'), [],
+                [['writeonly','allow_updateifcopy','allow_same_kind_casts']],
+                op_dtypes=[np.dtype('f4')])
+
 def test_iter_op_axes():
     # Check that custom axes work
 

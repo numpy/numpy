@@ -185,6 +185,24 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 else if (strcmp(str, "writeonly") == 0) {
                     op_flags[iiter] |= NPY_ITER_WRITEONLY;
                 }
+                else if (strcmp(str, "nbo_aligned") == 0) {
+                    op_flags[iiter] |= NPY_ITER_NBO_ALIGNED;
+                }
+                else if (strcmp(str, "allow_copy") == 0) {
+                    op_flags[iiter] |= NPY_ITER_ALLOW_COPY;
+                }
+                else if (strcmp(str, "allow_updateifcopy") == 0) {
+                    op_flags[iiter] |= NPY_ITER_ALLOW_UPDATEIFCOPY;
+                }
+                else if (strcmp(str, "allow_safe_casts") == 0) {
+                    op_flags[iiter] |= NPY_ITER_ALLOW_SAFE_CASTS;
+                }
+                else if (strcmp(str, "allow_same_kind_casts") == 0) {
+                    op_flags[iiter] |= NPY_ITER_ALLOW_SAME_KIND_CASTS;
+                }
+                else if (strcmp(str, "allow_unsafe_casts") == 0) {
+                    op_flags[iiter] |= NPY_ITER_ALLOW_UNSAFE_CASTS;
+                }
                 else if (strcmp(str, "allow_writeable_references") == 0) {
                     op_flags[iiter] |= NPY_ITER_ALLOW_WRITEABLE_REFERENCES;
                 }
