@@ -90,6 +90,10 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             if (op[iiter] == NULL) {
                 goto fail;
             }
+            else if (op[iiter] == Py_None) {
+                Py_DECREF(op[iiter]);
+                op[iiter] = NULL;
+            }
         }
     }
     else {
@@ -205,6 +209,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 }
                 else if (strcmp(str, "allow_writeable_references") == 0) {
                     op_flags[iiter] |= NPY_ITER_ALLOW_WRITEABLE_REFERENCES;
+                }
+                else if (strcmp(str, "allocate_if_null") == 0) {
+                    op_flags[iiter] |= NPY_ITER_ALLOCATE_IF_NULL;
                 }
                 else {
                     PyErr_Format(PyExc_ValueError,

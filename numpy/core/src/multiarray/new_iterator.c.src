@@ -76,8 +76,6 @@
         ((NPY_SIZEOF_INTP)*(ndim))
 #define NIT_DTYPES_SIZEOF(itflags, ndim, niter) \
         ((NPY_SIZEOF_INTP)*(niter))
-#define NIT_ITEMSIZES_SIZEOF(itflags, ndim, niter) \
-        ((NPY_SIZEOF_INTP)*(niter))
 #define NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter) \
         ((NPY_SIZEOF_INTP)*(niter+1))
 #define NIT_OBJECTS_SIZEOF(itflags, ndim, niter) \
@@ -94,12 +92,9 @@
 #define NIT_DTYPES_OFFSET(itflags, ndim, niter) \
         (NIT_PERM_OFFSET() + \
          NIT_PERM_SIZEOF(itflags, ndim, niter))
-#define NIT_ITEMSIZES_OFFSET(itflags, ndim, niter) \
+#define NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) \
         (NIT_DTYPES_OFFSET(itflags, ndim, niter) + \
          NIT_DTYPES_SIZEOF(itflags, ndim, niter))
-#define NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) \
-        (NIT_ITEMSIZES_OFFSET(itflags, ndim, niter) + \
-         NIT_ITEMSIZES_SIZEOF(itflags, ndim, niter))
 #define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
         (NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) + \
          NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter))
@@ -123,8 +118,6 @@
         (char*)(iter) + NIT_PERM_OFFSET()))
 #define NIT_DTYPES(iter) ((PyArray_Descr**)( \
         (char*)(iter) + NIT_DTYPES_OFFSET(itflags, ndim, niter)))
-#define NIT_ITEMSIZES(iter) ((npy_intp*)( \
-        (char*)(iter) + NIT_ITEMSIZES_OFFSET(itflags, ndim, niter)))
 #define NIT_RESETDATAPTR(iter) ((char**)( \
         (char*)(iter) + NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter)))
 #define NIT_OBJECTS(iter) ((PyObject**)( \
@@ -195,7 +188,7 @@ static void
 npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim);
 
 static PyObject *
-npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
+npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes);
 
 /* The constructor for an iterator over multiple objects */
@@ -226,6 +219,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
 
     npy_intp *perm;
     char axes_dupcheck[NPY_MAXDIMS];
+    int any_allocate_if_null = 0;
 
     if (niter > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -342,9 +336,15 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     }
 
 
-    /* For now, disallow any NULL operands */
-    for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_type[iiter] == NPY_ITER_OP_NULL) {
+    /* If all the operands were NULL, it's an error */
+    if (op_type[0] == NPY_ITER_OP_NULL) {
+        int all_null = 1;
+        for (iiter = 1; iiter < niter; ++iiter) {
+            if (op_type[iiter] != NPY_ITER_OP_NULL) {
+                all_null = 0;
+            }
+        }
+        if (all_null) {
             npy_intp i;
 
             for (i = 0; i < niter; ++i) {
@@ -352,7 +352,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                 Py_XDECREF(op_dtype[i]);
             }
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator input value cannot be NULL");
+                    "At least one iterator input must be non-NULL");
             return NULL;
         }
     }
@@ -413,7 +413,6 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     op_dataptr = NIT_RESETDATAPTR(iter);
     for (iiter = 0; iiter < niter; ++iiter) {
         NIT_DTYPES(iter)[iiter] = op_dtype[iiter];
-        NIT_ITEMSIZES(iter)[iiter] = op_dtype[iiter]->elsize;
         NIT_OBJECTS(iter)[iiter] = op[iiter];
 
         if (itflags&NPY_ITFLAG_HASOFFSETS) {
@@ -432,6 +431,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                      */
                     op_dataptr[iiter] = PyArray_DATA(op[iiter]);
                     break;
+
                 case NPY_ITER_OP_ARRAY_SCALAR:
                     /*
                      * Always copy scalars to a buffer at the end
@@ -469,6 +469,14 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                     }
                     op_dataptr[iiter] = bufferptr;
                     NPY_INC_BUFFERPTR(bufferptr, op_dtype[iiter]->elsize);
+                    break;
+
+                case NPY_ITER_OP_NULL:
+                    op_dataptr[iiter] = NULL;
+                    /* Now that ndim is fixed, outputs get the full ndim */
+                    op_ndim[iiter] = ndim;
+                    /* Flag this so later we can avoid flipping axes */
+                    any_allocate_if_null = 1;
                     break;
             }
         }
@@ -509,22 +517,53 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         if (ndim > 1) {
             npyiter_find_best_axis_ordering(iter);
         }
-        npyiter_flip_negative_strides(iter);
+        /*
+         * If there's an output being allocated, we must leave the
+         * strides as positive.
+         */
+        if (!any_allocate_if_null) {
+            npyiter_flip_negative_strides(iter);
+        }
         itflags = NIT_ITFLAGS(iter);
     }
 
     /*
      * At this point, the iteration order has been finalized. so
-     * any copying due to casting/byte order/alignment can be
+     * any allocation of ops that were NULL, or any temporary
+     * copying due to casting/byte order/alignment can be
      * done now using a memory layout matching the iterator.
      */
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_itflags[iiter]&NPY_OP_ITFLAG_COPY) {
+        if (op_type[iiter] == NPY_ITER_OP_NULL) {
+            PyObject *out;
+
+            /* Allocate the output array, if possible */
+            out = npyiter_new_temp_array(iter, ndim, NULL,
+                                        op_dtype[iiter],
+                                        op_axes ? op_axes[iiter] : NULL);
+            if (out == NULL) {
+                NpyIter_Deallocate(iter);
+                return NULL;
+            }
+
+            op[iiter] = out;
+            NIT_OBJECTS(iter)[iiter] = out;
+
+            /*
+             * Now we need to replace the pointers and strides with values
+             * from the temporary array.
+             */
+            npyiter_replace_axisdata(iter, iiter, op[iiter], op_ndim[iiter],
+                    PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
+        }
+        else if (op_itflags[iiter]&NPY_OP_ITFLAG_COPY) {
             PyObject *temp;
 
             /* Allocate the temporary array, if possible */
-            temp = npyiter_new_temp_array(iter, op[iiter], op_dtype[iiter],
-                                          op_axes ? op_axes[iiter] : NULL);
+            temp = npyiter_new_temp_array(iter, PyArray_NDIM(op[iiter]),
+                                        PyArray_DIMS(op[iiter]),
+                                        op_dtype[iiter],
+                                        op_axes ? op_axes[iiter] : NULL);
             if (temp == NULL) {
                 NpyIter_Deallocate(iter);
                 return NULL;
@@ -1257,15 +1296,6 @@ npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
     }
 }
 
-npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter)
-{
-    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
-    npy_intp ndim = NIT_NDIM(iter);
-    npy_intp niter = NIT_NITER(iter);
-    
-    return NIT_ITEMSIZES(iter);
-}
-
 npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
@@ -1449,20 +1479,20 @@ npyiter_can_cast(npy_uint32 op_flags, PyArray_Descr *from, PyArray_Descr *to)
     else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
         /* If the types are extended, convert to NBO and compare */
         if (PyTypeNum_ISEXTENDED(from->type_num)) {
-            PyArray_Descr *fromnbo, *tonbo;
+            PyArray_Descr *nbo_from, *nbo_to;
             int ret;
 
-            fromnbo = PyArray_DescrNewByteorder(from, NPY_NATIVE);
-            tonbo = PyArray_DescrNewByteorder(to, NPY_NATIVE);
-            if (fromnbo == NULL || tonbo == NULL) {
-                Py_XDECREF(fromnbo);
-                Py_XDECREF(tonbo);
+            nbo_from = PyArray_DescrNewByteorder(from, NPY_NATIVE);
+            nbo_to = PyArray_DescrNewByteorder(to, NPY_NATIVE);
+            if (nbo_from == NULL || nbo_to == NULL) {
+                Py_XDECREF(nbo_from);
+                Py_XDECREF(nbo_to);
                 PyErr_Clear();
                 return 0;
             }
-            ret = PyArray_EquivTypes(fromnbo, tonbo);
-            Py_DECREF(fromnbo);
-            Py_DECREF(tonbo);
+            ret = PyArray_EquivTypes(nbo_from, nbo_to);
+            Py_DECREF(nbo_from);
+            Py_DECREF(nbo_to);
             return ret;
         }
         return 1;
@@ -1501,6 +1531,13 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
 {
     /* NULL operands may be automatically allocated outputs */
     if (*op == NULL) {
+        /* ALLOCATE_IF_NULL should be enabled */
+        if (!(op_flags&NPY_ITER_ALLOCATE_IF_NULL)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator input was NULL, but automatic allocation as an "
+                    "output wasn't requested");
+            return 0;
+        }
         /* Reading should be disabled */
         if ((*op_itflags)&NPY_OP_ITFLAG_READ) {
             PyErr_SetString(PyExc_ValueError,
@@ -1508,7 +1545,14 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                     "operand, but wasn't flagged as write only");
             return 0;
         }
-        *op_dtype = NULL;
+        *op_dtype = op_request_dtype;
+        if (*op_dtype == NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Automatic allocation was requested for an iterator "
+                    "operand, but no data type descr was provided");
+            return 0;
+        }
+        Py_INCREF(*op_dtype);
         *op_type = NPY_ITER_OP_NULL;
         *op_ndim = 0;
         /* No copying/buffering of NULL operands */
@@ -1787,7 +1831,14 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
             return 0;
         }
         for (idim = 0; idim < ondim; ++idim) {
-            npy_intp shape = PyArray_DIM(op[0], ondim-idim-1);
+            npy_intp shape;
+
+            if (op[0] != NULL) {
+                shape = PyArray_DIM(op[0], ondim-idim-1);
+            }
+            else {
+                shape = 1;
+            }
 
             NAD_SHAPE(axisdata) = shape;
             NAD_COORD(axisdata) = 0;
@@ -1826,7 +1877,14 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
                 NAD_PTRS(axisdata)[0] = odataptr;
             }
             else if (i < ondim) {
-                npy_intp shape = PyArray_DIM(op[0], i);
+                npy_intp shape;
+                
+                if (op[0] != NULL) {
+                    shape = PyArray_DIM(op[0], i);
+                }
+                else {
+                    shape = 1;
+                }
 
                 NAD_SHAPE(axisdata) = shape;
                 NAD_COORD(axisdata) = 0;
@@ -1867,7 +1925,14 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
                 return 0;
             }
             for (idim = 0; idim < ondim; ++idim) {
-                npy_intp shape = PyArray_DIM(op[iiter], ondim-idim-1);
+                npy_intp shape;
+                
+                if (op[iiter] != NULL) {
+                    shape = PyArray_DIM(op[iiter], ondim-idim-1);
+                }
+                else {
+                    shape = 1;
+                }
 
                 if (shape == 1) {
                     NAD_STRIDES(axisdata)[iiter] = 0;
@@ -1910,7 +1975,14 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyObject **op,
                     NAD_PTRS(axisdata)[iiter] = odataptr;
                 }
                 else if (i < ondim) {
-                    npy_intp shape = PyArray_DIM(op[iiter], i);
+                    npy_intp shape;
+                    
+                    if (op[iiter] != NULL) {
+                        shape = PyArray_DIM(op[iiter], i);
+                    }
+                    else {
+                        shape = 1;
+                    }
 
                     if (shape == 1) {
                         NAD_STRIDES(axisdata)[iiter] = 0;
@@ -2506,27 +2578,28 @@ npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim)
  * in the iteration.  Its dtype will be op_dtype.
  *
  * The result array has a memory ordering which matches the iterator,
- * which may or may not match that of op.
+ * which may or may not match that of op.  The parameter 'shape' may be
+ * NULL, in which case it is filled in from the iterator's shape.
  *
  * This function must be called before any axes are coalesced.
  */
 static PyObject *
-npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
+npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
-    npy_intp *perm = NIT_PERM(iter), op_ndim;
-    npy_intp strides[NPY_MAXDIMS], stride = op_dtype->elsize;
+    npy_intp *perm = NIT_PERM(iter);
+    npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS],
+             stride = op_dtype->elsize;
     char reversestride[NPY_MAXDIMS], anyreverse = 0;
     char *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
 
     PyObject *ret;
 
-    op_ndim = PyArray_NDIM(op);
     /* Initially no strides have been set */
     for (idim = 0; idim < op_ndim; ++idim) {
         strides[idim] = 0;
@@ -2560,6 +2633,9 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
                 reversestride[i] = 1;
                 anyreverse = 1;
             }
+            if (shape == NULL) {
+                new_shape[i] = NAD_SHAPE(axisdata);
+            }
         }
     }
 
@@ -2569,18 +2645,31 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
      */
     for (idim = 0; idim < op_ndim; ++idim) {
         if (strides[idim] == 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "Iterator input requiring a temporary copy "
-                    "had custom axes specified which don't cover "
-                    "all the input axes");
+            if (shape) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Iterator input requiring a temporary copy "
+                        "had custom axes specified which don't cover "
+                        "all the input axes");
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError,
+                        "Iterator automatically allocated output "
+                        "had custom axes specified which don't cover "
+                        "all the input axes");
+            }
             return NULL;
         }
+    }
+
+    /* If shape was NULL, set it to the shape we calculated */
+    if (shape == NULL) {
+        shape = new_shape;
     }
 
     /* Allocate the temporary array */
     Py_INCREF(op_dtype);
     ret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
-                               PyArray_DIMS(op), strides, NULL, 0, NULL);
+                               shape, strides, NULL, 0, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -2592,13 +2681,13 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
 
         for (idim = 0; idim < op_ndim; ++idim) {
             if (reversestride[idim]) {
-                dataptr += strides[idim]*(PyArray_DIM(op,idim)-1);
+                dataptr += strides[idim]*(shape[idim]-1);
                 strides[idim] = -strides[idim];
             }
         }
         Py_INCREF(op_dtype);
         newret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
-                              PyArray_DIMS(op), strides, dataptr,
+                              shape, strides, dataptr,
                               NPY_WRITEABLE, NULL);
         if (newret == NULL) {
             Py_DECREF(ret);
@@ -2663,13 +2752,11 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
     printf("\n");
     printf("DTypes: ");
     for (iiter = 0; iiter < niter; ++iiter) {
-        PyObject_Print((PyObject*)NIT_DTYPES(iter)[iiter], stdout, 0);
+        if (NIT_DTYPES(iter)[iiter] != NULL)
+            PyObject_Print((PyObject*)NIT_DTYPES(iter)[iiter], stdout, 0);
+        else
+            printf("(nil) ");
         printf(" "); 
-    }
-    printf("\n");
-    printf("ItemSizes: ");
-    for (iiter = 0; iiter < niter; ++iiter) {
-        printf("%d ", (int)NIT_ITEMSIZES(iter)[iiter]);
     }
     printf("\n");
     printf("InitDataPtrs: ");

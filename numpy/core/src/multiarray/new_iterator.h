@@ -63,8 +63,6 @@ PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter);
 PyObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter);
 /* Get a pointer to the index, if it is being tracked */
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
-/* Get the array of item sizes (1 per object being iterated) */
-npy_intp *NpyIter_GetItemSizeArray(PyArray_NpyIter *iter);
 
 /* Get the array of strides for the inner loop */
 npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);
@@ -95,6 +93,7 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(PyArray_NpyIter *iter);
 #define NPY_ITER_ALLOW_SAME_KIND_CASTS      0x00800000
 #define NPY_ITER_ALLOW_UNSAFE_CASTS         0x01000000
 #define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x02000000
+#define NPY_ITER_ALLOCATE_IF_NULL           0x04000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
