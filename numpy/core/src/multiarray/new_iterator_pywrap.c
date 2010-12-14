@@ -244,9 +244,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             PyObject *dtype = PySequence_GetItem(op_dtypes_in, iiter);
             /* Make sure the entry is an array descr */
             if (PyObject_TypeCheck(dtype, &PyArrayDescr_Type)) {
-                op_request_dtypes[iiter] = dtype;
+                op_request_dtypes[iiter] = (PyArray_Descr *)dtype;
             }
-            else if (op_request_dtypes[iiter] == Py_None) {
+            else if (dtype == Py_None) {
                 Py_DECREF(dtype);
                 op_request_dtypes[iiter] = NULL;
             }
@@ -458,6 +458,34 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
                         PyArray_Scalar(dataptrs[iiter], dtypes[iiter], NULL));
             }
         }
+    }
+
+    return ret;
+}
+
+static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
+{
+    PyObject *ret;
+
+    npy_intp iiter, niter;
+    PyObject **objects;
+
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return NULL;
+    }
+
+    niter = NpyIter_GetNIter(self->iter);
+    objects = NpyIter_GetObjectArray(self->iter);
+
+    ret = PyTuple_New(niter);
+    if (ret == NULL) {
+        return NULL;
+    }
+    for (iiter = 0; iiter < niter; ++iiter) {
+        Py_INCREF(objects[iiter]);
+        PyTuple_SET_ITEM(ret, iiter, objects[iiter]);
     }
 
     return ret;
@@ -756,6 +784,9 @@ static PyMemberDef npyiter_members[] = {
 static PyGetSetDef npyiter_getsets[] = {
     {"value",
         (getter)npyiter_value_get,
+        NULL, NULL, NULL},
+    {"operands",
+        (getter)npyiter_operands_get,
         NULL, NULL, NULL},
     {"shape",
         (getter)npyiter_shape_get,

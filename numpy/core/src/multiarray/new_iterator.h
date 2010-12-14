@@ -59,6 +59,8 @@ int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape);
 char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter);
 /* Get the array of data type pointers (1 per object being iterated) */
 PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter);
+/* Get the array of objects being iterated */
+PyObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter);
 /* Get a pointer to the index, if it is being tracked */
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
 /* Get the array of item sizes (1 per object being iterated) */
