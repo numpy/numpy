@@ -50,7 +50,7 @@
 /* The operand needs casting */
 #define NPY_OP_ITFLAG_CAST         0x020
 /* The operand needs a byte swap and/or alignment operation */
-#define NPY_OP_ITFLAG_NBO_ALIGN    0x040
+#define NPY_OP_ITFLAG_COPYSWAP    0x040
 
 /* Internal flag, for the type of operands */
 #define NPY_ITER_OP_ARRAY         0
@@ -193,6 +193,7 @@ static void
 npyiter_coalesce_axes(PyArray_NpyIter *iter);
 static void
 npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim);
+
 static PyObject *
 npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
                 PyArray_Descr *op_dtype, npy_intp *op_axes);
@@ -528,6 +529,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                 NpyIter_Deallocate(iter);
                 return NULL;
             }
+
             /* If the data will be read, copy it into temp */
             if (op_itflags[iiter]&NPY_OP_ITFLAG_READ) {
                 if (PyArray_CopyInto((PyArrayObject *)temp,
@@ -1434,14 +1436,35 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 
 /*
  * Returns 1 if the from -> to cast can be done, based on the casting
- * flags provided in op_flags, and 0 otherwise.  This should
- * only be called if PyArray_EquivTypes already returned false.
+ * flags provided in op_flags, and 0 otherwise.
  */
 static int
 npyiter_can_cast(npy_uint32 op_flags, PyArray_Descr *from, PyArray_Descr *to)
 {
     /* If unsafe casts are allowed */
     if (op_flags&NPY_ITER_ALLOW_UNSAFE_CASTS) {
+        return 1;
+    }
+    /* Equivalent types can be cast even with no casting flags */
+    else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
+        /* If the types are extended, convert to NBO and compare */
+        if (PyTypeNum_ISEXTENDED(from->type_num)) {
+            PyArray_Descr *fromnbo, *tonbo;
+            int ret;
+
+            fromnbo = PyArray_DescrNewByteorder(from, NPY_NATIVE);
+            tonbo = PyArray_DescrNewByteorder(to, NPY_NATIVE);
+            if (fromnbo == NULL || tonbo == NULL) {
+                Py_XDECREF(fromnbo);
+                Py_XDECREF(tonbo);
+                PyErr_Clear();
+                return 0;
+            }
+            ret = PyArray_EquivTypes(fromnbo, tonbo);
+            Py_DECREF(fromnbo);
+            Py_DECREF(tonbo);
+            return ret;
+        }
         return 1;
     }
     /* If safe or same-kind casts are allowed */
@@ -1554,21 +1577,10 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                 return 0;
             }
         }
-        /* If a particular dtype was requested handle allowed casting */
+        /* If a particular dtype was requested, handle allowed casting */
         if (op_request_dtype != NULL) {
             /* If the types aren't equivalent, a cast is necessary */
             if (!PyArray_EquivTypes(op_request_dtype, *op_dtype)) {
-                /* Copying or buffering must be enabled for casting */
-                if (!((*op_itflags)&
-                            (NPY_OP_ITFLAG_COPY|NPY_OP_ITFLAG_BUFFER))) {
-                    PyErr_SetString(PyExc_TypeError,
-                            "Iterator input dtype did not match "
-                            "the requested dtype, but no copying or "
-                            "buffering was enabled");
-                    Py_DECREF(*op);
-                    Py_DECREF(*op_dtype);
-                    return 0;
-                }
                 /* Check read (op -> temp) casting */
                 if (((*op_itflags)&NPY_OP_ITFLAG_READ) &&
                             !npyiter_can_cast(op_flags,
@@ -1603,11 +1615,42 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             Py_INCREF(*op_dtype);
         }
 
+        /* Check if the operand is aligned and in the byte order requested */
+        if (op_flags&NPY_ITER_NBO_ALIGNED) {
+            /* Check byte order */
+            if (!PyArray_ISNBO((*op_dtype)->byteorder)) {
+                PyArray_Descr *nbo_dtype;
+                
+                /* Replace with a new descr which is in native byte order */
+                nbo_dtype = PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE);
+                Py_DECREF(*op_dtype);
+                *op_dtype = nbo_dtype;
+
+                /* Indicate that byte order or alignment needs fixing */
+                *op_itflags |= NPY_OP_ITFLAG_COPYSWAP;
+            }
+            /* Check alignment */
+            if (!PyArray_ISALIGNED(*op)) {
+                *op_itflags |= NPY_OP_ITFLAG_COPYSWAP;
+            }
+        }
+
+        /* Copying or buffering must be enabled for casting/conversion */
+        if (((*op_itflags)&(NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_COPYSWAP)) &&
+                !((*op_itflags)&(NPY_OP_ITFLAG_COPY|NPY_OP_ITFLAG_BUFFER))) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Iterator input required copying or buffering, "
+                    "but neither copying nor buffering was enabled");
+            Py_DECREF(*op);
+            Py_DECREF(*op_dtype);
+            return 0;
+        }
+
         /*
          * If copying was permitted, but no cast or alignment is needed,
          * clear the copy and buffer flags.
          */
-        if (!((*op_itflags)&(NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_NBO_ALIGN))) {
+        if (!((*op_itflags)&(NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_COPYSWAP))) {
             *op_itflags &= ~(NPY_OP_ITFLAG_COPY|
                              NPY_OP_ITFLAG_UPDATEIFCOPY|
                              NPY_OP_ITFLAG_BUFFER);
@@ -2524,19 +2567,18 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
      * If custom axes were specified, some dimensions may not have been used.
      * Throw an error in this case.
      */
-    if (op_axes != NULL) {
-        for (idim = 0; idim < op_ndim; ++idim) {
-            if (strides[idim] == 0) {
-                PyErr_SetString(PyExc_RuntimeError,
-                        "Iterator input requiring a temporary copy "
-                        "had custom axes specified which don't cover "
-                        "all the input axes");
-                return NULL;
-            }
+    for (idim = 0; idim < op_ndim; ++idim) {
+        if (strides[idim] == 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Iterator input requiring a temporary copy "
+                    "had custom axes specified which don't cover "
+                    "all the input axes");
+            return NULL;
         }
     }
 
     /* Allocate the temporary array */
+    Py_INCREF(op_dtype);
     ret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
                                PyArray_DIMS(op), strides, NULL, 0, NULL);
     if (ret == NULL) {
@@ -2554,9 +2596,10 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
                 strides[idim] = -strides[idim];
             }
         }
+        Py_INCREF(op_dtype);
         newret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
                               PyArray_DIMS(op), strides, dataptr,
-                              NPY_WRITEABLE|NPY_ALIGNED, NULL);
+                              NPY_WRITEABLE, NULL);
         if (newret == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -2564,6 +2607,9 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
         ((PyArrayObject *)newret)->base = ret;
         ret = newret;
     }
+
+    /* Make sure all the flags are good */
+    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
 
     return ret;
 }
@@ -2655,8 +2701,8 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
             printf("UPDATEIFCOPY ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_CAST)
             printf("CAST ");
-        if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_NBO_ALIGN)
-            printf("NBO_ALIGN ");
+        if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_COPYSWAP)
+            printf("COPYSWAP ");
     }
     printf("\n");
     printf("\n");

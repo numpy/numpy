@@ -589,6 +589,51 @@ def test_iter_flags_errors():
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
 
+def test_iter_nbo_align():
+    # Check that byte order and alignment changes work
+
+    # Byte order change by requesting a specific dtype
+    a = np.arange(6, dtype='f4')
+    au = a.byteswap().newbyteorder()
+    assert_(a.dtype.byteorder != au.dtype.byteorder)
+    i = newiter(au, [], [['readwrite','allow_updateifcopy']],
+                                            op_dtypes=[np.dtype('f4')])
+    assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
+    assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
+    assert_equal(i.operands[0], a)
+    i.operands[0][:] = 2
+    i = None
+    assert_equal(au, [2]*6)
+
+    # Byte order change by requesting NBO_ALIGNED
+    a = np.arange(6, dtype='f4')
+    au = a.byteswap().newbyteorder()
+    assert_(a.dtype.byteorder != au.dtype.byteorder)
+    i = newiter(au, [], [['readwrite','allow_updateifcopy','nbo_aligned']])
+    assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
+    assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
+    assert_equal(i.operands[0], a)
+    i.operands[0][:] = 2
+    i = None
+    assert_equal(au, [2]*6)
+
+    # Unaligned input
+    a = np.zeros((6*4+1,), dtype='i1')[1:]
+    a.dtype = 'f4'
+    a[:] = np.arange(6, dtype='f4')
+    assert_(not a.flags.aligned)
+    # Without 'nbo_aligned', shouldn't copy
+    i = newiter(a, [], [['readonly']])
+    assert_(not i.operands[0].flags.aligned)
+    assert_equal(i.operands[0], a);
+    # With 'nbo_aligned', should make a copy
+    i = newiter(a, [], [['readwrite','allow_updateifcopy','nbo_aligned']])
+    assert_(i.operands[0].flags.aligned)
+    assert_equal(i.operands[0], a);
+    i.operands[0][:] = 3
+    i = None
+    assert_equal(a, [3]*6)
+
 def test_iter_array_cast():
     # Check that arrays are cast as requested
 
@@ -637,7 +682,6 @@ def test_iter_array_cast():
     i.operands[0][:] = 1
     i = None
     assert_equal(a, [1,1,1])
-
 
 def test_iter_array_cast_errors():
     # Check that invalid casts are caught
