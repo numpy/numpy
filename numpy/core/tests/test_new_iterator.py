@@ -589,6 +589,56 @@ def test_iter_flags_errors():
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
 
+def test_iter_array_cast():
+    # Check that arrays are cast as requested
+
+    # No cast 'f4' -> 'f4'
+    a = np.arange(6, dtype='f4').reshape(2,3)
+    i = newiter(a, [], [['readwrite']], op_dtypes=[np.dtype('f4')])
+    assert_equal(i.operands[0], a)
+    assert_equal(i.operands[0].dtype, np.dtype('f4'))
+
+    # Safe case 'f4' -> 'f8'
+    a = np.arange(24, dtype='f4').reshape(2,3,4).swapaxes(1,2)
+    i = newiter(a, [], [['readonly','allow_copy','allow_safe_casts']],
+            op_dtypes=[np.dtype('f8')])
+    assert_equal(i.operands[0], a)
+    assert_equal(i.operands[0].dtype, np.dtype('f8'))
+    # The memory layout of the temporary should match a (a is (48,4,16))
+    assert_equal(i.operands[0].strides, (96,8,32))
+    a = a[::-1,:,::-1]
+    i = newiter(a, [], [['readonly','allow_copy','allow_safe_casts']],
+            op_dtypes=[np.dtype('f8')])
+    assert_equal(i.operands[0], a)
+    assert_equal(i.operands[0].dtype, np.dtype('f8'))
+    assert_equal(i.operands[0].strides, (-96,8,-32))
+
+    # Same-kind cast 'f8' -> 'f4' -> 'f8'
+    a = np.arange(24, dtype='f8').reshape(2,3,4).T
+    i = newiter(a, [],
+            [['readwrite','allow_updateifcopy','allow_same_kind_casts']],
+            op_dtypes=[np.dtype('f4')])
+    assert_equal(i.operands[0], a)
+    assert_equal(i.operands[0].dtype, np.dtype('f4'))
+    assert_equal(i.operands[0].strides, (4, 16, 48))
+    # Check that UPDATEIFCOPY is activated
+    i.operands[0][2,1,1] = -12.5
+    assert_(a[2,1,1] != -12.5)
+    i = None
+    assert_equal(a[2,1,1], -12.5)
+
+    # Unsafe cast 'f4' -> 'i4'
+    a = np.arange(6, dtype='i4')[::-2]
+    i = newiter(a, [],
+            [['writeonly','allow_updateifcopy','allow_unsafe_casts']],
+            op_dtypes=[np.dtype('f4')])
+    assert_equal(i.operands[0].dtype, np.dtype('f4'))
+    assert_equal(i.operands[0].strides, (-4,))
+    i.operands[0][:] = 1
+    i = None
+    assert_equal(a, [1,1,1])
+
+
 def test_iter_array_cast_errors():
     # Check that invalid casts are caught
 

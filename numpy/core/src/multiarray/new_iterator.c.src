@@ -545,11 +545,9 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                 Py_INCREF(op[iiter]);
             }
 
-            printf("before %p\n", op[iiter]);
             Py_DECREF(op[iiter]);
             op[iiter] = temp;
             NIT_OBJECTS(iter)[iiter] = temp;
-            printf("after %p\n", op[iiter]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -2541,6 +2539,9 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
     /* Allocate the temporary array */
     ret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
                                PyArray_DIMS(op), strides, NULL, 0, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
     
     /* If there are any reversed axes, create a view that reverses them */
     if (anyreverse) {
@@ -2554,7 +2555,12 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyObject *op,
             }
         }
         newret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
-                              PyArray_DIMS(op), strides, dataptr, 0, NULL);
+                              PyArray_DIMS(op), strides, dataptr,
+                              NPY_WRITEABLE|NPY_ALIGNED, NULL);
+        if (newret == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
         ((PyArrayObject *)newret)->base = ret;
         ret = newret;
     }
