@@ -874,7 +874,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 #else
     npy_intp idim, ndim = NIT_NDIM(iter);
 #endif
-#if @const_ndim@ < 100
+#if @const_niter@ < 100
     const npy_intp niter = @const_niter@;
 #else
     npy_intp niter = NIT_NITER(iter);
@@ -1187,6 +1187,11 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 
 }
 
+int NpyIter_HasInnerLoop(PyArray_NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NOINNER) == 0;
+}
+
 int NpyIter_HasCoords(PyArray_NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASCOORDS) != 0;
@@ -1295,6 +1300,33 @@ npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
         return NULL;
     }
 }
+
+void NpyIter_GetReadFlags(PyArray_NpyIter *iter, char *outreadflags)
+{
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp iiter, niter = NIT_NITER(iter);
+
+    char *op_itflags = NIT_OPITFLAGS(iter);
+
+    for (iiter = 0; iiter < niter; ++iiter) {
+        outreadflags[iiter] = (op_itflags[iiter]&NPY_OP_ITFLAG_READ) != 0;
+    }
+}
+
+void NpyIter_GetWriteFlags(PyArray_NpyIter *iter, char *outwriteflags)
+{
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp iiter, niter = NIT_NITER(iter);
+
+    char *op_itflags = NIT_OPITFLAGS(iter);
+
+    for (iiter = 0; iiter < niter; ++iiter) {
+        outwriteflags[iiter] = (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) != 0;
+    }
+}
+
 
 npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter)
 {
@@ -2790,6 +2822,7 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
             printf("CAST ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_COPYSWAP)
             printf("COPYSWAP ");
+        printf("\n");
     }
     printf("\n");
     printf("\n");

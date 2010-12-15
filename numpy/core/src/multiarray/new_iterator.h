@@ -35,6 +35,8 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords);
 /* Sets the iterator to point at the given index */
 int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index);
 
+/* Whether the iterator handles the inner loop */
+int NpyIter_HasInnerLoop(PyArray_NpyIter *iter);
 /* Whether the iterator is tracking coordinates */
 int NpyIter_HasCoords(PyArray_NpyIter *iter);
 /* Whether the iterator is tracking an index */
@@ -63,6 +65,10 @@ PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter);
 PyObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter);
 /* Get a pointer to the index, if it is being tracked */
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
+/* Gets an array of read flags (1 per object being iterated) */
+void NpyIter_GetReadFlags(PyArray_NpyIter *iter, char *outreadflags);
+/* Gets an array of write flags (1 per object being iterated) */
+void NpyIter_GetWriteFlags(PyArray_NpyIter *iter, char *outwriteflags);
 
 /* Get the array of strides for the inner loop */
 npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter);

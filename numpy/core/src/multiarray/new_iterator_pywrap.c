@@ -18,7 +18,10 @@ struct NewNpyArrayIterObject_tag {
     PyArray_NpyIter *iter;
     NpyIter_IterNext_Fn iternext;
     NpyIter_GetCoords_Fn getcoords;
+    npy_intp *innerstrides, *innerloopsizeptr;
     char finished;
+    char readflags[NPY_MAXARGS];
+    char writeflags[NPY_MAXARGS];
 };
 
 static PyObject *
@@ -366,6 +369,19 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->getcoords = NULL;
     }
 
+    if (NpyIter_HasInnerLoop(self->iter)) {
+        self->innerstrides = NULL;
+        self->innerloopsizeptr = NULL;
+    }
+    else {
+        self->innerstrides = NpyIter_GetInnerStrideArray(self->iter);
+        self->innerloopsizeptr = NpyIter_GetInnerLoopSizePtr(self->iter);
+    }
+
+    /* Get the read/write settings */
+    NpyIter_GetReadFlags(self->iter, self->readflags);
+    NpyIter_GetWriteFlags(self->iter, self->writeflags);
+
     return 0;
 
 fail:
@@ -453,7 +469,25 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     } else {
         /* Return a scalar or tuple of scalars with the values */
         if (niter == 1) {
-            ret = PyArray_Scalar(dataptrs[0], dtypes[0], NULL);
+            if (self->readflags[0]) {
+                if (NpyIter_HasInnerLoop(self->iter)) {
+                    ret = PyArray_Scalar(dataptrs[0], dtypes[0], NULL);
+                }
+                else {
+                    Py_INCREF(dtypes[0]);
+                    ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtypes[0], 1,
+                                               self->innerloopsizeptr,
+                                               &self->innerstrides[0], dataptrs[0],
+                                               self->writeflags[0] ? NPY_WRITEABLE : 0, NULL);
+                    ((PyArrayObject *)ret)->base = (PyObject *)self;
+                    Py_INCREF(self);
+                    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
+                }
+            }
+            else {
+                Py_INCREF(Py_None);
+                ret = Py_None;
+            }
         }
         else {
             ret = PyTuple_New(niter);
@@ -461,8 +495,29 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
                 return NULL;
             }
             for (iiter = 0; iiter < niter; ++iiter) {
-                PyTuple_SET_ITEM(ret, iiter,
-                        PyArray_Scalar(dataptrs[iiter], dtypes[iiter], NULL));
+                if (self->readflags[iiter]) {
+                    PyObject *item;
+
+                    if (NpyIter_HasInnerLoop(self->iter)) {
+                        item = PyArray_Scalar(dataptrs[iiter], dtypes[iiter], NULL);
+                    }
+                    else {
+                        Py_INCREF(dtypes[iiter]);
+                        item = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtypes[iiter], 1,
+                                                   self->innerloopsizeptr,
+                                                   &self->innerstrides[iiter], dataptrs[iiter],
+                                                   self->writeflags[iiter] ? NPY_WRITEABLE : 0, NULL);
+                        ((PyArrayObject *)item)->base = (PyObject *)self;
+                        Py_INCREF(self);
+                        PyArray_UpdateFlags((PyArrayObject *)item, NPY_UPDATE_ALL);
+                    }
+                    PyTuple_SET_ITEM(ret, iiter, item);
+                        
+                }
+                else {
+                    Py_INCREF(Py_None);
+                    PyTuple_SET_ITEM(ret, iiter, Py_None);
+                }
             }
         }
     }
@@ -477,9 +532,9 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
     npy_intp iiter, niter;
     PyObject **objects;
 
-    if (self->iter == NULL || self->finished) {
+    if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator is past the end");
+                "Iterator was not constructed correctly");
         return NULL;
     }
 
@@ -777,6 +832,132 @@ static PyObject *npyiter_finished_get(NewNpyArrayIterObject *self)
     }
 }
 
+NPY_NO_EXPORT Py_ssize_t
+npyiter_seq_length(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        return 0;
+    }
+    else {
+        return NpyIter_GetNIter(self->iter);
+    }
+}
+
+NPY_NO_EXPORT PyObject *
+npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
+{
+    PyObject *ret;
+
+    npy_intp niter;
+    char *dataptr;
+    PyArray_Descr *dtype;
+
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return NULL;
+    }
+    niter = NpyIter_GetNIter(self->iter);
+    /* Python negative indexing */
+    if (i < 0) {
+        i += niter;
+    }
+    if (i < 0 || i >= niter) {
+        PyErr_Format(PyExc_IndexError,
+                "Iterator operand index %d is out of bounds", (int)i);
+        return NULL;
+    }
+    if (!self->readflags[i]) {
+        PyErr_Format(PyExc_RuntimeError,
+                "Iterator operand %d is write-only", (int)i);
+        return NULL;
+    }
+
+    dataptr = NpyIter_GetDataPtrArray(self->iter)[i];
+    dtype = NpyIter_GetDescrArray(self->iter)[i];
+
+    if (NpyIter_HasInnerLoop(self->iter)) {
+        ret = PyArray_Scalar(dataptr, dtype, NULL);
+    }
+    else {
+        Py_INCREF(dtype);
+        ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, self->innerloopsizeptr,
+                                   &self->innerstrides[i], dataptr,
+                                   self->writeflags[i] ? NPY_WRITEABLE : 0, NULL);
+        ((PyArrayObject *)ret)->base = (PyObject *)self;
+        Py_INCREF(self);
+        PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
+    }
+    return ret;
+}
+
+NPY_NO_EXPORT int
+npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
+{
+
+    npy_intp niter;
+    char *dataptr;
+    PyArray_Descr *dtype;
+    PyObject *object;
+
+    if (v == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "can't delete iterator operands");
+        return -1;
+    }
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return -1;
+    }
+    niter = NpyIter_GetNIter(self->iter);
+    /* Python negative indexing */
+    if (i < 0) {
+        i += niter;
+    }
+    if (i < 0 || i >= niter) {
+        PyErr_Format(PyExc_IndexError,
+                "Iterator operand index  %d is out of bounds", (int)i);
+        return -1;
+    }
+    if (!self->writeflags[i]) {
+        PyErr_Format(PyExc_RuntimeError,
+                "Iterator operand %d is not writeable", (int)i);
+        return -1;
+    }
+
+    dataptr = NpyIter_GetDataPtrArray(self->iter)[i];
+    dtype = NpyIter_GetDescrArray(self->iter)[i];
+    object = NpyIter_GetObjectArray(self->iter)[i];
+
+    /*
+     * TODO: When buffering is enabled for an operand, the object won't
+     *       correspond to the data, so that will have to be accounted for
+     */
+    if (NpyIter_HasInnerLoop(self->iter)) {
+        if (PyArray_Check(object)) {
+            return dtype->f->setitem(v, dataptr, (PyArrayObject*)object);
+        }
+        else {
+            return dtype->f->setitem(v, dataptr, NULL);
+        }
+    } else {
+        PyArrayObject *tmp;
+        int ret;
+        Py_INCREF(dtype);
+        tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, self->innerloopsizeptr,
+                                   &self->innerstrides[i], dataptr,
+                                   NPY_WRITEABLE, NULL);
+        if (tmp == NULL) {
+            return -1;
+        }
+        PyArray_UpdateFlags(tmp, NPY_UPDATE_ALL);
+        ret = PyArray_CopyObject(tmp, v);
+        Py_DECREF(tmp);
+        return ret;
+    }
+}
+
 static PyMethodDef npyiter_methods[] = {
     {"reset", (PyCFunction)npyiter_reset, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
@@ -831,6 +1012,32 @@ static PyGetSetDef npyiter_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
+NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
+#if PY_VERSION_HEX >= 0x02050000
+    (lenfunc)npyiter_seq_length,            /*sq_length*/
+    (binaryfunc)NULL,                       /*sq_concat*/
+    (ssizeargfunc)NULL,                     /*sq_repeat*/
+    (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
+    (ssizessizeargfunc)NULL,                /*sq_slice*/
+    (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
+    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
+    (objobjproc)NULL,                       /*sq_contains */
+    (binaryfunc)NULL,                       /*sq_inplace_concat */
+    (ssizeargfunc)NULL,                     /*sq_inplace_repeat */
+#else
+    (inquiry)npyiter_seq_length,            /*sq_length*/
+    (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
+    (intargfunc)NULL,                       /*sq_repeat is handled nb_multiply*/
+    (intargfunc)npyiter_seq_item,           /*sq_item*/
+    (intintargfunc)NULL,                    /*sq_slice*/
+    (intobjargproc)npyiter_seq_ass_item,    /*sq_ass_item*/
+    (intintobjargproc)NULL,                 /*sq_ass_slice*/
+    (objobjproc)NULL,                       /*sq_contains */
+    (binaryfunc)NULL,                       /*sg_inplace_concat */
+    (intargfunc)NULL                        /*sg_inplace_repeat */
+#endif
+};
+
 NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
 #if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -853,7 +1060,7 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
 #endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
+    &npyiter_as_sequence,                       /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
     0,                                          /* tp_hash */
     0,                                          /* tp_call */
