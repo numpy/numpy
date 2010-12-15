@@ -832,7 +832,7 @@ def test_iter_allocate_output():
 
     # Simple case
     a = arange(6)
-    i = newiter([a,None], [], [['readonly'],['writeonly','allocate_if_null']],
+    i = newiter([a,None], [], [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')])
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
@@ -840,14 +840,14 @@ def test_iter_allocate_output():
     # The allocated output should match the iteration order
     # C-order input, best iteration order
     a = arange(6, dtype='i4').reshape(2,3)
-    i = newiter([a,None], [], [['readonly'],['writeonly','allocate_if_null']],
+    i = newiter([a,None], [], [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')])
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].strides, a.strides)
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
     # F-order input, best iteration order
     a = arange(24, dtype='i4').reshape(2,3,4).T
-    i = newiter([a,None], [], [['readonly'],['writeonly','allocate_if_null']],
+    i = newiter([a,None], [], [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')])
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].strides, a.strides)
@@ -855,7 +855,7 @@ def test_iter_allocate_output():
     # Non-contiguous input, C iteration order
     a = arange(24, dtype='i4').reshape(2,3,4).swapaxes(0,1)
     i = newiter([a,None], ['force_c_order'],
-                        [['readonly'],['writeonly','allocate_if_null']],
+                        [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')])
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].strides, (32,16,4))
@@ -863,38 +863,72 @@ def test_iter_allocate_output():
 
     # Specifing op_axes should work
     a = arange(24, dtype='i4').reshape(2,3,4)
-    i = newiter([None,a], [], [['writeonly','allocate_if_null'],['readonly']],
+    i = newiter([None,a], [], [['writeonly','allocate'],['readonly']],
                         op_dtypes=[np.dtype('u4'),None],
                         op_axes=[[1,2,0],None]);
     assert_equal(i.operands[0].shape, (4,2,3))
     assert_equal(i.operands[0].strides, (4,48,16))
     assert_equal(i.operands[0].dtype, np.dtype('u4'))
 
+    # Check type promotion of automatic outputs
+    i = newiter([array([3],dtype='f4'),array([0],dtype='f8'),None], [],
+                    [['readonly']]*2+[['writeonly','allocate']])
+    assert_equal(i.dtypes[2], np.dtype('f8'));
+    i = newiter([array([3],dtype='i4'),array([0],dtype='f4'),None], [],
+                    [['readonly']]*2+[['writeonly','allocate']])
+    assert_equal(i.dtypes[2], np.dtype('f8'));
+    i = newiter([array([3],dtype='f4'),array(0,dtype='f8'),None], [],
+                    [['readonly']]*2+[['writeonly','allocate']])
+    assert_equal(i.dtypes[2], np.dtype('f4'));
+    i = newiter([array([3],dtype='u4'),array(0,dtype='i4'),None], [],
+                    [['readonly']]*2+[['writeonly','allocate']])
+    assert_equal(i.dtypes[2], np.dtype('u4'));
+    i = newiter([array([3],dtype='u4'),array(-12,dtype='i4'),None], [],
+                    [['readonly']]*2+[['writeonly','allocate']])
+    assert_equal(i.dtypes[2], np.dtype('i8'));
+
+    # When there's just one input, the output type exactly matches
+    a = array([3],dtype='u4').newbyteorder()
+    i = newiter([a,None], [],
+                    [['readonly'],['writeonly','allocate']])
+    assert_equal(i.dtypes[0], i.dtypes[1]);
+    # With two or more inputs, the output type will is native byte order
+    i = newiter([a,a,None], [],
+                    [['readonly'],['readonly'],['writeonly','allocate']])
+    assert_(i.dtypes[0] != i.dtypes[2]);
+    assert_equal(i.dtypes[0].newbyteorder('='), i.dtypes[2])
+
+    # If the inputs are all scalars, the output should be a scalar
+    i = newiter([None,1,2.3,np.float32(12),np.complex128(3)],[],
+                [['writeonly','allocate']] + [['readonly']]*4)
+    assert_equal(i.operands[0].dtype, np.dtype('complex128'))
+    assert_equal(i.operands[0].ndim, 0)
+
 def test_iter_allocate_output_errors():
     # Check that the iterator will throw errors for bad output allocations
 
-    # Need to specify a data type
+    # Need an input if no output data type is specified
     a = arange(6)
-    assert_raises(ValueError, newiter, [a,None], [],
-                        [['readonly'],['writeonly','allocate_if_null']])
+    assert_raises(TypeError, newiter, [a,None], [],
+                        [['writeonly'],['writeonly','allocate']])
     # Must specify at least one input
     assert_raises(ValueError, newiter, [None,None], [],
-                        [['writeonly','allocate_if_null'],
-                         ['writeonly','allocate_if_null']],
+                        [['writeonly','allocate'],
+                         ['writeonly','allocate']],
                         op_dtypes=[np.dtype('f4'),np.dtype('f4')])
     # If using op_axes, must specify all the axes
     a = arange(24, dtype='i4').reshape(2,3,4)
     assert_raises(ValueError, newiter, [a,None], [],
-                        [['readonly'],['writeonly','allocate_if_null']],
+                        [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')],
                         op_axes=[None,[0,np.newaxis,1]])
     # If using op_axes, the axes must be within bounds
     assert_raises(ValueError, newiter, [a,None], [],
-                        [['readonly'],['writeonly','allocate_if_null']],
+                        [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')],
                         op_axes=[None,[0,3,1]])
     # If using op_axes, there can't be duplicates
     assert_raises(ValueError, newiter, [a,None], [],
-                        [['readonly'],['writeonly','allocate_if_null']],
+                        [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')],
                         op_axes=[None,[0,2,1,0]])

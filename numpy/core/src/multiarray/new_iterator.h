@@ -99,7 +99,7 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(PyArray_NpyIter *iter);
 #define NPY_ITER_ALLOW_SAME_KIND_CASTS      0x00800000
 #define NPY_ITER_ALLOW_UNSAFE_CASTS         0x01000000
 #define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x02000000
-#define NPY_ITER_ALLOCATE_IF_NULL           0x04000000
+#define NPY_ITER_ALLOCATE                   0x04000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
