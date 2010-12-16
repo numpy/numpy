@@ -827,7 +827,7 @@ def test_iter_offsets():
     i = newiter([a,b], ['offsets'], [['readonly']]*2)
     assert_equal([x for x in i], [(0,0),(4,4),(8,8),(12,2),(16,6),(20,10)])
 
-def test_iter_allocate_output():
+def test_iter_allocate_output_simple():
     # Check that the iterator will properly allocate outputs
 
     # Simple case
@@ -837,7 +837,9 @@ def test_iter_allocate_output():
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
 
+def test_iter_allocate_output_itorder():
     # The allocated output should match the iteration order
+
     # C-order input, best iteration order
     a = arange(6, dtype='i4').reshape(2,3)
     i = newiter([a,None], [], [['readonly'],['writeonly','allocate']],
@@ -861,7 +863,9 @@ def test_iter_allocate_output():
     assert_equal(i.operands[1].strides, (32,16,4))
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
 
+def test_iter_allocate_output_opaxes():
     # Specifing op_axes should work
+
     a = arange(24, dtype='i4').reshape(2,3,4)
     i = newiter([None,a], [], [['writeonly','allocate'],['readonly']],
                         op_dtypes=[np.dtype('u4'),None],
@@ -870,7 +874,9 @@ def test_iter_allocate_output():
     assert_equal(i.operands[0].strides, (4,48,16))
     assert_equal(i.operands[0].dtype, np.dtype('u4'))
 
+def test_iter_allocate_output_types():
     # Check type promotion of automatic outputs
+
     i = newiter([array([3],dtype='f4'),array([0],dtype='f8'),None], [],
                     [['readonly']]*2+[['writeonly','allocate']])
     assert_equal(i.dtypes[2], np.dtype('f8'));
@@ -903,6 +909,29 @@ def test_iter_allocate_output():
                 [['writeonly','allocate']] + [['readonly']]*4)
     assert_equal(i.operands[0].dtype, np.dtype('complex128'))
     assert_equal(i.operands[0].ndim, 0)
+
+def test_iter_allocate_output_subtype():
+    # Make sure that the subtype with priority wins
+
+    # matrix vs ndarray
+    a = np.matrix([[1,2], [3,4]])
+    b = np.arange(4).reshape(2,2).T
+    i = newiter([a,b,None], [],
+                    [['readonly'],['readonly'],['writeonly','allocate']])
+    assert_equal(type(a), type(i.operands[2]))
+    assert_(type(b) != type(i.operands[2]))
+    assert_equal(i.operands[2].shape, (2,2))
+
+    # matrix always wants things to be 2D
+    b = np.arange(4).reshape(1,2,2)
+    assert_raises(RuntimeError, newiter, [a,b,None], [],
+                    [['readonly'],['readonly'],['writeonly','allocate']])
+    # but if subtypes are disabled, the result can still work
+    i = newiter([a,b,None], [],
+            [['readonly'],['readonly'],['writeonly','allocate','no_subtype']])
+    assert_equal(type(b), type(i.operands[2]))
+    assert_(type(a) != type(i.operands[2]))
+    assert_equal(i.operands[2].shape, (1,2,2))
 
 def test_iter_allocate_output_errors():
     # Check that the iterator will throw errors for bad output allocations

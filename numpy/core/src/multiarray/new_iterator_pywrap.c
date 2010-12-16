@@ -267,8 +267,17 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                         }
                         break;
                     case 'n':
-                        if (strcmp(str, "nbo_aligned") == 0) {
-                            flag = NPY_ITER_NBO_ALIGNED;
+                        switch (str[1]) {
+                            case 'b':
+                                if (strcmp(str, "nbo_aligned") == 0) {
+                                    flag = NPY_ITER_NBO_ALIGNED;
+                                }
+                                break;
+                            case 'o':
+                                if (strcmp(str, "no_subtype") == 0) {
+                                    flag = NPY_ITER_NO_SUBTYPE;
+                                }
+                                break;
                         }
                         break;
                     case 'a':

@@ -49,6 +49,8 @@
 #define NPY_OP_ITFLAG_CAST         0x010
 /* The operand needs a byte swap and/or alignment operation */
 #define NPY_OP_ITFLAG_COPYSWAP     0x020
+/* The operand should not be allocated with a subtype */
+#define NPY_OP_ITFLAG_NOSUBTYPE    0x040
 
 /* Internal flag, for the type of operands */
 #define NPY_ITER_OP_ARRAY         0
@@ -186,7 +188,7 @@ static void
 npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim);
 
 static PyArray_Descr *
-npyiter_get_result_type(npy_intp niter, npy_intp *op_ndim,
+npyiter_get_output_type(npy_intp niter, npy_intp *op_ndim,
                         char *op_itflags, PyArray_Descr **op_dtype,
                         char **op_dataptr);
 static int
@@ -195,7 +197,8 @@ static int
 npyiter_promote_types(int type1, int type2);
 
 static PyObject *
-npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
+npyiter_new_temp_array(PyArray_NpyIter *iter, PyTypeObject *subtype,
+                npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes);
 
 /* The constructor for an iterator over multiple objects */
@@ -228,6 +231,9 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     char axes_dupcheck[NPY_MAXDIMS];
     int any_allocate_if_null = 0, any_missing_dtypes = 0,
             allocate_output_scalars = 0;
+    /* The subtype for automatically allocated outputs */
+    double subtype_priority = NPY_PRIORITY;
+    PyTypeObject *subtype = &PyArray_Type;
 
     if (niter > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -556,27 +562,44 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         itflags = NIT_ITFLAGS(iter);
     }
 
-    /*
-     * If an automatically allocated output didn't have a specified
-     * dtype, we need to figure it out now, before allocating the outputs.
-     */
-    if (any_missing_dtypes) {
-        PyArray_Descr *dtype;
-
-        dtype = npyiter_get_result_type(niter, op_ndim,
-                                        op_itflags, op_dtype, op_dataptr);
-        if (dtype == NULL) {
-            NpyIter_Deallocate(iter);
-            return NULL;
-        }
+    if (any_allocate_if_null) {
+        /*
+         * The __array_priority__ attribute of the inputs determines
+         * the subtype of any output arrays.  Take the subtype
+         * with highest priority.
+         */
         for (iiter = 0; iiter < niter; ++iiter) {
-            if (op_dtype[iiter] == NULL) {
-                Py_INCREF(dtype);
-                op_dtype[iiter] = dtype;
-                NIT_DTYPES(iter)[iiter] = dtype;
+            if (op_itflags[iiter]&NPY_OP_ITFLAG_READ) {
+                double priority = PyArray_GetPriority(op[iiter], 0.0);
+                if (priority > subtype_priority) {
+                    subtype_priority = priority;
+                    subtype = Py_TYPE(op[iiter]);
+                }
             }
         }
-        Py_DECREF(dtype);
+
+        /*
+         * If an automatically allocated output didn't have a specified
+         * dtype, we need to figure it out now, before allocating the outputs.
+         */
+        if (any_missing_dtypes) {
+            PyArray_Descr *dtype;
+
+            dtype = npyiter_get_output_type(niter, op_ndim,
+                                        op_itflags, op_dtype, op_dataptr);
+            if (dtype == NULL) {
+                NpyIter_Deallocate(iter);
+                return NULL;
+            }
+            for (iiter = 0; iiter < niter; ++iiter) {
+                if (op_dtype[iiter] == NULL) {
+                    Py_INCREF(dtype);
+                    op_dtype[iiter] = dtype;
+                    NIT_DTYPES(iter)[iiter] = dtype;
+                }
+            }
+            Py_DECREF(dtype);
+        }
     }
 
     /*
@@ -588,9 +611,19 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op_type[iiter] == NPY_ITER_OP_NULL) {
             PyObject *out;
+            PyTypeObject *op_subtype;
+
+            /* Check whether the subtype was disabled */
+            if (op_itflags[iiter]&NPY_OP_ITFLAG_NOSUBTYPE) {
+                op_subtype = &PyArray_Type;
+            }
+            else {
+                op_subtype = subtype;
+            }
 
             /* Allocate the output array, if possible */
-            out = npyiter_new_temp_array(iter, op_ndim[iiter], NULL,
+            out = npyiter_new_temp_array(iter, op_subtype,
+                                        op_ndim[iiter], NULL,
                                         op_dtype[iiter],
                                         op_axes ? op_axes[iiter] : NULL);
             if (out == NULL) {
@@ -612,7 +645,8 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
             PyObject *temp;
 
             /* Allocate the temporary array, if possible */
-            temp = npyiter_new_temp_array(iter, PyArray_NDIM(op[iiter]),
+            temp = npyiter_new_temp_array(iter, &PyArray_Type,
+                                        PyArray_NDIM(op[iiter]),
                                         PyArray_DIMS(op[iiter]),
                                         op_dtype[iiter],
                                         op_axes ? op_axes[iiter] : NULL);
@@ -1611,7 +1645,11 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
     /* NULL operands must be automatically allocated outputs */
     if (*op == NULL) {
         /* ALLOCATE should be enabled */
-        if (!(op_flags&NPY_ITER_ALLOCATE)) {
+        if (op_flags&NPY_ITER_ALLOCATE) {
+            if (op_flags&NPY_ITER_NO_SUBTYPE) {
+                *op_itflags |= NPY_OP_ITFLAG_NOSUBTYPE;
+            }
+        } else {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input was NULL, but automatic allocation as an "
                     "output wasn't requested");
@@ -2642,7 +2680,8 @@ npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim)
  * This function must be called before any axes are coalesced.
  */
 static PyObject *
-npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
+npyiter_new_temp_array(PyArray_NpyIter *iter, PyTypeObject *subtype,
+                npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -2726,7 +2765,7 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
 
     /* Allocate the temporary array */
     Py_INCREF(op_dtype);
-    ret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
+    ret = PyArray_NewFromDescr(subtype, op_dtype, op_ndim,
                                shape, strides, NULL, 0, NULL);
     if (ret == NULL) {
         return NULL;
@@ -2744,7 +2783,7 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
             }
         }
         Py_INCREF(op_dtype);
-        newret = PyArray_NewFromDescr(&PyArray_Type, op_dtype, op_ndim,
+        newret = PyArray_NewFromDescr(subtype, op_dtype, op_ndim,
                               shape, strides, dataptr,
                               NPY_WRITEABLE, NULL);
         if (newret == NULL) {
@@ -2758,11 +2797,23 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, npy_intp op_ndim, npy_intp *shape,
     /* Make sure all the flags are good */
     PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
 
+    /* Double-check that the subtype didn't mess with the dimensions */
+    if (subtype != &PyArray_Type) {
+        if (PyArray_NDIM(ret) != op_ndim ||
+                    !PyArray_CompareLists(shape, PyArray_DIMS(ret), op_ndim)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Iterator automatic output has an array subtype "
+                    "which changed the dimensions of the output");
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
     return ret;
 }
 
 static PyArray_Descr *
-npyiter_get_result_type(npy_intp niter, npy_intp *op_ndim,
+npyiter_get_output_type(npy_intp niter, npy_intp *op_ndim,
                         char *op_itflags, PyArray_Descr **op_dtype,
                         char **op_dataptr)
 {
