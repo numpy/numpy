@@ -491,6 +491,12 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     NpyIter_GetReadFlags(self->iter, self->readflags);
     NpyIter_GetWriteFlags(self->iter, self->writeflags);
 
+    /* Release the references we got to the ops and dtypes */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        Py_XDECREF(op[iiter]);
+        Py_XDECREF(op_request_dtypes[iiter]);
+    }
+
     return 0;
 
 fail:
@@ -669,6 +675,37 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
 
         Py_INCREF(object);
         PyTuple_SET_ITEM(ret, iiter, object);
+    }
+
+    return ret;
+}
+
+static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
+{
+    PyObject *ret;
+
+    npy_intp iiter, niter;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was not constructed correctly");
+        return NULL;
+    }
+
+    niter = NpyIter_GetNIter(self->iter);
+
+    ret = PyTuple_New(niter);
+    if (ret == NULL) {
+        return NULL;
+    }
+    for (iiter = 0; iiter < niter; ++iiter) {
+        PyObject *view = NpyIter_GetIterView(self->iter, iiter);
+
+        if (view == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret, iiter, view);
     }
 
     return ret;
@@ -971,7 +1008,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
     PyObject *ret;
 
-    npy_intp niter;
+    npy_intp niter, innerloopsize, innerstride;
     char *dataptr;
     PyArray_Descr *dtype;
 
@@ -1010,18 +1047,24 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     dtype = self->dtypes[i];
 
     if (NpyIter_HasInnerLoop(self->iter)) {
-        ret = PyArray_Scalar(dataptr, dtype, NULL);
+        innerloopsize = 1;
+        innerstride = 0;
     }
     else {
-        Py_INCREF(dtype);
-        ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                1, self->innerloopsizeptr,
-                                &self->innerstrides[i], dataptr,
-                                self->writeflags[i] ? NPY_WRITEABLE : 0, NULL);
-        ((PyArrayObject *)ret)->base = (PyObject *)self;
-        Py_INCREF(self);
-        PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
+        innerloopsize = *self->innerloopsizeptr;
+        innerstride = self->innerstrides[i];
     }
+
+    Py_INCREF(dtype);
+    ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
+                            1, &innerloopsize,
+                            &innerstride, dataptr,
+                            self->writeflags[i] ? NPY_WRITEABLE : 0, NULL);
+    Py_INCREF(self);
+    ((PyArrayObject *)ret)->base = (PyObject *)self;
+
+    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
+
     return ret;
 }
 
@@ -1108,9 +1151,6 @@ static PyGetSetDef npyiter_getsets[] = {
     {"value",
         (getter)npyiter_value_get,
         NULL, NULL, NULL},
-    {"operands",
-        (getter)npyiter_operands_get,
-        NULL, NULL, NULL},
     {"shape",
         (getter)npyiter_shape_get,
         NULL, NULL, NULL},
@@ -1122,6 +1162,12 @@ static PyGetSetDef npyiter_getsets[] = {
         (getter)npyiter_index_get,
         (setter)npyiter_index_set,
         NULL, NULL},
+    {"operands",
+        (getter)npyiter_operands_get,
+        NULL, NULL, NULL},
+    {"itviews",
+        (getter)npyiter_itviews_get,
+        NULL, NULL, NULL},
     {"hascoords",
         (getter)npyiter_hascoords_get,
         NULL, NULL, NULL},

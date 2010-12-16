@@ -316,6 +316,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
          */
         op[iiter] = op_in[iiter];
         Py_XINCREF(op[iiter]);
+        op_dtype[iiter] = NULL;
 
         /* Check the readonly/writeonly flags, and fill in op_itflags */
         if (!npyiter_check_per_op_flags(op_flags[iiter], &op_itflags[iiter])) {
@@ -329,8 +330,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
         }
 
         /*
-         * Prepare the operand.  This eats the op[iiter] reference
-         * on an error, and produces an op_dtype[iiter] reference
+         * Prepare the operand.  This produces an op_dtype[iiter] reference
          * on success.
          */
         if (!pyiter_prepare_operand(&op[iiter],
@@ -340,7 +340,7 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
                         op_flags[iiter], &op_itflags[iiter])) {
             npy_intp i;
 
-            for (i = 0; i < iiter; ++i) {
+            for (i = 0; i <= iiter; ++i) {
                 Py_XDECREF(op[i]);
                 Py_XDECREF(op_dtype[i]);
             }
@@ -668,8 +668,8 @@ NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
             if (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) {
                 PyArray_FLAGS(temp) |= NPY_UPDATEIFCOPY;
                 PyArray_FLAGS(op[iiter]) &= ~NPY_WRITEABLE;
-                ((PyArrayObject *)temp)->base = op[iiter];
                 Py_INCREF(op[iiter]);
+                ((PyArrayObject *)temp)->base = op[iiter];
             }
 
             Py_DECREF(op[iiter]);
@@ -797,8 +797,8 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
 
     if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot call GotoCoord on an iterator without "
-                "the constructor flag NPY_ITER_COORDS.");
+                "Cannot call GotoCoords on an iterator without "
+                "requesting coordinates in the constructor");
         return NPY_FAIL;
     }
 
@@ -827,7 +827,7 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
         }
         else {
             PyErr_SetString(PyExc_IndexError,
-                    "Iterator GotoCoord called with out-of-bounds "
+                    "Iterator GotoCoords called with out-of-bounds "
                     "coordinates.");
             return NPY_FAIL;
         }
@@ -877,7 +877,7 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
     if (!(itflags&NPY_ITFLAG_HASINDEX)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoIndex on an iterator without "
-                "the constructor flag NPY_ITER_(C|F)_ORDER_INDEX.");
+                "requesting an index in the constructor");
         return NPY_FAIL;
     }
 
@@ -1236,7 +1236,7 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 
     if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot get a GetCoords function for an iterator "
+                "Cannot retrieve a GetCoords function for an iterator "
                 "that doesn't track coordinates.");
         return NULL;
     }
@@ -1320,8 +1320,8 @@ int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape)
 
     if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot get the shape of an iterator constructed "
-                "without the NPY_ITER_COORDS flag set");
+                "Cannot get the shape of an iterator "
+                "without coordinates requested in the constructor");
         return NPY_FAIL;
     }
 
@@ -1368,6 +1368,74 @@ PyObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter)
     npy_intp niter = NIT_NITER(iter);
 
     return NIT_OBJECTS(iter);
+}
+
+PyObject *NpyIter_GetIterView(PyArray_NpyIter *iter, npy_intp i)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    PyObject *obj, *view;
+    PyArray_Descr *dtype;
+    char *dataptr, *axisdata;
+    npy_intp sizeof_axisdata;
+    int writeable;
+
+    if (i < 0 || i >= niter) {
+        PyErr_SetString(PyExc_IndexError,
+                "index provided for an iterator view was out of bounds");
+        return NULL;
+    }
+
+    /* Need data pointers to make the views */
+    if (itflags&NPY_ITFLAG_HASOFFSETS) {
+        PyErr_SetString(PyExc_IndexError,
+                "cannot provide an iterator view when tracking offsets");
+        return NULL;
+    }
+
+    obj = NIT_OBJECTS(iter)[i];
+    if (PyArray_Check(obj)) {
+        dtype = PyArray_DESCR(obj);
+        writeable = NIT_OPITFLAGS(iter)[i]&NPY_OP_ITFLAG_WRITE;
+        dataptr = NIT_RESETDATAPTR(iter)[i];
+        axisdata = NIT_AXISDATA(iter);
+        sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+
+        /* Retrieve the shape and strides from the axisdata */
+        for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
+            shape[ndim-idim-1] = NAD_SHAPE(axisdata);
+            strides[ndim-idim-1] = NAD_STRIDES(axisdata)[i];
+        }
+        
+        Py_INCREF(dtype);
+        view = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
+                                    shape, strides, dataptr,
+                                    writeable ? NPY_WRITEABLE : 0,
+                                    NULL);
+        if (view == NULL) {
+            return NULL;
+        }
+        /* Tell the view who owns the data */
+        Py_INCREF(obj);
+        ((PyArrayObject *)view)->base = obj;
+        /* Make sure all the flags are good */
+        PyArray_UpdateFlags((PyArrayObject *)view, NPY_UPDATE_ALL);
+    }
+    else {
+        /*
+         * TODO: Should probably restrict the iterator to just processing
+         *       arrays - this would be more uniform, and it looks like
+         *       the numpy-refactor ndarray library works that way.
+         */
+        /* Just return the scalar as-is */
+        view = obj;
+        Py_INCREF(view);
+    }
+
+    return view;
 }
 
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
@@ -1454,8 +1522,8 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         if ((flags&(NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) ==
                     (NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator flags NPY_ITER_C_ORDER_INDEX and "
-                    "NPY_ITER_F_ORDER_INDEX cannot both be specified");
+                    "Iterator flags C_ORDER_INDEX and "
+                    "F_ORDER_INDEX cannot both be specified");
             return 0;
         }
         (*itflags) |= NPY_ITFLAG_HASINDEX;
@@ -1480,9 +1548,9 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
                             (NPY_ITER_FORCE_F_ORDER|
                              NPY_ITER_FORCE_ANY_CONTIGUOUS))) {
             PyErr_SetString(PyExc_ValueError,
-                    "Only one of NPY_ITER_FORCE_C_ORDER, "
-                    "NPY_ITER_FORCE_F_ORDER, and "
-                    "NPY_ITER_FORCE_ANY_CONTIGUOUS may be specified");
+                    "Only one of the iterator flags FORCE_C_ORDER, "
+                    "FORCE_F_ORDER, and "
+                    "FORCE_ANY_CONTIGUOUS may be specified");
             return 0;
         }
     }
@@ -1514,7 +1582,7 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 {
     if ((op_flags&NPY_ITER_GLOBAL_FLAGS) != 0) {
         PyErr_SetString(PyExc_ValueError,
-                    "A global flag was passed as a per-operand flag "
+                    "A global iterator flag was passed as a per-operand flag "
                     "to the iterator constructor");
         return 0;
     }
@@ -1524,8 +1592,8 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
         /* The read/write flags are mutually exclusive */
         if (op_flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Only one of the iterator flags NPY_ITER_READWRITE, "
-                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
+                    "Only one of the iterator flags READWRITE, "
+                    "READONLY, and WRITEONLY may be "
                     "specified for an operand");
             return 0;
         }
@@ -1536,8 +1604,8 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
         /* The read/write flags are mutually exclusive */
         if (op_flags&NPY_ITER_WRITEONLY) {
             PyErr_SetString(PyExc_ValueError,
-                    "Only one of the iterator flags NPY_ITER_READWRITE, "
-                    "NPY_ITER_READONLY, and NPY_ITER_WRITEONLY may be "
+                    "Only one of the iterator flags READWRITE, "
+                    "READONLY, and WRITEONLY may be "
                     "specified for an operand");
             return 0;
         }
@@ -1549,8 +1617,8 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
     }
     else {
         PyErr_SetString(PyExc_ValueError,
-                "None of the iterator flags NPY_ITER_READWRITE, "
-                "NPY_ITER_READONLY, or NPY_ITER_WRITEONLY were "
+                "None of the iterator flags READWRITE, "
+                "READONLY, or WRITEONLY were "
                 "specified for an operand");
         return 0;
     }
@@ -1561,9 +1629,9 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
         if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
                     !(op_flags&NPY_ITER_ALLOW_UPDATEIFCOPY)) {
             PyErr_SetString(PyExc_ValueError,
-                    "If an operand is writeable, must use "
-                    "NPY_ITER_ALLOW_UPDATEIFCOPY instead of "
-                    "NPY_ITER_ALLOW_COPY");
+                    "If an iterator operand is writeable, must use "
+                    "the flag ALLOW_UPDATEIFCOPY instead of "
+                    "ALLOW_COPY");
             return 0;
         }
     }
@@ -1659,17 +1727,12 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
         if ((*op_itflags)&NPY_OP_ITFLAG_READ) {
             PyErr_SetString(PyExc_ValueError,
                     "Automatic allocation was requested for an iterator "
-                    "operand, but wasn't flagged as write only");
+                    "operand, but it wasn't flagged as write only");
             return 0;
         }
-        /* If a requested dtype was provided, use it */
-        if (op_request_dtype != NULL) {
-            Py_INCREF(op_request_dtype);
-            *op_dtype = op_request_dtype;
-        }
-        else {
-            *op_dtype = NULL;
-        }
+        /* If a requested dtype was provided, use it, otherwise NULL */
+        Py_XINCREF(op_request_dtype);
+        *op_dtype = op_request_dtype;
         *op_type = NPY_ITER_OP_NULL;
         *op_ndim = 0;
         /* No copying/buffering of NULL operands */
@@ -1686,14 +1749,12 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input was an immutable Python scalar, but was "
                     "flagged as writeable");
-            Py_DECREF(*op);
             return 0;
         }
         new_op = PyArray_ScalarFromObject(*op);
         if (new_op == NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input failed to convert to array scalar");
-            Py_DECREF(*op);
             return 0;
         }
         Py_DECREF(*op);
@@ -1706,7 +1767,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input was a non-writeable array, but was "
                     "flagged as writeable");
-            Py_DECREF(*op);
             return 0;
 
         }
@@ -1717,7 +1777,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
         if (*op_dtype == NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input array object has no dtype descr");
-            Py_DECREF(*op);
             return 0;
         }
         Py_INCREF(*op_dtype);
@@ -1732,9 +1791,7 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                 PyErr_SetString(PyExc_ValueError,
                         "Tried to construct an iterator for a writeable "
                         "array of references/pointers without specifying the "
-                        "NPY_ITER_ALLOW_WRITEABLE_REFERENCES flag.");
-                Py_DECREF(*op);
-                Py_DECREF(*op_dtype);
+                        "ALLOW_WRITEABLE_REFERENCES flag.");
                 return 0;
             }
         }
@@ -1750,8 +1807,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                             "Iterator input dtype could not be cast "
                             "to the requested dtype, according to "
                             "the casting flags given");
-                    Py_DECREF(*op);
-                    Py_DECREF(*op_dtype);
                     return 0;
                 }
                 /* Check write (temp -> op) casting */
@@ -1762,8 +1817,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                             "Iterator requested dtype could not be cast "
                             "to the input dtype, according to "
                             "the casting flags given");
-                    Py_DECREF(*op);
-                    Py_DECREF(*op_dtype);
                     return 0;
                 }
 
@@ -1802,8 +1855,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             PyErr_SetString(PyExc_TypeError,
                     "Iterator input required copying or buffering, "
                     "but neither copying nor buffering was enabled");
-            Py_DECREF(*op);
-            Py_DECREF(*op_dtype);
             return 0;
         }
 
@@ -1822,7 +1873,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input was an immutable array scalar, but was "
                     "flagged as writeable");
-            Py_DECREF(*op);
             return 0;
         }
         *op_type = NPY_ITER_OP_ARRAY_SCALAR;
@@ -1832,7 +1882,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
         if (*op_dtype == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input array scalar has no dtype descr");
-            Py_DECREF(*op);
             return 0;
         }
         /* TODO: perhaps could relax this restriction? */
@@ -1841,8 +1890,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
             PyErr_SetString(PyExc_ValueError,
                     "Iterator input array scalars which require "
                     "reference/pointer tracking are not supported");
-            Py_DECREF(*op);
-            Py_DECREF(*op_dtype);
             return 0;
         }
         /* If a particular dtype was requested handle allowed casting */
@@ -1858,8 +1905,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
                             "Iterator scalar input dtype could not be cast "
                             "to the requested dtype, according to "
                             "the casting flags given");
-                    Py_DECREF(*op);
-                    Py_DECREF(*op_dtype);
                     return 0;
                 }
 
@@ -1880,7 +1925,6 @@ pyiter_prepare_operand(PyObject** op, PyArray_Descr *op_request_dtype,
     else {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator input must be an array or a scalar");
-        Py_DECREF(*op);
         return 0;
     }
 
@@ -2988,6 +3032,7 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
     npy_intp sizeof_axisdata;
 
     printf("\n------ BEGIN ITERATOR DUMP ------\n");
+    printf("Iterator Address: %p\n", iter);
     printf("Flags: ");
     if (itflags&NPY_ITFLAG_IDENTPERM)
         printf("IDENTPERM ");
@@ -3061,6 +3106,8 @@ NpyIter_DebugPrint(PyArray_NpyIter *iter)
             printf("CAST ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_COPYSWAP)
             printf("COPYSWAP ");
+        if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_NOSUBTYPE)
+            printf("NOSUBTYPE ");
         printf("\n");
     }
     printf("\n");

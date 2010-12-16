@@ -19,6 +19,16 @@ def iter_indices(i):
         i.iternext()
     return ret
 
+def test_iter_refcount():
+    # Make sure the iterator doesn't leak
+
+    a = arange(6)
+    rc = sys.getrefcount(a)
+    it = newiter(a)
+    assert_equal(sys.getrefcount(a), rc+1)
+    it = None
+    assert_equal(sys.getrefcount(a), rc)
+
 def test_iter_best_order():
     # The iterator should always find the iteration order
     # with increasing memory addresses
@@ -130,7 +140,7 @@ def test_iter_any_contiguous_order():
                 assert_equal([x for x in i],
                                     aview.swapaxes(0,1).ravel(order='A'))
 
-def test_iter_best_order_coords():
+def test_iter_best_order_coords_1d():
     # The coords should be correct with any reordering
 
     a = arange(4)
@@ -140,6 +150,9 @@ def test_iter_best_order_coords():
     # 1D reversed order
     i = newiter(a[::-1],['coords'],[['readonly']])
     assert_equal(iter_coords(i), [(3,),(2,),(1,),(0,)])
+
+def test_iter_best_order_coords_2d():
+    # The coords should be correct with any reordering
 
     a = arange(6)
     # 2D C-order
@@ -164,6 +177,9 @@ def test_iter_best_order_coords():
     i = newiter(a.reshape(2,3).copy(order='F')[::-1,::-1],
                                                    ['coords'],[['readonly']])
     assert_equal(iter_coords(i), [(1,2),(0,2),(1,1),(0,1),(1,0),(0,0)])
+
+def test_iter_best_order_coords_3d():
+    # The coords should be correct with any reordering
 
     a = arange(12)
     # 3D C-order
@@ -206,7 +222,7 @@ def test_iter_best_order_coords():
                             [(0,0,1),(1,0,1),(0,1,1),(1,1,1),(0,2,1),(1,2,1),
                              (0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,2,0),(1,2,0)])
 
-def test_iter_best_order_c_index():
+def test_iter_best_order_c_index_1d():
     # The C index should be correct with any reordering
 
     a = arange(4)
@@ -216,6 +232,9 @@ def test_iter_best_order_c_index():
     # 1D reversed order
     i = newiter(a[::-1],['c_order_index'],[['readonly']])
     assert_equal(iter_indices(i), [3,2,1,0])
+
+def test_iter_best_order_c_index_2d():
+    # The C index should be correct with any reordering
 
     a = arange(6)
     # 2D C-order
@@ -242,6 +261,9 @@ def test_iter_best_order_c_index():
     i = newiter(a.reshape(2,3).copy(order='F')[::-1,::-1],
                                     ['c_order_index'],[['readonly']])
     assert_equal(iter_indices(i), [5,2,4,1,3,0])
+
+def test_iter_best_order_c_index_3d():
+    # The C index should be correct with any reordering
 
     a = arange(12)
     # 3D C-order
@@ -277,7 +299,7 @@ def test_iter_best_order_c_index():
     assert_equal(iter_indices(i),
                             [1,7,3,9,5,11,0,6,2,8,4,10])
 
-def test_iter_best_order_f_order_index():
+def test_iter_best_order_f_order_index_1d():
     # The Fortran index should be correct with any reordering
 
     a = arange(4)
@@ -287,6 +309,9 @@ def test_iter_best_order_f_order_index():
     # 1D reversed order
     i = newiter(a[::-1],['f_order_index'],[['readonly']])
     assert_equal(iter_indices(i), [3,2,1,0])
+
+def test_iter_best_order_f_order_index_2d():
+    # The Fortran index should be correct with any reordering
 
     a = arange(6)
     # 2D C-order
@@ -313,6 +338,9 @@ def test_iter_best_order_f_order_index():
     i = newiter(a.reshape(2,3).copy(order='F')[::-1,::-1],
                                     ['f_order_index'],[['readonly']])
     assert_equal(iter_indices(i), [5,4,3,2,1,0])
+
+def test_iter_best_order_f_order_index_3d():
+    # The Fortran index should be correct with any reordering
 
     a = arange(12)
     # 3D C-order
@@ -898,7 +926,7 @@ def test_iter_allocate_output_types():
     i = newiter([a,None], [],
                     [['readonly'],['writeonly','allocate']])
     assert_equal(i.dtypes[0], i.dtypes[1]);
-    # With two or more inputs, the output type will is native byte order
+    # With two or more inputs, the output type is in native byte order
     i = newiter([a,a,None], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
     assert_(i.dtypes[0] != i.dtypes[2]);
