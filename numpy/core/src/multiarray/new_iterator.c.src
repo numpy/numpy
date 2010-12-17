@@ -2989,6 +2989,7 @@ static int
 npyiter_scalar_kind(PyArray_Descr *dtype, char *data)
 {
     int kind;
+    Py_INCREF(dtype);
     PyArrayObject *array = (PyArrayObject *)PyArray_NewFromDescr(
                                     &PyArray_Type, dtype, 0,
                                     NULL, NULL, data, 0, NULL);

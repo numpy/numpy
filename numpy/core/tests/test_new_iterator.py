@@ -23,11 +23,17 @@ def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
     a = arange(6)
-    rc = sys.getrefcount(a)
-    it = newiter(a)
-    assert_equal(sys.getrefcount(a), rc+1)
+    dt = np.dtype('f4').newbyteorder()
+    rc_a = sys.getrefcount(a)
+    rc_dt = sys.getrefcount(dt)
+    it = newiter(a, [],
+                [['readwrite','allow_unsafe_casts','allow_updateifcopy']],
+                op_dtypes=[dt])
+    assert_(sys.getrefcount(a) > rc_a)
+    assert_(sys.getrefcount(dt) > rc_dt)
     it = None
-    assert_equal(sys.getrefcount(a), rc)
+    assert_equal(sys.getrefcount(a), rc_a)
+    assert_equal(sys.getrefcount(dt), rc_dt)
 
 def test_iter_best_order():
     # The iterator should always find the iteration order
@@ -902,7 +908,7 @@ def test_iter_allocate_output_opaxes():
     assert_equal(i.operands[0].strides, (4,48,16))
     assert_equal(i.operands[0].dtype, np.dtype('u4'))
 
-def test_iter_allocate_output_types():
+def test_iter_allocate_output_types_promotion():
     # Check type promotion of automatic outputs
 
     i = newiter([array([3],dtype='f4'),array([0],dtype='f8'),None], [],
@@ -921,6 +927,9 @@ def test_iter_allocate_output_types():
                     [['readonly']]*2+[['writeonly','allocate']])
     assert_equal(i.dtypes[2], np.dtype('i8'));
 
+def test_iter_allocate_output_types_byte_order():
+    # Verify the rules for byte order changes
+
     # When there's just one input, the output type exactly matches
     a = array([3],dtype='u4').newbyteorder()
     i = newiter([a,None], [],
@@ -932,7 +941,9 @@ def test_iter_allocate_output_types():
     assert_(i.dtypes[0] != i.dtypes[2]);
     assert_equal(i.dtypes[0].newbyteorder('='), i.dtypes[2])
 
+def test_iter_allocate_output_types_scalar():
     # If the inputs are all scalars, the output should be a scalar
+
     i = newiter([None,1,2.3,np.float32(12),np.complex128(3)],[],
                 [['writeonly','allocate']] + [['readonly']]*4)
     assert_equal(i.operands[0].dtype, np.dtype('complex128'))
