@@ -24,7 +24,7 @@ struct NewNpyArrayIterObject_tag {
     NpyIter_GetCoords_Fn getcoords;
     char **dataptrs;
     PyArray_Descr **dtypes;
-    PyObject **objects;
+    PyArrayObject **objects;
     npy_intp *innerstrides, *innerloopsizeptr;
     char readflags[NPY_MAXARGS];
     char writeflags[NPY_MAXARGS];
@@ -55,7 +55,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     npy_intp iiter;
 
     npy_intp niter = 0;
-    PyObject *op[NPY_MAXARGS];
+    PyArrayObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0;
     npy_uint32 op_flags[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
@@ -101,11 +101,13 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 Py_DECREF(item);
                 item = NULL;
             }
+            /* Is converted to an array after op flags are retrieved */
             op[iiter] = item;
         }
     }
     else {
         niter = 1;
+        /* Is converted to an array after op flags are retrieved */
         Py_INCREF(op_in);
         op[0] = op_in;
         op_request_dtypes[0] = NULL;
@@ -341,6 +343,31 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         PyErr_SetString(PyExc_ValueError,
                 "Must provide a tuple of flag-tuples in op_flags");
         goto fail;
+    }
+    /* Now that we have the flags - convert all the ops to arrays */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        if (op[iiter] != NULL) {
+            PyArrayObject *ao;
+            int fromanyflags = 0;
+            
+            if (op_flags[iiter]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
+                fromanyflags = NPY_UPDATEIFCOPY;
+            }
+            ao = (PyArrayObject *)PyArray_FromAny((PyObject *)op[iiter],
+                                            NULL, 0, 0, fromanyflags, NULL);
+            if (ao == NULL) {
+                if (PyErr_Occurred() &&
+                            PyErr_ExceptionMatches(PyExc_TypeError)) {
+                    PyErr_SetString(PyExc_TypeError,
+                            "Iterator input is flagged as writeable, "
+                            "but is an object which cannot be written "
+                            "back to via UPDATEIFCOPY");
+                }
+                goto fail;
+            }
+            Py_DECREF(op[iiter]);
+            op[iiter] = ao;
+        }
     }
     /* op_request_dtypes */
     if (op_dtypes_in != NULL && op_dtypes_in != Py_None) {
@@ -655,7 +682,7 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
     PyObject *ret;
 
     npy_intp iiter, niter;
-    PyObject **objects;
+    PyArrayObject **objects;
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -671,7 +698,7 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
         return NULL;
     }
     for (iiter = 0; iiter < niter; ++iiter) {
-        PyObject *object = objects[iiter];
+        PyObject *object = (PyObject *)objects[iiter];
 
         Py_INCREF(object);
         PyTuple_SET_ITEM(ret, iiter, object);
@@ -699,13 +726,13 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
         return NULL;
     }
     for (iiter = 0; iiter < niter; ++iiter) {
-        PyObject *view = NpyIter_GetIterView(self->iter, iiter);
+        PyArrayObject *view = NpyIter_GetIterView(self->iter, iiter);
 
         if (view == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
-        PyTuple_SET_ITEM(ret, iiter, view);
+        PyTuple_SET_ITEM(ret, iiter, (PyObject *)view);
     }
 
     return ret;
@@ -1075,7 +1102,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     npy_intp niter;
     char *dataptr;
     PyArray_Descr *dtype;
-    PyObject *object;
+    PyArrayObject *object;
 
     if (v == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1112,12 +1139,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
      *       correspond to the data, so that will have to be accounted for
      */
     if (NpyIter_HasInnerLoop(self->iter)) {
-        if (PyArray_Check(object)) {
-            return dtype->f->setitem(v, dataptr, (PyArrayObject*)object);
-        }
-        else {
-            return dtype->f->setitem(v, dataptr, NULL);
-        }
+        return dtype->f->setitem(v, dataptr, object);
     } else {
         PyArrayObject *tmp;
         int ret;

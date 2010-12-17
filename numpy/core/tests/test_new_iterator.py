@@ -606,11 +606,11 @@ def test_iter_flags_errors():
     assert_raises(ValueError, newiter, a,
                 [], [['readonly','writeonly','readwrite']])
     # Python scalars are always readonly
-    assert_raises(ValueError, newiter, 1.5, [], [['writeonly']])
-    assert_raises(ValueError, newiter, 1.5, [], [['readwrite']])
+    assert_raises(TypeError, newiter, 1.5, [], [['writeonly']])
+    assert_raises(TypeError, newiter, 1.5, [], [['readwrite']])
     # Array scalars are always readonly
-    assert_raises(ValueError, newiter, np.int32(1), [], [['writeonly']])
-    assert_raises(ValueError, newiter, np.int32(1), [], [['readwrite']])
+    assert_raises(TypeError, newiter, np.int32(1), [], [['writeonly']])
+    assert_raises(TypeError, newiter, np.int32(1), [], [['readwrite']])
     # Check readonly array
     a.flags.writeable = False
     assert_raises(ValueError, newiter, a, [], [['writeonly']])
@@ -754,19 +754,22 @@ def test_iter_scalar_cast():
     assert_equal(i.value.dtype, np.dtype('f4'))
     assert_equal(i.value, 2.5)
     # Safe cast 'f4' -> 'f8'
-    i = newiter(np.float32(2.5), [], [['readonly','allow_safe_casts']],
+    i = newiter(np.float32(2.5), [],
+                    [['readonly','allow_copy','allow_safe_casts']],
                     op_dtypes=[np.dtype('f8')])
     assert_equal(i.dtypes[0], np.dtype('f8'))
     assert_equal(i.value.dtype, np.dtype('f8'))
     assert_equal(i.value, 2.5)
     # Same-kind cast 'f8' -> 'f4'
-    i = newiter(np.float64(2.5), [], [['readonly','allow_same_kind_casts']],
+    i = newiter(np.float64(2.5), [],
+                    [['readonly','allow_copy','allow_same_kind_casts']],
                     op_dtypes=[np.dtype('f4')])
     assert_equal(i.dtypes[0], np.dtype('f4'))
     assert_equal(i.value.dtype, np.dtype('f4'))
     assert_equal(i.value, 2.5)
     # Unsafe cast 'f8' -> 'i4'
-    i = newiter(np.float64(3.0), [], [['readonly','allow_unsafe_casts']],
+    i = newiter(np.float64(3.0), [],
+                    [['readonly','allow_copy','allow_unsafe_casts']],
                     op_dtypes=[np.dtype('i4')])
     assert_equal(i.dtypes[0], np.dtype('i4'))
     assert_equal(i.value.dtype, np.dtype('i4'))
@@ -1000,3 +1003,6 @@ def test_iter_allocate_output_errors():
                         [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')],
                         op_axes=[None,[0,2,1,0]])
+
+if __name__ == "__main__":
+    run_module_suite()

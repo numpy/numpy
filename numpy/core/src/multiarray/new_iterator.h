@@ -13,15 +13,15 @@ typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter,
                                       npy_intp *outcoords);
 
 
-/* Allocate a new iterator over one object */
+/* Allocate a new iterator over one array object */
 PyArray_NpyIter*
-NpyIter_New(PyObject* op, npy_uint32 flags, PyArray_Descr* dtype,
+NpyIter_New(PyArrayObject* op, npy_uint32 flags, PyArray_Descr* dtype,
                   int min_depth, int max_depth,
                   npy_intp a_ndim, npy_intp *axes);
 
-/* Allocate a new iterator over multiple objects */
+/* Allocate a new iterator over multiple array objects */
 PyArray_NpyIter*
-NpyIter_MultiNew(npy_intp niter, PyObject **op_in, npy_uint32 flags,
+NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
                  int min_depth, int max_depth,
                  npy_intp oa_ndim, npy_intp **op_axes);
@@ -62,9 +62,9 @@ char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter);
 /* Get the array of data type pointers (1 per object being iterated) */
 PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter);
 /* Get the array of objects being iterated */
-PyObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter);
+PyArrayObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter);
 /* Returns a view to the i-th object with the iterator's internal axes */
-PyObject *NpyIter_GetIterView(PyArray_NpyIter *iter, npy_intp i);
+PyArrayObject *NpyIter_GetIterView(PyArray_NpyIter *iter, npy_intp i);
 /* Get a pointer to the index, if it is being tracked */
 npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter);
 /* Gets an array of read flags (1 per object being iterated) */
