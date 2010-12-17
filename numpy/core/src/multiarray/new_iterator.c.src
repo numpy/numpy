@@ -202,7 +202,6 @@ npyiter_new_temp_array(PyArray_NpyIter *iter, PyTypeObject *subtype,
 PyArray_NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
-                 int min_ndim, int max_ndim,
                  npy_intp oa_ndim, npy_intp **op_axes)
 {
     npy_uint32 itflags = NPY_ITFLAG_IDENTPERM;
@@ -380,22 +379,6 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     else if (ndim == 0) {
         allocate_output_scalars = 1;
         ndim = 1;
-    }
-
-    /* Make sure the number of dimensions matches the requirements */
-    if ((min_ndim >= 0 && ndim < min_ndim) ||
-            (max_ndim >= 0 && ndim > max_ndim)) {
-        npy_intp i;
-
-        PyErr_Format(PyExc_ValueError,
-                "Requested an iterator with %d <= ndim <= %d, "
-                "but input ndim is %d",
-                min_ndim, max_ndim, (int)ndim);
-        for (i = 0; i < niter; ++i) {
-            Py_XDECREF(op[i]);
-            Py_XDECREF(op_dtype[i]);
-        }
-        return NULL;
     }
 
     /* Allocate memory for the iterator */
@@ -657,7 +640,6 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 /* The constructor for an iterator over one object */
 PyArray_NpyIter*
 NpyIter_New(PyArrayObject *op, npy_uint32 flags, PyArray_Descr* dtype,
-                  int min_ndim, int max_ndim,
                   npy_intp a_ndim, npy_intp *axes)
 {
     /* Split the flags into separate global and op flags */
@@ -666,11 +648,10 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags, PyArray_Descr* dtype,
 
     if (a_ndim > 0) {
         return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
-                                min_ndim, max_ndim, a_ndim, &axes);
+                                                        a_ndim, &axes);
     }
     else {
-        return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
-                                min_ndim, max_ndim, 0, NULL);
+        return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype, 0, NULL);
     }
 }
 
@@ -1616,7 +1597,7 @@ npyiter_can_cast(npy_uint32 op_flags, PyArray_Descr *from, PyArray_Descr *to)
     /* If safe or same-kind casts are allowed */
     else if (op_flags&(NPY_ITER_ALLOW_SAFE_CASTS|
                        NPY_ITER_ALLOW_SAME_KIND_CASTS)) {
-        if (PyArray_CanCastSafely(from->type_num, to->type_num)) {
+        if (PyArray_CanCastTo(from, to)) {
             return 1;
         }
         else if(op_flags&NPY_ITER_ALLOW_SAME_KIND_CASTS) {

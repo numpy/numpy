@@ -16,14 +16,12 @@ typedef void (*NpyIter_GetCoords_Fn )(PyArray_NpyIter *iter,
 /* Allocate a new iterator over one array object */
 PyArray_NpyIter*
 NpyIter_New(PyArrayObject* op, npy_uint32 flags, PyArray_Descr* dtype,
-                  int min_depth, int max_depth,
                   npy_intp a_ndim, npy_intp *axes);
 
 /* Allocate a new iterator over multiple array objects */
 PyArray_NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
-                 int min_depth, int max_depth,
                  npy_intp oa_ndim, npy_intp **op_axes);
 
 /* Deallocate an iterator */
