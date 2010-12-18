@@ -16,7 +16,7 @@ typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 struct NewNpyArrayIterObject_tag {
     PyObject_HEAD
     /* The iterator */
-    PyArray_NpyIter *iter;
+    NpyIter *iter;
     /* Flag indicating iteration stopped */
     char finished;
     /* Cached values from the iterator */

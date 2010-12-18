@@ -166,29 +166,29 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                     npy_uint32 *op_flags,
                     char *op_itflags);
 static int
-npyiter_fill_axisdata(PyArray_NpyIter *iter, PyArrayObject **op,
+npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
                       npy_intp *op_ndim, char **op_dataptr,
                       npy_intp **op_axes);
 static void
-npyiter_replace_axisdata(PyArray_NpyIter *iter, npy_intp iiter,
+npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
                       PyArrayObject *op,
                       npy_intp op_ndim, char *op_dataptr,
                       npy_intp *op_axes);
 static void
-npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags);
+npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags);
 static void
-npyiter_apply_forced_iteration_order(npy_uint32 flags, PyArray_NpyIter *iter);
+npyiter_apply_forced_iteration_order(npy_uint32 flags, NpyIter *iter);
 
 static void
-npyiter_flip_negative_strides(PyArray_NpyIter *iter);
+npyiter_flip_negative_strides(NpyIter *iter);
 static void
-npyiter_reverse_axis_ordering(PyArray_NpyIter *iter);
+npyiter_reverse_axis_ordering(NpyIter *iter);
 static void 
-npyiter_find_best_axis_ordering(PyArray_NpyIter *iter);
+npyiter_find_best_axis_ordering(NpyIter *iter);
 static void 
-npyiter_coalesce_axes(PyArray_NpyIter *iter);
+npyiter_coalesce_axes(NpyIter *iter);
 static void
-npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim);
+npyiter_shrink_ndim(NpyIter *iter, npy_intp new_ndim);
 
 static PyArray_Descr *
 npyiter_get_output_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
@@ -197,12 +197,12 @@ static int
 npyiter_promote_types(int type1, int type2);
 
 static PyArrayObject *
-npyiter_new_temp_array(PyArray_NpyIter *iter, PyTypeObject *subtype,
+npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes);
 
 /* The constructor for an iterator over multiple objects */
-PyArray_NpyIter*
+NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes)
@@ -212,7 +212,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     npy_intp iiter;
 
     /* The iterator being constructed */
-    PyArray_NpyIter *iter;
+    NpyIter *iter;
 
     /* For tracking buffer space at the end of the iterator memory */
     npy_intp bufferspace = 0;
@@ -387,14 +387,14 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /* Allocate memory for the iterator */
     if (bufferspace > 0) {
         npy_intp itsize = NIT_SIZEOF_ITERATOR(itflags, ndim, niter);
-        iter = (PyArray_NpyIter*)
+        iter = (NpyIter*)
                     PyArray_malloc(itsize + bufferspace);
         /* Initialize the buffer pointer to just after the iterator memory */
         bufferptr = (char*)iter;
         NPYITER_INC_BUFFERPTR(bufferptr, itsize);
     }
     else {
-        iter = (PyArray_NpyIter*)
+        iter = (NpyIter*)
                     PyArray_malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, niter));
     }
 
@@ -674,7 +674,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 }
 
 /* The constructor for an iterator over one object */
-PyArray_NpyIter*
+NpyIter*
 NpyIter_New(PyArrayObject *op, npy_uint32 flags, PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes)
 {
@@ -691,7 +691,7 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags, PyArray_Descr* dtype,
     }
 }
 
-int NpyIter_Deallocate(PyArray_NpyIter *iter)
+int NpyIter_Deallocate(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -713,7 +713,7 @@ int NpyIter_Deallocate(PyArray_NpyIter *iter)
 }
 
 /* Resets the iterator to its initial state */
-void NpyIter_Reset(PyArray_NpyIter *iter)
+void NpyIter_Reset(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -747,7 +747,7 @@ void NpyIter_Reset(PyArray_NpyIter *iter)
  *
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
-int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
+int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -827,7 +827,7 @@ int NpyIter_GotoCoords(PyArray_NpyIter *iter, npy_intp *coords)
  *
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
-int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
+int NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -916,7 +916,7 @@ int NpyIter_GotoIndex(PyArray_NpyIter *iter, npy_intp index)
 /* Specialized iternext (@const_itflags@,@const_ndim@,@const_niter@) */
 NPY_NO_EXPORT int
 npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
-                                                      PyArray_NpyIter *iter)
+                                                      NpyIter *iter)
 {
     const npy_uint32 itflags = @const_itflags@;
 #if @const_ndim@ < 100
@@ -1057,13 +1057,13 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 
 /* Specialization of iternext for when the iteration size is 1 */
 NPY_NO_EXPORT int
-npyiter_iternext_sizeone(PyArray_NpyIter *iter)
+npyiter_iternext_sizeone(NpyIter *iter)
 {
     return 0;
 }
 
 /* Returns a specialized iternext function */
-NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter)
+NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1151,7 +1151,7 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(PyArray_NpyIter *iter)
  * #tag_itflags = 0, IND, IDP, INDuIDP, NEGP, INDuNEGP#
  */
 NPY_NO_EXPORT void
-npyiter_getcoord_itflags@tag_itflags@(PyArray_NpyIter *iter, npy_intp *outcoord)
+npyiter_getcoord_itflags@tag_itflags@(NpyIter *iter, npy_intp *outcoord)
 {
     const npy_uint32 itflags = @const_itflags@;
     npy_intp ndim = NIT_NDIM(iter);
@@ -1192,7 +1192,7 @@ npyiter_getcoord_itflags@tag_itflags@(PyArray_NpyIter *iter, npy_intp *outcoord)
 /**end repeat**/
 
 /* Returns a specialized getcoord function */
-NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
+NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1237,42 +1237,42 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(PyArray_NpyIter *iter)
 
 }
 
-int NpyIter_HasInnerLoop(PyArray_NpyIter *iter)
+int NpyIter_HasInnerLoop(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NOINNER) == 0;
 }
 
-int NpyIter_HasCoords(PyArray_NpyIter *iter)
+int NpyIter_HasCoords(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASCOORDS) != 0;
 }
 
-int NpyIter_HasIndex(PyArray_NpyIter *iter)
+int NpyIter_HasIndex(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASINDEX) != 0;
 }
 
-int NpyIter_HasOffsets(PyArray_NpyIter *iter)
+int NpyIter_HasOffsets(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASOFFSETS) != 0;
 }
 
-npy_intp NpyIter_GetNDim(PyArray_NpyIter *iter)
+npy_intp NpyIter_GetNDim(NpyIter *iter)
 {
     return NIT_NDIM(iter);
 }
 
-npy_intp NpyIter_GetNIter(PyArray_NpyIter *iter)
+npy_intp NpyIter_GetNIter(NpyIter *iter)
 {
     return NIT_NITER(iter);
 }
 
-npy_intp NpyIter_GetIterSize(PyArray_NpyIter *iter)
+npy_intp NpyIter_GetIterSize(NpyIter *iter)
 {
     return NIT_ITERSIZE(iter);
 }
 
-int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape)
+int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
 {
     const npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1305,7 +1305,7 @@ int NpyIter_GetShape(PyArray_NpyIter *iter, npy_intp *outshape)
     return NPY_SUCCEED;
 }
 
-char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter)
+char **NpyIter_GetDataPtrArray(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1316,7 +1316,7 @@ char **NpyIter_GetDataPtrArray(PyArray_NpyIter *iter)
     return NAD_PTRS(axisdata);
 }
 
-PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter)
+PyArray_Descr **NpyIter_GetDescrArray(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1325,7 +1325,7 @@ PyArray_Descr **NpyIter_GetDescrArray(PyArray_NpyIter *iter)
     return NIT_DTYPES(iter);
 }
 
-PyArrayObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter)
+PyArrayObject **NpyIter_GetObjectArray(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1334,7 +1334,7 @@ PyArrayObject **NpyIter_GetObjectArray(PyArray_NpyIter *iter)
     return NIT_OBJECTS(iter);
 }
 
-PyArrayObject *NpyIter_GetIterView(PyArray_NpyIter *iter, npy_intp i)
+PyArrayObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1390,7 +1390,7 @@ PyArrayObject *NpyIter_GetIterView(PyArray_NpyIter *iter, npy_intp i)
     return view;
 }
 
-npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
+npy_intp *NpyIter_GetIndexPtr(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1407,7 +1407,7 @@ npy_intp *NpyIter_GetIndexPtr(PyArray_NpyIter *iter)
     }
 }
 
-void NpyIter_GetReadFlags(PyArray_NpyIter *iter, char *outreadflags)
+void NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1420,7 +1420,7 @@ void NpyIter_GetReadFlags(PyArray_NpyIter *iter, char *outreadflags)
     }
 }
 
-void NpyIter_GetWriteFlags(PyArray_NpyIter *iter, char *outwriteflags)
+void NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1434,7 +1434,7 @@ void NpyIter_GetWriteFlags(PyArray_NpyIter *iter, char *outwriteflags)
 }
 
 
-npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter)
+npy_intp *NpyIter_GetInnerStrideArray(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1444,7 +1444,7 @@ npy_intp *NpyIter_GetInnerStrideArray(PyArray_NpyIter *iter)
     return NAD_STRIDES(axisdata);
 }
 
-npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter)
+npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1819,7 +1819,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
  * Returns 1 on success, 0 on failure.
  */
 static int
-npyiter_fill_axisdata(PyArray_NpyIter *iter, PyArrayObject **op,
+npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
                       npy_intp *op_ndim, char **op_dataptr,
                       npy_intp **op_axes)
 {
@@ -2055,7 +2055,7 @@ npyiter_fill_axisdata(PyArray_NpyIter *iter, PyArrayObject **op,
  * array.
  */
 static void
-npyiter_replace_axisdata(PyArray_NpyIter *iter, npy_intp iiter,
+npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
                       PyArrayObject *op,
                       npy_intp op_ndim, char *op_dataptr,
                       npy_intp *op_axes)
@@ -2130,7 +2130,7 @@ npyiter_replace_axisdata(PyArray_NpyIter *iter, npy_intp iiter,
  * be reordered.
  */
 static void
-npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags)
+npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -2195,7 +2195,7 @@ npyiter_compute_index_strides(PyArray_NpyIter *iter, npy_uint32 flags)
  * order was forced.
  */
 static void
-npyiter_apply_forced_iteration_order(npy_uint32 flags, PyArray_NpyIter *iter)
+npyiter_apply_forced_iteration_order(npy_uint32 flags, NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -2238,7 +2238,7 @@ npyiter_apply_forced_iteration_order(npy_uint32 flags, PyArray_NpyIter *iter)
  * negative or zero.
  */
 static void
-npyiter_flip_negative_strides(PyArray_NpyIter *iter)
+npyiter_flip_negative_strides(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -2317,7 +2317,7 @@ npyiter_flip_negative_strides(PyArray_NpyIter *iter)
 }
 
 static void
-npyiter_reverse_axis_ordering(PyArray_NpyIter *iter)
+npyiter_reverse_axis_ordering(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -2362,7 +2362,7 @@ static npy_intp intp_abs(npy_intp x)
 }
 
 static void 
-npyiter_find_best_axis_ordering(PyArray_NpyIter *iter)
+npyiter_find_best_axis_ordering(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -2496,7 +2496,7 @@ npyiter_find_best_axis_ordering(PyArray_NpyIter *iter)
 }
 
 static void 
-npyiter_coalesce_axes(PyArray_NpyIter *iter)
+npyiter_coalesce_axes(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -2568,7 +2568,7 @@ npyiter_coalesce_axes(PyArray_NpyIter *iter)
 }
 
 static void
-npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim)
+npyiter_shrink_ndim(NpyIter *iter, npy_intp new_ndim)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -2601,7 +2601,7 @@ npyiter_shrink_ndim(PyArray_NpyIter *iter, npy_intp new_ndim)
  * This function must be called before any axes are coalesced.
  */
 static PyArrayObject *
-npyiter_new_temp_array(PyArray_NpyIter *iter, PyTypeObject *subtype,
+npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes)
 {
@@ -2888,7 +2888,7 @@ npyiter_promote_types(int type1, int type2)
 
 /* For debugging */
 NPY_NO_EXPORT void
-NpyIter_DebugPrint(PyArray_NpyIter *iter)
+NpyIter_DebugPrint(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
