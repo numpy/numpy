@@ -832,6 +832,24 @@ def test_iter_common_data_type():
     assert_equal(i.dtypes[3], np.dtype('c16'));
     assert_equal(i.value, (3,-12,2j,9))
 
+    # When allocating outputs, other outputs aren't factored in
+    i = newiter([array([3],dtype='i4'),None,array([2j],dtype='c16')], [],
+                    [['readonly','copy','safe_casts'],
+                     ['writeonly','allocate'],
+                     ['writeonly']])
+    assert_equal(i.dtypes[0], np.dtype('i4'));
+    assert_equal(i.dtypes[1], np.dtype('i4'));
+    assert_equal(i.dtypes[2], np.dtype('c16'));
+    # But, if common data types are requested, they are
+    i = newiter([array([3],dtype='i4'),None,array([2j],dtype='c16')],
+                    ['common_data_type'],
+                    [['readonly','copy','safe_casts'],
+                     ['writeonly','allocate'],
+                     ['writeonly']])
+    assert_equal(i.dtypes[0], np.dtype('c16'));
+    assert_equal(i.dtypes[1], np.dtype('c16'));
+    assert_equal(i.dtypes[2], np.dtype('c16'));
+
 def test_iter_op_axes():
     # Check that custom axes work
 

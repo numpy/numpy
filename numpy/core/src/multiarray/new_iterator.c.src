@@ -191,8 +191,9 @@ static void
 npyiter_shrink_ndim(NpyIter *iter, npy_intp new_ndim);
 
 static PyArray_Descr *
-npyiter_get_output_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
-                        char *op_itflags, PyArray_Descr **op_dtype);
+npyiter_get_common_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
+                        char *op_itflags, PyArray_Descr **op_dtype,
+                        int only_inputs);
 static int
 npyiter_promote_types(int type1, int type2);
 
@@ -519,9 +520,11 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     if (any_missing_dtypes || (flags&NPY_ITER_COMMON_DATA_TYPE)) {
         PyArray_Descr *dtype;
+        int only_inputs = !(flags&NPY_ITER_COMMON_DATA_TYPE);
 
-        dtype = npyiter_get_output_type(niter, op, op_ndim,
-                                    op_itflags, op_dtype);
+        dtype = npyiter_get_common_type(niter, op, op_ndim,
+                                    op_itflags, op_dtype,
+                                    only_inputs);
         if (dtype == NULL) {
             NpyIter_Deallocate(iter);
             return NULL;
@@ -1783,20 +1786,20 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_READ) &&
                         !npyiter_can_cast(op_flags[iiter],
                                 PyArray_DESCR(op[iiter]), op_dtype[iiter])) {
-                PyErr_SetString(PyExc_TypeError,
-                        "Iterator input dtype could not be cast "
+                PyErr_Format(PyExc_TypeError,
+                        "Iterator operand %d dtype could not be cast "
                         "to the requested dtype, according to "
-                        "the casting flags given");
+                        "the casting flags given", (int)iiter);
                 return 0;
             }
             /* Check write (temp -> op) casting */
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
                         !npyiter_can_cast(op_flags[iiter],
                                 op_dtype[iiter], PyArray_DESCR(op[iiter]))) {
-                PyErr_SetString(PyExc_TypeError,
+                PyErr_Format(PyExc_TypeError,
                         "Iterator requested dtype could not be cast "
-                        "to the input dtype, according to "
-                        "the casting flags given");
+                        "to the operand %d dtype, according to "
+                        "the casting flags given", (int)iiter);
                 return 0;
             }
 
@@ -2734,9 +2737,15 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     return ret;
 }
 
+/*
+ * Calculates a dtype that all the types can be promoted to, using the
+ * ufunc rules.  If only_inputs is 1, it leaves any operands that
+ * are not read from out of the calculation.
+ */
 static PyArray_Descr *
-npyiter_get_output_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
-                        char *op_itflags, PyArray_Descr **op_dtype)
+npyiter_get_common_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
+                        char *op_itflags, PyArray_Descr **op_dtype,
+                        int only_inputs)
 {
     PyArray_Descr *scalar_dtype = NULL, *array_dtype = NULL;
     int scalar_kind = NPY_NOSCALAR;
@@ -2744,8 +2753,8 @@ npyiter_get_output_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
 
     /* First promote all the scalar dtypes */
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_ndim[iiter] == 0 &&
-                            (op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
+        if (op_ndim[iiter] == 0 && op_dtype[iiter] != NULL &&
+                    (!only_inputs || (op_itflags[iiter]&NPY_OP_ITFLAG_READ))) {
             if (scalar_dtype == NULL) {
                 scalar_dtype = op_dtype[iiter];
                 Py_INCREF(scalar_dtype);
@@ -2797,8 +2806,8 @@ npyiter_get_output_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
 
     /* Then promote all the array dtypes */
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_ndim[iiter] > 0 &&
-                            (op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
+        if (op_ndim[iiter] > 0 && op_dtype[iiter] != NULL &&
+                    (!only_inputs || (op_itflags[iiter]&NPY_OP_ITFLAG_READ))) {
             if (array_dtype == NULL) {
                 array_dtype = op_dtype[iiter];
                 Py_INCREF(array_dtype);

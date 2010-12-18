@@ -211,8 +211,12 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     /* op_flags */
     if (op_flags_in == NULL) {
         for (iiter = 0; iiter < niter; ++iiter) {
+            /*
+             * By default, make writeable arrays readwrite, and anything
+             * else readonly.
+             */
             if (op[iiter] != NULL && PyArray_Check(op[iiter]) &&
-                PyArray_CHKFLAGS(op[iiter], NPY_WRITEABLE)) {
+                            PyArray_CHKFLAGS(op[iiter], NPY_WRITEABLE)) {
                 op_flags[iiter] = NPY_ITER_READWRITE;
             }
             else {
