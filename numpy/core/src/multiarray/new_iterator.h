@@ -79,27 +79,52 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(PyArray_NpyIter *iter);
 NPY_NO_EXPORT void NpyIter_DebugPrint(PyArray_NpyIter *iter);
 
 
-/* Global flags that may be passed to the iterator constructors */
+/*** Global flags that may be passed to the iterator constructors ***/
+
+/* Track an index representing C order */
 #define NPY_ITER_C_ORDER_INDEX              0x00000001
+/* Track an index representing F order */
 #define NPY_ITER_F_ORDER_INDEX              0x00000002
+/* Track coordinates */
 #define NPY_ITER_COORDS                     0x00000004
+/* Iterate in C order */
 #define NPY_ITER_FORCE_C_ORDER              0x00000008
+/* Iterate in F order */
 #define NPY_ITER_FORCE_F_ORDER              0x00000010
-#define NPY_ITER_FORCE_ANY_CONTIGUOUS       0x00000020
+/* Iterate in F order if all operands are F contiguous, C order otherwise */
+#define NPY_ITER_FORCE_C_OR_F_ORDER         0x00000020
+/* Let the caller handle the inner loop of iteration */
 #define NPY_ITER_NO_INNER_ITERATION         0x00000040
-#define NPY_ITER_OFFSETS                    0x00000080
-/* Per-operand flags that may be passed to the iterator constructors */
+/* Convert all the operands to a common data type */
+#define NPY_ITER_COMMON_DATA_TYPE           0x00000080
+/* Produce offsets instead of pointers into the data */
+#define NPY_ITER_OFFSETS                    0x00000100
+
+/*** Per-operand flags that may be passed to the iterator constructors ***/
+
+/* The operand will be read from and written to */
 #define NPY_ITER_READWRITE                  0x00010000
+/* The operand will only be read from */
 #define NPY_ITER_READONLY                   0x00020000
+/* The operand will only be written to */
 #define NPY_ITER_WRITEONLY                  0x00040000
+/* The operand's data must be in native byte order and aligned */
 #define NPY_ITER_NBO_ALIGNED                0x00080000
-#define NPY_ITER_ALLOW_COPY                 0x00100000
-#define NPY_ITER_ALLOW_UPDATEIFCOPY         0x00200000
-#define NPY_ITER_ALLOW_SAFE_CASTS           0x00400000
-#define NPY_ITER_ALLOW_SAME_KIND_CASTS      0x00800000
-#define NPY_ITER_ALLOW_UNSAFE_CASTS         0x01000000
-#define NPY_ITER_ALLOW_WRITEABLE_REFERENCES 0x02000000
+/* The operand may be copied to satisfy requirements */
+#define NPY_ITER_COPY                       0x00100000
+/* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
+#define NPY_ITER_UPDATEIFCOPY               0x00200000
+/* Allow safe casts to be used when converting data */
+#define NPY_ITER_SAFE_CASTS                 0x00400000
+/* Allow casts within types of the same kind to be used when converting data */
+#define NPY_ITER_SAME_KIND_CASTS            0x00800000
+/* Allow any casts when converting data */
+#define NPY_ITER_UNSAFE_CASTS               0x01000000
+/* Allow writeable operands to have references or pointers */
+#define NPY_ITER_WRITEABLE_REFERENCES       0x02000000
+/* Allocate the operand if it is NULL */
 #define NPY_ITER_ALLOCATE                   0x04000000
+/* If an operand is allocated, don't use the priority subtype */
 #define NPY_ITER_NO_SUBTYPE                 0x08000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff

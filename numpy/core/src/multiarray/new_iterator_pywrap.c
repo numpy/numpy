@@ -139,15 +139,20 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             /* Use switch statements to quickly isolate the right flag */
             switch (str[0]) {
                 case 'c':
-                    switch (str[1]) {
-                        case '_':
+                    if (length >= 6) switch (str[5]) {
+                        case 'e':
                             if (strcmp(str, "c_order_index") == 0) {
                                 flag = NPY_ITER_C_ORDER_INDEX;
                             }
                             break;
-                        case 'o':
+                        case 's':
                             if (strcmp(str, "coords") == 0) {
                                 flag = NPY_ITER_COORDS;
+                            }
+                            break;
+                        case 'n':
+                            if (strcmp(str, "common_data_type") == 0) {
+                                flag = NPY_ITER_COMMON_DATA_TYPE;
                             }
                             break;
                     }
@@ -163,16 +168,15 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                             if (strcmp(str, "force_c_order") == 0) {
                                 flag = NPY_ITER_FORCE_C_ORDER;
                             }
+                            else if (strcmp(str, "force_c_or_f_order") == 0) {
+                                flag = NPY_ITER_FORCE_C_OR_F_ORDER;
+                            }
                             break;
                         case 'f':
                             if (strcmp(str, "force_f_order") == 0) {
                                 flag = NPY_ITER_FORCE_F_ORDER;
                             }
                             break;
-                        case 'a':
-                            if (strcmp(str, "force_any_contiguous") == 0) {
-                                flag = NPY_ITER_FORCE_ANY_CONTIGUOUS;
-                            }
                             break;
                     }
                     break;
@@ -248,23 +252,14 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 }
                 /* Use switch statements to quickly isolate the right flag */
                 switch (str[0]) {
-                    case 'r':
-                        if (length >= 8) switch (str[4]) {
-                            case 'w':
-                                if (strcmp(str, "readwrite") == 0) {
-                                    flag = NPY_ITER_READWRITE;
-                                }
-                                break;
-                            case 'o':
-                                if (strcmp(str, "readonly") == 0) {
-                                    flag = NPY_ITER_READONLY;
-                                }
-                                break;
+                    case 'a':
+                        if (strcmp(str, "allocate") == 0) {
+                            flag = NPY_ITER_ALLOCATE;
                         }
                         break;
-                    case 'w':
-                        if (strcmp(str, "writeonly") == 0) {
-                            flag = NPY_ITER_WRITEONLY;
+                    case 'c':
+                        if (strcmp(str, "copy") == 0) {
+                            flag = NPY_ITER_COPY;
                         }
                         break;
                     case 'n':
@@ -281,43 +276,59 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                                 break;
                         }
                         break;
-                    case 'a':
-                        if (length >= 8) switch (str[8]) {
-                            case 'p':
-                                if (strcmp(str, "allow_copy") == 0) {
-                                    flag = NPY_ITER_ALLOW_COPY;
+                    case 'r':
+                        if (length > 4) switch (str[4]) {
+                            case 'o':
+                                if (strcmp(str, "readonly") == 0) {
+                                    flag = NPY_ITER_READONLY;
                                 }
                                 break;
-                            case 'd':
-                                if (strcmp(str, "allow_updateifcopy") == 0) {
-                                    flag = NPY_ITER_ALLOW_UPDATEIFCOPY;
+                            case 'w':
+                                if (strcmp(str, "readwrite") == 0) {
+                                    flag = NPY_ITER_READWRITE;
                                 }
                                 break;
+                        }
+                        break;
+                    case 's':
+                        if (length > 2) switch (str[2]) {
                             case 'f':
-                                if (strcmp(str, "allow_safe_casts") == 0) {
-                                    flag = NPY_ITER_ALLOW_SAFE_CASTS;
+                                if (strcmp(str, "safe_casts") == 0) {
+                                    flag = NPY_ITER_SAFE_CASTS;
                                 }
                                 break;
                             case 'm':
+                                if (strcmp(str, "same_kind_casts") == 0) {
+                                    flag = NPY_ITER_SAME_KIND_CASTS;
+                                }
+                                break;
+                        }
+                        break;
+                    case 'u':
+                        switch (str[1]) {
+                            case 'n':
+                                if (strcmp(str, "unsafe_casts") == 0) {
+                                    flag = NPY_ITER_UNSAFE_CASTS;
+                                }
+                                break;
+                            case 'p':
+                                if (strcmp(str, "updateifcopy") == 0) {
+                                    flag = NPY_ITER_UPDATEIFCOPY;
+                                }
+                                break;
+                        }
+                        break;
+                    case 'w':
+                        if (length > 5) switch (str[5]) {
+                            case 'a':
                                 if (strcmp(str,
-                                               "allow_same_kind_casts") == 0) {
-                                    flag = NPY_ITER_ALLOW_SAME_KIND_CASTS;
+                                                "writeable_references") == 0) {
+                                    flag = NPY_ITER_WRITEABLE_REFERENCES;
                                 }
                                 break;
-                            case 's':
-                                if (strcmp(str, "allow_unsafe_casts") == 0) {
-                                    flag = NPY_ITER_ALLOW_UNSAFE_CASTS;
-                                }
-                                break;
-                            case 'i':
-                                if (strcmp(str,
-                                          "allow_writeable_references") == 0) {
-                                    flag = NPY_ITER_ALLOW_WRITEABLE_REFERENCES;
-                                }
-                                break;
-                            case 0: /* zero terminator, size==8 */
-                                if (strcmp(str, "allocate") == 0) {
-                                    flag = NPY_ITER_ALLOCATE;
+                            case 'o':
+                                if (strcmp(str, "writeonly") == 0) {
+                                    flag = NPY_ITER_WRITEONLY;
                                 }
                                 break;
                         }
