@@ -30,6 +30,38 @@ struct NewNpyArrayIterObject_tag {
     char writeflags[NPY_MAXARGS];
 };
 
+void npyiter_cache_values(NewNpyArrayIterObject *self)
+{
+    NpyIter *iter = self->iter;
+
+    /* iternext and getcoords functions */
+    self->iternext = NpyIter_GetIterNext(iter);
+    if (NpyIter_HasCoords(iter)) {
+        self->getcoords = NpyIter_GetGetCoords(iter);
+    }
+    else {
+        self->getcoords = NULL;
+    }
+
+    /* Internal data pointers */
+    self->dataptrs = NpyIter_GetDataPtrArray(iter);
+    self->dtypes = NpyIter_GetDescrArray(iter);
+    self->objects = NpyIter_GetObjectArray(iter);
+
+    if (NpyIter_HasInnerLoop(iter)) {
+        self->innerstrides = NULL;
+        self->innerloopsizeptr = NULL;
+    }
+    else {
+        self->innerstrides = NpyIter_GetInnerStrideArray(iter);
+        self->innerloopsizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+    }
+
+    /* The read/write settings */
+    NpyIter_GetReadFlags(iter, self->readflags);
+    NpyIter_GetWriteFlags(iter, self->writeflags);
+}
+
 static PyObject *
 npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
@@ -506,30 +538,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* Cache some values for the member functions to use */
-    self->iternext = NpyIter_GetIterNext(self->iter);
-    if (NpyIter_HasCoords(self->iter)) {
-        self->getcoords = NpyIter_GetGetCoords(self->iter);
-    }
-    else {
-        self->getcoords = NULL;
-    }
-
-    self->dataptrs = NpyIter_GetDataPtrArray(self->iter);
-    self->dtypes = NpyIter_GetDescrArray(self->iter);
-    self->objects = NpyIter_GetObjectArray(self->iter);
-
-    if (NpyIter_HasInnerLoop(self->iter)) {
-        self->innerstrides = NULL;
-        self->innerloopsizeptr = NULL;
-    }
-    else {
-        self->innerstrides = NpyIter_GetInnerStrideArray(self->iter);
-        self->innerloopsizeptr = NpyIter_GetInnerLoopSizePtr(self->iter);
-    }
-
-    /* Get the read/write settings */
-    NpyIter_GetReadFlags(self->iter, self->readflags);
-    NpyIter_GetWriteFlags(self->iter, self->writeflags);
+    npyiter_cache_values(self);
 
     /* Release the references we got to the ops and dtypes */
     for (iiter = 0; iiter < niter; ++iiter) {
@@ -560,10 +569,14 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_reset(NewNpyArrayIterObject *self)
 {
-    if (self->iter) {
-        NpyIter_Reset(self->iter);
-        self->finished = 0;
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was not constructed correctly");
+        return NULL;
     }
+
+    NpyIter_Reset(self->iter);
+    self->finished = 0;
 
     Py_RETURN_NONE;
 }
@@ -578,6 +591,42 @@ npyiter_iternext(NewNpyArrayIterObject *self)
         self->finished = 1;
         Py_RETURN_FALSE;
     }
+}
+
+static PyObject *
+npyiter_remove_coords(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was not constructed correctly");
+        return NULL;
+    }
+
+    NpyIter_RemoveCoords(self->iter);
+    /* RemoveCoords invalidates cached values */
+    npyiter_cache_values(self);
+    /* RemoveCoords also resets the iterator */
+    self->finished = 0;
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+npyiter_remove_inner_loop(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was not constructed correctly");
+        return NULL;
+    }
+
+    NpyIter_RemoveInnerLoop(self->iter);
+    /* RemoveInnerLoop invalidates cached values */
+    npyiter_cache_values(self);
+    /* RemoveInnerLoop also resets the iterator */
+    self->finished = 0;
+
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -1081,10 +1130,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         return -1;
     }
     niter = NpyIter_GetNIter(self->iter);
-    /* Python negative indexing */
-    if (i < 0) {
-        i += niter;
-    }
     if (i < 0 || i >= niter) {
         PyErr_Format(PyExc_IndexError,
                 "Iterator operand index  %d is out of bounds", (int)i);
@@ -1100,16 +1145,17 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     dtype = self->dtypes[i];
     object = self->objects[i];
 
-    /*
-     * TODO: When buffering is enabled for an operand, the object won't
-     *       correspond to the data, so that will have to be accounted for
-     */
     if (NpyIter_HasInnerLoop(self->iter)) {
+        /*
+         * TODO: When buffering is enabled for an operand, the object won't
+         *       correspond to the data, so that will have to be accounted for
+         */
         return dtype->f->setitem(v, dataptr, object);
     } else {
         PyArrayObject *tmp;
         int ret;
         Py_INCREF(dtype);
+        /* TODO - there should be a better way than this... */
         tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
                                     1, self->innerloopsizeptr,
                                     &self->innerstrides[i], dataptr,
@@ -1127,6 +1173,9 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 static PyMethodDef npyiter_methods[] = {
     {"reset", (PyCFunction)npyiter_reset, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
+    {"remove_coords", (PyCFunction)npyiter_remove_coords, METH_NOARGS, NULL},
+    {"remove_inner_loop", (PyCFunction)npyiter_remove_inner_loop,
+                METH_NOARGS, NULL},
     {"debug_print", (PyCFunction)npyiter_debug_print, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };

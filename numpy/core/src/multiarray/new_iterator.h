@@ -24,6 +24,11 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes);
 
+/* Removes coords support from an iterator */
+int NpyIter_RemoveCoords(NpyIter *iter);
+/* Removes the inner loop handling (adds NPY_ITER_NO_INNER_ITERATION) */
+int NpyIter_RemoveInnerLoop(NpyIter *iter);
+
 /* Deallocate an iterator */
 int NpyIter_Deallocate(NpyIter* iter);
 

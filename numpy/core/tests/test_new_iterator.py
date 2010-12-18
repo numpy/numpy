@@ -810,8 +810,11 @@ def test_iter_common_data_type():
                     [['readonly','copy','same_kind_casts']]*2)
     assert_equal(i.dtypes[0], np.dtype('f4'));
     assert_equal(i.dtypes[1], np.dtype('f4'));
+    # TODO
     # This case is weird - the scalar/array combination produces a cast
     # classified as unsafe.  I think this NumPy rule needs to be revisited.
+    # For example, when the scalar is writeable, a negative value could
+    # be written during iteration, invalidating the scalar kind assumed!
     i = newiter([array([3],dtype='u4'),array(0,dtype='i4')],
                     ['common_data_type'],
                     [['readonly','copy','unsafe_casts']]*2)
@@ -1061,6 +1064,32 @@ def test_iter_allocate_output_errors():
                         [['readonly'],['writeonly','allocate']],
                         op_dtypes=[None,np.dtype('f4')],
                         op_axes=[None,[0,2,1,0]])
+
+def test_iter_remove_coords_inner_loop():
+    # Check that removing coords support works
+
+    a = arange(24).reshape(2,3,4)
+
+    i = newiter(a,['coords'])
+    assert_equal(i.ndim, 3)
+    assert_equal(i.shape, (2,3,4))
+    assert_equal(i.itviews[0].shape, (2,3,4))
+
+    # Removing coords causes all dimensions to coalesce
+    before = [x for x in i]
+    i.remove_coords()
+    after = [x for x in i]
+
+    assert_equal(before, after)
+    assert_equal(i.ndim, 1)
+    assert_raises(ValueError, lambda i:i.shape, i)
+    assert_equal(i.itviews[0].shape, (24,))
+
+    # Removing the inner loop means there's just one iteration
+    assert_equal(i.itersize, 24)
+    i.remove_inner_loop()
+    assert_equal(i.itersize, 1)
+    assert_equal(i.value, arange(24))
 
 if __name__ == "__main__":
     run_module_suite()

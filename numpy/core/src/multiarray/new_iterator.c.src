@@ -191,7 +191,7 @@ static void
 npyiter_shrink_ndim(NpyIter *iter, npy_intp new_ndim);
 
 static PyArray_Descr *
-npyiter_get_common_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
+npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
                         char *op_itflags, PyArray_Descr **op_dtype,
                         int only_inputs);
 static int
@@ -522,7 +522,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         PyArray_Descr *dtype;
         int only_inputs = !(flags&NPY_ITER_COMMON_DATA_TYPE);
 
-        dtype = npyiter_get_common_type(niter, op, op_ndim,
+        dtype = npyiter_get_common_dtype(niter, op, op_ndim,
                                     op_itflags, op_dtype,
                                     only_inputs);
         if (dtype == NULL) {
@@ -711,6 +711,55 @@ int NpyIter_Deallocate(NpyIter *iter)
 
     /* Deallocate the iterator memory */
     PyArray_free(iter);
+
+    return NPY_SUCCEED;
+}
+
+/* Removes coords support from the iterator */
+int NpyIter_RemoveCoords(NpyIter *iter)
+{
+    npy_uint32 itflags;
+
+    /* Make sure the iterator is reset */
+    NpyIter_Reset(iter);
+
+    itflags = NIT_ITFLAGS(iter);
+    if (itflags&NPY_ITFLAG_HASCOORDS) {
+        NIT_ITFLAGS(iter) = itflags & ~NPY_ITFLAG_HASCOORDS;
+        npyiter_coalesce_axes(iter);
+    }
+
+    return NPY_SUCCEED;
+}
+
+/* Removes the inner loop handling (adds NPY_ITER_NO_INNER_ITERATION) */
+int NpyIter_RemoveInnerLoop(NpyIter *iter)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);;
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    char *axisdata;
+
+    /* Check conditions under which this can be done */
+    if (itflags&(NPY_ITFLAG_HASINDEX|NPY_ITFLAG_HASCOORDS)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator flag NO_INNER_ITERATION cannot be used "
+                "if coords or an index is being tracked");
+        return NPY_FAIL;
+    }
+    /* Set the flag */
+    if (!(itflags&NPY_ITFLAG_NOINNER)) {
+        itflags |= NPY_ITFLAG_NOINNER;
+        NIT_ITFLAGS(iter) = itflags;
+        
+        /* Adjust ITERSIZE */
+        axisdata = NIT_AXISDATA(iter);
+        NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata);
+    }
+
+    /* Reset the iterator */
+    NpyIter_Reset(iter);
 
     return NPY_SUCCEED;
 }
@@ -2743,7 +2792,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
  * are not read from out of the calculation.
  */
 static PyArray_Descr *
-npyiter_get_common_type(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
+npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
                         char *op_itflags, PyArray_Descr **op_dtype,
                         int only_inputs)
 {
