@@ -16,13 +16,13 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 /* Allocate a new iterator over one array object */
 NpyIter*
 NpyIter_New(PyArrayObject* op, npy_uint32 flags, PyArray_Descr* dtype,
-                  npy_intp a_ndim, npy_intp *axes);
+                  npy_intp a_ndim, npy_intp *axes, npy_intp buffersize);
 
 /* Allocate a new iterator over multiple array objects */
 NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
-                 npy_intp oa_ndim, npy_intp **op_axes);
+                 npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize);
 
 /* Removes coords support from an iterator */
 int NpyIter_RemoveCoords(NpyIter *iter);
@@ -107,6 +107,10 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_COMMON_DATA_TYPE           0x00000080
 /* Produce offsets instead of pointers into the data */
 #define NPY_ITER_OFFSETS                    0x00000100
+/* Enables buffering */
+#define NPY_ITER_BUFFERED                   0x00000200
+/* Enables buffering, and grows the inner loop when possible */
+#define NPY_ITER_BUFFERED_GROWINNER         0x00000400
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 

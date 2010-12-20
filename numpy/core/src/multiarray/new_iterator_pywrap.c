@@ -79,12 +79,12 @@ static int
 npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"op", "flags", "op_flags", "op_dtypes",
-                             "op_axes"};
+                             "op_axes", "buffersize"};
 
     PyObject *op_in, *flags_in = NULL, *op_flags_in = NULL,
                 *op_dtypes_in = NULL, *op_axes_in = NULL;
 
-    npy_intp iiter;
+    npy_intp iiter, buffersize = 0;
 
     npy_intp niter = 0;
     PyArrayObject *op[NPY_MAXARGS];
@@ -101,9 +101,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOOi", kwlist,
                     &op_in, &flags_in, &op_flags_in, &op_dtypes_in,
-                    &op_axes_in)) {
+                    &op_axes_in, &buffersize)) {
         return -1;
     }
 
@@ -170,6 +170,14 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             }
             /* Use switch statements to quickly isolate the right flag */
             switch (str[0]) {
+                case 'b':
+                    if (strcmp(str, "buffered") == 0) {
+                        flag = NPY_ITER_BUFFERED;
+                    }
+                    else if (strcmp(str, "buffered_growinner") == 0) {
+                        flag = NPY_ITER_BUFFERED_GROWINNER;
+                    }
+                    break;
                 case 'c':
                     if (length >= 6) switch (str[5]) {
                         case 'e':
@@ -531,7 +539,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     self->iter = NpyIter_MultiNew(niter, op, flags, op_flags,
                                   (PyArray_Descr**)op_request_dtypes,
-                                  oa_ndim, oa_ndim > 0 ? op_axes : NULL);
+                                  oa_ndim, oa_ndim > 0 ? op_axes : NULL,
+                                  buffersize);
 
     if (self->iter == NULL) {
         goto fail;
