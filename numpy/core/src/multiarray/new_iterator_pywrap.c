@@ -17,8 +17,8 @@ struct NewNpyArrayIterObject_tag {
     PyObject_HEAD
     /* The iterator */
     NpyIter *iter;
-    /* Flag indicating iteration stopped */
-    char finished;
+    /* Flag indicating iteration started/stopped */
+    char started, finished;
     /* Cached values from the iterator */
     NpyIter_IterNext_Fn iternext;
     NpyIter_GetCoords_Fn getcoords;
@@ -549,6 +549,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     /* Cache some values for the member functions to use */
     npyiter_cache_values(self);
 
+    self->started = 0;
+    self->finished = 0;
+
     /* Release the references we got to the ops and dtypes */
     for (iiter = 0; iiter < niter; ++iiter) {
         Py_XDECREF(op[iiter]);
@@ -585,6 +588,7 @@ npyiter_reset(NewNpyArrayIterObject *self)
     }
 
     NpyIter_Reset(self->iter);
+    self->started = 0;
     self->finished = 0;
 
     Py_RETURN_NONE;
@@ -615,6 +619,7 @@ npyiter_remove_coords(NewNpyArrayIterObject *self)
     /* RemoveCoords invalidates cached values */
     npyiter_cache_values(self);
     /* RemoveCoords also resets the iterator */
+    self->started = 0;
     self->finished = 0;
 
     Py_RETURN_NONE;
@@ -633,6 +638,7 @@ npyiter_remove_inner_loop(NewNpyArrayIterObject *self)
     /* RemoveInnerLoop invalidates cached values */
     npyiter_cache_values(self);
     /* RemoveInnerLoop also resets the iterator */
+    self->started = 0;
     self->finished = 0;
 
     Py_RETURN_NONE;
@@ -765,22 +771,23 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
-    PyObject *ret;
-
     if (self->iter == NULL || self->finished) {
         return NULL;
     }
 
-    ret = npyiter_value_get(self);
-    if (ret == NULL) {
-        return NULL;
+    /*
+     * Use the started flag for the Python iteration protocol to work
+     * when buffering is enabled.
+     */
+    if (self->started) {
+        if (!self->iternext(self->iter)) {
+            self->finished = 1;
+            return NULL;
+        }
     }
+    self->started = 1;
 
-    if (!self->iternext(self->iter)) {
-        self->finished = 1;
-    }
-    
-    return ret;
+    return npyiter_value_get(self);
 };
 
 static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
@@ -875,6 +882,7 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
         if (NpyIter_GotoCoords(self->iter, coords) != NPY_SUCCEED) {
             return -1;
         }
+        self->started = 0;
         self->finished = 0;
         
         return 0;
@@ -928,6 +936,7 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
         if (NpyIter_GotoIndex(self->iter, index) != NPY_SUCCEED) {
             return -1;
         }
+        self->started = 0;
         self->finished = 0;
         return 0;
     }
@@ -1123,10 +1132,11 @@ NPY_NO_EXPORT int
 npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 {
 
-    npy_intp niter;
+    npy_intp niter, innerloopsize, innerstride;
     char *dataptr;
     PyArray_Descr *dtype;
-    PyArrayObject *object;
+    PyArrayObject *tmp;
+    int ret;
 
     if (v == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1152,31 +1162,29 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 
     dataptr = self->dataptrs[i];
     dtype = self->dtypes[i];
-    object = self->objects[i];
 
     if (NpyIter_HasInnerLoop(self->iter)) {
-        /*
-         * TODO: When buffering is enabled for an operand, the object won't
-         *       correspond to the data, so that will have to be accounted for
-         */
-        return dtype->f->setitem(v, dataptr, object);
-    } else {
-        PyArrayObject *tmp;
-        int ret;
-        Py_INCREF(dtype);
-        /* TODO - there should be a better way than this... */
-        tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                    1, self->innerloopsizeptr,
-                                    &self->innerstrides[i], dataptr,
-                                    NPY_WRITEABLE, NULL);
-        if (tmp == NULL) {
-            return -1;
-        }
-        PyArray_UpdateFlags(tmp, NPY_UPDATE_ALL);
-        ret = PyArray_CopyObject(tmp, v);
-        Py_DECREF(tmp);
-        return ret;
+        innerloopsize = 1;
+        innerstride = 0;
     }
+    else {
+        innerloopsize = *self->innerloopsizeptr;
+        innerstride = self->innerstrides[i];
+    }
+
+    /* TODO - there should be a better way than this... */
+    Py_INCREF(dtype);
+    tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
+                                1, &innerloopsize,
+                                &innerstride, dataptr,
+                                NPY_WRITEABLE, NULL);
+    if (tmp == NULL) {
+        return -1;
+    }
+    PyArray_UpdateFlags(tmp, NPY_UPDATE_ALL);
+    ret = PyArray_CopyObject(tmp, v);
+    Py_DECREF(tmp);
+    return ret;
 }
 
 static PyMethodDef npyiter_methods[] = {

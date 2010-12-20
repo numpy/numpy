@@ -1091,5 +1091,66 @@ def test_iter_remove_coords_inner_loop():
     assert_equal(i.itersize, 1)
     assert_equal(i.value, arange(24))
 
+def test_iter_buffering():
+    # Test buffering with several buffer sizes and types
+    arrays = []
+    # F-order swapped array
+    arrays.append(np.arange(24,
+                    dtype='c16').reshape(2,3,4).T.newbyteorder().byteswap())
+    # Contiguous 1-dimensional array
+    arrays.append(np.arange(10, dtype='f4'))
+    # Unaligned array
+    a = np.zeros((4*16+1,), dtype='i1')[1:]
+    a.dtype = 'i4'
+    a[:] = np.arange(16,dtype='i4')
+    arrays.append(a)
+    for a in arrays:
+        for buffersize in (1,2,3,5,8,11,16,1024):
+            vals = []
+            i = np.newiter(a, ['buffered','no_inner_iteration','force_c_order'],
+                           [['readonly','nbo_aligned']],
+                           buffersize=buffersize)
+            while not i.finished:
+                assert_(i[0].size <= buffersize)
+                vals.append(i[0].copy())
+                i.iternext()
+            assert_equal(np.concatenate(vals), a.ravel(order='C'))
+
+def test_iter_write_buffering():
+    # Test that buffering of writes is working
+
+    # F-order swapped array
+    a = np.arange(24).reshape(2,3,4).T.newbyteorder().byteswap()
+    i = np.newiter(a, ['buffered','force_c_order'],
+                   [['readwrite','nbo_aligned']],
+                   buffersize=16)
+    x = 0
+    while not i.finished:
+        i[0] = x
+        x += 1
+        i.iternext()
+    assert_equal(a.ravel(order='C'), np.arange(24))
+
+def test_iter_cast_buffering():
+    # Test that buffering can handle a simple cast
+
+    a = np.arange(10, dtype='f4')
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   op_dtypes=[np.dtype('f8')],
+                   buffersize=3)
+    for v in i:
+        print v
+        v[()] *= 2
+    
+    assert_equal(a, 2*np.arange(10, dtype='f4'))
+
+def test_iter_buffering_growinner():
+    # Test that the inner loop grows when no buffering is needed
+    a = np.arange(30)
+    i = np.newiter(a, ['buffered_growinner','no_inner_iteration'], buffersize=5)
+    # Should end up with just one inner loop here
+    assert_equal(i[0].size, a.size)
+
 if __name__ == "__main__":
     run_module_suite()

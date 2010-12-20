@@ -766,7 +766,7 @@ PyArray_GetTransferFunction(int aligned,
         /* TODO wrap the cast in an alignment operation */
     }
 
-    /* TODO: write more complicated transfer code! */
+    /* TODO: write the more complicated transfer code! */
     *outstransfer = NULL;
     *outtransferdata = NULL;
     PyErr_SetString(PyExc_RuntimeError,
