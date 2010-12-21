@@ -1140,7 +1140,6 @@ def test_iter_cast_buffering():
                    op_dtypes=[np.dtype('f8')],
                    buffersize=3)
     for v in i:
-        print v
         v[()] *= 2
     
     assert_equal(a, 2*np.arange(10, dtype='f4'))

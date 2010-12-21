@@ -1113,10 +1113,8 @@ int NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
 /**begin repeat
  * #const_itflags = 0,
  *                  NPY_ITFLAG_HASINDEX,
- *                  NPY_ITFLAG_NOINNER,
- *                  NPY_ITFLAG_BUFFER,
- *                  NPY_ITFLAG_HASINDEX|NPY_ITFLAG_BUFFER#
- * #tag_itflags = 0, IND, NOINN, BUF, INDuBUF#
+ *                  NPY_ITFLAG_NOINNER#
+ * #tag_itflags = 0, IND, NOINN#
  */
 /**begin repeat1
  * #const_ndim = 1, 2, 100#
