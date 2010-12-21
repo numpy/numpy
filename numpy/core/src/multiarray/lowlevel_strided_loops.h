@@ -75,13 +75,13 @@ PyArray_GetStridedCopySwapPairFn(npy_intp aligned, npy_intp src_stride,
  * If it's possible, gives back a transfer function which casts and/or
  * byte swaps data with the dtype 'from' into data with the dtype 'to'.
  * If the outtransferdata is populated with a non-NULL value, it
- * must be deallocated with the PyArray_free function when the transfer
- * function is no longer required.
+ * must be deallocated with the ``PyArray_FreeStridedTransferData``
+ * function when the transfer function is no longer required.
  *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
 NPY_NO_EXPORT int
-PyArray_GetTransferFunction(int aligned,
+PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *from, PyArray_Descr *to,
                             PyArray_StridedTransferFn *outstransfer,

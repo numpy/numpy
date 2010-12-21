@@ -788,7 +788,7 @@ PyArray_WrapTransferFunction(npy_intp src_itemsize, npy_intp dst_itemsize,
 
 
 NPY_NO_EXPORT int
-PyArray_GetTransferFunction(int aligned,
+PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             PyArray_StridedTransferFn *outstransfer,

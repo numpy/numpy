@@ -50,8 +50,6 @@
 #define NPY_OP_ITFLAG_COPYSWAP     0x10
 /* The operand never needs buffering */
 #define NPY_OP_ITFLAG_BUFNEVER     0x20
-/* The operand needs to be byte-swapped */
-#define NPY_OP_ITFLAG_BUFSWAP      0x40
 /* The operand is aligned */
 #define NPY_OP_ITFLAG_ALIGNED      0x80
 
@@ -656,8 +654,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             npyiter_replace_axisdata(iter, iiter, op[iiter], op_ndim[iiter],
                     PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
 
-            /* Newly allocated arrays need no buffering */
-            op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
+            /* New arrays are aligned and need no swapping or casting */
+            op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~(NPY_OP_ITFLAG_COPYSWAP|NPY_OP_ITFLAG_CAST);
         }
         else if ((op_itflags[iiter]&
@@ -703,8 +701,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             npyiter_replace_axisdata(iter, iiter, op[iiter], op_ndim[iiter],
                     PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
 
-            /* Copied arrays need no buffering */
-            op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
+            /* Now it is aligned, and no longer needs a swap or cast */
+            op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~(NPY_OP_ITFLAG_COPYSWAP|NPY_OP_ITFLAG_CAST);
         }
         else {
@@ -729,17 +727,83 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             if (PyArray_ISALIGNED(op[iiter])) {
                 op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             }
-
-            /*
-             * If the operand has a different byte order than the
-             * desired data type, need a swap
-             */
-            if (PyArray_ISNBO(PyArray_DESCR(op[iiter])->byteorder) !=
-                    PyArray_ISNBO(op_dtype[iiter]->byteorder)) {
-                op_itflags[iiter] |= NPY_OP_ITFLAG_BUFSWAP;
-            }
         }
 
+        /*
+         * If no alignment, byte swap, or casting is needed, and
+         * the inner stride of this operand works for the whole
+         * array, we can set NPY_OP_ITFLAG_BUFNEVER.
+         * But, if buffering is enabled, write-buffering must be
+         * one-to-one, because the buffering write back won't combine
+         * values correctly. This test doesn't catch everything, but it will
+         * catch the most common case of a broadcasting a write-buffered
+         * dimension.
+         */
+        if ((itflags&NPY_ITFLAG_BUFFER) &&
+                        (!(op_itflags[iiter]&(NPY_OP_ITFLAG_CAST|
+                                             NPY_OP_ITFLAG_COPYSWAP)) ||
+                          (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE))) {
+            int is_one_to_one = 1;
+            npy_intp stride, shape, innerstride = 0, innershape;
+            char *axisdata = NIT_AXISDATA(iter);
+            npy_intp sizeof_axisdata =
+                                NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+            /* Find stride of the first non-empty shape */
+            for (idim = 0; idim < ndim; ++idim) {
+                innershape = NAD_SHAPE(axisdata);
+                if (innershape != 1) {
+                    innerstride = NAD_STRIDES(axisdata)[iiter];
+                    if (innerstride == 0) {
+                        is_one_to_one = 0;
+                    }
+                    break;
+                }
+                axisdata += sizeof_axisdata;
+            }
+            ++idim;
+            axisdata += sizeof_axisdata;
+            /* Check that everything could have coalesced together */
+            for (; idim < ndim; ++idim) {
+                stride = NAD_STRIDES(axisdata)[iiter];
+                shape = NAD_SHAPE(axisdata);
+                if (shape != 1) {
+                    if (stride == 0) {
+                        is_one_to_one = 0;
+                    }
+                    /*
+                     * If N times the inner stride doesn't equal this
+                     * stride, the multi-dimensionality is needed.
+                     */
+                    if (innerstride*innershape != stride) {
+                        break;
+                    }
+                    else {
+                        innershape *= shape;
+                    }
+                }
+                axisdata += sizeof_axisdata;
+            }
+            /*
+             * If we looped all the way to the end, one stride works.
+             * Set that stride, because it may not belong to the first
+             * dimension.
+             */
+            if (idim == ndim &&
+                        !(op_itflags[iiter]&(NPY_OP_ITFLAG_CAST|
+                                             NPY_OP_ITFLAG_COPYSWAP))) {
+                op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
+                NBF_STRIDES(bufferdata)[iiter] = innerstride;
+            }
+            else if (!is_one_to_one &&
+                        (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Iterator operand requires write buffering, "
+                        "but has dimensions which have been broadcasted "
+                        "and would be combined incorrectly");
+                NpyIter_Deallocate(iter);
+                return NULL;
+            }
+        }
     }
 
     /*
@@ -3288,7 +3352,7 @@ npyiter_allocate_buffers(NpyIter *iter)
 
             /* Also need to get an appropriate transfer functions */
             if (flags&NPY_OP_ITFLAG_READ) {
-                if (PyArray_GetTransferFunction(
+                if (PyArray_GetDTypeTransferFunction(
                                         (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_stride,
                                         op_dtype[iiter]->elsize,
@@ -3305,7 +3369,7 @@ npyiter_allocate_buffers(NpyIter *iter)
                 NBF_READTRANSFERFN(bufferdata)[iiter] = NULL;
             }
             if (flags&NPY_OP_ITFLAG_WRITE) {
-                if (PyArray_GetTransferFunction(
+                if (PyArray_GetDTypeTransferFunction(
                                         (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_dtype[iiter]->elsize,
                                         op_stride,
@@ -3321,6 +3385,10 @@ npyiter_allocate_buffers(NpyIter *iter)
             else {
                 NBF_WRITETRANSFERFN(bufferdata)[iiter] = NULL;
             }
+        }
+        else {
+            NBF_READTRANSFERFN(bufferdata)[iiter] = NULL;
+            NBF_WRITETRANSFERFN(bufferdata)[iiter] = NULL;
         }
     }
 
@@ -3548,43 +3616,27 @@ npyiter_copy_to_buffers(NpyIter *iter)
         transferdata = NBF_READTRANSFERDATA(bufferdata)[iiter];
         switch (op_itflags[iiter]&
                         (NPY_OP_ITFLAG_BUFNEVER|
-                         NPY_OP_ITFLAG_BUFSWAP|
-                         NPY_OP_ITFLAG_ALIGNED|
+                         NPY_OP_ITFLAG_COPYSWAP|
                          NPY_OP_ITFLAG_CAST)) {
             /* never need to buffer this operand */
             case NPY_OP_ITFLAG_BUFNEVER:
                 ptrs[iiter] = ad_ptrs[iiter];
-                strides[iiter] = ad_strides[iiter];
+                /*
+                 * Should not adjust the stride - ad_strides[iiter]
+                 * could be zero, but strides[iiter] was initialized
+                 * to the first non-trivial stride.
+                 */
                 stransfer = NULL;
                 break;
-            /* aligned copy*/
-            case NPY_OP_ITFLAG_ALIGNED:
-                /*
-                 * Since all we're doing is copying the data to make
-                 * it work with one stride, if it already does there's
-                 * no need to copy.
-                 */
-                if (is_onestride) {
-                    ptrs[iiter] = ad_ptrs[iiter];
-                    strides[iiter] = ad_strides[iiter];
-                    stransfer = NULL;
-                }
-                else {
-                    /* In this case, the buffer is being used */
-                    ptrs[iiter] = buffers[iiter];
-                    strides[iiter] = dtypes[iiter]->elsize;
-                }
-                break;
-            /* unaligned copy */
+            /* just a copy */
             case 0:
                 /*
-                 * If aligned data wasn't requested (as seen by the
-                 * copyswap flag not being set), all we're doing is
-                 * copying the data to make it work with one stride.
-                 * If it already does there's no need to copy.
+                 * No copyswap or cast was requested, so all we're
+                 * doing is copying the data to fill the buffer and
+                 * produce a single stride.  If the underlying data
+                 * already does that, no need to copy it.
                  */
-                if (is_onestride &&
-                            !(op_itflags[iiter]&NPY_OP_ITFLAG_COPYSWAP)) {
+                if (is_onestride) {
                     ptrs[iiter] = ad_ptrs[iiter];
                     strides[iiter] = ad_strides[iiter];
                     stransfer = NULL;
@@ -3719,8 +3771,6 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("COPYSWAP ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_BUFNEVER)
             printf("BUFNEVER ");
-        if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_BUFSWAP)
-            printf("BUFSWAP ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_ALIGNED)
             printf("ALIGNED ");
         printf("\n");

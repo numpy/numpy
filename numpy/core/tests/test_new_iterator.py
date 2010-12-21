@@ -1211,6 +1211,35 @@ def test_iter_buffered_cast_byteswapped():
         v[()] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.longdouble))
 
+def test_iter_buffering_badwriteback():
+    # Writing back from a buffer cannot combine elements
+
+    # a needs write buffering, but had a broadcast dimension
+    a = np.arange(6).reshape(2,3,1)
+    b = np.arange(12).reshape(2,3,2)
+    assert_raises(ValueError,np.newiter,[a,b],
+                        ['buffered','no_inner_iteration','force_c_order'],
+                        [['readwrite'],['writeonly']])
+
+    # But if a is readonly, it's fine
+    i = np.newiter([a,b],['buffered','no_inner_iteration','force_c_order'],
+                        [['readonly'],['writeonly']])
+    
+    # If a has just one element, it's fine too (constant 0 stride)
+    a = np.arange(1).reshape(1,1,1)
+    i = np.newiter([a,b],['buffered','no_inner_iteration','force_c_order'],
+                        [['readwrite'],['writeonly']])
+
+    # check that it fails on other dimensions too
+    a = np.arange(6).reshape(1,3,2)
+    assert_raises(ValueError,np.newiter,[a,b],
+                        ['buffered','no_inner_iteration','force_c_order'],
+                        [['readwrite'],['writeonly']])
+    a = np.arange(4).reshape(2,1,2)
+    assert_raises(ValueError,np.newiter,[a,b],
+                        ['buffered','no_inner_iteration','force_c_order'],
+                        [['readwrite'],['writeonly']])
+
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed
     a = np.arange(30)
