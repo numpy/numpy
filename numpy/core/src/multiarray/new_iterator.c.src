@@ -203,7 +203,7 @@ npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
 static void
 npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags);
 static void
-npyiter_apply_forced_iteration_order(npy_uint32 flags, NpyIter *iter);
+npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order);
 
 static void
 npyiter_flip_negative_strides(NpyIter *iter);
@@ -240,7 +240,8 @@ npyiter_copy_to_buffers(NpyIter *iter);
 /* The constructor for an iterator over multiple objects */
 NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
-                 npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
+                 NPY_ORDER order, npy_uint32 *op_flags,
+                 PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize)
 {
     npy_uint32 itflags = NPY_ITFLAG_IDENTPERM;
@@ -528,7 +529,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /*
      * If an iteration order is being forced, apply it.
      */
-    npyiter_apply_forced_iteration_order(flags, iter);
+    npyiter_apply_forced_iteration_order(iter, order);
     itflags = NIT_ITFLAGS(iter);
 
     /*
@@ -846,7 +847,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 
 /* The constructor for an iterator over one object */
 NpyIter*
-NpyIter_New(PyArrayObject *op, npy_uint32 flags, PyArray_Descr* dtype,
+NpyIter_New(PyArrayObject *op, npy_uint32 flags,
+                  NPY_ORDER order, PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes, npy_intp buffersize)
 {
     /* Split the flags into separate global and op flags */
@@ -854,11 +856,11 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags, PyArray_Descr* dtype,
     flags &= NPY_ITER_GLOBAL_FLAGS;
 
     if (a_ndim > 0) {
-        return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
+        return NpyIter_MultiNew(1, &op, flags, order, &op_flags, &dtype,
                                 a_ndim, &axes, buffersize);
     }
     else {
-        return NpyIter_MultiNew(1, &op, flags, &op_flags, &dtype,
+        return NpyIter_MultiNew(1, &op, flags, order, &op_flags, &dtype,
                                 0, NULL, buffersize);
     }
 }
@@ -1867,24 +1869,6 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
          */
         (*itflags) |= NPY_ITFLAG_HASCOORDS;
     }
-    /* Check that at most one forced ordering is specified */
-    if (flags&(NPY_ITER_FORCE_C_ORDER|
-                        NPY_ITER_FORCE_F_ORDER|
-                        NPY_ITER_FORCE_C_OR_F_ORDER)) {
-        if (((flags&NPY_ITER_FORCE_C_ORDER) &&
-                            (flags&(NPY_ITER_FORCE_F_ORDER|
-                                    NPY_ITER_FORCE_C_OR_F_ORDER))) ||
-                        ((flags&(NPY_ITER_FORCE_F_ORDER|
-                                 NPY_ITER_FORCE_C_OR_F_ORDER)) ==
-                            (NPY_ITER_FORCE_F_ORDER|
-                             NPY_ITER_FORCE_C_OR_F_ORDER))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Only one of the iterator flags FORCE_C_ORDER, "
-                    "FORCE_F_ORDER, and "
-                    "FORCE_C_OR_F_ORDER may be specified");
-            return 0;
-        }
-    }
     /* Check if offsets were requested instead of pointers */
     if (flags&NPY_ITER_OFFSETS) {
         /* Buffering is incompatible with offsets */
@@ -2613,43 +2597,51 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
 }
 
 /*
- * If the flags specify a forced iteration order, applies it
- * to the iterator, and indicates in its itflags that the iteration
- * order was forced.
+ * If the order is NPY_KEEPORDER, lets the iterator find the best
+ * iteration order, otherwise forces it.  Indicates in the itflags that
+ * whether the iteration order was forced.
  */
 static void
-npyiter_apply_forced_iteration_order(npy_uint32 flags, NpyIter *iter)
+npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
     npy_intp iiter, niter = NIT_NITER(iter);
 
-    if (flags&(NPY_ITER_FORCE_C_ORDER|
-               NPY_ITER_FORCE_F_ORDER|
-               NPY_ITER_FORCE_C_OR_F_ORDER)) {
+    switch (order) {
+    case NPY_CORDER:
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
+        break;
+    case NPY_FORTRANORDER:
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
         /* Only need to actually do something if there is more than 1 dim */
         if (ndim > 1) {
-            if (flags&NPY_ITER_FORCE_F_ORDER) {
+            npyiter_reverse_axis_ordering(iter);
+        }
+        break;
+    case NPY_ANYORDER:
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
+        /* Only need to actually do something if there is more than 1 dim */
+        if (ndim > 1) {
+            PyArrayObject **op = NIT_OBJECTS(iter);
+            int forder = 1;
+
+            /* Check that all the array inputs are fortran order */
+            for (iiter = 0; iiter < niter; ++iiter, ++op) {
+                if (*op && !PyArray_CHKFLAGS(*op, NPY_F_CONTIGUOUS)) {
+                   forder = 0;
+                   break;
+                }
+            }
+
+            if (forder) {
                 npyiter_reverse_axis_ordering(iter);
             }
-            else if(flags&NPY_ITER_FORCE_C_OR_F_ORDER) {
-                PyArrayObject **op = NIT_OBJECTS(iter);
-                int forder = 1;
-
-                /* Check that all the array inputs are fortran order */
-                for (iiter = 0; iiter < niter; ++iiter, ++op) {
-                    if (*op && !PyArray_CHKFLAGS(*op, NPY_F_CONTIGUOUS)) {
-                       forder = 0;
-                       break;
-                    }
-                }
-
-                if (forder) {
-                    npyiter_reverse_axis_ordering(iter);
-                }
-            }
         }
+        break;
+    case NPY_KEEPORDER:
+        /* Don't set the forced order flag here... */
+        break;
     }
 }
 

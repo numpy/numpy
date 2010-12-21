@@ -177,7 +177,8 @@ typedef enum {
 typedef enum {
         NPY_ANYORDER=-1,
         NPY_CORDER=0,
-        NPY_FORTRANORDER=1
+        NPY_FORTRANORDER=1,
+        NPY_KEEPORDER=2
 } NPY_ORDER;
 
 

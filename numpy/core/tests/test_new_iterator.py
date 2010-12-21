@@ -78,15 +78,14 @@ def test_iter_c_order():
 
             aview = a.reshape(shape)[dirs_index]
             # C-order
-            i = newiter(aview, ['force_c_order'], [['readonly']])
+            i = newiter(aview, order='C')
             assert_equal([x for x in i], aview.ravel(order='C'))
             # Fortran-order
-            i = newiter(aview.T, ['force_c_order'], [['readonly']])
+            i = newiter(aview.T, order='C')
             assert_equal([x for x in i], aview.T.ravel(order='C'))
             # Other order
             if len(shape) > 2:
-                i = newiter(aview.swapaxes(0,1),
-                                    ['force_c_order'], [['readonly']])
+                i = newiter(aview.swapaxes(0,1), order='C')
                 assert_equal([x for x in i],
                                     aview.swapaxes(0,1).ravel(order='C'))
 
@@ -106,15 +105,14 @@ def test_iter_f_order():
 
             aview = a.reshape(shape)[dirs_index]
             # C-order
-            i = newiter(aview, ['force_f_order'], [['readonly']])
+            i = newiter(aview, order='F')
             assert_equal([x for x in i], aview.ravel(order='F'))
             # Fortran-order
-            i = newiter(aview.T, ['force_f_order'], [['readonly']])
+            i = newiter(aview.T, order='F')
             assert_equal([x for x in i], aview.T.ravel(order='F'))
             # Other order
             if len(shape) > 2:
-                i = newiter(aview.swapaxes(0,1),
-                                    ['force_f_order'], [['readonly']])
+                i = newiter(aview.swapaxes(0,1), order='F')
                 assert_equal([x for x in i],
                                     aview.swapaxes(0,1).ravel(order='F'))
 
@@ -134,15 +132,14 @@ def test_iter_c_or_f_order():
 
             aview = a.reshape(shape)[dirs_index]
             # C-order
-            i = newiter(aview, ['force_c_or_f_order'], [['readonly']])
+            i = newiter(aview, order='A')
             assert_equal([x for x in i], aview.ravel(order='A'))
             # Fortran-order
-            i = newiter(aview.T, ['force_c_or_f_order'], [['readonly']])
+            i = newiter(aview.T, order='A')
             assert_equal([x for x in i], aview.T.ravel(order='A'))
             # Other order
             if len(shape) > 2:
-                i = newiter(aview.swapaxes(0,1),
-                                    ['force_c_or_f_order'], [['readonly']])
+                i = newiter(aview.swapaxes(0,1), order='A')
                 assert_equal([x for x in i],
                                     aview.swapaxes(0,1).ravel(order='A'))
 
@@ -458,17 +455,17 @@ def test_iter_dim_coalescing():
 
     # When C or F order is forced, coalescing may still occur
     a3d = arange(24).reshape(2,3,4)
-    i = newiter(a3d, ['force_c_order'], [['readonly']])
+    i = newiter(a3d, order='C')
     assert_equal(i.ndim, 1)
-    i = newiter(a3d.T, ['force_c_order'], [['readonly']])
+    i = newiter(a3d.T, order='C')
     assert_equal(i.ndim, 3)
-    i = newiter(a3d, ['force_f_order'], [['readonly']])
+    i = newiter(a3d, order='F')
     assert_equal(i.ndim, 3)
-    i = newiter(a3d.T, ['force_f_order'], [['readonly']])
+    i = newiter(a3d.T, order='F')
     assert_equal(i.ndim, 1)
-    i = newiter(a3d, ['force_c_or_f_order'], [['readonly']])
+    i = newiter(a3d, order='A')
     assert_equal(i.ndim, 1)
-    i = newiter(a3d.T, ['force_c_or_f_order'], [['readonly']])
+    i = newiter(a3d.T, order='A')
     assert_equal(i.ndim, 1)
 
 def test_iter_broadcasting():
@@ -578,16 +575,6 @@ def test_iter_flags_errors():
     assert_raises(ValueError, newiter, [a]*100, [], [['readonly']]*100)
     # op_flags must match ops
     assert_raises(ValueError, newiter, [a]*3, [], [['readonly']]*2)
-    # Can only force one order
-    assert_raises(ValueError, newiter, a,
-                ['force_c_order','force_f_order'], [['readonly']])
-    assert_raises(ValueError, newiter, a,
-                ['force_c_order','force_c_or_f_order'], [['readonly']])
-    assert_raises(ValueError, newiter, a,
-                ['force_f_order','force_c_or_f_order'], [['readonly']])
-    assert_raises(ValueError, newiter, a,
-                ['force_c_order','force_f_order','force_c_or_f_order'],
-                [['readonly']])
     # Cannot track both a C and an F index
     assert_raises(ValueError, newiter, a,
                 ['c_order_index','f_order_index'], [['readonly']])
@@ -954,8 +941,9 @@ def test_iter_allocate_output_itorder():
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
     # Non-contiguous input, C iteration order
     a = arange(24, dtype='i4').reshape(2,3,4).swapaxes(0,1)
-    i = newiter([a,None], ['force_c_order'],
+    i = newiter([a,None], [],
                         [['readonly'],['writeonly','allocate']],
+                        order='C',
                         op_dtypes=[None,np.dtype('f4')])
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].strides, (32,16,4))
@@ -1109,8 +1097,9 @@ def test_iter_buffering():
     for a in arrays:
         for buffersize in (1,2,3,5,8,11,16,1024):
             vals = []
-            i = np.newiter(a, ['buffered','no_inner_iteration','force_c_order'],
+            i = np.newiter(a, ['buffered','no_inner_iteration'],
                            [['readonly','nbo_aligned']],
+                           order='C',
                            buffersize=buffersize)
             while not i.finished:
                 assert_(i[0].size <= buffersize)
@@ -1123,8 +1112,9 @@ def test_iter_write_buffering():
 
     # F-order swapped array
     a = np.arange(24).reshape(2,3,4).T.newbyteorder().byteswap()
-    i = np.newiter(a, ['buffered','force_c_order'],
+    i = np.newiter(a, ['buffered'],
                    [['readwrite','nbo_aligned']],
+                   order='C',
                    buffersize=16)
     x = 0
     while not i.finished:
@@ -1218,27 +1208,32 @@ def test_iter_buffering_badwriteback():
     a = np.arange(6).reshape(2,3,1)
     b = np.arange(12).reshape(2,3,2)
     assert_raises(ValueError,np.newiter,[a,b],
-                        ['buffered','no_inner_iteration','force_c_order'],
-                        [['readwrite'],['writeonly']])
+                        ['buffered','no_inner_iteration'],
+                        [['readwrite'],['writeonly']],
+                        order='C')
 
     # But if a is readonly, it's fine
-    i = np.newiter([a,b],['buffered','no_inner_iteration','force_c_order'],
-                        [['readonly'],['writeonly']])
+    i = np.newiter([a,b],['buffered','no_inner_iteration'],
+                        [['readonly'],['writeonly']],
+                        order='C')
     
     # If a has just one element, it's fine too (constant 0 stride)
     a = np.arange(1).reshape(1,1,1)
-    i = np.newiter([a,b],['buffered','no_inner_iteration','force_c_order'],
-                        [['readwrite'],['writeonly']])
+    i = np.newiter([a,b],['buffered','no_inner_iteration'],
+                        [['readwrite'],['writeonly']],
+                        order='C')
 
     # check that it fails on other dimensions too
     a = np.arange(6).reshape(1,3,2)
     assert_raises(ValueError,np.newiter,[a,b],
-                        ['buffered','no_inner_iteration','force_c_order'],
-                        [['readwrite'],['writeonly']])
+                        ['buffered','no_inner_iteration'],
+                        [['readwrite'],['writeonly']],
+                        order='C')
     a = np.arange(4).reshape(2,1,2)
     assert_raises(ValueError,np.newiter,[a,b],
-                        ['buffered','no_inner_iteration','force_c_order'],
-                        [['readwrite'],['writeonly']])
+                        ['buffered','no_inner_iteration'],
+                        [['readwrite'],['writeonly']],
+                        order='C')
 
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed

@@ -79,9 +79,9 @@ static int
 npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"op", "flags", "op_flags", "op_dtypes",
-                             "op_axes", "buffersize"};
+                             "order", "op_axes", "buffersize"};
 
-    PyObject *op_in, *flags_in = NULL, *op_flags_in = NULL,
+    PyObject *op_in, *flags_in = NULL, *order_in = NULL, *op_flags_in = NULL,
                 *op_dtypes_in = NULL, *op_axes_in = NULL;
 
     npy_intp iiter, buffersize = 0;
@@ -89,6 +89,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     npy_intp niter = 0;
     PyArrayObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0;
+    NPY_ORDER order = NPY_KEEPORDER;
     npy_uint32 op_flags[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
     npy_intp oa_ndim = 0;
@@ -101,9 +102,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOOi", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOOOi", kwlist,
                     &op_in, &flags_in, &op_flags_in, &op_dtypes_in,
-                    &op_axes_in, &buffersize)) {
+                    &order_in, &op_axes_in, &buffersize)) {
         return -1;
     }
 
@@ -145,10 +146,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     }
     /* flags */
     if (flags_in == NULL) {
-        /* Default to behaving similarly to the old iterator */
-        flags = NPY_ITER_C_ORDER_INDEX |
-                NPY_ITER_COORDS |
-                NPY_ITER_FORCE_C_ORDER;
+        flags = 0;
     }
     else if (PyTuple_Check(flags_in) || PyList_Check(flags_in)) {
         int iflags, nflags = PySequence_Size(flags_in);
@@ -198,26 +196,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     }
                     break;
                 case 'f':
-                    if (length >= 7) switch (str[6]) {
-                        case 'r':
-                            if (strcmp(str, "f_order_index") == 0) {
-                                flag = NPY_ITER_F_ORDER_INDEX;
-                            }
-                            break;
-                        case 'c':
-                            if (strcmp(str, "force_c_order") == 0) {
-                                flag = NPY_ITER_FORCE_C_ORDER;
-                            }
-                            else if (strcmp(str, "force_c_or_f_order") == 0) {
-                                flag = NPY_ITER_FORCE_C_OR_F_ORDER;
-                            }
-                            break;
-                        case 'f':
-                            if (strcmp(str, "force_f_order") == 0) {
-                                flag = NPY_ITER_FORCE_F_ORDER;
-                            }
-                            break;
-                            break;
+                    if (strcmp(str, "f_order_index") == 0) {
+                        flag = NPY_ITER_F_ORDER_INDEX;
                     }
                     break;
                 case 'n':
@@ -247,6 +227,39 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         PyErr_SetString(PyExc_ValueError,
                 "Parameter 2 must be a tuple of flags");
         goto fail;
+    }
+    /* order */
+    if (order_in != NULL) {
+        char *str = NULL;
+        Py_ssize_t length = 0;
+        
+        if (PyString_AsStringAndSize(order_in, &str, &length) == -1) {
+            goto fail;
+        }
+
+        if (length != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "order must be 'C', 'F', 'A', or 'K'");
+            goto fail;
+        }
+        switch (str[0]) {
+            case 'C':
+                order = NPY_CORDER;
+                break;
+            case 'F':
+                order = NPY_FORTRANORDER;
+                break;
+            case 'A':
+                order = NPY_ANYORDER;
+                break;
+            case 'K':
+                order = NPY_KEEPORDER;
+                break;
+            default:
+                PyErr_SetString(PyExc_ValueError,
+                        "order must be 'C', 'F', 'A', or 'K'");
+                goto fail;
+        }
     }
     /* op_flags */
     if (op_flags_in == NULL) {
@@ -540,7 +553,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    self->iter = NpyIter_MultiNew(niter, op, flags, op_flags,
+    self->iter = NpyIter_MultiNew(niter, op, flags, order, op_flags,
                                   (PyArray_Descr**)op_request_dtypes,
                                   oa_ndim, oa_ndim > 0 ? op_axes : NULL,
                                   buffersize);

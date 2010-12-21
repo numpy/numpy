@@ -15,13 +15,15 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 
 /* Allocate a new iterator over one array object */
 NpyIter*
-NpyIter_New(PyArrayObject* op, npy_uint32 flags, PyArray_Descr* dtype,
+NpyIter_New(PyArrayObject* op, npy_uint32 flags,
+                  NPY_ORDER order, PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes, npy_intp buffersize);
 
 /* Allocate a new iterator over multiple array objects */
 NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
-                 npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
+                 NPY_ORDER order, npy_uint32 *op_flags,
+                 PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize);
 
 /* Removes coords support from an iterator */
@@ -95,22 +97,16 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_F_ORDER_INDEX              0x00000002
 /* Track coordinates */
 #define NPY_ITER_COORDS                     0x00000004
-/* Iterate in C order */
-#define NPY_ITER_FORCE_C_ORDER              0x00000008
-/* Iterate in F order */
-#define NPY_ITER_FORCE_F_ORDER              0x00000010
-/* Iterate in F order if all operands are F contiguous, C order otherwise */
-#define NPY_ITER_FORCE_C_OR_F_ORDER         0x00000020
 /* Let the caller handle the inner loop of iteration */
-#define NPY_ITER_NO_INNER_ITERATION         0x00000040
+#define NPY_ITER_NO_INNER_ITERATION         0x00000008
 /* Convert all the operands to a common data type */
-#define NPY_ITER_COMMON_DATA_TYPE           0x00000080
+#define NPY_ITER_COMMON_DATA_TYPE           0x00000010
 /* Produce offsets instead of pointers into the data */
-#define NPY_ITER_OFFSETS                    0x00000100
+#define NPY_ITER_OFFSETS                    0x00000020
 /* Enables buffering */
-#define NPY_ITER_BUFFERED                   0x00000200
+#define NPY_ITER_BUFFERED                   0x00000040
 /* Enables buffering, and grows the inner loop when possible */
-#define NPY_ITER_BUFFERED_GROWINNER         0x00000400
+#define NPY_ITER_BUFFERED_GROWINNER         0x00000080
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
