@@ -12,18 +12,33 @@ typedef int (*NpyIter_IterNext_Fn )(NpyIter *iter);
 typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
                                       npy_intp *outcoords);
 
+/* For specifying allowed casting in operations which support it */
+typedef enum {
+        /* Only allow exactly equivalent types */
+        NPY_NO_CASTING=0,
+        /* Allow casts between equivalent types of different byte orders  */
+        NPY_EQUIV_CASTING=0,
+        /* Only allow safe casts */
+        NPY_SAFE_CASTING=1,
+        /* Allow safe casts or casts within the same kind */
+        NPY_SAME_KIND_CASTING=2,
+        /* Allow any casts */
+        NPY_UNSAFE_CASTING=3
+} NPY_CASTING;
+
 
 /* Allocate a new iterator over one array object */
 NpyIter*
 NpyIter_New(PyArrayObject* op, npy_uint32 flags,
-                  NPY_ORDER order, PyArray_Descr* dtype,
+                  NPY_ORDER order, NPY_CASTING casting,
+                  PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes, npy_intp buffersize);
 
 /* Allocate a new iterator over multiple array objects */
 NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
-                 NPY_ORDER order, npy_uint32 *op_flags,
-                 PyArray_Descr **op_request_dtypes,
+                 NPY_ORDER order, NPY_CASTING casting,
+                 npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize);
 
 /* Removes coords support from an iterator */
@@ -122,20 +137,14 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_COPY                       0x00100000
 /* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
 #define NPY_ITER_UPDATEIFCOPY               0x00200000
-/* Allow safe casts to be used when converting data */
-#define NPY_ITER_SAFE_CASTS                 0x00400000
-/* Allow casts within types of the same kind to be used when converting data */
-#define NPY_ITER_SAME_KIND_CASTS            0x00800000
-/* Allow any casts when converting data */
-#define NPY_ITER_UNSAFE_CASTS               0x01000000
 /* Allow writeable operands to have references or pointers */
-#define NPY_ITER_WRITEABLE_REFERENCES       0x02000000
+#define NPY_ITER_WRITEABLE_REFERENCES       0x00400000
 /* Allocate the operand if it is NULL */
-#define NPY_ITER_ALLOCATE                   0x04000000
-/* If an operand is allocated, don't use the priority subtype */
-#define NPY_ITER_NO_SUBTYPE                 0x08000000
-/* Disallows broadcasting of the dimensions, they must match exactly */
-#define NPY_ITER_NO_BROADCAST               0x10000000
+#define NPY_ITER_ALLOCATE                   0x00800000
+/* If an operand is allocated, don't use any subtype */
+#define NPY_ITER_NO_SUBTYPE                 0x01000000
+/* Require that the dimension match the iterator dimensions exactly */
+#define NPY_ITER_NO_BROADCAST               0x02000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

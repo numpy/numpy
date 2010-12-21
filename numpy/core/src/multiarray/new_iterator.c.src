@@ -51,7 +51,7 @@
 /* The operand never needs buffering */
 #define NPY_OP_ITFLAG_BUFNEVER     0x20
 /* The operand is aligned */
-#define NPY_OP_ITFLAG_ALIGNED      0x80
+#define NPY_OP_ITFLAG_ALIGNED      0x40
 
 /* Internal flag, for the type of operands */
 #define NPY_ITER_OP_ARRAY         0
@@ -189,7 +189,7 @@ pyiter_prepare_operand(PyArrayObject **op, PyArray_Descr *op_request_dtype,
 static int
 npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
-                    npy_uint32 *op_flags,
+                    NPY_CASTING casting,
                     char *op_itflags);
 static int
 npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
@@ -222,6 +222,8 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op, npy_intp *op_ndim,
                         int only_inputs);
 static int
 npyiter_promote_types(int type1, int type2);
+static int
+npyiter_can_cast(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting);
 
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
@@ -240,7 +242,8 @@ npyiter_copy_to_buffers(NpyIter *iter);
 /* The constructor for an iterator over multiple objects */
 NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
-                 NPY_ORDER order, npy_uint32 *op_flags,
+                 NPY_ORDER order, NPY_CASTING casting,
+                 npy_uint32 *op_flags,
                  PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize)
 {
@@ -611,7 +614,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      * to check that data type conversions are following the
      * casting rules.
      */
-    if (!npyiter_check_casting(niter, op, op_dtype, op_flags, op_itflags)) {
+    if (!npyiter_check_casting(niter, op, op_dtype, casting, op_itflags)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -848,7 +851,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 /* The constructor for an iterator over one object */
 NpyIter*
 NpyIter_New(PyArrayObject *op, npy_uint32 flags,
-                  NPY_ORDER order, PyArray_Descr* dtype,
+                  NPY_ORDER order, NPY_CASTING casting,
+                  PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes, npy_intp buffersize)
 {
     /* Split the flags into separate global and op flags */
@@ -856,11 +860,13 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags,
     flags &= NPY_ITER_GLOBAL_FLAGS;
 
     if (a_ndim > 0) {
-        return NpyIter_MultiNew(1, &op, flags, order, &op_flags, &dtype,
+        return NpyIter_MultiNew(1, &op, flags, order, casting,
+                                &op_flags, &dtype,
                                 a_ndim, &axes, buffersize);
     }
     else {
-        return NpyIter_MultiNew(1, &op, flags, order, &op_flags, &dtype,
+        return NpyIter_MultiNew(1, &op, flags, order, casting,
+                                &op_flags, &dtype,
                                 0, NULL, buffersize);
     }
 }
@@ -1970,22 +1976,27 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 /*
  * Returns 1 if the from -> to cast can be done, based on the casting
  * flags provided in op_flags, and 0 otherwise.
+ *
+ * TODO: Maybe this approach, with the NPY_CASTING enum, should replace
+ *       the PyArray_CanCastTo code for NumPy 2.0?
  */
 static int
-npyiter_can_cast(npy_uint32 op_flags, PyArray_Descr *from, PyArray_Descr *to)
+npyiter_can_cast(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting)
 {
     /* If unsafe casts are allowed */
-    if (op_flags&NPY_ITER_UNSAFE_CASTS) {
+    if (casting == NPY_UNSAFE_CASTING) {
         return 1;
     }
-    /* Equivalent types can be cast even with no casting flags */
+    /* Equivalent types can be cast with any value of 'casting'  */
     else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
         /* If the types are extended, convert to NBO and compare */
         if (PyTypeNum_ISEXTENDED(from->type_num)) {
             int ret;
 
-            if (!PyArray_ISNBO(from->byteorder) ||
-                                    !PyArray_ISNBO(to->byteorder)) {
+            /* Only NPY_NO_CASTING prevents byte order conversion */
+            if ((casting != NPY_NO_CASTING) &&
+                                (!PyArray_ISNBO(from->byteorder) ||
+                                 !PyArray_ISNBO(to->byteorder))) {
                 PyArray_Descr *nbo_from, *nbo_to;
 
                 nbo_from = PyArray_DescrNewByteorder(from, NPY_NATIVE);
@@ -2008,19 +2019,22 @@ npyiter_can_cast(npy_uint32 op_flags, PyArray_Descr *from, PyArray_Descr *to)
         return 1;
     }
     /* If safe or same-kind casts are allowed */
-    else if (op_flags&(NPY_ITER_SAFE_CASTS|
-                       NPY_ITER_SAME_KIND_CASTS)) {
+    else if (casting == NPY_SAFE_CASTING || casting == NPY_SAME_KIND_CASTING) {
         if (PyArray_CanCastTo(from, to)) {
             return 1;
         }
-        else if(op_flags&NPY_ITER_SAME_KIND_CASTS) {
+        else if(casting == NPY_SAME_KIND_CASTING) {
+            /* TODO: Should also allow casting from "lower" to "higher
+             *       kinds, but kind is a char so we need to remap to
+             *       an ordered version (like NPY_SCALARKIND is ordered).
+             */
             return from->kind == to->kind;
         }
         else {
             return 0;
         }
     }
-    /* No casting flags were specified */
+    /* NPY_NO_CASTING or NPY_EQUIV_CASTING was specified */
     else {
         return 0;
     }
@@ -2143,7 +2157,7 @@ pyiter_prepare_operand(PyArrayObject **op, PyArray_Descr *op_request_dtype,
 static int
 npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
-                    npy_uint32 *op_flags,
+                    NPY_CASTING casting,
                     char *op_itflags)
 {
     npy_intp iiter;
@@ -2154,22 +2168,24 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                                                      op_dtype[iiter])) {
             /* Check read (op -> temp) casting */
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_READ) &&
-                        !npyiter_can_cast(op_flags[iiter],
-                                PyArray_DESCR(op[iiter]), op_dtype[iiter])) {
+                        !npyiter_can_cast(PyArray_DESCR(op[iiter]),
+                                          op_dtype[iiter],
+                                          casting)) {
                 PyErr_Format(PyExc_TypeError,
                         "Iterator operand %d dtype could not be cast "
                         "to the requested dtype, according to "
-                        "the casting flags given", (int)iiter);
+                        "the casting enabled", (int)iiter);
                 return 0;
             }
             /* Check write (temp -> op) casting */
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
-                        !npyiter_can_cast(op_flags[iiter],
-                                op_dtype[iiter], PyArray_DESCR(op[iiter]))) {
+                        !npyiter_can_cast(op_dtype[iiter],
+                                          PyArray_DESCR(op[iiter]),
+                                          casting)) {
                 PyErr_Format(PyExc_TypeError,
                         "Iterator requested dtype could not be cast "
                         "to the operand %d dtype, according to "
-                        "the casting flags given", (int)iiter);
+                        "the casting enabled", (int)iiter);
                 return 0;
             }
 

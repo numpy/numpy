@@ -79,10 +79,11 @@ static int
 npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"op", "flags", "op_flags", "op_dtypes",
-                             "order", "op_axes", "buffersize"};
+                             "order", "casting", "op_axes", "buffersize",
+                             NULL};
 
     PyObject *op_in, *flags_in = NULL, *order_in = NULL, *op_flags_in = NULL,
-                *op_dtypes_in = NULL, *op_axes_in = NULL;
+                *op_dtypes_in = NULL, *casting_in = NULL, *op_axes_in = NULL;
 
     npy_intp iiter, buffersize = 0;
 
@@ -90,6 +91,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0;
     NPY_ORDER order = NPY_KEEPORDER;
+    NPY_CASTING casting = NPY_NO_CASTING;
     npy_uint32 op_flags[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
     npy_intp oa_ndim = 0;
@@ -102,9 +104,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOOOi", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOOOOi", kwlist,
                     &op_in, &flags_in, &op_flags_in, &op_dtypes_in,
-                    &order_in, &op_axes_in, &buffersize)) {
+                    &order_in, &casting_in, &op_axes_in, &buffersize)) {
         return -1;
     }
 
@@ -239,7 +241,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
         if (length != 1) {
             PyErr_SetString(PyExc_ValueError,
-                    "order must be 'C', 'F', 'A', or 'K'");
+                    "order must be one of 'C', 'F', 'A', or 'K'");
             goto fail;
         }
         switch (str[0]) {
@@ -257,8 +259,70 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 break;
             default:
                 PyErr_SetString(PyExc_ValueError,
-                        "order must be 'C', 'F', 'A', or 'K'");
+                        "order must be one of 'C', 'F', 'A', or 'K'");
                 goto fail;
+        }
+    }
+    /* casting */
+    if (casting_in != NULL) {
+        char *str = NULL;
+        Py_ssize_t length = 0;
+        int bad_cast_input = 0;
+        
+        if (PyString_AsStringAndSize(casting_in, &str, &length) == -1) {
+            goto fail;
+        }
+        if (length >= 2) switch (str[2]) {
+            case 0:
+                if (strcmp(str, "no") == 0) {
+                    casting = NPY_NO_CASTING;
+                }
+                else {
+                    bad_cast_input = 1;
+                }
+                break;
+            case 'u':
+                if (strcmp(str, "equiv") == 0) {
+                    casting = NPY_EQUIV_CASTING;
+                }
+                else {
+                    bad_cast_input = 1;
+                }
+                break;
+            case 'f':
+                if (strcmp(str, "safe") == 0) {
+                    casting = NPY_SAFE_CASTING;
+                }
+                else {
+                    bad_cast_input = 1;
+                }
+                break;
+            case 'm':
+                if (strcmp(str, "same_kind") == 0) {
+                    casting = NPY_SAME_KIND_CASTING;
+                }
+                else {
+                    bad_cast_input = 1;
+                }
+                break;
+            case 's':
+                if (strcmp(str, "unsafe") == 0) {
+                    casting = NPY_UNSAFE_CASTING;
+                }
+                else {
+                    bad_cast_input = 1;
+                }
+                break;
+            default:
+                bad_cast_input = 1;
+                break;
+
+        }
+        if (bad_cast_input) {
+            PyErr_SetString(PyExc_ValueError,
+                    "casting must be one of 'no', 'equiv', 'safe', "
+                    "'same_kind', or 'unsafe'");
+            goto fail;
         }
     }
     /* op_flags */
@@ -350,32 +414,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                                 break;
                         }
                         break;
-                    case 's':
-                        if (length > 2) switch (str[2]) {
-                            case 'f':
-                                if (strcmp(str, "safe_casts") == 0) {
-                                    flag = NPY_ITER_SAFE_CASTS;
-                                }
-                                break;
-                            case 'm':
-                                if (strcmp(str, "same_kind_casts") == 0) {
-                                    flag = NPY_ITER_SAME_KIND_CASTS;
-                                }
-                                break;
-                        }
-                        break;
                     case 'u':
-                        switch (str[1]) {
-                            case 'n':
-                                if (strcmp(str, "unsafe_casts") == 0) {
-                                    flag = NPY_ITER_UNSAFE_CASTS;
-                                }
-                                break;
-                            case 'p':
-                                if (strcmp(str, "updateifcopy") == 0) {
-                                    flag = NPY_ITER_UPDATEIFCOPY;
-                                }
-                                break;
+                        if (strcmp(str, "updateifcopy") == 0) {
+                            flag = NPY_ITER_UPDATEIFCOPY;
                         }
                         break;
                     case 'w':
@@ -553,7 +594,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    self->iter = NpyIter_MultiNew(niter, op, flags, order, op_flags,
+    self->iter = NpyIter_MultiNew(niter, op, flags, order, casting, op_flags,
                                   (PyArray_Descr**)op_request_dtypes,
                                   oa_ndim, oa_ndim > 0 ? op_axes : NULL,
                                   buffersize);

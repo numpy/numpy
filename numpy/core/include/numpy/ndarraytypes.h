@@ -174,13 +174,17 @@ typedef enum {
 } NPY_SCALARKIND;
 #define NPY_NSCALARKINDS (NPY_OBJECT_SCALAR + 1)
 
+/* For specifying array memory layout or iteration order */
 typedef enum {
+        /* Fortran order if inputs are all Fortran, C otherwise */
         NPY_ANYORDER=-1,
+        /* C order */
         NPY_CORDER=0,
+        /* Fortran order */
         NPY_FORTRANORDER=1,
+        /* An order as close to the inputs as possible */
         NPY_KEEPORDER=2
 } NPY_ORDER;
-
 
 typedef enum {
         NPY_CLIP=0,

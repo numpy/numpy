@@ -27,7 +27,8 @@ def test_iter_refcount():
     rc_a = sys.getrefcount(a)
     rc_dt = sys.getrefcount(dt)
     it = newiter(a, [],
-                [['readwrite','unsafe_casts','updateifcopy']],
+                [['readwrite','updateifcopy']],
+                casting='unsafe',
                 op_dtypes=[dt])
     assert_(sys.getrefcount(a) > rc_a)
     assert_(sys.getrefcount(dt) > rc_dt)
@@ -664,16 +665,26 @@ def test_iter_array_cast():
     assert_equal(i.operands[0], a)
     assert_equal(i.operands[0].dtype, np.dtype('f4'))
 
+    # Byte-order cast '<f4' -> '>f4'
+    a = np.arange(6, dtype='<f4').reshape(2,3)
+    i = newiter(a, [], [['readwrite','updateifcopy']],
+            casting='equiv',
+            op_dtypes=[np.dtype('>f4')])
+    assert_equal(i.operands[0], a)
+    assert_equal(i.operands[0].dtype, np.dtype('>f4'))
+
     # Safe case 'f4' -> 'f8'
     a = np.arange(24, dtype='f4').reshape(2,3,4).swapaxes(1,2)
-    i = newiter(a, [], [['readonly','copy','safe_casts']],
+    i = newiter(a, [], [['readonly','copy']],
+            casting='safe',
             op_dtypes=[np.dtype('f8')])
     assert_equal(i.operands[0], a)
     assert_equal(i.operands[0].dtype, np.dtype('f8'))
     # The memory layout of the temporary should match a (a is (48,4,16))
     assert_equal(i.operands[0].strides, (96,8,32))
     a = a[::-1,:,::-1]
-    i = newiter(a, [], [['readonly','copy','safe_casts']],
+    i = newiter(a, [], [['readonly','copy']],
+            casting='safe',
             op_dtypes=[np.dtype('f8')])
     assert_equal(i.operands[0], a)
     assert_equal(i.operands[0].dtype, np.dtype('f8'))
@@ -682,7 +693,8 @@ def test_iter_array_cast():
     # Same-kind cast 'f8' -> 'f4' -> 'f8'
     a = np.arange(24, dtype='f8').reshape(2,3,4).T
     i = newiter(a, [],
-            [['readwrite','updateifcopy','same_kind_casts']],
+            [['readwrite','updateifcopy']],
+            casting='same_kind',
             op_dtypes=[np.dtype('f4')])
     assert_equal(i.operands[0], a)
     assert_equal(i.operands[0].dtype, np.dtype('f4'))
@@ -696,7 +708,8 @@ def test_iter_array_cast():
     # Unsafe cast 'f4' -> 'i4'
     a = np.arange(6, dtype='i4')[::-2]
     i = newiter(a, [],
-            [['writeonly','updateifcopy','unsafe_casts']],
+            [['writeonly','updateifcopy']],
+            casting='unsafe',
             op_dtypes=[np.dtype('f4')])
     assert_equal(i.operands[0].dtype, np.dtype('f4'))
     assert_equal(i.operands[0].strides, (-4,))
@@ -716,19 +729,27 @@ def test_iter_array_cast_errors():
     assert_raises(TypeError, newiter, arange(2,dtype='f8'), [],
                 [['writeonly','updateifcopy']],
                 op_dtypes=[np.dtype('f4')])
+    # '<f4' -> '>f4' should not work with casting='no'
+    assert_raises(TypeError, newiter, arange(2,dtype='<f4'), [],
+                [['readonly']], casting='no',
+                op_dtypes=[np.dtype('>f4')])
     # 'f4' -> 'f8' is a safe cast, but 'f8' -> 'f4' isn't
     assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
-                [['readwrite','updateifcopy','safe_casts']],
+                [['readwrite','updateifcopy']],
+                casting='safe',
                 op_dtypes=[np.dtype('f8')])
     assert_raises(TypeError, newiter, arange(2,dtype='f8'), [],
-                [['readwrite','updateifcopy','safe_casts']],
+                [['readwrite','updateifcopy']],
+                casting='safe',
                 op_dtypes=[np.dtype('f4')])
     # 'f4' -> 'i4' is neither a safe nor a same-kind cast
     assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
-                [['readonly','copy','same_kind_casts']],
+                [['readonly','copy']],
+                casting='same_kind',
                 op_dtypes=[np.dtype('i4')])
     assert_raises(TypeError, newiter, arange(2,dtype='i4'), [],
-                [['writeonly','updateifcopy','same_kind_casts']],
+                [['writeonly','updateifcopy']],
+                casting='same_kind',
                 op_dtypes=[np.dtype('f4')])
 
 def test_iter_scalar_cast():
@@ -742,21 +763,24 @@ def test_iter_scalar_cast():
     assert_equal(i.value, 2.5)
     # Safe cast 'f4' -> 'f8'
     i = newiter(np.float32(2.5), [],
-                    [['readonly','copy','safe_casts']],
+                    [['readonly','copy']],
+                    casting='safe',
                     op_dtypes=[np.dtype('f8')])
     assert_equal(i.dtypes[0], np.dtype('f8'))
     assert_equal(i.value.dtype, np.dtype('f8'))
     assert_equal(i.value, 2.5)
     # Same-kind cast 'f8' -> 'f4'
     i = newiter(np.float64(2.5), [],
-                    [['readonly','copy','same_kind_casts']],
+                    [['readonly','copy']],
+                    casting='same_kind',
                     op_dtypes=[np.dtype('f4')])
     assert_equal(i.dtypes[0], np.dtype('f4'))
     assert_equal(i.value.dtype, np.dtype('f4'))
     assert_equal(i.value, 2.5)
     # Unsafe cast 'f8' -> 'i4'
     i = newiter(np.float64(3.0), [],
-                    [['readonly','copy','unsafe_casts']],
+                    [['readonly','copy']],
+                    casting='unsafe',
                     op_dtypes=[np.dtype('i4')])
     assert_equal(i.dtypes[0], np.dtype('i4'))
     assert_equal(i.value.dtype, np.dtype('i4'))
@@ -772,11 +796,13 @@ def test_iter_scalar_cast_errors():
                 [['readonly']], op_dtypes=[np.dtype('f4')])
     # 'f8' -> 'f4' isn't a safe cast
     assert_raises(TypeError, newiter, np.float64(2), [],
-                [['readonly','safe_casts']],
+                [['readonly']],
+                casting='safe',
                 op_dtypes=[np.dtype('f4')])
     # 'f4' -> 'i4' is neither a safe nor a same-kind cast
     assert_raises(TypeError, newiter, np.float32(2), [],
-                [['readonly','same_kind_casts']],
+                [['readonly']],
+                casting='same_kind',
                 op_dtypes=[np.dtype('i4')])
 
 def test_iter_common_data_type():
@@ -784,17 +810,20 @@ def test_iter_common_data_type():
 
     i = newiter([array([3],dtype='f4'),array([0],dtype='f8')],
                     ['common_data_type'],
-                    [['readonly','copy','safe_casts']]*2)
+                    [['readonly','copy']]*2,
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('f8'));
     assert_equal(i.dtypes[1], np.dtype('f8'));
     i = newiter([array([3],dtype='i4'),array([0],dtype='f4')],
                     ['common_data_type'],
-                    [['readonly','copy','safe_casts']]*2)
+                    [['readonly','copy']]*2,
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('f8'));
     assert_equal(i.dtypes[1], np.dtype('f8'));
     i = newiter([array([3],dtype='f4'),array(0,dtype='f8')],
                     ['common_data_type'],
-                    [['readonly','copy','same_kind_casts']]*2)
+                    [['readonly','copy']]*2,
+                    casting='same_kind')
     assert_equal(i.dtypes[0], np.dtype('f4'));
     assert_equal(i.dtypes[1], np.dtype('f4'));
     # TODO
@@ -804,18 +833,21 @@ def test_iter_common_data_type():
     # be written during iteration, invalidating the scalar kind assumed!
     i = newiter([array([3],dtype='u4'),array(0,dtype='i4')],
                     ['common_data_type'],
-                    [['readonly','copy','unsafe_casts']]*2)
+                    [['readonly','copy']]*2,
+                    casting='unsafe')
     assert_equal(i.dtypes[0], np.dtype('u4'));
     assert_equal(i.dtypes[1], np.dtype('u4'));
     i = newiter([array([3],dtype='u4'),array(-12,dtype='i4')],
                     ['common_data_type'],
-                    [['readonly','copy','safe_casts']]*2)
+                    [['readonly','copy']]*2,
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('i8'));
     assert_equal(i.dtypes[1], np.dtype('i8'));
     i = newiter([array([3],dtype='u4'),array(-12,dtype='i4'),
                  array([2j],dtype='c8'),array([9],dtype='f8')],
                     ['common_data_type'],
-                    [['readonly','copy','safe_casts']]*4)
+                    [['readonly','copy']]*4,
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('c16'));
     assert_equal(i.dtypes[1], np.dtype('c16'));
     assert_equal(i.dtypes[2], np.dtype('c16'));
@@ -824,18 +856,20 @@ def test_iter_common_data_type():
 
     # When allocating outputs, other outputs aren't factored in
     i = newiter([array([3],dtype='i4'),None,array([2j],dtype='c16')], [],
-                    [['readonly','copy','safe_casts'],
+                    [['readonly','copy'],
                      ['writeonly','allocate'],
-                     ['writeonly']])
+                     ['writeonly']],
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('i4'));
     assert_equal(i.dtypes[1], np.dtype('i4'));
     assert_equal(i.dtypes[2], np.dtype('c16'));
     # But, if common data types are requested, they are
     i = newiter([array([3],dtype='i4'),None,array([2j],dtype='c16')],
                     ['common_data_type'],
-                    [['readonly','copy','safe_casts'],
+                    [['readonly','copy'],
                      ['writeonly','allocate'],
-                     ['writeonly']])
+                     ['writeonly']],
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('c16'));
     assert_equal(i.dtypes[1], np.dtype('c16'));
     assert_equal(i.dtypes[2], np.dtype('c16'));
@@ -1128,7 +1162,8 @@ def test_iter_buffered_cast_simple():
 
     a = np.arange(10, dtype='f4')
     i = np.newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   [['readwrite','nbo_aligned']],
+                   casting='same_kind',
                    op_dtypes=[np.dtype('f8')],
                    buffersize=3)
     for v in i:
@@ -1165,7 +1200,8 @@ def test_iter_buffered_cast_byteswapped():
     a = np.arange(10, dtype='c8').newbyteorder().byteswap()
     a += 2j
     i = np.newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   [['readwrite','nbo_aligned']],
+                   casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
     for v in i:
@@ -1175,7 +1211,8 @@ def test_iter_buffered_cast_byteswapped():
     a = np.arange(10, dtype='c8')
     a += 2j
     i = np.newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   [['readwrite','nbo_aligned']],
+                   casting='same_kind',
                    op_dtypes=[np.dtype('c16').newbyteorder()],
                    buffersize=3)
     for v in i:
@@ -1185,7 +1222,8 @@ def test_iter_buffered_cast_byteswapped():
     a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
     a += 2j
     i = np.newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   [['readwrite','nbo_aligned']],
+                   casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
     for v in i:
@@ -1194,7 +1232,8 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
     i = np.newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   [['readwrite','nbo_aligned']],
+                   casting='same_kind',
                    op_dtypes=[np.dtype('f4')],
                    buffersize=7)
     for v in i:
