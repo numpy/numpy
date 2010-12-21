@@ -196,7 +196,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
 static int
 npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
                       npy_intp *op_ndim, char **op_dataptr,
-                      npy_intp **op_axes);
+                      npy_uint32 *op_flags, npy_intp **op_axes);
 static void
 npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
                       PyArrayObject *op,
@@ -500,7 +500,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     }
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
-    if (!npyiter_fill_axisdata(iter, op, op_ndim, op_dataptr, op_axes)) {
+    if (!npyiter_fill_axisdata(iter, op, op_ndim, op_dataptr,
+                                                        op_flags, op_axes)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -2145,7 +2146,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
 static int
 npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
                       npy_intp *op_ndim, char **op_dataptr,
-                      npy_intp **op_axes)
+                      npy_uint32 *op_flags, npy_intp **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -2353,6 +2354,40 @@ npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
                 }
 
                 axisdata += sizeof_axisdata;
+            }
+        }
+    }
+
+    /* Go through and check for operands with NPY_ITER_NO_BROADCAST set */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        if (op_flags[iiter]&NPY_ITER_NO_BROADCAST) {
+            npy_intp *axes;
+
+            if (op_ndim[iiter] != ndim) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Iterator input has the NO_BROADCAST flag set, but "
+                        "has a different number of dimensions than the "
+                        "iterator");
+                return 0;
+            }
+
+            axes = op_axes ? op_axes[iiter] : NULL;
+            axisdata = axisdata0;
+            for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
+                npy_intp i;
+                if (axes) {
+                    i = axes[ndim-idim-1];
+                }
+                else {
+                    i = ndim-idim-1;
+                }
+                if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Iterator input has the NO_BROADCAST flag set, "
+                            "but has different dimensions than the final "
+                            "broadcast shape of the iterator");
+                    return 0;
+                }
             }
         }
     }

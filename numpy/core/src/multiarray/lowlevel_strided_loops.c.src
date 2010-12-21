@@ -874,7 +874,7 @@ PyArray_GetTransferFunction(int aligned,
             PyArray_StridedTransferFn tobuffer, frombuffer, casttransfer;
 
             /* Get the copy/swap operation from src */
-            if (PyArray_ISNBO(src_dtype->byteorder)) {
+            if (src_itemsize == 1 || PyArray_ISNBO(src_dtype->byteorder)) {
                 tobuffer = PyArray_GetStridedCopyFn(aligned,
                                             src_stride, src_itemsize,
                                             src_itemsize);
@@ -891,7 +891,7 @@ PyArray_GetTransferFunction(int aligned,
             }
 
             /* Get the copy/swap operation to dst */
-            if (PyArray_ISNBO(dst_dtype->byteorder)) {
+            if (dst_itemsize == 1 || PyArray_ISNBO(dst_dtype->byteorder)) {
                 frombuffer = PyArray_GetStridedCopyFn(aligned,
                                             dst_itemsize, dst_stride,
                                             dst_itemsize);

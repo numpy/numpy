@@ -317,6 +317,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                                 if (strcmp(str, "no_subtype") == 0) {
                                     flag = NPY_ITER_NO_SUBTYPE;
                                 }
+                                else if (strcmp(str, "no_broadcast") == 0) {
+                                    flag = NPY_ITER_NO_BROADCAST;
+                                }
                                 break;
                         }
                         break;

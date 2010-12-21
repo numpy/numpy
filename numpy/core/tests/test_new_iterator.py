@@ -1104,6 +1104,8 @@ def test_iter_buffering():
     a.dtype = 'i4'
     a[:] = np.arange(16,dtype='i4')
     arrays.append(a)
+    # 4-D F-order array
+    arrays.append(np.arange(120,dtype='i4').reshape(5,3,2,4).T)
     for a in arrays:
         for buffersize in (1,2,3,5,8,11,16,1024):
             vals = []
@@ -1215,6 +1217,19 @@ def test_iter_buffering_growinner():
     i = np.newiter(a, ['buffered_growinner','no_inner_iteration'], buffersize=5)
     # Should end up with just one inner loop here
     assert_equal(i[0].size, a.size)
+
+def test_iter_no_broadcast():
+    # Test that the no_broadcast flag works
+    a = np.arange(24).reshape(2,3,4)
+    b = np.arange(6).reshape(2,3,1)
+    c = np.arange(12).reshape(3,4)
+
+    i = np.newiter([a,b,c], [],
+                    [['readonly','no_broadcast'],['readonly'],['readonly']])
+    assert_raises(ValueError, np.newiter, [a,b,c], [],
+                    [['readonly'],['readonly','no_broadcast'],['readonly']])
+    assert_raises(ValueError, np.newiter, [a,b,c], [],
+                    [['readonly'],['readonly'],['readonly','no_broadcast']])
 
 if __name__ == "__main__":
     run_module_suite()

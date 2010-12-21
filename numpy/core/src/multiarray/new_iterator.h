@@ -138,6 +138,8 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_ALLOCATE                   0x04000000
 /* If an operand is allocated, don't use the priority subtype */
 #define NPY_ITER_NO_SUBTYPE                 0x08000000
+/* Disallows broadcasting of the dimensions, they must match exactly */
+#define NPY_ITER_NO_BROADCAST               0x10000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
