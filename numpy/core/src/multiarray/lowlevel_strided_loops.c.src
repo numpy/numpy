@@ -34,7 +34,7 @@
 #define _NPY_SWAP_PAIR4(x) (((((npy_uint32)x)&0xffu) << 8) | \
                        ((((npy_uint32)x)&0xff00u) >> 8) | \
                        ((((npy_uint32)x)&0xff0000u) << 8) | \
-                       (((npy_uint32)x) >> 8))
+                       ((((npy_uint32)x)&0xff000000u) >> 8))
 
 #define _NPY_SWAP8(x) (((((npy_uint64)x)&0xffu) << 56) | \
                        ((((npy_uint64)x)&0xff00u) << 40) | \
@@ -52,7 +52,7 @@
                        ((((npy_uint64)x)&0xff00000000u) << 24) | \
                        ((((npy_uint64)x)&0xff0000000000u) << 8) | \
                        ((((npy_uint64)x)&0xff000000000000u) >> 8) | \
-                       (((npy_uint64)x) >> 24))
+                       ((((npy_uint64)x)&0xff00000000000000u) >> 24))
 
 #define _NPY_SWAP_INPLACE2(x) { \
         char a = (x)[0]; (x)[0] = (x)[1]; (x)[1] = a; \
@@ -115,6 +115,7 @@ static void
                         npy_intp N, npy_intp NPY_UNUSED(itemsize),
                         void *NPY_UNUSED(data))
 {
+    /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
     while (N > 0) {
 #if @is_aligned@
 
@@ -675,9 +676,9 @@ _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
 }
 
 static void
-_aligned_contig_to_contig_cast(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+_aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
+                        char *src, npy_intp NPY_UNUSED(src_stride),
+                        npy_intp N, npy_intp NPY_UNUSED(itemsize),
                         void *data)
 {
     PyArray_VectorUnaryFunc *castfunc = ((_strided_cast_data *)data)->castfunc;
@@ -685,33 +686,137 @@ _aligned_contig_to_contig_cast(char *dst, npy_intp dst_stride,
     castfunc(src, dst, N, NULL, NULL);
 }
 
+/* Wraps a transfer function + data in alignment code */
+typedef struct {
+    void *freefunc;
+    PyArray_StridedTransferFn wrapped,
+                tobuffer, frombuffer;
+    void *wrappeddata;
+    npy_intp src_itemsize, dst_itemsize;
+    char *bufferin, *bufferout;
+} _align_wrap_data;
+
+/* transfer data free function */
+void _align_wrap_data_free(_align_wrap_data *data)
+{
+    PyArray_FreeStridedTransferData(data->wrappeddata);
+    PyArray_free(data);
+}
+
+static void
+_strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp itemsize,
+                        void *data)
+{
+    _align_wrap_data *d = (_align_wrap_data *)data;
+    PyArray_StridedTransferFn wrapped = d->wrapped,
+            tobuffer = d->tobuffer,
+            frombuffer = d->frombuffer;
+    npy_intp src_itemsize = d->src_itemsize, dst_itemsize = d->dst_itemsize;
+    void *wrappeddata = d->wrappeddata;
+    char *bufferin = d->bufferin, *bufferout = d->bufferout;
+
+    for(;;) {
+        if (N > 32) {
+            tobuffer(bufferin, src_itemsize, src, src_stride, 32,
+                                            src_itemsize, NULL);
+            wrapped(bufferout, dst_itemsize, bufferin, src_itemsize, 32,
+                                            itemsize, wrappeddata);
+            frombuffer(dst, dst_stride, bufferout, dst_itemsize, 32,
+                                            dst_itemsize, NULL);
+            N -= 32;
+            src += 32*src_stride;
+            dst += 32*dst_stride;
+        }
+        else {
+            tobuffer(bufferin, src_itemsize, src, src_stride, N,
+                                            src_itemsize, NULL);
+            wrapped(bufferout, dst_itemsize, bufferin, src_itemsize, N,
+                                            itemsize, wrappeddata);
+            frombuffer(dst, dst_stride, bufferout, dst_itemsize, N,
+                                            dst_itemsize, NULL);
+            return;
+        }
+    }
+}
+
+/*
+ * Wraps an aligned contig to contig transfer function between either
+ * copies or byte swaps to temporary buffers.
+ *
+ * src_itemsize/dst_itemsize - The sizes of the src and dst datatypes.
+ * tobuffer - copy/swap function from src to an aligned contiguous buffer.
+ *            data passed to 'tobuffer' is NULL.
+ * frombuffer - copy/swap function from an aligned contiguous buffer to dst.
+ *              data passed to 'frombuffer' is NULL.
+ * wrapped - contig to contig transfer function being wrapped
+ * wrappeddata - data for wrapped
+ */
+NPY_NO_EXPORT void
+PyArray_WrapTransferFunction(npy_intp src_itemsize, npy_intp dst_itemsize,
+            PyArray_StridedTransferFn tobuffer,
+            PyArray_StridedTransferFn frombuffer,
+            PyArray_StridedTransferFn wrapped, void *wrappeddata,
+            PyArray_StridedTransferFn *outstransfer,
+            void **outtransferdata)
+{
+    _align_wrap_data *data;
+    npy_intp basedatasize, datasize;
+
+    /* Round up the structure size to 16-byte boundary */
+    basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
+    /* Add space for two 32-element buffers */
+    datasize = basedatasize + 32*src_itemsize + 32*dst_itemsize;
+
+    /* Allocate the data, and populate it */
+    data = (_align_wrap_data *)PyArray_malloc(datasize);
+    data->freefunc = (void *)&_align_wrap_data_free;
+    data->tobuffer = tobuffer;
+    data->frombuffer = frombuffer;
+    data->wrapped = wrapped;
+    data->wrappeddata = wrappeddata;
+    data->src_itemsize = src_itemsize;
+    data->dst_itemsize = dst_itemsize;
+    data->bufferin = (char *)data + basedatasize;
+    data->bufferout = data->bufferin + 32*src_itemsize;
+
+    /* Set the function and data */
+    *outstransfer = &_strided_to_strided_contig_align_wrap;
+    *outtransferdata = data;
+}
 
 
 NPY_NO_EXPORT int
 PyArray_GetTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *from, PyArray_Descr *to,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             PyArray_StridedTransferFn *outstransfer,
                             void **outtransferdata)
 {
+    npy_intp src_itemsize = src_dtype->elsize,
+             dst_itemsize = dst_dtype->elsize;
+    int src_type_num = src_dtype->type_num,
+        dst_type_num = dst_dtype->type_num;
+
     /* First look at the possibilities of just a copy or swap */
-    if (from->elsize == to->elsize && from->type_num < NPY_OBJECT &&
-                                      to->type_num < NPY_OBJECT &&
-                                      from->kind == to->kind) {
+    if (src_itemsize == dst_itemsize && src_type_num < NPY_OBJECT &&
+                                      dst_type_num < NPY_OBJECT &&
+                                      src_dtype->kind == dst_dtype->kind) {
         /* This is a straight copy */
-        if (from->elsize == 1 || PyArray_ISNBO(from->byteorder) ==
-                                 PyArray_ISNBO(to->byteorder)) {
+        if (src_itemsize == 1 || PyArray_ISNBO(src_dtype->byteorder) ==
+                                 PyArray_ISNBO(dst_dtype->byteorder)) {
             *outstransfer = PyArray_GetStridedCopyFn(aligned,
                                         src_stride, dst_stride,
-                                        from->elsize);
+                                        src_itemsize);
             *outtransferdata = NULL;
             return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
         }
         /* This is a straight copy + byte swap */
-        else if (!PyTypeNum_ISCOMPLEX(from->type_num)) {
+        else if (!PyTypeNum_ISCOMPLEX(src_type_num)) {
             *outstransfer = PyArray_GetStridedCopySwapFn(aligned,
                                         src_stride, dst_stride,
-                                        from->elsize);
+                                        src_itemsize);
             *outtransferdata = NULL;
             return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
         }
@@ -719,40 +824,42 @@ PyArray_GetTransferFunction(int aligned,
         else {
             *outstransfer = PyArray_GetStridedCopySwapPairFn(aligned,
                                         src_stride, dst_stride,
-                                        from->elsize);
+                                        src_itemsize);
             *outtransferdata = NULL;
             return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
         }
     }
 
-    /* TODO check for fields & subarrays */
+    /* Check whether a simple cast and some swaps will suffice */
+    if (src_type_num < NPY_OBJECT && dst_type_num < NPY_OBJECT) {
+        _strided_cast_data *data;
+        PyArray_VectorUnaryFunc *castfunc;
 
-    /* Check whether a simple cast will suffice */
-    if (from->type_num < NPY_OBJECT && to->type_num < NPY_OBJECT &&
-            PyArray_ISNBO(from->type_num) && PyArray_ISNBO(to->type_num)) {
-        PyArray_VectorUnaryFunc *castfunc =
-                    PyArray_GetCastFunc(from, to->type_num);
+        /* Get the cast function */
+        castfunc = PyArray_GetCastFunc(src_dtype, dst_type_num);
         if (!castfunc) {
             *outstransfer = NULL;
             *outtransferdata = NULL;
             return NPY_FAIL;
         }
 
-        if (aligned) {
-            /* Allocate the data that describes the cast */
-            _strided_cast_data *data =
-                                PyArray_malloc(sizeof(_strided_cast_data));
-            if (data == NULL) {
-                PyErr_NoMemory();
-                *outstransfer = NULL;
-                *outtransferdata = NULL;
-                return NPY_FAIL;
-            }
-            data->freefunc = (void*)&(PyArray_free);
-            data->castfunc = castfunc;
+        /* Allocate the data for the casting */
+        data = PyArray_malloc(sizeof(_strided_cast_data));
+        if (data == NULL) {
+            PyErr_NoMemory();
+            *outstransfer = NULL;
+            *outtransferdata = NULL;
+            return NPY_FAIL;
+        }
+        data->freefunc = (void*)&(PyArray_free);
+        data->castfunc = castfunc;
 
+
+        /* If it's aligned and all native byte order, we're all done */
+        if (aligned && PyArray_ISNBO(src_dtype->byteorder) &&
+                       PyArray_ISNBO(dst_dtype->byteorder)) {
             /* Choose the contiguous cast if we can */
-            if (src_stride == from->elsize && dst_stride == to->elsize) {
+            if (src_stride == src_itemsize && dst_stride == dst_itemsize) {
                 *outstransfer = _aligned_contig_to_contig_cast;
             }
             else {
@@ -762,9 +869,58 @@ PyArray_GetTransferFunction(int aligned,
 
             return NPY_SUCCEED;
         }
+        /* Otherwise, we have to copy and/or swap to aligned temporaries */
+        else {
+            PyArray_StridedTransferFn tobuffer, frombuffer, casttransfer;
 
-        /* TODO wrap the cast in an alignment operation */
+            /* Get the copy/swap operation from src */
+            if (PyArray_ISNBO(src_dtype->byteorder)) {
+                tobuffer = PyArray_GetStridedCopyFn(aligned,
+                                            src_stride, src_itemsize,
+                                            src_itemsize);
+            }
+            else if(!PyTypeNum_ISCOMPLEX(src_type_num)) {
+                tobuffer = PyArray_GetStridedCopySwapFn(aligned,
+                                            src_stride, src_itemsize,
+                                            src_itemsize);
+            }
+            else {
+                tobuffer = PyArray_GetStridedCopySwapPairFn(aligned,
+                                            src_stride, src_itemsize,
+                                            src_itemsize);
+            }
+
+            /* Get the copy/swap operation to dst */
+            if (PyArray_ISNBO(dst_dtype->byteorder)) {
+                frombuffer = PyArray_GetStridedCopyFn(aligned,
+                                            dst_itemsize, dst_stride,
+                                            dst_itemsize);
+            }
+            else if(!PyTypeNum_ISCOMPLEX(dst_type_num)) {
+                frombuffer = PyArray_GetStridedCopySwapFn(aligned,
+                                            dst_itemsize, dst_stride,
+                                            dst_itemsize);
+            }
+            else {
+                frombuffer = PyArray_GetStridedCopySwapPairFn(aligned,
+                                            dst_itemsize, dst_stride,
+                                            dst_itemsize);
+            }
+
+            /* Use the aligned contiguous cast */
+            casttransfer = &_aligned_contig_to_contig_cast;
+
+            /* Wrap it all up in a new transfer function + data */
+            PyArray_WrapTransferFunction(src_itemsize, dst_itemsize,
+                                tobuffer, frombuffer,
+                                casttransfer, data,
+                                outstransfer, outtransferdata);
+
+            return NPY_SUCCEED;
+        }
     }
+
+    /* TODO check for fields & subarrays */
 
     /* TODO: write the more complicated transfer code! */
     *outstransfer = NULL;

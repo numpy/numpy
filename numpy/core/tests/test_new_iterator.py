@@ -1131,7 +1131,7 @@ def test_iter_write_buffering():
         i.iternext()
     assert_equal(a.ravel(order='C'), np.arange(24))
 
-def test_iter_cast_buffering():
+def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast
 
     a = np.arange(10, dtype='f4')
@@ -1143,6 +1143,71 @@ def test_iter_cast_buffering():
         v[()] *= 2
     
     assert_equal(a, 2*np.arange(10, dtype='f4'))
+
+def test_iter_buffered_cast_byteswapped():
+    # Test that buffering can handle a cast which requires swap->cast->swap
+
+    a = np.arange(10, dtype='f4').newbyteorder().byteswap()
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   op_dtypes=[np.dtype('f8').newbyteorder()],
+                   buffersize=3)
+    for v in i:
+        v[()] *= 2
+    
+    assert_equal(a, 2*np.arange(10, dtype='f4'))
+
+    a = np.arange(10, dtype='f8').newbyteorder().byteswap()
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','unsafe_casts']],
+                   op_dtypes=[np.dtype('c8').newbyteorder()],
+                   buffersize=3)
+    for v in i:
+        v[()] *= 2
+    
+    assert_equal(a, 2*np.arange(10, dtype='f8'))
+
+def test_iter_buffered_cast_byteswapped():
+    # Test that buffering can handle a cast which requires swap->cast->copy
+
+    a = np.arange(10, dtype='c8').newbyteorder().byteswap()
+    a += 2j
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   op_dtypes=[np.dtype('c16')],
+                   buffersize=3)
+    for v in i:
+        v[()] *= 2
+    assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
+
+    a = np.arange(10, dtype='c8')
+    a += 2j
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   op_dtypes=[np.dtype('c16').newbyteorder()],
+                   buffersize=3)
+    for v in i:
+        v[()] *= 2
+    assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
+
+    a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
+    a += 2j
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   op_dtypes=[np.dtype('c16')],
+                   buffersize=3)
+    for v in i:
+        v[()] *= 2
+    assert_equal(a, 2*np.arange(10, dtype=np.clongdouble) + 4j)
+
+    a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
+    i = np.newiter(a, ['buffered','no_inner_iteration'],
+                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   op_dtypes=[np.dtype('f4')],
+                   buffersize=7)
+    for v in i:
+        v[()] *= 2
+    assert_equal(a, 2*np.arange(10, dtype=np.longdouble))
 
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed
