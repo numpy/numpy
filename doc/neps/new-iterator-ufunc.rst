@@ -381,11 +381,45 @@ The proposed ‘order=’ flags become as follows:
 ‘K’  a layout equivalent to ‘C’ followed by some permutation of the axes, as close to the layout of the input(s) as possible (“Keep Layout”)
 ===  =====================================================================================
 
+Or as an enum::
+
+    /* For specifying array memory layout or iteration order */
+    typedef enum {
+            /* Fortran order if inputs are all Fortran, C otherwise */
+            NPY_ANYORDER=-1,
+            /* C order */
+            NPY_CORDER=0,
+            /* Fortran order */
+            NPY_FORTRANORDER=1,
+            /* An order as close to the inputs as possible */
+            NPY_KEEPORDER=2
+    } NPY_ORDER;
+
+
 Perhaps a good strategy is to first implement the capabilities discussed
 here without changing the defaults.  Once they are implemented and
 well-tested, the defaults can change from ``order='C'`` to ``order='K'``
 everywhere appropriate.  UFuncs additionally should gain an ``order=``
 parameter to control the layout of their output(s).
+
+The iterator can do automatic casting, and I have created a sequence
+of more permissive casting rules.  Perhaps for 2.0, NumPy could adopt
+this enum as its prefered way of dealing with casting.::
+
+    /* For specifying allowed casting in operations which support it */
+    typedef enum {
+            /* Only allow exactly equivalent types */
+            NPY_NO_CASTING=0,
+            /* Allow casts between equivalent types of different byte orders  */
+            NPY_EQUIV_CASTING=0,
+            /* Only allow safe casts */
+            NPY_SAFE_CASTING=1,
+            /* Allow safe casts or casts within the same kind */
+            NPY_SAME_KIND_CASTING=2,
+            /* Allow any casts */
+            NPY_UNSAFE_CASTING=3
+    } NPY_CASTING;
+
 
 Iterator Rewrite
 ================
@@ -629,7 +663,7 @@ the API.  We do this with a typedef of an incomplete struct
 Construction and Destruction
 ----------------------------
 
-``NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, PyArray_Descr* dtype, npy_intp a_ndim, npy_intp *axes, npy_intp buffersize)``
+``NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype, npy_intp a_ndim, npy_intp *axes, npy_intp buffersize)``
 
     Creates an iterator for the given numpy array object ``op``.
 
@@ -640,6 +674,12 @@ Construction and Destruction
     Any of the ``NPY_ORDER`` enum values may be passed to ``order``.  For
     efficient iteration, ``NPY_KEEPORDER`` is the best option, and the other
     orders enforce the particular iteration pattern.
+
+    Any of the ``NPY_CASTING`` enum values may be passed to ``casting``.
+    The values include ``NPY_NO_CASTING``, ``NPY_EQUIV_CASTING``,
+    ``NPY_SAFE_CASTING``, ``NPY_SAME_KIND_CASTING``, and
+    ``NPY_UNSAFE_CASTING``.  To allow the casts to occur, copying or
+    buffering must also be enabled.
 
     If ``dtype`` isn't ``NULL``, then it requires that data type.
     If copying is allowed, it will make a temporary copy if the data
@@ -661,7 +701,7 @@ Construction and Destruction
     To make an iterator similar to the old iterator, this should work.::
 
         iter = NpyIter_New(op, NPY_ITER_READWRITE,
-                            NPY_CORDER, NULL, 0, NULL);
+                            NPY_CORDER, NPY_NO_CASTING, NULL, 0, NULL);
 
     If you want to edit an array with aligned ``double`` code,
     but the order doesn't matter, you would use this.::
@@ -669,13 +709,13 @@ Construction and Destruction
         dtype = PyArray_DescrFromType(NPY_DOUBLE);
         iter = NpyIter_New(op, NPY_ITER_READWRITE |
                             NPY_ITER_BUFFERED |
-                            NPY_ITER_SAME_KIND_CASTS |
                             NPY_ITER_NBO_ALIGNED,
                             NPY_KEEPORDER,
+                            NPY_SAME_KIND_CASTING,
                             dtype, 0, NULL);
         Py_DECREF(dtype);
 
-``NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, npy_uint32 *op_flags, PyArray_Descr** op_dtypes, npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize)``
+``NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32 *op_flags, PyArray_Descr** op_dtypes, npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize)``
 
     Creates an iterator for broadcasting the ``niter`` array objects provided
     in ``op``.
@@ -687,6 +727,12 @@ Construction and Destruction
     Any of the ``NPY_ORDER`` enum values may be passed to ``order``.  For
     efficient iteration, ``NPY_KEEPORDER`` is the best option, and the other
     orders enforce the particular iteration pattern.
+
+    Any of the ``NPY_CASTING`` enum values may be passed to ``casting``.
+    The values include ``NPY_NO_CASTING``, ``NPY_EQUIV_CASTING``,
+    ``NPY_SAFE_CASTING``, ``NPY_SAME_KIND_CASTING``, and
+    ``NPY_UNSAFE_CASTING``.  To allow the casts to occur, copying or
+    buffering must also be enabled.
 
     If ``op_dtypes`` isn't ``NULL``, it specifies a data type or ``NULL``
     for each ``op[i]``.
@@ -841,19 +887,6 @@ Construction and Destruction
             flag overrides it and the requested data type is converted to be
             native byte order.
 
-        ``NPY_ITER_SAFE_CASTS``, ``NPY_ITER_SAME_KIND_CASTS``
-        ``NPY_ITER_UNSAFE_CASTS``
-
-            ``SAFE_CASTS`` means casting which the function
-            ``PyArray_CanCastSafely`` says is permitted.
-            ``SAME_KIND_CASTS`` adds to that any casting between types
-            of the same scalar kind, like ``double`` to ``float``.
-            ``UNSAFE_CASTS`` allows any casting for which a cast function
-            exists.
-
-            To allow the casts to occur, copying or buffering must
-            also be enabled.
-
         ``NPY_ITER_ALLOCATE``
 
             This is for output arrays, and requires that the flag
@@ -894,7 +927,7 @@ Construction and Destruction
             correctly.
 
 
-``int NpyIter_UpdateIter(NpyIter *iter, npy_intp i, npy_uint32 op_flags, PyArray_Descr *dtype)`` **UNIMPLEMENTED**
+``int NpyIter_UpdateIter(NpyIter *iter, npy_intp i, npy_uint32 op_flags, NPY_CASTING casting, PyArray_Descr *dtype)`` **UNIMPLEMENTED**
 
     Updates the i-th operand within the iterator to possibly have a new
     data type or more restrictive flag attributes.  A use-case for
@@ -914,8 +947,7 @@ Construction and Destruction
 
     The flags that may be passed in ``op_flags`` are
     ``NPY_ITER_COPY``, ``NPY_ITER_UPDATEIFCOPY``, 
-    ``NPY_ITER_NBO_ALIGNED``, ``NPY_ITER_SAFE_CASTS``,
-    ``NPY_ITER_SAME_KIND_CASTS``, and ``NPY_ITER_UNSAFE_CASTS``.
+    ``NPY_ITER_NBO_ALIGNED``.
 
 ``int NpyIter_RemoveCoords(NpyIter *iter)``
 
@@ -1125,7 +1157,7 @@ Examples
 --------
 
 A copy function using the iterator.  The ``order`` parameter
-is used to force the memory layout of the allocated
+is used to control the memory layout of the allocated
 result.
 
 If the input is a reference type, this function will fail.
@@ -1157,7 +1189,8 @@ references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags.::
         op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
 
         /* Construct the iterator */
-        iter = NpyIter_MultiNew(2, op, flags, order, op_flags, NULL, 0, NULL);
+        iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
+                                op_flags, NULL, 0, NULL);
         if (iter == NULL) {
             return NULL;
         }
