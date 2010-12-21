@@ -1243,8 +1243,61 @@ references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags.::
         return ret;
     }
 
-Python Example
---------------
+Python Lambda UFunc Example
+---------------------------
+
+To show how the new iterator allows the definition of efficient UFunc-like
+functions in pure Python, we demonstrate the function ``luf``, which
+makes a lambda-expression act like a UFunc.  This is very similar to the
+``numexpr`` library, but only takes a few lines of code.
+
+First, here is the definition of the ``luf`` function.::
+
+    def luf(lamdaexpr, *args, **kwargs):
+        """Lambda UFunc
+        
+            e.g.
+            c = luf(lambda i,j:i+j, a, b, order='K',
+                                casting='safe', buffersize=8192)
+
+            c = np.empty(...)
+            luf(lambda i,j:i+j, a, b, order='K',
+                                casting='safe', buffersize=8192)
+        """
+
+        nargs = len(args)
+        op = args + (kwargs.get('out',None),)
+        it = np.newiter(op, ['buffered','no_inner_iteration'],
+                [['readonly','nbo_aligned']]*nargs +
+                                [['writeonly','allocate','no_broadcast']],
+                order=kwargs.get('order','K'),
+                casting=kwargs.get('casting','safe'),
+                buffersize=kwargs.get('buffersize',0))
+        while not it.finished:
+            it[-1] = lamdaexpr(*it[:-1])
+            it.iternext()
+
+        return it.operands[-1]
+
+Then, by using ``luf`` instead of straight Python expressions, we
+can gain some performance from better cache behavior.::
+
+    In [2]: a = np.random.random((50,50,50,10))
+    In [3]: b = np.random.random((50,50,1,10))
+    In [4]: c = np.random.random((50,50,50,1))
+
+    In [5]: timeit 3*a+b-(a/c)
+    1 loops, best of 3: 138 ms per loop
+
+    In [6]: timeit luf(lambda a,b,c:3*a+b-(a/c), a, b, c)
+    10 loops, best of 3: 60.9 ms per loop
+
+    In [7]: np.all(3*a+b-(a/c) == luf(lambda a,b,c:3*a+b-(a/c), a, b, c))
+    Out[7]: True
+
+
+Python Addition Example
+-----------------------
 
 The iterator has been mostly written and exposed to Python.  To
 see how it behaves, let's see what we can do with the np.add ufunc.
