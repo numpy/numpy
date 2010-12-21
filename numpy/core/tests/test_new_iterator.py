@@ -805,23 +805,23 @@ def test_iter_scalar_cast_errors():
                 casting='same_kind',
                 op_dtypes=[np.dtype('i4')])
 
-def test_iter_common_data_type():
+def test_iter_common_dtype():
     # Check that the iterator finds a common data type correctly
 
     i = newiter([array([3],dtype='f4'),array([0],dtype='f8')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy']]*2,
                     casting='safe')
     assert_equal(i.dtypes[0], np.dtype('f8'));
     assert_equal(i.dtypes[1], np.dtype('f8'));
     i = newiter([array([3],dtype='i4'),array([0],dtype='f4')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy']]*2,
                     casting='safe')
     assert_equal(i.dtypes[0], np.dtype('f8'));
     assert_equal(i.dtypes[1], np.dtype('f8'));
     i = newiter([array([3],dtype='f4'),array(0,dtype='f8')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy']]*2,
                     casting='same_kind')
     assert_equal(i.dtypes[0], np.dtype('f4'));
@@ -832,20 +832,20 @@ def test_iter_common_data_type():
     # For example, when the scalar is writeable, a negative value could
     # be written during iteration, invalidating the scalar kind assumed!
     i = newiter([array([3],dtype='u4'),array(0,dtype='i4')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy']]*2,
                     casting='unsafe')
     assert_equal(i.dtypes[0], np.dtype('u4'));
     assert_equal(i.dtypes[1], np.dtype('u4'));
     i = newiter([array([3],dtype='u4'),array(-12,dtype='i4')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy']]*2,
                     casting='safe')
     assert_equal(i.dtypes[0], np.dtype('i8'));
     assert_equal(i.dtypes[1], np.dtype('i8'));
     i = newiter([array([3],dtype='u4'),array(-12,dtype='i4'),
                  array([2j],dtype='c8'),array([9],dtype='f8')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy']]*4,
                     casting='safe')
     assert_equal(i.dtypes[0], np.dtype('c16'));
@@ -865,7 +865,7 @@ def test_iter_common_data_type():
     assert_equal(i.dtypes[2], np.dtype('c16'));
     # But, if common data types are requested, they are
     i = newiter([array([3],dtype='i4'),None,array([2j],dtype='c16')],
-                    ['common_data_type'],
+                    ['common_dtype'],
                     [['readonly','copy'],
                      ['writeonly','allocate'],
                      ['writeonly']],

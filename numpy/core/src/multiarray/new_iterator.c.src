@@ -575,9 +575,9 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      * If an automatically allocated output didn't have a specified
      * dtype, we need to figure it out now, before allocating the outputs.
      */
-    if (any_missing_dtypes || (flags&NPY_ITER_COMMON_DATA_TYPE)) {
+    if (any_missing_dtypes || (flags&NPY_ITER_COMMON_DTYPE)) {
         PyArray_Descr *dtype;
-        int only_inputs = !(flags&NPY_ITER_COMMON_DATA_TYPE);
+        int only_inputs = !(flags&NPY_ITER_COMMON_DTYPE);
 
         dtype = npyiter_get_common_dtype(niter, op, op_ndim,
                                     op_itflags, op_dtype,
@@ -586,7 +586,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             NpyIter_Deallocate(iter);
             return NULL;
         }
-        if (flags&NPY_ITER_COMMON_DATA_TYPE) {
+        if (flags&NPY_ITER_COMMON_DTYPE) {
             /* Replace all the data types */
             for (iiter = 0; iiter < niter; ++iiter) {
                 Py_XDECREF(op_dtype[iiter]);

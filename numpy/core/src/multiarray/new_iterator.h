@@ -115,7 +115,7 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 /* Let the caller handle the inner loop of iteration */
 #define NPY_ITER_NO_INNER_ITERATION         0x00000008
 /* Convert all the operands to a common data type */
-#define NPY_ITER_COMMON_DATA_TYPE           0x00000010
+#define NPY_ITER_COMMON_DTYPE               0x00000010
 /* Produce offsets instead of pointers into the data */
 #define NPY_ITER_OFFSETS                    0x00000020
 /* Enables buffering */

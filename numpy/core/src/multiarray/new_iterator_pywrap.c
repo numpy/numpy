@@ -191,8 +191,8 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                             }
                             break;
                         case 'n':
-                            if (strcmp(str, "common_data_type") == 0) {
-                                flag = NPY_ITER_COMMON_DATA_TYPE;
+                            if (strcmp(str, "common_dtype") == 0) {
+                                flag = NPY_ITER_COMMON_DTYPE;
                             }
                             break;
                     }
