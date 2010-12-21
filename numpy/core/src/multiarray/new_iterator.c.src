@@ -8,10 +8,6 @@
 #include "new_iterator.h"
 #include "lowlevel_strided_loops.h"
 
-/* Adjust ptr to be the next 16-byte aligned position after adding 'amount' */
-#define NPYITER_INC_BUFFERPTR(ptr, amount) \
-            ptr = ((char*)(((npy_intp)(ptr)+(amount)+0xf)&(-0x10)))
-
 /* Rounds up a number of bytes to be divisible by sizeof intp */
 #if NPY_SIZEOF_INTP == 4
 #define NPY_INTP_ALIGNED(size) ((size + 0x3)&(-0x4))
@@ -351,7 +347,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      * small enough to be cache-friendly.
      */
     if (itflags&NPY_ITFLAG_BUFFER && buffersize <= 0) {
-        buffersize = 256;
+        buffersize = 1 << 12;
     }
 
     /* Prepare all the operands */
@@ -922,6 +918,11 @@ void NpyIter_Reset(NpyIter *iter)
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
     nstrides = NAD_NSTRIDES();
+
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        /* Copy any data from the buffers back to the arrays */
+        npyiter_copy_from_buffers(iter);
+    }
     
     for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
         char **ptrs;
@@ -1301,6 +1302,8 @@ npyiter_buffered_iternext(NpyIter *iter)
 
     /* Increment to the next buffer */
     if (!npyiter_jumpforward(iter, NBF_SIZE(bufferdata))) {
+        NBF_POS(bufferdata) = 0;
+        NBF_SIZE(bufferdata) = 0;
         return 0;
     }
 
@@ -1645,6 +1648,13 @@ PyArrayObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     if (itflags&NPY_ITFLAG_HASOFFSETS) {
         PyErr_SetString(PyExc_IndexError,
                 "cannot provide an iterator view when tracking offsets");
+        return NULL;
+    }
+
+    /* Don't provide views if buffering is enabled */
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        PyErr_SetString(PyExc_ValueError,
+                "cannot provide an iterator view when buffering is enabled");
         return NULL;
     }
 
@@ -3435,6 +3445,11 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp axisdata_incr = NIT_SIZEOF_AXISDATA(itflags, ndim, niter) /
                                 NPY_SIZEOF_INTP;
 
+    /* If we're past the end, nothing to copy */
+    if (NBF_SIZE(bufferdata) == 0) {
+        return;
+    }
+
     for (iiter = 0; iiter < niter; ++iiter) {
         stransfer = NBF_WRITETRANSFERFN(bufferdata)[iiter];
         transferdata = NBF_WRITETRANSFERDATA(bufferdata)[iiter];
@@ -3442,7 +3457,6 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Copy back only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffers[iiter]);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
-                /*printf("transfer %p <- %p\n", ad_ptrs[iiter], buffers[iiter]);*/
                 PyArray_TransferStridedToNDim(ndim,
                         ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                         buffers[iiter], strides[iiter],
