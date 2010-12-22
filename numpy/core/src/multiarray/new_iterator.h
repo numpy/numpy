@@ -14,16 +14,16 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 
 /* For specifying allowed casting in operations which support it */
 typedef enum {
-        /* Only allow exactly equivalent types */
+        /* Only allow identical types */
         NPY_NO_CASTING=0,
-        /* Allow casts between equivalent types of different byte orders  */
-        NPY_EQUIV_CASTING=0,
+        /* Allow identical and byte swapped types */
+        NPY_EQUIV_CASTING=1,
         /* Only allow safe casts */
-        NPY_SAFE_CASTING=1,
+        NPY_SAFE_CASTING=2,
         /* Allow safe casts or casts within the same kind */
-        NPY_SAME_KIND_CASTING=2,
+        NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=3
+        NPY_UNSAFE_CASTING=4
 } NPY_CASTING;
 
 

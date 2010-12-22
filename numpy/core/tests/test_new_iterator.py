@@ -619,7 +619,8 @@ def test_iter_nbo_align():
     au = a.byteswap().newbyteorder()
     assert_(a.dtype.byteorder != au.dtype.byteorder)
     i = newiter(au, [], [['readwrite','updateifcopy']],
-                                            op_dtypes=[np.dtype('f4')])
+                        casting='equiv',
+                        op_dtypes=[np.dtype('f4')])
     assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0], a)
@@ -631,7 +632,7 @@ def test_iter_nbo_align():
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
     assert_(a.dtype.byteorder != au.dtype.byteorder)
-    i = newiter(au, [], [['readwrite','updateifcopy','nbo_aligned']])
+    i = newiter(au, [], [['readwrite','updateifcopy','nbo_aligned']], casting='equiv')
     assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0], a)
@@ -731,7 +732,7 @@ def test_iter_array_cast_errors():
                 op_dtypes=[np.dtype('f4')])
     # '<f4' -> '>f4' should not work with casting='no'
     assert_raises(TypeError, newiter, arange(2,dtype='<f4'), [],
-                [['readonly']], casting='no',
+                [['readonly','copy']], casting='no',
                 op_dtypes=[np.dtype('>f4')])
     # 'f4' -> 'f8' is a safe cast, but 'f8' -> 'f4' isn't
     assert_raises(TypeError, newiter, arange(2,dtype='f4'), [],
@@ -1134,6 +1135,7 @@ def test_iter_buffering():
             i = np.newiter(a, ['buffered','no_inner_iteration'],
                            [['readonly','nbo_aligned']],
                            order='C',
+                           casting='equiv',
                            buffersize=buffersize)
             while not i.finished:
                 assert_(i[0].size <= buffersize)
@@ -1148,6 +1150,7 @@ def test_iter_write_buffering():
     a = np.arange(24).reshape(2,3,4).T.newbyteorder().byteswap()
     i = np.newiter(a, ['buffered'],
                    [['readwrite','nbo_aligned']],
+                   casting='equiv',
                    order='C',
                    buffersize=16)
     x = 0

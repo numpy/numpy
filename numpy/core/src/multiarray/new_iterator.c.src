@@ -2016,7 +2016,14 @@ npyiter_can_cast(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting)
             }
             return ret;
         }
-        return 1;
+
+        if (casting == NPY_NO_CASTING) {
+            return PyArray_ISNBO(from->byteorder) ==
+                   PyArray_ISNBO(to->byteorder);
+        }
+        else {
+            return 1;
+        }
     }
     /* If safe or same-kind casts are allowed */
     else if (casting == NPY_SAFE_CASTING || casting == NPY_SAME_KIND_CASTING) {

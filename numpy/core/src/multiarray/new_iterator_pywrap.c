@@ -91,7 +91,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0;
     NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_NO_CASTING;
+    NPY_CASTING casting = NPY_EQUIV_CASTING;
     npy_uint32 op_flags[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
     npy_intp oa_ndim = 0;
