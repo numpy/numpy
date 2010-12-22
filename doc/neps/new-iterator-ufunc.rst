@@ -409,23 +409,22 @@ everywhere appropriate.  UFuncs additionally should gain an ``order=``
 parameter to control the layout of their output(s).
 
 The iterator can do automatic casting, and I have created a sequence
-of more permissive casting rules.  Perhaps for 2.0, NumPy could adopt
-this enum as its prefered way of dealing with casting.::
+of progressively more permissive casting rules.  Perhaps for 2.0, NumPy
+could adopt this enum as its prefered way of dealing with casting.::
 
     /* For specifying allowed casting in operations which support it */
     typedef enum {
-            /* Only allow exactly equivalent types */
+            /* Only allow identical types */
             NPY_NO_CASTING=0,
-            /* Allow casts between equivalent types of different byte orders  */
-            NPY_EQUIV_CASTING=0,
+            /* Allow identical and byte swapped types */
+            NPY_EQUIV_CASTING=1,
             /* Only allow safe casts */
-            NPY_SAFE_CASTING=1,
-            /* Allow safe casts or casts within the same kind */
-            NPY_SAME_KIND_CASTING=2,
+            NPY_SAFE_CASTING=2,
+            /* Allow safe casts and casts within the same kind */
+            NPY_SAME_KIND_CASTING=3,
             /* Allow any casts */
-            NPY_UNSAFE_CASTING=3
+            NPY_UNSAFE_CASTING=4
     } NPY_CASTING;
-
 
 Iterator Rewrite
 ================
@@ -652,7 +651,7 @@ For the multi-iterator:
 For other API calls:
 
 ===============================  =============================================
-``PyArray_ConvertToCommonType``  Iterator flag ``NPY_ITER_COMMON_DATA_TYPE``
+``PyArray_ConvertToCommonType``  Iterator flag ``NPY_ITER_COMMON_DTYPE``
 ===============================  =============================================
 
 
@@ -743,8 +742,10 @@ Construction and Destruction
     If ``op_dtypes`` isn't ``NULL``, it specifies a data type or ``NULL``
     for each ``op[i]``.
 
-    If the parameter ``oa_ndim`` is not 0, you must also specify
-    ``op_axes``.  These parameters let you control in detail how the
+    The parameter ``oa_ndim``, when non-zero, specifies the number of
+    dimensions that will be iterated with customized broadcasting.  
+    If it is provided, ``op_axes`` must also be provided.
+    These two parameters let you control in detail how the
     axes of the operand arrays get matched together and iterated.
     In ``op_axes``, you must provide an array of ``niter`` pointers
     to ``oa_ndim``-sized arrays of type ``npy_intp``.  If an entry
@@ -754,11 +755,12 @@ Construction and Destruction
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.::
 
-        npy_intp oa_ndim = 3; npy_intp op0_axes[] = {0, 1, 2};    /* 3-D
-        operand */ npy_intp op1_axes[] = {-1, 0, 1};   /* 2-D operand */
-        npy_intp op2_axes[] = {-1, -1, 0};  /* 1-D operand */ npy_intp
-        op3_axes[] = {-1, -1, -1}  /* 0-D (scalar) operand */ npy_intp
-        *op_axes[] = {op0_axes, op1_axes, op2_axes, op3_axes};
+        npy_intp oa_ndim = 3;               /* # iteration axes */
+        npy_intp op0_axes[] = {0, 1, 2};    /* 3-D operand */
+        npy_intp op1_axes[] = {-1, 0, 1};   /* 2-D operand */
+        npy_intp op2_axes[] = {-1, -1, 0};  /* 1-D operand */
+        npy_intp op3_axes[] = {-1, -1, -1}  /* 0-D (scalar) operand */
+        npy_intp *op_axes[] = {op0_axes, op1_axes, op2_axes, op3_axes};
 
     If ``buffersize`` is zero, a default buffer size is used,
     otherwise it specifies how big of a buffer to use.  Buffers
@@ -789,7 +791,7 @@ Construction and Destruction
             This flag is incompatible with ``NPY_ITER_C_ORDER_INDEX``,
             ``NPY_ITER_F_ORDER_INDEX``, and ``NPY_ITER_COORDS``.
 
-        ``NPY_ITER_COMMON_DATA_TYPE``
+        ``NPY_ITER_COMMON_DTYPE``
 
             Causes the iterator to convert all the operands to a common
             data type, calculated based on the ufunc type promotion rules.
@@ -812,6 +814,23 @@ Construction and Destruction
             ``NPY_ITER_OFFSETS``, and any outer loop iterators should
             be made with it.  The sum of the inner loop pointers and
             the outer loop offsets produces the innermost element addresses.
+
+            To help understand how the offsets work, here is a simple
+            nested iteration example.  Let's say our array ``a`` has shape
+            (2, 3, 4), and strides (48, 16, 4).  The data pointer for element
+            (i, j, k) is at address
+            ``PyArray_BYTES(a) + 48*i + 16*j + 4*k``.  Now consider two
+            iterators with custom op_axes (0,1) and (2,).  The first
+            one will produce addresses like
+            ``PyArray_BYTES(a) + 48*i + 16*j``, and the second one will
+            produce addresses like ``PyArray_BYTES(a) + 4*k``.  Simply
+            adding together these values would produce invalid pointers.
+            Instead, we can make the outer iterator produce offsets,
+            in which case it will produce the values ``48*i + 16*j``,
+            and its sum with the other iterator's pointer gives the
+            correct data address.  It's important to note that this
+            will not work if any of the iterators share an axis.  The
+            iterator cannot check this, so your code must handle it.
 
             This flag is incompatible with copying or buffering inputs.
 
@@ -1054,7 +1073,8 @@ Construction and Destruction
 ``npy_intp NpyIter_GetIterSize(NpyIter *iter)``
 
     Returns the number of times the iterator will iterate
-    starting from a new or reset state.
+    starting from a new or reset state.  If buffering is enabled,
+    it returns 0.
 
 ``int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)``
 
@@ -1125,7 +1145,7 @@ Functions For Iteration
     This gives back a pointer to the ``niter`` data pointers.  If
     ``NPY_ITER_NO_INNER_ITERATION`` was not specified, each data
     pointer points to the current data item of the iterator.  If
-    inner iteration was specified, it points to the first data
+    no inner iteration was specified, it points to the first data
     item of the inner loop.
 
     This pointer may be cached before the iteration loop, calling
@@ -1397,7 +1417,7 @@ as dramatically.  Let's use ``c`` instead of ``b`` to see how this works.::
 
 It's still a lot better than seven seconds, but still over ten times worse
 than the built-in function.  Here, the inner loop has 100 elements,
-and its iterating 10000 times.  If we were coding in C, our performance
+and it's iterating 10000 times.  If we were coding in C, our performance
 would already be as good as the built-in performance, but in Python
 there is too much overhead.
 
