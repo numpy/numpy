@@ -3,6 +3,12 @@
 :Content-Type: text/x-rst
 :Created: 25-Nov-2010
 
+*****************
+Table of Contents
+*****************
+
+.. contents::
+
 ********
 Abstract
 ********
@@ -1261,7 +1267,7 @@ First, here is the definition of the ``luf`` function.::
                                 casting='safe', buffersize=8192)
 
             c = np.empty(...)
-            luf(lambda i,j:i+j, a, b, order='K',
+            luf(lambda i,j:i+j, a, b, out=c, order='K',
                                 casting='safe', buffersize=8192)
         """
 
