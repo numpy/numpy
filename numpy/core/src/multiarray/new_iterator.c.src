@@ -2445,7 +2445,8 @@ npyiter_fill_axisdata(NpyIter *iter, PyArrayObject **op,
                 else {
                     i = ndim-idim-1;
                 }
-                if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+                if (op[iiter] != NULL &&
+                            PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
                     PyErr_SetString(PyExc_ValueError,
                             "Iterator input has the NO_BROADCAST flag set, "
                             "but has different dimensions than the final "

@@ -1185,6 +1185,48 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     return ret;
 }
 
+NPY_NO_EXPORT PyObject *
+npyiter_seq_slice(NewNpyArrayIterObject *self,
+                    Py_ssize_t ilow, Py_ssize_t ihigh)
+{
+    PyObject *ret;
+    npy_intp niter;
+    Py_ssize_t i;
+
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return NULL;
+    }
+    niter = NpyIter_GetNIter(self->iter);
+    if (ilow < 0) {
+        ilow = 0;
+    }
+    else if (ilow >= niter) {
+        ilow = niter-1;
+    }
+    if (ihigh < ilow) {
+        ihigh = ilow;
+    }
+    else if (ihigh >= niter) {
+        ihigh = niter-1;
+    }
+
+    ret = PyTuple_New(ihigh-ilow);
+    if (ret == NULL) {
+        return NULL;
+    }
+    for (i = ilow; i < ihigh ; ++i) {
+        PyObject *item = npyiter_seq_item(self, i);
+        if (item == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret, i-ilow, item);
+    }
+    return ret;
+}
+
 NPY_NO_EXPORT int
 npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 {
@@ -1310,7 +1352,7 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (binaryfunc)NULL,                       /*sq_concat*/
     (ssizeargfunc)NULL,                     /*sq_repeat*/
     (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
-    (ssizessizeargfunc)NULL,                /*sq_slice*/
+    (ssizessizeargfunc)npyiter_seq_slice,   /*sq_slice*/
     (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
     (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
@@ -1321,7 +1363,7 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
     (intargfunc)NULL,                       /*sq_repeat is handled nb_multiply*/
     (intargfunc)npyiter_seq_item,           /*sq_item*/
-    (intintargfunc)NULL,                    /*sq_slice*/
+    (intintargfunc)npyiter_seq_slice,       /*sq_slice*/
     (intobjargproc)npyiter_seq_ass_item,    /*sq_ass_item*/
     (intintobjargproc)NULL,                 /*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
