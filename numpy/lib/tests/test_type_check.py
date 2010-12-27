@@ -3,6 +3,13 @@ from numpy.lib import *
 from numpy.core import *
 from numpy.compat import asbytes
 
+try: 
+    import ctypes 
+    _HAS_CTYPE = True 
+except ImportError: 
+    _HAS_CTYPE = False 
+
+    
 def assert_all(x):
     assert(all(x)), x
 
@@ -375,9 +382,9 @@ class TestArrayConversion(TestCase):
         assert_equal(a.__class__,ndarray)
         assert issubdtype(a.dtype,float)
 
-
 class TestDateTimeData:
 
+    @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
     def test_basic(self):
         a = array(['1980-03-23'], dtype=datetime64)
         assert_equal(datetime_data(a.dtype), (asbytes('us'), 1, 1, 1))
