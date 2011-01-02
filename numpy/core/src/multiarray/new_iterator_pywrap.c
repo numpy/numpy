@@ -76,66 +76,520 @@ npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 }
 
 static int
-npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
+NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
 {
-    static char *kwlist[] = {"op", "flags", "op_flags", "op_dtypes",
-                             "order", "casting", "op_axes", "buffersize",
-                             NULL};
+    npy_uint32 tmpflags = 0;
+    int iflags, nflags;
 
-    PyObject *op_in, *flags_in = NULL, *order_in = NULL, *op_flags_in = NULL,
-                *op_dtypes_in = NULL, *casting_in = NULL, *op_axes_in = NULL;
+    PyObject *f;
+    char *str = NULL;
+    Py_ssize_t length = 0;
+    npy_uint32 flag = 0;
 
-    npy_intp iiter, buffersize = 0;
-
-    npy_intp niter = 0;
-    PyArrayObject *op[NPY_MAXARGS];
-    npy_uint32 flags = 0;
-    NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_EQUIV_CASTING;
-    npy_uint32 op_flags[NPY_MAXARGS];
-    PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
-    npy_intp oa_ndim = 0;
-    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
-    npy_intp *op_axes[NPY_MAXARGS];
-
-    if (self->iter != NULL) {
+    if (!PyTuple_Check(flags_in) && !PyList_Check(flags_in)) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was already initialized");
-        return -1;
+                "Iterator global flags must be a list or tuple of strings");
+        return NPY_FAIL;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOOOOi", kwlist,
-                    &op_in, &flags_in, &op_flags_in, &op_dtypes_in,
-                    &order_in, &casting_in, &op_axes_in, &buffersize)) {
-        return -1;
+    nflags = PySequence_Size(flags_in);
+
+    for (iflags = 0; iflags < nflags; ++iflags) {
+        f = PySequence_GetItem(flags_in, iflags);
+        if (f == NULL) {
+            return NPY_FAIL;
+        }
+        if (PyString_AsStringAndSize(f, &str, &length) == -1) {
+            Py_DECREF(f);
+            return NPY_FAIL;
+        }
+        /* Use switch statements to quickly isolate the right flag */
+        switch (str[0]) {
+            case 'b':
+                if (strcmp(str, "buffered") == 0) {
+                    flag = NPY_ITER_BUFFERED;
+                }
+                else if (strcmp(str, "buffered_growinner") == 0) {
+                    flag = NPY_ITER_BUFFERED_GROWINNER;
+                }
+                break;
+            case 'c':
+                if (length >= 6) switch (str[5]) {
+                    case 'e':
+                        if (strcmp(str, "c_order_index") == 0) {
+                            flag = NPY_ITER_C_ORDER_INDEX;
+                        }
+                        break;
+                    case 's':
+                        if (strcmp(str, "coords") == 0) {
+                            flag = NPY_ITER_COORDS;
+                        }
+                        break;
+                    case 'n':
+                        if (strcmp(str, "common_dtype") == 0) {
+                            flag = NPY_ITER_COMMON_DTYPE;
+                        }
+                        break;
+                }
+                break;
+            case 'f':
+                if (strcmp(str, "f_order_index") == 0) {
+                    flag = NPY_ITER_F_ORDER_INDEX;
+                }
+                break;
+            case 'n':
+                if (strcmp(str, "no_inner_iteration") == 0) {
+                    flag = NPY_ITER_NO_INNER_ITERATION;
+                }
+                break;
+            case 'o':
+                if (strcmp(str, "offsets") == 0) {
+                    flag = NPY_ITER_OFFSETS;
+                }
+                break;
+        }
+        if (flag == 0) {
+            PyErr_Format(PyExc_ValueError,
+                    "Unexpected iterator global flag \"%s\"", str);
+            Py_DECREF(f);
+            return NPY_FAIL;
+        }
+        else {
+            tmpflags |= flag;
+        }
+        Py_DECREF(f);
     }
+
+    *flags |= tmpflags;
+    return NPY_SUCCEED;
+}
+
+/* TODO: Use PyArray_OrderConverter once 'K' is added there */
+static int
+npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
+{
+    char *str = NULL;
+    Py_ssize_t length = 0;
+    
+    if (PyString_AsStringAndSize(order_in, &str, &length) == -1) {
+        return NPY_FAIL;
+    }
+
+    if (length == 1) switch (str[0]) {
+        case 'C':
+            *order = NPY_CORDER;
+            return NPY_SUCCEED;
+        case 'F':
+            *order = NPY_FORTRANORDER;
+            return NPY_SUCCEED;
+        case 'A':
+            *order = NPY_ANYORDER;
+            return NPY_SUCCEED;
+        case 'K':
+            *order = NPY_KEEPORDER;
+            return NPY_SUCCEED;
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+            "order must be one of 'C', 'F', 'A', or 'K'");
+    return NPY_FAIL;
+}
+
+/*
+ * Convert any Python object, *obj*, to an NPY_CASTING enum.
+ * TODO: Move elsewhere, add to the NumPy API.
+ */
+static int
+PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
+{
+    char *str = NULL;
+    Py_ssize_t length = 0;
+    
+    if (PyString_AsStringAndSize(obj, &str, &length) == -1) {
+        return NPY_FAIL;
+    }
+    if (length >= 2) switch (str[2]) {
+        case 0:
+            if (strcmp(str, "no") == 0) {
+                *casting = NPY_NO_CASTING;
+                return NPY_SUCCEED;
+            }
+            break;
+        case 'u':
+            if (strcmp(str, "equiv") == 0) {
+                *casting = NPY_EQUIV_CASTING;
+                return NPY_SUCCEED;
+            }
+            break;
+        case 'f':
+            if (strcmp(str, "safe") == 0) {
+                *casting = NPY_SAFE_CASTING;
+                return NPY_SUCCEED;
+            }
+            break;
+        case 'm':
+            if (strcmp(str, "same_kind") == 0) {
+                *casting = NPY_SAME_KIND_CASTING;
+                return NPY_SUCCEED;
+            }
+            break;
+        case 's':
+            if (strcmp(str, "unsafe") == 0) {
+                *casting = NPY_UNSAFE_CASTING;
+                return NPY_SUCCEED;
+            }
+            break;
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+            "casting must be one of 'no', 'equiv', 'safe', "
+            "'same_kind', or 'unsafe'");
+    return NPY_FAIL;
+
+}
+
+static int
+NpyIter_OpFlagsConverter(PyObject *op_flags_in,
+                         npy_uint32 *op_flags)
+{
+    int iflags, nflags;
+
+    if (!PyTuple_Check(op_flags_in) && !PyList_Check(op_flags_in)) {
+        PyErr_SetString(PyExc_ValueError,
+                "op_flags must be a tuple or array of per-op flag-tuples");
+        return NPY_FAIL;
+    }
+
+    nflags = PySequence_Size(op_flags_in);
+
+    *op_flags = 0;
+    for (iflags = 0; iflags < nflags; ++iflags) {
+        PyObject *f;
+        char *str = NULL;
+        Py_ssize_t length = 0;
+        npy_uint32 flag = 0;
+
+        f = PySequence_GetItem(op_flags_in, iflags);
+        if (f == NULL) {
+            return NPY_FAIL;
+        }
+
+        if (PyString_AsStringAndSize(f, &str, &length) == -1) {
+            Py_DECREF(f);
+            PyErr_SetString(PyExc_ValueError,
+                   "op_flags must be a tuple or array of per-op flag-tuples");
+            return NPY_FAIL;
+        }
+
+        /* Use switch statements to quickly isolate the right flag */
+        switch (str[0]) {
+            case 'a':
+                if (strcmp(str, "allocate") == 0) {
+                    flag = NPY_ITER_ALLOCATE;
+                }
+                break;
+            case 'c':
+                if (strcmp(str, "copy") == 0) {
+                    flag = NPY_ITER_COPY;
+                }
+                break;
+            case 'n':
+                switch (str[1]) {
+                    case 'b':
+                        if (strcmp(str, "nbo_aligned") == 0) {
+                            flag = NPY_ITER_NBO_ALIGNED;
+                        }
+                        break;
+                    case 'o':
+                        if (strcmp(str, "no_subtype") == 0) {
+                            flag = NPY_ITER_NO_SUBTYPE;
+                        }
+                        else if (strcmp(str, "no_broadcast") == 0) {
+                            flag = NPY_ITER_NO_BROADCAST;
+                        }
+                        break;
+                }
+                break;
+            case 'r':
+                if (length > 4) switch (str[4]) {
+                    case 'o':
+                        if (strcmp(str, "readonly") == 0) {
+                            flag = NPY_ITER_READONLY;
+                        }
+                        break;
+                    case 'w':
+                        if (strcmp(str, "readwrite") == 0) {
+                            flag = NPY_ITER_READWRITE;
+                        }
+                        break;
+                }
+                break;
+            case 'u':
+                if (strcmp(str, "updateifcopy") == 0) {
+                    flag = NPY_ITER_UPDATEIFCOPY;
+                }
+                break;
+            case 'w':
+                if (length > 5) switch (str[5]) {
+                    case 'a':
+                        if (strcmp(str,
+                                        "writeable_references") == 0) {
+                            flag = NPY_ITER_WRITEABLE_REFERENCES;
+                        }
+                        break;
+                    case 'o':
+                        if (strcmp(str, "writeonly") == 0) {
+                            flag = NPY_ITER_WRITEONLY;
+                        }
+                        break;
+                }
+                break;
+        }
+        if (flag == 0) {
+            PyErr_Format(PyExc_ValueError,
+                    "Unexpected per-op iterator flag \"%s\"", str);
+            Py_DECREF(f);
+            return NPY_FAIL;
+        }
+        else {
+            *op_flags |= flag;
+        }
+        Py_DECREF(f);
+    }
+
+    return NPY_SUCCEED;
+}
+
+static int
+npyiter_convert_op_flags_array(PyObject *op_flags_in,
+                         npy_uint32 *op_flags_array, npy_intp niter)
+{
+    npy_intp iiter;
+
+    if (!PyTuple_Check(op_flags_in) && !PyList_Check(op_flags_in)) {
+        PyErr_SetString(PyExc_ValueError,
+                "op_flags must be a tuple or array of per-op flag-tuples");
+        return NPY_FAIL;
+    }
+
+    if (PySequence_Size(op_flags_in) != niter) {
+        goto try_single_flags;
+    }
+
+    for (iiter = 0; iiter < niter; ++iiter) {
+        PyObject *f = PySequence_GetItem(op_flags_in, iiter);
+        if (f == NULL) {
+            return NPY_FAIL;
+        }
+        if (NpyIter_OpFlagsConverter(f,
+                        &op_flags_array[iiter]) != NPY_SUCCEED) {
+            Py_DECREF(f);
+            /* If the first one doesn't work, try the whole thing as flags */
+            if (iiter == 0) {
+                PyErr_Clear();
+                goto try_single_flags;
+            }
+            return NPY_FAIL;
+        }
+        
+        Py_DECREF(f);
+    }
+
+    return NPY_SUCCEED;
+
+try_single_flags:
+    if (NpyIter_OpFlagsConverter(op_flags_in,
+                        &op_flags_array[0]) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+
+    for (iiter = 1; iiter < niter; ++iiter) {
+        op_flags_array[iiter] = op_flags_array[0];
+    }
+
+    return NPY_SUCCEED;
+}
+
+static int
+npyiter_convert_dtypes(PyObject *op_dtypes_in,
+                        PyArray_Descr **op_dtypes,
+                        npy_intp niter)
+{
+    npy_intp iiter;
+
+    /*
+     * If the input isn't a tuple of dtypes, try converting it as-is
+     * to a dtype, and replicating to all operands.
+     */
+    if ((!PyTuple_Check(op_dtypes_in) && !PyList_Check(op_dtypes_in)) ||
+                                    PySequence_Size(op_dtypes_in) != niter) {
+        goto try_single_dtype;
+    }
+
+    for (iiter = 0; iiter < niter; ++iiter) {
+        PyObject *dtype = PySequence_GetItem(op_dtypes_in, iiter);
+        if (dtype == NULL) {
+            npy_intp i;
+            for (i = 0; i < iiter; ++i ) {
+                Py_XDECREF(op_dtypes[i]);
+            }
+            return NPY_FAIL;
+        }
+
+        /* Try converting the object to a descr */
+        if (PyArray_DescrConverter2(dtype, &op_dtypes[iiter]) != NPY_SUCCEED) {
+            npy_intp i;
+            for (i = 0; i < iiter; ++i ) {
+                Py_XDECREF(op_dtypes[i]);
+            }
+            Py_DECREF(dtype);
+            PyErr_Clear();
+            goto try_single_dtype;
+        }
+
+        Py_DECREF(dtype);
+    }
+
+    return NPY_SUCCEED;
+
+try_single_dtype:
+    if (PyArray_DescrConverter2(op_dtypes_in, &op_dtypes[0]) == NPY_SUCCEED) {
+        for (iiter = 1; iiter < niter; ++iiter) {
+            op_dtypes[iiter] = op_dtypes[0];
+            Py_XINCREF(op_dtypes[iiter]);
+        }
+        return NPY_SUCCEED;
+    }
+
+    return NPY_FAIL;
+}
+
+static int
+npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
+                        npy_intp **op_axes, npy_intp *oa_ndim)
+{
+    PyObject *a;
+    npy_intp iiter;
+
+    if ((!PyTuple_Check(op_axes_in) && !PyList_Check(op_axes_in)) ||
+                                PySequence_Size(op_axes_in) != niter) {
+        PyErr_SetString(PyExc_ValueError,
+                "op_axes must be a tuple/list matching the number of ops");
+        return NPY_FAIL;
+    }
+
+    *oa_ndim = 0;
+
+    /* Copy the tuples into op_axes */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        npy_intp idim;
+        a = PySequence_GetItem(op_axes_in, iiter);
+        if (a == NULL) {
+            return NPY_FAIL;
+        }
+        if (a == Py_None) {
+            op_axes[iiter] = NULL;
+        } else {
+            if (!PyTuple_Check(a) && !PyList_Check(a)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Each entry of op_axes must be None "
+                        "or a tuple/list");
+                Py_DECREF(a);
+                return NPY_FAIL;
+            }
+            if (*oa_ndim == 0) {
+                *oa_ndim = PySequence_Size(a);
+                if (*oa_ndim == 0) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "op_axes must have at least one dimension");
+                    return NPY_FAIL;
+                }
+                if (*oa_ndim > NPY_MAXDIMS) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Too many dimensions in op_axes");
+                    return NPY_FAIL;
+                }
+            }
+            if (PySequence_Size(a) != *oa_ndim) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Each entry of op_axes must have the same size");
+                Py_DECREF(a);
+                return NPY_FAIL;
+            }
+            for (idim = 0; idim < *oa_ndim; ++idim) {
+                PyObject *v = PySequence_GetItem(a, idim);
+                if (v == NULL) {
+                    Py_DECREF(a);
+                    return NPY_FAIL;
+                }
+                /* numpy.newaxis is None */
+                if (v == Py_None) {
+                    op_axes[iiter][idim] = -1;
+                }
+                else {
+                    op_axes[iiter][idim] = PyInt_AsLong(v);
+                    if (op_axes[iiter][idim]==-1 &&
+                                                PyErr_Occurred()) {
+                        Py_DECREF(a);
+                        Py_DECREF(v);
+                        return NPY_FAIL;
+                    }
+                }
+                Py_DECREF(v);
+            }
+            Py_DECREF(a);
+        }
+    }
+
+    if (*oa_ndim == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "If op_axes is provided, at least one list of axes "
+                "must be contained within it");
+        return NPY_FAIL;
+    }
+    
+    return NPY_SUCCEED;
+}
+
+/*
+ * Converts the operand array and op_flags array into the form NpyIter_MultiNew
+ * needs.  Sets niter, and on success, each op[i] owns a reference
+ * to an array object.
+ */
+static int
+npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
+                    PyArrayObject **op, npy_uint32 *op_flags,
+                    npy_intp *niter_out)
+{
+    npy_intp iiter, niter;
 
     /* niter and op */
     if (PyTuple_Check(op_in) || PyList_Check(op_in)) {
         niter = PySequence_Size(op_in);
         if (niter == 0) {
             PyErr_SetString(PyExc_ValueError,
-                    "Must provide at least one op");
-            return -1;
+                    "Must provide at least one operand");
+            return NPY_FAIL;
         }
         if (niter > NPY_MAXARGS) {
-            PyErr_SetString(PyExc_ValueError, "Too many ops");
-            return -1;
+            PyErr_SetString(PyExc_ValueError, "Too many operands");
+            return NPY_FAIL;
         }
-        /* Initialize the ops and dtypes to NULL */
-        memset(op, 0, sizeof(op[0])*niter);
-        memset(op_request_dtypes, 0, sizeof(op_request_dtypes[0])*niter);
     
         for (iiter = 0; iiter < niter; ++iiter) {
             PyObject *item = PySequence_GetItem(op_in, iiter);
             if (item == NULL) {
-                goto fail;
+                npy_intp i;
+                for (i = 0; i < iiter; ++i) {
+                    Py_XDECREF(op[i]);
+                }
+                return NPY_FAIL;
             }
             else if (item == Py_None) {
                 Py_DECREF(item);
                 item = NULL;
             }
-            /* Is converted to an array after op flags are retrieved */
+            /* This is converted to an array after op flags are retrieved */
             op[iiter] = (PyArrayObject *)item;
         }
     }
@@ -144,195 +598,22 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         /* Is converted to an array after op flags are retrieved */
         Py_INCREF(op_in);
         op[0] = (PyArrayObject *)op_in;
-        op_request_dtypes[0] = NULL;
     }
-    /* flags */
-    if (flags_in == NULL) {
-        flags = 0;
-    }
-    else if (PyTuple_Check(flags_in) || PyList_Check(flags_in)) {
-        int iflags, nflags = PySequence_Size(flags_in);
 
-        flags = 0;
-        for (iflags = 0; iflags < nflags; ++iflags) {
-            PyObject *f;
-            char *str = NULL;
-            Py_ssize_t length = 0;
-            npy_uint32 flag = 0;
+    *niter_out = niter;
 
-            f = PySequence_GetItem(flags_in, iflags);
-            if (f == NULL) {
-                goto fail;
-            }
-            if (PyString_AsStringAndSize(f, &str, &length) == -1) {
-                Py_DECREF(f);
-                goto fail;
-            }
-            /* Use switch statements to quickly isolate the right flag */
-            switch (str[0]) {
-                case 'b':
-                    if (strcmp(str, "buffered") == 0) {
-                        flag = NPY_ITER_BUFFERED;
-                    }
-                    else if (strcmp(str, "buffered_growinner") == 0) {
-                        flag = NPY_ITER_BUFFERED_GROWINNER;
-                    }
-                    break;
-                case 'c':
-                    if (length >= 6) switch (str[5]) {
-                        case 'e':
-                            if (strcmp(str, "c_order_index") == 0) {
-                                flag = NPY_ITER_C_ORDER_INDEX;
-                            }
-                            break;
-                        case 's':
-                            if (strcmp(str, "coords") == 0) {
-                                flag = NPY_ITER_COORDS;
-                            }
-                            break;
-                        case 'n':
-                            if (strcmp(str, "common_dtype") == 0) {
-                                flag = NPY_ITER_COMMON_DTYPE;
-                            }
-                            break;
-                    }
-                    break;
-                case 'f':
-                    if (strcmp(str, "f_order_index") == 0) {
-                        flag = NPY_ITER_F_ORDER_INDEX;
-                    }
-                    break;
-                case 'n':
-                    if (strcmp(str, "no_inner_iteration") == 0) {
-                        flag = NPY_ITER_NO_INNER_ITERATION;
-                    }
-                    break;
-                case 'o':
-                    if (strcmp(str, "offsets") == 0) {
-                        flag = NPY_ITER_OFFSETS;
-                    }
-                    break;
-            }
-            if (flag == 0) {
-                PyErr_Format(PyExc_ValueError,
-                        "Unexpected flag \"%s\"", str);
-                Py_DECREF(f);
-                goto fail;
-            }
-            else {
-                flags |= flag;
-            }
-            Py_DECREF(f);
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError,
-                "Parameter 2 must be a tuple of flags");
-        goto fail;
-    }
-    /* order */
-    if (order_in != NULL) {
-        char *str = NULL;
-        Py_ssize_t length = 0;
-        
-        if (PyString_AsStringAndSize(order_in, &str, &length) == -1) {
-            goto fail;
-        }
-
-        if (length != 1) {
-            PyErr_SetString(PyExc_ValueError,
-                    "order must be one of 'C', 'F', 'A', or 'K'");
-            goto fail;
-        }
-        switch (str[0]) {
-            case 'C':
-                order = NPY_CORDER;
-                break;
-            case 'F':
-                order = NPY_FORTRANORDER;
-                break;
-            case 'A':
-                order = NPY_ANYORDER;
-                break;
-            case 'K':
-                order = NPY_KEEPORDER;
-                break;
-            default:
-                PyErr_SetString(PyExc_ValueError,
-                        "order must be one of 'C', 'F', 'A', or 'K'");
-                goto fail;
-        }
-    }
-    /* casting */
-    if (casting_in != NULL) {
-        char *str = NULL;
-        Py_ssize_t length = 0;
-        int bad_cast_input = 0;
-        
-        if (PyString_AsStringAndSize(casting_in, &str, &length) == -1) {
-            goto fail;
-        }
-        if (length >= 2) switch (str[2]) {
-            case 0:
-                if (strcmp(str, "no") == 0) {
-                    casting = NPY_NO_CASTING;
-                }
-                else {
-                    bad_cast_input = 1;
-                }
-                break;
-            case 'u':
-                if (strcmp(str, "equiv") == 0) {
-                    casting = NPY_EQUIV_CASTING;
-                }
-                else {
-                    bad_cast_input = 1;
-                }
-                break;
-            case 'f':
-                if (strcmp(str, "safe") == 0) {
-                    casting = NPY_SAFE_CASTING;
-                }
-                else {
-                    bad_cast_input = 1;
-                }
-                break;
-            case 'm':
-                if (strcmp(str, "same_kind") == 0) {
-                    casting = NPY_SAME_KIND_CASTING;
-                }
-                else {
-                    bad_cast_input = 1;
-                }
-                break;
-            case 's':
-                if (strcmp(str, "unsafe") == 0) {
-                    casting = NPY_UNSAFE_CASTING;
-                }
-                else {
-                    bad_cast_input = 1;
-                }
-                break;
-            default:
-                bad_cast_input = 1;
-                break;
-
-        }
-        if (bad_cast_input) {
-            PyErr_SetString(PyExc_ValueError,
-                    "casting must be one of 'no', 'equiv', 'safe', "
-                    "'same_kind', or 'unsafe'");
-            goto fail;
-        }
-    }
     /* op_flags */
-    if (op_flags_in == NULL) {
+    if (op_flags_in == NULL || op_flags_in == Py_None) {
         for (iiter = 0; iiter < niter; ++iiter) {
             /*
-             * By default, make writeable arrays readwrite, and anything
+             * By default, make NULL operands writeonly and flagged for
+             * allocation, writeable arrays readwrite, and anything
              * else readonly.
              */
-            if (op[iiter] != NULL && PyArray_Check(op[iiter]) &&
+            if (op[iiter] == NULL) {
+                op_flags[iiter] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+            }
+            else if (PyArray_Check(op[iiter]) &&
                             PyArray_CHKFLAGS(op[iiter], NPY_WRITEABLE)) {
                 op_flags[iiter] = NPY_ITER_READWRITE;
             }
@@ -341,120 +622,14 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-    else if (PyTuple_Check(op_flags_in) || PyList_Check(op_flags_in)) {
-        if (PySequence_Size(op_flags_in) != niter) {
-            PyErr_SetString(PyExc_ValueError,
-                    "op_flags must be a tuple/list matching the number of ops");
-            goto fail;
-        }
+    else if (npyiter_convert_op_flags_array(op_flags_in,
+                                      op_flags, niter) != NPY_SUCCEED) {
         for (iiter = 0; iiter < niter; ++iiter) {
-            int iflags, nflags;
-            PyObject *f = PySequence_GetItem(op_flags_in, iiter);
-            if (f == NULL || (!PyTuple_Check(f) && !PyList_Check(f))) {
-                PyObject_Print(f, stderr, 0);
-                Py_XDECREF(f);
-                PyErr_SetString(PyExc_ValueError,
-                        "Each entry of op_flags must be a tuple/list");
-                goto fail;
-            }
-            
-            nflags = PySequence_Size(f);
-            op_flags[iiter] = 0;
-            for (iflags = 0; iflags < nflags; ++iflags) {
-                PyObject *f2 = PySequence_GetItem(f, iflags);
-                char *str = NULL;
-                Py_ssize_t length = 0;
-                npy_uint32 flag = 0;
-
-                if (PyString_AsStringAndSize(f2, &str, &length) == -1) {
-                    Py_XDECREF(f2);
-                    Py_DECREF(f);
-                    goto fail;
-                }
-                /* Use switch statements to quickly isolate the right flag */
-                switch (str[0]) {
-                    case 'a':
-                        if (strcmp(str, "allocate") == 0) {
-                            flag = NPY_ITER_ALLOCATE;
-                        }
-                        break;
-                    case 'c':
-                        if (strcmp(str, "copy") == 0) {
-                            flag = NPY_ITER_COPY;
-                        }
-                        break;
-                    case 'n':
-                        switch (str[1]) {
-                            case 'b':
-                                if (strcmp(str, "nbo_aligned") == 0) {
-                                    flag = NPY_ITER_NBO_ALIGNED;
-                                }
-                                break;
-                            case 'o':
-                                if (strcmp(str, "no_subtype") == 0) {
-                                    flag = NPY_ITER_NO_SUBTYPE;
-                                }
-                                else if (strcmp(str, "no_broadcast") == 0) {
-                                    flag = NPY_ITER_NO_BROADCAST;
-                                }
-                                break;
-                        }
-                        break;
-                    case 'r':
-                        if (length > 4) switch (str[4]) {
-                            case 'o':
-                                if (strcmp(str, "readonly") == 0) {
-                                    flag = NPY_ITER_READONLY;
-                                }
-                                break;
-                            case 'w':
-                                if (strcmp(str, "readwrite") == 0) {
-                                    flag = NPY_ITER_READWRITE;
-                                }
-                                break;
-                        }
-                        break;
-                    case 'u':
-                        if (strcmp(str, "updateifcopy") == 0) {
-                            flag = NPY_ITER_UPDATEIFCOPY;
-                        }
-                        break;
-                    case 'w':
-                        if (length > 5) switch (str[5]) {
-                            case 'a':
-                                if (strcmp(str,
-                                                "writeable_references") == 0) {
-                                    flag = NPY_ITER_WRITEABLE_REFERENCES;
-                                }
-                                break;
-                            case 'o':
-                                if (strcmp(str, "writeonly") == 0) {
-                                    flag = NPY_ITER_WRITEONLY;
-                                }
-                                break;
-                        }
-                        break;
-                }
-                if (flag == 0) {
-                    PyErr_Format(PyExc_ValueError,
-                            "Unexpected flag \"%s\"", str);
-                    Py_DECREF(f2);
-                    Py_DECREF(f);
-                    goto fail;
-                }
-                else {
-                    op_flags[iiter] |= flag;
-                }
-                Py_DECREF(f2);
-            }
-            Py_DECREF(f);
+            Py_XDECREF(op[iiter]);
         }
+        return NPY_FAIL;
     }
-    else {
-        PyErr_SetString(PyExc_ValueError,
-                "Must provide a tuple of flag-tuples in op_flags");
-        goto fail;
-    }
+
     /* Now that we have the flags - convert all the ops to arrays */
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op[iiter] != NULL) {
@@ -470,126 +645,93 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                 if (PyErr_Occurred() &&
                             PyErr_ExceptionMatches(PyExc_TypeError)) {
                     PyErr_SetString(PyExc_TypeError,
-                            "Iterator input is flagged as writeable, "
+                            "Iterator operand is flagged as writeable, "
                             "but is an object which cannot be written "
                             "back to via UPDATEIFCOPY");
                 }
-                goto fail;
+                for (iiter = 0; iiter < niter; ++iiter) {
+                    Py_DECREF(op[iiter]);
+                }
+                return NPY_FAIL;
             }
             Py_DECREF(op[iiter]);
             op[iiter] = ao;
         }
     }
-    /* op_request_dtypes */
-    if (op_dtypes_in != NULL && op_dtypes_in != Py_None) {
-        if (!PyTuple_Check(op_dtypes_in) && !PyList_Check(op_dtypes_in)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Must provide a tuple in op_dtypes");
-            goto fail;
-        }
-        if (PySequence_Size(op_dtypes_in) != niter) {
-            PyErr_SetString(PyExc_ValueError,
-                   "op_dtypes must be a tuple/list matching the number of ops");
-            goto fail;
-        }
-        for (iiter = 0; iiter < niter; ++iiter) {
-            PyObject *dtype = PySequence_GetItem(op_dtypes_in, iiter);
-            /* Make sure the entry is an array descr */
-            if (PyObject_TypeCheck(dtype, &PyArrayDescr_Type)) {
-                op_request_dtypes[iiter] = (PyArray_Descr *)dtype;
-            }
-            else if (dtype == Py_None) {
-                Py_DECREF(dtype);
-                op_request_dtypes[iiter] = NULL;
-            }
-            else {
-                Py_DECREF(dtype);
-                PyErr_SetString(PyExc_ValueError,
-                        "Iterator requested dtypes must be array descrs.");
-                goto fail;
-            }
-        }
+
+    return NPY_SUCCEED;
+}
+
+static int
+npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"op", "flags", "op_flags", "op_dtypes",
+                             "order", "casting", "op_axes", "buffersize",
+                             NULL};
+
+    PyObject *op_in, *flags_in = NULL, *op_flags_in = NULL,
+                *op_dtypes_in = NULL, *op_axes_in = NULL;
+
+    npy_intp iiter, niter = 0;
+    PyArrayObject *op[NPY_MAXARGS];
+    npy_uint32 flags = 0;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    npy_uint32 op_flags[NPY_MAXARGS];
+    PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
+    npy_intp oa_ndim = 0;
+    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
+    npy_intp *op_axes[NPY_MAXARGS];
+    int buffersize = 0;
+
+    if (self->iter != NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was already initialized");
+        return -1;
     }
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOO&O&Oi", kwlist,
+                    &op_in,
+                    &flags_in,
+                    &op_flags_in,
+                    &op_dtypes_in,
+                    npyiter_order_converter, &order,
+                    PyArray_CastingConverter, &casting,
+                    &op_axes_in,
+                    &buffersize)) {
+        return -1;
+    }
+
+    if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &niter)
+                                                        != NPY_SUCCEED) {
+        return -1;
+    }
+
+    /* Set the dtypes to all NULL to start as well */
+    memset(op_request_dtypes, 0, sizeof(op_request_dtypes[0])*niter);
+
+    /* flags */
+    if (flags_in != NULL &&
+              NpyIter_GlobalFlagsConverter(flags_in, &flags) != NPY_SUCCEED) {
+        goto fail;
+    }
+
+    /* op_request_dtypes */
+    if (op_dtypes_in != NULL && op_dtypes_in != Py_None &&
+            npyiter_convert_dtypes(op_dtypes_in,
+                                   op_request_dtypes, niter) != NPY_SUCCEED) {
+        goto fail;
+    }
+
     /* op_axes */
     if (op_axes_in != NULL && op_axes_in != Py_None) {
-        PyObject *a;
-        if (!PyTuple_Check(op_axes_in) && !PyList_Check(op_axes_in)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Must provide a tuple in op_axes");
-            goto fail;
-        }
-        if (PySequence_Size(op_axes_in) != niter) {
-            PyErr_SetString(PyExc_ValueError,
-                    "op_axes must be a tuple/list matching the number of ops");
-            goto fail;
-        }
-        /* Copy the tuples into op_axes */
+        /* Initialize to point to the op_axes arrays */
         for (iiter = 0; iiter < niter; ++iiter) {
-            npy_intp idim;
-            a = PySequence_GetItem(op_axes_in, iiter);
-            if (a == NULL) {
-                goto fail;
-            }
-            if (a == Py_None) {
-                op_axes[iiter] = NULL;
-            } else {
-                if (!PyTuple_Check(a) && !PyList_Check(a)) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Each entry of op_axes must be None "
-                            "or a tuple/list");
-                    Py_DECREF(a);
-                    goto fail;
-                }
-                if (oa_ndim == 0) {
-                    oa_ndim = PySequence_Size(a);
-                    if (oa_ndim == 0) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "Must have at least one  dimension "
-                                "in op_axes");
-                        goto fail;
-                    }
-                    if (oa_ndim > NPY_MAXDIMS) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "Too many dimensions in op_axes");
-                        goto fail;
-                    }
-                }
-                if (PySequence_Size(a) != oa_ndim) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Each entry of op_axes must have the same size");
-                    Py_DECREF(a);
-                    goto fail;
-                }
-                for (idim = 0; idim < oa_ndim; ++idim) {
-                    PyObject *v = PySequence_GetItem(a, idim);
-                    if (v == NULL) {
-                        Py_DECREF(a);
-                        goto fail;
-                    }
-                    /* numpy.newaxis is None */
-                    if (v == Py_None) {
-                        op_axes_arrays[iiter][idim] = -1;
-                    }
-                    else {
-                        op_axes_arrays[iiter][idim] = PyInt_AsLong(v);
-                        if (op_axes_arrays[iiter][idim]==-1 &&
-                                                    PyErr_Occurred()) {
-                            Py_DECREF(a);
-                            Py_DECREF(v);
-                            goto fail;
-                        }
-                    }
-                    Py_DECREF(v);
-                }
-                Py_DECREF(a);
-                op_axes[iiter] = op_axes_arrays[iiter];
-            }
+            op_axes[iiter] = op_axes_arrays[iiter];
         }
 
-        if (oa_ndim == 0) {
-            PyErr_SetString(PyExc_ValueError,
-                    "If op_axes is provided, at least one list of axes "
-                    "must be within it");
+        if (npyiter_convert_op_axes(op_axes_in, niter,
+                                    op_axes, &oa_ndim) != NPY_SUCCEED) {
             goto fail;
         }
     }
