@@ -801,39 +801,6 @@ Construction and Destruction
             If the common data type is known ahead of time, don't use this
             flag.  Instead, set the requested dtype for all the operands.
 
-        ``NPY_ITER_OFFSETS``
-
-            Causes the iterator to produce offsets in the addresses
-            returned by ``NpyIter_GetDataPtrArray`` instead of
-            pointers.  If used, cast the DataPtrArray value from
-            ``char **`` to ``npy_intp *``.
-            
-            This option is useful, together with the ``op_axes`` parameter,
-            for nested loops with two or more iterators.
-            The inner loop iterator should be made without
-            ``NPY_ITER_OFFSETS``, and any outer loop iterators should
-            be made with it.  The sum of the inner loop pointers and
-            the outer loop offsets produces the innermost element addresses.
-
-            To help understand how the offsets work, here is a simple
-            nested iteration example.  Let's say our array ``a`` has shape
-            (2, 3, 4), and strides (48, 16, 4).  The data pointer for element
-            (i, j, k) is at address
-            ``PyArray_BYTES(a) + 48*i + 16*j + 4*k``.  Now consider two
-            iterators with custom op_axes (0,1) and (2,).  The first
-            one will produce addresses like
-            ``PyArray_BYTES(a) + 48*i + 16*j``, and the second one will
-            produce addresses like ``PyArray_BYTES(a) + 4*k``.  Simply
-            adding together these values would produce invalid pointers.
-            Instead, we can make the outer iterator produce offsets,
-            in which case it will produce the values ``48*i + 16*j``,
-            and its sum with the other iterator's pointer gives the
-            correct data address.  It's important to note that this
-            will not work if any of the iterators share an axis.  The
-            iterator cannot check this, so your code must handle it.
-
-            This flag is incompatible with copying or buffering inputs.
-
         ``NPY_ITER_BUFFERED`` **PARTIALLY IMPLEMENTED**
 
             Causes the iterator to store buffering data, and use buffering
@@ -1016,6 +983,60 @@ Construction and Destruction
     Resets the iterator back to its initial state, at the beginning
     of the arrays.
 
+``void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)``
+
+    Resets the iterator back to its initial state, but using the values
+    in ``baseptrs`` for the data instead of the pointers from the arrays
+    being iterated.  This functions is intended to be used, together with
+    the ``op_axes`` parameter, by nested iteration code with two or more
+    iterators.
+
+    *TODO*: Move the following into a special section on nested iterators.
+
+    Creating iterators for nested iteration requires some care.  All
+    the iterator operands must match exactly, or the calls to
+    ``NpyIter_ResetBasePointers`` will be invalid.  This means that
+    automatic copies and output allocation should not be used haphazardly.
+    It is possible to still use the automatic data conversion and casting
+    features of the iterator by creating one of the iterators with
+    all the conversion parameters enabled, then grabbing the allocated
+    operands with the ``NpyIter_GetObjectArray`` function and passing
+    them into the constructors for the rest of the iterators.
+
+    **WARNING**: When creating iterators for nested iteration,
+    the code must not use a dimension more than once in the different
+    iterators.  If this is done, nested iteration will produce
+    out-of-bounds pointers during iteration.
+
+    **WARNING**: When creating iterators for nested iteration, buffering
+    can only be applied to the innermost iterator.  If a buffered iterator
+    is used as the source for ``baseptrs``, it will point into a small buffer
+    instead of the array and the inner iteration will be invalid.
+
+    The pattern for using nested iterators is as follows.::
+
+        NpyIter *iter1, *iter1;
+        NpyIter_IterNext_Fn iternext1, iternext2;
+        char **dataptrs1;
+
+        /*
+         * With the exact same operands, no copies allowed, and
+         * no axis in op_axes used both in iter1 and iter2.
+         * Buffering may be enabled for iter2, but not for iter1.
+         */
+        iter1 = ...; iter2 = ...;
+
+        iternext1 = NpyIter_GetIterNext(iter1);
+        iternext2 = NpyIter_GetIterNext(iter2);
+        dataptrs1 = NpyIter_GetDataPtrArray(iter1);
+
+        do {
+            NpyIter_ResetBasePointers(iter2, dataptrs1);
+            do {
+                /* Use the iter2 values */
+            } while (iternext2(iter2));
+        } while (iternext1(iter1));
+
 ``int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)``
 
     Adjusts the iterator to point to the ``ndim`` coordinates
@@ -1053,11 +1074,6 @@ Construction and Destruction
     Returns 1 if the iterator was created with the
     ``NPY_ITER_C_ORDER_INDEX`` or ``NPY_ITER_F_ORDER_INDEX``
     flag, 0 otherwise.
-
-``int NpyIter_HasOffsets(NpyIter *iter)``
-
-    Returns 1 if the iterator was created with the
-    ``NPY_ITER_OFFSETS`` flag, 0 otherwise.
 
 ``npy_intp NpyIter_GetNDim(NpyIter *iter)``
 
