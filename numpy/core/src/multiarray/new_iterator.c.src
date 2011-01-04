@@ -25,16 +25,14 @@
 #define NPY_ITFLAG_HASINDEX    0x004
 /* The iterator is tracking coordinates */
 #define NPY_ITFLAG_HASCOORDS   0x008
-/* The iterator returns offsets instead of pointers */
-#define NPY_ITFLAG_HASOFFSETS  0x010
 /* The iteration order was forced on construction */
-#define NPY_ITFLAG_FORCEDORDER 0x020
+#define NPY_ITFLAG_FORCEDORDER 0x010
 /* The inner loop is handled outside the iterator */
-#define NPY_ITFLAG_NOINNER     0x040
+#define NPY_ITFLAG_NOINNER     0x020
 /* The iterator is buffered */
-#define NPY_ITFLAG_BUFFER      0x080
+#define NPY_ITFLAG_BUFFER      0x040
 /* The iterator is buffered */
-#define NPY_ITFLAG_GROWINNER   0x100
+#define NPY_ITFLAG_GROWINNER   0x080
 
 /* Internal iterator per-operand iterator flags */
 
@@ -78,6 +76,8 @@
         ((NPY_SIZEOF_INTP)*(niter))
 #define NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter) \
         ((NPY_SIZEOF_INTP)*(niter+1))
+#define NIT_BASEOFFSETS_SIZEOF(itflags, ndim, niter) \
+        ((NPY_SIZEOF_INTP)*(niter+1))
 #define NIT_OBJECTS_SIZEOF(itflags, ndim, niter) \
         ((NPY_SIZEOF_INTP)*(niter))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, niter) \
@@ -97,9 +97,12 @@
 #define NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) \
         (NIT_DTYPES_OFFSET(itflags, ndim, niter) + \
          NIT_DTYPES_SIZEOF(itflags, ndim, niter))
-#define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
+#define NIT_BASEOFFSETS_OFFSET(itflags, ndim, niter) \
         (NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) + \
          NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter))
+#define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
+        (NIT_BASEOFFSETS_OFFSET(itflags, ndim, niter) + \
+         NIT_BASEOFFSETS_SIZEOF(itflags, ndim, niter))
 #define NIT_OPITFLAGS_OFFSET(itflags, ndim, niter) \
         (NIT_OBJECTS_OFFSET(itflags, ndim, niter) + \
          NIT_OBJECTS_SIZEOF(itflags, ndim, niter))
@@ -125,6 +128,8 @@
         (char*)(iter) + NIT_DTYPES_OFFSET(itflags, ndim, niter)))
 #define NIT_RESETDATAPTR(iter) ((char **)( \
         (char*)(iter) + NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter)))
+#define NIT_BASEOFFSETS(iter) ((npy_intp *)( \
+        (char*)(iter) + NIT_BASEOFFSETS_OFFSET(itflags, ndim, niter)))
 #define NIT_OBJECTS(iter) ((PyArrayObject **)( \
         (char*)(iter) + NIT_OBJECTS_OFFSET(itflags, ndim, niter)))
 #define NIT_OPITFLAGS(iter) ( \
@@ -304,16 +309,21 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         for (iiter = 0; iiter < niter; ++iiter) {
             npy_intp *axes = op_axes[iiter];
             if (axes != NULL) {
-                memset(axes_dupcheck, 0, oa_ndim);
+                memset(axes_dupcheck, 0, NPY_MAXDIMS);
                 for (idim = 0; idim < oa_ndim; ++idim) {
                     npy_intp i = axes[idim];
                     if (i >= 0) {
-                        if (i >= NPY_MAXDIMS ||
-                                axes_dupcheck[i] == 1) {
+                        if (i >= NPY_MAXDIMS) {
+                            PyErr_Format(PyExc_ValueError,
+                                    "The 'op_axes' provided to the iterator "
+                                    "constructor contained invalid "
+                                    "values %d", (int)i);
+                            return NULL;
+                        } else if(axes_dupcheck[i] == 1) {
                             PyErr_Format(PyExc_ValueError,
                                     "The 'op_axes' provided to the iterator "
                                     "constructor contained duplicate "
-                                    "or invalid values");
+                                    "value %d", (int)i);
                             return NULL;
                         }
                         else {
@@ -328,19 +338,6 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /* Checks the global iterator flags */
     if (!pyiter_check_global_flags(flags, &itflags)) {
         return NULL;
-    }
-
-    /* If offsets were requested, make sure copying is disabled */
-    if (itflags&NPY_ITFLAG_HASOFFSETS) {
-        for (iiter = 0; iiter < niter; ++iiter) {
-            if (op_flags[iiter]&(NPY_ITER_COPY|
-                        NPY_ITER_UPDATEIFCOPY)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "If the iterator flag NPY_ITER_OFFSETS is used, "
-                        "copying and buffering must not be enabled");
-                return NULL;
-            }
-        }
     }
 
     /*
@@ -445,48 +442,44 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     for (iiter = 0; iiter < niter; ++iiter) {
         NIT_DTYPES(iter)[iiter] = op_dtype[iiter];
         NIT_OBJECTS(iter)[iiter] = op[iiter];
+        NIT_BASEOFFSETS(iter)[iiter] = 0;
 
-        if (itflags&NPY_ITFLAG_HASOFFSETS) {
-            /* If offsets were requested, set the data pointers to zero */
-            op_dataptr[iiter] = 0;
-        }
-        else {
-            /* Get the data pointer for this operand */
-            switch (op_type[iiter]) {
-                case NPY_ITER_OP_ARRAY:
-                    /*
-                     * Array casting/copying is handled later, once the
-                     * iteration order is finalized.  Here, we
-                     * optimistically assume the array will be used
-                     * as is.
-                     */
-                    op_dataptr[iiter] = PyArray_DATA(op[iiter]);
-                    break;
+        /* Get the data pointer for this operand */
+        switch (op_type[iiter]) {
+            case NPY_ITER_OP_ARRAY:
+                /*
+                 * Array casting/copying is handled later, once the
+                 * iteration order is finalized.  Here, we
+                 * optimistically assume the array will be used
+                 * as is.
+                 */
+                op_dataptr[iiter] = PyArray_DATA(op[iiter]);
+                break;
 
-                case NPY_ITER_OP_NULL:
-                    op_dataptr[iiter] = NULL;
-                    /* Now that ndim is fixed, outputs get the full ndim */
-                    if (allocate_output_scalars) {
-                        op_ndim[iiter] = 0;
-                    }
-                    else {
-                        op_ndim[iiter] = ndim;
-                    }
-                    /* Flag this so later we can avoid flipping axes */
-                    any_allocate_if_null = 1;
-                    /*
-                     * If the data type wasn't provided, will need to
-                     * calculate it later.
-                     */
-                    if (op_dtype[iiter] == NULL) {
-                        any_missing_dtypes = 1;
-                    }
-                    break;
-            }
+            case NPY_ITER_OP_NULL:
+                op_dataptr[iiter] = NULL;
+                /* Now that ndim is fixed, outputs get the full ndim */
+                if (allocate_output_scalars) {
+                    op_ndim[iiter] = 0;
+                }
+                else {
+                    op_ndim[iiter] = ndim;
+                }
+                /* Flag this so later we can avoid flipping axes */
+                any_allocate_if_null = 1;
+                /*
+                 * If the data type wasn't provided, will need to
+                 * calculate it later.
+                 */
+                if (op_dtype[iiter] == NULL) {
+                    any_missing_dtypes = 1;
+                }
+                break;
         }
     }
     /* Set resetindex to zero as well (it's just after the resetdataptr) */
     op_dataptr[niter] = 0;
+    NIT_BASEOFFSETS(iter)[niter] = 0;
 
     /*
      * Initialize buffer data (must set the buffers and transferdata
@@ -995,6 +988,50 @@ void NpyIter_Reset(NpyIter *iter)
     if (itflags&NPY_ITFLAG_BUFFER) {
         /* Copy any data from the buffers back to the arrays */
         npyiter_copy_from_buffers(iter);
+    }
+    
+    for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
+        char **ptrs;
+        NAD_COORD(axisdata) = 0;
+        ptrs = NAD_PTRS(axisdata);
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            ptrs[istrides] = resetdataptr[istrides];
+        }
+    }
+
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        /* Prepare the next buffers and set pos/size */
+        npyiter_copy_to_buffers(iter);
+    }
+}
+
+/* Resets the iterator to its initial state, with new base data pointers */
+void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp iiter, niter = NIT_NITER(iter);
+
+    char **resetdataptr;
+    char *axisdata;
+    npy_intp *baseoffsets;
+    npy_intp sizeof_axisdata;
+    npy_intp istrides, nstrides;
+
+    resetdataptr = NIT_RESETDATAPTR(iter);
+    baseoffsets = NIT_BASEOFFSETS(iter);
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    nstrides = NAD_NSTRIDES();
+
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        /* Copy any data from the buffers back to the arrays */
+        npyiter_copy_from_buffers(iter);
+    }
+
+    /* The new data pointers for resetting */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        resetdataptr[iiter] = baseptrs[iiter] + baseoffsets[iiter];
     }
     
     for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
@@ -1609,11 +1646,6 @@ int NpyIter_HasIndex(NpyIter *iter)
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASINDEX) != 0;
 }
 
-int NpyIter_HasOffsets(NpyIter *iter)
-{
-    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASOFFSETS) != 0;
-}
-
 npy_intp NpyIter_GetNDim(NpyIter *iter)
 {
     return NIT_NDIM(iter);
@@ -1714,13 +1746,6 @@ PyArrayObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     if (i < 0 || i >= niter) {
         PyErr_SetString(PyExc_IndexError,
                 "index provided for an iterator view was out of bounds");
-        return NULL;
-    }
-
-    /* Need data pointers to make the views */
-    if (itflags&NPY_ITFLAG_HASOFFSETS) {
-        PyErr_SetString(PyExc_IndexError,
-                "cannot provide an iterator view when tracking offsets");
         return NULL;
     }
 
@@ -1874,17 +1899,6 @@ pyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
          * would produce a different set of coordinates.
          */
         (*itflags) |= NPY_ITFLAG_HASCOORDS;
-    }
-    /* Check if offsets were requested instead of pointers */
-    if (flags&NPY_ITER_OFFSETS) {
-        /* Buffering is incompatible with offsets */
-        if (flags&(NPY_ITER_BUFFERED|NPY_ITER_BUFFERED_GROWINNER)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator flag BUFFERED cannot be used "
-                    "with the flag OFFSETS");
-            return 0;
-        }
-        (*itflags) |= NPY_ITFLAG_HASOFFSETS;
     }
     /* Check if the caller wants to handle inner iteration */
     if (flags&NPY_ITER_NO_INNER_ITERATION) {
@@ -2161,6 +2175,25 @@ pyiter_prepare_operand(PyArrayObject **op, PyArray_Descr *op_request_dtype,
     return 1;
 }
 
+static const char *
+npyiter_casting_to_string(NPY_CASTING casting)
+{
+    switch (casting) {
+        case NPY_NO_CASTING:
+            return "'no'";
+        case NPY_EQUIV_CASTING:
+            return "'equiv'";
+        case NPY_SAFE_CASTING:
+            return "'safe'";
+        case NPY_SAME_KIND_CASTING:
+            return "'same_kind'";
+        case NPY_UNSAFE_CASTING:
+            return "'unsafe'";
+        default:
+            return "<unknown>";
+    }
+}
+
 static int
 npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
@@ -2181,7 +2214,8 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                 PyErr_Format(PyExc_TypeError,
                         "Iterator operand %d dtype could not be cast "
                         "to the requested dtype, according to "
-                        "the casting enabled", (int)iiter);
+                        "the casting rule given, %s", (int)iiter,
+                        npyiter_casting_to_string(casting));
                 return 0;
             }
             /* Check write (temp -> op) casting */
@@ -2192,7 +2226,8 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                 PyErr_Format(PyExc_TypeError,
                         "Iterator requested dtype could not be cast "
                         "to the operand %d dtype, according to "
-                        "the casting enabled", (int)iiter);
+                        "the casting rule given, %s", (int)iiter,
+                        npyiter_casting_to_string(casting));
                 return 0;
             }
 
@@ -2498,6 +2533,7 @@ npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
     char *axisdata0, *axisdata;
     npy_intp sizeof_axisdata;
     npy_intp *perm;
+    npy_intp baseoffset = 0;
 
     perm = NIT_PERM(iter);
     axisdata0 = NIT_AXISDATA(iter);
@@ -2536,7 +2572,7 @@ npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
                 if (p < 0) {
                     /* If the perm entry is negative, flip the axis */
                     NAD_STRIDES(axisdata)[iiter] = -stride;
-                    op_dataptr += stride*(shape-1);
+                    baseoffset += stride*(shape-1);
                 }
                 else {
                     NAD_STRIDES(axisdata)[iiter] = stride;
@@ -2545,8 +2581,11 @@ npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
         }
     }
 
-    /* Now the base data pointer is calculated, set it everywhere its needed */
+    op_dataptr += baseoffset;
+
+    /* Now the base data pointer is calculated, set it everywhere it's needed */
     NIT_RESETDATAPTR(iter)[iiter] = op_dataptr;
+    NIT_BASEOFFSETS(iter)[iiter] = baseoffset;
     axisdata = axisdata0;
     for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
         NAD_PTRS(axisdata)[iiter] = op_dataptr;
@@ -2685,12 +2724,12 @@ npyiter_flip_negative_strides(NpyIter *iter)
 
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     char *axisdata, *axisdata0;
-    npy_intp *ptrs0;
+    npy_intp *baseoffsets;
     npy_intp sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
     int any_flipped = 0;
 
     axisdata0 = axisdata = NIT_AXISDATA(iter);
-    ptrs0 = (npy_intp*)NAD_PTRS(axisdata0);
+    baseoffsets = NIT_BASEOFFSETS(iter);
     for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
         npy_intp *strides = NAD_STRIDES(axisdata);
         int any_negative = 0;
@@ -2718,7 +2757,7 @@ npyiter_flip_negative_strides(NpyIter *iter)
                 npy_intp stride = strides[istrides];
 
                 /* Adjust the base pointers to start at the end */
-                ptrs0[istrides] += shapem1 * stride;
+                baseoffsets[istrides] += shapem1 * stride;
                 /* Flip the stride */
                 strides[istrides] = -stride;
             }
@@ -2734,16 +2773,16 @@ npyiter_flip_negative_strides(NpyIter *iter)
      * in the first AXISDATA, and need to be copied to all the rest
      */
     if (any_flipped) {
-        npy_intp *resetdataptr = (npy_intp*)NIT_RESETDATAPTR(iter);
+        char **resetdataptr = NIT_RESETDATAPTR(iter);
 
         for (istrides = 0; istrides < nstrides; ++istrides) {
-            resetdataptr[istrides] = ptrs0[istrides];
+            resetdataptr[istrides] += baseoffsets[istrides];
         }
         axisdata = axisdata0;
         for (idim = 0; idim < ndim; ++idim, axisdata += sizeof_axisdata) {
-            npy_intp *ptrs = (npy_intp*)NAD_PTRS(axisdata);
+            char **ptrs = NAD_PTRS(axisdata);
             for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = ptrs0[istrides];
+                ptrs[istrides] = resetdataptr[istrides];
             }
         }
         /*
@@ -3085,36 +3124,63 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
         if (i >= 0) {
             strides[i] = stride;
-            stride *= NAD_SHAPE(axisdata);
             if (p < 0) {
                 reversestride[i] = 1;
                 anyreverse = 1;
             }
             if (shape == NULL) {
                 new_shape[i] = NAD_SHAPE(axisdata);
+                stride *= new_shape[i];
+            }
+            else {
+                stride *= shape[i];
             }
         }
     }
 
     /*
      * If custom axes were specified, some dimensions may not have been used.
-     * Throw an error in this case.
+     * Throw an error if no shape was specified (i.e. an allocated output),
+     * otherwise fill in the rest.
      */
     for (idim = 0; idim < op_ndim; ++idim) {
         if (strides[idim] == 0) {
-            if (shape) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Iterator input requiring a temporary copy "
-                        "had custom axes specified which don't cover "
-                        "all the input axes");
-            }
-            else {
+            npy_intp factor, new_strides[NPY_MAXDIMS],
+                     itemsize;
+            if (shape == NULL) {
                 PyErr_SetString(PyExc_ValueError,
                         "Iterator automatically allocated output "
                         "had custom axes specified which don't cover "
                         "all the input axes");
+                return NULL;
             }
-            return NULL;
+
+            /* Fill in the missing strides in C order */
+            factor = 1;
+            itemsize = op_dtype->elsize;
+            for (idim = op_ndim-1; idim >= 0; --idim) {
+                if (strides[idim] == 0) {
+                    new_strides[idim] = factor * itemsize;
+                    factor *= shape[idim];
+                }
+            }
+
+            /*
+             * Copy the missing strides, and multiply the existing strides
+             * by the calculated factor.  This way, the missing strides
+             * are tighter together in memory, which is good for nested
+             * loops.
+             */
+            for (idim = 0; idim < op_ndim; ++idim) {
+                if (strides[idim] == 0) {
+                    strides[idim] = new_strides[idim];
+                }
+                else {
+                    strides[idim] *= factor;
+                }
+            }
+
+            break;
         }
     }
 
@@ -3719,8 +3785,6 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("HASINDEX ");
     if (itflags&NPY_ITFLAG_HASCOORDS)
         printf("HASCOORDS ");
-    if (itflags&NPY_ITFLAG_HASOFFSETS)
-        printf("HASOFFSETS ");
     if (itflags&NPY_ITFLAG_FORCEDORDER)
         printf("FORCEDORDER ");
     if (itflags&NPY_ITFLAG_NOINNER)
@@ -3761,6 +3825,11 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("InitDataPtrs: ");
     for (iiter = 0; iiter < niter; ++iiter) {
         printf("%p ", NIT_RESETDATAPTR(iter)[iiter]);
+    }
+    printf("\n");
+    printf("BaseOffsets: ");
+    for (iiter = 0; iiter < niter; ++iiter) {
+        printf("%i ", (int)NIT_BASEOFFSETS(iter)[iiter]);
     }
     printf("\n");
     if (itflags&NPY_ITFLAG_HASINDEX) {

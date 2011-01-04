@@ -42,6 +42,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "number.h"
 #include "scalartypes.h"
 #include "numpymemoryview.h"
+#include "new_iterator_pywrap.h"
 
 /*NUMPY_API
  * Get Priority from object
@@ -2730,6 +2731,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"array",
         (PyCFunction)_array_fromobject,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"nested_iters",
+        (PyCFunction)NpyIter_NestedIters,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"arange",
         (PyCFunction)array_arange,

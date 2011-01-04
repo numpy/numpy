@@ -19,6 +19,8 @@ struct NewNpyArrayIterObject_tag {
     NpyIter *iter;
     /* Flag indicating iteration started/stopped */
     char started, finished;
+    /* Child to update for nested iteration */
+    NewNpyArrayIterObject *nested_child;
     /* Cached values from the iterator */
     NpyIter_IterNext_Fn iternext;
     NpyIter_GetCoords_Fn getcoords;
@@ -70,6 +72,7 @@ npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     self = (NewNpyArrayIterObject *)subtype->tp_alloc(subtype, 0);
     if (self != NULL) {
         self->iter = NULL;
+        self->nested_child = NULL;
     }
 
     return (PyObject *)self;
@@ -85,6 +88,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     char *str = NULL;
     Py_ssize_t length = 0;
     npy_uint32 flag = 0;
+
+    if (flags_in == NULL || flags_in == Py_None) {
+        *flags = 0;
+        return NPY_SUCCEED;
+    }
 
     if (!PyTuple_Check(flags_in) && !PyList_Check(flags_in)) {
         PyErr_SetString(PyExc_ValueError,
@@ -140,11 +148,6 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             case 'n':
                 if (strcmp(str, "no_inner_iteration") == 0) {
                     flag = NPY_ITER_NO_INNER_ITERATION;
-                }
-                break;
-            case 'o':
-                if (strcmp(str, "offsets") == 0) {
-                    flag = NPY_ITER_OFFSETS;
                 }
                 break;
         }
@@ -669,7 +672,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                              "order", "casting", "op_axes", "buffersize",
                              NULL};
 
-    PyObject *op_in, *flags_in = NULL, *op_flags_in = NULL,
+    PyObject *op_in = NULL, *flags_in = NULL, *op_flags_in = NULL,
                 *op_dtypes_in = NULL, *op_axes_in = NULL;
 
     npy_intp iiter, niter = 0;
@@ -702,6 +705,12 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
+    /* flags */
+    if (NpyIter_GlobalFlagsConverter(flags_in, &flags) != NPY_SUCCEED) {
+        return -1;
+    }
+
+    /* op and op_flags */
     if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &niter)
                                                         != NPY_SUCCEED) {
         return -1;
@@ -709,12 +718,6 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     /* Set the dtypes to all NULL to start as well */
     memset(op_request_dtypes, 0, sizeof(op_request_dtypes[0])*niter);
-
-    /* flags */
-    if (flags_in != NULL &&
-              NpyIter_GlobalFlagsConverter(flags_in, &flags) != NPY_SUCCEED) {
-        goto fail;
-    }
 
     /* op_request_dtypes */
     if (op_dtypes_in != NULL && op_dtypes_in != Py_None &&
@@ -737,7 +740,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     }
 
     self->iter = NpyIter_MultiNew(niter, op, flags, order, casting, op_flags,
-                                  (PyArray_Descr**)op_request_dtypes,
+                                  op_request_dtypes,
                                   oa_ndim, oa_ndim > 0 ? op_axes : NULL,
                                   buffersize);
 
@@ -767,14 +770,335 @@ fail:
     return -1;
 }
 
+NPY_NO_EXPORT PyObject *
+NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
+                    PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"op", "axes", "flags", "op_flags",
+                             "op_dtypes", "order",
+                             "casting", "buffersize",
+                             NULL};
+
+    PyObject *op_in = NULL, *axes_in = NULL, *flags_in = NULL,
+            *op_flags_in = NULL, *op_dtypes_in = NULL;
+
+    npy_intp iiter, niter = 0, inest, nnest = 0;
+    PyArrayObject *op[NPY_MAXARGS];
+    npy_uint32 flags = 0, flags_inner = 0;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    npy_uint32 op_flags[NPY_MAXARGS], op_flags_inner[NPY_MAXARGS];
+    PyArray_Descr *op_request_dtypes[NPY_MAXARGS],
+                  *op_request_dtypes_inner[NPY_MAXARGS];
+    npy_intp op_axes_data[NPY_MAXDIMS];
+    npy_intp *nested_op_axes[NPY_MAXDIMS];
+    npy_intp nested_naxes[NPY_MAXDIMS], iaxes, naxes;
+    npy_intp negones[NPY_MAXDIMS];
+    char used_axes[NPY_MAXDIMS];
+    int buffersize = 0;
+
+    PyObject *ret = NULL;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OOOO&O&i", kwlist,
+                    &op_in,
+                    &axes_in,
+                    &flags_in,
+                    &op_flags_in,
+                    &op_dtypes_in,
+                    npyiter_order_converter, &order,
+                    PyArray_CastingConverter, &casting,
+                    &buffersize)) {
+        return NULL;
+    }
+
+    /* axes */
+    if (!PyTuple_Check(axes_in) && !PyList_Check(axes_in)) {
+        PyErr_SetString(PyExc_ValueError,
+                "axes must be a tuple of axis arrays");
+        return NULL;
+    }
+    nnest = PySequence_Size(axes_in);
+    if (nnest < 2) {
+        PyErr_SetString(PyExc_ValueError,
+                "axes must have at least 2 entries for nested iteration");
+        return NULL;
+    }
+    naxes = 0;
+    memset(used_axes, 0, NPY_MAXDIMS);
+    for (inest = 0; inest < nnest; ++inest) {
+        PyObject *item = PySequence_GetItem(axes_in, inest);
+        npy_intp i;
+        if (item == NULL) {
+            return NULL;
+        }
+        if (!PyTuple_Check(item) && !PyList_Check(item)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Each item in axes must be a an integer tuple");
+            Py_DECREF(item);
+            return NULL;
+        }
+        nested_naxes[inest] = PySequence_Size(item);
+        if (naxes + nested_naxes[inest] > NPY_MAXDIMS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Too many axes given");
+            Py_DECREF(item);
+            return NULL;
+        }
+        for (i = 0; i < nested_naxes[inest]; ++i) {
+            PyObject *v = PySequence_GetItem(item, i);
+            npy_intp axis;
+            if (v == NULL) {
+                Py_DECREF(item);
+                return NULL;
+            }
+            axis = PyInt_AsLong(v);
+            Py_DECREF(v);
+            if (axis < 0 || axis >= NPY_MAXDIMS) {
+                PyErr_SetString(PyExc_ValueError,
+                        "An axis is out of bounds");
+                Py_DECREF(item);
+                return NULL;
+            }
+            /*
+             * This check is very important, without it out of bounds
+             * data accesses are possible.
+             */
+            if (used_axes[axis] != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "An axis is used more than once");
+                Py_DECREF(item);
+                return NULL;
+            }
+            used_axes[axis] = 1;
+            op_axes_data[naxes+i] = axis;
+        }
+        nested_op_axes[inest] = &op_axes_data[naxes];
+        naxes += nested_naxes[inest];
+        Py_DECREF(item);
+    }
+
+    /* flags */
+    if (NpyIter_GlobalFlagsConverter(flags_in, &flags) != NPY_SUCCEED) {
+        return NULL;
+    }
+
+    /* op and op_flags */
+    if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &niter)
+                                                        != NPY_SUCCEED) {
+        return NULL;
+    }
+
+    /* Set the dtypes to all NULL to start as well */
+    memset(op_request_dtypes, 0, sizeof(op_request_dtypes[0])*niter);
+    memset(op_request_dtypes_inner, 0,
+                        sizeof(op_request_dtypes_inner[0])*niter);
+
+    /* op_request_dtypes */
+    if (op_dtypes_in != NULL && op_dtypes_in != Py_None &&
+            npyiter_convert_dtypes(op_dtypes_in,
+                                   op_request_dtypes, niter) != NPY_SUCCEED) {
+        goto fail;
+    }
+
+    ret = PyTuple_New(nnest);
+    if (ret == NULL) {
+        goto fail;
+    }
+
+    /* For broadcasting allocated arrays */
+    for (iaxes = 0; iaxes < naxes; ++iaxes) {
+        negones[iaxes] = -1;
+    }
+
+    /*
+     * Clear any unnecessary ALLOCATE flags, so we can use them
+     * to indicate exactly the allocated outputs.  Also, separate
+     * the inner loop flags.
+     */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        if ((op_flags[iiter]&NPY_ITER_ALLOCATE) && op[iiter] != NULL) {
+            op_flags[iiter] &= ~NPY_ITER_ALLOCATE;
+        }
+
+        /*
+         * Clear any flags allowing copies or output allocation for
+         * the inner loop.
+         */
+        op_flags_inner[iiter] = op_flags[iiter] & ~(NPY_ITER_COPY|
+                             NPY_ITER_UPDATEIFCOPY|
+                             NPY_ITER_ALLOCATE);
+        /*
+         * If buffering is enabled and copying is not,
+         * clear the nbo_aligned flag and strip the data type
+         * for the outer loops.
+         */
+        if ((flags&(NPY_ITER_BUFFERED|NPY_ITER_BUFFERED_GROWINNER)) &&
+                !(op_flags[iiter]&(NPY_ITER_COPY|
+                                   NPY_ITER_UPDATEIFCOPY|
+                                   NPY_ITER_ALLOCATE))) {
+            op_flags[iiter] &= ~NPY_ITER_NBO_ALIGNED;
+            op_request_dtypes_inner[iiter] = op_request_dtypes[iiter];
+            op_request_dtypes[iiter] = NULL;
+        }
+    }
+
+    /* Only the inner loop gets the buffering and no inner flags */
+    flags_inner = flags&~NPY_ITER_COMMON_DTYPE;
+    flags &= ~(NPY_ITER_NO_INNER_ITERATION|
+                    NPY_ITER_BUFFERED|
+                    NPY_ITER_BUFFERED_GROWINNER);
+
+    for (inest = 0; inest < nnest; ++inest) {
+        NewNpyArrayIterObject *iter;
+        npy_intp *op_axes_niter[NPY_MAXARGS];
+
+        /*
+         * All the operands' op_axes are the same, except for
+         * allocated outputs.
+         */
+        for (iiter = 0; iiter < niter; ++iiter) {
+            if (op_flags[iiter]&NPY_ITER_ALLOCATE) {
+                if (inest == 0) {
+                    op_axes_niter[iiter] = NULL;
+                }
+                else {
+                    op_axes_niter[iiter] = negones;
+                }
+            }
+            else {
+                op_axes_niter[iiter] = nested_op_axes[inest];
+            }
+        }
+
+        /*
+        printf("\n");
+        for (iiter = 0; iiter < niter; ++iiter) {
+            npy_intp i;
+
+            for (i = 0; i < nested_naxes[inest]; ++i) {
+                printf("%d ", (int)op_axes_niter[iiter][i]);
+            }
+            printf("\n");
+        }
+        */
+        
+        /* Allocate the iterator */
+        iter = (NewNpyArrayIterObject *)npyiter_new(&NpyIter_Type, NULL, NULL);
+        if (iter == NULL) {
+            Py_DECREF(ret);
+            goto fail;
+        }
+
+        if (inest < nnest-1) {
+            iter->iter = NpyIter_MultiNew(niter, op, flags, order,
+                                casting, op_flags, op_request_dtypes,
+                                nested_naxes[inest], op_axes_niter,
+                                0);
+        }
+        else {
+            iter->iter = NpyIter_MultiNew(niter, op, flags_inner, order,
+                                casting, op_flags_inner,
+                                op_request_dtypes_inner,
+                                nested_naxes[inest], op_axes_niter,
+                                buffersize);
+        }
+
+        if (iter->iter == NULL) {
+            Py_DECREF(ret);
+            goto fail;
+        }
+
+        /* Cache some values for the member functions to use */
+        npyiter_cache_values(iter);
+
+        iter->started = 0;
+        iter->finished = 0;
+
+        /*
+         * If there are any allocated outputs or any copies were made,
+         * adjust op so that the other iterators use the same ones.
+         */
+        if (inest == 0) {
+            PyArrayObject **objects = NpyIter_GetObjectArray(iter->iter);
+            for (iiter = 0; iiter < niter; ++iiter) {
+                if (op[iiter] != objects[iiter]) {
+                    Py_XDECREF(op[iiter]);
+                    op[iiter] = objects[iiter];
+                    Py_INCREF(op[iiter]);
+                }
+
+                /*
+                 * Clear any flags allowing copies for
+                 * the rest of the iterators
+                 */
+                op_flags[iiter] &= ~(NPY_ITER_COPY|
+                                 NPY_ITER_UPDATEIFCOPY);
+            }
+            /* Clear the common dtype flag for the rest of the iterators */
+            flags &= ~NPY_ITER_COMMON_DTYPE;
+        }
+
+        PyTuple_SET_ITEM(ret, inest, (PyObject *)iter);
+    }
+
+    /* Release our references to the ops and dtypes */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        Py_XDECREF(op[iiter]);
+        Py_XDECREF(op_request_dtypes[iiter]);
+        Py_XDECREF(op_request_dtypes_inner[iiter]);
+    }
+
+    /* Set up the nested child references */
+    for (inest = 0; inest < nnest-1; ++inest) {
+        NewNpyArrayIterObject *iter;
+        iter = (NewNpyArrayIterObject *)PyTuple_GET_ITEM(ret, inest);
+        /*
+         * Indicates which iterator to reset with new base pointers
+         * each iteration step.
+         */
+        iter->nested_child =
+                (NewNpyArrayIterObject *)PyTuple_GET_ITEM(ret, inest+1);
+        Py_INCREF(iter->nested_child);
+        /*
+         * Need to do a nested reset so all the iterators point
+         * at the right data
+         */
+        NpyIter_ResetBasePointers(iter->nested_child->iter, iter->dataptrs);
+    }
+
+    return ret;
+
+fail:
+    for (iiter = 0; iiter < niter; ++iiter) {
+        Py_XDECREF(op[iiter]);
+        Py_XDECREF(op_request_dtypes[iiter]);
+        Py_XDECREF(op_request_dtypes_inner[iiter]);
+    }
+    return NULL;
+}
+
 static void
 npyiter_dealloc(NewNpyArrayIterObject *self)
 {
     if (self->iter) {
         NpyIter_Deallocate(self->iter);
         self->iter = NULL;
+        Py_XDECREF(self->nested_child);
+        self->nested_child = NULL;
     }
     self->ob_type->tp_free((PyObject*)self);
+}
+
+static void
+npyiter_resetbasepointers(NewNpyArrayIterObject *self)
+{
+    while (self->nested_child) {
+        NpyIter_ResetBasePointers(self->nested_child->iter,
+                                                    self->dataptrs);
+        self = self->nested_child;
+        self->started = 0;
+        self->finished = 0;
+    }
 }
 
 static PyObject *
@@ -790,6 +1114,9 @@ npyiter_reset(NewNpyArrayIterObject *self)
     self->started = 0;
     self->finished = 0;
 
+    /* If there is nesting, the nested iterators should be reset */
+    npyiter_resetbasepointers(self);
+
     Py_RETURN_NONE;
 }
 
@@ -797,6 +1124,9 @@ static PyObject *
 npyiter_iternext(NewNpyArrayIterObject *self)
 {
     if (self->iter != NULL && !self->finished && self->iternext(self->iter)) {
+        /* If there is nesting, the nested iterators should be reset */
+        npyiter_resetbasepointers(self);
+
         Py_RETURN_TRUE;
     }
     else {
@@ -877,29 +1207,17 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     dtypes = self->dtypes;
     dataptrs = self->dataptrs;
 
-    if (NpyIter_HasOffsets(self->iter)) {
-        npy_intp *offsets = (npy_intp *)dataptrs;
-        /* Return an array with all the offsets */
+    /* Return an array  or tuple of arrays with the values */
+    if (niter == 1) {
+        ret = npyiter_seq_item(self, 0);
+    }
+    else {
         ret = PyTuple_New(niter);
         if (ret == NULL) {
             return NULL;
         }
         for (iiter = 0; iiter < niter; ++iiter) {
-            PyTuple_SET_ITEM(ret, iiter, PyInt_FromLong(offsets[iiter]));
-        }
-    } else {
-        /* Return an array  or tuple of arrays with the values */
-        if (niter == 1) {
-            ret = npyiter_seq_item(self, 0);
-        }
-        else {
-            ret = PyTuple_New(niter);
-            if (ret == NULL) {
-                return NULL;
-            }
-            for (iiter = 0; iiter < niter; ++iiter) {
-                PyTuple_SET_ITEM(ret, iiter, npyiter_seq_item(self, iiter));
-            }
+            PyTuple_SET_ITEM(ret, iiter, npyiter_seq_item(self, iiter));
         }
     }
 
@@ -970,6 +1288,8 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
+    NewNpyArrayIterObject * tmp;
+
     if (self->iter == NULL || self->finished) {
         return NULL;
     }
@@ -983,6 +1303,9 @@ npyiter_next(NewNpyArrayIterObject *self)
             self->finished = 1;
             return NULL;
         }
+
+        /* If there is nesting, the nested iterators should be reset */
+        npyiter_resetbasepointers(self);
     }
     self->started = 1;
 
@@ -1083,7 +1406,10 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
         }
         self->started = 0;
         self->finished = 0;
-        
+
+        /* If there is nesting, the nested iterators should be reset */
+        npyiter_resetbasepointers(self);
+
         return 0;
     }
     else {
@@ -1137,6 +1463,10 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
         }
         self->started = 0;
         self->finished = 0;
+
+        /* If there is nesting, the nested iterators should be reset */
+        npyiter_resetbasepointers(self);
+
         return 0;
     }
     else {

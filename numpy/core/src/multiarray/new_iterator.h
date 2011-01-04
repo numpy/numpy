@@ -49,8 +49,10 @@ int NpyIter_RemoveInnerLoop(NpyIter *iter);
 /* Deallocate an iterator */
 int NpyIter_Deallocate(NpyIter* iter);
 
-/* Resets the iterator back to its initial state */
+/* Resets the iterator to its initial state */
 void NpyIter_Reset(NpyIter *iter);
+/* Resets the iterator to its initial state, with new base data pointers */
+void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs);
 /* Sets the iterator to point at the coordinates in 'coords' */
 int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords);
 /* Sets the iterator to point at the given index */
@@ -62,8 +64,6 @@ int NpyIter_HasInnerLoop(NpyIter *iter);
 int NpyIter_HasCoords(NpyIter *iter);
 /* Whether the iterator is tracking an index */
 int NpyIter_HasIndex(NpyIter *iter);
-/* Whether the iterator gives back offsets instead of pointers */
-int NpyIter_HasOffsets(NpyIter *iter);
 
 /* Compute a specialized iteration function for an iterator */
 NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter);
@@ -116,12 +116,10 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_NO_INNER_ITERATION         0x00000008
 /* Convert all the operands to a common data type */
 #define NPY_ITER_COMMON_DTYPE               0x00000010
-/* Produce offsets instead of pointers into the data */
-#define NPY_ITER_OFFSETS                    0x00000020
 /* Enables buffering */
-#define NPY_ITER_BUFFERED                   0x00000040
+#define NPY_ITER_BUFFERED                   0x00000020
 /* Enables buffering, and grows the inner loop when possible */
-#define NPY_ITER_BUFFERED_GROWINNER         0x00000080
+#define NPY_ITER_BUFFERED_GROWINNER         0x00000040
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
