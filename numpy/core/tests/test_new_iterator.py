@@ -231,10 +231,10 @@ def test_iter_best_order_c_index_1d():
 
     a = arange(4)
     # 1D order
-    i = newiter(a,['c_order_index'],[['readonly']])
+    i = newiter(a,['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [0,1,2,3])
     # 1D reversed order
-    i = newiter(a[::-1],['c_order_index'],[['readonly']])
+    i = newiter(a[::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [3,2,1,0])
 
 def test_iter_best_order_c_index_2d():
@@ -242,28 +242,28 @@ def test_iter_best_order_c_index_2d():
 
     a = arange(6)
     # 2D C-order
-    i = newiter(a.reshape(2,3),['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3),['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [0,1,2,3,4,5])
     # 2D Fortran-order
     i = newiter(a.reshape(2,3).copy(order='F'),
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [0,3,1,4,2,5])
     # 2D reversed C-order
-    i = newiter(a.reshape(2,3)[::-1],['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3)[::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [3,4,5,0,1,2])
-    i = newiter(a.reshape(2,3)[:,::-1],['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3)[:,::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [2,1,0,5,4,3])
-    i = newiter(a.reshape(2,3)[::-1,::-1],['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3)[::-1,::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [5,4,3,2,1,0])
     # 2D reversed Fortran-order
     i = newiter(a.reshape(2,3).copy(order='F')[::-1],
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [3,0,4,1,5,2])
     i = newiter(a.reshape(2,3).copy(order='F')[:,::-1],
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [2,5,1,4,0,3])
     i = newiter(a.reshape(2,3).copy(order='F')[::-1,::-1],
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i), [5,2,4,1,3,0])
 
 def test_iter_best_order_c_index_3d():
@@ -271,112 +271,112 @@ def test_iter_best_order_c_index_3d():
 
     a = arange(12)
     # 3D C-order
-    i = newiter(a.reshape(2,3,2),['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2),['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [0,1,2,3,4,5,6,7,8,9,10,11])
     # 3D Fortran-order
     i = newiter(a.reshape(2,3,2).copy(order='F'),
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [0,6,2,8,4,10,1,7,3,9,5,11])
     # 3D reversed C-order
-    i = newiter(a.reshape(2,3,2)[::-1],['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2)[::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [6,7,8,9,10,11,0,1,2,3,4,5])
-    i = newiter(a.reshape(2,3,2)[:,::-1],['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2)[:,::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [4,5,2,3,0,1,10,11,8,9,6,7])
-    i = newiter(a.reshape(2,3,2)[:,:,::-1],['c_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2)[:,:,::-1],['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [1,0,3,2,5,4,7,6,9,8,11,10])
     # 3D reversed Fortran-order
     i = newiter(a.reshape(2,3,2).copy(order='F')[::-1],
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [6,0,8,2,10,4,7,1,9,3,11,5])
     i = newiter(a.reshape(2,3,2).copy(order='F')[:,::-1],
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [4,10,2,8,0,6,5,11,3,9,1,7])
     i = newiter(a.reshape(2,3,2).copy(order='F')[:,:,::-1],
-                                    ['c_order_index'],[['readonly']])
+                                    ['c_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [1,7,3,9,5,11,0,6,2,8,4,10])
 
-def test_iter_best_order_f_order_index_1d():
+def test_iter_best_order_f_index_1d():
     # The Fortran index should be correct with any reordering
 
     a = arange(4)
     # 1D order
-    i = newiter(a,['f_order_index'],[['readonly']])
+    i = newiter(a,['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [0,1,2,3])
     # 1D reversed order
-    i = newiter(a[::-1],['f_order_index'],[['readonly']])
+    i = newiter(a[::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [3,2,1,0])
 
-def test_iter_best_order_f_order_index_2d():
+def test_iter_best_order_f_index_2d():
     # The Fortran index should be correct with any reordering
 
     a = arange(6)
     # 2D C-order
-    i = newiter(a.reshape(2,3),['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3),['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [0,2,4,1,3,5])
     # 2D Fortran-order
     i = newiter(a.reshape(2,3).copy(order='F'),
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [0,1,2,3,4,5])
     # 2D reversed C-order
-    i = newiter(a.reshape(2,3)[::-1],['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3)[::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [1,3,5,0,2,4])
-    i = newiter(a.reshape(2,3)[:,::-1],['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3)[:,::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [4,2,0,5,3,1])
-    i = newiter(a.reshape(2,3)[::-1,::-1],['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3)[::-1,::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [5,3,1,4,2,0])
     # 2D reversed Fortran-order
     i = newiter(a.reshape(2,3).copy(order='F')[::-1],
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [1,0,3,2,5,4])
     i = newiter(a.reshape(2,3).copy(order='F')[:,::-1],
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [4,5,2,3,0,1])
     i = newiter(a.reshape(2,3).copy(order='F')[::-1,::-1],
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i), [5,4,3,2,1,0])
 
-def test_iter_best_order_f_order_index_3d():
+def test_iter_best_order_f_index_3d():
     # The Fortran index should be correct with any reordering
 
     a = arange(12)
     # 3D C-order
-    i = newiter(a.reshape(2,3,2),['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2),['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [0,6,2,8,4,10,1,7,3,9,5,11])
     # 3D Fortran-order
     i = newiter(a.reshape(2,3,2).copy(order='F'),
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [0,1,2,3,4,5,6,7,8,9,10,11])
     # 3D reversed C-order
-    i = newiter(a.reshape(2,3,2)[::-1],['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2)[::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [1,7,3,9,5,11,0,6,2,8,4,10])
-    i = newiter(a.reshape(2,3,2)[:,::-1],['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2)[:,::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [4,10,2,8,0,6,5,11,3,9,1,7])
-    i = newiter(a.reshape(2,3,2)[:,:,::-1],['f_order_index'],[['readonly']])
+    i = newiter(a.reshape(2,3,2)[:,:,::-1],['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [6,0,8,2,10,4,7,1,9,3,11,5])
     # 3D reversed Fortran-order
     i = newiter(a.reshape(2,3,2).copy(order='F')[::-1],
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [1,0,3,2,5,4,7,6,9,8,11,10])
     i = newiter(a.reshape(2,3,2).copy(order='F')[:,::-1],
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [4,5,2,3,0,1,10,11,8,9,6,7])
     i = newiter(a.reshape(2,3,2).copy(order='F')[:,:,::-1],
-                                    ['f_order_index'],[['readonly']])
+                                    ['f_index'],[['readonly']])
     assert_equal(iter_indices(i),
                             [6,7,8,9,10,11,0,1,2,3,4,5])
 
@@ -444,15 +444,15 @@ def test_iter_dim_coalescing():
 
     # A tracked index can allow coalescing if it's compatible with the array
     a3d = arange(24).reshape(2,3,4)
-    i = newiter(a3d, ['c_order_index'], [['readonly']])
+    i = newiter(a3d, ['c_index'], [['readonly']])
     assert_equal(i.ndim, 1)
-    i = newiter(a3d.swapaxes(0,1), ['c_order_index'], [['readonly']])
+    i = newiter(a3d.swapaxes(0,1), ['c_index'], [['readonly']])
     assert_equal(i.ndim, 3)
-    i = newiter(a3d.T, ['c_order_index'], [['readonly']])
+    i = newiter(a3d.T, ['c_index'], [['readonly']])
     assert_equal(i.ndim, 3)
-    i = newiter(a3d.T, ['f_order_index'], [['readonly']])
+    i = newiter(a3d.T, ['f_index'], [['readonly']])
     assert_equal(i.ndim, 1)
-    i = newiter(a3d.T.swapaxes(0,1), ['f_order_index'], [['readonly']])
+    i = newiter(a3d.T.swapaxes(0,1), ['f_index'], [['readonly']])
     assert_equal(i.ndim, 3)
 
     # When C or F order is forced, coalescing may still occur
@@ -579,14 +579,14 @@ def test_iter_flags_errors():
     assert_raises(ValueError, newiter, [a]*3, [], [['readonly']]*2)
     # Cannot track both a C and an F index
     assert_raises(ValueError, newiter, a,
-                ['c_order_index','f_order_index'], [['readonly']])
+                ['c_index','f_index'], [['readonly']])
     # Inner iteration and coords/indices are incompatible
     assert_raises(ValueError, newiter, a,
                 ['no_inner_iteration','coords'], [['readonly']])
     assert_raises(ValueError, newiter, a,
-                ['no_inner_iteration','c_order_index'], [['readonly']])
+                ['no_inner_iteration','c_index'], [['readonly']])
     assert_raises(ValueError, newiter, a,
-                ['no_inner_iteration','f_order_index'], [['readonly']])
+                ['no_inner_iteration','f_index'], [['readonly']])
     # Must specify exactly one of readwrite/readonly/writeonly per operand
     assert_raises(ValueError, newiter, a, [], [[]])
     assert_raises(ValueError, newiter, a, [], [['readonly','writeonly']])

@@ -124,8 +124,8 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             case 'c':
                 if (length >= 6) switch (str[5]) {
                     case 'e':
-                        if (strcmp(str, "c_order_index") == 0) {
-                            flag = NPY_ITER_C_ORDER_INDEX;
+                        if (strcmp(str, "c_index") == 0) {
+                            flag = NPY_ITER_C_INDEX;
                         }
                         break;
                     case 's':
@@ -141,8 +141,8 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                 }
                 break;
             case 'f':
-                if (strcmp(str, "f_order_index") == 0) {
-                    flag = NPY_ITER_F_ORDER_INDEX;
+                if (strcmp(str, "f_index") == 0) {
+                    flag = NPY_ITER_F_INDEX;
                 }
                 break;
             case 'n':

@@ -107,9 +107,9 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 /*** Global flags that may be passed to the iterator constructors ***/
 
 /* Track an index representing C order */
-#define NPY_ITER_C_ORDER_INDEX              0x00000001
-/* Track an index representing F order */
-#define NPY_ITER_F_ORDER_INDEX              0x00000002
+#define NPY_ITER_C_INDEX                    0x00000001
+/* Track an index representing Fortran order */
+#define NPY_ITER_F_INDEX                    0x00000002
 /* Track coordinates */
 #define NPY_ITER_COORDS                     0x00000004
 /* Let the caller handle the inner loop of iteration */

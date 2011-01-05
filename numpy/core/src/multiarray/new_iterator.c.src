@@ -1599,12 +1599,12 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
     }
 
     /* Check for an index */
-    if (flags&(NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) {
-        if ((flags&(NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) ==
-                    (NPY_ITER_C_ORDER_INDEX | NPY_ITER_F_ORDER_INDEX)) {
+    if (flags&(NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) {
+        if ((flags&(NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) ==
+                    (NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator flags C_ORDER_INDEX and "
-                    "F_ORDER_INDEX cannot both be specified");
+                    "Iterator flags C_INDEX and "
+                    "F_INDEX cannot both be specified");
             return 0;
         }
         (*itflags) |= NPY_ITFLAG_HASINDEX;
@@ -2492,7 +2492,7 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
         return;
     }
 
-    if (flags&NPY_ITER_C_ORDER_INDEX) {
+    if (flags&NPY_ITER_C_INDEX) {
         sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
         axisdata = NIT_AXISDATA(iter);
         indexstride = 1;
@@ -2509,7 +2509,7 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
             indexstride *= shape;
         }
     }
-    else if (flags&NPY_ITER_F_ORDER_INDEX) {
+    else if (flags&NPY_ITER_F_INDEX) {
         sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
         axisdata = NIT_INDEX_AXISDATA(NIT_AXISDATA(iter), ndim-1);
         indexstride = 1;
