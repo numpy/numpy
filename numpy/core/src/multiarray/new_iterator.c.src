@@ -337,15 +337,6 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         return NULL;
     }
 
-    /*
-     * If buffering is enabled and no buffersize was given, use a default
-     * chosen to be big enough to get some amortization benefits, but
-     * small enough to be cache-friendly.
-     */
-    if ((itflags&NPY_ITFLAG_BUFFER) && buffersize <= 0) {
-        buffersize = 1 << 12;
-    }
-
     /* Calculate how many dimensions the iterator should have */
     ndim = npyiter_calculate_ndim(niter, op_in, oa_ndim);
 
@@ -387,30 +378,9 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     if (itflags&NPY_ITFLAG_BUFFER) {
         bufferdata = NIT_BUFFERDATA(iter);
-        memset(NBF_BUFFERS(bufferdata), 0, (niter+1)*NPY_SIZEOF_INTP);
-        for (iiter = 0; iiter < niter; ++iiter) {
-            NBF_READTRANSFERDATA(bufferdata)[iiter] = NULL;
-            NBF_WRITETRANSFERDATA(bufferdata)[iiter] = NULL;
-        }
-    }
-
-    /* Set some flags for allocated outputs */
-    for (iiter = 0; iiter < niter; ++iiter) {
-        if (op[iiter] == NULL) {
-            /* Flag this so later we can avoid flipping axes */
-            any_allocate = 1;
-            /* If a subtype may be used, indicate so */
-            if (!(op_flags[iiter]&NPY_ITER_NO_SUBTYPE)) {
-                need_subtype = 1;
-            }
-            /*
-             * If the data type wasn't provided, will need to
-             * calculate it later.
-             */
-            if (op_dtype[iiter] == NULL) {
-                any_missing_dtypes = 1;
-            }
-        }
+        memset(NBF_BUFFERS(bufferdata), 0, niter*NPY_SIZEOF_INTP);
+        memset(NBF_READTRANSFERDATA(bufferdata), 0, niter*NPY_SIZEOF_INTP);
+        memset(NBF_WRITETRANSFERDATA(bufferdata), 0, niter*NPY_SIZEOF_INTP);
     }
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
@@ -420,6 +390,14 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     }
 
     if (itflags&NPY_ITFLAG_BUFFER) {
+        /*
+         * If buffering is enabled and no buffersize was given, use a default
+         * chosen to be big enough to get some amortization benefits, but
+         * small enough to be cache-friendly.
+         */
+        if (buffersize <= 0) {
+            buffersize = 1 << 12;
+        }
         /* No point in a buffer bigger than the iteration size */
         if (buffersize > NIT_ITERSIZE(iter)) {
             buffersize = NIT_ITERSIZE(iter);
@@ -445,6 +423,25 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     npyiter_apply_forced_iteration_order(iter, order);
     itflags = NIT_ITFLAGS(iter);
+
+    /* Set some flags for allocated outputs */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        if (op[iiter] == NULL) {
+            /* Flag this so later we can avoid flipping axes */
+            any_allocate = 1;
+            /* If a subtype may be used, indicate so */
+            if (!(op_flags[iiter]&NPY_ITER_NO_SUBTYPE)) {
+                need_subtype = 1;
+            }
+            /*
+             * If the data type wasn't provided, will need to
+             * calculate it.
+             */
+            if (op_dtype[iiter] == NULL) {
+                any_missing_dtypes = 1;
+            }
+        }
+    }
 
     /*
      * If the ordering was not forced, reorder the axes
@@ -512,8 +509,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      * to check that data type conversions are following the
      * casting rules.
      */
-    if (!npyiter_check_casting(niter, op,
-                                op_dtype, casting, op_itflags)) {
+    if (!npyiter_check_casting(niter, op, op_dtype, casting, op_itflags)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
