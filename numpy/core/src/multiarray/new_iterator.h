@@ -74,7 +74,7 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter);
 npy_intp NpyIter_GetNDim(NpyIter *iter);
 /* Gets the number of objects being iterated */
 npy_intp NpyIter_GetNIter(NpyIter *iter);
-/* Gets the number of times the iterator iterates */
+/* Gets the number of elements being iterated */
 npy_intp NpyIter_GetIterSize(NpyIter *iter);
 /* Gets the broadcast shape (if coords are enabled) */
 int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape);

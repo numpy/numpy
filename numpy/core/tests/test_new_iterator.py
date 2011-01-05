@@ -384,7 +384,8 @@ def test_iter_no_inner_full_coalesce():
     # Check no_inner iterators which coalesce into a single inner loop
 
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
-        a = arange(np.prod(shape))
+        size = np.prod(shape)
+        a = arange(size)
         # Test each combination of forward and backwards indexing
         for dirs in range(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
@@ -397,17 +398,17 @@ def test_iter_no_inner_full_coalesce():
             # C-order
             i = newiter(aview, ['no_inner_iteration'], [['readonly']])
             assert_equal(i.ndim, 1)
-            assert_equal(i.itersize, 1)
+            assert_equal(i[0].shape, (size,))
             # Fortran-order
             i = newiter(aview.T, ['no_inner_iteration'], [['readonly']])
             assert_equal(i.ndim, 1)
-            assert_equal(i.itersize, 1)
+            assert_equal(i[0].shape, (size,))
             # Other order
             if len(shape) > 2:
                 i = newiter(aview.swapaxes(0,1),
                                     ['no_inner_iteration'], [['readonly']])
                 assert_equal(i.ndim, 1)
-                assert_equal(i.itersize, 1)
+                assert_equal(i[0].shape, (size,))
 
 def test_iter_no_inner_dim_coalescing():
     # Check no_inner iterators whose dimensions may not coalesce completely
@@ -417,21 +418,21 @@ def test_iter_no_inner_dim_coalescing():
     a = arange(24).reshape(2,3,4)[:,:,:-1]
     i = newiter(a, ['no_inner_iteration'], [['readonly']])
     assert_equal(i.ndim, 2)
-    assert_equal(i.itersize, 6)
+    assert_equal(i[0].shape, (3,))
     a = arange(24).reshape(2,3,4)[:,:-1,:]
     i = newiter(a, ['no_inner_iteration'], [['readonly']])
     assert_equal(i.ndim, 2)
-    assert_equal(i.itersize, 2)
+    assert_equal(i[0].shape, (8,))
     a = arange(24).reshape(2,3,4)[:-1,:,:]
     i = newiter(a, ['no_inner_iteration'], [['readonly']])
     assert_equal(i.ndim, 1)
-    assert_equal(i.itersize, 1)
+    assert_equal(i[0].shape, (12,))
     
     # Even with lots of 1-sized dimensions, should still coalesce
     a = arange(24).reshape(1,1,2,1,1,3,1,1,4,1,1)
     i = newiter(a, ['no_inner_iteration'], [['readonly']])
     assert_equal(i.ndim, 1)
-    assert_equal(i.itersize, 1)
+    assert_equal(i[0].shape, (24,))
 
 def test_iter_dim_coalescing():
     # Check that the correct number of dimensions are coalesced
@@ -1110,9 +1111,12 @@ def test_iter_remove_coords_inner_loop():
     assert_equal(i.itviews[0].shape, (24,))
 
     # Removing the inner loop means there's just one iteration
+    i.reset()
     assert_equal(i.itersize, 24)
+    assert_equal(i[0].shape, tuple())
     i.remove_inner_loop()
-    assert_equal(i.itersize, 1)
+    assert_equal(i.itersize, 24)
+    assert_equal(i[0].shape, (24,))
     assert_equal(i.value, arange(24))
 
 def test_iter_buffering():

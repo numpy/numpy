@@ -18,21 +18,23 @@
 /* Internal iterator flags */
 
 /* The perm is the identity */
-#define NPY_ITFLAG_IDENTPERM   0x001
+#define NPY_ITFLAG_IDENTPERM    0x001
 /* The perm has negative entries (indicating flipped axes) */
-#define NPY_ITFLAG_NEGPERM     0x002
+#define NPY_ITFLAG_NEGPERM      0x002
 /* The iterator is tracking an index */
-#define NPY_ITFLAG_HASINDEX    0x004
+#define NPY_ITFLAG_HASINDEX     0x004
 /* The iterator is tracking coordinates */
-#define NPY_ITFLAG_HASCOORDS   0x008
+#define NPY_ITFLAG_HASCOORDS    0x008
 /* The iteration order was forced on construction */
-#define NPY_ITFLAG_FORCEDORDER 0x010
+#define NPY_ITFLAG_FORCEDORDER  0x010
 /* The inner loop is handled outside the iterator */
-#define NPY_ITFLAG_NOINNER     0x020
+#define NPY_ITFLAG_NOINNER      0x020
 /* The iterator is buffered */
-#define NPY_ITFLAG_BUFFER      0x040
+#define NPY_ITFLAG_BUFFER       0x040
 /* The iterator should grow the buffered inner loop when possible */
-#define NPY_ITFLAG_GROWINNER   0x080
+#define NPY_ITFLAG_GROWINNER    0x080
+/* There is just one iteration, can specialize iternext for that */
+#define NPY_ITFLAG_ONEITERATION 0x100
 
 /* Internal iterator per-operand iterator flags */
 
@@ -536,10 +538,15 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         ndim = NIT_NDIM(iter);
     }
 
-    /* Now that the axes are finished, adjust ITERSIZE if necessary */
+    /*
+     * Now that the axes are finished, check whether we can apply
+     * the single iteration optimization to the iternext function.
+     */
     if ((itflags&NPY_ITFLAG_NOINNER) && !(itflags&NPY_ITFLAG_BUFFER)) {
         NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-        NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata);
+        if (NIT_ITERSIZE(iter) == NAD_SHAPE(axisdata)) {
+            NIT_ITFLAGS(iter) |= NPY_ITFLAG_ONEITERATION;
+        }
     }
 
     if (itflags&NPY_ITFLAG_BUFFER) {
@@ -547,11 +554,6 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         if (!npyiter_allocate_buffers(iter)) {
             NpyIter_Deallocate(iter);
             return NULL;
-        }
-
-        /* BUFFERED + NOINNER may not have a predictable itersize */
-        if (itflags&NPY_ITFLAG_NOINNER) {
-            NIT_ITERSIZE(iter) = 0;
         }
 
         /* Prepare the next buffers and set pos/size */
@@ -654,7 +656,7 @@ int NpyIter_RemoveCoords(NpyIter *iter)
 /* Removes the inner loop handling (adds NPY_ITER_NO_INNER_ITERATION) */
 int NpyIter_RemoveInnerLoop(NpyIter *iter)
 {
-    npy_uint32 itflags = NIT_ITFLAGS(iter);;
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
@@ -670,15 +672,15 @@ int NpyIter_RemoveInnerLoop(NpyIter *iter)
         itflags |= NPY_ITFLAG_NOINNER;
         NIT_ITFLAGS(iter) = itflags;
         
-        /* Adjust ITERSIZE */
-        if (itflags&NPY_ITFLAG_BUFFER) {
-            /* BUFFERED + NOINNER may not have a predictable itersize */
-            NIT_ITERSIZE(iter) = 0;
-                                            
-        }
-        else {
+        /*
+         * Check whether we can apply the single iteration
+         * optimization to the iternext function.
+         */
+        if (!(itflags&NPY_ITFLAG_BUFFER)) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-            NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata);
+            if (NIT_ITERSIZE(iter) == NAD_SHAPE(axisdata)) {
+                NIT_ITFLAGS(iter) |= NPY_ITFLAG_ONEITERATION;
+            }
         }
     }
 
@@ -1162,10 +1164,10 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter)
     npy_intp niter = NIT_NITER(iter);
 
     /*
-     * When there is just one element being iterated,
-     * the iternext function is very simple
+     * When there is just one iteration and buffering is disabled
+     * the iternext function is very simple.
      */
-    if (NIT_ITERSIZE(iter) == 1) {
+    if (itflags&NPY_ITFLAG_ONEITERATION) {
         return &npyiter_iternext_sizeone;
     }
 
