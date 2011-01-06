@@ -1336,7 +1336,8 @@ def test_iter_buffering_badwriteback():
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed
     a = np.arange(30)
-    i = np.newiter(a, ['buffered_growinner','no_inner_iteration'], buffersize=5)
+    i = np.newiter(a, ['buffered','growinner','no_inner_iteration'],
+                           buffersize=5)
     # Should end up with just one inner loop here
     assert_equal(i[0].size, a.size)
 

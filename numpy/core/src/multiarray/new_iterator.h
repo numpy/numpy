@@ -123,8 +123,8 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_COMMON_DTYPE               0x00000010
 /* Enables buffering */
 #define NPY_ITER_BUFFERED                   0x00000020
-/* Enables buffering, and grows the inner loop when possible */
-#define NPY_ITER_BUFFERED_GROWINNER         0x00000040
+/* When buffering is enabled, grows the inner loop when possible */
+#define NPY_ITER_GROWINNER                  0x00000040
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 

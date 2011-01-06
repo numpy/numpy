@@ -117,9 +117,6 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                 if (strcmp(str, "buffered") == 0) {
                     flag = NPY_ITER_BUFFERED;
                 }
-                else if (strcmp(str, "buffered_growinner") == 0) {
-                    flag = NPY_ITER_BUFFERED_GROWINNER;
-                }
                 break;
             case 'c':
                 if (length >= 6) switch (str[5]) {
@@ -143,6 +140,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             case 'f':
                 if (strcmp(str, "f_index") == 0) {
                     flag = NPY_ITER_F_INDEX;
+                }
+                break;
+            case 'g':
+                if (strcmp(str, "growinner") == 0) {
+                    flag = NPY_ITER_GROWINNER;
                 }
                 break;
             case 'n':
@@ -932,7 +934,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
          * clear the nbo_aligned flag and strip the data type
          * for the outer loops.
          */
-        if ((flags&(NPY_ITER_BUFFERED|NPY_ITER_BUFFERED_GROWINNER)) &&
+        if ((flags&(NPY_ITER_BUFFERED)) &&
                 !(op_flags[iiter]&(NPY_ITER_COPY|
                                    NPY_ITER_UPDATEIFCOPY|
                                    NPY_ITER_ALLOCATE))) {
@@ -945,8 +947,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
     /* Only the inner loop gets the buffering and no inner flags */
     flags_inner = flags&~NPY_ITER_COMMON_DTYPE;
     flags &= ~(NPY_ITER_NO_INNER_ITERATION|
-                    NPY_ITER_BUFFERED|
-                    NPY_ITER_BUFFERED_GROWINNER);
+                    NPY_ITER_BUFFERED);
 
     for (inest = 0; inest < nnest; ++inest) {
         NewNpyArrayIterObject *iter;

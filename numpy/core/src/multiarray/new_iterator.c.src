@@ -1751,9 +1751,9 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         (*itflags) |= NPY_ITFLAG_NOINNER;
     }
     /* Buffering */
-    if (flags&(NPY_ITER_BUFFERED|NPY_ITER_BUFFERED_GROWINNER)) {
+    if (flags&NPY_ITER_BUFFERED) {
         (*itflags) |= NPY_ITFLAG_BUFFER;
-        if (flags&NPY_ITER_BUFFERED_GROWINNER) {
+        if (flags&NPY_ITER_GROWINNER) {
             (*itflags) |= NPY_ITFLAG_GROWINNER;
         }
     }
