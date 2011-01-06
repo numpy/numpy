@@ -43,35 +43,6 @@ def test_iter_refcount():
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
 
-def test_iter_iterindex():
-    # Make sure iterindex works
-
-    a = arange(6).reshape(2,3)
-    i = newiter(a)
-    assert_equal(iter_iterindices(i), range(6))
-    i.iterindex = 2
-    assert_equal(iter_iterindices(i), range(2,6))
-
-    i = newiter(a, order='F')
-    assert_equal(iter_iterindices(i), range(6))
-    i.iterindex = 3
-    assert_equal(iter_iterindices(i), range(3,6))
-
-    i = newiter(a[::-1], order='F')
-    assert_equal(iter_iterindices(i), range(6))
-    i.iterindex = 4
-    assert_equal(iter_iterindices(i), range(4,6))
-
-    i = newiter(a[::-1,::-1], order='C')
-    assert_equal(iter_iterindices(i), range(6))
-    i.iterindex = 5
-    assert_equal(iter_iterindices(i), range(5,6))
-
-    i = newiter(a[::1,::-1])
-    assert_equal(iter_iterindices(i), range(6))
-    i.iterindex = 1
-    assert_equal(iter_iterindices(i), range(1,6))
-
 def test_iter_best_order():
     # The iterator should always find the iteration order
     # with increasing memory addresses
@@ -654,14 +625,19 @@ def test_iter_flags_errors():
         i.index = 0
     def assign_iterindex(i):
         i.iterindex = 0;
+    def assign_iterrange(i):
+        i.iterrange = (0,1);
     i = newiter(arange(6), ['no_inner_iteration'])
     assert_raises(ValueError, assign_coords, i)
     assert_raises(ValueError, assign_index, i)
     assert_raises(ValueError, assign_iterindex, i)
+    assert_raises(ValueError, assign_iterrange, i)
     i = newiter(arange(6), ['buffered'])
     assert_raises(ValueError, assign_coords, i)
     assert_raises(ValueError, assign_index, i)
-    assert_raises(ValueError, assign_iterindex, i)
+    assert_raises(ValueError, assign_iterrange, i)
+    # Can't iterate if size is zero
+    assert_raises(ValueError, newiter, np.array([]))
 
 def test_iter_nbo_align():
     # Check that byte order and alignment changes work
@@ -1169,6 +1145,81 @@ def test_iter_remove_coords_inner_loop():
     assert_equal(i.itersize, 24)
     assert_equal(i[0].shape, (24,))
     assert_equal(i.value, arange(24))
+
+def test_iter_iterindex():
+    # Make sure iterindex works
+
+    buffersize = 5
+    a = arange(24).reshape(4,3,2)
+    for flags in ([], ['buffered']):
+        i = newiter(a, flags, buffersize=buffersize)
+        assert_equal(iter_iterindices(i), range(24))
+        i.iterindex = 2
+        assert_equal(iter_iterindices(i), range(2,24))
+
+        i = newiter(a, flags, order='F', buffersize=buffersize)
+        assert_equal(iter_iterindices(i), range(24))
+        i.iterindex = 5
+        assert_equal(iter_iterindices(i), range(5,24))
+
+        i = newiter(a[::-1], flags, order='F', buffersize=buffersize)
+        assert_equal(iter_iterindices(i), range(24))
+        i.iterindex = 9
+        assert_equal(iter_iterindices(i), range(9,24))
+
+        i = newiter(a[::-1,::-1], flags, order='C', buffersize=buffersize)
+        assert_equal(iter_iterindices(i), range(24))
+        i.iterindex = 13
+        assert_equal(iter_iterindices(i), range(13,24))
+
+        i = newiter(a[::1,::-1], flags, buffersize=buffersize)
+        assert_equal(iter_iterindices(i), range(24))
+        i.iterindex = 23
+        assert_equal(iter_iterindices(i), range(23,24))
+        i.reset()
+        i.iterindex = 2
+        assert_equal(iter_iterindices(i), range(2,24))
+
+def test_iter_iterrange():
+    # Make sure getting and resetting the iterrange works
+
+    buffersize = 5
+    a = arange(24, dtype='i4').reshape(4,3,2)
+    a_fort = a.ravel(order='F')
+
+    i = newiter(a, ['ranged'], ['readonly'], order='F',
+                buffersize=buffersize)
+    assert_equal(i.iterrange, (0,24))
+    assert_equal([x[()] for x in i], a_fort)
+    for r in [(0,24), (1,2), (3,24), (5,5), (0,20), (23,24)]:
+        i.iterrange = r
+        assert_equal(i.iterrange, r)
+        assert_equal([x[()] for x in i], a_fort[r[0]:r[1]])
+
+    i = newiter(a, ['ranged','buffered'], ['readonly'], order='F',
+                op_dtypes='f8', buffersize=buffersize)
+    assert_equal(i.iterrange, (0,24))
+    assert_equal([x[()] for x in i], a_fort)
+    for r in [(0,24), (1,2), (3,24), (5,5), (0,20), (23,24)]:
+        i.iterrange = r
+        assert_equal(i.iterrange, r)
+        assert_equal([x[()] for x in i], a_fort[r[0]:r[1]])
+
+    def get_array(i):
+        val = np.array([], dtype='f8')
+        for x in i:
+            val = np.concatenate((val, x))
+        return val
+
+    i = newiter(a, ['ranged','buffered','no_inner_iteration'],
+                ['readonly'], order='F',
+                op_dtypes='f8', buffersize=buffersize)
+    assert_equal(i.iterrange, (0,24))
+    assert_equal(get_array(i), a_fort)
+    for r in [(0,24), (1,2), (3,24), (5,5), (0,20), (23,24)]:
+        i.iterrange = r
+        assert_equal(i.iterrange, r)
+        assert_equal(get_array(i), a_fort[r[0]:r[1]])
 
 def test_iter_buffering():
     # Test buffering with several buffer sizes and types

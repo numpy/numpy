@@ -152,6 +152,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                     flag = NPY_ITER_NO_INNER_ITERATION;
                 }
                 break;
+            case 'r':
+                if (strcmp(str, "ranged") == 0) {
+                    flag = NPY_ITER_RANGED;
+                }
+                break;
         }
         if (flag == 0) {
             PyErr_Format(PyExc_ValueError,
@@ -1107,7 +1112,7 @@ npyiter_reset(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1141,7 +1146,7 @@ npyiter_remove_coords(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1160,7 +1165,7 @@ npyiter_remove_inner_loop(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1234,7 +1239,7 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1263,7 +1268,7 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1371,7 +1376,7 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return -1;
     }
 
@@ -1441,7 +1446,7 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return -1;
     }
 
@@ -1492,7 +1497,7 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return -1;
     }
 
@@ -1518,11 +1523,73 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
     return 0;
 }
 
+static PyObject *npyiter_iterrange_get(NewNpyArrayIterObject *self)
+{
+    npy_intp istart = 0, iend = 0;
+    PyObject *ret;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return NULL;
+    }
+
+    NpyIter_GetIterIndexRange(self->iter, &istart, &iend);
+
+    ret = PyTuple_New(2);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    PyTuple_SET_ITEM(ret, 0, PyInt_FromLong(istart));
+    PyTuple_SET_ITEM(ret, 1, PyInt_FromLong(iend));
+
+    return ret;
+}
+
+static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
+{
+    npy_intp istart = 0, iend = 0;
+    PyObject *item;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return -1;
+    }
+
+    if (value == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot delete iterrange");
+        return -1;
+    }
+
+    if (!PyArg_ParseTuple(value, "nn", &istart, &iend)) {
+        return -1;
+    }
+
+    if (NpyIter_ResetToIterIndexRange(self->iter, istart, iend)
+                                                    != NPY_SUCCEED) {
+        return -1;
+    }
+    if (istart < iend) {
+        self->started = self->finished = 0;
+    }
+    else {
+        self->started = self->finished = 1;
+    }
+
+    /* If there is nesting, the nested iterators should be reset */
+    npyiter_resetbasepointers(self);
+
+    return 0;
+}
+
 static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1538,7 +1605,7 @@ static PyObject *npyiter_hasindex_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1559,7 +1626,7 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1584,7 +1651,7 @@ static PyObject *npyiter_ndim_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1595,7 +1662,7 @@ static PyObject *npyiter_niter_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1606,7 +1673,7 @@ static PyObject *npyiter_itersize_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator was not constructed correctly");
+                "Iterator is invalid");
         return NULL;
     }
 
@@ -1832,6 +1899,10 @@ static PyGetSetDef npyiter_getsets[] = {
     {"iterindex",
         (getter)npyiter_iterindex_get,
         (setter)npyiter_iterindex_set,
+        NULL, NULL},
+    {"iterrange",
+        (getter)npyiter_iterrange_get,
+        (setter)npyiter_iterrange_set,
         NULL, NULL},
     {"operands",
         (getter)npyiter_operands_get,

@@ -57,6 +57,9 @@ npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter);
 void NpyIter_Reset(NpyIter *iter);
 /* Resets the iterator to its initial state, with new base data pointers */
 void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs);
+/* Resets the iterator to a new iterator index range */
+int NpyIter_ResetToIterIndexRange(NpyIter *iter,
+                                  npy_intp istart, npy_intp iend);
 
 /* Gets the number of dimensions being iterated */
 npy_intp NpyIter_GetNDim(NpyIter *iter);
@@ -68,6 +71,9 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter);
 
 /* Gets the number of elements being iterated */
 npy_intp NpyIter_GetIterSize(NpyIter *iter);
+/* Get the range of iteration indices being iterated */
+void NpyIter_GetIterIndexRange(NpyIter *iter,
+                               npy_intp *istart, npy_intp *iend);
 /* Gets the current iteration index */
 npy_intp NpyIter_GetIterIndex(NpyIter *iter);
 /* Sets the iterator to point at the given iteration index */
@@ -121,10 +127,12 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_NO_INNER_ITERATION         0x00000008
 /* Convert all the operands to a common data type */
 #define NPY_ITER_COMMON_DTYPE               0x00000010
+/* Enables sub-range iteration */
+#define NPY_ITER_RANGED                     0x00000020
 /* Enables buffering */
-#define NPY_ITER_BUFFERED                   0x00000020
-/* When buffering is enabled, grows the inner loop when possible */
-#define NPY_ITER_GROWINNER                  0x00000040
+#define NPY_ITER_BUFFERED                   0x00000040
+/* When buffering is enabled, grows the inner loop if possible */
+#define NPY_ITER_GROWINNER                  0x00000080
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
