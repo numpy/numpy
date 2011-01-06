@@ -1288,8 +1288,6 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
-    NewNpyArrayIterObject * tmp;
-
     if (self->iter == NULL || self->finished) {
         return NULL;
     }
@@ -1474,6 +1472,49 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
                 "Iterator does not have an index");
         return -1;
     }
+}
+
+static PyObject *npyiter_iterindex_get(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return NULL;
+    }
+
+    return PyInt_FromLong(NpyIter_GetIterIndex(self->iter));
+}
+
+static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
+{
+    npy_intp iterindex;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator was not constructed correctly");
+        return -1;
+    }
+
+    if (value == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot delete iterindex");
+        return -1;
+    }
+
+    iterindex = PyInt_AsLong(value);
+    if (iterindex==-1 && PyErr_Occurred()) {
+        return -1;
+    }
+    if (NpyIter_GotoIterIndex(self->iter, iterindex) != NPY_SUCCEED) {
+        return -1;
+    }
+    self->started = 0;
+    self->finished = 0;
+
+    /* If there is nesting, the nested iterators should be reset */
+    npyiter_resetbasepointers(self);
+
+    return 0;
 }
 
 static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
@@ -1786,6 +1827,10 @@ static PyGetSetDef npyiter_getsets[] = {
     {"index",
         (getter)npyiter_index_get,
         (setter)npyiter_index_set,
+        NULL, NULL},
+    {"iterindex",
+        (getter)npyiter_iterindex_get,
+        (setter)npyiter_iterindex_set,
         NULL, NULL},
     {"operands",
         (getter)npyiter_operands_get,

@@ -342,7 +342,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /* Calculate how many dimensions the iterator should have */
     ndim = npyiter_calculate_ndim(niter, op_in, oa_ndim);
 
-    /* If 'ndim' is zero, any outputs should scalars */
+    /* If 'ndim' is zero, any outputs should be scalars */
     if (ndim == 0) {
         output_scalars = 1;
         ndim = 1;
@@ -805,6 +805,13 @@ int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
         return NPY_FAIL;
     }
 
+    if (itflags&NPY_ITFLAG_NOINNER) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot call GotoCoords on an iterator which "
+                "has the flag NO_INNER_ITERATION");
+        return NPY_FAIL;
+    }
+
     perm = NIT_PERM(iter);
     dataptr = NIT_RESETDATAPTR(iter);
     axisdata = NIT_AXISDATA(iter);
@@ -861,7 +868,8 @@ int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
     return NPY_SUCCEED;
 }
 
-/* If the iterator is tracking an index, sets the iterator
+/*
+ * If the iterator is tracking an index, sets the iterator
  * to the specified index.
  *
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
@@ -888,6 +896,13 @@ int NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoIndex on an iterator which "
                 "is buffered");
+        return NPY_FAIL;
+    }
+
+    if (itflags&NPY_ITFLAG_NOINNER) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot call GotoIndex on an iterator which "
+                "has the flag NO_INNER_ITERATION");
         return NPY_FAIL;
     }
 
@@ -939,6 +954,114 @@ int NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
     }
 
     return NPY_SUCCEED;
+}
+
+/*
+ * Sets the iterator position to the specified iterindex,
+ * which matches the iteration order of the iterator.
+ *
+ * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
+ */
+int NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    char **dataptr;
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp istrides, nstrides, i, shape;
+
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot call GotoIterIndex on an iterator which "
+                "is buffered");
+        return NPY_FAIL;
+    }
+
+    if (itflags&NPY_ITFLAG_NOINNER) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot call GotoIterIndex on an iterator which "
+                "has the flag NO_INNER_ITERATION");
+        return NPY_FAIL;
+    }
+
+    if (iterindex < 0 || iterindex >= NIT_ITERSIZE(iter)) {
+        PyErr_SetString(PyExc_IndexError,
+                "Iterator GotoIterIndex called with out-of-bounds "
+                "index.");
+        return NPY_FAIL;
+    }
+
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    nstrides = NAD_NSTRIDES();
+
+    /*
+     * Set the coordinates, from the fastest-changing to the
+     * slowest-changing.
+     */
+    axisdata = NIT_AXISDATA(iter);
+    shape = NAD_SHAPE(axisdata);
+    i = iterindex;
+    iterindex /= shape;
+    NAD_COORD(axisdata) = i - iterindex * shape;
+    for (idim = 0; idim < ndim-1; ++idim) {
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+        shape = NAD_SHAPE(axisdata);
+        i = iterindex;
+        iterindex /= shape;
+        NAD_COORD(axisdata) = i - iterindex * shape;
+    }
+
+    dataptr = NIT_RESETDATAPTR(iter);
+
+    /*
+     * The successive pointers accumulate
+     * the offsets in the opposite order, starting from the
+     * original data pointers.
+     */
+    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, -1)) {
+        npy_intp *strides;
+        char **ptrs;
+
+        strides = NAD_STRIDES(axisdata);
+        ptrs = NAD_PTRS(axisdata);
+
+        i = NAD_COORD(axisdata);
+
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            ptrs[istrides] = dataptr[istrides] + i*strides[istrides];
+        }
+
+        dataptr = ptrs;
+    }
+
+    return NPY_SUCCEED;
+}
+
+npy_intp NpyIter_GetIterIndex(NpyIter *iter)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp iterindex = 0;
+
+    sizeof_axisdata = NIT_SIZEOF_AXISDATA(itflags, ndim, niter);
+    axisdata = NIT_INDEX_AXISDATA(NIT_AXISDATA(iter), ndim-1);
+
+    for (idim = ndim-2; idim >= 0; --idim) {
+        iterindex += NAD_COORD(axisdata);
+        NIT_ADVANCE_AXISDATA(axisdata, -1);
+        iterindex *= NAD_SHAPE(axisdata);
+    }
+    iterindex += NAD_COORD(axisdata);
+
+    return iterindex;
 }
 
 /* SPECIALIZED iternext functions that handle the non-buffering part */

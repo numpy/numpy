@@ -27,57 +27,69 @@ typedef enum {
 } NPY_CASTING;
 
 
-/* Allocate a new iterator over one array object */
+/* Allocate a new iterator for one array object */
 NpyIter*
 NpyIter_New(PyArrayObject* op, npy_uint32 flags,
                   NPY_ORDER order, NPY_CASTING casting,
                   PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes, npy_intp buffersize);
 
-/* Allocate a new iterator over multiple array objects */
+/* Allocate a new iterator for multiple array objects */
 NpyIter*
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  NPY_ORDER order, NPY_CASTING casting,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize);
 
-/* Removes coords support from an iterator */
-int NpyIter_RemoveCoords(NpyIter *iter);
-/* Removes the inner loop handling (adds NPY_ITER_NO_INNER_ITERATION) */
-int NpyIter_RemoveInnerLoop(NpyIter *iter);
-
 /* Deallocate an iterator */
 int NpyIter_Deallocate(NpyIter* iter);
+
+/* Whether the iterator handles the inner loop */
+int NpyIter_HasInnerLoop(NpyIter *iter);
+/* Removes the inner loop handling (so HasInnerLoop returns false) */
+int NpyIter_RemoveInnerLoop(NpyIter *iter);
+/* Get the array of strides for the inner loop (when HasInnerLoop is false) */
+npy_intp *NpyIter_GetInnerStrideArray(NpyIter *iter);
+/* Get a pointer to the size of the inner loop  (when HasInnerLoop is false) */
+npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter);
 
 /* Resets the iterator to its initial state */
 void NpyIter_Reset(NpyIter *iter);
 /* Resets the iterator to its initial state, with new base data pointers */
 void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs);
-/* Sets the iterator to point at the coordinates in 'coords' */
-int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords);
-/* Sets the iterator to point at the given index */
-int NpyIter_GotoIndex(NpyIter *iter, npy_intp index);
-
-/* Whether the iterator handles the inner loop */
-int NpyIter_HasInnerLoop(NpyIter *iter);
-/* Whether the iterator is tracking coordinates */
-int NpyIter_HasCoords(NpyIter *iter);
-/* Whether the iterator is tracking an index */
-int NpyIter_HasIndex(NpyIter *iter);
-
-/* Compute a specialized iteration function for an iterator */
-NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter);
-/* Compute a specialized getcoords function for an iterator */
-NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter);
 
 /* Gets the number of dimensions being iterated */
 npy_intp NpyIter_GetNDim(NpyIter *iter);
 /* Gets the number of objects being iterated */
 npy_intp NpyIter_GetNIter(NpyIter *iter);
+
+/* Compute the specialized iteration function for an iterator */
+NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter);
+
 /* Gets the number of elements being iterated */
 npy_intp NpyIter_GetIterSize(NpyIter *iter);
+/* Gets the current iteration index */
+npy_intp NpyIter_GetIterIndex(NpyIter *iter);
+/* Sets the iterator to point at the given iteration index */
+int NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex);
+
+/* Whether the iterator is tracking coordinates */
+int NpyIter_HasCoords(NpyIter *iter);
 /* Gets the broadcast shape (if coords are enabled) */
 int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape);
+/* Compute a specialized getcoords function for the iterator */
+NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter);
+/* Sets the iterator to point at the coordinates in 'coords' */
+int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords);
+/* Removes coords support from an iterator */
+int NpyIter_RemoveCoords(NpyIter *iter);
+
+/* Whether the iterator is tracking an index */
+int NpyIter_HasIndex(NpyIter *iter);
+/* Get a pointer to the index, if it is being tracked */
+npy_intp *NpyIter_GetIndexPtr(NpyIter *iter);
+/* Sets the iterator to point at the given index */
+int NpyIter_GotoIndex(NpyIter *iter, npy_intp index);
 
 /* Get the array of data pointers (1 per object being iterated) */
 char **NpyIter_GetDataPtrArray(NpyIter *iter);
@@ -87,18 +99,11 @@ PyArray_Descr **NpyIter_GetDescrArray(NpyIter *iter);
 PyArrayObject **NpyIter_GetObjectArray(NpyIter *iter);
 /* Returns a view to the i-th object with the iterator's internal axes */
 PyArrayObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i);
-/* Get a pointer to the index, if it is being tracked */
-npy_intp *NpyIter_GetIndexPtr(NpyIter *iter);
 
 /* Gets an array of read flags (1 per object being iterated) */
 void NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags);
 /* Gets an array of write flags (1 per object being iterated) */
 void NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags);
-
-/* Get the array of strides for the inner loop */
-npy_intp *NpyIter_GetInnerStrideArray(NpyIter *iter);
-/* Get a pointer to the size of the inner loop */
-npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter);
 
 /* For debugging */
 NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);

@@ -19,6 +19,13 @@ def iter_indices(i):
         i.iternext()
     return ret
 
+def iter_iterindices(i):
+    ret = []
+    while not i.finished:
+        ret.append(i.iterindex)
+        i.iternext()
+    return ret
+
 def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
@@ -35,6 +42,35 @@ def test_iter_refcount():
     it = None
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
+
+def test_iter_iterindex():
+    # Make sure iterindex works
+
+    a = arange(6).reshape(2,3)
+    i = newiter(a)
+    assert_equal(iter_iterindices(i), range(6))
+    i.iterindex = 2
+    assert_equal(iter_iterindices(i), range(2,6))
+
+    i = newiter(a, order='F')
+    assert_equal(iter_iterindices(i), range(6))
+    i.iterindex = 3
+    assert_equal(iter_iterindices(i), range(3,6))
+
+    i = newiter(a[::-1], order='F')
+    assert_equal(iter_iterindices(i), range(6))
+    i.iterindex = 4
+    assert_equal(iter_iterindices(i), range(4,6))
+
+    i = newiter(a[::-1,::-1], order='C')
+    assert_equal(iter_iterindices(i), range(6))
+    i.iterindex = 5
+    assert_equal(iter_iterindices(i), range(5,6))
+
+    i = newiter(a[::1,::-1])
+    assert_equal(iter_iterindices(i), range(6))
+    i.iterindex = 1
+    assert_equal(iter_iterindices(i), range(1,6))
 
 def test_iter_best_order():
     # The iterator should always find the iteration order
@@ -611,6 +647,21 @@ def test_iter_flags_errors():
     assert_raises(ValueError, lambda i:i.shape, i)
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
+    # GotoCoords and GotoIndex incompatible with buffering or no_inner
+    def assign_coords(i):
+        i.coords = (0,)
+    def assign_index(i):
+        i.index = 0
+    def assign_iterindex(i):
+        i.iterindex = 0;
+    i = newiter(arange(6), ['no_inner_iteration'])
+    assert_raises(ValueError, assign_coords, i)
+    assert_raises(ValueError, assign_index, i)
+    assert_raises(ValueError, assign_iterindex, i)
+    i = newiter(arange(6), ['buffered'])
+    assert_raises(ValueError, assign_coords, i)
+    assert_raises(ValueError, assign_index, i)
+    assert_raises(ValueError, assign_iterindex, i)
 
 def test_iter_nbo_align():
     # Check that byte order and alignment changes work
