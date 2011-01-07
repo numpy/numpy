@@ -772,7 +772,7 @@ Construction and Destruction
     Flags that may be passed in ``flags``, applying to the whole
     iterator, are:
 
-        ``NPY_ITER_C_ORDER_INDEX``, ``NPY_ITER_F_ORDER_INDEX``
+        ``NPY_ITER_C_INDEX``, ``NPY_ITER_F_INDEX``
         
             Causes the iterator to track an index matching C or
             Fortran order. These options are mutually exclusive.
@@ -788,8 +788,8 @@ Construction and Destruction
             Causes the iterator to skip iteration of the innermost
             loop, allowing the user of the iterator to handle it.
 
-            This flag is incompatible with ``NPY_ITER_C_ORDER_INDEX``,
-            ``NPY_ITER_F_ORDER_INDEX``, and ``NPY_ITER_COORDS``.
+            This flag is incompatible with ``NPY_ITER_C_INDEX``,
+            ``NPY_ITER_F_INDEX``, and ``NPY_ITER_COORDS``.
 
         ``NPY_ITER_COMMON_DTYPE``
 
@@ -800,6 +800,20 @@ Construction and Destruction
             
             If the common data type is known ahead of time, don't use this
             flag.  Instead, set the requested dtype for all the operands.
+
+        ``NPY_ITER_RANGED``
+
+            Enables support for iteration of sub-ranges of the full
+            ``iterindex`` range ``[0, NpyIter_IterSize(iter))``.  Use
+            the function ``NpyIter_ResetToIterIndexRange`` to specify
+            a range for iteration.
+
+            This flag can only be used with ``NPY_ITER_NO_INNER_ITERATION``
+            when ``NPY_ITER_BUFFERED`` is enabled.  This is because
+            without buffering, the inner loop is always the size of the
+            innermost iteration dimension, and allowing it to get cut up
+            would require special handling, effectively making it more
+            like the buffered version.
 
         ``NPY_ITER_BUFFERED`` **PARTIALLY IMPLEMENTED**
 
@@ -828,14 +842,21 @@ Construction and Destruction
             values multiple times to the same output, and accumulation
             wouldn't work correctly.
 
-        ``NPY_ITER_BUFFERED_GROWINNER``
+        ``NPY_ITER_GROWINNER``
 
-            Enables buffering as ``NPY_ITER_BUFFERED`` does, but when
-            buffering is not needed it grows the size of the inner loop
-            as much as possible.  This option is best used if you're doing
-            a straight pass through all the data, rather than
-            anything with small cache-friendly arrays of
-            temporary values for each inner loop.
+            When buffering is enabled, this allows the size of the inner
+            loop to grow when buffering isn't necessary.  This option
+            is best used if you're doing a straight pass through all the
+            data, rather than anything with small cache-friendly arrays
+            of temporary values for each inner loop.
+
+        ``NPY_ITER_DELAY_BUFALLOC``
+
+            When buffering is enabled, this delays allocation of the
+            buffers until one of the ``NpyIter_Reset*`` functions is
+            called.  This flag exists to avoid wasteful copying of
+            buffer data when making multiple copies of a buffered
+            iterator for multi-threaded iteration.
 
     Flags that may be passed in ``op_flags[i]``, where ``0 <= i < niter``:
 
@@ -918,6 +939,24 @@ Construction and Destruction
             the iterator is aware of this possibility and handles it
             correctly.
 
+``NpyIter *NpyIter_Copy(NpyIter *iter)``
+
+    Makes a copy of the given iterator.  This function is provided
+    primarily to enable multi-threaded iteration of the data.
+    
+    *TODO*: Move this to a section about multithreaded iteration.
+
+    The recommended approach to multithreaded iteration is to
+    first create an iterator with the flags
+    ``NPY_ITER_NO_INNER_ITERATION``, ``NPY_ITER_RANGED``,
+    ``NPY_ITER_BUFFERED``, ``NPY_ITER_DELAY_BUFALLOC``, and
+    possibly ``NPY_ITER_GROWINNER``.  Create a copy of this iterator
+    for each thread (minus one for the first iterator).  Then, take
+    the iteration index range ``[0, NpyIter_GetIterSize(iter))`` and
+    split it up into tasks, for example using a TBB parallel_for loop.
+    When a thread gets a task to execute, it then uses its copy of
+    the iterator by calling ``NpyIter_ResetToIterIndexRange`` and
+    iterating over the full range.
 
 ``int NpyIter_UpdateIter(NpyIter *iter, npy_intp i, npy_uint32 op_flags, NPY_CASTING casting, PyArray_Descr *dtype)`` **UNIMPLEMENTED**
 
@@ -978,18 +1017,43 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
-``void NpyIter_Reset(NpyIter *iter)``
+``int NpyIter_Reset(NpyIter *iter)``
 
     Resets the iterator back to its initial state, at the beginning
-    of the arrays.
+    of the iteration range.
 
-``void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)``
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+``int NpyIter_ResetToIterIndexRange(NpyIter *iter, npy_intp istart, npy_intp iend)``
+
+    Resets the iterator and restricts it to the ``iterindex`` range
+    ``[istart, iend)``.  See ``NpyIter_Copy`` for an explanation of
+    how to use this for multi-threaded iteration.  This requires that
+    the flag ``NPY_ITER_RANGED`` was passed to the iterator constructor.
+
+    If you want to reset both the ``iterindex`` range and the base
+    pointers at the same time, you can do the following to avoid
+    extra buffer copying (be sure to add the return code error checks
+    when you copy this code).::
+
+        /* Set to a trivial empty range */
+        NpyIter_ResetToIterIndexRange(iter, 0, 0);
+        /* Set the base pointers */
+        NpyIter_ResetBasePointers(iter, baseptrs);
+        /* Set to the desired range */
+        NpyIter_ResetToIterIndexRange(iter, istart, iend);
+
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+``int NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)``
 
     Resets the iterator back to its initial state, but using the values
     in ``baseptrs`` for the data instead of the pointers from the arrays
     being iterated.  This functions is intended to be used, together with
     the ``op_axes`` parameter, by nested iteration code with two or more
     iterators.
+
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
     *TODO*: Move the following into a special section on nested iterators.
 
@@ -1040,9 +1104,9 @@ Construction and Destruction
 ``int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)``
 
     Adjusts the iterator to point to the ``ndim`` coordinates
-    pointed to by ``coords``.  If the iterator was constructed without
-    the ``NPY_ITER_COORDS`` flag, or the coordinates are out of
-    bounds, returns an error.
+    pointed to by ``coords``.  Returns an error if coordinates
+    are not being tracked, the coordinates are out of bounds,
+    or inner loop iteration is disabled.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
@@ -1050,11 +1114,36 @@ Construction and Destruction
 
     Adjusts the iterator to point to the ``index`` specified.
     If the iterator was constructed with the flag
-    ``NPY_ITER_C_ORDER_INDEX``, ``index`` is the C-order index,
+    ``NPY_ITER_C_INDEX``, ``index`` is the C-order index,
     and if the iterator was constructed with the flag
-    ``NPY_ITER_F_ORDER_INDEX``, ``index`` is the Fortran-order
+    ``NPY_ITER_F_INDEX``, ``index`` is the Fortran-order
     index.  Returns an error if there is no index being tracked,
-    or the index is out of bounds.
+    the index is out of bounds, or inner loop iteration is disabled.
+
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+``npy_intp NpyIter_GetIterSize(NpyIter *iter)``
+
+    Returns the number of elements being iterated.  This is the product
+    of all the dimensions in the shape.
+
+``npy_intp NpyIter_GetIterIndex(NpyIter *iter)``
+
+    Gets the ``iterindex`` of the iterator, which is an index matching
+    the iteration order of the iterator.
+
+``void NpyIter_GetIterIndexRange(NpyIter *iter, npy_intp *istart, npy_intp *iend)``
+
+    Gets the ``iterindex`` sub-range that is being iterated.  If
+    ``NPY_ITER_RANGED`` was not specified, this always returns the
+    range ``[0, NpyIter_IterSize(iter))``.
+
+``int NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)``
+
+    Adjusts the iterator to point to the ``iterindex`` specified.
+    The IterIndex is an index matching the iteration order of the iterator.
+    Returns an error if the ``iterindex`` is out of bounds,
+    buffering is enabled, or inner loop iteration is disabled.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
@@ -1072,7 +1161,7 @@ Construction and Destruction
 ``int NpyIter_HasIndex(NpyIter *iter)``
 
     Returns 1 if the iterator was created with the
-    ``NPY_ITER_C_ORDER_INDEX`` or ``NPY_ITER_F_ORDER_INDEX``
+    ``NPY_ITER_C_INDEX`` or ``NPY_ITER_F_INDEX``
     flag, 0 otherwise.
 
 ``npy_intp NpyIter_GetNDim(NpyIter *iter)``
@@ -1085,12 +1174,6 @@ Construction and Destruction
 ``npy_intp NpyIter_GetNIter(NpyIter *iter)``
 
     Returns the number of objects being iterated.
-
-``npy_intp NpyIter_GetIterSize(NpyIter *iter)``
-
-    Returns the number of times the iterator will iterate
-    starting from a new or reset state.  If buffering is enabled,
-    it returns 0.
 
 ``int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)``
 
@@ -1171,7 +1254,7 @@ Functions For Iteration
 
     This gives back a pointer to the index being tracked, or NULL
     if no index is being tracked.  It is only useable if one of
-    the flags ``NPY_ITER_C_ORDER_INDEX`` or ``NPY_ITER_F_ORDER_INDEX``
+    the flags ``NPY_ITER_C_INDEX`` or ``NPY_ITER_F_INDEX``
     were specified during construction.
 
 When the flag ``NPY_ITER_NO_INNER_ITERATION`` is used, the code
@@ -1529,7 +1612,6 @@ Here's the same function, rewritten to use a new iterator.  Note how
 easy it was to add an optional output parameter.::
 
     In [5]: def composite_over_it(im1, im2, out=None, buffersize=4096):
-      ....:     it = np.newiter([im1, im1[:,:,-1], im2, out],
       ....:                     ['buffered','no_inner_iteration'],
       ....:                     [['readonly']]*3+[['writeonly','allocate']],
       ....:                     op_axes=[None,[0,1,np.newaxis],None,None],
