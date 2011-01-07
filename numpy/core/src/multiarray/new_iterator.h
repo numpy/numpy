@@ -48,6 +48,9 @@ NpyIter_Copy(NpyIter *iter);
 /* Deallocate an iterator */
 int NpyIter_Deallocate(NpyIter* iter);
 
+/* Whether the buffer allocation is being delayed */
+int NpyIter_HasDelayedBufAlloc(NpyIter *iter);
+
 /* Whether the iterator handles the inner loop */
 int NpyIter_HasInnerLoop(NpyIter *iter);
 /* Removes the inner loop handling (so HasInnerLoop returns false) */
@@ -58,9 +61,9 @@ npy_intp *NpyIter_GetInnerStrideArray(NpyIter *iter);
 npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter);
 
 /* Resets the iterator to its initial state */
-void NpyIter_Reset(NpyIter *iter);
+int NpyIter_Reset(NpyIter *iter);
 /* Resets the iterator to its initial state, with new base data pointers */
-void NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs);
+int NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs);
 /* Resets the iterator to a new iterator index range */
 int NpyIter_ResetToIterIndexRange(NpyIter *iter,
                                   npy_intp istart, npy_intp iend);
@@ -137,6 +140,8 @@ NPY_NO_EXPORT void NpyIter_DebugPrint(NpyIter *iter);
 #define NPY_ITER_BUFFERED                   0x00000040
 /* When buffering is enabled, grows the inner loop if possible */
 #define NPY_ITER_GROWINNER                  0x00000080
+/* Delay allocation of buffers until first Reset* call */
+#define NPY_ITER_DELAY_BUFALLOC             0x00000100
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 

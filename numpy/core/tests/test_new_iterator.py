@@ -603,6 +603,14 @@ def test_iter_flags_errors():
     assert_raises(ValueError, newiter, [], [], [])
     # Too many operands
     assert_raises(ValueError, newiter, [a]*100, [], [['readonly']]*100)
+    # Bad global flag
+    assert_raises(ValueError, newiter, [a], ['bad flag'], [['readonly']])
+    # Bad op flag
+    assert_raises(ValueError, newiter, [a], [], [['readonly','bad flag']])
+    # Bad order parameter
+    assert_raises(ValueError, newiter, [a], [], [['readonly']], order='G')
+    # Bad casting parameter
+    assert_raises(ValueError, newiter, [a], [], [['readonly']], casting='noon')
     # op_flags must match ops
     assert_raises(ValueError, newiter, [a]*3, [], [['readonly']]*2)
     # Cannot track both a C and an F index
@@ -1035,6 +1043,12 @@ def test_iter_copy():
     i = None
     assert_equal([x[()] for x in j], a.ravel(order='F'))
 
+    a = arange(24, dtype='<i4').reshape(2,3,4)
+    i = newiter(a, ['buffered'], order='F', casting='unsafe',
+                op_dtypes='>f8', buffersize=5)
+    j = i.copy()
+    i = None
+    assert_equal([x[()] for x in j], a.ravel(order='F'))
 
 def test_iter_allocate_output_simple():
     # Check that the iterator will properly allocate outputs
@@ -1326,6 +1340,30 @@ def test_iter_write_buffering():
         x += 1
         i.iternext()
     assert_equal(a.ravel(order='C'), np.arange(24))
+
+def test_iter_buffering_delayed_alloc():
+    # Test that delaying buffer allocation works
+
+    a = np.arange(6)
+    b = np.arange(1, dtype='f4')
+    i = np.newiter([a,b], ['buffered','delay_bufalloc','coords'],
+                    casting='unsafe',
+                    op_dtypes='f4')
+    assert_(i.hasdelayedbufalloc)
+    assert_raises(ValueError, lambda i:i.coords, i)
+    assert_raises(ValueError, lambda i:i[0], i)
+    assert_raises(ValueError, lambda i:i[0:2], i)
+    def assign_iter(i):
+        i[0] = 0
+    assert_raises(ValueError, assign_iter, i)
+
+    i.reset()
+    assert_(not i.hasdelayedbufalloc)
+    assert_equal(i.coords, (0,))
+    assert_equal(i[0], 0)
+    i[1] = 1
+    assert_equal(i[0:2], [0,1])
+    assert_equal([[x[0][()],x[1][()]] for x in i], zip(range(6), [1]*6))
 
 def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast

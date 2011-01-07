@@ -38,7 +38,7 @@ void npyiter_cache_values(NewNpyArrayIterObject *self)
 
     /* iternext and getcoords functions */
     self->iternext = NpyIter_GetIterNext(iter);
-    if (NpyIter_HasCoords(iter)) {
+    if (NpyIter_HasCoords(iter) && !NpyIter_HasDelayedBufAlloc(iter)) {
         self->getcoords = NpyIter_GetGetCoords(iter);
     }
     else {
@@ -87,17 +87,17 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     PyObject *f;
     char *str = NULL;
     Py_ssize_t length = 0;
-    npy_uint32 flag = 0;
+    npy_uint32 flag;
 
     if (flags_in == NULL || flags_in == Py_None) {
         *flags = 0;
-        return NPY_SUCCEED;
+        return 1;
     }
 
     if (!PyTuple_Check(flags_in) && !PyList_Check(flags_in)) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator global flags must be a list or tuple of strings");
-        return NPY_FAIL;
+        return 0;
     }
 
     nflags = PySequence_Size(flags_in);
@@ -105,13 +105,14 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     for (iflags = 0; iflags < nflags; ++iflags) {
         f = PySequence_GetItem(flags_in, iflags);
         if (f == NULL) {
-            return NPY_FAIL;
+            return 0;
         }
         if (PyString_AsStringAndSize(f, &str, &length) == -1) {
             Py_DECREF(f);
-            return NPY_FAIL;
+            return 0;
         }
         /* Use switch statements to quickly isolate the right flag */
+        flag = 0;
         switch (str[0]) {
             case 'b':
                 if (strcmp(str, "buffered") == 0) {
@@ -135,6 +136,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                             flag = NPY_ITER_COMMON_DTYPE;
                         }
                         break;
+                }
+                break;
+            case 'd':
+                if (strcmp(str, "delay_bufalloc") == 0) {
+                    flag = NPY_ITER_DELAY_BUFALLOC;
                 }
                 break;
             case 'f':
@@ -162,7 +168,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             PyErr_Format(PyExc_ValueError,
                     "Unexpected iterator global flag \"%s\"", str);
             Py_DECREF(f);
-            return NPY_FAIL;
+            return 0;
         }
         else {
             tmpflags |= flag;
@@ -171,7 +177,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     }
 
     *flags |= tmpflags;
-    return NPY_SUCCEED;
+    return 1;
 }
 
 /* TODO: Use PyArray_OrderConverter once 'K' is added there */
@@ -182,27 +188,27 @@ npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
     Py_ssize_t length = 0;
     
     if (PyString_AsStringAndSize(order_in, &str, &length) == -1) {
-        return NPY_FAIL;
+        return 0;
     }
 
     if (length == 1) switch (str[0]) {
         case 'C':
             *order = NPY_CORDER;
-            return NPY_SUCCEED;
+            return 1;
         case 'F':
             *order = NPY_FORTRANORDER;
-            return NPY_SUCCEED;
+            return 1;
         case 'A':
             *order = NPY_ANYORDER;
-            return NPY_SUCCEED;
+            return 1;
         case 'K':
             *order = NPY_KEEPORDER;
-            return NPY_SUCCEED;
+            return 1;
     }
 
     PyErr_SetString(PyExc_ValueError,
             "order must be one of 'C', 'F', 'A', or 'K'");
-    return NPY_FAIL;
+    return 0;
 }
 
 /*
@@ -216,37 +222,37 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
     Py_ssize_t length = 0;
     
     if (PyString_AsStringAndSize(obj, &str, &length) == -1) {
-        return NPY_FAIL;
+        return 0;
     }
     if (length >= 2) switch (str[2]) {
         case 0:
             if (strcmp(str, "no") == 0) {
                 *casting = NPY_NO_CASTING;
-                return NPY_SUCCEED;
+                return 1;
             }
             break;
         case 'u':
             if (strcmp(str, "equiv") == 0) {
                 *casting = NPY_EQUIV_CASTING;
-                return NPY_SUCCEED;
+                return 1;
             }
             break;
         case 'f':
             if (strcmp(str, "safe") == 0) {
                 *casting = NPY_SAFE_CASTING;
-                return NPY_SUCCEED;
+                return 1;
             }
             break;
         case 'm':
             if (strcmp(str, "same_kind") == 0) {
                 *casting = NPY_SAME_KIND_CASTING;
-                return NPY_SUCCEED;
+                return 1;
             }
             break;
         case 's':
             if (strcmp(str, "unsafe") == 0) {
                 *casting = NPY_UNSAFE_CASTING;
-                return NPY_SUCCEED;
+                return 1;
             }
             break;
     }
@@ -254,7 +260,7 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
     PyErr_SetString(PyExc_ValueError,
             "casting must be one of 'no', 'equiv', 'safe', "
             "'same_kind', or 'unsafe'");
-    return NPY_FAIL;
+    return 0;
 
 }
 
@@ -263,11 +269,12 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                          npy_uint32 *op_flags)
 {
     int iflags, nflags;
+    npy_uint32 flag;
 
     if (!PyTuple_Check(op_flags_in) && !PyList_Check(op_flags_in)) {
         PyErr_SetString(PyExc_ValueError,
                 "op_flags must be a tuple or array of per-op flag-tuples");
-        return NPY_FAIL;
+        return 0;
     }
 
     nflags = PySequence_Size(op_flags_in);
@@ -277,21 +284,21 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
         PyObject *f;
         char *str = NULL;
         Py_ssize_t length = 0;
-        npy_uint32 flag = 0;
 
         f = PySequence_GetItem(op_flags_in, iflags);
         if (f == NULL) {
-            return NPY_FAIL;
+            return 0;
         }
 
         if (PyString_AsStringAndSize(f, &str, &length) == -1) {
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,
                    "op_flags must be a tuple or array of per-op flag-tuples");
-            return NPY_FAIL;
+            return 0;
         }
 
         /* Use switch statements to quickly isolate the right flag */
+        flag = 0;
         switch (str[0]) {
             case 'a':
                 if (strcmp(str, "allocate") == 0) {
@@ -359,7 +366,7 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
             PyErr_Format(PyExc_ValueError,
                     "Unexpected per-op iterator flag \"%s\"", str);
             Py_DECREF(f);
-            return NPY_FAIL;
+            return 0;
         }
         else {
             *op_flags |= flag;
@@ -367,7 +374,7 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
         Py_DECREF(f);
     }
 
-    return NPY_SUCCEED;
+    return 1;
 }
 
 static int
@@ -379,7 +386,7 @@ npyiter_convert_op_flags_array(PyObject *op_flags_in,
     if (!PyTuple_Check(op_flags_in) && !PyList_Check(op_flags_in)) {
         PyErr_SetString(PyExc_ValueError,
                 "op_flags must be a tuple or array of per-op flag-tuples");
-        return NPY_FAIL;
+        return 0;
     }
 
     if (PySequence_Size(op_flags_in) != niter) {
@@ -389,35 +396,35 @@ npyiter_convert_op_flags_array(PyObject *op_flags_in,
     for (iiter = 0; iiter < niter; ++iiter) {
         PyObject *f = PySequence_GetItem(op_flags_in, iiter);
         if (f == NULL) {
-            return NPY_FAIL;
+            return 0;
         }
         if (NpyIter_OpFlagsConverter(f,
-                        &op_flags_array[iiter]) != NPY_SUCCEED) {
+                        &op_flags_array[iiter]) != 1) {
             Py_DECREF(f);
             /* If the first one doesn't work, try the whole thing as flags */
             if (iiter == 0) {
                 PyErr_Clear();
                 goto try_single_flags;
             }
-            return NPY_FAIL;
+            return 0;
         }
         
         Py_DECREF(f);
     }
 
-    return NPY_SUCCEED;
+    return 1;
 
 try_single_flags:
     if (NpyIter_OpFlagsConverter(op_flags_in,
-                        &op_flags_array[0]) != NPY_SUCCEED) {
-        return NPY_FAIL;
+                        &op_flags_array[0]) != 1) {
+        return 0;
     }
 
     for (iiter = 1; iiter < niter; ++iiter) {
         op_flags_array[iiter] = op_flags_array[0];
     }
 
-    return NPY_SUCCEED;
+    return 1;
 }
 
 static int
@@ -443,11 +450,11 @@ npyiter_convert_dtypes(PyObject *op_dtypes_in,
             for (i = 0; i < iiter; ++i ) {
                 Py_XDECREF(op_dtypes[i]);
             }
-            return NPY_FAIL;
+            return 0;
         }
 
         /* Try converting the object to a descr */
-        if (PyArray_DescrConverter2(dtype, &op_dtypes[iiter]) != NPY_SUCCEED) {
+        if (PyArray_DescrConverter2(dtype, &op_dtypes[iiter]) != 1) {
             npy_intp i;
             for (i = 0; i < iiter; ++i ) {
                 Py_XDECREF(op_dtypes[i]);
@@ -460,18 +467,18 @@ npyiter_convert_dtypes(PyObject *op_dtypes_in,
         Py_DECREF(dtype);
     }
 
-    return NPY_SUCCEED;
+    return 1;
 
 try_single_dtype:
-    if (PyArray_DescrConverter2(op_dtypes_in, &op_dtypes[0]) == NPY_SUCCEED) {
+    if (PyArray_DescrConverter2(op_dtypes_in, &op_dtypes[0]) == 1) {
         for (iiter = 1; iiter < niter; ++iiter) {
             op_dtypes[iiter] = op_dtypes[0];
             Py_XINCREF(op_dtypes[iiter]);
         }
-        return NPY_SUCCEED;
+        return 1;
     }
 
-    return NPY_FAIL;
+    return 0;
 }
 
 static int
@@ -485,7 +492,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
                                 PySequence_Size(op_axes_in) != niter) {
         PyErr_SetString(PyExc_ValueError,
                 "op_axes must be a tuple/list matching the number of ops");
-        return NPY_FAIL;
+        return 0;
     }
 
     *oa_ndim = 0;
@@ -495,7 +502,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
         npy_intp idim;
         a = PySequence_GetItem(op_axes_in, iiter);
         if (a == NULL) {
-            return NPY_FAIL;
+            return 0;
         }
         if (a == Py_None) {
             op_axes[iiter] = NULL;
@@ -505,32 +512,32 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
                         "Each entry of op_axes must be None "
                         "or a tuple/list");
                 Py_DECREF(a);
-                return NPY_FAIL;
+                return 0;
             }
             if (*oa_ndim == 0) {
                 *oa_ndim = PySequence_Size(a);
                 if (*oa_ndim == 0) {
                     PyErr_SetString(PyExc_ValueError,
                             "op_axes must have at least one dimension");
-                    return NPY_FAIL;
+                    return 0;
                 }
                 if (*oa_ndim > NPY_MAXDIMS) {
                     PyErr_SetString(PyExc_ValueError,
                             "Too many dimensions in op_axes");
-                    return NPY_FAIL;
+                    return 0;
                 }
             }
             if (PySequence_Size(a) != *oa_ndim) {
                 PyErr_SetString(PyExc_ValueError,
                         "Each entry of op_axes must have the same size");
                 Py_DECREF(a);
-                return NPY_FAIL;
+                return 0;
             }
             for (idim = 0; idim < *oa_ndim; ++idim) {
                 PyObject *v = PySequence_GetItem(a, idim);
                 if (v == NULL) {
                     Py_DECREF(a);
-                    return NPY_FAIL;
+                    return 0;
                 }
                 /* numpy.newaxis is None */
                 if (v == Py_None) {
@@ -542,7 +549,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
                                                 PyErr_Occurred()) {
                         Py_DECREF(a);
                         Py_DECREF(v);
-                        return NPY_FAIL;
+                        return 0;
                     }
                 }
                 Py_DECREF(v);
@@ -555,10 +562,10 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
         PyErr_SetString(PyExc_ValueError,
                 "If op_axes is provided, at least one list of axes "
                 "must be contained within it");
-        return NPY_FAIL;
+        return 0;
     }
     
-    return NPY_SUCCEED;
+    return 1;
 }
 
 /*
@@ -579,11 +586,11 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
         if (niter == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Must provide at least one operand");
-            return NPY_FAIL;
+            return 0;
         }
         if (niter > NPY_MAXARGS) {
             PyErr_SetString(PyExc_ValueError, "Too many operands");
-            return NPY_FAIL;
+            return 0;
         }
     
         for (iiter = 0; iiter < niter; ++iiter) {
@@ -593,7 +600,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                 for (i = 0; i < iiter; ++i) {
                     Py_XDECREF(op[i]);
                 }
-                return NPY_FAIL;
+                return 0;
             }
             else if (item == Py_None) {
                 Py_DECREF(item);
@@ -633,11 +640,11 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
         }
     }
     else if (npyiter_convert_op_flags_array(op_flags_in,
-                                      op_flags, niter) != NPY_SUCCEED) {
+                                      op_flags, niter) != 1) {
         for (iiter = 0; iiter < niter; ++iiter) {
             Py_XDECREF(op[iiter]);
         }
-        return NPY_FAIL;
+        return 0;
     }
 
     /* Now that we have the flags - convert all the ops to arrays */
@@ -662,14 +669,14 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                 for (iiter = 0; iiter < niter; ++iiter) {
                     Py_DECREF(op[iiter]);
                 }
-                return NPY_FAIL;
+                return 0;
             }
             Py_DECREF(op[iiter]);
             op[iiter] = ao;
         }
     }
 
-    return NPY_SUCCEED;
+    return 1;
 }
 
 static int
@@ -679,7 +686,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                              "order", "casting", "op_axes", "buffersize",
                              NULL};
 
-    PyObject *op_in = NULL, *flags_in = NULL, *op_flags_in = NULL,
+    PyObject *op_in = NULL, *op_flags_in = NULL,
                 *op_dtypes_in = NULL, *op_axes_in = NULL;
 
     npy_intp iiter, niter = 0;
@@ -700,9 +707,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOO&O&Oi", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&OOO&O&Oi", kwlist,
                     &op_in,
-                    &flags_in,
+                    NpyIter_GlobalFlagsConverter, &flags,
                     &op_flags_in,
                     &op_dtypes_in,
                     npyiter_order_converter, &order,
@@ -712,14 +719,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    /* flags */
-    if (NpyIter_GlobalFlagsConverter(flags_in, &flags) != NPY_SUCCEED) {
-        return -1;
-    }
-
     /* op and op_flags */
     if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &niter)
-                                                        != NPY_SUCCEED) {
+                                                        != 1) {
         return -1;
     }
 
@@ -729,7 +731,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     /* op_request_dtypes */
     if (op_dtypes_in != NULL && op_dtypes_in != Py_None &&
             npyiter_convert_dtypes(op_dtypes_in,
-                                   op_request_dtypes, niter) != NPY_SUCCEED) {
+                                   op_request_dtypes, niter) != 1) {
         goto fail;
     }
 
@@ -741,7 +743,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
 
         if (npyiter_convert_op_axes(op_axes_in, niter,
-                                    op_axes, &oa_ndim) != NPY_SUCCEED) {
+                                    op_axes, &oa_ndim) != 1) {
             goto fail;
         }
     }
@@ -786,7 +788,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
                              "casting", "buffersize",
                              NULL};
 
-    PyObject *op_in = NULL, *axes_in = NULL, *flags_in = NULL,
+    PyObject *op_in = NULL, *axes_in = NULL,
             *op_flags_in = NULL, *op_dtypes_in = NULL;
 
     npy_intp iiter, niter = 0, inest, nnest = 0;
@@ -806,10 +808,10 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
     PyObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OOOO&O&i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&OOO&O&i", kwlist,
                     &op_in,
                     &axes_in,
-                    &flags_in,
+                    NpyIter_GlobalFlagsConverter, &flags,
                     &op_flags_in,
                     &op_dtypes_in,
                     npyiter_order_converter, &order,
@@ -884,14 +886,9 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         Py_DECREF(item);
     }
 
-    /* flags */
-    if (NpyIter_GlobalFlagsConverter(flags_in, &flags) != NPY_SUCCEED) {
-        return NULL;
-    }
-
     /* op and op_flags */
     if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &niter)
-                                                        != NPY_SUCCEED) {
+                                                        != 1) {
         return NULL;
     }
 
@@ -903,7 +900,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
     /* op_request_dtypes */
     if (op_dtypes_in != NULL && op_dtypes_in != Py_None &&
             npyiter_convert_dtypes(op_dtypes_in,
-                                   op_request_dtypes, niter) != NPY_SUCCEED) {
+                                   op_request_dtypes, niter) != 1) {
         goto fail;
     }
 
@@ -1069,7 +1066,11 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
          * Need to do a nested reset so all the iterators point
          * at the right data
          */
-        NpyIter_ResetBasePointers(iter->nested_child->iter, iter->dataptrs);
+        if (NpyIter_ResetBasePointers(iter->nested_child->iter,
+                                iter->dataptrs) != NPY_SUCCEED) {
+            Py_DECREF(ret);
+            return NULL;
+        }
     }
 
     return ret;
@@ -1095,16 +1096,20 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
     self->ob_type->tp_free((PyObject*)self);
 }
 
-static void
+static int
 npyiter_resetbasepointers(NewNpyArrayIterObject *self)
 {
     while (self->nested_child) {
-        NpyIter_ResetBasePointers(self->nested_child->iter,
-                                                    self->dataptrs);
+        if (NpyIter_ResetBasePointers(self->nested_child->iter,
+                                        self->dataptrs) != NPY_SUCCEED) {
+            return NPY_FAIL;
+        }
         self = self->nested_child;
         self->started = 0;
         self->finished = 0;
     }
+
+    return NPY_SUCCEED;
 }
 
 static PyObject *
@@ -1116,12 +1121,20 @@ npyiter_reset(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    NpyIter_Reset(self->iter);
+    if (NpyIter_Reset(self->iter) != NPY_SUCCEED) {
+        return NULL;
+    }
     self->started = 0;
     self->finished = 0;
 
+    if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
+        self->getcoords = NpyIter_GetGetCoords(self->iter);
+    }
+
     /* If there is nesting, the nested iterators should be reset */
-    npyiter_resetbasepointers(self);
+    if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
@@ -1168,7 +1181,9 @@ npyiter_iternext(NewNpyArrayIterObject *self)
 {
     if (self->iter != NULL && !self->finished && self->iternext(self->iter)) {
         /* If there is nesting, the nested iterators should be reset */
-        npyiter_resetbasepointers(self);
+        if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+            return NULL;
+        }
 
         Py_RETURN_TRUE;
     }
@@ -1346,7 +1361,9 @@ npyiter_next(NewNpyArrayIterObject *self)
         }
 
         /* If there is nesting, the nested iterators should be reset */
-        npyiter_resetbasepointers(self);
+        if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+            return NULL;
+        }
     }
     self->started = 1;
 
@@ -1390,7 +1407,7 @@ static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (NpyIter_HasCoords(self->iter)) {
+    if (self->getcoords != NULL) {
         ndim = NpyIter_GetNDim(self->iter);
         self->getcoords(self->iter, coords);
         ret = PyTuple_New(ndim);
@@ -1401,9 +1418,22 @@ static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
         return ret;
     }
     else {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator does not have coordinates");
-        return NULL;
+        if (!NpyIter_HasCoords(self->iter)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator does not have coordinates");
+            return NULL;
+        }
+        else if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator construction used delayed buffer allocation, "
+                    "and no reset has been done yet");
+            return NULL;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator is in an invalid state");
+            return NULL;
+        }
     }
 }
 
@@ -1449,7 +1479,9 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
         self->finished = 0;
 
         /* If there is nesting, the nested iterators should be reset */
-        npyiter_resetbasepointers(self);
+        if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+            return -1;
+        }
 
         return 0;
     }
@@ -1506,7 +1538,9 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
         self->finished = 0;
 
         /* If there is nesting, the nested iterators should be reset */
-        npyiter_resetbasepointers(self);
+        if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+            return -1;
+        }
 
         return 0;
     }
@@ -1555,7 +1589,9 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
     self->finished = 0;
 
     /* If there is nesting, the nested iterators should be reset */
-    npyiter_resetbasepointers(self);
+    if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+        return -1;
+    }
 
     return 0;
 }
@@ -1615,10 +1651,32 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
         self->started = self->finished = 1;
     }
 
+    if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
+        self->getcoords = NpyIter_GetGetCoords(self->iter);
+    }
+
     /* If there is nesting, the nested iterators should be reset */
-    npyiter_resetbasepointers(self);
+    if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
+        return -1;
+    }
 
     return 0;
+}
+
+static PyObject *npyiter_hasdelayedbufalloc_get(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return NULL;
+    }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
 }
 
 static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
@@ -1752,6 +1810,14 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                 "Iterator is past the end");
         return NULL;
     }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator construction used delayed buffer allocation, "
+                "and no reset has been done yet");
+        return NULL;
+    }
+
     niter = NpyIter_GetNIter(self->iter);
     if (i < 0 || i >= niter) {
         PyErr_Format(PyExc_IndexError,
@@ -1815,6 +1881,14 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
                 "Iterator is past the end");
         return NULL;
     }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator construction used delayed buffer allocation, "
+                "and no reset has been done yet");
+        return NULL;
+    }
+
     niter = NpyIter_GetNIter(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -1825,8 +1899,8 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
     if (ihigh < ilow) {
         ihigh = ilow;
     }
-    else if (ihigh >= niter) {
-        ihigh = niter-1;
+    else if (ihigh > niter) {
+        ihigh = niter;
     }
 
     ret = PyTuple_New(ihigh-ilow);
@@ -1859,11 +1933,20 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
                         "can't delete iterator operands");
         return -1;
     }
+
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is past the end");
         return -1;
     }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator construction used delayed buffer allocation, "
+                "and no reset has been done yet");
+        return -1;
+    }
+
     niter = NpyIter_GetNIter(self->iter);
     if (i < 0 || i >= niter) {
         PyErr_Format(PyExc_IndexError,
@@ -1947,6 +2030,9 @@ static PyGetSetDef npyiter_getsets[] = {
         NULL, NULL, NULL},
     {"itviews",
         (getter)npyiter_itviews_get,
+        NULL, NULL, NULL},
+    {"hasdelayedbufalloc",
+        (getter)npyiter_hasdelayedbufalloc_get,
         NULL, NULL, NULL},
     {"hascoords",
         (getter)npyiter_hascoords_get,
