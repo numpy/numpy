@@ -302,17 +302,23 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                 if (strcmp(str, "allocate") == 0) {
                     flag = NPY_ITER_ALLOCATE;
                 }
+                if (strcmp(str, "aligned") == 0) {
+                    flag = NPY_ITER_ALIGNED;
+                }
                 break;
             case 'c':
                 if (strcmp(str, "copy") == 0) {
                     flag = NPY_ITER_COPY;
                 }
+                if (strcmp(str, "contig") == 0) {
+                    flag = NPY_ITER_CONTIG;
+                }
                 break;
             case 'n':
                 switch (str[1]) {
                     case 'b':
-                        if (strcmp(str, "nbo_aligned") == 0) {
-                            flag = NPY_ITER_NBO_ALIGNED;
+                        if (strcmp(str, "nbo") == 0) {
+                            flag = NPY_ITER_NBO;
                         }
                         break;
                     case 'o':
@@ -396,14 +402,14 @@ npyiter_convert_op_flags_array(PyObject *op_flags_in,
         if (f == NULL) {
             return 0;
         }
+        /* If the first item is a string, try as one set of flags */
+        if (iiter == 0 && (PyString_Check(f) || PyUnicode_Check(f))) {
+            Py_DECREF(f);
+            goto try_single_flags;
+        }
         if (NpyIter_OpFlagsConverter(f,
                         &op_flags_array[iiter]) != 1) {
             Py_DECREF(f);
-            /* If the first one doesn't work, try the whole thing as flags */
-            if (iiter == 0) {
-                PyErr_Clear();
-                goto try_single_flags;
-            }
             return 0;
         }
         
@@ -938,7 +944,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
                 !(op_flags[iiter]&(NPY_ITER_COPY|
                                    NPY_ITER_UPDATEIFCOPY|
                                    NPY_ITER_ALLOCATE))) {
-            op_flags[iiter] &= ~NPY_ITER_NBO_ALIGNED;
+            op_flags[iiter] &= ~(NPY_ITER_NBO|NPY_ITER_ALIGNED|NPY_ITER_CONTIG);
             op_request_dtypes_inner[iiter] = op_request_dtypes[iiter];
             op_request_dtypes[iiter] = NULL;
         }

@@ -668,8 +668,8 @@ def test_iter_flags_errors():
     # Can't iterate if size is zero
     assert_raises(ValueError, newiter, np.array([]))
 
-def test_iter_nbo_align():
-    # Check that byte order and alignment changes work
+def test_iter_nbo_align_contig():
+    # Check that byte order, alignment, and contig changes work
 
     # Byte order change by requesting a specific dtype
     a = np.arange(6, dtype='f4')
@@ -685,11 +685,11 @@ def test_iter_nbo_align():
     i = None
     assert_equal(au, [2]*6)
 
-    # Byte order change by requesting NBO_ALIGNED
+    # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
     assert_(a.dtype.byteorder != au.dtype.byteorder)
-    i = newiter(au, [], [['readwrite','updateifcopy','nbo_aligned']], casting='equiv')
+    i = newiter(au, [], [['readwrite','updateifcopy','nbo']], casting='equiv')
     assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0], a)
@@ -702,17 +702,30 @@ def test_iter_nbo_align():
     a.dtype = 'f4'
     a[:] = np.arange(6, dtype='f4')
     assert_(not a.flags.aligned)
-    # Without 'nbo_aligned', shouldn't copy
+    # Without 'aligned', shouldn't copy
     i = newiter(a, [], [['readonly']])
     assert_(not i.operands[0].flags.aligned)
     assert_equal(i.operands[0], a);
-    # With 'nbo_aligned', should make a copy
-    i = newiter(a, [], [['readwrite','updateifcopy','nbo_aligned']])
+    # With 'aligned', should make a copy
+    i = newiter(a, [], [['readwrite','updateifcopy','aligned']])
     assert_(i.operands[0].flags.aligned)
     assert_equal(i.operands[0], a);
     i.operands[0][:] = 3
     i = None
     assert_equal(a, [3]*6)
+
+    # Discontiguous input
+    a = arange(12)
+    # If it is contiguous, shouldn't copy
+    i = newiter(a[:6], [], [['readonly']])
+    assert_(i.operands[0].flags.contiguous)
+    assert_equal(i.operands[0], a[:6]);
+    # If it isn't contiguous, should buffer
+    i = newiter(a[::2], ['buffered','no_inner_iteration'],
+                        [['readonly','contig']],
+                        buffersize=10)
+    assert_(i[0].flags.contiguous)
+    assert_equal(i[0], a[::2])
 
 def test_iter_array_cast():
     # Check that arrays are cast as requested
@@ -1314,7 +1327,7 @@ def test_iter_buffering():
         for buffersize in (1,2,3,5,8,11,16,1024):
             vals = []
             i = newiter(a, ['buffered','no_inner_iteration'],
-                           [['readonly','nbo_aligned']],
+                           [['readonly','nbo','aligned']],
                            order='C',
                            casting='equiv',
                            buffersize=buffersize)
@@ -1330,7 +1343,7 @@ def test_iter_write_buffering():
     # F-order swapped array
     a = np.arange(24).reshape(2,3,4).T.newbyteorder().byteswap()
     i = newiter(a, ['buffered'],
-                   [['readwrite','nbo_aligned']],
+                   [['readwrite','nbo','aligned']],
                    casting='equiv',
                    order='C',
                    buffersize=16)
@@ -1370,7 +1383,7 @@ def test_iter_buffered_cast_simple():
 
     a = np.arange(10, dtype='f4')
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned']],
+                   [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f8')],
                    buffersize=3)
@@ -1384,7 +1397,7 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype='f4').newbyteorder().byteswap()
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','same_kind_casts']],
+                   [['readwrite','nbo','aligned','same_kind_casts']],
                    op_dtypes=[np.dtype('f8').newbyteorder()],
                    buffersize=3)
     for v in i:
@@ -1394,7 +1407,7 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype='f8').newbyteorder().byteswap()
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned','unsafe_casts']],
+                   [['readwrite','nbo','aligned','unsafe_casts']],
                    op_dtypes=[np.dtype('c8').newbyteorder()],
                    buffersize=3)
     for v in i:
@@ -1408,7 +1421,7 @@ def test_iter_buffered_cast_byteswapped():
     a = np.arange(10, dtype='c8').newbyteorder().byteswap()
     a += 2j
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned']],
+                   [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
@@ -1419,7 +1432,7 @@ def test_iter_buffered_cast_byteswapped():
     a = np.arange(10, dtype='c8')
     a += 2j
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned']],
+                   [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16').newbyteorder()],
                    buffersize=3)
@@ -1430,7 +1443,7 @@ def test_iter_buffered_cast_byteswapped():
     a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
     a += 2j
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned']],
+                   [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
@@ -1440,7 +1453,7 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo_aligned']],
+                   [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f4')],
                    buffersize=7)

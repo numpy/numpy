@@ -2311,8 +2311,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             *op_dtype = op_request_dtype;
         }
 
-        /* Check if the operand is aligned and in the byte order requested */
-        if (op_flags&NPY_ITER_NBO_ALIGNED) {
+        /* Check if the operand is in the byte order requested */
+        if (op_flags&NPY_ITER_NBO) {
             /* Check byte order */
             if (!PyArray_ISNBO((*op_dtype)->byteorder)) {
                 PyArray_Descr *nbo_dtype;
@@ -2325,11 +2325,18 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                 /* Indicate that byte order or alignment needs fixing */
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
             }
+        }
+        /* Check if the operand is aligned */
+        if (op_flags&NPY_ITER_ALIGNED) {
             /* Check alignment */
-            else if (!PyArray_ISALIGNED(*op)) {
+            if (!PyArray_ISALIGNED(*op)) {
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
             }
         }
+        /*
+         * The check for NPY_ITER_CONTIG can only be done later,
+         * once the final iteration order is settled.
+         */
     }
     else {
         PyErr_SetString(PyExc_ValueError,
@@ -3594,7 +3601,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iiter, op[iiter], ondim,
                     PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
 
-            /* New arrays are aligned and need no swapping or casting */
+            /* New arrays are aligned and need no cast */
             op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
         }
@@ -3638,7 +3645,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iiter, op[iiter], ondim,
                     PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
 
-            /* The temporary copy is aligned and needs no swap or cast */
+            /* The temporary copy is aligned and needs no cast */
             op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
         }
@@ -3661,6 +3668,23 @@ npyiter_allocate_arrays(NpyIter *iter,
              */
             if (PyArray_ISALIGNED(op[iiter])) {
                 op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+        }
+
+        /* Here we can finally check for contiguous iteration */
+        if (op_flags[iiter]&NPY_ITER_CONTIG) {
+            NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+            npy_intp stride = NAD_STRIDES(axisdata)[iiter];
+
+            if (stride != op_dtype[iiter]->elsize) {
+                op_itflags[iiter] |= NPY_OP_ITFLAG_CAST;
+                if (!(itflags&NPY_ITFLAG_BUFFER)) {
+                    PyErr_SetString(PyExc_TypeError,
+                            "Iterator operand required buffering, "
+                            "to be contiguous as requested, but "
+                            "buffering is not enabled");
+                    return 0;
+                }
             }
         }
 
