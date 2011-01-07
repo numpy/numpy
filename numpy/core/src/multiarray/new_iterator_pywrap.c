@@ -9,7 +9,7 @@
 
 #include "numpy/npy_3kcompat.h"
 
-#include "new_iterator.h"
+#include <numpy/new_iterator.h>
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 

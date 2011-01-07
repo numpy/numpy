@@ -5,7 +5,7 @@
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 
-#include "new_iterator.h"
+#include <numpy/new_iterator.h>
 #include "lowlevel_strided_loops.h"
 
 /* Rounds up a number of bytes to be divisible by sizeof intp */
@@ -51,9 +51,9 @@
 /* The operand needs type conversion/byte swapping/alignment */
 #define NPY_OP_ITFLAG_CAST         0x08
 /* The operand never needs buffering */
-#define NPY_OP_ITFLAG_BUFNEVER     0x20
+#define NPY_OP_ITFLAG_BUFNEVER     0x10
 /* The operand is aligned */
-#define NPY_OP_ITFLAG_ALIGNED      0x40
+#define NPY_OP_ITFLAG_ALIGNED      0x20
 
 /*
  * The data layout of the iterator is fully specified by
