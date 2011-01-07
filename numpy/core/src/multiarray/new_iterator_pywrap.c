@@ -9,8 +9,6 @@
 
 #include "numpy/npy_3kcompat.h"
 
-#include <numpy/new_iterator.h>
-
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
 struct NewNpyArrayIterObject_tag {
@@ -2093,7 +2091,7 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     0,                                          /* ob_size */
 #endif
     "numpy.newiter",                            /* tp_name */
-    sizeof(NewNpyArrayIterObject),               /* tp_basicsize */
+    sizeof(NewNpyArrayIterObject),              /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)npyiter_dealloc,                /* tp_dealloc */

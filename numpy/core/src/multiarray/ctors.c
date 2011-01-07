@@ -206,13 +206,13 @@ fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data
  * Strides are only added if given (because data is given).
  */
 static int
-_update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
-                             intp *newstrides, int oldnd)
+_update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
+                             npy_intp *newstrides, int oldnd)
 {
     PyArray_Descr *old;
     int newnd;
     int numnew;
-    intp *mydim;
+    npy_intp *mydim;
     int i;
     int tuple;
 
@@ -236,17 +236,17 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
     }
     if (tuple) {
         for (i = 0; i < numnew; i++) {
-            mydim[i] = (intp) PyInt_AsLong(
+            mydim[i] = (npy_intp) PyInt_AsLong(
                     PyTuple_GET_ITEM(old->subarray->shape, i));
         }
     }
     else {
-        mydim[0] = (intp) PyInt_AsLong(old->subarray->shape);
+        mydim[0] = (npy_intp) PyInt_AsLong(old->subarray->shape);
     }
 
     if (newstrides) {
-        intp tempsize;
-        intp *mystrides;
+        npy_intp tempsize;
+        npy_intp *mystrides;
 
         mystrides = newstrides + oldnd;
         /* Make new strides -- alwasy C-contiguous */
@@ -272,12 +272,12 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
  * same for each element
  */
 static int
-object_depth_and_dimension(PyObject *s, int max, intp *dims)
+object_depth_and_dimension(PyObject *s, int max, npy_intp *dims)
 {
-    intp *newdims, *test_dims;
+    npy_intp *newdims, *test_dims;
     int nd, test_nd;
     int i, islist, istuple;
-    intp size;
+    npy_intp size;
     PyObject *obj;
 
     islist = PyList_Check(s);
@@ -333,10 +333,10 @@ object_depth_and_dimension(PyObject *s, int max, intp *dims)
 }
 
 static void
-_strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
-                   intp N, int elsize)
+_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
+                    npy_intp instrides, npy_intp N, int elsize)
 {
-    intp i, j;
+    npy_intp i, j;
     char *tout = dst;
     char *tin = src;
 
@@ -379,10 +379,10 @@ _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
 }
 
 static void
-_unaligned_strided_byte_move(char *dst, intp outstrides, char *src,
-                             intp instrides, intp N, int elsize)
+_unaligned_strided_byte_move(char *dst, npy_intp outstrides, char *src,
+                             npy_intp instrides, npy_intp N, int elsize)
 {
-    intp i;
+    npy_intp i;
     char *tout = dst;
     char *tin = src;
 
@@ -414,10 +414,10 @@ _unaligned_strided_byte_move(char *dst, intp outstrides, char *src,
 }
 
 NPY_NO_EXPORT void
-_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
-                             intp instrides, intp N, int elsize)
+_unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
+                             npy_intp instrides, npy_intp N, int elsize)
 {
-    intp i;
+    npy_intp i;
     char *tout = dst;
     char *tin = src;
 
@@ -448,7 +448,7 @@ _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
 }
 
 NPY_NO_EXPORT void
-_strided_byte_swap(void *p, intp stride, intp n, int size)
+_strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size)
 {
     char *a, *b, c = 0;
     int j, m;
@@ -491,18 +491,18 @@ _strided_byte_swap(void *p, intp stride, intp n, int size)
 }
 
 NPY_NO_EXPORT void
-byte_swap_vector(void *p, intp n, int size)
+byte_swap_vector(void *p, npy_intp n, int size)
 {
-    _strided_byte_swap(p, (intp) size, n, size);
+    _strided_byte_swap(p, (npy_intp) size, n, size);
     return;
 }
 
 /* If numitems > 1, then dst must be contiguous */
 NPY_NO_EXPORT void
-copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
-              intp srcstrides, int swap)
+copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
+              npy_intp srcstrides, int swap)
 {
-    intp i;
+    npy_intp i;
     char *s1 = (char *)src;
     char *d1 = (char *)dst;
 
@@ -528,8 +528,8 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 {
     char *aligned = NULL;
     char *sptr;
-    intp numcopies, nbytes;
-    void (*myfunc)(char *, intp, char *, intp, intp, int);
+    npy_intp numcopies, nbytes;
+    void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int);
     int retval = -1;
     NPY_BEGIN_THREADS_DEF;
 
@@ -564,7 +564,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 
     if ((dest->nd < 2) || PyArray_ISONESEGMENT(dest)) {
         char *dptr;
-        intp dstride;
+        npy_intp dstride;
 
         dptr = dest->data;
         if (dest->nd == 1) {
@@ -633,11 +633,11 @@ _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order)
 {
     PyArrayIterObject *it;
     PyObject *orig_src;
-    void (*myfunc)(char *, intp, char *, intp, intp, int);
+    void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int);
     char *dptr;
     int axis;
     int elsize;
-    intp nbytes;
+    npy_intp nbytes;
     NPY_BEGIN_THREADS_DEF;
 
 
@@ -706,11 +706,11 @@ _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order)
 
 static int
 _copy_from_same_shape(PyArrayObject *dest, PyArrayObject *src,
-                      void (*myfunc)(char *, intp, char *, intp, intp, int),
-                      int swap)
+            void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int),
+            int swap)
 {
     int maxaxis = -1, elsize;
-    intp maxdim;
+    npy_intp maxdim;
     PyArrayIterObject *dit, *sit;
     NPY_BEGIN_THREADS_DEF;
 
@@ -756,12 +756,12 @@ _copy_from_same_shape(PyArrayObject *dest, PyArrayObject *src,
 
 static int
 _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
-                void (*myfunc)(char *, intp, char *, intp, intp, int),
-                int swap)
+            void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int),
+            int swap)
 {
     int elsize;
     PyArrayMultiIterObject *multi;
-    int maxaxis; intp maxdim;
+    int maxaxis; npy_intp maxdim;
     NPY_BEGIN_THREADS_DEF;
 
     elsize = PyArray_ITEMSIZE(dest);
@@ -841,7 +841,7 @@ static int
 _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 {
     int swap;
-    void (*myfunc)(char *, intp, char *, intp, intp, int);
+    void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int);
     int simple;
     int same;
     NPY_BEGIN_THREADS_DEF;
@@ -914,7 +914,7 @@ PyArray_MoveInto(PyArrayObject *dest, PyArrayObject *src)
 
 /* adapted from Numarray */
 static int
-setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
+setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, npy_intp offset)
 {
     Py_ssize_t i, slen;
     int res = -1;
@@ -1042,7 +1042,7 @@ static PyObject *
 ObjectArray_FromNestedList(PyObject *s, PyArray_Descr *typecode, int fortran)
 {
     int nd;
-    intp d[MAX_DIMS];
+    npy_intp d[MAX_DIMS];
     PyArrayObject *r;
 
     /* Get the depth and the number of dimensions */
@@ -1218,7 +1218,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
  * an array of ndim nd, and determine the size in each dimension
  */
 static int
-discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
+discover_dimensions(PyObject *s, int nd, npy_intp *d, int check_it)
 {
     PyObject *e;
     int r, n, i, n_lower;
@@ -1285,7 +1285,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
     PyArrayObject *r;
     int nd;
     int err;
-    intp d[MAX_DIMS];
+    npy_intp d[MAX_DIMS];
     int stop_at_string;
     int stop_at_tuple;
     int check_it;
@@ -1367,23 +1367,23 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                     intp *dims, intp *strides, void *data,
+                     npy_intp *dims, npy_intp *strides, void *data,
                      int flags, PyObject *obj)
 {
     PyArrayObject *self;
     int i;
     size_t sd;
-    intp largest;
-    intp size;
+    npy_intp largest;
+    npy_intp size;
 
     if (descr->subarray) {
         PyObject *ret;
-        intp newdims[2*MAX_DIMS];
-        intp *newstrides = NULL;
-        memcpy(newdims, dims, nd*sizeof(intp));
+        npy_intp newdims[2*MAX_DIMS];
+        npy_intp *newstrides = NULL;
+        memcpy(newdims, dims, nd*sizeof(npy_intp));
         if (strides) {
             newstrides = newdims + MAX_DIMS;
-            memcpy(newstrides, strides, nd*sizeof(intp));
+            memcpy(newstrides, strides, nd*sizeof(npy_intp));
         }
         nd =_update_descr_and_dimensions(&descr, newdims,
                                          newstrides, nd);
@@ -1426,7 +1426,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
     largest = NPY_MAX_INTP / sd;
     for (i = 0; i < nd; i++) {
-        intp dim = dims[i];
+        npy_intp dim = dims[i];
 
         if (dim == 0) {
             /*
@@ -1484,7 +1484,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             goto fail;
         }
         self->strides = self->dimensions + nd;
-        memcpy(self->dimensions, dims, sizeof(intp)*nd);
+        memcpy(self->dimensions, dims, sizeof(npy_intp)*nd);
         if (strides == NULL) { /* fill it in */
             sd = _array_fill_strides(self->strides, dims, nd, sd,
                                      flags, &(self->flags));
@@ -1494,7 +1494,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * we allow strides even when we create
              * the memory, but be careful with this...
              */
-            memcpy(self->strides, strides, sizeof(intp)*nd);
+            memcpy(self->strides, strides, sizeof(npy_intp)*nd);
             sd *= size;
         }
     }
@@ -1592,8 +1592,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  * Generic new array creation routine.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
-            intp *strides, void *data, int itemsize, int flags,
+PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
+            npy_intp *strides, void *data, int itemsize, int flags,
             PyObject *obj)
 {
     PyArray_Descr *descr;
@@ -2319,7 +2319,7 @@ PyArray_FromInterface(PyObject *input)
         if (PyErr_Occurred()) {
             PyErr_Clear();
         }
-        memcpy(ret->strides, strides, n*sizeof(intp));
+        memcpy(ret->strides, strides, n*sizeof(npy_intp));
     }
     else PyErr_Clear();
     PyArray_UpdateFlags(ret, UPDATE_ALL);
@@ -2406,7 +2406,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 {
     PyObject *ret;
     int i;
-    intp newd[MAX_DIMS];
+    npy_intp newd[MAX_DIMS];
     char msg[] = "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.";
 
     if (DEPRECATE(msg) < 0) {
@@ -2415,7 +2415,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
     if (!PyArray_ISNBO(descr->byteorder))
         descr->byteorder = '=';
     for (i = 0; i < nd; i++) {
-        newd[i] = (intp) d[i];
+        newd[i] = (npy_intp) d[i];
     }
     ret = PyArray_NewFromDescr(&PyArray_Type, descr,
                                nd, newd,
@@ -2502,7 +2502,7 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 {
     int elsize, simple;
     PyArrayIterObject *idest, *isrc;
-    void (*myfunc)(char *, intp, char *, intp, intp, int);
+    void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int);
     NPY_BEGIN_THREADS_DEF;
 
     if (!PyArray_EquivArrTypes(dest, src)) {
@@ -2648,7 +2648,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
  * accepts NULL type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
+PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
 {
     PyArrayObject *ret;
 
@@ -2677,7 +2677,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
  * steals referenct to type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
+PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
 {
     PyArrayObject *ret;
 
@@ -2705,7 +2705,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
  * Return 0 on success, -1 on failure. In case of failure, set a PyExc_Overflow
  * exception
  */
-static int _safe_ceil_to_intp(double value, intp* ret)
+static int _safe_ceil_to_intp(double value, npy_intp* ret)
 {
     double ivalue;
 
@@ -2714,7 +2714,7 @@ static int _safe_ceil_to_intp(double value, intp* ret)
         return -1;
     }
 
-    *ret = (intp)ivalue;
+    *ret = (npy_intp)ivalue;
     return 0;
 }
 
@@ -2725,7 +2725,7 @@ static int _safe_ceil_to_intp(double value, intp* ret)
 NPY_NO_EXPORT PyObject *
 PyArray_Arange(double start, double stop, double step, int type_num)
 {
-    intp length;
+    npy_intp length;
     PyObject *range;
     PyArray_ArrFuncs *funcs;
     PyObject *obj;
@@ -2790,10 +2790,10 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 /*
  * the formula is len = (intp) ceil((start - stop) / step);
  */
-static intp
+static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
-    intp len, tmp;
+    npy_intp len, tmp;
     PyObject *val;
     double value;
 
@@ -2870,7 +2870,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     PyObject *range;
     PyArray_ArrFuncs *funcs;
     PyObject *next, *err;
-    intp length;
+    npy_intp length;
     PyArray_Descr *native = NULL;
     int swap;
 
@@ -2996,22 +2996,22 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 }
 
 static PyArrayObject *
-array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, intp num, size_t *nread)
+array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nread)
 {
     PyArrayObject *r;
-    intp start, numbytes;
+    npy_intp start, numbytes;
 
     if (num < 0) {
         int fail = 0;
 
-        start = (intp )ftell(fp);
+        start = (npy_intp)ftell(fp);
         if (start < 0) {
             fail = 1;
         }
         if (fseek(fp, 0, SEEK_END) < 0) {
             fail = 1;
         }
-        numbytes = (intp) ftell(fp);
+        numbytes = (npy_intp) ftell(fp);
         if (numbytes < 0) {
             fail = 1;
         }
@@ -3047,17 +3047,17 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, intp num, size_t *nread)
  */
 #define FROM_BUFFER_SIZE 4096
 static PyArrayObject *
-array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
+array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
                 void *stream, next_element next, skip_separator skip_sep,
                 void *stream_data)
 {
     PyArrayObject *r;
-    intp i;
+    npy_intp i;
     char *dptr, *clean_sep, *tmp;
     int err = 0;
-    intp thisbuf = 0;
-    intp size;
-    intp bytes, totalbytes;
+    npy_intp thisbuf = 0;
+    npy_intp size;
+    npy_intp bytes, totalbytes;
 
     size = (num >= 0) ? num : FROM_BUFFER_SIZE;
     r = (PyArrayObject *)
@@ -3138,7 +3138,7 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
  * necessary is read by this routine.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
+PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
 {
     PyArrayObject *ret;
     size_t nread = 0;
@@ -3173,7 +3173,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
         Py_DECREF(dtype);
         return NULL;
     }
-    if (((intp) nread) < num) {
+    if (((npy_intp) nread) < num) {
         /* Realloc memory for smaller number of elements */
         const size_t nsize = NPY_MAX(nread,1)*ret->descr->elsize;
         char *tmp;
@@ -3191,12 +3191,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
 PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
-                   intp count, intp offset)
+                   npy_intp count, npy_intp offset)
 {
     PyArrayObject *ret;
     char *data;
     Py_ssize_t ts;
-    intp s, n;
+    npy_intp s, n;
     int itemsize;
     int write = 1;
 
@@ -3247,15 +3247,15 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     if ((offset < 0) || (offset >= ts)) {
         PyErr_Format(PyExc_ValueError,
                      "offset must be non-negative and smaller than buffer "\
-                     "lenth (%" INTP_FMT ")", (intp)ts);
+                     "lenth (%" INTP_FMT ")", (npy_intp)ts);
         Py_DECREF(buf);
         Py_DECREF(type);
         return NULL;
     }
 
     data += offset;
-    s = (intp)ts - offset;
-    n = (intp)count;
+    s = (npy_intp)ts - offset;
+    n = (npy_intp)count;
     itemsize = type->elsize;
     if (n < 0 ) {
         if (s % itemsize != 0) {
@@ -3320,8 +3320,8 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
  * for whitespace around the separator is added.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
-                   intp num, char *sep)
+PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
+                   npy_intp num, char *sep)
 {
     int itemsize;
     PyArrayObject *ret;
@@ -3407,12 +3407,12 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
  * steals a reference to dtype (which cannot be NULL)
  */
 NPY_NO_EXPORT PyObject *
-PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
+PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
 {
     PyObject *value;
     PyObject *iter = PyObject_GetIter(obj);
     PyArrayObject *ret = NULL;
-    intp i, elsize, elcount;
+    npy_intp i, elsize, elcount;
     char *item, *new_data;
 
     if (iter == NULL) {
@@ -3521,7 +3521,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
  */
 
 NPY_NO_EXPORT size_t
-_array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
+_array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {
     int i;

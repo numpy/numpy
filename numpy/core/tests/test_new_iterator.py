@@ -1313,7 +1313,7 @@ def test_iter_buffering():
     for a in arrays:
         for buffersize in (1,2,3,5,8,11,16,1024):
             vals = []
-            i = np.newiter(a, ['buffered','no_inner_iteration'],
+            i = newiter(a, ['buffered','no_inner_iteration'],
                            [['readonly','nbo_aligned']],
                            order='C',
                            casting='equiv',
@@ -1329,7 +1329,7 @@ def test_iter_write_buffering():
 
     # F-order swapped array
     a = np.arange(24).reshape(2,3,4).T.newbyteorder().byteswap()
-    i = np.newiter(a, ['buffered'],
+    i = newiter(a, ['buffered'],
                    [['readwrite','nbo_aligned']],
                    casting='equiv',
                    order='C',
@@ -1346,7 +1346,7 @@ def test_iter_buffering_delayed_alloc():
 
     a = np.arange(6)
     b = np.arange(1, dtype='f4')
-    i = np.newiter([a,b], ['buffered','delay_bufalloc','coords'],
+    i = newiter([a,b], ['buffered','delay_bufalloc','coords'],
                     casting='unsafe',
                     op_dtypes='f4')
     assert_(i.hasdelayedbufalloc)
@@ -1369,7 +1369,7 @@ def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast
 
     a = np.arange(10, dtype='f4')
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f8')],
@@ -1383,7 +1383,7 @@ def test_iter_buffered_cast_byteswapped():
     # Test that buffering can handle a cast which requires swap->cast->swap
 
     a = np.arange(10, dtype='f4').newbyteorder().byteswap()
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned','same_kind_casts']],
                    op_dtypes=[np.dtype('f8').newbyteorder()],
                    buffersize=3)
@@ -1393,7 +1393,7 @@ def test_iter_buffered_cast_byteswapped():
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
     a = np.arange(10, dtype='f8').newbyteorder().byteswap()
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned','unsafe_casts']],
                    op_dtypes=[np.dtype('c8').newbyteorder()],
                    buffersize=3)
@@ -1407,7 +1407,7 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype='c8').newbyteorder().byteswap()
     a += 2j
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
@@ -1418,7 +1418,7 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype='c8')
     a += 2j
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16').newbyteorder()],
@@ -1429,7 +1429,7 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
     a += 2j
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
@@ -1439,7 +1439,7 @@ def test_iter_buffered_cast_byteswapped():
     assert_equal(a, 2*np.arange(10, dtype=np.clongdouble) + 4j)
 
     a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
-    i = np.newiter(a, ['buffered','no_inner_iteration'],
+    i = newiter(a, ['buffered','no_inner_iteration'],
                    [['readwrite','nbo_aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f4')],
@@ -1454,30 +1454,30 @@ def test_iter_buffering_badwriteback():
     # a needs write buffering, but had a broadcast dimension
     a = np.arange(6).reshape(2,3,1)
     b = np.arange(12).reshape(2,3,2)
-    assert_raises(ValueError,np.newiter,[a,b],
+    assert_raises(ValueError,newiter,[a,b],
                         ['buffered','no_inner_iteration'],
                         [['readwrite'],['writeonly']],
                         order='C')
 
     # But if a is readonly, it's fine
-    i = np.newiter([a,b],['buffered','no_inner_iteration'],
+    i = newiter([a,b],['buffered','no_inner_iteration'],
                         [['readonly'],['writeonly']],
                         order='C')
     
     # If a has just one element, it's fine too (constant 0 stride)
     a = np.arange(1).reshape(1,1,1)
-    i = np.newiter([a,b],['buffered','no_inner_iteration'],
+    i = newiter([a,b],['buffered','no_inner_iteration'],
                         [['readwrite'],['writeonly']],
                         order='C')
 
     # check that it fails on other dimensions too
     a = np.arange(6).reshape(1,3,2)
-    assert_raises(ValueError,np.newiter,[a,b],
+    assert_raises(ValueError,newiter,[a,b],
                         ['buffered','no_inner_iteration'],
                         [['readwrite'],['writeonly']],
                         order='C')
     a = np.arange(4).reshape(2,1,2)
-    assert_raises(ValueError,np.newiter,[a,b],
+    assert_raises(ValueError,newiter,[a,b],
                         ['buffered','no_inner_iteration'],
                         [['readwrite'],['writeonly']],
                         order='C')
@@ -1485,7 +1485,7 @@ def test_iter_buffering_badwriteback():
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed
     a = np.arange(30)
-    i = np.newiter(a, ['buffered','growinner','no_inner_iteration'],
+    i = newiter(a, ['buffered','growinner','no_inner_iteration'],
                            buffersize=5)
     # Should end up with just one inner loop here
     assert_equal(i[0].size, a.size)
@@ -1496,11 +1496,11 @@ def test_iter_no_broadcast():
     b = np.arange(6).reshape(2,3,1)
     c = np.arange(12).reshape(3,4)
 
-    i = np.newiter([a,b,c], [],
+    i = newiter([a,b,c], [],
                     [['readonly','no_broadcast'],['readonly'],['readonly']])
-    assert_raises(ValueError, np.newiter, [a,b,c], [],
+    assert_raises(ValueError, newiter, [a,b,c], [],
                     [['readonly'],['readonly','no_broadcast'],['readonly']])
-    assert_raises(ValueError, np.newiter, [a,b,c], [],
+    assert_raises(ValueError, newiter, [a,b,c], [],
                     [['readonly'],['readonly'],['readonly','no_broadcast']])
 
 def test_iter_nested_iters_basic():

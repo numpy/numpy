@@ -5,7 +5,6 @@
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 
-#include <numpy/new_iterator.h>
 #include "lowlevel_strided_loops.h"
 
 /* Rounds up a number of bytes to be divisible by sizeof intp */
@@ -301,8 +300,10 @@ npyiter_copy_from_buffers(NpyIter *iter);
 static void
 npyiter_copy_to_buffers(NpyIter *iter);
 
-/* The constructor for an iterator over multiple objects */
-NpyIter *
+/*NUMPY_API
+ * Allocate a new iterator for multiple array objects
+ */
+NPY_NO_EXPORT NpyIter *
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  NPY_ORDER order, NPY_CASTING casting,
                  npy_uint32 *op_flags,
@@ -585,8 +586,10 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     return iter;
 }
 
-/* The constructor for an iterator over one object */
-NpyIter *
+/*NUMPY_API
+ * Allocate a new iterator for one array object
+ */
+NPY_NO_EXPORT NpyIter *
 NpyIter_New(PyArrayObject *op, npy_uint32 flags,
                   NPY_ORDER order, NPY_CASTING casting,
                   PyArray_Descr* dtype,
@@ -608,7 +611,10 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags,
     }
 }
 
-NpyIter *
+/*NUMPY_API
+ * Makes a copy of the iterator
+ */
+NPY_NO_EXPORT NpyIter *
 NpyIter_Copy(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -708,7 +714,11 @@ NpyIter_Copy(NpyIter *iter)
     return newiter;
 }
 
-int NpyIter_Deallocate(NpyIter *iter)
+/*NUMPY_API
+ * Deallocate an iterator
+ */
+NPY_NO_EXPORT int
+NpyIter_Deallocate(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -758,8 +768,11 @@ int NpyIter_Deallocate(NpyIter *iter)
     return NPY_SUCCEED;
 }
 
-/* Removes coords support from the iterator */
-int NpyIter_RemoveCoords(NpyIter *iter)
+/*NUMPY_API
+ * Removes coords support from an iterator
+ */
+NPY_NO_EXPORT int
+NpyIter_RemoveCoords(NpyIter *iter)
 {
     npy_uint32 itflags;
 
@@ -777,8 +790,11 @@ int NpyIter_RemoveCoords(NpyIter *iter)
     return NPY_SUCCEED;
 }
 
-/* Removes the inner loop handling (adds NPY_ITER_NO_INNER_ITERATION) */
-int NpyIter_RemoveInnerLoop(NpyIter *iter)
+/*NUMPY_API
+ * Removes the inner loop handling (so HasInnerLoop returns false)
+ */
+NPY_NO_EXPORT int
+NpyIter_RemoveInnerLoop(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -819,8 +835,11 @@ int NpyIter_RemoveInnerLoop(NpyIter *iter)
     return NpyIter_Reset(iter);
 }
 
-/* Resets the iterator to its initial state */
-int NpyIter_Reset(NpyIter *iter)
+/*NUMPY_API
+ * Resets the iterator to its initial state
+ */
+NPY_NO_EXPORT int
+NpyIter_Reset(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -863,8 +882,11 @@ int NpyIter_Reset(NpyIter *iter)
     return NPY_SUCCEED;
 }
 
-/* Resets the iterator to its initial state, with new base data pointers */
-int NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
+/*NUMPY_API
+ * Resets the iterator to its initial state, with new base data pointers
+ */
+NPY_NO_EXPORT int
+NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -902,8 +924,10 @@ int NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
     return NPY_SUCCEED;
 }
 
-/* Resets the iterator to a new iterator index range */
-int
+/*NUMPY_API
+ * Resets the iterator to a new iterator index range
+ */
+NPY_NO_EXPORT int
 NpyIter_ResetToIterIndexRange(NpyIter *iter,
                               npy_intp istart, npy_intp iend)
 {
@@ -937,7 +961,7 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
     return NpyIter_Reset(iter);
 }
 
-/*
+/*NUMPY_API
  * Sets the iterator to the specified coordinates, which must have the
  * correct number of entries for 'ndim'.  It is only valid
  * when NPY_ITER_COORDS was passed to the constructor.  This operation
@@ -945,7 +969,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
  *
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
-int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
+NPY_NO_EXPORT int
+NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1023,13 +1048,14 @@ int NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
     return NPY_SUCCEED;
 }
 
-/*
+/*NUMPY_API
  * If the iterator is tracking an index, sets the iterator
  * to the specified index.
  *
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
-int NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
+NPY_NO_EXPORT int
+NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1110,13 +1136,14 @@ int NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
     return NPY_SUCCEED;
 }
 
-/*
+/*NUMPY_API
  * Sets the iterator position to the specified iterindex,
  * which matches the iteration order of the iterator.
  *
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
-int NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
+NPY_NO_EXPORT int
+NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1175,7 +1202,11 @@ int NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
     return NPY_SUCCEED;
 }
 
-npy_intp NpyIter_GetIterIndex(NpyIter *iter)
+/*NUMPY_API
+ * Gets the current iteration index
+ */
+NPY_NO_EXPORT npy_intp
+NpyIter_GetIterIndex(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1225,7 +1256,7 @@ npy_intp NpyIter_GetIterIndex(NpyIter *iter)
  */
 
 /* Specialized iternext (@const_itflags@,@tag_ndim@,@tag_niter@) */
-NPY_NO_EXPORT int
+static int
 npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
                                                       NpyIter *iter)
 {
@@ -1374,7 +1405,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 /**end repeat**/
 
 /* iternext function that handle the buffering part */
-NPY_NO_EXPORT int
+static int
 npyiter_buffered_iternext(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -1429,14 +1460,17 @@ npyiter_buffered_iternext(NpyIter *iter)
 /**end repeat**/
 
 /* Specialization of iternext for when the iteration size is 1 */
-NPY_NO_EXPORT int
+static int
 npyiter_iternext_sizeone(NpyIter *iter)
 {
     return 0;
 }
 
-/* Returns a specialized iternext function */
-NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter)
+/*NUMPY_API
+ * Compute the specialized iteration function for an iterator
+ */
+NPY_NO_EXPORT NpyIter_IterNext_Fn
+NpyIter_GetIterNext(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1542,7 +1576,7 @@ NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter)
  * #tag_itflags = 0, IND, IDP, INDuIDP, NEGP, INDuNEGP,
  *                BUF, INDuBUF, IDPuBUF, INDuIDPuBUF, NEGPuBUF, INDuNEGPuBUF#
  */
-NPY_NO_EXPORT void
+static void
 npyiter_getcoord_itflags@tag_itflags@(NpyIter *iter, npy_intp *outcoord)
 {
     const npy_uint32 itflags = @const_itflags@;
@@ -1583,8 +1617,11 @@ npyiter_getcoord_itflags@tag_itflags@(NpyIter *iter, npy_intp *outcoord)
 }
 /**end repeat**/
 
-/* Returns a specialized getcoord function */
-NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter)
+/*NUMPY_API
+ * Compute a specialized getcoords function for the iterator
+ */
+NPY_NO_EXPORT NpyIter_GetCoords_Fn
+NpyIter_GetGetCoords(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1647,42 +1684,73 @@ NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter)
 
 }
 
-int NpyIter_HasDelayedBufAlloc(NpyIter *iter)
+/*NUMPY_API
+ * Whether the buffer allocation is being delayed
+ */
+NPY_NO_EXPORT int
+NpyIter_HasDelayedBufAlloc(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_DELAYBUF) != 0;
 }
 
-int NpyIter_HasInnerLoop(NpyIter *iter)
+/*NUMPY_API
+ * Whether the iterator handles the inner loop
+ */
+NPY_NO_EXPORT int
+NpyIter_HasInnerLoop(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NOINNER) == 0;
 }
 
-int NpyIter_HasCoords(NpyIter *iter)
+/*NUMPY_API
+ * Whether the iterator is tracking coordinates
+ */
+NPY_NO_EXPORT int
+NpyIter_HasCoords(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASCOORDS) != 0;
 }
 
-int NpyIter_HasIndex(NpyIter *iter)
+/*NUMPY_API
+ * Whether the iterator is tracking an index
+ */
+NPY_NO_EXPORT int
+NpyIter_HasIndex(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASINDEX) != 0;
 }
 
-npy_intp NpyIter_GetNDim(NpyIter *iter)
+/*NUMPY_API
+ * Gets the number of dimensions being iterated
+ */
+NPY_NO_EXPORT npy_intp
+NpyIter_GetNDim(NpyIter *iter)
 {
     return NIT_NDIM(iter);
 }
 
-npy_intp NpyIter_GetNIter(NpyIter *iter)
+/*NUMPY_API
+ * Gets the number of operands being iterated
+ */
+NPY_NO_EXPORT npy_intp
+NpyIter_GetNIter(NpyIter *iter)
 {
     return NIT_NITER(iter);
 }
 
-npy_intp NpyIter_GetIterSize(NpyIter *iter)
+/*NUMPY_API
+ * Gets the number of elements being iterated
+ */
+NPY_NO_EXPORT npy_intp
+NpyIter_GetIterSize(NpyIter *iter)
 {
     return NIT_ITERSIZE(iter);
 }
 
-void
+/*NUMPY_API
+ * Gets the range of iteration indices being iterated
+ */
+NPY_NO_EXPORT void
 NpyIter_GetIterIndexRange(NpyIter *iter,
                           npy_intp *istart, npy_intp *iend)
 {
@@ -1690,7 +1758,11 @@ NpyIter_GetIterIndexRange(NpyIter *iter,
     *iend = NIT_ITEREND(iter);
 }
 
-int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
+/*NUMPY_API
+ * Gets the broadcast shape (if coords are enabled)
+ */
+NPY_NO_EXPORT int
+NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1723,7 +1795,11 @@ int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
     return NPY_SUCCEED;
 }
 
-char **NpyIter_GetDataPtrArray(NpyIter *iter)
+/*NUMPY_API
+ * Get the array of data pointers (1 per object being iterated)
+ */
+NPY_NO_EXPORT char **
+NpyIter_GetDataPtrArray(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1739,7 +1815,11 @@ char **NpyIter_GetDataPtrArray(NpyIter *iter)
     }
 }
 
-PyArray_Descr **NpyIter_GetDescrArray(NpyIter *iter)
+/*NUMPY_API
+ * Get the array of data type pointers (1 per object being iterated)
+ */
+NPY_NO_EXPORT PyArray_Descr **
+NpyIter_GetDescrArray(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1748,7 +1828,11 @@ PyArray_Descr **NpyIter_GetDescrArray(NpyIter *iter)
     return NIT_DTYPES(iter);
 }
 
-PyArrayObject **NpyIter_GetObjectArray(NpyIter *iter)
+/*NUMPY_API
+ * Get the array of objects being iterated
+ */
+NPY_NO_EXPORT PyArrayObject **
+NpyIter_GetObjectArray(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1757,7 +1841,11 @@ PyArrayObject **NpyIter_GetObjectArray(NpyIter *iter)
     return NIT_OBJECTS(iter);
 }
 
-PyArrayObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i)
+/*NUMPY_API
+ * Returns a view to the i-th object with the iterator's internal axes
+ */
+NPY_NO_EXPORT PyArrayObject *
+NpyIter_GetIterView(NpyIter *iter, npy_intp i)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -1814,7 +1902,11 @@ PyArrayObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     return view;
 }
 
-npy_intp *NpyIter_GetIndexPtr(NpyIter *iter)
+/*NUMPY_API
+ * Get a pointer to the index, if it is being tracked
+ */
+NPY_NO_EXPORT npy_intp *
+NpyIter_GetIndexPtr(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1831,7 +1923,11 @@ npy_intp *NpyIter_GetIndexPtr(NpyIter *iter)
     }
 }
 
-void NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags)
+/*NUMPY_API
+ * Gets an array of read flags (1 per object being iterated)
+ */
+NPY_NO_EXPORT void
+NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1844,7 +1940,11 @@ void NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags)
     }
 }
 
-void NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
+/*NUMPY_API
+ * Gets an array of write flags (1 per object being iterated)
+ */
+NPY_NO_EXPORT void
+NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);
@@ -1858,7 +1958,11 @@ void NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
 }
 
 
-npy_intp *NpyIter_GetInnerStrideArray(NpyIter *iter)
+/*NUMPY_API
+ * Get the array of strides for the inner loop (when HasInnerLoop is false)
+ */
+NPY_NO_EXPORT npy_intp *
+NpyIter_GetInnerStrideArray(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1874,7 +1978,11 @@ npy_intp *NpyIter_GetInnerStrideArray(NpyIter *iter)
     }
 }
 
-npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
+/*NUMPY_API
+ * Get a pointer to the size of the inner loop  (when HasInnerLoop is false)
+ */
+NPY_NO_EXPORT npy_intp *
+NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -3941,7 +4049,8 @@ fail:
  * iterindex, updating the pointers as well.  This function does
  * no error checking.
  */
-static void npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
+static void
+npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -4193,7 +4302,9 @@ npyiter_copy_to_buffers(NpyIter *iter)
     }
 }
 
-/* For debugging */
+/*NUMPY_API
+ * For debugging
+ */
 NPY_NO_EXPORT void
 NpyIter_DebugPrint(NpyIter *iter)
 {

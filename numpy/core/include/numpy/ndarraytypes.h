@@ -186,6 +186,20 @@ typedef enum {
         NPY_KEEPORDER=2
 } NPY_ORDER;
 
+/* For specifying allowed casting in operations which support it */
+typedef enum {
+        /* Only allow identical types */
+        NPY_NO_CASTING=0,
+        /* Allow identical and byte swapped types */
+        NPY_EQUIV_CASTING=1,
+        /* Only allow safe casts */
+        NPY_SAFE_CASTING=2,
+        /* Allow safe casts or casts within the same kind */
+        NPY_SAME_KIND_CASTING=3,
+        /* Allow any casts */
+        NPY_UNSAFE_CASTING=4
+} NPY_CASTING;
+
 typedef enum {
         NPY_CLIP=0,
         NPY_WRAP=1,
@@ -843,6 +857,66 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ALLOW_C_API
 #define NPY_DISABLE_C_API
 #endif
+
+/*****************************
+ * New iterator object
+ *****************************/
+
+/* The actual structure of the iterator is an internal detail */
+typedef struct NpyIter_InternalOnly NpyIter;
+
+/* Iterator function pointers that may be specialized */
+typedef int (*NpyIter_IterNext_Fn )(NpyIter *iter);
+typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
+                                      npy_intp *outcoords);
+
+/*** Global flags that may be passed to the iterator constructors ***/
+
+/* Track an index representing C order */
+#define NPY_ITER_C_INDEX                    0x00000001
+/* Track an index representing Fortran order */
+#define NPY_ITER_F_INDEX                    0x00000002
+/* Track coordinates */
+#define NPY_ITER_COORDS                     0x00000004
+/* Let the caller handle the inner loop of iteration */
+#define NPY_ITER_NO_INNER_ITERATION         0x00000008
+/* Convert all the operands to a common data type */
+#define NPY_ITER_COMMON_DTYPE               0x00000010
+/* Enables sub-range iteration */
+#define NPY_ITER_RANGED                     0x00000020
+/* Enables buffering */
+#define NPY_ITER_BUFFERED                   0x00000040
+/* When buffering is enabled, grows the inner loop if possible */
+#define NPY_ITER_GROWINNER                  0x00000080
+/* Delay allocation of buffers until first Reset* call */
+#define NPY_ITER_DELAY_BUFALLOC             0x00000100
+
+/*** Per-operand flags that may be passed to the iterator constructors ***/
+
+/* The operand will be read from and written to */
+#define NPY_ITER_READWRITE                  0x00010000
+/* The operand will only be read from */
+#define NPY_ITER_READONLY                   0x00020000
+/* The operand will only be written to */
+#define NPY_ITER_WRITEONLY                  0x00040000
+/* The operand's data must be in native byte order and aligned */
+#define NPY_ITER_NBO_ALIGNED                0x00080000
+/* The operand may be copied to satisfy requirements */
+#define NPY_ITER_COPY                       0x00100000
+/* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
+#define NPY_ITER_UPDATEIFCOPY               0x00200000
+/* Allow writeable operands to have references or pointers */
+#define NPY_ITER_WRITEABLE_REFERENCES       0x00400000
+/* Allocate the operand if it is NULL */
+#define NPY_ITER_ALLOCATE                   0x00800000
+/* If an operand is allocated, don't use any subtype */
+#define NPY_ITER_NO_SUBTYPE                 0x01000000
+/* Require that the dimension match the iterator dimensions exactly */
+#define NPY_ITER_NO_BROADCAST               0x02000000
+
+#define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
+#define NPY_ITER_PER_OP_FLAGS               0xffff0000
+
 
 /*****************************
  * Basic iterator object

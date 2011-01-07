@@ -53,7 +53,7 @@ maintainer email:  oliphant.travis@ieee.org
 /*NUMPY_API
   Compute the size of an array (in number of items)
 */
-NPY_NO_EXPORT intp
+NPY_NO_EXPORT npy_intp
 PyArray_Size(PyObject *op)
 {
     if (PyArray_Check(op)) {
@@ -78,7 +78,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      */
     if (dest->descr->type == PyArray_CHARLTR && dest->nd > 0 \
         && PyString_Check(src_object)) {
-        intp n_new, n_old;
+        npy_intp n_new, n_old;
         char *new_string;
         PyObject *tmp;
 
@@ -216,12 +216,12 @@ array_dealloc(PyArrayObject *self) {
 
 static int
 dump_data(char **string, int *n, int *max_n, char *data, int nd,
-          intp *dimensions, intp *strides, PyArrayObject* self)
+          npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
 {
     PyArray_Descr *descr=self->descr;
     PyObject *op, *sp;
     char *ostring;
-    intp i, N;
+    npy_intp i, N;
 
 #define CHECK_MEMORY do { if (*n >= *max_n-16) {         \
         *max_n *= 2;                                     \
@@ -444,15 +444,15 @@ _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
     PyArray_UCS4 *sptr;
     PyArray_UCS4 *s1t=s1, *s2t=s2;
     int val;
-    intp size;
+    npy_intp size;
     int diff;
 
-    if ((intp)s1 % sizeof(PyArray_UCS4) != 0) {
+    if ((npy_intp)s1 % sizeof(PyArray_UCS4) != 0) {
         size = len1*sizeof(PyArray_UCS4);
         s1t = malloc(size);
         memcpy(s1t, s1, size);
     }
-    if ((intp)s2 % sizeof(PyArray_UCS4) != 0) {
+    if ((npy_intp)s2 % sizeof(PyArray_UCS4) != 0) {
         size = len2*sizeof(PyArray_UCS4);
         s2t = malloc(size);
         memcpy(s2t, s2, size);
@@ -658,7 +658,7 @@ _compare_strings(PyObject *result, PyArrayMultiIterObject *multi,
 {
     PyArrayIterObject *iself, *iother;
     Bool *dptr;
-    intp size;
+    npy_intp size;
     int val;
     int N1, N2;
     int (*cmpfunc)(void *, void *, int, int);
@@ -827,7 +827,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         PyObject *key, *value, *temp2;
         PyObject *op;
         Py_ssize_t pos = 0;
-        intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
+        npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
         op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
@@ -863,7 +863,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 /* If the type was multidimensional, collapse that part to 1-D
                  */
                 if (PyArray_NDIM(temp) != result_ndim+1) {
-                    intp dimensions[NPY_MAXDIMS];
+                    npy_intp dimensions[NPY_MAXDIMS];
                     PyArray_Dims newdims;
 
                     newdims.ptr = dimensions;
@@ -871,7 +871,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     memcpy(dimensions, PyArray_DIMS(temp),
                            sizeof(intp)*result_ndim);
                     dimensions[result_ndim] = -1;
-                    temp2 = PyArray_Newshape(temp, &newdims, PyArray_ANYORDER);
+                    temp2 = PyArray_Newshape((PyArrayObject *)temp,
+                                             &newdims, PyArray_ANYORDER);
                     if (temp2 == NULL) {
                         Py_DECREF(temp);
                         Py_XDECREF(res);
@@ -1099,7 +1100,7 @@ PyArray_ElementStrides(PyObject *arr)
 {
     int itemsize = PyArray_ITEMSIZE(arr);
     int i, N = PyArray_NDIM(arr);
-    intp *strides = PyArray_STRIDES(arr);
+    npy_intp *strides = PyArray_STRIDES(arr);
 
     for (i = 0; i < N; i++) {
         if ((strides[i] % itemsize) != 0) {
@@ -1128,13 +1129,13 @@ PyArray_ElementStrides(PyObject *arr)
 
 /*NUMPY_API*/
 NPY_NO_EXPORT Bool
-PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
-                     intp *dims, intp *newstrides)
+PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
+                     npy_intp *dims, npy_intp *newstrides)
 {
     int i;
-    intp byte_begin;
-    intp begin;
-    intp end;
+    npy_intp byte_begin;
+    npy_intp begin;
+    npy_intp end;
 
     if (numbytes == 0) {
         numbytes = PyArray_MultiplyList(dims, nd) * elsize;
@@ -1201,7 +1202,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     if (strides.ptr != NULL) {
-        intp nb, off;
+        npy_intp nb, off;
         if (strides.len != dims.len) {
             PyErr_SetString(PyExc_ValueError,
                             "strides, if given, must be "   \
@@ -1215,7 +1216,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         else {
             nb = buffer.len;
-            off = (intp) offset;
+            off = (npy_intp) offset;
         }
 
 
@@ -1252,10 +1253,10 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     else {
         /* buffer given -- use it */
         if (dims.len == 1 && dims.ptr[0] == -1) {
-            dims.ptr[0] = (buffer.len-(intp)offset) / itemsize;
+            dims.ptr[0] = (buffer.len-(npy_intp)offset) / itemsize;
         }
         else if ((strides.ptr == NULL) &&
-                 (buffer.len < (offset + (((intp)itemsize)*
+                 (buffer.len < (offset + (((npy_intp)itemsize)*
                                           PyArray_MultiplyList(dims.ptr,
                                                                dims.len))))) {
             PyErr_SetString(PyExc_TypeError,

@@ -20,10 +20,10 @@
 #define RubberIndex -2
 #define SingleIndex -3
 
-NPY_NO_EXPORT intp
-parse_subindex(PyObject *op, intp *step_size, intp *n_steps, intp max)
+NPY_NO_EXPORT npy_intp
+parse_subindex(PyObject *op, npy_intp *step_size, npy_intp *n_steps, npy_intp max)
 {
-    intp index;
+    npy_intp index;
 
     if (op == Py_None) {
         *n_steps = PseudoIndex;
@@ -34,7 +34,7 @@ parse_subindex(PyObject *op, intp *step_size, intp *n_steps, intp max)
         index = 0;
     }
     else if (PySlice_Check(op)) {
-        intp stop;
+        npy_intp stop;
         if (slice_GetIndices((PySliceObject *)op, max,
                              &index, &stop, step_size, n_steps) < 0) {
             if (!PyErr_Occurred()) {
@@ -77,11 +77,11 @@ parse_subindex(PyObject *op, intp *step_size, intp *n_steps, intp max)
 
 NPY_NO_EXPORT int
 parse_index(PyArrayObject *self, PyObject *op,
-            intp *dimensions, intp *strides, intp *offset_ptr)
+            npy_intp *dimensions, npy_intp *strides, npy_intp *offset_ptr)
 {
     int i, j, n;
     int nd_old, nd_new, n_add, n_pseudo;
-    intp n_steps, start, offset, step_size;
+    npy_intp n_steps, start, offset, step_size;
     PyObject *op1 = NULL;
     int is_slice;
 
@@ -180,7 +180,7 @@ parse_index(PyArrayObject *self, PyObject *op,
 }
 
 static int
-slice_coerce_index(PyObject *o, intp *v)
+slice_coerce_index(PyObject *o, npy_intp *v)
 {
     *v = PyArray_PyIntAsIntp(o);
     if (error_converting(*v)) {
@@ -193,11 +193,11 @@ slice_coerce_index(PyObject *o, intp *v)
 /* This is basically PySlice_GetIndicesEx, but with our coercion
  * of indices to integers (plus, that function is new in Python 2.3) */
 NPY_NO_EXPORT int
-slice_GetIndices(PySliceObject *r, intp length,
-                 intp *start, intp *stop, intp *step,
-                 intp *slicelength)
+slice_GetIndices(PySliceObject *r, npy_intp length,
+                 npy_intp *start, npy_intp *stop, npy_intp *step,
+                 npy_intp *slicelength)
 {
-    intp defstop;
+    npy_intp defstop;
 
     if (r->step == Py_None) {
         *step = 1;
@@ -363,7 +363,7 @@ PyArray_IterNew(PyObject *obj)
  * Get Iterator broadcast to a particular shape
  */
 NPY_NO_EXPORT PyObject *
-PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
+PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
 {
     PyArrayIterObject *it;
     int i, diff, j, compat, k;
@@ -451,7 +451,7 @@ PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
     }
     if (*inaxis < 0) {
         int i, minaxis = 0;
-        intp minstride = 0;
+        npy_intp minstride = 0;
         i = 0;
         while (minstride == 0 && i < PyArray_NDIM(obj)) {
             minstride = PyArray_STRIDE(obj,i);
@@ -496,8 +496,8 @@ PyArray_RemoveSmallest(PyArrayMultiIterObject *multi)
     PyArrayIterObject *it;
     int i, j;
     int axis;
-    intp smallest;
-    intp sumstrides[NPY_MAXDIMS];
+    npy_intp smallest;
+    npy_intp sumstrides[NPY_MAXDIMS];
 
     if (multi->nd == 0) {
         return -1;
@@ -562,9 +562,9 @@ iter_length(PyArrayIterObject *self)
 static PyObject *
 iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 {
-    intp index, strides;
+    npy_intp index, strides;
     int itemsize;
-    intp count = 0;
+    npy_intp count = 0;
     char *dptr, *optr;
     PyObject *r;
     int swap;
@@ -623,18 +623,18 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 static PyObject *
 iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 {
-    intp num;
+    npy_intp num;
     PyObject *r;
     PyArrayIterObject *ind_it;
     int itemsize;
     int swap;
     char *optr;
-    intp index;
+    npy_intp index;
     PyArray_CopySwapFunc *copyswap;
 
     itemsize = self->ao->descr->elsize;
     if (ind->nd == 0) {
-        num = *((intp *)ind->data);
+        num = *((npy_intp *)ind->data);
         if (num < 0) {
             num += self->size;
         }
@@ -671,7 +671,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     copyswap = PyArray_DESCR(r)->f->copyswap;
     swap = (PyArray_ISNOTSWAPPED(r) != PyArray_ISNOTSWAPPED(self->ao));
     while (index--) {
-        num = *((intp *)(ind_it->dataptr));
+        num = *((npy_intp *)(ind_it->dataptr));
         if (num < 0) {
             num += self->size;
         }
@@ -700,8 +700,8 @@ NPY_NO_EXPORT PyObject *
 iter_subscript(PyArrayIterObject *self, PyObject *ind)
 {
     PyArray_Descr *indtype = NULL;
-    intp start, step_size;
-    intp n_steps;
+    npy_intp start, step_size;
+    npy_intp n_steps;
     PyObject *r;
     char *dptr;
     int size;
@@ -739,7 +739,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             return PyArray_ToScalar(self->dataptr, self->ao);
         }
         else { /* empty array */
-            intp ii = 0;
+            npy_intp ii = 0;
             Py_INCREF(self->ao->descr);
             r = PyArray_NewFromDescr(Py_TYPE(self->ao),
                                      self->ao->descr,
@@ -848,7 +848,7 @@ static int
 iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                   PyArrayIterObject *val, int swap)
 {
-    intp index, strides;
+    npy_intp index, strides;
     char *dptr;
     PyArray_CopySwapFunc *copyswap;
 
@@ -890,15 +890,15 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
                  PyArrayIterObject *val, int swap)
 {
     PyArray_Descr *typecode;
-    intp num;
+    npy_intp num;
     PyArrayIterObject *ind_it;
-    intp index;
+    npy_intp index;
     PyArray_CopySwapFunc *copyswap;
 
     typecode = self->ao->descr;
     copyswap = self->ao->descr->f->copyswap;
     if (ind->nd == 0) {
-        num = *((intp *)ind->data);
+        num = *((npy_intp *)ind->data);
         PyArray_ITER_GOTO1D(self, num);
         copyswap(self->dataptr, val->dataptr, swap, self->ao);
         return 0;
@@ -909,7 +909,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     }
     index = ind_it->size;
     while (index--) {
-        num = *((intp *)(ind_it->dataptr));
+        num = *((npy_intp *)(ind_it->dataptr));
         if (num < 0) {
             num += self->size;
         }
@@ -941,8 +941,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     PyArray_Descr *type;
     PyArray_Descr *indtype = NULL;
     int swap, retval = -1;
-    intp start, step_size;
-    intp n_steps;
+    npy_intp start, step_size;
+    npy_intp n_steps;
     PyObject *obj = NULL;
     PyArray_CopySwapFunc *copyswap;
 
@@ -1122,7 +1122,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 {
 
     PyObject *r;
-    intp size;
+    npy_intp size;
 
     /* Any argument ignored */
 
@@ -1226,7 +1226,7 @@ iter_coords_get(PyArrayIterObject *self)
          * coordinates not kept track of ---
          * need to generate from index
          */
-        intp val;
+        npy_intp val;
         int i;
         val = self->index;
         for (i = 0; i < nd; i++) {
@@ -1321,7 +1321,7 @@ NPY_NO_EXPORT int
 PyArray_Broadcast(PyArrayMultiIterObject *mit)
 {
     int i, nd, k, j;
-    intp tmp;
+    npy_intp tmp;
     PyArrayIterObject *it;
 
     /* Discover the broadcast number of dimensions */
@@ -1944,7 +1944,7 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
  * A Neighborhood Iterator object.
 */
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, intp *bounds,
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
                             int mode, PyArrayObject* fill)
 {
     int i;

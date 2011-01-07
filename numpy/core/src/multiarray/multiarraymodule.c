@@ -85,10 +85,10 @@ PyArray_MultiplyIntList(int *l1, int n)
 /*NUMPY_API
  * Multiply a List
  */
-NPY_NO_EXPORT intp
-PyArray_MultiplyList(intp *l1, int n)
+NPY_NO_EXPORT npy_intp
+PyArray_MultiplyList(npy_intp *l1, int n)
 {
-    intp s = 1;
+    npy_intp s = 1;
 
     while (n--) {
         s *= (*l1++);
@@ -99,15 +99,15 @@ PyArray_MultiplyList(intp *l1, int n)
 /*NUMPY_API
  * Multiply a List of Non-negative numbers with over-flow detection.
  */
-NPY_NO_EXPORT intp
-PyArray_OverflowMultiplyList(intp *l1, int n)
+NPY_NO_EXPORT npy_intp
+PyArray_OverflowMultiplyList(npy_intp *l1, int n)
 {
-    intp prod = 1;
-    intp imax = NPY_MAX_INTP;
+    npy_intp prod = 1;
+    npy_intp imax = NPY_MAX_INTP;
     int i;
 
     for (i = 0; i < n; i++) {
-        intp dim = l1[i];
+        npy_intp dim = l1[i];
 
         if (dim == 0) {
             return 0;
@@ -125,10 +125,10 @@ PyArray_OverflowMultiplyList(intp *l1, int n)
  * Produce a pointer into array
  */
 NPY_NO_EXPORT void *
-PyArray_GetPtr(PyArrayObject *obj, intp* ind)
+PyArray_GetPtr(PyArrayObject *obj, npy_intp* ind)
 {
     int n = obj->nd;
-    intp *strides = obj->strides;
+    npy_intp *strides = obj->strides;
     char *dptr = obj->data;
 
     while (n--) {
@@ -141,7 +141,7 @@ PyArray_GetPtr(PyArrayObject *obj, intp* ind)
  * Compare Lists
  */
 NPY_NO_EXPORT int
-PyArray_CompareLists(intp *l1, intp *l2, int n)
+PyArray_CompareLists(npy_intp *l1, npy_intp *l2, int n)
 {
     int i;
 
@@ -168,11 +168,11 @@ PyArray_CompareLists(intp *l1, intp *l2, int n)
  * steals a reference to typedescr -- can be NULL
  */
 NPY_NO_EXPORT int
-PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
+PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
                  PyArray_Descr* typedescr)
 {
     PyArrayObject *ap;
-    intp n, m, i, j;
+    npy_intp n, m, i, j;
     char **ptr2;
     char ***ptr3;
 
@@ -216,7 +216,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
         }
         *((char ****)ptr) = ptr3;
     }
-    memcpy(dims, ap->dimensions, nd*sizeof(intp));
+    memcpy(dims, ap->dimensions, nd*sizeof(npy_intp));
     *op = (PyObject *)ap;
     return 0;
 
@@ -233,7 +233,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 NPY_NO_EXPORT int
 PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 {
-    intp newd1;
+    npy_intp newd1;
     PyArray_Descr *descr;
     char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
@@ -254,7 +254,7 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 NPY_NO_EXPORT int
 PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 {
-    intp newdims[2];
+    npy_intp newdims[2];
     PyArray_Descr *descr;
     char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
 
@@ -348,7 +348,7 @@ PyArray_Concatenate(PyObject *op, int axis)
     char *data;
     PyTypeObject *subtype;
     double prior1, prior2;
-    intp numbytes;
+    npy_intp numbytes;
 
     n = PySequence_Length(op);
     if (n == -1) {
@@ -580,7 +580,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
  */
 static PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
-                  int nd, intp dimensions[], int typenum)
+                  int nd, npy_intp dimensions[], int typenum)
 {
     PyArrayObject *ret;
     PyTypeObject *subtype;
@@ -616,11 +616,11 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     PyArrayIterObject *it1, *it2;
-    intp i, j, l;
+    npy_intp i, j, l;
     int typenum, nd, axis;
-    intp is1, is2, os;
+    npy_intp is1, is2, os;
     char *op;
-    intp dimensions[MAX_DIMS];
+    npy_intp dimensions[MAX_DIMS];
     PyArray_DotFunc *dot;
     PyArray_Descr *typec;
     NPY_BEGIN_THREADS_DEF;
@@ -724,11 +724,11 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     PyArrayIterObject *it1, *it2;
-    intp i, j, l;
+    npy_intp i, j, l;
     int typenum, nd, axis, matchDim;
-    intp is1, is2, os;
+    npy_intp is1, is2, os;
     char *op;
-    intp dimensions[MAX_DIMS];
+    npy_intp dimensions[MAX_DIMS];
     PyArray_DotFunc *dot;
     PyArray_Descr *typec;
     NPY_BEGIN_THREADS_DEF;
@@ -854,8 +854,8 @@ PyArray_CopyAndTranspose(PyObject *op)
 {
     PyObject *ret, *arr;
     int nd;
-    intp dims[2];
-    intp i,j;
+    npy_intp dims[2];
+    npy_intp i,j;
     int elsize, str2;
     char *iptr;
     char *optr;
@@ -921,9 +921,9 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
                    int mode, int *inverted)
 {
     PyArrayObject *ret;
-    intp length;
-    intp i, n1, n2, n, n_left, n_right;
-    intp is1, is2, os;
+    npy_intp length;
+    npy_intp i, n1, n2, n, n_left, n_right;
+    npy_intp is1, is2, os;
     char *ip1, *ip2, *op;
     PyArray_DotFunc *dot;
 
@@ -952,7 +952,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         n_left = n_right = 0;
         break;
     case 1:
-        n_left = (intp)(n/2);
+        n_left = (npy_intp)(n/2);
         n_right = n - n_left - 1;
         break;
     case 2:
@@ -1026,11 +1026,11 @@ clean_ret:
 static int
 _pyarray_revert(PyArrayObject *ret)
 {
-    intp length;
-    intp i;
+    npy_intp length;
+    npy_intp i;
     PyArray_CopySwapFunc *copyswap;
     char *tmp = NULL, *sw1, *sw2;
-    intp os;
+    npy_intp os;
     char *op;
 
     length = ret->dimensions[0];
@@ -1456,8 +1456,8 @@ PyArray_EquivTypenums(int typenum1, int typenum2)
 static PyObject *
 _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 {
-    intp newdims[MAX_DIMS];
-    intp newstrides[MAX_DIMS];
+    npy_intp newdims[MAX_DIMS];
+    npy_intp newstrides[MAX_DIMS];
     int i, k, num;
     PyObject *ret;
 
@@ -1737,7 +1737,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         Py_XDECREF(descr);
         return NULL;
     }
-    return PyArray_FromString(data, (intp)s, descr, (intp)nin, sep);
+    return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }
 
 
@@ -1778,7 +1778,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     if (type == NULL) {
         type = PyArray_DescrFromType(PyArray_DEFAULT);
     }
-    ret = PyArray_FromFile(fp, type, (intp) nin, sep);
+    ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
     ok = npy_PyFile_DupClose(file, fp);
     Py_DECREF(file);
     if (ok < 0) {
@@ -1802,7 +1802,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_XDECREF(descr);
         return NULL;
     }
-    return PyArray_FromIter(iter, descr, (intp)nin);
+    return PyArray_FromIter(iter, descr, (npy_intp)nin);
 }
 
 static PyObject *
@@ -1822,7 +1822,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (type == NULL) {
         type = PyArray_DescrFromType(PyArray_DEFAULT);
     }
-    return PyArray_FromBuffer(obj, type, (intp)nin, (intp)offset);
+    return PyArray_FromBuffer(obj, type, (npy_intp)nin, (npy_intp)offset);
 }
 
 static PyObject *
