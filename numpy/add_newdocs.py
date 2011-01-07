@@ -3796,12 +3796,15 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
 
 add_newdoc('numpy.lib._compiled_base', 'bincount',
     """
-    bincount(x, weights=None)
+    bincount(x, weights=None, minlength=None)
 
     Count number of occurrences of each value in array of non-negative ints.
 
     The number of bins (of size 1) is one larger than the largest value in
-    `x`. Each bin gives the number of occurrences of its index value in `x`.
+    `x`. If `minlength` is specified, there will be at least this number
+    of bins in the output array (though it will be longer if necessary,
+    depending on the contents of `x`).
+    Each bin gives the number of occurrences of its index value in `x`.
     If `weights` is specified the input array is weighted by it, i.e. if a
     value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
     of ``out[n] += 1``.
@@ -3812,6 +3815,8 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
         Input array.
     weights : array_like, optional
         Weights, array of the same shape as `x`.
+    minlength : integer, optional
+        A minimum number of bins for the output array.
 
     Returns
     -------
@@ -3823,7 +3828,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     ------
     ValueError
         If the input is not 1-dimensional, or contains elements with negative
-        values.
+        values, or if `minlength` is non-positive.
     TypeError
         If the type of the input is float or complex.
 
