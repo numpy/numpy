@@ -11,9 +11,10 @@
  * and a casting operation,
  *
  * The 'transferdata' parameter is slightly special, and must always contain
- * a pointer to a deallocation routine at its beginning.  The function
- * PyArray_FreeStridedTransferFn should be used to deallocate such
- * pointers, and calls the function pointer.
+ * pointer to deallocation and copying routines at its beginning.  The function
+ * PyArray_FreeStridedTransferData should be used to deallocate such
+ * pointers, and calls the first function pointer, while the function
+ * PyArray_CopyStridedTransferData should be used to copy it.
  * 
  */
 typedef void (*PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
@@ -27,6 +28,13 @@ typedef void (*PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
  */
 NPY_NO_EXPORT void
 PyArray_FreeStridedTransferData(void *transferdata);
+
+/*
+ * Copies a PyArray_StridedTransferFunction data object.  See
+ * the comment with the function typedef for more details.
+ */
+NPY_NO_EXPORT void *
+PyArray_CopyStridedTransferData(void *transferdata);
 
 /*
  * Gives back a function pointer to a specialized function for copying

@@ -29,6 +29,7 @@ def iter_iterindices(i):
 def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
+    # Basic
     a = arange(6)
     dt = np.dtype('f4').newbyteorder()
     rc_a = sys.getrefcount(a)
@@ -40,6 +41,26 @@ def test_iter_refcount():
     assert_(sys.getrefcount(a) > rc_a)
     assert_(sys.getrefcount(dt) > rc_dt)
     it = None
+    assert_equal(sys.getrefcount(a), rc_a)
+    assert_equal(sys.getrefcount(dt), rc_dt)
+
+    # With a copy
+    a = arange(6, dtype='f4')
+    dt = np.dtype('f4')
+    rc_a = sys.getrefcount(a)
+    rc_dt = sys.getrefcount(dt)
+    it = newiter(a, [],
+                [['readwrite']],
+                op_dtypes=[dt])
+    rc2_a = sys.getrefcount(a)
+    rc2_dt = sys.getrefcount(dt)
+    it2 = it.copy()
+    assert_(sys.getrefcount(a) > rc2_a)
+    assert_(sys.getrefcount(dt) > rc2_dt)
+    it = None
+    assert_equal(sys.getrefcount(a), rc2_a)
+    assert_equal(sys.getrefcount(dt), rc2_dt)
+    it2 = None
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
 
@@ -975,6 +996,45 @@ def test_iter_op_axes_errors():
     # Non-broadcastable dimensions in the result
     assert_raises(ValueError, newiter, [a,a], [], [['readonly']]*2,
                                     op_axes=[[0,1],[1,0]])
+
+def test_iter_copy():
+    # Check that copying the iterator works correctly
+    a = arange(24).reshape(2,3,4)
+
+    # Simple iterator
+    i = newiter(a)
+    j = i.copy()
+    assert_equal([x[()] for x in i], [x[()] for x in j])
+
+    i.iterindex = 3
+    j = i.copy()
+    assert_equal([x[()] for x in i], [x[()] for x in j])
+
+    # Buffered iterator
+    i = newiter(a, ['buffered','ranged'], order='F', buffersize=3)
+    j = i.copy()
+    assert_equal([x[()] for x in i], [x[()] for x in j])
+
+    i.iterindex = 3
+    j = i.copy()
+    assert_equal([x[()] for x in i], [x[()] for x in j])
+
+    i.iterrange = (3,9)
+    j = i.copy()
+    assert_equal([x[()] for x in i], [x[()] for x in j])
+
+    i.iterrange = (2,18)
+    i.next(); i.next()
+    j = i.copy()
+    assert_equal([x[()] for x in i], [x[()] for x in j])
+
+    # Casting iterator
+    i = newiter(a, ['buffered'], order='F', casting='unsafe',
+                op_dtypes='f8', buffersize=5)
+    j = i.copy()
+    i = None
+    assert_equal([x[()] for x in j], a.ravel(order='F'))
+
 
 def test_iter_allocate_output_simple():
     # Check that the iterator will properly allocate outputs

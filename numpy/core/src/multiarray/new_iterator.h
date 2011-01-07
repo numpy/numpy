@@ -28,18 +28,22 @@ typedef enum {
 
 
 /* Allocate a new iterator for one array object */
-NpyIter*
+NpyIter *
 NpyIter_New(PyArrayObject* op, npy_uint32 flags,
                   NPY_ORDER order, NPY_CASTING casting,
                   PyArray_Descr* dtype,
                   npy_intp a_ndim, npy_intp *axes, npy_intp buffersize);
 
 /* Allocate a new iterator for multiple array objects */
-NpyIter*
+NpyIter *
 NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
                  NPY_ORDER order, NPY_CASTING casting,
                  npy_uint32 *op_flags, PyArray_Descr **op_request_dtypes,
                  npy_intp oa_ndim, npy_intp **op_axes, npy_intp buffersize);
+
+/* Makes a copy of the iterator */
+NpyIter *
+NpyIter_Copy(NpyIter *iter);
 
 /* Deallocate an iterator */
 int NpyIter_Deallocate(NpyIter* iter);

@@ -1126,6 +1126,43 @@ npyiter_reset(NewNpyArrayIterObject *self)
     Py_RETURN_NONE;
 }
 
+/*
+ * Makes a copy of the iterator.  Note that the nesting is not
+ * copied.
+ */
+static PyObject *
+npyiter_copy(NewNpyArrayIterObject *self)
+{
+    NewNpyArrayIterObject *iter;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return NULL;
+    }
+
+    /* Allocate the iterator */
+    iter = (NewNpyArrayIterObject *)npyiter_new(&NpyIter_Type, NULL, NULL);
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    /* Copy the C iterator */
+    iter->iter = NpyIter_Copy(self->iter);
+    if (iter->iter == NULL) {
+        Py_DECREF(iter);
+        return NULL;
+    }
+
+    /* Cache some values for the member functions to use */
+    npyiter_cache_values(iter);
+
+    iter->started = self->started;
+    iter->finished = self->finished;
+
+    return (PyObject *)iter;
+}
+
 static PyObject *
 npyiter_iternext(NewNpyArrayIterObject *self)
 {
@@ -1550,7 +1587,6 @@ static PyObject *npyiter_iterrange_get(NewNpyArrayIterObject *self)
 static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
 {
     npy_intp istart = 0, iend = 0;
-    PyObject *item;
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1869,6 +1905,8 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 
 static PyMethodDef npyiter_methods[] = {
     {"reset", (PyCFunction)npyiter_reset, METH_NOARGS, NULL},
+    {"copy", (PyCFunction)npyiter_copy, METH_NOARGS, NULL},
+    {"__copy__", (PyCFunction)npyiter_copy, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
     {"remove_coords", (PyCFunction)npyiter_remove_coords, METH_NOARGS, NULL},
     {"remove_inner_loop", (PyCFunction)npyiter_remove_inner_loop,

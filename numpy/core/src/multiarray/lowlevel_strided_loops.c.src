@@ -658,9 +658,23 @@ NPY_NO_EXPORT PyArray_StridedTransferFn
 
 /* Does a simple aligned cast */
 typedef struct {
-    void *freefunc;
+    void *freefunc, *copyfunc;
     PyArray_VectorUnaryFunc *castfunc;
 } _strided_cast_data;
+
+/* strided cast data copy function */
+_strided_cast_data *_strided_cast_data_copy(_strided_cast_data *data)
+{
+    _strided_cast_data *newdata = 
+            (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
+    if (newdata == NULL) {
+        return NULL;
+    }
+
+    memcpy(newdata, data, sizeof(_strided_cast_data));
+
+    return newdata;
+}
 
 static void
 _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
@@ -691,7 +705,7 @@ _aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
 
 /* Wraps a transfer function + data in alignment code */
 typedef struct {
-    void *freefunc;
+    void *freefunc, *copyfunc;
     PyArray_StridedTransferFn wrapped,
                 tobuffer, frombuffer;
     void *wrappeddata;
@@ -704,6 +718,37 @@ void _align_wrap_data_free(_align_wrap_data *data)
 {
     PyArray_FreeStridedTransferData(data->wrappeddata);
     PyArray_free(data);
+}
+
+/* transfer data copy function */
+_align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
+{
+    _align_wrap_data *newdata;
+    npy_intp basedatasize, datasize;
+
+    /* Round up the structure size to 16-byte boundary */
+    basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
+    /* Add space for two 32-element buffers */
+    datasize = basedatasize + 32*data->src_itemsize + 32*data->dst_itemsize;
+
+    /* Allocate the data, and populate it */
+    newdata = (_align_wrap_data *)PyArray_malloc(datasize);
+    if (newdata == NULL) {
+        return NULL;
+    }
+    memcpy(newdata, data, basedatasize);
+    newdata->bufferin = (char *)newdata + basedatasize;
+    newdata->bufferout = newdata->bufferin + 32*newdata->src_itemsize;
+    if (newdata->wrappeddata != NULL) {
+        newdata->wrappeddata =
+                        PyArray_CopyStridedTransferData(data->wrappeddata);
+        if (newdata->wrappeddata == NULL) {
+            PyArray_free(newdata);
+            return NULL;
+        }
+    }
+
+    return newdata;
 }
 
 static void
@@ -775,6 +820,7 @@ PyArray_WrapTransferFunction(npy_intp src_itemsize, npy_intp dst_itemsize,
     /* Allocate the data, and populate it */
     data = (_align_wrap_data *)PyArray_malloc(datasize);
     data->freefunc = (void *)&_align_wrap_data_free;
+    data->copyfunc = (void *)&_align_wrap_data_copy;
     data->tobuffer = tobuffer;
     data->frombuffer = frombuffer;
     data->wrapped = wrapped;
@@ -847,7 +893,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
         }
 
         /* Allocate the data for the casting */
-        data = PyArray_malloc(sizeof(_strided_cast_data));
+        data = (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
         if (data == NULL) {
             PyErr_NoMemory();
             *outstransfer = NULL;
@@ -855,6 +901,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
             return NPY_FAIL;
         }
         data->freefunc = (void*)&(PyArray_free);
+        data->copyfunc = (void*)&(_strided_cast_data_copy);
         data->castfunc = castfunc;
 
 
@@ -942,6 +989,19 @@ PyArray_FreeStridedTransferData(void *transferdata)
                         *((_npy_stridedtransfer_dealloc *)transferdata);
         dealloc(transferdata);
     }
+}
+
+typedef void *(*_npy_stridedtransfer_copy)(void *);
+NPY_NO_EXPORT void *
+PyArray_CopyStridedTransferData(void *transferdata)
+{
+    if (transferdata != NULL) {
+        _npy_stridedtransfer_copy copy =
+                        *((_npy_stridedtransfer_copy *)transferdata + 1);
+        return copy(transferdata);
+    }
+
+    return NULL;
 }
 
 
