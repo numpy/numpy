@@ -90,27 +90,29 @@ mnx (intp *i , intp len)
 /*
  * arr_bincount is registered as bincount.
  *
- * bincount accepts one or two arguments. The first is an array of
- * non-negative integers and the second, if present, is an array of weights,
- * which must be promotable to double.  Call these arguments list and
+ * bincount accepts one, two or three arguments. The first is an array of
+ * non-negative integers The second, if present, is an array of weights,
+ * which must be promotable to double. Call these arguments list and
  * weight. Both must be one-dimensional with len(weight) == len(list). If
  * weight is not present then bincount(list)[i] is the number of occurrences
  * of i in list.  If weight is present then bincount(self,list, weight)[i]
  * is the sum of all weight[j] where list [j] == i.  Self is not used.
+ * The third argument, if present, is a minimum length desired for the
+ * output array.
  */
 static PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *type;
-    PyObject *list = NULL, *weight=Py_None;
+    PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
     PyObject *lst=NULL, *ans=NULL, *wts=NULL;
-    intp *numbers, *ians, len , mxi, mni, ans_size;
+    intp *numbers, *ians, len , mxi, mni, ans_size, minlength;
     int i;
     double *weights , *dans;
-    static char *kwlist[] = {"list", "weights", NULL};
+    static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O",
-                kwlist, &list, &weight)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO",
+                kwlist, &list, &weight, &mlength)) {
             goto fail;
     }
     if (!(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1))) {
@@ -131,6 +133,20 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         goto fail;
     }
     ans_size = numbers [mxi] + 1;
+    if (mlength != Py_None) {
+        if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
+            goto fail;
+        }
+        if (minlength <= 0) {
+            /* superfluous, but may catch incorrect usage */
+            PyErr_SetString(PyExc_ValueError,
+                    "minlength, if specified, must be positive.");
+            goto fail;
+        }
+        if (ans_size < minlength) {
+            ans_size = minlength;
+        }
+    }
     type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
         if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {

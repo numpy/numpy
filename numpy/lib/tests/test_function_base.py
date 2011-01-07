@@ -1026,6 +1026,21 @@ class TestBincount(TestCase):
         y = np.bincount(x, w)
         assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1]))
 
+    def test_with_minlength(self):
+        x = np.array([0, 1, 0, 1, 1])
+        y = np.bincount(x, minlength=3)
+        assert_array_equal(y, np.array([2, 3, 0]))
+
+    def test_with_minlength_smaller_than_maxvalue(self):
+        x = np.array([0, 1, 1, 2, 2, 3, 3])
+        y = np.bincount(x, minlength=2)
+        assert_array_equal(y, np.array([1, 2, 2, 2]))
+
+    def test_with_minlength_and_weights(self):
+        x = np.array([1, 2, 4, 5, 2])
+        w = np.array([0.2, 0.3, 0.5, 0.1, 0.2])
+        y = np.bincount(x, w, 8)
+        assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1, 0, 0]))
 
 class TestInterp(TestCase):
     def test_exceptions(self):
