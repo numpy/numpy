@@ -1748,6 +1748,44 @@ NpyIter_GetIterSize(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Whether the iterator is buffered
+ */
+NPY_NO_EXPORT int
+NpyIter_IsBuffered(NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_BUFFER) != 0;
+}
+
+/*NUMPY_API
+ * Whether the inner loop can grow if buffering is unneeded
+ */
+NPY_NO_EXPORT int
+NpyIter_IsGrowInner(NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_GROWINNER) != 0;
+}
+
+/*NUMPY_API
+ * Gets the size of the buffer, or 0 if buffering is not enabled
+ */
+NPY_NO_EXPORT npy_intp
+NpyIter_GetBufferSize(NpyIter *iter)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+    
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+        return NBF_BUFFERSIZE(bufferdata);
+    }
+    else {
+        return 0;
+    }
+
+}
+
+/*NUMPY_API
  * Gets the range of iteration indices being iterated
  */
 NPY_NO_EXPORT void
