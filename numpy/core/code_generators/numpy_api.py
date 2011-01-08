@@ -252,7 +252,7 @@ multiarray_funcs_api = {
     'PyArray_TimedeltaToTimedeltaStruct':   218,
     'PyArray_DatetimeStructToDatetime':     219,
     'PyArray_TimedeltaStructToTimedelta':   220,
-    'PyArray_MatrixProduct3':               221,
+    'PyArray_MatrixProduct3':               222,
 }
 
 ufunc_types_api = {
