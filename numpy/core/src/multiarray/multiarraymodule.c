@@ -1204,7 +1204,7 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 {
     char *str;
     if (object == NULL || object == Py_None) {
-        *val = PyArray_ANYORDER;
+        *val = NPY_ANYORDER;
     }
     else if (PyUnicode_Check(object)) {
         PyObject *tmp;
@@ -1216,10 +1216,10 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     }
     else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
         if (PyObject_IsTrue(object)) {
-            *val = PyArray_FORTRANORDER;
+            *val = NPY_FORTRANORDER;
         }
         else {
-            *val = PyArray_CORDER;
+            *val = NPY_CORDER;
         }
         if (PyErr_Occurred()) {
             return PY_FAIL;
@@ -1229,13 +1229,16 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     else {
         str = PyBytes_AS_STRING(object);
         if (str[0] == 'C' || str[0] == 'c') {
-            *val = PyArray_CORDER;
+            *val = NPY_CORDER;
         }
         else if (str[0] == 'F' || str[0] == 'f') {
-            *val = PyArray_FORTRANORDER;
+            *val = NPY_FORTRANORDER;
         }
         else if (str[0] == 'A' || str[0] == 'a') {
-            *val = PyArray_ANYORDER;
+            *val = NPY_ANYORDER;
+        }
+        else if (str[0] == 'K' || str[0] == 'k') {
+            *val = NPY_KEEPORDER;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -1482,10 +1485,10 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-#define STRIDING_OK(op, order) ((order) == PyArray_ANYORDER ||          \
-                                ((order) == PyArray_CORDER &&           \
+#define STRIDING_OK(op, order) ((order) == NPY_ANYORDER ||          \
+                                ((order) == NPY_CORDER &&           \
                                  PyArray_ISCONTIGUOUS(op)) ||           \
-                                ((order) == PyArray_FORTRANORDER &&     \
+                                ((order) == NPY_FORTRANORDER &&     \
                                  PyArray_ISFORTRAN(op)))
 
 static PyObject *
@@ -1499,7 +1502,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
-    NPY_ORDER order=PyArray_ANYORDER;
+    NPY_ORDER order=NPY_ANYORDER;
     int flags = 0;
 
     if (PyTuple_GET_SIZE(args) > 2) {
@@ -1560,11 +1563,11 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     if (copy) {
         flags = ENSURECOPY;
     }
-    if (order == PyArray_CORDER) {
+    if (order == NPY_CORDER) {
         flags |= CONTIGUOUS;
     }
-    else if ((order == PyArray_FORTRANORDER)
-             /* order == PyArray_ANYORDER && */
+    else if ((order == NPY_FORTRANORDER)
+             /* order == NPY_ANYORDER && */
              || (PyArray_Check(op) && PyArray_ISFORTRAN(op))) {
         flags |= FORTRAN;
     }
@@ -1599,7 +1602,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"shape","dtype","order",NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
-    NPY_ORDER order = PyArray_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     Bool fortran;
     PyObject *ret = NULL;
 
@@ -1609,7 +1612,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 PyArray_OrderConverter, &order)) {
         goto fail;
     }
-    if (order == PyArray_FORTRANORDER) {
+    if (order == NPY_FORTRANORDER) {
         fortran = TRUE;
     }
     else {
@@ -1695,7 +1698,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
-    NPY_ORDER order = PyArray_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     Bool fortran = FALSE;
     PyObject *ret = NULL;
 
@@ -1705,7 +1708,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 PyArray_OrderConverter, &order)) {
         goto fail;
     }
-    if (order == PyArray_FORTRANORDER) {
+    if (order == NPY_FORTRANORDER) {
         fortran = TRUE;
     }
     else {

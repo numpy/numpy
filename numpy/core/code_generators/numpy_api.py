@@ -291,6 +291,7 @@ multiarray_funcs_api = {
     'NpyIter_GetReadFlags':                 257,
     'NpyIter_GetWriteFlags':                258,
     'NpyIter_DebugPrint':                   259,
+    'PyArray_CastingConverter':             260,
 }
 
 ufunc_types_api = {

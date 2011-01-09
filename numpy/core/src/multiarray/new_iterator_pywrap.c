@@ -209,11 +209,11 @@ npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
     return 0;
 }
 
-/*
+/*NUMPY_API
  * Convert any Python object, *obj*, to an NPY_CASTING enum.
- * TODO: Move elsewhere, add to the NumPy API.
+ * TODO: Move elsewhere
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 {
     char *str = NULL;
