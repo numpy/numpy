@@ -601,8 +601,9 @@ release strategy for this iterator would be to release a 1.X (1.6?) version
 with the iterator added, but not used by the NumPy code.  Then, 2.0 can
 be release with it fully integrated.  If this strategy is chosen, the
 naming convention and API should be finalized as much as possible before
-the 1.X release.  I would suggest the name ``np.iter`` within Python,
-as it is currently unused.
+the 1.X release.  The name ``np.iter`` can't be used because it conflicts
+with the Python built-in ``iter``.  I would suggest the name ``np.nditer``
+within Python, as it is currently unused.
 
 In addition to the performance goals set out for the new iterator,
 it appears the API can be refactored to better support some common
@@ -714,7 +715,8 @@ Construction and Destruction
         dtype = PyArray_DescrFromType(NPY_DOUBLE);
         iter = NpyIter_New(op, NPY_ITER_READWRITE |
                             NPY_ITER_BUFFERED |
-                            NPY_ITER_NBO_ALIGNED,
+                            NPY_ITER_NBO,
+                            NPY_ITER_ALIGNED,
                             NPY_KEEPORDER,
                             NPY_SAME_KIND_CASTING,
                             dtype, 0, NULL);
@@ -884,21 +886,24 @@ Construction and Destruction
             to back to ``op[i]`` on destruction, instead of doing
             the unecessary copy operation.
 
-        ``NPY_ITER_NBO_ALIGNED``
+        ``NPY_ITER_NBO``, ``NPY_ITER_ALIGNED``, ``NPY_ITER_CONTIG``
 
             Causes the iterator to provide data for ``op[i]``
-            that is in native byte order and aligned according to
-            the dtype requirements.
+            that is in native byte order, aligned according to
+            the dtype requirements, contiguous, or any combination.
 
             By default, the iterator produces pointers into the
             arrays provided, which may be aligned or unaligned, and
             with any byte order.  If copying or buffering is not
-            enabled and an alignment fix or byte swapping is required,
+            enabled and the operand data doesn't satisfy the constraints,
             an error will be raised.
 
-            If the requested data type is non-native byte order, this
-            flag overrides it and the requested data type is converted to be
-            native byte order.
+            The contiguous constraint applies only to the inner loop,
+            successive inner loops may have arbitrary pointer changes.
+
+            If the requested data type is in non-native byte order,
+            the NBO flag overrides it and the requested data type is
+            converted to be in native byte order.
 
         ``NPY_ITER_ALLOCATE``
 
@@ -931,6 +936,11 @@ Construction and Destruction
             TODO: Maybe it would be better to introduce a function
             ``NpyIter_GetWrappedOutput`` and remove this flag?
 
+        ``NPY_ITER_NO_BROADCAST``
+
+            Ensures that the input or output matches the iteration
+            dimensions exactly.
+
         ``NPY_ITER_WRITEABLE_REFERENCES``
 
             By default, the iterator fails on creation if the iterator
@@ -958,6 +968,15 @@ Construction and Destruction
     the iterator by calling ``NpyIter_ResetToIterIndexRange`` and
     iterating over the full range.
 
+    When using the iterator in multi-threaded code or in code not
+    holding the Python GIL, care must be taken to only call functions
+    which are safe in that context.  ``NpyIter_Copy`` cannot be safely
+    called without the Python GIL, because it increments Python
+    references.  The ``Reset*`` and some other functions may be safely
+    called by passing in the ``errmsg`` parameter as non-NULL, so that
+    the functions will pass back errors through it instead of setting
+    a Python exception.
+
 ``int NpyIter_UpdateIter(NpyIter *iter, npy_intp i, npy_uint32 op_flags, NPY_CASTING casting, PyArray_Descr *dtype)`` **UNIMPLEMENTED**
 
     Updates the i-th operand within the iterator to possibly have a new
@@ -978,7 +997,7 @@ Construction and Destruction
 
     The flags that may be passed in ``op_flags`` are
     ``NPY_ITER_COPY``, ``NPY_ITER_UPDATEIFCOPY``, 
-    ``NPY_ITER_NBO_ALIGNED``.
+    ``NPY_ITER_NBO``, ``NPY_ITER_ALIGNED``, ``NPY_ITER_CONTIG``.
 
 ``int NpyIter_RemoveCoords(NpyIter *iter)``
 
@@ -1017,14 +1036,18 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
-``int NpyIter_Reset(NpyIter *iter)``
+``int NpyIter_Reset(NpyIter *iter, char **errmsg)``
 
     Resets the iterator back to its initial state, at the beginning
     of the iteration range.
 
-    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.  If errmsg is non-NULL,
+    no Python exception is set when ``NPY_FAIL`` is returned.
+    Instead, \*errmsg is set to an error message.  When errmsg is
+    non-NULL, the function may be safely called without holding
+    the Python GIL.
 
-``int NpyIter_ResetToIterIndexRange(NpyIter *iter, npy_intp istart, npy_intp iend)``
+``int NpyIter_ResetToIterIndexRange(NpyIter *iter, npy_intp istart, npy_intp iend, char **errmsg)``
 
     Resets the iterator and restricts it to the ``iterindex`` range
     ``[istart, iend)``.  See ``NpyIter_Copy`` for an explanation of
@@ -1043,9 +1066,13 @@ Construction and Destruction
         /* Set to the desired range */
         NpyIter_ResetToIterIndexRange(iter, istart, iend);
 
-    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.  If errmsg is non-NULL,
+    no Python exception is set when ``NPY_FAIL`` is returned.
+    Instead, \*errmsg is set to an error message.  When errmsg is
+    non-NULL, the function may be safely called without holding
+    the Python GIL.
 
-``int NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)``
+``int NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs, char **errmsg)``
 
     Resets the iterator back to its initial state, but using the values
     in ``baseptrs`` for the data instead of the pointers from the arrays
@@ -1053,7 +1080,11 @@ Construction and Destruction
     the ``op_axes`` parameter, by nested iteration code with two or more
     iterators.
 
-    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.  If errmsg is non-NULL,
+    no Python exception is set when ``NPY_FAIL`` is returned.
+    Instead, \*errmsg is set to an error message.  When errmsg is
+    non-NULL, the function may be safely called without holding
+    the Python GIL.
 
     *TODO*: Move the following into a special section on nested iterators.
 
@@ -1164,6 +1195,21 @@ Construction and Destruction
     ``NPY_ITER_C_INDEX`` or ``NPY_ITER_F_INDEX``
     flag, 0 otherwise.
 
+``int NpyIter_IsBuffered(NpyIter *iter)``
+
+    Returns 1 if the iterator was created with the
+    ``NPY_ITER_BUFFERED`` flag, 0 otherwise.
+
+``int NpyIter_IsGrowInner(NpyIter *iter)``
+
+    Returns 1 if the iterator was created with the
+    ``NPY_ITER_GROWINNER`` flag, 0 otherwise.
+
+``npy_intp NpyIter_GetBufferSize(NpyIter *iter)``
+
+    If the iterator is buffered, returns the size of the buffer
+    being used, otherwise returns 0.
+
 ``npy_intp NpyIter_GetNDim(NpyIter *iter)``
 
     Returns the number of dimensions being iterated.  If coordinates
@@ -1223,7 +1269,7 @@ Construction and Destruction
 Functions For Iteration
 -----------------------
 
-``NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter)``
+``NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter *iter, char **errmsg)``
 
     Returns a function pointer for iteration.  A specialized version
     of the function pointer may be calculated by this function
@@ -1231,13 +1277,103 @@ Functions For Iteration
     get good performance, it is required that the function pointer
     be saved in a variable rather than retrieved for each loop iteration.
 
-``NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter)``
+    Returns NULL if there is an error.  If errmsg is non-NULL,
+    no Python exception is set when ``NPY_FAIL`` is returned.
+    Instead, \*errmsg is set to an error message.  When errmsg is
+    non-NULL, the function may be safely called without holding
+    the Python GIL.
+
+    The typical looping construct is as follows.::
+
+        NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
+
+        do {
+            /* use the addresses dataptr[0], ... dataptr[niter-1] */
+        } while(iternext(iter));
+
+    When ``NPY_ITER_NO_INNER_ITERATION`` is specified, the typical
+    inner loop construct is as follows.::
+
+        NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
+        npy_intp *stride = NpyIter_GetInnerStrideArray(iter);
+        npy_intp *size_ptr = NpyIter_GetInnerLoopSizePtr(iter), size;
+        npy_intp iiter, niter = NpyIter_GetNIter(iter);
+
+        do {
+            size = *size_ptr;
+            while (size--) {
+                /* use the addresses dataptr[0], ... dataptr[niter-1] */
+                for (iiter = 0; iiter < niter; ++iiter) {
+                    dataptr[iiter] += stride[iiter];
+                }
+            }
+        } while (iternext());
+
+    Observe that we are using the dataptr array inside the iterator, not
+    copying the values to a local temporary.  This is possible because
+    when ``iternext()`` is called, these pointers will be overwritten
+    with fresh values, not incrementally updated.
+
+    If a compile-time fixed buffer is being used (both flags
+    ``NPY_ITER_BUFFERED`` and ``NPY_ITER_NO_INNER_ITERATION``), the
+    inner size may be used as a signal as well.  The size is guaranteed
+    to become zero when ``iternext()`` returns false, enabling the
+    following loop construct.  Note that if you use this construct,
+    you should not pass ``NPY_ITER_GROWINNER`` as a flag, because it
+    will cause larger sizes under some circumstances.::
+
+        /* The constructor should have buffersize passed as this value */
+        #define FIXED_BUFFER_SIZE 1024
+
+        NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
+        npy_intp *stride = NpyIter_GetInnerStrideArray(iter);
+        npy_intp *size_ptr = NpyIter_GetInnerLoopSizePtr(iter), size;
+        npy_intp i, iiter, niter = NpyIter_GetNIter(iter);
+
+        /* One loop with a fixed inner size */
+        size = *size_ptr;
+        while (size == FIXED_BUFFER_SIZE) {
+            /*
+             * This loop could be manually unrolled by a factor
+             * which divides into FIXED_BUFFER_SIZE
+             */
+            for (i = 0; i < FIXED_BUFFER_SIZE; ++i) {
+                /* use the addresses dataptr[0], ... dataptr[niter-1] */
+                for (iiter = 0; iiter < niter; ++iiter) {
+                    dataptr[iiter] += stride[iiter];
+                }
+            }
+            iternext();
+            size = *size_ptr;
+        }
+
+        /* Finish-up loop with variable inner size */
+        if (size > 0) do {
+            size = *size_ptr;
+            while (size--) {
+                /* use the addresses dataptr[0], ... dataptr[niter-1] */
+                for (iiter = 0; iiter < niter; ++iiter) {
+                    dataptr[iiter] += stride[iiter];
+                }
+            }
+        } while (iternext());
+
+``NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter *iter, char **errmsg)``
 
     Returns a function pointer for getting the coordinates
     of the iterator.  Returns NULL if the iterator does not
     support coordinates.  It is recommended that this function
     pointer be cached in a local variable before the iteration
     loop.
+
+    Returns NULL if there is an error.  If errmsg is non-NULL,
+    no Python exception is set when ``NPY_FAIL`` is returned.
+    Instead, \*errmsg is set to an error message.  When errmsg is
+    non-NULL, the function may be safely called without holding
+    the Python GIL.
 
 ``char **NpyIter_GetDataPtrArray(NpyIter *iter)``
 
@@ -1248,7 +1384,8 @@ Functions For Iteration
     item of the inner loop.
 
     This pointer may be cached before the iteration loop, calling
-    ``iternext`` will not change it.
+    ``iternext`` will not change it.  This function may be safely
+    called without holding the Python GIL.
 
 ``npy_intp *NpyIter_GetIndexPtr(NpyIter *iter)``
 
@@ -1267,7 +1404,8 @@ functions provide that information.
     one for each iterated object, to be used by the inner loop.
 
     This pointer may be cached before the iteration loop, calling
-    ``iternext`` will not change it.
+    ``iternext`` will not change it. This function may be safely
+    called without holding the Python GIL.
 
 ``npy_intp* NpyIter_GetInnerLoopSizePtr(NpyIter *iter)``
 
@@ -1275,8 +1413,9 @@ functions provide that information.
     inner loop should execute.
 
     This address may be cached before the iteration loop, calling
-    ``iternext`` will not change it.  The value itself may change
-    during iteration, in particular if buffering is enabled.
+    ``iternext`` will not change it.  The value itself may change during
+    iteration, in particular if buffering is enabled.  This function
+    may be safely called without holding the Python GIL.
 
 Examples
 --------
