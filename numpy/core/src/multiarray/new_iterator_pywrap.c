@@ -35,9 +35,9 @@ void npyiter_cache_values(NewNpyArrayIterObject *self)
     NpyIter *iter = self->iter;
 
     /* iternext and getcoords functions */
-    self->iternext = NpyIter_GetIterNext(iter);
+    self->iternext = NpyIter_GetIterNext(iter, NULL);
     if (NpyIter_HasCoords(iter) && !NpyIter_HasDelayedBufAlloc(iter)) {
-        self->getcoords = NpyIter_GetGetCoords(iter);
+        self->getcoords = NpyIter_GetGetCoords(iter, NULL);
     }
     else {
         self->getcoords = NULL;
@@ -1071,7 +1071,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
          * at the right data
          */
         if (NpyIter_ResetBasePointers(iter->nested_child->iter,
-                                iter->dataptrs) != NPY_SUCCEED) {
+                                iter->dataptrs, NULL) != NPY_SUCCEED) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -1105,7 +1105,7 @@ npyiter_resetbasepointers(NewNpyArrayIterObject *self)
 {
     while (self->nested_child) {
         if (NpyIter_ResetBasePointers(self->nested_child->iter,
-                                        self->dataptrs) != NPY_SUCCEED) {
+                                        self->dataptrs, NULL) != NPY_SUCCEED) {
             return NPY_FAIL;
         }
         self = self->nested_child;
@@ -1125,14 +1125,14 @@ npyiter_reset(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (NpyIter_Reset(self->iter) != NPY_SUCCEED) {
+    if (NpyIter_Reset(self->iter, NULL) != NPY_SUCCEED) {
         return NULL;
     }
     self->started = 0;
     self->finished = 0;
 
     if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
-        self->getcoords = NpyIter_GetGetCoords(self->iter);
+        self->getcoords = NpyIter_GetGetCoords(self->iter, NULL);
     }
 
     /* If there is nesting, the nested iterators should be reset */
@@ -1644,7 +1644,7 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
         return -1;
     }
 
-    if (NpyIter_ResetToIterIndexRange(self->iter, istart, iend)
+    if (NpyIter_ResetToIterIndexRange(self->iter, istart, iend, NULL)
                                                     != NPY_SUCCEED) {
         return -1;
     }
@@ -1656,7 +1656,7 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 
     if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
-        self->getcoords = NpyIter_GetGetCoords(self->iter);
+        self->getcoords = NpyIter_GetGetCoords(self->iter, NULL);
     }
 
     /* If there is nesting, the nested iterators should be reset */

@@ -71,7 +71,7 @@ struct NpyIter_InternalOnly {
     npy_uint32 itflags;
     npy_uint16 ndim, niter;
     npy_intp itersize, iterstart, iterend;
-    /* iterindex is only used if RANGED or BUFFERED was set */
+    /* iterindex is only used if RANGED or BUFFERED is set */
     npy_intp iterindex;
     /* The rest is variable */
     char iter_flexdata;
@@ -293,7 +293,7 @@ npyiter_get_priority_subtype(npy_intp niter, PyArrayObject **op,
                             double *subtype_priority, PyTypeObject **subtype);
 
 static int
-npyiter_allocate_buffers(NpyIter *iter);
+npyiter_allocate_buffers(NpyIter *iter, char **errmsg);
 static void npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex);
 static void
 npyiter_copy_from_buffers(NpyIter *iter);
@@ -573,7 +573,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         }
         else {
             /* Allocate the buffers */
-            if (!npyiter_allocate_buffers(iter)) {
+            if (!npyiter_allocate_buffers(iter, NULL)) {
                 NpyIter_Deallocate(iter);
                 return NULL;
             }
@@ -777,7 +777,7 @@ NpyIter_RemoveCoords(NpyIter *iter)
     npy_uint32 itflags;
 
     /* Make sure the iterator is reset */
-    if (NpyIter_Reset(iter) != NPY_SUCCEED) {
+    if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
         return NPY_FAIL;
     }
 
@@ -832,14 +832,19 @@ NpyIter_RemoveInnerLoop(NpyIter *iter)
     }
 
     /* Reset the iterator */
-    return NpyIter_Reset(iter);
+    return NpyIter_Reset(iter, NULL);
 }
 
 /*NUMPY_API
  * Resets the iterator to its initial state
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
  */
 NPY_NO_EXPORT int
-NpyIter_Reset(NpyIter *iter)
+NpyIter_Reset(NpyIter *iter, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -850,7 +855,7 @@ NpyIter_Reset(NpyIter *iter)
 
         /* If buffer allocation was delayed, do it now */
         if (itflags&NPY_ITFLAG_DELAYBUF) {
-            if (!npyiter_allocate_buffers(iter)) {
+            if (!npyiter_allocate_buffers(iter, errmsg)) {
                 return NPY_FAIL;
             }
             NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_DELAYBUF;
@@ -884,9 +889,14 @@ NpyIter_Reset(NpyIter *iter)
 
 /*NUMPY_API
  * Resets the iterator to its initial state, with new base data pointers
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
  */
 NPY_NO_EXPORT int
-NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
+NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -898,7 +908,7 @@ NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
     if (itflags&NPY_ITFLAG_BUFFER) {
         /* If buffer allocation was delayed, do it now */
         if (itflags&NPY_ITFLAG_DELAYBUF) {
-            if (!npyiter_allocate_buffers(iter)) {
+            if (!npyiter_allocate_buffers(iter, errmsg)) {
                 return NPY_FAIL;
             }
             NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_DELAYBUF;
@@ -926,39 +936,61 @@ NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs)
 
 /*NUMPY_API
  * Resets the iterator to a new iterator index range
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
  */
 NPY_NO_EXPORT int
 NpyIter_ResetToIterIndexRange(NpyIter *iter,
-                              npy_intp istart, npy_intp iend)
+                              npy_intp istart, npy_intp iend, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     /*npy_intp ndim = NIT_NDIM(iter);*/
     /*npy_intp niter = NIT_NITER(iter);*/
 
     if (!(itflags&NPY_ITFLAG_RANGE)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot call ResetToIterIndexRange on an iterator without "
-                "requesting ranged iteration support in the constructor");
+        if (errmsg == NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot call ResetToIterIndexRange on an iterator without "
+                    "requesting ranged iteration support in the constructor");
+        }
+        else {
+            *errmsg = "Cannot call ResetToIterIndexRange on an iterator "
+                      "without requesting ranged iteration support in the "
+                    "constructor";
+        }
         return NPY_FAIL;
     }
 
     if (istart < 0 || iend > NIT_ITERSIZE(iter)) {
-        PyErr_Format(PyExc_ValueError,
-                "Out-of-bounds range [%d, %d) passed to "
-                "ResetToIterIndexRange", (int)istart, (int)iend);
+        if (errmsg == NULL) {
+            PyErr_Format(PyExc_ValueError,
+                    "Out-of-bounds range [%d, %d) passed to "
+                    "ResetToIterIndexRange", (int)istart, (int)iend);
+        }
+        else {
+            *errmsg = "Out-of-bounds range passed to ResetToIterIndexRange";
+        }
         return NPY_FAIL;
     }
     else if (iend < istart) {
-        PyErr_Format(PyExc_ValueError,
-                "Invalid range [%d, %d) passed to ResetToIterIndexRange",
-                (int)istart, (int)iend);
+        if (errmsg == NULL) {
+            PyErr_Format(PyExc_ValueError,
+                    "Invalid range [%d, %d) passed to ResetToIterIndexRange",
+                    (int)istart, (int)iend);
+        }
+        else {
+            *errmsg = "Invalid range passed to ResetToIterIndexRange";
+        }
         return NPY_FAIL;
     }
 
     NIT_ITERSTART(iter) = istart;
     NIT_ITEREND(iter) = iend;
 
-    return NpyIter_Reset(iter);
+    return NpyIter_Reset(iter, errmsg);
 }
 
 /*NUMPY_API
@@ -1468,9 +1500,14 @@ npyiter_iternext_sizeone(NpyIter *iter)
 
 /*NUMPY_API
  * Compute the specialized iteration function for an iterator
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
  */
 NPY_NO_EXPORT NpyIter_IterNext_Fn
-NpyIter_GetIterNext(NpyIter *iter)
+NpyIter_GetIterNext(NpyIter *iter, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1550,10 +1587,16 @@ NpyIter_GetIterNext(NpyIter *iter)
 /**end repeat**/
     }
     /* The switch above should have caught all the possibilities. */
-    PyErr_Format(PyExc_ValueError,
-            "GetIterNext internal iterator error - unexpected "
-            "itflags/ndim/niter combination (%04x/%d/%d)",
-            (int)itflags, (int)ndim, (int)niter);
+    if (errmsg == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "GetIterNext internal iterator error - unexpected "
+                "itflags/ndim/niter combination (%04x/%d/%d)",
+                (int)itflags, (int)ndim, (int)niter);
+    }
+    else {
+        *errmsg = "GetIterNext internal iterator error - unexpected "
+                  "itflags/ndim/niter combination";
+    }
     return NULL;
 }
 
@@ -1619,9 +1662,14 @@ npyiter_getcoord_itflags@tag_itflags@(NpyIter *iter, npy_intp *outcoord)
 
 /*NUMPY_API
  * Compute a specialized getcoords function for the iterator
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
  */
 NPY_NO_EXPORT NpyIter_GetCoords_Fn
-NpyIter_GetGetCoords(NpyIter *iter)
+NpyIter_GetGetCoords(NpyIter *iter, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -1631,15 +1679,28 @@ NpyIter_GetGetCoords(NpyIter *iter)
     if ((itflags&(NPY_ITFLAG_HASCOORDS|NPY_ITFLAG_DELAYBUF)) !=
             NPY_ITFLAG_HASCOORDS) {
         if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Cannot retrieve a GetCoords function for an iterator "
-                    "that doesn't track coordinates.");
+            if (errmsg == NULL) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot retrieve a GetCoords function for an iterator "
+                        "that doesn't track coordinates.");
+            }
+            else {
+                *errmsg = "Cannot retrieve a GetCoords function for an "
+                          "iterator that doesn't track coordinates.";
+            }
             return NULL;
         }
         else {
-            PyErr_SetString(PyExc_ValueError,
-                    "Cannot retrieve a GetCoords function for an iterator "
-                    "that used DELAY_BUFALLOC before a Reset call");
+            if (errmsg == NULL) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot retrieve a GetCoords function for an iterator "
+                        "that used DELAY_BUFALLOC before a Reset call");
+            }
+            else {
+                *errmsg = "Cannot retrieve a GetCoords function for an "
+                          "iterator that used DELAY_BUFALLOC before a "
+                          "Reset call";
+            }
             return NULL;
         }
     }
@@ -1676,10 +1737,16 @@ NpyIter_GetGetCoords(NpyIter *iter)
 /**end repeat**/
     }
     /* The switch above should have caught all the possibilities. */
-    PyErr_Format(PyExc_ValueError,
-            "GetGetCoords internal iterator error - unexpected "
-            "itflags/ndim/niter combination (%04x/%d/%d)",
-            (int)itflags, (int)ndim, (int)niter);
+    if (errmsg == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "GetGetCoords internal iterator error - unexpected "
+                "itflags/ndim/niter combination (%04x/%d/%d)",
+                (int)itflags, (int)ndim, (int)niter);
+    }
+    else {
+        *errmsg = "GetGetCoords internal iterator error - unexpected "
+                  "itflags/ndim/niter combination";
+    }
     return NULL;
 
 }
@@ -1835,6 +1902,8 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
 
 /*NUMPY_API
  * Get the array of data pointers (1 per object being iterated)
+ *
+ * This function may be safely called without holding the Python GIL.
  */
 NPY_NO_EXPORT char **
 NpyIter_GetDataPtrArray(NpyIter *iter)
@@ -1998,6 +2067,8 @@ NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
 
 /*NUMPY_API
  * Get the array of strides for the inner loop (when HasInnerLoop is false)
+ *
+ * This function may be safely called without holding the Python GIL.
  */
 NPY_NO_EXPORT npy_intp *
 NpyIter_GetInnerStrideArray(NpyIter *iter)
@@ -2018,6 +2089,8 @@ NpyIter_GetInnerStrideArray(NpyIter *iter)
 
 /*NUMPY_API
  * Get a pointer to the size of the inner loop  (when HasInnerLoop is false)
+ *
+ * This function may be safely called without holding the Python GIL.
  */
 NPY_NO_EXPORT npy_intp *
 NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
@@ -4003,8 +4076,15 @@ npyiter_promote_types(int type1, int type2)
     return NPY_NOTYPE;
 }
 
+/*
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
+ */
 static int
-npyiter_allocate_buffers(NpyIter *iter)
+npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -4102,7 +4182,12 @@ fail:
             writetransferdata[iiter] = NULL;
         }
     }
-    PyErr_NoMemory();
+    if (errmsg == NULL) {
+        PyErr_NoMemory();
+    }
+    else {
+        *errmsg = "out of memory";
+    }
     return 0;
 }
 
