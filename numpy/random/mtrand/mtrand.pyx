@@ -3474,10 +3474,18 @@ cdef class RandomState:
         """
         cdef ndarray olam
         cdef double flam
+        cdef double lam_max
+        cdef unsigned long One
+        # This might be easier if we could just use LONG_MAX
+        One = 1
+        lam_max = One << ( sizeof(long)*8 - 1 )
+
         flam = PyFloat_AsDouble(lam)
         if not PyErr_Occurred():
             if lam < 0:
                 raise ValueError("lam < 0")
+            elif lam > lam_max:
+                raise ValueError("lam > LONG_MAX")
             return discd_array_sc(self.internal_state, rk_poisson, size, flam)
 
         PyErr_Clear()
@@ -3485,6 +3493,8 @@ cdef class RandomState:
         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ALIGNED)
         if np.any(np.less(olam, 0)):
             raise ValueError("lam < 0")
+        elif np.any(np.less(lam_max, olam)):
+            raise ValueError("lam > LONG_MAX")
         return discd_array(self.internal_state, rk_poisson, size, olam)
 
     def zipf(self, a, size=None):
