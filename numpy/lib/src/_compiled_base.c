@@ -140,7 +140,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         if (minlength <= 0) {
             /* superfluous, but may catch incorrect usage */
             PyErr_SetString(PyExc_ValueError,
-                    "minlength, if specified, must be positive.");
+                    "minlength must be positive");
             goto fail;
         }
         if (ans_size < minlength) {
