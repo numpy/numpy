@@ -1183,7 +1183,8 @@ npyiter_copy(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_iternext(NewNpyArrayIterObject *self)
 {
-    if (self->iter != NULL && !self->finished && self->iternext(self->iter)) {
+    if (self->iter != NULL && self->iternext != NULL &&
+                        !self->finished && self->iternext(self->iter)) {
         /* If there is nesting, the nested iterators should be reset */
         if (npyiter_resetbasepointers(self) != NPY_SUCCEED) {
             return NULL;
@@ -1279,7 +1280,12 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
             return NULL;
         }
         for (iiter = 0; iiter < niter; ++iiter) {
-            PyTuple_SET_ITEM(ret, iiter, npyiter_seq_item(self, iiter));
+            PyObject *a = npyiter_seq_item(self, iiter);
+            if (a == NULL) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(ret, iiter, a);
         }
     }
 
@@ -1350,7 +1356,7 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
-    if (self->iter == NULL || self->finished) {
+    if (self->iter == NULL || self->iternext == NULL || self->finished) {
         return NULL;
     }
 

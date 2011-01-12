@@ -232,6 +232,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                         char **op_dataptr,
                         PyArray_Descr *op_request_dtype,
                         PyArray_Descr** op_dtype,
+                        npy_uint32 flags,
                         npy_uint32 op_flags, char *op_itflags);
 static int
 npyiter_prepare_operands(npy_intp niter, PyArrayObject **op_in,
@@ -239,6 +240,7 @@ npyiter_prepare_operands(npy_intp niter, PyArrayObject **op_in,
                     char **op_dataptr,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
+                    npy_uint32 flags,
                     npy_uint32 *op_flags, char *op_itflags);
 static int
 npyiter_check_casting(npy_intp niter, PyArrayObject **op,
@@ -379,6 +381,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /* Prepare all the operands */
     if (!npyiter_prepare_operands(niter, op_in, op, op_dataptr,
                         op_request_dtypes, op_dtype,
+                        flags,
                         op_flags, op_itflags)) {
         PyArray_free(iter);
         return NULL;
@@ -2351,6 +2354,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                         char **op_dataptr,
                         PyArray_Descr *op_request_dtype,
                         PyArray_Descr **op_dtype,
+                        npy_uint32 flags,
                         npy_uint32 op_flags, char *op_itflags)
 {
     /* NULL operands must be automatically allocated outputs */
@@ -2358,24 +2362,32 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* ALLOCATE should be enabled */
         if (!(op_flags&NPY_ITER_ALLOCATE)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator input was NULL, but automatic allocation as an "
+                    "Iterator operand was NULL, but automatic allocation as an "
                     "output wasn't requested");
             return 0;
         }
-        /* Reading should be disabled */
-        /* Disable this check for now, since except in one case (buffering
-         * without delayed buffer allocation), the caller can use
-         * NpyIter_GetObjectArray to initialize it after the iterator
-         * is created.
-         * TODO: Maybe reenable it when buffering is on, but delayed buffer
-         * allocation is off.
-        if ((*op_itflags)&NPY_OP_ITFLAG_READ) {
+        /* Writing should be enabled */
+        if (!((*op_itflags)&NPY_OP_ITFLAG_WRITE)) {
             PyErr_SetString(PyExc_ValueError,
                     "Automatic allocation was requested for an iterator "
-                    "operand, but it wasn't flagged as write only");
+                    "operand, but it wasn't flagged for writing");
             return 0;
         }
-        */
+        /*
+         * Reading should be disabled if buffering is enabled without
+         * also enabling NPY_ITER_DELAY_BUFALLOC.  In all other cases,
+         * the caller may initialize the allocated operand to a value
+         * before beginning iteration.
+         */
+        if (((flags&(NPY_ITER_BUFFERED|
+                        NPY_ITER_DELAY_BUFALLOC)) == NPY_ITER_BUFFERED) &&
+                ((*op_itflags)&NPY_OP_ITFLAG_READ)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Automatic allocation was requested for an iterator "
+                    "operand, and it was flagged as readable, but buffering "
+                    " without delayed allocation was enabled");
+            return 0;
+        }
         *op_dataptr = NULL;
         /* If a requested dtype was provided, use it, otherwise NULL */
         Py_XINCREF(op_request_dtype);
@@ -2513,6 +2525,7 @@ npyiter_prepare_operands(npy_intp niter, PyArrayObject **op_in,
                     char **op_dataptr,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
+                    npy_uint32 flags,
                     npy_uint32 *op_flags, char *op_itflags)
 {
     npy_intp iiter, i;
@@ -2539,6 +2552,7 @@ npyiter_prepare_operands(npy_intp niter, PyArrayObject **op_in,
                         &op_dataptr[iiter],
                         op_request_dtypes ? op_request_dtypes[iiter] : NULL,
                         &op_dtype[iiter],
+                        flags,
                         op_flags[iiter], &op_itflags[iiter])) {
             for (i = 0; i <= iiter; ++i) {
                 Py_XDECREF(op[i]);

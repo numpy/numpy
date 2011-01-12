@@ -1073,6 +1073,18 @@ def test_iter_allocate_output_simple():
     assert_equal(i.operands[1].shape, a.shape)
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
 
+def test_iter_allocate_output_buffered_readwrite():
+    # Allocated output with buffering + delay_bufalloc
+
+    a = arange(6)
+    i = newiter([a,None], ['buffered','delay_bufalloc'],
+                        [['readonly'],['allocate','readwrite']])
+    i.operands[1][:] = 1
+    i.reset()
+    for x in i:
+        x[1][()] += x[0][()]
+    assert_equal(i.operands[1], a+1)
+
 def test_iter_allocate_output_itorder():
     # The allocated output should match the iteration order
 
@@ -1182,6 +1194,12 @@ def test_iter_allocate_output_errors():
     a = arange(6)
     assert_raises(TypeError, newiter, [a,None], [],
                         [['writeonly'],['writeonly','allocate']])
+    # Allocated output should be flagged for writing
+    assert_raises(ValueError, newiter, [a,None], [],
+                        [['readonly'],['allocate','readonly']])
+    # Allocated output can't have buffering without delayed bufalloc
+    assert_raises(ValueError, newiter, [a,None], ['buffered'],
+                                            ['allocate','readwrite'])
     # Must specify at least one input
     assert_raises(ValueError, newiter, [None,None], [],
                         [['writeonly','allocate'],
