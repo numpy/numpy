@@ -293,6 +293,8 @@ npyiter_get_priority_subtype(npy_intp niter, PyArrayObject **op,
                             double *subtype_priority, PyTypeObject **subtype);
 
 static int
+npyiter_allocate_transfer_functions(NpyIter *iter);
+static int
 npyiter_allocate_buffers(NpyIter *iter, char **errmsg);
 static void npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex);
 static void
@@ -567,6 +569,10 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 
     /* If buffering is set without delayed allocation */
     if (itflags&NPY_ITFLAG_BUFFER) {
+        if (!npyiter_allocate_transfer_functions(iter)) {
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
         if (itflags&NPY_ITFLAG_DELAYBUF) {
             /* Make the data pointers NULL */
             memset(NBF_PTRS(bufferdata), 0, niter*NPY_SIZEOF_INTP);
@@ -2357,12 +2363,19 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             return 0;
         }
         /* Reading should be disabled */
+        /* Disable this check for now, since except in one case (buffering
+         * without delayed buffer allocation), the caller can use
+         * NpyIter_GetObjectArray to initialize it after the iterator
+         * is created.
+         * TODO: Maybe reenable it when buffering is on, but delayed buffer
+         * allocation is off.
         if ((*op_itflags)&NPY_OP_ITFLAG_READ) {
             PyErr_SetString(PyExc_ValueError,
                     "Automatic allocation was requested for an iterator "
                     "operand, but it wasn't flagged as write only");
             return 0;
         }
+        */
         *op_dataptr = NULL;
         /* If a requested dtype was provided, use it, otherwise NULL */
         Py_XINCREF(op_request_dtype);
@@ -2416,9 +2429,41 @@ npyiter_prepare_one_operand(PyArrayObject **op,
          * requested type.
          */
         if (op_request_dtype != NULL) {
+            /* We just have a borrowed reference to op_request_dtype */
+            Py_INCREF(op_request_dtype);
+            /* If it's a data type without a size, set the size */
+            if (op_request_dtype->elsize == 0) {
+                PyArray_DESCR_REPLACE(op_request_dtype);
+                if (op_request_dtype == NULL) {
+                    return 0;
+                }
+
+                if (op_request_dtype->type_num == NPY_STRING) {
+                    switch((*op_dtype)->type_num) {
+                        case NPY_STRING:
+                            op_request_dtype->elsize = (*op_dtype)->elsize;
+                            break;
+                        case NPY_UNICODE:
+                            op_request_dtype->elsize = (*op_dtype)->elsize >> 2;
+                            break;
+                    }
+                }
+                else if (op_request_dtype->type_num == NPY_UNICODE) {
+                    switch((*op_dtype)->type_num) {
+                        case NPY_STRING:
+                            op_request_dtype->elsize = (*op_dtype)->elsize << 2;
+                            break;
+                        case NPY_UNICODE:
+                            op_request_dtype->elsize = (*op_dtype)->elsize;
+                            break;
+                    }
+                }
+                else if (op_request_dtype->type_num == NPY_VOID) {
+                    op_request_dtype->elsize = (*op_dtype)->elsize;
+                }
+            }
             /* Store the requested dtype */
             Py_DECREF(*op_dtype);
-            Py_INCREF(op_request_dtype);
             *op_dtype = op_request_dtype;
         }
 
@@ -2568,7 +2613,18 @@ npyiter_can_cast(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting)
                 Py_DECREF(nbo_to);
             }
             else {
-                ret = PyArray_EquivTypes(from, to);
+                if (from->type_num == NPY_STRING ||
+                                    from->type_num == NPY_UNICODE) {
+                    if (casting == NPY_SAME_KIND_CASTING) {
+                        ret = 1;
+                    }
+                    else {
+                        ret = (from->elsize <= to->elsize);
+                    }
+                }
+                else {
+                    ret = PyArray_EquivTypes(from, to);
+                }
             }
             return ret;
         }
@@ -3889,7 +3945,7 @@ npyiter_get_priority_subtype(npy_intp niter, PyArrayObject **op,
     npy_intp iiter;
 
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_itflags[iiter]&NPY_OP_ITFLAG_READ) {
+        if (op[iiter] != NULL && op_itflags[iiter]&NPY_OP_ITFLAG_READ) {
             double priority = PyArray_GetPriority((PyObject *)op[iiter], 0.0);
             if (priority > *subtype_priority) {
                 *subtype_priority = priority;
@@ -4076,15 +4132,8 @@ npyiter_promote_types(int type1, int type2)
     return NPY_NOTYPE;
 }
 
-/*
- *
- * If errmsg is non-NULL, it should point to a variable which will
- * receive the error message, and no Python exception will be set.
- * This is so that the function can be called from code not holding
- * the GIL.
- */
 static int
-npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
+npyiter_allocate_transfer_functions(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp ndim = NIT_NDIM(iter);
@@ -4097,8 +4146,6 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
     PyArrayObject **op = NIT_OBJECTS(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
-    npy_intp buffersize = NBF_BUFFERSIZE(bufferdata);
-    char *buffer, **buffers = NBF_BUFFERS(bufferdata);
     PyArray_StridedTransferFn *readtransferfn = NBF_READTRANSFERFN(bufferdata),
                         *writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
     void **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
@@ -4113,17 +4160,9 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
 
         /*
          * If we have determined that a buffer may be needed,
-         * allocate one.
+         * allocate the appropriate transfer functions
          */
         if (!(flags&NPY_OP_ITFLAG_BUFNEVER)) {
-            npy_intp itemsize = op_dtype[iiter]->elsize;
-            buffer = PyArray_malloc(itemsize*buffersize);
-            if (buffer == NULL) {
-                goto fail;
-            }
-            buffers[iiter] = buffer;
-
-            /* Also need to get an appropriate transfer functions */
             if (flags&NPY_OP_ITFLAG_READ) {
                 if (PyArray_GetDTypeTransferFunction(
                                         (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
@@ -4169,10 +4208,6 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
 
 fail:
     for (i = 0; i < iiter; ++i) {
-        if (buffers[i] != NULL) {
-            PyArray_free(buffers[i]);
-            buffers[i] = NULL;
-        }
         if (readtransferdata[iiter] != NULL) {
             PyArray_FreeStridedTransferData(readtransferdata[iiter]);
             readtransferdata[iiter] = NULL;
@@ -4182,11 +4217,61 @@ fail:
             writetransferdata[iiter] = NULL;
         }
     }
-    if (errmsg == NULL) {
-        PyErr_NoMemory();
+    return 0;
+}
+
+/*
+ *
+ * If errmsg is non-NULL, it should point to a variable which will
+ * receive the error message, and no Python exception will be set.
+ * This is so that the function can be called from code not holding
+ * the GIL.
+ */
+static int
+npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
+{
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp iiter = 0, niter = NIT_NITER(iter);
+
+    npy_intp i;
+    char *op_itflags = NIT_OPITFLAGS(iter);
+    NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+    PyArray_Descr **op_dtype = NIT_DTYPES(iter);
+    npy_intp buffersize = NBF_BUFFERSIZE(bufferdata);
+    char *buffer, **buffers = NBF_BUFFERS(bufferdata);
+
+    for (iiter = 0; iiter < niter; ++iiter) {
+        char flags = op_itflags[iiter];
+
+        /*
+         * If we have determined that a buffer may be needed,
+         * allocate one.
+         */
+        if (!(flags&NPY_OP_ITFLAG_BUFNEVER)) {
+            npy_intp itemsize = op_dtype[iiter]->elsize;
+            buffer = PyArray_malloc(itemsize*buffersize);
+            if (buffer == NULL) {
+                if (errmsg == NULL) {
+                    PyErr_NoMemory();
+                }
+                else {
+                    *errmsg = "out of memory";
+                }
+                goto fail;
+            }
+            buffers[iiter] = buffer;
+        }
     }
-    else {
-        *errmsg = "out of memory";
+
+    return 1;
+
+fail:
+    for (i = 0; i < iiter; ++i) {
+        if (buffers[i] != NULL) {
+            PyArray_free(buffers[i]);
+            buffers[i] = NULL;
+        }
     }
     return 0;
 }
@@ -4345,6 +4430,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
 
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
+    PyArrayObject **operands = NIT_OBJECTS(iter);
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
@@ -4430,7 +4516,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
                     ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                     &NAD_COORD(axisdata), axisdata_incr,
                     &NAD_SHAPE(axisdata), axisdata_incr,
-                    transfersize, dtypes[iiter]->elsize,
+                    transfersize, PyArray_DESCR(operands[iiter])->elsize,
                     stransfer,
                     transferdata);
         }

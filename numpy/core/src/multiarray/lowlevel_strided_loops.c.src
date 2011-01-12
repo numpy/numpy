@@ -115,7 +115,7 @@
 static void
 @prefix@_@oper@_size@elsize@(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(itemsize),
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         void *NPY_UNUSED(data))
 {
     /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
@@ -175,7 +175,7 @@ static void
 @prefix@_@oper@_size@elsize@_srcstride0(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(itemsize),
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         void *NPY_UNUSED(data))
 {
 #if @elsize@ != 16
@@ -219,11 +219,11 @@ static void
 static void
 _strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *NPY_UNUSED(data))
 {
     while (N > 0) {
-        memcpy(dst, src, itemsize);
+        memcpy(dst, src, src_itemsize);
         dst += dst_stride;
         src += src_stride;
         --N;
@@ -233,16 +233,16 @@ _strided_to_strided(char *dst, npy_intp dst_stride,
 static void
 _swap_strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *NPY_UNUSED(data))
 {
     char *a, *b, c;
 
     while (N > 0) {
-        memcpy(dst, src, itemsize);
+        memcpy(dst, src, src_itemsize);
         /* general in-place swap */
         a = dst;
-        b = dst + itemsize - 1;
+        b = dst + src_itemsize - 1;
         while (a < b) {
             c = *a;
             *a = *b;
@@ -258,14 +258,14 @@ _swap_strided_to_strided(char *dst, npy_intp dst_stride,
 static void
 _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *NPY_UNUSED(data))
 {
     char *a, *b, c;
-    npy_intp itemsize_half = itemsize / 2;
+    npy_intp itemsize_half = src_itemsize / 2;
 
     while (N > 0) {
-        memcpy(dst, src, itemsize);
+        memcpy(dst, src, src_itemsize);
         /* general in-place swap */
         a = dst;
         b = dst + itemsize_half - 1;
@@ -293,12 +293,12 @@ _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
 static void
 _strided_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *NPY_UNUSED(data))
 {
     while (N > 0) {
-        memcpy(dst, src, itemsize);
-        dst += itemsize;
+        memcpy(dst, src, src_itemsize);
+        dst += src_itemsize;
         src += src_stride;
         --N;
     }
@@ -307,13 +307,13 @@ _strided_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
 static void
 _contig_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *NPY_UNUSED(data))
 {
     while (N > 0) {
-        memcpy(dst, src, itemsize);
+        memcpy(dst, src, src_itemsize);
         dst += dst_stride;
-        src += itemsize;
+        src += src_itemsize;
         --N;
     }
 }
@@ -321,10 +321,10 @@ _contig_to_strided(char *dst, npy_intp dst_stride,
 static void
 _contig_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *NPY_UNUSED(data))
 {
-    memcpy(dst, src, itemsize*N);
+    memcpy(dst, src, src_itemsize*N);
 }
 
 
@@ -656,6 +656,85 @@ NPY_NO_EXPORT PyArray_StridedTransferFn
 
 /**end repeat**/
 
+/* Does a zero-padded copy */
+typedef struct {
+    void *freefunc, *copyfunc;
+    npy_intp dst_itemsize;
+} _strided_zero_pad_data;
+
+/* zero-padded data copy function */
+_strided_zero_pad_data *_strided_zero_pad_data_copy(
+                                        _strided_zero_pad_data *data)
+{
+    _strided_zero_pad_data *newdata = 
+            (_strided_zero_pad_data *)PyArray_malloc(
+                                    sizeof(_strided_zero_pad_data));
+    if (newdata == NULL) {
+        return NULL;
+    }
+
+    memcpy(newdata, data, sizeof(_strided_zero_pad_data));
+
+    return newdata;
+}
+
+/*
+ * Does a strided to strided zero-padded copy for the case where
+ * dst_itemsize > src_itemsize
+ */
+static void
+_strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    _strided_zero_pad_data *d = (_strided_zero_pad_data *)data;
+    npy_intp dst_itemsize = d->dst_itemsize;
+    npy_intp zero_size = dst_itemsize-src_itemsize;
+
+    while (N > 0) {
+        memcpy(dst, src, src_itemsize);
+        memset(dst + src_itemsize, 0, zero_size);
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+}
+
+NPY_NO_EXPORT int
+PyArray_GetStridedZeroPadCopyFn(npy_intp aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            npy_intp src_itemsize, npy_intp dst_itemsize,
+                            PyArray_StridedTransferFn *outstransfer,
+                            void **outtransferdata)
+{
+    if (src_itemsize >= dst_itemsize) {
+        /* If the sizes are different, the alignment flag isn't trustworthy */
+        if (src_itemsize != dst_itemsize) {
+            aligned = 0;
+        }
+        *outstransfer = PyArray_GetStridedCopyFn(aligned, src_stride,
+                                dst_stride, dst_itemsize);
+        *outtransferdata = NULL;
+        return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+    }
+    else {
+        _strided_zero_pad_data *d = PyArray_malloc(
+                                        sizeof(_strided_zero_pad_data));
+        if (d == NULL) {
+            PyErr_NoMemory();
+            return NPY_FAIL;
+        }
+        d->dst_itemsize = dst_itemsize;
+        d->freefunc = &PyArray_free;
+        d->copyfunc = &_strided_zero_pad_data_copy;
+
+        *outstransfer = &_strided_to_strided_zero_pad_copy;
+        *outtransferdata = d;
+        return NPY_SUCCEED;
+    }
+}
+
 /* Does a simple aligned cast */
 typedef struct {
     void *freefunc, *copyfunc;
@@ -679,7 +758,7 @@ _strided_cast_data *_strided_cast_data_copy(_strided_cast_data *data)
 static void
 _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *data)
 {
     PyArray_VectorUnaryFunc *castfunc = ((_strided_cast_data *)data)->castfunc;
@@ -754,14 +833,14 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
 static void
 _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp itemsize,
+                        npy_intp N, npy_intp src_itemsize,
                         void *data)
 {
     _align_wrap_data *d = (_align_wrap_data *)data;
     PyArray_StridedTransferFn wrapped = d->wrapped,
             tobuffer = d->tobuffer,
             frombuffer = d->frombuffer;
-    npy_intp src_itemsize = d->src_itemsize, dst_itemsize = d->dst_itemsize;
+    npy_intp dst_itemsize = d->dst_itemsize;
     void *wrappeddata = d->wrappeddata;
     char *bufferin = d->bufferin, *bufferout = d->bufferout;
 
@@ -770,7 +849,7 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
             tobuffer(bufferin, src_itemsize, src, src_stride, 32,
                                             src_itemsize, NULL);
             wrapped(bufferout, dst_itemsize, bufferin, src_itemsize, 32,
-                                            itemsize, wrappeddata);
+                                            src_itemsize, wrappeddata);
             frombuffer(dst, dst_stride, bufferout, dst_itemsize, 32,
                                             dst_itemsize, NULL);
             N -= 32;
@@ -781,7 +860,7 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
             tobuffer(bufferin, src_itemsize, src, src_stride, N,
                                             src_itemsize, NULL);
             wrapped(bufferout, dst_itemsize, bufferin, src_itemsize, N,
-                                            itemsize, wrappeddata);
+                                            src_itemsize, wrappeddata);
             frombuffer(dst, dst_stride, bufferout, dst_itemsize, N,
                                             dst_itemsize, NULL);
             return;
@@ -876,6 +955,27 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                         src_itemsize);
             *outtransferdata = NULL;
             return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+        }
+    }
+    else if (src_dtype->type_num == dst_dtype->type_num) {
+        switch (src_dtype->type_num) {
+            case NPY_VOID:
+                /*
+                 * If it's not a structured type or subarray,
+                 * do a simple copy
+                 */
+                if (src_dtype->fields != NULL ||
+                            dst_dtype->fields != NULL ||
+                            src_dtype->subarray != NULL ||
+                            dst_dtype->subarray != NULL) {
+                    break;
+                }
+            case NPY_STRING:
+            case NPY_UNICODE:
+                return PyArray_GetStridedZeroPadCopyFn(0,
+                                    src_stride, dst_stride,
+                                    src_dtype->elsize, dst_dtype->elsize,
+                                    outstransfer, outtransferdata);
         }
     }
 
@@ -1012,7 +1112,7 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
                 char *src, npy_intp *src_strides, npy_intp src_strides_inc,
                 npy_intp *coords, npy_intp coords_inc,
                 npy_intp *shape, npy_intp shape_inc,
-                npy_intp count, npy_intp itemsize,
+                npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn stransfer,
                 void *data)
 {
@@ -1024,10 +1124,10 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     src_stride0 = src_strides[0];
     N = shape0 - coord0;
     if (N >= count) {
-        stransfer(dst, dst_stride, src, src_stride0, count, itemsize, data);
+        stransfer(dst, dst_stride, src, src_stride0, count, src_itemsize, data);
         return 0;
     }
-    stransfer(dst, dst_stride, src, src_stride0, N, itemsize, data);
+    stransfer(dst, dst_stride, src, src_stride0, N, src_itemsize, data);
     count -= N;
 
     /* If it's 1-dimensional, there's no more to copy */
@@ -1048,12 +1148,12 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     for (i = 0; i < M; ++i) {
         if (shape0 >= count) {
             stransfer(dst, dst_stride, src, src_stride0,
-                        count, itemsize, data);
+                        count, src_itemsize, data);
             return 0;
         }
         else {
             stransfer(dst, dst_stride, src, src_stride0,
-                        shape0, itemsize, data);
+                        shape0, src_itemsize, data);
         }
         count -= shape0;
         src += src_stride1;
@@ -1109,12 +1209,12 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
             for (i = 0; i < shape1; ++i) {
                 if (shape0 >= count) {
                     stransfer(dst, dst_stride, src, src_stride0,
-                                count, itemsize, data);
+                                count, src_itemsize, data);
                     return 0;
                 }
                 else {
                     stransfer(dst, dst_stride, src, src_stride0,
-                                shape0, itemsize, data);
+                                shape0, src_itemsize, data);
                 }
                 count -= shape0;
                 src += src_stride1;
@@ -1130,7 +1230,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 char *src, npy_intp src_stride,
                 npy_intp *coords, npy_intp coords_inc,
                 npy_intp *shape, npy_intp shape_inc,
-                npy_intp count, npy_intp itemsize,
+                npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn stransfer,
                 void *data)
 {
@@ -1142,10 +1242,10 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
     dst_stride0 = dst_strides[0];
     N = shape0 - coord0;
     if (N >= count) {
-        stransfer(dst, dst_stride0, src, src_stride, count, itemsize, data);
+        stransfer(dst, dst_stride0, src, src_stride, count, src_itemsize, data);
         return 0;
     }
-    stransfer(dst, dst_stride0, src, src_stride, N, itemsize, data);
+    stransfer(dst, dst_stride0, src, src_stride, N, src_itemsize, data);
     count -= N;
 
     /* If it's 1-dimensional, there's no more to copy */
@@ -1166,12 +1266,12 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
     for (i = 0; i < M; ++i) {
         if (shape0 >= count) {
             stransfer(dst, dst_stride0, src, src_stride,
-                        count, itemsize, data);
+                        count, src_itemsize, data);
             return 0;
         }
         else {
             stransfer(dst, dst_stride0, src, src_stride,
-                        shape0, itemsize, data);
+                        shape0, src_itemsize, data);
         }
         count -= shape0;
         dst += dst_stride1;
@@ -1227,12 +1327,12 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
             for (i = 0; i < shape1; ++i) {
                 if (shape0 >= count) {
                     stransfer(dst, dst_stride0, src, src_stride,
-                                count, itemsize, data);
+                                count, src_itemsize, data);
                     return 0;
                 }
                 else {
                     stransfer(dst, dst_stride0, src, src_stride,
-                                shape0, itemsize, data);
+                                shape0, src_itemsize, data);
                 }
                 count -= shape0;
                 dst += dst_stride1;

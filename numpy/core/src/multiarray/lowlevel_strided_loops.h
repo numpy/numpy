@@ -19,7 +19,7 @@
  */
 typedef void (*PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
-                                    npy_intp N, npy_intp itemsize,
+                                    npy_intp N, npy_intp src_itemsize,
                                     void *transferdata);
 
 /*
@@ -80,6 +80,20 @@ PyArray_GetStridedCopySwapPairFn(npy_intp aligned, npy_intp src_stride,
                              npy_intp dst_stride, npy_intp itemsize);
 
 /*
+ * Gives back a transfer function and transfer data pair which copies
+ * the data from source to dest, truncating it if the data doesn't
+ * fit, and padding with zero bytes if there's too much space.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL
+ */
+NPY_NO_EXPORT int
+PyArray_GetStridedZeroPadCopyFn(npy_intp aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            npy_intp src_itemsize, npy_intp dst_itemsize,
+                            PyArray_StridedTransferFn *outstransfer,
+                            void **outtransferdata);
+
+/*
  * If it's possible, gives back a transfer function which casts and/or
  * byte swaps data with the dtype 'from' into data with the dtype 'to'.
  * If the outtransferdata is populated with a non-NULL value, it
@@ -126,11 +140,11 @@ PyArray_GetDTypeTransferFunction(int aligned,
  *      How much to add to the shape pointer to get to the next shape entry.
  * count:
  *      How many elements to transfer
- * itemsize:
+ * src_itemsize:
  *      How big each element is.  If transfering between elements of different
  *      sizes, for example a casting operation, the 'stransfer' function
- *      should be specialized for that, in which case 'stransfer' will ignore
- *      this parameter.
+ *      should be specialized for that, in which case 'stransfer' will use
+ *      this parameter as the source item size.
  * stransfer:
  *      The strided transfer function.
  * transferdata:
@@ -144,7 +158,7 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
                 char *src, npy_intp *src_strides, npy_intp src_strides_inc,
                 npy_intp *coords, npy_intp coords_inc,
                 npy_intp *shape, npy_intp shape_inc,
-                npy_intp count, npy_intp itemsize,
+                npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn stransfer,
                 void *transferdata);
 
@@ -154,7 +168,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 char *src, npy_intp src_stride,
                 npy_intp *coords, npy_intp coords_inc,
                 npy_intp *shape, npy_intp shape_inc,
-                npy_intp count, npy_intp itemsize,
+                npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn stransfer,
                 void *transferdata);
 

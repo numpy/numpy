@@ -1495,6 +1495,24 @@ def test_iter_buffering_badwriteback():
                         [['readwrite'],['writeonly']],
                         order='C')
 
+def test_iter_buffering_string():
+    # Safe casting disallows shrinking strings
+    a = np.array(['abc', 'a', 'abcd'], dtype=np.str)
+    assert_equal(a.dtype, np.dtype('S4'));
+    assert_raises(TypeError,newiter,a,['buffered'],['readonly'],
+                    op_dtypes='S2')
+    i = newiter(a, ['buffered'], ['readonly'], op_dtypes='S6')
+    assert_equal(i[0], 'abc')
+    assert_equal(i[0].dtype, np.dtype('S6'))
+
+    a = np.array(['abc', 'a', 'abcd'], dtype=np.unicode)
+    assert_equal(a.dtype, np.dtype('U4'));
+    assert_raises(TypeError,newiter,a,['buffered'],['readonly'],
+                    op_dtypes='U2')
+    i = newiter(a, ['buffered'], ['readonly'], op_dtypes='U6')
+    assert_equal(i[0], u'abc')
+    assert_equal(i[0].dtype, np.dtype('U6'))
+
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed
     a = np.arange(30)
