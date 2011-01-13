@@ -100,12 +100,17 @@ PyArray_GetStridedZeroPadCopyFn(npy_intp aligned,
  * must be deallocated with the ``PyArray_FreeStridedTransferData``
  * function when the transfer function is no longer required.
  *
+ * If move_references is 1, and the 'from' type has references,
+ * the source references will get a DECREF after the reference value is
+ * cast to the dest type, then be set to NULL.
+ *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
 NPY_NO_EXPORT int
 PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *from, PyArray_Descr *to,
+                            int move_references,
                             PyArray_StridedTransferFn *outstransfer,
                             void **outtransferdata);
 

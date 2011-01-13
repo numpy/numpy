@@ -160,6 +160,9 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                 if (strcmp(str, "ranged") == 0) {
                     flag = NPY_ITER_RANGED;
                 }
+                else if (strcmp(str, "refs_ok") == 0) {
+                    flag = NPY_ITER_REFS_OK;
+                }
                 break;
         }
         if (flag == 0) {
@@ -351,18 +354,8 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                 }
                 break;
             case 'w':
-                if (length > 5) switch (str[5]) {
-                    case 'a':
-                        if (strcmp(str,
-                                        "writeable_references") == 0) {
-                            flag = NPY_ITER_WRITEABLE_REFERENCES;
-                        }
-                        break;
-                    case 'o':
-                        if (strcmp(str, "writeonly") == 0) {
-                            flag = NPY_ITER_WRITEONLY;
-                        }
-                        break;
+                if (strcmp(str, "writeonly") == 0) {
+                    flag = NPY_ITER_WRITEONLY;
                 }
                 break;
         }
@@ -1689,6 +1682,22 @@ static PyObject *npyiter_hasdelayedbufalloc_get(NewNpyArrayIterObject *self)
     }
 }
 
+static PyObject *npyiter_iterationneedsapi_get(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return NULL;
+    }
+
+    if (NpyIter_IterationNeedsAPI(self->iter)) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
 static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
@@ -2043,6 +2052,9 @@ static PyGetSetDef npyiter_getsets[] = {
         NULL, NULL, NULL},
     {"hasdelayedbufalloc",
         (getter)npyiter_hasdelayedbufalloc_get,
+        NULL, NULL, NULL},
+    {"iterationneedsapi",
+        (getter)npyiter_iterationneedsapi_get,
         NULL, NULL, NULL},
     {"hascoords",
         (getter)npyiter_hascoords_get,

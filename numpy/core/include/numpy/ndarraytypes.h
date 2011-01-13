@@ -882,14 +882,16 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 #define NPY_ITER_NO_INNER_ITERATION         0x00000008
 /* Convert all the operands to a common data type */
 #define NPY_ITER_COMMON_DTYPE               0x00000010
+/* Operands may hold references, requiring API access during iteration */
+#define NPY_ITER_REFS_OK                    0x00000020
 /* Enables sub-range iteration */
-#define NPY_ITER_RANGED                     0x00000020
+#define NPY_ITER_RANGED                     0x00000040
 /* Enables buffering */
-#define NPY_ITER_BUFFERED                   0x00000040
+#define NPY_ITER_BUFFERED                   0x00000080
 /* When buffering is enabled, grows the inner loop if possible */
-#define NPY_ITER_GROWINNER                  0x00000080
+#define NPY_ITER_GROWINNER                  0x00000100
 /* Delay allocation of buffers until first Reset* call */
-#define NPY_ITER_DELAY_BUFALLOC             0x00000100
+#define NPY_ITER_DELAY_BUFALLOC             0x00000200
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
@@ -909,14 +911,12 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 #define NPY_ITER_COPY                       0x00400000
 /* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
 #define NPY_ITER_UPDATEIFCOPY               0x00800000
-/* Allow writeable operands to have references or pointers */
-#define NPY_ITER_WRITEABLE_REFERENCES       0x01000000
 /* Allocate the operand if it is NULL */
-#define NPY_ITER_ALLOCATE                   0x02000000
+#define NPY_ITER_ALLOCATE                   0x01000000
 /* If an operand is allocated, don't use any subtype */
-#define NPY_ITER_NO_SUBTYPE                 0x04000000
+#define NPY_ITER_NO_SUBTYPE                 0x02000000
 /* Require that the dimension match the iterator dimensions exactly */
-#define NPY_ITER_NO_BROADCAST               0x08000000
+#define NPY_ITER_NO_BROADCAST               0x04000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

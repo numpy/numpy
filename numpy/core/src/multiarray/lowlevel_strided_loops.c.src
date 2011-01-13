@@ -656,6 +656,57 @@ NPY_NO_EXPORT PyArray_StridedTransferFn
 
 /**end repeat**/
 
+/* Moves references from src to dst */
+static void
+_strided_to_strided_move_references(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    PyObject *src_ref = NULL, *dst_ref = NULL;
+    while (N > 0) {
+        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
+        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+
+        /* Release the reference in dst */
+        Py_XDECREF(dst_ref);
+        /* Move the reference */
+        NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
+        /* Set the source reference to NULL */
+        src_ref = NULL;
+        NPY_COPY_PYOBJECT_PTR(src, &src_ref);
+
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+}
+
+/* Copies references from src to dst */
+static void
+_strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    PyObject *src_ref = NULL, *dst_ref = NULL;
+    while (N > 0) {
+        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
+        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+
+        /* Release the reference in dst */
+        Py_XDECREF(dst_ref);
+        /* Copy the reference */
+        NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
+        /* Claim the reference */
+        Py_XINCREF(src_ref);
+
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+}
+
 /* Does a zero-padded copy */
 typedef struct {
     void *freefunc, *copyfunc;
@@ -919,6 +970,7 @@ NPY_NO_EXPORT int
 PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            int move_references,
                             PyArray_StridedTransferFn *outstransfer,
                             void **outtransferdata)
 {
@@ -976,6 +1028,16 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                     src_stride, dst_stride,
                                     src_dtype->elsize, dst_dtype->elsize,
                                     outstransfer, outtransferdata);
+            case NPY_OBJECT:
+                if (move_references) {
+                    *outstransfer = &_strided_to_strided_move_references;
+                    *outtransferdata = NULL;
+                }
+                else {
+                    *outstransfer = &_strided_to_strided_copy_references;
+                    *outtransferdata = NULL;
+                }
+                return NPY_SUCCEED;
         }
     }
 

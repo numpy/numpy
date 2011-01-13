@@ -38,6 +38,8 @@
 #define NPY_ITFLAG_ONEITERATION 0x200
 /* Delay buffer allocation until first Reset* call */
 #define NPY_ITFLAG_DELAYBUF     0x400
+/* Iteration needs API access during iternext */
+#define NPY_ITFLAG_NEEDSAPI     0x800
 
 /* Internal iterator per-operand iterator flags */
 
@@ -567,6 +569,27 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         }
         else if (NIT_ITERSIZE(iter) == 1) {
             NIT_ITFLAGS(iter) |= NPY_ITFLAG_ONEITERATION;
+        }
+    }
+
+    /*
+     * If REFS_OK was specified, check whether there are any
+     * reference arrays and flag it if so.
+     */ 
+    if (flags&NPY_ITER_REFS_OK) {
+        for (iiter = 0; iiter < niter; ++iiter) {
+            PyArray_Descr *odt = PyArray_DESCR(op[iiter]),
+                          *rdt = op_dtype[iiter];
+            if (((odt->flags&(NPY_ITEM_REFCOUNT|
+                           NPY_ITEM_IS_POINTER|
+                           NPY_NEEDS_PYAPI)) != 0) ||
+                    (odt != rdt &&
+                        ((rdt->flags&(NPY_ITEM_REFCOUNT|
+                                     NPY_ITEM_IS_POINTER|
+                                     NPY_NEEDS_PYAPI))) != 0)) {
+                /* Iteration needs API access */
+                NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
+            }
         }
     }
 
@@ -1797,6 +1820,17 @@ NpyIter_HasIndex(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Whether the iteration loop, and in particular the iternext()
+ * function, needs API access.  If this is true, the GIL must
+ * be retained while iterating.
+ */
+NPY_NO_EXPORT int
+NpyIter_IterationNeedsAPI(NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NEEDSAPI) != 0;
+}
+
+/*NUMPY_API
  * Gets the number of dimensions being iterated
  */
 NPY_NO_EXPORT npy_intp
@@ -2421,17 +2455,21 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         }
         Py_INCREF(*op_dtype);
         /*
-         * Make sure that if the data type has a Python reference or
-         * other pointer, WRITEABLE_REFERENCES was specified.
+         * If references weren't specifically allowed, make sure there
+         * are no references in the inputs or requested dtypes.
          */
-        if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
-                        !(op_flags&NPY_ITER_WRITEABLE_REFERENCES)) {
-            if (PyDataType_FLAGCHK(*op_dtype, NPY_ITEM_HASOBJECT) ||
-                        PyDataType_FLAGCHK(*op_dtype, NPY_ITEM_IS_POINTER)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Tried to construct an iterator for a writeable "
-                        "array of references/pointers without specifying the "
-                        "WRITEABLE_REFERENCES flag.");
+        if (!(flags&NPY_ITER_REFS_OK)) {
+            PyArray_Descr *dt = PyArray_DESCR(*op);
+            if (((dt->flags&(NPY_ITEM_REFCOUNT|
+                           NPY_ITEM_IS_POINTER|
+                           NPY_NEEDS_PYAPI)) != 0) ||
+                    (dt != *op_dtype &&
+                        (((*op_dtype)->flags&(NPY_ITEM_REFCOUNT|
+                                             NPY_ITEM_IS_POINTER|
+                                             NPY_NEEDS_PYAPI))) != 0)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "Iterator operand or requested dtype holds "
+                        "references, but the REFS_OK flag was not enabled");
                 return 0;
             }
         }
@@ -4178,12 +4216,14 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
          */
         if (!(flags&NPY_OP_ITFLAG_BUFNEVER)) {
             if (flags&NPY_OP_ITFLAG_READ) {
+                int move_references = 0;
                 if (PyArray_GetDTypeTransferFunction(
                                         (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_stride,
                                         op_dtype[iiter]->elsize,
                                         PyArray_DESCR(op[iiter]),
                                         op_dtype[iiter],
+                                        move_references,
                                         &stransfer,
                                         &transferdata) != NPY_SUCCEED) {
                     goto fail;
@@ -4195,12 +4235,14 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                 readtransferfn[iiter] = NULL;
             }
             if (flags&NPY_OP_ITFLAG_WRITE) {
+                int move_references = 1;
                 if (PyArray_GetDTypeTransferFunction(
                                         (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_dtype[iiter]->elsize,
                                         op_stride,
                                         op_dtype[iiter],
                                         PyArray_DESCR(op[iiter]),
+                                        move_references,
                                         &stransfer,
                                         &transferdata) != NPY_SUCCEED) {
                     goto fail;
@@ -4395,6 +4437,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
              *ad_strides = NAD_STRIDES(axisdata);
     char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
     char **buffers = NBF_BUFFERS(bufferdata);
+    char *buffer;
 
     PyArray_StridedTransferFn stransfer = NULL;
     void *transferdata = NULL;
@@ -4410,18 +4453,36 @@ npyiter_copy_from_buffers(NpyIter *iter)
     for (iiter = 0; iiter < niter; ++iiter) {
         stransfer = NBF_WRITETRANSFERFN(bufferdata)[iiter];
         transferdata = NBF_WRITETRANSFERDATA(bufferdata)[iiter];
+        buffer = buffers[iiter];
+        /*
+         * Copy the data back to the arrays.  If the type has refs,
+         * this function moves them so the buffer's refs are released.
+         */
         if ((stransfer != NULL) && (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)) {
             /* Copy back only if the pointer was pointing to the buffer */
-            npy_intp delta = (ptrs[iiter] - buffers[iiter]);
+            npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
                 PyArray_TransferStridedToNDim(ndim,
                         ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
-                        buffers[iiter], strides[iiter],
+                        buffer, strides[iiter],
                         &NAD_COORD(axisdata), axisdata_incr,
                         &NAD_SHAPE(axisdata), axisdata_incr,
                         transfersize, dtypes[iiter]->elsize,
                         stransfer,
                         transferdata);
+            }
+        }
+        /* If there's no copy back, we may have to decrement refs */
+        else if (PyDataType_REFCHK(dtypes[iiter])) {
+            /* Decrement refs only if the pointer was pointing to the buffer */
+            npy_intp delta = (ptrs[iiter] - buffer);
+            if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
+                npy_intp i, size = NBF_SIZE(bufferdata);
+                PyObject **data = (PyObject **)buffer;
+
+                for (i = 0; i < size; ++i, ++data) {
+                    PyArray_Item_XDECREF(data, dtypes[iiter]);
+                }
             }
         }
     }
@@ -4523,14 +4584,21 @@ npyiter_copy_to_buffers(NpyIter *iter)
         }
 
         if (stransfer != NULL) {
-            /*printf("transfer %p -> %p\n", ad_ptrs[iiter], ptrs[iiter]);*/
+            npy_intp itemsize = PyArray_DESCR(operands[iiter])->elsize;
+
             any_buffered = 1;
+
+            /* If the data type requires zero-inititialization */
+            if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
+                memset(ptrs[iiter], 0, itemsize*transfersize);
+            }
+
             PyArray_TransferNDimToStrided(ndim,
                     ptrs[iiter], strides[iiter],
                     ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                     &NAD_COORD(axisdata), axisdata_incr,
                     &NAD_SHAPE(axisdata), axisdata_incr,
-                    transfersize, PyArray_DESCR(operands[iiter])->elsize,
+                    transfersize, itemsize,
                     stransfer,
                     transferdata);
         }
@@ -4587,6 +4655,8 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("ONEITERATION ");
     if (itflags&NPY_ITFLAG_DELAYBUF)
         printf("DELAYBUF ");
+    if (itflags&NPY_ITFLAG_NEEDSAPI)
+        printf("NEEDSAPI ");
     printf("\n");
     printf("NDim: %d\n", (int)ndim);
     printf("NIter: %d\n", (int)niter);

@@ -38,6 +38,7 @@ def test_iter_refcount():
                 [['readwrite','updateifcopy']],
                 casting='unsafe',
                 op_dtypes=[dt])
+    assert_(not it.iterationneedsapi)
     assert_(sys.getrefcount(a) > rc_a)
     assert_(sys.getrefcount(dt) > rc_dt)
     it = None
@@ -884,6 +885,39 @@ def test_iter_scalar_cast_errors():
                 [['readonly']],
                 casting='same_kind',
                 op_dtypes=[np.dtype('i4')])
+
+def test_iter_object_arrays():
+    # Check that object arrays work
+
+    obj = {'a':3,'b':'d'}
+    a = np.array([[1,2,3], None, obj, None], dtype='O')
+    rc = sys.getrefcount(obj)
+
+    # Need to allow references for object arrays
+    assert_raises(TypeError, newiter, a)
+    assert_equal(sys.getrefcount(obj), rc)
+
+    i = newiter(a, ['refs_ok'], ['readonly'])
+    vals = [x[()] for x in i]
+    assert_equal(np.array(vals, dtype='O'), a)
+    vals, i, x = [None]*3
+    assert_equal(sys.getrefcount(obj), rc)
+
+    i = newiter(a.reshape(2,2).T, ['refs_ok','buffered'],
+                        ['readonly'], order='C')
+    assert_(i.iterationneedsapi)
+    vals = [x[()] for x in i]
+    assert_equal(np.array(vals, dtype='O'), a.reshape(2,2).ravel(order='F'))
+    vals, i, x = [None]*3
+    assert_equal(sys.getrefcount(obj), rc)
+
+    i = newiter(a.reshape(2,2).T, ['refs_ok','buffered'],
+                        ['readwrite'], order='C')
+    for x in i:
+        x[()] = None
+    vals, i, x = [None]*3
+    assert_equal(sys.getrefcount(obj), rc-1)
+    assert_equal(a, np.array([None]*4, dtype='O'))
 
 def test_iter_common_dtype():
     # Check that the iterator finds a common data type correctly
