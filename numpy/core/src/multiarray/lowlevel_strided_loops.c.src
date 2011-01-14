@@ -21,6 +21,8 @@
 #  define NPY_USE_UNALIGNED_ACCESS 0
 #endif
 
+#define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
+
 #define _NPY_NOP1(x) (x)
 #define _NPY_NOP2(x) (x)
 #define _NPY_NOP4(x) (x)
@@ -817,8 +819,10 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
 
     /* Round up the structure size to 16-byte boundary */
     basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
-    /* Add space for two 32-element buffers */
-    datasize = basedatasize + 32*data->src_itemsize + 32*data->dst_itemsize;
+    /* Add space for two low level buffers */
+    datasize = basedatasize +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*data->src_itemsize +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*data->dst_itemsize;
 
     /* Allocate the data, and populate it */
     newdata = (_align_wrap_data *)PyArray_malloc(datasize);
@@ -827,7 +831,8 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
     }
     memcpy(newdata, data, basedatasize);
     newdata->bufferin = (char *)newdata + basedatasize;
-    newdata->bufferout = newdata->bufferin + 32*newdata->src_itemsize;
+    newdata->bufferout = newdata->bufferin +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*newdata->src_itemsize;
     if (newdata->wrappeddata != NULL) {
         newdata->wrappeddata =
                         PyArray_CopyStridedTransferData(data->wrappeddata);
@@ -855,16 +860,19 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
     char *bufferin = d->bufferin, *bufferout = d->bufferout;
 
     for(;;) {
-        if (N > 32) {
-            tobuffer(bufferin, src_itemsize, src, src_stride, 32,
-                                            src_itemsize, NULL);
-            wrapped(bufferout, dst_itemsize, bufferin, src_itemsize, 32,
-                                            src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize, 32,
-                                            dst_itemsize, NULL);
-            N -= 32;
-            src += 32*src_stride;
-            dst += 32*dst_stride;
+        if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
+            tobuffer(bufferin, src_itemsize, src, src_stride,
+                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                                    src_itemsize, NULL);
+            wrapped(bufferout, dst_itemsize, bufferin, src_itemsize,
+                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                                    src_itemsize, wrappeddata);
+            frombuffer(dst, dst_stride, bufferout, dst_itemsize,
+                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                                    dst_itemsize, NULL);
+            N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
+            src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
+            dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
         }
         else {
             tobuffer(bufferin, src_itemsize, src, src_stride, N,
@@ -906,8 +914,10 @@ PyArray_WrapAlignedContigTransferFunction(
 
     /* Round up the structure size to 16-byte boundary */
     basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
-    /* Add space for two 32-element buffers */
-    datasize = basedatasize + 32*src_itemsize + 32*dst_itemsize;
+    /* Add space for two low level buffers */
+    datasize = basedatasize +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_itemsize +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_itemsize;
 
     /* Allocate the data, and populate it */
     data = (_align_wrap_data *)PyArray_malloc(datasize);
@@ -924,7 +934,8 @@ PyArray_WrapAlignedContigTransferFunction(
     data->src_itemsize = src_itemsize;
     data->dst_itemsize = dst_itemsize;
     data->bufferin = (char *)data + basedatasize;
-    data->bufferout = data->bufferin + 32*src_itemsize;
+    data->bufferout = data->bufferin +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_itemsize;
 
     /* Set the function and data */
     *outstransfer = &_strided_to_strided_contig_align_wrap;
@@ -1716,6 +1727,24 @@ get_subarray_transfer_function(int aligned,
     }
 }
 
+/*
+ * Handles subarray transfer.  To call this, at least one of the dtype's
+ * fields must be non-NULL
+ */
+static int
+get_fields_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            int move_references,
+                            PyArray_StridedTransferFn *outstransfer,
+                            void **outtransferdata)
+{
+    /* TODO! */
+    PyErr_SetString(PyExc_ValueError,
+                "fields not supported by transfer functions yet");
+    return NPY_FAIL;
+}
+
 NPY_NO_EXPORT int
 PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
@@ -1793,28 +1822,35 @@ PyArray_GetDTypeTransferFunction(int aligned,
                         outstransfer, outtransferdata);
     }
 
-    /* TODO: Handle fields here */
-
-    /* Check for different-sized strings or unicode */
-    if (src_type_num == dst_type_num) switch (src_type_num) {
-        case NPY_STRING:
-        case NPY_UNICODE:
-        // case NPY_VOID:
-            return PyArray_GetStridedZeroPadCopyFn(0,
-                                    src_stride, dst_stride,
-                                    src_dtype->elsize, dst_dtype->elsize,
-                                    outstransfer, outtransferdata);
-    }
-
-    /* Check whether a simple cast and some swaps will suffice */
-    if (src_type_num < NPY_NTYPES && dst_type_num < NPY_NTYPES) {
-        return get_cast_transfer_function(aligned,
+    /* Handle fields */
+    if ((src_dtype->fields != NULL && src_dtype->fields != Py_None) ||
+            (dst_dtype->fields != NULL && dst_dtype->fields != Py_None)) {
+        return get_fields_transfer_function(aligned,
                         src_stride, dst_stride,
                         src_dtype, dst_dtype,
                         move_references,
                         outstransfer, outtransferdata);
     }
 
+    /* Check for different-sized strings, unicodes, or voids */
+    if (src_type_num == dst_type_num) switch (src_type_num) {
+        case NPY_STRING:
+        case NPY_UNICODE:
+        case NPY_VOID:
+            return PyArray_GetStridedZeroPadCopyFn(0,
+                                    src_stride, dst_stride,
+                                    src_dtype->elsize, dst_dtype->elsize,
+                                    outstransfer, outtransferdata);
+    }
+
+    /* Otherwise a cast is necessary */
+    return get_cast_transfer_function(aligned,
+                    src_stride, dst_stride,
+                    src_dtype, dst_dtype,
+                    move_references,
+                    outstransfer, outtransferdata);
+
+#if 0
     /* TODO check for fields & subarrays */
     printf("\n");
     PyObject_Print((PyObject *)src_dtype, stdout, 0);
@@ -1828,6 +1864,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
     PyErr_SetString(PyExc_RuntimeError,
             "General transfer function support has not been written yet");
     return NPY_FAIL;
+#endif
 }
 
 typedef void (*_npy_stridedtransfer_dealloc)(void *);
