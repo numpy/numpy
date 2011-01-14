@@ -95,21 +95,26 @@ PyArray_GetStridedZeroPadCopyFn(npy_intp aligned,
 
 /*
  * If it's possible, gives back a transfer function which casts and/or
- * byte swaps data with the dtype 'from' into data with the dtype 'to'.
- * If the outtransferdata is populated with a non-NULL value, it
- * must be deallocated with the ``PyArray_FreeStridedTransferData``
+ * byte swaps data with the dtype 'src_dtype' into data with the dtype
+ * 'dst_dtype'.  If the outtransferdata is populated with a non-NULL value,
+ * it must be deallocated with the ``PyArray_FreeStridedTransferData``
  * function when the transfer function is no longer required.
  *
- * If move_references is 1, and the 'from' type has references,
+ * If move_references is 1, and 'src_dtype' has references,
  * the source references will get a DECREF after the reference value is
- * cast to the dest type, then be set to NULL.
+ * cast to the dest type.
+ *
+ * WARNING: If you set move_references to 1, it is best that src_stride is
+ *          never zero when calling the transfer function.  Otherwise, the
+ *          first destination reference will get the value and all the rest
+ *          will get NULL.
  *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
 NPY_NO_EXPORT int
 PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *from, PyArray_Descr *to,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             PyArray_StridedTransferFn *outstransfer,
                             void **outtransferdata);

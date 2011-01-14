@@ -4477,11 +4477,12 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Decrement refs only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
-                npy_intp i, size = NBF_SIZE(bufferdata);
-                PyObject **data = (PyObject **)buffer;
+                npy_intp i, size = NBF_SIZE(bufferdata),
+                        itemsize = dtypes[iiter]->elsize;
 
-                for (i = 0; i < size; ++i, ++data) {
-                    PyArray_Item_XDECREF(data, dtypes[iiter]);
+                for (i = 0; i < size; ++i) {
+                    PyArray_Item_XDECREF(buffer, dtypes[iiter]);
+                    buffer += itemsize;
                 }
             }
         }
