@@ -2,6 +2,12 @@
 #define __LOWLEVEL_STRIDED_LOOPS_H
 
 /*
+ * NOTE: This API should remain private for the time being, to allow
+ *       for further refinement.  I think the 'aligned' mechanism
+ *       needs changing, for example.
+ */
+
+/*
  * This function pointer is for functions that transfer an arbitrarily strided
  * input to a an arbitrarily strided output.  It may be a fully general
  * function, or a specialized function when the strides or item size
@@ -62,6 +68,9 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
  * and swapping strided memory.  This assumes each element is a single
  * value to be swapped.
  *
+ * For information on the 'aligned', 'src_stride' and 'dst_stride' parameters
+ * see above.
+ *
  * Parameters are as for PyArray_GetStridedCopyFn.
  */
 NPY_NO_EXPORT PyArray_StridedTransferFn
@@ -72,6 +81,9 @@ PyArray_GetStridedCopySwapFn(npy_intp aligned, npy_intp src_stride,
  * Gives back a function pointer to a specialized function for copying
  * and swapping strided memory.  This assumes each element is a pair
  * of values, each of which needs to be swapped.
+ *
+ * For information on the 'aligned', 'src_stride' and 'dst_stride' parameters
+ * see above.
  *
  * Parameters are as for PyArray_GetStridedCopyFn.
  */
@@ -84,6 +96,9 @@ PyArray_GetStridedCopySwapPairFn(npy_intp aligned, npy_intp src_stride,
  * the data from source to dest, truncating it if the data doesn't
  * fit, and padding with zero bytes if there's too much space.
  *
+ * For information on the 'aligned', 'src_stride' and 'dst_stride' parameters
+ * see above.
+ *
  * Returns NPY_SUCCEED or NPY_FAIL
  */
 NPY_NO_EXPORT int
@@ -94,35 +109,14 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
                             void **outtransferdata);
 
 /*
- * Returns a transfer function which DECREFs any references in src_type.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-NPY_NO_EXPORT int
-PyArray_GetDecSrcRefTransferFunction(int aligned,
-                            npy_intp src_stride,
-                            PyArray_Descr *src_dtype,
-                            PyArray_StridedTransferFn *outstransfer,
-                            void **outtransferdata);
-
-/*
- * Returns a transfer function which zeros out the dest values.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-NPY_NO_EXPORT int
-PyArray_GetSetDstZeroTransferFunction(int aligned,
-                            npy_intp dst_stride,
-                            PyArray_Descr *dst_dtype,
-                            PyArray_StridedTransferFn *outstransfer,
-                            void **outtransferdata);
-
-/*
  * If it's possible, gives back a transfer function which casts and/or
  * byte swaps data with the dtype 'src_dtype' into data with the dtype
  * 'dst_dtype'.  If the outtransferdata is populated with a non-NULL value,
  * it must be deallocated with the ``PyArray_FreeStridedTransferData``
  * function when the transfer function is no longer required.
+ *
+ * For information on the 'aligned', 'src_stride' and 'dst_stride' parameters
+ * see above.
  *
  * If move_references is 1, and 'src_dtype' has references,
  * the source references will get a DECREF after the reference value is
@@ -132,6 +126,13 @@ PyArray_GetSetDstZeroTransferFunction(int aligned,
  *          never zero when calling the transfer function.  Otherwise, the
  *          first destination reference will get the value and all the rest
  *          will get NULL.
+ *
+ * If you pass NULL to src_dtype, you get a transfer function which does
+ * not touch the src values, and sets the dst values to zeros.
+ *
+ * If you pass NULL to dst_dtype, you either get a no-op, or if you
+ * also set move_references to 1, you get a transfer function which
+ * decrements the references in src.
  *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */

@@ -4252,10 +4252,16 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
             }
             /* If no write back but there are references make a decref fn */
             else if (PyDataType_REFCHK(op_dtype[iiter])) {
-                if (PyArray_GetDecSrcRefTransferFunction(
+                /*
+                 * By passing NULL to dst_type and setting move_references
+                 * to 1, we get back a function that just decrements the
+                 * src references.
+                 */
+                if (PyArray_GetDTypeTransferFunction(
                                         (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
-                                        op_dtype[iiter]->elsize,
-                                        op_dtype[iiter],
+                                        op_dtype[iiter]->elsize, 0,
+                                        op_dtype[iiter], NULL,
+                                        1,
                                         &stransfer,
                                         &transferdata) != NPY_SUCCEED) {
                     goto fail;
@@ -4493,9 +4499,17 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Decrement refs only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
+                /* Decrement refs */
                 stransfer(NULL, 0, buffer, dtypes[iiter]->elsize,
                             transfersize, dtypes[iiter]->elsize,
                             transferdata);
+                /*
+                 * Zero out the memory for safety.  For instance,
+                 * if during iteration some Python code copied an
+                 * array pointing into the buffer, it will get None
+                 * values for its references after this.
+                 */
+                memset(buffer, 0, dtypes[iiter]->elsize*transfersize);
             }
         }
     }
