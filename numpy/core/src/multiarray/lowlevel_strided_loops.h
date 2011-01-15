@@ -87,9 +87,33 @@ PyArray_GetStridedCopySwapPairFn(npy_intp aligned, npy_intp src_stride,
  * Returns NPY_SUCCEED or NPY_FAIL
  */
 NPY_NO_EXPORT int
-PyArray_GetStridedZeroPadCopyFn(npy_intp aligned,
+PyArray_GetStridedZeroPadCopyFn(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
+                            PyArray_StridedTransferFn *outstransfer,
+                            void **outtransferdata);
+
+/*
+ * Returns a transfer function which DECREFs any references in src_type.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+PyArray_GetDecSrcRefTransferFunction(int aligned,
+                            npy_intp src_stride,
+                            PyArray_Descr *src_dtype,
+                            PyArray_StridedTransferFn *outstransfer,
+                            void **outtransferdata);
+
+/*
+ * Returns a transfer function which zeros out the dest values.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+PyArray_GetSetDstZeroTransferFunction(int aligned,
+                            npy_intp dst_stride,
+                            PyArray_Descr *dst_dtype,
                             PyArray_StridedTransferFn *outstransfer,
                             void **outtransferdata);
 

@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import array, arange, newiter
 from numpy.testing import *
-import sys
+import sys, warnings
 
 import warnings
 
@@ -919,6 +919,44 @@ def test_iter_object_arrays():
     assert_equal(sys.getrefcount(obj), rc-1)
     assert_equal(a, np.array([None]*4, dtype='O'))
 
+    # Conversions to/from objects
+    a = np.arange(6, dtype='O')
+    i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
+                    casting='unsafe', op_dtypes='i4')
+    for x in i:
+        x[()] += 1
+    assert_equal(a, np.arange(6)+1)
+
+    a = np.arange(6, dtype='i4')
+    i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
+                    casting='unsafe', op_dtypes='O')
+    for x in i:
+        x[()] += 1
+    assert_equal(a, np.arange(6)+1)
+
+    # Non-contiguous object array
+    a = np.zeros((6,), dtype=[('p','i1'),('a','O')])
+    a = a['a']
+    a[:] = np.arange(6)
+    i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
+                    casting='unsafe', op_dtypes='i4')
+    for x in i:
+        x[()] += 1
+    assert_equal(a, np.arange(6)+1)
+
+    #Non-contiguous value array
+    a = np.zeros((6,), dtype=[('p','i1'),('a','i4')])
+    a = a['a']
+    a[:] = np.arange(6) + 98172488
+    i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
+                    casting='unsafe', op_dtypes='O')
+    ob = i[0][()]
+    rc = sys.getrefcount(ob)
+    for x in i:
+        x[()] += 1
+    assert_equal(sys.getrefcount(ob), rc-1)
+    assert_equal(a, np.arange(6)+98172489)
+
 def test_iter_common_dtype():
     # Check that the iterator finds a common data type correctly
 
@@ -1449,7 +1487,8 @@ def test_iter_buffered_cast_byteswapped():
 
     a = np.arange(10, dtype='f4').newbyteorder().byteswap()
     i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo','aligned','same_kind_casts']],
+                   [['readwrite','nbo','aligned']],
+                   casting='same_kind',
                    op_dtypes=[np.dtype('f8').newbyteorder()],
                    buffersize=3)
     for v in i:
@@ -1457,17 +1496,23 @@ def test_iter_buffered_cast_byteswapped():
     
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
-    a = np.arange(10, dtype='f8').newbyteorder().byteswap()
-    i = newiter(a, ['buffered','no_inner_iteration'],
-                   [['readwrite','nbo','aligned','unsafe_casts']],
-                   op_dtypes=[np.dtype('c8').newbyteorder()],
-                   buffersize=3)
-    for v in i:
-        v[()] *= 2
-    
-    assert_equal(a, 2*np.arange(10, dtype='f8'))
+    try:
+        warnings.simplefilter("ignore", np.ComplexWarning)
 
-def test_iter_buffered_cast_byteswapped():
+        a = np.arange(10, dtype='f8').newbyteorder().byteswap()
+        i = newiter(a, ['buffered','no_inner_iteration'],
+                       [['readwrite','nbo','aligned']],
+                       casting='unsafe',
+                       op_dtypes=[np.dtype('c8').newbyteorder()],
+                       buffersize=3)
+        for v in i:
+            v[()] *= 2
+        
+        assert_equal(a, 2*np.arange(10, dtype='f8'))
+    finally:
+        warnings.simplefilter("default", np.ComplexWarning)
+
+def test_iter_buffered_cast_byteswapped_complex():
     # Test that buffering can handle a cast which requires swap->cast->copy
 
     a = np.arange(10, dtype='c8').newbyteorder().byteswap()
@@ -1512,6 +1557,296 @@ def test_iter_buffered_cast_byteswapped():
     for v in i:
         v[()] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.longdouble))
+
+def test_iter_buffered_cast_structured_type():
+    # Tests buffering of structured types
+
+    # simple -> struct type (duplicates the value)
+    sdt = [('a', 'f4'), ('b', 'i8'), ('c', 'c8', (2,3)), ('d', 'O')]
+    a = np.arange(3, dtype='f4') + 0.5
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt)
+    vals = [np.array(x) for x in i]
+    assert_equal(vals[0]['a'], 0.5)
+    assert_equal(vals[0]['b'], 0)
+    assert_equal(vals[0]['c'], [[(0.5)]*3]*2)
+    assert_equal(vals[0]['d'], 0.5)
+    assert_equal(vals[1]['a'], 1.5)
+    assert_equal(vals[1]['b'], 1)
+    assert_equal(vals[1]['c'], [[(1.5)]*3]*2)
+    assert_equal(vals[1]['d'], 1.5)
+    assert_equal(vals[0].dtype, np.dtype(sdt))
+
+    # object -> struct type
+    sdt = [('a', 'f4'), ('b', 'i8'), ('c', 'c8', (2,3)), ('d', 'O')]
+    a = np.arange(3, dtype='O') + 0.5
+    rc = sys.getrefcount(a[0])
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt)
+    vals = [np.array(x) for x in i]
+    assert_equal(vals[0]['a'], 0.5)
+    assert_equal(vals[0]['b'], 0)
+    assert_equal(vals[0]['c'], [[(0.5)]*3]*2)
+    assert_equal(vals[0]['d'], 0.5)
+    assert_equal(vals[1]['a'], 1.5)
+    assert_equal(vals[1]['b'], 1)
+    assert_equal(vals[1]['c'], [[(1.5)]*3]*2)
+    assert_equal(vals[1]['d'], 1.5)
+    assert_equal(vals[0].dtype, np.dtype(sdt))
+    vals, i, x = [None]*3
+    assert_equal(sys.getrefcount(a[0]), rc)
+
+    # struct type -> simple (takes the first value)
+    sdt = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
+    a = np.array([(5.5,7,'test'),(8,10,11)], dtype=sdt)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes='i4')
+    assert_equal([x[()] for x in i], [5, 8])
+
+    # struct type -> struct type (field-wise copy)
+    sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
+    sdt2 = [('d', 'u2'), ('a', 'O'), ('b', 'f8')]
+    a = np.array([(1,2,3),(4,5,6)], dtype=sdt1)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    assert_equal([np.array(x) for x in i],
+                    [np.array((3,1,2), dtype=sdt2),
+                     np.array((6,4,5), dtype=sdt2)])
+
+    # struct type -> struct type (field gets discarded)
+    sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
+    sdt2 = [('b', 'O'), ('a', 'f8')]
+    a = np.array([(1,2,3),(4,5,6)], dtype=sdt1)
+    i = newiter(a, ['buffered','refs_ok'], ['readwrite'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    vals = []
+    for x in i:
+        vals.append(np.array(x))
+        x['a'] = x['b']+3
+    assert_equal(vals, [np.array((2,1), dtype=sdt2),
+                     np.array((5,4), dtype=sdt2)])
+    assert_equal(a, np.array([(5,2,None),(8,5,None)], dtype=sdt1))
+
+    # struct type -> struct type (structured field gets discarded)
+    sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'),('b','i4')])]
+    sdt2 = [('b', 'O'), ('a', 'f8')]
+    a = np.array([(1,2,(0,9)),(4,5,(20,21))], dtype=sdt1)
+    i = newiter(a, ['buffered','refs_ok'], ['readwrite'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    vals = []
+    for x in i:
+        vals.append(np.array(x))
+        x['a'] = x['b']+3
+    assert_equal(vals, [np.array((2,1), dtype=sdt2),
+                     np.array((5,4), dtype=sdt2)])
+    assert_equal(a, np.array([(5,2,(0,0)),(8,5,(0,0))], dtype=sdt1))
+
+    # struct type -> struct type (structured field w/ ref gets discarded)
+    sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'),('b','O')])]
+    sdt2 = [('b', 'O'), ('a', 'f8')]
+    a = np.array([(1,2,(0,9)),(4,5,(20,21))], dtype=sdt1)
+    i = newiter(a, ['buffered','refs_ok'], ['readwrite'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    vals = []
+    for x in i:
+        vals.append(np.array(x))
+        x['a'] = x['b']+3
+    assert_equal(vals, [np.array((2,1), dtype=sdt2),
+                     np.array((5,4), dtype=sdt2)])
+    assert_equal(a, np.array([(5,2,(0,None)),(8,5,(0,None))], dtype=sdt1))
+
+    # struct type -> struct type back (structured field w/ ref gets discarded)
+    sdt1 = [('b', 'O'), ('a', 'f8')]
+    sdt2 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'),('b','O')])]
+    a = np.array([(1,2),(4,5)], dtype=sdt1)
+    i = newiter(a, ['buffered','refs_ok'], ['readwrite'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    vals = []
+    for x in i:
+        vals.append(np.array(x))
+        assert_equal(x['d'], np.array((0, None), dtype=[('a','i2'),('b','O')]))
+        x['a'] = x['b']+3
+    assert_equal(vals, [np.array((2,1,(0,None)), dtype=sdt2),
+                     np.array((5,4,(0,None)), dtype=sdt2)])
+    assert_equal(a, np.array([(1,4),(4,7)], dtype=sdt1))
+
+def test_iter_buffered_cast_subarray():
+    # Tests buffering of subarrays
+
+    # one element -> many (copies it to all)
+    sdt1 = [('a', 'f4')]
+    sdt2 = [('a', 'f8', (3,2,2))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    for x, count in zip(i, range(6)):
+        assert_(np.all(x['a'] == count))
+
+    # one element -> many -> back (copies it to all)
+    sdt1 = [('a', 'O', (1,1))]
+    sdt2 = [('a', 'O', (3,2,2))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'][:,0,0] = np.arange(6)
+    i = newiter(a, ['buffered','refs_ok'], ['readwrite'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_(np.all(x['a'] == count))
+        x['a'][0] += 2
+        count += 1
+    assert_equal(a['a'], np.arange(6).reshape(6,1,1)+2)
+
+    # many -> one element -> back (copies just element 0)
+    sdt1 = [('a', 'O', (3,2,2))]
+    sdt2 = [('a', 'O', (1,))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'][:,0,0,0] = np.arange(6)
+    i = newiter(a, ['buffered','refs_ok'], ['readwrite'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'], count)
+        x['a'] += 2
+        count += 1
+    assert_equal(a['a'], np.arange(6).reshape(6,1,1,1)*np.ones((1,3,2,2))+2)
+
+    # many -> one element -> back (copies just element 0)
+    sdt1 = [('a', 'f8', (3,2,2))]
+    sdt2 = [('a', 'O', (1,))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'][:,0,0,0] = np.arange(6)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'], count)
+        count += 1
+
+    # many -> one element (copies just element 0)
+    sdt1 = [('a', 'O', (3,2,2))]
+    sdt2 = [('a', 'f4', (1,))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'][:,0,0,0] = np.arange(6)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'], count)
+        count += 1
+
+    # many -> matching shape (straightforward copy)
+    sdt1 = [('a', 'O', (3,2,2))]
+    sdt2 = [('a', 'f4', (3,2,2))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6*3*2*2).reshape(6,3,2,2)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'], a[count]['a'])
+        count += 1
+
+    # vector -> smaller vector (truncates)
+    sdt1 = [('a', 'f8', (6,))]
+    sdt2 = [('a', 'f4', (2,))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6*6).reshape(6,6)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'], a[count]['a'][:2])
+        count += 1
+
+    # vector -> bigger vector (pads with zeros)
+    sdt1 = [('a', 'f8', (2,))]
+    sdt2 = [('a', 'f4', (6,))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6*2).reshape(6,2)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'][:2], a[count]['a'])
+        assert_equal(x['a'][2:], [0,0,0,0])
+        count += 1
+
+    # vector -> matrix (broadcasts)
+    sdt1 = [('a', 'f8', (2,))]
+    sdt2 = [('a', 'f4', (2,2))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6*2).reshape(6,2)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'][0], a[count]['a'])
+        assert_equal(x['a'][1], a[count]['a'])
+        count += 1
+
+    # vector -> matrix (broadcasts and zero-pads)
+    sdt1 = [('a', 'f8', (2,1))]
+    sdt2 = [('a', 'f4', (3,2))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6*2).reshape(6,2,1)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'][:2,0], a[count]['a'][:,0])
+        assert_equal(x['a'][:2,1], a[count]['a'][:,0])
+        assert_equal(x['a'][2,:], [0,0])
+        count += 1
+
+    # matrix -> matrix (truncates and zero-pads)
+    sdt1 = [('a', 'f8', (2,3))]
+    sdt2 = [('a', 'f4', (3,2))]
+    a = np.zeros((6,), dtype=sdt1)
+    a['a'] = np.arange(6*2*3).reshape(6,2,3)
+    i = newiter(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
+    assert_equal(i[0].dtype, np.dtype(sdt2))
+    count = 0
+    for x in i:
+        assert_equal(x['a'][:2,0], a[count]['a'][:,0])
+        assert_equal(x['a'][:2,1], a[count]['a'][:,1])
+        assert_equal(x['a'][2,:], [0,0])
+        count += 1
 
 def test_iter_buffering_badwriteback():
     # Writing back from a buffer cannot combine elements

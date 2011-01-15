@@ -4484,6 +4484,9 @@ npyiter_copy_from_buffers(NpyIter *iter)
                     PyArray_Item_XDECREF(buffer, dtypes[iiter]);
                     buffer += itemsize;
                 }
+
+                /* Also set the values to zero for safety */
+                memset(buffers[iiter], 0, itemsize*size);
             }
         }
     }
@@ -4585,13 +4588,13 @@ npyiter_copy_to_buffers(NpyIter *iter)
         }
 
         if (stransfer != NULL) {
-            npy_intp itemsize = PyArray_DESCR(operands[iiter])->elsize;
+            npy_intp src_itemsize = PyArray_DESCR(operands[iiter])->elsize;
 
             any_buffered = 1;
 
             /* If the data type requires zero-inititialization */
             if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
-                memset(ptrs[iiter], 0, itemsize*transfersize);
+                memset(ptrs[iiter], 0, dtypes[iiter]->elsize*transfersize);
             }
 
             PyArray_TransferNDimToStrided(ndim,
@@ -4599,7 +4602,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
                     ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                     &NAD_COORD(axisdata), axisdata_incr,
                     &NAD_SHAPE(axisdata), axisdata_incr,
-                    transfersize, itemsize,
+                    transfersize, src_itemsize,
                     stransfer,
                     transferdata);
         }

@@ -2037,7 +2037,9 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
-        int ret = PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        int ret = PyObject_RichCompareBool(
+                            in1 ? in1 : Py_None,
+                            in2 ? in2 : Py_None, Py_@OP@);
         if (ret == -1) {
             return;
         }

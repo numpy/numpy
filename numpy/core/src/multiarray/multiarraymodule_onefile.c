@@ -38,7 +38,7 @@
 #include "new_iterator.c"
 #include "new_iterator_pywrap.c"
 #include "lowlevel_strided_loops.c"
-
+#include "dtype_transfer.c"
 
 
 #ifndef Py_UNICODE_WIDE
