@@ -1136,6 +1136,8 @@ def nonzero(a):
         array.
     ndarray.nonzero :
         Equivalent ndarray method.
+    count_nonzero :
+        Counts the number of non-zero elements in the input array.
 
     Examples
     --------

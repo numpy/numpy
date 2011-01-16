@@ -1725,6 +1725,29 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
+array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *array_in;
+    PyArrayObject *array;
+    npy_intp count;
+
+    if (!PyArg_ParseTuple(args, "O", &array_in)) {
+        return NULL;
+    }
+
+    array = PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
+    if (array == NULL) {
+        return NULL;
+    }
+
+    count =  PyArray_CountNonzero(array);
+
+    Py_DECREF(array);
+
+    return (count == -1) ? NULL : PyInt_FromSsize_t(count);
+}
+
+static PyObject *
 array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     char *data;
@@ -2744,6 +2767,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"zeros",
         (PyCFunction)array_zeros,
         METH_VARARGS|METH_KEYWORDS, NULL},
+    {"count_nonzero",
+        (PyCFunction)array_count_nonzero,
+        METH_VARARGS, NULL},
     {"empty",
         (PyCFunction)array_empty,
         METH_VARARGS|METH_KEYWORDS, NULL},

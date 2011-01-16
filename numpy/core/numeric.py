@@ -1,6 +1,6 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'newiter', 'nested_iters', 'ufunc',
-           'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
-           'fromstring', 'fromfile', 'frombuffer',
+           'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
+           'dtype', 'fromstring', 'fromfile', 'frombuffer',
            'int_asbuffer', 'where', 'argwhere',
            'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'set_numeric_ops', 'can_cast',
@@ -197,6 +197,7 @@ newaxis = None
 arange = multiarray.arange
 array = multiarray.array
 zeros = multiarray.zeros
+count_nonzero = multiarray.count_nonzero
 empty = multiarray.empty
 fromstring = multiarray.fromstring
 fromiter = multiarray.fromiter

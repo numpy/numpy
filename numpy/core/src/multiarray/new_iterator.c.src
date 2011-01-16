@@ -552,8 +552,16 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     if (ndim > 1 && !(itflags&NPY_ITFLAG_HASCOORDS)) {
         npyiter_coalesce_axes(iter);
+        /*
+         * The operation may have changed the layout, so we have to
+         * get the internal pointers again.
+         */
         itflags = NIT_ITFLAGS(iter);
         ndim = NIT_NDIM(iter);
+        op = NIT_OBJECTS(iter);
+        op_dtype = NIT_DTYPES(iter);
+        op_itflags = NIT_OPITFLAGS(iter);
+        op_dataptr = NIT_RESETDATAPTR(iter);
     }
 
     /*
