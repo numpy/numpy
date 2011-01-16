@@ -404,7 +404,7 @@ wrap_aligned_contig_transfer_function(
 }
 
 /*************************** WRAP DTYPE COPY/SWAP *************************/
-/* Does a simple aligned cast */
+/* Wraps the dtype copy swap function */
 typedef struct {
     void *freefunc, *copyfunc;
     PyArray_CopySwapNFunc *copyswapn;
@@ -1134,11 +1134,10 @@ typedef struct {
     PyArray_StridedTransferFn stransfer;
     void *data;
     npy_intp src_N, dst_N, src_itemsize, dst_itemsize;
-    /* TODO: Switch to using decsrcref transfer functions instead */
-    /* If this is non-NULL the source type has references needing a decref */
-    PyArray_Descr *src_dtype;
-    /* If this is non-NULL, the dest type has references needing a decref */
-    PyArray_Descr *dst_dtype;
+    PyArray_StridedTransferFn stransfer_decsrcref;
+    void *data_decsrcref;
+    PyArray_StridedTransferFn stransfer_decdstref;
+    void *data_decdstref;
     npy_intp offsets;
 } _subarray_broadcast_data;
 
@@ -1146,8 +1145,8 @@ typedef struct {
 void _subarray_broadcast_data_free(_subarray_broadcast_data *data)
 {
     PyArray_FreeStridedTransferData(data->data);
-    Py_XDECREF(data->src_dtype);
-    Py_XDECREF(data->dst_dtype);
+    PyArray_FreeStridedTransferData(data->data_decsrcref);
+    PyArray_FreeStridedTransferData(data->data_decdstref);
     PyArray_free(data);
 }
 
@@ -1173,8 +1172,25 @@ _subarray_broadcast_data *_subarray_broadcast_data_copy(
             return NULL;
         }
     }
-    Py_XINCREF(newdata->src_dtype);
-    Py_XINCREF(newdata->dst_dtype);
+    if (data->data_decsrcref != NULL) {
+        newdata->data_decsrcref =
+                        PyArray_CopyStridedTransferData(data->data_decsrcref);
+        if (newdata->data_decsrcref == NULL) {
+            PyArray_FreeStridedTransferData(newdata->data);
+            PyArray_free(newdata);
+            return NULL;
+        }
+    }
+    if (data->data_decdstref != NULL) {
+        newdata->data_decdstref =
+                        PyArray_CopyStridedTransferData(data->data_decdstref);
+        if (newdata->data_decdstref == NULL) {
+            PyArray_FreeStridedTransferData(newdata->data);
+            PyArray_FreeStridedTransferData(newdata->data_decsrcref);
+            PyArray_free(newdata);
+            return NULL;
+        }
+    }
 
     return newdata;
 }
@@ -1186,62 +1202,80 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
                         void *data)
 {
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
-    PyArray_Descr *src_dtype = d->src_dtype, *dst_dtype = d->dst_dtype;
     PyArray_StridedTransferFn subtransfer = d->stransfer;
     void *subdata = d->data;
+    npy_intp i, dst_subN = d->dst_N,
+            src_subitemsize = d->src_itemsize,
+            dst_subitemsize = d->dst_itemsize;
+    npy_intp *offsets = &d->offsets;
+
+    while (N > 0) {
+        for (i = 0; i < dst_subN; ++i) {
+            if (offsets[i] != -1) {
+                subtransfer(dst + i*dst_subitemsize, dst_subitemsize,
+                            src + offsets[i], src_subitemsize,
+                            1, src_subitemsize,
+                            subdata);
+            }
+            else {
+                char *tmp = dst + i*dst_subitemsize;
+                memset(tmp, 0, dst_subitemsize);
+            }
+        }
+
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+}
+
+
+static void
+_strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *data)
+{
+    _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
+    PyArray_StridedTransferFn subtransfer = d->stransfer;
+    void *subdata = d->data;
+    PyArray_StridedTransferFn stransfer_decsrcref = d->stransfer_decsrcref;
+    void *data_decsrcref = d->data_decsrcref;
+    PyArray_StridedTransferFn stransfer_decdstref = d->stransfer_decdstref;
+    void *data_decdstref = d->data_decdstref;
     npy_intp i, dst_subN = d->dst_N, src_subN = d->src_N,
             src_subitemsize = d->src_itemsize,
             dst_subitemsize = d->dst_itemsize;
     npy_intp *offsets = &d->offsets;
 
-    if (src_dtype == NULL && dst_dtype == NULL) {
-        while (N > 0) {
-            for (i = 0; i < dst_subN; ++i) {
-                if (offsets[i] != -1) {
-                    subtransfer(dst + i*dst_subitemsize, dst_subitemsize,
-                                src + offsets[i], src_subitemsize,
-                                1, src_subitemsize,
-                                subdata);
-                }
-                else {
-                    char *tmp = dst + i*dst_subitemsize;
-                    memset(tmp, 0, dst_subitemsize);
-                }
+    while (N > 0) {
+        for (i = 0; i < dst_subN; ++i) {
+            char *dst_ptr = dst + i*dst_subitemsize;
+            if (offsets[i] != -1) {
+                subtransfer(dst_ptr, dst_subitemsize,
+                            src + offsets[i], src_subitemsize,
+                            1, src_subitemsize,
+                            subdata);
             }
-
-            src += src_stride;
-            dst += dst_stride;
-            --N;
+            else {
+                if (stransfer_decdstref != NULL) {
+                    stransfer_decdstref(NULL, 0, dst_ptr, dst_subitemsize,
+                                        1, dst_subitemsize,
+                                        data_decdstref);
+                }
+                memset(dst_ptr, 0, dst_subitemsize);
+            }
         }
-    }
-    else {
-        while (N > 0) {
-            for (i = 0; i < dst_subN; ++i) {
-                if (offsets[i] != -1) {
-                    subtransfer(dst + i*dst_subitemsize, dst_subitemsize,
-                                src + offsets[i], src_subitemsize,
-                                1, src_subitemsize,
-                                subdata);
-                }
-                else {
-                    char *tmp = dst + i*dst_subitemsize;
-                    if (dst_dtype != NULL) {
-                        PyArray_Item_XDECREF(tmp, dst_dtype);
-                    }
-                    memset(tmp, 0, dst_subitemsize);
-                }
-            }
 
-            if (src_dtype != NULL) {
-                for (i = 0; i < src_subN; ++i) {
-                    PyArray_Item_XDECREF(src + i*src_subitemsize, src_dtype);
-                }
-            }
-
-            src += src_stride;
-            dst += dst_stride;
-            --N;
+        if (stransfer_decsrcref != NULL) {
+            stransfer_decsrcref(NULL, 0, src, src_subitemsize,
+                                    src_subN, src_subitemsize,
+                                    data_decsrcref);
         }
+
+        src += src_stride;
+        dst += dst_stride;
+        --N;
     }
 }
 
@@ -1290,20 +1324,39 @@ get_subarray_broadcast_transfer_function(int aligned,
 
     /* If the src object will need a DECREF, set src_dtype */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
-        data->src_dtype = src_dtype;
-        Py_INCREF(src_dtype);
+        if (PyArray_GetDTypeTransferFunction(aligned,
+                        src_dtype->elsize, 0,
+                        src_dtype, NULL,
+                        1,
+                        &data->stransfer_decsrcref,
+                        &data->data_decsrcref) != NPY_SUCCEED) {
+            PyArray_FreeStridedTransferData(data->data);
+            PyArray_free(data);
+            return NPY_FAIL;
+        }
     }
     else {
-        data->src_dtype = NULL;
+        data->stransfer_decsrcref = NULL;
+        data->data_decsrcref = NULL;
     }
 
     /* If the dst object needs a DECREF to set it to NULL, set dst_dtype */
     if (PyDataType_REFCHK(dst_dtype)) {
-        data->dst_dtype = dst_dtype;
-        Py_INCREF(dst_dtype);
+        if (PyArray_GetDTypeTransferFunction(aligned,
+                        dst_dtype->elsize, 0,
+                        dst_dtype, NULL,
+                        1,
+                        &data->stransfer_decdstref,
+                        &data->data_decdstref) != NPY_SUCCEED) {
+            PyArray_FreeStridedTransferData(data->data);
+            PyArray_FreeStridedTransferData(data->data_decsrcref);
+            PyArray_free(data);
+            return NPY_FAIL;
+        }
     }
     else {
-        data->dst_dtype = NULL;
+        data->stransfer_decdstref = NULL;
+        data->data_decdstref = NULL;
     }
 
     /* Calculate the broadcasting and set the offsets */
@@ -1352,7 +1405,13 @@ get_subarray_broadcast_transfer_function(int aligned,
         }
     }
 
-    *outstransfer = &_strided_to_strided_subarray_broadcast;
+    if (data->stransfer_decsrcref == NULL &&
+                                data->stransfer_decdstref == NULL) {
+        *outstransfer = &_strided_to_strided_subarray_broadcast;
+    }
+    else {
+        *outstransfer = &_strided_to_strided_subarray_broadcast_withrefs;
+    }
     *outtransferdata = data;
 
     return NPY_SUCCEED;
@@ -2299,6 +2358,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
         else {
             *outstransfer = &_dec_src_ref_nop;
             *outtransferdata = NULL;
+            return NPY_SUCCEED;
         }
     }
     else if (src_dtype == NULL) {
