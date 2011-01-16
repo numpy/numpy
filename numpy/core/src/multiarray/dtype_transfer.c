@@ -1128,6 +1128,10 @@ get_n_to_n_transfer_function(int aligned,
 
 /********************** COPY WITH SUBARRAY BROADCAST ************************/
 
+typedef struct {
+    npy_intp offset, count;
+} _subarray_broadcast_offsetrun;
+
 /* Copies element with subarray broadcasting */
 typedef struct {
     void *freefunc, *copyfunc;
@@ -1138,7 +1142,9 @@ typedef struct {
     void *data_decsrcref;
     PyArray_StridedTransferFn stransfer_decdstref;
     void *data_decdstref;
-    npy_intp offsets;
+    /* This gets a run-length encoded representation of the transfer */
+    npy_intp run_count;
+    _subarray_broadcast_offsetrun offsetruns;
 } _subarray_broadcast_data;
 
 /* transfer data free function */
@@ -1155,9 +1161,10 @@ _subarray_broadcast_data *_subarray_broadcast_data_copy(
                                 _subarray_broadcast_data *data)
 {
     _subarray_broadcast_data *newdata;
-    npy_intp dst_N = data->dst_N, structsize;
+    npy_intp run_count = data->run_count, structsize;
 
-    structsize = sizeof(_subarray_broadcast_data) + dst_N*NPY_SIZEOF_INTP;
+    structsize = sizeof(_subarray_broadcast_data) +
+                        run_count*sizeof(_subarray_broadcast_offsetrun);
 
     /* Allocate the data and populate it */
     newdata = (_subarray_broadcast_data *)PyArray_malloc(structsize);
@@ -1204,23 +1211,29 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
     PyArray_StridedTransferFn subtransfer = d->stransfer;
     void *subdata = d->data;
-    npy_intp i, dst_subN = d->dst_N,
+    npy_intp run, run_count = d->run_count,
             src_subitemsize = d->src_itemsize,
             dst_subitemsize = d->dst_itemsize;
-    npy_intp *offsets = &d->offsets;
+    npy_intp index, offset, count;
+    char *dst_ptr;
+    _subarray_broadcast_offsetrun *offsetruns = &d->offsetruns;
 
     while (N > 0) {
-        for (i = 0; i < dst_subN; ++i) {
-            if (offsets[i] != -1) {
-                subtransfer(dst + i*dst_subitemsize, dst_subitemsize,
-                            src + offsets[i], src_subitemsize,
-                            1, src_subitemsize,
+        index = 0;
+        for (run = 0; run < run_count; ++run) {
+            offset = offsetruns[run].offset;
+            count = offsetruns[run].count;
+            dst_ptr = dst + index*dst_subitemsize;
+            if (offset != -1) {
+                subtransfer(dst_ptr, dst_subitemsize,
+                            src + offset, src_subitemsize,
+                            count, src_subitemsize,
                             subdata);
             }
             else {
-                char *tmp = dst + i*dst_subitemsize;
-                memset(tmp, 0, dst_subitemsize);
+                memset(dst_ptr, 0, count*dst_subitemsize);
             }
+            index += count;
         }
 
         src += src_stride;
@@ -1243,28 +1256,35 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
     void *data_decsrcref = d->data_decsrcref;
     PyArray_StridedTransferFn stransfer_decdstref = d->stransfer_decdstref;
     void *data_decdstref = d->data_decdstref;
-    npy_intp i, dst_subN = d->dst_N, src_subN = d->src_N,
+    npy_intp run, run_count = d->run_count,
             src_subitemsize = d->src_itemsize,
-            dst_subitemsize = d->dst_itemsize;
-    npy_intp *offsets = &d->offsets;
+            dst_subitemsize = d->dst_itemsize,
+            src_subN = d->src_N;
+    npy_intp index, offset, count;
+    char *dst_ptr;
+    _subarray_broadcast_offsetrun *offsetruns = &d->offsetruns;
 
     while (N > 0) {
-        for (i = 0; i < dst_subN; ++i) {
-            char *dst_ptr = dst + i*dst_subitemsize;
-            if (offsets[i] != -1) {
+        index = 0;
+        for (run = 0; run < run_count; ++run) {
+            offset = offsetruns[run].offset;
+            count = offsetruns[run].count;
+            dst_ptr = dst + index*dst_subitemsize;
+            if (offset != -1) {
                 subtransfer(dst_ptr, dst_subitemsize,
-                            src + offsets[i], src_subitemsize,
-                            1, src_subitemsize,
+                            src + offset, src_subitemsize,
+                            count, src_subitemsize,
                             subdata);
             }
             else {
                 if (stransfer_decdstref != NULL) {
                     stransfer_decdstref(NULL, 0, dst_ptr, dst_subitemsize,
-                                        1, dst_subitemsize,
+                                        count, dst_subitemsize,
                                         data_decdstref);
                 }
-                memset(dst_ptr, 0, dst_subitemsize);
+                memset(dst_ptr, 0, count*dst_subitemsize);
             }
+            index += count;
         }
 
         if (stransfer_decsrcref != NULL) {
@@ -1291,9 +1311,11 @@ get_subarray_broadcast_transfer_function(int aligned,
                             void **outtransferdata)
 {
     _subarray_broadcast_data *data;
-    npy_intp structsize, index, src_index, dst_index, i, ndim, *offsets;
+    npy_intp structsize, index, run, run_size, src_index, dst_index, i, ndim;
+    _subarray_broadcast_offsetrun *offsetruns;
     
-    structsize = sizeof(_subarray_broadcast_data) + dst_size*NPY_SIZEOF_INTP;
+    structsize = sizeof(_subarray_broadcast_data) +
+                        dst_size*sizeof(_subarray_broadcast_offsetrun);
 
     /* Allocate the data and populate it */
     data = (_subarray_broadcast_data *)PyArray_malloc(structsize);
@@ -1322,7 +1344,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     data->src_itemsize = src_dtype->elsize;
     data->dst_itemsize = dst_dtype->elsize;
 
-    /* If the src object will need a DECREF, set src_dtype */
+    /* If the src object will need a DECREF */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
         if (PyArray_GetDTypeTransferFunction(aligned,
                         src_dtype->elsize, 0,
@@ -1340,7 +1362,7 @@ get_subarray_broadcast_transfer_function(int aligned,
         data->data_decsrcref = NULL;
     }
 
-    /* If the dst object needs a DECREF to set it to NULL, set dst_dtype */
+    /* If the dst object needs a DECREF to set it to NULL */
     if (PyDataType_REFCHK(dst_dtype)) {
         if (PyArray_GetDTypeTransferFunction(aligned,
                         dst_dtype->elsize, 0,
@@ -1360,7 +1382,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     }
 
     /* Calculate the broadcasting and set the offsets */
-    offsets = &data->offsets;
+    offsetruns = &data->offsetruns;
     ndim = (src_shape.len > dst_shape.len) ? src_shape.len : dst_shape.len;
     for (index = 0; index < dst_size; ++index) {
         npy_intp src_factor = 1;
@@ -1398,10 +1420,50 @@ get_subarray_broadcast_transfer_function(int aligned,
         }
         /* Set the offset */
         if (src_index == -1) {
-            offsets[index] = -1;
+            offsetruns[index].offset = -1;
         }
         else {
-            offsets[index] = src_index * src_dtype->elsize;
+            offsetruns[index].offset = src_index;
+        }
+    }
+
+    /* Run-length encode the result */
+    run = 0;
+    run_size = 1;
+    for (index = 1; index < dst_size; ++index) {
+        if (offsetruns[run].offset == -1) {
+            /* Stop the run when there's a valid index again */
+            if (offsetruns[index].offset != -1) {
+                offsetruns[run].count = run_size;
+                run++;
+                run_size = 1;
+                offsetruns[run].offset = offsetruns[index].offset;
+            }
+            else {
+                run_size++;
+            }
+        }
+        else {
+            /* Stop the run when there's a valid index again */
+            if (offsetruns[index].offset != offsetruns[index-1].offset + 1) {
+                offsetruns[run].count = run_size;
+                run++;
+                run_size = 1;
+                offsetruns[run].offset = offsetruns[index].offset;
+            }
+            else {
+                run_size++;
+            }
+        }
+    }
+    offsetruns[run].count = run_size;
+    run++;
+    data->run_count = run;
+
+    /* Multiply all the offsets by the src item size */
+    while (run--) {
+        if (offsetruns[run].offset != -1) {
+            offsetruns[run].offset *= src_dtype->elsize;
         }
     }
 
