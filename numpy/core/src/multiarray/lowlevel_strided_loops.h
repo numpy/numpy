@@ -23,7 +23,7 @@
  * PyArray_CopyStridedTransferData should be used to copy it.
  * 
  */
-typedef void (*PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
+typedef void (PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_intp N, npy_intp src_itemsize,
                                     void *transferdata);
@@ -59,7 +59,7 @@ PyArray_CopyStridedTransferData(void *transferdata);
  *      Should be the item size if it will always be the same, 0 otherwise.
  *
  */
-NPY_NO_EXPORT PyArray_StridedTransferFn
+NPY_NO_EXPORT PyArray_StridedTransferFn *
 PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
                          npy_intp dst_stride, npy_intp itemsize);
 
@@ -73,7 +73,7 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
  *
  * Parameters are as for PyArray_GetStridedCopyFn.
  */
-NPY_NO_EXPORT PyArray_StridedTransferFn
+NPY_NO_EXPORT PyArray_StridedTransferFn *
 PyArray_GetStridedCopySwapFn(npy_intp aligned, npy_intp src_stride,
                              npy_intp dst_stride, npy_intp itemsize);
 
@@ -87,7 +87,7 @@ PyArray_GetStridedCopySwapFn(npy_intp aligned, npy_intp src_stride,
  *
  * Parameters are as for PyArray_GetStridedCopyFn.
  */
-NPY_NO_EXPORT PyArray_StridedTransferFn
+NPY_NO_EXPORT PyArray_StridedTransferFn *
 PyArray_GetStridedCopySwapPairFn(npy_intp aligned, npy_intp src_stride,
                              npy_intp dst_stride, npy_intp itemsize);
 
@@ -105,7 +105,7 @@ NPY_NO_EXPORT int
 PyArray_GetStridedZeroPadCopyFn(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
-                            PyArray_StridedTransferFn *outstransfer,
+                            PyArray_StridedTransferFn **outstransfer,
                             void **outtransferdata);
 
 /*
@@ -141,7 +141,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedTransferFn *outstransfer,
+                            PyArray_StridedTransferFn **outstransfer,
                             void **outtransferdata);
 
 /*
@@ -194,7 +194,7 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
                 npy_intp *coords, npy_intp coords_inc,
                 npy_intp *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
-                PyArray_StridedTransferFn stransfer,
+                PyArray_StridedTransferFn *stransfer,
                 void *transferdata);
 
 NPY_NO_EXPORT npy_intp
@@ -204,7 +204,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 npy_intp *coords, npy_intp coords_inc,
                 npy_intp *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
-                PyArray_StridedTransferFn stransfer,
+                PyArray_StridedTransferFn *stransfer,
                 void *transferdata);
 
 #endif

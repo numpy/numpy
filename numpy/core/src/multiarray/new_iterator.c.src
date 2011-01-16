@@ -167,11 +167,11 @@ struct NpyIter_BD {
         &(bufferdata)->bd_flexdata + 0)
 #define NBF_PTRS(bufferdata) ((char **) \
         (&(bufferdata)->bd_flexdata + 1*(niter)))
-#define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedTransferFn *) \
+#define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedTransferFn **) \
         (&(bufferdata)->bd_flexdata + 2*(niter)))
 #define NBF_READTRANSFERDATA(bufferdata) ((void **) \
         (&(bufferdata)->bd_flexdata + 3*(niter)))
-#define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedTransferFn *) \
+#define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedTransferFn **) \
         (&(bufferdata)->bd_flexdata + 4*(niter)))
 #define NBF_WRITETRANSFERDATA(bufferdata) ((void **) \
         (&(bufferdata)->bd_flexdata + 5*(niter)))
@@ -4206,12 +4206,12 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     PyArrayObject **op = NIT_OBJECTS(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
-    PyArray_StridedTransferFn *readtransferfn = NBF_READTRANSFERFN(bufferdata),
-                        *writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
+    PyArray_StridedTransferFn **readtransferfn = NBF_READTRANSFERFN(bufferdata),
+                        **writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
     void **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
          **writetransferdata = NBF_WRITETRANSFERDATA(bufferdata);
 
-    PyArray_StridedTransferFn stransfer = NULL;
+    PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
 
     for (iiter = 0; iiter < niter; ++iiter) {
@@ -4466,7 +4466,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
 
-    PyArray_StridedTransferFn stransfer = NULL;
+    PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
     
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, niter) /
@@ -4548,7 +4548,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
     npy_intp iterindex, iterend, transfersize, singlestridesize;
     int is_onestride = 0, any_buffered = 0;
 
-    PyArray_StridedTransferFn stransfer = NULL;
+    PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, niter) /
