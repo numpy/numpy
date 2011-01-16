@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "ctors.h"
+#include "lowlevel_strided_loops.h"
 
 #define PyAO PyArrayObject
 #define _check_axis PyArray_CheckAxis
@@ -1701,12 +1702,8 @@ PyArray_CountNonzero(PyArrayObject *self)
     npy_intp *strideptr, *innersizeptr;
 
     /* If it's a trivial one-dimensional loop, don't use an iterator */
-    if (ndim <= 1 || PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) ||
-                     PyArray_CHKFLAGS(self, NPY_FORTRAN)) {
-        data = PyArray_BYTES(self);
-        stride = (ndim == 0) ? 0 : (PyArray_CHKFLAGS(self, NPY_FORTRAN) ?
-                    PyArray_STRIDE(self, 0) : PyArray_STRIDE(self, ndim-1));
-        count = PyArray_SIZE(self);
+    if (PyArray_TRIVIALLY_ITERABLE(self)) {
+        PyArray_PREPARE_TRIVIAL_ITERATION(self, count, data, stride);
 
         while (count--) {
             if (nonzero(data, self)) {
