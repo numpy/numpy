@@ -26,8 +26,9 @@ static int
 get_decsrcref_transfer_function(int aligned,
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata);
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api);
 
 /*
  * Returns a transfer function which zeros out the dest values.
@@ -38,8 +39,9 @@ static int
 get_setdstzero_transfer_function(int aligned,
                             npy_intp dst_stride,
                             PyArray_Descr *dst_dtype,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata);
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api);
 
 
 /*************************** COPY REFERENCES *******************************/
@@ -146,18 +148,18 @@ NPY_NO_EXPORT int
 PyArray_GetStridedZeroPadCopyFn(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
 {
     if (src_itemsize >= dst_itemsize) {
         /* If the sizes are different, the alignment flag isn't trustworthy */
         if (src_itemsize != dst_itemsize) {
             aligned = 0;
         }
-        *outstransfer = PyArray_GetStridedCopyFn(aligned, src_stride,
+        *out_stransfer = PyArray_GetStridedCopyFn(aligned, src_stride,
                                 dst_stride, dst_itemsize);
-        *outtransferdata = NULL;
-        return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+        *out_transferdata = NULL;
+        return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
     }
     else {
         _strided_zero_pad_data *d = PyArray_malloc(
@@ -170,8 +172,8 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
         d->freefunc = &PyArray_free;
         d->copyfunc = &_strided_zero_pad_data_copy;
 
-        *outstransfer = &_strided_to_strided_zero_pad_copy;
-        *outtransferdata = d;
+        *out_stransfer = &_strided_to_strided_zero_pad_copy;
+        *out_transferdata = d;
         return NPY_SUCCEED;
     }
 }
@@ -358,8 +360,8 @@ wrap_aligned_contig_transfer_function(
             PyArray_StridedTransferFn *frombuffer, void *fromdata,
             PyArray_StridedTransferFn *wrapped, void *wrappeddata,
             int init_dest,
-            PyArray_StridedTransferFn **outstransfer,
-            void **outtransferdata)
+            PyArray_StridedTransferFn **out_stransfer,
+            void **out_transferdata)
 {
     _align_wrap_data *data;
     npy_intp basedatasize, datasize;
@@ -393,12 +395,12 @@ wrap_aligned_contig_transfer_function(
 
     /* Set the function and data */
     if (init_dest) {
-        *outstransfer = &_strided_to_strided_contig_align_wrap_init_dest;
+        *out_stransfer = &_strided_to_strided_contig_align_wrap_init_dest;
     }
     else {
-        *outstransfer = &_strided_to_strided_contig_align_wrap;
+        *out_stransfer = &_strided_to_strided_contig_align_wrap;
     }
-    *outtransferdata = data;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -451,8 +453,8 @@ wrap_copy_swap_function(int aligned,
                 npy_intp src_stride, npy_intp dst_stride,
                 PyArray_Descr *dtype,
                 int should_swap,
-                PyArray_StridedTransferFn **outstransfer,
-                void **outtransferdata)
+                PyArray_StridedTransferFn **out_stransfer,
+                void **out_transferdata)
 {
     _wrap_copy_swap_data *data;
     npy_intp shape = 1;
@@ -461,8 +463,8 @@ wrap_copy_swap_function(int aligned,
     data = (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
     if (data == NULL) {
         PyErr_NoMemory();
-        *outstransfer = NULL;
-        *outtransferdata = NULL;
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
         return NPY_FAIL;
     }
 
@@ -483,8 +485,8 @@ wrap_copy_swap_function(int aligned,
         return NPY_FAIL;
     }
 
-    *outstransfer = &_strided_to_strided_wrap_copy_swap;
-    *outtransferdata = data;
+    *out_stransfer = &_strided_to_strided_wrap_copy_swap;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -581,8 +583,9 @@ get_cast_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     _strided_cast_data *data;
     void *todata = NULL, *fromdata = NULL;
@@ -596,11 +599,33 @@ get_cast_transfer_function(int aligned,
         return NPY_FAIL;
     }
 
+    /* Check the data types whose casting functions use API calls */
+    switch (src_dtype->type_num) {
+        case NPY_OBJECT:
+        case NPY_STRING:
+        case NPY_UNICODE:
+        case NPY_VOID:
+            if (out_needs_api) {
+                *out_needs_api = 1;
+            }
+            break;
+    }
+    switch (dst_dtype->type_num) {
+        case NPY_OBJECT:
+        case NPY_STRING:
+        case NPY_UNICODE:
+        case NPY_VOID:
+            if (out_needs_api) {
+                *out_needs_api = 1;
+            }
+            break;
+    }
+
     /* Get the cast function */
     castfunc = PyArray_GetCastFunc(src_dtype, dst_dtype->type_num);
     if (!castfunc) {
-        *outstransfer = NULL;
-        *outtransferdata = NULL;
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
         return NPY_FAIL;
     }
 
@@ -608,8 +633,8 @@ get_cast_transfer_function(int aligned,
     data = (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
-        *outstransfer = NULL;
-        *outtransferdata = NULL;
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
         return NPY_FAIL;
     }
     data->freefunc = (void*)&_strided_cast_data_free;
@@ -645,17 +670,17 @@ get_cast_transfer_function(int aligned,
                    PyArray_ISNBO(dst_dtype->byteorder)) {
         /* Choose the contiguous cast if we can */
         if (move_references && src_dtype->type_num == NPY_OBJECT) {
-            *outstransfer = _aligned_strided_to_strided_cast_decref_src;
+            *out_stransfer = _aligned_strided_to_strided_cast_decref_src;
         }
         else {
             if (src_stride == src_itemsize && dst_stride == dst_itemsize) {
-                *outstransfer = _aligned_contig_to_contig_cast;
+                *out_stransfer = _aligned_contig_to_contig_cast;
             }
             else {
-                *outstransfer = _aligned_strided_to_strided_cast;
+                *out_stransfer = _aligned_strided_to_strided_cast;
             }
         }
-        *outtransferdata = data;
+        *out_transferdata = data;
 
         return NPY_SUCCEED;
     }
@@ -737,7 +762,7 @@ get_cast_transfer_function(int aligned,
 
         /* If necessary, use the cast function with source decref */
         if (move_references && src_dtype->type_num == NPY_OBJECT) {
-            *outstransfer = _aligned_strided_to_strided_cast_decref_src;
+            *out_stransfer = _aligned_strided_to_strided_cast_decref_src;
         }
         /* Use the aligned contiguous cast otherwise */
         else {
@@ -751,7 +776,7 @@ get_cast_transfer_function(int aligned,
                             frombuffer, fromdata,
                             casttransfer, data,
                             PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
-                            outstransfer, outtransferdata) != NPY_SUCCEED) {
+                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data);
             return NPY_FAIL;
         }
@@ -879,8 +904,8 @@ wrap_transfer_function_one_to_n(
                             void *data_finish_src,
                             npy_intp dst_itemsize,
                             npy_intp N,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
 {
     _one_to_n_data *data;
 
@@ -901,12 +926,12 @@ wrap_transfer_function_one_to_n(
     data->dst_itemsize = dst_itemsize;
 
     if (stransfer_finish_src == NULL) {
-        *outstransfer = &_strided_to_strided_one_to_n;
+        *out_stransfer = &_strided_to_strided_one_to_n;
     }
     else {
-        *outstransfer = &_strided_to_strided_one_to_n_with_finish;
+        *out_stransfer = &_strided_to_strided_one_to_n_with_finish;
     }
-    *outtransferdata = data;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -917,8 +942,9 @@ get_one_to_n_transfer_function(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             npy_intp N,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     PyArray_StridedTransferFn *stransfer, *stransfer_finish_src = NULL;
     void *data, *data_finish_src = NULL;
@@ -933,7 +959,8 @@ get_one_to_n_transfer_function(int aligned,
                     0, dst_dtype->elsize,
                     src_dtype, dst_dtype,
                     0,
-                    &stransfer, &data) != NPY_SUCCEED) {
+                    &stransfer, &data,
+                    out_needs_api) != NPY_SUCCEED) {
         return NPY_FAIL;
     }
 
@@ -943,7 +970,8 @@ get_one_to_n_transfer_function(int aligned,
                             src_stride,
                             src_dtype,
                             &stransfer_finish_src,
-                            &data_finish_src) != NPY_SUCCEED) {
+                            &data_finish_src,
+                            out_needs_api) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data);
             return NPY_FAIL;
         }
@@ -953,7 +981,7 @@ get_one_to_n_transfer_function(int aligned,
                             stransfer_finish_src, data_finish_src,
                             dst_dtype->elsize,
                             N,
-                            outstransfer, outtransferdata) != NPY_SUCCEED) {
+                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
         PyArray_FreeStridedTransferData(data);
         PyArray_FreeStridedTransferData(data_finish_src);
         return NPY_FAIL;
@@ -1054,8 +1082,8 @@ wrap_transfer_function_n_to_n(
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
                             npy_intp N,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
 {
     _n_to_n_data *data;
 
@@ -1079,12 +1107,12 @@ wrap_transfer_function_n_to_n(
      */
     if (src_stride == N * src_itemsize &&
                     dst_stride == N * dst_itemsize) {
-        *outstransfer = &_contig_to_contig_n_to_n;
+        *out_stransfer = &_contig_to_contig_n_to_n;
     }
     else {
-        *outstransfer = &_strided_to_strided_n_to_n;
+        *out_stransfer = &_strided_to_strided_n_to_n;
     }
-    *outtransferdata = data;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -1095,8 +1123,9 @@ get_n_to_n_transfer_function(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             npy_intp N,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     PyArray_StridedTransferFn *stransfer;
     void *data;
@@ -1109,7 +1138,8 @@ get_n_to_n_transfer_function(int aligned,
                     src_dtype->elsize, dst_dtype->elsize,
                     src_dtype, dst_dtype,
                     move_references,
-                    &stransfer, &data) != NPY_SUCCEED) {
+                    &stransfer, &data,
+                    out_needs_api) != NPY_SUCCEED) {
         return NPY_FAIL;
     }
 
@@ -1117,8 +1147,8 @@ get_n_to_n_transfer_function(int aligned,
                             src_stride, dst_stride,
                             src_dtype->elsize, dst_dtype->elsize,
                             N,
-                            outstransfer,
-                            outtransferdata) != NPY_SUCCEED) {
+                            out_stransfer,
+                            out_transferdata) != NPY_SUCCEED) {
         PyArray_FreeStridedTransferData(data);
         return NPY_FAIL;
     }
@@ -1307,8 +1337,9 @@ get_subarray_broadcast_transfer_function(int aligned,
                             npy_intp src_size, npy_intp dst_size,
                             PyArray_Dims src_shape, PyArray_Dims dst_shape,
                             int move_references,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     _subarray_broadcast_data *data;
     npy_intp structsize, index, run, run_size, src_index, dst_index, i, ndim;
@@ -1333,7 +1364,8 @@ get_subarray_broadcast_transfer_function(int aligned,
                     src_dtype->elsize, dst_dtype->elsize,
                     src_dtype, dst_dtype,
                     0,
-                    &data->stransfer, &data->data) != NPY_SUCCEED) {
+                    &data->stransfer, &data->data,
+                    out_needs_api) != NPY_SUCCEED) {
         PyArray_free(data);
         return NPY_FAIL;
     }
@@ -1351,7 +1383,8 @@ get_subarray_broadcast_transfer_function(int aligned,
                         src_dtype, NULL,
                         1,
                         &data->stransfer_decsrcref,
-                        &data->data_decsrcref) != NPY_SUCCEED) {
+                        &data->data_decsrcref,
+                        out_needs_api) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data->data);
             PyArray_free(data);
             return NPY_FAIL;
@@ -1369,7 +1402,8 @@ get_subarray_broadcast_transfer_function(int aligned,
                         dst_dtype, NULL,
                         1,
                         &data->stransfer_decdstref,
-                        &data->data_decdstref) != NPY_SUCCEED) {
+                        &data->data_decdstref,
+                        out_needs_api) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data->data);
             PyArray_FreeStridedTransferData(data->data_decsrcref);
             PyArray_free(data);
@@ -1469,12 +1503,12 @@ get_subarray_broadcast_transfer_function(int aligned,
 
     if (data->stransfer_decsrcref == NULL &&
                                 data->stransfer_decdstref == NULL) {
-        *outstransfer = &_strided_to_strided_subarray_broadcast;
+        *out_stransfer = &_strided_to_strided_subarray_broadcast;
     }
     else {
-        *outstransfer = &_strided_to_strided_subarray_broadcast_withrefs;
+        *out_stransfer = &_strided_to_strided_subarray_broadcast_withrefs;
     }
-    *outtransferdata = data;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -1488,8 +1522,9 @@ get_subarray_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     PyArray_Dims src_shape = {NULL, -1}, dst_shape = {NULL, -1};
     npy_intp src_size = 1, dst_size = 1;
@@ -1530,7 +1565,8 @@ get_subarray_transfer_function(int aligned,
                 src_stride, dst_stride,
                 src_dtype, dst_dtype,
                 move_references,
-                outstransfer, outtransferdata);
+                out_stransfer, out_transferdata,
+                out_needs_api);
     }
     /* Copy the src value to all the dst values */
     else if (src_size == 1) {
@@ -1542,7 +1578,8 @@ get_subarray_transfer_function(int aligned,
                         src_dtype, dst_dtype,
                         move_references,
                         dst_size,
-                        outstransfer, outtransferdata);
+                        out_stransfer, out_transferdata,
+                        out_needs_api);
     }
     /* If the shapes match exactly, do an n to n copy */
     else if (src_shape.len == dst_shape.len &&
@@ -1556,7 +1593,8 @@ get_subarray_transfer_function(int aligned,
                         src_dtype, dst_dtype,
                         move_references,
                         src_size,
-                        outstransfer, outtransferdata);
+                        out_stransfer, out_transferdata,
+                        out_needs_api);
     }
     /*
      * Copy the subarray with broadcasting, truncating, and zero-padding
@@ -1569,7 +1607,8 @@ get_subarray_transfer_function(int aligned,
                         src_size, dst_size,
                         src_shape, dst_shape,
                         move_references,
-                        outstransfer, outtransferdata);
+                        out_stransfer, out_transferdata,
+                        out_needs_api);
 
         PyDimMem_FREE(src_shape.ptr);
         PyDimMem_FREE(dst_shape.ptr);
@@ -1688,8 +1727,9 @@ get_fields_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *src_fld_dtype, *dst_fld_dtype;
@@ -1729,7 +1769,8 @@ get_fields_transfer_function(int aligned,
                                     src_dtype, dst_fld_dtype,
                                     0,
                                     &fields[i].stransfer,
-                                    &fields[i].data) != NPY_SUCCEED) {
+                                    &fields[i].data,
+                                    out_needs_api) != NPY_SUCCEED) {
                 for (i = i-1; i >= 0; --i) {
                     PyArray_FreeStridedTransferData(fields[i].data);
                 }
@@ -1750,7 +1791,8 @@ get_fields_transfer_function(int aligned,
                                     src_stride,
                                     src_dtype,
                                     &fields[field_count].stransfer,
-                                    &fields[field_count].data) != NPY_SUCCEED) {
+                                    &fields[field_count].data,
+                                    out_needs_api) != NPY_SUCCEED) {
                 for (i = 0; i < field_count; ++i) {
                     PyArray_FreeStridedTransferData(fields[i].data);
                 }
@@ -1764,8 +1806,8 @@ get_fields_transfer_function(int aligned,
         }
         data->field_count = field_count;
 
-        *outstransfer = &_strided_to_strided_field_transfer;
-        *outtransferdata = data;
+        *out_stransfer = &_strided_to_strided_field_transfer;
+        *out_transferdata = data;
 
         return NPY_SUCCEED;
     }
@@ -1808,7 +1850,8 @@ get_fields_transfer_function(int aligned,
                                 src_fld_dtype, dst_dtype,
                                 move_references,
                                 &fields[0].stransfer,
-                                &fields[0].data) != NPY_SUCCEED) {
+                                &fields[0].data,
+                                out_needs_api) != NPY_SUCCEED) {
             PyArray_free(data);
             return NPY_FAIL;
         }
@@ -1835,7 +1878,8 @@ get_fields_transfer_function(int aligned,
                                 src_stride,
                                 src_fld_dtype,
                                 &fields[field_count].stransfer,
-                                &fields[field_count].data) != NPY_SUCCEED) {
+                                &fields[field_count].data,
+                                out_needs_api) != NPY_SUCCEED) {
                         for (i = field_count-1; i >= 0; --i) {
                             PyArray_FreeStridedTransferData(fields[i].data);
                         }
@@ -1852,8 +1896,8 @@ get_fields_transfer_function(int aligned,
 
         data->field_count = field_count;
 
-        *outstransfer = &_strided_to_strided_field_transfer;
-        *outtransferdata = data;
+        *out_stransfer = &_strided_to_strided_field_transfer;
+        *out_transferdata = data;
 
         return NPY_SUCCEED;
     }
@@ -1920,7 +1964,8 @@ get_fields_transfer_function(int aligned,
                                         src_fld_dtype, dst_fld_dtype,
                                         move_references,
                                         &fields[i].stransfer,
-                                        &fields[i].data) != NPY_SUCCEED) {
+                                        &fields[i].data,
+                                        out_needs_api) != NPY_SUCCEED) {
                     for (i = i-1; i >= 0; --i) {
                         PyArray_FreeStridedTransferData(fields[i].data);
                     }
@@ -1941,7 +1986,8 @@ get_fields_transfer_function(int aligned,
                                             dst_stride,
                                             dst_fld_dtype,
                                             &fields[i].stransfer,
-                                            &fields[i].data) != NPY_SUCCEED) {
+                                            &fields[i].data,
+                                            out_needs_api) != NPY_SUCCEED) {
                     for (i = i-1; i >= 0; --i) {
                         PyArray_FreeStridedTransferData(fields[i].data);
                     }
@@ -1979,7 +2025,8 @@ get_fields_transfer_function(int aligned,
                                     src_stride,
                                     src_fld_dtype,
                                     &fields[field_count].stransfer,
-                                    &fields[field_count].data) != NPY_SUCCEED) {
+                                    &fields[field_count].data,
+                                    out_needs_api) != NPY_SUCCEED) {
                             for (i = field_count-1; i >= 0; --i) {
                                 PyArray_FreeStridedTransferData(fields[i].data);
                             }
@@ -2000,8 +2047,8 @@ get_fields_transfer_function(int aligned,
 
         data->field_count = field_count;
 
-        *outstransfer = &_strided_to_strided_field_transfer;
-        *outtransferdata = data;
+        *out_stransfer = &_strided_to_strided_field_transfer;
+        *out_transferdata = data;
 
         return NPY_SUCCEED;
     }
@@ -2011,8 +2058,9 @@ static int
 get_decsrcref_fields_transfer_function(int aligned,
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *src_fld_dtype;
@@ -2047,11 +2095,15 @@ get_decsrcref_fields_transfer_function(int aligned,
             return NPY_FAIL;
         }
         if (PyDataType_REFCHK(src_fld_dtype)) {
+            if (out_needs_api) {
+                *out_needs_api = 1;
+            }
             if (get_decsrcref_transfer_function(0,
                                     src_stride,
                                     src_fld_dtype,
                                     &fields[field_count].stransfer,
-                                    &fields[field_count].data) != NPY_SUCCEED) {
+                                    &fields[field_count].data,
+                                    out_needs_api) != NPY_SUCCEED) {
                 for (i = field_count-1; i >= 0; --i) {
                     PyArray_FreeStridedTransferData(fields[i].data);
                 }
@@ -2067,8 +2119,8 @@ get_decsrcref_fields_transfer_function(int aligned,
 
     data->field_count = field_count;
 
-    *outstransfer = &_strided_to_strided_field_transfer;
-    *outtransferdata = data;
+    *out_stransfer = &_strided_to_strided_field_transfer;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -2077,8 +2129,9 @@ static int
 get_setdestzero_fields_transfer_function(int aligned,
                             npy_intp dst_stride,
                             PyArray_Descr *dst_dtype,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *dst_fld_dtype;
@@ -2115,7 +2168,8 @@ get_setdestzero_fields_transfer_function(int aligned,
                                 dst_stride,
                                 dst_fld_dtype,
                                 &fields[i].stransfer,
-                                &fields[i].data) != NPY_SUCCEED) {
+                                &fields[i].data,
+                                out_needs_api) != NPY_SUCCEED) {
             for (i = i-1; i >= 0; --i) {
                 PyArray_FreeStridedTransferData(fields[i].data);
             }
@@ -2129,8 +2183,8 @@ get_setdestzero_fields_transfer_function(int aligned,
 
     data->field_count = field_count;
 
-    *outstransfer = &_strided_to_strided_field_transfer;
-    *outtransferdata = data;
+    *out_stransfer = &_strided_to_strided_field_transfer;
+    *out_transferdata = data;
 
     return NPY_SUCCEED;
 }
@@ -2217,8 +2271,9 @@ NPY_NO_EXPORT int
 get_setdstzero_transfer_function(int aligned,
                             npy_intp dst_stride,
                             PyArray_Descr *dst_dtype,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     _dst_memset_zero_data *data;
 
@@ -2236,19 +2291,23 @@ get_setdstzero_transfer_function(int aligned,
         data->dst_itemsize = dst_dtype->elsize;
 
         if (dst_stride == data->dst_itemsize) {
-            *outstransfer = &_null_to_contig_memset_zero;
+            *out_stransfer = &_null_to_contig_memset_zero;
         }
         else {
-            *outstransfer = &_null_to_strided_memset_zero;
+            *out_stransfer = &_null_to_strided_memset_zero;
         }
-        *outtransferdata = data;
+        *out_transferdata = data;
 
         return NPY_SUCCEED;
     }
     /* If it's exactly one reference, use the decref function */
     else if (dst_dtype->type_num == NPY_OBJECT) {
-        *outstransfer = &_null_to_strided_reference_setzero;
-        *outtransferdata = NULL;
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
+
+        *out_stransfer = &_null_to_strided_reference_setzero;
+        *out_transferdata = NULL;
 
         return NPY_SUCCEED;
     }
@@ -2258,6 +2317,10 @@ get_setdstzero_transfer_function(int aligned,
         npy_intp dst_size = 1;
         PyArray_StridedTransferFn *stransfer;
         void *data;
+
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
 
         if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
                                             &dst_shape))) {
@@ -2272,7 +2335,8 @@ get_setdstzero_transfer_function(int aligned,
         if (get_setdstzero_transfer_function(aligned,
                                 dst_dtype->subarray->base->elsize,
                                 dst_dtype->subarray->base,
-                                &stransfer, &data) != NPY_SUCCEED) {
+                                &stransfer, &data,
+                                out_needs_api) != NPY_SUCCEED) {
             return NPY_FAIL;
         }
 
@@ -2280,7 +2344,7 @@ get_setdstzero_transfer_function(int aligned,
                                 0, dst_stride,
                                 0, dst_dtype->subarray->base->elsize,
                                 dst_size,
-                                outstransfer, outtransferdata) != NPY_SUCCEED) {
+                                out_stransfer, out_transferdata) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data);
             return NPY_FAIL;
         }
@@ -2289,10 +2353,15 @@ get_setdstzero_transfer_function(int aligned,
     }
     /* If there are fields, need to do each field */
     else if (PyDataType_HASFIELDS(dst_dtype)) {
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
+
         return get_setdestzero_fields_transfer_function(aligned,
                             dst_stride, dst_dtype,
-                            outstransfer,
-                            outtransferdata);
+                            out_stransfer,
+                            out_transferdata,
+                            out_needs_api);
     }
 }
 
@@ -2332,20 +2401,25 @@ NPY_NO_EXPORT int
 get_decsrcref_transfer_function(int aligned,
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     /* If there are no references, it's a nop */
     if (!PyDataType_REFCHK(src_dtype)) {
-        *outstransfer = &_dec_src_ref_nop;
-        *outtransferdata = NULL;
+        *out_stransfer = &_dec_src_ref_nop;
+        *out_transferdata = NULL;
 
         return NPY_SUCCEED;
     }
     /* If it's a single reference, it's one decref */
     else if (src_dtype->type_num == NPY_OBJECT) {
-        *outstransfer = &_strided_to_null_dec_src_ref_reference;
-        *outtransferdata = NULL;
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
+
+        *out_stransfer = &_strided_to_null_dec_src_ref_reference;
+        *out_transferdata = NULL;
 
         return NPY_SUCCEED;
     }
@@ -2355,6 +2429,10 @@ get_decsrcref_transfer_function(int aligned,
         npy_intp src_size = 1;
         PyArray_StridedTransferFn *stransfer;
         void *data;
+
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
 
         if (!(PyArray_IntpConverter(src_dtype->subarray->shape,
                                             &src_shape))) {
@@ -2369,7 +2447,8 @@ get_decsrcref_transfer_function(int aligned,
         if (get_decsrcref_transfer_function(aligned,
                                 src_dtype->subarray->base->elsize,
                                 src_dtype->subarray->base,
-                                &stransfer, &data) != NPY_SUCCEED) {
+                                &stransfer, &data,
+                                out_needs_api) != NPY_SUCCEED) {
             return NPY_FAIL;
         }
 
@@ -2377,7 +2456,7 @@ get_decsrcref_transfer_function(int aligned,
                                 src_stride, 0,
                                 src_dtype->subarray->base->elsize, 0,
                                 src_size,
-                                outstransfer, outtransferdata) != NPY_SUCCEED) {
+                                out_stransfer, out_transferdata) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data);
             return NPY_FAIL;
         }
@@ -2386,10 +2465,15 @@ get_decsrcref_transfer_function(int aligned,
     }
     /* If there are fields, need to do each field */
     else {
+        if (out_needs_api) {
+            *out_needs_api = 1;
+        }
+
         return get_decsrcref_fields_transfer_function(aligned,
                             src_stride, src_dtype,
-                            outstransfer,
-                            outtransferdata);
+                            out_stransfer,
+                            out_transferdata,
+                            out_needs_api);
     }
 }
 
@@ -2400,8 +2484,9 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata)
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
 {
     npy_intp src_itemsize, dst_itemsize;
     int src_type_num, dst_type_num;
@@ -2423,11 +2508,12 @@ PyArray_GetDTypeTransferFunction(int aligned,
             return get_decsrcref_transfer_function(aligned,
                                 src_dtype->elsize,
                                 src_dtype,
-                                outstransfer, outtransferdata);
+                                out_stransfer, out_transferdata,
+                                out_needs_api);
         }
         else {
-            *outstransfer = &_dec_src_ref_nop;
-            *outtransferdata = NULL;
+            *out_stransfer = &_dec_src_ref_nop;
+            *out_transferdata = NULL;
             return NPY_SUCCEED;
         }
     }
@@ -2435,7 +2521,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
         return get_setdstzero_transfer_function(aligned,
                                 dst_dtype->elsize,
                                 dst_dtype,
-                                outstransfer, outtransferdata);
+                                out_stransfer, out_transferdata,
+                                out_needs_api);
     }
 
     src_itemsize = src_dtype->elsize;
@@ -2459,10 +2546,10 @@ PyArray_GetDTypeTransferFunction(int aligned,
          *       which holds the strongest alignment value for all
          *       the data which will be used.
          */
-        *outstransfer = PyArray_GetStridedCopyFn(0,
+        *out_stransfer = PyArray_GetStridedCopyFn(0,
                                         src_stride, dst_stride,
                                         src_dtype->elsize);
-        *outtransferdata = NULL;
+        *out_transferdata = NULL;
         return NPY_SUCCEED;
     }
 
@@ -2482,7 +2569,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                 src_stride, dst_stride,
                                 src_dtype, dst_dtype,
                                 move_references,
-                                outstransfer, outtransferdata);
+                                out_stransfer, out_transferdata,
+                                out_needs_api);
             }
             else {
                 return wrap_copy_swap_function(aligned,
@@ -2490,7 +2578,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                 src_dtype,
                                 PyArray_ISNBO(src_dtype->byteorder) !=
                                         PyArray_ISNBO(dst_dtype->byteorder),
-                                outstransfer, outtransferdata);
+                                out_stransfer, out_transferdata);
             }
 
 
@@ -2501,19 +2589,22 @@ PyArray_GetDTypeTransferFunction(int aligned,
             case NPY_VOID:
             case NPY_STRING:
             case NPY_UNICODE:
-                *outstransfer = PyArray_GetStridedCopyFn(0,
+                *out_stransfer = PyArray_GetStridedCopyFn(0,
                                     src_stride, dst_stride,
                                     src_itemsize);
-                *outtransferdata = NULL;
+                *out_transferdata = NULL;
                 return NPY_SUCCEED;
             case NPY_OBJECT:
+                if (out_needs_api) {
+                    *out_needs_api = 1;
+                }
                 if (move_references) {
-                    *outstransfer = &_strided_to_strided_move_references;
-                    *outtransferdata = NULL;
+                    *out_stransfer = &_strided_to_strided_move_references;
+                    *out_transferdata = NULL;
                 }
                 else {
-                    *outstransfer = &_strided_to_strided_copy_references;
-                    *outtransferdata = NULL;
+                    *out_stransfer = &_strided_to_strided_copy_references;
+                    *out_transferdata = NULL;
                 }
                 return NPY_SUCCEED;
         }
@@ -2521,27 +2612,27 @@ PyArray_GetDTypeTransferFunction(int aligned,
         /* This is a straight copy */
         if (src_itemsize == 1 || PyArray_ISNBO(src_dtype->byteorder) ==
                                  PyArray_ISNBO(dst_dtype->byteorder)) {
-            *outstransfer = PyArray_GetStridedCopyFn(aligned,
+            *out_stransfer = PyArray_GetStridedCopyFn(aligned,
                                         src_stride, dst_stride,
                                         src_itemsize);
-            *outtransferdata = NULL;
-            return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+            *out_transferdata = NULL;
+            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
         }
         /* This is a straight copy + byte swap */
         else if (!PyTypeNum_ISCOMPLEX(src_type_num)) {
-            *outstransfer = PyArray_GetStridedCopySwapFn(aligned,
+            *out_stransfer = PyArray_GetStridedCopySwapFn(aligned,
                                         src_stride, dst_stride,
                                         src_itemsize);
-            *outtransferdata = NULL;
-            return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+            *out_transferdata = NULL;
+            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
         }
         /* This is a straight copy + element pair byte swap */
         else {
-            *outstransfer = PyArray_GetStridedCopySwapPairFn(aligned,
+            *out_stransfer = PyArray_GetStridedCopySwapPairFn(aligned,
                                         src_stride, dst_stride,
                                         src_itemsize);
-            *outtransferdata = NULL;
-            return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+            *out_transferdata = NULL;
+            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
         }
     }
 
@@ -2551,7 +2642,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
                         src_stride, dst_stride,
                         src_dtype, dst_dtype,
                         move_references,
-                        outstransfer, outtransferdata);
+                        out_stransfer, out_transferdata,
+                        out_needs_api);
     }
 
     /* Handle fields */
@@ -2561,7 +2653,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
                         src_stride, dst_stride,
                         src_dtype, dst_dtype,
                         move_references,
-                        outstransfer, outtransferdata);
+                        out_stransfer, out_transferdata,
+                        out_needs_api);
     }
 
     /* Check for different-sized strings, unicodes, or voids */
@@ -2572,7 +2665,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
             return PyArray_GetStridedZeroPadCopyFn(0,
                                     src_stride, dst_stride,
                                     src_dtype->elsize, dst_dtype->elsize,
-                                    outstransfer, outtransferdata);
+                                    out_stransfer, out_transferdata);
     }
 
     /* Otherwise a cast is necessary */
@@ -2580,6 +2673,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     src_stride, dst_stride,
                     src_dtype, dst_dtype,
                     move_references,
-                    outstransfer, outtransferdata);
+                    out_stransfer, out_transferdata,
+                    out_needs_api);
 }
 

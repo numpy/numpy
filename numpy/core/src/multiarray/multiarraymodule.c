@@ -1735,7 +1735,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
 
-    array = PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
+    array = (PyArrayObject *)PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
     if (array == NULL) {
         return NULL;
     }

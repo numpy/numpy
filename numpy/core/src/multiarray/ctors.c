@@ -2606,6 +2606,8 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         char *dst_data, *src_data;
         npy_intp count, dst_stride, src_stride, src_itemsize;
 
+        int needs_api = 0;
+
         PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(dst, src, count,
                               dst_data, src_data, dst_stride, src_stride);
 
@@ -2614,14 +2616,14 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
                         src_stride, dst_stride,
                         PyArray_DESCR(src), PyArray_DESCR(dst),
                         0,
-                        &stransfer, &transferdata) != NPY_SUCCEED) {
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
             return -1;
         }
 
         src_itemsize = PyArray_DESCR(src)->elsize;
 
-        if (PyDataType_FLAGCHK(PyArray_DESCR(dst), NPY_NEEDS_PYAPI) ||
-                    PyDataType_FLAGCHK(PyArray_DESCR(src), NPY_NEEDS_PYAPI)) {
+        if (needs_api) {
             stransfer(dst_data, dst_stride, src_data, src_stride,
                         count, src_itemsize, transferdata);
         }
@@ -2669,6 +2671,8 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
         src_itemsize = PyArray_DESCR(src)->elsize;
 
+        int needs_api = NpyIter_IterationNeedsAPI(iter);
+
         /*
          * Because buffering is disabled in the iterator, the inner loop
          * strides will be the same throughout the iteration loop.  Thus,
@@ -2680,13 +2684,14 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
                         stride[1], stride[0],
                         PyArray_DESCR(src), PyArray_DESCR(dst),
                         0,
-                        &stransfer, &transferdata) != NPY_SUCCEED) {
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
             return -1;
         }
 
 
-        if (NpyIter_IterationNeedsAPI(iter)) {
+        if (needs_api) {
             do {
                 stransfer(dataptr[0], stride[0],
                             dataptr[1], stride[1],

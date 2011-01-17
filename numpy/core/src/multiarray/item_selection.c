@@ -1690,7 +1690,6 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 NPY_NO_EXPORT npy_intp
 PyArray_CountNonzero(PyArrayObject *self)
 {
-    int ndim = PyArray_NDIM(self);
     PyArray_NonzeroFunc *nonzero = self->descr->f->nonzero;
     char *data;
     npy_intp stride, count;

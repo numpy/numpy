@@ -115,24 +115,41 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
  * it must be deallocated with the ``PyArray_FreeStridedTransferData``
  * function when the transfer function is no longer required.
  *
- * For information on the 'aligned', 'src_stride' and 'dst_stride' parameters
- * see above.
- *
- * If move_references is 1, and 'src_dtype' has references,
- * the source references will get a DECREF after the reference value is
- * cast to the dest type.
+ * aligned:
+ *      Should be 1 if the src and dst pointers are always aligned,
+ *      0 otherwise.
+ * src_stride:  
+ *      Should be the src stride if it will always be the same,
+ *      NPY_MAX_INTP otherwise.
+ * dst_stride:  
+ *      Should be the dst stride if it will always be the same,
+ *      NPY_MAX_INTP otherwise.
+ * src_dtype:
+ *      The data type of source data.  If this is NULL, a transfer
+ *      function which sets the destination to zeros is produced.
+ * dst_dtype:
+ *      The data type of destination data.  If this is NULL and
+ *      move_references is 1, a transfer function which decrements
+ *      source data references is produced.
+ * move_references:
+ *      If 0, the destination data gets new reference ownership.
+ *      If 1, the references from the source data are moved to
+ *      the destination data.
+ * out_stransfer:
+ *      The resulting transfer function is placed here.
+ * out_transferdata:
+ *      The auxiliary data for the transfer function is placed here.
+ *      When finished with the transfer function, the caller must call
+ *      ``PyArray_FreeStridedTransferData`` on this data.
+ * out_needs_api:
+ *      If this is non-NULL, and the transfer function produced needs
+ *      to call into the (Python) API, this gets set to 1.  This
+ *      remains untouched if no API access is required.
  *
  * WARNING: If you set move_references to 1, it is best that src_stride is
  *          never zero when calling the transfer function.  Otherwise, the
  *          first destination reference will get the value and all the rest
  *          will get NULL.
- *
- * If you pass NULL to src_dtype, you get a transfer function which does
- * not touch the src values, and sets the dst values to zeros.
- *
- * If you pass NULL to dst_dtype, you either get a no-op, or if you
- * also set move_references to 1, you get a transfer function which
- * decrements the references in src.
  *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
@@ -141,8 +158,9 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata);
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api);
 
 /*
  * These two functions copy or convert the data of an n-dimensional array

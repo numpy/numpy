@@ -586,15 +586,10 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */ 
     if (flags&NPY_ITER_REFS_OK) {
         for (iiter = 0; iiter < niter; ++iiter) {
-            PyArray_Descr *odt = PyArray_DESCR(op[iiter]),
-                          *rdt = op_dtype[iiter];
-            if (((odt->flags&(NPY_ITEM_REFCOUNT|
-                           NPY_ITEM_IS_POINTER|
-                           NPY_NEEDS_PYAPI)) != 0) ||
-                    (odt != rdt &&
-                        ((rdt->flags&(NPY_ITEM_REFCOUNT|
+            PyArray_Descr *rdt = op_dtype[iiter];
+            if ((rdt->flags&(NPY_ITEM_REFCOUNT|
                                      NPY_ITEM_IS_POINTER|
-                                     NPY_NEEDS_PYAPI))) != 0)) {
+                                     NPY_NEEDS_PYAPI)) != 0) {
                 /* Iteration needs API access */
                 NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
             }
@@ -4216,6 +4211,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
 
     PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
+    int needs_api = 0;
 
     for (iiter = 0; iiter < niter; ++iiter) {
         char flags = op_itflags[iiter];
@@ -4236,7 +4232,8 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         op_dtype[iiter],
                                         move_references,
                                         &stransfer,
-                                        &transferdata) != NPY_SUCCEED) {
+                                        &transferdata,
+                                        &needs_api) != NPY_SUCCEED) {
                     goto fail;
                 }
                 readtransferfn[iiter] = stransfer;
@@ -4255,7 +4252,8 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         PyArray_DESCR(op[iiter]),
                                         move_references,
                                         &stransfer,
-                                        &transferdata) != NPY_SUCCEED) {
+                                        &transferdata,
+                                        &needs_api) != NPY_SUCCEED) {
                     goto fail;
                 }
                 writetransferfn[iiter] = stransfer;
@@ -4274,7 +4272,8 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         op_dtype[iiter], NULL,
                                         1,
                                         &stransfer,
-                                        &transferdata) != NPY_SUCCEED) {
+                                        &transferdata,
+                                        &needs_api) != NPY_SUCCEED) {
                     goto fail;
                 }
                 writetransferfn[iiter] = stransfer;
@@ -4288,6 +4287,11 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
             readtransferfn[iiter] = NULL;
             writetransferfn[iiter] = NULL;
         }
+    }
+
+    /* If any of the dtype transfer functions needed the API, flag it */
+    if (needs_api) {
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
     }
 
     return 1;
