@@ -43,6 +43,16 @@ get_setdstzero_transfer_function(int aligned,
                             void **out_transferdata,
                             int *out_needs_api);
 
+/*
+ * Returns a transfer function which sets a boolean type to ones.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+get_bool_setdstone_transfer_function(npy_intp dst_stride,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *NPY_UNUSED(out_needs_api));
 
 /*************************** COPY REFERENCES *******************************/
 
@@ -592,6 +602,7 @@ get_cast_transfer_function(int aligned,
     PyArray_VectorUnaryFunc *castfunc;
     npy_intp shape = 1, src_itemsize = src_dtype->elsize,
             dst_itemsize = dst_dtype->elsize;
+    PyArray_Descr *tmp_dtype;
 
     if (src_dtype->type_num == dst_dtype->type_num) {
         PyErr_SetString(PyExc_ValueError,
@@ -642,10 +653,22 @@ get_cast_transfer_function(int aligned,
     data->castfunc = castfunc;
     /*
      * TODO: This is a hack so the cast functions have an array.
-     *       The cast functions shouldn't need that.
+     *       The cast functions shouldn't need that.  Also, since we
+     *       always handle byte order conversions, this array should
+     *       have native byte order.
      */
-    Py_INCREF(src_dtype);
-    data->aip = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, src_dtype,
+    if (PyArray_ISNBO(src_dtype->byteorder)) {
+        tmp_dtype = src_dtype;
+        Py_INCREF(tmp_dtype);
+    }
+    else {
+        tmp_dtype = PyArray_DescrNewByteorder(src_dtype, NPY_NATIVE);
+        if (tmp_dtype == NULL) {
+            PyArray_free(data);
+            return NPY_FAIL;
+        }
+    }
+    data->aip = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, tmp_dtype,
                             1, &shape, NULL, NULL, 0, NULL);
     if (data->aip == NULL) {
         PyArray_free(data);
@@ -653,10 +676,23 @@ get_cast_transfer_function(int aligned,
     }
     /*
      * TODO: This is a hack so the cast functions have an array.
-     *       The cast functions shouldn't need that.
+     *       The cast functions shouldn't need that.  Also, since we
+     *       always handle byte order conversions, this array should
+     *       have native byte order.
      */
-    Py_INCREF(dst_dtype);
-    data->aop = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dst_dtype,
+    if (PyArray_ISNBO(dst_dtype->byteorder)) {
+        tmp_dtype = dst_dtype;
+        Py_INCREF(tmp_dtype);
+    }
+    else {
+        tmp_dtype = PyArray_DescrNewByteorder(dst_dtype, NPY_NATIVE);
+        if (tmp_dtype == NULL) {
+            Py_DECREF(data->aip);
+            PyArray_free(data);
+            return NPY_FAIL;
+        }
+    }
+    data->aop = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, tmp_dtype,
                             1, &shape, NULL, NULL, 0, NULL);
     if (data->aop == NULL) {
         Py_DECREF(data->aip);
@@ -1821,7 +1857,7 @@ get_fields_transfer_function(int aligned,
          * to process all the fields
          */
         if (move_references && PyDataType_REFCHK(src_dtype)) {
-            field_count = names_size;
+            field_count = names_size + 1;
         }
         else {
             field_count = 1;
@@ -1845,19 +1881,61 @@ get_fields_transfer_function(int aligned,
             PyArray_free(data);
             return NPY_FAIL;
         }
-        if (PyArray_GetDTypeTransferFunction(0,
-                                src_stride, dst_stride,
-                                src_fld_dtype, dst_dtype,
-                                move_references,
-                                &fields[0].stransfer,
-                                &fields[0].data,
-                                out_needs_api) != NPY_SUCCEED) {
-            PyArray_free(data);
-            return NPY_FAIL;
+        field_count = 0;
+        /*
+         * Special case bool type, the existence of fields implies True
+         *
+         * TODO: Perhaps a better behavior would be to combine all the
+         *       input fields with an OR?  The same would apply to subarrays.
+         */
+        if (dst_dtype->type_num == NPY_BOOL) {
+            if (get_bool_setdstone_transfer_function(dst_stride,
+                                    &fields[field_count].stransfer,
+                                    &fields[field_count].data,
+                                    out_needs_api) != NPY_SUCCEED) {
+                PyArray_free(data);
+                return NPY_FAIL;
+            }
+            fields[field_count].src_offset = 0;
+            fields[field_count].dst_offset = 0;
+            fields[field_count].src_itemsize = 0;
+            field_count++;
+
+            /* If the src field has references, may need to clear them */
+            if (move_references && PyDataType_REFCHK(src_fld_dtype)) {
+                if (get_decsrcref_transfer_function(0,
+                            src_stride,
+                            src_fld_dtype,
+                            &fields[field_count].stransfer,
+                            &fields[field_count].data,
+                            out_needs_api) != NPY_SUCCEED) {
+                    PyArray_FreeStridedTransferData(fields[0].data);
+                    PyArray_free(data);
+                    return NPY_FAIL;
+                }
+                fields[field_count].src_offset = src_offset;
+                fields[field_count].dst_offset = 0;
+                fields[field_count].src_itemsize = src_fld_dtype->elsize;
+                field_count++;
+            }
         }
-        fields[0].src_offset = src_offset;
-        fields[0].dst_offset = 0;
-        fields[0].src_itemsize = src_fld_dtype->elsize;
+        /* Transfer the first field to the output */
+        else {
+            if (PyArray_GetDTypeTransferFunction(0,
+                                    src_stride, dst_stride,
+                                    src_fld_dtype, dst_dtype,
+                                    move_references,
+                                    &fields[field_count].stransfer,
+                                    &fields[field_count].data,
+                                    out_needs_api) != NPY_SUCCEED) {
+                PyArray_free(data);
+                return NPY_FAIL;
+            }
+            fields[field_count].src_offset = src_offset;
+            fields[field_count].dst_offset = 0;
+            fields[field_count].src_itemsize = src_fld_dtype->elsize;
+            field_count++;
+        }
 
         /*
          * If the references should be removed from src, add
@@ -1865,7 +1943,6 @@ get_fields_transfer_function(int aligned,
          * for all the other fields.
          */
         if (move_references && PyDataType_REFCHK(src_dtype)) {
-            field_count = 1;
             for (i = 1; i < names_size; ++i) {
                 key = PyTuple_GET_ITEM(names, i);
                 tup = PyDict_GetItem(src_dtype->fields, key);
@@ -2189,6 +2266,55 @@ get_setdestzero_fields_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
+/************************* DEST BOOL SETONE *******************************/
+
+static void
+_null_to_strided_set_bool_one(char *dst,
+                        npy_intp dst_stride,
+                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *NPY_UNUSED(data))
+{
+    /* bool type is one byte, so can just use the char */
+
+    while (N > 0) {
+        *dst = 1;
+
+        dst += dst_stride;
+        --N;
+    }
+}
+
+static void
+_null_to_contig_set_bool_one(char *dst,
+                        npy_intp NPY_UNUSED(dst_stride),
+                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *NPY_UNUSED(data))
+{
+    /* bool type is one byte, so can just use the char */
+
+    memset(dst, 1, N);
+}
+
+/* Only for the bool type, sets the destination to 1 */
+NPY_NO_EXPORT int
+get_bool_setdstone_transfer_function(npy_intp dst_stride,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *NPY_UNUSED(out_needs_api))
+{
+    if (dst_stride == 1) {
+        *out_stransfer = &_null_to_contig_set_bool_one;
+    }
+    else {
+        *out_stransfer = &_null_to_strided_set_bool_one;
+    }
+    *out_transferdata = NULL;
+
+    return NPY_SUCCEED;
+}
+
 /*************************** DEST SETZERO *******************************/
 
 /* Sets dest to zero */
@@ -2491,13 +2617,13 @@ PyArray_GetDTypeTransferFunction(int aligned,
     npy_intp src_itemsize, dst_itemsize;
     int src_type_num, dst_type_num;
 
-    /*
+#if 0
     printf("Calculating dtype transfer from ");
     PyObject_Print((PyObject *)src_dtype, stdout, 0);
     printf(" to ");
     PyObject_Print((PyObject *)dst_dtype, stdout, 0);
     printf("\n");
-    */
+#endif
 
     /*
      * If one of the dtypes is NULL, we give back either a src decref

@@ -77,8 +77,7 @@ def assert_equal_records(a, b):
 
 
 def assert_equal(actual, desired, err_msg=''):
-    """Asserts that two items are equal.
-    """
+    "Asserts that two items are equal."
     # Case #1: dictionary .....
     if isinstance(desired, dict):
         if not isinstance(actual, dict):
@@ -94,7 +93,10 @@ def assert_equal(actual, desired, err_msg=''):
         return _assert_equal_on_sequences(actual, desired, err_msg='')
     if not (isinstance(actual, ndarray) or isinstance(desired, ndarray)):
         msg = build_err_msg([actual, desired], err_msg,)
-        if not desired == actual:
+        try:
+            if not desired == actual:
+                raise AssertionError(msg)
+        except ValueError:
             raise AssertionError(msg)
         return
     # Case #4. arrays or equivalent

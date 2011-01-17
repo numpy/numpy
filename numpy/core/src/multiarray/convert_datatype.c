@@ -308,63 +308,8 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 NPY_NO_EXPORT int
 PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 {
-    int simple;
-    int same;
-    PyArray_VectorUnaryFunc *castfunc = NULL;
-    intp mpsize = PyArray_SIZE(mp);
-    int iswap, oswap;
-    NPY_BEGIN_THREADS_DEF;
-
-    if (mpsize == 0) {
-        return 0;
-    }
-    if (!PyArray_ISWRITEABLE(out)) {
-        PyErr_SetString(PyExc_ValueError, "output array is not writeable");
-        return -1;
-    }
-
-    castfunc = PyArray_GetCastFunc(mp->descr, out->descr->type_num);
-    if (castfunc == NULL) {
-        return -1;
-    }
-
-    same = PyArray_SAMESHAPE(out, mp);
-    simple = same && ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) ||
-            (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
-    if (simple) {
-#if NPY_ALLOW_THREADS
-        if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
-            NPY_BEGIN_THREADS;
-        }
-#endif
-        castfunc(mp->data, out->data, mpsize, mp, out);
-
-#if NPY_ALLOW_THREADS
-        if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
-            NPY_END_THREADS;
-        }
-#endif
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-
-    /*
-     * If the input or output is OBJECT, STRING, UNICODE, or VOID
-     *  then getitem and setitem are used for the cast
-     *  and byteswapping is handled by those methods
-     */
-    if (PyArray_ISFLEXIBLE(mp) || PyArray_ISOBJECT(mp) || PyArray_ISOBJECT(out) ||
-            PyArray_ISFLEXIBLE(out)) {
-        iswap = oswap = 0;
-    }
-    else {
-        iswap = PyArray_ISBYTESWAPPED(mp);
-        oswap = PyArray_ISBYTESWAPPED(out);
-    }
-
-    return _broadcast_cast(out, mp, castfunc, iswap, oswap);
+    /* CopyInto handles the casting now */
+    return PyArray_CopyInto(out, mp);
 }
 
 
