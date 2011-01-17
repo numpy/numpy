@@ -268,7 +268,8 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                     stride = ((PyArray_NDIM(arr) == 0) ? 0 : \
                                 (PyArray_CHKFLAGS(arr, NPY_FORTRAN) ? \
                                             PyArray_STRIDE(arr, 0) : \
-                                            PyArray_STRIDE(arr, ndim-1)))
+                                            PyArray_STRIDE(arr, \
+                                                PyArray_NDIM(arr)-1)))
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2) (\
                     PyArray_TRIVIALLY_ITERABLE(arr1) && \
@@ -276,6 +277,8 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                     PyArray_CompareLists(PyArray_DIMS(arr1), \
                                          PyArray_DIMS(arr2), \
                                          PyArray_NDIM(arr1)) && \
+                    PyArray_CHKFLAGS(arr1, NPY_CONTIGUOUS) == \
+                            PyArray_CHKFLAGS(arr2, NPY_CONTIGUOUS) && \
                     PyArray_CHKFLAGS(arr1, NPY_FORTRAN) == \
                             PyArray_CHKFLAGS(arr2, NPY_FORTRAN) \
                     )
@@ -289,9 +292,11 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                     stride1 = ((PyArray_NDIM(arr1) == 0) ? 0 : \
                                 (PyArray_CHKFLAGS(arr1, NPY_FORTRAN) ? \
                                             PyArray_STRIDE(arr1, 0) : \
-                                            PyArray_STRIDE(arr1, ndim-1))), \
+                                            PyArray_STRIDE(arr1, \
+                                                PyArray_NDIM(arr1)-1))), \
                     stride2 = ((PyArray_NDIM(arr2) == 0) ? 0 : \
                                 (PyArray_CHKFLAGS(arr2, NPY_FORTRAN) ? \
                                             PyArray_STRIDE(arr2, 0) : \
-                                            PyArray_STRIDE(arr2, ndim-1)))
+                                            PyArray_STRIDE(arr2, \
+                                                PyArray_NDIM(arr2)-1)))
 #endif

@@ -21,6 +21,8 @@
 
 #include "numpymemoryview.h"
 
+#include "lowlevel_strided_loops.h"
+
 /*
  * Reading from a file or a string.
  *
@@ -826,17 +828,16 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
     return 0;
 }
 
-/* If destination is not the right type, then src
-   will be cast to destination -- this requires
-   src and dest to have the same shape
-*/
-
-/* Requires arrays to have broadcastable shapes
-
-   The arrays are assumed to have the same number of elements
-   They can be different sizes and have different types however.
-*/
-
+/*
+ * If destination is not the right type, then src
+ * will be cast to destination -- this requires
+ * src and dest to have the same shape
+ *
+ * Requires arrays to have broadcastable shapes
+ *
+ * The arrays are assumed to have the same number of elements
+ * They can be different sizes and have different types however.
+ */
 static int
 _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 {
@@ -846,14 +847,14 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
     int same;
     NPY_BEGIN_THREADS_DEF;
 
-
-    if (!PyArray_EquivArrTypes(dest, src)) {
-        return PyArray_CastTo(dest, src);
-    }
     if (!PyArray_ISWRITEABLE(dest)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "cannot write to array");
         return -1;
+    }
+
+    if (!PyArray_EquivArrTypes(dest, src)) {
+        return PyArray_CastTo(dest, src);
     }
     same = PyArray_SAMESHAPE(dest, src);
     simple = same && ((PyArray_ISCARRAY_RO(src) && PyArray_ISCARRAY(dest)) ||
@@ -1640,7 +1641,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
 
     view = PyMemoryView_GET_BUFFER(memoryview);
     if (view->format != NULL) {
-        descr = (PyObject*)_descriptor_from_pep3118_format(view->format);
+        descr = _descriptor_from_pep3118_format(view->format);
         if (descr == NULL) {
             PyObject *msg;
             msg = PyBytes_FromFormat("Invalid PEP 3118 format string: '%s'",
@@ -2573,11 +2574,140 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 
 /*NUMPY_API
  * Copy an Array into another array -- memory must not overlap.
+ * Broadcast to the destination shape if necessary.
+ *
+ * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
+PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 {
-    return _array_copy_into(dest, src, 1);
+    PyArray_StridedTransferFn *stransfer = NULL;
+    void *transferdata = NULL;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArray_ISWRITEABLE(dst)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "cannot write to array");
+        return -1;
+    }
+
+    if (PyArray_SIZE(src) == 0) {
+        if (PyArray_SIZE(dst) == 0) {
+            return 0;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot copy from zero-sized array");
+            return -1;
+        }
+    }
+
+    if (PyArray_TRIVIALLY_ITERABLE_PAIR(dst, src)) {
+        char *dst_data, *src_data;
+        npy_intp count, dst_stride, src_stride, src_itemsize;
+
+        PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(dst, src, count,
+                              dst_data, src_data, dst_stride, src_stride);
+
+        if (PyArray_GetDTypeTransferFunction(
+                        PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                        src_stride, dst_stride,
+                        PyArray_DESCR(src), PyArray_DESCR(dst),
+                        0,
+                        &stransfer, &transferdata) != NPY_SUCCEED) {
+            return -1;
+        }
+
+        src_itemsize = PyArray_DESCR(src)->elsize;
+
+        if (PyDataType_FLAGCHK(PyArray_DESCR(dst), NPY_NEEDS_PYAPI) ||
+                    PyDataType_FLAGCHK(PyArray_DESCR(src), NPY_NEEDS_PYAPI)) {
+            stransfer(dst_data, dst_stride, src_data, src_stride,
+                        count, src_itemsize, transferdata);
+        }
+        else {
+            NPY_BEGIN_THREADS;
+            stransfer(dst_data, dst_stride, src_data, src_stride,
+                        count, src_itemsize, transferdata);
+            NPY_END_THREADS;
+        }
+
+        PyArray_FreeStridedTransferData(transferdata);
+
+        return PyErr_Occurred() ? -1 : 0;
+    }
+    else {
+        PyArrayObject *op[2];
+        npy_uint32 op_flags[2];
+        NpyIter *iter;
+
+        NpyIter_IterNext_Fn iternext;
+        char **dataptr;
+        npy_intp *stride;
+        npy_intp *countptr;
+        npy_intp src_itemsize;
+
+        op[0] = dst;
+        op[1] = src;
+        op_flags[0] = NPY_ITER_WRITEONLY|NPY_ITER_NO_BROADCAST;
+        op_flags[1] = NPY_ITER_READONLY;
+
+        iter = NpyIter_MultiNew(2, op,
+                            NPY_ITER_NO_INNER_ITERATION|
+                            NPY_ITER_REFS_OK,
+                            NPY_KEEPORDER,
+                            NPY_NO_CASTING,
+                            op_flags,
+                            NULL, 0, NULL, 0);
+        if (iter == NULL) {
+            return -1;
+        }
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        stride = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
+        src_itemsize = PyArray_DESCR(src)->elsize;
+
+        /*
+         * Because buffering is disabled in the iterator, the inner loop
+         * strides will be the same throughout the iteration loop.  Thus,
+         * we can pass them to this function to take advantage of
+         * contiguous strides, etc.
+         */
+        if (PyArray_GetDTypeTransferFunction(
+                        PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                        stride[1], stride[0],
+                        PyArray_DESCR(src), PyArray_DESCR(dst),
+                        0,
+                        &stransfer, &transferdata) != NPY_SUCCEED) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
+
+        if (NpyIter_IterationNeedsAPI(iter)) {
+            do {
+                stransfer(dataptr[0], stride[0],
+                            dataptr[1], stride[1],
+                            *countptr, src_itemsize, transferdata);
+            } while(iternext(iter));
+        }
+        else {
+            NPY_BEGIN_THREADS;
+            do {
+                stransfer(dataptr[0], stride[0],
+                            dataptr[1], stride[1],
+                            *countptr, src_itemsize, transferdata);
+            } while(iternext(iter));
+            NPY_END_THREADS;
+        }
+
+        PyArray_FreeStridedTransferData(transferdata);
+        NpyIter_Deallocate(iter);
+
+        return PyErr_Occurred() ? -1 : 0;
+    }
 }
 
 

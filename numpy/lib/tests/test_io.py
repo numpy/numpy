@@ -381,6 +381,15 @@ class TestLoadTxt(TestCase):
                      dtype=dt)
         assert_array_equal(x, a)
 
+    def test_3d_shaped_dtype(self):
+        c = StringIO("aaaa  1.0  8.0  1 2 3 4 5 6 7 8 9 10 11 12")
+        dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
+                       ('block', int, (2, 2, 3))])
+        x = np.loadtxt(c, dtype=dt)
+        a = np.array([('aaaa', 1.0, 8.0, [[[1, 2, 3], [4, 5, 6]],[[7, 8, 9], [10, 11, 12]]])],
+                     dtype=dt)
+        assert_array_equal(x, a)
+
     def test_empty_file(self):
         c = StringIO()
         assert_raises(IOError, np.loadtxt, c)
@@ -883,7 +892,6 @@ M   33  21.99
         a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
                      dtype=dt)
         assert_array_equal(x, a)
-
 
     def test_withmissing(self):
         data = StringIO('A,B\n0,1\n2,N/A')

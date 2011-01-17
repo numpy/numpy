@@ -2469,12 +2469,10 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         if (!(flags&NPY_ITER_REFS_OK)) {
             PyArray_Descr *dt = PyArray_DESCR(*op);
             if (((dt->flags&(NPY_ITEM_REFCOUNT|
-                           NPY_ITEM_IS_POINTER|
-                           NPY_NEEDS_PYAPI)) != 0) ||
+                           NPY_ITEM_IS_POINTER)) != 0) ||
                     (dt != *op_dtype &&
                         (((*op_dtype)->flags&(NPY_ITEM_REFCOUNT|
-                                             NPY_ITEM_IS_POINTER|
-                                             NPY_NEEDS_PYAPI))) != 0)) {
+                                             NPY_ITEM_IS_POINTER))) != 0)) {
                 PyErr_SetString(PyExc_TypeError,
                         "Iterator operand or requested dtype holds "
                         "references, but the REFS_OK flag was not enabled");
@@ -3003,16 +3001,8 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
 
     /* Go through and check for operands with NPY_ITER_NO_BROADCAST set */
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op_flags[iiter]&NPY_ITER_NO_BROADCAST) {
+        if (op[iiter] != NULL && (op_flags[iiter]&NPY_ITER_NO_BROADCAST)) {
             npy_intp *axes;
-
-            if (op[iiter] != NULL && PyArray_NDIM(op[iiter]) != ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Iterator input has the NO_BROADCAST flag set, but "
-                        "has a different number of dimensions than the "
-                        "iterator");
-                return 0;
-            }
 
             axes = op_axes ? op_axes[iiter] : NULL;
             axisdata = axisdata0;
@@ -3024,12 +3014,25 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                 else {
                     i = ndim-idim-1;
                 }
-                if (op[iiter] != NULL &&
-                            PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+                if (i < PyArray_NDIM(op[iiter])) {
+                    if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "Iterator input has the NO_BROADCAST flag "
+                                "set, but has different dimensions than "
+                                "the final broadcast shape of the iterator");
+                        return 0;
+                    }
+                }
+                /*
+                 * Allow additional dimensions of size 1 to be added on,
+                 * but no broadcasting that would produce a one to many
+                 * mapping
+                 */
+                else if (NAD_SHAPE(axisdata) != 1) {
                     PyErr_SetString(PyExc_ValueError,
-                            "Iterator input has the NO_BROADCAST flag set, "
-                            "but has different dimensions than the final "
-                            "broadcast shape of the iterator");
+                            "Iterator input has the NO_BROADCAST flag "
+                            "set, but has different dimensions than "
+                            "the final broadcast shape of the iterator");
                     return 0;
                 }
                 

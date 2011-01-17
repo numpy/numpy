@@ -2407,6 +2407,14 @@ PyArray_GetDTypeTransferFunction(int aligned,
     int src_type_num, dst_type_num;
 
     /*
+    printf("Calculating dtype transfer from ");
+    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    printf(" to ");
+    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    printf("\n");
+    */
+
+    /*
      * If one of the dtypes is NULL, we give back either a src decref
      * function or a dst setzero function
      */
