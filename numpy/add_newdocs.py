@@ -1214,7 +1214,44 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: invalid type promotion
+    """)
 
+add_newdoc('numpy.core.multiarray', 'min_scalar_type',
+    """
+    min_scalar_type(a)
+
+    For scalar ``a``, returns the data type with the smallest size
+    and smallest scalar kind which can hold its value.  For vector ``a``,
+    returns the vector's dtype unmodified.
+
+    As a special case, floating point values are not reduced to integers.
+
+    Parameters
+    ----------
+    a : scalar or array_like
+        The value whose minimal data type is to be found.
+
+    Returns
+    -------
+    out : dtype
+        The minimal data type.
+
+    Examples
+    --------
+    >>> np.min_scalar_type(10)
+    dtype('uint8')
+
+    >>> np.min_scalar_type(-260)
+    dtype('int16')
+
+    >>> np.min_scalar_type(3.1)
+    dtype('float16')
+
+    >>> np.min_scalar_type(1e50)
+    dtype('float64')
+
+    >>> np.min_scalar_type(np.arange(4,dtype='f8'))
+    dtype('float64')
 
     """)
 

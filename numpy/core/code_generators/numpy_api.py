@@ -295,6 +295,7 @@ multiarray_funcs_api = {
     'PyArray_CastingConverter':             261,
     'PyArray_CountNonzero':                 262,
     'PyArray_PromoteTypes':                 263,
+    'PyArray_MinScalarType':                264,
 }
 
 ufunc_types_api = {

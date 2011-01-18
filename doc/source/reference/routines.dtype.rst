@@ -10,6 +10,7 @@ Data type routines
 
    can_cast
    promote_types
+   min_scalar_type
    common_type
    obj2sctype
 

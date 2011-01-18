@@ -397,6 +397,249 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     return NULL;
 }
 
+/*
+ * NOTE: While this is unlikely to be a performance problem, if
+ *       it is it could be reverted to a simple positive/negative
+ *       check as the previous system used.
+ */
+static int min_scalar_type_num(char *valueptr, int type_num)
+{
+    switch (type_num) {
+        case NPY_BOOL: {
+            return NPY_BOOL;
+        }
+        case NPY_UBYTE: {
+            return NPY_UBYTE;
+        }
+        case NPY_BYTE: {
+            char value = *valueptr;
+            if (value >= 0) {
+                return NPY_UBYTE;
+            }
+            break;
+        }
+        case NPY_USHORT: {
+            npy_ushort value = *(npy_ushort *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                return NPY_UBYTE;
+            }
+            break;
+        }
+        case NPY_SHORT: {
+            npy_short value = *(npy_short *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_USHORT);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
+        case NPY_ULONG:
+#endif
+        case NPY_UINT: {
+            npy_uint value = *(npy_uint *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                return NPY_UBYTE;
+            }
+            else if (value <= NPY_MAX_USHORT) {
+                return NPY_USHORT;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
+        case NPY_LONG:
+#endif
+        case NPY_INT: {
+            npy_int value = *(npy_int *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_UINT);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            else if (value >= NPY_MIN_SHORT) {
+                return NPY_SHORT;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_INT && NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+        case NPY_ULONG: {
+            npy_ulong value = *(npy_ulong *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                return NPY_UBYTE;
+            }
+            else if (value <= NPY_MAX_USHORT) {
+                return NPY_USHORT;
+            }
+            else if (value <= NPY_MAX_UINT) {
+                return NPY_UINT;
+            }
+            break;
+        }
+        case NPY_LONG: {
+            npy_long value = *(npy_long *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_ULONG);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            else if (value >= NPY_MIN_SHORT) {
+                return NPY_SHORT;
+            }
+            else if (value >= NPY_MIN_INT) {
+                return NPY_INT;
+            }
+            break;
+        }
+#endif
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_LONGLONG
+        case NPY_ULONG:
+#endif
+        case NPY_ULONGLONG: {
+            npy_ulonglong value = *(npy_ulonglong *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                return NPY_UBYTE;
+            }
+            else if (value <= NPY_MAX_USHORT) {
+                return NPY_USHORT;
+            }
+            else if (value <= NPY_MAX_UINT) {
+                return NPY_UINT;
+            }
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_INT && NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+            else if (value <= NPY_MAX_ULONG) {
+                return NPY_ULONG;
+            }
+#endif
+            break;
+        }
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_LONGLONG
+        case NPY_LONG:
+#endif
+        case NPY_LONGLONG: {
+            npy_longlong value = *(npy_longlong *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_ULONGLONG);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            else if (value >= NPY_MIN_SHORT) {
+                return NPY_SHORT;
+            }
+            else if (value >= NPY_MIN_INT) {
+                return NPY_INT;
+            }
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_INT && NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+            else if (value >= NPY_MIN_LONG) {
+                return NPY_LONG;
+            }
+#endif
+            break;
+        }
+        /*
+         * Float types aren't allowed to be demoted to integer types,
+         * but precision loss is allowed.
+         */
+        case NPY_HALF: {
+            return NPY_HALF;
+        }
+        case NPY_FLOAT: {
+            float value = *(float *)valueptr;
+            if (value > -65000 && value < 65000) {
+                return NPY_HALF;
+            }
+            break;
+        }
+        case NPY_DOUBLE: {
+            double value = *(double *)valueptr;
+            if (value > -65000 && value < 65000) {
+                return NPY_HALF;
+            }
+            else if (value > -3.4e38 && value < 3.4e38) {
+                return NPY_FLOAT;
+            }
+            break;
+        }
+        case NPY_LONGDOUBLE: {
+            npy_longdouble value = *(npy_longdouble *)valueptr;
+            if (value > -65000 && value < 65000) {
+                return NPY_HALF;
+            }
+            else if (value > -3.4e38 && value < 3.4e38) {
+                return NPY_FLOAT;
+            }
+            else if (value > -1.7e308 && value < 1.7e308) {
+                return NPY_DOUBLE;
+            }
+            break;
+        }
+        /*
+         * Complex types may be demoted to float types if the
+         * imaginary part is zero.
+         */
+        case NPY_CFLOAT: {
+            npy_cfloat value = *(npy_cfloat *)valueptr;
+            if (value.imag == 0) {
+                return min_scalar_type_num((char *)&value.real, NPY_FLOAT);
+            }
+            break;
+        }
+        case NPY_CDOUBLE: {
+            npy_cdouble value = *(npy_cdouble *)valueptr;
+            if (value.imag == 0) {
+                return min_scalar_type_num((char *)&value.real, NPY_DOUBLE);
+            }
+            /* TODO: Check overflow values as for float case */
+            return NPY_CFLOAT;
+        }
+        case NPY_CLONGDOUBLE: {
+            npy_cdouble value = *(npy_cdouble *)valueptr;
+            if (value.imag == 0) {
+                return min_scalar_type_num((char *)&value.real, NPY_LONGDOUBLE);
+            }
+            /* TODO: Check overflow values as for float case */
+            return NPY_CFLOAT;
+        }
+    }
+
+    return type_num;
+}
+
+/*NUMPY_API
+ * If arr is a scalar (has 0 dimensions) with a built-in number data type,
+ * finds the smallest type size/kind which can still represent its data.
+ * Otherwise, returns the array's data type.
+ * 
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_MinScalarType(PyArrayObject *arr)
+{
+    PyArray_Descr *dtype = PyArray_DESCR(arr);
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
+        Py_INCREF(dtype);
+        return dtype;
+    }
+    else {
+        char *data = PyArray_BYTES(arr);
+        int swap = !PyArray_ISNBO(dtype->byteorder);
+        /* An aligned memory buffer large enough to hold any type */
+#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
+        npy_longlong value;
+#else
+        npy_clongdouble value;
+#endif
+        dtype->f->copyswap(&value, data, swap, NULL);
+
+        return PyArray_DescrFromType(
+                        min_scalar_type_num((char *)&value, dtype->type_num));
+
+    }
+}
+
 /*NUMPY_API
  * Is the typenum valid?
  */

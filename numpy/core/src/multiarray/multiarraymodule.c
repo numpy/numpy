@@ -2238,6 +2238,27 @@ array_promote_types(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return ret;
 }
 
+static PyObject *
+array_min_scalar_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *array_in = NULL;
+    PyArrayObject *array;
+    PyObject *ret = NULL;
+
+    if(!PyArg_ParseTuple(args, "O", &array_in)) {
+        return NULL;
+    }
+
+    array = (PyArrayObject *)PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
+    if (array == NULL) {
+        return NULL;
+    }
+
+    ret = (PyObject *)PyArray_MinScalarType(array);
+    Py_DECREF(array);
+    return ret;
+}
+
 #if !defined(NPY_PY3K)
 static PyObject *
 new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
@@ -2845,6 +2866,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"promote_types",
         (PyCFunction)array_promote_types,
+        METH_VARARGS, NULL},
+    {"min_scalar_type",
+        (PyCFunction)array_min_scalar_type,
         METH_VARARGS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",

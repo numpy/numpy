@@ -3,7 +3,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'newiter', 'nested_iters', 'ufunc',
            'dtype', 'fromstring', 'fromfile', 'frombuffer',
            'int_asbuffer', 'where', 'argwhere',
            'concatenate', 'fastCopyAndTranspose', 'lexsort',
-           'set_numeric_ops', 'can_cast', 'promote_types',
+           'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
@@ -213,6 +213,7 @@ fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
 promote_types = multiarray.promote_types
+min_scalar_type = multiarray.min_scalar_type
 lexsort = multiarray.lexsort
 compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
