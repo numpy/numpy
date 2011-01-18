@@ -238,7 +238,54 @@ class TestScalarIndexing(TestCase):
         def subscript(x, i): x[i]
         self.assertRaises(IndexError, subscript, a, (newaxis, 0))
         self.assertRaises(IndexError, subscript, a, (newaxis,)*50)
+    
+    def test_overlapping_assignment(self):
+        # With positive strides
+        a = np.arange(4)
+        a[:-1] = a[1:]
+        assert_equal(a, [1,2,3,3])
 
+        a = np.arange(4)
+        a[1:] = a[:-1]
+        assert_equal(a, [0,0,1,2])
+
+        # With positive and negative strides
+        a = np.arange(4)
+        a[:] = a[::-1]
+        assert_equal(a, [3,2,1,0])
+
+        a = np.arange(6).reshape(2,3)
+        a[::-1,:] = a[:,::-1]
+        assert_equal(a, [[5,4,3],[2,1,0]])
+
+        a = np.arange(6).reshape(2,3)
+        a[::-1,::-1] = a[:,::-1]
+        assert_equal(a, [[3,4,5],[0,1,2]])
+
+        # With just one element overlapping
+        a = np.arange(5)
+        a[:3] = a[2:]
+        assert_equal(a, [2,3,4,3,4])
+
+        a = np.arange(5)
+        a[2:] = a[:3]
+        assert_equal(a, [0,1,0,1,2])
+
+        a = np.arange(5)
+        a[2::-1] = a[2:]
+        assert_equal(a, [4,3,2,3,4])
+
+        a = np.arange(5)
+        a[2:] = a[2::-1]
+        assert_equal(a, [0,1,2,1,0])
+
+        a = np.arange(5)
+        a[2::-1] = a[:1:-1]
+        assert_equal(a, [2,3,4,3,4])
+
+        a = np.arange(5)
+        a[:1:-1] = a[2::-1]
+        assert_equal(a, [0,1,0,1,2])
 
 class TestCreation(TestCase):
     def test_from_attribute(self):

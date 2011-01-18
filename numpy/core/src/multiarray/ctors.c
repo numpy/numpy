@@ -490,89 +490,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
     }
 }
 
-/*
- * Special-case of PyArray_CopyInto when dst is 1-d
- * and contiguous (and aligned).
- * PyArray_CopyInto requires broadcastable arrays while
- * this one is a flattening operation...
- *
- * TODO: Delete this function when its usage is removed.
- */
-NPY_NO_EXPORT int
-_flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order)
-{
-    PyArrayIterObject *it;
-    PyObject *orig_src;
-    void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int);
-    char *dptr;
-    int axis;
-    int elsize;
-    npy_intp nbytes;
-    NPY_BEGIN_THREADS_DEF;
-
-
-    orig_src = src;
-    if (PyArray_NDIM(src) == 0) {
-        /* Refcount note: src and dst have the same size */
-        PyArray_INCREF((PyArrayObject *)src);
-        PyArray_XDECREF((PyArrayObject *)dst);
-        NPY_BEGIN_THREADS;
-        memcpy(PyArray_BYTES(dst), PyArray_BYTES(src),
-                PyArray_ITEMSIZE(src));
-        NPY_END_THREADS;
-        return 0;
-    }
-
-    axis = PyArray_NDIM(src)-1;
-
-    if (order == PyArray_FORTRANORDER) {
-        if (PyArray_NDIM(src) <= 2) {
-            axis = 0;
-        }
-        /* fall back to a more general method */
-        else {
-            src = PyArray_Transpose((PyArrayObject *)orig_src, NULL);
-        }
-    }
-
-    it = (PyArrayIterObject *)PyArray_IterAllButAxis(src, &axis);
-    if (it == NULL) {
-        if (src != orig_src) {
-            Py_DECREF(src);
-        }
-        return -1;
-    }
-
-    if (PyArray_SAFEALIGNEDCOPY(src)) {
-        myfunc = _strided_byte_copy;
-    }
-    else {
-        myfunc = _unaligned_strided_byte_copy;
-    }
-
-    dptr = PyArray_BYTES(dst);
-    elsize = PyArray_ITEMSIZE(dst);
-    nbytes = elsize * PyArray_DIM(src, axis);
-
-    /* Refcount note: src and dst have the same size */
-    PyArray_INCREF((PyArrayObject *)src);
-    PyArray_XDECREF((PyArrayObject *)dst);
-    NPY_BEGIN_THREADS;
-    while(it->index < it->size) {
-        myfunc(dptr, elsize, it->dataptr, PyArray_STRIDE(src,axis),
-                PyArray_DIM(src,axis), elsize);
-        dptr += nbytes;
-        PyArray_ITER_NEXT(it);
-    }
-    NPY_END_THREADS;
-
-    if (src != orig_src) {
-        Py_DECREF(src);
-    }
-    Py_DECREF(it);
-    return 0;
-}
-
 /* Gets a half-open range [start, end) which contains the array data */
 void _get_memory_extents(PyArrayObject *arr,
                     npy_uintp *out_start, npy_uintp *out_end)
@@ -623,20 +540,21 @@ int _arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
  *
  * This is in general a difficult problem to solve efficiently, because
  * strides can be negative.  Consider "a = np.arange(3); a[::-1] = a", which
- * currently incorrectly produces [0, 1, 0].
+ * previously produced the incorrect [0, 1, 0].
  *
  * Instead of trying to be fancy, we simply check for overlap and make
  * a temporary copy when one exists.
- *
- * A special case is when there is just one dimension with positive
- * strides, and we pass that to CopyInto, which correctly handles
- * it for most cases.  It may still incorrectly handle copying of
- * partially-overlapping data elements, where the data pointer was offset
- * by a fraction of the element size.
  */
 NPY_NO_EXPORT int
 PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
 {
+    /*
+     * A special case is when there is just one dimension with positive
+     * strides, and we pass that to CopyInto, which correctly handles
+     * it for most cases.  It may still incorrectly handle copying of
+     * partially-overlapping data elements, where the data pointer was offset
+     * by a fraction of the element size.
+     */
     if ((PyArray_NDIM(dst) == 1 &&
                         PyArray_NDIM(src) == 1 &&
                         PyArray_STRIDE(dst, 0) > 0 &&
@@ -2255,19 +2173,10 @@ PyArray_EnsureAnyArray(PyObject *op)
     return PyArray_EnsureArray(op);
 }
 
-/*NUMPY_API
- * Copy an Array into another array -- memory must not overlap
- * Does not require src and dest to have "broadcastable" shapes
- * (only the same number of elements).
- *
- * TODO: For NumPy 2.0, this could accept an order parameter which
- *       only allows NPY_CORDER and NPY_FORDER.  Could also rename
- *       this to CopyAsFlat to make the name more intuitive.
- *
- * Returns 0 on success, -1 on error.
- */
+/* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
 NPY_NO_EXPORT int
-PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
+PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
+                                NPY_ORDER order)
 {
     PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
@@ -2288,6 +2197,12 @@ PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
     if (!PyArray_ISWRITEABLE(dst)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "cannot write to array");
+        return -1;
+    }
+
+    if (!(order == NPY_CORDER || order == NPY_FORTRANORDER)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "CopyAnyIntoOrdered requires either C or Fortran order");
         return -1;
     }
 
@@ -2321,7 +2236,7 @@ PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
     dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY|
                                 NPY_ITER_NO_INNER_ITERATION|
                                 NPY_ITER_REFS_OK,
-                                NPY_CORDER,
+                                order,
                                 NPY_NO_CASTING,
                                 NULL, 0, NULL, 0);
     if (dst_iter == NULL) {
@@ -2330,7 +2245,7 @@ PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
     src_iter = NpyIter_New(src, NPY_ITER_READONLY|
                                 NPY_ITER_NO_INNER_ITERATION|
                                 NPY_ITER_REFS_OK,
-                                NPY_CORDER,
+                                order,
                                 NPY_NO_CASTING,
                                 NULL, 0, NULL, 0);
     if (src_iter == NULL) {
@@ -2436,6 +2351,23 @@ PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
     NpyIter_Deallocate(src_iter);
 
     return PyErr_Occurred() ? -1 : 0;
+}
+
+/*NUMPY_API
+ * Copy an Array into another array -- memory must not overlap
+ * Does not require src and dest to have "broadcastable" shapes
+ * (only the same number of elements).
+ *
+ * TODO: For NumPy 2.0, this could accept an order parameter which
+ *       only allows NPY_CORDER and NPY_FORDER.  Could also rename
+ *       this to CopyAsFlat to make the name more intuitive.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
+{
+    return PyArray_CopyAnyIntoOrdered(dst, src, NPY_CORDER);
 }
 
 /*NUMPY_API

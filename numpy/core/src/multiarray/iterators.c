@@ -1155,8 +1155,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
         if (r == NULL) {
             return NULL;
         }
-        if (_flat_copyinto(r, (PyObject *)it->ao,
-                           PyArray_CORDER) < 0) {
+        if (PyArray_CopyAnyInto(r, it->ao) < 0) {
             Py_DECREF(r);
             return NULL;
         }

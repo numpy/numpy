@@ -791,15 +791,15 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER fortran)
 NPY_NO_EXPORT PyObject *
 PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 {
-    PyObject *ret;
+    PyArrayObject *ret;
     intp size;
 
-    if (order == PyArray_ANYORDER) {
-        order = PyArray_ISFORTRAN(a);
+    if (order == NPY_ANYORDER) {
+        order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;
     }
     size = PyArray_SIZE(a);
     Py_INCREF(a->descr);
-    ret = PyArray_NewFromDescr(Py_TYPE(a),
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(a),
                                a->descr,
                                1, &size,
                                NULL,
@@ -809,11 +809,11 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     if (ret == NULL) {
         return NULL;
     }
-    if (_flat_copyinto(ret, (PyObject *)a, order) < 0) {
+    if (PyArray_CopyAnyIntoOrdered(ret, a, order) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
-    return ret;
+    return (PyObject *)ret;
 }
 
 

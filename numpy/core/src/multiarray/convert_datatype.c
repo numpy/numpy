@@ -120,17 +120,17 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
         }
 #if PY_VERSION_HEX >= 0x02050000
         ret = PyErr_WarnEx(cls,
-                           "Casting complex values to real discards the imaginary "
-                           "part", 1);
+                           "Casting complex values to real discards "
+                           "the imaginary part", 1);
 #else
         ret = PyErr_Warn(cls,
-                         "Casting complex values to real discards the imaginary "
-                         "part");
+                         "Casting complex values to real discards "
+                         "the imaginary part");
 #endif
         Py_XDECREF(cls);
         if (ret < 0) {
             return NULL;
-	}
+	    }
     }
     if (castfunc) {
         return castfunc;
@@ -177,7 +177,8 @@ PyArray_CanCastSafely(int fromtype, int totype)
     PyArray_Descr *from;
 
     /* Fast table lookup for small type numbers */
-    if ((unsigned int)fromtype < NPY_NTYPES && (unsigned int)totype < NPY_NTYPES) {
+    if ((unsigned int)fromtype < NPY_NTYPES &&
+                                (unsigned int)totype < NPY_NTYPES) {
         return _npy_can_cast_safely_table[fromtype][totype];
     }
 
