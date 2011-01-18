@@ -744,6 +744,30 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
     return Py_None;
 }
 
+/* Sets the array values from another array as if they were flat */
+static PyObject *
+array_setasflat(PyArrayObject *self, PyObject *args)
+{
+    PyObject *arr_in;
+    PyArrayObject *arr;
+    
+    if (!PyArg_ParseTuple(args, "O", &arr_in)) {
+        return NULL;
+    }
+
+    arr = PyArray_FromAny(arr_in, NULL, 0, 0, 0, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+
+    if (PyArray_CopyAnyInto(self, arr) != 0) {
+        Py_DECREF(arr);
+        return NULL;
+    }
+
+    Py_DECREF(arr);
+    Py_RETURN_NONE;
+}
 
 static PyObject *
 array_cast(PyArrayObject *self, PyObject *args)
@@ -2230,6 +2254,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"itemset",
         (PyCFunction) array_setscalar,
+        METH_VARARGS, NULL},
+    {"setasflat",
+        (PyCFunction) array_setasflat,
         METH_VARARGS, NULL},
     {"max",
         (PyCFunction)array_max,

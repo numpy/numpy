@@ -263,7 +263,7 @@ class TestMatrixReturn(TestCase):
             'searchsorted', 'setflags', 'setfield', 'sort', 'take',
             'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
             'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset'
+            'prod', 'std', 'ctypes', 'itemset', 'setasflat'
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:

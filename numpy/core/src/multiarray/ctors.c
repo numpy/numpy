@@ -2497,79 +2497,174 @@ PyArray_EnsureAnyArray(PyObject *op)
  * Copy an Array into another array -- memory must not overlap
  * Does not require src and dest to have "broadcastable" shapes
  * (only the same number of elements).
+ *
+ * TODO: For NumPy 2.0, this could accept an order parameter which
+ *       only allows NPY_CORDER and NPY_FORDER.  Could also rename
+ *       this to CopyAsFlat to make the name more intuitive.
+ *
+ * Returns 0 on success, -1 on error.
  */
 NPY_NO_EXPORT int
-PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
+PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
 {
-    int elsize, simple;
-    PyArrayIterObject *idest, *isrc;
-    void (*myfunc)(char *, npy_intp, char *, npy_intp, npy_intp, int);
+    PyArray_StridedTransferFn *stransfer = NULL;
+    void *transferdata = NULL;
+    NpyIter *dst_iter, *src_iter;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArray_EquivArrTypes(dest, src)) {
-        return PyArray_CastAnyTo(dest, src);
-    }
-    if (!PyArray_ISWRITEABLE(dest)) {
+    NpyIter_IterNext_Fn dst_iternext, src_iternext;
+    char **dst_dataptr, **src_dataptr;
+    npy_intp dst_stride, src_stride;
+    npy_intp *dst_countptr, *src_countptr;
+
+    char *dst_data, *src_data;
+    npy_intp dst_count, src_count, count;
+    npy_intp src_itemsize;
+    int needs_api;
+
+    if (!PyArray_ISWRITEABLE(dst)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "cannot write to array");
         return -1;
     }
-    if (PyArray_SIZE(dest) != PyArray_SIZE(src)) {
+
+    /* If the shapes match, use the more efficient CopyInto */
+    if (PyArray_NDIM(dst) == PyArray_NDIM(src) &&
+            PyArray_CompareLists(PyArray_DIMS(dst), PyArray_DIMS(src),
+                                PyArray_NDIM(dst))) {
+        return PyArray_CopyInto(dst, src);
+    }
+
+    if (PyArray_SIZE(dst) != PyArray_SIZE(src)) {
         PyErr_SetString(PyExc_ValueError,
                 "arrays must have the same number of elements"
                 " for copy");
         return -1;
     }
 
-    simple = ((PyArray_ISCARRAY_RO(src) && PyArray_ISCARRAY(dest)) ||
-            (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
-    if (simple) {
-        /* Refcount note: src and dest have the same size */
-        PyArray_INCREF(src);
-        PyArray_XDECREF(dest);
-        NPY_BEGIN_THREADS;
-        memcpy(dest->data, src->data, PyArray_NBYTES(dest));
-        NPY_END_THREADS;
-        return 0;
+    /*
+     * This copy is based on matching C-order traversals of src and dst.
+     * By using two iterators, we can find maximal sub-chunks that
+     * can be processed at once.
+     */
+    dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY|
+                                NPY_ITER_NO_INNER_ITERATION|
+                                NPY_ITER_REFS_OK,
+                                NPY_CORDER,
+                                NPY_NO_CASTING,
+                                NULL, 0, NULL, 0);
+    if (dst_iter == NULL) {
+        return -1;
+    }
+    src_iter = NpyIter_New(src, NPY_ITER_READONLY|
+                                NPY_ITER_NO_INNER_ITERATION|
+                                NPY_ITER_REFS_OK,
+                                NPY_CORDER,
+                                NPY_NO_CASTING,
+                                NULL, 0, NULL, 0);
+    if (src_iter == NULL) {
+        NpyIter_Deallocate(dst_iter);
+        return -1;
     }
 
-    if (PyArray_SAMESHAPE(dest, src)) {
-        int swap;
+    /* Get all the values needed for the inner loop */
+    dst_iternext = NpyIter_GetIterNext(dst_iter, NULL);
+    dst_dataptr = NpyIter_GetDataPtrArray(dst_iter);
+    /* Since buffering is disabled, we can cache the stride */
+    dst_stride = *NpyIter_GetInnerStrideArray(dst_iter);
+    dst_countptr = NpyIter_GetInnerLoopSizePtr(dst_iter);
 
-        if (PyArray_SAFEALIGNEDCOPY(dest) && PyArray_SAFEALIGNEDCOPY(src)) {
-            myfunc = _strided_byte_copy;
+    src_iternext = NpyIter_GetIterNext(src_iter, NULL);
+    src_dataptr = NpyIter_GetDataPtrArray(src_iter);
+    /* Since buffering is disabled, we can cache the stride */
+    src_stride = *NpyIter_GetInnerStrideArray(src_iter);
+    src_countptr = NpyIter_GetInnerLoopSizePtr(src_iter);
+
+    if (dst_iternext == NULL || src_iternext == NULL) {
+        NpyIter_Deallocate(dst_iter);
+        NpyIter_Deallocate(src_iter);
+        return -1;
+    }
+
+    src_itemsize = PyArray_DESCR(src)->elsize;
+
+    needs_api = NpyIter_IterationNeedsAPI(dst_iter) ||
+                NpyIter_IterationNeedsAPI(src_iter);
+
+    /*
+     * Because buffering is disabled in the iterator, the inner loop
+     * strides will be the same throughout the iteration loop.  Thus,
+     * we can pass them to this function to take advantage of
+     * contiguous strides, etc.
+     */
+    if (PyArray_GetDTypeTransferFunction(
+                    PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                    src_stride, dst_stride,
+                    PyArray_DESCR(src), PyArray_DESCR(dst),
+                    0,
+                    &stransfer, &transferdata,
+                    &needs_api) != NPY_SUCCEED) {
+        NpyIter_Deallocate(dst_iter);
+        NpyIter_Deallocate(src_iter);
+        return -1;
+    }
+
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
+    dst_count = *dst_countptr;
+    src_count = *src_countptr;
+    dst_data = *dst_dataptr;
+    src_data = *src_dataptr;
+    /*
+     * The tests did not trigger this code, so added a new function
+     * ndarray.setasflat to the Python exposure in order to test it.
+     */
+    for(;;) {
+        /* Transfer the biggest amount that fits both */
+        count = (src_count < dst_count) ? src_count : dst_count;
+        stransfer(dst_data, dst_stride,
+                    src_data, src_stride,
+                    count, src_itemsize, transferdata);
+
+        /* If we exhausted the dst block, refresh it */
+        if (dst_count == count) {
+            if (!dst_iternext(dst_iter)) {
+                break;
+            }
+            dst_count = *dst_countptr;
+            dst_data = *dst_dataptr;
         }
         else {
-            myfunc = _unaligned_strided_byte_copy;
+            dst_count -= count;
+            dst_data += count*dst_stride;
         }
-        swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
-        return _copy_from_same_shape(dest, src, myfunc, swap);
+
+        /* If we exhausted the src block, refresh it */
+        if (src_count == count) {
+            if (!src_iternext(src_iter)) {
+                break;
+            }
+            src_count = *src_countptr;
+            src_data = *src_dataptr;
+        }
+        else {
+            src_count -= count;
+            src_data += count*src_stride;
+        }
     }
 
-    /* Otherwise we have to do an iterator-based copy */
-    idest = (PyArrayIterObject *)PyArray_IterNew((PyObject *)dest);
-    if (idest == NULL) {
-        return -1;
+    if (!needs_api) {
+        NPY_END_THREADS;
     }
-    isrc = (PyArrayIterObject *)PyArray_IterNew((PyObject *)src);
-    if (isrc == NULL) {
-        Py_DECREF(idest);
-        return -1;
-    }
-    elsize = dest->descr->elsize;
-    /* Refcount note: src and dest have the same size */
-    PyArray_INCREF(src);
-    PyArray_XDECREF(dest);
-    NPY_BEGIN_THREADS;
-    while(idest->index < idest->size) {
-        memcpy(idest->dataptr, isrc->dataptr, elsize);
-        PyArray_ITER_NEXT(idest);
-        PyArray_ITER_NEXT(isrc);
-    }
-    NPY_END_THREADS;
-    Py_DECREF(idest);
-    Py_DECREF(isrc);
-    return 0;
+
+    PyArray_FreeStridedTransferData(transferdata);
+    NpyIter_Deallocate(dst_iter);
+    NpyIter_Deallocate(src_iter);
+
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 /*NUMPY_API
@@ -2648,6 +2743,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         npy_intp *stride;
         npy_intp *countptr;
         npy_intp src_itemsize;
+        int needs_api;
 
         op[0] = dst;
         op[1] = src;
@@ -2666,12 +2762,16 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         }
 
         iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
         dataptr = NpyIter_GetDataPtrArray(iter);
         stride = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
         src_itemsize = PyArray_DESCR(src)->elsize;
 
-        int needs_api = NpyIter_IterationNeedsAPI(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
         /*
          * Because buffering is disabled in the iterator, the inner loop
