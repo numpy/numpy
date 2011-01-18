@@ -294,6 +294,7 @@ multiarray_funcs_api = {
     'NpyIter_IterationNeedsAPI':            260,
     'PyArray_CastingConverter':             261,
     'PyArray_CountNonzero':                 262,
+    'PyArray_PromoteTypes':                 263,
 }
 
 ufunc_types_api = {

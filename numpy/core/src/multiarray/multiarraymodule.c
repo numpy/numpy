@@ -2194,7 +2194,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     static char *kwlist[] = {"from", "to", NULL};
 
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&", kwlist,
-                PyArray_DescrConverter, &d1, PyArray_DescrConverter, &d2)) {
+                PyArray_DescrConverter2, &d1, PyArray_DescrConverter2, &d2)) {
         goto finish;
     }
     if (d1 == NULL || d2 == NULL) {
@@ -2211,6 +2211,31 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     Py_XDECREF(d1);
     Py_XDECREF(d2);
     return retobj;
+}
+
+static PyObject *
+array_promote_types(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyArray_Descr *d1 = NULL;
+    PyArray_Descr *d2 = NULL;
+    PyObject *ret = NULL;
+    if(!PyArg_ParseTuple(args, "O&O&",
+                PyArray_DescrConverter2, &d1, PyArray_DescrConverter2, &d2)) {
+        goto finish;
+    }
+
+    if (d1 == NULL || d2 == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "did not understand one of the types");
+        goto finish;
+    }
+
+    ret = (PyObject *)PyArray_PromoteTypes(d1, d2);
+
+ finish:
+    Py_XDECREF(d1);
+    Py_XDECREF(d2);
+    return ret;
 }
 
 #if !defined(NPY_PY3K)
@@ -2818,6 +2843,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"can_cast",
         (PyCFunction)array_can_cast_safely,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"promote_types",
+        (PyCFunction)array_promote_types,
+        METH_VARARGS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",
         (PyCFunction)new_buffer,

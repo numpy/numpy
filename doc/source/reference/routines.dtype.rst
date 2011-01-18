@@ -9,6 +9,7 @@ Data type routines
    :toctree: generated/
 
    can_cast
+   promote_types
    common_type
    obj2sctype
 

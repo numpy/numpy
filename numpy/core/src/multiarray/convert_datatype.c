@@ -276,6 +276,128 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 }
 
 /*NUMPY_API
+ * Produces the smallest size and lowest kind type to which both
+ * input types can be cast.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    int type_num1 = type1->type_num, type_num2 = type2->type_num, ret_type_num;
+
+    /* If they're built-in types, use the promotion table */
+    if (type_num1 < NPY_NTYPES && type_num2 < NPY_NTYPES) {
+        ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
+        /* The table doesn't handle string/unicode/void, check the result */
+        if (ret_type_num >= 0) {
+            return PyArray_DescrFromType(ret_type_num);
+        }
+    }
+    /* If one or both are user defined, calculate it */
+    else {
+        int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
+  
+        if (PyArray_CanCastTo(type2, type1)) {
+            /* Promoted types are always native byte order */
+            if (PyArray_ISNBO(type1->byteorder)) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            else {
+                return PyArray_DescrNewByteorder(type1, NPY_NATIVE);
+            }
+        }
+        else if (PyArray_CanCastTo(type1, type2)) {
+            /* Promoted types are always native byte order */
+            if (PyArray_ISNBO(type2->byteorder)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            else {
+                return PyArray_DescrNewByteorder(type2, NPY_NATIVE);
+            }
+        }
+
+        /* Convert the 'kind' char into a scalar kind */
+        switch (type1->kind) {
+            case 'b':
+                skind1 = NPY_BOOL_SCALAR;
+                break;
+            case 'u':
+                skind1 = NPY_INTPOS_SCALAR;
+                break;
+            case 'i':
+                skind1 = NPY_INTNEG_SCALAR;
+                break;
+            case 'f':
+                skind1 = NPY_FLOAT_SCALAR;
+                break;
+            case 'c':
+                skind1 = NPY_COMPLEX_SCALAR;
+                break;
+        }
+        switch (type2->kind) {
+            case 'b':
+                skind2 = NPY_BOOL_SCALAR;
+                break;
+            case 'u':
+                skind2 = NPY_INTPOS_SCALAR;
+                break;
+            case 'i':
+                skind2 = NPY_INTNEG_SCALAR;
+                break;
+            case 'f':
+                skind2 = NPY_FLOAT_SCALAR;
+                break;
+            case 'c':
+                skind2 = NPY_COMPLEX_SCALAR;
+                break;
+        }
+
+        /* If both are scalars, there may be a promotion possible */
+        if (skind1 != NPY_NOSCALAR && skind2 != NPY_NOSCALAR) {
+
+            /* Start with the larger scalar kind */
+            skind = (skind1 > skind2) ? skind1 : skind2;
+            ret_type_num = _npy_smallest_type_of_kind_table[skind];
+
+            for (;;) {
+
+                /* If there is no larger type of this kind, try a larger kind */
+                if (ret_type_num < 0) {
+                    ++skind;
+                    /* Use -1 to signal no promoted type found */
+                    if (skind < NPY_NSCALARKINDS) {
+                        ret_type_num = _npy_smallest_type_of_kind_table[skind];
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                /* If we found a type to which we can promote both, done! */
+                if (PyArray_CanCastSafely(type_num1, ret_type_num) &&
+                            PyArray_CanCastSafely(type_num2, ret_type_num)) {
+                    return PyArray_DescrFromType(ret_type_num);
+                }
+
+                /* Try the next larger type of this kind */
+                ret_type_num = _npy_next_larger_type_table[ret_type_num];
+            }
+
+        }
+
+        PyErr_SetString(PyExc_TypeError,
+                "invalid type promotion with custom data type");
+        return NULL;
+    }
+
+    /* TODO: Also combine fields, subarrays, strings, etc */
+    
+    PyErr_SetString(PyExc_TypeError, "invalid type promotion");
+    return NULL;
+}
+
+/*NUMPY_API
  * Is the typenum valid?
  */
 NPY_NO_EXPORT int

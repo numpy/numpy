@@ -2423,8 +2423,6 @@ get_setdstzero_transfer_function(int aligned,
             *out_stransfer = &_null_to_strided_memset_zero;
         }
         *out_transferdata = data;
-
-        return NPY_SUCCEED;
     }
     /* If it's exactly one reference, use the decref function */
     else if (dst_dtype->type_num == NPY_OBJECT) {
@@ -2434,8 +2432,6 @@ get_setdstzero_transfer_function(int aligned,
 
         *out_stransfer = &_null_to_strided_reference_setzero;
         *out_transferdata = NULL;
-
-        return NPY_SUCCEED;
     }
     /* If there are subarrays, need to wrap it */
     else if (dst_dtype->subarray != NULL) {
@@ -2467,15 +2463,13 @@ get_setdstzero_transfer_function(int aligned,
         }
 
         if (wrap_transfer_function_n_to_n(stransfer, data,
-                                0, dst_stride,
-                                0, dst_dtype->subarray->base->elsize,
-                                dst_size,
-                                out_stransfer, out_transferdata) != NPY_SUCCEED) {
+                            0, dst_stride,
+                            0, dst_dtype->subarray->base->elsize,
+                            dst_size,
+                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
             PyArray_FreeStridedTransferData(data);
             return NPY_FAIL;
         }
-
-        return NPY_SUCCEED;
     }
     /* If there are fields, need to do each field */
     else if (PyDataType_HASFIELDS(dst_dtype)) {
@@ -2489,6 +2483,8 @@ get_setdstzero_transfer_function(int aligned,
                             out_transferdata,
                             out_needs_api);
     }
+
+    return NPY_SUCCEED;
 }
 
 static void

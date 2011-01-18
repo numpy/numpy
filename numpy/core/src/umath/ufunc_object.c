@@ -3500,6 +3500,187 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 }
 
 static PyObject *
+ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
+{
+    npy_intp nargs, nin = self->nin, nout = self->nout;
+    npy_intp i, niter = nin + nout;
+    PyObject *obj, *context;
+    char *ufunc_name;
+    /* This contains the all the inputs and outputs */
+    PyArrayObject *op[NPY_MAXARGS];
+    PyArray_Descr *dtype[NPY_MAXARGS];
+
+    /* TODO: For 1.6, the default should probably be NPY_CORDER */
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    PyObject *extobj = NULL, *typetup = NULL;
+
+    ufunc_name = self->name ? self->name : "";
+
+    /* Check number of arguments */
+    nargs = PyTuple_Size(args);
+    if ((nargs < self->nin) || (nargs > self->nargs)) {
+        PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
+        return NULL;
+    }
+
+    if (self->core_enabled) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "core_enabled (generalized ufunc) not supported yet");
+        return NULL;
+    }
+
+    /* Initialize all the operands and dtypes to NULL */
+    for (i = 0; i < niter; ++i) {
+        op[i] = NULL;
+        dtype[i] = NULL;
+    }
+
+    /* Get input arguments */
+    for(i = 0; i < nin; ++i) {
+        obj = PyTuple_GET_ITEM(args, i);
+        if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
+            /*
+             * TODO: There should be a comment here explaining what
+             *       context does.
+             */
+            context = Py_BuildValue("OOi", self, args, i);
+            if (context == NULL) {
+                return NULL;
+            }
+        }
+        else {
+            context = NULL;
+        }
+        op[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, context);
+
+        /* Start with a native byte-order data type */
+        if (PyArray_ISNBO(PyArray_DESCR(op[i])->byteorder)) {
+            dtype[i] = PyArray_DESCR(op[i]);
+            Py_INCREF(dtype[i]);
+        }
+        else {
+            dtype[i] = PyArray_DescrNewByteorder(PyArray_DESCR(op[i]),
+                                                            NPY_NATIVE);
+        }
+    }
+
+    /* Get positional output arguments */
+    for (i = nin; i < nargs; ++i) {
+        obj = PyTuple_GET_ITEM(args, i);
+        /* Translate None to NULL */
+        if (obj == Py_None) {
+            continue;
+        }
+        /* If it's an array, can use it */
+        if (PyArray_Check(obj)) {
+            if (!PyArray_ISWRITEABLE(obj)) {
+                PyErr_SetString(PyExc_ValueError,
+                                "return array is not writeable");
+                goto fail;
+            }
+            Py_INCREF(obj);
+            op[i] = (PyArrayObject *)obj;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "return arrays must be "
+                            "of ArrayType");
+            goto fail;
+        }
+    }
+
+    /* Get keyword output and other arguments.
+     * Raise an error if anything else is present in the
+     * keyword dictionary.
+     */
+    if (kwds != NULL) {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(kwds, &pos, &key, &value)) {
+            Py_ssize_t length = 0;
+            char *str = NULL;
+            int bad_arg = 1;
+            
+            if (PyString_AsStringAndSize(key, &str, &length) == -1) {
+                PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
+                goto fail;
+            }
+
+            switch (str[0]) {
+                case 'c':
+                    if (strncmp(str,"casting",7) == 0) {
+                        if (!PyArray_CastingConverter(value, &casting)) {
+                            goto fail;
+                        }
+                        bad_arg = 0;
+                    }
+                    break;
+                case 'e':
+                    if (strncmp(str,"extobj",6) == 0) {
+                        extobj = value;
+                        bad_arg = 0;
+                    }
+                    break;
+                case 'o':
+                    if (strncmp(str,"out",3) == 0) {
+                        if (op[nin] != NULL) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "cannot specify 'out' as both a positional "
+                                    "and keyword argument");
+                            goto fail;
+                        }
+                        else {
+                            if (PyArray_Check(value)) {
+                                if (!PyArray_ISWRITEABLE(value)) {
+                                    PyErr_SetString(PyExc_ValueError,
+                                            "return array is not writeable");
+                                    goto fail;
+                                }
+                                Py_INCREF(value);
+                                op[nin] = (PyArrayObject *)value;
+                            }
+                            else {
+                                PyErr_SetString(PyExc_TypeError,
+                                                "return arrays must be "
+                                                "of ArrayType");
+                                goto fail;
+                            }
+                        }
+                    }
+                    else if (strncmp(str,"order",5) == 0) {
+                        if (!PyArray_OrderConverter(value, &order)) {
+                            goto fail;
+                        }
+                        bad_arg = 0;
+                    }
+                    break;
+                case 's':
+                    if (strncmp(str,"sig",3) == 0) {
+                        typetup = value;
+                        bad_arg = 0;
+                    }
+                    break;
+            }
+
+            if (bad_arg) {
+                char *format = "'%s' is an invalid keyword to %s";
+                PyErr_Format(PyExc_TypeError, format, str, ufunc_name);
+                goto fail;
+            }
+        }
+    }
+    
+    return NULL;
+fail:
+    for (i = 0; i < niter; ++i) {
+        Py_XDECREF(op[i]);
+        Py_XDECREF(dtype[i]);
+    }
+    return NULL;
+}
+
+static PyObject *
 ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 {
     int i;
@@ -4191,6 +4372,9 @@ static struct PyMethodDef ufunc_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL },
     {"outer",
         (PyCFunction)ufunc_outer,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"gennew", /* new generic call */
+        (PyCFunction)ufunc_generic_call_iter,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
