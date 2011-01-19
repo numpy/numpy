@@ -1275,8 +1275,8 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     min_scalar_type(a)
 
     For scalar ``a``, returns the data type with the smallest size
-    and smallest scalar kind which can hold its value.  For vector ``a``,
-    returns the vector's dtype unmodified.
+    and smallest scalar kind which can hold its value.  For non-scalar
+    array ``a``, returns the vector's dtype unmodified.
 
     As a special case, floating point values are not reduced to integers.
 

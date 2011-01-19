@@ -1016,8 +1016,9 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
             PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
             int tmp_is_small_unsigned = 0;
             /*
-             * If it's a scalar, find the min scalar type.  The function is expanded here so that
-             * we can flag whether we've got an unsigned integer which would fit an a signed integer
+             * If it's a scalar, find the min scalar type. The function
+             * is expanded here so that we can flag whether we've got an
+             * unsigned integer which would fit an a signed integer
              * of the same size, something not exposed in the public API.
              */
             if (PyArray_NDIM(arr[i]) == 0 && PyTypeNum_ISNUMBER(tmp->type_num)) {
@@ -1031,7 +1032,8 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 npy_clongdouble value;
 #endif
                 tmp->f->copyswap(&value, data, swap, NULL);
-                type_num = min_scalar_type_num((char *)&value, tmp->type_num, &tmp_is_small_unsigned);
+                type_num = min_scalar_type_num((char *)&value,
+                                        tmp->type_num, &tmp_is_small_unsigned);
                 tmp = PyArray_DescrFromType(type_num);
                 if (tmp == NULL) {
                     Py_XDECREF(ret);
@@ -1055,8 +1057,15 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 printf(" (%d) ", ret_is_small_unsigned);
                 printf("\n");
 #endif
-                tmpret = promote_types(tmp, ret, tmp_is_small_unsigned, ret_is_small_unsigned);
-                ret_is_small_unsigned = tmp_is_small_unsigned && ret_is_small_unsigned;
+                tmpret = promote_types(tmp, ret, tmp_is_small_unsigned,
+                                                    ret_is_small_unsigned);
+                if (tmpret == NULL) {
+                    Py_DECREF(tmp);
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+                ret_is_small_unsigned = tmp_is_small_unsigned &&
+                                        ret_is_small_unsigned;
                 Py_DECREF(tmp);
                 Py_DECREF(ret);
                 ret = tmpret;
@@ -1073,6 +1082,11 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
             else {
                 if (ret_is_small_unsigned) {
                     tmpret = promote_types(tmp, ret, 0, ret_is_small_unsigned);
+                    if (tmpret == NULL) {
+                        Py_DECREF(tmp);
+                        Py_DECREF(ret);
+                        return NULL;
+                    }
                 }
                 else {
                     tmpret = PyArray_PromoteTypes(tmp, ret);
@@ -1081,6 +1095,11 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 ret = tmpret;
             }
         }
+    }
+
+    if (ret == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "no arrays or types available to calculate result type");
     }
 
     return ret;

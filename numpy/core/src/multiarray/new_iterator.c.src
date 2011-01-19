@@ -277,9 +277,8 @@ npyiter_shrink_ndim(NpyIter *iter, npy_intp new_ndim);
 static PyArray_Descr *
 npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
                         char *op_itflags, PyArray_Descr **op_dtype,
+                        PyArray_Descr **op_request_dtypes,
                         int only_inputs, int output_scalars);
-static int
-npyiter_promote_types(int type1, int type2);
 
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
@@ -495,6 +494,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 
         dtype = npyiter_get_common_dtype(niter, op,
                                     op_itflags, op_dtype,
+                                    op_request_dtypes,
                                     only_inputs,
                                     output_scalars);
         if (dtype == NULL) {
@@ -3935,173 +3935,31 @@ npyiter_get_priority_subtype(npy_intp niter, PyArrayObject **op,
 static PyArray_Descr *
 npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
                         char *op_itflags, PyArray_Descr **op_dtype,
+                        PyArray_Descr **op_request_dtypes,
                         int only_inputs, int output_scalars)
 {
-    PyArray_Descr *scalar_dtype = NULL, *array_dtype = NULL;
-    int scalar_kind = NPY_NOSCALAR;
     npy_intp iiter;
-    /* 0 = don't use, 1 = scalar, 2 = array */
-    char op_category[NPY_MAXARGS];
+    npy_intp narrs = 0, ndtypes = 0;
+    PyArrayObject *arrs[NPY_MAXARGS];
+    PyArray_Descr *dtypes[NPY_MAXARGS];
 
-    /* Determine which operands are scalars and which dtypes to use */
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op_dtype[iiter] != NULL &&
                     (!only_inputs || (op_itflags[iiter]&NPY_OP_ITFLAG_READ))) {
-            if ((op[iiter] == NULL && output_scalars) ||
-                    PyArray_NDIM(op[iiter]) == 0) {
-                op_category[iiter] = 1;
+            /* If no dtype was requested and the op is a scalar, pass the op */
+            if ((op_request_dtypes == NULL ||
+                            op_request_dtypes[iiter] == NULL) &&
+                                            PyArray_NDIM(op[iiter]) == 0) {
+                arrs[narrs++] = op[iiter];
             }
+            /* Otherwise just pass in the dtype */
             else {
-                op_category[iiter] = 2;
-            }
-        }
-        else {
-            op_category[iiter] = 0;
-        }
-    }
-
-    /* First promote all the scalar dtypes */
-    for (iiter = 0; iiter < niter; ++iiter) {
-        /* Process all the scalar inputs (category = 1) */
-        if (op_category[iiter] == 1) {
-            if (scalar_dtype == NULL) {
-                scalar_dtype = op_dtype[iiter];
-                Py_INCREF(scalar_dtype);
-                /*
-                 * Note: because dtype and op[iiter] may not have the same
-                 *       type, this value could be (slightly) wrong in
-                 *       very few cases.
-                 */
-                scalar_kind = PyArray_ScalarKind(scalar_dtype->type_num,
-                                                            &op[iiter]);
-            }
-            else {
-                PyArray_Descr *dtype = op_dtype[iiter];
-                int kind, typenum;
-
-                if (PyTypeNum_ISEXTENDED(scalar_dtype->type_num) ||
-                                PyTypeNum_ISEXTENDED(dtype->type_num)) {
-                    PyErr_SetString(PyExc_TypeError,
-                            "Iterator allocated output could not "
-                            "determine a data type based on the inputs");
-                    Py_DECREF(scalar_dtype);
-                    return NULL;
-                }
-                /*
-                 * Note: because dtype and op[iiter] may not have the same
-                 *       type, this value could be (slightly) wrong in
-                 *       very few cases.
-                 */
-                kind = PyArray_ScalarKind(dtype->type_num, &op[iiter]);
-                if (kind > scalar_kind) {
-                    scalar_kind = kind;
-                }
-                typenum = npyiter_promote_types(scalar_dtype->type_num,
-                                                  dtype->type_num);
-                if (typenum == NPY_NOTYPE) {
-                    PyErr_SetString(PyExc_TypeError,
-                            "Iterator allocated output could not "
-                            "determine a data type based on the inputs");
-                    Py_DECREF(scalar_dtype);
-                    return NULL;
-                }
-
-                dtype = PyArray_DescrFromType(typenum);
-                Py_DECREF(scalar_dtype);
-                scalar_dtype = dtype;
+                dtypes[ndtypes++] = op_dtype[iiter];
             }
         }
     }
 
-    /* Then promote all the array dtypes */
-    for (iiter = 0; iiter < niter; ++iiter) {
-        /* Process all the array inputs (category = 2) */
-        if (op_category[iiter] == 2) {
-            if (array_dtype == NULL) {
-                array_dtype = op_dtype[iiter];
-                Py_INCREF(array_dtype);
-            }
-            else {
-                PyArray_Descr *dtype = op_dtype[iiter];
-                int typenum;
-
-                if (PyTypeNum_ISEXTENDED(array_dtype->type_num) ||
-                                PyTypeNum_ISEXTENDED(dtype->type_num)) {
-                    PyErr_SetString(PyExc_TypeError,
-                            "Iterator allocated output could not "
-                            "determine a data type based on the inputs");
-                    Py_XDECREF(scalar_dtype);
-                    return NULL;
-                }
-                typenum = npyiter_promote_types(array_dtype->type_num,
-                                                  dtype->type_num);
-                if (typenum == NPY_NOTYPE) {
-                    PyErr_SetString(PyExc_TypeError,
-                            "Iterator allocated output could not "
-                            "determine a data type based on the inputs");
-                    Py_XDECREF(scalar_dtype);
-                    return NULL;
-                }
-                            
-                dtype = PyArray_DescrFromType(typenum);
-                Py_DECREF(array_dtype);
-                array_dtype = dtype;
-            }
-        }
-    }
-
-    /* Now combine the scalar and array types */
-    if (scalar_dtype != NULL && array_dtype != NULL) {
-        PyArray_Descr *dtype;
-        if (PyArray_CanCoerceScalar(scalar_dtype->type_num,
-                                    array_dtype->type_num,
-                                    scalar_kind)) {
-            dtype = PyArray_DescrFromType(array_dtype->type_num);
-            Py_DECREF(scalar_dtype);
-            Py_DECREF(array_dtype);
-            return dtype;
-        }
-        else {
-            int typenum;
-
-            typenum = npyiter_promote_types(scalar_dtype->type_num,
-                                            array_dtype->type_num);
-            Py_DECREF(scalar_dtype);
-            Py_DECREF(array_dtype);
-            return PyArray_DescrFromType(typenum);
-        }
-    }
-    else if (array_dtype != NULL) {
-        return array_dtype;
-    }
-    else if (scalar_dtype != NULL) {
-        return scalar_dtype;
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                "Iterator allocated output could not "
-                "determine a data type based on the inputs");
-        return NULL;
-    }
-}
-
-/*
- * TODO This is a slow way to do it and depends on the type
- * number ordering.  Should be based on a table like scalar kinds.
- */
-static int
-npyiter_promote_types(int type1, int type2)
-{
-    int i;
-
-    for(i = 0; i < NPY_NTYPES; ++i) {
-        if (PyArray_CanCastSafely(type1, i) &&
-                            PyArray_CanCastSafely(type2, i)) {
-            return i;
-        }
-    }
-
-    return NPY_NOTYPE;
+    return PyArray_ResultType(narrs, arrs, ndtypes, dtypes);
 }
 
 static int
