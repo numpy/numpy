@@ -42,6 +42,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "number.h"
 #include "scalartypes.h"
 #include "numpymemoryview.h"
+#include "convert_datatype.h"
 #include "new_iterator_pywrap.h"
 
 /*NUMPY_API
@@ -2187,23 +2188,51 @@ static PyObject *
 array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
         PyObject *kwds)
 {
+    PyObject *from_obj = NULL;
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
     Bool ret;
     PyObject *retobj = NULL;
-    static char *kwlist[] = {"from", "to", NULL};
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    static char *kwlist[] = {"from", "to", "casting", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&", kwlist,
-                PyArray_DescrConverter2, &d1, PyArray_DescrConverter2, &d2)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&", kwlist,
+                &from_obj,
+                PyArray_DescrConverter2, &d2,
+                PyArray_CastingConverter, &casting)) {
         goto finish;
     }
-    if (d1 == NULL || d2 == NULL) {
+    if (d2 == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "did not understand one of the types; 'None' not accepted");
         goto finish;
     }
 
-    ret = PyArray_CanCastTo(d1, d2);
+    /* If the first parameter is an object or scalar, use CanCastArrayTo */
+    if (PyArray_Check(from_obj)) {
+        ret = PyArray_CanCastArrayTo((PyArrayObject *)from_obj, d2, casting);
+    }
+    else if (PyArray_IsScalar(from_obj, Generic) ||
+                                PyArray_IsPythonNumber(from_obj)) {
+        PyArrayObject *arr;
+        arr = (PyArrayObject *)PyArray_FromAny(from_obj,
+                                        NULL, 0, 0, 0, NULL);
+        if (arr == NULL) {
+            goto finish;
+        }
+        ret = PyArray_CanCastArrayTo(arr, d2, casting);
+        Py_DECREF(arr);
+    }
+    /* Otherwise use CanCastTo */
+    else {
+        if (!PyArray_DescrConverter2(from_obj, &d1) || d1 == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "did not understand one of the types; 'None' not accepted");
+            goto finish;
+        }
+        ret = can_cast_to(d1, d2, casting);
+    }
+
     retobj = ret ? Py_True : Py_False;
     Py_INCREF(retobj);
 
@@ -2256,6 +2285,72 @@ array_min_scalar_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     ret = (PyObject *)PyArray_MinScalarType(array);
     Py_DECREF(array);
+    return ret;
+}
+
+static PyObject *
+array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    npy_intp i, len, narr = 0, ndtypes = 0;
+    PyArrayObject *arr[NPY_MAXARGS];
+    PyArray_Descr *dtypes[NPY_MAXARGS];
+    PyObject *ret = NULL;
+
+    len = PyTuple_GET_SIZE(args);
+    if (len == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "at least one array or dtype is required");
+        goto finish;
+    }
+
+    for (i = 0; i < len; ++i) {
+        PyObject *obj = PyTuple_GET_ITEM(args, i);
+        if (PyArray_Check(obj)) {
+            if (narr == NPY_MAXARGS) {
+                PyErr_SetString(PyExc_ValueError,
+                                "too many arguments");
+                goto finish;
+            }
+            Py_INCREF(obj);
+            arr[narr] = (PyArrayObject *)obj;
+            ++narr;
+        }
+        else if (PyArray_IsScalar(obj, Generic) ||
+                                    PyArray_IsPythonNumber(obj)) {
+            if (narr == NPY_MAXARGS) {
+                PyErr_SetString(PyExc_ValueError,
+                                "too many arguments");
+                goto finish;
+            }
+            arr[narr] = (PyArrayObject *)PyArray_FromAny(obj,
+                                            NULL, 0, 0, 0, NULL);
+            if (arr[narr] == NULL) {
+                goto finish;
+            }
+            ++narr;
+        }
+        else {
+            if (ndtypes == NPY_MAXARGS) {
+                PyErr_SetString(PyExc_ValueError,
+                                "too many arguments");
+                goto finish;
+            }
+            if (!PyArray_DescrConverter2(obj, &dtypes[ndtypes])) {
+                goto finish;
+            }
+            ++ndtypes;
+        }
+    }
+
+    ret = (PyObject *)PyArray_ResultType(narr, arr, ndtypes, dtypes);
+
+finish:
+    for (i = 0; i < narr; ++i) {
+        Py_DECREF(arr[i]);
+    }
+    for (i = 0; i < ndtypes; ++i) {
+        Py_DECREF(dtypes[i]);
+    }
     return ret;
 }
 
@@ -2869,6 +2964,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"min_scalar_type",
         (PyCFunction)array_min_scalar_type,
+        METH_VARARGS, NULL},
+    {"result_type",
+        (PyCFunction)array_result_type,
         METH_VARARGS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",

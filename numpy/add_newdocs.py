@@ -1144,9 +1144,12 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
 add_newdoc('numpy.core.multiarray', 'can_cast',
     """
-    can_cast(fromtype, totype)
+    can_cast(from, totype, casting = 'safe')
 
-    Returns True if cast between data types can occur without losing precision.
+    Returns True if cast between data types can occur according to the
+    casting rule.  If from is a scalar or array scalar, also returns
+    True if the scalar value can be cast without overflow or truncation
+    to an integer.
 
     Parameters
     ----------
@@ -1154,14 +1157,19 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
         Data type to cast from.
     totype : dtype or dtype specifier
         Data type to cast to.
+    casting : casting rule
+        May be any of 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
 
     Returns
     -------
     out : bool
-        True if cast can occur without losing precision.
+        True if cast can occur according to the casting rule.
 
     Examples
     --------
+
+    Basic examples
+
     >>> np.can_cast(np.int32, np.int64)
     True
     >>> np.can_cast(np.float64, np.complex)
@@ -1174,6 +1182,52 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     >>> np.can_cast('i8', 'f4')
     False
     >>> np.can_cast('i4', 'S4')
+    True
+
+    Casting scalars
+
+    >>> np.can_cast(100, 'i1')
+    True
+    >>> np.can_cast(150, 'i1')
+    False
+    >>> np.can_cast(150, 'u1')
+    True
+
+    >>> np.can_cast(3.5e100, np.float32)
+    False
+    >>> np.can_cast(1000.0, np.float32)
+    True
+
+    Array scalar checks the value, array does not
+
+    >>> np.can_cast(np.array(1000.0), np.float32)
+    True
+    >>> np.can_cast(np.array([1000.0]), np.float32)
+    False
+
+    Using the casting rules
+
+    >>> np.can_cast('i8', 'i8', 'no')
+    True
+    >>> np.can_cast('<i8', '>i8', 'no')
+    False
+
+    >>> np.can_cast('<i8', '>i8', 'equiv')
+    True
+    >>> np.can_cast('<i4', '>i8', 'equiv')
+    False
+
+    >>> np.can_cast('<i4', '>i8', 'safe')
+    True
+    >>> np.can_cast('<i8', '>i4', 'safe')
+    False
+
+    >>> np.can_cast('<i8', '>i4', 'same_kind')
+    True
+    >>> np.can_cast('<i8', '>u4', 'same_kind')
+    False
+
+    >>> np.can_cast('<i8', '>u4', 'unsafe')
     True
 
     """)
@@ -1251,6 +1305,48 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     dtype('float64')
 
     >>> np.min_scalar_type(np.arange(4,dtype='f8'))
+    dtype('float64')
+
+    """)
+
+add_newdoc('numpy.core.multiarray', 'result_type',
+    """
+    result_type(*arrays_and_dtypes)
+
+    Returns the type that results from applying the NumPy
+    type promotion rules to the arguments.
+
+    Type promotion in NumPy works similarly to the rules in languages
+    like C++, with some slight differences.  When both scalars and
+    arrays are used, the array's type takes precedence and the actual value
+    of the scalar is taken into account.
+    
+    For example, calculating 3*a, where a is an array of 32-bit floats,
+    intuitively should result in a 32-bit float output.  If the 3 is a
+    32-bit integer, the NumPy rules indicate it can't convert losslessly
+    into a 32-bit float, so a 64-bit float should be the result type.
+    By examining the value of the constant, '3', we see that it fits in
+    an 8-bit integer, which can be cast losslessly into the 32-bit float.
+
+    Parameters
+    ----------
+    arrays_and_dtypes : list of arrays and dtypes
+        The operands of some operation whose result type is needed.
+
+    Returns
+    -------
+    out : dtype
+        The result type.
+
+    Examples
+    --------
+    >>> np.result_type(3, np.arange(7, dtype='i1'))
+    dtype('int8')
+
+    >>> np.result_type('i4', 'c8')
+    dtype('complex128')
+
+    >>> np.result_type(3.0, -2)
     dtype('float64')
 
     """)

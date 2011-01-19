@@ -978,15 +978,10 @@ def test_iter_common_dtype():
                     casting='same_kind')
     assert_equal(i.dtypes[0], np.dtype('f4'));
     assert_equal(i.dtypes[1], np.dtype('f4'));
-    # TODO
-    # This case is weird - the scalar/array combination produces a cast
-    # classified as unsafe.  I think this NumPy rule needs to be revisited.
-    # For example, when the scalar is writeable, a negative value could
-    # be written during iteration, invalidating the scalar kind assumed!
     i = newiter([array([3],dtype='u4'),array(0,dtype='i4')],
                     ['common_dtype'],
                     [['readonly','copy']]*2,
-                    casting='unsafe')
+                    casting='safe')
     assert_equal(i.dtypes[0], np.dtype('u4'));
     assert_equal(i.dtypes[1], np.dtype('u4'));
     i = newiter([array([3],dtype='u4'),array(-12,dtype='i4')],

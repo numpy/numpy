@@ -4,6 +4,7 @@
 
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
+#include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"
 
@@ -279,8 +280,6 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
                         int only_inputs, int output_scalars);
 static int
 npyiter_promote_types(int type1, int type2);
-static int
-npyiter_can_cast(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting);
 
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
@@ -2627,91 +2626,6 @@ npyiter_prepare_operands(npy_intp niter, PyArrayObject **op_in,
     return 1;
 }
 
-/*
- * Returns 1 if the from -> to cast can be done, based on the casting
- * flags provided in op_flags, and 0 otherwise.
- *
- * TODO: Maybe this approach, with the NPY_CASTING enum, should replace
- *       the PyArray_CanCastTo code for NumPy 2.0?
- */
-static int
-npyiter_can_cast(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting)
-{
-    /* If unsafe casts are allowed */
-    if (casting == NPY_UNSAFE_CASTING) {
-        return 1;
-    }
-    /* Equivalent types can be cast with any value of 'casting'  */
-    else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
-        /* If the types are extended, convert to NBO and compare */
-        if (PyTypeNum_ISEXTENDED(from->type_num)) {
-            int ret;
-
-            /* Only NPY_NO_CASTING prevents byte order conversion */
-            if ((casting != NPY_NO_CASTING) &&
-                                (!PyArray_ISNBO(from->byteorder) ||
-                                 !PyArray_ISNBO(to->byteorder))) {
-                PyArray_Descr *nbo_from, *nbo_to;
-
-                nbo_from = PyArray_DescrNewByteorder(from, NPY_NATIVE);
-                nbo_to = PyArray_DescrNewByteorder(to, NPY_NATIVE);
-                if (nbo_from == NULL || nbo_to == NULL) {
-                    Py_XDECREF(nbo_from);
-                    Py_XDECREF(nbo_to);
-                    PyErr_Clear();
-                    return 0;
-                }
-                ret = PyArray_EquivTypes(nbo_from, nbo_to);
-                Py_DECREF(nbo_from);
-                Py_DECREF(nbo_to);
-            }
-            else {
-                if (from->type_num == NPY_STRING ||
-                                    from->type_num == NPY_UNICODE) {
-                    if (casting == NPY_SAME_KIND_CASTING) {
-                        ret = 1;
-                    }
-                    else {
-                        ret = (from->elsize <= to->elsize);
-                    }
-                }
-                else {
-                    ret = PyArray_EquivTypes(from, to);
-                }
-            }
-            return ret;
-        }
-
-        if (casting == NPY_NO_CASTING) {
-            return PyArray_ISNBO(from->byteorder) ==
-                   PyArray_ISNBO(to->byteorder);
-        }
-        else {
-            return 1;
-        }
-    }
-    /* If safe or same-kind casts are allowed */
-    else if (casting == NPY_SAFE_CASTING || casting == NPY_SAME_KIND_CASTING) {
-        if (PyArray_CanCastTo(from, to)) {
-            return 1;
-        }
-        else if(casting == NPY_SAME_KIND_CASTING) {
-            /* TODO: Should also allow casting from "lower" to "higher
-             *       kinds, but kind is a char so we need to remap to
-             *       an ordered version (like NPY_SCALARKIND is ordered).
-             */
-            return from->kind == to->kind;
-        }
-        else {
-            return 0;
-        }
-    }
-    /* NPY_NO_CASTING or NPY_EQUIV_CASTING was specified */
-    else {
-        return 0;
-    }
-}
-
 static const char *
 npyiter_casting_to_string(NPY_CASTING casting)
 {
@@ -2745,7 +2659,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                                                      op_dtype[iiter])) {
             /* Check read (op -> temp) casting */
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_READ) &&
-                        !npyiter_can_cast(PyArray_DESCR(op[iiter]),
+                        !PyArray_CanCastArrayTo(op[iiter],
                                           op_dtype[iiter],
                                           casting)) {
                 PyErr_Format(PyExc_TypeError,
@@ -2757,7 +2671,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
             }
             /* Check write (temp -> op) casting */
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
-                        !npyiter_can_cast(op_dtype[iiter],
+                        !can_cast_to(op_dtype[iiter],
                                           PyArray_DESCR(op[iiter]),
                                           casting)) {
                 PyErr_Format(PyExc_TypeError,

@@ -332,8 +332,8 @@ class TestFloatExceptions(TestCase):
         finally:
             np.seterr(**oldsettings)
 
-class TestCoercion(TestCase):
-    def test_coercion(self):
+class TestTypes(TestCase):
+    def check_promotion_cases(self, promote_func):
         """Tests that the scalars get coerced correctly."""
         i8, i16, i32, i64 = int8(0), int16(0), int32(0), int64(0)
         u8, u16, u32, u64 = uint8(0), uint16(0), uint32(0), uint64(0)
@@ -341,40 +341,85 @@ class TestCoercion(TestCase):
         c64, c128, cld = complex64(0), complex128(0), clongdouble(0)
 
         # coercion within the same type
-        assert_equal(np.add(i8,i16).dtype, int16)
-        assert_equal(np.add(i32,i8).dtype, int32)
-        assert_equal(np.add(i16,i64).dtype, int64)
-        assert_equal(np.add(u8,u32).dtype, uint32)
-        assert_equal(np.add(f32,f64).dtype, float64)
-        assert_equal(np.add(fld,f32).dtype, longdouble)
-        assert_equal(np.add(f64,fld).dtype, longdouble)
-        assert_equal(np.add(c128,c64).dtype, complex128)
-        assert_equal(np.add(cld,c128).dtype, clongdouble)
-        assert_equal(np.add(c64,fld).dtype, clongdouble)
+        assert_equal(promote_func(i8,i16), np.dtype(int16))
+        assert_equal(promote_func(i32,i8), np.dtype(int32))
+        assert_equal(promote_func(i16,i64), np.dtype(int64))
+        assert_equal(promote_func(u8,u32), np.dtype(uint32))
+        assert_equal(promote_func(f32,f64), np.dtype(float64))
+        assert_equal(promote_func(fld,f32), np.dtype(longdouble))
+        assert_equal(promote_func(f64,fld), np.dtype(longdouble))
+        assert_equal(promote_func(c128,c64), np.dtype(complex128))
+        assert_equal(promote_func(cld,c128), np.dtype(clongdouble))
+        assert_equal(promote_func(c64,fld), np.dtype(clongdouble))
 
         # coercion between types
-        assert_equal(np.add(i8,u8).dtype, int16)
-        assert_equal(np.add(u8,i32).dtype, int32)
-        assert_equal(np.add(i64,u32).dtype, int64)
-        assert_equal(np.add(u64,i32).dtype, float64)
-        assert_equal(np.add(i32,f32).dtype, float64)
-        assert_equal(np.add(i64,f32).dtype, float64)
-        assert_equal(np.add(f32,i16).dtype, float32)
-        assert_equal(np.add(f32,u32).dtype, float64)
-        assert_equal(np.add(f32,c64).dtype, complex64)
-        assert_equal(np.add(c128,f32).dtype, complex128)
-        assert_equal(np.add(cld,f64).dtype, clongdouble)
+        assert_equal(promote_func(i8,u8), np.dtype(int16))
+        assert_equal(promote_func(u8,i32), np.dtype(int32))
+        assert_equal(promote_func(i64,u32), np.dtype(int64))
+        assert_equal(promote_func(u64,i32), np.dtype(float64))
+        assert_equal(promote_func(i32,f32), np.dtype(float64))
+        assert_equal(promote_func(i64,f32), np.dtype(float64))
+        assert_equal(promote_func(f32,i16), np.dtype(float32))
+        assert_equal(promote_func(f32,u32), np.dtype(float64))
+        assert_equal(promote_func(f32,c64), np.dtype(complex64))
+        assert_equal(promote_func(c128,f32), np.dtype(complex128))
+        assert_equal(promote_func(cld,f64), np.dtype(clongdouble))
 
         # coercion between scalars and 1-D arrays
-        assert_equal(np.add(array([i8]),i64).dtype, int8)
-        assert_equal(np.add(u64,array([i32])).dtype, int32)
-        assert_equal(np.add(i64,array([u32])).dtype, uint32)
-        assert_equal(np.add(int32(-1),array([u64])).dtype, float64)
-        assert_equal(np.add(f64,array([f32])).dtype, float32)
-        assert_equal(np.add(fld,array([f32])).dtype, float32)
-        assert_equal(np.add(array([f64]),fld).dtype, float64)
-        assert_equal(np.add(fld,array([c64])).dtype, complex64)
-        assert_equal(np.add(c64,array([f64])).dtype, complex128)
+        assert_equal(promote_func(array([i8]),i64), np.dtype(int8))
+        assert_equal(promote_func(u64,array([i32])), np.dtype(int32))
+        assert_equal(promote_func(i64,array([u32])), np.dtype(uint32))
+        assert_equal(promote_func(int32(-1),array([u64])), np.dtype(float64))
+        assert_equal(promote_func(f64,array([f32])), np.dtype(float32))
+        assert_equal(promote_func(fld,array([f32])), np.dtype(float32))
+        assert_equal(promote_func(array([f64]),fld), np.dtype(float64))
+        assert_equal(promote_func(fld,array([c64])), np.dtype(complex64))
+
+    def test_coercion(self):
+        def res_type(a, b):
+            return np.add(a, b).dtype
+        self.check_promotion_cases(res_type)
+
+        f64 = float64(0)
+        c64 = complex64(0)
+        # Scalars used to coerce to complex even if the value was real
+        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
+
+    def test_result_type(self):
+        self.check_promotion_cases(np.result_type)
+
+        f64 = float64(0)
+        c64 = complex64(0)
+        # Scalars do not coerce to complex if the value is real
+        assert_equal(np.result_type(c64,array([f64])), np.dtype(float64))
+        # But they do if the value is complex
+        assert_equal(np.result_type(complex64(3j),array([f64])),
+                                                    np.dtype(complex128))
+    def can_cast(self):
+        assert_(np.can_cast(np.int32, np.int64))
+        assert_(np.can_cast(np.float64, np.complex))
+        assert_(not np.can_cast(np.complex, np.float))
+        
+        assert_(np.can_cast('i8', 'f8'))
+        assert_(not np.can_cast('i8', 'f4'))
+        assert_(np.can_cast('i4', 'S4'))
+
+        assert_(np.can_cast('i8', 'i8', 'no'))
+        assert_(not np.can_cast('<i8', '>i8', 'no'))
+
+        assert_(np.can_cast('<i8', '>i8', 'equiv'))
+        assert_(not np.can_cast('<i4', '>i8', 'equiv'))
+
+        assert_(np.can_cast('<i4', '>i8', 'safe'))
+        assert_(not np.can_cast('<i8', '>i4', 'safe'))
+
+        assert_(np.can_cast('<i8', '>i4', 'same_kind'))
+        assert_(not np.can_cast('<i8', '>u4', 'same_kind'))
+
+        assert_(np.can_cast('<i8', '>u4', 'unsafe'))
+
+        assert_raises(TypeError, np.can_cast, 'i4', None)
+        assert_raises(TypeError, np.can_cast, None, 'i4')
 
 class TestFromiter(TestCase):
     def makegen(self):

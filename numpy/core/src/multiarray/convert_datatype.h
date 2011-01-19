@@ -13,7 +13,11 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num);
 NPY_NO_EXPORT int
 PyArray_CanCastSafely(int fromtype, int totype);
 
-NPY_NO_EXPORT Bool
+/* This can replace PyArray_CanCastTo for NumPy 2.0 (ABI change) */
+NPY_NO_EXPORT npy_bool
+can_cast_to(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting);
+
+NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to);
 
 NPY_NO_EXPORT int
