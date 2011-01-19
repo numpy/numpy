@@ -5552,8 +5552,8 @@ class mvoid(MaskedArray):
 
     def __getitem__(self, indx):
         "Get the index..."
-        _mask = self._mask.astype(np.void)
-        if _mask is not nomask and _mask[indx]:
+        m = self._mask
+        if m is not nomask and m[indx]:
             return masked
         return self._data[indx]
 

@@ -1410,10 +1410,16 @@ _equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
 NPY_NO_EXPORT unsigned char
 PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 {
-    int typenum1 = typ1->type_num;
-    int typenum2 = typ2->type_num;
-    int size1 = typ1->elsize;
-    int size2 = typ2->elsize;
+    int typenum1, typenum2, size1, size2;
+
+    if (typ1 == typ2) {
+        return TRUE;
+    }
+
+    typenum1 = typ1->type_num;
+    typenum2 = typ2->type_num;
+    size1 = typ1->elsize;
+    size2 = typ2->elsize;
 
     if (size1 != size2) {
         return FALSE;

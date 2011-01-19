@@ -770,7 +770,7 @@ array_setasflat(PyArrayObject *self, PyObject *args)
 }
 
 static PyObject *
-array_cast(PyArrayObject *self, PyObject *args)
+array_astype(PyArrayObject *self, PyObject *args)
 {
     PyArray_Descr *descr = NULL;
     PyObject *obj;
@@ -781,19 +781,6 @@ array_cast(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    if (PyArray_EquivTypes(descr, self->descr)) {
-        obj = _ARET(PyArray_NewCopy(self,NPY_ANYORDER));
-        Py_XDECREF(descr);
-        return obj;
-    }
-    if (descr->names != NULL) {
-        int flags;
-        flags = NPY_FORCECAST;
-        if (PyArray_ISFORTRAN(self)) {
-            flags |= NPY_FORTRAN;
-        }
-        return PyArray_FromArray(self, descr, flags);
-    }
     return PyArray_CastToType(self, descr, PyArray_ISFORTRAN(self));
 }
 
@@ -2205,7 +2192,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_argsort,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
-        (PyCFunction)array_cast,
+        (PyCFunction)array_astype,
         METH_VARARGS, NULL},
     {"byteswap",
         (PyCFunction)array_byteswap,

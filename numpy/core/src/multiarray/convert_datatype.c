@@ -22,6 +22,9 @@
  *
  * Cast an array using typecode structure.
  * steals reference to at --- cannot be NULL
+ *
+ * This function always makes a copy of mp, even if the dtype
+ * doesn't change.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
@@ -31,16 +34,6 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
     PyArray_Descr *mpd;
 
     mpd = mp->descr;
-
-    if (((mpd == at) ||
-                ((mpd->type_num == at->type_num) &&
-                 PyArray_EquivByteorders(mpd->byteorder, at->byteorder) &&
-                 ((mpd->elsize == at->elsize) || (at->elsize==0)))) &&
-                 PyArray_ISBEHAVED_RO(mp)) {
-        Py_DECREF(at);
-        Py_INCREF(mp);
-        return (PyObject *)mp;
-    }
 
     if (at->elsize == 0) {
         PyArray_DESCR_REPLACE(at);
