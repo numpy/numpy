@@ -1198,7 +1198,7 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 }
 
 /*NUMPY_API
- * Convert an object to FORTRAN / C / ANY
+ * Convert an object to FORTRAN / C / ANY / KEEP
  */
 NPY_NO_EXPORT int
 PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)

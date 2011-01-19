@@ -851,7 +851,36 @@ Converting data types
     additional support for size checking if *fromtype* and *totype*
     are :cdata:`NPY_STRING` or :cdata:`NPY_UNICODE`.
 
+.. cfunction:: int PyArray_CanCastArrayTo(PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
+
+    Returns non-zero if *arr* can be cast to *totype* according
+    to the casting rule given in *casting*.  If *arr* is an array
+    scalar, its value is taken into account, and non-zero is also
+    returned when the value will not overflow or be truncated to
+    an integer when converting to a smaller type.
+
+.. cfunction:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
+
+    If *arr* is an array, returns its data type descriptor, but if
+    *arr* is an array scalar (has 0 dimensions), it finds the data type
+    of smallest kind and size to which the value may be converted
+    without overflow or truncation to an integer.
+
+.. cfunction:: PyArray_Descr* PyArray_PromoteTypes(PyArray_Descr* type1, PyArray_Descr* type2)
+
+    Finds the data type of smallest size and kind to which *type1* and
+    *type2* may be safely converted.
+
+.. cfunction:: PyArray_Descr* PyArray_ResultType(npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, PyArray_Descr**dtypes)
+
+    This applies PyArray_PromoteTypes to all the inputs, along with
+    using the NumPy rules for combining scalars and arrays, to
+    determine the output type of a set of operands.  This is the
+    same result type that ufuncs produce.
+
 .. cfunction:: int PyArray_ObjectType(PyObject* op, int mintype)
+
+    This function is deprecated, use PyArray_ResultType.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -863,6 +892,8 @@ Converting data types
 
 .. cfunction:: void PyArray_ArrayType(PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
 
+    This function is deprecated, use PyArray_ResultType.
+
     This function works similarly to :cfunc:`PyArray_ObjectType` (...)
     except it handles flexible arrays. The *mintype* argument can have
     an itemsize member and the *outtype* argument will have an
@@ -870,6 +901,9 @@ Converting data types
     the object *op*.
 
 .. cfunction:: PyArrayObject** PyArray_ConvertToCommonType(PyObject* op, int* n)
+
+    Using the newly introduced iterator with flag NPY_ITER_COMMON_DTYPE
+    is preferred to this method.
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
@@ -1531,6 +1565,10 @@ Item selection and manipulation
     Equivalent to :meth:`ndarray.diagonal` (*self*, *offset*, *axis1*, *axis2*
     ). Return the *offset* diagonals of the 2-d arrays defined by
     *axis1* and *axis2*.
+
+.. cfunction:: npy_intp PyArray_CountNonzero(PyArrayObject* self)
+
+    Counts the number of non-zero elements in the array object *self*.
 
 .. cfunction:: PyObject* PyArray_Nonzero(PyArrayObject* self)
 
@@ -2338,6 +2376,18 @@ to.
 
     Convert Python strings into one of :cdata:`NPY_SEARCHLEFT` (starts with 'l'
     or 'L'), or :cdata:`NPY_SEARCHRIGHT` (starts with 'r' or 'R').
+
+.. cfunction:: int PyArray_OrderConverter(PyObject* obj, NPY_ORDER* order)
+
+   Convert the Python strings 'C', 'F', 'A', and 'K' into the NPY_ORDER
+   enumeration NPY_CORDER, NPY_FORTRANORDER, NPY_ANYORDER, and NPY_KEEPORDER.
+
+.. cfunction:: int PyArray_CastingConverter(PyObject* obj, NPY_CASTING* casting)
+
+   Convert the Python strings 'no', 'equiv', 'safe', 'same_kind', and
+   'unsafe' into the NPY_CASTING enumeration NPY_NO_CASTING,
+   NPY_EQUIV_CASTING, NPY_SAFE_CASTING, NPY_SAME_KIND_CASTING, and
+   NPY_UNSAFE_CASTING.
 
 Other conversions
 ^^^^^^^^^^^^^^^^^
