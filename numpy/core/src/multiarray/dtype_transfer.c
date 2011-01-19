@@ -589,26 +589,80 @@ _aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
 }
 
 static int
-get_cast_transfer_function(int aligned,
+get_nbo_cast_numeric_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            int src_type_num, int dst_type_num,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
+{
+    /* Emit a warning if complex imaginary is being cast away */
+    if (PyTypeNum_ISCOMPLEX(src_type_num) &&
+                    !PyTypeNum_ISCOMPLEX(dst_type_num) &&
+                    !PyTypeNum_ISBOOL(dst_type_num)) {
+        PyObject *cls = NULL, *obj = NULL;
+        int ret;
+        obj = PyImport_ImportModule("numpy.core");
+        if (obj) {
+            cls = PyObject_GetAttrString(obj, "ComplexWarning");
+            Py_DECREF(obj);
+        }
+#if PY_VERSION_HEX >= 0x02050000
+        ret = PyErr_WarnEx(cls,
+                           "Casting complex values to real discards "
+                           "the imaginary part", 1);
+#else
+        ret = PyErr_Warn(cls,
+                         "Casting complex values to real discards "
+                         "the imaginary part");
+#endif
+        Py_XDECREF(cls);
+        if (ret < 0) {
+            return NPY_FAIL;
+        }
+    }
+
+    *out_stransfer = PyArray_GetStridedNumericCastFn(aligned,
+                                src_stride, dst_stride,
+                                src_type_num, dst_type_num);
+    *out_transferdata = NULL;
+    if (*out_stransfer == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "unexpected error in GetStridedNumericCastFn");
+        return NPY_FAIL;
+    }
+
+    return NPY_SUCCEED;
+}
+
+static int
+get_nbo_cast_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             PyArray_StridedTransferFn **out_stransfer,
                             void **out_transferdata,
-                            int *out_needs_api)
+                            int *out_needs_api,
+                            int *out_needs_wrap)
 {
     _strided_cast_data *data;
-    void *todata = NULL, *fromdata = NULL;
     PyArray_VectorUnaryFunc *castfunc;
+    PyArray_Descr *tmp_dtype;
     npy_intp shape = 1, src_itemsize = src_dtype->elsize,
             dst_itemsize = dst_dtype->elsize;
-    PyArray_Descr *tmp_dtype;
 
-    if (src_dtype->type_num == dst_dtype->type_num) {
-        PyErr_SetString(PyExc_ValueError,
-                "low level cast function is for unequal type numbers");
-        return NPY_FAIL;
+    if (PyTypeNum_ISNUMBER(src_dtype->type_num) &&
+                    PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
+        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                          !PyArray_ISNBO(dst_dtype->byteorder);
+        return get_nbo_cast_numeric_transfer_function(aligned,
+                                    src_stride, dst_stride,
+                                    src_dtype->type_num, dst_dtype->type_num,
+                                    out_stransfer, out_transferdata);
     }
+
+    *out_needs_wrap = !aligned ||
+                      !PyArray_ISNBO(src_dtype->byteorder) ||
+                      !PyArray_ISNBO(dst_dtype->byteorder);
 
     /* Check the data types whose casting functions use API calls */
     switch (src_dtype->type_num) {
@@ -700,29 +754,74 @@ get_cast_transfer_function(int aligned,
         return NPY_FAIL;
     }
 
-
     /* If it's aligned and all native byte order, we're all done */
-    if (aligned && PyArray_ISNBO(src_dtype->byteorder) &&
-                   PyArray_ISNBO(dst_dtype->byteorder)) {
-        /* Choose the contiguous cast if we can */
-        if (move_references && src_dtype->type_num == NPY_OBJECT) {
-            *out_stransfer = _aligned_strided_to_strided_cast_decref_src;
+    if (move_references && src_dtype->type_num == NPY_OBJECT) {
+        *out_stransfer = _aligned_strided_to_strided_cast_decref_src;
+    }
+    else {
+        /*
+         * Use the contig version if the strides are contiguous or
+         * we're telling the caller to wrap the return, because
+         * the wrapping uses a contiguous buffer.
+         */
+        if ((src_stride == src_itemsize && dst_stride == dst_itemsize) ||
+                        *out_needs_wrap) {
+            *out_stransfer = _aligned_contig_to_contig_cast;
         }
         else {
-            if (src_stride == src_itemsize && dst_stride == dst_itemsize) {
-                *out_stransfer = _aligned_contig_to_contig_cast;
-            }
-            else {
-                *out_stransfer = _aligned_strided_to_strided_cast;
-            }
+            *out_stransfer = _aligned_strided_to_strided_cast;
         }
-        *out_transferdata = data;
+    }
+    *out_transferdata = data;
+
+    return NPY_SUCCEED;
+}
+
+static int
+get_cast_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            int move_references,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata,
+                            int *out_needs_api)
+{
+    PyArray_StridedTransferFn *caststransfer;
+    void *castdata, *todata = NULL, *fromdata = NULL;
+    int needs_wrap = 0;
+    npy_intp src_itemsize = src_dtype->elsize,
+            dst_itemsize = dst_dtype->elsize;
+
+    if (src_dtype->type_num == dst_dtype->type_num) {
+        PyErr_SetString(PyExc_ValueError,
+                "low level cast function is for unequal type numbers");
+        return NPY_FAIL;
+    }
+
+    if (get_nbo_cast_transfer_function(aligned,
+                            src_stride, dst_stride,
+                            src_dtype, dst_dtype,
+                            move_references,
+                            &caststransfer,
+                            &castdata,
+                            out_needs_api,
+                            &needs_wrap) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+
+    /*
+     * If all native byte order and doesn't need alignment wrapping,
+     * return the function
+     */
+    if (!needs_wrap) {
+        *out_stransfer = caststransfer;
+        *out_transferdata = castdata;
 
         return NPY_SUCCEED;
     }
     /* Otherwise, we have to copy and/or swap to aligned temporaries */
     else {
-        PyArray_StridedTransferFn *tobuffer, *frombuffer, *casttransfer;
+        PyArray_StridedTransferFn *tobuffer, *frombuffer;
 
         /* Get the copy/swap operation from src */
 
@@ -747,7 +846,7 @@ get_cast_transfer_function(int aligned,
                                         src_stride, src_itemsize,
                                         src_itemsize);
         }
-        /* If not complex, a paired swap */
+        /* If complex, a paired swap */
         else {
             tobuffer = PyArray_GetStridedCopySwapPairFn(aligned,
                                         src_stride, src_itemsize,
@@ -782,7 +881,7 @@ get_cast_transfer_function(int aligned,
                                         dst_itemsize, dst_stride,
                                         dst_itemsize);
         }
-        /* If not complex, a paired swap */
+        /* If complex, a paired swap */
         else {
             frombuffer = PyArray_GetStridedCopySwapPairFn(aligned,
                                         dst_itemsize, dst_stride,
@@ -790,30 +889,25 @@ get_cast_transfer_function(int aligned,
         }
 
         if (frombuffer == NULL || tobuffer == NULL) {
-            PyArray_FreeStridedTransferData(data);
+            PyArray_FreeStridedTransferData(castdata);
             PyArray_FreeStridedTransferData(todata);
             PyArray_FreeStridedTransferData(fromdata);
             return NPY_FAIL;
         }
 
-        /* If necessary, use the cast function with source decref */
-        if (move_references && src_dtype->type_num == NPY_OBJECT) {
-            *out_stransfer = _aligned_strided_to_strided_cast_decref_src;
-        }
-        /* Use the aligned contiguous cast otherwise */
-        else {
-            casttransfer = &_aligned_contig_to_contig_cast;
-        }
+        *out_stransfer = caststransfer;
 
         /* Wrap it all up in a new transfer function + data */
         if (wrap_aligned_contig_transfer_function(
                             src_itemsize, dst_itemsize,
                             tobuffer, todata,
                             frombuffer, fromdata,
-                            casttransfer, data,
+                            caststransfer, castdata,
                             PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
                             out_stransfer, out_transferdata) != NPY_SUCCEED) {
-            PyArray_FreeStridedTransferData(data);
+            PyArray_FreeStridedTransferData(castdata);
+            PyArray_FreeStridedTransferData(todata);
+            PyArray_FreeStridedTransferData(fromdata);
             return NPY_FAIL;
         }
 
@@ -2651,6 +2745,26 @@ PyArray_GetDTypeTransferFunction(int aligned,
     dst_itemsize = dst_dtype->elsize;
     src_type_num = src_dtype->type_num;
     dst_type_num = dst_dtype->type_num;
+
+    /* Common special case - number -> number NBO cast */
+    if (PyTypeNum_ISNUMBER(src_type_num) &&
+                    PyTypeNum_ISNUMBER(dst_type_num) &&
+                    PyArray_ISNBO(src_dtype->byteorder) &&
+                    PyArray_ISNBO(dst_dtype->byteorder)) {
+        if (PyArray_EquivTypenums(src_type_num, dst_type_num)) {
+            *out_stransfer = PyArray_GetStridedCopyFn(aligned,
+                                        src_stride, dst_stride,
+                                        src_itemsize);
+            *out_transferdata = NULL;
+            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+        }
+        else {
+            return get_nbo_cast_numeric_transfer_function (aligned,
+                                        src_stride, dst_stride,
+                                        src_type_num, dst_type_num,
+                                        out_stransfer, out_transferdata);
+        }
+    }
 
     /*
      * If there are no references and the data types are equivalent,

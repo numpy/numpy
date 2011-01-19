@@ -109,6 +109,17 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
                             void **outtransferdata);
 
 /*
+ * For casts between built-in numeric types,
+ * this produces a function pointer for casting from src_type_num
+ * to dst_type_num.  If a conversion is unsupported, returns NULL
+ * without setting a Python exception.
+ */
+NPY_NO_EXPORT PyArray_StridedTransferFn *
+PyArray_GetStridedNumericCastFn(npy_intp aligned, npy_intp src_stride,
+                             npy_intp dst_stride,
+                             int src_type_num, int dst_type_num);
+
+/*
  * If it's possible, gives back a transfer function which casts and/or
  * byte swaps data with the dtype 'src_dtype' into data with the dtype
  * 'dst_dtype'.  If the outtransferdata is populated with a non-NULL value,

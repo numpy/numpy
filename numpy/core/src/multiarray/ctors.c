@@ -334,52 +334,6 @@ object_depth_and_dimension(PyObject *s, int max, npy_intp *dims)
     return nd + 1;
 }
 
-static void
-_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
-                    npy_intp instrides, npy_intp N, int elsize)
-{
-    npy_intp i, j;
-    char *tout = dst;
-    char *tin = src;
-
-#define _FAST_MOVE(_type_)                              \
-    for(i=0; i<N; i++) {                               \
-        ((_type_ *)tout)[0] = ((_type_ *)tin)[0];       \
-        tin += instrides;                               \
-        tout += outstrides;                             \
-    }                                                   \
-    return
-
-    switch(elsize) {
-    case 8:
-        _FAST_MOVE(Int64);
-    case 4:
-        _FAST_MOVE(Int32);
-    case 1:
-        _FAST_MOVE(Int8);
-    case 2:
-        _FAST_MOVE(Int16);
-    case 16:
-        for (i = 0; i < N; i++) {
-            ((Int64 *)tout)[0] = ((Int64 *)tin)[0];
-            ((Int64 *)tout)[1] = ((Int64 *)tin)[1];
-            tin += instrides;
-            tout += outstrides;
-        }
-        return;
-    default:
-        for(i = 0; i < N; i++) {
-            for(j=0; j<elsize; j++) {
-                *tout++ = *tin++;
-            }
-            tin = tin + instrides - elsize;
-            tout = tout + outstrides - elsize;
-        }
-    }
-#undef _FAST_MOVE
-
-}
-
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
                              npy_intp instrides, npy_intp N, int elsize)

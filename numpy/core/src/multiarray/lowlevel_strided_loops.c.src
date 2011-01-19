@@ -11,12 +11,13 @@
 #include <numpy/ndarrayobject.h>
 #include <numpy/ufuncobject.h>
 #include <numpy/npy_cpu.h>
+#include <numpy/halffloat.h>
 
 #include "lowlevel_strided_loops.h"
 
 /* x86 platform works with unaligned reads and writes */
 #if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
-#  define NPY_USE_UNALIGNED_ACCESS 1
+#  define NPY_USE_UNALIGNED_ACCESS 0 //1
 #else
 #  define NPY_USE_UNALIGNED_ACCESS 0
 #endif
@@ -656,6 +657,280 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
 
 /**end repeat**/
 
+/************* STRIDED CASTING SPECIALIZED FUNCTIONS *************/
+
+/**begin repeat
+ *
+ * #NAME1 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name1 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ * #rname1 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          float, double, longdouble#
+ * #is_half1 = 0*11, 1, 0*6#
+ * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
+ * #is_double1 = 0*13, 1, 0, 0, 1, 0#
+ * #is_complex1 = 0*15, 1*3#
+ */
+
+/**begin repeat1
+ *
+ * #NAME2 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name2 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ * #rname2 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          float, double, longdouble#
+ * #is_half2 = 0*11, 1, 0*6#
+ * #is_float2 = 0*12, 1, 0, 0, 1, 0, 0#
+ * #is_double2 = 0*13, 1, 0, 0, 1, 0#
+ * #is_complex2 = 0*15, 1*3#
+ */
+
+/**begin repeat2
+ * #prefix = _aligned,,_aligned_contig,_contig#
+ * #aligned = 1,0,1,0#
+ * #contig = 0,0,1,1#
+ */
+
+#if !(NPY_USE_UNALIGNED_ACCESS && !@aligned@)
+
+/* For half types, don't use actual double/float types in conversion */
+#if @is_half1@ || @is_half2@
+
+#  if @is_float1@
+#    define _TYPE1 npy_uint32
+#  elif @is_double1@
+#    define _TYPE1 npy_uint64
+#  else
+#    define _TYPE1 npy_@rname1@
+#  endif
+
+#  if @is_float2@
+#    define _TYPE2 npy_uint32
+#  elif @is_double2@
+#    define _TYPE2 npy_uint64
+#  else
+#    define _TYPE2 npy_@rname2@
+#  endif
+
+#else
+
+#define _TYPE1 npy_@rname1@
+#define _TYPE2 npy_@rname2@
+
+#endif
+
+/* Determine an appropriate casting conversion function */
+#if @is_half1@
+
+#  if @is_float2@
+#    define _CONVERT_FN(x) npy_halfbits_to_floatbits(x)
+#  elif @is_double2@
+#    define _CONVERT_FN(x) npy_halfbits_to_doublebits(x)
+#  elif @is_half2@
+#    define _CONVERT_FN(x) (x)
+#  else
+#    define _CONVERT_FN(x) ((_TYPE2)npy_half_to_float(x))
+#  endif
+
+#elif @is_half2@
+
+#  if @is_float1@
+#    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
+#  elif @is_double1@
+#    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
+#  else
+#    define _CONVERT_FN(x) npy_float_to_half((float)x)
+#  endif
+
+#else
+
+#    define _CONVERT_FN(x) ((_TYPE2)x)
+
+#endif
+
+static void
+@prefix@_cast_@name1@_to_@name2@(
+                        char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *NPY_UNUSED(data))
+{
+#if @is_complex1@
+    _TYPE1 src_value[2];
+#elif !@aligned@
+    _TYPE1 src_value;
+#endif
+#if @is_complex2@
+    _TYPE2 dst_value[2];
+#elif !@aligned@
+    _TYPE2 dst_value;
+#endif
+
+    /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
+
+    while (N--) {
+#if @aligned@
+#  if @is_complex1@
+        src_value[0] = ((_TYPE1 *)src)[0];
+        src_value[1] = ((_TYPE1 *)src)[1];
+#  elif !@aligned@
+        src_value = *((_TYPE1 *)src);
+#  endif
+#else
+        memcpy(&src_value, src, sizeof(src_value));
+#endif
+
+/* Do the cast */
+#if @is_complex1@
+#  if @is_complex2@
+    dst_value[0] = _CONVERT_FN(src_value[0]);
+    dst_value[1] = _CONVERT_FN(src_value[1]);
+#  elif !@aligned@
+    dst_value = _CONVERT_FN(src_value[0]);
+#  else
+    *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
+#  endif
+#else
+#  if @is_complex2@
+#    if !@aligned@
+    dst_value[0] = _CONVERT_FN(src_value);
+#    else
+    dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
+#    endif
+    dst_value[1] = 0;
+#  elif !@aligned@
+    dst_value = _CONVERT_FN(src_value);
+#  else
+    *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
+#  endif
+#endif
+
+#if @aligned@
+#  if @is_complex2@
+        ((_TYPE2 *)dst)[0] = dst_value[0];
+        ((_TYPE2 *)dst)[1] = dst_value[1];
+#  elif !@aligned@
+        *((_TYPE2 *)dst) = dst_value;
+#  endif
+#else
+        memcpy(dst, &dst_value, sizeof(dst_value));
+#endif
+
+#if @contig@
+        dst += sizeof(npy_@name2@);
+        src += sizeof(npy_@name1@);
+#else
+        dst += dst_stride;
+        src += src_stride;
+#endif
+    }
+}
+
+#undef _CONVERT_FN
+#undef _TYPE2
+#undef _TYPE1
+
+#endif
+
+/**end repeat2**/
+
+/**end repeat1**/
+
+/**end repeat**/
+
+NPY_NO_EXPORT PyArray_StridedTransferFn *
+PyArray_GetStridedNumericCastFn(npy_intp aligned, npy_intp src_stride,
+                             npy_intp dst_stride,
+                             int src_type_num, int dst_type_num)
+{
+    switch (src_type_num) {
+/**begin repeat
+ *
+ * #NAME1 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name1 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ */
+
+        case NPY_@NAME1@:
+            //printf("test fn %d - second %d\n", NPY_@NAME1@, dst_type_num);
+            switch (dst_type_num) {
+/**begin repeat1
+ *
+ * #NAME2 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name2 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ */
+
+                case NPY_@NAME2@:
+                    //printf("ret fn %d %d\n", NPY_@NAME1@, NPY_@NAME2@);
+#  if NPY_USE_UNALIGNED_ACCESS
+                    if (src_stride == sizeof(npy_@name1@) &&
+                                dst_stride == sizeof(npy_@name2@)) {
+                        return &_aligned_contig_cast_@name1@_to_@name2@;
+                    }
+                    else {
+                        return &_aligned_cast_@name1@_to_@name2@;
+                    }
+#  else
+                    if (src_stride == sizeof(npy_@name1@) &&
+                                dst_stride == sizeof(npy_@name2@)) {
+                        return aligned ?
+                                    &_aligned_contig_cast_@name1@_to_@name2@ :
+                                    &_contig_cast_@name1@_to_@name2@;
+                    }
+                    else {
+                        return aligned ? &_aligned_cast_@name1@_to_@name2@ :
+                                         &_cast_@name1@_to_@name2@;
+                    }
+#  endif
+
+/**end repeat1**/
+            }
+            //printf("switched test fn %d - second %d\n", NPY_@NAME1@, dst_type_num);
+
+/**end repeat**/
+    }
+
+    return NULL;
+}
+
+
+/************** STRIDED TRANSFER FUNCTION MEMORY MANAGEMENT **************/
+
 typedef void (*_npy_stridedtransfer_dealloc)(void *);
 NPY_NO_EXPORT void
 PyArray_FreeStridedTransferData(void *transferdata)
@@ -680,6 +955,7 @@ PyArray_CopyStridedTransferData(void *transferdata)
     return NULL;
 }
 
+/****************** PRIMITIVE FLAT TO/FROM NDIM FUNCTIONS ******************/
 
 NPY_NO_EXPORT npy_intp
 PyArray_TransferNDimToStrided(npy_intp ndim,

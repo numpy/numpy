@@ -3509,6 +3509,7 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     /* This contains the all the inputs and outputs */
     PyArrayObject *op[NPY_MAXARGS];
     PyArray_Descr *dtype[NPY_MAXARGS];
+    PyArray_Descr *result_type;
 
     /* TODO: For 1.6, the default should probably be NPY_CORDER */
     NPY_ORDER order = NPY_KEEPORDER;
@@ -3535,6 +3536,7 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         op[i] = NULL;
         dtype[i] = NULL;
     }
+    result_type = NULL;
 
     /* Get input arguments */
     for(i = 0; i < nin; ++i) {
@@ -3555,6 +3557,7 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         op[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, context);
 
         /* Start with a native byte-order data type */
+        /*
         if (PyArray_ISNBO(PyArray_DESCR(op[i])->byteorder)) {
             dtype[i] = PyArray_DESCR(op[i]);
             Py_INCREF(dtype[i]);
@@ -3563,6 +3566,7 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
             dtype[i] = PyArray_DescrNewByteorder(PyArray_DESCR(op[i]),
                                                             NPY_NATIVE);
         }
+        */
     }
 
     /* Get positional output arguments */
@@ -3670,13 +3674,42 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-    
-    return NULL;
+
+    /*
+     * Determine the result type.  A better approach would be for
+     * the ufunc to provide a function which gives back the result
+     * type and inner loop function.  The default would work as follows.
+     */
+    result_type = PyArray_ResultType(nin, op, 0, NULL);
+    if (result_type == NULL) {
+        goto fail;
+    }
+    /* Take into account the types of any output parameters */
+    for (i = nin; i < nargs; ++i) {
+        PyArray_Descr *tmp;
+        if (op[i] != NULL) {
+            tmp = PyArray_PromoteTypes(result_type, PyArray_DESCR(op[i]));
+            if (tmp == NULL) {
+                goto fail;
+            }
+            Py_DECREF(result_type);
+            result_type = tmp;
+        }
+    }
+
+    /* Find the function loop */
+
+    printf("result type: ");
+    PyObject_Print((PyObject *)result_type, stdout, 0);
+    printf("\n");
+
+    PyErr_SetString(PyExc_RuntimeError, "implementation is not finished!");
 fail:
     for (i = 0; i < niter; ++i) {
         Py_XDECREF(op[i]);
         Py_XDECREF(dtype[i]);
     }
+    Py_XDECREF(result_type);
     return NULL;
 }
 

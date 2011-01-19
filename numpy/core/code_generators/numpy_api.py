@@ -292,6 +292,7 @@ multiarray_funcs_api = {
     'NpyIter_GetWriteFlags':                258,
     'NpyIter_DebugPrint':                   259,
     'NpyIter_IterationNeedsAPI':            260,
+    #
     'PyArray_CastingConverter':             261,
     'PyArray_CountNonzero':                 262,
     'PyArray_PromoteTypes':                 263,

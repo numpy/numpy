@@ -11,13 +11,33 @@ typedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
 typedef struct {
         PyObject_HEAD
+        /*
+         * nin: Number of inputs
+         * nout: Number of outputs
+         * nargs: Always nin + nout (Why is it stored?)
+         */
         int nin, nout, nargs;
+
+        /* Identity for reduction, either PyUFunc_One or PyUFunc_Zero */
         int identity;
+
+        /* Array of one-dimensional core loops */
         PyUFuncGenericFunction *functions;
+        /* Array of funcdata that gets passed into the functions */
         void **data;
+        /* The number of elements in 'functions' and 'data' */
         int ntypes;
+
+        /* Does not appear to be used */
         int check_return;
-        char *name, *types;
+
+        /* The name of the ufunc */
+        char *name;
+
+        /* Array of type numbers, of size ('nargs' * 'ntypes') */
+        char *types;
+
+        /* Documentation string */
         char *doc;
         void *ptr;
         PyObject *obj;
@@ -68,7 +88,8 @@ typedef struct {
 #define UFUNC_FPE_UNDERFLOW     4
 #define UFUNC_FPE_INVALID       8
 
-#define UFUNC_ERR_DEFAULT  0      /* Error mode that avoids look-up (no checking) */
+/* Error mode that avoids look-up (no checking) */
+#define UFUNC_ERR_DEFAULT       0
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
