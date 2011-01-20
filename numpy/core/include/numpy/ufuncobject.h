@@ -39,6 +39,7 @@ typedef struct {
 
         /* Documentation string */
         char *doc;
+
         void *ptr;
         PyObject *obj;
         PyObject *userloops;

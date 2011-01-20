@@ -817,6 +817,9 @@ Converting data types
 
 .. cfunction:: int PyArray_CastTo(PyArrayObject* out, PyArrayObject* in)
 
+    Deprecated, PyArray_CopyInto handles the casting for NumPy 1.6 and
+    later.
+
     Cast the elements of the array *in* into the array *out*. The
     output array should be writeable, have an integer-multiple of the
     number of elements in the input array (more than one copy can be
@@ -844,17 +847,20 @@ Converting data types
 
 .. cfunction:: int PyArray_CanCastTo(PyArray_Descr* fromtype, PyArray_Descr* totype)
 
+    Deprecated, PyArray_CanCastTypeTo subsumes its functionality in
+    NumPy 1.6 and later.
+    
+    Equivalent to PyArray_CanCastTypeTo(fromtype, totype, NPY_SAFE_CASTING).
+
+.. cfunction:: int PyArray_CanCastTypeTo(PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING casting)
+
     Returns non-zero if an array of data type *fromtype* (which can
     include flexible types) can be cast safely to an array of data
-    type *totype* (which can include flexible types). This is
-    basically a wrapper around :cfunc:`PyArray_CanCastSafely` with
-    additional support for size checking if *fromtype* and *totype*
-    are :cdata:`NPY_STRING` or :cdata:`NPY_UNICODE`.
-
-.. cfunction:: int PyArray_CanCastTypeTo(PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING)
-
-    This is equivalent to PyArray_CanCastTo, but adds a parameter *casting*
-    specifying what casts may be accepted.
+    type *totype* (which can include flexible types) according to
+    the casting rule *casting*. For simple types with NPY_SAFE_CASTING,
+    this is basically a wrapper around :cfunc:`PyArray_CanCastSafely`, but
+    for flexible types such as strings or unicode, it produces results
+    taking into account their sizes.
 
 .. cfunction:: int PyArray_CanCastArrayTo(PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
 
@@ -885,7 +891,8 @@ Converting data types
 
 .. cfunction:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is deprecated, use PyArray_ResultType.
+    This function is deprecated, use PyArray_MinScalarType and/or
+    PyArray_ResultType for this functionality.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -907,8 +914,9 @@ Converting data types
 
 .. cfunction:: PyArrayObject** PyArray_ConvertToCommonType(PyObject* op, int* n)
 
-    Using the newly introduced iterator with flag NPY_ITER_COMMON_DTYPE
-    is preferred to this method.
+    May be deprecated in the future.  Using the newly introduced iterator
+    with flag NPY_ITER_COMMON_DTYPE or with the same dtype parameter for
+    all operands is preferred to this method.
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected

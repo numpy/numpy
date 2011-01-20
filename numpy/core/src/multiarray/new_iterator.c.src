@@ -2816,7 +2816,7 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
             /* Possible if op_axes are being used, but op_axes[iiter] is NULL */
             if (ondim > ndim) {
                 PyErr_SetString(PyExc_ValueError,
-                        "Iterator input has more dimensions than allowed "
+                        "input operand has more dimensions than allowed "
                         "by the 'op_axes' specified");
                 return 0;
             }
@@ -2835,7 +2835,7 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                     }
                     else if (NAD_SHAPE(axisdata) != shape) {
                         PyErr_SetString(PyExc_ValueError,
-                                "Iterator input objects cannot be broadcast "
+                                "operands cannot be broadcast "
                                 "to a single shape");
                         return 0;
                     }
@@ -2885,8 +2885,8 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                         }
                         else if (NAD_SHAPE(axisdata) != shape) {
                             PyErr_SetString(PyExc_ValueError,
-                                    "Iterator input objects cannot be "
-                                    "broadcast to a single shape");
+                                    "operands cannot be broadcast "
+                                    "to a single shape");
                             return 0;
                         }
                         NAD_STRIDES(axisdata)[iiter] =
@@ -2925,10 +2925,13 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                 }
                 if (i < PyArray_NDIM(op[iiter])) {
                     if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "Iterator input has the NO_BROADCAST flag "
-                                "set, but has different dimensions than "
-                                "the final broadcast shape of the iterator");
+                        if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "output operand cannot be broadcasted");
+                        } else {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "operand cannot be broadcasted");
+                        }
                         return 0;
                     }
                 }
@@ -2938,10 +2941,13 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                  * mapping
                  */
                 else if (NAD_SHAPE(axisdata) != 1) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Iterator input has the NO_BROADCAST flag "
-                            "set, but has different dimensions than "
-                            "the final broadcast shape of the iterator");
+                    if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
+                        PyErr_SetString(PyExc_ValueError,
+                                    "output operand cannot be broadcasted");
+                    } else {
+                        PyErr_SetString(PyExc_ValueError,
+                                    "operand cannot be broadcasted");
+                    }
                     return 0;
                 }
                 

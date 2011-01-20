@@ -153,15 +153,17 @@ Functions
     followed by the outputs assumed by the 1-d loop.
 
 .. cfunction:: int PyUFunc_GenericFunction(PyUFuncObject* self,
-   PyObject* args, PyArrayObject** mps)
+   PyObject* args, PyObject* kwds, PyArrayObject** mps)
 
-    A generic ufunc call. The ufunc is passed in as *self*, the
-    arguments to the ufunc as *args*. The *mps* argument is an array
-    of :ctype:`PyArrayObject` pointers containing the converted input
-    arguments as well as the ufunc outputs on return. The user is
-    responsible for managing this array and receives a new reference
-    for each array in *mps*. The total number of arrays in *mps* is
-    given by *self* ->nin + *self* ->nout.
+    A generic ufunc call. The ufunc is passed in as *self*, the arguments
+    to the ufunc as *args* and *kwds*. The *mps* argument is an array of
+    :ctype:`PyArrayObject` pointers whose values are discarded and which
+    receive the converted input arguments as well as the ufunc outputs
+    when success is returned. The user is responsible for managing this
+    array and receives a new reference for each array in *mps*. The total
+    number of arrays in *mps* is given by *self* ->nin + *self* ->nout.
+
+    Returns 0 on success, -1 on error.
 
 .. cfunction:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
 
