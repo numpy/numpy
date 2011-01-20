@@ -2365,7 +2365,8 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         }
     }
 
-    if (PyArray_TRIVIALLY_ITERABLE_PAIR(dst, src)) {
+    if (PyArray_NDIM(dst) >= PyArray_NDIM(src) &&
+                            PyArray_TRIVIALLY_ITERABLE_PAIR(dst, src)) {
         char *dst_data, *src_data;
         npy_intp count, dst_stride, src_stride, src_itemsize;
 
