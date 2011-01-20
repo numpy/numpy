@@ -851,6 +851,11 @@ Converting data types
     additional support for size checking if *fromtype* and *totype*
     are :cdata:`NPY_STRING` or :cdata:`NPY_UNICODE`.
 
+.. cfunction:: int PyArray_CanCastTypeTo(PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING)
+
+    This is equivalent to PyArray_CanCastTo, but adds a parameter *casting*
+    specifying what casts may be accepted.
+
 .. cfunction:: int PyArray_CanCastArrayTo(PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
 
     Returns non-zero if *arr* can be cast to *totype* according

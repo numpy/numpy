@@ -2671,7 +2671,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
             }
             /* Check write (temp -> op) casting */
             if ((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
-                        !can_cast_to(op_dtype[iiter],
+                        !PyArray_CanCastTypeTo(op_dtype[iiter],
                                           PyArray_DESCR(op[iiter]),
                                           casting)) {
                 PyErr_Format(PyExc_TypeError,

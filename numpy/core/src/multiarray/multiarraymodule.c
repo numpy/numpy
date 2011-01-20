@@ -2229,14 +2229,14 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
         ret = PyArray_CanCastArrayTo(arr, d2, casting);
         Py_DECREF(arr);
     }
-    /* Otherwise use CanCastTo */
+    /* Otherwise use CanCastTypeTo */
     else {
         if (!PyArray_DescrConverter2(from_obj, &d1) || d1 == NULL) {
             PyErr_SetString(PyExc_TypeError,
                     "did not understand one of the types; 'None' not accepted");
             goto finish;
         }
-        ret = can_cast_to(d1, d2, casting);
+        ret = PyArray_CanCastTypeTo(d1, d2, casting);
     }
 
     retobj = ret ? Py_True : Py_False;

@@ -3503,7 +3503,7 @@ static PyObject *
 ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 {
     npy_intp nargs, nin = self->nin, nout = self->nout;
-    npy_intp i, niter = nin + nout;
+    npy_intp i, j, niter = nin + nout;
     PyObject *obj, *context;
     char *ufunc_name;
     /* This contains the all the inputs and outputs */
@@ -3511,9 +3511,11 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     PyArray_Descr *dtype[NPY_MAXARGS];
     PyArray_Descr *result_type;
 
+    int no_castable_output, all_inputs_scalar;
+
     /* TODO: For 1.6, the default should probably be NPY_CORDER */
     NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_SAFE_CASTING;
+    NPY_CASTING casting = NPY_SAFE_CASTING, input_casting, output_casting;
     PyObject *extobj = NULL, *typetup = NULL;
 
     ufunc_name = self->name ? self->name : "";
@@ -3539,6 +3541,7 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     result_type = NULL;
 
     /* Get input arguments */
+    all_inputs_scalar = 1;
     for(i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
         if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
@@ -3555,18 +3558,14 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
             context = NULL;
         }
         op[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, context);
-
-        /* Start with a native byte-order data type */
-        /*
-        if (PyArray_ISNBO(PyArray_DESCR(op[i])->byteorder)) {
-            dtype[i] = PyArray_DESCR(op[i]);
-            Py_INCREF(dtype[i]);
+        Py_XDECREF(context);
+        if (op[i] == NULL) {
+            goto fail;
         }
-        else {
-            dtype[i] = PyArray_DescrNewByteorder(PyArray_DESCR(op[i]),
-                                                            NPY_NATIVE);
+        /* If there's a non-scalar input, indicate so */
+        if (PyArray_NDIM(op[i]) > 0) {
+            all_inputs_scalar = 0;
         }
-        */
     }
 
     /* Get positional output arguments */
@@ -3650,6 +3649,7 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
                                                 "of ArrayType");
                                 goto fail;
                             }
+                        
                         }
                     }
                     else if (strncmp(str,"order",5) == 0) {
@@ -3676,31 +3676,114 @@ ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     }
 
     /*
-     * Determine the result type.  A better approach would be for
-     * the ufunc to provide a function which gives back the result
-     * type and inner loop function.  The default would work as follows.
+     * Now that we have the casting parameter, decide on the casting rules
+     * for inputs and outputs.  For inputs, we want NPY_SAFE_CASTING or
+     * stricter, and for outputs, anything is ok.
      */
-    result_type = PyArray_ResultType(nin, op, 0, NULL);
-    if (result_type == NULL) {
-        goto fail;
+    if (casting > NPY_SAFE_CASTING) {
+        input_casting = NPY_SAFE_CASTING;
     }
-    /* Take into account the types of any output parameters */
-    for (i = nin; i < nargs; ++i) {
-        PyArray_Descr *tmp;
-        if (op[i] != NULL) {
-            tmp = PyArray_PromoteTypes(result_type, PyArray_DESCR(op[i]));
-            if (tmp == NULL) {
-                goto fail;
+    else {
+        input_casting = casting;
+    }
+    output_casting = casting;
+
+    /*
+     * Determine the UFunc loop.  This could in general be *much* faster,
+     * and a better way to implement it might be for the ufunc to
+     * provide a function which gives back the result type and inner
+     * loop function.
+     *
+     * The method for finding the loop in the previous code did not
+     * appear consistent (as noted by some asymmetry in the generated
+     * coercion tables for np.add).
+     */
+    no_castable_output = 0;
+    for (i = 0; i < self->ntypes; ++i) {
+        char *types = self->types + i*self->nargs;
+        /*
+         * First check if all the inputs can be safely cast
+         * to the types for this function
+         */
+        for (j = 0; j < nin; ++j) {
+            PyArray_Descr *tmp = PyArray_DescrFromType(types[j]);
+            /*
+             * If all the inputs are scalars, use the regular
+             * promotion rules, not the special value-checking ones.
+             */
+            if (all_inputs_scalar) {
+                if (!PyArray_CanCastTypeTo(PyArray_DESCR(op[j]), tmp,
+                                                    input_casting)) {
+                    Py_DECREF(tmp);
+                    break;
+                }
             }
-            Py_DECREF(result_type);
-            result_type = tmp;
+            else {
+                if (!PyArray_CanCastArrayTo(op[j], tmp, input_casting)) {
+                    Py_DECREF(tmp);
+                    break;
+                }
+            }
+            Py_DECREF(tmp);
+        }
+        /*
+         * If all the inputs were ok, then check casting back to the
+         * outputs.
+         */
+        if (j == nin) {
+            for (j = nin; j < niter; ++j) {
+                if (op[j] != NULL) {
+                    PyArray_Descr *tmp = PyArray_DescrFromType(types[j]);
+                    if (!PyArray_CanCastTypeTo(tmp, PyArray_DESCR(op[j]),
+                                                    output_casting)) {
+                        Py_DECREF(tmp);
+                        no_castable_output = 1;
+                        break;
+                    }
+                    Py_DECREF(tmp);
+                }
+            }
+        }
+        /* If all the tests passed, we found our function */
+        if (j == niter) {
+            /* Fill the dtypes array */
+            for (j = 0; j < niter; ++j) {
+                dtype[j] = PyArray_DescrFromType(types[j]);
+            }
+            break;
         }
     }
+    /* If no function was found, throw an error */
+    if (i == self->ntypes) {
+        if (no_castable_output) {
+            PyErr_Format(PyExc_TypeError,
+                    "function output could not be coerced to a provided "
+                    "output parameter according to the specified casting "
+                    "rule");
+        }
+        else {
+            PyErr_Format(PyExc_TypeError,
+                    "function not supported for the input types, and the "
+                    "inputs could not be safely coerced to any supported "
+                    "types");
+        }
+        return NULL;
+    }
+    else {
+        
+    }
 
-    /* Find the function loop */
 
-    printf("result type: ");
-    PyObject_Print((PyObject *)result_type, stdout, 0);
+    printf("input types:\n");
+    for (i = 0; i < nin; ++i) {
+        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        printf(" ");
+    }
+    printf("\noutput types:\n");
+    for (i = nin; i < niter; ++i) {
+        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        printf(" ");
+    }
     printf("\n");
 
     PyErr_SetString(PyExc_RuntimeError, "implementation is not finished!");

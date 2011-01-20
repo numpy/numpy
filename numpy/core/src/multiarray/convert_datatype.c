@@ -63,7 +63,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
     if (out == NULL) {
         return NULL;
     }
-    ret = PyArray_CastTo((PyArrayObject *)out, mp);
+    ret = PyArray_CopyInto((PyArrayObject *)out, mp);
     if (ret != -1) {
         return out;
     }
@@ -219,7 +219,8 @@ PyArray_CanCastSafely(int fromtype, int totype)
 /*NUMPY_API
  * leaves reference count alone --- cannot be NULL
  *
- * TODO: For NumPy 2.0, add a NPY_CASTING parameter (can_cast_to function).
+ * PyArray_CanCastTypeTo is equivalent to this, but adds a 'casting'
+ * parameter.
  */
 NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
@@ -312,8 +313,13 @@ type_num_unsigned_to_signed(int type_num)
     }
 }
 
+/*NUMPY_API
+ * Returns true if data of type 'from' may be cast to data of type
+ * 'to' according to the rule 'casting'.
+ */
 NPY_NO_EXPORT npy_bool
-can_cast_to(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting)
+PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
+                                                    NPY_CASTING casting)
 {
     /* If unsafe casts are allowed */
     if (casting == NPY_UNSAFE_CASTING) {
@@ -405,7 +411,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 
     /* If it's not a scalar, use the standard rules */
     if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(from->type_num)) {
-        return can_cast_to(from, to, casting);
+        return PyArray_CanCastTypeTo(from, to, casting);
     }
     /* Otherwise, check the value */
     else {
@@ -446,7 +452,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
         PyObject_Print(to, stdout, 0);
         printf("\n");
 #endif
-        ret = can_cast_to(dtype, to, casting);
+        ret = PyArray_CanCastTypeTo(dtype, to, casting);
         Py_DECREF(dtype);
         return ret;
     }
