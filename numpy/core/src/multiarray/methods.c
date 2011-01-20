@@ -773,7 +773,6 @@ static PyObject *
 array_astype(PyArrayObject *self, PyObject *args)
 {
     PyArray_Descr *descr = NULL;
-    PyObject *obj;
 
     if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
                           &descr)) {

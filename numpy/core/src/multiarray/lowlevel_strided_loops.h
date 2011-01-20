@@ -286,6 +286,20 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
  *          // Create iterator, etc...
  *      }
  */
+
+/*
+ * Note: Equivalently iterable macro requires one of arr1 or arr2 be
+ *       trivially iterable to be valid.
+ */
+#define PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2) ( \
+                        PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
+                        PyArray_CompareLists(PyArray_DIMS(arr1), \
+                                             PyArray_DIMS(arr2), \
+                                             PyArray_NDIM(arr1)) && \
+                        (arr1->flags&(NPY_CONTIGUOUS|NPY_FORTRAN)) == \
+                                (arr2->flags&(NPY_CONTIGUOUS|NPY_FORTRAN)) \
+                        )
+
 #define PyArray_TRIVIALLY_ITERABLE(arr) ( \
                     PyArray_NDIM(arr) <= 1 || \
                     PyArray_CHKFLAGS(arr, NPY_CONTIGUOUS) || \
@@ -302,30 +316,82 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2) (\
                     PyArray_TRIVIALLY_ITERABLE(arr1) && \
-                    PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
-                    PyArray_CompareLists(PyArray_DIMS(arr1), \
-                                         PyArray_DIMS(arr2), \
-                                         PyArray_NDIM(arr1)) && \
-                    PyArray_CHKFLAGS(arr1, NPY_CONTIGUOUS) == \
-                            PyArray_CHKFLAGS(arr2, NPY_CONTIGUOUS) && \
-                    PyArray_CHKFLAGS(arr1, NPY_FORTRAN) == \
-                            PyArray_CHKFLAGS(arr2, NPY_FORTRAN) \
+                        (PyArray_NDIM(arr2) == 0 || \
+                         PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2) || \
+                         (PyArray_NDIM(arr1) == 0 && \
+                             PyArray_TRIVIALLY_ITERABLE(arr2) \
+                         ) \
+                        ) \
                     )
 #define PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(arr1, arr2, \
                                         count, \
                                         data1, data2, \
-                                        stride1, stride2) \
-                    count = PyArray_SIZE(arr1), \
-                    data1 = PyArray_BYTES(arr1), \
-                    data2 = PyArray_BYTES(arr2), \
-                    stride1 = ((PyArray_NDIM(arr1) == 0) ? 0 : \
+                                        stride1, stride2) { \
+                    npy_intp size1 = PyArray_SIZE(arr1); \
+                    npy_intp size2 = PyArray_SIZE(arr2); \
+                    count = size1 > size2 ? size1 : size2; \
+                    data1 = PyArray_BYTES(arr1); \
+                    data2 = PyArray_BYTES(arr2); \
+                    stride1 = (size1 == 1 ? 0 : \
                                 (PyArray_CHKFLAGS(arr1, NPY_FORTRAN) ? \
                                             PyArray_STRIDE(arr1, 0) : \
                                             PyArray_STRIDE(arr1, \
-                                                PyArray_NDIM(arr1)-1))), \
-                    stride2 = ((PyArray_NDIM(arr2) == 0) ? 0 : \
+                                                PyArray_NDIM(arr1)-1))); \
+                    stride2 = (size2 == 1 ? 0 : \
                                 (PyArray_CHKFLAGS(arr2, NPY_FORTRAN) ? \
                                             PyArray_STRIDE(arr2, 0) : \
                                             PyArray_STRIDE(arr2, \
-                                                PyArray_NDIM(arr2)-1)))
+                                                PyArray_NDIM(arr2)-1))); \
+                }
+
+#define PyArray_TRIVIALLY_ITERABLE_TRIPLE(arr1, arr2, arr3) (\
+                PyArray_TRIVIALLY_ITERABLE(arr1) && \
+                    ((PyArray_NDIM(arr2) == 0 && \
+                        (PyArray_NDIM(arr3) == 0 || \
+                            PyArray_EQUIVALENTLY_ITERABLE(arr1, arr3) \
+                        ) \
+                     ) || \
+                     (PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2) && \
+                        (PyArray_NDIM(arr3) == 0 || \
+                            PyArray_EQUIVALENTLY_ITERABLE(arr1, arr3) \
+                        ) \
+                     ) || \
+                     (PyArray_NDIM(arr1) == 0 && \
+                        PyArray_TRIVIALLY_ITERABLE(arr2) && \
+                            (PyArray_NDIM(arr3) == 0 || \
+                                PyArray_EQUIVALENTLY_ITERABLE(arr2, arr3) \
+                            ) \
+                     ) \
+                    ) \
+                )
+
+#define PyArray_PREPARE_TRIVIAL_TRIPLE_ITERATION(arr1, arr2, arr3, \
+                                        count, \
+                                        data1, data2, data3, \
+                                        stride1, stride2, stride3) { \
+                    npy_intp size1 = PyArray_SIZE(arr1); \
+                    npy_intp size2 = PyArray_SIZE(arr2); \
+                    npy_intp size3 = PyArray_SIZE(arr3); \
+                    count = size1 > size2 ? size1 : size2; \
+                    count = size3 > count ? size3 : count; \
+                    data1 = PyArray_BYTES(arr1); \
+                    data2 = PyArray_BYTES(arr2); \
+                    data2 = PyArray_BYTES(arr3); \
+                    stride1 = (size1 == 1 ? 0 : \
+                                (PyArray_CHKFLAGS(arr1, NPY_FORTRAN) ? \
+                                            PyArray_STRIDE(arr1, 0) : \
+                                            PyArray_STRIDE(arr1, \
+                                                PyArray_NDIM(arr1)-1))); \
+                    stride2 = (size2 == 1 ? 0 : \
+                                (PyArray_CHKFLAGS(arr2, NPY_FORTRAN) ? \
+                                            PyArray_STRIDE(arr2, 0) : \
+                                            PyArray_STRIDE(arr2, \
+                                                PyArray_NDIM(arr2)-1))); \
+                    stride3 = (size3 == 1 ? 0 : \
+                                (PyArray_CHKFLAGS(arr3, NPY_FORTRAN) ? \
+                                            PyArray_STRIDE(arr3, 0) : \
+                                            PyArray_STRIDE(arr3, \
+                                                PyArray_NDIM(arr3)-1))); \
+                }
+
 #endif
