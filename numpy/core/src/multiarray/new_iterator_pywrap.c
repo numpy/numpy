@@ -24,7 +24,7 @@ struct NewNpyArrayIterObject_tag {
     NpyIter_GetCoords_Fn getcoords;
     char **dataptrs;
     PyArray_Descr **dtypes;
-    PyArrayObject **objects;
+    PyArrayObject **operands;
     npy_intp *innerstrides, *innerloopsizeptr;
     char readflags[NPY_MAXARGS];
     char writeflags[NPY_MAXARGS];
@@ -46,7 +46,7 @@ void npyiter_cache_values(NewNpyArrayIterObject *self)
     /* Internal data pointers */
     self->dataptrs = NpyIter_GetDataPtrArray(iter);
     self->dtypes = NpyIter_GetDescrArray(iter);
-    self->objects = NpyIter_GetObjectArray(iter);
+    self->operands = NpyIter_GetOperandArray(iter);
 
     if (NpyIter_HasInnerLoop(iter)) {
         self->innerstrides = NULL;
@@ -1019,11 +1019,11 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
          * adjust op so that the other iterators use the same ones.
          */
         if (inest == 0) {
-            PyArrayObject **objects = NpyIter_GetObjectArray(iter->iter);
+            PyArrayObject **operands = NpyIter_GetOperandArray(iter->iter);
             for (iiter = 0; iiter < niter; ++iiter) {
-                if (op[iiter] != objects[iiter]) {
+                if (op[iiter] != operands[iiter]) {
                     Py_XDECREF(op[iiter]);
-                    op[iiter] = objects[iiter];
+                    op[iiter] = operands[iiter];
                     Py_INCREF(op[iiter]);
                 }
 
@@ -1290,7 +1290,7 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
     PyObject *ret;
 
     npy_intp iiter, niter;
-    PyArrayObject **objects;
+    PyArrayObject **operands;
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1299,17 +1299,17 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
     }
 
     niter = NpyIter_GetNIter(self->iter);
-    objects = self->objects;
+    operands = self->operands;
 
     ret = PyTuple_New(niter);
     if (ret == NULL) {
         return NULL;
     }
     for (iiter = 0; iiter < niter; ++iiter) {
-        PyObject *object = (PyObject *)objects[iiter];
+        PyObject *operand = (PyObject *)operands[iiter];
 
-        Py_INCREF(object);
-        PyTuple_SET_ITEM(ret, iiter, object);
+        Py_INCREF(operand);
+        PyTuple_SET_ITEM(ret, iiter, operand);
     }
 
     return ret;

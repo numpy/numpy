@@ -1984,7 +1984,7 @@ NpyIter_GetDescrArray(NpyIter *iter)
  * Get the array of objects being iterated
  */
 NPY_NO_EXPORT PyArrayObject **
-NpyIter_GetObjectArray(NpyIter *iter)
+NpyIter_GetOperandArray(NpyIter *iter)
 {
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     npy_intp ndim = NIT_NDIM(iter);

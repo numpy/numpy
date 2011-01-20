@@ -247,25 +247,26 @@ static char *_types_msg =  "function not supported for these types, "   \
  * and determines an appropriate __array_prepare__ function to call
  * for the outputs.
  *
- * If an output argument is provided, then it is wrapped
+ * If an output argument is provided, then it is prepped
  * with its own __array_prepare__ not with the one determined by
  * the input arguments.
  *
  * if the provided output argument is already an ndarray,
- * the wrapping function is None (which means no wrapping will
+ * the prepping function is None (which means no prepping will
  * be done --- not even PyArray_Return).
  *
- * A NULL is placed in output_wrap for outputs that
+ * A NULL is placed in output_prep for outputs that
  * should just have PyArray_Return called.
  */
 static void
-_find_array_prepare(PyObject *args, PyObject **output_wrap, int nin, int nout)
+_find_array_prepare(PyObject *args, PyObject *kwds,
+                    PyObject **output_prep, int nin, int nout)
 {
     Py_ssize_t nargs;
     int i;
     int np = 0;
-    PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
-    PyObject *obj, *wrap = NULL;
+    PyObject *with_prep[NPY_MAXARGS], *preps[NPY_MAXARGS];
+    PyObject *obj, *prep = NULL;
 
     nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nin; i++) {
@@ -273,16 +274,16 @@ _find_array_prepare(PyObject *args, PyObject **output_wrap, int nin, int nout)
         if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
             continue;
         }
-        wrap = PyObject_GetAttrString(obj, "__array_prepare__");
-        if (wrap) {
-            if (PyCallable_Check(wrap)) {
-                with_wrap[np] = obj;
-                wraps[np] = wrap;
+        prep = PyObject_GetAttrString(obj, "__array_prepare__");
+        if (prep) {
+            if (PyCallable_Check(prep)) {
+                with_prep[np] = obj;
+                preps[np] = prep;
                 ++np;
             }
             else {
-                Py_DECREF(wrap);
-                wrap = NULL;
+                Py_DECREF(prep);
+                prep = NULL;
             }
         }
         else {
@@ -290,33 +291,33 @@ _find_array_prepare(PyObject *args, PyObject **output_wrap, int nin, int nout)
         }
     }
     if (np > 0) {
-        /* If we have some wraps defined, find the one of highest priority */
-        wrap = wraps[0];
+        /* If we have some preps defined, find the one of highest priority */
+        prep = preps[0];
         if (np > 1) {
-            double maxpriority = PyArray_GetPriority(with_wrap[0],
+            double maxpriority = PyArray_GetPriority(with_prep[0],
                         PyArray_SUBTYPE_PRIORITY);
             for (i = 1; i < np; ++i) {
-                double priority = PyArray_GetPriority(with_wrap[i],
+                double priority = PyArray_GetPriority(with_prep[i],
                             PyArray_SUBTYPE_PRIORITY);
                 if (priority > maxpriority) {
                     maxpriority = priority;
-                    Py_DECREF(wrap);
-                    wrap = wraps[i];
+                    Py_DECREF(prep);
+                    prep = preps[i];
                 }
                 else {
-                    Py_DECREF(wraps[i]);
+                    Py_DECREF(preps[i]);
                 }
             }
         }
     }
 
     /*
-     * Here wrap is the wrapping function determined from the
+     * Here prep is the prepping function determined from the
      * input arrays (could be NULL).
      *
      * For all the output arrays decide what to do.
      *
-     * 1) Use the wrap function determined from the input arrays
+     * 1) Use the prep function determined from the input arrays
      * This is the default if the output array is not
      * passed in.
      *
@@ -328,33 +329,44 @@ _find_array_prepare(PyObject *args, PyObject **output_wrap, int nin, int nout)
     for (i = 0; i < nout; i++) {
         int j = nin + i;
         int incref = 1;
-        output_wrap[i] = wrap;
+        output_prep[i] = prep;
+        obj = NULL;
         if (j < nargs) {
             obj = PyTuple_GET_ITEM(args, j);
-            if (obj == Py_None) {
-                continue;
+            /* Output argument one may also be in a keyword argument */
+            if (i == 0 && obj == Py_None && kwds != NULL) {
+                obj = PyDict_GetItemString(kwds, "out");
             }
+        }
+        /* Output argument one may also be in a keyword argument */
+        else if (i == 0 && kwds != NULL) {
+            obj = PyDict_GetItemString(kwds, "out");
+        }
+
+        if (obj != Py_None && obj != NULL) {
             if (PyArray_CheckExact(obj)) {
-                output_wrap[i] = Py_None;
+                /* None signals to not call any wrapping */
+                output_prep[i] = Py_None;
             }
             else {
-                PyObject *owrap = PyObject_GetAttrString(obj,
+                PyObject *oprep = PyObject_GetAttrString(obj,
                             "__array_prepare__");
                 incref = 0;
-                if (!(owrap) || !(PyCallable_Check(owrap))) {
-                    Py_XDECREF(owrap);
-                    owrap = wrap;
+                if (!(oprep) || !(PyCallable_Check(oprep))) {
+                    Py_XDECREF(oprep);
+                    oprep = prep;
                     incref = 1;
                     PyErr_Clear();
                 }
-                output_wrap[i] = owrap;
+                output_prep[i] = oprep;
             }
         }
+
         if (incref) {
-            Py_XINCREF(output_wrap[i]);
+            Py_XINCREF(output_prep[i]);
         }
     }
-    Py_XDECREF(wrap);
+    Py_XDECREF(prep);
     return;
 }
 
@@ -1493,7 +1505,8 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
      * None --- array-object passed in don't call PyArray_Return
      * method --- the __array_prepare__ method to call.
      */
-    _find_array_prepare(args, wraparr, loop->ufunc->nin, loop->ufunc->nout);
+    _find_array_prepare(args, NULL, wraparr,
+                        loop->ufunc->nin, loop->ufunc->nout);
 
     /* wrap outputs */
     for (i = 0; i < loop->ufunc->nout; i++) {
@@ -2655,13 +2668,13 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
                         !PyArray_EquivTypes(out_dtype[j], PyArray_DESCR(op[j]))
                                                 )) {
                     /*
-                     * If op is a scalar or small one dimensional array,
-                     * make a copy to keep the opportunity for a trivial
-                     * loop.
+                     * If op[j] is a scalar or small one dimensional
+                     * array input, make a copy to keep the opportunity
+                     * for a trivial loop.
                      */
-                    if (PyArray_NDIM(op[j]) == 0 ||
+                    if (j < nin && (PyArray_NDIM(op[j]) == 0 ||
                             (PyArray_NDIM(op[j]) == 1 &&
-                             PyArray_DIM(op[j],0) <= buffersize)) {
+                             PyArray_DIM(op[j],0) <= buffersize))) {
                         PyArrayObject *tmp;
                         Py_INCREF(out_dtype[j]);
                         tmp = (PyArrayObject *)
@@ -2743,18 +2756,83 @@ trivial_three_operand_loop(PyArrayObject **op,
     innerloop(data, count, stride, innerloopdata);
 }
 
+/*
+ * Calls the given __array_prepare__ function on the operand *op,
+ * substituting it in place if a new array is returned and matches
+ * the old one.
+ *
+ * This requires that the dimensions, strides and data type remain
+ * exactly the same, which may be more strict than before.
+ */
 static int
-iterator_loop(npy_intp nin, npy_intp nout,
+prepare_ufunc_output(PyUFuncObject *self,
+                    PyArrayObject **op,
+                    PyObject *arr_prep,
+                    PyObject *arr_prep_args,
+                    int i)
+{
+    if (arr_prep != NULL && arr_prep != Py_None) {
+        PyObject *res;
+
+        res = PyObject_CallFunction(arr_prep, "O(OOi)",
+                    *op, self, arr_prep_args, i);
+        if ((res == NULL) || (res == Py_None) || !PyArray_Check(res)) {
+            if (!PyErr_Occurred()){
+                PyErr_SetString(PyExc_TypeError,
+                        "__array_prepare__ must return an "
+                        "ndarray or subclass thereof");
+            }
+            Py_XDECREF(res);
+            return -1;
+        }
+
+        /* If the same object was returned, nothing to do */
+        if (res == (PyObject *)*op) {
+            Py_DECREF(res);
+        }
+        /* If the result doesn't match, throw an error */
+        else if (PyArray_NDIM(res) != PyArray_NDIM(*op) ||
+                !PyArray_CompareLists(PyArray_DIMS(res),
+                                      PyArray_DIMS(*op),
+                                      PyArray_NDIM(res)) ||
+                !PyArray_CompareLists(PyArray_STRIDES(res),
+                                      PyArray_STRIDES(*op),
+                                      PyArray_NDIM(res)) ||
+                !PyArray_EquivTypes(PyArray_DESCR(res),
+                                    PyArray_DESCR(*op))) {
+            PyErr_SetString(PyExc_TypeError,
+                    "__array_prepare__ must return an "
+                    "ndarray or subclass thereof which is "
+                    "otherwise identical to its input");
+            Py_DECREF(res);
+            return -1;
+        }
+        /* Replace the op value */
+        else {
+            Py_DECREF(*op);
+            *op = (PyArrayObject *)res;
+        }
+    }
+
+    return 0;
+}
+
+static int
+iterator_loop(PyUFuncObject *self,
                     PyArrayObject **op,
                     PyArray_Descr **dtype,
                     NPY_ORDER order,
                     npy_intp buffersize,
+                    PyObject **arr_prep,
+                    PyObject *arr_prep_args,
                     PyUFuncGenericFunction innerloop,
                     void *innerloopdata)
 {
-    npy_intp i, niter = nin + nout;
+    npy_intp i, nin = self->nin, nout = self->nout;
+    npy_intp niter = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
+    char *baseptrs[NPY_MAXARGS];
 
     NpyIter_IterNext_Fn iternext;
     char **dataptr;
@@ -2784,8 +2862,10 @@ iterator_loop(npy_intp nin, npy_intp nout,
      */
     iter = NpyIter_MultiNew(niter, op,
                         NPY_ITER_NO_INNER_ITERATION|
+                        NPY_ITER_REFS_OK|
                         NPY_ITER_BUFFERED|
-                        NPY_ITER_GROWINNER,
+                        NPY_ITER_GROWINNER|
+                        NPY_ITER_DELAY_BUFALLOC,
                         order, NPY_UNSAFE_CASTING,
                         op_flags, dtype,
                         0, NULL, buffersize);
@@ -2793,7 +2873,34 @@ iterator_loop(npy_intp nin, npy_intp nout,
         return -1;
     }
 
-    /* Prepare for the loop */
+    /* Copy any allocated outputs */
+    op_it = NpyIter_GetOperandArray(iter);
+    for (i = nin; i < niter; ++i) {
+        if (op[i] == NULL) {
+            op[i] = op_it[i];
+            Py_INCREF(op[i]);
+        }
+    }
+
+    /* Call the __array_prepare__ functions where necessary */
+    for (i = 0; i < nout; ++i) {
+        if (prepare_ufunc_output(self, &op[nin+i],
+                            arr_prep[i], arr_prep_args, i) < 0) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+    }
+
+    /* Reset the iterator with the base pointers from the wrapped outputs */
+    for (i = 0; i < niter; ++i) {
+        baseptrs[i] = PyArray_BYTES(op[i]);
+    }
+    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+        NpyIter_Deallocate(iter);
+        return -1;
+    }
+
+    /* Get the variables needed for the loop */
     iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
         NpyIter_Deallocate(iter);
@@ -2814,28 +2921,35 @@ iterator_loop(npy_intp nin, npy_intp nout,
         innerloop(dataptr, count_ptr, stride, innerloopdata);
     } while (iternext(iter));
 
-    /* Copy any allocated outputs */
-    op_it = NpyIter_GetObjectArray(iter);
-    for (i = nin; i < niter; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
-
     NpyIter_Deallocate(iter);
     return 0;
 }
 
+/*
+ * trivial_loop_ok - 1 if no alignment, data conversion, etc required
+ * nin             - number of inputs
+ * nout            - number of outputs
+ * op              - the operands (nin + nout of them)
+ * order           - the loop execution order/output memory order
+ * buffersize      - how big of a buffer to use
+ * arr_prep        - the __array_prepare__ functions for the outputs
+ * innerloop       - the inner loop function
+ * innerloopdata   - data to pass to the inner loop
+ */
 static int
-execute_ufunc_loop(int trivial_loop_ok, npy_intp nin, npy_intp nout,
+execute_ufunc_loop(PyUFuncObject *self,
+                    int trivial_loop_ok,
                     PyArrayObject **op,
                     PyArray_Descr **dtype,
                     NPY_ORDER order,
                     npy_intp buffersize,
+                    PyObject **arr_prep,
+                    PyObject *arr_prep_args,
                     PyUFuncGenericFunction innerloop,
                     void *innerloopdata)
 {
+    npy_intp nin = self->nin, nout = self->nout;
+
     /* First check for the trivial cases that don't need an iterator */
     if (trivial_loop_ok) {
         if (nin == 1 && nout == 1) {
@@ -2850,8 +2964,14 @@ execute_ufunc_loop(int trivial_loop_ok, npy_intp nin, npy_intp nout,
                              NULL, NULL,
                              PyArray_ISFORTRAN(op[0]) ? NPY_F_CONTIGUOUS : 0,
                              NULL);
-                //printf("trivial 1 input with allocated output\n");
 
+                /* Call the __prepare_array__ if necessary */
+                if (prepare_ufunc_output(self, &op[1],
+                                    arr_prep[0], arr_prep_args, 0) < 0) {
+                    return -1;
+                }
+
+                //printf("trivial 1 input with allocated output\n");
                 trivial_two_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -2859,8 +2979,14 @@ execute_ufunc_loop(int trivial_loop_ok, npy_intp nin, npy_intp nout,
             else if (op[1] != NULL &&
                         PyArray_NDIM(op[1]) >= PyArray_NDIM(op[0]) &&
                         PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
-                //printf("trivial 1 input\n");
 
+                /* Call the __prepare_array__ if necessary */
+                if (prepare_ufunc_output(self, &op[1],
+                                    arr_prep[0], arr_prep_args, 0) < 0) {
+                    return -1;
+                }
+
+                //printf("trivial 1 input\n");
                 trivial_two_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -2889,8 +3015,14 @@ execute_ufunc_loop(int trivial_loop_ok, npy_intp nin, npy_intp nout,
                                  NULL, NULL,
                                  PyArray_ISFORTRAN(tmp) ? NPY_F_CONTIGUOUS : 0,
                                  NULL);
-                //printf("trivial 2 input with allocated output\n");
 
+                /* Call the __prepare_array__ if necessary */
+                if (prepare_ufunc_output(self, &op[2],
+                                    arr_prep[0], arr_prep_args, 0) < 0) {
+                    return -1;
+                }
+
+                //printf("trivial 2 input with allocated output\n");
                 trivial_three_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -2899,8 +3031,14 @@ execute_ufunc_loop(int trivial_loop_ok, npy_intp nin, npy_intp nout,
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[0]) &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[1]) &&
                     PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2])) {
-                //printf("trivial 2 input\n");
 
+                /* Call the __prepare_array__ if necessary */
+                if (prepare_ufunc_output(self, &op[2],
+                                    arr_prep[0], arr_prep_args, 0) < 0) {
+                    return -1;
+                }
+
+                //printf("trivial 2 input\n");
                 trivial_three_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -2914,13 +3052,51 @@ execute_ufunc_loop(int trivial_loop_ok, npy_intp nin, npy_intp nout,
      */
 
     //printf("iterator loop\n");
-
-    if (iterator_loop(nin, nout, op, dtype, order,
-                    buffersize, innerloop, innerloopdata) != NPY_SUCCEED) {
+    if (iterator_loop(self, op, dtype, order,
+                    buffersize, arr_prep, arr_prep_args,
+                    innerloop, innerloopdata) < 0) {
         return -1;
     }
 
     return 0;
+}
+
+static PyObject *
+make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
+{
+    PyObject *out = kwds ? PyDict_GetItemString(kwds, "out") : NULL;
+    PyObject *arr_prep_args;
+
+    if (out == NULL) {
+        Py_INCREF(args);
+        return args;
+    }
+    else {
+        npy_intp i, nargs = PyTuple_GET_SIZE(args), n;
+        n = nargs;
+        if (n < nin + 1) {
+            n = nin + 1;
+        }
+        arr_prep_args = PyTuple_New(n);
+        if (arr_prep_args == NULL) {
+            return NULL;
+        }
+        /* Copy the tuple, but set the nin-th item to the keyword arg */
+        for (i = 0; i < nin; ++i) {
+            PyObject *item = PyTuple_GET_ITEM(args, i);
+            Py_INCREF(item);
+            PyTuple_SET_ITEM(arr_prep_args, i, item);
+        }
+        Py_INCREF(out);
+        PyTuple_SET_ITEM(arr_prep_args, nin, out);
+        for (i = nin+1; i < n; ++i) {
+            PyObject *item = PyTuple_GET_ITEM(args, i);
+            Py_INCREF(item);
+            PyTuple_SET_ITEM(arr_prep_args, i, item);
+        }
+
+        return arr_prep_args;
+    }
 }
 
 NPY_NO_EXPORT int
@@ -2942,6 +3118,14 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
     /* The selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
+
+    /* The __array_prepare__ function to call for each output */
+    PyObject *arr_prep[NPY_MAXARGS];
+    /*
+     * This is either args, or args with the out= parameter from
+     * kwds added appropriately.
+     */
+    PyObject *arr_prep_args = NULL;
 
     int trivial_loop_ok = 0;
 
@@ -2973,6 +3157,7 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
     for (i = 0; i < niter; ++i) {
         op[i] = NULL;
         dtype[i] = NULL;
+        arr_prep[i] = NULL;
     }
 
     /* Get all the arguments */
@@ -3015,12 +3200,27 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
     printf("\n");
 #endif
 
+    /*
+     * Get the appropriate __array_prepare__ function to call
+     * for each output
+     */
+    _find_array_prepare(args, kwds, arr_prep, nin, nout);
+
+    /* Set up arr_prep_args if a prep function was needed */
+    for (i = 0; i < nout; ++i) {
+        if (arr_prep[i] != NULL && arr_prep[i] != Py_None) {
+            arr_prep_args = make_arr_prep_args(nin, args, kwds);
+            break;
+        }
+    }
+
     /* Start with the floating-point exception flags cleared */
     PyUFunc_clearfperr();
 
     /* Do the ufunc loop */
-    if (execute_ufunc_loop(trivial_loop_ok, nin, nout, op, dtype, order,
-                        buffersize, innerloop, innerloopdata) < 0) {
+    if (execute_ufunc_loop(self, trivial_loop_ok, op, dtype, order,
+                        buffersize, arr_prep, arr_prep_args,
+                        innerloop, innerloopdata) < 0) {
         goto fail;
     }
 
@@ -3030,10 +3230,13 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
         goto fail;
     }
 
+    /* The caller takes ownership of all the references in op */
     for (i = 0; i < niter; ++i) {
         Py_XDECREF(dtype[i]);
+        Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
+    Py_XDECREF(arr_prep_args);
 
     return 0;
 
@@ -3042,8 +3245,11 @@ fail:
         Py_XDECREF(op[i]);
         op[i] = NULL;
         Py_XDECREF(dtype[i]);
+        Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
+    Py_XDECREF(arr_prep_args);
+
     return -1;
 }
 
@@ -4169,17 +4375,22 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
         int j = nin + i;
         int incref = 1;
         output_wrap[i] = wrap;
+        obj = NULL;
         if (j < nargs) {
             obj = PyTuple_GET_ITEM(args, j);
             /* Output argument one may also be in a keyword argument */
-            if (obj == Py_None && j == 0 && kwds != NULL) {
+            if (i == 0 && obj == Py_None && kwds != NULL) {
                 obj = PyDict_GetItemString(kwds, "out");
             }
+        }
+        /* Output argument one may also be in a keyword argument */
+        else if (i == 0 && kwds != NULL) {
+            obj = PyDict_GetItemString(kwds, "out");
+        }
 
-            if (obj == Py_None || obj == NULL) {
-                continue;
-            }
+        if (obj != Py_None && obj != NULL) {
             if (PyArray_CheckExact(obj)) {
+                /* None signals to not call any wrapping */
                 output_wrap[i] = Py_None;
             }
             else {
@@ -4194,6 +4405,7 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
                 output_wrap[i] = owrap;
             }
         }
+
         if (incref) {
             Py_XINCREF(output_wrap[i]);
         }
@@ -4201,6 +4413,7 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
     Py_XDECREF(wrap);
     return;
 }
+
 
 static PyObject *
 ufunc_generic_call_iter(PyUFuncObject *self, PyObject *args, PyObject *kwds)

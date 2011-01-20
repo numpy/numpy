@@ -286,7 +286,7 @@ multiarray_funcs_api = {
     'NpyIter_GotoIndex':                    252,
     'NpyIter_GetDataPtrArray':              253,
     'NpyIter_GetDescrArray':                254,
-    'NpyIter_GetObjectArray':               255,
+    'NpyIter_GetOperandArray':              255,
     'NpyIter_GetIterView':                  256,
     'NpyIter_GetReadFlags':                 257,
     'NpyIter_GetWriteFlags':                258,
