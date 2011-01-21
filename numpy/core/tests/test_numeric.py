@@ -377,7 +377,7 @@ class TestTypes(TestCase):
 
     def test_old_coercion(self):
         def res_type(a, b):
-            return np.add.f(a, b).dtype
+            return np.add.of(a, b).dtype
         self.check_promotion_cases(res_type)
 
         f64 = float64(0)

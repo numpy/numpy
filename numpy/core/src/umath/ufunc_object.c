@@ -3216,8 +3216,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     /* TODO: For 1.6, the default should probably be NPY_CORDER */
     NPY_ORDER order = NPY_KEEPORDER;
-    /* If NPY_SAFE_CASTING is default, it breaks += in many cases */
-    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+    /*
+     * Many things in NumPy do unsafe casting (doing int += float, etc).
+     * The strictness should probably become a state parameter, similar
+     * to the seterr/geterr.
+     */
+    NPY_CASTING casting = NPY_UNSAFE_CASTING;
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *typetup = NULL;
 
@@ -3239,7 +3243,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
-    NPY_UFUNC_DBG_PRINTF("Evaluating ufunc %s\n", ufunc_name);
+    NPY_UFUNC_DBG_PRINTF("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
     for (i = 0; i < niter; ++i) {
@@ -3326,6 +3330,11 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
             arr_prep_args = make_arr_prep_args(nin, args, kwds);
             break;
         }
+    }
+
+    /* If the loop wants the arrays, provide them */
+    if (_does_loop_use_arrays(innerloopdata)) {
+        innerloopdata = (void*)op;
     }
 
     /* Start with the floating-point exception flags cleared */

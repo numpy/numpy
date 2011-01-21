@@ -797,8 +797,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_MIN_BUFSIZE ((int)sizeof(cdouble))
 #define NPY_MAX_BUFSIZE (((int)sizeof(cdouble))*1000000)
-#define NPY_BUFSIZE 10000
-/* #define NPY_BUFSIZE 80*/
+#define NPY_BUFSIZE 8192
+/* buffer stress test size: */
+/*#define NPY_BUFSIZE 17*/
 
 #define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
 #define PyArray_MIN(a,b) (((a)<(b))?(a):(b))

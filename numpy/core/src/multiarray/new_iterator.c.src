@@ -8,6 +8,12 @@
 
 #include "lowlevel_strided_loops.h"
 
+#if 0
+#define NPY_IT_DBG_PRINTF(...) printf(__VA_ARGS__)
+#else
+#define NPY_IT_DBG_PRINTF(...)
+#endif
+
 /* Rounds up a number of bytes to be divisible by sizeof intp */
 #if NPY_SIZEOF_INTP == 4
 #define NPY_INTP_ALIGNED(size) ((size + 0x3)&(-0x4))
@@ -4269,6 +4275,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
         return;
     }
 
+    NPY_IT_DBG_PRINTF("Iterator: Copying buffers to outputs\n");
+
     for (iiter = 0; iiter < niter; ++iiter) {
         stransfer = NBF_WRITETRANSFERFN(bufferdata)[iiter];
         transferdata = NBF_WRITETRANSFERDATA(bufferdata)[iiter];
@@ -4281,6 +4289,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Copy back only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
+                NPY_IT_DBG_PRINTF("Iterator: Copying buffer to operand %d\n", (int)iiter);
                 PyArray_TransferStridedToNDim(ndim,
                         ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                         buffer, strides[iiter],
@@ -4299,6 +4308,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Decrement refs only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
+                NPY_IT_DBG_PRINTF("Iterator: Freeing refs for buffer of operand %d\n", (int)iiter);
                 /* Decrement refs */
                 stransfer(NULL, 0, buffer, dtypes[iiter]->elsize,
                             transfersize, dtypes[iiter]->elsize,
@@ -4313,6 +4323,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
             }
         }
     }
+
+    NPY_IT_DBG_PRINTF("Iterator: Finished copying buffers to outputs\n");
 }
 
 /*
@@ -4345,6 +4357,8 @@ npyiter_copy_to_buffers(NpyIter *iter)
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, niter) /
                                 NPY_SIZEOF_INTP;
+
+    NPY_IT_DBG_PRINTF("Iterator: Copying inputs to buffers\n");
 
     /* Calculate the size if using any buffers */
     iterindex = NIT_ITERINDEX(iter);
@@ -4415,8 +4429,11 @@ npyiter_copy_to_buffers(NpyIter *iter)
 
             any_buffered = 1;
 
+            NPY_IT_DBG_PRINTF("Iterator: Copying operand %d to buffer\n", (int)iiter);
+
             /* If the data type requires zero-inititialization */
             if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
+                NPY_IT_DBG_PRINTF("Iterator: Buffer requires init, memsetting to 0\n");
                 memset(ptrs[iiter], 0, dtypes[iiter]->elsize*transfersize);
             }
 
@@ -4428,6 +4445,13 @@ npyiter_copy_to_buffers(NpyIter *iter)
                     transfersize, src_itemsize,
                     stransfer,
                     transferdata);
+        }
+        else if (ptrs[iiter] == buffers[iiter]) {
+            /* If the data type requires zero-inititialization */
+            if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
+                NPY_IT_DBG_PRINTF("Iterator: Write-only buffer for operand %d requires init, memsetting to 0\n", (int)iiter);
+                memset(ptrs[iiter], 0, dtypes[iiter]->elsize*transfersize);
+            }
         }
 
     }
@@ -4442,6 +4466,8 @@ npyiter_copy_to_buffers(NpyIter *iter)
             NBF_BUFITEREND(bufferdata) = iterindex + singlestridesize;
         }
     }
+
+    NPY_IT_DBG_PRINTF("Iterator: Finished copying inputs to buffers (buffer size is %d)\n", (int)NBF_SIZE(bufferdata));
 }
 
 /*NUMPY_API
