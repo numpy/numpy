@@ -816,14 +816,12 @@ static int
 discover_itemsize(PyObject *s, int nd, int *itemsize)
 {
     int n, r, i;
-    PyObject *e;
 
     if (PyArray_Check(s)) {
         *itemsize = MAX(*itemsize, PyArray_ITEMSIZE(s));
         return 0;
     }
 
-    n = PyObject_Length(s);
     if ((nd == 0) || PyString_Check(s) ||
 #if defined(NPY_PY3K)
         PyMemoryView_Check(s) ||
@@ -832,19 +830,32 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 #endif
         PyUnicode_Check(s)) {
 
-        *itemsize = MAX(*itemsize, n);
+        /* If an object has no length, leave it be */
+        n = PyObject_Length(s);
+        if (n == -1) {
+            PyErr_Clear();
+        }
+        else {
+            *itemsize = MAX(*itemsize, n);
+        }
         return 0;
     }
+
+    n = PySequence_Length(s);
     for (i = 0; i < n; i++) {
-        if ((e = PySequence_GetItem(s,i))==NULL) {
+        PyObject *e = PySequence_GetItem(s,i);
+
+        if (e == NULL) {
             return -1;
         }
+
         r = discover_itemsize(e,nd-1,itemsize);
         Py_DECREF(e);
         if (r == -1) {
             return -1;
         }
     }
+
     return 0;
 }
 
@@ -968,6 +979,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
             itemsize *= 4;
         }
     }
+
     if (itemsize != typecode->elsize) {
         PyArray_DESCR_REPLACE(typecode);
         typecode->elsize = itemsize;
@@ -2343,31 +2355,6 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         return -1;
     }
 
-    if (PyArray_SIZE(src) == 0) {
-        /* If src and dst have the same shapes, copying zero-sized is ok */
-        if (PyArray_NDIM(src) == PyArray_NDIM(dst) &&
-                    PyArray_CompareLists(PyArray_DIMS(src), PyArray_DIMS(dst),
-                                                        PyArray_NDIM(src))) {
-            return 0;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot copy from zero-sized array");
-            return -1;
-        }
-    }
-    if (PyArray_SIZE(dst) == 0) {
-        /* Allow a scalar to be assigned to anything, even an empty array */
-        if (PyArray_NDIM(src) == 0) {
-            return 0;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot copy to zero-sized array");
-            return -1;
-        }
-    }
-
     if (PyArray_NDIM(dst) >= PyArray_NDIM(src) &&
                             PyArray_TRIVIALLY_ITERABLE_PAIR(dst, src)) {
         char *dst_data, *src_data;
@@ -2437,7 +2424,8 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 
         iter = NpyIter_MultiNew(2, op,
                             NPY_ITER_NO_INNER_ITERATION|
-                            NPY_ITER_REFS_OK,
+                            NPY_ITER_REFS_OK|
+                            NPY_ITER_ZEROSIZE_OK,
                             NPY_KEEPORDER,
                             NPY_NO_CASTING,
                             op_flags,
@@ -2476,21 +2464,20 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         }
 
 
-        if (needs_api) {
+        if (NpyIter_GetIterSize(iter) != 0) {
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
+
             do {
                 stransfer(dataptr[0], stride[0],
                             dataptr[1], stride[1],
                             *countptr, src_itemsize, transferdata);
             } while(iternext(iter));
-        }
-        else {
-            NPY_BEGIN_THREADS;
-            do {
-                stransfer(dataptr[0], stride[0],
-                            dataptr[1], stride[1],
-                            *countptr, src_itemsize, transferdata);
-            } while(iternext(iter));
-            NPY_END_THREADS;
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
         }
 
         PyArray_FreeStridedTransferData(transferdata);

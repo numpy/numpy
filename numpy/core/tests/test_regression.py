@@ -608,6 +608,9 @@ class TestRegression(TestCase):
         assert_equal(np.dot(x,z),np.dot(x,y2))
 
     def test_object_casting(self, level=rlevel):
+        # This currently triggers the object-type version of
+        # the bitwise_or operation, because float64 -> object
+        # casting succeeds
         def rs():
             x = np.ones([484,286])
             y = np.zeros([484,286])
@@ -1140,7 +1143,8 @@ class TestRegression(TestCase):
     def test_array_from_sequence_scalar_array2(self):
         """Ticket #1081: weird array with strange input..."""
         t = np.array([np.array([]), np.array(0, object)])
-        assert_raises(ValueError, lambda: np.array(t))
+        assert_equal(t.shape, (2,))
+        assert_equal(t.dtype, np.dtype(object))
 
     def test_array_too_big(self):
         """Ticket #1080."""
@@ -1445,6 +1449,18 @@ class TestRegression(TestCase):
         a = np.array([1.])
         a[1:1] *= 2
         assert_equal(a, [1.])
+
+    def test_array_side_effect(self):
+        assert_equal(np.dtype('S10').itemsize, 10)
+
+        A = np.array([['abc', 2], ['long   ', '0123456789']], dtype=np.string_)
+
+        # This was throwing an exception because in ctors.c,
+        # discover_itemsize was calling PyObject_Length without checking
+        # the return code.  This failed to get the length of the number 2,
+        # and the exception hung around until something checked
+        # PyErr_Occurred() and returned an error.
+        assert_equal(np.dtype('S10').itemsize, 10)
 
 if __name__ == "__main__":
     run_module_suite()
