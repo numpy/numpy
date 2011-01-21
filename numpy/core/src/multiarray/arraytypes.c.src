@@ -439,14 +439,10 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     PyObject *temp = NULL;
 
     if (!PyBytes_Check(op) && !PyUnicode_Check(op)
-            && PySequence_Check(op) && PySequence_Size(op) > 0) {
+            && PySequence_Check(op) && PySequence_Size(op) != 0) {
         PyErr_SetString(PyExc_ValueError,
-                "setting an array element with a sequence");
+                "cannot set an array element with a sequence");
         return -1;
-    }
-    /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
     }
 #if defined(NPY_PY3K)
     if (PyUnicode_Check(op)) {
@@ -501,28 +497,15 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 static PyObject *
 OBJECT_getitem(char *ip, PyArrayObject *ap)
 {
-    /* TODO: We might be able to get away with just the "else" clause now */
-    if (!ap || PyArray_ISALIGNED(ap)) {
-        if (*(PyObject **)ip == NULL) {
-            Py_INCREF(Py_None);
-            return Py_None;
-        }
-        else {
-            Py_INCREF(*(PyObject **)ip);
-            return *(PyObject **)ip;
-        }
+    PyObject *obj;
+    NPY_COPY_PYOBJECT_PTR(&obj, ip);
+    if (obj == NULL) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
     else {
-        PyObject *obj;
-        NPY_COPY_PYOBJECT_PTR(&obj, ip);
-        if (obj == NULL) {
-            Py_INCREF(Py_None);
-            return Py_None;
-        }
-        else {
-            Py_INCREF(obj);
-            return obj;
-        }
+        Py_INCREF(obj);
+        return obj;
     }
 }
 
@@ -530,18 +513,14 @@ OBJECT_getitem(char *ip, PyArrayObject *ap)
 static int
 OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
+    PyObject *obj;
+
+    NPY_COPY_PYOBJECT_PTR(&obj, ov);
+    Py_XDECREF(obj);
+
     Py_INCREF(op);
-    /* TODO: We might be able to get away with just the "else" clause now */
-    if (!ap || PyArray_ISALIGNED(ap)) {
-        Py_XDECREF(*(PyObject **)ov);
-        *(PyObject **)ov = op;
-    }
-    else {
-        PyObject *obj;
-        NPY_COPY_PYOBJECT_PTR(&obj, ov);
-        Py_XDECREF(obj);
-        NPY_COPY_PYOBJECT_PTR(ov, &op);
-    }
+    NPY_COPY_PYOBJECT_PTR(ov, &op);
+
     return PyErr_Occurred() ? -1 : 0;
 }
 
