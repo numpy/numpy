@@ -1441,5 +1441,10 @@ class TestRegression(TestCase):
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0], [1]) # [0] if nonzero() ignores swap
 
+    def test_empty_mul(self):
+        a = np.array([1.])
+        a[1:1] *= 2
+        assert_equal(a, [1.])
+
 if __name__ == "__main__":
     run_module_suite()

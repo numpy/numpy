@@ -43,8 +43,15 @@
 
 #define USE_USE_DEFAULTS 1
 
-/*#define NPY_UFUNC_DBG_PRINTF(...) printf(__VA_ARGS__)*/
+/********************/
+#if 0
+#define NPY_UFUNC_DBG_PRINTF(...) printf(__VA_ARGS__)
+#else
 #define NPY_UFUNC_DBG_PRINTF(...)
+#endif
+
+#define USE_NEW_ITERATOR_GENFUNC 1
+/********************/
 
 /* ---------------------------------------------------------------- */
 
@@ -5336,8 +5343,11 @@ static struct PyMethodDef ufunc_methods[] = {
     {"outer",
         (PyCFunction)ufunc_outer,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"f", /* old generic call */
+    {"of", /* old generic call */
         (PyCFunction)ufunc_generic_call,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"nf", /* new generic call */
+        (PyCFunction)ufunc_generic_call_iter,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
@@ -5564,7 +5574,11 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
     0,                                          /* tp_hash */
+#if USE_NEW_ITERATOR_GENFUNC 
     (ternaryfunc)ufunc_generic_call_iter,       /* tp_call */
+#else
+    (ternaryfunc)ufunc_generic_call,            /* tp_call */
+#endif
     (reprfunc)ufunc_repr,                       /* tp_str */
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */

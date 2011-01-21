@@ -17,8 +17,8 @@
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
-#define DTYPE_TRANSFER_REFTRACE(x, y)
-/*#define DTYPE_TRANSFER_REFTRACE printf*/
+#define DTYPE_TRANSFER_REFTRACE(...)
+/*#define DTYPE_TRANSFER_REFTRACE(...) printf(__VA_ARGS__)*/
 
 /*
  * Returns a transfer function which DECREFs any references in src_type.
