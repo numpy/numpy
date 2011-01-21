@@ -602,6 +602,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             return NULL;
         }
         if (itflags&NPY_ITFLAG_DELAYBUF) {
+            bufferdata = NIT_BUFFERDATA(iter);
             /* Make the data pointers NULL */
             memset(NBF_PTRS(bufferdata), 0, niter*NPY_SIZEOF_INTP);
         }
@@ -2441,10 +2442,9 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                     "flagged as writeable");
             return 0;
         }
-        if (PyArray_SIZE(*op) == 0) {
+        if (!(flags&NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator does not support iteration of zero-sized "
-                    "operands");
+                    "Iteration of zero-sized operands is not enabled");
             return 0;
         }
         *op_dataptr = PyArray_BYTES(*op);
@@ -2938,9 +2938,16 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                 /*
                  * Allow additional dimensions of size 1 to be added on,
                  * but no broadcasting that would produce a one to many
-                 * mapping
+                 * mapping.
+                 *
+                 * TODO: either policy triggers unit test errors...
+                 *   should we disallow this (as previously):
+                 *     x = array(2)
+                 *     np.add(x, [1], x)
+                 *   or should we disallow this (allowed previously):
+                 *     <I forget at the moment>...
                  */
-                else if (NAD_SHAPE(axisdata) != 1) {
+                else { /*if (NAD_SHAPE(axisdata) != 1) {*/
                     if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
                         PyErr_SetString(PyExc_ValueError,
                                     "output operand cannot be broadcasted");
@@ -3563,7 +3570,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     /* Initially no strides have been set */
     for (idim = 0; idim < op_ndim; ++idim) {
-        strides[idim] = 0;
+        strides[idim] = NPY_MAX_INTP;
         reversestride[idim] = 0;
     }
 
@@ -3609,7 +3616,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
      * otherwise fill in the rest.
      */
     for (idim = 0; idim < op_ndim; ++idim) {
-        if (strides[idim] == 0) {
+        if (strides[idim] == NPY_MAX_INTP) {
             npy_intp factor, new_strides[NPY_MAXDIMS],
                      itemsize;
             if (shape == NULL) {
@@ -3624,7 +3631,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
             factor = 1;
             itemsize = op_dtype->elsize;
             for (idim = op_ndim-1; idim >= 0; --idim) {
-                if (strides[idim] == 0) {
+                if (strides[idim] == NPY_MAX_INTP) {
                     new_strides[idim] = factor * itemsize;
                     factor *= shape[idim];
                 }
@@ -3637,7 +3644,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
              * loops.
              */
             for (idim = 0; idim < op_ndim; ++idim) {
-                if (strides[idim] == 0) {
+                if (strides[idim] == NPY_MAX_INTP) {
                     strides[idim] = new_strides[idim];
                 }
                 else {
@@ -4525,9 +4532,25 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("InitIndex: %d\n",
                         (int)(npy_intp)NIT_RESETDATAPTR(iter)[niter]);
     }
-    printf("Objects: ");
+    printf("Operands: ");
     for (iiter = 0; iiter < niter; ++iiter) {
         printf("%p ", NIT_OBJECTS(iter)[iiter]);
+    }
+    printf("\n");
+    printf("Operand DTypes: ");
+    for (iiter = 0; iiter < niter; ++iiter) {
+        PyArray_Descr *dtype;
+        if (NIT_OBJECTS(iter)[iiter] != NULL) {
+            dtype = PyArray_DESCR(NIT_OBJECTS(iter)[iiter]);
+            if (dtype != NULL)
+                PyObject_Print((PyObject *)dtype, stdout, 0);
+            else
+                printf("(nil) ");
+        }
+        else {
+            printf("(op nil) ");
+        }
+        printf(" "); 
     }
     printf("\n");
     printf("OpItFlags:\n");

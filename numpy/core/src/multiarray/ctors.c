@@ -2344,7 +2344,10 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
     }
 
     if (PyArray_SIZE(src) == 0) {
-        if (PyArray_SIZE(dst) == 0) {
+        /* If src and dst have the same shapes, copying zero-sized is ok */
+        if (PyArray_NDIM(src) == PyArray_NDIM(dst) &&
+                    PyArray_CompareLists(PyArray_DIMS(src), PyArray_DIMS(dst),
+                                                        PyArray_NDIM(src))) {
             return 0;
         }
         else {

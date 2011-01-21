@@ -2058,7 +2058,7 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         PyObject **out = (PyObject **)op1;
         int v;
         PyObject *ret;
-        PyObject_Cmp(in1, zero, &v);
+        PyObject_Cmp(in1 ? in1 : Py_None, zero, &v);
         ret = PyLong_FromLong(v);
         if (PyErr_Occurred()) {
             return;
@@ -2072,7 +2072,8 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyInt_FromLong(PyObject_Compare(in1, zero));
+        PyObject *ret = PyInt_FromLong(
+                            PyObject_Compare(in1 ? in1 : Py_None, zero));
         if (PyErr_Occurred()) {
             return;
         }

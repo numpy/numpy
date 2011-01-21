@@ -884,14 +884,16 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 #define NPY_ITER_COMMON_DTYPE               0x00000010
 /* Operands may hold references, requiring API access during iteration */
 #define NPY_ITER_REFS_OK                    0x00000020
+/* Zero-sized operands should be permitted, iteration checks IterSize for 0 */
+#define NPY_ITER_ZEROSIZE_OK                0x00000040
 /* Enables sub-range iteration */
-#define NPY_ITER_RANGED                     0x00000040
+#define NPY_ITER_RANGED                     0x00000080
 /* Enables buffering */
-#define NPY_ITER_BUFFERED                   0x00000080
+#define NPY_ITER_BUFFERED                   0x00000100
 /* When buffering is enabled, grows the inner loop if possible */
-#define NPY_ITER_GROWINNER                  0x00000100
+#define NPY_ITER_GROWINNER                  0x00000200
 /* Delay allocation of buffers until first Reset* call */
-#define NPY_ITER_DELAY_BUFALLOC             0x00000200
+#define NPY_ITER_DELAY_BUFALLOC             0x00000400
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 

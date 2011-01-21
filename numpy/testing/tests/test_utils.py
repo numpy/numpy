@@ -413,7 +413,7 @@ class TestULP(unittest.TestCase):
 
     def test_double(self):
         # Generate 1 + small deviation, check that adding eps gives a few UNL
-        x = np.ones(10).astype(np.float32)
+        x = np.ones(10).astype(np.float64)
         x += 0.01 * np.random.randn(10).astype(np.float64)
         eps = np.finfo(np.float64).eps
         assert_array_max_ulp(x, x+eps, maxulp=200)

@@ -940,7 +940,9 @@ class _MaskedBinaryOperation:
         # Revert result to da where masked
         if m.any():
             np.putmask(result, m, 0)
-            result += m * da
+            # This only makes sense if the operation preserved the dtype
+            if result.dtype == da.dtype:
+                result += m * da
         # Transforms to a (subclass of) MaskedArray
         result = result.view(get_masked_subclass(a, b))
         result._mask = m

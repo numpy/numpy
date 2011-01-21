@@ -164,6 +164,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                     flag = NPY_ITER_REFS_OK;
                 }
                 break;
+            case 'z':
+                if (strcmp(str, "zerosize_ok") == 0) {
+                    flag = NPY_ITER_ZEROSIZE_OK;
+                }
+                break;
         }
         if (flag == 0) {
             PyErr_Format(PyExc_ValueError,
@@ -757,8 +762,14 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     /* Cache some values for the member functions to use */
     npyiter_cache_values(self);
 
-    self->started = 0;
-    self->finished = 0;
+    if (NpyIter_GetIterSize(self->iter) == 0) {
+        self->started = 1;
+        self->finished = 1;
+    }
+    else {
+        self->started = 0;
+        self->finished = 0;
+    }
 
     /* Release the references we got to the ops and dtypes */
     for (iiter = 0; iiter < niter; ++iiter) {
@@ -1011,8 +1022,14 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         /* Cache some values for the member functions to use */
         npyiter_cache_values(iter);
 
-        iter->started = 0;
-        iter->finished = 0;
+        if (NpyIter_GetIterSize(iter->iter) == 0) {
+            iter->started = 1;
+            iter->finished = 1;
+        }
+        else {
+            iter->started = 0;
+            iter->finished = 0;
+        }
 
         /*
          * If there are any allocated outputs or any copies were made,
@@ -1102,8 +1119,14 @@ npyiter_resetbasepointers(NewNpyArrayIterObject *self)
             return NPY_FAIL;
         }
         self = self->nested_child;
-        self->started = 0;
-        self->finished = 0;
+        if (NpyIter_GetIterSize(self->iter) == 0) {
+            self->started = 1;
+            self->finished = 1;
+        }
+        else {
+            self->started = 0;
+            self->finished = 0;
+        }
     }
 
     return NPY_SUCCEED;
@@ -1121,8 +1144,14 @@ npyiter_reset(NewNpyArrayIterObject *self)
     if (NpyIter_Reset(self->iter, NULL) != NPY_SUCCEED) {
         return NULL;
     }
-    self->started = 0;
-    self->finished = 0;
+    if (NpyIter_GetIterSize(self->iter) == 0) {
+        self->started = 1;
+        self->finished = 1;
+    }
+    else {
+        self->started = 0;
+        self->finished = 0;
+    }
 
     if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
         self->getcoords = NpyIter_GetGetCoords(self->iter, NULL);
@@ -1204,8 +1233,14 @@ npyiter_remove_coords(NewNpyArrayIterObject *self)
     /* RemoveCoords invalidates cached values */
     npyiter_cache_values(self);
     /* RemoveCoords also resets the iterator */
-    self->started = 0;
-    self->finished = 0;
+    if (NpyIter_GetIterSize(self->iter) == 0) {
+        self->started = 1;
+        self->finished = 1;
+    }
+    else {
+        self->started = 0;
+        self->finished = 0;
+    }
 
     Py_RETURN_NONE;
 }
@@ -1223,8 +1258,14 @@ npyiter_remove_inner_loop(NewNpyArrayIterObject *self)
     /* RemoveInnerLoop invalidates cached values */
     npyiter_cache_values(self);
     /* RemoveInnerLoop also resets the iterator */
-    self->started = 0;
-    self->finished = 0;
+    if (NpyIter_GetIterSize(self->iter) == 0) {
+        self->started = 1;
+        self->finished = 1;
+    }
+    else {
+        self->started = 0;
+        self->finished = 0;
+    }
 
     Py_RETURN_NONE;
 }

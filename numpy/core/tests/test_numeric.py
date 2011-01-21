@@ -375,6 +375,16 @@ class TestTypes(TestCase):
         assert_equal(promote_func(array([f64]),fld), np.dtype(float64))
         assert_equal(promote_func(fld,array([c64])), np.dtype(complex64))
 
+    def test_old_coercion(self):
+        def res_type(a, b):
+            return np.add.f(a, b).dtype
+        self.check_promotion_cases(res_type)
+
+        f64 = float64(0)
+        c64 = complex64(0)
+        # Scalars used to coerce to complex even if the value was real
+        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
+
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
@@ -382,8 +392,11 @@ class TestTypes(TestCase):
 
         f64 = float64(0)
         c64 = complex64(0)
-        # Scalars used to coerce to complex even if the value was real
-        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
+        # Scalars do not coerce to complex if the value is real
+        assert_equal(res_type(c64,array([f64])), np.dtype(float64))
+        # But they do if the value is complex
+        assert_equal(res_type(complex64(3j),array([f64])),
+                                                    np.dtype(complex128))
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
@@ -395,6 +408,7 @@ class TestTypes(TestCase):
         # But they do if the value is complex
         assert_equal(np.result_type(complex64(3j),array([f64])),
                                                     np.dtype(complex128))
+
     def can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
         assert_(np.can_cast(np.float64, np.complex))
@@ -745,7 +759,7 @@ class TestClip(TestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int64_inout(self):
-        """Test native in32 input with double array min/max and int32 out."""
+        """Test native int32 input with double array min/max and int32 out."""
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = zeros(a.shape, float64)
         M   = float64(1)

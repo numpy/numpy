@@ -17,6 +17,9 @@
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
+#define DTYPE_TRANSFER_REFTRACE(x, y)
+/*#define DTYPE_TRANSFER_REFTRACE printf*/
+
 /*
  * Returns a transfer function which DECREFs any references in src_type.
  *
@@ -69,8 +72,10 @@ _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
         /* Release the reference in dst */
+        DTYPE_TRANSFER_REFTRACE("dec dst ref %p\n", dst_ref);
         Py_XDECREF(dst_ref);
         /* Move the reference */
+        DTYPE_TRANSFER_REFTRACE("move src ref %p\n", src_ref);
         NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
         /* Set the source reference to NULL */
         src_ref = NULL;
@@ -95,8 +100,10 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
         /* Release the reference in dst */
+        DTYPE_TRANSFER_REFTRACE("dec dst ref %p\n", dst_ref);
         Py_XDECREF(dst_ref);
         /* Copy the reference */
+        DTYPE_TRANSFER_REFTRACE("copy src ref %p\n", src_ref);
         NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
         /* Claim the reference */
         Py_XINCREF(src_ref);
@@ -569,6 +576,7 @@ _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
 
         /* After casting, decrement the source ref */
         NPY_COPY_PYOBJECT_PTR(&src_ref, src);
+        DTYPE_TRANSFER_REFTRACE("dec src ref (cast object -> not object) %p\n", src_ref);
         Py_XDECREF(src_ref);
 
         dst += dst_stride;
@@ -2476,6 +2484,7 @@ _null_to_strided_reference_setzero(char *dst,
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
         /* Release the reference in dst */
+        DTYPE_TRANSFER_REFTRACE("dec dest ref (to set zero) %p\n", dst_ref);
         Py_XDECREF(dst_ref);
         
         /* Set it to zero */
@@ -2605,6 +2614,7 @@ _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
         NPY_COPY_PYOBJECT_PTR(&src_ref, src);
 
         /* Release the reference in src */
+        DTYPE_TRANSFER_REFTRACE("dec src ref (null dst)  %p\n", src_ref);
         Py_XDECREF(src_ref);
 
         src += src_stride;
