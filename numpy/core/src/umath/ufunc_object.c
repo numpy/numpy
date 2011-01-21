@@ -2395,6 +2395,8 @@ static int get_ufunc_arguments(PyUFuncObject *self,
     PyObject *obj, *context;
     char *ufunc_name;
 
+    int any_flexible = 0, any_object = 0;
+
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
     /* Check number of arguments */
@@ -2426,6 +2428,25 @@ static int get_ufunc_arguments(PyUFuncObject *self,
         if (out_op[i] == NULL) {
             return -1;
         }
+        if (!any_flexible &&
+                PyTypeNum_ISFLEXIBLE(PyArray_DESCR(out_op[i])->type_num)) {
+            any_flexible = 1;
+        }
+        if (!any_object &&
+                PyTypeNum_ISOBJECT(PyArray_DESCR(out_op[i])->type_num)) {
+            any_object = 1;
+        }
+    }
+
+    /*
+     * Indicate not implemented if there are flexible objects (structured
+     * type or string) but no object types.
+     *
+     * Not sure - adding this increased to 246 errors, 150 failures.
+     */
+    if (any_flexible && !any_object) {
+        return -2;
+
     }
 
     /* Get positional output arguments */
@@ -3107,6 +3128,7 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
     npy_intp nin, nout;
     npy_intp i, niter;
     char *ufunc_name;
+    int retval = -1;
 
     PyArray_Descr *dtype[NPY_MAXARGS];
 
@@ -3161,8 +3183,9 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
     }
 
     /* Get all the arguments */
-    if (get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &typetup) < 0) {
+    retval = get_ufunc_arguments(self, args, kwds,
+                op, &order, &casting, &extobj, &typetup);
+    if (retval < 0) {
         goto fail;
     }
 
@@ -3184,6 +3207,24 @@ PyUFunc_GenericFunction_Iter(PyUFuncObject *self,
     if (find_best_ufunc_inner_loop(self, op, casting, buffersize,
                     dtype, &innerloop, &innerloopdata, &trivial_loop_ok) < 0) {
         goto fail;
+    }
+
+    /*
+     * FAIL with NotImplemented if the other object has
+     * the __r<op>__ method and has __array_priority__ as
+     * an attribute (signalling it can handle ndarray's)
+     * and is not already an ndarray or a subtype of the same type.
+    */
+    if (nin == 2 && nout == 1 && dtype[1]->type_num == NPY_OBJECT) {
+        PyObject *_obj = PyTuple_GET_ITEM(args, 1);
+        if (!PyArray_CheckExact(_obj)
+               /* If both are same subtype of object arrays, then proceed */
+                && !(Py_TYPE(_obj) == Py_TYPE(PyTuple_GET_ITEM(args, 0)))
+                && PyObject_HasAttrString(_obj, "__array_priority__")
+                && _has_reflected_op(_obj, ufunc_name)) {
+            retval = -2;
+           goto fail;
+        }
     }
 
 #if 0
@@ -3250,7 +3291,7 @@ fail:
     Py_XDECREF(errobj);
     Py_XDECREF(arr_prep_args);
 
-    return -1;
+    return retval;
 }
 
 static PyArrayObject *
@@ -5222,8 +5263,8 @@ static struct PyMethodDef ufunc_methods[] = {
     {"outer",
         (PyCFunction)ufunc_outer,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"f", /* new generic call */
-        (PyCFunction)ufunc_generic_call_iter,
+    {"f", /* old generic call */
+        (PyCFunction)ufunc_generic_call,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
@@ -5450,7 +5491,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
     0,                                          /* tp_hash */
-    (ternaryfunc)ufunc_generic_call,            /* tp_call */
+    (ternaryfunc)ufunc_generic_call_iter,       /* tp_call */
     (reprfunc)ufunc_repr,                       /* tp_str */
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
