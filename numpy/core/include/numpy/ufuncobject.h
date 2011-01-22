@@ -44,19 +44,32 @@ typedef struct {
         PyObject *obj;
         PyObject *userloops;
     
-        /* generalized ufunc */
-        int core_enabled;      /* 0 for scalar ufunc; 1 for generalized ufunc */
-        int core_num_dim_ix;   /* number of distinct dimension names in
-                                  signature */
+        /* generalized ufunc parameters */
+
+        /* 0 for scalar ufunc; 1 for generalized ufunc */
+        int core_enabled;
+        /* number of distinct dimension names in signature */
+        int core_num_dim_ix;
  
-        /* dimension indices of input/output argument k are stored in
-           core_dim_ixs[core_offsets[k]..core_offsets[k]+core_num_dims[k]-1] */
-        int *core_num_dims;    /* numbers of core dimensions of each argument */
-        int *core_dim_ixs;     /* dimension indices in a flatted form; indices
-                                  are in the range of [0,core_num_dim_ix) */
-        int *core_offsets;     /* positions of 1st core dimensions of each
-                                  argument in core_dim_ixs */
-        char *core_signature;  /* signature string for printing purpose */
+        /*
+         * dimension indices of input/output argument k are stored in
+         * core_dim_ixs[core_offsets[k]..core_offsets[k]+core_num_dims[k]-1]
+         */
+
+        /* numbers of core dimensions of each argument */
+        int *core_num_dims;
+        /*
+         * dimension indices in a flatted form; indices
+         * are in the range of [0,core_num_dim_ix)
+         */
+        int *core_dim_ixs;
+        /*
+         * positions of 1st core dimensions of each
+         * argument in core_dim_ixs
+         */
+        int *core_offsets;
+        /* signature string for printing purpose */
+        char *core_signature;
 } PyUFuncObject;
 
 #include "arrayobject.h"

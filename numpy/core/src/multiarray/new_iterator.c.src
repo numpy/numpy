@@ -2696,6 +2696,53 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
     return 1;
 }
 
+static PyObject *
+npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
+{
+    npy_intp i;
+    PyObject *ret, *tmp;
+
+    if (n <= 0) {
+        return PyString_FromString("()");
+    }
+
+    switch (n) {
+        case 1:
+            return PyString_FromFormat("(%zd)%s",
+                                vals[0], ending);
+        case 2:
+            return PyString_FromFormat("(%zd,%zd)%s",
+                                vals[0], vals[1], ending);
+        case 3:
+            return PyString_FromFormat("(%zd,%zd,%zd)%s",
+                                vals[0], vals[1], vals[2], ending);
+        case 4:
+            return PyString_FromFormat("(%zd,%zd,%zd,%zd)%s",
+                                vals[0], vals[1], vals[2], vals[3], ending);
+    }
+
+    ret = PyString_FromFormat("(%zd,%zd,%zd,%zd,%zd",
+                                vals[0], vals[1], vals[2], vals[3], vals[4]);
+    if (ret == NULL) {
+        return NULL;
+    }
+    for (i = 5; i < n; ++i) {
+        tmp = PyString_FromFormat(",%zd", vals[i]);
+        if (tmp == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        
+        PyString_ConcatAndDel(&ret, tmp);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+    tmp = PyString_FromFormat(")%s", ending);
+    PyString_ConcatAndDel(&ret, tmp);
+    return ret;
+}
+
 /*
  * Fills in the AXISDATA for the 'niter' operands, broadcasting
  * the dimensionas as necessary.  Also fills
@@ -2840,10 +2887,7 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                         NAD_SHAPE(axisdata) = shape;
                     }
                     else if (NAD_SHAPE(axisdata) != shape) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "operands cannot be broadcast "
-                                "to a single shape");
-                        return 0;
+                        goto broadcast_error;
                     }
                     NAD_STRIDES(axisdata)[iiter] = PyArray_STRIDE(
                                                       op[iiter], ondim-idim-1);
@@ -2890,10 +2934,7 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                             NAD_SHAPE(axisdata) = shape;
                         }
                         else if (NAD_SHAPE(axisdata) != shape) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "operands cannot be broadcast "
-                                    "to a single shape");
-                            return 0;
+                            goto broadcast_error;
                         }
                         NAD_STRIDES(axisdata)[iiter] =
                                                 PyArray_STRIDE(op[iiter], i);
@@ -2929,14 +2970,16 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                 else {
                     i = ndim-idim-1;
                 }
-                if (i < PyArray_NDIM(op[iiter])) {
+                if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
                     if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
                         if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
                             PyErr_SetString(PyExc_ValueError,
-                                    "output operand cannot be broadcasted");
+                                    "output operand is smaller "
+                                    "than the broadcast dimensions");
                         } else {
                             PyErr_SetString(PyExc_ValueError,
-                                    "operand cannot be broadcasted");
+                                    "operand is smaller "
+                                    "than the broadcast dimensions");
                         }
                         return 0;
                     }
@@ -2956,10 +2999,12 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
                 else { /*if (NAD_SHAPE(axisdata) != 1) {*/
                     if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
                         PyErr_SetString(PyExc_ValueError,
-                                    "output operand cannot be broadcasted");
+                                    "output operand is smaller "
+                                    "than the broadcast dimensions");
                     } else {
                         PyErr_SetString(PyExc_ValueError,
-                                    "operand cannot be broadcasted");
+                                    "operand is smaller "
+                                    "than the broadcast dimensions");
                     }
                     return 0;
                 }
@@ -2982,6 +3027,78 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
     NIT_ITEREND(iter) = NIT_ITERSIZE(iter);
 
     return 1;
+
+broadcast_error: {
+        PyObject *errmsg, *tmp;
+        npy_intp remdims[NPY_MAXDIMS];
+        char *tmpstr;
+
+        if (op_axes == NULL) {
+            errmsg = PyString_FromString("operands could not be broadcast "
+                                "together with shapes ");
+            for (iiter = 0; iiter < niter; ++iiter) {
+                if (op[iiter] != NULL) {
+                    tmp = npyiter_shape_string(PyArray_NDIM(op[iiter]),
+                                                    PyArray_DIMS(op[iiter]),
+                                                    " ");
+                    if (tmp == NULL) {
+                        return 0;
+                    }
+                    PyString_ConcatAndDel(&errmsg, tmp);
+                    if (errmsg == NULL) {
+                        return 0;
+                    }
+                }
+            }
+            PyErr_SetObject(PyExc_ValueError, errmsg);
+        }
+        else {
+            errmsg = PyString_FromString("operands could not be broadcast "
+                                "together with remapped shapes "
+                                "[original->remapped]: ");
+            for (iiter = 0; iiter < niter; ++iiter) {
+                if (op[iiter] != NULL) {
+                    npy_intp *axes = op_axes[iiter];
+
+                    tmpstr = (axes == NULL) ? " " : "->";
+                    tmp = npyiter_shape_string(PyArray_NDIM(op[iiter]),
+                                                    PyArray_DIMS(op[iiter]),
+                                                    tmpstr);
+                    if (tmp == NULL) {
+                        return 0;
+                    }
+                    PyString_ConcatAndDel(&errmsg, tmp);
+                    if (errmsg == NULL) {
+                        return 0;
+                    }
+
+                    if (axes != NULL) {
+                        for (idim = 0; idim < ndim; ++idim) {
+                            npy_intp i = axes[ndim-idim-1];
+
+                            if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
+                                remdims[idim] = PyArray_DIM(op[iiter], i);
+                            }
+                            else {
+                                remdims[idim] = 1;
+                            }
+                        }
+                        tmp = npyiter_shape_string(ndim, remdims, " ");
+                        if (tmp == NULL) {
+                            return 0;
+                        }
+                        PyString_ConcatAndDel(&errmsg, tmp);
+                        if (errmsg == NULL) {
+                            return 0;
+                        }
+                    }
+                }
+            }
+            PyErr_SetObject(PyExc_ValueError, errmsg);
+        }
+
+        return 0;
+    }
 }
 
 /*
