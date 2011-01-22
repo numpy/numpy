@@ -17,16 +17,23 @@
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
-#if 0
-#define DTYPE_TRANSFER_REFTRACE(msg, ref) \
-    printf("%-12s %20p (refcnt %d)%s\n", msg, ref, \
+/********** PRINTF DEBUG TRACING **************/
+#define NPY_DT_DBG_TRACING 0
+/* Tracing incref/decref can be very noisy */
+#define NPY_DT_REF_DBG_TRACING 0
+
+#if NPY_DT_REF_DBG_TRACING
+#define NPY_DT_DBG_REFTRACE(msg, ref) \
+    printf("%-12s %20p %s%d%s\n", msg, ref, \
+                        ref ? "(refcnt " : "", \
                         ref ? (int)ref->ob_refcnt : 0, \
                         ref ? ((ref->ob_refcnt <= 0) ? \
-                                        " <- BIG PROBLEM!!!!" : "") : ""); \
+                                        ") <- BIG PROBLEM!!!!" : ")") : ""); \
     fflush(stdout);
 #else
-#define DTYPE_TRANSFER_REFTRACE(...)
+#define NPY_DT_DBG_REFTRACE(...)
 #endif
+/**********************************************/
 
 /*
  * Returns a transfer function which DECREFs any references in src_type.
@@ -80,10 +87,10 @@ _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
         /* Release the reference in dst */
-        DTYPE_TRANSFER_REFTRACE("dec dst ref", dst_ref);
+        NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
         Py_XDECREF(dst_ref);
         /* Move the reference */
-        DTYPE_TRANSFER_REFTRACE("move src ref", src_ref);
+        NPY_DT_DBG_REFTRACE("move src ref", src_ref);
         NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
         /* Set the source reference to NULL */
         src_ref = NULL;
@@ -108,10 +115,10 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
         /* Release the reference in dst */
-        DTYPE_TRANSFER_REFTRACE("dec dst ref", dst_ref);
+        NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
         Py_XDECREF(dst_ref);
         /* Copy the reference */
-        DTYPE_TRANSFER_REFTRACE("copy src ref", src_ref);
+        NPY_DT_DBG_REFTRACE("copy src ref", src_ref);
         NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
         /* Claim the reference */
         Py_XINCREF(src_ref);
@@ -584,7 +591,7 @@ _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
 
         /* After casting, decrement the source ref */
         NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        DTYPE_TRANSFER_REFTRACE("dec src ref (cast object -> not object)", src_ref);
+        NPY_DT_DBG_REFTRACE("dec src ref (cast object -> not object)", src_ref);
         Py_XDECREF(src_ref);
 
         dst += dst_stride;
@@ -2492,7 +2499,7 @@ _null_to_strided_reference_setzero(char *dst,
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
         /* Release the reference in dst */
-        DTYPE_TRANSFER_REFTRACE("dec dest ref (to set zero)", dst_ref);
+        NPY_DT_DBG_REFTRACE("dec dest ref (to set zero)", dst_ref);
         Py_XDECREF(dst_ref);
         
         /* Set it to zero */
@@ -2622,7 +2629,7 @@ _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
         NPY_COPY_PYOBJECT_PTR(&src_ref, src);
 
         /* Release the reference in src */
-        DTYPE_TRANSFER_REFTRACE("dec src ref (null dst)", src_ref);
+        NPY_DT_DBG_REFTRACE("dec src ref (null dst)", src_ref);
         Py_XDECREF(src_ref);
 
         src += src_stride;
@@ -2725,7 +2732,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
     npy_intp src_itemsize, dst_itemsize;
     int src_type_num, dst_type_num;
 
-#if 0
+#if NPY_DT_DBG_TRACING
     printf("Calculating dtype transfer from ");
     PyObject_Print((PyObject *)src_dtype, stdout, 0);
     printf(" to ");

@@ -8,11 +8,15 @@
 
 #include "lowlevel_strided_loops.h"
 
-#if 0
+/********** PRINTF DEBUG TRACING **************/
+#define NPY_IT_DBG_TRACING 0
+
+#if NPY_IT_DBG_TRACING
 #define NPY_IT_DBG_PRINTF(...) printf(__VA_ARGS__)
 #else
 #define NPY_IT_DBG_PRINTF(...)
 #endif
+/**********************************************/
 
 /* Rounds up a number of bytes to be divisible by sizeof intp */
 #if NPY_SIZEOF_INTP == 4
@@ -2702,32 +2706,33 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
     npy_intp i;
     PyObject *ret, *tmp;
 
-    if (n <= 0) {
-        return PyString_FromString("()");
+    /*
+     * Negative dimension indicates "newaxis", which can
+     * be discarded for printing if its a leading dimension.
+     * Find the first non-"newaxis" dimension.
+     */
+    i = 0;
+    while (i < n && vals[i] < 0) {
+        ++i;
     }
 
-    switch (n) {
-        case 1:
-            return PyString_FromFormat("(%zd)%s",
-                                vals[0], ending);
-        case 2:
-            return PyString_FromFormat("(%zd,%zd)%s",
-                                vals[0], vals[1], ending);
-        case 3:
-            return PyString_FromFormat("(%zd,%zd,%zd)%s",
-                                vals[0], vals[1], vals[2], ending);
-        case 4:
-            return PyString_FromFormat("(%zd,%zd,%zd,%zd)%s",
-                                vals[0], vals[1], vals[2], vals[3], ending);
+    if (i == n) {
+            return PyString_FromFormat("()%s", ending);
+    }
+    else {
+        ret = PyString_FromFormat("(%zd", vals[i]);
+        if (ret == NULL) {
+            return NULL;
+        }
     }
 
-    ret = PyString_FromFormat("(%zd,%zd,%zd,%zd,%zd",
-                                vals[0], vals[1], vals[2], vals[3], vals[4]);
-    if (ret == NULL) {
-        return NULL;
-    }
-    for (i = 5; i < n; ++i) {
-        tmp = PyString_FromFormat(",%zd", vals[i]);
+    for (; i < n; ++i) {
+        if (vals[i] < 0) {
+            tmp = PyString_FromString("newaxis");
+        }
+        else {
+            tmp = PyString_FromFormat(",%zd", vals[i]);
+        }
         if (tmp == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -2738,6 +2743,7 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
             return NULL;
         }
     }
+
     tmp = PyString_FromFormat(")%s", ending);
     PyString_ConcatAndDel(&ret, tmp);
     return ret;
@@ -3080,7 +3086,7 @@ broadcast_error: {
                                 remdims[idim] = PyArray_DIM(op[iiter], i);
                             }
                             else {
-                                remdims[idim] = 1;
+                                remdims[idim] = -1;
                             }
                         }
                         tmp = npyiter_shape_string(ndim, remdims, " ");
@@ -4406,7 +4412,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Copy back only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
-                NPY_IT_DBG_PRINTF("Iterator: Copying buffer to operand %d\n", (int)iiter);
+                NPY_IT_DBG_PRINTF("Iterator: Copying buffer to "
+                                    "operand %d\n", (int)iiter);
                 PyArray_TransferStridedToNDim(ndim,
                         ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                         buffer, strides[iiter],
@@ -4425,7 +4432,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Decrement refs only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
-                NPY_IT_DBG_PRINTF("Iterator: Freeing refs for buffer of operand %d\n", (int)iiter);
+                NPY_IT_DBG_PRINTF("Iterator: Freeing refs for buffer "
+                                    "of operand %d\n", (int)iiter);
                 /* Decrement refs */
                 stransfer(NULL, 0, buffer, dtypes[iiter]->elsize,
                             transfersize, dtypes[iiter]->elsize,
@@ -4546,11 +4554,13 @@ npyiter_copy_to_buffers(NpyIter *iter)
 
             any_buffered = 1;
 
-            NPY_IT_DBG_PRINTF("Iterator: Copying operand %d to buffer\n", (int)iiter);
+            NPY_IT_DBG_PRINTF("Iterator: Copying operand %d to "
+                                "buffer\n", (int)iiter);
 
             /* If the data type requires zero-inititialization */
             if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
-                NPY_IT_DBG_PRINTF("Iterator: Buffer requires init, memsetting to 0\n");
+                NPY_IT_DBG_PRINTF("Iterator: Buffer requires init, "
+                                    "memsetting to 0\n");
                 memset(ptrs[iiter], 0, dtypes[iiter]->elsize*transfersize);
             }
 
@@ -4566,7 +4576,9 @@ npyiter_copy_to_buffers(NpyIter *iter)
         else if (ptrs[iiter] == buffers[iiter]) {
             /* If the data type requires zero-inititialization */
             if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
-                NPY_IT_DBG_PRINTF("Iterator: Write-only buffer for operand %d requires init, memsetting to 0\n", (int)iiter);
+                NPY_IT_DBG_PRINTF("Iterator: Write-only buffer for "
+                                    "operand %d requires init, "
+                                    "memsetting to 0\n", (int)iiter);
                 memset(ptrs[iiter], 0, dtypes[iiter]->elsize*transfersize);
             }
         }
@@ -4584,7 +4596,8 @@ npyiter_copy_to_buffers(NpyIter *iter)
         }
     }
 
-    NPY_IT_DBG_PRINTF("Iterator: Finished copying inputs to buffers (buffer size is %d)\n", (int)NBF_SIZE(bufferdata));
+    NPY_IT_DBG_PRINTF("Iterator: Finished copying inputs to buffers "
+                        "(buffered size is %d)\n", (int)NBF_SIZE(bufferdata));
 }
 
 /*NUMPY_API
