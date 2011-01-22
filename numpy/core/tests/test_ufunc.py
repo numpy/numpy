@@ -275,6 +275,31 @@ class TestUfunc(TestCase):
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
 
+    def test_forced_sig(self):
+        a = 0.5*np.arange(3,dtype='f8')
+        assert_equal(np.add(a,0.5), [0.5, 1, 1.5])
+        assert_equal(np.add(a,0.5,sig='i'), [0, 1, 1])
+        assert_equal(np.add(a,0.5,sig='ii->i'), [0, 1, 1])
+        assert_equal(np.add(a,0.5,sig=('i4',)), [0, 1, 1])
+        assert_equal(np.add(a,0.5,sig=('i4','i4','i4')), [0, 1, 1])
+
+        b = np.zeros((3,),dtype='f8')
+        np.add(a,0.5,out=b)
+        assert_equal(b, [0.5, 1, 1.5])
+        b[:] = 0
+        np.add(a,0.5,sig='i',out=b)
+        assert_equal(b, [0, 1, 1])
+        b[:] = 0
+        np.add(a,0.5,sig='ii->i',out=b)
+        assert_equal(b, [0, 1, 1])
+        b[:] = 0
+        np.add(a,0.5,sig=('i4',),out=b)
+        assert_equal(b, [0, 1, 1])
+        b[:] = 0
+        np.add(a,0.5,sig=('i4','i4','i4'),out=b)
+        assert_equal(b, [0, 1, 1])
+        
+
     def test_inner1d(self):
         a = np.arange(6).reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1))
@@ -344,13 +369,24 @@ class TestUfunc(TestCase):
         c = np.zeros((2,3),dtype='int')
         umt.inner1d(a,b,c)
         assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
+        c[:] = -1
+        umt.inner1d(a,b,out=c)
+        assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
+
         msg = "output argument with type cast"
         c = np.zeros((2,3),dtype='int16')
         umt.inner1d(a,b,c)
         assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
+        c[:] = -1
+        umt.inner1d(a,b,out=c)
+        assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
+
         msg = "output argument with incontiguous layout"
         c = np.zeros((2,3,4),dtype='int16')
         umt.inner1d(a,b,c[...,0])
+        assert_array_equal(c[...,0], np.sum(a*b,axis=-1), err_msg=msg)
+        c[:] = -1
+        umt.inner1d(a,b,out=c[...,0])
         assert_array_equal(c[...,0], np.sum(a*b,axis=-1), err_msg=msg)
 
     def test_innerwt(self):

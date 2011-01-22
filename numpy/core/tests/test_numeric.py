@@ -5,7 +5,9 @@ import numpy as np
 from numpy.core import *
 from numpy.random import rand, randint, randn
 from numpy.testing import *
+from numpy.testing.utils import WarningManager
 from numpy.core.multiarray import dot as dot_
+import warnings
 
 class Vec:
     def __init__(self,sequence=None):
@@ -388,6 +390,11 @@ class TestTypes(TestCase):
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
+
+        ctx = WarningManager()
+        ctx.__enter__()
+        warnings.simplefilter('ignore', np.ComplexWarning)
+
         self.check_promotion_cases(res_type)
 
         f64 = float64(0)
@@ -397,6 +404,9 @@ class TestTypes(TestCase):
         # But they do if the value is complex
         assert_equal(res_type(complex64(3j),array([f64])),
                                                     np.dtype(complex128))
+
+        ctx.__exit__()
+
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
