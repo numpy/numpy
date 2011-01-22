@@ -329,8 +329,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                                         stride1, stride2) { \
                     npy_intp size1 = PyArray_SIZE(arr1); \
                     npy_intp size2 = PyArray_SIZE(arr2); \
-                    count = size1 > size2 ? size1 : size2; \
-                    if (size1 == 0 || size2 == 0) count = 0; \
+                    count = ((size1 > size2) || size1 == 0) ? size1 : size2; \
                     data1 = PyArray_BYTES(arr1); \
                     data2 = PyArray_BYTES(arr2); \
                     stride1 = (size1 == 1 ? 0 : \
@@ -373,9 +372,8 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                     npy_intp size1 = PyArray_SIZE(arr1); \
                     npy_intp size2 = PyArray_SIZE(arr2); \
                     npy_intp size3 = PyArray_SIZE(arr3); \
-                    count = size1 > size2 ? size1 : size2; \
-                    if (size3 > count) count = size3; \
-                    if (size1 == 0 || size2 == 0 || size2 == 0) count = 0; \
+                    count = ((size1 > size2) || size1 == 0) ? size1 : size2; \
+                    count = ((size3 > count) || size3 == 0) ? size3 : count; \
                     data1 = PyArray_BYTES(arr1); \
                     data2 = PyArray_BYTES(arr2); \
                     data3 = PyArray_BYTES(arr3); \
