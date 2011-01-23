@@ -203,7 +203,7 @@ The Python API would be expanded as follows.
 ``numpy.deferredstate(state)``
 
     A context manager for deferred state handling, similar to
-    n``umpy.errstate``.
+    ``numpy.errstate``.
 
 
 Error Handling
@@ -249,7 +249,7 @@ they might go wrong:
 1. Make a temporary copy of 'arr' with UPDATEIFCOPY ('arr' becomes read only)
 2. Use 'arr' in a deferred expression (deferred usage count becomes one,
    NPY_DEFERRED_WASWRITEABLE is **not** set, since 'arr' is read only)
-3. Destroy the temporarry copy, causing 'arr' to become writeable
+3. Destroy the temporary copy, causing 'arr' to become writeable
 4. Writing to 'arr' destroys the value of the deferred expression
 
 To deal with this issue, we make these two states mutually exclusive.
