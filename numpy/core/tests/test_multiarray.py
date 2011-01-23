@@ -1150,6 +1150,17 @@ class TestIO(object):
         v = np.array([1,2,3,4], dtype=np.int_)
         self._check_from('1,2,3,4', v, sep=',', dtype=np.int_)
 
+    def test_dtype_bool(self):
+        # can't use _check_from because fromstring can't handle True/False
+        v = np.array([True, False, True, False], dtype=np.bool_)
+        s = '1,0,-2.3,0'
+        f = open(self.filename, 'wb')
+        f.write(asbytes(s))
+        f.close()
+        y = np.fromfile(self.filename, sep=',', dtype=np.bool_)
+        assert_(y.dtype == '?')
+        assert_array_equal(y, v)
+
     def test_tofile_sep(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         f = open(self.filename, 'w')

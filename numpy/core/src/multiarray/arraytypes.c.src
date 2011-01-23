@@ -1735,12 +1735,12 @@ static int
 static int
 BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
 {
-    int temp;
-    int num;
+    double result;
+    int ret;
 
-    num = fscanf(fp, "%d", &temp);
-    *ip = (Bool) (temp != 0);
-    return num;
+    ret = NumPyOS_ascii_ftolf(fp, &result);
+    *ip = (Bool) (result != 0.0);
+    return ret;
 }
 
 /**begin repeat
