@@ -63,6 +63,11 @@ doc/cdoc/build
 *.sql
 *.sqlite
 
+# Patches #
+###########
+*.patch
+*.diff
+
 # OS generated files #
 ######################
 .gdb_history
