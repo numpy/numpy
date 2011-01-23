@@ -2999,11 +2999,29 @@ static PyArrayObject *
 array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, intp num, size_t *nread)
 {
     PyArrayObject *r;
-    intp start, numbytes;
+    npy_intp start, numbytes;
 
     if (num < 0) {
         int fail = 0;
 
+#if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400)
+        /* Workaround Win64 fwrite() bug. Ticket #1660 */
+        start = (intp )_ftelli64(fp);
+        if (start < 0) {
+            fail = 1;
+        }
+        if (_fseeki64(fp, 0, SEEK_END) < 0) {
+            fail = 1;
+        }
+        numbytes = (intp) _ftelli64(fp);
+        if (numbytes < 0) {
+            fail = 1;
+        }
+        numbytes -= start;
+        if (_fseeki64(fp, start, SEEK_SET) < 0) {
+            fail = 1;
+        }
+#else
         start = (intp )ftell(fp);
         if (start < 0) {
             fail = 1;
@@ -3019,6 +3037,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, intp num, size_t *nread)
         if (fseek(fp, start, SEEK_SET) < 0) {
             fail = 1;
         }
+#endif
         if (fail) {
             PyErr_SetString(PyExc_IOError,
                             "could not seek in file");

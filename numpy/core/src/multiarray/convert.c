@@ -62,8 +62,8 @@ PyArray_ToList(PyArrayObject *self)
 NPY_NO_EXPORT int
 PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 {
-    intp size;
-    intp n, n2;
+    npy_intp size;
+    npy_intp n, n2;
     size_t n3, n4;
     PyArrayIterObject *it;
     PyObject *obj, *strobj, *tupobj, *byteobj;
@@ -81,9 +81,33 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         if (PyArray_ISCONTIGUOUS(self)) {
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
+
+#if defined (_MSC_VER) && defined(_WIN64)
+            /* Workaround Win64 fwrite() bug. Ticket #1660 */
+            {
+                npy_intp maxsize = 2147483648 / self->descr->elsize;
+                npy_intp chunksize;
+
+                n = 0;
+                while (size > 0) {
+                    chunksize = (size > maxsize) ? maxsize : size;
+                    n2 = fwrite((const void *)
+                             ((char *)self->data + (n * self->descr->elsize)),
+                             (size_t) self->descr->elsize,
+                             (size_t) chunksize, fp);
+                    if (n2 < chunksize) {
+                        break;
+                    }
+                    n += n2;
+                    size -= chunksize;
+                }
+                size = PyArray_SIZE(self);
+            }
+#else
             n = fwrite((const void *)self->data,
                     (size_t) self->descr->elsize,
                     (size_t) size, fp);
+#endif
             NPY_END_ALLOW_THREADS;
             if (n < size) {
                 PyErr_Format(PyExc_ValueError,
