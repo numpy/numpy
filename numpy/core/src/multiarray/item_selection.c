@@ -1460,16 +1460,16 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     dtype = PyArray_DescrFromObject((PyObject *)op2, op1->descr);
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
-    ap1 = (PyArrayObject *)PyArray_FromAny((PyObject *)op1, dtype,
-                                           1, 1, NPY_DEFAULT, NULL);
+    ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
+                                1, 1, NPY_DEFAULT | NPY_NOTSWAPPED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
     }
 
     /* need ap2 as contiguous array and of right type */
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype,
-                                          0, 0, NPY_DEFAULT, NULL);
+    ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
+                                0, 0, NPY_DEFAULT | NPY_NOTSWAPPED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }

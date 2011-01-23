@@ -594,6 +594,14 @@ class TestMethods(TestCase):
         msg = "Test complex searchsorted with nans, side='r'"
         b = a.searchsorted(a, side='r')
         assert_equal(b, np.arange(1,10), msg)
+        msg = "Test searchsorted with little endian, side='l'"
+        a = np.array([0,128],dtype='<i4')
+        b = a.searchsorted(np.array(128,dtype='<i4'))
+        assert_equal(b, 1, msg)
+        msg = "Test searchsorted with big endian, side='l'"
+        a = np.array([0,128],dtype='>i4')
+        b = a.searchsorted(np.array(128,dtype='>i4'))
+        assert_equal(b, 1, msg)
 
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
