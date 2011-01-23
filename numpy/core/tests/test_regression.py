@@ -1441,5 +1441,9 @@ class TestRegression(TestCase):
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0], [1]) # [0] if nonzero() ignores swap
 
+    def test_find_common_type_boolean(self):
+        # Ticket #1695
+        assert_(np.find_common_type([],['?','?']) == '?')
+
 if __name__ == "__main__":
     run_module_suite()
