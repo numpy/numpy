@@ -853,7 +853,7 @@ typeNA = sctypeNA
 # O -> Python object
 _kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
 
-__test_types = typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
+__test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
 __len_test_types = len(__test_types)
 
 # Keep incrementing until a common type both can be coerced to
