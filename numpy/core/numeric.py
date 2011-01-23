@@ -6,7 +6,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'newiter', 'nested_iters', 'ufunc',
            'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
-           'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
+           'correlate', 'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
@@ -218,6 +218,7 @@ result_type = multiarray.result_type
 lexsort = multiarray.lexsort
 compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
+einsum = multiarray.einsum
 
 def asarray(a, dtype=None, order=None):
     """

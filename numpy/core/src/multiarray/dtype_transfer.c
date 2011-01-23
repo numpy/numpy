@@ -2,6 +2,12 @@
  * This file contains low-level loops for data type transfers.
  * In particular the function PyArray_GetDTypeTransferFunction is
  * implemented here.
+ *
+ * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
+ * The Univerity of British Columbia
+ *
+ * See LICENSE.txt for the license.
+
  */
 
 #define PY_SSIZE_T_CLEAN

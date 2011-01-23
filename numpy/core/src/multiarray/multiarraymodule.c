@@ -1895,6 +1895,122 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
+array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    char *subscripts;
+    int i, nop;
+    PyArrayObject *op[NPY_MAXARGS];
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    PyArrayObject *out = NULL;
+    PyArray_Descr *dtype = NULL;
+    PyObject *ret = NULL;
+
+    nop = PyTuple_GET_SIZE(args) - 1;
+    if (nop <= 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "must specify the einstein sum subscripts string "
+                        "and at least one operand");
+        return NULL;
+    }
+    else if (nop > NPY_MAXARGS) {
+        PyErr_SetString(PyExc_ValueError, "too many operands");
+        return NULL;
+    }
+
+    /* Get the subscripts string */
+    subscripts = PyString_AsString(PyTuple_GET_ITEM(args, 0));
+    if (subscripts == NULL) {
+        return NULL;
+    }
+
+    /* Set the operands to NULL */
+    for (i = 0; i < nop; ++i) {
+        op[i] = NULL;
+    }
+
+    /* Get the operands */
+    for (i = 0; i < nop; ++i) {
+        PyObject *obj = PyTuple_GET_ITEM(args, i+1);
+        if (PyArray_Check(obj)) {
+            Py_INCREF(obj);
+            op[i] = (PyArrayObject *)obj;
+        }
+        else {
+            op[i] = (PyArrayObject *)PyArray_FromAny(obj,
+                                    NULL, 0, 0, NPY_ENSUREARRAY, NULL);
+            if (op[i] == NULL) {
+                goto finish;
+            }
+        }
+    }
+
+    /* Get the keyword arguments */
+    if (kwds != NULL) {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(kwds, &pos, &key, &value)) {
+            char *str = PyString_AsString(key);
+
+            if (str == NULL) {
+                PyErr_Clear();
+                PyErr_SetString(PyExc_TypeError, "invalid keyword");
+                goto finish;
+            }
+
+            if (strcmp(str,"out") == 0) {
+                if (PyArray_Check(value)) {
+                    out = (PyArrayObject *)value;
+                }
+                else {
+                    PyErr_SetString(PyExc_TypeError,
+                                "keyword parameter out must be an "
+                                "array for einsum");
+                    goto finish;
+                }
+            }
+            else if (strcmp(str,"order") == 0) {
+                if (!PyArray_OrderConverter(value, &order)) {
+                    goto finish;
+                }
+            }
+            else if (strcmp(str,"casting") == 0) {
+                if (!PyArray_CastingConverter(value, &casting)) {
+                    goto finish;
+                }
+            }
+            else if (strcmp(str,"dtype") == 0) {
+                if (!PyArray_DescrConverter2(value, &dtype)) {
+                    goto finish;
+                }
+            }
+            else {
+                PyErr_Format(PyExc_TypeError,
+                            "'%s' is an invalid keyword for einsum",
+                            str);
+                goto finish;
+            }
+        }
+    }
+
+    ret = (PyObject *)PyArray_EinsteinSum(subscripts, nop, op, dtype,
+                                        order, casting, out);
+
+    /* If no output was supplied, possibly convert to a scalar */
+    if (ret != NULL && out == NULL) {
+        ret = _ARET(ret);
+    }
+
+finish:
+    for (i = 0; i < nop; ++i) {
+        Py_XDECREF(op[i]);
+    }
+    Py_XDECREF(dtype);
+
+    return ret;
+}
+
+static PyObject *
 array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *a0;
@@ -2947,6 +3063,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"dot",
         (PyCFunction)array_matrixproduct,
         METH_VARARGS, NULL},
+    {"einsum",
+        (PyCFunction)array_einsum,
+        METH_VARARGS|METH_KEYWORDS, NULL},
     {"_fastCopyAndTranspose",
         (PyCFunction)array_fastCopyAndTranspose,
         METH_VARARGS, NULL},

@@ -602,7 +602,8 @@ def configuration(parent_package='',top_path=None):
         sources = [join(local_dir, subpath, 'scalartypes.c.src'),
                    join(local_dir, subpath, 'arraytypes.c.src'),
                    join(local_dir, subpath, 'new_iterator.c.src'),
-                   join(local_dir, subpath, 'lowlevel_strided_loops.c.src')]
+                   join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
+                   join(local_dir, subpath, 'einsum.c.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
@@ -771,7 +772,8 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'new_iterator.c.src'),
         join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
         join('src', 'multiarray', 'dtype_transfer.c'),
-        join('src', 'multiarray', 'new_iterator_pywrap.c')]
+        join('src', 'multiarray', 'new_iterator_pywrap.c'),
+        join('src', 'multiarray', 'einsum.c.src')]
 
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))

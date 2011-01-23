@@ -153,6 +153,127 @@ class TestResize(TestCase):
         Ar = resize(A, (0,))
         assert_equal(Ar, array([]))
 
+class TestEinSum(TestCase):
+    def test_einsum_errors(self):
+        # Need enough arguments
+        assert_raises(ValueError, np.einsum)
+        assert_raises(ValueError, np.einsum, "")
+
+        # subscripts must be a string
+        assert_raises(TypeError, np.einsum, 0, 0)
+
+        # out parameter must be an array
+        assert_raises(TypeError, np.einsum, "", 0, out='test')
+
+        # order parameter must be a valid order
+        assert_raises(TypeError, np.einsum, "", 0, order='W')
+
+        # casting parameter must be a valid casting
+        assert_raises(ValueError, np.einsum, "", 0, casting='blah')
+
+        # dtype parameter must be a valid dtype
+        assert_raises(TypeError, np.einsum, "", 0, dtype='bad_data_type')
+
+        # other keyword arguments are rejected
+        assert_raises(TypeError, np.einsum, "", 0, bad_arg=0)
+
+        # number of operands must match count in subscripts string
+        assert_raises(ValueError, np.einsum, "", 0, 0)
+        assert_raises(ValueError, np.einsum, ",", 0, [0], [0])
+        assert_raises(ValueError, np.einsum, ",", [0])
+
+        # can't have more subscripts than dimensions in the operand
+        assert_raises(ValueError, np.einsum, "i", 0)
+        assert_raises(ValueError, np.einsum, "ij", [0,0])
+        assert_raises(ValueError, np.einsum, "...i", 0)
+        assert_raises(ValueError, np.einsum, "i...j", [0,0])
+        assert_raises(ValueError, np.einsum, "i...", 0)
+        assert_raises(ValueError, np.einsum, "ij...", [0,0])
+
+        # invalid ellipsis
+        assert_raises(ValueError, np.einsum, "i..", [0,0])
+        assert_raises(ValueError, np.einsum, ".i...", [0,0])
+        assert_raises(ValueError, np.einsum, "j->..j", [0,0])
+        assert_raises(ValueError, np.einsum, "j->.j...", [0,0])
+
+        # invalid subscript character
+        assert_raises(ValueError, np.einsum, "i%...", [0,0])
+        assert_raises(ValueError, np.einsum, "...j$", [0,0])
+        assert_raises(ValueError, np.einsum, "i->&", [0,0])
+
+        # output subscripts must appear in input
+        assert_raises(ValueError, np.einsum, "i->ij", [0,0])
+
+        # output subscripts may only be specified once
+        assert_raises(ValueError, np.einsum, "ij->jij", [[0,0],[0,0]])
+
+        # dimensions much match when being collapsed
+        assert_raises(ValueError, np.einsum, "ii->i", np.arange(6).reshape(2,3))
+
+    def test_einsum_views(self):
+        # pass-through
+        a = np.arange(6).reshape(2,3)
+
+        b = np.einsum("", a)
+        assert_(b.base is a)
+
+        b = np.einsum("ij", a)
+        assert_(b.base is a)
+        assert_equal(b, a)
+
+        # transpose
+        a = np.arange(6).reshape(2,3)
+
+        b = np.einsum("ji", a)
+        assert_(b.base is a)
+        assert_equal(b, a.T)
+
+        # diagonal
+        a = np.arange(9).reshape(3,3)
+
+        b = np.einsum("ii->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[i,i] for i in range(3)])
+
+        # diagonal with various ways of broadcasting an additional dimension
+        a = np.arange(27).reshape(3,3,3)
+
+        b = np.einsum("ii->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [[x[i,i] for i in range(3)] for x in a])
+
+        b = np.einsum("ii...->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [[x[i,i] for i in range(3)]
+                         for x in a.transpose(2,0,1)])
+
+        b = np.einsum("ii->i...", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[:,i,i] for i in range(3)])
+
+        b = np.einsum("jii->ij", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[:,i,i] for i in range(3)])
+
+        b = np.einsum("ii...->i...", a)
+        assert_(b.base is a)
+        assert_equal(b, [a.transpose(2,0,1)[:,i,i] for i in range(3)])
+
+        b = np.einsum("i...i->i...", a)
+        assert_(b.base is a)
+        assert_equal(b, [a.transpose(1,0,2)[:,i,i] for i in range(3)])
+
+        b = np.einsum("i...i->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [[x[i,i] for i in range(3)]
+                         for x in a.transpose(1,0,2)])
+
+        # triple diagonal
+        a = np.arange(27).reshape(3,3,3)
+
+        b = np.einsum("iii->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[i,i,i] for i in range(3)])
 
 class TestNonarrayArgs(TestCase):
     # check that non-array arguments to functions wrap them in arrays

@@ -1,3 +1,11 @@
+/*
+ * This file implements the CPython wrapper of the new NumPy iterator.
+ *
+ * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
+ * The Univerity of British Columbia
+ *
+ * See LICENSE.txt for the license.
+ */
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "structmember.h"

@@ -300,6 +300,7 @@ multiarray_funcs_api = {
     'PyArray_ResultType':                   265,
     'PyArray_CanCastArrayTo':               266,
     'PyArray_CanCastTypeTo':                267,
+    'PyArray_EinsteinSum':                  268,
 }
 
 ufunc_types_api = {

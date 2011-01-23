@@ -46,6 +46,7 @@ API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'datetime.c'),
              join('multiarray', 'new_iterator.c.src'),
              join('multiarray', 'new_iterator_pywrap.c'),
+             join('multiarray', 'einsum.c.src'),
              join('umath', 'ufunc_object.c'),
              join('umath', 'loops.c.src'),
             ]
