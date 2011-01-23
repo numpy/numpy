@@ -887,14 +887,16 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 #define NPY_ITER_REFS_OK                    0x00000020
 /* Zero-sized operands should be permitted, iteration checks IterSize for 0 */
 #define NPY_ITER_ZEROSIZE_OK                0x00000040
+/* Permits reductions (size-0 stride with dimension size > 1) */
+#define NPY_ITER_REDUCE_OK                  0x00000080
 /* Enables sub-range iteration */
-#define NPY_ITER_RANGED                     0x00000080
+#define NPY_ITER_RANGED                     0x00000100
 /* Enables buffering */
-#define NPY_ITER_BUFFERED                   0x00000100
+#define NPY_ITER_BUFFERED                   0x00000200
 /* When buffering is enabled, grows the inner loop if possible */
-#define NPY_ITER_GROWINNER                  0x00000200
+#define NPY_ITER_GROWINNER                  0x00000400
 /* Delay allocation of buffers until first Reset* call */
-#define NPY_ITER_DELAY_BUFALLOC             0x00000400
+#define NPY_ITER_DELAY_BUFALLOC             0x00000800
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
@@ -919,7 +921,7 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 /* If an operand is allocated, don't use any subtype */
 #define NPY_ITER_NO_SUBTYPE                 0x02000000
 /* Require that the dimension match the iterator dimensions exactly */
-#define NPY_ITER_NO_BROADCAST               0x04000000
+#define NPY_ITER_NO_BROADCAST               0x08000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

@@ -1444,7 +1444,8 @@ def test_iter_buffering_delayed_alloc():
 
     a = np.arange(6)
     b = np.arange(1, dtype='f4')
-    i = newiter([a,b], ['buffered','delay_bufalloc','coords'],
+    i = newiter([a,b], ['buffered','delay_bufalloc','coords','reduce_ok'],
+                    ['readwrite'],
                     casting='unsafe',
                     op_dtypes='f4')
     assert_(i.hasdelayedbufalloc)
@@ -1859,9 +1860,9 @@ def test_iter_buffering_badwriteback():
                         [['readonly'],['writeonly']],
                         order='C')
     
-    # If a has just one element, it's fine too (constant 0 stride)
+    # If a has just one element, it's fine too (constant 0 stride, a reduction)
     a = np.arange(1).reshape(1,1,1)
-    i = newiter([a,b],['buffered','no_inner_iteration'],
+    i = newiter([a,b],['buffered','no_inner_iteration','reduce_ok'],
                         [['readwrite'],['writeonly']],
                         order='C')
 
@@ -2082,6 +2083,80 @@ def test_iter_nested_iters_dtype_buffered():
         for y in j:
             y[()] += 1
     assert_equal(a, [[1,2,3],[4,5,6]])
+
+def test_iter_reduction_error():
+    
+    a = np.arange(6)
+    assert_raises(ValueError, newiter, [a,None], [],
+                    [['readonly'], ['readwrite','allocate']],
+                    op_axes=[[0],[-1]])
+
+    a = np.arange(6).reshape(2,3)
+    assert_raises(ValueError, newiter, [a,None], ['no_inner_iteration'],
+                    [['readonly'], ['readwrite','allocate']],
+                    op_axes=[[0,1],[-1,-1]])
+
+def test_iter_reduction():
+    # Test doing reductions with the iterator
+
+    a = np.arange(6)
+    i = newiter([a,None], ['reduce_ok'],
+                    [['readonly'], ['readwrite','allocate']],
+                    op_axes=[[0],[-1]])
+    # Need to initialize the output operand to the addition unit
+    i.operands[1][()] = 0
+    # Do the reduction
+    for x, y in i:
+        y[()] += x
+    # Since no axes were specified, should have allocated a scalar
+    assert_equal(i.operands[1].ndim, 0)
+    assert_equal(i.operands[1], np.sum(a))
+
+    a = np.arange(6).reshape(2,3)
+    i = newiter([a,None], ['reduce_ok','no_inner_iteration'],
+                    [['readonly'], ['readwrite','allocate']],
+                    op_axes=[[0,1],[-1,-1]])
+    # Need to initialize the output operand to the addition unit
+    i.operands[1][()] = 0
+    # Reduction shape/strides for the output
+    assert_equal(i[1].shape, (6,))
+    assert_equal(i[1].strides, (0,))
+    # Do the reduction
+    for x, y in i:
+        y[()] += x
+    # Since no axes were specified, should have allocated a scalar
+    assert_equal(i.operands[1].ndim, 0)
+    assert_equal(i.operands[1], np.sum(a))
+
+
+def test_iter_buffering_reduction():
+    # Test doing buffered reductions with the iterator
+
+    a = np.arange(6)
+    b = np.array(0., dtype='f8').byteswap().newbyteorder()
+    i = newiter([a,b], ['reduce_ok', 'buffered'],
+                    [['readonly'], ['readwrite','nbo']],
+                    op_axes=[[0],[-1]])
+    assert_equal(i[1].dtype, np.dtype('f8'))
+    assert_(i[1].dtype != b.dtype)
+    # Do the reduction
+    for x, y in i:
+        y[()] += x
+    # Since no axes were specified, should have allocated a scalar
+    assert_equal(b, np.sum(a))
+
+    a = np.arange(6).reshape(2,3)
+    b = np.array([0,0], dtype='f8').byteswap().newbyteorder()
+    i = newiter([a,b], ['reduce_ok','no_inner_iteration', 'buffered'],
+                    [['readonly'], ['readwrite','nbo']],
+                    op_axes=[[0,1],[0,-1]])
+    # Reduction shape/strides for the output
+    assert_equal(i[1].shape, (3,))
+    assert_equal(i[1].strides, (0,))
+    # Do the reduction
+    for x, y in i:
+        y[()] += x
+    assert_equal(b, np.sum(a, axis=1))
 
 if __name__ == "__main__":
     run_module_suite()

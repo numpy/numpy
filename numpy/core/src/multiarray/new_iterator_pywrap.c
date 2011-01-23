@@ -163,6 +163,9 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                 else if (strcmp(str, "refs_ok") == 0) {
                     flag = NPY_ITER_REFS_OK;
                 }
+                else if (strcmp(str, "reduce_ok") == 0) {
+                    flag = NPY_ITER_REDUCE_OK;
+                }
                 break;
             case 'z':
                 if (strcmp(str, "zerosize_ok") == 0) {
@@ -626,15 +629,11 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
         for (iiter = 0; iiter < niter; ++iiter) {
             /*
              * By default, make NULL operands writeonly and flagged for
-             * allocation, writeable arrays readwrite, and anything
-             * else readonly.
+             * allocation, and everything else readonly.  To write
+             * to a provided operand, you must specify the write flag manually.
              */
             if (op[iiter] == NULL) {
                 op_flags[iiter] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
-            }
-            else if (PyArray_Check(op[iiter]) &&
-                            PyArray_CHKFLAGS(op[iiter], NPY_WRITEABLE)) {
-                op_flags[iiter] = NPY_ITER_READWRITE;
             }
             else {
                 op_flags[iiter] = NPY_ITER_READONLY;

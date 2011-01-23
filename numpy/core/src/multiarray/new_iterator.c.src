@@ -28,29 +28,31 @@
 /* Internal iterator flags */
 
 /* The perm is the identity */
-#define NPY_ITFLAG_IDENTPERM    0x001
+#define NPY_ITFLAG_IDENTPERM    0x0001
 /* The perm has negative entries (indicating flipped axes) */
-#define NPY_ITFLAG_NEGPERM      0x002
+#define NPY_ITFLAG_NEGPERM      0x0002
 /* The iterator is tracking an index */
-#define NPY_ITFLAG_HASINDEX     0x004
+#define NPY_ITFLAG_HASINDEX     0x0004
 /* The iterator is tracking coordinates */
-#define NPY_ITFLAG_HASCOORDS    0x008
+#define NPY_ITFLAG_HASCOORDS    0x0008
 /* The iteration order was forced on construction */
-#define NPY_ITFLAG_FORCEDORDER  0x010
+#define NPY_ITFLAG_FORCEDORDER  0x0010
 /* The inner loop is handled outside the iterator */
-#define NPY_ITFLAG_NOINNER      0x020
+#define NPY_ITFLAG_NOINNER      0x0020
 /* The iterator is ranged */
-#define NPY_ITFLAG_RANGE        0x040
+#define NPY_ITFLAG_RANGE        0x0040
 /* The iterator is buffered */
-#define NPY_ITFLAG_BUFFER       0x080
+#define NPY_ITFLAG_BUFFER       0x0080
 /* The iterator should grow the buffered inner loop when possible */
-#define NPY_ITFLAG_GROWINNER    0x100
+#define NPY_ITFLAG_GROWINNER    0x0100
 /* There is just one iteration, can specialize iternext for that */
-#define NPY_ITFLAG_ONEITERATION 0x200
+#define NPY_ITFLAG_ONEITERATION 0x0200
 /* Delay buffer allocation until first Reset* call */
-#define NPY_ITFLAG_DELAYBUF     0x400
+#define NPY_ITFLAG_DELAYBUF     0x0400
 /* Iteration needs API access during iternext */
-#define NPY_ITFLAG_NEEDSAPI     0x800
+#define NPY_ITFLAG_NEEDSAPI     0x0800
+/* Iteration includes one or more operands being reduced */
+#define NPY_ITFLAG_REDUCE       0x1000
 
 /* Internal iterator per-operand iterator flags */
 
@@ -261,8 +263,9 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                     NPY_CASTING casting,
                     char *op_itflags);
 static int
-npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
-                      npy_uint32 *op_flags, npy_intp **op_axes);
+npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
+                    char **op_dataptr,
+                    npy_uint32 *op_flags, npy_intp **op_axes);
 static void
 npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
                       PyArrayObject *op,
@@ -292,10 +295,12 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
 
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
+                npy_uint32 flags, char op_itflags,
                 npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes);
 static int
 npyiter_allocate_arrays(NpyIter *iter,
+                        npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, char *op_itflags,
                         npy_intp **op_axes, int output_scalars);
@@ -313,6 +318,8 @@ static void
 npyiter_copy_from_buffers(NpyIter *iter);
 static void
 npyiter_copy_to_buffers(NpyIter *iter);
+static npy_intp
+npyiter_checkreducesize(NpyIter *iter, npy_intp count);
 
 /*NUMPY_API
  * Allocate a new iterator for multiple array objects
@@ -412,7 +419,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     }
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
-    if (!npyiter_fill_axisdata(iter, op_dataptr, op_flags, op_axes)) {
+    if (!npyiter_fill_axisdata(iter, flags, op_itflags, op_dataptr,
+                                                op_flags, op_axes)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -549,7 +557,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      * copying due to casting/byte order/alignment can be
      * done now using a memory layout matching the iterator.
      */
-    if (!npyiter_allocate_arrays(iter, op_dtype, subtype, op_flags,
+    if (!npyiter_allocate_arrays(iter, flags, op_dtype, subtype, op_flags,
                             op_itflags, op_axes, output_scalars)) {
         NpyIter_Deallocate(iter);
         return NULL;
@@ -2760,8 +2768,9 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
  * Returns 1 on success, 0 on failure.
  */
 static int
-npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
-                      npy_uint32 *op_flags, npy_intp **op_axes)
+npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
+                    char **op_dataptr,
+                    npy_uint32 *op_flags, npy_intp **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -2876,7 +2885,7 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
             if (ondim > ndim) {
                 PyErr_SetString(PyExc_ValueError,
                         "input operand has more dimensions than allowed "
-                        "by the 'op_axes' specified");
+                        "by the axis remapping");
                 return 0;
             }
             for (idim = 0; idim < ondim; ++idim) {
@@ -2961,61 +2970,86 @@ npyiter_fill_axisdata(NpyIter *iter, char **op_dataptr,
         }
     }
 
-    /* Go through and check for operands with NPY_ITER_NO_BROADCAST set */
+    /* Go through and check for operands for broadcasting and reduction */
     for (iiter = 0; iiter < niter; ++iiter) {
-        if (op[iiter] != NULL && (op_flags[iiter]&NPY_ITER_NO_BROADCAST)) {
-            npy_intp *axes;
+        if (op[iiter] != NULL) {
+            /* If broadcasting is disallowed for this operand */
+            if (op_flags[iiter]&NPY_ITER_NO_BROADCAST) {
+                npy_intp *axes;
 
-            axes = op_axes ? op_axes[iiter] : NULL;
-            axisdata = axisdata0;
-            for (idim = 0; idim < ndim; ++idim) {
-                npy_intp i;
-                if (axes) {
-                    i = axes[ndim-idim-1];
-                }
-                else {
-                    i = ndim-idim-1;
-                }
-                if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
-                    if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+                axes = op_axes ? op_axes[iiter] : NULL;
+                axisdata = axisdata0;
+                for (idim = 0; idim < ndim; ++idim) {
+                    npy_intp i;
+                    if (axes) {
+                        i = axes[ndim-idim-1];
+                    }
+                    else {
+                        i = ndim-idim-1;
+                    }
+                    if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
+                        if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+                            if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "output operand is smaller "
+                                        "than the broadcast dimensions");
+                            } else {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "operand is smaller "
+                                        "than the broadcast dimensions");
+                            }
+                            return 0;
+                        }
+                    }
+                    /*
+                     * Also disallow broadcasting by adding additional
+                     * dimensions.
+                     */
+                    else {
                         if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
                             PyErr_SetString(PyExc_ValueError,
-                                    "output operand is smaller "
-                                    "than the broadcast dimensions");
+                                        "output operand is smaller "
+                                        "than the broadcast dimensions");
                         } else {
                             PyErr_SetString(PyExc_ValueError,
-                                    "operand is smaller "
-                                    "than the broadcast dimensions");
+                                        "operand is smaller "
+                                        "than the broadcast dimensions");
                         }
                         return 0;
                     }
+                    
+                    NIT_ADVANCE_AXISDATA(axisdata, 1);
                 }
-                /*
-                 * Allow additional dimensions of size 1 to be added on,
-                 * but no broadcasting that would produce a one to many
-                 * mapping.
-                 *
-                 * TODO: either policy triggers unit test errors...
-                 *   should we disallow this (as previously):
-                 *     x = array(2)
-                 *     np.add(x, [1], x)
-                 *   or should we disallow this (allowed previously):
-                 *     <I forget at the moment>...
-                 */
-                else { /*if (NAD_SHAPE(axisdata) != 1) {*/
-                    if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
-                        PyErr_SetString(PyExc_ValueError,
-                                    "output operand is smaller "
-                                    "than the broadcast dimensions");
-                    } else {
-                        PyErr_SetString(PyExc_ValueError,
-                                    "operand is smaller "
-                                    "than the broadcast dimensions");
+            }
+            /* Check whether this operand includes any reduction */
+            else if (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) {
+                axisdata = axisdata0;
+                for (idim = 0; idim < ndim; ++idim) {
+                    /*
+                     * If the stride is 0 and the shape is bigger than
+                     * one, that's a reduction.
+                     */
+                    if (NAD_SHAPE(axisdata) > 1 &&
+                                    NAD_STRIDES(axisdata)[iiter] == 0) {
+                        if (!(flags&NPY_ITER_REDUCE_OK)) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "operand requires a reduction, but "
+                                    "reduction is not enabled");
+                            return 0;
+                        }
+                        if (!(op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "operand requires a reduction, but "
+                                    "is flagged as write-only, not "
+                                    "read-write");
+                            return 0;
+                        }
+                        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                        break;
                     }
-                    return 0;
+                    
+                    NIT_ADVANCE_AXISDATA(axisdata, 1);
                 }
-                
-                NIT_ADVANCE_AXISDATA(axisdata, 1);
             }
         }
     }
@@ -3681,6 +3715,7 @@ npyiter_shrink_ndim(NpyIter *iter, npy_intp new_ndim)
  */
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
+                npy_uint32 flags, char op_itflags,
                 npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes)
 {
@@ -3694,8 +3729,24 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     char reversestride[NPY_MAXDIMS], anyreverse = 0;
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
+    npy_intp tmp_op_axes = -1;
 
     PyArrayObject *ret;
+
+    /*
+     * If it's an automatically allocated output, start by assuming
+     * the shape will have the same length as the iterator
+     */
+    if (shape == NULL) {
+        /*
+         * If it's a scalar output, trigger scalar allocation below
+         * by making an op_axes of -1
+         */
+        if (op_ndim == 0 && ndim == 1 && op_axes == NULL) {
+            op_axes = &tmp_op_axes;
+        }
+        op_ndim = ndim;
+    }
 
     /* Initially no strides have been set */
     for (idim = 0; idim < op_ndim; ++idim) {
@@ -3741,47 +3792,93 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     /*
      * If custom axes were specified, some dimensions may not have been used.
-     * Throw an error if no shape was specified (i.e. an allocated output),
-     * otherwise fill in the rest.
+     * Add the REDUCE itflag if this creates a reduction situation.
      */
-    for (idim = 0; idim < op_ndim; ++idim) {
-        if (strides[idim] == NPY_MAX_INTP) {
-            npy_intp factor, new_strides[NPY_MAXDIMS],
-                     itemsize;
-            if (shape == NULL) {
+    if (shape == NULL) {
+        npy_intp new_ndim = -1;
+
+        axisdata = NIT_AXISDATA(iter);
+        for (idim = 0; idim < op_ndim; ++idim) {
+            if (strides[idim] == NPY_MAX_INTP) {
+                /*
+                 * If deleting this axis produces a reduction, but
+                 * reduction wasn't enabled, throw an error
+                 */
+                if (NAD_SHAPE(axisdata) != 1) {
+                    if (!(flags&NPY_ITER_REDUCE_OK)) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "output requires a reduction, but "
+                                "reduction is not enabled");
+                        return NULL;
+                    }
+                    if (!(op_itflags&NPY_OP_ITFLAG_READ)) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "output requires a reduction, but "
+                                "is flagged as write-only, not read-write");
+                        return NULL;
+                    }
+
+                    /* Indicate that a reduction is occurring */
+                    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                }
+
+                /* If we didn't get the number of dimensions yet, set it */
+                if (new_ndim == -1) {
+                    new_ndim = idim;
+                }
+            }
+            /*
+             * If there's a gap in the array's dimensions, it's an error.
+             * For example, op_axes of [0,2] for the automatically allocated
+             * output.
+             */
+            else if (new_ndim != -1) {
                 PyErr_SetString(PyExc_ValueError,
-                        "Iterator automatically allocated output "
-                        "had custom axes specified which don't cover "
-                        "all the input axes");
+                        "automatically allocated reduction output array "
+                        "specified with an inconsistent axis mapping");
                 return NULL;
             }
 
-            /* Fill in the missing strides in C order */
-            factor = 1;
-            itemsize = op_dtype->elsize;
-            for (idim = op_ndim-1; idim >= 0; --idim) {
-                if (strides[idim] == NPY_MAX_INTP) {
-                    new_strides[idim] = factor * itemsize;
-                    factor *= shape[idim];
-                }
-            }
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
+        }
 
-            /*
-             * Copy the missing strides, and multiply the existing strides
-             * by the calculated factor.  This way, the missing strides
-             * are tighter together in memory, which is good for nested
-             * loops.
-             */
-            for (idim = 0; idim < op_ndim; ++idim) {
-                if (strides[idim] == NPY_MAX_INTP) {
-                    strides[idim] = new_strides[idim];
-                }
-                else {
-                    strides[idim] *= factor;
-                }
-            }
+        if (new_ndim >= 0) {
+            op_ndim = new_ndim;
+        }
+    }
+    else {
+        for (idim = 0; idim < op_ndim; ++idim) {
+            if (strides[idim] == NPY_MAX_INTP) {
+                npy_intp factor, new_strides[NPY_MAXDIMS],
+                         itemsize;
 
-            break;
+                /* Fill in the missing strides in C order */
+                factor = 1;
+                itemsize = op_dtype->elsize;
+                for (idim = op_ndim-1; idim >= 0; --idim) {
+                    if (strides[idim] == NPY_MAX_INTP) {
+                        new_strides[idim] = factor * itemsize;
+                        factor *= shape[idim];
+                    }
+                }
+
+                /*
+                 * Copy the missing strides, and multiply the existing strides
+                 * by the calculated factor.  This way, the missing strides
+                 * are tighter together in memory, which is good for nested
+                 * loops.
+                 */
+                for (idim = 0; idim < op_ndim; ++idim) {
+                    if (strides[idim] == NPY_MAX_INTP) {
+                        strides[idim] = new_strides[idim];
+                    }
+                    else {
+                        strides[idim] *= factor;
+                    }
+                }
+
+                break;
+            }
         }
     }
 
@@ -3842,6 +3939,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
 static int
 npyiter_allocate_arrays(NpyIter *iter,
+                        npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, char *op_itflags,
                         npy_intp **op_axes, int output_scalars)
@@ -3865,6 +3963,7 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             /* Allocate the output array */
             out = npyiter_new_temp_array(iter, op_subtype,
+                                        flags, op_itflags[iiter],
                                         ondim,
                                         NULL,
                                         op_dtype[iiter],
@@ -3893,6 +3992,7 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             /* Allocate the temporary array, if possible */
             temp = npyiter_new_temp_array(iter, &PyArray_Type,
+                                        flags, op_itflags[iiter],
                                         ondim,
                                         PyArray_DIMS(op[iiter]),
                                         op_dtype[iiter],
@@ -4032,7 +4132,8 @@ npyiter_allocate_arrays(NpyIter *iter,
                 NBF_STRIDES(bufferdata)[iiter] = innerstride;
             }
             else if (!is_one_to_one &&
-                        (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)) {
+                        (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
+                        !(itflags&NPY_ITFLAG_REDUCE)) {
                 PyErr_SetString(PyExc_ValueError,
                         "Iterator operand requires write buffering, "
                         "but has dimensions which have been broadcasted "
@@ -4412,6 +4513,20 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Copy back only if the pointer was pointing to the buffer */
             npy_intp delta = (ptrs[iiter] - buffer);
             if (0 <= delta && delta <= transfersize*dtypes[iiter]->elsize) {
+                npy_intp op_transfersize;
+
+                /*
+                 * If this operand is being reduced in the inner loop,
+                 * its buffering stride was set to zero, and just
+                 * one element was copied.
+                 */
+                if ((itflags&NPY_ITFLAG_REDUCE) && strides[iiter] == 0) {
+                    op_transfersize = 1;
+                }
+                else {
+                    op_transfersize = transfersize;
+                }
+
                 NPY_IT_DBG_PRINTF("Iterator: Copying buffer to "
                                     "operand %d\n", (int)iiter);
                 PyArray_TransferStridedToNDim(ndim,
@@ -4419,7 +4534,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                         buffer, strides[iiter],
                         &NAD_COORD(axisdata), axisdata_incr,
                         &NAD_SHAPE(axisdata), axisdata_incr,
-                        transfersize, dtypes[iiter]->elsize,
+                        op_transfersize, dtypes[iiter]->elsize,
                         stransfer,
                         transferdata);
             }
@@ -4492,6 +4607,17 @@ npyiter_copy_to_buffers(NpyIter *iter)
     if (transfersize > iterend - iterindex) {
         transfersize = iterend - iterindex;
     }
+
+    /*
+     * If there are any reduction operands, we may have to make
+     * the size smaller so we don't copy the same value into
+     * a buffer twice, as the buffering does not have a mechanism
+     * to combine values itself.
+     */
+    if (itflags&NPY_ITFLAG_REDUCE) {
+        transfersize = npyiter_checkreducesize(iter, transfersize);
+    }
+
     NBF_SIZE(bufferdata) = transfersize;
     NBF_BUFITEREND(bufferdata) = iterindex + transfersize;
 
@@ -4551,8 +4677,22 @@ npyiter_copy_to_buffers(NpyIter *iter)
 
         if (stransfer != NULL) {
             npy_intp src_itemsize = PyArray_DESCR(operands[iiter])->elsize;
+            npy_intp op_transfersize;
 
             any_buffered = 1;
+
+            /*
+             * If this operand is being reduced in the inner loop,
+             * set its buffering stride to zero, and just copy
+             * one element.
+             */
+            if ((itflags&NPY_ITFLAG_REDUCE) && ad_strides[iiter] == 0) {
+                op_transfersize = 1;
+                strides[iiter] = 0;
+            }
+            else {
+                op_transfersize = transfersize;
+            }
 
             NPY_IT_DBG_PRINTF("Iterator: Copying operand %d to "
                                 "buffer\n", (int)iiter);
@@ -4561,7 +4701,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
             if (PyDataType_FLAGCHK(dtypes[iiter], NPY_NEEDS_INIT)) {
                 NPY_IT_DBG_PRINTF("Iterator: Buffer requires init, "
                                     "memsetting to 0\n");
-                memset(ptrs[iiter], 0, dtypes[iiter]->elsize*transfersize);
+                memset(ptrs[iiter], 0, dtypes[iiter]->elsize*op_transfersize);
             }
 
             PyArray_TransferNDimToStrided(ndim,
@@ -4569,7 +4709,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
                     ad_ptrs[iiter], &ad_strides[iiter], axisdata_incr,
                     &NAD_COORD(axisdata), axisdata_incr,
                     &NAD_SHAPE(axisdata), axisdata_incr,
-                    transfersize, src_itemsize,
+                    op_transfersize, src_itemsize,
                     stransfer,
                     transferdata);
         }
@@ -4591,6 +4731,9 @@ npyiter_copy_to_buffers(NpyIter *iter)
      */
     if (!any_buffered && (itflags&NPY_ITFLAG_GROWINNER)) {
         if (singlestridesize > transfersize) {
+            NPY_IT_DBG_PRINTF("Iterator: Expanding inner loop size "
+                    "from %d to %d since buffering wasn't needed\n",
+                    (int)NBF_SIZE(bufferdata), (int)singlestridesize);
             NBF_SIZE(bufferdata) = singlestridesize;
             NBF_BUFITEREND(bufferdata) = iterindex + singlestridesize;
         }
@@ -4599,6 +4742,70 @@ npyiter_copy_to_buffers(NpyIter *iter)
     NPY_IT_DBG_PRINTF("Iterator: Finished copying inputs to buffers "
                         "(buffered size is %d)\n", (int)NBF_SIZE(bufferdata));
 }
+
+/*
+ * This checks how much space can be buffered without encountering the
+ * same value twice, or for operands whose innermost stride is zero,
+ * without encountering a different value.  By reducing the buffered
+ * amount to this size, reductions can be safely buffered.
+ */
+static npy_intp
+npyiter_checkreducesize(NpyIter *iter, npy_intp count)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp iiter, niter = NIT_NITER(iter);
+
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp coord, shape, *strides;
+    npy_intp reducespace = 1, factor;
+
+    char stride0op[NPY_MAXARGS];
+
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
+    axisdata = NIT_AXISDATA(iter);
+
+    /* Indicate which operands have stride 0 in the inner loop */
+    strides = NAD_STRIDES(axisdata);
+    for (iiter = 0; iiter < niter; ++iiter) {
+        stride0op[iiter] = (strides[iiter] == 0);
+    }
+    shape = NAD_SHAPE(axisdata);
+    coord = NAD_COORD(axisdata);
+    reducespace += (shape-coord-1);
+    factor = shape;
+    NIT_ADVANCE_AXISDATA(axisdata, 1);
+
+    /* Go forward through axisdata, calculating the space available */
+    for (idim = 1; idim < ndim && reducespace < count;
+                                ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+        strides = NAD_STRIDES(axisdata);
+        for (iiter = 0; iiter < niter; ++iiter) {
+            /*
+             * If a stride switched from zero to non-zero, or vice versa,
+             * that's the point where the data will stop being the same
+             * element or will repeat.
+             */
+            if((stride0op[iiter] && (strides[iiter] != 0)) ||
+                            (!stride0op[iiter] && (strides[iiter] == 0))) {
+                NPY_IT_DBG_PRINTF("Iterator: Reduce operation limits "
+                                    "buffer to %d\n", (int)reducespace);
+                /* Return the smaller of the provided count or reducespace */
+                return (reducespace < count) ? reducespace : count;
+            }
+        }
+        shape = NAD_SHAPE(axisdata);
+        coord = NAD_COORD(axisdata);
+        reducespace += (shape-coord-1) * factor;
+        factor *= shape;
+    }
+
+    /* Return either count or how much space is available */
+    return (reducespace < count) ? reducespace : count;
+}
+
+
 
 /*NUMPY_API
  * For debugging
