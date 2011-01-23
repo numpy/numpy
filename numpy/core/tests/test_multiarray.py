@@ -1088,6 +1088,31 @@ class TestIO(object):
                          array([1,2,3,4]),
                          dtype='<f4')
 
+    @dec.slow # takes > 1 minute on mechanical hard drive
+    def test_big_binary(self):
+        """Test workarounds for 32-bit limited fwrite, fseek, and ftell
+        calls in windows. These normally would hang doing something like this.
+        See http://projects.scipy.org/numpy/ticket/1660"""
+        if sys.platform != 'win32':
+            return
+        try:
+            # before workarounds, only up to 2**32-1 worked
+            fourgbplus = 2**32 + 2**16
+            testbytes = np.arange(8, dtype=np.int8)
+            n = len(testbytes)
+            flike = tempfile.NamedTemporaryFile()
+            f = flike.file
+            np.tile(testbytes, fourgbplus // testbytes.nbytes).tofile(f)
+            flike.seek(0)
+            a = np.fromfile(f, dtype=np.int8)
+            flike.close()
+            assert_(len(a) == fourgbplus)
+            # check only start and end for speed:
+            assert_((a[:n] == testbytes).all())
+            assert_((a[-n:] == testbytes).all())
+        except MemoryError:
+            pass
+
     def test_string(self):
         self._check_from('1,2,3,4', [1., 2., 3., 4.], sep=',')
 
