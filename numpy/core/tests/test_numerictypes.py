@@ -366,7 +366,7 @@ class TestMultipleFields(TestCase):
         self.assertRaises(ValueError, self._bad_call)
     def test_return(self):
         res = self.ary[['f0','f2']].tolist()
-        assert(res == [(1,3), (5,7)])        
+        assert(res == [(1,3), (5,7)])
 
 if __name__ == "__main__":
     run_module_suite()
