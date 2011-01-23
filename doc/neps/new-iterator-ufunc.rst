@@ -24,7 +24,7 @@ Key benefits include:
 * standard and customizable broadcasting
 * automatic type/byte-order/alignment conversions
 * optional buffering to minimize conversion memory usage
-* optional output arrays
+* optional output arrays, with automatic allocation when unsupplied
 * automatic output or common type selection
 
 A large fraction of this iterator design has already been implemented with
@@ -803,6 +803,41 @@ Construction and Destruction
             If the common data type is known ahead of time, don't use this
             flag.  Instead, set the requested dtype for all the operands.
 
+        ``NPY_ITER_REFS_OK``
+
+            Indicates that arrays with reference types (object
+            arrays or structured arrays containing an object type)
+            may be accepted and used in the iterator.  If this flag
+            is enabled, the caller must be sure to check whether
+            ``NpyIter_IterationNeedsAPI(iter)`` is true, in which case
+            it may not release the GIL during iteration.
+
+        ``NPY_ITER_ZEROSIZE_OK``
+
+            Indicates that arrays with a size of zero should be permitted.
+            Since the typical iteration loop does not naturally work with
+            zero-sized arrays, you must check that the IterSize is non-zero
+            before entering the iteration loop.
+
+        ``NPY_ITER_REDUCE_OK``
+
+            Permits writeable operands with a dimension with zero
+            stride and size greater than one.  Note that such operands
+            must be read/write.
+
+            When buffering is enabled, this also switches to a special
+            buffering mode which reduces the loop length as necessary to
+            not trample on values being reduced.
+
+            Note that if you want to do a reduction on an automatically
+            allocated output, you must use ``NpyIter_GetOperandArray``
+            to get its reference, then set every value to the reduction
+            unit before doing the iteration loop.  In the case of a
+            buffered reduction, this means you must also specify the
+            flag ``NPY_ITER_DELAY_BUFALLOC``, then reset the iterator
+            after initializing the allocated operand to prepare the
+            buffers.
+
         ``NPY_ITER_RANGED``
 
             Enables support for iteration of sub-ranges of the full
@@ -817,7 +852,7 @@ Construction and Destruction
             would require special handling, effectively making it more
             like the buffered version.
 
-        ``NPY_ITER_BUFFERED`` **PARTIALLY IMPLEMENTED**
+        ``NPY_ITER_BUFFERED``
 
             Causes the iterator to store buffering data, and use buffering
             to satisfy data type, alignment, and byte-order requirements.
@@ -837,12 +872,11 @@ Construction and Destruction
             broadcast so elements need to be duplicated to get a constant
             stride.
 
-            When an operand is write buffered, it must either be an
-            aligned singleton, so buffering can be skipped for the operand,
-            or must match the dimensions of the iterator broadcast shape.
-            This is because the write back would otherwise overwrite
-            values multiple times to the same output, and accumulation
-            wouldn't work correctly.
+            In normal buffering, the size of each inner loop is equal
+            to the buffer size, or possibly larger if ``NPY_ITER_GROWINNER``
+            is specified.  If ``NPY_ITER_REDUCE_OK`` is enabled and
+            a reduction occurs, the inner loops may become smaller depending
+            on the structure of the reduction.
 
         ``NPY_ITER_GROWINNER``
 
@@ -859,6 +893,14 @@ Construction and Destruction
             called.  This flag exists to avoid wasteful copying of
             buffer data when making multiple copies of a buffered
             iterator for multi-threaded iteration.
+
+            Another use of this flag is for setting up reduction operations.
+            After the iterator is created, and a reduction output
+            is allocated automatically by the iterator (be sure to use
+            READWRITE access), its value may be initialized to the reduction
+            unit.  Use ``NpyIter_GetOperandArray`` to get the object.
+            Then, call ``NpyIter_Reset`` to allocate and fill the buffers
+            with their initial values.
 
     Flags that may be passed in ``op_flags[i]``, where ``0 <= i < niter``:
 
@@ -923,7 +965,7 @@ Construction and Destruction
             output will be in native byte order.
 
             After being allocated with this flag, the caller may retrieve
-            the new array by calling ``NpyIter_GetObjectArray`` and
+            the new array by calling ``NpyIter_GetOperandArray`` and
             getting the i-th object in the returned C array.  The caller
             must call Py_INCREF on it to claim a reference to the array.
 
@@ -1095,7 +1137,7 @@ Construction and Destruction
     It is possible to still use the automatic data conversion and casting
     features of the iterator by creating one of the iterators with
     all the conversion parameters enabled, then grabbing the allocated
-    operands with the ``NpyIter_GetObjectArray`` function and passing
+    operands with the ``NpyIter_GetOperandArray`` function and passing
     them into the constructors for the rest of the iterators.
 
     **WARNING**: When creating iterators for nested iteration,
@@ -1157,6 +1199,39 @@ Construction and Destruction
 
     Returns the number of elements being iterated.  This is the product
     of all the dimensions in the shape.
+
+``npy_intp NpyIter_GetReduceBlockSizeFactor(NpyIter *iter)`` **UNIMPLEMENTED**
+
+    This provides a factor that must divide into the blocksize used
+    for ranged iteration to safely multithread a reduction.  If
+    the iterator has no reduction, it returns 1.
+
+    When using ranged iteration to multithread a reduction, there are
+    two possible ways to do the reduction:
+    
+    If there is a big reduction to a small output, make a temporary
+    array initialized to the reduction unit for each thread, then have
+    each thread reduce into its temporary.  When that is complete,
+    combine the temporaries together.  You can detect this case by
+    observing that ``NpyIter_GetReduceBlockSizeFactor`` returns a
+    large value, for instance half or a third of ``NpyIter_GetIterSize``.
+    You should also check that the output is small just to be sure.
+
+    If there are many small reductions to a big output, and the reduction
+    dimensions are inner dimensions, ``NpyIter_GetReduceBlockSizeFactor``
+    will return a small number, and as long as the block size you choose
+    for multithreading is ``NpyIter_GetReduceBlockSizeFactor(iter)*n``
+    for some ``n``, the operation will be safe.
+
+    The bad case is when the a reduction dimension is the outermost
+    loop in the iterator.  For example, if you have a C-order
+    array with shape (3,1000,1000), and you reduce on dimension 0,
+    ``NpyIter_GetReduceBlockSizeFactor`` will return a size equal to
+    ``NpyIter_GetIterSize`` for ``NPY_KEEPORDER`` or ``NPY_CORDER``
+    iteration orders.  While it is bad for the CPU cache, perhaps
+    in the future another order possibility could be provided, maybe
+    ``NPY_REDUCEORDER``, which pushes the reduction axes to the inner
+    loop, but otherwise is the same as ``NPY_KEEPORDER``.
 
 ``npy_intp NpyIter_GetIterIndex(NpyIter *iter)``
 
@@ -1237,7 +1312,7 @@ Construction and Destruction
     This pointer may be cached before the iteration loop, calling
     ``iternext`` will not change it.
 
-``PyObject **NpyIter_GetObjectArray(NpyIter *iter)``
+``PyObject **NpyIter_GetOperandArray(NpyIter *iter)``
 
     This gives back a pointer to the ``niter`` operand PyObjects
     that are being iterated.  The result points into ``iter``,
@@ -1246,7 +1321,7 @@ Construction and Destruction
 ``PyObject *NpyIter_GetIterView(NpyIter *iter, npy_intp i)``
 
     This gives back a reference to a new ndarray view, which is a view
-    into the i-th object in the array ``NpyIter_GetObjectArray()``,
+    into the i-th object in the array ``NpyIter_GetOperandArray()``,
     whose dimensions and strides match the internal optimized
     iteration pattern.  A C-order iteration of this view is equivalent
     to the iterator's iteration order.
@@ -1496,7 +1571,7 @@ references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags.::
         }
 
         /* Get the result from the iterator object array */
-        ret = NpyIter_GetObjectArray(iter)[1];
+        ret = NpyIter_GetOperandArray(iter)[1];
         Py_INCREF(ret);
 
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
@@ -1751,6 +1826,7 @@ Here's the same function, rewritten to use a new iterator.  Note how
 easy it was to add an optional output parameter.::
 
     In [5]: def composite_over_it(im1, im2, out=None, buffersize=4096):
+      ....:     it = np.newiter([im1, im1[:,:,-1], im2, out],
       ....:                     ['buffered','no_inner_iteration'],
       ....:                     [['readonly']]*3+[['writeonly','allocate']],
       ....:                     op_axes=[None,[0,1,np.newaxis],None,None],
@@ -1808,4 +1884,34 @@ functions.::
     In [18]: np.all(composite_over(image1, image2) ==
         ...:        composite_over_it(image1, image2))
     Out[18]: True
+
+Image Compositing With NumExpr
+------------------------------
+
+As a test of the iterator, numexpr has been enhanced to allow use of
+the iterator instead of its internal broadcasting code.  First, let's
+implement the composite operation with numexpr.::
+
+    In [22]: def composite_over_ne(im1, im2, out=None):
+       ....:     ima = im1[:,:,-1][:,:,np.newaxis]
+       ....:     return ne.evaluate("im1+(1-ima)*im2")
+
+    In [23]: timeit composite_over_ne(image1,image2)
+    1 loops, best of 3: 1.25 s per loop
+
+This beats the straight NumPy operation, but isn't very good.  Switching
+to the iterator version of numexpr, we get a big improvement over the
+straight Python function using the iterator.  Note that in this is on
+a dual core machine.::
+
+    In [29]: def composite_over_ne_it(im1, im2, out=None):
+       ....:     ima = im1[:,:,-1][:,:,np.newaxis]
+       ....:     return ne.evaluate_iter("im1+(1-ima)*im2")
+
+    In [30]: timeit composite_over_ne_it(image1,image2)
+    10 loops, best of 3: 67.2 ms per loop
+
+    In [31]: ne.set_num_threads(1)
+    In [32]: timeit composite_over_ne_it(image1,image2)
+    10 loops, best of 3: 91.1 ms per loop
 
