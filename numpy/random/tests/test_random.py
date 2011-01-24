@@ -11,7 +11,7 @@ class TestRegression(TestCase):
         """
         for mu in np.linspace(-7., 7., 5):
             r = random.mtrand.vonmises(mu,1,50)
-            assert np.all(r > -np.pi) and np.all(r <= np.pi)
+            assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_hypergeometric_range(self) :
         """Test for ticket #921"""
@@ -58,10 +58,10 @@ class TestMultinomial(TestCase):
         random.multinomial(100, [0.2, 0.8, 0.0, 0.0, 0.0])
 
     def test_int_negative_interval(self):
-        assert -5 <= random.randint(-5,-1) < -1
+        assert_( -5 <= random.randint(-5,-1) < -1)
         x = random.randint(-5,-1,5)
-        assert np.all(-5 <= x)
-        assert np.all(x < -1)
+        assert_(np.all(-5 <= x))
+        assert_(np.all(x < -1))
 
 
 
@@ -75,7 +75,7 @@ class TestSetState(TestCase):
         old = self.prng.tomaxint(16)
         self.prng.set_state(self.state)
         new = self.prng.tomaxint(16)
-        assert np.all(old == new)
+        assert_(np.all(old == new))
 
     def test_gaussian_reset(self):
         """ Make sure the cached every-other-Gaussian is reset.
@@ -83,7 +83,7 @@ class TestSetState(TestCase):
         old = self.prng.standard_normal(size=3)
         self.prng.set_state(self.state)
         new = self.prng.standard_normal(size=3)
-        assert np.all(old == new)
+        assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         """ When the state is saved with a cached Gaussian, make sure the cached
@@ -94,7 +94,7 @@ class TestSetState(TestCase):
         old = self.prng.standard_normal(size=3)
         self.prng.set_state(state)
         new = self.prng.standard_normal(size=3)
-        assert np.all(old == new)
+        assert_(np.all(old == new))
 
     def test_backwards_compatibility(self):
         """ Make sure we can accept old state tuples that do not have the cached
@@ -106,8 +106,8 @@ class TestSetState(TestCase):
         x2 = self.prng.standard_normal(size=16)
         self.prng.set_state(self.state)
         x3 = self.prng.standard_normal(size=16)
-        assert np.all(x1 == x2)
-        assert np.all(x1 == x3)
+        assert_(np.all(x1 == x2))
+        assert_(np.all(x1 == x3))
 
     def test_negative_binomial(self):
         """ Ensure that the negative binomial results take floating point
