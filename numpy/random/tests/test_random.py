@@ -41,6 +41,15 @@ class TestRegression(TestCase):
         b = np.random.permutation(12L)
         assert_array_equal(a, b)
 
+    def test_hypergeometric_range(self) :
+        """Test for ticket #1690"""
+        lmax = np.iinfo('l').max
+        lmin = np.iinfo('l').min
+        try:
+            random.randint(lmin, lmax)
+        except:
+            raise AssertionError
+
 class TestMultinomial(TestCase):
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])

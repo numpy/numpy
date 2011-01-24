@@ -855,7 +855,8 @@ cdef class RandomState:
                [3, 2, 2, 0]])
 
         """
-        cdef long lo, hi, diff
+        cdef long lo, hi, rv
+        cdef unsigned long diff
         cdef long *array_data
         cdef ndarray array "arrayObject"
         cdef long length
@@ -868,18 +869,20 @@ cdef class RandomState:
             lo = low
             hi = high
 
-        diff = hi - lo - 1
-        if diff < 0:
+        if lo >= hi :
             raise ValueError("low >= high")
 
+        diff = <unsigned long>hi - <unsigned long>lo - 1UL
         if size is None:
-            return <long>rk_interval(diff, self.internal_state) + lo
+            rv = lo + <long>rk_interval(diff, self. internal_state)
+            return rv
         else:
             array = <ndarray>np.empty(size, int)
             length = PyArray_SIZE(array)
             array_data = <long *>array.data
             for i from 0 <= i < length:
-                array_data[i] = lo + <long>rk_interval(diff, self.internal_state)
+                rv = lo + <long>rk_interval(diff, self. internal_state)
+                array_data[i] = rv
             return array
 
     def bytes(self, unsigned int length):
