@@ -292,16 +292,17 @@ multiarray_funcs_api = {
     'NpyIter_GetWriteFlags':                258,
     'NpyIter_DebugPrint':                   259,
     'NpyIter_IterationNeedsAPI':            260,
+    'NpyIter_GetInnerFixedStrideArray':     261,
     #
-    'PyArray_CastingConverter':             261,
-    'PyArray_CountNonzero':                 262,
-    'PyArray_PromoteTypes':                 263,
-    'PyArray_MinScalarType':                264,
-    'PyArray_ResultType':                   265,
-    'PyArray_CanCastArrayTo':               266,
-    'PyArray_CanCastTypeTo':                267,
-    'PyArray_EinsteinSum':                  268,
-    'PyArray_FillWithZero':                 269,
+    'PyArray_CastingConverter':             262,
+    'PyArray_CountNonzero':                 263,
+    'PyArray_PromoteTypes':                 264,
+    'PyArray_MinScalarType':                265,
+    'PyArray_ResultType':                   266,
+    'PyArray_CanCastArrayTo':               267,
+    'PyArray_CanCastTypeTo':                268,
+    'PyArray_EinsteinSum':                  269,
+    'PyArray_FillWithZero':                 270,
 }
 
 ufunc_types_api = {

@@ -283,72 +283,139 @@ class TestEinSum(TestCase):
         assert_(b.base is a)
         assert_equal(b, a.swapaxes(0,1))
 
-    def test_einsum_sums(self):
+    def check_einsum_sums(self, dtype):
         # sum(a, axis=-1)
-        a = np.arange(10)
+        a = np.arange(10, dtype=dtype)
         assert_equal(np.einsum("i->", a), np.sum(a, axis=-1))
 
-        a = np.arange(24).reshape(2,3,4)
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
         assert_equal(np.einsum("i->", a), np.sum(a, axis=-1))
 
         # sum(a, axis=0)
-        a = np.arange(10)
+        a = np.arange(10, dtype=dtype)
         assert_equal(np.einsum("i...->", a), np.sum(a, axis=0))
 
-        a = np.arange(24).reshape(2,3,4)
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
         assert_equal(np.einsum("i...->", a), np.sum(a, axis=0))
 
         # trace(a)
-        a = np.arange(25).reshape(5,5)
+        a = np.arange(25, dtype=dtype).reshape(5,5)
         assert_equal(np.einsum("ii", a), np.trace(a))
 
         # multiply(a, b)
-        a = np.arange(12).reshape(3,4)
-        b = np.arange(24).reshape(2,3,4)
+        a = np.arange(12, dtype=dtype).reshape(3,4)
+        b = np.arange(24, dtype=dtype).reshape(2,3,4)
         assert_equal(np.einsum(",", a, b), np.multiply(a, b))
 
         # inner(a,b)
-        a = np.arange(24).reshape(2,3,4)
-        b = np.arange(4)
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
+        b = np.arange(4, dtype=dtype)
         assert_equal(np.einsum("i,i", a, b), np.inner(a, b))
 
-        a = np.arange(24).reshape(2,3,4)
-        b = np.arange(2)
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
+        b = np.arange(2, dtype=dtype)
         assert_equal(np.einsum("i...,i...", a, b), np.inner(a.T, b.T).T)
 
         # outer(a,b)
-        a = np.arange(3)+1
-        b = np.arange(4)+1
+        a = np.arange(3, dtype=dtype)+1
+        b = np.arange(4, dtype=dtype)+1
         assert_equal(np.einsum("i,j", a, b), np.outer(a, b))
 
         # matvec(a,b) / a.dot(b) where a is matrix, b is vector
-        a = np.arange(20).reshape(4,5)
-        b = np.arange(5)
+        a = np.arange(20, dtype=dtype).reshape(4,5)
+        b = np.arange(5, dtype=dtype)
         assert_equal(np.einsum("ij,j", a, b), np.dot(a, b))
 
-        a = np.arange(20).reshape(4,5)
-        b = np.arange(5)
+        a = np.arange(20, dtype=dtype).reshape(4,5)
+        b = np.arange(5, dtype=dtype)
         assert_equal(np.einsum("ji,j", a.T, b.T), np.dot(b.T, a.T))
 
         # matmat(a,b) / a.dot(b) where a is matrix, b is matrix
-        a = np.arange(20).reshape(4,5)
-        b = np.arange(30).reshape(5,6)
+        a = np.arange(20, dtype=dtype).reshape(4,5)
+        b = np.arange(30, dtype=dtype).reshape(5,6)
         assert_equal(np.einsum("ij,jk", a, b), np.dot(a, b))
 
         # tensordot(a, b)
-        a = np.arange(60.).reshape(3,4,5)
-        b = np.arange(24.).reshape(4,3,2)
-        assert_equal(np.einsum("ijk,jil->kl", a, b),
-                        np.tensordot(a,b, axes=([1,0],[0,1])))
+        if np.dtype(dtype) != np.dtype('f2'):
+            a = np.arange(60, dtype=dtype).reshape(3,4,5)
+            b = np.arange(24, dtype=dtype).reshape(4,3,2)
+            assert_equal(np.einsum("ijk,jil->kl", a, b),
+                            np.tensordot(a,b, axes=([1,0],[0,1])))
 
         # logical_and(logical_and(a!=0, b!=0), c!=0)
-        a = np.array([1,   3,   -2,   0,   12,  13,   0,   1])
-        b = np.array([0,   3.5, 0.,   -2,  0,   1,    3,   12])
+        a = np.array([1,   3,   -2,   0,   12,  13,   0,   1], dtype=dtype)
+        b = np.array([0,   3.5, 0.,   -2,  0,   1,    3,   12], dtype=dtype)
         c = np.array([True,True,False,True,True,False,True,True])
         assert_equal(np.einsum("i,i,i->i", a, b, c,
                                 dtype='?', casting='unsafe'),
                             logical_and(logical_and(a!=0, b!=0), c!=0))
 
+        a = np.arange(9, dtype=dtype)
+        assert_equal(np.einsum(",i->", 3, a), 3*np.sum(a))
+        assert_equal(np.einsum("i,->", a, 3), 3*np.sum(a))
+
+        # Various stride0, contiguous, and SSE aligned variants
+        a = np.arange(64, dtype=dtype)
+        if np.dtype(dtype).itemsize > 1:
+            assert_equal(np.einsum(",",a,a), np.multiply(a,a))
+            assert_equal(np.einsum("i,i", a, a), np.dot(a,a))
+            assert_equal(np.einsum("i,->i", a, 2), 2*a)
+            assert_equal(np.einsum(",i->i", 2, a), 2*a)
+            assert_equal(np.einsum("i,->", a, 2), 2*np.sum(a))
+            assert_equal(np.einsum(",i->", 2, a), 2*np.sum(a))
+
+            assert_equal(np.einsum(",",a[1:],a[:-1]), np.multiply(a[1:],a[:-1]))
+            assert_equal(np.einsum("i,i", a[1:], a[:-1]), np.dot(a[1:],a[:-1]))
+            assert_equal(np.einsum("i,->i", a[1:], 2), 2*a[1:])
+            assert_equal(np.einsum(",i->i", 2, a[1:]), 2*a[1:])
+            assert_equal(np.einsum("i,->", a[1:], 2), 2*np.sum(a[1:]))
+            assert_equal(np.einsum(",i->", 2, a[1:]), 2*np.sum(a[1:]))
+
+
+    def test_einsum_sums_int8(self):
+        self.check_einsum_sums('i1');
+
+    def test_einsum_sums_uint8(self):
+        self.check_einsum_sums('u1');
+
+    def test_einsum_sums_int16(self):
+        self.check_einsum_sums('i2');
+
+    def test_einsum_sums_uint16(self):
+        self.check_einsum_sums('u2');
+
+    def test_einsum_sums_int32(self):
+        self.check_einsum_sums('i4');
+
+    def test_einsum_sums_uint32(self):
+        self.check_einsum_sums('u4');
+
+    def test_einsum_sums_int64(self):
+        self.check_einsum_sums('i8');
+
+    def test_einsum_sums_uint64(self):
+        self.check_einsum_sums('u8');
+
+    def test_einsum_sums_float16(self):
+        self.check_einsum_sums('f2');
+
+    def test_einsum_sums_float32(self):
+        self.check_einsum_sums('f4');
+
+    def test_einsum_sums_float64(self):
+        self.check_einsum_sums('f8');
+
+    def test_einsum_sums_longdouble(self):
+        self.check_einsum_sums(np.longdouble);
+
+    def test_einsum_sums_cfloat64(self):
+        self.check_einsum_sums('c8');
+
+    def test_einsum_sums_cfloat128(self):
+        self.check_einsum_sums('c16');
+
+    def test_einsum_sums_clongdouble(self):
+        self.check_einsum_sums(np.clongdouble);
 
 class TestNonarrayArgs(TestCase):
     # check that non-array arguments to functions wrap them in arrays

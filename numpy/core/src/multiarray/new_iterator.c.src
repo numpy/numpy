@@ -113,7 +113,7 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         ((NPY_SIZEOF_INTP)*(niter+1))
 #define NIT_BASEOFFSETS_SIZEOF(itflags, ndim, niter) \
         ((NPY_SIZEOF_INTP)*(niter+1))
-#define NIT_OBJECTS_SIZEOF(itflags, ndim, niter) \
+#define NIT_OPERANDS_SIZEOF(itflags, ndim, niter) \
         ((NPY_SIZEOF_INTP)*(niter))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, niter) \
         (NPY_INTP_ALIGNED(niter))
@@ -132,12 +132,12 @@ typedef struct NpyIter_BD NpyIter_BufferData;
 #define NIT_BASEOFFSETS_OFFSET(itflags, ndim, niter) \
         (NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter) + \
          NIT_RESETDATAPTR_SIZEOF(itflags, ndim, niter))
-#define NIT_OBJECTS_OFFSET(itflags, ndim, niter) \
+#define NIT_OPERANDS_OFFSET(itflags, ndim, niter) \
         (NIT_BASEOFFSETS_OFFSET(itflags, ndim, niter) + \
          NIT_BASEOFFSETS_SIZEOF(itflags, ndim, niter))
 #define NIT_OPITFLAGS_OFFSET(itflags, ndim, niter) \
-        (NIT_OBJECTS_OFFSET(itflags, ndim, niter) + \
-         NIT_OBJECTS_SIZEOF(itflags, ndim, niter))
+        (NIT_OPERANDS_OFFSET(itflags, ndim, niter) + \
+         NIT_OPERANDS_SIZEOF(itflags, ndim, niter))
 #define NIT_BUFFERDATA_OFFSET(itflags, ndim, niter) \
         (NIT_OPITFLAGS_OFFSET(itflags, ndim, niter) + \
          NIT_OPITFLAGS_SIZEOF(itflags, ndim, niter))
@@ -168,8 +168,8 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         &(iter)->iter_flexdata + NIT_RESETDATAPTR_OFFSET(itflags, ndim, niter)))
 #define NIT_BASEOFFSETS(iter) ((npy_intp *)( \
         &(iter)->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, niter)))
-#define NIT_OBJECTS(iter) ((PyArrayObject **)( \
-        &(iter)->iter_flexdata + NIT_OBJECTS_OFFSET(itflags, ndim, niter)))
+#define NIT_OPERANDS(iter) ((PyArrayObject **)( \
+        &(iter)->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, niter)))
 #define NIT_OPITFLAGS(iter) ( \
         &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, niter))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
@@ -399,7 +399,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     NIT_ITERINDEX(iter) = 0;
     memset(NIT_BASEOFFSETS(iter), 0, (niter+1)*NPY_SIZEOF_INTP);
 
-    op = NIT_OBJECTS(iter);
+    op = NIT_OPERANDS(iter);
     op_dtype = NIT_DTYPES(iter);
     op_itflags = NIT_OPITFLAGS(iter);
     op_dataptr = NIT_RESETDATAPTR(iter);
@@ -519,6 +519,9 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         PyArray_Descr *dtype;
         int only_inputs = !(flags&NPY_ITER_COMMON_DTYPE);
 
+        op = NIT_OPERANDS(iter);
+        op_dtype = NIT_DTYPES(iter);
+
         dtype = npyiter_get_common_dtype(niter, op,
                                     op_itflags, op_dtype,
                                     op_request_dtypes,
@@ -529,21 +532,21 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             return NULL;
         }
         if (flags&NPY_ITER_COMMON_DTYPE) {
+            NPY_IT_DBG_PRINTF("Iterator: Replacing all data types\n");
             /* Replace all the data types */
             for (iiter = 0; iiter < niter; ++iiter) {
                 Py_XDECREF(op_dtype[iiter]);
                 Py_INCREF(dtype);
                 op_dtype[iiter] = dtype;
-                NIT_DTYPES(iter)[iiter] = dtype;
             }
         }
         else {
+            NPY_IT_DBG_PRINTF("Iterator: Setting unset output data types\n");
             /* Replace the NULL data types */
             for (iiter = 0; iiter < niter; ++iiter) {
                 if (op_dtype[iiter] == NULL) {
                     Py_INCREF(dtype);
                     op_dtype[iiter] = dtype;
-                    NIT_DTYPES(iter)[iiter] = dtype;
                 }
             }
         }
@@ -584,7 +587,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
          */
         itflags = NIT_ITFLAGS(iter);
         ndim = NIT_NDIM(iter);
-        op = NIT_OBJECTS(iter);
+        op = NIT_OPERANDS(iter);
         op_dtype = NIT_DTYPES(iter);
         op_itflags = NIT_OPITFLAGS(iter);
         op_dataptr = NIT_RESETDATAPTR(iter);
@@ -697,7 +700,7 @@ NpyIter_Copy(NpyIter *iter)
     memcpy(newiter, iter, size);
 
     /* Take ownership of references to the operands and dtypes */
-    objects = NIT_OBJECTS(newiter);
+    objects = NIT_OPERANDS(newiter);
     dtypes = NIT_DTYPES(newiter);
     for (iiter = 0; iiter < niter; ++iiter) {
         Py_INCREF(objects[iiter]);
@@ -787,7 +790,7 @@ NpyIter_Deallocate(NpyIter *iter)
     npy_intp iiter, niter = NIT_NITER(iter);
 
     PyArray_Descr **dtype = NIT_DTYPES(iter);
-    PyArrayObject **object = NIT_OBJECTS(iter);
+    PyArrayObject **object = NIT_OPERANDS(iter);
 
     /* Deallocate any buffers and buffering data */
     if (itflags&NPY_ITFLAG_BUFFER) {
@@ -2018,7 +2021,7 @@ NpyIter_GetOperandArray(NpyIter *iter)
     npy_intp ndim = NIT_NDIM(iter);
     npy_intp niter = NIT_NITER(iter);
 
-    return NIT_OBJECTS(iter);
+    return NIT_OPERANDS(iter);
 }
 
 /*NUMPY_API
@@ -2052,7 +2055,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
         return NULL;
     }
 
-    obj = NIT_OBJECTS(iter)[i];
+    obj = NIT_OPERANDS(iter)[i];
     dtype = PyArray_DESCR(obj);
     writeable = NIT_OPITFLAGS(iter)[i]&NPY_OP_ITFLAG_WRITE;
     dataptr = NIT_RESETDATAPTR(iter)[i];
@@ -2159,6 +2162,65 @@ NpyIter_GetInnerStrideArray(NpyIter *iter)
         return NAD_STRIDES(axisdata);
     }
 }
+
+/*NUMPY_API
+ * Get an array of strides which are fixed.  Any strides which may
+ * change during iteration receive the value NPY_MAX_INTP.  Once
+ * the iterator is ready to iterate, call this to get the strides
+ * which will always be fixed in the inner loop, then choose optimized
+ * inner loop functions which take advantage of those fixed strides.
+ *
+ * This function may be safely called without holding the Python GIL.
+ */
+NPY_NO_EXPORT void
+NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp ndim = NIT_NDIM(iter);
+    npy_intp iiter, niter = NIT_NITER(iter);
+
+    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        NpyIter_BufferData *data = NIT_BUFFERDATA(iter);
+        char *op_itflags = NIT_OPITFLAGS(iter);
+        npy_intp stride, *strides = NBF_STRIDES(data),
+                *ad_strides = NAD_STRIDES(axisdata);
+        PyArray_Descr **dtypes = NIT_DTYPES(iter);
+
+        for (iiter = 0; iiter < niter; ++iiter) {
+            stride = strides[iiter];
+            /* Operands which are always/never buffered have fixed strides */
+            if (op_itflags[iiter]&
+                            (NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_BUFNEVER)) {
+                out_strides[iiter] = stride;
+            }
+            /* Reductions in the inner loop have fixed strides */
+            else if (stride == 0 && (itflags&NPY_ITFLAG_REDUCE)) {
+                out_strides[iiter] = stride;
+            }
+            /*
+             * Inner loop contiguous array means its stride won't change when
+             * switching between buffering and not buffering
+             */
+            else if (ad_strides[iiter] == dtypes[iiter]->elsize) {
+                out_strides[iiter] = ad_strides[iiter];
+            }
+            /*
+             * Otherwise the strides can change if the operand is sometimes
+             * buffered, sometimes not.
+             */
+            else {
+                out_strides[iiter] = NPY_MAX_INTP;
+            }
+        }
+    }
+    else {
+        /* If there's no buffering, the strides are always fixed */
+        memcpy(out_strides, NAD_STRIDES(axisdata), niter*NPY_SIZEOF_INTP);
+    }
+}
+
 
 /*NUMPY_API
  * Get a pointer to the size of the inner loop  (when HasInnerLoop is false)
@@ -2685,6 +2747,20 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
     npy_intp iiter;
 
     for(iiter = 0; iiter < niter; ++iiter) {
+        NPY_IT_DBG_PRINTF("Iterator: Checking casting for operand %d\n",
+                            (int)iiter);
+#if NPY_IT_DBG_TRACING 
+        printf("op: ");
+        if (op[iiter] != NULL) {
+            PyObject_Print((PyObject *)PyArray_DESCR(op[iiter]), stdout, 0);
+        }
+        else {
+            printf("<null>");
+        }
+        printf(", iter: ");
+        PyObject_Print((PyObject *)op_dtype[iiter], stdout, 0);
+        printf("\n");
+#endif
         /* If the types aren't equivalent, a cast is necessary */
         if (op[iiter] != NULL && !PyArray_EquivTypes(PyArray_DESCR(op[iiter]),
                                                      op_dtype[iiter])) {
@@ -2795,7 +2871,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
     char *odataptr;
     NpyIter_AxisData *axisdata0, *axisdata;
     npy_intp sizeof_axisdata;
-    PyArrayObject **op = NIT_OBJECTS(iter);
+    PyArrayObject **op = NIT_OPERANDS(iter);
 
     axisdata0 = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
@@ -3331,7 +3407,7 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_FORCEDORDER;
         /* Only need to actually do something if there is more than 1 dim */
         if (ndim > 1) {
-            PyArrayObject **op = NIT_OBJECTS(iter);
+            PyArrayObject **op = NIT_OPERANDS(iter);
             int forder = 1;
 
             /* Check that all the array inputs are fortran order */
@@ -3975,7 +4051,7 @@ npyiter_allocate_arrays(NpyIter *iter,
     npy_intp iiter, niter = NIT_NITER(iter);
 
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-    PyArrayObject **op = NIT_OBJECTS(iter);
+    PyArrayObject **op = NIT_OPERANDS(iter);
 
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op[iiter] == NULL) {
@@ -4216,6 +4292,8 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
     PyArrayObject *arrs[NPY_MAXARGS];
     PyArray_Descr *dtypes[NPY_MAXARGS];
 
+    NPY_IT_DBG_PRINTF("Iterator: Getting a common data type from operands\n");
+
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op_dtype[iiter] != NULL &&
                     (!only_inputs || (op_itflags[iiter]&NPY_OP_ITFLAG_READ))) {
@@ -4246,7 +4324,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     char *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-    PyArrayObject **op = NIT_OBJECTS(iter);
+    PyArrayObject **op = NIT_OPERANDS(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
     PyArray_StridedTransferFn **readtransferfn = NBF_READTRANSFERFN(bufferdata),
@@ -4614,7 +4692,7 @@ npyiter_copy_to_buffers(NpyIter *iter)
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
 
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
-    PyArrayObject **operands = NIT_OBJECTS(iter);
+    PyArrayObject **operands = NIT_OPERANDS(iter);
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
@@ -4929,14 +5007,14 @@ NpyIter_DebugPrint(NpyIter *iter)
     }
     printf("Operands: ");
     for (iiter = 0; iiter < niter; ++iiter) {
-        printf("%p ", NIT_OBJECTS(iter)[iiter]);
+        printf("%p ", NIT_OPERANDS(iter)[iiter]);
     }
     printf("\n");
     printf("Operand DTypes: ");
     for (iiter = 0; iiter < niter; ++iiter) {
         PyArray_Descr *dtype;
-        if (NIT_OBJECTS(iter)[iiter] != NULL) {
-            dtype = PyArray_DESCR(NIT_OBJECTS(iter)[iiter]);
+        if (NIT_OPERANDS(iter)[iiter] != NULL) {
+            dtype = PyArray_DESCR(NIT_OPERANDS(iter)[iiter]);
             if (dtype != NULL)
                 PyObject_Print((PyObject *)dtype, stdout, 0);
             else

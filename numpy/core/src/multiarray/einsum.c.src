@@ -18,6 +18,32 @@
 
 #include <ctype.h>
 
+#ifdef __SSE__
+#define EINSUM_USE_SSE1 1
+#else
+#define EINSUM_USE_SSE1 0
+#endif
+
+/*
+ * TODO: Only SSE for float32 is implemented in the loops,
+ * no SSE2 for float64
+ */
+#ifdef __SSE2__
+#define EINSUM_USE_SSE2 0
+#else
+#define EINSUM_USE_SSE2 0
+#endif
+
+#if EINSUM_USE_SSE1
+#include <xmmintrin.h>
+#endif
+
+#if EINSUM_USE_SSE2
+#include <emmintrin.h>
+#endif
+
+#define EINSUM_IS_SSE_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
+
 typedef enum {
     BROADCAST_LEFT,
     BROADCAST_RIGHT,
@@ -45,6 +71,10 @@ typedef enum {
  *            0*5,
  *            0*4,
  *            1*3#
+ * #float32 = 0*5,
+ *            0*5,
+ *            0,1,0,0,
+ *            0*3#
  */
 
 /**begin repeat1
@@ -55,29 +85,46 @@ static void
 @name@_sum_of_products_@noplabel@(int nop, char **dataptr,
                                 npy_intp *strides, npy_intp count)
 {
+#if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3) && !@complex@
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3) && !@complex@
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+#if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
+    char *data_out = dataptr[@nop@];
+    npy_intp stride_out = strides[@nop@];
+#endif
+
     while (count--) {
 #if !@complex@
 #  if @nop@ == 1
-        *(npy_@name@ *)dataptr[1] = @to@(@from@(*(npy_@name@ *)dataptr[0]) +
-                                         @from@(*(npy_@name@ *)dataptr[1]));
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
+        *(npy_@name@ *)data_out = @to@(@from@(*(npy_@name@ *)data0) +
+                                         @from@(*(npy_@name@ *)data_out));
+        data0 += stride0;
+        data_out += stride_out;
 #  elif @nop@ == 2
-        *(npy_@name@ *)dataptr[2] = @to@(@from@(*(npy_@name@ *)dataptr[0]) *
-                                         @from@(*(npy_@name@ *)dataptr[1]) +
-                                         @from@(*(npy_@name@ *)dataptr[2]));
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
-        dataptr[2] += strides[2];
+        *(npy_@name@ *)data_out = @to@(@from@(*(npy_@name@ *)data0) *
+                                         @from@(*(npy_@name@ *)data1) +
+                                         @from@(*(npy_@name@ *)data_out));
+        data0 += stride0;
+        data1 += stride1;
+        data_out += stride_out;
 #  elif @nop@ == 3
-        *(npy_@name@ *)dataptr[3] = @to@(@from@(*(npy_@name@ *)dataptr[0]) *
-                                         @from@(*(npy_@name@ *)dataptr[1]) *
-                                         @from@(*(npy_@name@ *)dataptr[2]) +
-                                         @from@(*(npy_@name@ *)dataptr[3]));
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
-        dataptr[2] += strides[2];
-        dataptr[3] += strides[3];
+        *(npy_@name@ *)data_out = @to@(@from@(*(npy_@name@ *)data0) *
+                                         @from@(*(npy_@name@ *)data1) *
+                                         @from@(*(npy_@name@ *)data2) +
+                                         @from@(*(npy_@name@ *)data_out));
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+        data_out += stride_out;
 #  else
         npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
         int i;
@@ -92,12 +139,12 @@ static void
 #  endif
 #else /* complex */
 #  if @nop@ == 1
-        ((npy_@temp@ *)dataptr[1])[0] = ((npy_@temp@ *)dataptr[0])[0] +
-                                         ((npy_@temp@ *)dataptr[1])[0];
-        ((npy_@temp@ *)dataptr[1])[1] = ((npy_@temp@ *)dataptr[0])[1] +
-                                         ((npy_@temp@ *)dataptr[1])[1];
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
+        ((npy_@temp@ *)data_out)[0] = ((npy_@temp@ *)data0)[0] +
+                                         ((npy_@temp@ *)data_out)[0];
+        ((npy_@temp@ *)data_out)[1] = ((npy_@temp@ *)data0)[1] +
+                                         ((npy_@temp@ *)data_out)[1];
+        data0 += stride0;
+        data_out += stride_out;
 #  else
 #    if @nop@ <= 3
 #define _SUMPROD_NOP @nop@
@@ -108,7 +155,7 @@ static void
         re = ((npy_@temp@ *)dataptr[0])[0];
         im = ((npy_@temp@ *)dataptr[0])[1];
         int i;
-        for (i = 1; i <= _SUMPROD_NOP; ++i) {
+        for (i = 1; i < _SUMPROD_NOP; ++i) {
             tmp = re * ((npy_@temp@ *)dataptr[i])[0] -
                   im * ((npy_@temp@ *)dataptr[i])[1];
             im = re * ((npy_@temp@ *)dataptr[i])[1] +
@@ -129,6 +176,723 @@ static void
     }
 }
 
+#if @nop@ == 1
+
+static void
+@name@_sum_of_products_contig_one(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    npy_@name@ *data_out = (npy_@name@ *)dataptr[1];
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+#if !@complex@
+        data_out[@i@] = @to@(@from@(data0[@i@]) +
+                             @from@(data_out[@i@]));
+#else /* complex */
+        ((npy_@temp@ *)data_out + 2*@i@)[0] =
+                                ((npy_@temp@ *)data0 + 2*@i@)[0] +
+                                ((npy_@temp@ *)data_out + 2*@i@)[0];
+        ((npy_@temp@ *)data_out + 2*@i@)[1] =
+                                ((npy_@temp@ *)data0 + 2*@i@)[1] +
+                                ((npy_@temp@ *)data_out + 2*@i@)[1];
+#endif
+        data0 += 16;
+        data_out += 16;
+/**end repeat2**/
+    }
+
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        return;
+    }
+#if !@complex@
+    data_out[@i@] = @to@(@from@(data0[@i@]) +
+                         @from@(data_out[@i@]));
+#else
+    ((npy_@temp@ *)data_out + 2*@i@)[0] =
+                            ((npy_@temp@ *)data0 + 2*@i@)[0] +
+                            ((npy_@temp@ *)data_out + 2*@i@)[0];
+    ((npy_@temp@ *)data_out + 2*@i@)[1] =
+                            ((npy_@temp@ *)data0 + 2*@i@)[1] +
+                            ((npy_@temp@ *)data_out + 2*@i@)[1];
+#endif
+/**end repeat2**/
+}
+
+#elif @nop@ == 2 && !@complex@
+
+static void
+@name@_sum_of_products_contig_two(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
+    npy_@name@ *data_out = (npy_@name@ *)dataptr[2];
+
+#if EINSUM_USE_SSE1 && @float32@
+    __m128 a, b;
+#endif
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
+        EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 16 */
+        while (count >= 16) {
+            count -= 16;
+
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+            a = _mm_mul_ps(_mm_load_ps(data0+@i@), _mm_load_ps(data1+@i@));
+            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
+            _mm_store_ps(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 16;
+            data1 += 16;
+            data_out += 16;
+        }
+    }
+#endif
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+#if EINSUM_USE_SSE1 && @float32@
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
+        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
+        _mm_storeu_ps(data_out+@i@, b);
+/**end repeat2**/
+#else
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        data_out[@i@] = @to@(@from@(data0[@i@]) *
+                             @from@(data1[@i@]) +
+                             @from@(data_out[@i@]));
+/**end repeat2**/
+#endif
+        data0 += 16;
+        data1 += 16;
+        data_out += 16;
+    }
+
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        return;
+    }
+    data_out[@i@] = @to@(@from@(data0[@i@]) *
+                         @from@(data1[@i@]) +
+                         @from@(data_out[@i@]));
+/**end repeat2**/
+}
+
+/* Some extra specializations for the two operand case */
+static void
+@name@_sum_of_products_stride0_contig_outcontig_two(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@temp@ value0 = @from@(*(npy_@name@ *)dataptr[0]);
+    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
+    npy_@name@ *data_out = (npy_@name@ *)dataptr[2];
+
+#if EINSUM_USE_SSE1 && @float32@
+    __m128 a, b, value0_sse;
+
+    value0_sse = _mm_set_ps1(value0);
+#endif
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 16 */
+        while (count >= 16) {
+            count -= 16;
+
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+            a = _mm_mul_ps(value0_sse, _mm_load_ps(data1+@i@));
+            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
+            _mm_store_ps(data_out+@i@, b);
+/**end repeat2**/
+            data1 += 16;
+            data_out += 16;
+        }
+    }
+#endif
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+#if EINSUM_USE_SSE1 && @float32@
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+        a = _mm_mul_ps(value0_sse, _mm_loadu_ps(data1+@i@));
+        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
+        _mm_storeu_ps(data_out+@i@, b);
+/**end repeat2**/
+#else
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        data_out[@i@] = @to@(value0 *
+                             @from@(data1[@i@]) +
+                             @from@(data_out[@i@]));
+/**end repeat2**/
+#endif
+        data1 += 16;
+        data_out += 16;
+    }
+
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        return;
+    }
+    data_out[@i@] = @to@(value0 *
+                         @from@(data1[@i@]) +
+                         @from@(data_out[@i@]));
+/**end repeat2**/
+}
+
+static void
+@name@_sum_of_products_contig_stride0_outcontig_two(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    npy_@temp@ value1 = @from@(*(npy_@name@ *)dataptr[1]);
+    npy_@name@ *data_out = (npy_@name@ *)dataptr[2];
+
+#if EINSUM_USE_SSE1 && @float32@
+    __m128 a, b, value1_sse;
+
+    value1_sse = _mm_set_ps1(value1);
+#endif
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 16 */
+        while (count >= 16) {
+            count -= 16;
+
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+            a = _mm_mul_ps(_mm_load_ps(data0+@i@), value1_sse);
+            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
+            _mm_store_ps(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 16;
+            data_out += 16;
+        }
+    }
+#endif
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+#if EINSUM_USE_SSE1 && @float32@
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), value1_sse);
+        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
+        _mm_storeu_ps(data_out+@i@, b);
+/**end repeat2**/
+#else
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        data_out[@i@] = @to@(@from@(data0[@i@])*
+                             value1  +
+                             @from@(data_out[@i@]));
+/**end repeat2**/
+#endif
+        data0 += 16;
+        data_out += 16;
+    }
+
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        return;
+    }
+    data_out[@i@] = @to@(@from@(data0[@i@])*
+                         value1  +
+                         @from@(data_out[@i@]));
+/**end repeat2**/
+}
+
+static void
+@name@_sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
+    npy_@temp@ accum = 0;
+
+#if EINSUM_USE_SSE1 && @float32@
+    __m128 a, accum_sse = _mm_setzero_ps();
+#endif
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1)) {
+        /* Unroll the loop by 16 */
+        while (count >= 16) {
+            count -= 16;
+
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+            /*
+             * NOTE: This accumulation changes the order, so will likely
+             *       produce slightly different results.
+             */
+            a = _mm_mul_ps(_mm_load_ps(data0+@i@), _mm_load_ps(data1+@i@));
+            accum_sse = _mm_add_ps(accum_sse, a);
+/**end repeat2**/
+            data0 += 16;
+            data1 += 16;
+        }
+    }
+#endif
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+#if EINSUM_USE_SSE1 && @float32@
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+        /*
+         * NOTE: This accumulation changes the order, so will likely
+         *       produce slightly different results.
+         */
+        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
+        accum_sse = _mm_add_ps(accum_sse, a);
+/**end repeat2**/
+#else
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        accum += @from@(data0[@i@]) * @from@(data1[@i@]);
+/**end repeat2**/
+#endif
+        data0 += 16;
+        data1 += 16;
+    }
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Add the four SSE values and put in accum */
+    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
+    accum_sse = _mm_add_ps(a, accum_sse);
+    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
+    accum_sse = _mm_add_ps(a, accum_sse);
+    _mm_store_ss(&accum, accum_sse);
+#endif
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        *(npy_@name@ *)dataptr[2] += @to@(accum);
+        return;
+    }
+    accum += @from@(data0[@i@]) * @from@(data1[@i@]);
+/**end repeat2**/
+
+    *(npy_@name@ *)dataptr[2] += @to@(accum);
+}
+
+static void
+@name@_sum_of_products_stride0_contig_outstride0_two(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@temp@ value0 = @from@(*(npy_@name@ *)dataptr[0]);
+    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
+    npy_@temp@ accum = 0;
+
+#if EINSUM_USE_SSE1 && @float32@
+    __m128 a, accum_sse = _mm_setzero_ps();
+#endif
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data1)) {
+        /* Unroll the loop by 16 */
+        while (count >= 16) {
+            count -= 16;
+
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+            /*
+             * NOTE: This accumulation changes the order, so will likely
+             *       produce slightly different results.
+             */
+            accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data1+@i@));
+/**end repeat2**/
+            data1 += 16;
+        }
+    }
+#endif
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+#if EINSUM_USE_SSE1 && @float32@
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+        /*
+         * NOTE: This accumulation changes the order, so will likely
+         *       produce slightly different results.
+         */
+        accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data1+@i@));
+/**end repeat2**/
+#else
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        accum += @from@(data1[@i@]);
+/**end repeat2**/
+#endif
+        data1 += 16;
+    }
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Add the four SSE values and put in accum */
+    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
+    accum_sse = _mm_add_ps(a, accum_sse);
+    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
+    accum_sse = _mm_add_ps(a, accum_sse);
+    _mm_store_ss(&accum, accum_sse);
+#endif
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        *(npy_@name@ *)dataptr[2] += @to@(value0 * accum);
+        return;
+    }
+    accum += @from@(data1[@i@]);
+/**end repeat2**/
+
+    *(npy_@name@ *)dataptr[2] += @to@(value0 * accum);
+}
+
+static void
+@name@_sum_of_products_contig_stride0_outstride0_two(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    npy_@temp@ value1 = @from@(*(npy_@name@ *)dataptr[1]);
+    npy_@temp@ accum = 0;
+
+#if EINSUM_USE_SSE1 && @float32@
+    __m128 a, accum_sse = _mm_setzero_ps();
+#endif
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0)) {
+        /* Unroll the loop by 16 */
+        while (count >= 16) {
+            count -= 16;
+
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+            /*
+             * NOTE: This accumulation changes the order, so will likely
+             *       produce slightly different results.
+             */
+            accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data0+@i@));
+/**end repeat2**/
+            data0 += 16;
+        }
+    }
+#endif
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+#if EINSUM_USE_SSE1 && @float32@
+/**begin repeat2
+ * #i = 0, 4, 8, 12#
+ */
+        /*
+         * NOTE: This accumulation changes the order, so will likely
+         *       produce slightly different results.
+         */
+        accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data0+@i@));
+/**end repeat2**/
+#else
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        accum += @from@(data0[@i@]);
+/**end repeat2**/
+#endif
+        data0 += 16;
+    }
+
+#if EINSUM_USE_SSE1 && @float32@
+    /* Add the four SSE values and put in accum */
+    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
+    accum_sse = _mm_add_ps(a, accum_sse);
+    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
+    accum_sse = _mm_add_ps(a, accum_sse);
+    _mm_store_ss(&accum, accum_sse);
+#endif
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        *(npy_@name@ *)dataptr[2] += @to@(accum * value1);
+        return;
+    }
+    accum += @from@(data0[@i@]);
+/**end repeat2**/
+
+    *(npy_@name@ *)dataptr[2] += @to@(accum * value1);
+}
+
+#elif @nop@ == 3 && !@complex@
+
+static void
+@name@_sum_of_products_contig_three(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
+    npy_@name@ *data2 = (npy_@name@ *)dataptr[2];
+    npy_@name@ *data_out = (npy_@name@ *)dataptr[3];
+
+    /* Unroll the loop by 16 */
+    while (count >= 16) {
+        count -= 16;
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        data_out[@i@] = @to@(@from@(data0[@i@]) *
+                             @from@(data1[@i@]) *
+                             @from@(data2[@i@]) +
+                             @from@(data_out[@i@]));
+/**end repeat2**/
+        data0 += 16;
+        data1 += 16;
+        data_out += 16;
+    }
+
+    /* Finish off the loop */
+
+/**begin repeat2
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+    if (count-- == 0) {
+        return;
+    }
+    data_out[@i@] = @to@(@from@(data0[@i@]) *
+                         @from@(data1[@i@]) *
+                         @from@(data2[@i@]) +
+                         @from@(data_out[@i@]));
+/**end repeat2**/
+}
+
+#else
+
+static void
+@name@_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
+                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+{
+    while (count--) {
+#if !@complex@
+        npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp *= @from@(*(npy_@name@ *)dataptr[i]);
+        }
+        *(npy_@name@ *)dataptr[nop] = @to@(temp +
+                                           @from@(*(npy_@name@ *)dataptr[i]));
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += sizeof(npy_@name@);
+        }
+#else /* complex */
+#  if @nop@ <= 3
+#    define _SUMPROD_NOP @nop@
+#  else
+#    define _SUMPROD_NOP nop
+#  endif
+        npy_@temp@ re, im, tmp;
+        re = ((npy_@temp@ *)dataptr[0])[0];
+        im = ((npy_@temp@ *)dataptr[0])[1];
+        int i;
+        for (i = 1; i < _SUMPROD_NOP; ++i) {
+            tmp = re * ((npy_@temp@ *)dataptr[i])[0] -
+                  im * ((npy_@temp@ *)dataptr[i])[1];
+            im = re * ((npy_@temp@ *)dataptr[i])[1] +
+                 im * ((npy_@temp@ *)dataptr[i])[0];
+            re = tmp;
+        }
+        ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[0] = re +
+                                     ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[0];
+        ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[1] = im +
+                                     ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[1];
+
+        for (i = 0; i <= _SUMPROD_NOP; ++i) {
+            dataptr[i] += sizeof(npy_@name@);
+        }
+#  undef _SUMPROD_NOP
+#endif
+    }
+}
+
+#endif
+
+static void
+@name@_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
+                                npy_intp *strides, npy_intp count)
+{
+#if @complex@
+    npy_@temp@ accum_re = 0, accum_im = 0;
+#else
+    npy_@temp@ accum = 0;
+#endif
+
+#if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3) && !@complex@
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3) && !@complex@
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+
+    while (count--) {
+#if !@complex@
+#  if @nop@ == 1
+        accum += @from@(*(npy_@name@ *)data0);
+        data0 += stride0;
+#  elif @nop@ == 2
+        accum += @from@(*(npy_@name@ *)data0) *
+                 @from@(*(npy_@name@ *)data1);
+        data0 += stride0;
+        data1 += stride1;
+#  elif @nop@ == 3
+        accum += @from@(*(npy_@name@ *)data0) *
+                 @from@(*(npy_@name@ *)data1) *
+                 @from@(*(npy_@name@ *)data2);
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+#  else
+        npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp *= @from@(*(npy_@name@ *)dataptr[i]);
+        }
+        accum += temp;
+        for (i = 0; i < nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+#  endif
+#else /* complex */
+#  if @nop@ == 1
+        accum_re += ((npy_@temp@ *)data0)[0];
+        accum_im += ((npy_@temp@ *)data0)[1];
+        data0 += stride0;
+#  else
+#    if @nop@ <= 3
+#define _SUMPROD_NOP @nop@
+#    else
+#define _SUMPROD_NOP nop
+#    endif
+        npy_@temp@ re, im, tmp;
+        re = ((npy_@temp@ *)dataptr[0])[0];
+        im = ((npy_@temp@ *)dataptr[0])[1];
+        int i;
+        for (i = 1; i < _SUMPROD_NOP; ++i) {
+            tmp = re * ((npy_@temp@ *)dataptr[i])[0] -
+                  im * ((npy_@temp@ *)dataptr[i])[1];
+            im = re * ((npy_@temp@ *)dataptr[i])[1] +
+                 im * ((npy_@temp@ *)dataptr[i])[0];
+            re = tmp;
+        }
+        accum_re += re;
+        accum_im += im;
+        for (i = 0; i < _SUMPROD_NOP; ++i) {
+            dataptr[i] += strides[i];
+        }
+#undef _SUMPROD_NOP
+#  endif
+#endif
+    }
+
+#if @complex@
+#  if @nop@ <= 3
+    ((npy_@temp@ *)dataptr[@nop@])[0] += accum_re;
+    ((npy_@temp@ *)dataptr[@nop@])[1] += accum_im;
+#  else
+    ((npy_@temp@ *)dataptr[nop])[0] += accum_re;
+    ((npy_@temp@ *)dataptr[nop])[1] += accum_im;
+#  endif
+#else
+#  if @nop@ <= 3
+    *((npy_@name@ *)dataptr[@nop@]) = @to@(accum +
+                                    @from@(*((npy_@name@ *)dataptr[@nop@])));
+#  else
+    *((npy_@name@ *)dataptr[nop]) = @to@(accum +
+                                    @from@(*((npy_@name@ *)dataptr[nop])));
+#  endif
+#endif
+
+}
+
 /**end repeat1**/
 
 /**end repeat**/
@@ -145,28 +909,45 @@ static void
 bool_sum_of_products_@noplabel@(int nop, char **dataptr,
                                 npy_intp *strides, npy_intp count)
 {
+#if (@nop@ <= 3)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3)
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3)
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+#if (@nop@ <= 3)
+    char *data_out = dataptr[@nop@];
+    npy_intp stride_out = strides[@nop@];
+#endif
+
     while (count--) {
 #if @nop@ == 1
-        *(npy_bool *)dataptr[1] = *(npy_bool *)dataptr[0] ||
-                                  *(npy_bool *)dataptr[1];
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
+        *(npy_bool *)data_out = *(npy_bool *)data0 ||
+                                  *(npy_bool *)data_out;
+        data0 += stride0;
+        data_out += stride_out;
 #elif @nop@ == 2
-        *(npy_bool *)dataptr[2] = (*(npy_bool *)dataptr[0] &&
-                                   *(npy_bool *)dataptr[1]) ||
-                                   *(npy_bool *)dataptr[2];
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
-        dataptr[2] += strides[2];
+        *(npy_bool *)data_out = (*(npy_bool *)data0 &&
+                                   *(npy_bool *)data1) ||
+                                   *(npy_bool *)data_out;
+        data0 += stride0;
+        data1 += stride1;
+        data_out += stride_out;
 #elif @nop@ == 3
-        *(npy_bool *)dataptr[3] = (*(npy_bool *)dataptr[0] &&
-                                   *(npy_bool *)dataptr[1] &&
-                                   *(npy_bool *)dataptr[2]) ||
-                                   *(npy_bool *)dataptr[3];
-        dataptr[0] += strides[0];
-        dataptr[1] += strides[1];
-        dataptr[2] += strides[2];
-        dataptr[3] += strides[3];
+        *(npy_bool *)data_out = (*(npy_bool *)data0 &&
+                                   *(npy_bool *)data1 &&
+                                   *(npy_bool *)data2) ||
+                                   *(npy_bool *)data_out;
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+        data_out += stride_out;
 #else
         npy_bool temp = *(npy_bool *)dataptr[0];
         int i;
@@ -181,13 +962,377 @@ bool_sum_of_products_@noplabel@(int nop, char **dataptr,
     }
 }
 
+static void
+bool_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
+                                npy_intp *strides, npy_intp count)
+{
+#if (@nop@ <= 3)
+    char *data0 = dataptr[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3)
+    char *data1 = dataptr[1];
+#endif
+#if (@nop@ == 3)
+    char *data2 = dataptr[2];
+#endif
+#if (@nop@ <= 3)
+    char *data_out = dataptr[@nop@];
+#endif
+
+/* Unroll the loop by 16 for fixed-size nop */
+#if (@nop@ <= 3)
+    while (count >= 16) {
+        count -= 16;
+#else
+    while (count--) {
+#endif
+
+#  if @nop@ == 1
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
+                                        (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 16*sizeof(npy_bool);
+        data_out += 16*sizeof(npy_bool);
+#  elif @nop@ == 2
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        *((npy_bool *)data_out + @i@) =
+                        ((*((npy_bool *)data0 + @i@)) &&
+                         (*((npy_bool *)data1 + @i@))) ||
+                            (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 16*sizeof(npy_bool);
+        data1 += 16*sizeof(npy_bool);
+        data_out += 16*sizeof(npy_bool);
+#  elif @nop@ == 3
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        *((npy_bool *)data_out + @i@) =
+                       ((*((npy_bool *)data0 + @i@)) &&
+                        (*((npy_bool *)data1 + @i@)) &&
+                        (*((npy_bool *)data2 + @i@))) ||
+                            (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 16*sizeof(npy_bool);
+        data1 += 16*sizeof(npy_bool);
+        data2 += 16*sizeof(npy_bool);
+        data_out += 16*sizeof(npy_bool);
+#  else
+        npy_bool temp = *(npy_bool *)dataptr[0];
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp = temp && *(npy_bool *)dataptr[i];
+        }
+        *(npy_bool *)dataptr[nop] = temp || *(npy_bool *)dataptr[i];
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += sizeof(npy_bool);
+        }
+#  endif
+    }
+
+    /* If the loop was unrolled, we need to finish it off */
+#if (@nop@ <= 3)
+#  if @nop@ == 1
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        if (count-- == 0) {
+            return;
+        }
+        *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
+                                        (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 16*sizeof(npy_bool);
+        data_out += 16*sizeof(npy_bool);
+#  elif @nop@ == 2
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        if (count-- == 0) {
+            return;
+        }
+        *((npy_bool *)data_out + @i@) =
+                        ((*((npy_bool *)data0 + @i@)) &&
+                         (*((npy_bool *)data1 + @i@))) ||
+                            (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 16*sizeof(npy_bool);
+        data1 += 16*sizeof(npy_bool);
+        data_out += 16*sizeof(npy_bool);
+#  elif @nop@ == 3
+/**begin repeat1
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ */
+        if (count-- == 0) {
+            return;
+        }
+        *((npy_bool *)data_out + @i@) =
+                       ((*((npy_bool *)data0 + @i@)) &&
+                        (*((npy_bool *)data1 + @i@)) &&
+                        (*((npy_bool *)data2 + @i@))) ||
+                            (*((npy_bool *)data_out + @i@));
+/**end repeat1**/
+        data0 += 16*sizeof(npy_bool);
+        data1 += 16*sizeof(npy_bool);
+        data2 += 16*sizeof(npy_bool);
+        data_out += 16*sizeof(npy_bool);
+#  endif
+#endif
+}
+
+static void
+bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
+                                npy_intp *strides, npy_intp count)
+{
+    npy_bool accum = 0;
+
+#if (@nop@ <= 3)
+    char *data0 = dataptr[0];
+    npy_intp stride0 = strides[0];
+#endif
+#if (@nop@ == 2 || @nop@ == 3)
+    char *data1 = dataptr[1];
+    npy_intp stride1 = strides[1];
+#endif
+#if (@nop@ == 3)
+    char *data2 = dataptr[2];
+    npy_intp stride2 = strides[2];
+#endif
+
+    while (count--) {
+#if @nop@ == 1
+        accum = *(npy_bool *)data0 || accum;
+        data0 += stride0;
+#elif @nop@ == 2
+        accum = (*(npy_bool *)data0 && *(npy_bool *)data1) || accum;
+        data0 += stride0;
+        data1 += stride1;
+#elif @nop@ == 3
+        accum = (*(npy_bool *)data0 &&
+                 *(npy_bool *)data1 &&
+                 *(npy_bool *)data2) || accum;
+        data0 += stride0;
+        data1 += stride1;
+        data2 += stride2;
+#else
+        npy_bool temp = *(npy_bool *)dataptr[0];
+        int i;
+        for (i = 1; i < nop; ++i) {
+            temp = temp && *(npy_bool *)dataptr[i];
+        }
+        accum = temp || accum;
+        for (i = 0; i <= nop; ++i) {
+            dataptr[i] += strides[i];
+        }
+#endif
+    }
+
+#  if @nop@ <= 3
+    *((npy_bool *)dataptr[@nop@]) = accum || *((npy_bool *)dataptr[@nop@]);
+#  else
+    *((npy_bool *)dataptr[nop]) = accum || *((npy_bool *)dataptr[nop]);
+#  endif
+}
+
 /**end repeat**/
 
 typedef void (*sum_of_products_fn)(int, char **, npy_intp *, npy_intp);
 
 static sum_of_products_fn
-get_sum_of_products_function(int nop, int type_num)
+get_sum_of_products_function(int nop, int type_num,
+                             npy_intp itemsize, npy_intp *fixed_strides)
 {
+    int iop;
+
+    /* nop of 2 has more specializations */
+    if (nop == 2) {
+        if (fixed_strides[0] == itemsize) {
+            if (fixed_strides[1] == itemsize) {
+                if (fixed_strides[2] == itemsize) {
+                    /* contig, contig, contig */
+                    switch (type_num) {
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ */
+                        case NPY_@NAME@:
+                   return &@name@_sum_of_products_contig_two;
+/**end repeat**/
+                    }
+                }
+                else if (fixed_strides[2] == 0) {
+                    /* contig, contig, stride0 */
+                    switch (type_num) {
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ */
+                        case NPY_@NAME@:
+                   return &@name@_sum_of_products_contig_contig_outstride0_two;
+/**end repeat**/
+                    }
+                }
+            }
+            else if (fixed_strides[1] == 0) {
+                if (fixed_strides[2] == itemsize) {
+                    /* contig, stride0, contig */
+                    switch (type_num) {
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ */
+                        case NPY_@NAME@:
+                   return &@name@_sum_of_products_contig_stride0_outcontig_two;
+/**end repeat**/
+                    }
+                }
+                else if (fixed_strides[2] == 0) {
+                    /* contig, stride0, stride0 */
+                    switch (type_num) {
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ */
+                        case NPY_@NAME@:
+                   return &@name@_sum_of_products_contig_stride0_outstride0_two;
+/**end repeat**/
+                    }
+                }
+            }
+        }
+        else if (fixed_strides[0] == 0) {
+            if (fixed_strides[1] == itemsize) {
+                if (fixed_strides[2] == itemsize) {
+                    /* stride0, contig, contig */
+                    switch (type_num) {
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ */
+                        case NPY_@NAME@:
+                   return &@name@_sum_of_products_stride0_contig_outcontig_two;
+/**end repeat**/
+                    }
+                }
+                else if (fixed_strides[2] == 0) {
+                    /* stride0, contig, stride0 */
+                    switch (type_num) {
+/**begin repeat
+ * #name = byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ */
+                        case NPY_@NAME@:
+                   return &@name@_sum_of_products_stride0_contig_outstride0_two;
+/**end repeat**/
+                    }
+                }
+            }
+        }
+    }
+
+    /* Inner loop with an output stride of 0 */
+    if (fixed_strides[nop] == 0) {
+        switch (type_num) {
+/**begin repeat
+ * #name = bool,
+ *         byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #NAME = BOOL,
+ *         BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ */
+            case NPY_@NAME@:
+                switch (nop) {
+/**begin repeat1
+ * #nop = 1, 2, 3, 1000#
+ * #noplabel = one, two, three, any#
+ */
+#if @nop@ <= 3
+                    case @nop@:
+#else
+                    default:
+#endif
+                        return &@name@_sum_of_products_outstride0_@noplabel@;
+/**end repeat1**/
+                }
+/**end repeat**/
+        }
+    }
+
+    /* Check for all contiguous */
+    for (iop = 0; iop < nop; ++iop) {
+        if (fixed_strides[iop] != itemsize) {
+            break;
+        }
+    }
+
+    /* Contiguous loop */
+    if (iop == nop) {
+        switch (type_num) {
+/**begin repeat
+ * #name = bool,
+ *         byte, short, int, long, longlong,
+ *         ubyte, ushort, uint, ulong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #NAME = BOOL,
+ *         BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ */
+            case NPY_@NAME@:
+                switch (nop) {
+/**begin repeat1
+ * #nop = 1, 2, 3, 1000#
+ * #noplabel = one, two, three, any#
+ */
+#if @nop@ <= 3
+                    case @nop@:
+#else
+                    default:
+#endif
+                        return &@name@_sum_of_products_contig_@noplabel@;
+/**end repeat1**/
+                }
+/**end repeat**/
+        }
+    }
+
+    /* Regular inner loop */
     switch (type_num) {
 /**begin repeat
  * #name = bool,
@@ -209,11 +1354,10 @@ get_sum_of_products_function(int nop, int type_num)
  */
 #if @nop@ <= 3
                 case @nop@:
-                    return &@name@_sum_of_products_@noplabel@;
 #else
                 default:
-                    return &@name@_sum_of_products_@noplabel@;
 #endif
+                    return &@name@_sum_of_products_@noplabel@;
 /**end repeat1**/
             }
 /**end repeat**/
@@ -913,6 +2057,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     NpyIter *iter;
     sum_of_products_fn sop;
+    npy_intp fixed_strides[NPY_MAXARGS];
 
     /* nop+1 (+1 is for the output) must fit in NPY_MAXARGS */
     if (nop >= NPY_MAXARGS) {
@@ -1156,7 +2301,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     /* Allocate the iterator */
     iter = NpyIter_MultiNew(nop+1, op, NPY_ITER_NO_INNER_ITERATION|
-                ((dtype == NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
+                ((dtype != NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
                                        NPY_ITER_BUFFERED|
                                        NPY_ITER_DELAY_BUFALLOC|
                                        NPY_ITER_GROWINNER|
@@ -1176,8 +2321,20 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     PyArray_FillWithZero(ret);
     NpyIter_Reset(iter, NULL);
 
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
     sop = get_sum_of_products_function(nop,
-                        NpyIter_GetDescrArray(iter)[0]->type_num);
+                        NpyIter_GetDescrArray(iter)[0]->type_num,
+                        NpyIter_GetDescrArray(iter)[0]->elsize,
+                        fixed_strides);
+
+    #if 0
+    NpyIter_DebugPrint(iter);
+    printf("fixed strides:\n");
+    for (iop = 0; iop <= nop; ++iop) {
+        printf("%ld ", fixed_strides[iop]);
+    }
+    printf("\n");
+    #endif
 
     /* Finally, the main loop */
     if (sop == NULL) {
