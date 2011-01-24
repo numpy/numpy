@@ -18,7 +18,7 @@
 #include "lowlevel_strided_loops.h"
 
 /********** PRINTF DEBUG TRACING **************/
-#define NPY_IT_DBG_TRACING 1
+#define NPY_IT_DBG_TRACING 0
 
 #if NPY_IT_DBG_TRACING
 #define NPY_IT_DBG_PRINTF(...) printf(__VA_ARGS__)

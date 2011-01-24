@@ -276,6 +276,80 @@ class TestEinSum(TestCase):
         assert_(b.base is a)
         assert_equal(b, [a[i,i,i] for i in range(3)])
 
+        # swap axes
+        a = np.arange(24).reshape(2,3,4)
+
+        b = np.einsum("ijk->jik", a)
+        assert_(b.base is a)
+        assert_equal(b, a.swapaxes(0,1))
+
+    def test_einsum_sums(self):
+        # sum(a, axis=-1)
+        a = np.arange(10)
+        assert_equal(np.einsum("i->", a), np.sum(a, axis=-1))
+
+        a = np.arange(24).reshape(2,3,4)
+        assert_equal(np.einsum("i->", a), np.sum(a, axis=-1))
+
+        # sum(a, axis=0)
+        a = np.arange(10)
+        assert_equal(np.einsum("i...->", a), np.sum(a, axis=0))
+
+        a = np.arange(24).reshape(2,3,4)
+        assert_equal(np.einsum("i...->", a), np.sum(a, axis=0))
+
+        # trace(a)
+        a = np.arange(25).reshape(5,5)
+        assert_equal(np.einsum("ii", a), np.trace(a))
+
+        # multiply(a, b)
+        a = np.arange(12).reshape(3,4)
+        b = np.arange(24).reshape(2,3,4)
+        assert_equal(np.einsum(",", a, b), np.multiply(a, b))
+
+        # inner(a,b)
+        a = np.arange(24).reshape(2,3,4)
+        b = np.arange(4)
+        assert_equal(np.einsum("i,i", a, b), np.inner(a, b))
+
+        a = np.arange(24).reshape(2,3,4)
+        b = np.arange(2)
+        assert_equal(np.einsum("i...,i...", a, b), np.inner(a.T, b.T).T)
+
+        # outer(a,b)
+        a = np.arange(3)+1
+        b = np.arange(4)+1
+        assert_equal(np.einsum("i,j", a, b), np.outer(a, b))
+
+        # matvec(a,b) / a.dot(b) where a is matrix, b is vector
+        a = np.arange(20).reshape(4,5)
+        b = np.arange(5)
+        assert_equal(np.einsum("ij,j", a, b), np.dot(a, b))
+
+        a = np.arange(20).reshape(4,5)
+        b = np.arange(5)
+        assert_equal(np.einsum("ji,j", a.T, b.T), np.dot(b.T, a.T))
+
+        # matmat(a,b) / a.dot(b) where a is matrix, b is matrix
+        a = np.arange(20).reshape(4,5)
+        b = np.arange(30).reshape(5,6)
+        assert_equal(np.einsum("ij,jk", a, b), np.dot(a, b))
+
+        # tensordot(a, b)
+        a = np.arange(60.).reshape(3,4,5)
+        b = np.arange(24.).reshape(4,3,2)
+        assert_equal(np.einsum("ijk,jil->kl", a, b),
+                        np.tensordot(a,b, axes=([1,0],[0,1])))
+
+        # logical_and(logical_and(a!=0, b!=0), c!=0)
+        a = np.array([1,   3,   -2,   0,   12,  13,   0,   1])
+        b = np.array([0,   3.5, 0.,   -2,  0,   1,    3,   12])
+        c = np.array([True,True,False,True,True,False,True,True])
+        assert_equal(np.einsum("i,i,i->i", a, b, c,
+                                dtype='?', casting='unsafe'),
+                            logical_and(logical_and(a!=0, b!=0), c!=0))
+
+
 class TestNonarrayArgs(TestCase):
     # check that non-array arguments to functions wrap them in arrays
     def test_squeeze(self):
