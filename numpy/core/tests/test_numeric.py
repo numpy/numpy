@@ -208,6 +208,7 @@ class TestEinSum(TestCase):
         assert_raises(ValueError, np.einsum, "ij->jij", [[0,0],[0,0]])
 
         # dimensions much match when being collapsed
+        assert_raises(ValueError, np.einsum, "ii", np.arange(6).reshape(2,3))
         assert_raises(ValueError, np.einsum, "ii->i", np.arange(6).reshape(2,3))
 
     def test_einsum_views(self):

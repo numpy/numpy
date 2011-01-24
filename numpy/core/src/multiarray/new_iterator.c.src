@@ -18,7 +18,7 @@
 #include "lowlevel_strided_loops.h"
 
 /********** PRINTF DEBUG TRACING **************/
-#define NPY_IT_DBG_TRACING 0
+#define NPY_IT_DBG_TRACING 1
 
 #if NPY_IT_DBG_TRACING
 #define NPY_IT_DBG_PRINTF(...) printf(__VA_ARGS__)
@@ -2555,6 +2555,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                 Py_DECREF(*op_dtype);
                 *op_dtype = nbo_dtype;
 
+                NPY_IT_DBG_PRINTF("Iterator: Setting NPY_OP_ITFLAG_CAST "
+                                    "because of NPY_ITER_NBO\n");
                 /* Indicate that byte order or alignment needs fixing */
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
             }
@@ -2563,6 +2565,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         if (op_flags&NPY_ITER_ALIGNED) {
             /* Check alignment */
             if (!PyArray_ISALIGNED(*op)) {
+                NPY_IT_DBG_PRINTF("Iterator: Setting NPY_OP_ITFLAG_CAST "
+                                    "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
             }
         }
@@ -2709,6 +2713,8 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
                 return 0;
             }
 
+            NPY_IT_DBG_PRINTF("Iterator: Setting NPY_OP_ITFLAG_CAST "
+                                "because the types aren't equivalent\n");
             /* Indicate that this operand needs casting */
             op_itflags[iiter] |= NPY_OP_ITFLAG_CAST;
         }
@@ -3784,6 +3790,9 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         }
 
         if (i >= 0) {
+            NPY_IT_DBG_PRINTF("Iterator: Setting allocated stride %d "
+                                "for iterator dimension %d to %d\n", (int)i,
+                                (int)idim, (int)stride);
             strides[i] = stride;
             if (p < 0) {
                 reversestride[i] = 1;
@@ -3808,7 +3817,13 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
         axisdata = NIT_AXISDATA(iter);
         for (idim = 0; idim < op_ndim; ++idim) {
+            NPY_IT_DBG_PRINTF("Iterator: Checking allocated output "
+                              "dimension %d with stride %d\n",
+                              (int)idim, (int)strides[idim]);
             if (strides[idim] == NPY_MAX_INTP) {
+                NPY_IT_DBG_PRINTF("Iterator: The axis wasn't used, "
+                                  "and its dimension is %d\n",
+                                  (int)NAD_SHAPE(axisdata));
                 /*
                  * If deleting this axis produces a reduction, but
                  * reduction wasn't enabled, throw an error
@@ -3827,6 +3842,8 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                         return NULL;
                     }
 
+                    NPY_IT_DBG_PRINTF("Iterator: Indicating that a reduction "
+                                      "is occurring\n");
                     /* Indicate that a reduction is occurring */
                     NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
                 }
@@ -4067,6 +4084,8 @@ npyiter_allocate_arrays(NpyIter *iter,
             npy_intp stride = NAD_STRIDES(axisdata)[iiter];
 
             if (stride != op_dtype[iiter]->elsize) {
+                NPY_IT_DBG_PRINTF("Iterator: Setting NPY_OP_ITFLAG_CAST "
+                                    "because of NPY_ITER_CONTIG\n");
                 op_itflags[iiter] |= NPY_OP_ITFLAG_CAST;
                 if (!(itflags&NPY_ITFLAG_BUFFER)) {
                     PyErr_SetString(PyExc_TypeError,
@@ -4142,7 +4161,9 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             else if (!is_one_to_one &&
                         (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
-                        !(itflags&NPY_ITFLAG_REDUCE)) {
+                        !(flags&NPY_ITER_REDUCE_OK)) {
+            NPY_IT_DBG_PRINTF("Iterator: %d %d %d\n",
+                            (int)(!is_one_to_one), (int)((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)), (int)(!(flags&NPY_ITER_REDUCE_OK)));
                 PyErr_SetString(PyExc_ValueError,
                         "Iterator operand requires write buffering, "
                         "but has dimensions which have been broadcasted "
@@ -4856,6 +4877,8 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("DELAYBUF ");
     if (itflags&NPY_ITFLAG_NEEDSAPI)
         printf("NEEDSAPI ");
+    if (itflags&NPY_ITFLAG_REDUCE)
+        printf("REDUCE ");
     printf("\n");
     printf("NDim: %d\n", (int)ndim);
     printf("NIter: %d\n", (int)niter);

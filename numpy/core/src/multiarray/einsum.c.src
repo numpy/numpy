@@ -17,6 +17,12 @@
 
 #include <ctype.h>
 
+typedef enum {
+    BROADCAST_LEFT,
+    BROADCAST_RIGHT,
+    BROADCAST_MIDDLE
+} EINSUM_BROADCAST;
+
 /*
  * Parses the subscripts for one operand into an output
  * of 'ndim' labels
@@ -28,9 +34,11 @@ parse_operand_subscripts(char *subscripts, int length,
                         char *out_label_counts,
                         int *out_min_label,
                         int *out_max_label,
-                        int *out_num_labels)
+                        int *out_num_labels,
+                        EINSUM_BROADCAST *out_broadcast)
 {
     int i, idim, ndim_left, label;
+    int left_labels = 0, right_labels = 0;
 
     printf("Parsing operand %d subscripts\n", iop);
 
@@ -55,6 +63,7 @@ parse_operand_subscripts(char *subscripts, int length,
                     (*out_num_labels)++;
                 }
                 out_label_counts[label]++;
+                right_labels = 1;
             }
             else {
                 PyErr_Format(PyExc_ValueError,
@@ -114,6 +123,7 @@ parse_operand_subscripts(char *subscripts, int length,
                         (*out_num_labels)++;
                     }
                     out_label_counts[label]++;
+                    left_labels = 1;
                 }
                 else {
                     PyErr_Format(PyExc_ValueError,
@@ -161,6 +171,16 @@ parse_operand_subscripts(char *subscripts, int length,
         }
     }
 
+    if (left_labels && right_labels) {
+        *out_broadcast = BROADCAST_MIDDLE;
+    }
+    else if (!left_labels) {
+        *out_broadcast = BROADCAST_RIGHT;
+    }
+    else {
+        *out_broadcast = BROADCAST_LEFT;
+    }
+
     return 1;
 }
 
@@ -173,9 +193,11 @@ static int
 parse_output_subscripts(char *subscripts, int length,
                         int ndim_broadcast,
                         const char *label_counts,
-                        char *out_labels)
+                        char *out_labels,
+                        EINSUM_BROADCAST *out_broadcast)
 {
     int i, nlabels, label, idim, ndim, ndim_left;
+    int left_labels = 0, right_labels = 0;
 
     /* Count the labels, making sure they're all unique and valid */
     nlabels = 0;
@@ -230,6 +252,7 @@ parse_output_subscripts(char *subscripts, int length,
                             "too many output subscripts");
                 return -1;
             }
+            right_labels = 1;
         }
         /* The end of the ellipsis */
         else {
@@ -269,6 +292,7 @@ parse_output_subscripts(char *subscripts, int length,
                                 "too many subscripts for the output");
                     return -1;
                 }
+                left_labels = 1;
             }
             else {
                 PyErr_SetString(PyExc_ValueError,
@@ -284,8 +308,352 @@ parse_output_subscripts(char *subscripts, int length,
         out_labels[idim++] = 0;
     }
 
+    if (left_labels && right_labels) {
+        *out_broadcast = BROADCAST_MIDDLE;
+    }
+    else if (!left_labels) {
+        *out_broadcast = BROADCAST_RIGHT;
+    }
+    else {
+        *out_broadcast = BROADCAST_LEFT;
+    }
+
     return ndim;
 }
+
+
+/*
+ * When there's just one operand and no reduction, we
+ * can return a view into op.  This calculates the view
+ * if possible.
+ */
+static int
+get_single_op_view(PyArrayObject *op, int  iop, char *labels,
+                   int ndim_output, char *output_labels,
+                   PyArrayObject **ret)
+{
+    npy_intp new_strides[NPY_MAXDIMS];
+    npy_intp new_dims[NPY_MAXDIMS];
+    char *out_label;
+    int label, i, idim, ndim, ibroadcast = 0;
+
+    ndim = PyArray_NDIM(op);
+
+    /* Initialize the dimensions and strides to zero */
+    for (idim = 0; idim < ndim_output; ++idim) {
+        new_dims[idim] = 0;
+        new_strides[idim] = 0;
+    }
+
+    /* Match the labels in the operand with the output labels */
+    for (idim = 0; idim < ndim; ++idim) {
+        printf("Matching label for dimension %d\n", idim);
+        label = labels[idim];
+        /* If this label says to merge axes, get the actual label */
+        if (label < 0) {
+            label = labels[idim+label];
+        }
+        /* If the label is 0, it's an unlabeled broadcast dimension */
+        if (label == 0) {
+            /* The next output label that's a broadcast dimension */
+            for (; ibroadcast < ndim_output; ++ibroadcast) {
+                if (output_labels[ibroadcast] == 0) {
+                    break;
+                }
+            }
+            if (ibroadcast == ndim_output) {
+                PyErr_SetString(PyExc_ValueError,
+                        "output had too few broadcast dimensions");
+                return 0;
+            }
+            new_dims[ibroadcast] = PyArray_DIM(op, idim);
+            new_strides[ibroadcast] = PyArray_STRIDE(op, idim);
+            ++ibroadcast;
+        }
+        else {
+            /* Find the position for this dimension in the output */
+            out_label = (char *)memchr(output_labels, label,
+                                                    ndim_output);
+            /* If it's not found, reduction -> can't return a view */
+            if (out_label == NULL) {
+                break;
+            }
+            /* Update the dimensions and strides of the output */
+            i = out_label - output_labels;
+            if (new_dims[i] != 0 &&
+                    new_dims[i] != PyArray_DIM(op, idim)) {
+                PyErr_Format(PyExc_ValueError,
+                        "dimensions in operand %d for collapsing "
+                        "index '%c' don't match (%d != %d)",
+                        iop, label, (int)new_dims[i],
+                        (int)PyArray_DIM(op, idim));
+                return 0;
+            }
+            new_dims[i] = PyArray_DIM(op, idim);
+            new_strides[i] += PyArray_STRIDE(op, idim);
+        }
+    }
+    /* If we processed all the input axes, return a view */
+    if (idim == ndim) {
+        printf("Returning a view\n");
+        Py_INCREF(PyArray_DESCR(op));
+        *ret = (PyArrayObject *)PyArray_NewFromDescr(
+                                Py_TYPE(op),
+                                PyArray_DESCR(op),
+                                ndim_output, new_dims, new_strides,
+                                PyArray_DATA(op),
+                                0, (PyObject *)op);
+
+        if (*ret == NULL) {
+            return 0;
+        }
+        if (!PyArray_Check(*ret)) {
+            Py_DECREF(*ret);
+            *ret = NULL;
+            PyErr_SetString(PyExc_RuntimeError,
+                        "NewFromDescr failed to return an array");
+            return 0;
+        }
+        PyArray_UpdateFlags(*ret,
+                    NPY_C_CONTIGUOUS|NPY_ALIGNED|NPY_F_CONTIGUOUS);
+        Py_INCREF(op);
+        PyArray_BASE(*ret) = (PyObject *)op;
+        return 1;
+    }
+
+    /* Return success, but that we couldn't make a view */
+    *ret = NULL;
+    return 1;
+}
+
+static PyArrayObject *
+get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
+{
+    npy_intp new_strides[NPY_MAXDIMS];
+    npy_intp new_dims[NPY_MAXDIMS];
+    int i, idim, ndim, icombine, combineoffset, label;
+    int icombinemap[NPY_MAXDIMS];
+
+    PyArrayObject *ret = NULL;
+
+    ndim = PyArray_NDIM(op);
+
+    /* Initialize the dimensions and strides to zero */
+    for (idim = 0; idim < ndim; ++idim) {
+        new_dims[idim] = 0;
+        new_strides[idim] = 0;
+    }
+
+    /* Copy the dimensions and strides, except when collapsing */
+    icombine = 0;
+    for (idim = 0; idim < ndim; ++idim) {
+        printf("Processing dimension %d\n", idim);
+        label = labels[idim];
+        /* If this label says to merge axes, get the actual label */
+        if (label < 0) {
+            combineoffset = label;
+            label = labels[idim+label];
+        }
+        else {
+            combineoffset = 0;
+            if (icombine != idim) {
+                labels[icombine] = labels[idim];
+            }
+            icombinemap[idim] = icombine;
+        }
+        /* If the label is 0, it's an unlabeled broadcast dimension */
+        if (label == 0) {
+            new_dims[icombine] = PyArray_DIM(op, idim);
+            new_strides[icombine] = PyArray_STRIDE(op, idim);
+        }
+        else {
+            /* Update the combined axis dimensions and strides */
+            i = idim + combineoffset;
+            if (combineoffset < 0 &&
+                        new_dims[i] != PyArray_DIM(op, idim)) {
+                PyErr_Format(PyExc_ValueError,
+                        "dimensions in operand %d for collapsing "
+                        "index '%c' don't match (%d != %d)",
+                        iop, label, (int)new_dims[i],
+                        (int)PyArray_DIM(op, idim));
+                return NULL;
+            }
+            i = icombinemap[i];
+            new_dims[i] = PyArray_DIM(op, idim);
+            new_strides[i] += PyArray_STRIDE(op, idim);
+        }
+
+        /* If the label didn't say to combine axes, increment dest i */
+        if (combineoffset == 0) {
+            icombine++;
+        }
+    }
+
+    /* The compressed number of dimensions */
+    ndim = icombine;
+
+    Py_INCREF(PyArray_DESCR(op));
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+                            Py_TYPE(op),
+                            PyArray_DESCR(op),
+                            ndim, new_dims, new_strides,
+                            PyArray_DATA(op),
+                            PyArray_ISWRITEABLE(op) ? NPY_WRITEABLE : 0,
+                            (PyObject *)op);
+
+    if (ret == NULL) {
+        return NULL;
+    }
+    if (!PyArray_Check(ret)) {
+        Py_DECREF(ret);
+        PyErr_SetString(PyExc_RuntimeError,
+                    "NewFromDescr failed to return an array");
+        return NULL;
+    }
+    PyArray_UpdateFlags(ret,
+                NPY_C_CONTIGUOUS|NPY_ALIGNED|NPY_F_CONTIGUOUS);
+    Py_INCREF(op);
+    PyArray_BASE(ret) = (PyObject *)op;
+
+    return ret;
+}
+
+static int
+prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
+            npy_intp ndim_iter, char *iter_labels, EINSUM_BROADCAST broadcast)
+{
+    int i, label, ibroadcast;
+
+    /* Regular broadcasting */
+    if (broadcast == BROADCAST_RIGHT) {
+        /* broadcast dimensions get placed in rightmost position */
+        ibroadcast = ndim-1; 
+        for (i = ndim_iter-1; i >= 0; --i) {
+            label = iter_labels[i];
+            /*
+             * If it's an unlabeled broadcast dimension, choose
+             * the next broadcast dimension from the operand.
+             */
+            if (label == 0) {
+                while (ibroadcast >= 0 && labels[ibroadcast] != 0) {
+                    --ibroadcast;
+                }
+                /*
+                 * If we used up all the operand broadcast dimensions,
+                 * extend it with a "newaxis"
+                 */
+                if (ibroadcast < 0) {
+                    axes[i] = -1;
+                }
+                /* Otherwise map to the broadcast axis */
+                else {
+                    axes[i] = ibroadcast;
+                }
+            }
+            /* It's a labeled dimension, find the matching one */
+            else {
+                char *match = memchr(labels, label, ndim);
+                /* If the op doesn't have the label, broadcast it */
+                if (match == NULL) {
+                    axes[i] = -1;
+                }
+                /* Otherwise use it */
+                else {
+                    axes[i] = match - labels;
+                }
+            }
+        }
+    }
+    /* Reverse broadcasting */
+    else if (broadcast == BROADCAST_LEFT) {
+        /* broadcast dimensions get placed in leftmost position */
+        ibroadcast = 0; 
+        for (i = 0; i < ndim_iter; ++i) {
+            label = iter_labels[i];
+            /*
+             * If it's an unlabeled broadcast dimension, choose
+             * the next broadcast dimension from the operand.
+             */
+            if (label == 0) {
+                while (ibroadcast < ndim && labels[ibroadcast] != 0) {
+                    ++ibroadcast;
+                }
+                /*
+                 * If we used up all the operand broadcast dimensions,
+                 * extend it with a "newaxis"
+                 */
+                if (ibroadcast >= ndim) {
+                    axes[i] = -1;
+                }
+                /* Otherwise map to the broadcast axis */
+                else {
+                    axes[i] = ibroadcast;
+                }
+            }
+            /* It's a labeled dimension, find the matching one */
+            else {
+                char *match = memchr(labels, label, ndim);
+                /* If the op doesn't have the label, broadcast it */
+                if (match == NULL) {
+                    axes[i] = -1;
+                }
+                /* Otherwise use it */
+                else {
+                    axes[i] = match - labels;
+                }
+            }
+        }
+    }
+    /* Middle broadcasting */
+    else {
+        /* broadcast dimensions get placed in leftmost position */
+        ibroadcast = 0; 
+        for (i = 0; i < ndim_iter; ++i) {
+            label = iter_labels[i];
+            /*
+             * If it's an unlabeled broadcast dimension, choose
+             * the next broadcast dimension from the operand.
+             */
+            if (label == 0) {
+                while (ibroadcast < ndim && labels[ibroadcast] != 0) {
+                    ++ibroadcast;
+                }
+                /*
+                 * If we used up all the operand broadcast dimensions,
+                 * it's an error
+                 */
+                if (ibroadcast >= ndim) {
+                    PyErr_Format(PyExc_ValueError,
+                            "operand %d did not have enough dimensions "
+                            "to match the broadcasting, and couldn't be "
+                            "extended because einstein sum subscripts "
+                            "were specified at both the start and end",
+                            iop);
+                    return 0;
+                }
+                /* Otherwise map to the broadcast axis */
+                else {
+                    axes[i] = ibroadcast;
+                }
+            }
+            /* It's a labeled dimension, find the matching one */
+            else {
+                char *match = memchr(labels, label, ndim);
+                /* If the op doesn't have the label, broadcast it */
+                if (match == NULL) {
+                    axes[i] = -1;
+                }
+                /* Otherwise use it */
+                else {
+                    axes[i] = match - labels;
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+
 
 /*NUMPY_API
  * This function provides summation of array elements according to
@@ -312,9 +680,11 @@ parse_output_subscripts(char *subscripts, int length,
  * then c[i,j] = a[j]*b[i].
  *
  * Alternatively, you can control the output order or prevent
- * an axis from being summed by providing indices for the output.
- * This allows us to turn 'trace' into 'diag', for example.
+ * an axis from being summed/force an axis to be summed by providing
+ * indices for the output. This allows us to turn 'trace' into
+ * 'diag', for example.
  *  - diag(a)         -> einsum("ii->i", a)
+ *  - sum(a, axis=0)  -> einsum("i...->", a)
  *
  * Subscripts at the beginning and end may be specified by
  * putting an ellipsis "..." in the middle.  For example,
@@ -337,12 +707,21 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     int iop, label, min_label = 127, max_label = 0, num_labels;
     char label_counts[128];
     char op_labels[NPY_MAXARGS][NPY_MAXDIMS];
-    char output_labels[NPY_MAXDIMS];
-    int idim, ndim_output, ndim_broadcast;
+    char output_labels[NPY_MAXDIMS], *iter_labels;
+    int idim, ndim_output, ndim_broadcast, ndim_iter;
 
-    PyArrayObject *op[NPY_MAXARGS];
+    EINSUM_BROADCAST broadcast[NPY_MAXARGS];
+    PyArrayObject *op[NPY_MAXARGS], *ret = NULL;
+    PyArray_Descr *op_dtypes_array[NPY_MAXARGS], **op_dtypes;
 
-    if (nop > NPY_MAXARGS) {
+    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
+    npy_intp *op_axes[NPY_MAXARGS];
+    npy_uint32 op_flags[NPY_MAXARGS];
+
+    NpyIter *iter;
+
+    /* nop+1 (+1 is for the output) must fit in NPY_MAXARGS */
+    if (nop >= NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError,
                     "too many operands provided to einstein sum function");
         return NULL;
@@ -376,7 +755,8 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (!parse_operand_subscripts(subscripts, length,
                         PyArray_NDIM(op_in[iop]),
                         iop, op_labels[iop], label_counts,
-                        &min_label, &max_label, &num_labels)) {
+                        &min_label, &max_label, &num_labels,
+                        &broadcast[iop])) {
             return NULL;
         }
         
@@ -433,7 +813,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         /* Parse the output subscript string */
         ndim_output = parse_output_subscripts(outsubscripts, length,
                                         ndim_broadcast, label_counts,
-                                        output_labels);
+                                        output_labels, &broadcast[nop]);
     }
     else {
         if (subscripts[0] != '-' || subscripts[1] != '>') {
@@ -447,9 +827,17 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         /* Parse the output subscript string */
         ndim_output = parse_output_subscripts(subscripts, strlen(subscripts),
                                         ndim_broadcast, label_counts,
-                                        output_labels);
+                                        output_labels, &broadcast[nop]);
     }
     if (ndim_output < 0) {
+        return NULL;
+    }
+
+    if (out != NULL && PyArray_NDIM(out) != ndim_output) {
+        PyErr_Format(PyExc_ValueError,
+                "out parameter does not have the correct number of "
+                "dimensions, has %d but should have %d",
+                (int)PyArray_NDIM(out), (int)ndim_output);
         return NULL;
     }
 
@@ -464,8 +852,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      */
     printf("Processing inputs\n");
     for (iop = 0; iop < nop; ++iop) {
-        npy_intp new_strides[NPY_MAXDIMS];
-        npy_intp new_dims[NPY_MAXDIMS];
         char *labels = op_labels[iop];
         int combine, ndim;
 
@@ -476,86 +862,16 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
          * first try remapping the axes to the output to return
          * a view instead of a copy.
          */
-        if (nop == 1 && out == NULL) {
-            char *out_label;
-            int i, ibroadcast = 0;
+        if (iop == 0 && nop == 1 && out == NULL) {
+            PyArrayObject *ret = NULL;
 
-            /* Initialize the dimensions and strides to zero */
-            for (idim = 0; idim < ndim_output; ++idim) {
-                new_dims[idim] = 0;
-                new_strides[idim] = 0;
+            if (!get_single_op_view(op_in[iop], iop, labels,
+                                    ndim_output, output_labels,
+                                    &ret)) {
+                return NULL;
             }
-            /* Match the labels in the operand with the output labels */
-            for (idim = 0; idim < ndim; ++idim) {
-                printf("Matching label for dimension %d\n", idim);
-                label = labels[idim];
-                /* If this label says to merge axes, get the actual label */
-                if (label < 0) {
-                    label = labels[idim+label];
-                }
-                /* If the label is 0, it's an unlabeled broadcast dimension */
-                if (label == 0) {
-                    /* The next output label that's a broadcast dimension */
-                    for (; ibroadcast < ndim_output; ++ibroadcast) {
-                        if (output_labels[ibroadcast] == 0) {
-                            break;
-                        }
-                    }
-                    if (ibroadcast == ndim_output) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "output had too few broadcast dimensions");
-                        return NULL;
-                    }
-                    new_dims[ibroadcast] = PyArray_DIM(op_in[iop], idim);
-                    new_strides[ibroadcast] = PyArray_STRIDE(op_in[iop], idim);
-                    ++ibroadcast;
-                }
-                else {
-                    /* Find the position for this dimension in the output */
-                    out_label = (char *)memchr(output_labels, label,
-                                                            ndim_output);
-                    /* If it's not found, reduction -> can't return a view */
-                    if (out_label == NULL) {
-                        break;
-                    }
-                    /* Update the dimensions and strides of the output */
-                    i = out_label - output_labels;
-                    if (new_dims[i] != 0 &&
-                            new_dims[i] != PyArray_DIM(op_in[iop], idim)) {
-                        PyErr_Format(PyExc_ValueError,
-                                "dimensions in operand %d for collapsing "
-                                "index '%c' don't match (%d != %d)",
-                                iop, label, (int)new_dims[i],
-                                (int)PyArray_DIM(op_in[iop], idim));
-                        return NULL;
-                    }
-                    new_dims[i] = PyArray_DIM(op_in[iop], idim);
-                    new_strides[i] += PyArray_STRIDE(op_in[iop], idim);
-                }
-            }
-            /* If we processed all the input axes, return a view */
-            if (idim == ndim) {
-                printf("Returning a view\n");
-                Py_INCREF(PyArray_DESCR(op_in[iop]));
-                op[iop] = (PyArrayObject *)PyArray_NewFromDescr(
-                                        Py_TYPE(op_in[iop]),
-                                        PyArray_DESCR(op_in[iop]),
-                                        ndim_output, new_dims, new_strides,
-                                        PyArray_DATA(op_in[iop]),
-                                        0, (PyObject *)op_in[iop]);
-
-                if (op[iop] == NULL) {
-                    return NULL;
-                }
-                if (!PyArray_Check(op[iop])) {
-                    Py_DECREF(op[iop]);
-                    PyErr_SetString(PyExc_RuntimeError,
-                                "NewFromDescr failed to return an array");
-                    return NULL;
-                }
-                Py_INCREF(op_in[iop]);
-                PyArray_BASE(op[iop]) = (PyObject *)op_in[iop];
-                return op[iop];
+            if (ret != NULL) {
+                return ret;
             }
         }
 
@@ -567,86 +883,115 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             }
         }
 
-        PyErr_SetString(PyExc_RuntimeError, "not implemented yet");
-        return NULL;
-    }
-
-    PyErr_SetString(PyExc_RuntimeError, "not implemented yet");
-    return NULL;
-
-#if 0
-        /* Copy the dimensions before the labels without changes */
-        for (idim = 0; idim < ndim-nlabels; ++i) {
-            new_strides[idim] = PyArray_STRIDE(op[iop], idim);
-            new_dims[idim] = PyArray_DIM(op[iop], idim);
-        }
-        /* Process the labels for the rest */
-        for (ilabels = 0; ilabels < nlabels; ++ilabels) {
-            label = labels[ilabels];
-            if (label_counts[label] > 1) {
-                /* If this label occurs earlier, merge it */
-                for (jlabels = 0; jlabels < ilabels; ++jlabels) {
-                    if (labels[jlabels] == label) {
-                        if (new_dims[jlabels+ndims-nlabels] !=
-                                PyArray_DIM(op[iop], ilabels+ndims-nlabels)) {
-                            PyErr_Format(PyExc_ValueError,
-                                    "operand %d has a repeated label, but "
-                                    "the dimensions for the label don't match",
-                                    (int)iop);
-                            goto fail;
-                        }
-                        new_strides[jlabels+ndims-nlabels] +=
-                                PyArray_STRIDE(op[iop], ilabels+ndims-nlabels);
-                        /* Indicate this label should be removed */
-                        labels[ilabels] = 0;
-                        break;
-                    }
-                }
-            }
-        }
-        /* Collapse the labels that got cleared */
-        jlabels = 0;
-        for (ilabels = 0; ilabels < nlabels; ++ilabels) {
-            if (labels[ilabels] != 0) {
-                if (jlabels != ilabels) {
-                    labels[jlabels] = labels[ilabels];
-                    i = ilabels+ndims-nlabels;
-                    new_strides[idim] = new_strides[i];
-                    new_dims[idim] = new_dims[i];
-                }
-                idim++;
-                jlabels++;
-            }
-            else {
-                op_nlabels[iop]--;
-            }
-        }
-        /* If the dimensions shrunk, make a new view */
-        if (idim != ndim) {
-            ndim = idim;
-            Py_INCREF(PyArray_DESCR(op_in[iop]));
-            op[iop] = PyArray_NewFromDescr(&PyArray_Type,
-                                        PyArray_DESCR(op_in[iop]),
-                                        ndim, new_dims, new_strides,
-                                        PyArray_DATA(op_in[iop]),
-                                        0, NULL);
+        /* If any dimensions are combined, create a view which combines them */
+        if (combine) {
+            op[iop] = get_combined_dims_view(op_in[iop], iop, labels);
             if (op[iop] == NULL) {
                 goto fail;
             }
-            Py_INCREF(op_in[iop]);
-            PyArray_BASE(op[iop]) = (PyObject *)op_in[iop];
         }
-        /* Otherwise just take a reference */
+        /* No combining needed */
         else {
-            op[iop] = op_in[iop]
-            Py_INCREF(op[iop]);
+            Py_INCREF(op_in[iop]);
+            op[iop] = op_in[iop];
         }
     }
-goto fail;
+
+    /* Set the output op */
+    op[nop] = out;
+
+    /*
+     * Set up the labels for the iterator (output + combined labels).
+     * Can just share the output_labels memory, because iter_labels
+     * is output_labels with some more labels appended.
+     */
+    iter_labels = output_labels;
+    ndim_iter = ndim_output;
+    for (label = min_label; label <= max_label; ++label) {
+        if (label_counts[label] > 0 &&
+                memchr(output_labels, label, ndim_output) == NULL) {
+            if (ndim_iter >= NPY_MAXDIMS) {
+                PyErr_SetString(PyExc_ValueError,
+                            "too many subscripts in einsum");
+                goto fail;
+            }
+            iter_labels[ndim_iter++] = label;
+        }
+    }
+
+    /* Set up the op_axes for the iterator */
+    for (iop = 0; iop < nop; ++iop) {
+        op_axes[iop] = op_axes_arrays[iop];
+
+        if (!prepare_op_axes(PyArray_NDIM(op[iop]), iop, op_labels[iop],
+                    op_axes[iop], ndim_iter, iter_labels, broadcast[iop])) {
+            goto fail;
+        }
+    }
+
+    /* Set up the op_dtypes if dtype was provided */
+    if (dtype == NULL) {
+        op_dtypes = NULL;
+    }
+    else {
+        op_dtypes = op_dtypes_array;
+        for (iop = 0; iop <= nop; ++iop) {
+            op_dtypes[iop] = dtype;
+        }
+    }
+
+    /* Set the op_axes for the output */
+    op_axes[nop] = op_axes_arrays[nop];
+    for (idim = 0; idim < ndim_output; ++idim) {
+        op_axes[nop][idim] = idim;
+    }
+    for (idim = ndim_output; idim < ndim_iter; ++idim) {
+        op_axes[nop][idim] = -1;
+    }
+
+    /* Set the iterator per-op flags */
+
+    for (iop = 0; iop < nop; ++iop) {
+        op_flags[iop] = NPY_ITER_READONLY|
+                        NPY_ITER_NBO|
+                        NPY_ITER_ALIGNED;
+    }
+    op_flags[nop] = NPY_ITER_READWRITE|
+                    NPY_ITER_NBO|
+                    NPY_ITER_ALIGNED|
+                    NPY_ITER_ALLOCATE|
+                    NPY_ITER_NO_BROADCAST;
+
+    /* Allocate the iterator */
+    iter = NpyIter_MultiNew(nop+1, op, NPY_ITER_NO_INNER_ITERATION|
+                ((dtype == NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
+                                       NPY_ITER_BUFFERED|
+                                       NPY_ITER_DELAY_BUFALLOC|
+                                       NPY_ITER_GROWINNER|
+                                       NPY_ITER_REDUCE_OK,
+                                       order, casting,
+                                       op_flags, op_dtypes,
+                                       ndim_iter, op_axes, 0);
+    
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    /* Initialize the output to all zeros */
+    ret = NpyIter_GetOperandArray(iter)[nop];
+    Py_INCREF(ret);
+    PyArray_FillWithZero(ret);
+    NpyIter_Reset(iter, NULL);
+
+    NpyIter_DebugPrint(iter);
+    NpyIter_Deallocate(iter);
+
+    return ret;
+
+fail:
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
     }
 
     return NULL;
-#endif
 }
