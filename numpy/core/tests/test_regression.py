@@ -915,7 +915,6 @@ class TestRegression(TestCase):
     def test_attributes(self, level=rlevel):
         """Ticket #791
         """
-        import numpy as np
         class TestArray(np.ndarray):
             def __new__(cls, data, info):
                 result = np.array(data)
@@ -925,63 +924,63 @@ class TestRegression(TestCase):
             def __array_finalize__(self, obj):
                 self.info = getattr(obj, 'info', '')
         dat = TestArray([[1,2,3,4],[5,6,7,8]],'jubba')
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.resize((4,2))
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.sort()
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.fill(2)
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.put([2,3,4],[6,3,4])
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.setfield(4, np.int32,0)
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.setflags()
-        assert dat.info == 'jubba'
-        assert dat.all(1).info == 'jubba'
-        assert dat.any(1).info == 'jubba'
-        assert dat.argmax(1).info == 'jubba'
-        assert dat.argmin(1).info == 'jubba'
-        assert dat.argsort(1).info == 'jubba'
-        assert dat.astype(TestArray).info == 'jubba'
-        assert dat.byteswap().info == 'jubba'
-        assert dat.clip(2,7).info == 'jubba'
-        assert dat.compress([0,1,1]).info == 'jubba'
-        assert dat.conj().info == 'jubba'
-        assert dat.conjugate().info == 'jubba'
-        assert dat.copy().info == 'jubba'
+        assert_(dat.info == 'jubba')
+        assert_(dat.all(1).info == 'jubba')
+        assert_(dat.any(1).info == 'jubba')
+        assert_(dat.argmax(1).info == 'jubba')
+        assert_(dat.argmin(1).info == 'jubba')
+        assert_(dat.argsort(1).info == 'jubba')
+        assert_(dat.astype(TestArray).info == 'jubba')
+        assert_(dat.byteswap().info == 'jubba')
+        assert_(dat.clip(2,7).info == 'jubba')
+        assert_(dat.compress([0,1,1]).info == 'jubba')
+        assert_(dat.conj().info == 'jubba')
+        assert_(dat.conjugate().info == 'jubba')
+        assert_(dat.copy().info == 'jubba')
         dat2 = TestArray([2, 3, 1, 0],'jubba')
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
                    [20, 21, 22, 23], [30, 31, 32, 33]]
-        assert dat2.choose(choices).info == 'jubba'
-        assert dat.cumprod(1).info == 'jubba'
-        assert dat.cumsum(1).info == 'jubba'
-        assert dat.diagonal().info == 'jubba'
-        assert dat.flatten().info == 'jubba'
-        assert dat.getfield(np.int32,0).info == 'jubba'
-        assert dat.imag.info == 'jubba'
-        assert dat.max(1).info == 'jubba'
-        assert dat.mean(1).info == 'jubba'
-        assert dat.min(1).info == 'jubba'
-        assert dat.newbyteorder().info == 'jubba'
-        assert dat.nonzero()[0].info == 'jubba'
-        assert dat.nonzero()[1].info == 'jubba'
-        assert dat.prod(1).info == 'jubba'
-        assert dat.ptp(1).info == 'jubba'
-        assert dat.ravel().info == 'jubba'
-        assert dat.real.info == 'jubba'
-        assert dat.repeat(2).info == 'jubba'
-        assert dat.reshape((2,4)).info == 'jubba'
-        assert dat.round().info == 'jubba'
-        assert dat.squeeze().info == 'jubba'
-        assert dat.std(1).info == 'jubba'
-        assert dat.sum(1).info == 'jubba'
-        assert dat.swapaxes(0,1).info == 'jubba'
-        assert dat.take([2,3,5]).info == 'jubba'
-        assert dat.transpose().info == 'jubba'
-        assert dat.T.info == 'jubba'
-        assert dat.var(1).info == 'jubba'
-        assert dat.view(TestArray).info == 'jubba'
+        assert_(dat2.choose(choices).info == 'jubba')
+        assert_(dat.cumprod(1).info == 'jubba')
+        assert_(dat.cumsum(1).info == 'jubba')
+        assert_(dat.diagonal().info == 'jubba')
+        assert_(dat.flatten().info == 'jubba')
+        assert_(dat.getfield(np.int32,0).info == 'jubba')
+        assert_(dat.imag.info == 'jubba')
+        assert_(dat.max(1).info == 'jubba')
+        assert_(dat.mean(1).info == 'jubba')
+        assert_(dat.min(1).info == 'jubba')
+        assert_(dat.newbyteorder().info == 'jubba')
+        assert_(dat.nonzero()[0].info == 'jubba')
+        assert_(dat.nonzero()[1].info == 'jubba')
+        assert_(dat.prod(1).info == 'jubba')
+        assert_(dat.ptp(1).info == 'jubba')
+        assert_(dat.ravel().info == 'jubba')
+        assert_(dat.real.info == 'jubba')
+        assert_(dat.repeat(2).info == 'jubba')
+        assert_(dat.reshape((2,4)).info == 'jubba')
+        assert_(dat.round().info == 'jubba')
+        assert_(dat.squeeze().info == 'jubba')
+        assert_(dat.std(1).info == 'jubba')
+        assert_(dat.sum(1).info == 'jubba')
+        assert_(dat.swapaxes(0,1).info == 'jubba')
+        assert_(dat.take([2,3,5]).info == 'jubba')
+        assert_(dat.transpose().info == 'jubba')
+        assert_(dat.T.info == 'jubba')
+        assert_(dat.var(1).info == 'jubba')
+        assert_(dat.view(TestArray).info == 'jubba')
 
     def test_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215

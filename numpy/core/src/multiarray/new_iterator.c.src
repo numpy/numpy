@@ -938,7 +938,19 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
     axisdata = NIT_INDEX_AXISDATA(axisdata0, 1);
     memmove(axisdata0, axisdata, (ndim-1-xdim)*sizeof_axisdata);
 
-    npyiter_shrink_ndim(iter, ndim-1);
+    /* If there is more than one dimension, shrink the iterator */
+    if (ndim > 1) {
+        npyiter_shrink_ndim(iter, ndim-1);
+    }
+    /* Otherwise convert it to a singleton dimension */
+    else {
+        npy_intp *strides = NAD_STRIDES(axisdata0);
+        NAD_SHAPE(axisdata0) = 1;
+        for (iiter = 0; iiter < niter; ++iiter) {
+            strides[iiter] = 0;
+        }
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_ONEITERATION;
+    }
 
     return NpyIter_Reset(iter, NULL);
 }
