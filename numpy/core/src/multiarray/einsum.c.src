@@ -2306,6 +2306,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                                        NPY_ITER_DELAY_BUFALLOC|
                                        NPY_ITER_GROWINNER|
                                        NPY_ITER_REDUCE_OK|
+                                       NPY_ITER_REFS_OK|
                                        NPY_ITER_ZEROSIZE_OK,
                                        order, casting,
                                        op_flags, op_dtypes,
@@ -2355,6 +2356,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         char **dataptr;
         npy_intp *stride;
         npy_intp *countptr;
+        int needs_api = NpyIter_IterationNeedsAPI(iter);
         NPY_BEGIN_THREADS_DEF;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2367,11 +2369,21 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         stride = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        NPY_BEGIN_THREADS;
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
         do {
             sop(nop, dataptr, stride, *countptr);
         } while(iternext(iter));
-        NPY_END_THREADS;
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
+
+        /* If the API was needed, it may have thrown an error */
+        if (needs_api && PyErr_Occurred()) {
+            Py_DECREF(ret);
+            ret = NULL;
+        }
     }
 
     NpyIter_Deallocate(iter);

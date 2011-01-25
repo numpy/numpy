@@ -371,6 +371,11 @@ class TestEinSum(TestCase):
             assert_equal(np.einsum("i,->", a[1:], 2), 2*np.sum(a[1:]))
             assert_equal(np.einsum(",i->", 2, a[1:]), 2*np.sum(a[1:]))
 
+        # An object array, summed as the data type
+        a = np.arange(9, dtype=object)
+        b = np.einsum("i->", a, dtype=dtype, casting='unsafe')
+        assert_equal(b, np.sum(a))
+        assert_equal(b.dtype, np.dtype(dtype))
 
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1');

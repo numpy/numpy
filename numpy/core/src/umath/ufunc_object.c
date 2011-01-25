@@ -3270,6 +3270,11 @@ trivial_two_operand_loop(PyArrayObject **op,
 {
     char *data[2];
     npy_intp count[2], stride[2];
+    int needs_api;
+    NPY_BEGIN_THREADS_DEF;
+
+    needs_api = PyDataType_REFCHK(PyArray_DESCR(op[0])) ||
+                PyDataType_REFCHK(PyArray_DESCR(op[1]));
 
     PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(op[0], op[1],
                                             count[0],
@@ -3277,7 +3282,16 @@ trivial_two_operand_loop(PyArrayObject **op,
                                             stride[0], stride[1]);
     count[1] = count[0];
     NPY_UF_DBG_PRINTF("two operand loop count %d\n", (int)count[0]);
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
     innerloop(data, count, stride, innerloopdata);
+
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
 }
 
 static void
@@ -3287,6 +3301,12 @@ trivial_three_operand_loop(PyArrayObject **op,
 {
     char *data[3];
     npy_intp count[3], stride[3];
+    int needs_api;
+    NPY_BEGIN_THREADS_DEF;
+
+    needs_api = PyDataType_REFCHK(PyArray_DESCR(op[0])) ||
+                PyDataType_REFCHK(PyArray_DESCR(op[1])) ||
+                PyDataType_REFCHK(PyArray_DESCR(op[2]));
 
     PyArray_PREPARE_TRIVIAL_TRIPLE_ITERATION(op[0], op[1], op[2],
                                             count[0],
@@ -3295,7 +3315,16 @@ trivial_three_operand_loop(PyArrayObject **op,
     count[1] = count[0];
     count[2] = count[0];
     NPY_UF_DBG_PRINTF("three operand loop count %d\n", (int)count[0]);
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
     innerloop(data, count, stride, innerloopdata);
+
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
 }
 
 /*
@@ -3375,6 +3404,8 @@ iterator_loop(PyUFuncObject *self,
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
     char *baseptrs[NPY_MAXARGS];
+    int needs_api;
+    NPY_BEGIN_THREADS_DEF;
 
     NpyIter_IterNext_Fn iternext;
     char **dataptr;
@@ -3414,6 +3445,8 @@ iterator_loop(PyUFuncObject *self,
     if (iter == NULL) {
         return -1;
     }
+
+    needs_api = NpyIter_IterationNeedsAPI(iter);
 
     /* Copy any allocated outputs */
     op_it = NpyIter_GetOperandArray(iter);
@@ -3455,11 +3488,19 @@ iterator_loop(PyUFuncObject *self,
         stride = NpyIter_GetInnerStrideArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
+
         /* Execute the loop */
         do {
             NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)*count_ptr);
             innerloop(dataptr, count_ptr, stride, innerloopdata);
         } while (iternext(iter));
+
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
     }
 
     NpyIter_Deallocate(iter);
@@ -4308,6 +4349,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     npy_intp *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
     npy_uint32 op_flags[2];
     int i, idim, ndim, otype_final;
+    int needs_api;
+    NPY_BEGIN_THREADS_DEF;
 
     NpyIter *iter = NULL, *iter_inner = NULL;
 
@@ -4508,6 +4551,13 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             stride_inner = NpyIter_GetInnerStrideArray(iter_inner);
             count_ptr_inner = NpyIter_GetInnerLoopSizePtr(iter_inner);
 
+            needs_api = NpyIter_IterationNeedsAPI(iter) ||
+                        NpyIter_IterationNeedsAPI(iter_inner);
+
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
+
             do {
                 /* Reset the inner iterator to the outer's data */
                 if (NpyIter_ResetBasePointers(iter_inner, dataptr, NULL)
@@ -4545,6 +4595,10 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                     }
                 } while(iternext_inner(iter_inner));
             } while (iternext(iter));
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
         }
         /* Execute the loop with just the outer iterator */
         else {
@@ -4556,6 +4610,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             stride_copy[0] = 0;
             stride_copy[1] = stride;
             stride_copy[2] = 0;
+
+            needs_api = NpyIter_IterationNeedsAPI(iter);
+
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
 
             do {
                 
@@ -4581,6 +4641,10 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                                 stride_copy, innerloopdata);
                 }
             } while (iternext(iter));
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
         }
     }
     else if (iter == NULL) {
@@ -4611,6 +4675,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 goto fail;
             }
 
+            needs_api = NpyIter_IterationNeedsAPI(iter_inner);
+
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
+
             do {
                 npy_intp count = *count_ptr_inner;
 
@@ -4639,6 +4709,10 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                                 stride_copy, innerloopdata);
                 }
             } while(iternext_inner(iter_inner));
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
         }
         /* Execute the loop with no iterators */
         else {
@@ -4676,8 +4750,19 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 stride_copy[1] = stride;
                 stride_copy[2] = 0;
                 NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
+
+                needs_api = PyDataType_REFCHK(op_dtypes[0]);
+
+                if (!needs_api) {
+                    NPY_BEGIN_THREADS;
+                }
+
                 innerloop(dataptr_copy, &count,
                             stride_copy, innerloopdata);
+
+                if (!needs_api) {
+                    NPY_END_THREADS;
+                }
             }
         }
     }
