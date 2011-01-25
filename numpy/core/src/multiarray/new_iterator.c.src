@@ -2819,7 +2819,7 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
             return PyString_FromFormat("()%s", ending);
     }
     else {
-        ret = PyString_FromFormat("(%zd", vals[i]);
+        ret = PyString_FromFormat("(%zd", vals[i++]);
         if (ret == NULL) {
             return NULL;
         }
@@ -3080,16 +3080,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     }
                     if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
                         if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
-                            if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "output operand is smaller "
-                                        "than the broadcast dimensions");
-                            } else {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "operand is smaller "
-                                        "than the broadcast dimensions");
-                            }
-                            return 0;
+                            goto operand_smaller_than_broadcast;
                         }
                     }
                     /*
@@ -3097,16 +3088,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                      * dimensions.
                      */
                     else {
-                        if (op_flags[iiter]&NPY_ITER_WRITEONLY) {
-                            PyErr_SetString(PyExc_ValueError,
-                                        "output operand is smaller "
-                                        "than the broadcast dimensions");
-                        } else {
-                            PyErr_SetString(PyExc_ValueError,
-                                        "operand is smaller "
-                                        "than the broadcast dimensions");
-                        }
-                        return 0;
+                        goto operand_smaller_than_broadcast;
                     }
                     
                     NIT_ADVANCE_AXISDATA(axisdata, 1);
@@ -3227,6 +3209,64 @@ broadcast_error: {
             }
             PyErr_SetObject(PyExc_ValueError, errmsg);
         }
+
+        return 0;
+    }
+
+operand_smaller_than_broadcast: {
+        npy_intp broadcast_shape[NPY_MAXDIMS];
+        PyObject *errmsg, *tmp;
+
+        /* Fill in the broadcast shape */
+        axisdata = NIT_AXISDATA(iter);
+        for (idim = 0; idim < ndim; ++idim) {
+            broadcast_shape[idim] = NAD_SHAPE(axisdata);
+            
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
+        }
+
+        /* Start of error message */
+        if (op_flags[iiter]&NPY_ITER_READONLY) {
+            errmsg = PyString_FromString("operand with shape ");
+        }
+        else {
+            errmsg = PyString_FromString("output operand with shape ");
+        }
+        if (errmsg == NULL) {
+            return 0;
+        }
+
+        /* Operand shape */
+        tmp = npyiter_shape_string(PyArray_NDIM(op[iiter]),
+                                        PyArray_DIMS(op[iiter]), "");
+        if (tmp == NULL) {
+            return 0;
+        }
+        PyString_ConcatAndDel(&errmsg, tmp);
+        if (errmsg == NULL) {
+            return 0;
+        }
+
+        tmp = PyString_FromString(" is smaller than the broadcast shape ");
+        if (tmp == NULL) {
+            return 0;
+        }
+        PyString_ConcatAndDel(&errmsg, tmp);
+        if (errmsg == NULL) {
+            return 0;
+        }
+
+        /* Broadcast shape */
+        tmp = npyiter_shape_string(ndim, broadcast_shape, "");
+        if (tmp == NULL) {
+            return 0;
+        }
+        PyString_ConcatAndDel(&errmsg, tmp);
+        if (errmsg == NULL) {
+            return 0;
+        }
+
+        PyErr_SetObject(PyExc_ValueError, errmsg);
 
         return 0;
     }

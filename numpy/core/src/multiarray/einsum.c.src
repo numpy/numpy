@@ -2319,8 +2319,15 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     ret = NpyIter_GetOperandArray(iter)[nop];
     Py_INCREF(ret);
     PyArray_FillWithZero(ret);
-    NpyIter_Reset(iter, NULL);
+    if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+        Py_DECREF(ret);
+        goto fail;
+    }
 
+    /*
+     * Get an inner loop function, specializing it based on
+     * the strides that are fixed for the whole loop.
+     */
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
     sop = get_sum_of_products_function(nop,
                         NpyIter_GetDescrArray(iter)[0]->type_num,
