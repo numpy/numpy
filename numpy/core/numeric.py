@@ -817,6 +817,10 @@ def outer(a,b):
     out : ndarray, shape (M, N)
         ``out[i, j] = a[i] * b[j]``
 
+    See also
+    --------
+    numpy.inner, numpy.einsum
+
     References
     ----------
     .. [1] : G. H. Golub and C. F. van Loan, *Matrix Computations*, 3rd
@@ -907,7 +911,7 @@ def tensordot(a, b, axes=2):
 
     See Also
     --------
-    numpy.dot
+    numpy.dot, numpy.einsum
 
     Notes
     -----
