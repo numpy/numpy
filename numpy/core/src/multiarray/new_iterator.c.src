@@ -3204,15 +3204,15 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     }
                     if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
                         if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
-                            goto operand_smaller_than_broadcast;
+                            goto operand_different_than_broadcast;
                         }
                     }
                     /*
                      * Also disallow broadcasting by adding additional
                      * dimensions.
                      */
-                    else {
-                        goto operand_smaller_than_broadcast;
+                    else if (!axes) {
+                        goto operand_different_than_broadcast;
                     }
                     
                     NIT_ADVANCE_AXISDATA(axisdata, 1);
@@ -3337,24 +3337,18 @@ broadcast_error: {
         return 0;
     }
 
-operand_smaller_than_broadcast: {
-        npy_intp broadcast_shape[NPY_MAXDIMS];
+operand_different_than_broadcast: {
+        npy_intp remdims[NPY_MAXDIMS];
         PyObject *errmsg, *tmp;
-
-        /* Fill in the broadcast shape */
-        axisdata = NIT_AXISDATA(iter);
-        for (idim = 0; idim < ndim; ++idim) {
-            broadcast_shape[idim] = NAD_SHAPE(axisdata);
-            
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-        }
 
         /* Start of error message */
         if (op_flags[iiter]&NPY_ITER_READONLY) {
-            errmsg = PyString_FromString("operand with shape ");
+            errmsg = PyString_FromString("non-broadcastable operand "
+                                        "with shape ");
         }
         else {
-            errmsg = PyString_FromString("output operand with shape ");
+            errmsg = PyString_FromString("non-broadcastable output "
+                                            "operand with shape ");
         }
         if (errmsg == NULL) {
             return 0;
@@ -3370,8 +3364,41 @@ operand_smaller_than_broadcast: {
         if (errmsg == NULL) {
             return 0;
         }
+        /* Remapped operand shape */
+        if (op_axes != NULL && op_axes[iiter] != NULL) {
+            npy_intp *axes = op_axes[iiter];
 
-        tmp = PyString_FromString(" is smaller than the broadcast shape ");
+            for (idim = 0; idim < ndim; ++idim) {
+                npy_intp i = axes[ndim-idim-1];
+
+                if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
+                    remdims[idim] = PyArray_DIM(op[iiter], i);
+                }
+                else {
+                    remdims[idim] = -1;
+                }
+            }
+
+            tmp = PyString_FromString(" [remapped to ");
+            if (tmp == NULL) {
+                return 0;
+            }
+            PyString_ConcatAndDel(&errmsg, tmp);
+            if (errmsg == NULL) {
+                return 0;
+            }
+
+            tmp = npyiter_shape_string(ndim, remdims, "]");
+            if (tmp == NULL) {
+                return 0;
+            }
+            PyString_ConcatAndDel(&errmsg, tmp);
+            if (errmsg == NULL) {
+                return 0;
+            }
+        }
+
+        tmp = PyString_FromString(" doesn't match the broadcast shape ");
         if (tmp == NULL) {
             return 0;
         }
@@ -3380,8 +3407,16 @@ operand_smaller_than_broadcast: {
             return 0;
         }
 
+        /* Fill in the broadcast shape */
+        axisdata = NIT_AXISDATA(iter);
+        for (idim = 0; idim < ndim; ++idim) {
+            remdims[idim] = NAD_SHAPE(axisdata);
+            
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
+        }
+
         /* Broadcast shape */
-        tmp = npyiter_shape_string(ndim, broadcast_shape, "");
+        tmp = npyiter_shape_string(ndim, remdims, "");
         if (tmp == NULL) {
             return 0;
         }
