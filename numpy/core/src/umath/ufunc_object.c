@@ -4332,16 +4332,10 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     return -1;
 }
 
-/*
- * We have two basic kinds of loops. One is used when arr is not-swapped
- * and aligned and output type is the same as input type.  The other uses
- * buffers when one of these is not satisfied.
- *
- *  Zero-length and one-length axes-to-be-reduced are handled separately.
- */
 static PyObject *
-PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
-        int axis, int otype)
+PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
+                    PyArrayObject *out, int axis, int otype,
+                    int operation, char *opname)
 {
     PyArrayObject *op[2];
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
@@ -4364,15 +4358,15 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
 
-    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s.reduce\n", ufunc_name);
+    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
 
 #if 0
-    printf("Doing %s.reduce on array with dtype :  ", ufunc_name);
+    printf("Doing %s.%s on array with dtype :  ", ufunc_name, opname);
     PyObject_Print((PyObject *)PyArray_DESCR(arr), stdout, 0);
     printf("\n");
 #endif
 
-    if (PyUFunc_GetPyValues("reduce", &buffersize, &errormask, &errobj) < 0) {
+    if (PyUFunc_GetPyValues(opname, &buffersize, &errormask, &errobj) < 0) {
         return NULL;
     }
 
@@ -4384,9 +4378,9 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                                 &innerloop, &innerloopdata) < 0) {
         PyArray_Descr *dtype = PyArray_DescrFromType(otype);
         PyErr_Format(PyExc_ValueError,
-                     "could not find a matching type for %s.reduce, "
+                     "could not find a matching type for %s.%s, "
                      "requested type has type code '%c'",
-                                ufunc_name, dtype ? dtype->type : '-');
+                            ufunc_name, opname, dtype ? dtype->type : '-');
         Py_XDECREF(dtype);
         goto fail;
     }
@@ -4400,18 +4394,32 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     }
 
 #if 0
-    printf("Found %s.reduce inner loop with dtype :  ", ufunc_name);
+    printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
     PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
     printf("\n");
 #endif
 
     /* Set up the op_axes for the outer loop */
-    for (i = 0, idim = 0; idim < ndim; ++idim) {
-        if (idim != axis) {
-            op_axes_arrays[0][i] = i;
-            op_axes_arrays[1][i] = idim;
+    if (operation == UFUNC_REDUCE) {
+        for (i = 0, idim = 0; idim < ndim; ++idim) {
+            if (idim != axis) {
+                op_axes_arrays[0][i] = i;
+                op_axes_arrays[1][i] = idim;
+                i++;
+            }
+        }
+    }
+    else if (operation == UFUNC_ACCUMULATE) {
+        for (i = 0, idim = 0; idim < ndim; ++idim) {
+            op_axes_arrays[0][idim] = idim;
+            op_axes_arrays[1][idim] = idim;
             i++;
         }
+    }
+    else {
+        PyErr_Format(PyExc_RuntimeError,
+                    "invalid reduction operation %s.%s", ufunc_name, opname);
+        goto fail;
     }
 
     /* The per-operand flags for the outer loop */
@@ -4462,8 +4470,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     if (PyArray_DIM(arr, axis) == 0) {
         if (self->identity == PyUFunc_None) {
             PyErr_Format(PyExc_ValueError,
-                         "zero-size array to %s.reduce "
-                         "without identity", ufunc_name);
+                         "zero-size array to %s.%s "
+                         "without identity", ufunc_name, opname);
             goto fail;
         }
         if (self->identity == PyUFunc_One) {
@@ -4792,11 +4800,29 @@ fail:
     return NULL;
 }
 
+/*
+ * We have two basic kinds of loops. One is used when arr is not-swapped
+ * and aligned and output type is the same as input type.  The other uses
+ * buffers when one of these is not satisfied.
+ *
+ *  Zero-length and one-length axes-to-be-reduced are handled separately.
+ */
+static PyObject *
+PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
+        int axis, int otype)
+{
+    return PyUFunc_ReductionOp(self, arr, out, axis, otype,
+                                UFUNC_REDUCE, "reduce");
+}
+
 
 static PyObject *
 PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                    int axis, int otype)
 {
+    /*return PyUFunc_ReductionOp(self, arr, out, axis, otype,
+                                UFUNC_ACCUMULATE, "accumulate");*/
+
     PyArrayObject *ret = NULL;
     PyUFuncReduceObject *loop;
     intp i, n;

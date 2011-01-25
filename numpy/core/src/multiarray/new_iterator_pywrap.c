@@ -1228,6 +1228,39 @@ npyiter_iternext(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
+npyiter_remove_axis(NewNpyArrayIterObject *self, PyObject *args)
+{
+    int axis = 0;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return NULL;
+    }
+
+    if (!PyArg_ParseTuple(args, "i", &axis)) {
+        return NULL;
+    }
+
+    if (NpyIter_RemoveAxis(self->iter, axis) != NPY_SUCCEED) {
+        return NULL;
+    }
+    /* RemoveAxis invalidates cached values */
+    npyiter_cache_values(self);
+    /* RemoveAxis also resets the iterator */
+    if (NpyIter_GetIterSize(self->iter) == 0) {
+        self->started = 1;
+        self->finished = 1;
+    }
+    else {
+        self->started = 0;
+        self->finished = 0;
+    }
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 npyiter_remove_coords(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
@@ -2058,6 +2091,7 @@ static PyMethodDef npyiter_methods[] = {
     {"copy", (PyCFunction)npyiter_copy, METH_NOARGS, NULL},
     {"__copy__", (PyCFunction)npyiter_copy, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
+    {"remove_axis", (PyCFunction)npyiter_remove_axis, METH_VARARGS, NULL},
     {"remove_coords", (PyCFunction)npyiter_remove_coords, METH_NOARGS, NULL},
     {"remove_inner_loop", (PyCFunction)npyiter_remove_inner_loop,
                 METH_NOARGS, NULL},

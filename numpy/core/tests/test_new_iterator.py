@@ -1289,6 +1289,18 @@ def test_iter_allocate_output_errors():
                         op_dtypes=[None,np.dtype('f4')],
                         op_axes=[None,[0,2,1,0]])
 
+def test_iter_remove_axis():
+    a = arange(24).reshape(2,3,4)
+
+    i = newiter(a,['coords'])
+    i.remove_axis(1)
+    assert_equal([x for x in i], a[:,0,:].ravel())
+
+    a = a[::-1,:,:]
+    i = newiter(a,['coords'])
+    i.remove_axis(0)
+    assert_equal([x for x in i], a[0,:,:].ravel())
+
 def test_iter_remove_coords_inner_loop():
     # Check that removing coords support works
 
