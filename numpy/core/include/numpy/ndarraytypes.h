@@ -420,6 +420,14 @@ typedef struct {
 } PyArray_Dims;
 
 typedef struct {
+        /*
+         * Functions to cast to most other standard types
+         * Can have some NULL entries. The types
+         * DATETIME, TIMEDELTA, and HALF go into the castdict
+         * even though they are built-in.
+         */
+        PyArray_VectorUnaryFunc *cast[NPY_NTYPES_ABI_COMPATIBLE];
+
         /* The next four functions *cannot* be NULL */
 
         /*
@@ -513,22 +521,6 @@ typedef struct {
         PyArray_FastClipFunc *fastclip;
         PyArray_FastPutmaskFunc *fastputmask;
         PyArray_FastTakeFunc *fasttake;
-
-        /*
-         * A little room to grow --- should use generic function
-         * interface for most additions
-         */
-        void *pad1;
-        void *pad2;
-        void *pad3;
-        void *pad4;
-
-        /*
-         * Functions to cast to all other standard types
-         * Can have some NULL entries
-         */
-        PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
-
 } PyArray_ArrFuncs;
 
 /* The item must be reference counted when it is inserted or extracted. */

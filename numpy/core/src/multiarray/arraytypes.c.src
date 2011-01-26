@@ -3601,6 +3601,29 @@ static int
  * #endian = |, |, =#
 */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
+    {
+        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
+        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_INT,
+        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
+        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
+        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+    },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
     (PyArray_CopySwapNFunc*)@from@_copyswapn,
@@ -3625,34 +3648,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     (PyArray_FastClipFunc *)NULL,
     (PyArray_FastPutmaskFunc *)NULL,
-    (PyArray_FastTakeFunc *)NULL,
-    NULL, NULL, NULL, NULL,
-    {
-        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
-        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_INT,
-        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
-        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
-        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
-        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
-        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
-        (PyArray_VectorUnaryFunc*)@from@_to_HALF
-    }
+    (PyArray_FastTakeFunc *)NULL
 };
 
 /*
@@ -3697,6 +3693,29 @@ static PyArray_Descr @from@_Descr = {
  * #isobject= 0*18,NPY_OBJECT_DTYPE_FLAGS,0*2#
  */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
+    {
+        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
+        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_INT,
+        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
+        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
+        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+    },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
     (PyArray_CopySwapNFunc*)@from@_copyswapn,
@@ -3721,34 +3740,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     (PyArray_FastClipFunc*)@from@_fastclip,
     (PyArray_FastPutmaskFunc*)@from@_fastputmask,
-    (PyArray_FastTakeFunc*)@from@_fasttake,
-    NULL, NULL, NULL, NULL,
-    {
-        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
-        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_INT,
-        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
-        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
-        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
-        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
-        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
-        (PyArray_VectorUnaryFunc*)@from@_to_HALF
-    }
+    (PyArray_FastTakeFunc*)@from@_fasttake
 };
 
 /*
@@ -3902,8 +3894,49 @@ set_typeinfo(PyObject *dict)
     PyObject *infodict, *s;
     int i;
 
+    PyArray_Descr *dtype;
+    PyObject *cobj, *key;
+
+    /* Add cast functions for the new types */
+/**begin repeat
+ *
+ * #name1 = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID,
+ *         DATETIME,TIMEDELTA#
+ */
+/**begin repeat1
+ *
+ * #name2 = HALF, DATETIME, TIMEDELTA#
+ */
+    dtype = _builtin_descrs[NPY_@name1@];
+    if (dtype->f->castdict == NULL) {
+        dtype->f->castdict = PyDict_New();
+        if (dtype->f->castdict == NULL) {
+            return -1;
+        }
+    }
+    key = PyInt_FromLong(NPY_@name2@);
+    if (key == NULL) {
+        return -1;
+    }
+    cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
+    if (cobj == NULL) {
+        Py_DECREF(key);
+        return -1;
+    }
+    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
+        Py_DECREF(key);
+        Py_DECREF(cobj);
+        return -1;
+    }
+    Py_DECREF(key);
+    Py_DECREF(cobj);
+/**end repeat1**/
+/**end repeat**/
+
     for (i = 0; i < _MAX_LETTER; i++) {
-        _letter_to_num[i] = PyArray_NTYPES;
+        _letter_to_num[i] = NPY_NTYPES;
     }
 
 /**begin repeat

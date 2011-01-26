@@ -83,10 +83,10 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 {
     PyArray_VectorUnaryFunc *castfunc = NULL;
 
-    if (type_num < PyArray_NTYPES) {
+    if (type_num < NPY_NTYPES_ABI_COMPATIBLE) {
         castfunc = descr->f->cast[type_num];
     }
-    if (castfunc == NULL) {
+    else {
         PyObject *obj = descr->f->castdict;
         if (obj && PyDict_Check(obj)) {
             PyObject *key;
