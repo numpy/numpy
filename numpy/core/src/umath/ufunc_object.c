@@ -2717,31 +2717,32 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
      * unit for UFUNC_REDUCE, or return the zero-sized output array
      * for UFUNC_ACCUMULATE.
      */
-    if (PyArray_DIM(op[1], axis) == 0) {
-        if (operation == UFUNC_REDUCE) {
-            if (self->identity == PyUFunc_None) {
-                PyErr_Format(PyExc_ValueError,
-                             "zero-size array to %s.%s "
-                             "without identity", ufunc_name, opname);
+    if (operation == UFUNC_REDUCE && PyArray_DIM(op[1], axis) == 0) {
+        if (self->identity == PyUFunc_None) {
+            PyErr_Format(PyExc_ValueError,
+                         "zero-size array to %s.%s "
+                         "without identity", ufunc_name, opname);
+            goto fail;
+        }
+        if (self->identity == PyUFunc_One) {
+            PyObject *obj = PyInt_FromLong((long) 1);
+            if (obj == NULL) {
                 goto fail;
             }
-            if (self->identity == PyUFunc_One) {
-                PyObject *obj = PyInt_FromLong((long) 1);
-                if (obj == NULL) {
-                    goto fail;
-                }
-                PyArray_FillWithScalar(op[0], obj);
-                Py_DECREF(obj);
-            } else {
-                PyObject *obj = PyInt_FromLong((long) 0);
-                if (obj == NULL) {
-                    goto fail;
-                }
-                PyArray_FillWithScalar(op[0], obj);
-                Py_DECREF(obj);
+            PyArray_FillWithScalar(op[0], obj);
+            Py_DECREF(obj);
+        } else {
+            PyObject *obj = PyInt_FromLong((long) 0);
+            if (obj == NULL) {
+                goto fail;
             }
+            PyArray_FillWithScalar(op[0], obj);
+            Py_DECREF(obj);
         }
 
+        goto finish;
+    }
+    else if (PyArray_SIZE(op[0]) == 0) {
         goto finish;
     }
 

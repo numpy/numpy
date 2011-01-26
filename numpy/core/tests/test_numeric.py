@@ -657,11 +657,15 @@ class TestTypes(TestCase):
 
         f64 = float64(0)
         c64 = complex64(0)
-        # Scalars do not coerce to complex if the value is real
-        assert_equal(res_type(c64,array([f64])), np.dtype(float64))
+        ## Scalars do not coerce to complex if the value is real
+        #assert_equal(res_type(c64,array([f64])), np.dtype(float64))
         # But they do if the value is complex
         assert_equal(res_type(complex64(3j),array([f64])),
                                                     np.dtype(complex128))
+
+        # Scalars do coerce to complex even if the value is real
+        # This is so "a+0j" can be reliably used to make something complex.
+        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
 
         ctx.__exit__()
 
@@ -671,11 +675,16 @@ class TestTypes(TestCase):
 
         f64 = float64(0)
         c64 = complex64(0)
-        # Scalars do not coerce to complex if the value is real
-        assert_equal(np.result_type(c64,array([f64])), np.dtype(float64))
+        ## Scalars do not coerce to complex if the value is real
+        #assert_equal(np.result_type(c64,array([f64])), np.dtype(float64))
         # But they do if the value is complex
         assert_equal(np.result_type(complex64(3j),array([f64])),
                                                     np.dtype(complex128))
+
+        # Scalars do coerce to complex even if the value is real
+        # This is so "a+0j" can be reliably used to make something complex.
+        assert_equal(np.result_type(c64,array([f64])), np.dtype(complex128))
+
 
     def can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))

@@ -274,7 +274,8 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
 static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     char **op_dataptr,
-                    npy_uint32 *op_flags, npy_intp **op_axes);
+                    npy_uint32 *op_flags, npy_intp **op_axes,
+                    int output_scalars);
 static void
 npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
                       PyArrayObject *op,
@@ -429,7 +430,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
     if (!npyiter_fill_axisdata(iter, flags, op_itflags, op_dataptr,
-                                                op_flags, op_axes)) {
+                                        op_flags, op_axes, output_scalars)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -2985,7 +2986,8 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
 static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     char **op_dataptr,
-                    npy_uint32 *op_flags, npy_intp **op_axes)
+                    npy_uint32 *op_flags, npy_intp **op_axes,
+                    int output_scalars)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     npy_intp idim, ndim = NIT_NDIM(iter);
@@ -3188,8 +3190,12 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
     /* Go through and check for operands for broadcasting and reduction */
     for (iiter = 0; iiter < niter; ++iiter) {
         if (op[iiter] != NULL) {
-            /* If broadcasting is disallowed for this operand */
-            if (op_flags[iiter]&NPY_ITER_NO_BROADCAST) {
+            /*
+             * If broadcasting is disallowed for this operand,
+             * unless scalars are output, which means all operands are scalar
+             * and no broadcasting errors could occur
+             */
+            if ((op_flags[iiter]&NPY_ITER_NO_BROADCAST) && !output_scalars) {
                 npy_intp *axes;
 
                 axes = op_axes ? op_axes[iiter] : NULL;

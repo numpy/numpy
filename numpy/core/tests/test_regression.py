@@ -1471,5 +1471,12 @@ class TestRegression(TestCase):
         a = np.arange(10000, dtype='f')
         assert_equal(a.sum(dtype='d'), a.astype('d').sum())
 
+    def test_ufunc_casting_out(self):
+        a = np.array(1.0, dtype=np.float32)
+        b = np.array(1.0, dtype=np.float64)
+        c = np.array(1.0, dtype=np.float32)
+        np.add(a, b, out=c)
+        assert_equal(c, 2.0)
+
 if __name__ == "__main__":
     run_module_suite()

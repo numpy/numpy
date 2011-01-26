@@ -1819,6 +1819,7 @@ PyArray_Nonzero(PyArrayObject *self)
     /* Build an iterator with coordinates, in C order */
     iter = NpyIter_New(self, NPY_ITER_READONLY|
                              NPY_ITER_COORDS|
+                             NPY_ITER_ZEROSIZE_OK|
                              NPY_ITER_REFS_OK,
                         NPY_CORDER, NPY_NO_CASTING,
                         NULL, 0, NULL, 0);
@@ -1828,31 +1829,33 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
-    /* Get the pointers for inner loop iteration */
-    iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        NpyIter_Deallocate(iter);
-        Py_DECREF(ret);
-        return NULL;
-    }
-    getcoords = NpyIter_GetGetCoords(iter, NULL);
-    if (getcoords == NULL) {
-        NpyIter_Deallocate(iter);
-        Py_DECREF(ret);
-        return NULL;
-    }
-    dataptr = NpyIter_GetDataPtrArray(iter);
-    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-    coords = (npy_intp *)PyArray_DATA(ret);
-
-    /* Get the coordinates for each non-zero element */
-    do {
-        if (nonzero(*dataptr, self)) {
-            getcoords(iter, coords);
-            coords += ndim;
+    if (NpyIter_GetIterSize(iter) != 0) {
+        /* Get the pointers for inner loop iteration */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(ret);
+            return NULL;
         }
-    } while(iternext(iter));
+        getcoords = NpyIter_GetGetCoords(iter, NULL);
+        if (getcoords == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(ret);
+            return NULL;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        coords = (npy_intp *)PyArray_DATA(ret);
+
+        /* Get the coordinates for each non-zero element */
+        do {
+            if (nonzero(*dataptr, self)) {
+                getcoords(iter, coords);
+                coords += ndim;
+            }
+        } while(iternext(iter));
+    }
 
     NpyIter_Deallocate(iter);
 

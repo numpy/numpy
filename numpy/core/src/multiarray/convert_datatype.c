@@ -1007,31 +1007,50 @@ static int min_scalar_type_num(char *valueptr, int type_num,
             break;
         }
         /*
-         * Complex types may be demoted to float types if the
-         * imaginary part is zero.
+         * The code to demote complex to float is disabled for now,
+         * as forcing complex by adding 0j is probably desireable.
          */
         case NPY_CFLOAT: {
             npy_cfloat value = *(npy_cfloat *)valueptr;
+            /*
             if (value.imag == 0) {
-                return min_scalar_type_num((char *)&value.real, NPY_FLOAT, is_small_unsigned);
+                return min_scalar_type_num((char *)&value.real,
+                                            NPY_FLOAT, is_small_unsigned);
             }
+            */
             break;
         }
         case NPY_CDOUBLE: {
             npy_cdouble value = *(npy_cdouble *)valueptr;
+            /*
             if (value.imag == 0) {
-                return min_scalar_type_num((char *)&value.real, NPY_DOUBLE, is_small_unsigned);
+                return min_scalar_type_num((char *)&value.real,
+                                            NPY_DOUBLE, is_small_unsigned);
             }
-            /* TODO: Check overflow values as for float case */
-            return NPY_CFLOAT;
+            */
+            if (value.real > -3.4e38 && value.real < 3.4e38 &&
+                     value.imag > -3.4e38 && value.imag < 3.4e38) {
+                return NPY_CFLOAT;
+            }
+            break;
         }
         case NPY_CLONGDOUBLE: {
             npy_cdouble value = *(npy_cdouble *)valueptr;
+            /*
             if (value.imag == 0) {
-                return min_scalar_type_num((char *)&value.real, NPY_LONGDOUBLE, is_small_unsigned);
+                return min_scalar_type_num((char *)&value.real,
+                                            NPY_LONGDOUBLE, is_small_unsigned);
             }
-            /* TODO: Check overflow values as for float case */
-            return NPY_CFLOAT;
+            */
+            if (value.real > -3.4e38 && value.real < 3.4e38 &&
+                     value.imag > -3.4e38 && value.imag < 3.4e38) {
+                return NPY_CFLOAT;
+            }
+            else if (value.real > -1.7e308 && value.real < 1.7e308 &&
+                     value.imag > -1.7e308 && value.imag < 1.7e308) {
+                return NPY_CDOUBLE;
+            }
+            break;
         }
     }
 
