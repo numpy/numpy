@@ -3639,19 +3639,19 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
         (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
         (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_HALF,
         (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
         (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
         (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
-        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
         (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
+        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
+        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
+        (PyArray_VectorUnaryFunc*)@from@_to_HALF
     }
 };
 
@@ -3735,19 +3735,19 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
         (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
         (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_HALF,
         (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
         (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
         (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
         (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
-        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
         (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
         (PyArray_VectorUnaryFunc*)@from@_to_STRING,
         (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID,
+        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
+        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
+        (PyArray_VectorUnaryFunc*)@from@_to_HALF
     }
 };
 
@@ -3812,19 +3812,19 @@ static PyArray_Descr *_builtin_descrs[] = {
     &ULONG_Descr,
     &LONGLONG_Descr,
     &ULONGLONG_Descr,
-    &HALF_Descr,
     &FLOAT_Descr,
     &DOUBLE_Descr,
     &LONGDOUBLE_Descr,
     &CFLOAT_Descr,
     &CDOUBLE_Descr,
     &CLONGDOUBLE_Descr,
-    &DATETIME_Descr,
-    &TIMEDELTA_Descr,
     &OBJECT_Descr,
     &STRING_Descr,
     &UNICODE_Descr,
     &VOID_Descr,
+    &DATETIME_Descr,
+    &TIMEDELTA_Descr,
+    &HALF_Descr
 };
 
 /*NUMPY_API

@@ -1080,7 +1080,7 @@ ufunc_loop_matches(PyUFuncObject *self,
             return 0;
         }
 #if NPY_UF_DBG_TRACING
-        printf("Checking type for op %d, type: ", (int)i);
+        printf("Checking type for op %d, type %d: ", (int)i, (int)types[i]);
         PyObject_Print((PyObject *)tmp, stdout, 0);
         printf(", operand type: ");
         PyObject_Print((PyObject *)PyArray_DESCR(op[i]), stdout, 0);
@@ -2363,6 +2363,9 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     int i;
     PyUFunc_Loop1d *funcdata;
 
+    NPY_UF_DBG_PRINTF("Getting binary op function for type number %d\n",
+                                *otype);
+
     /* If the type is custom and there are userloops, search for it here */
     if (self->userloops != NULL && PyTypeNum_ISUSERDEF(*otype)) {
         PyObject *key, *obj;
@@ -2392,6 +2395,9 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     /* Search for a function with compatible inputs */
     for (i = 0; i < self->ntypes; ++i) {
         char *types = self->types + i*self->nargs;
+
+        NPY_UF_DBG_PRINTF("Trying loop with signature %d %d -> %d\n",
+                                types[0], types[1], types[2]);
 
         if (PyArray_CanCastSafely(*otype, types[0]) &&
                     types[0] == types[1] &&
@@ -2513,7 +2519,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         goto fail;
     }
 
-#if 0
+#if NPY_UF_DBG_TRACING
     printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
     PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
     printf("\n");
@@ -3365,7 +3371,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
          * is used for add and multiply reduction to avoid overflow
          */
         int typenum = PyArray_TYPE(mp);
-        if ((typenum < NPY_HALF)
+        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
             && ((strcmp(self->name,"add") == 0)
                 || (strcmp(self->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {

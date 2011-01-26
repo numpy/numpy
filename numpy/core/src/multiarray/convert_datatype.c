@@ -534,7 +534,29 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-    int type_num1 = type1->type_num, type_num2 = type2->type_num, ret_type_num;
+    int type_num1, type_num2, ret_type_num;
+
+    /* If one of the arguments is NULL, return the non-NULL one */
+    if (type1 == NULL || type2 == NULL) {
+        if (type1 == NULL) {
+            if (type2 == NULL) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "PromoteTypes received two NULL arguments");
+                return NULL;
+            }
+            else {
+                Py_INCREF(type2);
+                return type2;
+            }
+        }
+        else {
+            Py_INCREF(type1);
+            return type1;
+        }
+    }
+
+    type_num1 = type1->type_num;
+    type_num2 = type2->type_num;
 
     /* If they're built-in types, use the promotion table */
     if (type_num1 < NPY_NTYPES && type_num2 < NPY_NTYPES) {
@@ -643,8 +665,108 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return NULL;
     }
 
+    switch (type_num1) {
+        /* BOOL can convert to anything */
+        case NPY_BOOL:
+            Py_INCREF(type2);
+            return type2;
+        /* For strings and unicodes, take the larger size */
+        case NPY_STRING:
+            if (type_num2 == NPY_STRING) {
+                if (type1->elsize > type2->elsize) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    Py_INCREF(type2);
+                    return type2;
+                }
+            }
+            else if (type_num2 == NPY_UNICODE) {
+                if (type2->elsize >= type1->elsize * 4) {
+                    Py_INCREF(type2);
+                    return type2;
+                }
+                else {
+                    PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
+                    if (d == NULL) {
+                        return NULL;
+                    }
+                    d->elsize = type1->elsize * 4;
+                    return d;
+                }
+            }
+            /* Allow NUMBER -> STRING */
+            else if (PyTypeNum_ISNUMBER(type_num2)) {
+                Py_INCREF(type1);
+                return type1;
+            }
+        case NPY_UNICODE:
+            if (type_num2 == NPY_UNICODE) {
+                if (type1->elsize > type2->elsize) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    Py_INCREF(type2);
+                    return type2;
+                }
+            }
+            else if (type_num2 == NPY_STRING) {
+                if (type1->elsize >= type2->elsize * 4) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
+                    if (d == NULL) {
+                        return NULL;
+                    }
+                    d->elsize = type2->elsize * 4;
+                    return d;
+                }
+            }
+            /* Allow NUMBER -> UNICODE */
+            else if (PyTypeNum_ISNUMBER(type_num2)) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            break;
+    }
+
+    switch (type_num2) {
+        /* BOOL can convert to anything */
+        case NPY_BOOL:
+            Py_INCREF(type1);
+            return type1;
+        case NPY_STRING:
+            /* Allow NUMBER -> STRING */
+            if (PyTypeNum_ISNUMBER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+        case NPY_UNICODE:
+            /* Allow NUMBER -> UNICODE */
+            if (PyTypeNum_ISNUMBER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            break;
+    }
+
+    /* For equivalent types we can return either */
+    if (PyArray_EquivTypes(type1, type2)) {
+        Py_INCREF(type1);
+        return type1;
+    }
+
     /* TODO: Also combine fields, subarrays, strings, etc */
     
+    printf("invalid type promotion: ");
+    PyObject_Print(type1, stdout, 0);
+    printf(" ");
+    PyObject_Print(type2, stdout, 0);
+    printf("\n");
     PyErr_SetString(PyExc_TypeError, "invalid type promotion");
     return NULL;
 }
@@ -1286,12 +1408,18 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     }
 
     for (i = 0; i < n; i++) {
+        mps[i] = NULL;
+    }
+
+    for (i = 0; i < n; i++) {
         otmp = PySequence_GetItem(op, i);
         if (!PyArray_CheckAnyScalar(otmp)) {
             newtype = PyArray_DescrFromObject(otmp, intype);
             Py_XDECREF(intype);
+            if (newtype == NULL) {
+                goto fail;
+            }
             intype = newtype;
-            mps[i] = NULL;
             intypekind = PyArray_ScalarKind(intype->type_num, NULL);
         }
         else {
@@ -1323,7 +1451,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         if (!PyArray_CanCoerceScalar(stype->type_num,
                                      intype->type_num,
                                      scalarkind)) {
-            newtype = _array_small_type(intype, stype);
+            newtype = PyArray_PromoteTypes(intype, stype);
             Py_XDECREF(intype);
             intype = newtype;
         }

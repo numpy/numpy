@@ -1429,6 +1429,9 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         }
         if (newtype == NULL) {
             newtype = _array_find_type(op, NULL, MAX_DIMS);
+            if (newtype == NULL) {
+                return NULL;
+            }
         }
         else if (newtype->type_num == PyArray_OBJECT) {
             isobject = 1;

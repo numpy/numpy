@@ -65,16 +65,24 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_INT, NPY_UINT,
                     NPY_LONG, NPY_ULONG,
                     NPY_LONGLONG, NPY_ULONGLONG,
-                    NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+                    NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
                     NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-                    NPY_DATETIME, NPY_TIMEDELTA,
-                    NPY_OBJECT=20,
+                    NPY_OBJECT=17,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
+                    /*
+                     * New 1.6 types appended, may be integrated
+                     * into the above in 2.0.
+                     */
+                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF, 
+
                     NPY_NTYPES,
                     NPY_NOTYPE,
                     NPY_CHAR,      /* special flag */
-                    NPY_USERDEF=256  /* leave room for characters */
+                    NPY_USERDEF=256,  /* leave room for characters */
+
+                    /* The number of types not including the new 1.6 types */
+                    NPY_NTYPES_ABI_COMPATIBLE=21
 };
 
 #define NPY_METADATA_DTSTR "__frequency__"
@@ -88,8 +96,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
 /* default scalar priority */
 #define NPY_SCALAR_PRIORITY -1000000.0
 
-/*TODO HALF - This is used as how many complex floating point types in the code */
-/* How many floating point types are there */
+/* How many floating point types are there (excluding half) */
 #define NPY_NUM_FLOATTYPE 3
 
 /*
@@ -1320,10 +1327,12 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&     \
                                 ((type) <= NPY_ULONGLONG))
 
-#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_HALF) &&      \
-                              ((type) <= NPY_LONGDOUBLE))
+#define PyTypeNum_ISFLOAT(type) ((((type) >= NPY_FLOAT) && \
+                              ((type) <= NPY_LONGDOUBLE)) || \
+                              ((type) == NPY_HALF))
 
-#define PyTypeNum_ISNUMBER(type) ((type) <= NPY_CLONGDOUBLE)
+#define PyTypeNum_ISNUMBER(type) (((type) <= NPY_CLONGDOUBLE) || \
+                                  ((type) == NPY_HALF))
 
 #define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
                                   ((type) == NPY_UNICODE))

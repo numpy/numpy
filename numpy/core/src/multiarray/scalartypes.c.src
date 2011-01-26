@@ -3499,10 +3499,15 @@ initialize_casting_tables(void)
         _npy_type_promotion_table[i][i] = i;
         /* Don't let number promote to string/unicode/void */
         if (i == NPY_STRING || i == NPY_UNICODE || i == NPY_VOID) {
+            /* Promoting these types requires examining their contents */
+            _npy_type_promotion_table[i][i] = -1;
             for (j = i+1; j < NPY_NTYPES; ++j) {
                 _npy_type_promotion_table[i][j] = -1;
                 _npy_type_promotion_table[j][i] = -1;
             }
+            /* Except they can convert to OBJECT */
+            _npy_type_promotion_table[i][NPY_OBJECT] = NPY_OBJECT;
+            _npy_type_promotion_table[NPY_OBJECT][i] = NPY_OBJECT;
         }
         else {
             for (j = i+1; j < NPY_NTYPES; ++j) {
@@ -3749,19 +3754,19 @@ static PyTypeObject *typeobjects[] = {
     &PyULongArrType_Type,
     &PyLongLongArrType_Type,
     &PyULongLongArrType_Type,
-    &PyHalfArrType_Type,
     &PyFloatArrType_Type,
     &PyDoubleArrType_Type,
     &PyLongDoubleArrType_Type,
     &PyCFloatArrType_Type,
     &PyCDoubleArrType_Type,
     &PyCLongDoubleArrType_Type,
-    &PyDatetimeArrType_Type,
-    &PyTimedeltaArrType_Type,
     &PyObjectArrType_Type,
     &PyStringArrType_Type,
     &PyUnicodeArrType_Type,
-    &PyVoidArrType_Type
+    &PyVoidArrType_Type,
+    &PyDatetimeArrType_Type,
+    &PyTimedeltaArrType_Type,
+    &PyHalfArrType_Type
 };
 
 NPY_NO_EXPORT int
