@@ -2811,7 +2811,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             NpyIter_IterNext_Fn iternext_inner;
             char **dataptr_inner;
             npy_intp *stride_inner;
-            npy_intp *count_ptr_inner;
+            npy_intp count, *count_ptr_inner;
 
             NPY_UF_DBG_PRINTF("UFunc: Reduce loop with two nested iterators\n");
             iternext_inner = NpyIter_GetIterNext(iter_inner, NULL);
@@ -2830,41 +2830,42 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             }
 
             do {
+                int first = 1;
+
                 /* Reset the inner iterator to the outer's data */
                 if (NpyIter_ResetBasePointers(iter_inner, dataptr, NULL)
                                                 != NPY_SUCCEED) {
                     goto fail;
                 }
 
+                /* Copy the first element to start the reduction */
+                if (otype == NPY_OBJECT) {
+                    Py_XDECREF(*(PyObject **)dataptr_inner[0]);
+                    *(PyObject **)dataptr_inner[0] =
+                                        *(PyObject **)dataptr_inner[1];
+                    Py_XINCREF(*(PyObject **)dataptr_inner[0]);
+                }
+                else {
+                    memcpy(dataptr_inner[0], dataptr_inner[1], itemsize);
+                }
+                
+                stride_copy[0] = 0;
+                stride_copy[2] = 0;
                 do {
-                    npy_intp count = *count_ptr_inner;
-
-                    /* Copy the first element to start the reduction */
-                    if (otype == NPY_OBJECT) {
-                        Py_XDECREF(*(PyObject **)dataptr_inner[0]);
-                        *(PyObject **)dataptr_inner[0] =
-                                            *(PyObject **)dataptr_inner[1];
-                        Py_XINCREF(*(PyObject **)dataptr_inner[0]);
-                    }
-                    else {
-                        memcpy(dataptr_inner[0], dataptr_inner[1], itemsize);
-                    }
-                    
-                    if (count > 1) {
+                    count = *count_ptr_inner;
+                    /* Turn the two items into three for the inner loop */
+                    dataptr_copy[0] = dataptr_inner[0];
+                    dataptr_copy[1] = dataptr_inner[1];
+                    dataptr_copy[2] = dataptr_inner[0];
+                    if (first) {
                         --count;
-                        /* Turn the two items into three for the inner loop */
-                        dataptr_copy[0] = dataptr_inner[0];
-                        dataptr_copy[1] = dataptr_inner[1] +
-                                          stride_inner[1];
-                        dataptr_copy[2] = dataptr_inner[0];
-                        stride_copy[0] = stride_inner[0];
-                        stride_copy[1] = stride_inner[1];
-                        stride_copy[2] = stride_inner[0];
-                        NPY_UF_DBG_PRINTF("iterator loop count %d\n",
-                                                    (int)count);
-                        innerloop(dataptr_copy, &count,
-                                    stride_copy, innerloopdata);
+                        dataptr_copy[1] += stride_inner[1];
+                        first = 0;
                     }
+                    stride_copy[1] = stride_inner[1];
+                    NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
+                    innerloop(dataptr_copy, &count,
+                                stride_copy, innerloopdata);
                 } while(iternext_inner(iter_inner));
             } while (iternext(iter));
 
@@ -2981,7 +2982,8 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             NpyIter_IterNext_Fn iternext_inner;
             char **dataptr_inner;
             npy_intp *stride_inner;
-            npy_intp *count_ptr_inner;
+            npy_intp count, *count_ptr_inner;
+            int first = 1;
 
             NPY_UF_DBG_PRINTF("UFunc: Reduce loop with just inner iterator\n");
 
@@ -3004,33 +3006,34 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                 NPY_BEGIN_THREADS;
             }
 
+            /* Copy the first element to start the reduction */
+            if (otype == NPY_OBJECT) {
+                Py_XDECREF(*(PyObject **)dataptr_inner[0]);
+                *(PyObject **)dataptr_inner[0] =
+                                    *(PyObject **)dataptr_inner[1];
+                Py_XINCREF(*(PyObject **)dataptr_inner[0]);
+            }
+            else {
+                memcpy(dataptr_inner[0], dataptr_inner[1], itemsize);
+            }
+            
+            stride_copy[0] = 0;
+            stride_copy[2] = 0;
             do {
-                npy_intp count = *count_ptr_inner;
-
-                /* Copy the first element to start the reduction */
-                if (otype == NPY_OBJECT) {
-                    Py_XDECREF(*(PyObject **)dataptr_inner[0]);
-                    *(PyObject **)dataptr_inner[0] =
-                                        *(PyObject **)dataptr_inner[1];
-                    Py_XINCREF(*(PyObject **)dataptr_inner[0]);
-                }
-                else {
-                    memcpy(dataptr_inner[0], dataptr_inner[1], itemsize);
-                }
-                
-                if (count > 1) {
+                count = *count_ptr_inner;
+                /* Turn the two items into three for the inner loop */
+                dataptr_copy[0] = dataptr_inner[0];
+                dataptr_copy[1] = dataptr_inner[1];
+                dataptr_copy[2] = dataptr_inner[0];
+                if (first) {
                     --count;
-                    /* Turn the two items into three for the inner loop */
-                    dataptr_copy[0] = dataptr_inner[0];
-                    dataptr_copy[1] = dataptr_inner[1] + stride_inner[1];
-                    dataptr_copy[2] = dataptr_inner[0];
-                    stride_copy[0] = stride_inner[0];
-                    stride_copy[1] = stride_inner[1];
-                    stride_copy[2] = stride_inner[0];
-                    NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
-                    innerloop(dataptr_copy, &count,
-                                stride_copy, innerloopdata);
+                    dataptr_copy[1] += stride_inner[1];
+                    first = 0;
                 }
+                stride_copy[1] = stride_inner[1];
+                NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
+                innerloop(dataptr_copy, &count,
+                            stride_copy, innerloopdata);
             } while(iternext_inner(iter_inner));
 
             if (!needs_api) {

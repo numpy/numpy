@@ -1461,5 +1461,15 @@ class TestRegression(TestCase):
         # PyErr_Occurred() and returned an error.
         assert_equal(np.dtype('S10').itemsize, 10)
 
+    def test_any_float(self):
+        # all and any for floats
+        a = np.array([0.1, 0.9])
+        assert_(np.any(a))
+        assert_(np.all(a))
+
+    def test_large_float_sum(self):
+        a = np.arange(10000, dtype='f')
+        assert_equal(a.sum(dtype='d'), a.astype('d').sum())
+
 if __name__ == "__main__":
     run_module_suite()
