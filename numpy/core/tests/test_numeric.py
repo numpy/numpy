@@ -645,16 +645,6 @@ class TestTypes(TestCase):
         assert_equal(promote_func(array([f64]),fld), np.dtype(float64))
         assert_equal(promote_func(fld,array([c64])), np.dtype(complex64))
 
-    def test_old_coercion(self):
-        def res_type(a, b):
-            return np.add.of(a, b).dtype
-        self.check_promotion_cases(res_type)
-
-        f64 = float64(0)
-        c64 = complex64(0)
-        # Scalars used to coerce to complex even if the value was real
-        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
-
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
