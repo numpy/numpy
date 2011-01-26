@@ -572,8 +572,7 @@ typedef struct _PyArray_Descr {
                                  * '>' (big), '<' (little), '|'
                                  * (not-applicable), or '=' (native).
                                  */
-        char unused;
-        int flags;              /* flag describing data type */
+        char flags;             /* flags describing data type */
         int type_num;           /* number representing this type */
         int elsize;             /* element size for this type */
         int alignment;          /* alignment needed for this type */

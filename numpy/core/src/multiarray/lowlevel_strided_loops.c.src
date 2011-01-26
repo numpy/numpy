@@ -681,6 +681,7 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
  *          byte, short, int, long, longlong,
  *          half, float, double, longdouble,
  *          float, double, longdouble#
+ * #is_bool1 = 1, 0*17#
  * #is_half1 = 0*11, 1, 0*6#
  * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double1 = 0*13, 1, 0, 0, 1, 0#
@@ -704,6 +705,7 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
  *          byte, short, int, long, longlong,
  *          half, float, double, longdouble,
  *          float, double, longdouble#
+ * #is_bool2 = 1, 0*17#
  * #is_half2 = 0*11, 1, 0*6#
  * #is_float2 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double2 = 0*13, 1, 0, 0, 1, 0#
@@ -771,7 +773,11 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
 
 #else
 
+#  if @is_bool2@
+#    define _CONVERT_FN(x) ((npy_bool)(x != 0))
+#  else
 #    define _CONVERT_FN(x) ((_TYPE2)x)
+#  endif
 
 #endif
 

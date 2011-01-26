@@ -45,6 +45,9 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "convert_datatype.h"
 #include "new_iterator_pywrap.h"
 
+/* Only here for API compatibility */
+NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
+
 /*NUMPY_API
  * Get Priority from object
  */
@@ -734,9 +737,14 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     PyArray_Descr *typec;
     NPY_BEGIN_THREADS_DEF;
 
+    PyArrayObject *ops_array[2];
+
+    ops_array[0] = op1;
+    ops_array[1] = op2;
     typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
+
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, ALIGNED, NULL);
     if (ap1 == NULL) {
@@ -2073,7 +2081,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
 NPY_NO_EXPORT unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
-    return (unsigned int)NPY_VERSION;
+    return (unsigned int)NPY_ABI_VERSION;
 }
 
 /*NUMPY_API
@@ -2082,7 +2090,7 @@ PyArray_GetNDArrayCVersion(void)
 NPY_NO_EXPORT unsigned int
 PyArray_GetNDArrayCFeatureVersion(void)
 {
-    return (unsigned int)NPY_FEATURE_VERSION;
+    return (unsigned int)NPY_API_VERSION;
 }
 
 static PyObject *

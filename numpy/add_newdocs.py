@@ -1514,11 +1514,22 @@ add_newdoc('numpy.core', 'einsum',
         If provided, the calculation is done into this array.
     dtype : None or data type
         If provided, forces the calculation to use the data type specified.
+        Note that you may have to also give a more liberal ``casting``
+        parameter to allow the conversions.
     order : 'C', 'F', 'A', or 'K'
-        Controls the memory layout of the output.
+        Controls the memory layout of the output. 'C' means it should
+        be Fortran contiguous. 'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout as the inputs as
+        is possible, including arbitrarily permuted axes.
     casting : 'no', 'equiv', 'safe', 'same_kind', 'unsafe'
         Controls what kind of data casting may occur.  Setting this to
         'unsafe' is not recommended, as it can adversely affect accumulations.
+        'no' means the data types should not be cast at all. 'equiv' means
+        only byte-order changes are allowed. 'safe' means only casts
+        which can preserve values are allowed. 'same_kind' means only
+        safe casts or casts within a kind, like float64 to float32, are
+        allowed.  'unsafe' means any data conversions may be done.
 
     Returns
     -------
