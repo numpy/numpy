@@ -608,7 +608,7 @@ class TestRegression(TestCase):
         assert_equal(np.dot(x,z),np.dot(x,y2))
 
     def test_object_casting(self, level=rlevel):
-        # This currently triggers the object-type version of
+        # This used to trigger the object-type version of
         # the bitwise_or operation, because float64 -> object
         # casting succeeds
         def rs():

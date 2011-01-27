@@ -1755,7 +1755,6 @@ PyArray_CountNonzero(PyArrayObject *self)
             data += stride;
         }
 
-        data = *dataptr;
     } while(iternext(iter));
 
     NpyIter_Deallocate(iter);

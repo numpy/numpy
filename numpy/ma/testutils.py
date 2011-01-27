@@ -93,10 +93,7 @@ def assert_equal(actual, desired, err_msg=''):
         return _assert_equal_on_sequences(actual, desired, err_msg='')
     if not (isinstance(actual, ndarray) or isinstance(desired, ndarray)):
         msg = build_err_msg([actual, desired], err_msg,)
-        try:
-            if not desired == actual:
-                raise AssertionError(msg)
-        except ValueError:
+        if not desired == actual:
             raise AssertionError(msg)
         return
     # Case #4. arrays or equivalent

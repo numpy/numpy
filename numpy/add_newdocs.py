@@ -1239,8 +1239,7 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
-    The returned data type is always in native byte order.  Promotion of
-    string, unicode and void with numbers is disallowed.
+    The returned data type is always in native byte order.
 
     Parameters
     ----------
@@ -1279,7 +1278,8 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     and smallest scalar kind which can hold its value.  For non-scalar
     array ``a``, returns the vector's dtype unmodified.
 
-    As a special case, floating point values are not reduced to integers.
+    As a special case, floating point values are not demoted to integers,
+    and complex values are not demoted to floats.
 
     Parameters
     ----------
