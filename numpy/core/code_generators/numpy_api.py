@@ -297,16 +297,17 @@ multiarray_funcs_api = {
     'NpyIter_IterationNeedsAPI':            261,
     'NpyIter_GetInnerFixedStrideArray':     262,
     'NpyIter_RemoveAxis':                   263,
+    'NpyIter_GetAxisStrideArray':           264,
     #
-    'PyArray_CastingConverter':             264,
-    'PyArray_CountNonzero':                 265,
-    'PyArray_PromoteTypes':                 266,
-    'PyArray_MinScalarType':                267,
-    'PyArray_ResultType':                   268,
-    'PyArray_CanCastArrayTo':               269,
-    'PyArray_CanCastTypeTo':                270,
-    'PyArray_EinsteinSum':                  271,
-    'PyArray_FillWithZero':                 272,
+    'PyArray_CastingConverter':             265,
+    'PyArray_CountNonzero':                 266,
+    'PyArray_PromoteTypes':                 267,
+    'PyArray_MinScalarType':                268,
+    'PyArray_ResultType':                   269,
+    'PyArray_CanCastArrayTo':               270,
+    'PyArray_CanCastTypeTo':                271,
+    'PyArray_EinsteinSum':                  272,
+    'PyArray_FillWithZero':                 273,
 }
 
 ufunc_types_api = {

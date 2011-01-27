@@ -2289,6 +2289,57 @@ NpyIter_GetInnerStrideArray(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Gets the array of strides for the specified axis.  Requires
+ * that the iterator be tracking coordinates, and that buffering
+ * is not enabled.
+ *
+ * Returns NULL if an error occurs.
+ */
+NPY_NO_EXPORT npy_intp *
+NpyIter_GetAxisStrideArray(NpyIter *iter, npy_intp axis)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    npy_intp *perm = NIT_PERM(iter);
+    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
+
+    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Iterator GetAxisStrideArray may only be called "
+                "if coordinates are being tracked");
+        return NULL;
+    }
+    else if (itflags&NPY_ITFLAG_BUFFER) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Iterator GetAxisStrideArray may not be called on "
+                "a buffered iterator");
+        return NULL;
+    }
+    else if (axis < 0 || axis >= ndim) {
+        PyErr_SetString(PyExc_ValueError,
+                "axis out of bounds in iterator RemoveAxis");
+        return NULL;
+    }
+
+    /* Reverse axis, since the iterator treats them that way */
+    axis = ndim-1-axis;
+
+    /* First find the axis in question */
+    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+        if (perm[idim] == axis || -1-perm[idim] == axis) {
+            return NAD_STRIDES(axisdata);
+        }
+    }
+
+    PyErr_SetString(PyExc_RuntimeError,
+            "internal error in iterator perm");
+    return  NULL;
+}
+
+/*NUMPY_API
  * Get an array of strides which are fixed.  Any strides which may
  * change during iteration receive the value NPY_MAX_INTP.  Once
  * the iterator is ready to iterate, call this to get the strides

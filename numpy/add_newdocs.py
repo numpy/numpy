@@ -1518,7 +1518,7 @@ add_newdoc('numpy.core', 'einsum',
         parameter to allow the conversions.
     order : 'C', 'F', 'A', or 'K'
         Controls the memory layout of the output. 'C' means it should
-        be Fortran contiguous. 'F' means it should be Fortran contiguous,
+        be C contiguous. 'F' means it should be Fortran contiguous,
         'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
         'K' means it should be as close to the layout as the inputs as
         is possible, including arbitrarily permuted axes.

@@ -684,149 +684,6 @@ fail:
 }
 
 
-#if 0
-
-/*
- * Concatenate the loop and core dimensions of
- * PyArrayMultiIterObject's iarg-th argument, to recover a full
- * dimension array (used for output arguments).
- */
-static npy_intp*
-_compute_output_dims(PyUFuncLoopObject *loop, int iarg,
-                     int *out_nd, npy_intp *tmp_dims)
-{
-    int i;
-    PyUFuncObject *ufunc = loop->ufunc;
-    if (ufunc->core_enabled == 0) {
-        /* case of ufunc with trivial core-signature */
-        *out_nd = loop->nd;
-        return loop->dimensions;
-    }
-
-    *out_nd = loop->nd + ufunc->core_num_dims[iarg];
-    if (*out_nd > NPY_MAXARGS) {
-        PyErr_SetString(PyExc_ValueError,
-                        "dimension of output variable exceeds limit");
-        return NULL;
-    }
-
-    /* copy loop dimensions */
-    memcpy(tmp_dims, loop->dimensions, sizeof(npy_intp) * loop->nd);
-
-    /* copy core dimension */
-    for (i = 0; i < ufunc->core_num_dims[iarg]; i++) {
-        tmp_dims[loop->nd + i] = loop->core_dim_sizes[1 +
-            ufunc->core_dim_ixs[ufunc->core_offsets[iarg] + i]];
-    }
-    return tmp_dims;
-}
-
-/* Check and set core_dim_sizes and core_strides for the i-th argument. */
-static int
-_compute_dimension_size(PyUFuncLoopObject *loop, PyArrayObject **mps, int i)
-{
-    PyUFuncObject *ufunc = loop->ufunc;
-    int j = ufunc->core_offsets[i];
-    int k = PyArray_NDIM(mps[i]) - ufunc->core_num_dims[i];
-    int ind;
-    for (ind = 0; ind < ufunc->core_num_dims[i]; ind++, j++, k++) {
-        npy_intp dim = k < 0 ? 1 : PyArray_DIM(mps[i], k);
-        /* First element of core_dim_sizes will be used for looping */
-        int dim_ix = ufunc->core_dim_ixs[j] + 1;
-        if (loop->core_dim_sizes[dim_ix] == 1) {
-            /* broadcast core dimension  */
-            loop->core_dim_sizes[dim_ix] = dim;
-        }
-        else if (dim != 1 && dim != loop->core_dim_sizes[dim_ix]) {
-            PyErr_SetString(PyExc_ValueError, "core dimensions mismatch");
-            return -1;
-        }
-        /* First ufunc->nargs elements will be used for looping */
-        loop->core_strides[ufunc->nargs + j] =
-            dim == 1 ? 0 : PyArray_STRIDE(mps[i], k);
-    }
-    return 0;
-}
-
-/* Return a view of array "ap" with "core_nd" dimensions cut from tail. */
-static PyArrayObject *
-_trunc_coredim(PyArrayObject *ap, int core_nd)
-{
-    PyArrayObject *ret;
-    int nd = ap->nd - core_nd;
-
-    if (nd < 0) {
-        nd = 0;
-    }
-    /* The following code is basically taken from PyArray_Transpose */
-    /* NewFromDescr will steal this reference */
-    Py_INCREF(ap->descr);
-    ret = (PyArrayObject *)
-        PyArray_NewFromDescr(Py_TYPE(ap), ap->descr,
-                             nd, ap->dimensions,
-                             ap->strides, ap->data, ap->flags,
-                             (PyObject *)ap);
-    if (ret == NULL) {
-        return NULL;
-    }
-    /* point at true owner of memory: */
-    ret->base = (PyObject *)ap;
-    Py_INCREF(ap);
-    PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
-    return ret;
-}
-#endif
-
-/*
-  static void
-  _printbytebuf(PyUFuncLoopObject *loop, int bufnum)
-  {
-  int i;
-
-  fprintf(stderr, "Printing byte buffer %d\n", bufnum);
-  for(i=0; i<loop->bufcnt; i++) {
-  fprintf(stderr, "  %d\n", *(((byte *)(loop->buffer[bufnum]))+i));
-  }
-  }
-
-  static void
-  _printlongbuf(PyUFuncLoopObject *loop, int bufnum)
-  {
-  int i;
-
-  fprintf(stderr, "Printing long buffer %d\n", bufnum);
-  for(i=0; i<loop->bufcnt; i++) {
-  fprintf(stderr, "  %ld\n", *(((long *)(loop->buffer[bufnum]))+i));
-  }
-  }
-
-  static void
-  _printlongbufptr(PyUFuncLoopObject *loop, int bufnum)
-  {
-  int i;
-
-  fprintf(stderr, "Printing long buffer %d\n", bufnum);
-  for(i=0; i<loop->bufcnt; i++) {
-  fprintf(stderr, "  %ld\n", *(((long *)(loop->bufptr[bufnum]))+i));
-  }
-  }
-
-
-
-  static void
-  _printcastbuf(PyUFuncLoopObject *loop, int bufnum)
-  {
-  int i;
-
-  fprintf(stderr, "Printing long buffer %d\n", bufnum);
-  for(i=0; i<loop->bufcnt; i++) {
-  fprintf(stderr, "  %ld\n", *(((long *)(loop->castbuf[bufnum]))+i));
-  }
-  }
-
-*/
-
-
 /********* GENERIC UFUNC USING ITERATOR *********/
 
 /*
@@ -2126,6 +1983,415 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
     }
 }
 
+static int
+PyUFunc_GeneralizedFunction(PyUFuncObject *self,
+                        PyObject *args, PyObject *kwds,
+                        PyArrayObject **op)
+{
+    npy_intp nin, nout;
+    npy_intp i, idim, niter;
+    char *ufunc_name;
+    int retval = -1, any_object = 0;
+    NPY_CASTING input_casting;
+
+    PyArray_Descr *dtype[NPY_MAXARGS];
+
+    /* Use remapped axes for generalized ufunc */
+    npy_intp broadcast_ndim, op_ndim;
+    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
+    npy_intp *op_axes[NPY_MAXARGS];
+
+    npy_uint32 op_flags[NPY_MAXARGS];
+
+    NpyIter *iter = NULL;
+
+    /* These parameters come from extobj= or from a TLS global */
+    int buffersize = 0, errormask = 0;
+    PyObject *errobj = NULL;
+    int first_error = 1;
+
+    /* The selected inner loop */
+    PyUFuncGenericFunction innerloop = NULL;
+    void *innerloopdata = NULL;
+    /* The dimensions which get passed to the inner loop */
+    npy_intp inner_dimensions[NPY_MAXDIMS+1];
+    /* The strides which get passed to the inner loop */
+    npy_intp *inner_strides = NULL;
+
+    npy_intp *inner_strides_tmp, *ax_strides_tmp[NPY_MAXDIMS];
+    int core_dim_ixs_size, *core_dim_ixs;
+
+    /* The __array_prepare__ function to call for each output */
+    PyObject *arr_prep[NPY_MAXARGS];
+    /*
+     * This is either args, or args with the out= parameter from
+     * kwds added appropriately.
+     */
+    PyObject *arr_prep_args = NULL;
+
+    int trivial_loop_ok = 0;
+
+    /* TODO: For 1.6, the default should probably be NPY_CORDER */
+    NPY_ORDER order = NPY_KEEPORDER;
+    /*
+     * Many things in NumPy do unsafe casting (doing int += float, etc).
+     * The strictness should probably become a state parameter, similar
+     * to the seterr/geterr.
+     */
+    NPY_CASTING casting = NPY_UNSAFE_CASTING;
+    /* When provided, extobj and typetup contain borrowed references */
+    PyObject *extobj = NULL, *type_tup = NULL;
+
+    if (self == NULL) {
+        PyErr_SetString(PyExc_ValueError, "function not supported");
+        return -1;
+    }
+
+    nin = self->nin;
+    nout = self->nout;
+    niter = nin + nout;
+
+    ufunc_name = self->name ? self->name : "<unnamed ufunc>";
+
+    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s\n", ufunc_name);
+
+    /* Initialize all the operands and dtypes to NULL */
+    for (i = 0; i < niter; ++i) {
+        op[i] = NULL;
+        dtype[i] = NULL;
+        arr_prep[i] = NULL;
+    }
+
+    NPY_UF_DBG_PRINTF("Getting arguments\n");
+
+    /* Get all the arguments */
+    retval = get_ufunc_arguments(self, args, kwds,
+                op, &order, &casting, &extobj, &type_tup, &any_object);
+    if (retval < 0) {
+        goto fail;
+    }
+
+    /* Figure out the number of dimensions needed by the iterator */
+    broadcast_ndim = 0;
+    for (i = 0; i < nin; ++i) {
+        npy_intp n = PyArray_NDIM(op[i]) - self->core_num_dims[i];
+        if (n > broadcast_ndim) {
+            broadcast_ndim = n;
+        }
+    }
+    op_ndim = broadcast_ndim + self->core_num_dim_ix;
+    if (op_ndim > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                    "too many dimensions for generalized ufunc %s",
+                    ufunc_name);
+        retval = -1;
+        goto fail;
+    }
+
+    /* Fill in op_axes for all the operands */
+    core_dim_ixs_size = 0;
+    core_dim_ixs = self->core_dim_ixs;
+    for (i = 0; i < niter; ++i) {
+        npy_intp n;
+        if (op[i]) {
+            /*
+             * Note that n may be negative if broadcasting
+             * extends into the core dimensions.
+             */
+            n = PyArray_NDIM(op[i]) - self->core_num_dims[i];
+        }
+        else {
+            n = broadcast_ndim;
+        }
+        /* Broadcast all the unspecified dimensions normally */
+        for (idim = 0; idim < broadcast_ndim; ++idim) {
+            if (idim >= broadcast_ndim - n) {
+                op_axes_arrays[i][idim] = idim - (broadcast_ndim - n);
+            }
+            else {
+                op_axes_arrays[i][idim] = -1;
+            }
+        }
+        /* Use the signature information for the rest */
+        for (idim = broadcast_ndim; idim < op_ndim; ++idim) {
+            op_axes_arrays[i][idim] = -1;
+        }
+        for (idim = 0; idim < self->core_num_dims[i]; ++idim) {
+            if (n + idim >= 0) {
+                op_axes_arrays[i][broadcast_ndim + core_dim_ixs[idim]] =
+                                                                    n + idim;
+            }
+            else {
+                op_axes_arrays[i][broadcast_ndim + core_dim_ixs[idim]] = -1;
+            }
+        }
+        core_dim_ixs_size += self->core_num_dims[i];
+        core_dim_ixs += self->core_num_dims[i];
+        op_axes[i] = op_axes_arrays[i];
+    }
+
+    /* Get the buffersize, errormask, and error object globals */
+    if (extobj == NULL) {
+        if (PyUFunc_GetPyValues(ufunc_name,
+                                &buffersize, &errormask, &errobj) < 0) {
+            retval = -1;
+            goto fail;
+        }
+    }
+    else {
+        if (_extract_pyvals(extobj, ufunc_name,
+                                &buffersize, &errormask, &errobj) < 0) {
+            retval = -1;
+            goto fail;
+        }
+    }
+
+    NPY_UF_DBG_PRINTF("Finding inner loop\n");
+
+    /*
+     * Decide the casting rules for inputs and outputs.  We want
+     * NPY_SAFE_CASTING or stricter, so that the loop selection code
+     * doesn't choose an integer loop for float inputs, for example.
+     */
+    input_casting = (casting > NPY_SAFE_CASTING) ? NPY_SAFE_CASTING : casting;
+
+    if (type_tup == NULL) {
+        /* Find the best ufunc inner loop, and fill in the dtypes */
+        retval = find_best_ufunc_inner_loop(self, op, input_casting, casting,
+                        buffersize, any_object, dtype,
+                        &innerloop, &innerloopdata, &trivial_loop_ok);
+    } else {
+        /* Find the specified ufunc inner loop, and fill in the dtypes */
+        retval = find_specified_ufunc_inner_loop(self, type_tup,
+                        op, casting,
+                        buffersize, any_object, dtype,
+                        &innerloop, &innerloopdata, &trivial_loop_ok);
+    }
+    if (retval < 0) {
+        goto fail;
+    }
+
+    /*
+     * FAIL with NotImplemented if the other object has
+     * the __r<op>__ method and has __array_priority__ as
+     * an attribute (signalling it can handle ndarray's)
+     * and is not already an ndarray or a subtype of the same type.
+    */
+    if (nin == 2 && nout == 1 && dtype[1]->type_num == NPY_OBJECT) {
+        PyObject *_obj = PyTuple_GET_ITEM(args, 1);
+        if (!PyArray_CheckExact(_obj)
+               /* If both are same subtype of object arrays, then proceed */
+                && !(Py_TYPE(_obj) == Py_TYPE(PyTuple_GET_ITEM(args, 0)))
+                && PyObject_HasAttrString(_obj, "__array_priority__")
+                && _has_reflected_op(_obj, ufunc_name)) {
+            retval = -2;
+            goto fail;
+        }
+    }
+
+#if NPY_UF_DBG_TRACING
+    printf("input types:\n");
+    for (i = 0; i < nin; ++i) {
+        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        printf(" ");
+    }
+    printf("\noutput types:\n");
+    for (i = nin; i < niter; ++i) {
+        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        printf(" ");
+    }
+    printf("\n");
+#endif
+
+    /*
+     * Get the appropriate __array_prepare__ function to call
+     * for each output
+     */
+    _find_array_prepare(args, kwds, arr_prep, nin, nout);
+
+    /* Set up arr_prep_args if a prep function was needed */
+    for (i = 0; i < nout; ++i) {
+        if (arr_prep[i] != NULL && arr_prep[i] != Py_None) {
+            arr_prep_args = make_arr_prep_args(nin, args, kwds);
+            break;
+        }
+    }
+
+    /* If the loop wants the arrays, provide them */
+    if (_does_loop_use_arrays(innerloopdata)) {
+        innerloopdata = (void*)op;
+    }
+
+    /*
+     * Set up the iterator per-op flags.  For generalized ufuncs, we
+     * can't do buffering, so must COPY or UPDATEIFCOPY.
+     */
+    for (i = 0; i < nin; ++i) {
+        op_flags[i] = NPY_ITER_READONLY|
+                      NPY_ITER_COPY|
+                      NPY_ITER_ALIGNED;
+    }
+    for (i = nin; i < niter; ++i) {
+        op_flags[i] = NPY_ITER_READWRITE|
+                      NPY_ITER_UPDATEIFCOPY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST;
+    }
+
+    /* Create the iterator */
+    iter = NpyIter_MultiNew(niter, op, NPY_ITER_COORDS|
+                                      NPY_ITER_REFS_OK|
+                                      NPY_ITER_REDUCE_OK,
+                           order, NPY_UNSAFE_CASTING, op_flags,
+                           dtype, op_ndim, op_axes, 0);
+    if (iter == NULL) {
+        retval = -1;
+        goto fail;
+    }
+
+    /* Fill in any allocated outputs */
+    for (i = nin; i < niter; ++i) {
+        if (op[i] == NULL) {
+            op[i] = NpyIter_GetOperandArray(iter)[i];
+            Py_INCREF(op[i]);
+        }
+    }
+
+    /*
+     * Set up the inner strides array. Because we're not doing
+     * buffering, the strides are fixed throughout the looping.
+     */
+    inner_strides = (npy_intp *)_pya_malloc(
+                        NPY_SIZEOF_INTP * (niter+core_dim_ixs_size));
+    /* The strides after the first niter match core_dim_ixs */
+    core_dim_ixs = self->core_dim_ixs;
+    inner_strides_tmp = inner_strides + niter;
+    for (idim = 0; idim < self->core_num_dim_ix; ++idim) {
+        ax_strides_tmp[idim] = NpyIter_GetAxisStrideArray(iter,
+                                                broadcast_ndim+idim);
+        if (ax_strides_tmp[idim] == NULL) {
+            retval = -1;
+            goto fail;
+        }
+    }
+    for (i = 0; i < niter; ++i) {
+        for (idim = 0; idim < self->core_num_dims[i]; ++idim) {
+            inner_strides_tmp[idim] = ax_strides_tmp[core_dim_ixs[idim]][i];
+        }
+
+        core_dim_ixs += self->core_num_dims[i];
+        inner_strides_tmp += self->core_num_dims[i];
+    }
+
+    /* Set up the inner dimensions array */
+    if (NpyIter_GetShape(iter, inner_dimensions) != NPY_SUCCEED) {
+        retval = -1;
+        goto fail;
+    }
+    /* Move the core dimensions to start at the second element */
+    memmove(&inner_dimensions[1], &inner_dimensions[broadcast_ndim],
+                        NPY_SIZEOF_INTP * self->core_num_dim_ix);
+
+    /* Remove all the core dimensions from the iterator */
+    for (i = 0; i < self->core_num_dim_ix; ++i) {
+        if (NpyIter_RemoveAxis(iter, broadcast_ndim) != NPY_SUCCEED) {
+            retval = -1;
+            goto fail;
+        }
+    }
+    if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
+        retval = -1;
+        goto fail;
+    }
+    if (NpyIter_RemoveInnerLoop(iter) != NPY_SUCCEED) {
+        retval = -1;
+        goto fail;
+    }
+
+    /*
+     * The first niter strides are for the inner loop (but only can
+     * copy them after removing the core axes
+     */
+    memcpy(inner_strides, NpyIter_GetInnerStrideArray(iter),
+                                    NPY_SIZEOF_INTP * niter);
+
+#if 0
+    printf("strides: ");
+    for (i = 0; i < niter+core_dim_ixs_size; ++i) {
+        printf("%d ", (int)inner_strides[i]);
+    }
+    printf("\n");
+#endif
+
+    /* Start with the floating-point exception flags cleared */
+    PyUFunc_clearfperr();
+
+    NPY_UF_DBG_PRINTF("Executing inner loop\n");
+
+    /* Do the ufunc loop */
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNext_Fn iternext;
+        char **dataptr;
+        npy_intp *count_ptr;
+
+        /* Get the variables needed for the loop */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            retval = -1;
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            inner_dimensions[0] = *count_ptr;
+            innerloop(dataptr, inner_dimensions, inner_strides, innerloopdata);
+        } while (iternext(iter));
+    }
+
+    /* Check whether any errors occurred during the loop */
+    if (PyErr_Occurred() || (errormask &&
+            PyUFunc_checkfperr(errormask, errobj, &first_error))) {
+        retval = -1;
+        goto fail;
+    }
+
+    _pya_free(inner_strides);
+    NpyIter_Deallocate(iter);
+    /* The caller takes ownership of all the references in op */
+    for (i = 0; i < niter; ++i) {
+        Py_XDECREF(dtype[i]);
+        Py_XDECREF(arr_prep[i]);
+    }
+    Py_XDECREF(errobj);
+    Py_XDECREF(arr_prep_args);
+
+    NPY_UF_DBG_PRINTF("Returning Success\n");
+
+    return 0;
+
+fail:
+    NPY_UF_DBG_PRINTF("Returning failure code %d\n", retval);
+    if (inner_strides) {
+        _pya_free(inner_strides);
+    }
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    for (i = 0; i < niter; ++i) {
+        Py_XDECREF(op[i]);
+        op[i] = NULL;
+        Py_XDECREF(dtype[i]);
+        Py_XDECREF(arr_prep[i]);
+    }
+    Py_XDECREF(errobj);
+    Py_XDECREF(arr_prep_args);
+
+    return retval;
+}
+
 /*UFUNC_API
  *
  * This generic function is called with the ufunc object, the arguments to it,
@@ -2179,16 +2445,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         return -1;
     }
 
+    /* TODO: support generalized ufunc */
+    if (self->core_enabled) {
+        return PyUFunc_GeneralizedFunction(self, args, kwds, op);
+    }
+
     nin = self->nin;
     nout = self->nout;
     niter = nin + nout;
-
-    /* TODO: support generalized ufunc */
-    if (self->core_enabled) {
-        PyErr_SetString(PyExc_RuntimeError,
-                    "core_enabled (generalized ufunc) not supported yet");
-        return -1;
-    }
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
