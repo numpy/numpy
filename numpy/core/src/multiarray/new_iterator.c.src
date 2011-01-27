@@ -75,6 +75,8 @@
 #define NPY_OP_ITFLAG_BUFNEVER     0x08
 /* The operand is aligned */
 #define NPY_OP_ITFLAG_ALIGNED      0x10
+/* The operand is being reduced */
+#define NPY_OP_ITFLAG_REDUCE       0x20
 
 /*
  * The data layout of the iterator is fully specified by
@@ -298,7 +300,7 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
 
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
-                npy_uint32 flags, char op_itflags,
+                npy_uint32 flags, char *op_itflags,
                 npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes);
 static int
@@ -2364,7 +2366,7 @@ NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
                 out_strides[iiter] = stride;
             }
             /* Reductions in the inner loop have fixed strides */
-            else if (stride == 0 && (itflags&NPY_ITFLAG_REDUCE)) {
+            else if (stride == 0 && (op_itflags[iiter]&NPY_OP_ITFLAG_REDUCE)) {
                 out_strides[iiter] = stride;
             }
             /*
@@ -3289,6 +3291,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                             return 0;
                         }
                         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                        op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
                         break;
                     }
                     
@@ -4031,7 +4034,7 @@ npyiter_coalesce_axes(NpyIter *iter)
  */
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
-                npy_uint32 flags, char op_itflags,
+                npy_uint32 flags, char *op_itflags,
                 npy_intp op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, npy_intp *op_axes)
 {
@@ -4137,7 +4140,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                                 "reduction is not enabled");
                         return NULL;
                     }
-                    if (!(op_itflags&NPY_OP_ITFLAG_READ)) {
+                    if (!((*op_itflags)&NPY_OP_ITFLAG_READ)) {
                         PyErr_SetString(PyExc_ValueError,
                                 "output requires a reduction, but "
                                 "is flagged as write-only, not read-write");
@@ -4148,6 +4151,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                                       "is occurring\n");
                     /* Indicate that a reduction is occurring */
                     NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                    (*op_itflags) |= NPY_OP_ITFLAG_REDUCE;
                 }
 
                 /* If we didn't get the number of dimensions yet, set it */
@@ -4291,7 +4295,7 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             /* Allocate the output array */
             out = npyiter_new_temp_array(iter, op_subtype,
-                                        flags, op_itflags[iiter],
+                                        flags, &op_itflags[iiter],
                                         ondim,
                                         NULL,
                                         op_dtype[iiter],
@@ -4320,7 +4324,7 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             /* Allocate the temporary array, if possible */
             temp = npyiter_new_temp_array(iter, &PyArray_Type,
-                                        flags, op_itflags[iiter],
+                                        flags, &op_itflags[iiter],
                                         ondim,
                                         PyArray_DIMS(op[iiter]),
                                         op_dtype[iiter],
@@ -4464,8 +4468,10 @@ npyiter_allocate_arrays(NpyIter *iter,
             else if (!is_one_to_one &&
                         (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
                         !(flags&NPY_ITER_REDUCE_OK)) {
-            NPY_IT_DBG_PRINTF("Iterator: %d %d %d\n",
-                            (int)(!is_one_to_one), (int)((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)), (int)(!(flags&NPY_ITER_REDUCE_OK)));
+                NPY_IT_DBG_PRINTF("Iterator: %d %d %d\n",
+                            (int)(!is_one_to_one),
+                            (int)((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)),
+                            (int)(!(flags&NPY_ITER_REDUCE_OK)));
                 PyErr_SetString(PyExc_ValueError,
                         "Iterator operand requires write buffering, "
                         "but has dimensions which have been broadcasted "
@@ -4854,7 +4860,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
                  * its buffering stride was set to zero, and just
                  * one element was copied.
                  */
-                if ((itflags&NPY_ITFLAG_REDUCE) && strides[iiter] == 0) {
+                if ((op_itflags[iiter]&NPY_OP_ITFLAG_REDUCE) &&
+                                                strides[iiter] == 0) {
                     op_transfersize = 1;
                 }
                 else {
@@ -5020,7 +5027,8 @@ npyiter_copy_to_buffers(NpyIter *iter)
              * set its buffering stride to zero, and just copy
              * one element.
              */
-            if ((itflags&NPY_ITFLAG_REDUCE) && ad_strides[iiter] == 0) {
+            if ((op_itflags[iiter]&NPY_OP_ITFLAG_REDUCE) &&
+                                            ad_strides[iiter] == 0) {
                 op_transfersize = 1;
                 strides[iiter] = 0;
             }
@@ -5265,6 +5273,8 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("BUFNEVER ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_ALIGNED)
             printf("ALIGNED ");
+        if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_REDUCE)
+            printf("REDUCE ");
         printf("\n");
     }
     printf("\n");
