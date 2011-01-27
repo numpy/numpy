@@ -321,26 +321,82 @@ class TestEinSum(TestCase):
         b = np.arange(4, dtype=dtype)+1
         assert_equal(np.einsum("i,j", a, b), np.outer(a, b))
 
-        # matvec(a,b) / a.dot(b) where a is matrix, b is vector
-        a = np.arange(20, dtype=dtype).reshape(4,5)
-        b = np.arange(5, dtype=dtype)
-        assert_equal(np.einsum("ij,j", a, b), np.dot(a, b))
+        # Suppress the complex warnings for the 'as f8' tests
+        ctx = WarningManager()
+        ctx.__enter__()
+        try:
+            warnings.simplefilter('ignore', np.ComplexWarning)
 
-        a = np.arange(20, dtype=dtype).reshape(4,5)
-        b = np.arange(5, dtype=dtype)
-        assert_equal(np.einsum("ji,j", a.T, b.T), np.dot(b.T, a.T))
+            # matvec(a,b) / a.dot(b) where a is matrix, b is vector
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            assert_equal(np.einsum("ij,j", a, b), np.dot(a, b))
 
-        # matmat(a,b) / a.dot(b) where a is matrix, b is matrix
-        a = np.arange(20, dtype=dtype).reshape(4,5)
-        b = np.arange(30, dtype=dtype).reshape(5,6)
-        assert_equal(np.einsum("ij,jk", a, b), np.dot(a, b))
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            c = np.arange(4, dtype=dtype)
+            np.einsum("ij,j", a, b, out=c,
+                        dtype='f8', casting='unsafe')
+            assert_equal(c,
+                        np.dot(a.astype('f8'), b.astype('f8')).astype(dtype))
 
-        # tensordot(a, b)
-        if np.dtype(dtype) != np.dtype('f2'):
-            a = np.arange(60, dtype=dtype).reshape(3,4,5)
-            b = np.arange(24, dtype=dtype).reshape(4,3,2)
-            assert_equal(np.einsum("ijk,jil->kl", a, b),
-                            np.tensordot(a,b, axes=([1,0],[0,1])))
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            assert_equal(np.einsum("ji,j", a.T, b.T), np.dot(b.T, a.T))
+
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            c = np.arange(4, dtype=dtype)
+            np.einsum("ji,j", a.T, b.T, out=c, dtype='f8', casting='unsafe')
+            assert_equal(c,
+                    np.dot(b.T.astype('f8'), a.T.astype('f8')).astype(dtype))
+
+            # matmat(a,b) / a.dot(b) where a is matrix, b is matrix
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(30, dtype=dtype).reshape(5,6)
+            assert_equal(np.einsum("ij,jk", a, b), np.dot(a, b))
+
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(30, dtype=dtype).reshape(5,6)
+            c = np.arange(24, dtype=dtype).reshape(4,6)
+            np.einsum("ij,jk", a, b, out=c, dtype='f8', casting='unsafe')
+            assert_equal(c,
+                        np.dot(a.astype('f8'), b.astype('f8')).astype(dtype))
+
+            # matrix triple product (note this is not an efficient
+            # way to multiply 3 matrices)
+            a = np.arange(12, dtype=dtype).reshape(3,4)
+            b = np.arange(20, dtype=dtype).reshape(4,5)
+            c = np.arange(30, dtype=dtype).reshape(5,6)
+            if dtype != 'f2':
+                assert_equal(np.einsum("ij,jk,kl", a, b, c),
+                                    a.dot(b).dot(c))
+
+            a = np.arange(12, dtype=dtype).reshape(3,4)
+            b = np.arange(20, dtype=dtype).reshape(4,5)
+            c = np.arange(30, dtype=dtype).reshape(5,6)
+            d = np.arange(18, dtype=dtype).reshape(3,6)
+            np.einsum("ij,jk,kl", a, b, c, out=d,
+                                dtype='f8', casting='unsafe')
+            assert_equal(d, a.astype('f8').dot(b.astype('f8')
+                        ).dot(c.astype('f8')).astype(dtype))
+
+            # tensordot(a, b)
+            if np.dtype(dtype) != np.dtype('f2'):
+                a = np.arange(60, dtype=dtype).reshape(3,4,5)
+                b = np.arange(24, dtype=dtype).reshape(4,3,2)
+                assert_equal(np.einsum("ijk,jil->kl", a, b),
+                                np.tensordot(a,b, axes=([1,0],[0,1])))
+
+                a = np.arange(60, dtype=dtype).reshape(3,4,5)
+                b = np.arange(24, dtype=dtype).reshape(4,3,2)
+                c = np.arange(10, dtype=dtype).reshape(5,2)
+                np.einsum("ijk,jil->kl", a, b, out=c,
+                                        dtype='f8', casting='unsafe')
+                assert_equal(c, np.tensordot(a.astype('f8'), b.astype('f8'),
+                                        axes=([1,0],[0,1])).astype(dtype))
+        finally:
+            ctx.__exit__()
 
         # logical_and(logical_and(a!=0, b!=0), c!=0)
         a = np.array([1,   3,   -2,   0,   12,  13,   0,   1], dtype=dtype)
