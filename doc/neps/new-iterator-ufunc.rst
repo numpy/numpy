@@ -1041,6 +1041,26 @@ Construction and Destruction
     ``NPY_ITER_COPY``, ``NPY_ITER_UPDATEIFCOPY``, 
     ``NPY_ITER_NBO``, ``NPY_ITER_ALIGNED``, ``NPY_ITER_CONTIG``.
 
+``int NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)``
+
+    Removes an axis from iteration.  This requires that
+    ``NPY_ITER_COORDS`` was set for iterator creation, and does not work
+    if buffering is enabled or an index is being tracked. This function
+    also resets the iterator to its initial state.
+
+    This is useful for setting up an accumulation loop, for example.
+    The iterator can first be created with all the dimensions, including
+    the accumulation axis, so that the output gets created correctly.
+    Then, the accumulation axis can be removed, and the calculation
+    done in a nested fashion.
+
+    **WARNING**: This function may change the internal memory layout of
+    the iterator.  Any cached functions or pointers from the iterator
+    must be retrieved again!
+
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+
 ``int NpyIter_RemoveCoords(NpyIter *iter)``
 
     If the iterator has coordinates, this strips support for them, and
@@ -1491,6 +1511,22 @@ functions provide that information.
     ``iternext`` will not change it.  The value itself may change during
     iteration, in particular if buffering is enabled.  This function
     may be safely called without holding the Python GIL.
+
+``void NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)``
+
+    Gets an array of strides which are fixed, or will not change during
+    the entire iteration.  For strides that may change, the value
+    NPY_MAX_INTP is placed in the stride.
+
+    Once the iterator is prepared for iteration (after a reset if
+    ``NPY_DELAY_BUFALLOC`` was used), call this to get the strides
+    which may be used to select a fast inner loop function.  For example,
+    if the stride is 0, that means the inner loop can always load its
+    value into a variable once, then use the variable throughout the loop,
+    or if the stride equals the itemsize, a contiguous version for that
+    operand may be used.
+
+    This function may be safely called without holding the Python GIL.
 
 Examples
 --------
