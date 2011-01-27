@@ -1316,6 +1316,20 @@ Construction and Destruction
 
     Returns the number of objects being iterated.
 
+``npy_intp *NpyIter_GetAxisStrideArray(NpyIter *iter, npy_intp axis)``
+
+    Gets the array of strides for the specified axis. Requires that
+    the iterator be tracking coordinates, and that buffering not
+    be enabled.
+
+    This may be used when you want to match up operand axes in
+    some fashion, then remove them with ``NpyIter_RemoveAxis`` to
+    handle their processing manually.  By calling this function
+    before removing the axes, you can get the strides for the
+    manual processing.
+    
+    Returns ``NULL`` on error.
+
 ``int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)``
 
     Returns the broadcast shape of the iterator in ``outshape``.
