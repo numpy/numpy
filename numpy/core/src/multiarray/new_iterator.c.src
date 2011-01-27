@@ -69,14 +69,12 @@
 #define NPY_OP_ITFLAG_WRITE        0x01
 /* The operand will be read from */
 #define NPY_OP_ITFLAG_READ         0x02
-/* The operand may have a temporary copy made */
-#define NPY_OP_ITFLAG_COPY         0x04
 /* The operand needs type conversion/byte swapping/alignment */
-#define NPY_OP_ITFLAG_CAST         0x08
+#define NPY_OP_ITFLAG_CAST         0x04
 /* The operand never needs buffering */
-#define NPY_OP_ITFLAG_BUFNEVER     0x10
+#define NPY_OP_ITFLAG_BUFNEVER     0x08
 /* The operand is aligned */
-#define NPY_OP_ITFLAG_ALIGNED      0x20
+#define NPY_OP_ITFLAG_ALIGNED      0x10
 
 /*
  * The data layout of the iterator is fully specified by
@@ -2624,17 +2622,16 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
     }
 
     /* Check the flags for temporary copies */
-    if (op_flags&(NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY)) {
-        *op_itflags |= NPY_OP_ITFLAG_COPY;
-        if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
-                    !(op_flags&NPY_ITER_UPDATEIFCOPY)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "If an iterator operand is writeable, must use "
-                    "the flag UPDATEIFCOPY instead of "
-                    "COPY");
-            return 0;
-        }
+    if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
+                (op_flags&(NPY_ITER_COPY|
+                           NPY_ITER_UPDATEIFCOPY)) == NPY_ITER_COPY) {
+        PyErr_SetString(PyExc_ValueError,
+                "If an iterator operand is writeable, must use "
+                "the flag UPDATEIFCOPY instead of "
+                "COPY");
+        return 0;
     }
+
     return 1;
 }
 
@@ -2688,8 +2685,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* If a requested dtype was provided, use it, otherwise NULL */
         Py_XINCREF(op_request_dtype);
         *op_dtype = op_request_dtype;
-        /* No copying of NULL operands */
-        *op_itflags &= ~NPY_OP_ITFLAG_COPY;
+
         return 1;
     }
 
@@ -4318,7 +4314,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
         }
         else if ((op_itflags[iiter]&NPY_OP_ITFLAG_CAST) &&
-                              (op_itflags[iiter]&NPY_OP_ITFLAG_COPY)) {
+                   (op_flags[iiter]&(NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY))) {
             PyArrayObject *temp;
             npy_intp ondim = PyArray_NDIM(op[iiter]);
 
@@ -5263,8 +5259,6 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("READ ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_WRITE)
             printf("WRITE ");
-        if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_COPY)
-            printf("COPY ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_CAST)
             printf("CAST ");
         if ((NIT_OPITFLAGS(iter)[iiter])&NPY_OP_ITFLAG_BUFNEVER)
