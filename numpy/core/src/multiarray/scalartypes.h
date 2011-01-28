@@ -18,7 +18,7 @@ NPY_NO_EXPORT unsigned char
 _npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
 NPY_NO_EXPORT char
 _npy_scalar_kinds_table[NPY_NTYPES];
-NPY_NO_EXPORT unsigned char
+NPY_NO_EXPORT char
 _npy_type_promotion_table[NPY_NTYPES][NPY_NTYPES];
 NPY_NO_EXPORT char
 _npy_smallest_type_of_kind_table[NPY_NSCALARKINDS];
