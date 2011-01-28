@@ -17,6 +17,8 @@
 
 #include "ctors.h"
 
+#include "shape.h"
+
 #include "buffer.h"
 
 #include "numpymemoryview.h"
@@ -1229,36 +1231,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     return NULL;
 }
 
-typedef struct {
-    npy_intp perm, stride;
-} _npy_stride_sort_item;
-
-/*
- * Sorts items so stride is descending, because C-order
- * is the default in the face of ambiguity.
- */
-int _npy_stride_sort_item_comparator(const void *a, const void *b)
-{
-    npy_intp astride = ((_npy_stride_sort_item *)a)->stride,
-            bstride = ((_npy_stride_sort_item *)b)->stride;
-
-    if (astride > bstride) {
-        return -1;
-    }
-    else if (astride == bstride) {
-        /*
-         * Make the qsort stable by next comparing the perm order.
-         * (Note that two perm entries will never be equal)
-         */
-        npy_intp aperm = ((_npy_stride_sort_item *)a)->perm,
-                bperm = ((_npy_stride_sort_item *)b)->perm;
-        return (aperm < bperm) ? -1 : 1;
-    }
-    else {
-        return 1;
-    }
-}
-
 /*NUMPY_API
  * Creates a new array with the same shape as the provided one,
  * with possible memory layout order and data type changes.
@@ -1320,26 +1292,15 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
     else {
         npy_intp strides[NPY_MAXDIMS], stride;
         npy_intp *shape = PyArray_DIMS(prototype);
-        _npy_stride_sort_item sortstrides[NPY_MAXDIMS];
-        int i, ndim = PyArray_NDIM(prototype);
+        _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+        int i;
 
-        /* Set up the permutation and absolute value of strides */
-        for (i = 0; i < ndim; ++i) {
-            sortstrides[i].perm = i;
-            sortstrides[i].stride = PyArray_STRIDE(prototype, i);
-            if (sortstrides[i].stride < 0) {
-                sortstrides[i].stride = -sortstrides[i].stride;
-            }
-        }
-
-        /* Sort them */
-        qsort(sortstrides, ndim, sizeof(_npy_stride_sort_item),
-                                        &_npy_stride_sort_item_comparator);
+        PyArray_CreateSortedStridePerm(prototype, strideperm);
 
         /* Build the new strides */
         stride = dtype->elsize;
         for (i = ndim-1; i >= 0; --i) {
-            npy_intp i_perm = sortstrides[i].perm;
+            npy_intp i_perm = strideperm[i].perm;
             strides[i_perm] = stride;
             stride *= shape[i_perm];
         }
@@ -2292,14 +2253,12 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
         return -1;
     }
 
-    if (!(order == NPY_CORDER || order == NPY_FORTRANORDER)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "CopyAnyIntoOrdered requires either C or Fortran order");
-        return -1;
-    }
-
-    /* If the shapes match, use the more efficient CopyInto */
-    if (PyArray_NDIM(dst) == PyArray_NDIM(src) &&
+    /*
+     * If the shapes match and a particular order is forced
+     * for both, use the more efficient CopyInto
+     */
+    if (order != NPY_ANYORDER && order != NPY_KEEPORDER &&
+            PyArray_NDIM(dst) == PyArray_NDIM(src) &&
             PyArray_CompareLists(PyArray_DIMS(dst), PyArray_DIMS(src),
                                 PyArray_NDIM(dst))) {
         return PyArray_CopyInto(dst, src);
@@ -2327,6 +2286,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
      */
     dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY|
                                 NPY_ITER_NO_INNER_ITERATION|
+                                NPY_ITER_DONT_REVERSE_AXES|
                                 NPY_ITER_REFS_OK,
                                 order,
                                 NPY_NO_CASTING,
@@ -2336,6 +2296,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
     }
     src_iter = NpyIter_New(src, NPY_ITER_READONLY|
                                 NPY_ITER_NO_INNER_ITERATION|
+                                NPY_ITER_DONT_REVERSE_AXES|
                                 NPY_ITER_REFS_OK,
                                 order,
                                 NPY_NO_CASTING,

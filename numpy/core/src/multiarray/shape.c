@@ -760,29 +760,137 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
     return (PyObject *)ret;
 }
 
+/*
+ * Sorts items so stride is descending, because C-order
+ * is the default in the face of ambiguity.
+ */
+int _npy_stride_sort_item_comparator(const void *a, const void *b)
+{
+    npy_intp astride = ((_npy_stride_sort_item *)a)->stride,
+            bstride = ((_npy_stride_sort_item *)b)->stride;
+
+    /* Sort the absolute value of the strides */
+    if (astride < 0) {
+        astride = -astride;
+    }
+    if (bstride < 0) {
+        bstride = -bstride;
+    }
+
+    if (astride > bstride) {
+        return -1;
+    }
+    else if (astride == bstride) {
+        /*
+         * Make the qsort stable by next comparing the perm order.
+         * (Note that two perm entries will never be equal)
+         */
+        npy_intp aperm = ((_npy_stride_sort_item *)a)->perm,
+                bperm = ((_npy_stride_sort_item *)b)->perm;
+        return (aperm < bperm) ? -1 : 1;
+    }
+    else {
+        return 1;
+    }
+}
+
+/*
+ * This function populates the first PyArray_NDIM(arr) elements
+ * of strideperm with sorted descending by their absolute values.
+ * For example, the stride array (4, -2, 12) becomes
+ * [(2, 12), (0, 4), (1, -2)].
+ */
+NPY_NO_EXPORT void
+PyArray_CreateSortedStridePerm(PyArrayObject *arr,
+                           _npy_stride_sort_item *strideperm)
+{
+    int i, ndim = PyArray_NDIM(arr);
+
+    /* Set up the strideperm values */
+    for (i = 0; i < ndim; ++i) {
+        strideperm[i].perm = i;
+        strideperm[i].stride = PyArray_STRIDE(arr, i);
+    }
+
+    /* Sort them */
+    qsort(strideperm, ndim, sizeof(_npy_stride_sort_item),
+                                    &_npy_stride_sort_item_comparator);
+}
+
 /*NUMPY_API
  * Ravel
  * Returns a contiguous array
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Ravel(PyArrayObject *a, NPY_ORDER fortran)
+PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
 {
     PyArray_Dims newdim = {NULL,1};
     intp val[1] = {-1};
 
-    if (fortran == PyArray_ANYORDER) {
-        fortran = PyArray_ISFORTRAN(a);
-    }
     newdim.ptr = val;
-    if (!fortran && PyArray_ISCONTIGUOUS(a)) {
-        return PyArray_Newshape(a, &newdim, PyArray_CORDER);
+
+    if (order == NPY_ANYORDER) {
+        order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;
     }
-    else if (fortran && PyArray_ISFORTRAN(a)) {
-        return PyArray_Newshape(a, &newdim, PyArray_FORTRANORDER);
+    else if (order == NPY_KEEPORDER) {
+        if (PyArray_IS_C_CONTIGUOUS(a)) {
+            order = NPY_CORDER;
+        }
+        else if (PyArray_IS_F_CONTIGUOUS(a)) {
+            order = NPY_FORTRANORDER;
+        }
     }
-    else {
-        return PyArray_Flatten(a, fortran);
+
+    if (order == NPY_CORDER && PyArray_ISCONTIGUOUS(a)) {
+        return PyArray_Newshape(a, &newdim, NPY_CORDER);
     }
+    else if (order == NPY_FORTRANORDER && PyArray_ISFORTRAN(a)) {
+        return PyArray_Newshape(a, &newdim, NPY_FORTRANORDER);
+    }
+    /* For KEEPORDER, check if we can make a flattened view */
+    else if (order == NPY_KEEPORDER) {
+        _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+        npy_intp stride;
+        int i, ndim = PyArray_NDIM(a);
+
+        PyArray_CreateSortedStridePerm(a, strideperm);
+
+        stride = PyArray_DESCR(a)->elsize;
+        for (i = ndim-1; i >= 0; --i) {
+            if (strideperm[i].stride != stride) {
+                break;
+            }
+            stride *= PyArray_DIM(a, strideperm[i].perm);
+        }
+
+        /* If all the strides matched a contiguous layout, return a view */
+        if (i < 0) {
+            PyObject *ret;
+            npy_intp stride = PyArray_DESCR(a)->elsize;
+
+            val[0] = PyArray_SIZE(a);
+
+            Py_INCREF(PyArray_DESCR(a));
+            ret = PyArray_NewFromDescr(Py_TYPE(a),
+                               PyArray_DESCR(a),
+                               1, val,
+                               &stride,
+                               PyArray_BYTES(a),
+                               PyArray_FLAGS(a),
+                               (PyObject *)a);
+
+            if (ret != NULL) {
+                PyArray_UpdateFlags((PyArrayObject *)ret,
+                                    NPY_CONTIGUOUS|NPY_FORTRAN);
+                Py_INCREF(a);
+                PyArray_BASE(ret) = (PyObject *)a;
+            }
+            return ret;
+        }
+
+    }
+
+    return PyArray_Flatten(a, order);
 }
 
 /*NUMPY_API
@@ -797,6 +905,7 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;
     }
+
     size = PyArray_SIZE(a);
     Py_INCREF(a->descr);
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(a),

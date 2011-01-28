@@ -897,6 +897,8 @@ typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
 #define NPY_ITER_GROWINNER                  0x00000400
 /* Delay allocation of buffers until first Reset* call */
 #define NPY_ITER_DELAY_BUFALLOC             0x00000800
+/* When NPY_KEEPORDER is specified, disable reversing negative-stride axes */
+#define NPY_ITER_DONT_REVERSE_AXES          0x00001000
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 

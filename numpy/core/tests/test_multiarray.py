@@ -667,17 +667,33 @@ class TestMethods(TestCase):
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
         assert_equal(a.ravel(), [0,1,2,3])
+        assert_(not a.ravel().flags.owndata)
         assert_equal(a.ravel('F'), [0,2,1,3])
         assert_equal(a.ravel(order='C'), [0,1,2,3])
         assert_equal(a.ravel(order='F'), [0,2,1,3])
         assert_equal(a.ravel(order='A'), [0,1,2,3])
+        assert_(not a.ravel(order='A').flags.owndata)
+        assert_equal(a.ravel(order='K'), [0,1,2,3])
+        assert_(not a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel(), a.reshape(-1))
 
         a = np.array([[0,1],[2,3]], order='F')
         assert_equal(a.ravel(), [0,1,2,3])
         assert_equal(a.ravel(order='A'), [0,2,1,3])
+        assert_equal(a.ravel(order='K'), [0,2,1,3])
+        assert_(not a.ravel(order='A').flags.owndata)
+        assert_(not a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel(), a.reshape(-1))
         assert_equal(a.ravel(order='A'), a.reshape(-1, order='A'))
+
+        a = np.array([[0,1],[2,3]])[::-1,:]
+        assert_equal(a.ravel(), [2,3,0,1])
+        assert_equal(a.ravel(order='C'), [2,3,0,1])
+        assert_equal(a.ravel(order='F'), [2,0,3,1])
+        assert_equal(a.ravel(order='A'), [2,3,0,1])
+        # 'K' doesn't reverse the axes of negative strides
+        assert_equal(a.ravel(order='K'), [2,3,0,1])
+        assert_(a.ravel(order='K').flags.owndata)
 
     def test_setasflat(self):
         # In this case, setasflat can treat a as a flat array,
