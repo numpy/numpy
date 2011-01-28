@@ -413,6 +413,58 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
     """)
 
+add_newdoc('numpy.core.multiarray', 'empty_like',
+    """
+    empty_like(a, dtype=None, order='K')
+
+    Return a new array with the same shape and type as a given array.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of the
+        returned array.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of ``a`` as closely
+        as possible.
+
+    Returns
+    -------
+    out : ndarray
+        Array of uninitialized (arbitrary) data with the same
+        shape and type as `a`.
+
+    See Also
+    --------
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+
+    Notes
+    -----
+    This function does *not* initialize the returned array; to do that use
+    `zeros_like` or `ones_like` instead.  It may be marginally faster than
+    the functions that do set the array values.
+
+    Examples
+    --------
+    >>> a = ([1,2,3], [4,5,6])                         # a is array-like
+    >>> np.empty_like(a)
+    array([[-1073741821, -1073741821,           3],    #random
+           [          0,           0, -1073741821]])
+    >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
+    >>> np.empty_like(a)
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],#random
+           [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
+
+    """)
+
 
 add_newdoc('numpy.core.multiarray', 'scalar',
     """

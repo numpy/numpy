@@ -1443,25 +1443,91 @@ class TestStdVarComplex(TestCase):
 
 
 class TestLikeFuncs(TestCase):
-    '''Test zeros_like and empty_like'''
+    '''Test ones_like, zeros_like, and empty_like'''
 
     def setUp(self):
-        self.data = [(array([[1,2,3],[4,5,6]],dtype=int32), (2,3), int32),
-                     (array([[1,2,3],[4,5,6]],dtype=float32), (2,3), float32),
+        self.data = [
+                # Array scalars
+                (array(3.), None),
+                (array(3), 'f8'),
+                # 1D arrays
+                (arange(6, dtype='f4'), None),
+                (arange(6), 'c16'),
+                # 2D C-layout arrays
+                (arange(6).reshape(2,3), None),
+                (arange(6).reshape(3,2), 'i1'),
+                # 2D F-layout arrays
+                (arange(6).reshape((2,3), order='F'), None),
+                (arange(6).reshape((3,2), order='F'), 'i1'),
+                # 3D C-layout arrays
+                (arange(24).reshape(2,3,4), None),
+                (arange(24).reshape(4,3,2), 'f4'),
+                # 3D F-layout arrays
+                (arange(24).reshape((2,3,4), order='F'), None),
+                (arange(24).reshape((4,3,2), order='F'), 'f4'),
+                # 3D non-C/F-layout arrays
+                (arange(24).reshape(2,3,4).swapaxes(0,1), None),
+                (arange(24).reshape(4,3,2).swapaxes(0,1), '?'),
                      ]
 
+    def check_like_function(self, like_function, value):
+        for d, dtype in self.data:
+            # default (K) order, dtype
+            dz = like_function(d, dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            assert_equal(array(dz.strides)*d.dtype.itemsize, 
+                         array(d.strides)*dz.dtype.itemsize)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+            # C order, default dtype
+            dz = like_function(d, order='C', dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            assert_(dz.flags.c_contiguous)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+            # F order, default dtype
+            dz = like_function(d, order='F', dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            assert_(dz.flags.f_contiguous)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+            # A order
+            dz = like_function(d, order='A', dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            if d.flags.f_contiguous:
+                assert_(dz.flags.f_contiguous)
+            else:
+                assert_(dz.flags.c_contiguous)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+    def test_ones_like(self):
+        self.check_like_function(np.ones_like, 1)
+
     def test_zeros_like(self):
-        for d, dshape, dtype in self.data:
-            dz = zeros_like(d)
-            assert dz.shape == dshape
-            assert dz.dtype.type == dtype
-            assert all(abs(dz) == 0)
+        self.check_like_function(np.zeros_like, 0)
 
     def test_empty_like(self):
-        for d, dshape, dtype in self.data:
-            dz = zeros_like(d)
-            assert dz.shape == dshape
-            assert dz.dtype.type == dtype
+        self.check_like_function(np.empty_like, None)
 
 class _TestCorrelate(TestCase):
     def _setup(self, dt):

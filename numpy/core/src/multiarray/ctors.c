@@ -1140,6 +1140,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     else {
         self->dimensions = self->strides = NULL;
+        self->flags |= FORTRAN;
     }
 
     if (data == NULL) {

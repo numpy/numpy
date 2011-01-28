@@ -174,7 +174,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER fortran)
+                 NPY_ORDER order)
 {
     intp i;
     intp *dimensions = newdims->ptr;
@@ -185,8 +185,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     intp newstrides[MAX_DIMS];
     int flags;
 
-    if (fortran == PyArray_ANYORDER) {
-        fortran = PyArray_ISFORTRAN(self);
+    if (order == PyArray_ANYORDER) {
+        order = PyArray_ISFORTRAN(self);
     }
     /*  Quick check to make sure anything actually needs to be done */
     if (n == self->nd) {
@@ -233,12 +233,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          */
         if (!(PyArray_ISONESEGMENT(self)) ||
             (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) &&
-               fortran == NPY_FORTRANORDER) ||
+               order == NPY_FORTRANORDER) ||
               (PyArray_CHKFLAGS(self, NPY_FORTRAN) &&
-                  fortran == NPY_CORDER)) && (self->nd > 1))) {
+                  order == NPY_CORDER)) && (self->nd > 1))) {
             int success = 0;
             success = _attempt_nocopy_reshape(self,n,dimensions,
-                                              newstrides,fortran);
+                                              newstrides,order);
             if (success) {
                 /* no need to copy the array after all */
                 strides = newstrides;
@@ -246,7 +246,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             }
             else {
                 PyObject *new;
-                new = PyArray_NewCopy(self, fortran);
+                new = PyArray_NewCopy(self, order);
                 if (new == NULL) {
                     return NULL;
                 }
@@ -260,7 +260,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
         /* Make sure the flags argument is set. */
         if (n > 1) {
-            if (fortran == NPY_FORTRANORDER) {
+            if (order == NPY_FORTRANORDER) {
                 flags &= ~NPY_CONTIGUOUS;
                 flags |= NPY_FORTRAN;
             }
@@ -275,7 +275,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          * replace any 0-valued strides with
          * appropriate value to preserve contiguousness
          */
-        if (fortran == PyArray_FORTRANORDER) {
+        if (order == NPY_FORTRANORDER) {
             if (strides[0] == 0) {
                 strides[0] = self->descr->elsize;
             }

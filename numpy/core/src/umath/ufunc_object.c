@@ -861,10 +861,34 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 case 's':
                     /* Allows a specific function inner loop to be selected */
                     if (strncmp(str,"sig",3) == 0) {
+                        if (*out_typetup != NULL) {
+                            PyErr_SetString(PyExc_RuntimeError,
+                                    "cannot specify both 'sig' and 'dtype'");
+                            return -1;
+                        }
                         *out_typetup = value;
+                        Py_INCREF(value);
                         bad_arg = 0;
                     }
                     break;
+                case 'd':
+                    /* Another way to specify 'sig' */
+                    if (strncmp(str,"dtype",5) == 0) {
+                        /* Allow this parameter to be None */
+                        PyArray_Descr *dtype;
+                        if (!PyArray_DescrConverter2(value, &dtype)) {
+                            return -1;
+                        }
+                        if (dtype != NULL) {
+                            if (*out_typetup != NULL) {
+                                PyErr_SetString(PyExc_RuntimeError,
+                                    "cannot specify both 'sig' and 'dtype'");
+                                return -1;
+                            }
+                            *out_typetup = Py_BuildValue("(N)", dtype);
+                        }
+                        bad_arg = 0;
+                    }
             }
 
             if (bad_arg) {
@@ -1413,7 +1437,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
 
         for (i = 0; i < n; ++i) {
             PyArray_Descr *dtype = NULL;
-            if (!PyArray_DescrConverter2(PyTuple_GET_ITEM(type_tup, i),
+            if (!PyArray_DescrConverter(PyTuple_GET_ITEM(type_tup, i),
                                                                 &dtype)) {
                 return -1;
             }
@@ -2366,6 +2390,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
+    Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
     NPY_UF_DBG_PRINTF("Returning Success\n");
@@ -2387,6 +2412,7 @@ fail:
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
+    Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
     return retval;
@@ -2592,6 +2618,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
+    Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
     NPY_UF_DBG_PRINTF("Returning Success\n");
@@ -2607,6 +2634,7 @@ fail:
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
+    Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
     return retval;

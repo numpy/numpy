@@ -1478,5 +1478,12 @@ class TestRegression(TestCase):
         np.add(a, b, out=c)
         assert_equal(c, 2.0)
 
+    def test_array_scalar_contiguous(self):
+        # Array scalars are both C and Fortran contiguous
+        assert_(np.array(1.0).flags.c_contiguous)
+        assert_(np.array(1.0).flags.f_contiguous)
+        assert_(np.array(np.float32(1.0)).flags.c_contiguous)
+        assert_(np.array(np.float32(1.0)).flags.f_contiguous)
+
 if __name__ == "__main__":
     run_module_suite()

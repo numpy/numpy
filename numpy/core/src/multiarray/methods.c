@@ -915,7 +915,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order=PyArray_CORDER;
+    PyArray_ORDER order = PyArray_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,

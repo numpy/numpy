@@ -3917,11 +3917,6 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
     npy_intp *first, *last;
     char *perm;
 
-    /* Need at least two dimensions for reversing to change things */
-    if (ndim < 2) {
-        return;
-    }
-
     size = NIT_AXISDATA_SIZEOF(itflags, ndim, niter)/NPY_SIZEOF_INTP;
     first = (npy_intp*)NIT_AXISDATA(iter);
     last = first + (ndim-1)*size;
@@ -3939,7 +3934,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
 
     /* Store the perm we applied */
     perm = NIT_PERM(iter);
-    for(i = ndim-1; i >= 0; --i, ++first) {
+    for(i = ndim-1; i >= 0; --i, ++perm) {
         *perm = (char)i;
     }
 

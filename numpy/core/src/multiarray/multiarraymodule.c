@@ -1208,8 +1208,9 @@ NPY_NO_EXPORT int
 PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 {
     char *str;
+    /* Leave the desired default from the caller for NULL/Py_None */
     if (object == NULL || object == Py_None) {
-        *val = NPY_ANYORDER;
+        return PY_SUCCEED;
     }
     else if (PyUnicode_Check(object)) {
         PyObject *tmp;
@@ -1513,7 +1514,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
-    NPY_ORDER order=NPY_ANYORDER;
+    NPY_ORDER order = NPY_ANYORDER;
     int flags = 0;
 
     if (PyTuple_GET_SIZE(args) > 2) {
@@ -1623,12 +1624,20 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 PyArray_OrderConverter, &order)) {
         goto fail;
     }
-    if (order == NPY_FORTRANORDER) {
-        fortran = TRUE;
+
+    switch (order) {
+        case NPY_CORDER:
+            fortran = FALSE;
+            break;
+        case NPY_FORTRANORDER:
+            fortran = TRUE;
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError,
+                            "only 'C' or 'F' order is permitted");
+            goto fail;
     }
-    else {
-        fortran = FALSE;
-    }
+
     ret = PyArray_Empty(shape.len, shape.ptr, typecode, fortran);
     PyDimMem_FREE(shape.ptr);
     return ret;
@@ -1636,6 +1645,33 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
  fail:
     Py_XDECREF(typecode);
     PyDimMem_FREE(shape.ptr);
+    return NULL;
+}
+
+static PyObject *
+array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+
+    static char *kwlist[] = {"prototype","dtype","order",NULL};
+    PyArrayObject *prototype = NULL;
+    PyArray_Descr *dtype = NULL;
+    NPY_ORDER order = NPY_KEEPORDER;
+    PyObject *ret = NULL;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
+                PyArray_Converter, &prototype,
+                PyArray_DescrConverter2, &dtype,
+                PyArray_OrderConverter, &order)) {
+        goto fail;
+    }
+    /* steals the reference to dtype if it's not NULL */
+    ret = PyArray_NewLikeArray(prototype, order, dtype);
+    Py_DECREF(prototype);
+    return ret;
+
+ fail:
+    Py_XDECREF(prototype);
+    Py_XDECREF(dtype);
     return NULL;
 }
 
@@ -1719,12 +1755,20 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 PyArray_OrderConverter, &order)) {
         goto fail;
     }
-    if (order == NPY_FORTRANORDER) {
-        fortran = TRUE;
+
+    switch (order) {
+        case NPY_CORDER:
+            fortran = FALSE;
+            break;
+        case NPY_FORTRANORDER:
+            fortran = TRUE;
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError,
+                            "only 'C' or 'F' order is permitted");
+            goto fail;
     }
-    else {
-        fortran = FALSE;
-    }
+
     ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) fortran);
     PyDimMem_FREE(shape.ptr);
     return ret;
@@ -3039,6 +3083,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"empty",
         (PyCFunction)array_empty,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"empty_like",
+        (PyCFunction)array_empty_like,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"scalar",
         (PyCFunction)array_scalar,
