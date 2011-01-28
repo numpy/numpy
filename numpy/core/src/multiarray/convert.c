@@ -429,23 +429,13 @@ PyArray_FillWithZero(PyArrayObject *a)
  * Copy an array.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
+PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
 {
-    PyArrayObject *ret;
-    if (fortran == PyArray_ANYORDER)
-        fortran = PyArray_ISFORTRAN(m1);
-
-    Py_INCREF(m1->descr);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(m1),
-                                                m1->descr,
-                                                m1->nd,
-                                                m1->dimensions,
-                                                NULL, NULL,
-                                                fortran,
-                                                (PyObject *)m1);
+    PyArrayObject *ret = PyArray_NewLikeArray(m1, order, NULL);
     if (ret == NULL) {
         return NULL;
     }
+
     if (PyArray_CopyInto(ret, m1) == -1) {
         Py_DECREF(ret);
         return NULL;

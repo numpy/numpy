@@ -825,6 +825,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
 
+#define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_C_CONTIGUOUS)
+#define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_F_CONTIGUOUS)
 
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS

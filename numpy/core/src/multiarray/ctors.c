@@ -498,6 +498,8 @@ int _arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
  *
  * Instead of trying to be fancy, we simply check for overlap and make
  * a temporary copy when one exists.
+ *
+ * Returns 0 on success, negative on failure.
  */
 NPY_NO_EXPORT int
 PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
@@ -522,17 +524,8 @@ PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
 
         /*
          * Allocate a temporary copy array.
-         * TODO: For efficiency, this should have a memory ordering
-         *       matching 'dst', even if 'dst' has its axes arbitrarily
-         *       scrambled.  A function to allocate this array needs to
-         *       be created.
          */
-        Py_INCREF(PyArray_DESCR(dst));
-        tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                        PyArray_DESCR(dst),
-                        PyArray_NDIM(dst), PyArray_DIMS(dst), NULL,
-                        NULL, PyArray_ISFORTRAN(dst) ? NPY_F_CONTIGUOUS : 0,
-                        NULL);
+        tmp = (PyArrayObject *)PyArray_NewLikeArray(dst, NPY_KEEPORDER, NULL);
         if (tmp == NULL) {
             return -1;
         }
@@ -1233,6 +1226,135 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  fail:
     Py_DECREF(self);
     return NULL;
+}
+
+typedef struct {
+    npy_intp perm, stride;
+} _npy_stride_sort_item;
+
+/*
+ * Sorts items so stride is descending, because C-order
+ * is the default in the face of ambiguity.
+ */
+int _npy_stride_sort_item_comparator(const void *a, const void *b)
+{
+    npy_intp astride = ((_npy_stride_sort_item *)a)->stride,
+            bstride = ((_npy_stride_sort_item *)b)->stride;
+
+    if (astride > bstride) {
+        return -1;
+    }
+    else if (astride == bstride) {
+        /*
+         * Make the qsort stable by next comparing the perm order.
+         * (Note that two perm entries will never be equal)
+         */
+        npy_intp aperm = ((_npy_stride_sort_item *)a)->perm,
+                bperm = ((_npy_stride_sort_item *)b)->perm;
+        return (aperm < bperm) ? -1 : 1;
+    }
+    else {
+        return 1;
+    }
+}
+
+/*NUMPY_API
+ * Creates a new array with the same shape as the provided one,
+ * with possible memory layout order and data type changes.
+ *
+ * prototype - The array the new one should be like.
+ * order     - NPY_CORDER - C-contiguous result.
+ *             NPY_FORTRANORDER - Fortran-contiguous result.
+ *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
+ *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
+ * dtype     - If not NULL, overrides the data type of the result.
+ *
+ * NOTE: If dtype is not NULL, steals the dtype reference.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
+                     PyArray_Descr *dtype)
+{
+    PyObject *ret = NULL;
+    int ndim = PyArray_NDIM(prototype);
+
+    /* If no override data type, use the one from the prototype */
+    if (dtype == NULL) {
+        dtype = PyArray_DESCR(prototype);
+        Py_INCREF(dtype);
+    }
+
+    /* Handle ANYORDER and simple KEEPORDER cases */
+    switch (order) {
+        case NPY_ANYORDER:
+            order = PyArray_ISFORTRAN(prototype) ?
+                                    NPY_FORTRANORDER : NPY_CORDER;
+            break;
+        case NPY_KEEPORDER:
+            if (PyArray_IS_C_CONTIGUOUS(prototype) || ndim <= 1) {
+                order = NPY_CORDER;
+                break;
+            }
+            else if (PyArray_IS_F_CONTIGUOUS(prototype)) {
+                order = NPY_FORTRANORDER;
+                break;
+            }
+            break;
+        default:
+            break;
+    }
+
+    /* If it's not KEEPORDER, this is simple */
+    if (order != NPY_KEEPORDER) {
+        ret = PyArray_NewFromDescr(Py_TYPE(prototype),
+                                            dtype,
+                                            ndim,
+                                            PyArray_DIMS(prototype),
+                                            NULL,
+                                            NULL,
+                                            order,
+                                            (PyObject *)prototype);
+    }
+    /* KEEPORDER needs some analysis of the strides */
+    else {
+        npy_intp strides[NPY_MAXDIMS], stride;
+        npy_intp *shape = PyArray_DIMS(prototype);
+        _npy_stride_sort_item sortstrides[NPY_MAXDIMS];
+        int i, ndim = PyArray_NDIM(prototype);
+
+        /* Set up the permutation and absolute value of strides */
+        for (i = 0; i < ndim; ++i) {
+            sortstrides[i].perm = i;
+            sortstrides[i].stride = PyArray_STRIDE(prototype, i);
+            if (sortstrides[i].stride < 0) {
+                sortstrides[i].stride = -sortstrides[i].stride;
+            }
+        }
+
+        /* Sort them */
+        qsort(sortstrides, ndim, sizeof(_npy_stride_sort_item),
+                                        &_npy_stride_sort_item_comparator);
+
+        /* Build the new strides */
+        stride = dtype->elsize;
+        for (i = ndim-1; i >= 0; --i) {
+            npy_intp i_perm = sortstrides[i].perm;
+            strides[i_perm] = stride;
+            stride *= shape[i_perm];
+        }
+
+        /* Finally, allocate the array */
+        ret = PyArray_NewFromDescr(Py_TYPE(prototype),
+                                            dtype,
+                                            ndim,
+                                            shape,
+                                            strides,
+                                            NULL,
+                                            0,
+                                            (PyObject *)prototype);
+    }
+
+    return ret;
 }
 
 /*NUMPY_API

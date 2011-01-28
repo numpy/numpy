@@ -158,6 +158,21 @@ From scratch
     *dims* and *strides* are copied into newly allocated dimension and
     strides arrays for the new array object.
 
+.. cfunction:: PyObject* PyArray_NewLikeArray(PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr)
+
+   This function steals a reference to *descr* if it is not NULL.
+
+   This array creation routine allows for the convenient creation of
+   a new array matching an existing array's shapes and memory layout,
+   possibly changing the layout and/or data type.
+
+   When *order* is NPY_ANYORDER, the result order is NPY_FORTRANORDER if
+   *prototype* is a fortran array, NPY_CORDER otherwise.  When *order* is
+   NPY_KEEPORDER, the result order matches that of *prototype*, even
+   when the axes of *prototype* aren't in C or Fortran order.
+
+   If *descr* is NULL, the data type of *prototype* is used.
+
 .. cfunction:: PyObject* PyArray_New(PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
     This is similar to :cfunc:`PyArray_DescrNew` (...) except you
