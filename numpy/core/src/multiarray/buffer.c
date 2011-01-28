@@ -768,7 +768,7 @@ _descriptor_from_pep3118_format(char *s)
         Py_DECREF(str);
         return NULL;
     }
-    descr = (PyArray_Descr*)PyObject_CallMethod(
+    descr = PyObject_CallMethod(
         _numpy_internal, "_dtype_from_pep3118", "O", str);
     Py_DECREF(str);
     Py_DECREF(_numpy_internal);

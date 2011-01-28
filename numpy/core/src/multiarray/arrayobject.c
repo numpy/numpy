@@ -882,7 +882,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     temp = temp2;
                 }
                 /* Reduce the extra dimension of `temp` using `op` */
-                temp2 = PyArray_GenericReduceFunction(temp, op, result_ndim,
+                temp2 = PyArray_GenericReduceFunction((PyArrayObject *)temp,
+                                                      op, result_ndim,
                                                       PyArray_BOOL, NULL);
                 if (temp2 == NULL) {
                     Py_DECREF(temp);

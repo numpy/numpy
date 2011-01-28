@@ -737,10 +737,6 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     PyArray_Descr *typec;
     NPY_BEGIN_THREADS_DEF;
 
-    PyArrayObject *ops_array[2];
-
-    ops_array[0] = op1;
-    ops_array[1] = op2;
     typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);

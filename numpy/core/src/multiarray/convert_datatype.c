@@ -762,11 +762,13 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 
     /* TODO: Also combine fields, subarrays, strings, etc */
     
+    /*
     printf("invalid type promotion: ");
     PyObject_Print(type1, stdout, 0);
     printf(" ");
     PyObject_Print(type2, stdout, 0);
     printf("\n");
+    */
     PyErr_SetString(PyExc_TypeError, "invalid type promotion");
     return NULL;
 }
@@ -1011,8 +1013,8 @@ static int min_scalar_type_num(char *valueptr, int type_num,
          * as forcing complex by adding 0j is probably desireable.
          */
         case NPY_CFLOAT: {
-            npy_cfloat value = *(npy_cfloat *)valueptr;
             /*
+            npy_cfloat value = *(npy_cfloat *)valueptr;
             if (value.imag == 0) {
                 return min_scalar_type_num((char *)&value.real,
                                             NPY_FLOAT, is_small_unsigned);
