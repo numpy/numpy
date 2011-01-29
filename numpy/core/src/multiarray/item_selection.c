@@ -1874,7 +1874,7 @@ finish:
     if (ndim == 1) {
         /* Directly switch to one dimensions (dimension 1 is 1 anyway) */
         ret->nd = 1;
-        PyTuple_SET_ITEM(ret_tuple, i, (PyObject *)ret);
+        PyTuple_SET_ITEM(ret_tuple, 0, (PyObject *)ret);
     }
     else {
         for (i = 0; i < ndim; ++i) {

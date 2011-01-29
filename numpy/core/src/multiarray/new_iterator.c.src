@@ -237,10 +237,10 @@ struct NpyIter_AD {
  * Requires that sizeof_axisdata be previously initialized
  * to NIT_AXISDATA_SIZEOF(itflags, ndim, niter).
  */
-#define NIT_ADVANCE_AXISDATA(axisdata, count) \
-        (*((char **)(&axisdata))) += (count)*sizeof_axisdata
 #define NIT_INDEX_AXISDATA(axisdata, index) ((NpyIter_AxisData *) \
         (((char *)(axisdata)) + (index)*sizeof_axisdata))
+#define NIT_ADVANCE_AXISDATA(axisdata, count) \
+        axisdata = NIT_INDEX_AXISDATA(axisdata, count)
 
 /* Size of the whole iterator */
 #define NIT_SIZEOF_ITERATOR(itflags, ndim, niter) ( \

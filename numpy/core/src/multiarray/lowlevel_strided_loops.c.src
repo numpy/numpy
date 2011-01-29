@@ -45,23 +45,23 @@
                        ((((npy_uint32)x)&0xff0000u) << 8) | \
                        ((((npy_uint32)x)&0xff000000u) >> 8))
 
-#define _NPY_SWAP8(x) (((((npy_uint64)x)&0xffu) << 56) | \
-                       ((((npy_uint64)x)&0xff00u) << 40) | \
-                       ((((npy_uint64)x)&0xff0000u) << 24) | \
-                       ((((npy_uint64)x)&0xff000000u) << 8) | \
-                       ((((npy_uint64)x)&0xff00000000u) >> 8) | \
-                       ((((npy_uint64)x)&0xff0000000000u) >> 24) | \
-                       ((((npy_uint64)x)&0xff000000000000u) >> 40) | \
+#define _NPY_SWAP8(x) (((((npy_uint64)x)&0xffULL) << 56) | \
+                       ((((npy_uint64)x)&0xff00ULL) << 40) | \
+                       ((((npy_uint64)x)&0xff0000ULL) << 24) | \
+                       ((((npy_uint64)x)&0xff000000ULL) << 8) | \
+                       ((((npy_uint64)x)&0xff00000000ULL) >> 8) | \
+                       ((((npy_uint64)x)&0xff0000000000ULL) >> 24) | \
+                       ((((npy_uint64)x)&0xff000000000000ULL) >> 40) | \
                        (((npy_uint64)x) >> 56))
 
-#define _NPY_SWAP_PAIR8(x) (((((npy_uint64)x)&0xffu) << 24) | \
-                       ((((npy_uint64)x)&0xff00u) << 8) | \
-                       ((((npy_uint64)x)&0xff0000u) >> 8) | \
-                       ((((npy_uint64)x)&0xff000000u) >> 24) | \
-                       ((((npy_uint64)x)&0xff00000000u) << 24) | \
-                       ((((npy_uint64)x)&0xff0000000000u) << 8) | \
-                       ((((npy_uint64)x)&0xff000000000000u) >> 8) | \
-                       ((((npy_uint64)x)&0xff00000000000000u) >> 24))
+#define _NPY_SWAP_PAIR8(x) (((((npy_uint64)x)&0xffULL) << 24) | \
+                       ((((npy_uint64)x)&0xff00ULL) << 8) | \
+                       ((((npy_uint64)x)&0xff0000ULL) >> 8) | \
+                       ((((npy_uint64)x)&0xff000000ULL) >> 24) | \
+                       ((((npy_uint64)x)&0xff00000000ULL) << 24) | \
+                       ((((npy_uint64)x)&0xff0000000000ULL) << 8) | \
+                       ((((npy_uint64)x)&0xff000000000000ULL) >> 8) | \
+                       ((((npy_uint64)x)&0xff00000000000000ULL) >> 24))
 
 #define _NPY_SWAP_INPLACE2(x) { \
         char a = (x)[0]; (x)[0] = (x)[1]; (x)[1] = a; \
