@@ -886,7 +886,7 @@ def test_iter_scalar_cast_errors():
                 casting='same_kind',
                 op_dtypes=[np.dtype('i4')])
 
-def test_iter_object_arrays():
+def test_iter_object_arrays_basic():
     # Check that object arrays work
 
     obj = {'a':3,'b':'d'}
@@ -914,24 +914,25 @@ def test_iter_object_arrays():
     i = newiter(a.reshape(2,2).T, ['refs_ok','buffered'],
                         ['readwrite'], order='C')
     for x in i:
-        x[()] = None
+        x[...] = None
     vals, i, x = [None]*3
     assert_equal(sys.getrefcount(obj), rc-1)
     assert_equal(a, np.array([None]*4, dtype='O'))
 
+def test_iter_object_arrays_conversions():
     # Conversions to/from objects
     a = np.arange(6, dtype='O')
     i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='i4')
     for x in i:
-        x[()] += 1
+        x[...] += 1
     assert_equal(a, np.arange(6)+1)
 
     a = np.arange(6, dtype='i4')
     i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='O')
     for x in i:
-        x[()] += 1
+        x[...] += 1
     assert_equal(a, np.arange(6)+1)
 
     # Non-contiguous object array
@@ -941,7 +942,7 @@ def test_iter_object_arrays():
     i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='i4')
     for x in i:
-        x[()] += 1
+        x[...] += 1
     assert_equal(a, np.arange(6)+1)
 
     #Non-contiguous value array
@@ -950,10 +951,10 @@ def test_iter_object_arrays():
     a[:] = np.arange(6) + 98172488
     i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='O')
-    ob = i[0][()]
+    ob = i[0][...]
     rc = sys.getrefcount(ob)
     for x in i:
-        x[()] += 1
+        x[...] += 1
     assert_equal(sys.getrefcount(ob), rc-1)
     assert_equal(a, np.arange(6)+98172489)
 
@@ -1149,7 +1150,7 @@ def test_iter_allocate_output_buffered_readwrite():
     i.operands[1][:] = 1
     i.reset()
     for x in i:
-        x[1][()] += x[0][()]
+        x[1][...] += x[0][...]
     assert_equal(i.operands[1], a+1)
 
 def test_iter_allocate_output_itorder():
@@ -1486,7 +1487,7 @@ def test_iter_buffered_cast_simple():
                    op_dtypes=[np.dtype('f8')],
                    buffersize=3)
     for v in i:
-        v[()] *= 2
+        v[...] *= 2
     
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
@@ -1500,7 +1501,7 @@ def test_iter_buffered_cast_byteswapped():
                    op_dtypes=[np.dtype('f8').newbyteorder()],
                    buffersize=3)
     for v in i:
-        v[()] *= 2
+        v[...] *= 2
     
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
@@ -1514,7 +1515,7 @@ def test_iter_buffered_cast_byteswapped():
                        op_dtypes=[np.dtype('c8').newbyteorder()],
                        buffersize=3)
         for v in i:
-            v[()] *= 2
+            v[...] *= 2
         
         assert_equal(a, 2*np.arange(10, dtype='f8'))
     finally:
@@ -1531,7 +1532,7 @@ def test_iter_buffered_cast_byteswapped_complex():
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
     for v in i:
-        v[()] *= 2
+        v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
 
     a = np.arange(10, dtype='c8')
@@ -1542,7 +1543,7 @@ def test_iter_buffered_cast_byteswapped_complex():
                    op_dtypes=[np.dtype('c16').newbyteorder()],
                    buffersize=3)
     for v in i:
-        v[()] *= 2
+        v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
 
     a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
@@ -1553,7 +1554,7 @@ def test_iter_buffered_cast_byteswapped_complex():
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
     for v in i:
-        v[()] *= 2
+        v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.clongdouble) + 4j)
 
     a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
@@ -1563,7 +1564,7 @@ def test_iter_buffered_cast_byteswapped_complex():
                    op_dtypes=[np.dtype('f4')],
                    buffersize=7)
     for v in i:
-        v[()] *= 2
+        v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.longdouble))
 
 def test_iter_buffered_cast_structured_type():
@@ -2076,7 +2077,7 @@ def test_iter_nested_iters_dtype_copy():
     assert_equal(j[0].dtype, np.dtype('f8'))
     for x in i:
         for y in j:
-            y[()] += 1
+            y[...] += 1
     assert_equal(a, [[0,1,2],[3,4,5]])
     i, j, x, y = (None,)*4 # force the updateifcopy
     assert_equal(a, [[1,2,3],[4,5,6]])
@@ -2093,7 +2094,7 @@ def test_iter_nested_iters_dtype_buffered():
     assert_equal(j[0].dtype, np.dtype('f8'))
     for x in i:
         for y in j:
-            y[()] += 1
+            y[...] += 1
     assert_equal(a, [[1,2,3],[4,5,6]])
 
 def test_iter_reduction_error():
@@ -2116,10 +2117,10 @@ def test_iter_reduction():
                     [['readonly'], ['readwrite','allocate']],
                     op_axes=[[0],[-1]])
     # Need to initialize the output operand to the addition unit
-    i.operands[1][()] = 0
+    i.operands[1][...] = 0
     # Do the reduction
     for x, y in i:
-        y[()] += x
+        y[...] += x
     # Since no axes were specified, should have allocated a scalar
     assert_equal(i.operands[1].ndim, 0)
     assert_equal(i.operands[1], np.sum(a))
@@ -2129,13 +2130,13 @@ def test_iter_reduction():
                     [['readonly'], ['readwrite','allocate']],
                     op_axes=[[0,1],[-1,-1]])
     # Need to initialize the output operand to the addition unit
-    i.operands[1][()] = 0
+    i.operands[1][...] = 0
     # Reduction shape/strides for the output
     assert_equal(i[1].shape, (6,))
     assert_equal(i[1].strides, (0,))
     # Do the reduction
     for x, y in i:
-        y[()] += x
+        y[...] += x
     # Since no axes were specified, should have allocated a scalar
     assert_equal(i.operands[1].ndim, 0)
     assert_equal(i.operands[1], np.sum(a))
@@ -2153,7 +2154,7 @@ def test_iter_buffering_reduction():
     assert_(i[1].dtype != b.dtype)
     # Do the reduction
     for x, y in i:
-        y[()] += x
+        y[...] += x
     # Since no axes were specified, should have allocated a scalar
     assert_equal(b, np.sum(a))
 
@@ -2167,7 +2168,7 @@ def test_iter_buffering_reduction():
     assert_equal(i[1].strides, (0,))
     # Do the reduction
     for x, y in i:
-        y[()] += x
+        y[...] += x
     assert_equal(b, np.sum(a, axis=1))
 
 if __name__ == "__main__":
