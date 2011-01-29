@@ -940,7 +940,9 @@ class _MaskedBinaryOperation:
         # Revert result to da where masked
         if m.any():
             np.putmask(result, m, 0)
-            result += m * da
+            # This only makes sense if the operation preserved the dtype
+            if result.dtype == da.dtype:
+                result += m * da
         # Transforms to a (subclass of) MaskedArray
         result = result.view(get_masked_subclass(a, b))
         result._mask = m
@@ -4314,6 +4316,8 @@ class MaskedArray(ndarray):
             array.
         ndarray.nonzero :
             Equivalent ndarray method.
+        count_nonzero :
+            Counts the number of non-zero elements in the input array.
 
         Examples
         --------
@@ -5550,8 +5554,8 @@ class mvoid(MaskedArray):
 
     def __getitem__(self, indx):
         "Get the index..."
-        _mask = self._mask.astype(np.void)
-        if _mask is not nomask and _mask[indx]:
+        m = self._mask
+        if m is not nomask and m[indx]:
             return masked
         return self._data[indx]
 

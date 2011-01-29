@@ -57,12 +57,10 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"indices", "axis", "out", "mode", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O&", kwlist,
-                                     &indices, PyArray_AxisConverter,
-                                     &dimension,
-                                     PyArray_OutputConverter,
-                                     &out,
-                                     PyArray_ClipmodeConverter,
-                                     &mode))
+                                     &indices,
+                                     PyArray_AxisConverter, &dimension,
+                                     PyArray_OutputConverter, &out,
+                                     PyArray_ClipmodeConverter, &mode))
         return NULL;
 
     return _ARET(PyArray_TakeFrom(self, indices, dimension, out, mode));
@@ -90,9 +88,9 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"indices", "values", "mode", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&", kwlist,
-                                     &indices, &values,
-                                     PyArray_ClipmodeConverter,
-                                     &mode))
+                                     &indices,
+                                     &values,
+                                     PyArray_ClipmodeConverter, &mode))
         return NULL;
     return PyArray_PutTo(self, values, indices, mode);
 }
@@ -203,10 +201,8 @@ array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return _ARET(PyArray_ArgMax(self, axis, out));
@@ -220,10 +216,8 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return _ARET(PyArray_ArgMin(self, axis, out));
@@ -237,10 +231,8 @@ array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return PyArray_Max(self, axis, out);
@@ -254,10 +246,8 @@ array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return PyArray_Ptp(self, axis, out);
@@ -272,10 +262,8 @@ array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return PyArray_Min(self, axis, out);
@@ -335,8 +323,8 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"dtype", "offset", 0};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i", kwlist,
-                                     PyArray_DescrConverter,
-                                     &dtype, &offset)) {
+                                     PyArray_DescrConverter, &dtype,
+                                     &offset)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -388,8 +376,9 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"value", "dtype", "offset", 0};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
-                                     &value, PyArray_DescrConverter,
-                                     &dtype, &offset)) {
+                                     &value,
+                                     PyArray_DescrConverter, &dtype,
+                                     &offset)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -459,7 +448,8 @@ array_byteswap(PyArrayObject *self, PyObject *args)
 {
     Bool inplace = FALSE;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace)) {
+    if (!PyArg_ParseTuple(args, "|O&",
+                            PyArray_BoolConverter, &inplace)) {
         return NULL;
     }
     return PyArray_Byteswap(self, inplace);
@@ -482,8 +472,7 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
-                                     PyArray_OrderConverter,
-                                     &order)) {
+                                     PyArray_OrderConverter, &order)) {
         return NULL;
     }
     return PyArray_ToString(self, order);
@@ -504,7 +493,9 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"file", "sep", "format", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ss", kwlist,
-                                     &file, &sep, &format)) {
+                                     &file,
+                                     &sep,
+                                     &format)) {
         return NULL;
     }
 
@@ -744,12 +735,35 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
     return Py_None;
 }
 
+/* Sets the array values from another array as if they were flat */
+static PyObject *
+array_setasflat(PyArrayObject *self, PyObject *args)
+{
+    PyObject *arr_in;
+    PyArrayObject *arr;
+    
+    if (!PyArg_ParseTuple(args, "O", &arr_in)) {
+        return NULL;
+    }
+
+    arr = (PyArrayObject *)PyArray_FromAny(arr_in, NULL, 0, 0, 0, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+
+    if (PyArray_CopyAnyInto(self, arr) != 0) {
+        Py_DECREF(arr);
+        return NULL;
+    }
+
+    Py_DECREF(arr);
+    Py_RETURN_NONE;
+}
 
 static PyObject *
-array_cast(PyArrayObject *self, PyObject *args)
+array_astype(PyArrayObject *self, PyObject *args)
 {
     PyArray_Descr *descr = NULL;
-    PyObject *obj;
 
     if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
                           &descr)) {
@@ -757,19 +771,6 @@ array_cast(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    if (PyArray_EquivTypes(descr, self->descr)) {
-        obj = _ARET(PyArray_NewCopy(self,NPY_ANYORDER));
-        Py_XDECREF(descr);
-        return obj;
-    }
-    if (descr->names != NULL) {
-        int flags;
-        flags = NPY_FORCECAST;
-        if (PyArray_ISFORTRAN(self)) {
-            flags |= NPY_FORTRAN;
-        }
-        return PyArray_FromArray(self, descr, flags);
-    }
     return PyArray_CastToType(self, descr, PyArray_ISFORTRAN(self));
 }
 
@@ -865,8 +866,8 @@ array_getarray(PyArrayObject *self, PyObject *args)
     PyArray_Descr *newtype = NULL;
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_DescrConverter,
-                          &newtype)) {
+    if (!PyArg_ParseTuple(args, "|O&",
+                            PyArray_DescrConverter, &newtype)) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -914,15 +915,15 @@ array_getarray(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER fortran=PyArray_CORDER;
+    PyArray_ORDER order = PyArray_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
-                            PyArray_OrderConverter, &fortran)) {
+                            PyArray_OrderConverter, &order)) {
         return NULL;
     }
 
-    return PyArray_NewCopy(self, fortran);
+    return PyArray_NewCopy(self, order);
 }
 
 #include <stdio.h>
@@ -976,8 +977,8 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
     static char *kwlist[] = {"repeats", "axis", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&", kwlist,
-                                     &repeats, PyArray_AxisConverter,
-                                     &axis)) {
+                                     &repeats,
+                                     PyArray_AxisConverter, &axis)) {
         return NULL;
     }
     return _ARET(PyArray_Repeat(self, repeats, axis));
@@ -1015,15 +1016,16 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis=-1;
     int val;
-    PyArray_SORTKIND which = PyArray_QUICKSORT;
+    PyArray_SORTKIND sortkind = PyArray_QUICKSORT;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist, &axis,
-                                     PyArray_SortkindConverter, &which,
-                                     &order)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist,
+                                    &axis,
+                                    PyArray_SortkindConverter, &sortkind,
+                                    &order)) {
         return NULL;
     }
     if (order == Py_None) {
@@ -1053,7 +1055,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         self->descr = newd;
     }
 
-    val = PyArray_Sort(self, axis, which);
+    val = PyArray_Sort(self, axis, sortkind);
     if (order != NULL) {
         Py_XDECREF(self->descr);
         self->descr = saved;
@@ -1069,14 +1071,14 @@ static PyObject *
 array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis = -1;
-    PyArray_SORTKIND which = PyArray_QUICKSORT;
+    PyArray_SORTKIND sortkind = PyArray_QUICKSORT;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O", kwlist,
                                      PyArray_AxisConverter, &axis,
-                                     PyArray_SortkindConverter, &which,
+                                     PyArray_SortkindConverter, &sortkind,
                                      &order)) {
         return NULL;
     }
@@ -1107,7 +1109,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         self->descr = newd;
     }
 
-    res = PyArray_ArgSort(self, axis, which);
+    res = PyArray_ArgSort(self, axis, sortkind);
     if (order != NULL) {
         Py_XDECREF(self->descr);
         self->descr = saved;
@@ -1355,14 +1357,19 @@ array_setstate(PyArrayObject *self, PyObject *args)
     /* This will free any memory associated with a and
        use the string in setstate as the (writeable) memory.
     */
-    if (!PyArg_ParseTuple(args, "(iO!O!iO)", &version, &PyTuple_Type,
-                          &shape, &PyArrayDescr_Type, &typecode,
-                          &fortran, &rawdata)) {
+    if (!PyArg_ParseTuple(args, "(iO!O!iO)",
+                            &version,
+                            &PyTuple_Type, &shape,
+                            &PyArrayDescr_Type, &typecode,
+                            &fortran,
+                            &rawdata)) {
         PyErr_Clear();
         version = 0;
-        if (!PyArg_ParseTuple(args, "(O!O!iO)", &PyTuple_Type,
-                              &shape, &PyArrayDescr_Type, &typecode,
-                              &fortran, &rawdata)) {
+        if (!PyArg_ParseTuple(args, "(O!O!iO)",
+                            &PyTuple_Type, &shape,
+                            &PyArrayDescr_Type, &typecode,
+                            &fortran,
+                            &rawdata)) {
             return NULL;
         }
     }
@@ -1675,11 +1682,9 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1699,11 +1704,9 @@ array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1724,11 +1727,9 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1748,11 +1749,9 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1772,11 +1771,9 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1818,10 +1815,8 @@ array_any(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return PyArray_Any(self, axis, out);
@@ -1836,10 +1831,8 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out))
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out))
         return NULL;
 
     return PyArray_All(self, axis, out);
@@ -1857,11 +1850,10 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out, &ddof)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out,
+                                     &ddof)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1883,11 +1875,10 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
-                                     PyArray_AxisConverter,
-                                     &axis, PyArray_DescrConverter2,
-                                     &dtype,
-                                     PyArray_OutputConverter,
-                                     &out, &ddof)) {
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_DescrConverter2, &dtype,
+                                     PyArray_OutputConverter, &out,
+                                     &ddof)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1907,10 +1898,9 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"condition", "axis", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&", kwlist,
-                                     &condition, PyArray_AxisConverter,
-                                     &axis,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     &condition,
+                                     PyArray_AxisConverter, &axis,
+                                     PyArray_OutputConverter, &out)) {
         return NULL;
     }
     return _ARET(PyArray_Compress(self, condition, axis, out));
@@ -1937,7 +1927,9 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"offset", "axis1", "axis2", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iiiO&O&", kwlist,
-                                     &offset, &axis1, &axis2,
+                                     &offset,
+                                     &axis1,
+                                     &axis2,
                                      PyArray_DescrConverter2, &dtype,
                                      PyArray_OutputConverter, &out)) {
         Py_XDECREF(dtype);
@@ -1960,9 +1952,9 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"min", "max", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO&", kwlist,
-                                     &min, &max,
-                                     PyArray_OutputConverter,
-                                     &out)) {
+                                     &min,
+                                     &max,
+                                     PyArray_OutputConverter, &out)) {
         return NULL;
     }
     if (max == NULL && min == NULL) {
@@ -1994,7 +1986,9 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"offset", "axis1", "axis2", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iii", kwlist,
-                                     &offset, &axis1, &axis2)) {
+                                     &offset,
+                                     &axis1,
+                                     &axis2)) {
         return NULL;
     }
     return _ARET(PyArray_Diagonal(self, offset, axis1, axis2));
@@ -2004,28 +1998,28 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER fortran = PyArray_CORDER;
+    PyArray_ORDER order = PyArray_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
-                            PyArray_OrderConverter, &fortran)) {
+                            PyArray_OrderConverter, &order)) {
         return NULL;
     }
-    return PyArray_Flatten(self, fortran);
+    return PyArray_Flatten(self, order);
 }
 
 
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER fortran = PyArray_CORDER;
+    PyArray_ORDER order = PyArray_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
-                            PyArray_OrderConverter, &fortran)) {
+                            PyArray_OrderConverter, &order)) {
         return NULL;
     }
-    return PyArray_Ravel(self, fortran);
+    return PyArray_Ravel(self, order);
 }
 
 
@@ -2037,8 +2031,8 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"decimals", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&", kwlist,
-                                     &decimals, PyArray_OutputConverter,
-                                     &out)) {
+                                     &decimals,
+                                     PyArray_OutputConverter, &out)) {
         return NULL;
     }
     return _ARET(PyArray_Round(self, decimals, out));
@@ -2056,7 +2050,9 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int flagback = self->flags;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
-                                     &write, &align, &uic))
+                                     &write,
+                                     &align,
+                                     &uic))
         return NULL;
 
     if (align != Py_None) {
@@ -2181,7 +2177,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_argsort,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
-        (PyCFunction)array_cast,
+        (PyCFunction)array_astype,
         METH_VARARGS, NULL},
     {"byteswap",
         (PyCFunction)array_byteswap,
@@ -2230,6 +2226,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"itemset",
         (PyCFunction) array_setscalar,
+        METH_VARARGS, NULL},
+    {"setasflat",
+        (PyCFunction) array_setasflat,
         METH_VARARGS, NULL},
     {"max",
         (PyCFunction)array_max,

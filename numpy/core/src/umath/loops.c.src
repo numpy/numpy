@@ -388,8 +388,8 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = f(in1);
-        if ((ret == NULL) || PyErr_Occurred()) {
+        PyObject *ret = f(in1 ? in1 : Py_None);
+        if (ret == NULL) {
             return;
         }
         Py_XDECREF(*out);
@@ -405,7 +405,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyObject_CallMethod(in1, meth, NULL);
+        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None, meth, NULL);
         if (ret == NULL) {
             return;
         }
@@ -423,8 +423,8 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = f(in1, in2);
-        if (PyErr_Occurred()) {
+        PyObject *ret = f(in1 ? in1 : Py_None, in2 ? in2 : Py_None);
+        if (ret == NULL) {
             return;
         }
         Py_XDECREF(*out);
@@ -441,7 +441,8 @@ PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyObject_CallMethod(in1, meth, "(O)", in2);
+        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None,
+                                            meth, "(O)", in2);
         if (ret == NULL) {
             return;
         }
@@ -482,8 +483,7 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
         for(j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
             if (in == NULL) {
-                Py_DECREF(arglist);
-                return;
+                in = Py_None;
             }
             PyTuple_SET_ITEM(arglist, j, in);
             Py_INCREF(in);
@@ -2037,7 +2037,9 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
-        int ret = PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        int ret = PyObject_RichCompareBool(
+                            in1 ? in1 : Py_None,
+                            in2 ? in2 : Py_None, Py_@OP@);
         if (ret == -1) {
             return;
         }
@@ -2056,7 +2058,7 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         PyObject **out = (PyObject **)op1;
         int v;
         PyObject *ret;
-        PyObject_Cmp(in1, zero, &v);
+        PyObject_Cmp(in1 ? in1 : Py_None, zero, &v);
         ret = PyLong_FromLong(v);
         if (PyErr_Occurred()) {
             return;
@@ -2070,7 +2072,8 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyInt_FromLong(PyObject_Compare(in1, zero));
+        PyObject *ret = PyInt_FromLong(
+                            PyObject_Compare(in1 ? in1 : Py_None, zero));
         if (PyErr_Occurred()) {
             return;
         }

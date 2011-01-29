@@ -267,7 +267,7 @@ NPY_NO_EXPORT npy_datetime
 PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 {
     npy_datetime ret;
-    npy_longlong days; /* The absolute number of days since Jan 1, 1970 */
+    npy_longlong days = 0; /* The absolute number of days since Jan 1, 1970 */
 
     if (fr > NPY_FR_M) {
         days = days_from_ymd(d->year, d->month, d->day);

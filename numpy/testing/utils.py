@@ -421,7 +421,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         usecomplex = False
 
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose,
-                         header='Arrays are not almost equal')
+             header=('Arrays are not almost equal to %d decimals' % decimal))
 
     if usecomplex:
         if iscomplexobj(actual):
@@ -616,7 +616,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'))
             if not cond :
                 raise AssertionError(msg)
-    except ValueError:
+    except ValueError as e:
+        header = 'error during assertion:\n%s\n\n%s' % (e, header)
         msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
                             names=('x', 'y'))
         raise ValueError(msg)
@@ -771,7 +772,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
             z = z.astype(float_) # handle object arrays
         return around(z, decimal) <= 10.0**(-decimal)
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
-                         header='Arrays are not almost equal')
+             header=('Arrays are not almost equal to %d decimals' % decimal))
 
 def assert_array_less(x, y, err_msg='', verbose=True):
     """

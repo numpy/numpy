@@ -1,12 +1,12 @@
-__all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
-           'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
-           'fromstring', 'fromfile', 'frombuffer',
+__all__ = ['newaxis', 'ndarray', 'flatiter', 'newiter', 'nested_iters', 'ufunc',
+           'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
+           'dtype', 'fromstring', 'fromfile', 'frombuffer',
            'int_asbuffer', 'where', 'argwhere',
-           'concatenate', 'fastCopyAndTranspose', 'lexsort',
-           'set_numeric_ops', 'can_cast',
+           'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
+           'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
-           'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
+           'correlate', 'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
@@ -54,23 +54,32 @@ BUFSIZE = multiarray.BUFSIZE
 
 ndarray = multiarray.ndarray
 flatiter = multiarray.flatiter
+newiter = multiarray.newiter
+nested_iters = multiarray.nested_iters
 broadcast = multiarray.broadcast
 dtype = multiarray.dtype
 ufunc = type(sin)
 
 
 # originally from Fernando Perez's IPython
-def zeros_like(a):
+def zeros_like(a, dtype=None, order='K'):
     """
     Return an array of zeros with the same shape and type as a given array.
 
-    Equivalent to ``a.copy().fill(0)``.
+    With default paramters, is equivalent to ``a.copy().fill(0)``.
 
     Parameters
     ----------
     a : array_like
         The shape and data-type of `a` define these same attributes of
         the returned array.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of ``a`` as closely
+        as possible.
 
     Returns
     -------
@@ -103,72 +112,8 @@ def zeros_like(a):
     array([ 0.,  0.,  0.])
 
     """
-    if isinstance(a, ndarray):
-        res = ndarray.__new__(type(a), a.shape, a.dtype, order=a.flags.fnc)
-        res.fill(0)
-        return res
-    try:
-        wrap = a.__array_wrap__
-    except AttributeError:
-        wrap = None
-    a = asarray(a)
-    res = zeros(a.shape, a.dtype)
-    if wrap:
-        res = wrap(res)
-    return res
-
-def empty_like(a):
-    """
-    Return a new array with the same shape and type as a given array.
-
-    Parameters
-    ----------
-    a : array_like
-        The shape and data-type of `a` define these same attributes of the
-        returned array.
-
-    Returns
-    -------
-    out : ndarray
-        Array of random data with the same shape and type as `a`.
-
-    See Also
-    --------
-    ones_like : Return an array of ones with shape and type of input.
-    zeros_like : Return an array of zeros with shape and type of input.
-    empty : Return a new uninitialized array.
-    ones : Return a new array setting values to one.
-    zeros : Return a new array setting values to zero.
-
-    Notes
-    -----
-    This function does *not* initialize the returned array; to do that use
-    `zeros_like` or `ones_like` instead.  It may be marginally faster than
-    the functions that do set the array values.
-
-    Examples
-    --------
-    >>> a = ([1,2,3], [4,5,6])                         # a is array-like
-    >>> np.empty_like(a)
-    array([[-1073741821, -1073741821,           3],    #random
-           [          0,           0, -1073741821]])
-    >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
-    >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],#random
-           [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
-
-    """
-    if isinstance(a, ndarray):
-        res = ndarray.__new__(type(a), a.shape, a.dtype, order=a.flags.fnc)
-        return res
-    try:
-        wrap = a.__array_wrap__
-    except AttributeError:
-        wrap = None
-    a = asarray(a)
-    res = empty(a.shape, a.dtype)
-    if wrap:
-        res = wrap(res)
+    res = empty_like(a, dtype=dtype, order=order)
+    res.fill(0)
     return res
 
 # end Fernando's utilities
@@ -195,7 +140,9 @@ newaxis = None
 arange = multiarray.arange
 array = multiarray.array
 zeros = multiarray.zeros
+count_nonzero = multiarray.count_nonzero
 empty = multiarray.empty
+empty_like = multiarray.empty_like
 fromstring = multiarray.fromstring
 fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
@@ -209,9 +156,13 @@ concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
+promote_types = multiarray.promote_types
+min_scalar_type = multiarray.min_scalar_type
+result_type = multiarray.result_type
 lexsort = multiarray.lexsort
 compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
+einsum = multiarray.einsum
 
 def asarray(a, dtype=None, order=None):
     """
@@ -810,6 +761,10 @@ def outer(a,b):
     out : ndarray, shape (M, N)
         ``out[i, j] = a[i] * b[j]``
 
+    See also
+    --------
+    numpy.inner, numpy.einsum
+
     References
     ----------
     .. [1] : G. H. Golub and C. F. van Loan, *Matrix Computations*, 3rd
@@ -900,7 +855,7 @@ def tensordot(a, b, axes=2):
 
     See Also
     --------
-    numpy.dot
+    numpy.dot, numpy.einsum
 
     Notes
     -----

@@ -576,13 +576,13 @@ arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
     if (PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
         cmp = arrayflags_compare((PyArrayFlagsObject *)self,
                                  (PyArrayFlagsObject *)other);
-    }
 
-    if (cmp_op == Py_EQ) {
-        result = (cmp == 0) ? Py_True : Py_False;
-    }
-    else if (cmp_op == Py_NE) {
-        result = (cmp != 0) ? Py_True : Py_False;
+        if (cmp_op == Py_EQ) {
+            result = (cmp == 0) ? Py_True : Py_False;
+        }
+        else if (cmp_op == Py_NE) {
+            result = (cmp != 0) ? Py_True : Py_False;
+        }
     }
 
     Py_INCREF(result);

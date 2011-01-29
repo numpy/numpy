@@ -1,5 +1,5 @@
-Sorting and searching
-=====================
+Sorting, searching, and counting
+================================
 
 .. currentmodule:: numpy
 
@@ -30,3 +30,10 @@ Searching
    where
    searchsorted
    extract
+
+Counting
+--------
+.. autosummary::
+   :toctree: generated/
+
+   count_nonzero

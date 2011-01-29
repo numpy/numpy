@@ -13,6 +13,7 @@
 
 #include "arrayobject.h"
 #include "mapping.h"
+#include "lowlevel_strided_loops.h"
 
 #include "convert.h"
 
@@ -353,26 +354,112 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 }
 
 /*NUMPY_API
-  Copy an array.
-*/
-NPY_NO_EXPORT PyObject *
-PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
+ * Fills an array with zeros.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_FillWithZero(PyArrayObject *a)
 {
-    PyArrayObject *ret;
-    if (fortran == PyArray_ANYORDER)
-        fortran = PyArray_ISFORTRAN(m1);
+    PyArray_StridedTransferFn *stransfer = NULL;
+    void *transferdata = NULL;
+    PyArray_Descr *dtype = PyArray_DESCR(a);
+    NpyIter *iter;
 
-    Py_INCREF(m1->descr);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(m1),
-                                                m1->descr,
-                                                m1->nd,
-                                                m1->dimensions,
-                                                NULL, NULL,
-                                                fortran,
-                                                (PyObject *)m1);
+    NpyIter_IterNext_Fn iternext;
+    char **dataptr;
+    npy_intp stride, *countptr;
+    int needs_api;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArray_ISWRITEABLE(a)) {
+        PyErr_SetString(PyExc_RuntimeError, "cannot write to array");
+        return -1;
+    }
+
+    /* A zero-sized array needs no zeroing */
+    if (PyArray_SIZE(a) == 0) {
+        return 0;
+    }
+
+    /* If it's possible to do a simple memset, do so */
+    if (!PyDataType_REFCHK(dtype) && (PyArray_ISCONTIGUOUS(a) ||
+                                      PyArray_ISFORTRAN(a))) {
+        memset(PyArray_DATA(a), 0, PyArray_NBYTES(a));
+        return 0;
+    }
+
+    /* Use an iterator to go through all the data */
+    iter = NpyIter_New(a, NPY_ITER_WRITEONLY|NPY_ITER_NO_INNER_ITERATION,
+                    NPY_KEEPORDER, NPY_NO_CASTING,
+                    NULL, 0, NULL, 0);
+    
+    if (iter == NULL) {
+        return -1;
+    }
+
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        NpyIter_Deallocate(iter);
+        return -1;
+    }
+    dataptr = NpyIter_GetDataPtrArray(iter);
+    stride = NpyIter_GetInnerStrideArray(iter)[0];
+    countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    needs_api = NpyIter_IterationNeedsAPI(iter);
+
+    /*
+     * Because buffering is disabled in the iterator, the inner loop
+     * strides will be the same throughout the iteration loop.  Thus,
+     * we can pass them to this function to take advantage of
+     * contiguous strides, etc.
+     *
+     * By setting the src_dtype to NULL, we get a function which sets
+     * the destination to zeros.
+     */
+    if (PyArray_GetDTypeTransferFunction(
+                    PyArray_ISALIGNED(a),
+                    0, stride,
+                    NULL, PyArray_DESCR(a),
+                    0,
+                    &stransfer, &transferdata,
+                    &needs_api) != NPY_SUCCEED) {
+        NpyIter_Deallocate(iter);
+        return -1;
+    }
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
+    do {
+        stransfer(NULL, 0, *dataptr, stride,
+                    *countptr, 0, transferdata);
+    } while(iternext(iter));
+
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
+
+    PyArray_FreeStridedTransferData(transferdata);
+    NpyIter_Deallocate(iter);
+
+    return 0;
+}
+
+/*NUMPY_API
+ * Copy an array.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
+{
+    PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(m1, order, NULL);
     if (ret == NULL) {
         return NULL;
     }
+
     if (PyArray_CopyInto(ret, m1) == -1) {
         Py_DECREF(ret);
         return NULL;

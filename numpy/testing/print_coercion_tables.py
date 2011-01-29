@@ -14,6 +14,8 @@ class GenericObject:
     def __radd__(self, other):
         return self
 
+    dtype = np.dtype('O')
+
 def print_cancast_table(ntypes):
     print 'X',
     for char in ntypes: print char,
@@ -24,7 +26,7 @@ def print_cancast_table(ntypes):
             print int(np.can_cast(row, col)),
         print
 
-def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray):
+def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, use_promote_types=False):
     print '+',
     for char in ntypes: print char,
     print
@@ -46,11 +48,14 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray):
                 else:
                     rowvalue = rowtype(inputfirstvalue)
                 colvalue = coltype(inputsecondvalue)
-                value = np.add(rowvalue,colvalue)
-                if isinstance(value, np.ndarray):
-                    char = value.dtype.char
+                if use_promote_types:
+                    char = np.promote_types(rowvalue.dtype, colvalue.dtype).char
                 else:
-                    char = np.dtype(type(value)).char
+                    value = np.add(rowvalue,colvalue)
+                    if isinstance(value, np.ndarray):
+                        char = value.dtype.char
+                    else:
+                        char = np.dtype(type(value)).char
             except ValueError:
                 char = '!'
             except OverflowError:
@@ -76,4 +81,6 @@ print_coercion_table(np.typecodes['All'], 0, 0, True)
 print
 print "array + neg scalar"
 print_coercion_table(np.typecodes['All'], 0, -1, True)
-
+print
+print "promote_types"
+print_coercion_table(np.typecodes['All'], 0, 0, False, True)

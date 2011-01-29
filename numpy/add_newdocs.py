@@ -413,6 +413,58 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
     """)
 
+add_newdoc('numpy.core.multiarray', 'empty_like',
+    """
+    empty_like(a, dtype=None, order='K')
+
+    Return a new array with the same shape and type as a given array.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of the
+        returned array.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of ``a`` as closely
+        as possible.
+
+    Returns
+    -------
+    out : ndarray
+        Array of uninitialized (arbitrary) data with the same
+        shape and type as `a`.
+
+    See Also
+    --------
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+
+    Notes
+    -----
+    This function does *not* initialize the returned array; to do that use
+    `zeros_like` or `ones_like` instead.  It may be marginally faster than
+    the functions that do set the array values.
+
+    Examples
+    --------
+    >>> a = ([1,2,3], [4,5,6])                         # a is array-like
+    >>> np.empty_like(a)
+    array([[-1073741821, -1073741821,           3],    #random
+           [          0,           0, -1073741821]])
+    >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
+    >>> np.empty_like(a)
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],#random
+           [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
+
+    """)
+
 
 add_newdoc('numpy.core.multiarray', 'scalar',
     """
@@ -479,6 +531,35 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     array([(0, 0), (0, 0)],
           dtype=[('x', '<i4'), ('y', '<i4')])
 
+    """)
+
+add_newdoc('numpy.core.multiarray', 'count_nonzero',
+    """
+    count_nonzero(a)
+
+    Counts the number of non-zero values in the array ``a``.
+
+    Parameters
+    ----------
+    a : array_like
+        The array for which to count non-zeros.
+
+    Returns
+    -------
+    count : int
+        Number of non-zero values in the array.
+
+    See Also
+    --------
+    nonzero : Return the coordinates of all the non-zero values.
+
+    Examples
+    --------
+    >>> np.count_nonzero(np.eye(4))
+    4
+
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
+    5
     """)
 
 add_newdoc('numpy.core.multiarray','set_typeDict',
@@ -797,6 +878,7 @@ add_newdoc('numpy.core', 'inner',
     --------
     tensordot : Sum products over arbitrary axes.
     dot : Generalised matrix product, using second last dimension of `b`.
+    einsum : Einstein summation convention.
 
     Notes
     -----
@@ -1115,9 +1197,12 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
 add_newdoc('numpy.core.multiarray', 'can_cast',
     """
-    can_cast(fromtype, totype)
+    can_cast(from, totype, casting = 'safe')
 
-    Returns True if cast between data types can occur without losing precision.
+    Returns True if cast between data types can occur according to the
+    casting rule.  If from is a scalar or array scalar, also returns
+    True if the scalar value can be cast without overflow or truncation
+    to an integer.
 
     Parameters
     ----------
@@ -1125,14 +1210,19 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
         Data type to cast from.
     totype : dtype or dtype specifier
         Data type to cast to.
+    casting : casting rule
+        May be any of 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
 
     Returns
     -------
     out : bool
-        True if cast can occur without losing precision.
+        True if cast can occur according to the casting rule.
 
     Examples
     --------
+
+    Basic examples
+
     >>> np.can_cast(np.int32, np.int64)
     True
     >>> np.can_cast(np.float64, np.complex)
@@ -1146,6 +1236,171 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     False
     >>> np.can_cast('i4', 'S4')
     True
+
+    Casting scalars
+
+    >>> np.can_cast(100, 'i1')
+    True
+    >>> np.can_cast(150, 'i1')
+    False
+    >>> np.can_cast(150, 'u1')
+    True
+
+    >>> np.can_cast(3.5e100, np.float32)
+    False
+    >>> np.can_cast(1000.0, np.float32)
+    True
+
+    Array scalar checks the value, array does not
+
+    >>> np.can_cast(np.array(1000.0), np.float32)
+    True
+    >>> np.can_cast(np.array([1000.0]), np.float32)
+    False
+
+    Using the casting rules
+
+    >>> np.can_cast('i8', 'i8', 'no')
+    True
+    >>> np.can_cast('<i8', '>i8', 'no')
+    False
+
+    >>> np.can_cast('<i8', '>i8', 'equiv')
+    True
+    >>> np.can_cast('<i4', '>i8', 'equiv')
+    False
+
+    >>> np.can_cast('<i4', '>i8', 'safe')
+    True
+    >>> np.can_cast('<i8', '>i4', 'safe')
+    False
+
+    >>> np.can_cast('<i8', '>i4', 'same_kind')
+    True
+    >>> np.can_cast('<i8', '>u4', 'same_kind')
+    False
+
+    >>> np.can_cast('<i8', '>u4', 'unsafe')
+    True
+
+    """)
+
+add_newdoc('numpy.core.multiarray', 'promote_types',
+    """
+    promote_types(type1, type2)
+
+    Returns the data type with the smallest size and smallest scalar
+    kind to which both ``type1`` and ``type2`` may be safely cast.
+    The returned data type is always in native byte order.
+
+    Parameters
+    ----------
+    type1 : dtype or dtype specifier
+        First data type.
+    type2 : dtype or dtype specifier
+        Second data type.
+
+    Returns
+    -------
+    out : dtype
+        The promoted data type.
+
+    Examples
+    --------
+    >>> np.promote_types('f4', 'f8')
+    dtype('float64')
+
+    >>> np.promote_types('i8', 'f4')
+    dtype('float64')
+
+    >>> np.promote_types('>i8', '<c8')
+    dtype('complex128')
+
+    >>> np.promote_types('i1', 'S8')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: invalid type promotion
+    """)
+
+add_newdoc('numpy.core.multiarray', 'min_scalar_type',
+    """
+    min_scalar_type(a)
+
+    For scalar ``a``, returns the data type with the smallest size
+    and smallest scalar kind which can hold its value.  For non-scalar
+    array ``a``, returns the vector's dtype unmodified.
+
+    As a special case, floating point values are not demoted to integers,
+    and complex values are not demoted to floats.
+
+    Parameters
+    ----------
+    a : scalar or array_like
+        The value whose minimal data type is to be found.
+
+    Returns
+    -------
+    out : dtype
+        The minimal data type.
+
+    Examples
+    --------
+    >>> np.min_scalar_type(10)
+    dtype('uint8')
+
+    >>> np.min_scalar_type(-260)
+    dtype('int16')
+
+    >>> np.min_scalar_type(3.1)
+    dtype('float16')
+
+    >>> np.min_scalar_type(1e50)
+    dtype('float64')
+
+    >>> np.min_scalar_type(np.arange(4,dtype='f8'))
+    dtype('float64')
+
+    """)
+
+add_newdoc('numpy.core.multiarray', 'result_type',
+    """
+    result_type(*arrays_and_dtypes)
+
+    Returns the type that results from applying the NumPy
+    type promotion rules to the arguments.
+
+    Type promotion in NumPy works similarly to the rules in languages
+    like C++, with some slight differences.  When both scalars and
+    arrays are used, the array's type takes precedence and the actual value
+    of the scalar is taken into account.
+    
+    For example, calculating 3*a, where a is an array of 32-bit floats,
+    intuitively should result in a 32-bit float output.  If the 3 is a
+    32-bit integer, the NumPy rules indicate it can't convert losslessly
+    into a 32-bit float, so a 64-bit float should be the result type.
+    By examining the value of the constant, '3', we see that it fits in
+    an 8-bit integer, which can be cast losslessly into the 32-bit float.
+
+    Parameters
+    ----------
+    arrays_and_dtypes : list of arrays and dtypes
+        The operands of some operation whose result type is needed.
+
+    Returns
+    -------
+    out : dtype
+        The result type.
+
+    Examples
+    --------
+    >>> np.result_type(3, np.arange(7, dtype='i1'))
+    dtype('int8')
+
+    >>> np.result_type('i4', 'c8')
+    dtype('complex128')
+
+    >>> np.result_type(3.0, -2)
+    dtype('float64')
 
     """)
 
@@ -1227,6 +1482,7 @@ add_newdoc('numpy.core', 'dot',
     --------
     vdot : Complex-conjugating dot product.
     tensordot : Sum products over arbitrary axes.
+    einsum : Einstein summation convention.
 
     Examples
     --------
@@ -1252,6 +1508,160 @@ add_newdoc('numpy.core', 'dot',
     499128
     >>> sum(a[2,3,2,:] * b[1,2,:,2])
     499128
+
+    """)
+
+add_newdoc('numpy.core', 'einsum',
+    """
+    einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
+
+    Evaluates the Einstein summation convention on the operands.
+
+    Using the Einstein summation convention, many common multi-dimensional
+    array operations can be represented in a simple fashion.  This function
+    provides a way compute such summations.
+
+    The best way to understand this function is to try the examples below,
+    which show how many common NumPy functions can be implemented as
+    calls to einsum.
+    
+    The subscripts string is a comma-separated list of subscript labels,
+    where each label refers to a dimension of the corresponding operand.
+    Repeated subscripts labels in one operand take the diagonal.  For example,
+    ``np.einsum('ii', a)`` is equivalent to ``np.trace(a)``.
+    
+    Whenever a label is repeated, it is summed, so ``np.einsum('i,i', a, b)``
+    is equivalent to ``np.inner(a,b)``.  If a label appears only once,
+    it is not summed, so ``np.einsum('i', a)`` produces a view of ``a``
+    with no changes.
+
+    The order of labels in the output is by default alphabetical.  This
+    means that ``np.einsum('ij', a)`` doesn't affect a 2D array, while
+    ``np.einsum('ji', a)`` takes its transpose.
+
+    The output can be controlled by specifying output subscript labels
+    as well.  This specifies the label order, and allows summing to be
+    disallowed or forced when desired.  The call ``np.einsum('i->', a)``
+    is equivalent to ``np.sum(a, axis=-1)``, and
+    ``np.einsum('ii->i', a)`` is equivalent to ``np.diag(a)``.
+
+    It is also possible to control how broadcasting occurs using
+    an ellipsis.  To take the trace along the first and last axes,
+    you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
+    product with the left-most indices instead of rightmost, you can do
+    ``np.einsum('ij...,jk...->ik...', a, b)``.
+
+    When there is only one operand, no axes are summed, and no output
+    parameter is provided, a view into the operand is returned instead
+    of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
+    produces a view.
+
+    Parameters
+    ----------
+    subscripts : string
+        Specifies the subscripts for summation.
+    operands : list of array_like
+        These are the arrays for the operation.
+    out : None or array
+        If provided, the calculation is done into this array.
+    dtype : None or data type
+        If provided, forces the calculation to use the data type specified.
+        Note that you may have to also give a more liberal ``casting``
+        parameter to allow the conversions.
+    order : 'C', 'F', 'A', or 'K'
+        Controls the memory layout of the output. 'C' means it should
+        be C contiguous. 'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout as the inputs as
+        is possible, including arbitrarily permuted axes.
+    casting : 'no', 'equiv', 'safe', 'same_kind', 'unsafe'
+        Controls what kind of data casting may occur.  Setting this to
+        'unsafe' is not recommended, as it can adversely affect accumulations.
+        'no' means the data types should not be cast at all. 'equiv' means
+        only byte-order changes are allowed. 'safe' means only casts
+        which can preserve values are allowed. 'same_kind' means only
+        safe casts or casts within a kind, like float64 to float32, are
+        allowed.  'unsafe' means any data conversions may be done.
+
+    Returns
+    -------
+    output : ndarray
+        The calculation based on the Einstein summation convention.
+
+    See Also
+    --------
+    dot, inner, outer, tensordot
+
+    
+    Examples
+    --------
+
+    >>> a = np.arange(25).reshape(5,5)
+    >>> b = np.arange(5)
+    >>> c = np.arange(6).reshape(2,3)
+
+    >>> np.einsum('ii', a)
+    60
+    >>> np.trace(a)
+    60
+
+    >>> np.einsum('ii->i', a)
+    array([ 0,  6, 12, 18, 24])
+    >>> np.diag(a)
+    array([ 0,  6, 12, 18, 24])
+
+    >>> np.einsum('ij,j', a, b)
+    array([ 30,  80, 130, 180, 230])
+    >>> np.dot(a, b)
+    array([ 30,  80, 130, 180, 230])
+
+    >>> np.einsum('ji', c)
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+    >>> c.T
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+
+    >>> np.einsum(',', 3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.multiply(3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+
+    >>> np.einsum('i,i', b, b)
+    30
+    >>> np.inner(b,b)
+    30
+
+    >>> np.einsum('i,j', np.arange(2)+1, b)
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+    >>> np.outer(np.arange(2)+1, b)
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+
+    >>> np.einsum('i...->', a)
+    array([50, 55, 60, 65, 70])
+    >>> np.sum(a, axis=0)
+    array([50, 55, 60, 65, 70])
+
+    >>> a = np.arange(60.).reshape(3,4,5)
+    >>> b = np.arange(24.).reshape(4,3,2)
+    >>> np.einsum('ijk,jil->kl', a, b)
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    >>> np.tensordot(a,b, axes=([1,0],[0,1]))
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
 
     """)
 
@@ -2609,6 +3019,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
     array([[3, 1, 7],
            [2, 0, 3],
            [8, 5, 9]])
+
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('setasflat',
+    """
+    a.setasflat(arr)
+
+    Equivalent to a.flat = arr.flat, but is generally more efficient.
+    This function does not check for overlap, so if ``arr`` and ``a``
+    are viewing the same data with different strides, the results will
+    be unpredictable.
+
+    Parameters
+    ----------
+    arr : array_like
+        The array to copy into a.
+
+    Examples
+    --------
+    >>> a = np.arange(2*4).reshape(2,4)[:,:-1]; a
+    array([[0, 1, 2],
+           [4, 5, 6]])
+    >>> b = np.arange(3*3, dtype='f4').reshape(3,3).T[::-1,:-1]; b
+    array([[ 2.,  5.],
+           [ 1.,  4.],
+           [ 0.,  3.]], dtype=float32)
+    >>> a.setasflat(b)
+    >>> a
+    array([[2, 5, 1],
+           [4, 0, 3]])
 
     """))
 

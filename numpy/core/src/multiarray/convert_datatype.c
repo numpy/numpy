@@ -22,6 +22,9 @@
  *
  * Cast an array using typecode structure.
  * steals reference to at --- cannot be NULL
+ *
+ * This function always makes a copy of mp, even if the dtype
+ * doesn't change.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
@@ -31,16 +34,6 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
     PyArray_Descr *mpd;
 
     mpd = mp->descr;
-
-    if (((mpd == at) ||
-                ((mpd->type_num == at->type_num) &&
-                 PyArray_EquivByteorders(mpd->byteorder, at->byteorder) &&
-                 ((mpd->elsize == at->elsize) || (at->elsize==0)))) &&
-                 PyArray_ISBEHAVED_RO(mp)) {
-        Py_DECREF(at);
-        Py_INCREF(mp);
-        return (PyObject *)mp;
-    }
 
     if (at->elsize == 0) {
         PyArray_DESCR_REPLACE(at);
@@ -70,7 +63,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
     if (out == NULL) {
         return NULL;
     }
-    ret = PyArray_CastTo((PyArrayObject *)out, mp);
+    ret = PyArray_CopyInto((PyArrayObject *)out, mp);
     if (ret != -1) {
         return out;
     }
@@ -90,10 +83,10 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 {
     PyArray_VectorUnaryFunc *castfunc = NULL;
 
-    if (type_num < PyArray_NTYPES) {
+    if (type_num < NPY_NTYPES_ABI_COMPATIBLE) {
         castfunc = descr->f->cast[type_num];
     }
-    if (castfunc == NULL) {
+    else {
         PyObject *obj = descr->f->castdict;
         if (obj && PyDict_Check(obj)) {
             PyObject *key;
@@ -120,17 +113,17 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
         }
 #if PY_VERSION_HEX >= 0x02050000
         ret = PyErr_WarnEx(cls,
-                           "Casting complex values to real discards the imaginary "
-                           "part", 1);
+                           "Casting complex values to real discards "
+                           "the imaginary part", 1);
 #else
         ret = PyErr_Warn(cls,
-                         "Casting complex values to real discards the imaginary "
-                         "part");
+                         "Casting complex values to real discards "
+                         "the imaginary part");
 #endif
         Py_XDECREF(cls);
         if (ret < 0) {
             return NULL;
-	}
+	    }
     }
     if (castfunc) {
         return castfunc;
@@ -139,161 +132,6 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
     PyErr_SetString(PyExc_ValueError, "No cast function available.");
     return NULL;
 }
-
-/*
- * Reference counts:
- * copyswapn is used which increases and decreases reference counts for OBJECT arrays.
- * All that needs to happen is for any reference counts in the buffers to be
- * decreased when completely finished with the buffers.
- *
- * buffers[0] is the destination
- * buffers[1] is the source
- */
-static void
-_strided_buffered_cast(char *dptr, intp dstride, int delsize, int dswap,
-                       PyArray_CopySwapNFunc *dcopyfunc,
-                       char *sptr, intp sstride, int selsize, int sswap,
-                       PyArray_CopySwapNFunc *scopyfunc,
-                       intp N, char **buffers, int bufsize,
-                       PyArray_VectorUnaryFunc *castfunc,
-                       PyArrayObject *dest, PyArrayObject *src)
-{
-    int i;
-    if (N <= bufsize) {
-        /*
-         * 1. copy input to buffer and swap
-         * 2. cast input to output
-         * 3. swap output if necessary and copy from output buffer
-         */
-        scopyfunc(buffers[1], selsize, sptr, sstride, N, sswap, src);
-        castfunc(buffers[1], buffers[0], N, src, dest);
-        dcopyfunc(dptr, dstride, buffers[0], delsize, N, dswap, dest);
-        return;
-    }
-
-    /* otherwise we need to divide up into bufsize pieces */
-    i = 0;
-    while (N > 0) {
-        int newN = MIN(N, bufsize);
-
-        _strided_buffered_cast(dptr+i*dstride, dstride, delsize,
-                               dswap, dcopyfunc,
-                               sptr+i*sstride, sstride, selsize,
-                               sswap, scopyfunc,
-                               newN, buffers, bufsize, castfunc, dest, src);
-        i += newN;
-        N -= bufsize;
-    }
-    return;
-}
-
-static int
-_broadcast_cast(PyArrayObject *out, PyArrayObject *in,
-                PyArray_VectorUnaryFunc *castfunc, int iswap, int oswap)
-{
-    int delsize, selsize, maxaxis, i, N;
-    PyArrayMultiIterObject *multi;
-    intp maxdim, ostrides, istrides;
-    char *buffers[2];
-    PyArray_CopySwapNFunc *ocopyfunc, *icopyfunc;
-    char *obptr;
-    NPY_BEGIN_THREADS_DEF;
-
-    delsize = PyArray_ITEMSIZE(out);
-    selsize = PyArray_ITEMSIZE(in);
-    multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, out, in);
-    if (multi == NULL) {
-        return -1;
-    }
-
-    if (multi->size != PyArray_SIZE(out)) {
-        PyErr_SetString(PyExc_ValueError,
-                "array dimensions are not "\
-                "compatible for copy");
-        Py_DECREF(multi);
-        return -1;
-    }
-
-    icopyfunc = in->descr->f->copyswapn;
-    ocopyfunc = out->descr->f->copyswapn;
-    maxaxis = PyArray_RemoveSmallest(multi);
-    if (maxaxis < 0) {
-        /* cast 1 0-d array to another */
-        N = 1;
-        maxdim = 1;
-        ostrides = delsize;
-        istrides = selsize;
-    }
-    else {
-        maxdim = multi->dimensions[maxaxis];
-        N = (int) (MIN(maxdim, PyArray_BUFSIZE));
-        ostrides = multi->iters[0]->strides[maxaxis];
-        istrides = multi->iters[1]->strides[maxaxis];
-
-    }
-    buffers[0] = _pya_malloc(N*delsize);
-    if (buffers[0] == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-    buffers[1] = _pya_malloc(N*selsize);
-    if (buffers[1] == NULL) {
-        _pya_free(buffers[0]);
-        PyErr_NoMemory();
-        return -1;
-    }
-    if (PyDataType_FLAGCHK(out->descr, NPY_NEEDS_INIT)) {
-        memset(buffers[0], 0, N*delsize);
-    }
-    if (PyDataType_FLAGCHK(in->descr, NPY_NEEDS_INIT)) {
-        memset(buffers[1], 0, N*selsize);
-    }
-
-#if NPY_ALLOW_THREADS
-    if (PyArray_ISNUMBER(in) && PyArray_ISNUMBER(out)) {
-        NPY_BEGIN_THREADS;
-    }
-#endif
-
-    while (multi->index < multi->size) {
-        _strided_buffered_cast(multi->iters[0]->dataptr,
-                ostrides,
-                delsize, oswap, ocopyfunc,
-                multi->iters[1]->dataptr,
-                istrides,
-                selsize, iswap, icopyfunc,
-                maxdim, buffers, N,
-                castfunc, out, in);
-        PyArray_MultiIter_NEXT(multi);
-    }
-#if NPY_ALLOW_THREADS
-    if (PyArray_ISNUMBER(in) && PyArray_ISNUMBER(out)) {
-        NPY_END_THREADS;
-    }
-#endif
-    Py_DECREF(multi);
-    if (PyDataType_REFCHK(in->descr)) {
-        obptr = buffers[1];
-        for (i = 0; i < N; i++, obptr+=selsize) {
-            PyArray_Item_XDECREF(obptr, in->descr);
-        }
-    }
-    if (PyDataType_REFCHK(out->descr)) {
-        obptr = buffers[0];
-        for (i = 0; i < N; i++, obptr+=delsize) {
-            PyArray_Item_XDECREF(obptr, out->descr);
-        }
-    }
-    _pya_free(buffers[0]);
-    _pya_free(buffers[1]);
-    if (PyErr_Occurred()) {
-        return -1;
-    }
-
-    return 0;
-}
-
-
 
 /*
  * Must be broadcastable.
@@ -308,167 +146,8 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 NPY_NO_EXPORT int
 PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 {
-    int simple;
-    int same;
-    PyArray_VectorUnaryFunc *castfunc = NULL;
-    intp mpsize = PyArray_SIZE(mp);
-    int iswap, oswap;
-    NPY_BEGIN_THREADS_DEF;
-
-    if (mpsize == 0) {
-        return 0;
-    }
-    if (!PyArray_ISWRITEABLE(out)) {
-        PyErr_SetString(PyExc_ValueError, "output array is not writeable");
-        return -1;
-    }
-
-    castfunc = PyArray_GetCastFunc(mp->descr, out->descr->type_num);
-    if (castfunc == NULL) {
-        return -1;
-    }
-
-    same = PyArray_SAMESHAPE(out, mp);
-    simple = same && ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) ||
-            (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
-    if (simple) {
-#if NPY_ALLOW_THREADS
-        if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
-            NPY_BEGIN_THREADS;
-        }
-#endif
-        castfunc(mp->data, out->data, mpsize, mp, out);
-
-#if NPY_ALLOW_THREADS
-        if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
-            NPY_END_THREADS;
-        }
-#endif
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-
-    /*
-     * If the input or output is OBJECT, STRING, UNICODE, or VOID
-     *  then getitem and setitem are used for the cast
-     *  and byteswapping is handled by those methods
-     */
-    if (PyArray_ISFLEXIBLE(mp) || PyArray_ISOBJECT(mp) || PyArray_ISOBJECT(out) ||
-            PyArray_ISFLEXIBLE(out)) {
-        iswap = oswap = 0;
-    }
-    else {
-        iswap = PyArray_ISBYTESWAPPED(mp);
-        oswap = PyArray_ISBYTESWAPPED(out);
-    }
-
-    return _broadcast_cast(out, mp, castfunc, iswap, oswap);
-}
-
-
-static int
-_bufferedcast(PyArrayObject *out, PyArrayObject *in,
-              PyArray_VectorUnaryFunc *castfunc)
-{
-    char *inbuffer, *bptr, *optr;
-    char *outbuffer=NULL;
-    PyArrayIterObject *it_in = NULL, *it_out = NULL;
-    intp i, index;
-    intp ncopies = PyArray_SIZE(out) / PyArray_SIZE(in);
-    int elsize=in->descr->elsize;
-    int nels = PyArray_BUFSIZE;
-    int el;
-    int inswap, outswap = 0;
-    int obuf=!PyArray_ISCARRAY(out);
-    int oelsize = out->descr->elsize;
-    PyArray_CopySwapFunc *in_csn;
-    PyArray_CopySwapFunc *out_csn;
-    int retval = -1;
-
-    in_csn = in->descr->f->copyswap;
-    out_csn = out->descr->f->copyswap;
-
-    /*
-     * If the input or output is STRING, UNICODE, or VOID
-     * then getitem and setitem are used for the cast
-     *  and byteswapping is handled by those methods
-     */
-
-    inswap = !(PyArray_ISFLEXIBLE(in) || PyArray_ISNOTSWAPPED(in));
-
-    inbuffer = PyDataMem_NEW(PyArray_BUFSIZE*elsize);
-    if (inbuffer == NULL) {
-        return -1;
-    }
-    if (PyArray_ISOBJECT(in)) {
-        memset(inbuffer, 0, PyArray_BUFSIZE*elsize);
-    }
-    it_in = (PyArrayIterObject *)PyArray_IterNew((PyObject *)in);
-    if (it_in == NULL) {
-        goto exit;
-    }
-    if (obuf) {
-        outswap = !(PyArray_ISFLEXIBLE(out) ||
-                    PyArray_ISNOTSWAPPED(out));
-        outbuffer = PyDataMem_NEW(PyArray_BUFSIZE*oelsize);
-        if (outbuffer == NULL) {
-            goto exit;
-        }
-        if (PyArray_ISOBJECT(out)) {
-            memset(outbuffer, 0, PyArray_BUFSIZE*oelsize);
-        }
-        it_out = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
-        if (it_out == NULL) {
-            goto exit;
-        }
-        nels = MIN(nels, PyArray_BUFSIZE);
-    }
-
-    optr = (obuf) ? outbuffer: out->data;
-    bptr = inbuffer;
-    el = 0;
-    while (ncopies--) {
-        index = it_in->size;
-        PyArray_ITER_RESET(it_in);
-        while (index--) {
-            in_csn(bptr, it_in->dataptr, inswap, in);
-            bptr += elsize;
-            PyArray_ITER_NEXT(it_in);
-            el += 1;
-            if ((el == nels) || (index == 0)) {
-                /* buffer filled, do cast */
-                castfunc(inbuffer, optr, el, in, out);
-                if (obuf) {
-                    /* Copy from outbuffer to array */
-                    for (i = 0; i < el; i++) {
-                        out_csn(it_out->dataptr,
-                                optr, outswap,
-                                out);
-                        optr += oelsize;
-                        PyArray_ITER_NEXT(it_out);
-                    }
-                    optr = outbuffer;
-                }
-                else {
-                    optr += out->descr->elsize * nels;
-                }
-                el = 0;
-                bptr = inbuffer;
-            }
-        }
-    }
-    retval = 0;
-
- exit:
-    Py_XDECREF(it_in);
-    PyDataMem_FREE(inbuffer);
-    PyDataMem_FREE(outbuffer);
-    if (obuf) {
-        Py_XDECREF(it_out);
-    }
-    return retval;
+    /* CopyInto handles the casting now */
+    return PyArray_CopyInto(out, mp);
 }
 
 /*NUMPY_API
@@ -478,42 +157,8 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in,
 NPY_NO_EXPORT int
 PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
 {
-    int simple;
-    PyArray_VectorUnaryFunc *castfunc = NULL;
-    npy_intp mpsize = PyArray_SIZE(mp);
-
-    if (mpsize == 0) {
-        return 0;
-    }
-    if (!PyArray_ISWRITEABLE(out)) {
-        PyErr_SetString(PyExc_ValueError, "output array is not writeable");
-        return -1;
-    }
-
-    if (!(mpsize == PyArray_SIZE(out))) {
-        PyErr_SetString(PyExc_ValueError,
-                        "arrays must have the same number of"
-                        " elements for the cast.");
-        return -1;
-    }
-
-    castfunc = PyArray_GetCastFunc(mp->descr, out->descr->type_num);
-    if (castfunc == NULL) {
-        return -1;
-    }
-    simple = ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) ||
-              (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
-    if (simple) {
-        castfunc(mp->data, out->data, mpsize, mp, out);
-        return 0;
-    }
-    if (PyArray_SAMESHAPE(out, mp)) {
-        int iswap, oswap;
-        iswap = PyArray_ISBYTESWAPPED(mp) && !PyArray_ISFLEXIBLE(mp);
-        oswap = PyArray_ISBYTESWAPPED(out) && !PyArray_ISFLEXIBLE(out);
-        return _broadcast_cast(out, mp, castfunc, iswap, oswap);
-    }
-    return _bufferedcast(out, mp, castfunc);
+    /* CopyAnyInto handles the casting now */
+    return PyArray_CopyAnyInto(out, mp);
 }
 
 /*NUMPY_API
@@ -525,7 +170,8 @@ PyArray_CanCastSafely(int fromtype, int totype)
     PyArray_Descr *from;
 
     /* Fast table lookup for small type numbers */
-    if ((unsigned int)fromtype < NPY_NTYPES && (unsigned int)totype < NPY_NTYPES) {
+    if ((unsigned int)fromtype < NPY_NTYPES &&
+                                (unsigned int)totype < NPY_NTYPES) {
         return _npy_can_cast_safely_table[fromtype][totype];
     }
 
@@ -572,15 +218,18 @@ PyArray_CanCastSafely(int fromtype, int totype)
 
 /*NUMPY_API
  * leaves reference count alone --- cannot be NULL
+ *
+ * PyArray_CanCastTypeTo is equivalent to this, but adds a 'casting'
+ * parameter.
  */
-NPY_NO_EXPORT Bool
+NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
     int fromtype=from->type_num;
     int totype=to->type_num;
-    Bool ret;
+    npy_bool ret;
 
-    ret = (Bool) PyArray_CanCastSafely(fromtype, totype);
+    ret = (npy_bool) PyArray_CanCastSafely(fromtype, totype);
     if (ret) {
         /* Check String and Unicode more closely */
         if (fromtype == PyArray_STRING) {
@@ -605,10 +254,216 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
     return ret;
 }
 
+/* Provides an ordering for the dtype 'kind' character codes */
+static int
+dtype_kind_to_ordering(char kind)
+{
+    switch (kind) {
+        /* Boolean kind */
+        case 'b':
+            return 0;
+        /* Unsigned int kind */
+        case 'u':
+            return 1;
+        /* Signed int kind */
+        case 'i':
+            return 2;
+        /* Float kind */
+        case 'f':
+            return 4;
+        /* Complex kind */
+        case 'c':
+            return 5;
+        /* String kind */
+        case 'S':
+        case 'a':
+            return 6;
+        /* Unicode kind */
+        case 'U':
+            return 7;
+        /* Void kind */
+        case 'V':
+            return 8;
+        /* Object kind */
+        case 'O':
+            return 9;
+        /* Anything else - ideally shouldn't happen... */
+        default:
+            return 10;
+    }
+}
+
+/* Converts a type number from unsigned to signed */
+static int
+type_num_unsigned_to_signed(int type_num)
+{
+    switch (type_num) {
+        case NPY_UBYTE:
+            return NPY_BYTE;
+        case NPY_USHORT:
+            return NPY_SHORT;
+        case NPY_UINT:
+            return NPY_INT;
+        case NPY_ULONG:
+            return NPY_LONG;
+        case NPY_ULONGLONG:
+            return NPY_LONGLONG;
+        default:
+            return type_num;
+    }
+}
+
+/*NUMPY_API
+ * Returns true if data of type 'from' may be cast to data of type
+ * 'to' according to the rule 'casting'.
+ */
+NPY_NO_EXPORT npy_bool
+PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
+                                                    NPY_CASTING casting)
+{
+    /* If unsafe casts are allowed */
+    if (casting == NPY_UNSAFE_CASTING) {
+        return 1;
+    }
+    /* Equivalent types can be cast with any value of 'casting'  */
+    else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
+        /* For complicated case, use EquivTypes (for now) */
+        if (PyTypeNum_ISUSERDEF(from->type_num) ||
+                        PyDataType_HASFIELDS(from) ||
+                        from->subarray != NULL) {
+            int ret;
+
+            /* Only NPY_NO_CASTING prevents byte order conversion */
+            if ((casting != NPY_NO_CASTING) &&
+                                (!PyArray_ISNBO(from->byteorder) ||
+                                 !PyArray_ISNBO(to->byteorder))) {
+                PyArray_Descr *nbo_from, *nbo_to;
+
+                nbo_from = PyArray_DescrNewByteorder(from, NPY_NATIVE);
+                nbo_to = PyArray_DescrNewByteorder(to, NPY_NATIVE);
+                if (nbo_from == NULL || nbo_to == NULL) {
+                    Py_XDECREF(nbo_from);
+                    Py_XDECREF(nbo_to);
+                    PyErr_Clear();
+                    return 0;
+                }
+                ret = PyArray_EquivTypes(nbo_from, nbo_to);
+                Py_DECREF(nbo_from);
+                Py_DECREF(nbo_to);
+            }
+            else {
+                ret = PyArray_EquivTypes(from, to);
+            }
+            return ret;
+        }
+
+        switch (casting) {
+            case NPY_NO_CASTING:
+                return (from->elsize == to->elsize) &&
+                        PyArray_ISNBO(from->byteorder) ==
+                                    PyArray_ISNBO(to->byteorder);
+            case NPY_EQUIV_CASTING:
+                return (from->elsize == to->elsize);
+            case NPY_SAFE_CASTING:
+                return (from->elsize <= to->elsize);
+            default:
+                return 1;
+        }
+    }
+    /* If safe or same-kind casts are allowed */
+    else if (casting == NPY_SAFE_CASTING || casting == NPY_SAME_KIND_CASTING) {
+        if (PyArray_CanCastTo(from, to)) {
+            return 1;
+        }
+        else if(casting == NPY_SAME_KIND_CASTING) {
+            /*
+             * Also allow casting from lower to higher kinds, according
+             * to the ordering provided by dtype_kind_to_ordering.
+             */
+            return dtype_kind_to_ordering(from->kind) <=
+                            dtype_kind_to_ordering(to->kind);
+        }
+        else {
+            return 0;
+        }
+    }
+    /* NPY_NO_CASTING or NPY_EQUIV_CASTING was specified */
+    else {
+        return 0;
+    }
+}
+
+/* CanCastArrayTo needs this function */
+static int min_scalar_type_num(char *valueptr, int type_num,
+                                            int *is_small_unsigned);
+
+/*NUMPY_API
+ * Returns 1 if the array object may be cast to the given data type using
+ * the casting rule, 0 otherwise.  This differs from PyArray_CanCastTo in
+ * that it handles scalar arrays (0 dimensions) specially, by checking
+ * their value.
+ */
+NPY_NO_EXPORT npy_bool
+PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
+                        NPY_CASTING casting)
+{
+    PyArray_Descr *from = PyArray_DESCR(arr);
+
+    /* If it's not a scalar, use the standard rules */
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(from->type_num)) {
+        return PyArray_CanCastTypeTo(from, to, casting);
+    }
+    /* Otherwise, check the value */
+    else {
+        char *data = PyArray_BYTES(arr);
+        int swap = !PyArray_ISNBO(from->byteorder);
+        int is_small_unsigned = 0, type_num;
+        npy_bool ret;
+        PyArray_Descr *dtype;
+
+        /* An aligned memory buffer large enough to hold any type */
+#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
+        npy_longlong value;
+#else
+        npy_clongdouble value;
+#endif
+        from->f->copyswap(&value, data, swap, NULL);
+
+        type_num = min_scalar_type_num((char *)&value, from->type_num,
+                                        &is_small_unsigned);
+        
+        /*
+         * If we've got a small unsigned scalar, and the 'to' type
+         * is not unsigned, then make it signed to allow the value
+         * to be cast more appropriately.
+         */
+        if (is_small_unsigned && !(PyTypeNum_ISUNSIGNED(to->type_num))) {
+            type_num = type_num_unsigned_to_signed(type_num);
+        }
+
+        dtype = PyArray_DescrFromType(type_num);
+        if (dtype == NULL) {
+            return 0;
+        }
+#if 0
+        printf("min scalar cast ");
+        PyObject_Print(dtype, stdout, 0);
+        printf(" to ");
+        PyObject_Print(to, stdout, 0);
+        printf("\n");
+#endif
+        ret = PyArray_CanCastTypeTo(dtype, to, casting);
+        Py_DECREF(dtype);
+        return ret;
+    }
+}
+
 /*NUMPY_API
  * See if array scalars can be cast.
+ *
+ * TODO: For NumPy 2.0, add a NPY_CASTING parameter.
  */
-NPY_NO_EXPORT Bool
+NPY_NO_EXPORT npy_bool
 PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 {
     int fromtype;
@@ -619,7 +474,777 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
     if (fromtype == PyArray_NOTYPE || totype == PyArray_NOTYPE) {
         return FALSE;
     }
-    return (Bool) PyArray_CanCastSafely(fromtype, totype);
+    return (npy_bool) PyArray_CanCastSafely(fromtype, totype);
+}
+
+/*
+ * Internal promote types function which handles unsigned integers which
+ * fit in same-sized signed integers specially.
+ */
+static PyArray_Descr *
+promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
+                        int is_small_unsigned1, int is_small_unsigned2)
+{
+    if (is_small_unsigned1) {
+        int type_num1 = type1->type_num, type_num2 = type2->type_num, ret_type_num;
+
+        if (type_num2 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num2) ||
+                                        PyTypeNum_ISUNSIGNED(type_num2))) {
+            /* Convert to the equivalent-sized signed integer */
+            type_num1 = type_num_unsigned_to_signed(type_num1);
+
+            ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
+            /* The table doesn't handle string/unicode/void, check the result */
+            if (ret_type_num >= 0) {
+                return PyArray_DescrFromType(ret_type_num);
+            }
+        }
+
+        return PyArray_PromoteTypes(type1, type2);
+    }
+    else if (is_small_unsigned2) {
+        int type_num1 = type1->type_num,
+            type_num2 = type2->type_num,
+            ret_type_num;
+
+        if (type_num1 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num1) ||
+                                        PyTypeNum_ISUNSIGNED(type_num1))) {
+            /* Convert to the equivalent-sized signed integer */
+            type_num2 = type_num_unsigned_to_signed(type_num2);
+
+            ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
+            /* The table doesn't handle string/unicode/void, check the result */
+            if (ret_type_num >= 0) {
+                return PyArray_DescrFromType(ret_type_num);
+            }
+        }
+
+        return PyArray_PromoteTypes(type1, type2);
+    }
+    else {
+        return PyArray_PromoteTypes(type1, type2);
+    }
+
+}
+
+/*NUMPY_API
+ * Produces the smallest size and lowest kind type to which both
+ * input types can be cast.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    int type_num1, type_num2, ret_type_num;
+
+    /* If one of the arguments is NULL, return the non-NULL one */
+    if (type1 == NULL || type2 == NULL) {
+        if (type1 == NULL) {
+            if (type2 == NULL) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "PromoteTypes received two NULL arguments");
+                return NULL;
+            }
+            else {
+                Py_INCREF(type2);
+                return type2;
+            }
+        }
+        else {
+            Py_INCREF(type1);
+            return type1;
+        }
+    }
+
+    type_num1 = type1->type_num;
+    type_num2 = type2->type_num;
+
+    /* If they're built-in types, use the promotion table */
+    if (type_num1 < NPY_NTYPES && type_num2 < NPY_NTYPES) {
+        ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
+        /* The table doesn't handle string/unicode/void, check the result */
+        if (ret_type_num >= 0) {
+            return PyArray_DescrFromType(ret_type_num);
+        }
+    }
+    /* If one or both are user defined, calculate it */
+    else {
+        int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
+  
+        if (PyArray_CanCastTo(type2, type1)) {
+            /* Promoted types are always native byte order */
+            if (PyArray_ISNBO(type1->byteorder)) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            else {
+                return PyArray_DescrNewByteorder(type1, NPY_NATIVE);
+            }
+        }
+        else if (PyArray_CanCastTo(type1, type2)) {
+            /* Promoted types are always native byte order */
+            if (PyArray_ISNBO(type2->byteorder)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            else {
+                return PyArray_DescrNewByteorder(type2, NPY_NATIVE);
+            }
+        }
+
+        /* Convert the 'kind' char into a scalar kind */
+        switch (type1->kind) {
+            case 'b':
+                skind1 = NPY_BOOL_SCALAR;
+                break;
+            case 'u':
+                skind1 = NPY_INTPOS_SCALAR;
+                break;
+            case 'i':
+                skind1 = NPY_INTNEG_SCALAR;
+                break;
+            case 'f':
+                skind1 = NPY_FLOAT_SCALAR;
+                break;
+            case 'c':
+                skind1 = NPY_COMPLEX_SCALAR;
+                break;
+        }
+        switch (type2->kind) {
+            case 'b':
+                skind2 = NPY_BOOL_SCALAR;
+                break;
+            case 'u':
+                skind2 = NPY_INTPOS_SCALAR;
+                break;
+            case 'i':
+                skind2 = NPY_INTNEG_SCALAR;
+                break;
+            case 'f':
+                skind2 = NPY_FLOAT_SCALAR;
+                break;
+            case 'c':
+                skind2 = NPY_COMPLEX_SCALAR;
+                break;
+        }
+
+        /* If both are scalars, there may be a promotion possible */
+        if (skind1 != NPY_NOSCALAR && skind2 != NPY_NOSCALAR) {
+
+            /* Start with the larger scalar kind */
+            skind = (skind1 > skind2) ? skind1 : skind2;
+            ret_type_num = _npy_smallest_type_of_kind_table[skind];
+
+            for (;;) {
+
+                /* If there is no larger type of this kind, try a larger kind */
+                if (ret_type_num < 0) {
+                    ++skind;
+                    /* Use -1 to signal no promoted type found */
+                    if (skind < NPY_NSCALARKINDS) {
+                        ret_type_num = _npy_smallest_type_of_kind_table[skind];
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                /* If we found a type to which we can promote both, done! */
+                if (PyArray_CanCastSafely(type_num1, ret_type_num) &&
+                            PyArray_CanCastSafely(type_num2, ret_type_num)) {
+                    return PyArray_DescrFromType(ret_type_num);
+                }
+
+                /* Try the next larger type of this kind */
+                ret_type_num = _npy_next_larger_type_table[ret_type_num];
+            }
+
+        }
+
+        PyErr_SetString(PyExc_TypeError,
+                "invalid type promotion with custom data type");
+        return NULL;
+    }
+
+    switch (type_num1) {
+        /* BOOL can convert to anything */
+        case NPY_BOOL:
+            Py_INCREF(type2);
+            return type2;
+        /* For strings and unicodes, take the larger size */
+        case NPY_STRING:
+            if (type_num2 == NPY_STRING) {
+                if (type1->elsize > type2->elsize) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    Py_INCREF(type2);
+                    return type2;
+                }
+            }
+            else if (type_num2 == NPY_UNICODE) {
+                if (type2->elsize >= type1->elsize * 4) {
+                    Py_INCREF(type2);
+                    return type2;
+                }
+                else {
+                    PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
+                    if (d == NULL) {
+                        return NULL;
+                    }
+                    d->elsize = type1->elsize * 4;
+                    return d;
+                }
+            }
+            /* Allow NUMBER -> STRING */
+            else if (PyTypeNum_ISNUMBER(type_num2)) {
+                Py_INCREF(type1);
+                return type1;
+            }
+        case NPY_UNICODE:
+            if (type_num2 == NPY_UNICODE) {
+                if (type1->elsize > type2->elsize) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    Py_INCREF(type2);
+                    return type2;
+                }
+            }
+            else if (type_num2 == NPY_STRING) {
+                if (type1->elsize >= type2->elsize * 4) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
+                    if (d == NULL) {
+                        return NULL;
+                    }
+                    d->elsize = type2->elsize * 4;
+                    return d;
+                }
+            }
+            /* Allow NUMBER -> UNICODE */
+            else if (PyTypeNum_ISNUMBER(type_num2)) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            break;
+    }
+
+    switch (type_num2) {
+        /* BOOL can convert to anything */
+        case NPY_BOOL:
+            Py_INCREF(type1);
+            return type1;
+        case NPY_STRING:
+            /* Allow NUMBER -> STRING */
+            if (PyTypeNum_ISNUMBER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+        case NPY_UNICODE:
+            /* Allow NUMBER -> UNICODE */
+            if (PyTypeNum_ISNUMBER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            break;
+    }
+
+    /* For equivalent types we can return either */
+    if (PyArray_EquivTypes(type1, type2)) {
+        Py_INCREF(type1);
+        return type1;
+    }
+
+    /* TODO: Also combine fields, subarrays, strings, etc */
+    
+    /*
+    printf("invalid type promotion: ");
+    PyObject_Print(type1, stdout, 0);
+    printf(" ");
+    PyObject_Print(type2, stdout, 0);
+    printf("\n");
+    */
+    PyErr_SetString(PyExc_TypeError, "invalid type promotion");
+    return NULL;
+}
+
+/*
+ * NOTE: While this is unlikely to be a performance problem, if
+ *       it is it could be reverted to a simple positive/negative
+ *       check as the previous system used.
+ *
+ * The is_small_unsigned output flag indicates whether it's an unsigned integer,
+ * and would fit in a signed integer of the same bit size.
+ */
+static int min_scalar_type_num(char *valueptr, int type_num,
+                                            int *is_small_unsigned)
+{
+    switch (type_num) {
+        case NPY_BOOL: {
+            return NPY_BOOL;
+        }
+        case NPY_UBYTE: {
+            char value = *valueptr;
+            if (value <= NPY_MAX_BYTE) {
+                *is_small_unsigned = 1;
+            }
+            return NPY_UBYTE;
+        }
+        case NPY_BYTE: {
+            char value = *valueptr;
+            if (value >= 0) {
+                *is_small_unsigned = 1;
+                return NPY_UBYTE;
+            }
+            break;
+        }
+        case NPY_USHORT: {
+            npy_ushort value = *(npy_ushort *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                if (value <= NPY_MAX_BYTE) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_UBYTE;
+            }
+
+            if (value <= NPY_MAX_SHORT) {
+                *is_small_unsigned = 1;
+            }
+            break;
+        }
+        case NPY_SHORT: {
+            npy_short value = *(npy_short *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_USHORT, is_small_unsigned);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
+        case NPY_ULONG:
+#endif
+        case NPY_UINT: {
+            npy_uint value = *(npy_uint *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                if (value < NPY_MAX_BYTE) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_UBYTE;
+            }
+            else if (value <= NPY_MAX_USHORT) {
+                if (value <= NPY_MAX_SHORT) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_USHORT;
+            }
+
+            if (value <= NPY_MAX_INT) {
+                *is_small_unsigned = 1;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
+        case NPY_LONG:
+#endif
+        case NPY_INT: {
+            npy_int value = *(npy_int *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_UINT, is_small_unsigned);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            else if (value >= NPY_MIN_SHORT) {
+                return NPY_SHORT;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_INT && NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+        case NPY_ULONG: {
+            npy_ulong value = *(npy_ulong *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                if (value <= NPY_MAX_BYTE) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_UBYTE;
+            }
+            else if (value <= NPY_MAX_USHORT) {
+                if (value <= NPY_MAX_SHORT) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_USHORT;
+            }
+            else if (value <= NPY_MAX_UINT) {
+                if (value <= NPY_MAX_INT) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_UINT;
+            }
+
+            if (value <= NPY_MAX_LONG) {
+                *is_small_unsigned = 1;
+            }
+            break;
+        }
+        case NPY_LONG: {
+            npy_long value = *(npy_long *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_ULONG, is_small_unsigned);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            else if (value >= NPY_MIN_SHORT) {
+                return NPY_SHORT;
+            }
+            else if (value >= NPY_MIN_INT) {
+                return NPY_INT;
+            }
+            break;
+        }
+#endif
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_LONGLONG
+        case NPY_ULONG:
+#endif
+        case NPY_ULONGLONG: {
+            npy_ulonglong value = *(npy_ulonglong *)valueptr;
+            if (value <= NPY_MAX_UBYTE) {
+                if (value <= NPY_MAX_BYTE) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_UBYTE;
+            }
+            else if (value <= NPY_MAX_USHORT) {
+                if (value <= NPY_MAX_SHORT) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_USHORT;
+            }
+            else if (value <= NPY_MAX_UINT) {
+                if (value <= NPY_MAX_INT) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_UINT;
+            }
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_INT && NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+            else if (value <= NPY_MAX_ULONG) {
+                if (value <= NPY_MAX_LONG) {
+                    *is_small_unsigned = 1;
+                }
+                return NPY_ULONG;
+            }
+#endif
+
+            if (value <= NPY_MAX_LONGLONG) {
+                *is_small_unsigned = 1;
+            }
+            break;
+        }
+#if NPY_SIZEOF_LONG == NPY_SIZEOF_LONGLONG
+        case NPY_LONG:
+#endif
+        case NPY_LONGLONG: {
+            npy_longlong value = *(npy_longlong *)valueptr;
+            if (value >= 0) {
+                return min_scalar_type_num(valueptr, NPY_ULONGLONG, is_small_unsigned);
+            }
+            else if (value >= NPY_MIN_BYTE) {
+                return NPY_BYTE;
+            }
+            else if (value >= NPY_MIN_SHORT) {
+                return NPY_SHORT;
+            }
+            else if (value >= NPY_MIN_INT) {
+                return NPY_INT;
+            }
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_INT && NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+            else if (value >= NPY_MIN_LONG) {
+                return NPY_LONG;
+            }
+#endif
+            break;
+        }
+        /*
+         * Float types aren't allowed to be demoted to integer types,
+         * but precision loss is allowed.
+         */
+        case NPY_HALF: {
+            return NPY_HALF;
+        }
+        case NPY_FLOAT: {
+            float value = *(float *)valueptr;
+            if (value > -65000 && value < 65000) {
+                return NPY_HALF;
+            }
+            break;
+        }
+        case NPY_DOUBLE: {
+            double value = *(double *)valueptr;
+            if (value > -65000 && value < 65000) {
+                return NPY_HALF;
+            }
+            else if (value > -3.4e38 && value < 3.4e38) {
+                return NPY_FLOAT;
+            }
+            break;
+        }
+        case NPY_LONGDOUBLE: {
+            npy_longdouble value = *(npy_longdouble *)valueptr;
+            if (value > -65000 && value < 65000) {
+                return NPY_HALF;
+            }
+            else if (value > -3.4e38 && value < 3.4e38) {
+                return NPY_FLOAT;
+            }
+            else if (value > -1.7e308 && value < 1.7e308) {
+                return NPY_DOUBLE;
+            }
+            break;
+        }
+        /*
+         * The code to demote complex to float is disabled for now,
+         * as forcing complex by adding 0j is probably desireable.
+         */
+        case NPY_CFLOAT: {
+            /*
+            npy_cfloat value = *(npy_cfloat *)valueptr;
+            if (value.imag == 0) {
+                return min_scalar_type_num((char *)&value.real,
+                                            NPY_FLOAT, is_small_unsigned);
+            }
+            */
+            break;
+        }
+        case NPY_CDOUBLE: {
+            npy_cdouble value = *(npy_cdouble *)valueptr;
+            /*
+            if (value.imag == 0) {
+                return min_scalar_type_num((char *)&value.real,
+                                            NPY_DOUBLE, is_small_unsigned);
+            }
+            */
+            if (value.real > -3.4e38 && value.real < 3.4e38 &&
+                     value.imag > -3.4e38 && value.imag < 3.4e38) {
+                return NPY_CFLOAT;
+            }
+            break;
+        }
+        case NPY_CLONGDOUBLE: {
+            npy_cdouble value = *(npy_cdouble *)valueptr;
+            /*
+            if (value.imag == 0) {
+                return min_scalar_type_num((char *)&value.real,
+                                            NPY_LONGDOUBLE, is_small_unsigned);
+            }
+            */
+            if (value.real > -3.4e38 && value.real < 3.4e38 &&
+                     value.imag > -3.4e38 && value.imag < 3.4e38) {
+                return NPY_CFLOAT;
+            }
+            else if (value.real > -1.7e308 && value.real < 1.7e308 &&
+                     value.imag > -1.7e308 && value.imag < 1.7e308) {
+                return NPY_CDOUBLE;
+            }
+            break;
+        }
+    }
+
+    return type_num;
+}
+
+/*NUMPY_API
+ * If arr is a scalar (has 0 dimensions) with a built-in number data type,
+ * finds the smallest type size/kind which can still represent its data.
+ * Otherwise, returns the array's data type.
+ * 
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_MinScalarType(PyArrayObject *arr)
+{
+    PyArray_Descr *dtype = PyArray_DESCR(arr);
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
+        Py_INCREF(dtype);
+        return dtype;
+    }
+    else {
+        char *data = PyArray_BYTES(arr);
+        int swap = !PyArray_ISNBO(dtype->byteorder);
+        int is_small_unsigned = 0;
+        /* An aligned memory buffer large enough to hold any type */
+#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
+        npy_longlong value;
+#else
+        npy_clongdouble value;
+#endif
+        dtype->f->copyswap(&value, data, swap, NULL);
+
+        return PyArray_DescrFromType(
+                        min_scalar_type_num((char *)&value, dtype->type_num, &is_small_unsigned));
+
+    }
+}
+
+/*NUMPY_API
+ * Produces the result type of a bunch of inputs, using the UFunc
+ * type promotion rules.
+ *
+ * If all the inputs are scalars (have 0 dimensions), does a regular
+ * type promotion.  Otherwise, does a type promotion on the MinScalarType
+ * of all the inputs.  Data types passed directly are treated as vector
+ * types.
+ * 
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
+                    npy_intp ndtypes, PyArray_Descr **dtypes)
+{
+    npy_intp i;
+    int all_scalar;
+    PyArray_Descr *ret = NULL, *tmpret;
+    int ret_is_small_unsigned = 0;
+
+    /* If there's just one type, pass it through */
+    if (narrs + ndtypes == 1) {
+        if (narrs == 1) {
+            ret = PyArray_DESCR(arr[0]);
+        }
+        else {
+            ret = dtypes[0];
+        }
+        Py_INCREF(ret);
+        return ret;
+    }
+
+    /* Determine if there are any scalars */
+    if (ndtypes > 0) {
+        all_scalar = 0;
+    }
+    else {
+        all_scalar = 1;
+        for (i = 0; i < narrs; ++i) {
+            if (PyArray_NDIM(arr[i]) != 0) {
+                all_scalar = 0;
+                break;
+            }
+        }
+    }
+
+    /* Loop through all the types, promoting them */
+    if (all_scalar) {
+        for (i = 0; i < narrs; ++i) {
+            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
+            /* Combine it with the existing type */
+            if (ret == NULL) {
+                ret = tmp;
+                Py_INCREF(ret);
+            }
+            else {
+                tmpret = PyArray_PromoteTypes(tmp, ret);
+                Py_DECREF(ret);
+                ret = tmpret;
+            }
+        }
+    }
+    else {
+        for (i = 0; i < narrs; ++i) {
+            /* Get the min scalar type for the array */
+            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
+            int tmp_is_small_unsigned = 0;
+            /*
+             * If it's a scalar, find the min scalar type. The function
+             * is expanded here so that we can flag whether we've got an
+             * unsigned integer which would fit an a signed integer
+             * of the same size, something not exposed in the public API.
+             */
+            if (PyArray_NDIM(arr[i]) == 0 && PyTypeNum_ISNUMBER(tmp->type_num)) {
+                char *data = PyArray_BYTES(arr[i]);
+                int swap = !PyArray_ISNBO(tmp->byteorder);
+                int type_num;
+                /* An aligned memory buffer large enough to hold any type */
+#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
+                npy_longlong value;
+#else
+                npy_clongdouble value;
+#endif
+                tmp->f->copyswap(&value, data, swap, NULL);
+                type_num = min_scalar_type_num((char *)&value,
+                                        tmp->type_num, &tmp_is_small_unsigned);
+                tmp = PyArray_DescrFromType(type_num);
+                if (tmp == NULL) {
+                    Py_XDECREF(ret);
+                    return NULL;
+                }
+            }
+            else {
+                Py_INCREF(tmp);
+            }
+            /* Combine it with the existing type */
+            if (ret == NULL) {
+                ret = tmp;
+                ret_is_small_unsigned = tmp_is_small_unsigned;
+            }
+            else {
+#if 0
+                printf("promoting type ");
+                PyObject_Print(tmp, stdout, 0);
+                printf(" (%d) ", tmp_is_small_unsigned);
+                PyObject_Print(ret, stdout, 0);
+                printf(" (%d) ", ret_is_small_unsigned);
+                printf("\n");
+#endif
+                tmpret = promote_types(tmp, ret, tmp_is_small_unsigned,
+                                                    ret_is_small_unsigned);
+                if (tmpret == NULL) {
+                    Py_DECREF(tmp);
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+                ret_is_small_unsigned = tmp_is_small_unsigned &&
+                                        ret_is_small_unsigned;
+                Py_DECREF(tmp);
+                Py_DECREF(ret);
+                ret = tmpret;
+            }
+        }
+
+        for (i = 0; i < ndtypes; ++i) {
+            PyArray_Descr *tmp = dtypes[i];
+            /* Combine it with the existing type */
+            if (ret == NULL) {
+                ret = tmp;
+                Py_INCREF(ret);
+            }
+            else {
+                if (ret_is_small_unsigned) {
+                    tmpret = promote_types(tmp, ret, 0, ret_is_small_unsigned);
+                    if (tmpret == NULL) {
+                        Py_DECREF(tmp);
+                        Py_DECREF(ret);
+                        return NULL;
+                    }
+                }
+                else {
+                    tmpret = PyArray_PromoteTypes(tmp, ret);
+                }
+                Py_DECREF(ret);
+                ret = tmpret;
+            }
+        }
+    }
+
+    if (ret == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "no arrays or types available to calculate result type");
+    }
+
+    return ret;
 }
 
 /*NUMPY_API
@@ -804,12 +1429,18 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     }
 
     for (i = 0; i < n; i++) {
+        mps[i] = NULL;
+    }
+
+    for (i = 0; i < n; i++) {
         otmp = PySequence_GetItem(op, i);
         if (!PyArray_CheckAnyScalar(otmp)) {
             newtype = PyArray_DescrFromObject(otmp, intype);
             Py_XDECREF(intype);
+            if (newtype == NULL) {
+                goto fail;
+            }
             intype = newtype;
-            mps[i] = NULL;
             intypekind = PyArray_ScalarKind(intype->type_num, NULL);
         }
         else {
@@ -841,7 +1472,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         if (!PyArray_CanCoerceScalar(stype->type_num,
                                      intype->type_num,
                                      scalarkind)) {
-            newtype = _array_small_type(intype, stype);
+            newtype = PyArray_PromoteTypes(intype, stype);
             Py_XDECREF(intype);
             intype = newtype;
         }

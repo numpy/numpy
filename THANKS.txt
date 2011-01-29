@@ -47,6 +47,8 @@ Roberto de Almeida for the buffered array iterator.
 Alan McIntyre for updating the NumPy test framework to use nose, improve
     the test coverage, and enhancing the test system documentation.
 Joe Harrington for administering the 2008 Documentation Sprint.
+Mark Wiebe for the new NumPy iterator, the float16 data type, improved
+    low-level data type operations, and other NumPy core improvements.
 
 NumPy is based on the Numeric (Jim Hugunin, Paul Dubois, Konrad
 Hinsen, and David Ascher) and NumArray (Perry Greenfield, J Todd

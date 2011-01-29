@@ -174,7 +174,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER fortran)
+                 NPY_ORDER order)
 {
     intp i;
     intp *dimensions = newdims->ptr;
@@ -185,8 +185,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     intp newstrides[MAX_DIMS];
     int flags;
 
-    if (fortran == PyArray_ANYORDER) {
-        fortran = PyArray_ISFORTRAN(self);
+    if (order == PyArray_ANYORDER) {
+        order = PyArray_ISFORTRAN(self);
     }
     /*  Quick check to make sure anything actually needs to be done */
     if (n == self->nd) {
@@ -233,12 +233,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          */
         if (!(PyArray_ISONESEGMENT(self)) ||
             (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) &&
-               fortran == NPY_FORTRANORDER) ||
+               order == NPY_FORTRANORDER) ||
               (PyArray_CHKFLAGS(self, NPY_FORTRAN) &&
-                  fortran == NPY_CORDER)) && (self->nd > 1))) {
+                  order == NPY_CORDER)) && (self->nd > 1))) {
             int success = 0;
             success = _attempt_nocopy_reshape(self,n,dimensions,
-                                              newstrides,fortran);
+                                              newstrides,order);
             if (success) {
                 /* no need to copy the array after all */
                 strides = newstrides;
@@ -246,7 +246,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             }
             else {
                 PyObject *new;
-                new = PyArray_NewCopy(self, fortran);
+                new = PyArray_NewCopy(self, order);
                 if (new == NULL) {
                     return NULL;
                 }
@@ -260,7 +260,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
         /* Make sure the flags argument is set. */
         if (n > 1) {
-            if (fortran == NPY_FORTRANORDER) {
+            if (order == NPY_FORTRANORDER) {
                 flags &= ~NPY_CONTIGUOUS;
                 flags |= NPY_FORTRAN;
             }
@@ -275,7 +275,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          * replace any 0-valued strides with
          * appropriate value to preserve contiguousness
          */
-        if (fortran == PyArray_FORTRANORDER) {
+        if (order == NPY_FORTRANORDER) {
             if (strides[0] == 0) {
                 strides[0] = self->descr->elsize;
             }
@@ -760,29 +760,137 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
     return (PyObject *)ret;
 }
 
+/*
+ * Sorts items so stride is descending, because C-order
+ * is the default in the face of ambiguity.
+ */
+int _npy_stride_sort_item_comparator(const void *a, const void *b)
+{
+    npy_intp astride = ((_npy_stride_sort_item *)a)->stride,
+            bstride = ((_npy_stride_sort_item *)b)->stride;
+
+    /* Sort the absolute value of the strides */
+    if (astride < 0) {
+        astride = -astride;
+    }
+    if (bstride < 0) {
+        bstride = -bstride;
+    }
+
+    if (astride > bstride) {
+        return -1;
+    }
+    else if (astride == bstride) {
+        /*
+         * Make the qsort stable by next comparing the perm order.
+         * (Note that two perm entries will never be equal)
+         */
+        npy_intp aperm = ((_npy_stride_sort_item *)a)->perm,
+                bperm = ((_npy_stride_sort_item *)b)->perm;
+        return (aperm < bperm) ? -1 : 1;
+    }
+    else {
+        return 1;
+    }
+}
+
+/*
+ * This function populates the first PyArray_NDIM(arr) elements
+ * of strideperm with sorted descending by their absolute values.
+ * For example, the stride array (4, -2, 12) becomes
+ * [(2, 12), (0, 4), (1, -2)].
+ */
+NPY_NO_EXPORT void
+PyArray_CreateSortedStridePerm(PyArrayObject *arr,
+                           _npy_stride_sort_item *strideperm)
+{
+    int i, ndim = PyArray_NDIM(arr);
+
+    /* Set up the strideperm values */
+    for (i = 0; i < ndim; ++i) {
+        strideperm[i].perm = i;
+        strideperm[i].stride = PyArray_STRIDE(arr, i);
+    }
+
+    /* Sort them */
+    qsort(strideperm, ndim, sizeof(_npy_stride_sort_item),
+                                    &_npy_stride_sort_item_comparator);
+}
+
 /*NUMPY_API
  * Ravel
  * Returns a contiguous array
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Ravel(PyArrayObject *a, NPY_ORDER fortran)
+PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
 {
     PyArray_Dims newdim = {NULL,1};
     intp val[1] = {-1};
 
-    if (fortran == PyArray_ANYORDER) {
-        fortran = PyArray_ISFORTRAN(a);
-    }
     newdim.ptr = val;
-    if (!fortran && PyArray_ISCONTIGUOUS(a)) {
-        return PyArray_Newshape(a, &newdim, PyArray_CORDER);
+
+    if (order == NPY_ANYORDER) {
+        order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;
     }
-    else if (fortran && PyArray_ISFORTRAN(a)) {
-        return PyArray_Newshape(a, &newdim, PyArray_FORTRANORDER);
+    else if (order == NPY_KEEPORDER) {
+        if (PyArray_IS_C_CONTIGUOUS(a)) {
+            order = NPY_CORDER;
+        }
+        else if (PyArray_IS_F_CONTIGUOUS(a)) {
+            order = NPY_FORTRANORDER;
+        }
     }
-    else {
-        return PyArray_Flatten(a, fortran);
+
+    if (order == NPY_CORDER && PyArray_ISCONTIGUOUS(a)) {
+        return PyArray_Newshape(a, &newdim, NPY_CORDER);
     }
+    else if (order == NPY_FORTRANORDER && PyArray_ISFORTRAN(a)) {
+        return PyArray_Newshape(a, &newdim, NPY_FORTRANORDER);
+    }
+    /* For KEEPORDER, check if we can make a flattened view */
+    else if (order == NPY_KEEPORDER) {
+        _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+        npy_intp stride;
+        int i, ndim = PyArray_NDIM(a);
+
+        PyArray_CreateSortedStridePerm(a, strideperm);
+
+        stride = PyArray_DESCR(a)->elsize;
+        for (i = ndim-1; i >= 0; --i) {
+            if (strideperm[i].stride != stride) {
+                break;
+            }
+            stride *= PyArray_DIM(a, strideperm[i].perm);
+        }
+
+        /* If all the strides matched a contiguous layout, return a view */
+        if (i < 0) {
+            PyObject *ret;
+            npy_intp stride = PyArray_DESCR(a)->elsize;
+
+            val[0] = PyArray_SIZE(a);
+
+            Py_INCREF(PyArray_DESCR(a));
+            ret = PyArray_NewFromDescr(Py_TYPE(a),
+                               PyArray_DESCR(a),
+                               1, val,
+                               &stride,
+                               PyArray_BYTES(a),
+                               PyArray_FLAGS(a),
+                               (PyObject *)a);
+
+            if (ret != NULL) {
+                PyArray_UpdateFlags((PyArrayObject *)ret,
+                                    NPY_CONTIGUOUS|NPY_FORTRAN);
+                Py_INCREF(a);
+                PyArray_BASE(ret) = (PyObject *)a;
+            }
+            return ret;
+        }
+
+    }
+
+    return PyArray_Flatten(a, order);
 }
 
 /*NUMPY_API
@@ -791,15 +899,16 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER fortran)
 NPY_NO_EXPORT PyObject *
 PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 {
-    PyObject *ret;
+    PyArrayObject *ret;
     intp size;
 
-    if (order == PyArray_ANYORDER) {
-        order = PyArray_ISFORTRAN(a);
+    if (order == NPY_ANYORDER) {
+        order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;
     }
+
     size = PyArray_SIZE(a);
     Py_INCREF(a->descr);
-    ret = PyArray_NewFromDescr(Py_TYPE(a),
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(a),
                                a->descr,
                                1, &size,
                                NULL,
@@ -809,11 +918,11 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     if (ret == NULL) {
         return NULL;
     }
-    if (_flat_copyinto(ret, (PyObject *)a, order) < 0) {
+    if (PyArray_CopyAnyIntoOrdered(ret, a, order) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
-    return ret;
+    return (PyObject *)ret;
 }
 
 

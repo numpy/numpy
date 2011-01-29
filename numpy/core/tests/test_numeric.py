@@ -5,7 +5,9 @@ import numpy as np
 from numpy.core import *
 from numpy.random import rand, randint, randn
 from numpy.testing import *
+from numpy.testing.utils import WarningManager
 from numpy.core.multiarray import dot as dot_
+import warnings
 
 class Vec:
     def __init__(self,sequence=None):
@@ -151,6 +153,330 @@ class TestResize(TestCase):
         Ar = resize(A, (0,))
         assert_equal(Ar, array([]))
 
+class TestEinSum(TestCase):
+    def test_einsum_errors(self):
+        # Need enough arguments
+        assert_raises(ValueError, np.einsum)
+        assert_raises(ValueError, np.einsum, "")
+
+        # subscripts must be a string
+        assert_raises(TypeError, np.einsum, 0, 0)
+
+        # out parameter must be an array
+        assert_raises(TypeError, np.einsum, "", 0, out='test')
+
+        # order parameter must be a valid order
+        assert_raises(TypeError, np.einsum, "", 0, order='W')
+
+        # casting parameter must be a valid casting
+        assert_raises(ValueError, np.einsum, "", 0, casting='blah')
+
+        # dtype parameter must be a valid dtype
+        assert_raises(TypeError, np.einsum, "", 0, dtype='bad_data_type')
+
+        # other keyword arguments are rejected
+        assert_raises(TypeError, np.einsum, "", 0, bad_arg=0)
+
+        # number of operands must match count in subscripts string
+        assert_raises(ValueError, np.einsum, "", 0, 0)
+        assert_raises(ValueError, np.einsum, ",", 0, [0], [0])
+        assert_raises(ValueError, np.einsum, ",", [0])
+
+        # can't have more subscripts than dimensions in the operand
+        assert_raises(ValueError, np.einsum, "i", 0)
+        assert_raises(ValueError, np.einsum, "ij", [0,0])
+        assert_raises(ValueError, np.einsum, "...i", 0)
+        assert_raises(ValueError, np.einsum, "i...j", [0,0])
+        assert_raises(ValueError, np.einsum, "i...", 0)
+        assert_raises(ValueError, np.einsum, "ij...", [0,0])
+
+        # invalid ellipsis
+        assert_raises(ValueError, np.einsum, "i..", [0,0])
+        assert_raises(ValueError, np.einsum, ".i...", [0,0])
+        assert_raises(ValueError, np.einsum, "j->..j", [0,0])
+        assert_raises(ValueError, np.einsum, "j->.j...", [0,0])
+
+        # invalid subscript character
+        assert_raises(ValueError, np.einsum, "i%...", [0,0])
+        assert_raises(ValueError, np.einsum, "...j$", [0,0])
+        assert_raises(ValueError, np.einsum, "i->&", [0,0])
+
+        # output subscripts must appear in input
+        assert_raises(ValueError, np.einsum, "i->ij", [0,0])
+
+        # output subscripts may only be specified once
+        assert_raises(ValueError, np.einsum, "ij->jij", [[0,0],[0,0]])
+
+        # dimensions much match when being collapsed
+        assert_raises(ValueError, np.einsum, "ii", np.arange(6).reshape(2,3))
+        assert_raises(ValueError, np.einsum, "ii->i", np.arange(6).reshape(2,3))
+
+    def test_einsum_views(self):
+        # pass-through
+        a = np.arange(6).reshape(2,3)
+
+        b = np.einsum("", a)
+        assert_(b.base is a)
+
+        b = np.einsum("ij", a)
+        assert_(b.base is a)
+        assert_equal(b, a)
+
+        # transpose
+        a = np.arange(6).reshape(2,3)
+
+        b = np.einsum("ji", a)
+        assert_(b.base is a)
+        assert_equal(b, a.T)
+
+        # diagonal
+        a = np.arange(9).reshape(3,3)
+
+        b = np.einsum("ii->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[i,i] for i in range(3)])
+
+        # diagonal with various ways of broadcasting an additional dimension
+        a = np.arange(27).reshape(3,3,3)
+
+        b = np.einsum("ii->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [[x[i,i] for i in range(3)] for x in a])
+
+        b = np.einsum("ii...->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [[x[i,i] for i in range(3)]
+                         for x in a.transpose(2,0,1)])
+
+        b = np.einsum("ii->i...", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[:,i,i] for i in range(3)])
+
+        b = np.einsum("jii->ij", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[:,i,i] for i in range(3)])
+
+        b = np.einsum("ii...->i...", a)
+        assert_(b.base is a)
+        assert_equal(b, [a.transpose(2,0,1)[:,i,i] for i in range(3)])
+
+        b = np.einsum("i...i->i...", a)
+        assert_(b.base is a)
+        assert_equal(b, [a.transpose(1,0,2)[:,i,i] for i in range(3)])
+
+        b = np.einsum("i...i->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [[x[i,i] for i in range(3)]
+                         for x in a.transpose(1,0,2)])
+
+        # triple diagonal
+        a = np.arange(27).reshape(3,3,3)
+
+        b = np.einsum("iii->i", a)
+        assert_(b.base is a)
+        assert_equal(b, [a[i,i,i] for i in range(3)])
+
+        # swap axes
+        a = np.arange(24).reshape(2,3,4)
+
+        b = np.einsum("ijk->jik", a)
+        assert_(b.base is a)
+        assert_equal(b, a.swapaxes(0,1))
+
+    def check_einsum_sums(self, dtype):
+        # sum(a, axis=-1)
+        a = np.arange(10, dtype=dtype)
+        assert_equal(np.einsum("i->", a), np.sum(a, axis=-1))
+
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
+        assert_equal(np.einsum("i->", a), np.sum(a, axis=-1))
+
+        # sum(a, axis=0)
+        a = np.arange(10, dtype=dtype)
+        assert_equal(np.einsum("i...->", a), np.sum(a, axis=0))
+
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
+        assert_equal(np.einsum("i...->", a), np.sum(a, axis=0))
+
+        # trace(a)
+        a = np.arange(25, dtype=dtype).reshape(5,5)
+        assert_equal(np.einsum("ii", a), np.trace(a))
+
+        # multiply(a, b)
+        a = np.arange(12, dtype=dtype).reshape(3,4)
+        b = np.arange(24, dtype=dtype).reshape(2,3,4)
+        assert_equal(np.einsum(",", a, b), np.multiply(a, b))
+
+        # inner(a,b)
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
+        b = np.arange(4, dtype=dtype)
+        assert_equal(np.einsum("i,i", a, b), np.inner(a, b))
+
+        a = np.arange(24, dtype=dtype).reshape(2,3,4)
+        b = np.arange(2, dtype=dtype)
+        assert_equal(np.einsum("i...,i...", a, b), np.inner(a.T, b.T).T)
+
+        # outer(a,b)
+        a = np.arange(3, dtype=dtype)+1
+        b = np.arange(4, dtype=dtype)+1
+        assert_equal(np.einsum("i,j", a, b), np.outer(a, b))
+
+        # Suppress the complex warnings for the 'as f8' tests
+        ctx = WarningManager()
+        ctx.__enter__()
+        try:
+            warnings.simplefilter('ignore', np.ComplexWarning)
+
+            # matvec(a,b) / a.dot(b) where a is matrix, b is vector
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            assert_equal(np.einsum("ij,j", a, b), np.dot(a, b))
+
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            c = np.arange(4, dtype=dtype)
+            np.einsum("ij,j", a, b, out=c,
+                        dtype='f8', casting='unsafe')
+            assert_equal(c,
+                        np.dot(a.astype('f8'), b.astype('f8')).astype(dtype))
+
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            assert_equal(np.einsum("ji,j", a.T, b.T), np.dot(b.T, a.T))
+
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(5, dtype=dtype)
+            c = np.arange(4, dtype=dtype)
+            np.einsum("ji,j", a.T, b.T, out=c, dtype='f8', casting='unsafe')
+            assert_equal(c,
+                    np.dot(b.T.astype('f8'), a.T.astype('f8')).astype(dtype))
+
+            # matmat(a,b) / a.dot(b) where a is matrix, b is matrix
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(30, dtype=dtype).reshape(5,6)
+            assert_equal(np.einsum("ij,jk", a, b), np.dot(a, b))
+
+            a = np.arange(20, dtype=dtype).reshape(4,5)
+            b = np.arange(30, dtype=dtype).reshape(5,6)
+            c = np.arange(24, dtype=dtype).reshape(4,6)
+            np.einsum("ij,jk", a, b, out=c, dtype='f8', casting='unsafe')
+            assert_equal(c,
+                        np.dot(a.astype('f8'), b.astype('f8')).astype(dtype))
+
+            # matrix triple product (note this is not an efficient
+            # way to multiply 3 matrices)
+            a = np.arange(12, dtype=dtype).reshape(3,4)
+            b = np.arange(20, dtype=dtype).reshape(4,5)
+            c = np.arange(30, dtype=dtype).reshape(5,6)
+            if dtype != 'f2':
+                assert_equal(np.einsum("ij,jk,kl", a, b, c),
+                                    a.dot(b).dot(c))
+
+            a = np.arange(12, dtype=dtype).reshape(3,4)
+            b = np.arange(20, dtype=dtype).reshape(4,5)
+            c = np.arange(30, dtype=dtype).reshape(5,6)
+            d = np.arange(18, dtype=dtype).reshape(3,6)
+            np.einsum("ij,jk,kl", a, b, c, out=d,
+                                dtype='f8', casting='unsafe')
+            assert_equal(d, a.astype('f8').dot(b.astype('f8')
+                        ).dot(c.astype('f8')).astype(dtype))
+
+            # tensordot(a, b)
+            if np.dtype(dtype) != np.dtype('f2'):
+                a = np.arange(60, dtype=dtype).reshape(3,4,5)
+                b = np.arange(24, dtype=dtype).reshape(4,3,2)
+                assert_equal(np.einsum("ijk,jil->kl", a, b),
+                                np.tensordot(a,b, axes=([1,0],[0,1])))
+
+                a = np.arange(60, dtype=dtype).reshape(3,4,5)
+                b = np.arange(24, dtype=dtype).reshape(4,3,2)
+                c = np.arange(10, dtype=dtype).reshape(5,2)
+                np.einsum("ijk,jil->kl", a, b, out=c,
+                                        dtype='f8', casting='unsafe')
+                assert_equal(c, np.tensordot(a.astype('f8'), b.astype('f8'),
+                                        axes=([1,0],[0,1])).astype(dtype))
+        finally:
+            ctx.__exit__()
+
+        # logical_and(logical_and(a!=0, b!=0), c!=0)
+        a = np.array([1,   3,   -2,   0,   12,  13,   0,   1], dtype=dtype)
+        b = np.array([0,   3.5, 0.,   -2,  0,   1,    3,   12], dtype=dtype)
+        c = np.array([True,True,False,True,True,False,True,True])
+        assert_equal(np.einsum("i,i,i->i", a, b, c,
+                                dtype='?', casting='unsafe'),
+                            logical_and(logical_and(a!=0, b!=0), c!=0))
+
+        a = np.arange(9, dtype=dtype)
+        assert_equal(np.einsum(",i->", 3, a), 3*np.sum(a))
+        assert_equal(np.einsum("i,->", a, 3), 3*np.sum(a))
+
+        # Various stride0, contiguous, and SSE aligned variants
+        a = np.arange(64, dtype=dtype)
+        if np.dtype(dtype).itemsize > 1:
+            assert_equal(np.einsum(",",a,a), np.multiply(a,a))
+            assert_equal(np.einsum("i,i", a, a), np.dot(a,a))
+            assert_equal(np.einsum("i,->i", a, 2), 2*a)
+            assert_equal(np.einsum(",i->i", 2, a), 2*a)
+            assert_equal(np.einsum("i,->", a, 2), 2*np.sum(a))
+            assert_equal(np.einsum(",i->", 2, a), 2*np.sum(a))
+
+            assert_equal(np.einsum(",",a[1:],a[:-1]), np.multiply(a[1:],a[:-1]))
+            assert_equal(np.einsum("i,i", a[1:], a[:-1]), np.dot(a[1:],a[:-1]))
+            assert_equal(np.einsum("i,->i", a[1:], 2), 2*a[1:])
+            assert_equal(np.einsum(",i->i", 2, a[1:]), 2*a[1:])
+            assert_equal(np.einsum("i,->", a[1:], 2), 2*np.sum(a[1:]))
+            assert_equal(np.einsum(",i->", 2, a[1:]), 2*np.sum(a[1:]))
+
+        # An object array, summed as the data type
+        a = np.arange(9, dtype=object)
+        b = np.einsum("i->", a, dtype=dtype, casting='unsafe')
+        assert_equal(b, np.sum(a))
+        assert_equal(b.dtype, np.dtype(dtype))
+
+    def test_einsum_sums_int8(self):
+        self.check_einsum_sums('i1');
+
+    def test_einsum_sums_uint8(self):
+        self.check_einsum_sums('u1');
+
+    def test_einsum_sums_int16(self):
+        self.check_einsum_sums('i2');
+
+    def test_einsum_sums_uint16(self):
+        self.check_einsum_sums('u2');
+
+    def test_einsum_sums_int32(self):
+        self.check_einsum_sums('i4');
+
+    def test_einsum_sums_uint32(self):
+        self.check_einsum_sums('u4');
+
+    def test_einsum_sums_int64(self):
+        self.check_einsum_sums('i8');
+
+    def test_einsum_sums_uint64(self):
+        self.check_einsum_sums('u8');
+
+    def test_einsum_sums_float16(self):
+        self.check_einsum_sums('f2');
+
+    def test_einsum_sums_float32(self):
+        self.check_einsum_sums('f4');
+
+    def test_einsum_sums_float64(self):
+        self.check_einsum_sums('f8');
+
+    def test_einsum_sums_longdouble(self):
+        self.check_einsum_sums(np.longdouble);
+
+    def test_einsum_sums_cfloat64(self):
+        self.check_einsum_sums('c8');
+
+    def test_einsum_sums_cfloat128(self):
+        self.check_einsum_sums('c16');
+
+    def test_einsum_sums_clongdouble(self):
+        self.check_einsum_sums(np.clongdouble);
 
 class TestNonarrayArgs(TestCase):
     # check that non-array arguments to functions wrap them in arrays
@@ -332,8 +658,8 @@ class TestFloatExceptions(TestCase):
         finally:
             np.seterr(**oldsettings)
 
-class TestCoercion(TestCase):
-    def test_coercion(self):
+class TestTypes(TestCase):
+    def check_promotion_cases(self, promote_func):
         """Tests that the scalars get coerced correctly."""
         i8, i16, i32, i64 = int8(0), int16(0), int32(0), int64(0)
         u8, u16, u32, u64 = uint8(0), uint16(0), uint32(0), uint64(0)
@@ -341,40 +667,106 @@ class TestCoercion(TestCase):
         c64, c128, cld = complex64(0), complex128(0), clongdouble(0)
 
         # coercion within the same type
-        assert_equal(np.add(i8,i16).dtype, int16)
-        assert_equal(np.add(i32,i8).dtype, int32)
-        assert_equal(np.add(i16,i64).dtype, int64)
-        assert_equal(np.add(u8,u32).dtype, uint32)
-        assert_equal(np.add(f32,f64).dtype, float64)
-        assert_equal(np.add(fld,f32).dtype, longdouble)
-        assert_equal(np.add(f64,fld).dtype, longdouble)
-        assert_equal(np.add(c128,c64).dtype, complex128)
-        assert_equal(np.add(cld,c128).dtype, clongdouble)
-        assert_equal(np.add(c64,fld).dtype, clongdouble)
+        assert_equal(promote_func(i8,i16), np.dtype(int16))
+        assert_equal(promote_func(i32,i8), np.dtype(int32))
+        assert_equal(promote_func(i16,i64), np.dtype(int64))
+        assert_equal(promote_func(u8,u32), np.dtype(uint32))
+        assert_equal(promote_func(f32,f64), np.dtype(float64))
+        assert_equal(promote_func(fld,f32), np.dtype(longdouble))
+        assert_equal(promote_func(f64,fld), np.dtype(longdouble))
+        assert_equal(promote_func(c128,c64), np.dtype(complex128))
+        assert_equal(promote_func(cld,c128), np.dtype(clongdouble))
+        assert_equal(promote_func(c64,fld), np.dtype(clongdouble))
 
         # coercion between types
-        assert_equal(np.add(i8,u8).dtype, int16)
-        assert_equal(np.add(u8,i32).dtype, int32)
-        assert_equal(np.add(i64,u32).dtype, int64)
-        assert_equal(np.add(u64,i32).dtype, float64)
-        assert_equal(np.add(i32,f32).dtype, float64)
-        assert_equal(np.add(i64,f32).dtype, float64)
-        assert_equal(np.add(f32,i16).dtype, float32)
-        assert_equal(np.add(f32,u32).dtype, float64)
-        assert_equal(np.add(f32,c64).dtype, complex64)
-        assert_equal(np.add(c128,f32).dtype, complex128)
-        assert_equal(np.add(cld,f64).dtype, clongdouble)
+        assert_equal(promote_func(i8,u8), np.dtype(int16))
+        assert_equal(promote_func(u8,i32), np.dtype(int32))
+        assert_equal(promote_func(i64,u32), np.dtype(int64))
+        assert_equal(promote_func(u64,i32), np.dtype(float64))
+        assert_equal(promote_func(i32,f32), np.dtype(float64))
+        assert_equal(promote_func(i64,f32), np.dtype(float64))
+        assert_equal(promote_func(f32,i16), np.dtype(float32))
+        assert_equal(promote_func(f32,u32), np.dtype(float64))
+        assert_equal(promote_func(f32,c64), np.dtype(complex64))
+        assert_equal(promote_func(c128,f32), np.dtype(complex128))
+        assert_equal(promote_func(cld,f64), np.dtype(clongdouble))
 
         # coercion between scalars and 1-D arrays
-        assert_equal(np.add(array([i8]),i64).dtype, int8)
-        assert_equal(np.add(u64,array([i32])).dtype, int32)
-        assert_equal(np.add(i64,array([u32])).dtype, uint32)
-        assert_equal(np.add(int32(-1),array([u64])).dtype, float64)
-        assert_equal(np.add(f64,array([f32])).dtype, float32)
-        assert_equal(np.add(fld,array([f32])).dtype, float32)
-        assert_equal(np.add(array([f64]),fld).dtype, float64)
-        assert_equal(np.add(fld,array([c64])).dtype, complex64)
-        assert_equal(np.add(c64,array([f64])).dtype, complex128)
+        assert_equal(promote_func(array([i8]),i64), np.dtype(int8))
+        assert_equal(promote_func(u64,array([i32])), np.dtype(int32))
+        assert_equal(promote_func(i64,array([u32])), np.dtype(uint32))
+        assert_equal(promote_func(int32(-1),array([u64])), np.dtype(float64))
+        assert_equal(promote_func(f64,array([f32])), np.dtype(float32))
+        assert_equal(promote_func(fld,array([f32])), np.dtype(float32))
+        assert_equal(promote_func(array([f64]),fld), np.dtype(float64))
+        assert_equal(promote_func(fld,array([c64])), np.dtype(complex64))
+
+    def test_coercion(self):
+        def res_type(a, b):
+            return np.add(a, b).dtype
+
+        ctx = WarningManager()
+        ctx.__enter__()
+        warnings.simplefilter('ignore', np.ComplexWarning)
+
+        self.check_promotion_cases(res_type)
+
+        f64 = float64(0)
+        c64 = complex64(0)
+        ## Scalars do not coerce to complex if the value is real
+        #assert_equal(res_type(c64,array([f64])), np.dtype(float64))
+        # But they do if the value is complex
+        assert_equal(res_type(complex64(3j),array([f64])),
+                                                    np.dtype(complex128))
+
+        # Scalars do coerce to complex even if the value is real
+        # This is so "a+0j" can be reliably used to make something complex.
+        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
+
+        ctx.__exit__()
+
+
+    def test_result_type(self):
+        self.check_promotion_cases(np.result_type)
+
+        f64 = float64(0)
+        c64 = complex64(0)
+        ## Scalars do not coerce to complex if the value is real
+        #assert_equal(np.result_type(c64,array([f64])), np.dtype(float64))
+        # But they do if the value is complex
+        assert_equal(np.result_type(complex64(3j),array([f64])),
+                                                    np.dtype(complex128))
+
+        # Scalars do coerce to complex even if the value is real
+        # This is so "a+0j" can be reliably used to make something complex.
+        assert_equal(np.result_type(c64,array([f64])), np.dtype(complex128))
+
+
+    def can_cast(self):
+        assert_(np.can_cast(np.int32, np.int64))
+        assert_(np.can_cast(np.float64, np.complex))
+        assert_(not np.can_cast(np.complex, np.float))
+        
+        assert_(np.can_cast('i8', 'f8'))
+        assert_(not np.can_cast('i8', 'f4'))
+        assert_(np.can_cast('i4', 'S4'))
+
+        assert_(np.can_cast('i8', 'i8', 'no'))
+        assert_(not np.can_cast('<i8', '>i8', 'no'))
+
+        assert_(np.can_cast('<i8', '>i8', 'equiv'))
+        assert_(not np.can_cast('<i4', '>i8', 'equiv'))
+
+        assert_(np.can_cast('<i4', '>i8', 'safe'))
+        assert_(not np.can_cast('<i8', '>i4', 'safe'))
+
+        assert_(np.can_cast('<i8', '>i4', 'same_kind'))
+        assert_(not np.can_cast('<i8', '>u4', 'same_kind'))
+
+        assert_(np.can_cast('<i8', '>u4', 'unsafe'))
+
+        assert_raises(TypeError, np.can_cast, 'i4', None)
+        assert_raises(TypeError, np.can_cast, None, 'i4')
 
 class TestFromiter(TestCase):
     def makegen(self):
@@ -409,6 +801,49 @@ class TestFromiter(TestCase):
         self.assertTrue(alltrue(a == expected,axis=0))
         self.assertTrue(alltrue(a20 == expected[:20],axis=0))
 
+class TestNonzero(TestCase):
+    def test_nonzero_trivial(self):
+        assert_equal(np.count_nonzero(array([])), 0)
+        assert_equal(np.nonzero(array([])), ([],))
+
+        assert_equal(np.count_nonzero(array(0)), 0)
+        assert_equal(np.nonzero(array(0)), ([],))
+        assert_equal(np.count_nonzero(array(1)), 1)
+        assert_equal(np.nonzero(array(1)), ([0],))
+
+    def test_nonzero_onedim(self):
+        x = array([1,0,2,-1,0,0,8])
+        assert_equal(np.count_nonzero(x), 4)
+        assert_equal(np.nonzero(x), ([0, 2, 3, 6],))
+
+        x = array([(1,2),(0,0),(1,1),(-1,3),(0,7)],
+                            dtype=[('a','i4'),('b','i2')])
+        assert_equal(np.count_nonzero(x['a']), 3)
+        assert_equal(np.count_nonzero(x['b']), 4)
+        assert_equal(np.nonzero(x['a']), ([0,2,3],))
+        assert_equal(np.nonzero(x['b']), ([0,2,3,4],))
+
+    def test_nonzero_twodim(self):
+        x = array([[0,1,0],[2,0,3]])
+        assert_equal(np.count_nonzero(x), 3)
+        assert_equal(np.nonzero(x), ([0,1,1],[1,0,2]))
+
+        x = np.eye(3)
+        assert_equal(np.count_nonzero(x), 3)
+        assert_equal(np.nonzero(x), ([0,1,2],[0,1,2]))
+
+        x = array([[(0,1),(0,0),(1,11)],
+                   [(1,1),(1,0),(0,0)],
+                   [(0,0),(1,5),(0,1)]], dtype=[('a','f4'),('b','u1')])
+        assert_equal(np.count_nonzero(x['a']), 4)
+        assert_equal(np.count_nonzero(x['b']), 5)
+        assert_equal(np.nonzero(x['a']), ([0,1,1,2],[2,0,1,1]))
+        assert_equal(np.nonzero(x['b']), ([0,0,1,2,2],[0,2,0,1,2]))
+
+        assert_equal(np.count_nonzero(x['a'].T), 4)
+        assert_equal(np.count_nonzero(x['b'].T), 5)
+        assert_equal(np.nonzero(x['a'].T), ([0,1,1,2],[1,1,2,0]))
+        assert_equal(np.nonzero(x['b'].T), ([0,0,1,2,2],[0,1,2,0,2]))
 
 class TestIndex(TestCase):
     def test_boolean(self):
@@ -657,7 +1092,7 @@ class TestClip(TestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int64_inout(self):
-        """Test native in32 input with double array min/max and int32 out."""
+        """Test native int32 input with double array min/max and int32 out."""
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = zeros(a.shape, float64)
         M   = float64(1)
@@ -1008,25 +1443,91 @@ class TestStdVarComplex(TestCase):
 
 
 class TestLikeFuncs(TestCase):
-    '''Test zeros_like and empty_like'''
+    '''Test ones_like, zeros_like, and empty_like'''
 
     def setUp(self):
-        self.data = [(array([[1,2,3],[4,5,6]],dtype=int32), (2,3), int32),
-                     (array([[1,2,3],[4,5,6]],dtype=float32), (2,3), float32),
+        self.data = [
+                # Array scalars
+                (array(3.), None),
+                (array(3), 'f8'),
+                # 1D arrays
+                (arange(6, dtype='f4'), None),
+                (arange(6), 'c16'),
+                # 2D C-layout arrays
+                (arange(6).reshape(2,3), None),
+                (arange(6).reshape(3,2), 'i1'),
+                # 2D F-layout arrays
+                (arange(6).reshape((2,3), order='F'), None),
+                (arange(6).reshape((3,2), order='F'), 'i1'),
+                # 3D C-layout arrays
+                (arange(24).reshape(2,3,4), None),
+                (arange(24).reshape(4,3,2), 'f4'),
+                # 3D F-layout arrays
+                (arange(24).reshape((2,3,4), order='F'), None),
+                (arange(24).reshape((4,3,2), order='F'), 'f4'),
+                # 3D non-C/F-layout arrays
+                (arange(24).reshape(2,3,4).swapaxes(0,1), None),
+                (arange(24).reshape(4,3,2).swapaxes(0,1), '?'),
                      ]
 
+    def check_like_function(self, like_function, value):
+        for d, dtype in self.data:
+            # default (K) order, dtype
+            dz = like_function(d, dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            assert_equal(array(dz.strides)*d.dtype.itemsize, 
+                         array(d.strides)*dz.dtype.itemsize)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+            # C order, default dtype
+            dz = like_function(d, order='C', dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            assert_(dz.flags.c_contiguous)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+            # F order, default dtype
+            dz = like_function(d, order='F', dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            assert_(dz.flags.f_contiguous)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+            # A order
+            dz = like_function(d, order='A', dtype=dtype)
+            assert_equal(dz.shape, d.shape)
+            if d.flags.f_contiguous:
+                assert_(dz.flags.f_contiguous)
+            else:
+                assert_(dz.flags.c_contiguous)
+            if dtype is None:
+                assert_equal(dz.dtype, d.dtype)
+            else:
+                assert_equal(dz.dtype, np.dtype(dtype))
+            if not value is None:
+                assert_(all(dz == value))
+
+    def test_ones_like(self):
+        self.check_like_function(np.ones_like, 1)
+
     def test_zeros_like(self):
-        for d, dshape, dtype in self.data:
-            dz = zeros_like(d)
-            assert dz.shape == dshape
-            assert dz.dtype.type == dtype
-            assert all(abs(dz) == 0)
+        self.check_like_function(np.zeros_like, 0)
 
     def test_empty_like(self):
-        for d, dshape, dtype in self.data:
-            dz = zeros_like(d)
-            assert dz.shape == dshape
-            assert dz.dtype.type == dtype
+        self.check_like_function(np.empty_like, None)
 
 class _TestCorrelate(TestCase):
     def _setup(self, dt):

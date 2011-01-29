@@ -1366,12 +1366,18 @@ class TestFillingValues(TestCase):
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+
         #.....Using a flexible type w/ a different type shouldn't matter
-        fill_val = np.array((-999, -12345678.9, "???"),
-                            dtype=[("A", int), ("B", float), ("C", "|S3")])
+        # BEHAVIOR in 1.5 and earlier: match structured types by position
+        #fill_val = np.array((-999, -12345678.9, "???"),
+        #                    dtype=[("A", int), ("B", float), ("C", "|S3")])
+        # BEHAVIOR in 1.6 and later: match structured types by name
+        fill_val = np.array(("???", -999, -12345678.9),
+                            dtype=[("c", "|S3"), ("a", int), ("b", float), ])
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+
         #.....Using an object-array shouldn't matter either
         fill_value = np.array((-999, -12345678.9, "???"), dtype=object)
         fval = _check_fill_value(fill_val, ndtype)

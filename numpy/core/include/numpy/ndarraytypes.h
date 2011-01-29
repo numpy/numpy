@@ -65,16 +65,24 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_INT, NPY_UINT,
                     NPY_LONG, NPY_ULONG,
                     NPY_LONGLONG, NPY_ULONGLONG,
-                    NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+                    NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
                     NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-                    NPY_DATETIME, NPY_TIMEDELTA,
-                    NPY_OBJECT=20,
+                    NPY_OBJECT=17,
                     NPY_STRING, NPY_UNICODE,
                     NPY_VOID,
+                    /*
+                     * New 1.6 types appended, may be integrated
+                     * into the above in 2.0.
+                     */
+                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF, 
+
                     NPY_NTYPES,
                     NPY_NOTYPE,
                     NPY_CHAR,      /* special flag */
-                    NPY_USERDEF=256  /* leave room for characters */
+                    NPY_USERDEF=256,  /* leave room for characters */
+
+                    /* The number of types not including the new 1.6 types */
+                    NPY_NTYPES_ABI_COMPATIBLE=21
 };
 
 #define NPY_METADATA_DTSTR "__frequency__"
@@ -88,8 +96,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
 /* default scalar priority */
 #define NPY_SCALAR_PRIORITY -1000000.0
 
-/*TODO HALF - This is used as how many complex floating point types in the code */
-/* How many floating point types are there */
+/* How many floating point types are there (excluding half) */
 #define NPY_NUM_FLOATTYPE 3
 
 /*
@@ -174,12 +181,31 @@ typedef enum {
 } NPY_SCALARKIND;
 #define NPY_NSCALARKINDS (NPY_OBJECT_SCALAR + 1)
 
+/* For specifying array memory layout or iteration order */
 typedef enum {
+        /* Fortran order if inputs are all Fortran, C otherwise */
         NPY_ANYORDER=-1,
+        /* C order */
         NPY_CORDER=0,
-        NPY_FORTRANORDER=1
+        /* Fortran order */
+        NPY_FORTRANORDER=1,
+        /* An order as close to the inputs as possible */
+        NPY_KEEPORDER=2
 } NPY_ORDER;
 
+/* For specifying allowed casting in operations which support it */
+typedef enum {
+        /* Only allow identical types */
+        NPY_NO_CASTING=0,
+        /* Allow identical and byte swapped types */
+        NPY_EQUIV_CASTING=1,
+        /* Only allow safe casts */
+        NPY_SAFE_CASTING=2,
+        /* Allow safe casts or casts within the same kind */
+        NPY_SAME_KIND_CASTING=3,
+        /* Allow any casts */
+        NPY_UNSAFE_CASTING=4
+} NPY_CASTING;
 
 typedef enum {
         NPY_CLIP=0,
@@ -394,6 +420,14 @@ typedef struct {
 } PyArray_Dims;
 
 typedef struct {
+        /*
+         * Functions to cast to most other standard types
+         * Can have some NULL entries. The types
+         * DATETIME, TIMEDELTA, and HALF go into the castdict
+         * even though they are built-in.
+         */
+        PyArray_VectorUnaryFunc *cast[NPY_NTYPES_ABI_COMPATIBLE];
+
         /* The next four functions *cannot* be NULL */
 
         /*
@@ -487,22 +521,6 @@ typedef struct {
         PyArray_FastClipFunc *fastclip;
         PyArray_FastPutmaskFunc *fastputmask;
         PyArray_FastTakeFunc *fasttake;
-
-        /*
-         * A little room to grow --- should use generic function
-         * interface for most additions
-         */
-        void *pad1;
-        void *pad2;
-        void *pad3;
-        void *pad4;
-
-        /*
-         * Functions to cast to all other standard types
-         * Can have some NULL entries
-         */
-        PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
-
 } PyArray_ArrFuncs;
 
 /* The item must be reference counted when it is inserted or extracted. */
@@ -554,8 +572,7 @@ typedef struct _PyArray_Descr {
                                  * '>' (big), '<' (little), '|'
                                  * (not-applicable), or '=' (native).
                                  */
-        char unused;
-        int flags;              /* flag describing data type */
+        char flags;             /* flags describing data type */
         int type_num;           /* number representing this type */
         int elsize;             /* element size for this type */
         int alignment;          /* alignment needed for this type */
@@ -778,8 +795,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_MIN_BUFSIZE ((int)sizeof(cdouble))
 #define NPY_MAX_BUFSIZE (((int)sizeof(cdouble))*1000000)
-#define NPY_BUFSIZE 10000
-/* #define NPY_BUFSIZE 80*/
+#define NPY_BUFSIZE 8192
+/* buffer stress test size: */
+/*#define NPY_BUFSIZE 17*/
 
 #define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
 #define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
@@ -807,6 +825,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
 
+#define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_C_CONTIGUOUS)
+#define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_F_CONTIGUOUS)
 
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
@@ -838,6 +858,76 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ALLOW_C_API
 #define NPY_DISABLE_C_API
 #endif
+
+/*****************************
+ * New iterator object
+ *****************************/
+
+/* The actual structure of the iterator is an internal detail */
+typedef struct NpyIter_InternalOnly NpyIter;
+
+/* Iterator function pointers that may be specialized */
+typedef int (*NpyIter_IterNext_Fn )(NpyIter *iter);
+typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
+                                      npy_intp *outcoords);
+
+/*** Global flags that may be passed to the iterator constructors ***/
+
+/* Track an index representing C order */
+#define NPY_ITER_C_INDEX                    0x00000001
+/* Track an index representing Fortran order */
+#define NPY_ITER_F_INDEX                    0x00000002
+/* Track coordinates */
+#define NPY_ITER_COORDS                     0x00000004
+/* Let the caller handle the inner loop of iteration */
+#define NPY_ITER_NO_INNER_ITERATION         0x00000008
+/* Convert all the operands to a common data type */
+#define NPY_ITER_COMMON_DTYPE               0x00000010
+/* Operands may hold references, requiring API access during iteration */
+#define NPY_ITER_REFS_OK                    0x00000020
+/* Zero-sized operands should be permitted, iteration checks IterSize for 0 */
+#define NPY_ITER_ZEROSIZE_OK                0x00000040
+/* Permits reductions (size-0 stride with dimension size > 1) */
+#define NPY_ITER_REDUCE_OK                  0x00000080
+/* Enables sub-range iteration */
+#define NPY_ITER_RANGED                     0x00000100
+/* Enables buffering */
+#define NPY_ITER_BUFFERED                   0x00000200
+/* When buffering is enabled, grows the inner loop if possible */
+#define NPY_ITER_GROWINNER                  0x00000400
+/* Delay allocation of buffers until first Reset* call */
+#define NPY_ITER_DELAY_BUFALLOC             0x00000800
+/* When NPY_KEEPORDER is specified, disable reversing negative-stride axes */
+#define NPY_ITER_DONT_REVERSE_AXES          0x00001000
+
+/*** Per-operand flags that may be passed to the iterator constructors ***/
+
+/* The operand will be read from and written to */
+#define NPY_ITER_READWRITE                  0x00010000
+/* The operand will only be read from */
+#define NPY_ITER_READONLY                   0x00020000
+/* The operand will only be written to */
+#define NPY_ITER_WRITEONLY                  0x00040000
+/* The operand's data must be in native byte order */
+#define NPY_ITER_NBO                        0x00080000
+/* The operand's data must be aligned */
+#define NPY_ITER_ALIGNED                    0x00100000
+/* The operand's data must be contiguous (within the inner loop) */
+#define NPY_ITER_CONTIG                     0x00200000
+/* The operand may be copied to satisfy requirements */
+#define NPY_ITER_COPY                       0x00400000
+/* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
+#define NPY_ITER_UPDATEIFCOPY               0x00800000
+/* Allocate the operand if it is NULL */
+#define NPY_ITER_ALLOCATE                   0x01000000
+/* If an operand is allocated, don't use any subtype */
+#define NPY_ITER_NO_SUBTYPE                 0x02000000
+/* Require that the dimension match the iterator dimensions exactly */
+#define NPY_ITER_NO_BROADCAST               0x08000000
+
+#define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
+#define NPY_ITER_PER_OP_FLAGS               0xffff0000
+
 
 /*****************************
  * Basic iterator object
@@ -1232,10 +1322,12 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&     \
                                 ((type) <= NPY_ULONGLONG))
 
-#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_HALF) &&      \
-                              ((type) <= NPY_LONGDOUBLE))
+#define PyTypeNum_ISFLOAT(type) ((((type) >= NPY_FLOAT) && \
+                              ((type) <= NPY_LONGDOUBLE)) || \
+                              ((type) == NPY_HALF))
 
-#define PyTypeNum_ISNUMBER(type) ((type) <= NPY_CLONGDOUBLE)
+#define PyTypeNum_ISNUMBER(type) (((type) <= NPY_CLONGDOUBLE) || \
+                                  ((type) == NPY_HALF))
 
 #define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
                                   ((type) == NPY_UNICODE))

@@ -205,7 +205,7 @@ def tensorsolve(a, b, axes=None):
 
     See Also
     --------
-    tensordot, tensorinv
+    tensordot, tensorinv, einsum
 
     Examples
     --------

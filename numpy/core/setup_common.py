@@ -21,7 +21,7 @@ from distutils.ccompiler import CompileError
 # Binary compatibility version number. This number is increased whenever the
 # C-API is changed such that binary compatibility is broken, i.e. whenever a
 # recompile of extension modules is needed.
-C_ABI_VERSION = 0x02000000
+C_ABI_VERSION = 0x01000009
 
 # Minor API version.  This number is increased whenever a change is made to the
 # C-API -- whether it breaks binary compatibility or not.  Some changes, such

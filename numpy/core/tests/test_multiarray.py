@@ -238,7 +238,54 @@ class TestScalarIndexing(TestCase):
         def subscript(x, i): x[i]
         self.assertRaises(IndexError, subscript, a, (newaxis, 0))
         self.assertRaises(IndexError, subscript, a, (newaxis,)*50)
+    
+    def test_overlapping_assignment(self):
+        # With positive strides
+        a = np.arange(4)
+        a[:-1] = a[1:]
+        assert_equal(a, [1,2,3,3])
 
+        a = np.arange(4)
+        a[1:] = a[:-1]
+        assert_equal(a, [0,0,1,2])
+
+        # With positive and negative strides
+        a = np.arange(4)
+        a[:] = a[::-1]
+        assert_equal(a, [3,2,1,0])
+
+        a = np.arange(6).reshape(2,3)
+        a[::-1,:] = a[:,::-1]
+        assert_equal(a, [[5,4,3],[2,1,0]])
+
+        a = np.arange(6).reshape(2,3)
+        a[::-1,::-1] = a[:,::-1]
+        assert_equal(a, [[3,4,5],[0,1,2]])
+
+        # With just one element overlapping
+        a = np.arange(5)
+        a[:3] = a[2:]
+        assert_equal(a, [2,3,4,3,4])
+
+        a = np.arange(5)
+        a[2:] = a[:3]
+        assert_equal(a, [0,1,0,1,2])
+
+        a = np.arange(5)
+        a[2::-1] = a[2:]
+        assert_equal(a, [4,3,2,3,4])
+
+        a = np.arange(5)
+        a[2:] = a[2::-1]
+        assert_equal(a, [0,1,2,1,0])
+
+        a = np.arange(5)
+        a[2::-1] = a[:1:-1]
+        assert_equal(a, [2,3,4,3,4])
+
+        a = np.arange(5)
+        a[:1:-1] = a[2::-1]
+        assert_equal(a, [0,1,0,1,2])
 
 class TestCreation(TestCase):
     def test_from_attribute(self):
@@ -628,18 +675,51 @@ class TestMethods(TestCase):
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
         assert_equal(a.ravel(), [0,1,2,3])
+        assert_(not a.ravel().flags.owndata)
         assert_equal(a.ravel('F'), [0,2,1,3])
         assert_equal(a.ravel(order='C'), [0,1,2,3])
         assert_equal(a.ravel(order='F'), [0,2,1,3])
         assert_equal(a.ravel(order='A'), [0,1,2,3])
+        assert_(not a.ravel(order='A').flags.owndata)
+        assert_equal(a.ravel(order='K'), [0,1,2,3])
+        assert_(not a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel(), a.reshape(-1))
 
         a = np.array([[0,1],[2,3]], order='F')
         assert_equal(a.ravel(), [0,1,2,3])
         assert_equal(a.ravel(order='A'), [0,2,1,3])
+        assert_equal(a.ravel(order='K'), [0,2,1,3])
+        assert_(not a.ravel(order='A').flags.owndata)
+        assert_(not a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel(), a.reshape(-1))
         assert_equal(a.ravel(order='A'), a.reshape(-1, order='A'))
 
+        a = np.array([[0,1],[2,3]])[::-1,:]
+        assert_equal(a.ravel(), [2,3,0,1])
+        assert_equal(a.ravel(order='C'), [2,3,0,1])
+        assert_equal(a.ravel(order='F'), [2,0,3,1])
+        assert_equal(a.ravel(order='A'), [2,3,0,1])
+        # 'K' doesn't reverse the axes of negative strides
+        assert_equal(a.ravel(order='K'), [2,3,0,1])
+        assert_(a.ravel(order='K').flags.owndata)
+
+    def test_setasflat(self):
+        # In this case, setasflat can treat a as a flat array,
+        # and must treat b in chunks of 3
+        a = np.arange(3*3*4).reshape(3,3,4)
+        b = np.arange(3*4*3, dtype='f4').reshape(3,4,3).T
+
+        assert_(not np.all(a.ravel() == b.ravel()))
+        a.setasflat(b)
+        assert_equal(a.ravel(), b.ravel())
+
+        # A case where the strides of neither a nor b can be collapsed
+        a = np.arange(3*2*4).reshape(3,2,4)[:,:,:-1]
+        b = np.arange(3*3*3, dtype='f4').reshape(3,3,3).T[:,:,:-1]
+
+        assert_(not np.all(a.ravel() == b.ravel()))
+        a.setasflat(b)
+        assert_equal(a.ravel(), b.ravel())
 
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
