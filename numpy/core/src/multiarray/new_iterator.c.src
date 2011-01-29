@@ -508,7 +508,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
          * If there's an output being allocated, we must not negate
          * any strides.
          */
-        if (!any_allocate && !(flags&NPY_ITER_DONT_REVERSE_AXES)) {
+        if (!any_allocate && !(flags&NPY_ITER_DONT_NEGATE_STRIDES)) {
             npyiter_flip_negative_strides(iter);
         }
         itflags = NIT_ITFLAGS(iter);

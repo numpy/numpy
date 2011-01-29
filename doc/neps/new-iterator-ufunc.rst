@@ -736,7 +736,7 @@ Construction and Destruction
     orders enforce the particular iteration pattern.  When using
     ``NPY_KEEPORDER``, if you also want to ensure that the iteration is
     not reversed along an axis, you should pass the flag
-    ``NPY_ITER_DONT_REVERSE_AXES``.
+    ``NPY_ITER_DONT_NEGATE_STRIDES``.
 
     Any of the ``NPY_CASTING`` enum values may be passed to ``casting``.
     The values include ``NPY_NO_CASTING``, ``NPY_EQUIV_CASTING``,
@@ -796,7 +796,7 @@ Construction and Destruction
             This flag is incompatible with ``NPY_ITER_C_INDEX``,
             ``NPY_ITER_F_INDEX``, and ``NPY_ITER_COORDS``.
 
-        ``NPY_ITER_DONT_REVERSE_AXES``
+        ``NPY_ITER_DONT_NEGATE_STRIDES``
 
             This only affects the iterator when NPY_KEEPORDER is specified
             for the order parameter.  By default with NPY_KEEPORDER, the

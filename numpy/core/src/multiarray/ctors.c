@@ -2289,7 +2289,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
      */
     dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY|
                                 NPY_ITER_NO_INNER_ITERATION|
-                                NPY_ITER_DONT_REVERSE_AXES|
+                                NPY_ITER_DONT_NEGATE_STRIDES|
                                 NPY_ITER_REFS_OK,
                                 order,
                                 NPY_NO_CASTING,
@@ -2299,7 +2299,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
     }
     src_iter = NpyIter_New(src, NPY_ITER_READONLY|
                                 NPY_ITER_NO_INNER_ITERATION|
-                                NPY_ITER_DONT_REVERSE_AXES|
+                                NPY_ITER_DONT_NEGATE_STRIDES|
                                 NPY_ITER_REFS_OK,
                                 order,
                                 NPY_NO_CASTING,
