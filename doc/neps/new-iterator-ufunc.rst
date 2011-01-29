@@ -733,7 +733,10 @@ Construction and Destruction
 
     Any of the ``NPY_ORDER`` enum values may be passed to ``order``.  For
     efficient iteration, ``NPY_KEEPORDER`` is the best option, and the other
-    orders enforce the particular iteration pattern.
+    orders enforce the particular iteration pattern.  When using
+    ``NPY_KEEPORDER``, if you also want to ensure that the iteration is
+    not reversed along an axis, you should pass the flag
+    ``NPY_ITER_DONT_REVERSE_AXES``.
 
     Any of the ``NPY_CASTING`` enum values may be passed to ``casting``.
     The values include ``NPY_NO_CASTING``, ``NPY_EQUIV_CASTING``,
@@ -792,6 +795,17 @@ Construction and Destruction
 
             This flag is incompatible with ``NPY_ITER_C_INDEX``,
             ``NPY_ITER_F_INDEX``, and ``NPY_ITER_COORDS``.
+
+        ``NPY_ITER_DONT_REVERSE_AXES``
+
+            This only affects the iterator when NPY_KEEPORDER is specified
+            for the order parameter.  By default with NPY_KEEPORDER, the
+            iterator reverses axes which have negative strides, so that
+            memory is traversed in a forward direction.  This disables
+            this step.  Use this flag if you want to use the underlying
+            memory-ordering of the axes, but don't want an axis reversed.
+            This is the behavior of ``numpy.ravel(a, order='K')``, for
+            instance.
 
         ``NPY_ITER_COMMON_DTYPE``
 
