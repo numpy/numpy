@@ -1606,10 +1606,12 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
          * my_diagonal.append (diagonal (a [i], offset))
          * return array (my_diagonal)
          */
-        PyObject *mydiagonal = NULL, *new = NULL, *ret = NULL, *sel = NULL;
-        intp i, n1;
+        PyObject *mydiagonal = NULL, *ret = NULL, *sel = NULL;
+        intp n1;
         int res;
         PyArray_Descr *typecode;
+
+        new = NULL;
 
         typecode = self->descr;
         mydiagonal = PyList_New(0);
@@ -1798,16 +1800,16 @@ PyArray_Nonzero(PyArrayObject *self)
 
     /* If it's a one-dimensional result, don't use an iterator */
     if (ndim <= 1) {
-        npy_intp i;
+        npy_intp j;
 
         coords = (npy_intp *)PyArray_DATA(ret);
         data = PyArray_BYTES(self);
         stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
         count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
 
-        for (i = 0; i < count; ++i) {
+        for (j = 0; j < count; ++j) {
             if (nonzero(data, self)) {
-                *coords++ = i;
+                *coords++ = j;
             }
             data += stride;
         }
@@ -1878,7 +1880,7 @@ finish:
     }
     else {
         for (i = 0; i < ndim; ++i) {
-            npy_intp stride = ndim*NPY_SIZEOF_INTP;
+            stride = ndim*NPY_SIZEOF_INTP;
             PyArrayObject *view;
 
             view = (PyArrayObject *)PyArray_New(Py_TYPE(self), 1,

@@ -1663,8 +1663,6 @@ npyiter_buffered_reduce_iternext_iters@tag_niter@(NpyIter *iter)
 
     ptrs = NBF_PTRS(bufferdata);
 
-    //NpyIter_DebugPrint(iter);
-
     /*
      * If the iterator handles the inner loop, need to increment all
      * the coordinates and pointers
@@ -1672,7 +1670,7 @@ npyiter_buffered_reduce_iternext_iters@tag_niter@(NpyIter *iter)
     if (!(itflags&NPY_ITFLAG_NOINNER)) {
         /* Increment within the buffer */
         if (++NIT_ITERINDEX(iter) < NBF_BUFITEREND(bufferdata)) {
-            npy_intp iiter, *strides;
+            npy_intp *strides;
 
             strides = NBF_STRIDES(bufferdata);
             for (iiter = 0; iiter < niter; ++iiter) {
@@ -2993,8 +2991,6 @@ npyiter_prepare_operands(npy_intp niter, PyArrayObject **op_in,
             }
         }
         if (all_null) {
-            npy_intp i;
-
             for (i = 0; i < niter; ++i) {
                 Py_XDECREF(op[i]);
                 Py_XDECREF(op_dtype[i]);
@@ -3953,8 +3949,8 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
     npy_intp idim, ndim = NIT_NDIM(iter);
     npy_intp iiter, niter = NIT_NITER(iter);
 
-    npy_intp i0, i1, ipos;
-    char j0, j1;
+    npy_intp ax_i0, ax_i1, ax_ipos;
+    char ax_j0, ax_j1;
     char *perm;
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
@@ -3967,21 +3963,21 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
      * the AXISDATA has been reversed from C order, this
      * is sorting from smallest stride to biggest stride.
      */
-    for (i0 = 1; i0 < ndim; ++i0) {
+    for (ax_i0 = 1; ax_i0 < ndim; ++ax_i0) {
         npy_intp *strides0;
 
-        /* 'ipos' is where perm[i0] will get inserted */
-        ipos = i0;
-        j0 = perm[i0];
+        /* 'ax_ipos' is where perm[ax_i0] will get inserted */
+        ax_ipos = ax_i0;
+        ax_j0 = perm[ax_i0];
 
-        strides0 = NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, j0));
-        for (i1 = i0-1; i1 >= 0; --i1) {
+        strides0 = NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, ax_j0));
+        for (ax_i1 = ax_i0-1; ax_i1 >= 0; --ax_i1) {
             int ambig = 1, shouldswap = 0;
             npy_intp *strides1;
 
-            j1 = perm[i1];
+            ax_j1 = perm[ax_i1];
 
-            strides1 = NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, j1));
+            strides1 = NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, ax_j1));
 
             for (iiter = 0; iiter < niter; ++iiter) {
                 if (strides0[iiter] != 0 && strides1[iiter] != 0) {
@@ -4010,12 +4006,12 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
             }
             /*
              * If the comparison was unambiguous, either shift
-             * 'ipos' to 'i1' or stop looking for an insertion
+             * 'ax_ipos' to 'ax_i1' or stop looking for an insertion
              * point
              */
             if (!ambig) {
                 if (shouldswap) {
-                    ipos = i1;
+                    ax_ipos = ax_i1;
                 }
                 else {
                     break;
@@ -4023,12 +4019,12 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
             }
         }
 
-        /* Insert perm[i0] into the right place */
-        if (ipos != i0) {
-            for (i1 = i0; i1 > ipos; --i1) {
-                perm[i1] = perm[i1-1];
+        /* Insert perm[ax_i0] into the right place */
+        if (ax_ipos != ax_i0) {
+            for (ax_i1 = ax_i0; ax_i1 > ax_ipos; --ax_i1) {
+                perm[ax_i1] = perm[ax_i1-1];
             }
-            perm[ipos] = j0;
+            perm[ax_ipos] = ax_j0;
             permuted = 1;
         }
     }
@@ -5785,7 +5781,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     PyGILState_STATE gilstate = PyGILState_Ensure();
 
     printf("\n------ BEGIN ITERATOR DUMP ------\n");
-    printf("| Iterator Address: %p\n", iter);
+    printf("| Iterator Address: %p\n", (void *)iter);
     printf("| ItFlags: ");
     if (itflags&NPY_ITFLAG_IDENTPERM)
         printf("IDENTPERM ");
@@ -5837,7 +5833,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("\n");
     printf("| DTypes: ");
     for (iiter = 0; iiter < niter; ++iiter) {
-        printf("%p ", NIT_DTYPES(iter)[iiter]);
+        printf("%p ", (void *)NIT_DTYPES(iter)[iiter]);
     }
     printf("\n");
     printf("| DTypes: ");
@@ -5851,7 +5847,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("\n");
     printf("| InitDataPtrs: ");
     for (iiter = 0; iiter < niter; ++iiter) {
-        printf("%p ", NIT_RESETDATAPTR(iter)[iiter]);
+        printf("%p ", (void *)NIT_RESETDATAPTR(iter)[iiter]);
     }
     printf("\n");
     printf("| BaseOffsets: ");
@@ -5865,7 +5861,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     }
     printf("| Operands: ");
     for (iiter = 0; iiter < niter; ++iiter) {
-        printf("%p ", NIT_OPERANDS(iter)[iiter]);
+        printf("%p ", (void *)NIT_OPERANDS(iter)[iiter]);
     }
     printf("\n");
     printf("| Operand DTypes: ");
@@ -5923,7 +5919,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("\n");
         printf("|   Ptrs: ");
         for (iiter = 0; iiter < niter; ++iiter)
-            printf("%p ", NBF_PTRS(bufferdata)[iiter]);
+            printf("%p ", (void *)NBF_PTRS(bufferdata)[iiter]);
         printf("\n");
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Outer Strides: ");
@@ -5932,28 +5928,28 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("\n");
             printf("|   REDUCE Outer Ptrs: ");
             for (iiter = 0; iiter < niter; ++iiter)
-                printf("%p ", NBF_REDUCE_OUTERPTRS(bufferdata)[iiter]);
+                printf("%p ", (void *)NBF_REDUCE_OUTERPTRS(bufferdata)[iiter]);
             printf("\n");
         }
         printf("|   ReadTransferFn: ");
         for (iiter = 0; iiter < niter; ++iiter)
-            printf("%p ", NBF_READTRANSFERFN(bufferdata)[iiter]);
+            printf("%p ", (void *)NBF_READTRANSFERFN(bufferdata)[iiter]);
         printf("\n");
         printf("|   ReadTransferData: ");
         for (iiter = 0; iiter < niter; ++iiter)
-            printf("%p ", NBF_READTRANSFERDATA(bufferdata)[iiter]);
+            printf("%p ", (void *)NBF_READTRANSFERDATA(bufferdata)[iiter]);
         printf("\n");
         printf("|   WriteTransferFn: ");
         for (iiter = 0; iiter < niter; ++iiter)
-            printf("%p ", NBF_WRITETRANSFERFN(bufferdata)[iiter]);
+            printf("%p ", (void *)NBF_WRITETRANSFERFN(bufferdata)[iiter]);
         printf("\n");
         printf("|   WriteTransferData: ");
         for (iiter = 0; iiter < niter; ++iiter)
-            printf("%p ", NBF_WRITETRANSFERDATA(bufferdata)[iiter]);
+            printf("%p ", (void *)NBF_WRITETRANSFERDATA(bufferdata)[iiter]);
         printf("\n");
         printf("|   Buffers: ");
         for (iiter = 0; iiter < niter; ++iiter)
-            printf("%p ", NBF_BUFFERS(bufferdata)[iiter]);
+            printf("%p ", (void *)NBF_BUFFERS(bufferdata)[iiter]);
         printf("\n");
         printf("|\n");
     }
@@ -5974,7 +5970,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         }
         printf("|   Ptrs: ");
         for (iiter = 0; iiter < niter; ++iiter) {
-            printf("%p ", NAD_PTRS(axisdata)[iiter]);
+            printf("%p ", (void *)NAD_PTRS(axisdata)[iiter]);
         }
         printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {

@@ -275,10 +275,10 @@
 #ifdef HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ x, @ctype@ y)
 {
-    __@ctype@_to_c99_cast x1 = {x};
-    __@ctype@_to_c99_cast y1 = {y};
+    __@ctype@_to_c99_cast xcast = {x};
+    __@ctype@_to_c99_cast ycast = {y};
     __@ctype@_to_c99_cast ret;
-    ret.c99_z = @kind@@c@(x1.c99_z, y1.c99_z);
+    ret.c99_z = @kind@@c@(xcast.c99_z, ycast.c99_z);
     return ret.npy_z;
 }
 #endif

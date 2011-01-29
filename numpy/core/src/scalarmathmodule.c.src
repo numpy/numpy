@@ -1007,9 +1007,9 @@ static PyObject *
 /**end repeat**/
 
 #if defined(NPY_PY3K)
-#define NONZERO_NAME(prefix, suffix) prefix##bool##suffix
+#define NONZERO_NAME(prefix) prefix##bool
 #else
-#define NONZERO_NAME(prefix, suffix) prefix##nonzero##suffix
+#define NONZERO_NAME(prefix) prefix##nonzero
 #endif
 
 #define _IS_NONZERO(x) (x != 0)
@@ -1020,7 +1020,7 @@ static PyObject *
  * #nonzero=_IS_NONZERO*10, !npy_half_iszero, _IS_NONZERO*6#
  */
 static int
-NONZERO_NAME(@name@_,)(PyObject *a)
+NONZERO_NAME(@name@_)(PyObject *a)
 {
     int ret;
     npy_@name@ arg1;
@@ -1029,7 +1029,7 @@ NONZERO_NAME(@name@_,)(PyObject *a)
         if (PyErr_Occurred()) {
             return -1;
         }
-        return PyGenericArrType_Type.tp_as_number->NONZERO_NAME(nb_,)(a);
+        return PyGenericArrType_Type.tp_as_number->NONZERO_NAME(nb_)(a);
     }
 
     /*

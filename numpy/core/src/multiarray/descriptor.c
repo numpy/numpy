@@ -576,7 +576,7 @@ static NPY_DATETIMEUNIT
     return unit;
 }
 
-static int _multiples_table[16][4] = {
+static NPY_DATETIMEUNIT _multiples_table[16][4] = {
     {12, 52, 365},                            /* NPY_FR_Y */
     {NPY_FR_M, NPY_FR_W, NPY_FR_D},
     {4,  30, 720},                            /* NPY_FR_M */
@@ -601,13 +601,13 @@ static int
 _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
 {
     int i, num, ind;
-    int *totry;
+    NPY_DATETIMEUNIT *totry;
     NPY_DATETIMEUNIT *baseunit;
     int q, r;
 
     ind = ((int)meta->base - (int)NPY_FR_Y)*2;
     totry = _multiples_table[ind];
-    baseunit = (NPY_DATETIMEUNIT *)_multiples_table[ind + 1];
+    baseunit = _multiples_table[ind + 1];
 
     num = 3;
     if (meta->base == NPY_FR_W) {
@@ -619,7 +619,7 @@ _convert_divisor_to_multiple(PyArray_DatetimeMetaData *meta)
     if (meta->base >= NPY_FR_s) {
         ind = ((int)NPY_FR_s - (int)NPY_FR_Y)*2;
         totry = _multiples_table[ind];
-        baseunit = (NPY_DATETIMEUNIT *)_multiples_table[ind + 1];
+        baseunit = _multiples_table[ind + 1];
         baseunit[0] = meta->base + 1;
         baseunit[1] = meta->base + 2;
         if (meta->base == NPY_DATETIME_NUMUNITS - 2) {
@@ -705,7 +705,7 @@ _convert_from_datetime_tuple(PyObject *obj)
     PyArray_Descr *new;
     PyObject *dt_tuple;
     PyObject *dt_cobj;
-    PyObject *datetime;
+    PyObject *datetime_flag;
 
     if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj)!=2) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -714,10 +714,10 @@ _convert_from_datetime_tuple(PyObject *obj)
     }
 
     dt_tuple = PyTuple_GET_ITEM(obj, 0);
-    datetime = PyTuple_GET_ITEM(obj, 1);
+    datetime_flag = PyTuple_GET_ITEM(obj, 1);
     if (!PyTuple_Check(dt_tuple)
             || PyTuple_GET_SIZE(dt_tuple) != 4
-            || !PyInt_Check(datetime)) {
+            || !PyInt_Check(datetime_flag)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "_datetimestring is not returning a length 4 tuple"\
                 " and an integer");
@@ -725,7 +725,7 @@ _convert_from_datetime_tuple(PyObject *obj)
     }
 
     /* Create new timedelta or datetime dtype */
-    if (PyObject_IsTrue(datetime)) {
+    if (PyObject_IsTrue(datetime_flag)) {
         new = PyArray_DescrNewFromType(PyArray_DATETIME);
     }
     else {
@@ -1814,15 +1814,12 @@ arraydescr_metadata_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_hasobject_get(PyArray_Descr *self)
 {
-    PyObject *res;
     if (PyDataType_FLAGCHK(self, NPY_ITEM_HASOBJECT)) {
-        res = Py_True;
+        Py_RETURN_TRUE;
     }
     else {
-        res = Py_False;
+        Py_RETURN_FALSE;
     }
-    Py_INCREF(res);
-    return res;
 }
 
 static PyObject *
@@ -2693,10 +2690,10 @@ arraydescr_str(PyArray_Descr *self)
         PyObject *sh;
         p = arraydescr_str(self->subarray->base);
         if (!self->subarray->base->names && !self->subarray->base->subarray) {
-            PyObject *t=PyUString_FromString("'");
-            PyUString_Concat(&p, t);
-            PyUString_ConcatAndDel(&t, p);
-            p = t;
+            PyObject *tmp=PyUString_FromString("'");
+            PyUString_Concat(&p, tmp);
+            PyUString_ConcatAndDel(&tmp, p);
+            p = tmp;
         }
         PyUString_ConcatAndDel(&t, p);
         PyUString_ConcatAndDel(&t, PyUString_FromString(","));

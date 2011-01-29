@@ -37,7 +37,7 @@
                                         ") <- BIG PROBLEM!!!!" : ")") : ""); \
     fflush(stdout);
 #else
-#define NPY_DT_DBG_REFTRACE(...)
+#define NPY_DT_DBG_REFTRACE(msg, ref)
 #endif
 /**********************************************/
 
@@ -137,15 +137,18 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
 
 /************************** ZERO-PADDED COPY ******************************/
 
+typedef void (*free_strided_transfer_data)(void *);
+typedef void *(*copy_strided_transfer_data)(void *);
+
 /* Does a zero-padded copy */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     npy_intp dst_itemsize;
 } _strided_zero_pad_data;
 
 /* zero-padded data copy function */
-_strided_zero_pad_data *_strided_zero_pad_data_copy(
-                                        _strided_zero_pad_data *data)
+void *_strided_zero_pad_data_copy(void *data)
 {
     _strided_zero_pad_data *newdata = 
             (_strided_zero_pad_data *)PyArray_malloc(
@@ -220,7 +223,8 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
 
 /* Wraps a transfer function + data in alignment code */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     PyArray_StridedTransferFn *wrapped,
                 *tobuffer, *frombuffer;
     void *wrappeddata, *todata, *fromdata;
@@ -229,17 +233,19 @@ typedef struct {
 } _align_wrap_data;
 
 /* transfer data free function */
-void _align_wrap_data_free(_align_wrap_data *data)
+void _align_wrap_data_free(void *data)
 {
-    PyArray_FreeStridedTransferData(data->wrappeddata);
-    PyArray_FreeStridedTransferData(data->todata);
-    PyArray_FreeStridedTransferData(data->fromdata);
+    _align_wrap_data *d = (_align_wrap_data *)data;
+    PyArray_FreeStridedTransferData(d->wrappeddata);
+    PyArray_FreeStridedTransferData(d->todata);
+    PyArray_FreeStridedTransferData(d->fromdata);
     PyArray_free(data);
 }
 
 /* transfer data copy function */
-_align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
+void *_align_wrap_data_copy(void *data)
 {
+    _align_wrap_data *d = (_align_wrap_data *)data;
     _align_wrap_data *newdata;
     npy_intp basedatasize, datasize;
 
@@ -247,8 +253,8 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
     basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
     /* Add space for two low level buffers */
     datasize = basedatasize +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*data->src_itemsize +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*data->dst_itemsize;
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*d->src_itemsize +
+                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*d->dst_itemsize;
 
     /* Allocate the data, and populate it */
     newdata = (_align_wrap_data *)PyArray_malloc(datasize);
@@ -261,14 +267,14 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
                 NPY_LOWLEVEL_BUFFER_BLOCKSIZE*newdata->src_itemsize;
     if (newdata->wrappeddata != NULL) {
         newdata->wrappeddata =
-                        PyArray_CopyStridedTransferData(data->wrappeddata);
+                        PyArray_CopyStridedTransferData(d->wrappeddata);
         if (newdata->wrappeddata == NULL) {
             PyArray_free(newdata);
             return NULL;
         }
     }
     if (newdata->todata != NULL) {
-        newdata->todata = PyArray_CopyStridedTransferData(data->todata);
+        newdata->todata = PyArray_CopyStridedTransferData(d->todata);
         if (newdata->todata == NULL) {
             PyArray_FreeStridedTransferData(newdata->wrappeddata);
             PyArray_free(newdata);
@@ -276,7 +282,7 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
         }
     }
     if (newdata->fromdata != NULL) {
-        newdata->fromdata = PyArray_CopyStridedTransferData(data->fromdata);
+        newdata->fromdata = PyArray_CopyStridedTransferData(d->fromdata);
         if (newdata->fromdata == NULL) {
             PyArray_FreeStridedTransferData(newdata->wrappeddata);
             PyArray_FreeStridedTransferData(newdata->todata);
@@ -285,7 +291,7 @@ _align_wrap_data *_align_wrap_data_copy(_align_wrap_data *data)
         }
     }
 
-    return newdata;
+    return (void *)newdata;
 }
 
 static void
@@ -417,8 +423,8 @@ wrap_aligned_contig_transfer_function(
         PyErr_NoMemory();
         return NPY_FAIL;
     }
-    data->freefunc = (void *)&_align_wrap_data_free;
-    data->copyfunc = (void *)&_align_wrap_data_copy;
+    data->freefunc = &_align_wrap_data_free;
+    data->copyfunc = &_align_wrap_data_copy;
     data->tobuffer = tobuffer;
     data->todata = todata;
     data->frombuffer = frombuffer;
@@ -446,21 +452,23 @@ wrap_aligned_contig_transfer_function(
 /*************************** WRAP DTYPE COPY/SWAP *************************/
 /* Wraps the dtype copy swap function */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     PyArray_CopySwapNFunc *copyswapn;
     int swap;
     PyArrayObject *arr;
 } _wrap_copy_swap_data;
 
 /* wrap copy swap data free function */
-void _wrap_copy_swap_data_free(_wrap_copy_swap_data *data)
+void _wrap_copy_swap_data_free(void *data)
 {
-    Py_DECREF(data->arr);
+    _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
+    Py_DECREF(d->arr);
     PyArray_free(data);
 }
 
 /* wrap copy swap data copy function */
-_wrap_copy_swap_data *_wrap_copy_swap_data_copy(_wrap_copy_swap_data *data)
+void *_wrap_copy_swap_data_copy(void *data)
 {
     _wrap_copy_swap_data *newdata = 
         (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
@@ -471,7 +479,7 @@ _wrap_copy_swap_data *_wrap_copy_swap_data_copy(_wrap_copy_swap_data *data)
     memcpy(newdata, data, sizeof(_wrap_copy_swap_data));
     Py_INCREF(newdata->arr);
 
-    return newdata;
+    return (void *)newdata;
 }
 
 static void
@@ -533,21 +541,23 @@ wrap_copy_swap_function(int aligned,
 
 /* Does a simple aligned cast */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     PyArray_VectorUnaryFunc *castfunc;
     PyArrayObject *aip, *aop;
 } _strided_cast_data;
 
 /* strided cast data free function */
-void _strided_cast_data_free(_strided_cast_data *data)
+void _strided_cast_data_free(void *data)
 {
-    Py_DECREF(data->aip);
-    Py_DECREF(data->aop);
+    _strided_cast_data *d = (_strided_cast_data *)data;
+    Py_DECREF(d->aip);
+    Py_DECREF(d->aop);
     PyArray_free(data);
 }
 
 /* strided cast data copy function */
-_strided_cast_data *_strided_cast_data_copy(_strided_cast_data *data)
+void *_strided_cast_data_copy(void *data)
 {
     _strided_cast_data *newdata = 
             (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
@@ -559,7 +569,7 @@ _strided_cast_data *_strided_cast_data_copy(_strided_cast_data *data)
     Py_INCREF(newdata->aip);
     Py_INCREF(newdata->aop);
 
-    return newdata;
+    return (void *)newdata;
 }
 
 static void
@@ -731,8 +741,8 @@ get_nbo_cast_transfer_function(int aligned,
         *out_transferdata = NULL;
         return NPY_FAIL;
     }
-    data->freefunc = (void*)&_strided_cast_data_free;
-    data->copyfunc = (void*)&_strided_cast_data_copy;
+    data->freefunc = &_strided_cast_data_free;
+    data->copyfunc = &_strided_cast_data_copy;
     data->castfunc = castfunc;
     /*
      * TODO: This is a hack so the cast functions have an array.
@@ -948,7 +958,8 @@ get_cast_transfer_function(int aligned,
 
 /* Copies 1 element to N contiguous elements */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     PyArray_StridedTransferFn *stransfer;
     void *data;
     npy_intp N, dst_itemsize;
@@ -958,16 +969,18 @@ typedef struct {
 } _one_to_n_data;
 
 /* transfer data free function */
-void _one_to_n_data_free(_one_to_n_data *data)
+void _one_to_n_data_free(void *data)
 {
-    PyArray_FreeStridedTransferData(data->data);
-    PyArray_FreeStridedTransferData(data->data_finish_src);
+    _one_to_n_data *d = (_one_to_n_data *)data;
+    PyArray_FreeStridedTransferData(d->data);
+    PyArray_FreeStridedTransferData(d->data_finish_src);
     PyArray_free(data);
 }
 
 /* transfer data copy function */
-_one_to_n_data *_one_to_n_data_copy(_one_to_n_data *data)
+void *_one_to_n_data_copy(void *data)
 {
+    _one_to_n_data *d = (_one_to_n_data *)data;
     _one_to_n_data *newdata;
 
     /* Allocate the data, and populate it */
@@ -976,16 +989,16 @@ _one_to_n_data *_one_to_n_data_copy(_one_to_n_data *data)
         return NULL;
     }
     memcpy(newdata, data, sizeof(_one_to_n_data));
-    if (data->data != NULL) {
-        newdata->data = PyArray_CopyStridedTransferData(data->data);
+    if (d->data != NULL) {
+        newdata->data = PyArray_CopyStridedTransferData(d->data);
         if (newdata->data == NULL) {
             PyArray_free(newdata);
             return NULL;
         }
     }
-    if (data->data_finish_src != NULL) {
+    if (d->data_finish_src != NULL) {
         newdata->data_finish_src =
-                        PyArray_CopyStridedTransferData(data->data_finish_src);
+                        PyArray_CopyStridedTransferData(d->data_finish_src);
         if (newdata->data_finish_src == NULL) {
             PyArray_FreeStridedTransferData(newdata->data);
             PyArray_free(newdata);
@@ -993,7 +1006,7 @@ _one_to_n_data *_one_to_n_data_copy(_one_to_n_data *data)
         }
     }
 
-    return newdata;
+    return (void *)newdata;
 }
 
 static void
@@ -1153,22 +1166,25 @@ get_one_to_n_transfer_function(int aligned,
 
 /* Copies N contiguous elements to N contiguous elements */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     PyArray_StridedTransferFn *stransfer;
     void *data;
     npy_intp N, src_itemsize, dst_itemsize;
 } _n_to_n_data;
 
 /* transfer data free function */
-void _n_to_n_data_free(_n_to_n_data *data)
+void _n_to_n_data_free(void *data)
 {
-    PyArray_FreeStridedTransferData(data->data);
+    _n_to_n_data *d = (_n_to_n_data *)data;
+    PyArray_FreeStridedTransferData(d->data);
     PyArray_free(data);
 }
 
 /* transfer data copy function */
-_n_to_n_data *_n_to_n_data_copy(_n_to_n_data *data)
+void *_n_to_n_data_copy(void *data)
 {
+    _n_to_n_data *d = (_n_to_n_data *)data;
     _n_to_n_data *newdata;
 
     /* Allocate the data, and populate it */
@@ -1178,14 +1194,14 @@ _n_to_n_data *_n_to_n_data_copy(_n_to_n_data *data)
     }
     memcpy(newdata, data, sizeof(_n_to_n_data));
     if (newdata->data != NULL) {
-        newdata->data = PyArray_CopyStridedTransferData(data->data);
+        newdata->data = PyArray_CopyStridedTransferData(d->data);
         if (newdata->data == NULL) {
             PyArray_free(newdata);
             return NULL;
         }
     }
 
-    return newdata;
+    return (void *)newdata;
 }
 
 static void
@@ -1323,7 +1339,8 @@ typedef struct {
 
 /* Copies element with subarray broadcasting */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     PyArray_StridedTransferFn *stransfer;
     void *data;
     npy_intp src_N, dst_N, src_itemsize, dst_itemsize;
@@ -1337,20 +1354,21 @@ typedef struct {
 } _subarray_broadcast_data;
 
 /* transfer data free function */
-void _subarray_broadcast_data_free(_subarray_broadcast_data *data)
+void _subarray_broadcast_data_free(void *data)
 {
-    PyArray_FreeStridedTransferData(data->data);
-    PyArray_FreeStridedTransferData(data->data_decsrcref);
-    PyArray_FreeStridedTransferData(data->data_decdstref);
+    _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
+    PyArray_FreeStridedTransferData(d->data);
+    PyArray_FreeStridedTransferData(d->data_decsrcref);
+    PyArray_FreeStridedTransferData(d->data_decdstref);
     PyArray_free(data);
 }
 
 /* transfer data copy function */
-_subarray_broadcast_data *_subarray_broadcast_data_copy(
-                                _subarray_broadcast_data *data)
+void *_subarray_broadcast_data_copy( void *data)
 {
+    _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
     _subarray_broadcast_data *newdata;
-    npy_intp run_count = data->run_count, structsize;
+    npy_intp run_count = d->run_count, structsize;
 
     structsize = sizeof(_subarray_broadcast_data) +
                         run_count*sizeof(_subarray_broadcast_offsetrun);
@@ -1361,25 +1379,25 @@ _subarray_broadcast_data *_subarray_broadcast_data_copy(
         return NULL;
     }
     memcpy(newdata, data, structsize);
-    if (data->data != NULL) {
-        newdata->data = PyArray_CopyStridedTransferData(data->data);
+    if (d->data != NULL) {
+        newdata->data = PyArray_CopyStridedTransferData(d->data);
         if (newdata->data == NULL) {
             PyArray_free(newdata);
             return NULL;
         }
     }
-    if (data->data_decsrcref != NULL) {
+    if (d->data_decsrcref != NULL) {
         newdata->data_decsrcref =
-                        PyArray_CopyStridedTransferData(data->data_decsrcref);
+                        PyArray_CopyStridedTransferData(d->data_decsrcref);
         if (newdata->data_decsrcref == NULL) {
             PyArray_FreeStridedTransferData(newdata->data);
             PyArray_free(newdata);
             return NULL;
         }
     }
-    if (data->data_decdstref != NULL) {
+    if (d->data_decdstref != NULL) {
         newdata->data_decdstref =
-                        PyArray_CopyStridedTransferData(data->data_decdstref);
+                        PyArray_CopyStridedTransferData(d->data_decdstref);
         if (newdata->data_decdstref == NULL) {
             PyArray_FreeStridedTransferData(newdata->data);
             PyArray_FreeStridedTransferData(newdata->data_decsrcref);
@@ -1403,16 +1421,16 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
     npy_intp run, run_count = d->run_count,
             src_subitemsize = d->src_itemsize,
             dst_subitemsize = d->dst_itemsize;
-    npy_intp index, offset, count;
+    npy_intp loop_index, offset, count;
     char *dst_ptr;
     _subarray_broadcast_offsetrun *offsetruns = &d->offsetruns;
 
     while (N > 0) {
-        index = 0;
+        loop_index = 0;
         for (run = 0; run < run_count; ++run) {
             offset = offsetruns[run].offset;
             count = offsetruns[run].count;
-            dst_ptr = dst + index*dst_subitemsize;
+            dst_ptr = dst + loop_index*dst_subitemsize;
             if (offset != -1) {
                 subtransfer(dst_ptr, dst_subitemsize,
                             src + offset, src_subitemsize,
@@ -1422,7 +1440,7 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
             else {
                 memset(dst_ptr, 0, count*dst_subitemsize);
             }
-            index += count;
+            loop_index += count;
         }
 
         src += src_stride;
@@ -1449,16 +1467,16 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
             src_subitemsize = d->src_itemsize,
             dst_subitemsize = d->dst_itemsize,
             src_subN = d->src_N;
-    npy_intp index, offset, count;
+    npy_intp loop_index, offset, count;
     char *dst_ptr;
     _subarray_broadcast_offsetrun *offsetruns = &d->offsetruns;
 
     while (N > 0) {
-        index = 0;
+        loop_index = 0;
         for (run = 0; run < run_count; ++run) {
             offset = offsetruns[run].offset;
             count = offsetruns[run].count;
-            dst_ptr = dst + index*dst_subitemsize;
+            dst_ptr = dst + loop_index*dst_subitemsize;
             if (offset != -1) {
                 subtransfer(dst_ptr, dst_subitemsize,
                             src + offset, src_subitemsize,
@@ -1473,7 +1491,7 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
                 }
                 memset(dst_ptr, 0, count*dst_subitemsize);
             }
-            index += count;
+            loop_index += count;
         }
 
         if (stransfer_decsrcref != NULL) {
@@ -1501,7 +1519,8 @@ get_subarray_broadcast_transfer_function(int aligned,
                             int *out_needs_api)
 {
     _subarray_broadcast_data *data;
-    npy_intp structsize, index, run, run_size, src_index, dst_index, i, ndim;
+    npy_intp structsize, loop_index, run, run_size,
+             src_index, dst_index, i, ndim;
     _subarray_broadcast_offsetrun *offsetruns;
     
     structsize = sizeof(_subarray_broadcast_data) +
@@ -1577,10 +1596,10 @@ get_subarray_broadcast_transfer_function(int aligned,
     /* Calculate the broadcasting and set the offsets */
     offsetruns = &data->offsetruns;
     ndim = (src_shape.len > dst_shape.len) ? src_shape.len : dst_shape.len;
-    for (index = 0; index < dst_size; ++index) {
+    for (loop_index = 0; loop_index < dst_size; ++loop_index) {
         npy_intp src_factor = 1;
 
-        dst_index = index;
+        dst_index = loop_index;
         src_index = 0;
         for (i = ndim-1; i >= 0; --i) {
             npy_intp coord = 0, shape;
@@ -1613,24 +1632,24 @@ get_subarray_broadcast_transfer_function(int aligned,
         }
         /* Set the offset */
         if (src_index == -1) {
-            offsetruns[index].offset = -1;
+            offsetruns[loop_index].offset = -1;
         }
         else {
-            offsetruns[index].offset = src_index;
+            offsetruns[loop_index].offset = src_index;
         }
     }
 
     /* Run-length encode the result */
     run = 0;
     run_size = 1;
-    for (index = 1; index < dst_size; ++index) {
+    for (loop_index = 1; loop_index < dst_size; ++loop_index) {
         if (offsetruns[run].offset == -1) {
             /* Stop the run when there's a valid index again */
-            if (offsetruns[index].offset != -1) {
+            if (offsetruns[loop_index].offset != -1) {
                 offsetruns[run].count = run_size;
                 run++;
                 run_size = 1;
-                offsetruns[run].offset = offsetruns[index].offset;
+                offsetruns[run].offset = offsetruns[loop_index].offset;
             }
             else {
                 run_size++;
@@ -1638,11 +1657,12 @@ get_subarray_broadcast_transfer_function(int aligned,
         }
         else {
             /* Stop the run when there's a valid index again */
-            if (offsetruns[index].offset != offsetruns[index-1].offset + 1) {
+            if (offsetruns[loop_index].offset !=
+                            offsetruns[loop_index-1].offset + 1) {
                 offsetruns[run].count = run_size;
                 run++;
                 run_size = 1;
-                offsetruns[run].offset = offsetruns[index].offset;
+                offsetruns[run].offset = offsetruns[loop_index].offset;
             }
             else {
                 run_size++;
@@ -1783,30 +1803,35 @@ typedef struct {
 } _single_field_transfer;
 
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     npy_intp field_count;
     
     _single_field_transfer fields;
 } _field_transfer_data;
 
 /* transfer data free function */
-void _field_transfer_data_free(_field_transfer_data *data)
+void _field_transfer_data_free(void *data)
 {
-    npy_intp i, field_count = data->field_count;
-    _single_field_transfer *fields = &data->fields;
+    _field_transfer_data *d = (_field_transfer_data *)data;
+    npy_intp i, field_count;
+    _single_field_transfer *fields;
+
+    field_count = d->field_count;
+    fields = &d->fields;
 
     for (i = 0; i < field_count; ++i) {
         PyArray_FreeStridedTransferData(fields[i].data);
     }
-    PyArray_free(data);
+    PyArray_free(d);
 }
 
 /* transfer data copy function */
-_field_transfer_data *_field_transfer_data_copy(
-                                _field_transfer_data *data)
+void *_field_transfer_data_copy(void *data)
 {
+    _field_transfer_data *d = (_field_transfer_data *)data;
     _field_transfer_data *newdata;
-    npy_intp i, field_count = data->field_count, structsize;
+    npy_intp i, field_count = d->field_count, structsize;
     _single_field_transfer *fields, *newfields;
 
     structsize = sizeof(_field_transfer_data) +
@@ -1817,9 +1842,9 @@ _field_transfer_data *_field_transfer_data_copy(
     if (newdata == NULL) {
         return NULL;
     }
-    memcpy(newdata, data, structsize);
+    memcpy(newdata, d, structsize);
     /* Copy all the fields transfer data */
-    fields = &data->fields;
+    fields = &d->fields;
     newfields = &newdata->fields;
     for (i = 0; i < field_count; ++i) {
         if (fields[i].data != NULL) {
@@ -1836,7 +1861,7 @@ _field_transfer_data *_field_transfer_data_copy(
         
     }
 
-    return newdata;
+    return (void *)newdata;
 }
 
 static void
@@ -2442,13 +2467,13 @@ get_bool_setdstone_transfer_function(npy_intp dst_stride,
 
 /* Sets dest to zero */
 typedef struct {
-    void *freefunc, *copyfunc;
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
     npy_intp dst_itemsize;
 } _dst_memset_zero_data;
 
 /* zero-padded data copy function */
-_dst_memset_zero_data *_dst_memset_zero_data_copy(
-                                        _dst_memset_zero_data *data)
+void *_dst_memset_zero_data_copy(void *data)
 {
     _dst_memset_zero_data *newdata = 
             (_dst_memset_zero_data *)PyArray_malloc(
@@ -2561,8 +2586,8 @@ get_setdstzero_transfer_function(int aligned,
     else if (dst_dtype->subarray != NULL) {
         PyArray_Dims dst_shape = {NULL, -1};
         npy_intp dst_size = 1;
-        PyArray_StridedTransferFn *stransfer;
-        void *data;
+        PyArray_StridedTransferFn *contig_stransfer;
+        void *contig_data;
 
         if (out_needs_api) {
             *out_needs_api = 1;
@@ -2581,17 +2606,17 @@ get_setdstzero_transfer_function(int aligned,
         if (get_setdstzero_transfer_function(aligned,
                                 dst_dtype->subarray->base->elsize,
                                 dst_dtype->subarray->base,
-                                &stransfer, &data,
+                                &contig_stransfer, &contig_data,
                                 out_needs_api) != NPY_SUCCEED) {
             return NPY_FAIL;
         }
 
-        if (wrap_transfer_function_n_to_n(stransfer, data,
+        if (wrap_transfer_function_n_to_n(contig_stransfer, contig_data,
                             0, dst_stride,
                             0, dst_dtype->subarray->base->elsize,
                             dst_size,
                             out_stransfer, out_transferdata) != NPY_SUCCEED) {
-            PyArray_FreeStridedTransferData(data);
+            PyArray_FreeStridedTransferData(contig_data);
             return NPY_FAIL;
         }
     }
