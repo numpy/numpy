@@ -187,12 +187,35 @@ static void
     npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
     npy_@name@ *data_out = (npy_@name@ *)dataptr[1];
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+#if !@complex@
+            data_out[@i@] = @to@(@from@(data0[@i@]) +
+                                 @from@(data_out[@i@]));
+#else
+            ((npy_@temp@ *)data_out + 2*@i@)[0] =
+                                    ((npy_@temp@ *)data0 + 2*@i@)[0] +
+                                    ((npy_@temp@ *)data_out + 2*@i@)[0];
+            ((npy_@temp@ *)data_out + 2*@i@)[1] =
+                                    ((npy_@temp@ *)data0 + 2*@i@)[1] +
+                                    ((npy_@temp@ *)data_out + 2*@i@)[1];
+#endif
+/**end repeat2**/
+        case 0:
+            return;
+    }
+
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
 #if !@complex@
         data_out[@i@] = @to@(@from@(data0[@i@]) +
@@ -205,31 +228,13 @@ static void
                                 ((npy_@temp@ *)data0 + 2*@i@)[1] +
                                 ((npy_@temp@ *)data_out + 2*@i@)[1];
 #endif
-        data0 += 16;
-        data_out += 16;
 /**end repeat2**/
+        data0 += 8;
+        data_out += 8;
     }
 
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        return;
-    }
-#if !@complex@
-    data_out[@i@] = @to@(@from@(data0[@i@]) +
-                         @from@(data_out[@i@]));
-#else
-    ((npy_@temp@ *)data_out + 2*@i@)[0] =
-                            ((npy_@temp@ *)data0 + 2*@i@)[0] +
-                            ((npy_@temp@ *)data_out + 2*@i@)[0];
-    ((npy_@temp@ *)data_out + 2*@i@)[1] =
-                            ((npy_@temp@ *)data0 + 2*@i@)[1] +
-                            ((npy_@temp@ *)data_out + 2*@i@)[1];
-#endif
-/**end repeat2**/
+    goto finish_after_unrolled_loop;
 }
 
 #elif @nop@ == 2 && !@complex@
@@ -245,36 +250,54 @@ static void
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b;
 #endif
+    
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+            data_out[@i@] = @to@(@from@(data0[@i@]) *
+                                 @from@(data1[@i@]) +
+                                 @from@(data_out[@i@]));
+/**end repeat2**/
+        case 0:
+            return;
+    }
 
 #if EINSUM_USE_SSE1 && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
         EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 16 */
-        while (count >= 16) {
-            count -= 16;
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
             a = _mm_mul_ps(_mm_load_ps(data0+@i@), _mm_load_ps(data1+@i@));
             b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
             _mm_store_ps(data_out+@i@, b);
 /**end repeat2**/
-            data0 += 16;
-            data1 += 16;
-            data_out += 16;
+            data0 += 8;
+            data1 += 8;
+            data_out += 8;
         }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
     }
 #endif
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
         a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
@@ -282,30 +305,20 @@ static void
 /**end repeat2**/
 #else
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         data_out[@i@] = @to@(@from@(data0[@i@]) *
                              @from@(data1[@i@]) +
                              @from@(data_out[@i@]));
 /**end repeat2**/
 #endif
-        data0 += 16;
-        data1 += 16;
-        data_out += 16;
+        data0 += 8;
+        data1 += 8;
+        data_out += 8;
     }
 
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        return;
-    }
-    data_out[@i@] = @to@(@from@(data0[@i@]) *
-                         @from@(data1[@i@]) +
-                         @from@(data_out[@i@]));
-/**end repeat2**/
+    goto finish_after_unrolled_loop;
 }
 
 /* Some extra specializations for the two operand case */
@@ -319,37 +332,55 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value0_sse;
-
-    value0_sse = _mm_set_ps1(value0);
 #endif
 
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+            data_out[@i@] = @to@(value0 *
+                                 @from@(data1[@i@]) +
+                                 @from@(data_out[@i@]));
+/**end repeat2**/
+        case 0:
+            return;
+    }
+
 #if EINSUM_USE_SSE1 && @float32@
+    value0_sse = _mm_set_ps1(value0);
+
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 16 */
-        while (count >= 16) {
-            count -= 16;
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
             a = _mm_mul_ps(value0_sse, _mm_load_ps(data1+@i@));
             b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
             _mm_store_ps(data_out+@i@, b);
 /**end repeat2**/
-            data1 += 16;
-            data_out += 16;
+            data1 += 8;
+            data_out += 8;
         }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
     }
 #endif
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
         a = _mm_mul_ps(value0_sse, _mm_loadu_ps(data1+@i@));
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
@@ -357,29 +388,19 @@ static void
 /**end repeat2**/
 #else
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         data_out[@i@] = @to@(value0 *
                              @from@(data1[@i@]) +
                              @from@(data_out[@i@]));
 /**end repeat2**/
 #endif
-        data1 += 16;
-        data_out += 16;
+        data1 += 8;
+        data_out += 8;
     }
 
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        return;
-    }
-    data_out[@i@] = @to@(value0 *
-                         @from@(data1[@i@]) +
-                         @from@(data_out[@i@]));
-/**end repeat2**/
+    goto finish_after_unrolled_loop;
 }
 
 static void
@@ -392,37 +413,55 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value1_sse;
-
-    value1_sse = _mm_set_ps1(value1);
 #endif
 
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+            data_out[@i@] = @to@(@from@(data0[@i@])*
+                                 value1  +
+                                 @from@(data_out[@i@]));
+/**end repeat2**/
+        case 0:
+            return;
+    }
+
 #if EINSUM_USE_SSE1 && @float32@
+    value1_sse = _mm_set_ps1(value1);
+
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 16 */
-        while (count >= 16) {
-            count -= 16;
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
             a = _mm_mul_ps(_mm_load_ps(data0+@i@), value1_sse);
             b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
             _mm_store_ps(data_out+@i@, b);
 /**end repeat2**/
-            data0 += 16;
-            data_out += 16;
+            data0 += 8;
+            data_out += 8;
         }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
     }
 #endif
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
         a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), value1_sse);
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
@@ -430,29 +469,19 @@ static void
 /**end repeat2**/
 #else
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         data_out[@i@] = @to@(@from@(data0[@i@])*
                              value1  +
                              @from@(data_out[@i@]));
 /**end repeat2**/
 #endif
-        data0 += 16;
-        data_out += 16;
+        data0 += 8;
+        data_out += 8;
     }
 
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        return;
-    }
-    data_out[@i@] = @to@(@from@(data0[@i@])*
-                         value1  +
-                         @from@(data_out[@i@]));
-/**end repeat2**/
+    goto finish_after_unrolled_loop;
 }
 
 static void
@@ -467,15 +496,29 @@ static void
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
 
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+            accum += @from@(data0[@i@]) * @from@(data1[@i@]);
+/**end repeat2**/
+        case 0:
+            *(npy_@name@ *)dataptr[2] += @to@(accum);
+            return;
+    }
+
 #if EINSUM_USE_SSE1 && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1)) {
-        /* Unroll the loop by 16 */
-        while (count >= 16) {
-            count -= 16;
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
             /*
              * NOTE: This accumulation changes the order, so will likely
@@ -484,19 +527,31 @@ static void
             a = _mm_mul_ps(_mm_load_ps(data0+@i@), _mm_load_ps(data1+@i@));
             accum_sse = _mm_add_ps(accum_sse, a);
 /**end repeat2**/
-            data0 += 16;
-            data1 += 16;
+            data0 += 8;
+            data1 += 8;
         }
+
+#if EINSUM_USE_SSE1 && @float32@
+        /* Add the four SSE values and put in accum */
+        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
+        accum_sse = _mm_add_ps(a, accum_sse);
+        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
+        accum_sse = _mm_add_ps(a, accum_sse);
+        _mm_store_ss(&accum, accum_sse);
+#endif
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
     }
 #endif
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
         /*
          * NOTE: This accumulation changes the order, so will likely
@@ -507,13 +562,13 @@ static void
 /**end repeat2**/
 #else
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         accum += @from@(data0[@i@]) * @from@(data1[@i@]);
 /**end repeat2**/
 #endif
-        data0 += 16;
-        data1 += 16;
+        data0 += 8;
+        data1 += 8;
     }
 
 #if EINSUM_USE_SSE1 && @float32@
@@ -524,19 +579,9 @@ static void
     accum_sse = _mm_add_ps(a, accum_sse);
     _mm_store_ss(&accum, accum_sse);
 #endif
+
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        *(npy_@name@ *)dataptr[2] += @to@(accum);
-        return;
-    }
-    accum += @from@(data0[@i@]) * @from@(data1[@i@]);
-/**end repeat2**/
-
-    *(npy_@name@ *)dataptr[2] += @to@(accum);
+    goto finish_after_unrolled_loop;
 }
 
 static void
@@ -551,15 +596,29 @@ static void
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
 
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+            accum += @from@(data1[@i@]);
+/**end repeat2**/
+        case 0:
+            *(npy_@name@ *)dataptr[2] += @to@(value0 * accum);
+            return;
+    }
+
 #if EINSUM_USE_SSE1 && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data1)) {
-        /* Unroll the loop by 16 */
-        while (count >= 16) {
-            count -= 16;
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
             /*
              * NOTE: This accumulation changes the order, so will likely
@@ -567,18 +626,30 @@ static void
              */
             accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data1+@i@));
 /**end repeat2**/
-            data1 += 16;
+            data1 += 8;
         }
+
+#if EINSUM_USE_SSE1 && @float32@
+        /* Add the four SSE values and put in accum */
+        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
+        accum_sse = _mm_add_ps(a, accum_sse);
+        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
+        accum_sse = _mm_add_ps(a, accum_sse);
+        _mm_store_ss(&accum, accum_sse);
+#endif
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
     }
 #endif
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
         /*
          * NOTE: This accumulation changes the order, so will likely
@@ -588,12 +659,12 @@ static void
 /**end repeat2**/
 #else
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         accum += @from@(data1[@i@]);
 /**end repeat2**/
 #endif
-        data1 += 16;
+        data1 += 8;
     }
 
 #if EINSUM_USE_SSE1 && @float32@
@@ -604,19 +675,9 @@ static void
     accum_sse = _mm_add_ps(a, accum_sse);
     _mm_store_ss(&accum, accum_sse);
 #endif
+
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        *(npy_@name@ *)dataptr[2] += @to@(value0 * accum);
-        return;
-    }
-    accum += @from@(data1[@i@]);
-/**end repeat2**/
-
-    *(npy_@name@ *)dataptr[2] += @to@(value0 * accum);
+    goto finish_after_unrolled_loop;
 }
 
 static void
@@ -631,15 +692,29 @@ static void
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
 
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat2
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+            accum += @from@(data0[@i@]);
+/**end repeat2**/
+        case 0:
+            *(npy_@name@ *)dataptr[2] += @to@(accum * value1);
+            return;
+    }
+
 #if EINSUM_USE_SSE1 && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data0)) {
-        /* Unroll the loop by 16 */
-        while (count >= 16) {
-            count -= 16;
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
             /*
              * NOTE: This accumulation changes the order, so will likely
@@ -647,18 +722,30 @@ static void
              */
             accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data0+@i@));
 /**end repeat2**/
-            data0 += 16;
+            data0 += 8;
         }
+
+#if EINSUM_USE_SSE1 && @float32@
+        /* Add the four SSE values and put in accum */
+        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
+        accum_sse = _mm_add_ps(a, accum_sse);
+        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
+        accum_sse = _mm_add_ps(a, accum_sse);
+        _mm_store_ss(&accum, accum_sse);
+#endif
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
     }
 #endif
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
- * #i = 0, 4, 8, 12#
+ * #i = 0, 4#
  */
         /*
          * NOTE: This accumulation changes the order, so will likely
@@ -668,12 +755,12 @@ static void
 /**end repeat2**/
 #else
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         accum += @from@(data0[@i@]);
 /**end repeat2**/
 #endif
-        data0 += 16;
+        data0 += 8;
     }
 
 #if EINSUM_USE_SSE1 && @float32@
@@ -684,19 +771,9 @@ static void
     accum_sse = _mm_add_ps(a, accum_sse);
     _mm_store_ss(&accum, accum_sse);
 #endif
+
     /* Finish off the loop */
-
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-    if (count-- == 0) {
-        *(npy_@name@ *)dataptr[2] += @to@(accum * value1);
-        return;
-    }
-    accum += @from@(data0[@i@]);
-/**end repeat2**/
-
-    *(npy_@name@ *)dataptr[2] += @to@(accum * value1);
+    goto finish_after_unrolled_loop;
 }
 
 #elif @nop@ == 3 && !@complex@
@@ -710,27 +787,27 @@ static void
     npy_@name@ *data2 = (npy_@name@ *)dataptr[2];
     npy_@name@ *data_out = (npy_@name@ *)dataptr[3];
 
-    /* Unroll the loop by 16 */
-    while (count >= 16) {
-        count -= 16;
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
 
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         data_out[@i@] = @to@(@from@(data0[@i@]) *
                              @from@(data1[@i@]) *
                              @from@(data2[@i@]) +
                              @from@(data_out[@i@]));
 /**end repeat2**/
-        data0 += 16;
-        data1 += 16;
-        data_out += 16;
+        data0 += 8;
+        data1 += 8;
+        data_out += 8;
     }
 
     /* Finish off the loop */
 
 /**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
     if (count-- == 0) {
         return;
@@ -981,38 +1058,76 @@ bool_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
     char *data_out = dataptr[@nop@];
 #endif
 
-/* Unroll the loop by 16 for fixed-size nop */
 #if (@nop@ <= 3)
-    while (count >= 16) {
-        count -= 16;
+/* This is placed before the main loop to make small counts faster */
+finish_after_unrolled_loop:
+    switch (count) {
+/**begin repeat1
+ * #i = 6, 5, 4, 3, 2, 1, 0#
+ */
+        case @i@+1:
+#  if @nop@ == 1
+            *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
+                                            (*((npy_bool *)data_out + @i@));
+            data0 += 8*sizeof(npy_bool);
+            data_out += 8*sizeof(npy_bool);
+#  elif @nop@ == 2
+            *((npy_bool *)data_out + @i@) =
+                            ((*((npy_bool *)data0 + @i@)) &&
+                             (*((npy_bool *)data1 + @i@))) ||
+                                (*((npy_bool *)data_out + @i@));
+            data0 += 8*sizeof(npy_bool);
+            data1 += 8*sizeof(npy_bool);
+            data_out += 8*sizeof(npy_bool);
+#  elif @nop@ == 3
+            *((npy_bool *)data_out + @i@) =
+                           ((*((npy_bool *)data0 + @i@)) &&
+                            (*((npy_bool *)data1 + @i@)) &&
+                            (*((npy_bool *)data2 + @i@))) ||
+                                (*((npy_bool *)data_out + @i@));
+            data0 += 8*sizeof(npy_bool);
+            data1 += 8*sizeof(npy_bool);
+            data2 += 8*sizeof(npy_bool);
+            data_out += 8*sizeof(npy_bool);
+#  endif
+/**end repeat1**/
+        case 0:
+            return;
+    }
+#endif
+
+/* Unroll the loop by 8 for fixed-size nop */
+#if (@nop@ <= 3)
+    while (count >= 8) {
+        count -= 8;
 #else
     while (count--) {
 #endif
 
 #  if @nop@ == 1
 /**begin repeat1
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
                                         (*((npy_bool *)data_out + @i@));
 /**end repeat1**/
-        data0 += 16*sizeof(npy_bool);
-        data_out += 16*sizeof(npy_bool);
+        data0 += 8*sizeof(npy_bool);
+        data_out += 8*sizeof(npy_bool);
 #  elif @nop@ == 2
 /**begin repeat1
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         *((npy_bool *)data_out + @i@) =
                         ((*((npy_bool *)data0 + @i@)) &&
                          (*((npy_bool *)data1 + @i@))) ||
                             (*((npy_bool *)data_out + @i@));
 /**end repeat1**/
-        data0 += 16*sizeof(npy_bool);
-        data1 += 16*sizeof(npy_bool);
-        data_out += 16*sizeof(npy_bool);
+        data0 += 8*sizeof(npy_bool);
+        data1 += 8*sizeof(npy_bool);
+        data_out += 8*sizeof(npy_bool);
 #  elif @nop@ == 3
 /**begin repeat1
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
+ * #i = 0, 1, 2, 3, 4, 5, 6, 7#
  */
         *((npy_bool *)data_out + @i@) =
                        ((*((npy_bool *)data0 + @i@)) &&
@@ -1020,10 +1135,10 @@ bool_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
                         (*((npy_bool *)data2 + @i@))) ||
                             (*((npy_bool *)data_out + @i@));
 /**end repeat1**/
-        data0 += 16*sizeof(npy_bool);
-        data1 += 16*sizeof(npy_bool);
-        data2 += 16*sizeof(npy_bool);
-        data_out += 16*sizeof(npy_bool);
+        data0 += 8*sizeof(npy_bool);
+        data1 += 8*sizeof(npy_bool);
+        data2 += 8*sizeof(npy_bool);
+        data_out += 8*sizeof(npy_bool);
 #  else
         npy_bool temp = *(npy_bool *)dataptr[0];
         int i;
@@ -1039,51 +1154,7 @@ bool_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
 
     /* If the loop was unrolled, we need to finish it off */
 #if (@nop@ <= 3)
-#  if @nop@ == 1
-/**begin repeat1
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-        if (count-- == 0) {
-            return;
-        }
-        *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
-                                        (*((npy_bool *)data_out + @i@));
-/**end repeat1**/
-        data0 += 16*sizeof(npy_bool);
-        data_out += 16*sizeof(npy_bool);
-#  elif @nop@ == 2
-/**begin repeat1
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-        if (count-- == 0) {
-            return;
-        }
-        *((npy_bool *)data_out + @i@) =
-                        ((*((npy_bool *)data0 + @i@)) &&
-                         (*((npy_bool *)data1 + @i@))) ||
-                            (*((npy_bool *)data_out + @i@));
-/**end repeat1**/
-        data0 += 16*sizeof(npy_bool);
-        data1 += 16*sizeof(npy_bool);
-        data_out += 16*sizeof(npy_bool);
-#  elif @nop@ == 3
-/**begin repeat1
- * #i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
- */
-        if (count-- == 0) {
-            return;
-        }
-        *((npy_bool *)data_out + @i@) =
-                       ((*((npy_bool *)data0 + @i@)) &&
-                        (*((npy_bool *)data1 + @i@)) &&
-                        (*((npy_bool *)data2 + @i@))) ||
-                            (*((npy_bool *)data_out + @i@));
-/**end repeat1**/
-        data0 += 16*sizeof(npy_bool);
-        data1 += 16*sizeof(npy_bool);
-        data2 += 16*sizeof(npy_bool);
-        data_out += 16*sizeof(npy_bool);
-#  endif
+    goto finish_after_unrolled_loop;
 #endif
 }
 
@@ -2405,7 +2476,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (!needs_api) {
             NPY_BEGIN_THREADS;
         }
+        /*printf("Einsum loop\n");*/
         do {
+            /*printf("Einsum inner loop count %d\n", (int)*countptr);*/
             sop(nop, dataptr, stride, *countptr);
         } while(iternext(iter));
         if (!needs_api) {

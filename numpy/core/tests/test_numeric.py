@@ -342,6 +342,8 @@ class TestEinSum(TestCase):
         assert_equal(b, a.swapaxes(0,1))
 
     def check_einsum_sums(self, dtype):
+        # Check various sums.  Does many sizes to exercise unrolled loops.
+
         # sum(a, axis=-1)
         for n in range(1,17):
             a = np.arange(n, dtype=dtype)
