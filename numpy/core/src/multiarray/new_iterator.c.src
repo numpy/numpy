@@ -4416,10 +4416,16 @@ npyiter_allocate_arrays(NpyIter *iter,
     npy_intp idim, ndim = NIT_NDIM(iter);
     npy_intp iiter, niter = NIT_NITER(iter);
 
-    NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+    NpyIter_BufferData *bufferdata = NULL;
     PyArrayObject **op = NIT_OPERANDS(iter);
 
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        bufferdata = NIT_BUFFERDATA(iter);
+    }
+
+
     for (iiter = 0; iiter < niter; ++iiter) {
+        /* NULL means an output the iterator should allocate */
         if (op[iiter] == NULL) {
             PyArrayObject *out;
             PyTypeObject *op_subtype;
@@ -4453,6 +4459,50 @@ npyiter_allocate_arrays(NpyIter *iter,
             op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
         }
+        /*
+         * If casting is required, the operand is read-only, and
+         * it's an array scalar, make a copy whether or not the
+         * copy flag is enabled.
+         */
+        else if ((op_itflags[iiter]&(NPY_OP_ITFLAG_CAST|
+                         NPY_OP_ITFLAG_READ|
+                         NPY_OP_ITFLAG_WRITE)) == (NPY_OP_ITFLAG_CAST|
+                                                   NPY_OP_ITFLAG_READ) &&
+                          PyArray_NDIM(op[iiter]) == 0) {
+            PyArrayObject *temp;
+            Py_INCREF(op_dtype[iiter]);
+            temp = (PyArrayObject *)PyArray_NewFromDescr(
+                                        &PyArray_Type, op_dtype[iiter],
+                                        0, NULL, NULL, NULL, 0, NULL);
+            if (temp == NULL) {
+                return 0;
+            }
+            if (PyArray_CopyInto(temp, op[iiter]) != 0) {
+                Py_DECREF(temp);
+                return 0;
+            }
+            Py_DECREF(op[iiter]);
+            op[iiter] = temp;
+
+            /*
+             * Now we need to replace the pointers and strides with values
+             * from the temporary array.
+             */
+            npyiter_replace_axisdata(iter, iiter, op[iiter], 0,
+                    PyArray_DATA(op[iiter]), NULL);
+
+            /*
+             * New arrays are aligned need no cast, and in the case
+             * of scalars, always have stride 0 so never need buffering
+             */
+            op_itflags[iiter] |= (NPY_OP_ITFLAG_ALIGNED|
+                                  NPY_OP_ITFLAG_BUFNEVER);
+            op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
+            if (itflags&NPY_ITFLAG_BUFFER) {
+                NBF_STRIDES(bufferdata)[iiter] = 0;
+            }
+        }
+        /* If casting is required and permitted */
         else if ((op_itflags[iiter]&NPY_OP_ITFLAG_CAST) &&
                    (op_flags[iiter]&(NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY))) {
             PyArrayObject *temp;
@@ -4494,7 +4544,10 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iiter, op[iiter], ondim,
                     PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
 
-            /* The temporary copy is aligned and needs no cast */
+            /*
+             * The temporary copy is aligned and needs no cast, and
+             * has constant stride 0 so never needs buffering
+             */
             op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
         }
@@ -4543,16 +4596,9 @@ npyiter_allocate_arrays(NpyIter *iter,
          * If no alignment, byte swap, or casting is needed, and
          * the inner stride of this operand works for the whole
          * array, we can set NPY_OP_ITFLAG_BUFNEVER.
-         * But, if buffering is enabled, write-buffering must be
-         * one-to-one, because the buffering write back won't combine
-         * values correctly. This test doesn't catch everything, but it will
-         * catch the most common case of a broadcasting a write-buffered
-         * dimension.
          */
-        if ((itflags&NPY_ITFLAG_BUFFER) &&
-                        (!(op_itflags[iiter]&NPY_OP_ITFLAG_CAST) ||
-                          (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE))) {
-            int is_one_to_one = 1;
+        if (PyArray_NDIM(op[iiter]) > 0 && (itflags&NPY_ITFLAG_BUFFER) &&
+                        !(op_itflags[iiter]&NPY_OP_ITFLAG_CAST)) {
             npy_intp stride, shape, innerstride = 0, innershape;
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
             npy_intp sizeof_axisdata =
@@ -4562,9 +4608,6 @@ npyiter_allocate_arrays(NpyIter *iter,
                 innershape = NAD_SHAPE(axisdata);
                 if (innershape != 1) {
                     innerstride = NAD_STRIDES(axisdata)[iiter];
-                    if (innerstride == 0) {
-                        is_one_to_one = 0;
-                    }
                     break;
                 }
                 NIT_ADVANCE_AXISDATA(axisdata, 1);
@@ -4576,9 +4619,6 @@ npyiter_allocate_arrays(NpyIter *iter,
                 stride = NAD_STRIDES(axisdata)[iiter];
                 shape = NAD_SHAPE(axisdata);
                 if (shape != 1) {
-                    if (stride == 0) {
-                        is_one_to_one = 0;
-                    }
                     /*
                      * If N times the inner stride doesn't equal this
                      * stride, the multi-dimensionality is needed.
@@ -4597,22 +4637,9 @@ npyiter_allocate_arrays(NpyIter *iter,
              * Set that stride, because it may not belong to the first
              * dimension.
              */
-            if (idim == ndim && !(op_itflags[iiter]&NPY_OP_ITFLAG_CAST)) {
+            if (idim == ndim) {
                 op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
                 NBF_STRIDES(bufferdata)[iiter] = innerstride;
-            }
-            else if (!is_one_to_one &&
-                        (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
-                        !(flags&NPY_ITER_REDUCE_OK)) {
-                NPY_IT_DBG_PRINTF("Iterator: %d %d %d\n",
-                            (int)(!is_one_to_one),
-                            (int)((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE)),
-                            (int)(!(flags&NPY_ITER_REDUCE_OK)));
-                PyErr_SetString(PyExc_ValueError,
-                        "Iterator operand requires write buffering, "
-                        "but has dimensions which have been broadcasted "
-                        "and would be combined incorrectly");
-                return 0;
             }
         }
     }
@@ -5201,9 +5228,15 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         reduce_outeraxisdata = NIT_INDEX_AXISDATA(axisdata, reduce_outerdim);
         NBF_SIZE(bufferdata) = reduce_innersize;
         NBF_REDUCE_POS(bufferdata) = 0;
-        NBF_REDUCE_OUTERSIZE(bufferdata) = transfersize/reduce_innersize;
         NBF_REDUCE_OUTERDIM(bufferdata) = reduce_outerdim;
         NBF_BUFITEREND(bufferdata) = iterindex + reduce_innersize;
+        if (reduce_innersize == 0) {
+            NBF_REDUCE_OUTERSIZE(bufferdata) = 0;
+            return;
+        }
+        else {
+            NBF_REDUCE_OUTERSIZE(bufferdata) = transfersize/reduce_innersize;
+        }
     }
     else {
         NBF_SIZE(bufferdata) = transfersize;

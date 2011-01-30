@@ -1796,7 +1796,10 @@ iterator_loop(PyUFuncObject *self,
     if (NpyIter_GetIterSize(iter) != 0) {
 
         /* Reset the iterator with the base pointers from the wrapped outputs */
-        for (i = 0; i < niter; ++i) {
+        for (i = 0; i < nin; ++i) {
+            baseptrs[i] = PyArray_BYTES(op_it[i]);
+        }
+        for (i = nin; i < niter; ++i) {
             baseptrs[i] = PyArray_BYTES(op[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {

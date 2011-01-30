@@ -866,17 +866,21 @@ def test_iter_scalar_cast():
     assert_equal(i.dtypes[0], np.dtype('i4'))
     assert_equal(i.value.dtype, np.dtype('i4'))
     assert_equal(i.value, 3)
+    # Readonly scalars may be cast even without setting COPY or BUFFERED
+    i = newiter(3, [], [['readonly']], op_dtypes=[np.dtype('f8')])
+    assert_equal(i[0].dtype, np.dtype('f8'))
+    assert_equal(i[0], 3.)
 
 def test_iter_scalar_cast_errors():
     # Check that invalid casts are caught
 
-    # Need to allow casting for casts to occur
+    # Need to allow copying/buffering for write casts of scalars to occur
     assert_raises(TypeError, newiter, np.float32(2), [],
-                [['readonly']], op_dtypes=[np.dtype('f8')])
+                [['readwrite']], op_dtypes=[np.dtype('f8')])
     assert_raises(TypeError, newiter, 2.5, [],
-                [['readonly']], op_dtypes=[np.dtype('f4')])
-    # 'f8' -> 'f4' isn't a safe cast
-    assert_raises(TypeError, newiter, np.float64(2), [],
+                [['readwrite']], op_dtypes=[np.dtype('f4')])
+    # 'f8' -> 'f4' isn't a safe cast if the value would overflow
+    assert_raises(TypeError, newiter, np.float64(1e60), [],
                 [['readonly']],
                 casting='safe',
                 op_dtypes=[np.dtype('f4')])
@@ -951,7 +955,7 @@ def test_iter_object_arrays_conversions():
     a[:] = np.arange(6) + 98172488
     i = newiter(a, ['refs_ok','buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='O')
-    ob = i[0][...]
+    ob = i[0][()]
     rc = sys.getrefcount(ob)
     for x in i:
         x[...] += 1
