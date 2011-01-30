@@ -819,18 +819,31 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         return -1;
     }
 
+    if (index == Py_Ellipsis) {
+        /*
+         * Doing "a[...] += 1" triggers assigning an array to itself,
+         * so this check is needed.
+         */
+        if (self == op) {
+            return 0;
+        }
+        else {
+            return PyArray_CopyObject(self, op);
+        }
+    }
+
     if (self->nd == 0) {
         /*
          * Several different exceptions to the 0-d no-indexing rule
          *
-         *  1) ellipses
+         *  1) ellipses (handled above generally)
          *  2) empty tuple
          *  3) Using newaxis (None)
          *  4) Boolean mask indexing
          */
-        if (index == Py_Ellipsis || index == Py_None ||
-            (PyTuple_Check(index) && (0 == PyTuple_GET_SIZE(index) ||
-                                      count_new_axes_0d(index) > 0))) {
+        if (index == Py_None || (PyTuple_Check(index) &&
+                                        (0 == PyTuple_GET_SIZE(index) ||
+                                         count_new_axes_0d(index) > 0))) {
             return self->descr->f->setitem(op, self->data, self);
         }
         if (PyBool_Check(index) || PyArray_IsScalar(index, Bool) ||

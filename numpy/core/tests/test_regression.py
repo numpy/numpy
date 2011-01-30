@@ -1489,5 +1489,21 @@ class TestRegression(TestCase):
         assert_(np.array(np.float32(1.0)).flags.c_contiguous)
         assert_(np.array(np.float32(1.0)).flags.f_contiguous)
 
+    def test_object_array_self_reference(self):
+        # Object arrays with references to themselves can cause problems
+        a = np.array(0, dtype=object)
+        a[()] = a
+        assert_raises(ValueError, int, a)
+        assert_raises(ValueError, long, a)
+        assert_raises(ValueError, float, a)
+        assert_raises(ValueError, oct, a)
+        assert_raises(ValueError, hex, a)
+
+        # This was causing a to become like the above
+        a = np.array(0, dtype=object)
+        a[...] += 1
+        assert_equal(a, 1)
+
+
 if __name__ == "__main__":
     run_module_suite()
