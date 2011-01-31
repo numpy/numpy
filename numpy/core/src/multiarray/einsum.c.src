@@ -1216,153 +1216,185 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 
 typedef void (*sum_of_products_fn)(int, char **, npy_intp *, npy_intp);
 
+/* These tables need to match up with the type enum */
+
+static sum_of_products_fn _binary_specialization_table[NPY_NTYPES][5] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 0,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        0, 0, 0,
+ *        0, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_stride0_contig_outstride0_two,
+    &@name@_sum_of_products_stride0_contig_outcontig_two,
+    &@name@_sum_of_products_contig_stride0_outstride0_two,
+    &@name@_sum_of_products_contig_stride0_outcontig_two,
+    &@name@_sum_of_products_contig_contig_outstride0_two,
+},
+#else
+    {NULL, NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _binary_specialization_table */
+
+static sum_of_products_fn _outstride0_specialized_table[NPY_NTYPES][4] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        0, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_outstride0_any,
+    &@name@_sum_of_products_outstride0_one,
+    &@name@_sum_of_products_outstride0_two,
+    &@name@_sum_of_products_outstride0_three
+},
+#else
+    {NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _outstride0_specialized_table */
+
+static sum_of_products_fn _allcontig_specialized_table[NPY_NTYPES][4] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        0, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_contig_any,
+    &@name@_sum_of_products_contig_one,
+    &@name@_sum_of_products_contig_two,
+    &@name@_sum_of_products_contig_three
+},
+#else
+    {NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _allcontig_specialized_table */
+
+static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
+/**begin repeat
+ * #name = bool,
+ *         byte, ubyte,
+ *         short, ushort,
+ *         int, uint,
+ *         long, ulong,
+ *         longlong, ulonglong,
+ *         float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         object, string, unicode, void,
+ *         datetime, timedelta, half#
+ * #use = 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1,
+ *        1, 1, 1,
+ *        1, 1, 1,
+ *        0, 0, 0, 0,
+ *        0, 0, 1#
+ */
+#if @use@
+{
+    &@name@_sum_of_products_any,
+    &@name@_sum_of_products_one,
+    &@name@_sum_of_products_two,
+    &@name@_sum_of_products_three
+},
+#else
+    {NULL, NULL, NULL, NULL},
+#endif
+/**end repeat**/
+}; /* End of _unnspecialized_table */
+
 static sum_of_products_fn
 get_sum_of_products_function(int nop, int type_num,
                              npy_intp itemsize, npy_intp *fixed_strides)
 {
     int iop;
 
+    if (type_num >= NPY_NTYPES) {
+        return NULL;
+    }
+
     /* nop of 2 has more specializations */
     if (nop == 2) {
-        if (fixed_strides[0] == itemsize) {
-            if (fixed_strides[1] == itemsize) {
-                if (fixed_strides[2] == itemsize) {
-                    /* contig, contig, contig */
-                    switch (type_num) {
-/**begin repeat
- * #name = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble#
- * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
- */
-                        case NPY_@NAME@:
-                   return &@name@_sum_of_products_contig_two;
-/**end repeat**/
-                    }
-                }
-                else if (fixed_strides[2] == 0) {
-                    /* contig, contig, stride0 */
-                    switch (type_num) {
-/**begin repeat
- * #name = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble#
- * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
- */
-                        case NPY_@NAME@:
-                   return &@name@_sum_of_products_contig_contig_outstride0_two;
-/**end repeat**/
-                    }
-                }
-            }
-            else if (fixed_strides[1] == 0) {
-                if (fixed_strides[2] == itemsize) {
-                    /* contig, stride0, contig */
-                    switch (type_num) {
-/**begin repeat
- * #name = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble#
- * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
- */
-                        case NPY_@NAME@:
-                   return &@name@_sum_of_products_contig_stride0_outcontig_two;
-/**end repeat**/
-                    }
-                }
-                else if (fixed_strides[2] == 0) {
-                    /* contig, stride0, stride0 */
-                    switch (type_num) {
-/**begin repeat
- * #name = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble#
- * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
- */
-                        case NPY_@NAME@:
-                   return &@name@_sum_of_products_contig_stride0_outstride0_two;
-/**end repeat**/
-                    }
-                }
-            }
-        }
-        else if (fixed_strides[0] == 0) {
-            if (fixed_strides[1] == itemsize) {
-                if (fixed_strides[2] == itemsize) {
-                    /* stride0, contig, contig */
-                    switch (type_num) {
-/**begin repeat
- * #name = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble#
- * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
- */
-                        case NPY_@NAME@:
-                   return &@name@_sum_of_products_stride0_contig_outcontig_two;
-/**end repeat**/
-                    }
-                }
-                else if (fixed_strides[2] == 0) {
-                    /* stride0, contig, stride0 */
-                    switch (type_num) {
-/**begin repeat
- * #name = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble#
- * #NAME = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE#
- */
-                        case NPY_@NAME@:
-                   return &@name@_sum_of_products_stride0_contig_outstride0_two;
-/**end repeat**/
-                    }
-                }
+        /* Encode the zero/contiguous strides */
+        int code;
+        code = (fixed_strides[0] == 0) ? 0 :
+                    (fixed_strides[0] == itemsize) ? 2*2*1 : 8;
+        code += (fixed_strides[1] == 0) ? 0 :
+                    (fixed_strides[1] == itemsize) ? 2*1 : 8;
+        code += (fixed_strides[2] == 0) ? 0 :
+                    (fixed_strides[2] == itemsize) ? 1 : 8;
+        if (code >= 2 && code < 7) {
+            sum_of_products_fn ret =
+                        _binary_specialization_table[type_num][code-2];
+            if (ret != NULL) {
+                return ret;
             }
         }
     }
 
     /* Inner loop with an output stride of 0 */
     if (fixed_strides[nop] == 0) {
-        switch (type_num) {
-/**begin repeat
- * #name = bool,
- *         byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble,
- *         cfloat, cdouble, clongdouble#
- * #NAME = BOOL,
- *         BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE#
- */
-            case NPY_@NAME@:
-                switch (nop) {
-/**begin repeat1
- * #nop = 1, 2, 3, 1000#
- * #noplabel = one, two, three, any#
- */
-#if @nop@ <= 3
-                    case @nop@:
-#else
-                    default:
-#endif
-                        return &@name@_sum_of_products_outstride0_@noplabel@;
-/**end repeat1**/
-                }
-/**end repeat**/
-        }
+        return _outstride0_specialized_table[type_num][nop <= 3 ? nop : 0];
     }
 
     /* Check for all contiguous */
@@ -1374,69 +1406,11 @@ get_sum_of_products_function(int nop, int type_num,
 
     /* Contiguous loop */
     if (iop == nop) {
-        switch (type_num) {
-/**begin repeat
- * #name = bool,
- *         byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble,
- *         cfloat, cdouble, clongdouble#
- * #NAME = BOOL,
- *         BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE#
- */
-            case NPY_@NAME@:
-                switch (nop) {
-/**begin repeat1
- * #nop = 1, 2, 3, 1000#
- * #noplabel = one, two, three, any#
- */
-#if @nop@ <= 3
-                    case @nop@:
-#else
-                    default:
-#endif
-                        return &@name@_sum_of_products_contig_@noplabel@;
-/**end repeat1**/
-                }
-/**end repeat**/
-        }
+        return _allcontig_specialized_table[type_num][nop <= 3 ? nop : 0];
     }
 
-    /* Regular inner loop */
-    switch (type_num) {
-/**begin repeat
- * #name = bool,
- *         byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         half, float, double, longdouble,
- *         cfloat, cdouble, clongdouble#
- * #NAME = BOOL,
- *         BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE#
- */
-        case NPY_@NAME@:
-            switch (nop) {
-/**begin repeat1
- * #nop = 1, 2, 3, 1000#
- * #noplabel = one, two, three, any#
- */
-#if @nop@ <= 3
-                case @nop@:
-#else
-                default:
-#endif
-                    return &@name@_sum_of_products_@noplabel@;
-/**end repeat1**/
-            }
-/**end repeat**/
-    }
-
-    return NULL;
+    /* None of the above specializations caught it, general loops */
+    return _unspecialized_table[type_num][nop <= 3 ? nop : 0];
 }
 
 /*
