@@ -1540,13 +1540,16 @@ add_newdoc('numpy.core', 'einsum',
     ``np.einsum('ji', a)`` takes its transpose.
 
     The output can be controlled by specifying output subscript labels
-    as well.  This specifies the label order, and allows summing to be
-    disallowed or forced when desired.  The call ``np.einsum('i->', a)``
-    is equivalent to ``np.sum(a, axis=-1)``, and
-    ``np.einsum('ii->i', a)`` is equivalent to ``np.diag(a)``.
+    as well.  This specifies the label order, and allows summing to
+    be disallowed or forced when desired.  The call ``np.einsum('i->', a)``
+    is like ``np.sum(a, axis=-1)``, and ``np.einsum('ii->i', a)``
+    is like ``np.diag(a)``.  The difference is that ``einsum`` does not
+    allow broadcasting by default.
 
-    It is also possible to control how broadcasting occurs using
-    an ellipsis.  To take the trace along the first and last axes,
+    To enable and control broadcasting, use an ellipsis.  Default
+    NumPy-style broadcasting is done by adding an ellipsis
+    to the left of each term, like ``np.einsum('...ii->...i', a)``.
+    To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
     product with the left-most indices instead of rightmost, you can do
     ``np.einsum('ij...,jk...->ik...', a, b)``.
@@ -1624,7 +1627,7 @@ add_newdoc('numpy.core', 'einsum',
            [1, 4],
            [2, 5]])
 
-    >>> np.einsum(',', 3, c)
+    >>> np.einsum('..., ...', 3, c)
     array([[ 0,  3,  6],
            [ 9, 12, 15]])
     >>> np.multiply(3, c)
@@ -1643,7 +1646,7 @@ add_newdoc('numpy.core', 'einsum',
     array([[0, 1, 2, 3, 4],
            [0, 2, 4, 6, 8]])
 
-    >>> np.einsum('i...->', a)
+    >>> np.einsum('i...->...', a)
     array([50, 55, 60, 65, 70])
     >>> np.sum(a, axis=0)
     array([50, 55, 60, 65, 70])

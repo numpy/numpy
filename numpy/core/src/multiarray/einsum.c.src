@@ -46,6 +46,7 @@
 #define EINSUM_IS_SSE_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
 
 typedef enum {
+    BROADCAST_NONE,
     BROADCAST_LEFT,
     BROADCAST_RIGHT,
     BROADCAST_MIDDLE
@@ -1382,7 +1383,7 @@ parse_operand_subscripts(char *subscripts, int length,
                         EINSUM_BROADCAST *out_broadcast)
 {
     int i, idim, ndim_left, label;
-    int left_labels = 0, right_labels = 0;
+    int left_labels = 0, right_labels = 0, ellipsis = 0;
 
     /* Process the labels from the end until the ellipsis */
     idim = ndim-1;
@@ -1417,6 +1418,7 @@ parse_operand_subscripts(char *subscripts, int length,
         else if (label == '.') {
             /* A valid ellipsis */
             if (i >= 2 && subscripts[i-1] == '.' && subscripts[i-2] == '.') {
+                ellipsis = 1;
                 length = i-2;
                 break;
             }
@@ -1428,7 +1430,7 @@ parse_operand_subscripts(char *subscripts, int length,
                 
             }
         }
-        else {
+        else if (label != ' ') {
             PyErr_Format(PyExc_ValueError,
                         "invalid subscript '%c' in einstein sum "
                         "subscripts string, subscripts must "
@@ -1436,6 +1438,15 @@ parse_operand_subscripts(char *subscripts, int length,
             return 0;
         }
     }
+
+    if (!ellipsis && idim != -1) {
+        PyErr_Format(PyExc_ValueError,
+                    "operand has more dimensions than subscripts "
+                    "given in einstein sum, but no '...' ellipsis "
+                    "provided to broadcast the extra dimensions.");
+        return 0;
+    }
+
     /* Reduce ndim to just the dimensions left to fill at the beginning */
     ndim_left = idim+1;
     idim = 0;
@@ -1472,7 +1483,7 @@ parse_operand_subscripts(char *subscripts, int length,
                     return 0;
                 }
             }
-            else {
+            else if (label != ' ') {
                 PyErr_Format(PyExc_ValueError,
                             "invalid subscript '%c' in einstein sum "
                             "subscripts string, subscripts must "
@@ -1509,7 +1520,10 @@ parse_operand_subscripts(char *subscripts, int length,
         }
     }
 
-    if (left_labels && right_labels) {
+    if (!ellipsis) {
+        *out_broadcast = BROADCAST_NONE;
+    }
+    else if (left_labels && right_labels) {
         *out_broadcast = BROADCAST_MIDDLE;
     }
     else if (!left_labels) {
@@ -1535,7 +1549,7 @@ parse_output_subscripts(char *subscripts, int length,
                         EINSUM_BROADCAST *out_broadcast)
 {
     int i, nlabels, label, idim, ndim, ndim_left;
-    int left_labels = 0, right_labels = 0;
+    int left_labels = 0, right_labels = 0, ellipsis = 0;
 
     /* Count the labels, making sure they're all unique and valid */
     nlabels = 0;
@@ -1563,7 +1577,7 @@ parse_output_subscripts(char *subscripts, int length,
                 return -1;
             }
         }
-        else if (label != '.') {
+        else if (label != '.' && label != ' ') {
             PyErr_Format(PyExc_ValueError,
                         "invalid subscript '%c' in einstein sum "
                         "subscripts string, subscripts must "
@@ -1580,7 +1594,7 @@ parse_output_subscripts(char *subscripts, int length,
     for (i = length-1; i >= 0; --i) {
         label = subscripts[i];
         /* A label for an axis */
-        if (label != '.') {
+        if (label != '.' && label != ' ') {
             if (idim >= 0) {
                 out_labels[idim--] = label;
             }
@@ -1593,9 +1607,10 @@ parse_output_subscripts(char *subscripts, int length,
             right_labels = 1;
         }
         /* The end of the ellipsis */
-        else {
+        else if (label == '.') {
             /* A valid ellipsis */
             if (i >= 2 && subscripts[i-1] == '.' && subscripts[i-2] == '.') {
+                ellipsis = 1;
                 length = i-2;
                 break;
             }
@@ -1608,6 +1623,15 @@ parse_output_subscripts(char *subscripts, int length,
             }
         }
     }
+
+    if (!ellipsis && idim != -1) {
+        PyErr_SetString(PyExc_ValueError,
+                    "output has more dimensions than subscripts "
+                    "given in einstein sum, but no '...' ellipsis "
+                    "provided to broadcast the extra dimensions.");
+        return 0;
+    }
+
     /* Reduce ndim to just the dimensions left to fill at the beginning */
     ndim_left = idim+1;
     idim = 0;
@@ -1620,7 +1644,7 @@ parse_output_subscripts(char *subscripts, int length,
         for (i = 0; i < length; ++i) {
             label = subscripts[i];
             /* A label for an axis */
-            if (label != '.') {
+            if (label != '.' && label != ' ') {
                 if (idim < ndim_left) {
                     out_labels[idim++] = label;
                 }
@@ -1646,7 +1670,10 @@ parse_output_subscripts(char *subscripts, int length,
         out_labels[idim++] = 0;
     }
 
-    if (left_labels && right_labels) {
+    if (!ellipsis) {
+        *out_broadcast = BROADCAST_NONE;
+    }
+    else if (left_labels && right_labels) {
         *out_broadcast = BROADCAST_MIDDLE;
     }
     else if (!left_labels) {
@@ -1941,7 +1968,7 @@ prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
             }
         }
     }
-    /* Middle broadcasting */
+    /* Middle or None broadcasting */
     else {
         /* broadcast dimensions get placed in leftmost position */
         ibroadcast = 0; 
@@ -2133,8 +2160,13 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * that appeared once, in alphabetical order
      */
     if (subscripts[0] == '\0') {
-        char outsubscripts[NPY_MAXDIMS];
-        int length = 0;
+        char outsubscripts[NPY_MAXDIMS + 3];
+        int length;
+        /* If no output was specified, always broadcast left (like normal) */
+        outsubscripts[0] = '.';
+        outsubscripts[1] = '.';
+        outsubscripts[2] = '.';
+        length = 3;
         for (label = min_label; label <= max_label; ++label) {
             if (label_counts[label] == 1) {
                 if (length < NPY_MAXDIMS-1) {
