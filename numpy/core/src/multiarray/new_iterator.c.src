@@ -4632,10 +4632,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iiter, op[iiter], ondim,
                     PyArray_DATA(op[iiter]), op_axes ? op_axes[iiter] : NULL);
 
-            /*
-             * The temporary copy is aligned and needs no cast, and
-             * has constant stride 0 so never needs buffering
-             */
+            /* The temporary copy is aligned and needs no cast */
             op_itflags[iiter] |= NPY_OP_ITFLAG_ALIGNED;
             op_itflags[iiter] &= ~NPY_OP_ITFLAG_CAST;
         }

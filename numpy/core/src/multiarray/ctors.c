@@ -447,7 +447,8 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 }
 
 /* Gets a half-open range [start, end) which contains the array data */
-void _get_memory_extents(PyArrayObject *arr,
+NPY_NO_EXPORT void
+_get_array_memory_extents(PyArrayObject *arr,
                     npy_uintp *out_start, npy_uintp *out_end)
 {
     npy_uintp start, end;
@@ -481,12 +482,13 @@ void _get_memory_extents(PyArrayObject *arr,
 }
 
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
-int _arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
+NPY_NO_EXPORT int
+_arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
 {
     npy_uintp start1 = 0, start2 = 0, end1 = 0, end2 = 0;
 
-    _get_memory_extents(arr1, &start1, &end1);
-    _get_memory_extents(arr2, &start2, &end2);
+    _get_array_memory_extents(arr1, &start1, &end1);
+    _get_array_memory_extents(arr2, &start2, &end2);
 
     return (start1 < end2) && (start2 < end1);
 }
@@ -506,6 +508,38 @@ int _arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
 NPY_NO_EXPORT int
 PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
 {
+    /*
+     * Performance fix for expresions like "a[1000:6000] += x".  In this
+     * case, first an in-place add is done, followed by an assignment,
+     * equivalently expressed like this:
+     *
+     *   tmp = a[1000:6000]   # Calls array_subscript_nice in mapping.c
+     *   np.add(tmp, x, tmp)
+     *   a[1000:6000] = tmp   # Calls array_ass_sub in mapping.c
+     *
+     * In the assignment the underlying data type, shape, strides, and
+     * data pointers are identical, but src != dst because they are separately
+     * generated slices.  By detecting this and skipping the redundant
+     * copy of values to themselves, we potentially give a big speed boost.
+     *
+     * Note that we don't call EquivTypes, because usually the exact same
+     * dtype object will appear, and we don't want to slow things down
+     * with a complicated comparison.  The comparisons are ordered to
+     * try and reject this with as little work as possible.
+     */
+    if (PyArray_DATA(src) == PyArray_DATA(dst) &&
+                        PyArray_DESCR(src) == PyArray_DESCR(dst) &&
+                        PyArray_NDIM(src) == PyArray_NDIM(dst) &&
+                        PyArray_CompareLists(PyArray_DIMS(src),
+                                             PyArray_DIMS(dst),
+                                             PyArray_NDIM(src)) &&
+                        PyArray_CompareLists(PyArray_STRIDES(src),
+                                             PyArray_STRIDES(dst),
+                                             PyArray_NDIM(src))) {
+        /*printf("Redundant copy operation detected\n");*/
+        return 0;
+    }
+
     /*
      * A special case is when there is just one dimension with positive
      * strides, and we pass that to CopyInto, which correctly handles
