@@ -616,7 +616,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'))
             if not cond :
                 raise AssertionError(msg)
-    except ValueError as e:
+    except ValueError, e:
         header = 'error during assertion:\n%s\n\n%s' % (e, header)
         msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
                             names=('x', 'y'))
