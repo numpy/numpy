@@ -18,6 +18,32 @@
 
 #include "lowlevel_strided_loops.h"
 
+/********** ITERATOR CONSTRUCTION TIMING **************/
+#define NPY_IT_CONSTRUCTION_TIMING 0
+
+#if NPY_IT_CONSTRUCTION_TIMING
+#define NPY_IT_TIME_POINT(var) { \
+            unsigned int hi, lo; \
+            __asm__ __volatile__ ( \
+                "rdtsc" \
+                : "=d" (hi), "=a" (lo)); \
+            var = (((unsigned long long)hi) << 32) | lo; \
+        }
+#define NPY_IT_PRINT_TIME_START(var) { \
+            printf("%30s: start\n", #var); \
+            c_temp = var; \
+        }
+#define NPY_IT_PRINT_TIME_VAR(var) { \
+            printf("%30s: %6.0f clocks\n", #var, \
+                    ((double)(var-c_temp))); \
+            c_temp = var; \
+        }
+#else
+#define NPY_IT_TIME_POINT(var)
+#endif
+
+/******************************************************/
+
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_IT_DBG_TRACING 0
 
@@ -371,6 +397,28 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     double subtype_priority = NPY_PRIORITY;
     PyTypeObject *subtype = &PyArray_Type;
 
+#if NPY_IT_CONSTRUCTION_TIMING
+    npy_intp c_temp,
+            c_start,
+            c_check_op_axes,
+            c_check_global_flags,
+            c_calculate_ndim,
+            c_malloc,
+            c_prepare_operands,
+            c_fill_axisdata,
+            c_compute_index_strides,
+            c_apply_forced_iteration_order,
+            c_find_best_axis_ordering,
+            c_get_priority_subtype,
+            c_find_output_common_dtype,
+            c_check_casting,
+            c_allocate_arrays,
+            c_coalesce_axes,
+            c_prepare_buffers;
+#endif
+
+    NPY_IT_TIME_POINT(c_start);
+
     if (niter > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
             "Cannot construct an iterator with more than %d operands "
@@ -383,10 +431,14 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         return NULL;
     }
 
+    NPY_IT_TIME_POINT(c_check_op_axes);
+
     /* Check the global iterator flags */
     if (!npyiter_check_global_flags(flags, &itflags)) {
         return NULL;
     }
+
+    NPY_IT_TIME_POINT(c_check_global_flags);
 
     /* Calculate how many dimensions the iterator should have */
     ndim = npyiter_calculate_ndim(niter, op_in, oa_ndim);
@@ -397,9 +449,13 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         ndim = 1;
     }
 
+    NPY_IT_TIME_POINT(c_calculate_ndim);
+
     /* Allocate memory for the iterator */
     iter = (NpyIter*)
                 PyArray_malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, niter));
+
+    NPY_IT_TIME_POINT(c_malloc);
 
     /* Fill in the basic data */
     NIT_ITFLAGS(iter) = itflags;
@@ -424,6 +480,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /* Set resetindex to zero as well (it's just after the resetdataptr) */
     op_dataptr[niter] = 0;
 
+    NPY_IT_TIME_POINT(c_prepare_operands);
+
     /*
      * Initialize buffer data (must set the buffers and transferdata
      * to NULL before we might deallocate the iterator).
@@ -442,6 +500,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         NpyIter_Deallocate(iter);
         return NULL;
     }
+
+    NPY_IT_TIME_POINT(c_fill_axisdata);
 
     if (itflags&NPY_ITFLAG_BUFFER) {
         /*
@@ -466,6 +526,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     npyiter_compute_index_strides(iter, flags);
 
+    NPY_IT_TIME_POINT(c_compute_index_strides);
+
     /* Initialize the perm to the identity */
     perm = NIT_PERM(iter);
     for(idim = 0; idim < ndim; ++idim) {
@@ -477,6 +539,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     npyiter_apply_forced_iteration_order(iter, order);
     itflags = NIT_ITFLAGS(iter);
+
+    NPY_IT_TIME_POINT(c_apply_forced_iteration_order);
 
     /* Set some flags for allocated outputs */
     for (iiter = 0; iiter < niter; ++iiter) {
@@ -515,10 +579,14 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         itflags = NIT_ITFLAGS(iter);
     }
 
+    NPY_IT_TIME_POINT(c_find_best_axis_ordering);
+
     if (need_subtype) {
         npyiter_get_priority_subtype(niter, op, op_itflags,
                                      &subtype_priority, &subtype);
     }
+
+    NPY_IT_TIME_POINT(c_get_priority_subtype);
 
     /*
      * If an automatically allocated output didn't have a specified
@@ -544,9 +612,11 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             NPY_IT_DBG_PRINTF("Iterator: Replacing all data types\n");
             /* Replace all the data types */
             for (iiter = 0; iiter < niter; ++iiter) {
-                Py_XDECREF(op_dtype[iiter]);
-                Py_INCREF(dtype);
-                op_dtype[iiter] = dtype;
+                if (op_dtype[iiter] != dtype) {
+                    Py_XDECREF(op_dtype[iiter]);
+                    Py_INCREF(dtype);
+                    op_dtype[iiter] = dtype;
+                }
             }
         }
         else {
@@ -562,6 +632,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         Py_DECREF(dtype);
     }
 
+    NPY_IT_TIME_POINT(c_find_output_common_dtype);
+
     /*
      * All of the data types have been settled, so it's time
      * to check that data type conversions are following the
@@ -571,6 +643,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         NpyIter_Deallocate(iter);
         return NULL;
     }
+
+    NPY_IT_TIME_POINT(c_check_casting);
 
     /*
      * At this point, the iteration order has been finalized. so
@@ -583,6 +657,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         NpyIter_Deallocate(iter);
         return NULL;
     }
+
+    NPY_IT_TIME_POINT(c_allocate_arrays);
 
     /*
      * Finally, if coords weren't requested,
@@ -601,6 +677,8 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
         op_itflags = NIT_OPITFLAGS(iter);
         op_dataptr = NIT_RESETDATAPTR(iter);
     }
+
+    NPY_IT_TIME_POINT(c_coalesce_axes);
 
     /*
      * Now that the axes are finished, check whether we can apply
@@ -656,6 +734,29 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
             npyiter_copy_to_buffers(iter, NULL);
         }
     }
+
+    NPY_IT_TIME_POINT(c_prepare_buffers);
+
+#if NPY_IT_CONSTRUCTION_TIMING
+    printf("\nIterator construction timing:\n");
+    NPY_IT_PRINT_TIME_START(c_start);
+    NPY_IT_PRINT_TIME_VAR(c_check_op_axes);
+    NPY_IT_PRINT_TIME_VAR(c_check_global_flags);
+    NPY_IT_PRINT_TIME_VAR(c_calculate_ndim);
+    NPY_IT_PRINT_TIME_VAR(c_malloc);
+    NPY_IT_PRINT_TIME_VAR(c_prepare_operands);
+    NPY_IT_PRINT_TIME_VAR(c_fill_axisdata);
+    NPY_IT_PRINT_TIME_VAR(c_compute_index_strides);
+    NPY_IT_PRINT_TIME_VAR(c_apply_forced_iteration_order);
+    NPY_IT_PRINT_TIME_VAR(c_find_best_axis_ordering);
+    NPY_IT_PRINT_TIME_VAR(c_get_priority_subtype);
+    NPY_IT_PRINT_TIME_VAR(c_find_output_common_dtype);
+    NPY_IT_PRINT_TIME_VAR(c_check_casting);
+    NPY_IT_PRINT_TIME_VAR(c_allocate_arrays);
+    NPY_IT_PRINT_TIME_VAR(c_coalesce_axes);
+    NPY_IT_PRINT_TIME_VAR(c_prepare_buffers);
+    printf("\n");
+#endif
 
     return iter;
 }
@@ -3242,297 +3343,200 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
     npy_intp iiter, niter = NIT_NITER(iter);
 
     npy_intp ondim;
-    char *odataptr;
-    NpyIter_AxisData *axisdata0, *axisdata;
+    NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
-    PyArrayObject **op = NIT_OPERANDS(iter);
+    PyArrayObject **op = NIT_OPERANDS(iter), *op_cur;
+    npy_intp broadcast_shape[NPY_MAXDIMS];
 
-    axisdata0 = NIT_AXISDATA(iter);
-    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
-
-    /* Process the first operand */
-    if (op_axes == NULL || op_axes[0] == NULL) {
-        /* Default broadcasting rules if op_axes is not specified */
-        axisdata = axisdata0;
-        ondim = (op[0] == NULL) ? 0 : PyArray_NDIM(op[0]);
-        odataptr = op_dataptr[0];
-        /* Possible if op_axes are being used, but op_axes[0] is NULL */
-        if (ondim > ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator input has more dimensions than allowed "
-                    "by the 'op_axes' specified");
-            return 0;
-        }
-        for (idim = 0; idim < ondim; ++idim) {
-            npy_intp shape;
-
-            /* op[0] != NULL, because we set ondim to 0 in that case */
-            shape = PyArray_DIM(op[0], ondim-idim-1);
-
-            NAD_SHAPE(axisdata) = shape;
-            NAD_COORD(axisdata) = 0;
-            if (shape == 1) {
-                NAD_STRIDES(axisdata)[0] = 0;
-            }
-            else {
-                NAD_STRIDES(axisdata)[0] = PyArray_STRIDE(op[0], ondim-idim-1);
-            }
-            NAD_PTRS(axisdata)[0] = odataptr;
-
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-        }
-        for (idim = ondim; idim < ndim; ++idim) {
-            NAD_SHAPE(axisdata) = 1;
-            NAD_COORD(axisdata) = 0;
-            NAD_STRIDES(axisdata)[0] = 0;
-            NAD_PTRS(axisdata)[0] = odataptr;
-
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-        }
+    /* First broadcast the shapes together */
+    for (idim = 0; idim < ndim; ++idim) {
+        broadcast_shape[idim] = 1;
     }
-    else {
-        npy_intp *axes = op_axes[0];
+    for (iiter = 0; iiter < niter; ++iiter) {
+        op_cur = op[iiter];
+        if (op_cur != NULL) {
+            npy_intp *shape = PyArray_DIMS(op_cur);
+            ondim = PyArray_NDIM(op_cur);
 
-        /* Use op_axes to choose the axes */
-        axisdata = axisdata0;
-        ondim = (op[0] == NULL) ? ndim : PyArray_NDIM(op[0]);
-        odataptr = op_dataptr[0];
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp i = axes[ndim-idim-1];
-            if (i < 0) {
-                NAD_SHAPE(axisdata) = 1;
-                NAD_COORD(axisdata) = 0;
-                NAD_STRIDES(axisdata)[0] = 0;
-                NAD_PTRS(axisdata)[0] = odataptr;
-            }
-            else if (i < ondim) {
-                npy_intp shape;
-
-                if (op[0] != NULL) {
-                    shape = PyArray_DIM(op[0], i);
-                }
-                else {
-                    shape = 1;
-                }
-
-                NAD_SHAPE(axisdata) = shape;
-                NAD_COORD(axisdata) = 0;
-                if (shape == 1) {
-                    NAD_STRIDES(axisdata)[0] = 0;
-                }
-                else {
-                    NAD_STRIDES(axisdata)[0] = PyArray_STRIDE(op[0], i);
-                }
-                NAD_PTRS(axisdata)[0] = odataptr;
-            }
-            else {
-                PyErr_Format(PyExc_ValueError,
-                        "Iterator input op_axes[0][%d] (==%d) is not a valid "
-                        "axis of op[0], which has %d dimensions",
-                        (int)(ndim-idim-1), (int)i, (int)ondim);
-                return 0;
-            }
-
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-        }
-    }
-
-    /*
-     * Process the rest of the operands, using the broadcasting rules
-     * to combine them.
-     */
-    for (iiter = 1; iiter < niter; ++iiter) {
-        if (op_axes == NULL || op_axes[iiter] == NULL) {
-            axisdata = axisdata0;
-            ondim = (op[iiter] == NULL) ? 0 : PyArray_NDIM(op[iiter]);
-            odataptr = op_dataptr[iiter];
-            /* Possible if op_axes are being used, but op_axes[iiter] is NULL */
-            if (ondim > ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "input operand has more dimensions than allowed "
-                        "by the axis remapping");
-                return 0;
-            }
-            for (idim = 0; idim < ondim; ++idim) {
-                npy_intp shape;
-
-                /* op[iiter] != NULL, because we set ondim to 0 in that case */
-                shape = PyArray_DIM(op[iiter], ondim-idim-1);
-
-                if (shape == 1) {
-                    NAD_STRIDES(axisdata)[iiter] = 0;
-                }
-                else {
-                    if (NAD_SHAPE(axisdata) == 1) {
-                        NAD_SHAPE(axisdata) = shape;
-                    }
-                    else if (NAD_SHAPE(axisdata) != shape) {
-                        goto broadcast_error;
-                    }
-                    NAD_STRIDES(axisdata)[iiter] = PyArray_STRIDE(
-                                                      op[iiter], ondim-idim-1);
-                }
-                NAD_PTRS(axisdata)[iiter] = odataptr;
-
-                NIT_ADVANCE_AXISDATA(axisdata, 1);
-            }
-            for (idim = ondim; idim < ndim; ++idim) {
-                NAD_STRIDES(axisdata)[iiter] = 0;
-                NAD_PTRS(axisdata)[iiter] = odataptr;
-
-                NIT_ADVANCE_AXISDATA(axisdata, 1);
-            }
-        }
-        else {
-            npy_intp *axes = op_axes[iiter];
-
-            /* Use op_axes to choose the axes */
-            axisdata = axisdata0;
-            ondim = (op[iiter] == NULL) ? ndim : PyArray_NDIM(op[iiter]);
-            odataptr = op_dataptr[iiter];
-            for (idim = 0; idim < ndim; ++idim) {
-                npy_intp i = axes[ndim-idim-1];
-                if (i < 0) {
-                    NAD_STRIDES(axisdata)[iiter] = 0;
-                    NAD_PTRS(axisdata)[iiter] = odataptr;
-                }
-                else if (i < ondim) {
-                    npy_intp shape;
-
-                    if (op[iiter] != NULL) {
-                        shape = PyArray_DIM(op[iiter], i);
-                    }
-                    else {
-                        shape = 1;
-                    }
-
-                    if (shape == 1) {
-                        NAD_STRIDES(axisdata)[iiter] = 0;
-                    }
-                    else {
-                        if (NAD_SHAPE(axisdata) == 1) {
-                            NAD_SHAPE(axisdata) = shape;
-                        }
-                        else if (NAD_SHAPE(axisdata) != shape) {
-                            goto broadcast_error;
-                        }
-                        NAD_STRIDES(axisdata)[iiter] =
-                                                PyArray_STRIDE(op[iiter], i);
-                    }
-                    NAD_PTRS(axisdata)[iiter] = odataptr;
-                }
-                else {
-                    PyErr_Format(PyExc_ValueError,
-                            "Iterator input op_axes[%d][%d] (==%d) is not a "
-                            "valid axis of op[%d], which has %d dimensions ",
-                            (int)iiter, (int)(ndim-idim-1), (int)i,
-                            (int)iiter, (int)ondim);
+            if (op_axes == NULL || op_axes[iiter] == NULL) {
+                /*
+                 * Possible if op_axes are being used, but
+                 * op_axes[iiter] is NULL
+                 */
+                if (ondim > ndim) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "input operand has more dimensions than allowed "
+                            "by the axis remapping");
                     return 0;
                 }
-
-                NIT_ADVANCE_AXISDATA(axisdata, 1);
+                for (idim = 0; idim < ondim; ++idim) {
+                    npy_intp bshape = broadcast_shape[idim+ndim-ondim],
+                                      op_shape = shape[idim];
+                    if (bshape == 1) {
+                        broadcast_shape[idim+ndim-ondim] = op_shape;
+                    }
+                    else if (bshape != op_shape && op_shape != 1) {
+                        goto broadcast_error;
+                    }
+                }
+            }
+            else {
+                npy_intp *axes = op_axes[iiter];
+                for (idim = 0; idim < ndim; ++idim) {
+                    npy_intp i = axes[idim];
+                    if (i >= 0) {
+                        if (i < ondim) {
+                            npy_intp bshape = broadcast_shape[idim],
+                                              op_shape = shape[i];
+                            if (bshape == 1) {
+                                broadcast_shape[idim] = op_shape;
+                            }
+                            else if (bshape != op_shape && op_shape != 1) {
+                                goto broadcast_error;
+                            }
+                        }
+                        else {
+                            PyErr_Format(PyExc_ValueError,
+                                    "Iterator input op_axes[%d][%d] (==%d) "
+                                    "is not a valid axis of op[%d], which "
+                                    "has %d dimensions ",
+                                    (int)iiter, (int)(ndim-idim-1), (int)i,
+                                    (int)iiter, (int)ondim);
+                            return 0;
+                        }
+                    }
+                }
             }
         }
     }
 
-    /* Go through and check for operands for broadcasting and reduction */
-    for (iiter = 0; iiter < niter; ++iiter) {
-        if (op[iiter] != NULL) {
-            /*
-             * If broadcasting is disallowed for this operand,
-             * unless scalars are output, which means all operands are scalar
-             * and no broadcasting errors could occur
-             */
-            if ((op_flags[iiter]&NPY_ITER_NO_BROADCAST) && !output_scalars) {
-                npy_intp *axes;
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
 
-                axes = op_axes ? op_axes[iiter] : NULL;
-                axisdata = axisdata0;
-                for (idim = 0; idim < ndim; ++idim) {
-                    npy_intp i;
-                    if (axes) {
-                        i = axes[ndim-idim-1];
-                    }
-                    else {
-                        i = ndim-idim-1;
-                    }
-                    if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
-                        if (PyArray_DIM(op[iiter], i) != NAD_SHAPE(axisdata)) {
+    /* Now process the operands, filling in the axisdata */
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp bshape = broadcast_shape[ndim-idim-1];
+        npy_intp *strides = NAD_STRIDES(axisdata);
+
+        NAD_SHAPE(axisdata) = bshape;
+        NAD_COORD(axisdata) = 0;
+        memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*niter);
+
+        for (iiter = 0; iiter < niter; ++iiter) {
+            op_cur = op[iiter];
+
+            if (op_axes == NULL || op_axes[iiter] == NULL) {
+                if (op_cur == NULL) {
+                    strides[iiter] = 0;
+                }
+                else {
+                    ondim = PyArray_NDIM(op_cur);
+                    if (bshape == 1) {
+                        strides[iiter] = 0;
+                        if (idim >= ondim && !output_scalars &&
+                                        (op_flags[iiter]&NPY_ITER_NO_BROADCAST)) {
                             goto operand_different_than_broadcast;
                         }
                     }
-                    /*
-                     * Also disallow broadcasting by adding additional
-                     * dimensions, unless that part of the broadcasting
-                     * was done explicitly through op_axes.
-                     */
-                    else if (!axes) {
-                        goto operand_different_than_broadcast;
-                    }
-                    /* If its writeable, this may cause a reduction */
-                    else if ((op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) &&
-                                                    NAD_SHAPE(axisdata) > 1) {
-                        if (!(flags&NPY_ITER_REDUCE_OK)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "operand requires a reduction, but "
-                                    "reduction is not enabled");
-                            return 0;
+                    else if (idim >= ondim ||
+                                        PyArray_DIM(op_cur, ondim-idim-1) == 1) {
+                        strides[iiter] = 0;
+                        if (op_flags[iiter]&NPY_ITER_NO_BROADCAST) {
+                            goto operand_different_than_broadcast;
                         }
-                        if (!(op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "operand requires a reduction, but "
-                                    "is flagged as write-only, not "
-                                    "read-write");
-                            return 0;
+                        /* If it's writeable, this means a reduction */
+                        if (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) {
+                            if (!(flags&NPY_ITER_REDUCE_OK)) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "output operand requires a reduction, but "
+                                        "reduction is not enabled");
+                                return 0;
+                            }
+                            if (!(op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "output operand requires a reduction, but "
+                                        "is flagged as write-only, not "
+                                        "read-write");
+                                return 0;
+                            }
+                            NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                            op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
                         }
-                        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-                        op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
                     }
-
-                    NIT_ADVANCE_AXISDATA(axisdata, 1);
+                    else {
+                        strides[iiter] = PyArray_STRIDE(op_cur, ondim-idim-1);
+                    }
                 }
             }
-            /* Check whether this operand includes any reduction */
-            else if (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) {
-                axisdata = axisdata0;
-                for (idim = 0; idim < ndim; ++idim) {
-                    /*
-                     * If the stride is 0 and the shape is bigger than
-                     * one, that's a reduction.
-                     */
-                    if (NAD_SHAPE(axisdata) > 1 &&
-                                    NAD_STRIDES(axisdata)[iiter] == 0) {
+            else {
+                npy_intp *axes = op_axes[iiter];
+                npy_intp i = axes[ndim-idim-1];
+                if (i >= 0) {
+                    if (bshape == 1 || op_cur == NULL) {
+                        strides[iiter] = 0;
+                    }
+                    else if (PyArray_DIM(op_cur, i) == 1) {
+                        strides[iiter] = 0;
+                        if (op_flags[iiter]&NPY_ITER_NO_BROADCAST) {
+                            goto operand_different_than_broadcast;
+                        }
+                        /* If it's writeable, this means a reduction */
+                        if (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) {
+                            if (!(flags&NPY_ITER_REDUCE_OK)) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "output operand requires a reduction, but "
+                                        "reduction is not enabled");
+                                return 0;
+                            }
+                            if (!(op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "output operand requires a reduction, but "
+                                        "is flagged as write-only, not "
+                                        "read-write");
+                                return 0;
+                            }
+                            NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                            op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
+                        }
+                    }
+                    else {
+                        strides[iiter] = PyArray_STRIDE(op_cur, i);
+                    }
+                }
+                else if (bshape == 1) {
+                    strides[iiter] = 0;
+                }
+                else {
+                    strides[iiter] = 0;
+                    /* If it's writeable, this means a reduction */
+                    if (op_itflags[iiter]&NPY_OP_ITFLAG_WRITE) {
                         if (!(flags&NPY_ITER_REDUCE_OK)) {
                             PyErr_SetString(PyExc_ValueError,
-                                    "operand requires a reduction, but "
+                                    "output operand requires a reduction, but "
                                     "reduction is not enabled");
                             return 0;
                         }
                         if (!(op_itflags[iiter]&NPY_OP_ITFLAG_READ)) {
                             PyErr_SetString(PyExc_ValueError,
-                                    "operand requires a reduction, but "
+                                    "output operand requires a reduction, but "
                                     "is flagged as write-only, not "
                                     "read-write");
                             return 0;
                         }
                         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
                         op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
-                        break;
                     }
-
-                    NIT_ADVANCE_AXISDATA(axisdata, 1);
                 }
             }
         }
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
     /* Now fill in the ITERSIZE member */
-    NIT_ITERSIZE(iter) = 1;
-    axisdata = axisdata0;
-    for (idim = 0; idim < ndim; ++idim) {
-        NIT_ITERSIZE(iter) *= NAD_SHAPE(axisdata);
-
-        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    NIT_ITERSIZE(iter) = broadcast_shape[0];
+    for (idim = 1; idim < ndim; ++idim) {
+        NIT_ITERSIZE(iter) *= broadcast_shape[idim];
     }
     /* The range defaults to everything */
     NIT_ITERSTART(iter) = 0;
@@ -3740,38 +3744,62 @@ npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
      */
     axisdata = axisdata0;
 
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        char p;
-        npy_intp i, shape;
+    if (op_axes != NULL) {
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+            char p;
+            npy_intp i, shape;
 
-        /* Apply the perm to get the original axis */
-        p = perm[idim];
-        if (p < 0) {
-            i = ndim+p;
-        }
-        else {
-            i = ndim-p-1;
-        }
+            /* Apply the perm to get the original axis */
+            p = perm[idim];
+            if (p < 0) {
+                i = op_axes[ndim+p];
+            }
+            else {
+                i = op_axes[ndim-p-1];
+            }
 
-        /* Apply op_axes */
-        if (op_axes != NULL) {
-            i = op_axes[i];
-        }
-        else {
-            i -= (ndim - op_ndim);
-        }
-
-        if (i >= 0 && i < op_ndim) {
-            shape = PyArray_DIM(op, i);
-            if (shape != 1) {
-                npy_intp stride = PyArray_STRIDE(op, i);
-                if (p < 0) {
-                    /* If the perm entry is negative, flip the axis */
-                    NAD_STRIDES(axisdata)[iiter] = -stride;
-                    baseoffset += stride*(shape-1);
+            if ((npy_uintp)i < (npy_uintp)op_ndim) {
+                shape = PyArray_DIM(op, i);
+                if (shape != 1) {
+                    npy_intp stride = PyArray_STRIDE(op, i);
+                    if (p < 0) {
+                        /* If the perm entry is negative, flip the axis */
+                        NAD_STRIDES(axisdata)[iiter] = -stride;
+                        baseoffset += stride*(shape-1);
+                    }
+                    else {
+                        NAD_STRIDES(axisdata)[iiter] = stride;
+                    }
                 }
-                else {
-                    NAD_STRIDES(axisdata)[iiter] = stride;
+            }
+        }
+    }
+    else {
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+            char p;
+            npy_intp i, shape;
+
+            /* Apply the perm to get the original axis */
+            p = perm[idim];
+            if (p < 0) {
+                i = op_ndim+p;
+            }
+            else {
+                i = op_ndim-p-1;
+            }
+
+            if (i >= 0) {
+                shape = PyArray_DIM(op, i);
+                if (shape != 1) {
+                    npy_intp stride = PyArray_STRIDE(op, i);
+                    if (p < 0) {
+                        /* If the perm entry is negative, flip the axis */
+                        NAD_STRIDES(axisdata)[iiter] = -stride;
+                        baseoffset += stride*(shape-1);
+                    }
+                    else {
+                        NAD_STRIDES(axisdata)[iiter] = stride;
+                    }
                 }
             }
         }
@@ -4266,71 +4294,140 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS],
              stride = op_dtype->elsize;
     char reversestride[NPY_MAXDIMS], anyreverse = 0;
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
-    npy_intp tmp_op_axes = -1;
-    npy_intp i, array_i[NPY_MAXDIMS];
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp i;
 
     PyArrayObject *ret;
 
-    /*
-     * If it's an automatically allocated output, start by assuming
-     * the shape will have the same length as the iterator
-     */
-    if (shape == NULL) {
-        /*
-         * If it's a scalar output, trigger scalar allocation below
-         * by making an op_axes of -1
-         */
-        if (op_ndim == 0 && ndim == 1 && op_axes == NULL) {
-            op_axes = &tmp_op_axes;
+    /* If it's a scalar, don't need to check the axes */
+    if (op_ndim == 0) {
+        Py_INCREF(op_dtype);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype, op_dtype, 0,
+                               NULL, NULL, NULL, 0, NULL);
+
+        /* Double-check that the subtype didn't mess with the dimensions */
+        if (PyArray_NDIM(ret) != 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Iterator automatic output has an array subtype "
+                    "which changed the dimensions of the output");
+            Py_DECREF(ret);
+            return NULL;
         }
-        op_ndim = ndim;
+
+        return ret;
     }
 
-    /* Initially no strides have been set */
-    for (idim = 0; idim < op_ndim; ++idim) {
-        strides[idim] = NPY_MAX_INTP;
-        reversestride[idim] = 0;
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
+
+    memset(reversestride, 0, NPY_MAXDIMS);
+    /* Initialize the strides to invalid values */
+    for (i = 0; i < NPY_MAXDIMS; ++i) {
+        strides[i] = NPY_MAX_INTP;
     }
 
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        char p;
+    if (op_axes != NULL) {
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+            char p;
 
-        /* Apply the perm to get the original axis */
-        p = perm[idim];
-        if (p < 0) {
-            i = ndim+p;
-        }
-        else {
-            i = ndim-p-1;
-        }
-
-        /* Apply op_axes */
-        if (op_axes != NULL) {
-            i = op_axes[i];
-        }
-        else {
-            i -= (ndim - op_ndim);
-        }
-
-        array_i[idim] = i;
-
-        if (i >= 0) {
-            NPY_IT_DBG_PRINTF("Iterator: Setting allocated stride %d "
-                                "for iterator dimension %d to %d\n", (int)i,
-                                (int)idim, (int)stride);
-            strides[i] = stride;
+            /* Apply the perm to get the original axis */
+            p = perm[idim];
             if (p < 0) {
-                reversestride[i] = 1;
-                anyreverse = 1;
-            }
-            if (shape == NULL) {
-                new_shape[i] = NAD_SHAPE(axisdata);
-                stride *= new_shape[i];
+                i = op_axes[ndim+p];
             }
             else {
-                stride *= shape[i];
+                i = op_axes[ndim-p-1];
+            }
+
+            if (i >= 0) {
+                NPY_IT_DBG_PRINTF("Iterator: Setting allocated stride %d "
+                                    "for iterator dimension %d to %d\n", (int)i,
+                                    (int)idim, (int)stride);
+                strides[i] = stride;
+                if (p < 0) {
+                    reversestride[i] = 1;
+                    anyreverse = 1;
+                }
+                else {
+                    reversestride[i] = 0;
+                }
+                if (shape == NULL) {
+                    new_shape[i] = NAD_SHAPE(axisdata);
+                    stride *= new_shape[i];
+                    if (i >= ndim) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "automatically allocated output array "
+                                "specified with an inconsistent axis mapping");
+                        return NULL;
+                    }
+                }
+                else {
+                    stride *= shape[i];
+                }
+            }
+            else {
+                if (shape == NULL) {
+                    /*
+                     * If deleting this axis produces a reduction, but
+                     * reduction wasn't enabled, throw an error
+                     */
+                    if (NAD_SHAPE(axisdata) != 1) {
+                        if (!(flags&NPY_ITER_REDUCE_OK)) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "output requires a reduction, but "
+                                    "reduction is not enabled");
+                            return NULL;
+                        }
+                        if (!((*op_itflags)&NPY_OP_ITFLAG_READ)) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "output requires a reduction, but "
+                                    "is flagged as write-only, not read-write");
+                            return NULL;
+                        }
+
+                        NPY_IT_DBG_PRINTF("Iterator: Indicating that a reduction "
+                                          "is occurring\n");
+                        /* Indicate that a reduction is occurring */
+                        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                        (*op_itflags) |= NPY_OP_ITFLAG_REDUCE;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+            char p;
+
+            /* Apply the perm to get the original axis */
+            p = perm[idim];
+            if (p < 0) {
+                i = op_ndim+p;
+            }
+            else {
+                i = op_ndim-p-1;
+            }
+
+            if (i >= 0) {
+                NPY_IT_DBG_PRINTF("Iterator: Setting allocated stride %d "
+                                    "for iterator dimension %d to %d\n", (int)i,
+                                    (int)idim, (int)stride);
+                strides[i] = stride;
+                if (p < 0) {
+                    reversestride[i] = 1;
+                    anyreverse = 1;
+                }
+                else {
+                    reversestride[i] = 0;
+                }
+                if (shape == NULL) {
+                    new_shape[i] = NAD_SHAPE(axisdata);
+                    stride *= new_shape[i];
+                }
+                else {
+                    stride *= shape[i];
+                }
             }
         }
     }
@@ -4340,45 +4437,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
      * Add the REDUCE itflag if this creates a reduction situation.
      */
     if (shape == NULL) {
-        axisdata = NIT_AXISDATA(iter);
-        for (idim = 0; idim < op_ndim; ++idim) {
-            i = array_i[idim];
-            NPY_IT_DBG_PRINTF("Iterator: Checking output "
-                          "dimension %d (iterator dim %d) with stride %d\n",
-                          (int)i, (int)idim, (int)strides[idim]);
-            if (i < 0) {
-                NPY_IT_DBG_PRINTF("Iterator: The axis wasn't used, "
-                                  "and its dimension is %d\n",
-                                  (int)NAD_SHAPE(axisdata));
-                /*
-                 * If deleting this axis produces a reduction, but
-                 * reduction wasn't enabled, throw an error
-                 */
-                if (NAD_SHAPE(axisdata) != 1) {
-                    if (!(flags&NPY_ITER_REDUCE_OK)) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "output requires a reduction, but "
-                                "reduction is not enabled");
-                        return NULL;
-                    }
-                    if (!((*op_itflags)&NPY_OP_ITFLAG_READ)) {
-                        PyErr_SetString(PyExc_ValueError,
-                                "output requires a reduction, but "
-                                "is flagged as write-only, not read-write");
-                        return NULL;
-                    }
-
-                    NPY_IT_DBG_PRINTF("Iterator: Indicating that a reduction "
-                                      "is occurring\n");
-                    /* Indicate that a reduction is occurring */
-                    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-                    (*op_itflags) |= NPY_OP_ITFLAG_REDUCE;
-                }
-            }
-
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-        }
-
         /* Ensure there are no dimension gaps in op_axes, and find op_ndim */
         op_ndim = ndim;
         if (op_axes != NULL) {
@@ -4395,7 +4453,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                  */
                 else if (op_ndim != ndim) {
                     PyErr_SetString(PyExc_ValueError,
-                            "automatically allocated reduction output array "
+                            "automatically allocated output array "
                             "specified with an inconsistent axis mapping");
                     return NULL;
                 }
@@ -4682,49 +4740,54 @@ npyiter_allocate_arrays(NpyIter *iter,
          * the inner stride of this operand works for the whole
          * array, we can set NPY_OP_ITFLAG_BUFNEVER.
          */
-        if (PyArray_NDIM(op[iiter]) > 0 && (itflags&NPY_ITFLAG_BUFFER) &&
-                        !(op_itflags[iiter]&NPY_OP_ITFLAG_CAST)) {
-            npy_intp stride, shape, innerstride = 0, innershape;
+        if ((itflags&NPY_ITFLAG_BUFFER) && !(op_itflags[iiter]&NPY_OP_ITFLAG_CAST)) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-            npy_intp sizeof_axisdata =
-                                NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
-            /* Find stride of the first non-empty shape */
-            for (idim = 0; idim < ndim; ++idim) {
-                innershape = NAD_SHAPE(axisdata);
-                if (innershape != 1) {
-                    innerstride = NAD_STRIDES(axisdata)[iiter];
-                    break;
-                }
-                NIT_ADVANCE_AXISDATA(axisdata, 1);
+            if (ndim == 1) {
+                op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
+                NBF_STRIDES(bufferdata)[iiter] = NAD_STRIDES(axisdata)[iiter];
             }
-            ++idim;
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-            /* Check that everything could have coalesced together */
-            for (; idim < ndim; ++idim) {
-                stride = NAD_STRIDES(axisdata)[iiter];
-                shape = NAD_SHAPE(axisdata);
-                if (shape != 1) {
-                    /*
-                     * If N times the inner stride doesn't equal this
-                     * stride, the multi-dimensionality is needed.
-                     */
-                    if (innerstride*innershape != stride) {
+            else if (PyArray_NDIM(op[iiter]) > 0) {
+                npy_intp stride, shape, innerstride = 0, innershape;
+                npy_intp sizeof_axisdata =
+                                    NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
+                /* Find stride of the first non-empty shape */
+                for (idim = 0; idim < ndim; ++idim) {
+                    innershape = NAD_SHAPE(axisdata);
+                    if (innershape != 1) {
+                        innerstride = NAD_STRIDES(axisdata)[iiter];
                         break;
                     }
-                    else {
-                        innershape *= shape;
-                    }
+                    NIT_ADVANCE_AXISDATA(axisdata, 1);
                 }
+                ++idim;
                 NIT_ADVANCE_AXISDATA(axisdata, 1);
-            }
-            /*
-             * If we looped all the way to the end, one stride works.
-             * Set that stride, because it may not belong to the first
-             * dimension.
-             */
-            if (idim == ndim) {
-                op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
-                NBF_STRIDES(bufferdata)[iiter] = innerstride;
+                /* Check that everything could have coalesced together */
+                for (; idim < ndim; ++idim) {
+                    stride = NAD_STRIDES(axisdata)[iiter];
+                    shape = NAD_SHAPE(axisdata);
+                    if (shape != 1) {
+                        /*
+                         * If N times the inner stride doesn't equal this
+                         * stride, the multi-dimensionality is needed.
+                         */
+                        if (innerstride*innershape != stride) {
+                            break;
+                        }
+                        else {
+                            innershape *= shape;
+                        }
+                    }
+                    NIT_ADVANCE_AXISDATA(axisdata, 1);
+                }
+                /*
+                 * If we looped all the way to the end, one stride works.
+                 * Set that stride, because it may not belong to the first
+                 * dimension.
+                 */
+                if (idim == ndim) {
+                    op_itflags[iiter] |= NPY_OP_ITFLAG_BUFNEVER;
+                    NBF_STRIDES(bufferdata)[iiter] = innerstride;
+                }
             }
         }
     }
@@ -4771,6 +4834,7 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
     npy_intp narrs = 0, ndtypes = 0;
     PyArrayObject *arrs[NPY_MAXARGS];
     PyArray_Descr *dtypes[NPY_MAXARGS];
+    PyArray_Descr *ret;
 
     NPY_IT_DBG_PRINTF("Iterator: Getting a common data type from operands\n");
 
@@ -4790,7 +4854,30 @@ npyiter_get_common_dtype(npy_intp niter, PyArrayObject **op,
         }
     }
 
-    return PyArray_ResultType(narrs, arrs, ndtypes, dtypes);
+    if (narrs == 0) {
+        npy_intp i;
+        ret = dtypes[0];
+        for (i = 1; i < ndtypes; ++i) {
+            if (ret != dtypes[i])
+                break;
+        }
+        if (i == ndtypes) {
+            if (ndtypes == 1 || PyArray_ISNBO(ret->byteorder)) {
+                Py_INCREF(ret);
+            }
+            else {
+                ret = PyArray_DescrNewByteorder(ret, NPY_NATIVE);
+            }
+        }
+        else {
+            ret = PyArray_ResultType(narrs, arrs, ndtypes, dtypes);
+        }
+    }
+    else {
+        ret = PyArray_ResultType(narrs, arrs, ndtypes, dtypes);
+    }
+
+    return ret;
 }
 
 static int
