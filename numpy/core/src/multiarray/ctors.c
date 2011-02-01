@@ -1054,11 +1054,11 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
     if (descr->subarray) {
         PyObject *ret;
-        npy_intp newdims[2*MAX_DIMS];
+        npy_intp newdims[2*NPY_MAXDIMS];
         npy_intp *newstrides = NULL;
         memcpy(newdims, dims, nd*sizeof(npy_intp));
         if (strides) {
-            newstrides = newdims + MAX_DIMS;
+            newstrides = newdims + NPY_MAXDIMS;
             memcpy(newstrides, strides, nd*sizeof(npy_intp));
         }
         nd =_update_descr_and_dimensions(&descr, newdims,
@@ -1068,15 +1068,11 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                                    data, flags, obj);
         return ret;
     }
-    if (nd < 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "number of dimensions must be >=0");
-        Py_DECREF(descr);
-        return NULL;
-    }
-    if (nd > MAX_DIMS) {
+
+    if ((unsigned int)nd > (unsigned int)NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
-                     "maximum number of dimensions is %d", MAX_DIMS);
+                     "number of dimensions must be within [0, %d]",
+                     NPY_MAXDIMS);
         Py_DECREF(descr);
         return NULL;
     }
@@ -1092,12 +1088,11 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
         PyArray_DESCR_REPLACE(descr);
         if (descr->type_num == NPY_STRING) {
-            descr->elsize = 1;
+            sd = descr->elsize = 1;
         }
         else {
-            descr->elsize = sizeof(PyArray_UCS4);
+            sd = descr->elsize = sizeof(PyArray_UCS4);
         }
-        sd = descr->elsize;
     }
 
     largest = NPY_MAX_INTP / sd;
@@ -1111,6 +1106,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              */
             continue;
         }
+
         if (dim < 0) {
             PyErr_SetString(PyExc_ValueError,
                             "negative dimensions "  \
@@ -1118,14 +1114,15 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             Py_DECREF(descr);
             return NULL;
         }
-        if (dim > largest) {
+
+        size *= dim;
+
+        if (size > largest) {
             PyErr_SetString(PyExc_ValueError,
                             "array is too big.");
             Py_DECREF(descr);
             return NULL;
         }
-        size *= dim;
-        largest /= dim;
     }
 
     self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
@@ -1139,15 +1136,15 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     if (data == NULL) {
         self->flags = DEFAULT;
         if (flags) {
-            self->flags |= FORTRAN;
+            self->flags |= NPY_F_CONTIGUOUS;
             if (nd > 1) {
-                self->flags &= ~CONTIGUOUS;
+                self->flags &= ~NPY_C_CONTIGUOUS;
             }
-            flags = FORTRAN;
+            flags = NPY_F_CONTIGUOUS;
         }
     }
     else {
-        self->flags = (flags & ~UPDATEIFCOPY);
+        self->flags = (flags & ~NPY_UPDATEIFCOPY);
     }
     self->descr = descr;
     self->base = (PyObject *)NULL;
@@ -1176,7 +1173,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     else {
         self->dimensions = self->strides = NULL;
-        self->flags |= FORTRAN;
+        self->flags |= NPY_F_CONTIGUOUS;
     }
 
     if (data == NULL) {
@@ -1189,7 +1186,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         if (sd == 0) {
             sd = descr->elsize;
         }
-        if ((data = PyDataMem_NEW(sd)) == NULL) {
+        data = PyDataMem_NEW(sd);
+        if (data == NULL) {
             PyErr_NoMemory();
             goto fail;
         }
@@ -1481,7 +1479,7 @@ fail:
 
 
 /*NUMPY_API
- * Does not check for ENSURECOPY and NOTSWAPPED in flags
+ * Does not check for NPY_ENSURECOPY and NPY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
  */
 NPY_NO_EXPORT PyObject *
@@ -1505,14 +1503,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         r = PyArray_FromArray((PyArrayObject *)op, newtype, flags);
     }
     else if (PyArray_IsScalar(op, Generic)) {
-        if (flags & UPDATEIFCOPY) {
+        if (flags & NPY_UPDATEIFCOPY) {
             goto err;
         }
         r = PyArray_FromScalar(op, newtype);
     }
     else if (newtype == NULL &&
                (newtype = _array_find_python_scalar_type(op))) {
-        if (flags & UPDATEIFCOPY) {
+        if (flags & NPY_UPDATEIFCOPY) {
             goto err;
         }
         r = Array_FromPyScalar(op, newtype);
@@ -1542,7 +1540,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     else {
         int isobject = 0;
 
-        if (flags & UPDATEIFCOPY) {
+        if (flags & NPY_UPDATEIFCOPY) {
             goto err;
         }
         if (newtype == NULL) {
@@ -1559,7 +1557,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
             /* necessary but not sufficient */
             Py_INCREF(newtype);
-            r = Array_FromSequence(op, newtype, flags & FORTRAN,
+            r = Array_FromSequence(op, newtype, flags & NPY_F_CONTIGUOUS,
                                    min_depth, max_depth);
             if (r == NULL && (thiserr=PyErr_Occurred())) {
                 if (PyErr_GivenExceptionMatches(thiserr,
@@ -1574,7 +1572,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 if (isobject) {
                     Py_INCREF(newtype);
                     r = ObjectArray_FromNestedList
-                        (op, newtype, flags & FORTRAN);
+                        (op, newtype, flags & NPY_F_CONTIGUOUS);
                     seq = TRUE;
                     Py_DECREF(newtype);
                 }
@@ -1626,16 +1624,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
 /*
  * flags is any of
- * CONTIGUOUS,
- * FORTRAN,
- * ALIGNED,
- * WRITEABLE,
- * NOTSWAPPED,
- * ENSURECOPY,
- * UPDATEIFCOPY,
- * FORCECAST,
- * ENSUREARRAY,
- * ELEMENTSTRIDES
+ * NPY_C_CONTIGUOUS (CONTIGUOUS),
+ * NPY_F_CONTIGUOUS (FORTRAN),
+ * NPY_ALIGNED,
+ * NPY_WRITEABLE,
+ * NPY_NOTSWAPPED,
+ * NPY_ENSURECOPY,
+ * NPY_UPDATEIFCOPY,
+ * NPY_FORCECAST,
+ * NPY_ENSUREARRAY,
+ * NPY_ELEMENTSTRIDES
  *
  * or'd (|) together
  *
@@ -1644,24 +1642,24 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * won't guarantee it -- it will depend on the object as to whether or
  * not it has such features.
  *
- * Note that ENSURECOPY is enough
- * to guarantee CONTIGUOUS, ALIGNED and WRITEABLE
+ * Note that NPY_ENSURECOPY is enough
+ * to guarantee NPY_C_CONTIGUOUS, NPY_ALIGNED and NPY_WRITEABLE
  * and therefore it is redundant to include those as well.
  *
- * BEHAVED == ALIGNED | WRITEABLE
- * CARRAY = CONTIGUOUS | BEHAVED
- * FARRAY = FORTRAN | BEHAVED
+ * NPY_BEHAVED == NPY_ALIGNED | NPY_WRITEABLE
+ * NPY_CARRAY = NPY_C_CONTIGUOUS | NPY_BEHAVED
+ * NPY_FARRAY = NPY_F_CONTIGUOUS | NPY_BEHAVED
  *
- * FORTRAN can be set in the FLAGS to request a FORTRAN array.
+ * NPY_F_CONTIGUOUS can be set in the FLAGS to request a FORTRAN array.
  * Fortran arrays are always behaved (aligned,
  * notswapped, and writeable) and not (C) CONTIGUOUS (if > 1d).
  *
- * UPDATEIFCOPY flag sets this flag in the returned array if a copy is
+ * NPY_UPDATEIFCOPY flag sets this flag in the returned array if a copy is
  * made and the base argument points to the (possibly) misbehaved array.
  * When the new array is deallocated, the original array held in base
  * is updated with the contents of the new array.
  *
- * FORCECAST will cause a cast to occur regardless of whether or not
+ * NPY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.
  */
 
@@ -1673,7 +1671,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
     PyObject *obj;
-    if (requires & NOTSWAPPED) {
+    if (requires & NPY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
             !PyArray_ISNBO(PyArray_DESCR(op)->byteorder)) {
             descr = PyArray_DescrNew(PyArray_DESCR(op));
@@ -1690,10 +1688,10 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     if (obj == NULL) {
         return NULL;
     }
-    if ((requires & ELEMENTSTRIDES) &&
+    if ((requires & NPY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
         PyObject *new;
-        new = PyArray_NewCopy((PyArrayObject *)obj, PyArray_ANYORDER);
+        new = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
         Py_DECREF(obj);
         obj = new;
     }
@@ -1731,10 +1729,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     /*
-     * Can't cast unless ndim-0 array, FORCECAST is specified
+     * Can't cast unless ndim-0 array, NPY_FORCECAST is specified
      * or the cast is safe.
      */
-    if (!(flags & FORCECAST) && !PyArray_NDIM(arr) == 0 &&
+    if (!(flags & NPY_FORCECAST) && !PyArray_NDIM(arr) == 0 &&
         !PyArray_CanCastTo(oldtype, newtype)) {
         Py_DECREF(newtype);
         PyErr_SetString(PyExc_TypeError,
@@ -1744,26 +1742,27 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     /* Don't copy if sizes are compatible */
-    if ((flags & ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
+    if ((flags & NPY_ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
         arrflags = arr->flags;
-        if (arr->nd <= 1 && (flags & FORTRAN)) {
-            flags |= CONTIGUOUS;
+        if (arr->nd <= 1 && (flags & NPY_F_CONTIGUOUS)) {
+            flags |= NPY_C_CONTIGUOUS;
         }
-        copy = (flags & ENSURECOPY) ||
-            ((flags & CONTIGUOUS) && (!(arrflags & CONTIGUOUS)))
-            || ((flags & ALIGNED) && (!(arrflags & ALIGNED)))
+        copy = (flags & NPY_ENSURECOPY) ||
+            ((flags & NPY_C_CONTIGUOUS) && (!(arrflags & NPY_C_CONTIGUOUS)))
+            || ((flags & NPY_ALIGNED) && (!(arrflags & NPY_ALIGNED)))
             || (arr->nd > 1 &&
-                ((flags & FORTRAN) && (!(arrflags & FORTRAN))))
-            || ((flags & WRITEABLE) && (!(arrflags & WRITEABLE)));
+                ((flags & NPY_F_CONTIGUOUS) &&
+                 (!(arrflags & NPY_F_CONTIGUOUS))))
+            || ((flags & NPY_WRITEABLE) && (!(arrflags & NPY_WRITEABLE)));
 
         if (copy) {
-            if ((flags & UPDATEIFCOPY) &&
+            if ((flags & NPY_UPDATEIFCOPY) &&
                 (!PyArray_ISWRITEABLE(arr))) {
                 Py_DECREF(newtype);
                 PyErr_SetString(PyExc_ValueError, msg);
                 return NULL;
             }
-            if ((flags & ENSUREARRAY)) {
+            if ((flags & NPY_ENSUREARRAY)) {
                 subtype = &PyArray_Type;
             }
             ret = (PyArrayObject *)
@@ -1771,7 +1770,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                                      arr->nd,
                                      arr->dimensions,
                                      NULL, NULL,
-                                     flags & FORTRAN,
+                                     flags & NPY_F_CONTIGUOUS,
                                      (PyObject *)arr);
             if (ret == NULL) {
                 return NULL;
@@ -1780,10 +1779,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                 Py_DECREF(ret);
                 return NULL;
             }
-            if (flags & UPDATEIFCOPY)  {
-                ret->flags |= UPDATEIFCOPY;
+            if (flags & NPY_UPDATEIFCOPY)  {
+                ret->flags |= NPY_UPDATEIFCOPY;
                 ret->base = (PyObject *)arr;
-                PyArray_FLAGS(ret->base) &= ~WRITEABLE;
+                PyArray_FLAGS(ret->base) &= ~NPY_WRITEABLE;
                 Py_INCREF(arr);
             }
         }
@@ -1793,7 +1792,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
          */
         else {
             Py_DECREF(newtype);
-            if ((flags & ENSUREARRAY) &&
+            if ((flags & NPY_ENSUREARRAY) &&
                 !PyArray_CheckExact(arr)) {
                 Py_INCREF(arr->descr);
                 ret = (PyArrayObject *)
@@ -1821,20 +1820,20 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
      * array type and copy was not specified
      */
     else {
-        if ((flags & UPDATEIFCOPY) &&
+        if ((flags & NPY_UPDATEIFCOPY) &&
             (!PyArray_ISWRITEABLE(arr))) {
             Py_DECREF(newtype);
             PyErr_SetString(PyExc_ValueError, msg);
             return NULL;
         }
-        if ((flags & ENSUREARRAY)) {
+        if ((flags & NPY_ENSUREARRAY)) {
             subtype = &PyArray_Type;
         }
         ret = (PyArrayObject *)
             PyArray_NewFromDescr(subtype, newtype,
                                  arr->nd, arr->dimensions,
                                  NULL, NULL,
-                                 flags & FORTRAN,
+                                 flags & NPY_F_CONTIGUOUS,
                                  (PyObject *)arr);
         if (ret == NULL) {
             return NULL;
@@ -1843,10 +1842,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             Py_DECREF(ret);
             return NULL;
         }
-        if (flags & UPDATEIFCOPY)  {
-            ret->flags |= UPDATEIFCOPY;
+        if (flags & NPY_UPDATEIFCOPY)  {
+            ret->flags |= NPY_UPDATEIFCOPY;
             ret->base = (PyObject *)arr;
-            PyArray_FLAGS(ret->base) &= ~WRITEABLE;
+            PyArray_FLAGS(ret->base) &= ~NPY_WRITEABLE;
             Py_INCREF(arr);
         }
     }
@@ -1875,9 +1874,9 @@ PyArray_FromStructInterface(PyObject *input)
     if (inter->two != 2) {
         goto fail;
     }
-    if ((inter->flags & NOTSWAPPED) != NOTSWAPPED) {
+    if ((inter->flags & NPY_NOTSWAPPED) != NPY_NOTSWAPPED) {
         endian = PyArray_OPPBYTE;
-        inter->flags &= ~NOTSWAPPED;
+        inter->flags &= ~NPY_NOTSWAPPED;
     }
 
     if (inter->flags & ARR_HAS_DESCR) {
@@ -1972,7 +1971,7 @@ PyArray_FromInterface(PyObject *input)
             if (res < 0) {
                 goto fail;
             }
-            dataflags &= ~WRITEABLE;
+            dataflags &= ~NPY_WRITEABLE;
         }
         attr = PyDict_GetItemString(inter, "offset");
         if (attr) {
@@ -2017,7 +2016,7 @@ PyArray_FromInterface(PyObject *input)
             goto fail;
         }
         if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
-            dataflags &= ~WRITEABLE;
+            dataflags &= ~NPY_WRITEABLE;
         }
     }
     attr = tstr;
@@ -2247,7 +2246,7 @@ PyArray_EnsureArray(PyObject *op)
         new = PyArray_FromScalar(op, NULL);
     }
     else {
-        new = PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY, NULL);
+        new = PyArray_FromAny(op, NULL, 0, 0, NPY_ENSUREARRAY, NULL);
     }
     Py_XDECREF(op);
     return new;
@@ -3340,11 +3339,11 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     }
 
     if (!write) {
-        ret->flags &= ~WRITEABLE;
+        ret->flags &= ~NPY_WRITEABLE;
     }
     /* Store a reference for decref on deallocation */
     ret->base = buf;
-    PyArray_UpdateFlags(ret, ALIGNED);
+    PyArray_UpdateFlags(ret, NPY_ALIGNED);
     return (PyObject *)ret;
 }
 
@@ -3561,9 +3560,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
  *
  * If data is given, then flags is flags associated with data.
  * If strides is not given, then a contiguous strides array will be created
- * and the CONTIGUOUS bit will be set.  If the flags argument
- * has the FORTRAN bit set, then a FORTRAN-style strides array will be
- * created (and of course the FORTRAN flag bit will be set).
+ * and the NPY_C_CONTIGUOUS bit will be set.  If the flags argument
+ * has the NPY_F_CONTIGUOUS bit set, then a FORTRAN-style strides array will be
+ * created (and of course the NPY_F_CONTIGUOUS flag bit will be set).
  *
  * If data is not given but created here, then flags will be DEFAULT
  * and a non-zero flags argument can be used to indicate a FORTRAN style
@@ -3576,17 +3575,16 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
 {
     int i;
     /* Only make Fortran strides if not contiguous as well */
-    if ((inflag & FORTRAN) && !(inflag & CONTIGUOUS)) {
+    if ((inflag & (NPY_F_CONTIGUOUS|NPY_C_CONTIGUOUS)) == NPY_F_CONTIGUOUS) {
         for (i = 0; i < nd; i++) {
             strides[i] = itemsize;
             itemsize *= dims[i] ? dims[i] : 1;
         }
-        *objflags |= FORTRAN;
         if (nd > 1) {
-            *objflags &= ~CONTIGUOUS;
+            *objflags = ((*objflags)|NPY_F_CONTIGUOUS) & ~NPY_C_CONTIGUOUS;
         }
         else {
-            *objflags |= CONTIGUOUS;
+            *objflags |= (NPY_F_CONTIGUOUS|NPY_C_CONTIGUOUS);
         }
     }
     else {
@@ -3594,12 +3592,11 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             strides[i] = itemsize;
             itemsize *= dims[i] ? dims[i] : 1;
         }
-        *objflags |= CONTIGUOUS;
         if (nd > 1) {
-            *objflags &= ~FORTRAN;
+            *objflags = ((*objflags)|NPY_C_CONTIGUOUS) & ~NPY_F_CONTIGUOUS;
         }
         else {
-            *objflags |= FORTRAN;
+            *objflags |= (NPY_C_CONTIGUOUS|NPY_F_CONTIGUOUS);
         }
     }
     return itemsize;

@@ -486,7 +486,9 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
                         int is_small_unsigned1, int is_small_unsigned2)
 {
     if (is_small_unsigned1) {
-        int type_num1 = type1->type_num, type_num2 = type2->type_num, ret_type_num;
+        int type_num1 = type1->type_num;
+        int type_num2 = type2->type_num;
+        int ret_type_num;
 
         if (type_num2 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num2) ||
                                         PyTypeNum_ISUNSIGNED(type_num2))) {
@@ -503,9 +505,9 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
         return PyArray_PromoteTypes(type1, type2);
     }
     else if (is_small_unsigned2) {
-        int type_num1 = type1->type_num,
-            type_num2 = type2->type_num,
-            ret_type_num;
+        int type_num1 = type1->type_num;
+        int type_num2 = type2->type_num;
+        int ret_type_num;
 
         if (type_num1 < NPY_NTYPES && !(PyTypeNum_ISBOOL(type_num1) ||
                                         PyTypeNum_ISUNSIGNED(type_num1))) {
@@ -535,25 +537,6 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
     int type_num1, type_num2, ret_type_num;
-
-    /* If one of the arguments is NULL, return the non-NULL one */
-    if (type1 == NULL || type2 == NULL) {
-        if (type1 == NULL) {
-            if (type2 == NULL) {
-                PyErr_SetString(PyExc_RuntimeError,
-                        "PromoteTypes received two NULL arguments");
-                return NULL;
-            }
-            else {
-                Py_INCREF(type2);
-                return type2;
-            }
-        }
-        else {
-            Py_INCREF(type1);
-            return type1;
-        }
-    }
 
     type_num1 = type1->type_num;
     type_num2 = type2->type_num;
@@ -1146,9 +1129,12 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 Py_INCREF(ret);
             }
             else {
-                tmpret = PyArray_PromoteTypes(tmp, ret);
-                Py_DECREF(ret);
-                ret = tmpret;
+                /* Only call promote if the types aren't the same dtype */
+                if (tmp != ret || !PyArray_ISNBO(ret->byteorder)) {
+                    tmpret = PyArray_PromoteTypes(tmp, ret);
+                    Py_DECREF(ret);
+                    ret = tmpret;
+                }
             }
         }
     }
@@ -1163,7 +1149,8 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
              * unsigned integer which would fit an a signed integer
              * of the same size, something not exposed in the public API.
              */
-            if (PyArray_NDIM(arr[i]) == 0 && PyTypeNum_ISNUMBER(tmp->type_num)) {
+            if (PyArray_NDIM(arr[i]) == 0 &&
+                                PyTypeNum_ISNUMBER(tmp->type_num)) {
                 char *data = PyArray_BYTES(arr[i]);
                 int swap = !PyArray_ISNBO(tmp->byteorder);
                 int type_num;
@@ -1199,18 +1186,24 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 printf(" (%d) ", ret_is_small_unsigned);
                 printf("\n");
 #endif
-                tmpret = promote_types(tmp, ret, tmp_is_small_unsigned,
-                                                    ret_is_small_unsigned);
-                if (tmpret == NULL) {
+                /* If they point to the same type, don't call promote */
+                if (tmp == ret && PyArray_ISNBO(tmp->byteorder)) {
+                    Py_DECREF(tmp);
+                }
+                else {
+                    tmpret = promote_types(tmp, ret, tmp_is_small_unsigned,
+                                                        ret_is_small_unsigned);
+                    if (tmpret == NULL) {
+                        Py_DECREF(tmp);
+                        Py_DECREF(ret);
+                        return NULL;
+                    }
                     Py_DECREF(tmp);
                     Py_DECREF(ret);
-                    return NULL;
+                    ret = tmpret;
                 }
                 ret_is_small_unsigned = tmp_is_small_unsigned &&
                                         ret_is_small_unsigned;
-                Py_DECREF(tmp);
-                Py_DECREF(ret);
-                ret = tmpret;
             }
         }
 
@@ -1222,19 +1215,23 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 Py_INCREF(ret);
             }
             else {
-                if (ret_is_small_unsigned) {
-                    tmpret = promote_types(tmp, ret, 0, ret_is_small_unsigned);
-                    if (tmpret == NULL) {
-                        Py_DECREF(tmp);
-                        Py_DECREF(ret);
-                        return NULL;
+                /* Only call promote if the types aren't the same dtype */
+                if (tmp != ret || !PyArray_ISNBO(tmp->byteorder)) {
+                    if (ret_is_small_unsigned) {
+                        tmpret = promote_types(tmp, ret, 0,
+                                                ret_is_small_unsigned);
+                        if (tmpret == NULL) {
+                            Py_DECREF(tmp);
+                            Py_DECREF(ret);
+                            return NULL;
+                        }
                     }
+                    else {
+                        tmpret = PyArray_PromoteTypes(tmp, ret);
+                    }
+                    Py_DECREF(ret);
+                    ret = tmpret;
                 }
-                else {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                }
-                Py_DECREF(ret);
-                ret = tmpret;
             }
         }
     }

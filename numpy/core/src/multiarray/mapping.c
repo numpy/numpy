@@ -824,7 +824,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
          * Doing "a[...] += 1" triggers assigning an array to itself,
          * so this check is needed.
          */
-        if (self == op) {
+        if ((PyObject *)self == op) {
             return 0;
         }
         else {
