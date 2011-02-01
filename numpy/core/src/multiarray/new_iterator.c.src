@@ -2466,28 +2466,57 @@ NPY_NO_EXPORT void
 NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    /*npy_intp ndim = NIT_NDIM(iter);*/
+    npy_intp ndim = NIT_NDIM(iter);
     npy_intp iiter, niter = NIT_NITER(iter);
 
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+    NpyIter_AxisData *axisdata0 = NIT_AXISDATA(iter);
+    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
 
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *data = NIT_BUFFERDATA(iter);
         char *op_itflags = NIT_OPITFLAGS(iter);
         npy_intp stride, *strides = NBF_STRIDES(data),
-                *ad_strides = NAD_STRIDES(axisdata);
+                *ad_strides = NAD_STRIDES(axisdata0);
         PyArray_Descr **dtypes = NIT_DTYPES(iter);
 
         for (iiter = 0; iiter < niter; ++iiter) {
             stride = strides[iiter];
-            /* Operands which are always/never buffered have fixed strides */
-            if (op_itflags[iiter]&
-                            (NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_BUFNEVER)) {
+            /*
+             * Operands which are always/never buffered have fixed strides,
+             * and everything has fixed strides when ndim is 0 or 1
+             */
+            if (ndim <= 1 || (op_itflags[iiter]&
+                            (NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_BUFNEVER))) {
                 out_strides[iiter] = stride;
             }
-            /* Reductions in the inner loop have fixed strides */
-            else if (stride == 0 && (op_itflags[iiter]&NPY_OP_ITFLAG_REDUCE)) {
-                out_strides[iiter] = stride;
+            /* If it's a reduction, 0-stride inner loop may have fixed stride */
+            else if (stride == 0 && (itflags&NPY_ITFLAG_REDUCE)) {
+                /* If it's a reduction operand, definitely fixed stride */
+                if (op_itflags[iiter]&NPY_OP_ITFLAG_REDUCE) {
+                    out_strides[iiter] = stride;
+                }
+                /*
+                 * Otherwise it's a fixed stride if the stride is 0
+                 * for all inner dimensions of the reduction double loop
+                 */
+                else {
+                    NpyIter_AxisData *axisdata = axisdata0;
+                    npy_intp idim,
+                            reduce_outerdim = NBF_REDUCE_OUTERDIM(data);
+                    for (idim = 0; idim < reduce_outerdim; ++idim) {
+                        if (NAD_STRIDES(axisdata)[iiter] != 0) {
+                            break;
+                        }
+                        NIT_ADVANCE_AXISDATA(axisdata, 1);
+                    }
+                    /* If all the strides were 0, the stride won't change */
+                    if (idim == reduce_outerdim) {
+                        out_strides[iiter] = stride;
+                    }
+                    else {
+                        out_strides[iiter] = NPY_MAX_INTP;
+                    }
+                }
             }
             /*
              * Inner loop contiguous array means its stride won't change when
@@ -2507,7 +2536,7 @@ NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
     }
     else {
         /* If there's no buffering, the strides are always fixed */
-        memcpy(out_strides, NAD_STRIDES(axisdata), niter*NPY_SIZEOF_INTP);
+        memcpy(out_strides, NAD_STRIDES(axisdata0), niter*NPY_SIZEOF_INTP);
     }
 }
 
@@ -5955,6 +5984,15 @@ NpyIter_DebugPrint(NpyIter *iter)
         for (iiter = 0; iiter < niter; ++iiter)
             printf("%d ", (int)NBF_STRIDES(bufferdata)[iiter]);
         printf("\n");
+        /* Print the fixed strides when there's no inner loop */
+        if (itflags&NPY_ITFLAG_NOINNER) {
+            npy_intp fixedstrides[NPY_MAXDIMS];
+            printf("|   Fixed Strides: ");
+            NpyIter_GetInnerFixedStrideArray(iter, fixedstrides);
+            for (iiter = 0; iiter < niter; ++iiter)
+                printf("%d ", (int)fixedstrides[iiter]);
+            printf("\n");
+        }
         printf("|   Ptrs: ");
         for (iiter = 0; iiter < niter; ++iiter)
             printf("%p ", (void *)NBF_PTRS(bufferdata)[iiter]);

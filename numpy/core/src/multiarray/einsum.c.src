@@ -45,6 +45,16 @@
 
 #define EINSUM_IS_SSE_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
 
+/********** PRINTF DEBUG TRACING **************/
+#define NPY_EINSUM_DBG_TRACING 0
+
+#if NPY_EINSUM_DBG_TRACING
+#define NPY_EINSUM_DBG_PRINTF(...) printf(__VA_ARGS__)
+#else
+#define NPY_EINSUM_DBG_PRINTF(...)
+#endif
+/**********************************************/
+
 typedef enum {
     BROADCAST_NONE,
     BROADCAST_LEFT,
@@ -103,6 +113,8 @@ static void
     char *data_out = dataptr[@nop@];
     npy_intp stride_out = strides[@nop@];
 #endif
+
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_@noplabel@ (%d)\n", (int)count);
 
     while (count--) {
 #if !@complex@
@@ -187,6 +199,8 @@ static void
     npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
     npy_@name@ *data_out = (npy_@name@ *)dataptr[1];
 
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_one (%d)\n", (int)count);
+
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
     switch (count) {
@@ -251,6 +265,8 @@ static void
     __m128 a, b;
 #endif
     
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_two (%d)\n", (int)count);
+
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
     switch (count) {
@@ -334,6 +350,9 @@ static void
     __m128 a, b, value0_sse;
 #endif
 
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
+                                                    (int)count);
+
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
     switch (count) {
@@ -415,6 +434,9 @@ static void
     __m128 a, b, value1_sse;
 #endif
 
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
+                                                    (int)count);
+
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
     switch (count) {
@@ -495,6 +517,9 @@ static void
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
+
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
+                                                    (int)count);
 
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
@@ -596,6 +621,9 @@ static void
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
 
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
+                                                    (int)count);
+
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
     switch (count) {
@@ -691,6 +719,9 @@ static void
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
+
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_stride0_outstride0_two (%d)\n",
+                                                    (int)count);
 
 /* This is placed before the main loop to make small counts faster */
 finish_after_unrolled_loop:
@@ -825,6 +856,9 @@ static void
 @name@_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_@noplabel@ (%d)\n",
+                                                    (int)count);
+
     while (count--) {
 #if !@complex@
         npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
@@ -891,6 +925,9 @@ static void
     char *data2 = dataptr[2];
     npy_intp stride2 = strides[2];
 #endif
+
+    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_outstride0_@noplabel@ (%d)\n",
+                                                    (int)count);
 
     while (count--) {
 #if !@complex@
@@ -2413,14 +2450,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                         NpyIter_GetDescrArray(iter)[0]->elsize,
                         fixed_strides);
 
-    #if 0
+#if NPY_EINSUM_DBG_TRACING 
     NpyIter_DebugPrint(iter);
-    printf("fixed strides:\n");
-    for (iop = 0; iop <= nop; ++iop) {
-        printf("%ld ", fixed_strides[iop]);
-    }
-    printf("\n");
-    #endif
+#endif
 
     /* Finally, the main loop */
     if (sop == NULL) {
@@ -2450,9 +2482,8 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (!needs_api) {
             NPY_BEGIN_THREADS;
         }
-        /*printf("Einsum loop\n");*/
+        NPY_EINSUM_DBG_PRINTF("Einsum loop\n");
         do {
-            /*printf("Einsum inner loop count %d\n", (int)*countptr);*/
             sop(nop, dataptr, stride, *countptr);
         } while(iternext(iter));
         if (!needs_api) {
