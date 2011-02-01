@@ -12,6 +12,7 @@
 
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
+#include <numpy/npy_3kcompat.h>
 
 #include "npy_config.h"
 
@@ -113,7 +114,20 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
         if (f == NULL) {
             return 0;
         }
-        if (PyString_AsStringAndSize(f, &str, &length) == -1) {
+
+        if (PyUnicode_Check(f)) {
+            /* accept unicode input */
+            PyObject *f_str;
+            f_str = PyUnicode_AsASCIIString(f);
+            if (f_str == NULL) {
+                Py_DECREF(f);
+                return 0;
+            }
+            Py_DECREF(f);
+            f = f_str;
+        }
+
+        if (PyBytes_AsStringAndSize(f, &str, &length) == -1) {
             Py_DECREF(f);
             return 0;
         }
@@ -203,8 +217,21 @@ npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
 {
     char *str = NULL;
     Py_ssize_t length = 0;
-    
-    if (PyString_AsStringAndSize(order_in, &str, &length) == -1) {
+
+    if (PyUnicode_Check(order_in)) {
+        /* accept unicode input */
+        PyObject *str_obj;
+        int ret;
+        str_obj = PyUnicode_AsASCIIString(order_in);
+        if (str_obj == NULL) {
+            return 0;
+        }
+        ret = npyiter_order_converter(str_obj, order);
+        Py_DECREF(str_obj);
+        return ret;
+    }
+
+    if (PyBytes_AsStringAndSize(order_in, &str, &length) == -1) {
         return 0;
     }
 
@@ -224,7 +251,7 @@ npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
     }
 
     PyErr_SetString(PyExc_ValueError,
-            "order must be one of 'C', 'F', 'A', or 'K'");
+                    "order must be one of 'C', 'F', 'A', or 'K'");
     return 0;
 }
 
@@ -237,10 +264,23 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 {
     char *str = NULL;
     Py_ssize_t length = 0;
-    
-    if (PyString_AsStringAndSize(obj, &str, &length) == -1) {
+
+    if (PyUnicode_Check(obj)) {
+        PyObject *str_obj;
+        int ret;
+        str_obj = PyUnicode_AsASCIIString(obj);
+        if (str_obj == NULL) {
+            return 0;
+        }
+        ret = PyArray_CastingConverter(str_obj, casting);
+        Py_DECREF(str_obj);
+        return ret;
+    }
+
+    if (PyBytes_AsStringAndSize(obj, &str, &length) == -1) {
         return 0;
     }
+
     if (length >= 2) switch (str[2]) {
         case 0:
             if (strcmp(str, "no") == 0) {
@@ -278,7 +318,6 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
             "casting must be one of 'no', 'equiv', 'safe', "
             "'same_kind', or 'unsafe'");
     return 0;
-
 }
 
 static int
@@ -307,7 +346,19 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
             return 0;
         }
 
-        if (PyString_AsStringAndSize(f, &str, &length) == -1) {
+        if (PyUnicode_Check(f)) {
+            /* accept unicode input */
+            PyObject *f_str;
+            f_str = PyUnicode_AsASCIIString(f);
+            if (f_str == NULL) {
+                Py_DECREF(f);
+                return 0;
+            }
+            Py_DECREF(f);
+            f = f_str;
+        }
+
+        if (PyBytes_AsStringAndSize(f, &str, &length) == -1) {
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,
                    "op_flags must be a tuple or array of per-op flag-tuples");
@@ -412,7 +463,7 @@ npyiter_convert_op_flags_array(PyObject *op_flags_in,
             return 0;
         }
         /* If the first item is a string, try as one set of flags */
-        if (iiter == 0 && (PyString_Check(f) || PyUnicode_Check(f))) {
+        if (iiter == 0 && (PyBytes_Check(f) || PyUnicode_Check(f))) {
             Py_DECREF(f);
             goto try_single_flags;
         }
@@ -1114,7 +1165,7 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
         Py_XDECREF(self->nested_child);
         self->nested_child = NULL;
     }
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static int
@@ -1706,7 +1757,11 @@ static PyObject *npyiter_iterrange_get(NewNpyArrayIterObject *self)
 
 static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
 {
+#if PY_VERSION_HEX >= 0x02050000
     npy_intp istart = 0, iend = 0;
+#else
+    long istart = 0, iend = 0;
+#endif
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1720,7 +1775,11 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
         return -1;
     }
 
+#if PY_VERSION_HEX >= 0x02050000
     if (!PyArg_ParseTuple(value, "nn", &istart, &iend)) {
+#else
+    if (!PyArg_ParseTuple(value, "ll", &istart, &iend)) {
+#endif
         return -1;
     }
 

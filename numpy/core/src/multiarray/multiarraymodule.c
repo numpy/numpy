@@ -552,7 +552,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
          *      so 1 is returned, but
          *   _npy_scalar_kinds_table[uint]==POSINT < NEGINT,
          *      so 0 is returned, as required.
-         * 
+         *
          */
         neededscalar = _npy_scalar_kinds_table[neededtype];
         if (neededscalar >= scalar) {
@@ -1799,7 +1799,18 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args)
 
     Py_DECREF(array);
 
+#if defined(NPY_PY3K)
+    return (count == -1) ? NULL : PyLong_FromSsize_t(count);
+#elif PY_VERSION_HEX >= 0x02050000
     return (count == -1) ? NULL : PyInt_FromSsize_t(count);
+#else
+    if ((npy_intp)((long)count) == count) {
+        return (count == -1) ? NULL : PyInt_FromLong(count);
+    }
+    else {
+        return (count == -1) ? NULL : PyLong_FromVoidPtr((void*)count);
+    }
+#endif
 }
 
 static PyObject *
@@ -1953,6 +1964,9 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     PyArrayObject *out = NULL;
     PyArray_Descr *dtype = NULL;
     PyObject *ret = NULL;
+    PyObject *subscripts_str;
+    PyObject *str_obj = NULL;
+    PyObject *str_key_obj = NULL;
 
     nop = PyTuple_GET_SIZE(args) - 1;
     if (nop <= 0) {
@@ -1967,8 +1981,18 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     }
 
     /* Get the subscripts string */
-    subscripts = PyString_AsString(PyTuple_GET_ITEM(args, 0));
+    subscripts_str = PyTuple_GET_ITEM(args, 0);
+    if (PyUnicode_Check(subscripts_str)) {
+        str_obj = PyUnicode_AsASCIIString(subscripts_str);
+        if (str_obj == NULL) {
+            return NULL;
+        }
+        subscripts_str = str_obj;
+    }
+
+    subscripts = PyBytes_AsString(subscripts_str);
     if (subscripts == NULL) {
+        Py_XDECREF(str_obj);
         return NULL;
     }
 
@@ -1998,7 +2022,17 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         while (PyDict_Next(kwds, &pos, &key, &value)) {
-            char *str = PyString_AsString(key);
+            char *str = NULL;
+
+#if defined(NPY_PY3K)
+            Py_XDECREF(str_key_obj);
+            str_key_obj = PyUnicode_AsASCIIString(key);
+            if (str_key_obj != NULL) {
+                key = str_key_obj;
+            }
+#endif
+
+            str = PyBytes_AsString(key);
 
             if (str == NULL) {
                 PyErr_Clear();
@@ -2054,6 +2088,8 @@ finish:
         Py_XDECREF(op[i]);
     }
     Py_XDECREF(dtype);
+    Py_XDECREF(str_obj);
+    Py_XDECREF(str_key_obj);
 
     return ret;
 }

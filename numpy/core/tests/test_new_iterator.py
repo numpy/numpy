@@ -1,5 +1,6 @@
 import numpy as np
-from numpy import array, arange, newiter
+from numpy import array, arange, newiter, all
+from numpy.compat import asbytes
 from numpy.testing import *
 import sys, warnings
 
@@ -1897,12 +1898,12 @@ def test_iter_buffering_badwriteback():
 
 def test_iter_buffering_string():
     # Safe casting disallows shrinking strings
-    a = np.array(['abc', 'a', 'abcd'], dtype=np.str)
+    a = np.array(['abc', 'a', 'abcd'], dtype=np.bytes_)
     assert_equal(a.dtype, np.dtype('S4'));
     assert_raises(TypeError,newiter,a,['buffered'],['readonly'],
                     op_dtypes='S2')
     i = newiter(a, ['buffered'], ['readonly'], op_dtypes='S6')
-    assert_equal(i[0], 'abc')
+    assert_equal(i[0], asbytes('abc'))
     assert_equal(i[0].dtype, np.dtype('S6'))
 
     a = np.array(['abc', 'a', 'abcd'], dtype=np.unicode)

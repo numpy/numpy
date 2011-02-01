@@ -13,6 +13,7 @@
 
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
+#include <numpy/npy_3kcompat.h>
 #include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"
@@ -3101,10 +3102,10 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
     }
 
     if (i == n) {
-            return PyString_FromFormat("()%s", ending);
+        return PyUString_FromFormat("()%s", ending);
     }
     else {
-        ret = PyString_FromFormat("(%zd", vals[i++]);
+        ret = PyUString_FromFormat("(%zd", vals[i++]);
         if (ret == NULL) {
             return NULL;
         }
@@ -3112,24 +3113,24 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
 
     for (; i < n; ++i) {
         if (vals[i] < 0) {
-            tmp = PyString_FromString(",newaxis");
+            tmp = PyUString_FromString(",newaxis");
         }
         else {
-            tmp = PyString_FromFormat(",%zd", vals[i]);
+            tmp = PyUString_FromFormat(",%zd", vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
-        
-        PyString_ConcatAndDel(&ret, tmp);
+
+        PyUString_ConcatAndDel(&ret, tmp);
         if (ret == NULL) {
             return NULL;
         }
     }
 
-    tmp = PyString_FromFormat(")%s", ending);
-    PyString_ConcatAndDel(&ret, tmp);
+    tmp = PyUString_FromFormat(")%s", ending);
+    PyUString_ConcatAndDel(&ret, tmp);
     return ret;
 }
 
@@ -3458,8 +3459,8 @@ broadcast_error: {
         char *tmpstr;
 
         if (op_axes == NULL) {
-            errmsg = PyString_FromString("operands could not be broadcast "
-                                "together with shapes ");
+            errmsg = PyUString_FromString("operands could not be broadcast "
+                                          "together with shapes ");
             for (iiter = 0; iiter < niter; ++iiter) {
                 if (op[iiter] != NULL) {
                     tmp = npyiter_shape_string(PyArray_NDIM(op[iiter]),
@@ -3468,7 +3469,7 @@ broadcast_error: {
                     if (tmp == NULL) {
                         return 0;
                     }
-                    PyString_ConcatAndDel(&errmsg, tmp);
+                    PyUString_ConcatAndDel(&errmsg, tmp);
                     if (errmsg == NULL) {
                         return 0;
                     }
@@ -3477,9 +3478,9 @@ broadcast_error: {
             PyErr_SetObject(PyExc_ValueError, errmsg);
         }
         else {
-            errmsg = PyString_FromString("operands could not be broadcast "
-                                "together with remapped shapes "
-                                "[original->remapped]: ");
+            errmsg = PyUString_FromString("operands could not be broadcast "
+                                          "together with remapped shapes "
+                                          "[original->remapped]: ");
             for (iiter = 0; iiter < niter; ++iiter) {
                 if (op[iiter] != NULL) {
                     npy_intp *axes = op_axes[iiter];
@@ -3491,7 +3492,7 @@ broadcast_error: {
                     if (tmp == NULL) {
                         return 0;
                     }
-                    PyString_ConcatAndDel(&errmsg, tmp);
+                    PyUString_ConcatAndDel(&errmsg, tmp);
                     if (errmsg == NULL) {
                         return 0;
                     }
@@ -3511,7 +3512,7 @@ broadcast_error: {
                         if (tmp == NULL) {
                             return 0;
                         }
-                        PyString_ConcatAndDel(&errmsg, tmp);
+                        PyUString_ConcatAndDel(&errmsg, tmp);
                         if (errmsg == NULL) {
                             return 0;
                         }
@@ -3530,12 +3531,12 @@ operand_different_than_broadcast: {
 
         /* Start of error message */
         if (op_flags[iiter]&NPY_ITER_READONLY) {
-            errmsg = PyString_FromString("non-broadcastable operand "
-                                        "with shape ");
+            errmsg = PyUString_FromString("non-broadcastable operand "
+                                          "with shape ");
         }
         else {
-            errmsg = PyString_FromString("non-broadcastable output "
-                                            "operand with shape ");
+            errmsg = PyUString_FromString("non-broadcastable output "
+                                          "operand with shape ");
         }
         if (errmsg == NULL) {
             return 0;
@@ -3547,7 +3548,7 @@ operand_different_than_broadcast: {
         if (tmp == NULL) {
             return 0;
         }
-        PyString_ConcatAndDel(&errmsg, tmp);
+        PyUString_ConcatAndDel(&errmsg, tmp);
         if (errmsg == NULL) {
             return 0;
         }
@@ -3566,11 +3567,11 @@ operand_different_than_broadcast: {
                 }
             }
 
-            tmp = PyString_FromString(" [remapped to ");
+            tmp = PyUString_FromString(" [remapped to ");
             if (tmp == NULL) {
                 return 0;
             }
-            PyString_ConcatAndDel(&errmsg, tmp);
+            PyUString_ConcatAndDel(&errmsg, tmp);
             if (errmsg == NULL) {
                 return 0;
             }
@@ -3579,17 +3580,17 @@ operand_different_than_broadcast: {
             if (tmp == NULL) {
                 return 0;
             }
-            PyString_ConcatAndDel(&errmsg, tmp);
+            PyUString_ConcatAndDel(&errmsg, tmp);
             if (errmsg == NULL) {
                 return 0;
             }
         }
 
-        tmp = PyString_FromString(" doesn't match the broadcast shape ");
+        tmp = PyUString_FromString(" doesn't match the broadcast shape ");
         if (tmp == NULL) {
             return 0;
         }
-        PyString_ConcatAndDel(&errmsg, tmp);
+        PyUString_ConcatAndDel(&errmsg, tmp);
         if (errmsg == NULL) {
             return 0;
         }
@@ -3607,7 +3608,7 @@ operand_different_than_broadcast: {
         if (tmp == NULL) {
             return 0;
         }
-        PyString_ConcatAndDel(&errmsg, tmp);
+        PyUString_ConcatAndDel(&errmsg, tmp);
         if (errmsg == NULL) {
             return 0;
         }

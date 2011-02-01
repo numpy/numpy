@@ -704,6 +704,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
 {
     npy_intp i, nargs, nin = self->nin;
     PyObject *obj, *context;
+    PyObject *str_key_obj = NULL;
     char *ufunc_name;
 
     int any_flexible = 0, any_object = 0;
@@ -797,10 +798,18 @@ static int get_ufunc_arguments(PyUFuncObject *self,
             Py_ssize_t length = 0;
             char *str = NULL;
             int bad_arg = 1;
-            
-            if (PyString_AsStringAndSize(key, &str, &length) == -1) {
+
+#if defined(NPY_PY3K)
+            Py_XDECREF(str_key_obj);
+            str_key_obj = PyUnicode_AsASCIIString(key);
+            if (str_key_obj != NULL) {
+                key = str_key_obj;
+            }
+#endif
+
+            if (PyBytes_AsStringAndSize(key, &str, &length) == -1) {
                 PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
-                return -1;
+                goto fail;
             }
 
             switch (str[0]) {
@@ -808,7 +817,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                     /* Provides a policy for allowed casting */
                     if (strncmp(str,"casting",7) == 0) {
                         if (!PyArray_CastingConverter(value, out_casting)) {
-                            return -1;
+                            goto fail;
                         }
                         bad_arg = 0;
                     }
@@ -830,14 +839,14 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                             PyErr_SetString(PyExc_ValueError,
                                     "cannot specify 'out' as both a "
                                     "positional and keyword argument");
-                            return -1;
+                            goto fail;
                         }
 
                         if (PyArray_Check(value)) {
                             if (!PyArray_ISWRITEABLE(value)) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "return array is not writeable");
-                                return -1;
+                                goto fail;
                             }
                             Py_INCREF(value);
                             out_op[nin] = (PyArrayObject *)value;
@@ -846,14 +855,14 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                             PyErr_SetString(PyExc_TypeError,
                                             "return arrays must be "
                                             "of ArrayType");
-                            return -1;
+                            goto fail;
                         }
                         bad_arg = 0;
                     }
                     /* Allows the default output layout to be overridden */
                     else if (strncmp(str,"order",5) == 0) {
                         if (!PyArray_OrderConverter(value, out_order)) {
-                            return -1;
+                            goto fail;
                         }
                         bad_arg = 0;
                     }
@@ -864,7 +873,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                         if (*out_typetup != NULL) {
                             PyErr_SetString(PyExc_RuntimeError,
                                     "cannot specify both 'sig' and 'dtype'");
-                            return -1;
+                            goto fail;
                         }
                         *out_typetup = value;
                         Py_INCREF(value);
@@ -877,13 +886,13 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                         /* Allow this parameter to be None */
                         PyArray_Descr *dtype;
                         if (!PyArray_DescrConverter2(value, &dtype)) {
-                            return -1;
+                            goto fail;
                         }
                         if (dtype != NULL) {
                             if (*out_typetup != NULL) {
                                 PyErr_SetString(PyExc_RuntimeError,
                                     "cannot specify both 'sig' and 'dtype'");
-                                return -1;
+                                goto fail;
                             }
                             *out_typetup = Py_BuildValue("(N)", dtype);
                         }
@@ -894,14 +903,19 @@ static int get_ufunc_arguments(PyUFuncObject *self,
             if (bad_arg) {
                 char *format = "'%s' is an invalid keyword to ufunc '%s'";
                 PyErr_Format(PyExc_TypeError, format, str, ufunc_name);
-                return -1;
+                goto fail;
             }
         }
     }
 
     *out_any_object = any_object;
 
+    Py_XDECREF(str_key_obj);
     return 0;
+
+fail:
+    Py_XDECREF(str_key_obj);
+    return -1;
 }
 
 static const char *
@@ -1447,11 +1461,21 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
 
         n_specified = n;
     }
-    else if (PyString_Check(type_tup)) {
+    else if (PyBytes_Check(type_tup) || PyUnicode_Check(type_tup)) {
         Py_ssize_t length;
         char *str;
+        PyObject *str_obj = NULL;
 
-        if (!PyString_AsStringAndSize(type_tup, &str, &length) < 0) {
+        if (PyUnicode_Check(type_tup)) {
+            str_obj = PyUnicode_AsASCIIString(type_tup);
+            if (str_obj == NULL) {
+                return -1;
+            }
+            type_tup = str_obj;
+        }
+
+        if (!PyBytes_AsStringAndSize(type_tup, &str, &length) < 0) {
+            Py_XDECREF(str_obj);
             return -1;
         }
         if (length != 1 && (length != niter + 2 ||
@@ -1463,6 +1487,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                                  "and %d after the -> sign",
                                  self->name ? self->name : "(unknown)",
                                  self->nin, self->nout);
+            Py_XDECREF(str_obj);
             return -1;
         }
         if (length == 1) {
@@ -1470,6 +1495,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
             n_specified = 1;
             dtype = PyArray_DescrFromType(str[0]);
             if (dtype == NULL) {
+                Py_XDECREF(str_obj);
                 return -1;
             }
             NPY_UF_DBG_PRINTF("signature character '%c', type num %d\n",
@@ -1486,6 +1512,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
 
                 dtype = PyArray_DescrFromType(str[istr]);
                 if (dtype == NULL) {
+                    Py_XDECREF(str_obj);
                     return -1;
                 }
                 NPY_UF_DBG_PRINTF("signature character '%c', type num %d\n",
@@ -1494,6 +1521,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                 Py_DECREF(dtype);
             }
         }
+        Py_XDECREF(str_obj);
     }
 
     /* If the ufunc has userloops, search for them. */
