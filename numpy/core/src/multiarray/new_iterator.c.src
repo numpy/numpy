@@ -2058,7 +2058,7 @@ NpyIter_GetGetCoords(NpyIter *iter, char **errmsg)
 /*NUMPY_API
  * Whether the buffer allocation is being delayed
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT npy_bool
 NpyIter_HasDelayedBufAlloc(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_DELAYBUF) != 0;
@@ -2067,7 +2067,7 @@ NpyIter_HasDelayedBufAlloc(NpyIter *iter)
 /*NUMPY_API
  * Whether the iterator handles the inner loop
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT npy_bool
 NpyIter_HasInnerLoop(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NOINNER) == 0;
@@ -2076,7 +2076,7 @@ NpyIter_HasInnerLoop(NpyIter *iter)
 /*NUMPY_API
  * Whether the iterator is tracking coordinates
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT npy_bool
 NpyIter_HasCoords(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASCOORDS) != 0;
@@ -2085,10 +2085,38 @@ NpyIter_HasCoords(NpyIter *iter)
 /*NUMPY_API
  * Whether the iterator is tracking an index
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT npy_bool
 NpyIter_HasIndex(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_HASINDEX) != 0;
+}
+
+/*NUMPY_API
+ * Whether the iteration could be done with no buffering.
+ */
+NPY_NO_EXPORT npy_bool
+NpyIter_RequiresBuffering(NpyIter *iter)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    /*npy_intp ndim = NIT_NDIM(iter);*/
+    npy_intp iiter, niter = NIT_NITER(iter);
+
+    char *op_itflags;
+
+    if (!(itflags&NPY_ITFLAG_BUFFER)) {
+        return 0;
+    }
+
+    op_itflags = NIT_OPITFLAGS(iter);
+
+    /* If any operand requires a cast, buffering is mandatory */
+    for (iiter = 0; iiter < niter; ++iiter) {
+        if (op_itflags[iiter]&NPY_OP_ITFLAG_CAST) {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 /*NUMPY_API
@@ -2096,7 +2124,7 @@ NpyIter_HasIndex(NpyIter *iter)
  * function, needs API access.  If this is true, the GIL must
  * be retained while iterating.
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT npy_bool
 NpyIter_IterationNeedsAPI(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NEEDSAPI) != 0;
@@ -2179,7 +2207,9 @@ NpyIter_GetIterIndexRange(NpyIter *iter,
 }
 
 /*NUMPY_API
- * Gets the broadcast shape (if coords are enabled)
+ * Gets the broadcast shape if coords are enabled, otherwise
+ * gets the shape of the iteration as Fortran-order (fastest-changing
+ * coordinate first)
  */
 NPY_NO_EXPORT int
 NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
@@ -2192,23 +2222,27 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
     NpyIter_AxisData *axisdata;
     char *perm;
 
-    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot get the shape of an iterator "
-                "without coordinates requested in the constructor");
-        return NPY_FAIL;
-    }
-
-    perm = NIT_PERM(iter);
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
-    for(idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        char p = perm[idim];
-        if (p < 0) {
-            outshape[ndim+p] = NAD_SHAPE(axisdata);
+
+    if (itflags&NPY_ITFLAG_HASCOORDS) {
+        perm = NIT_PERM(iter);
+        for(idim = 0; idim < ndim; ++idim) {
+            char p = perm[idim];
+            if (p < 0) {
+                outshape[ndim+p] = NAD_SHAPE(axisdata);
+            }
+            else {
+                outshape[ndim-p-1] = NAD_SHAPE(axisdata);
+            }
+            
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
-        else {
-            outshape[ndim-p-1] = NAD_SHAPE(axisdata);
+    }
+    else {
+        for(idim = 0; idim < ndim; ++idim) {
+            outshape[idim] = NAD_SHAPE(axisdata);
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
     }
 
@@ -2235,6 +2269,28 @@ NpyIter_GetDataPtrArray(NpyIter *iter)
         NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
         return NAD_PTRS(axisdata);
     }
+}
+
+/*NUMPY_API
+ * Get the array of data pointers (1 per object being iterated),
+ * directly into the arrays (never pointing to a buffer), for starting
+ * unbuffered iteration. This always returns the addresses for the
+ * iterator position as reset to iterator index 0.
+ *
+ * These pointers are different from the pointers accepted by
+ * NpyIter_ResetBasePointers, because the direction along some
+ * axes may have been reversed, requiring base offsets.
+ *
+ * This function may be safely called without holding the Python GIL.
+ */
+NPY_NO_EXPORT char **
+NpyIter_GetInitialDataPtrArray(NpyIter *iter)
+{
+    /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
+    /*npy_intp ndim = NIT_NDIM(iter);*/
+    npy_intp niter = NIT_NITER(iter);
+
+    return NIT_RESETDATAPTR(iter);
 }
 
 /*NUMPY_API
@@ -2403,9 +2459,10 @@ NpyIter_GetInnerStrideArray(NpyIter *iter)
 }
 
 /*NUMPY_API
- * Gets the array of strides for the specified axis.  Requires
- * that the iterator be tracking coordinates, and that buffering
- * is not enabled.
+ * Gets the array of strides for the specified axis.
+ * If the iterator is tracking coordinates, gets the strides
+ * for the axis specified, otherwise gets the strides for
+ * the iteration axis as Fortran order (fastest-changing axis first).
  *
  * Returns NULL if an error occurs.
  */
@@ -2420,32 +2477,25 @@ NpyIter_GetAxisStrideArray(NpyIter *iter, npy_intp axis)
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
 
-    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "Iterator GetAxisStrideArray may only be called "
-                "if coordinates are being tracked");
-        return NULL;
-    }
-    else if (itflags&NPY_ITFLAG_BUFFER) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "Iterator GetAxisStrideArray may not be called on "
-                "a buffered iterator");
-        return NULL;
-    }
-    else if (axis < 0 || axis >= ndim) {
+    if (axis < 0 || axis >= ndim) {
         PyErr_SetString(PyExc_ValueError,
                 "axis out of bounds in iterator GetStrideAxisArray");
         return NULL;
     }
 
-    /* Reverse axis, since the iterator treats them that way */
-    axis = ndim-1-axis;
+    if (itflags&NPY_ITFLAG_HASCOORDS) {
+        /* Reverse axis, since the iterator treats them that way */
+        axis = ndim-1-axis;
 
-    /* First find the axis in question */
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        if (perm[idim] == axis || -1-perm[idim] == axis) {
-            return NAD_STRIDES(axisdata);
+        /* First find the axis in question */
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+            if (perm[idim] == axis || -1-perm[idim] == axis) {
+                return NAD_STRIDES(axisdata);
+            }
         }
+    }
+    else {
+        return NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, axis));
     }
 
     PyErr_SetString(PyExc_RuntimeError,

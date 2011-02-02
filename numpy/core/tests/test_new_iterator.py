@@ -643,10 +643,9 @@ def test_iter_flags_errors():
     assert_raises(ValueError, newiter, a, [], [['writeonly']])
     assert_raises(ValueError, newiter, a, [], [['readwrite']])
     a.flags.writeable = True
-    # Coords and shape available only with the coords flag
+    # Coords available only with the coords flag
     i = newiter(arange(6), [], [['readonly']])
     assert_raises(ValueError, lambda i:i.coords, i)
-    assert_raises(ValueError, lambda i:i.shape, i)
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
     # GotoCoords and GotoIndex incompatible with buffering or no_inner

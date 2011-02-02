@@ -26,11 +26,10 @@
 #endif
 
 /*
- * TODO: Only SSE for float32 is implemented in the loops,
- * no SSE2 for float64
+ * TODO: Only some SSE2 for float64 is implemented.
  */
 #ifdef __SSE2__
-#define EINSUM_USE_SSE2 0
+#define EINSUM_USE_SSE2 1
 #else
 #define EINSUM_USE_SSE2 0
 #endif
@@ -86,6 +85,10 @@ typedef enum {
  * #float32 = 0*5,
  *            0*5,
  *            0,1,0,0,
+ *            0*3#
+ * #float64 = 0*5,
+ *            0*5,
+ *            0,0,1,0,
  *            0*3#
  */
 
@@ -348,6 +351,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value0_sse;
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, b, value0_sse;
 #endif
 
     NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
@@ -389,7 +394,40 @@ finish_after_unrolled_loop:
         }
 
         /* Finish off the loop */
-        goto finish_after_unrolled_loop;
+        if (count > 0) {
+            goto finish_after_unrolled_loop;
+        }
+        else {
+            return;
+        }
+    }
+#elif EINSUM_USE_SSE2 && @float64@
+    value0_sse = _mm_set1_pd(value0);
+
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            a = _mm_mul_pd(value0_sse, _mm_load_pd(data1+@i@));
+            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
+            _mm_store_pd(data_out+@i@, b);
+/**end repeat2**/
+            data1 += 8;
+            data_out += 8;
+        }
+
+        /* Finish off the loop */
+        if (count > 0) {
+            goto finish_after_unrolled_loop;
+        }
+        else {
+            return;
+        }
     }
 #endif
 
@@ -405,6 +443,14 @@ finish_after_unrolled_loop:
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
         _mm_storeu_ps(data_out+@i@, b);
 /**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        a = _mm_mul_pd(value0_sse, _mm_loadu_pd(data1+@i@));
+        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
+        _mm_storeu_pd(data_out+@i@, b);
+/**end repeat2**/
 #else
 /**begin repeat2
  * #i = 0, 1, 2, 3, 4, 5, 6, 7#
@@ -419,7 +465,9 @@ finish_after_unrolled_loop:
     }
 
     /* Finish off the loop */
-    goto finish_after_unrolled_loop;
+    if (count > 0) {
+        goto finish_after_unrolled_loop;
+    }
 }
 
 static void
@@ -516,6 +564,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, accum_sse = _mm_setzero_pd();
 #endif
 
     NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
@@ -556,14 +606,41 @@ finish_after_unrolled_loop:
             data1 += 8;
         }
 
-#if EINSUM_USE_SSE1 && @float32@
         /* Add the four SSE values and put in accum */
         a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = _mm_add_ps(a, accum_sse);
         a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = _mm_add_ps(a, accum_sse);
         _mm_store_ss(&accum, accum_sse);
-#endif
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            /*
+             * NOTE: This accumulation changes the order, so will likely
+             *       produce slightly different results.
+             */
+            a = _mm_mul_pd(_mm_load_pd(data0+@i@), _mm_load_pd(data1+@i@));
+            accum_sse = _mm_add_pd(accum_sse, a);
+/**end repeat2**/
+            data0 += 8;
+            data1 += 8;
+        }
+
+        /* Add the two SSE2 values and put in accum */
+        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
+        accum_sse = _mm_add_pd(a, accum_sse);
+        _mm_store_sd(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
@@ -585,6 +662,17 @@ finish_after_unrolled_loop:
         a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
         accum_sse = _mm_add_ps(accum_sse, a);
 /**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        /*
+         * NOTE: This accumulation changes the order, so will likely
+         *       produce slightly different results.
+         */
+        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), _mm_loadu_pd(data1+@i@));
+        accum_sse = _mm_add_pd(accum_sse, a);
+/**end repeat2**/
 #else
 /**begin repeat2
  * #i = 0, 1, 2, 3, 4, 5, 6, 7#
@@ -603,6 +691,11 @@ finish_after_unrolled_loop:
     a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = _mm_add_ps(a, accum_sse);
     _mm_store_ss(&accum, accum_sse);
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Add the two SSE2 values and put in accum */
+    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
+    accum_sse = _mm_add_pd(a, accum_sse);
+    _mm_store_sd(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
@@ -2101,6 +2194,222 @@ prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
     return 1;
 }
 
+static int
+unbuffered_loop_nop1_ndim2(NpyIter *iter)
+{
+    npy_intp coord, shape[2], strides[2][2];
+    char *ptrs[2][2], *ptr;
+    sum_of_products_fn sop;
+
+#if NPY_EINSUM_DBG_TRACING 
+    NpyIter_DebugPrint(iter);
+#endif
+    NPY_EINSUM_DBG_PRINTF("running hand-coded 1-op 2-dim loop\n");
+
+    NpyIter_GetShape(iter, shape);
+    memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
+                                            2*sizeof(npy_intp));
+    memcpy(strides[1], NpyIter_GetAxisStrideArray(iter, 1),
+                                            2*sizeof(npy_intp));
+    memcpy(ptrs[0], NpyIter_GetInitialDataPtrArray(iter),
+                                            2*sizeof(char *));
+    memcpy(ptrs[1], ptrs[0], 2*sizeof(char*));
+
+    sop = get_sum_of_products_function(1,
+                    NpyIter_GetDescrArray(iter)[0]->type_num,
+                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    strides[0]);
+
+    if (sop == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                    "invalid data type for einsum");
+        return -1;
+    }
+
+    /*
+     * Since the iterator wasn't tracking coordinates, the
+     * loop provided by the iterator is in Fortran-order.
+     */
+    for (coord = shape[1]; coord > 0; --coord) {
+        sop(1, ptrs[0], strides[0], shape[0]);
+
+        ptr = ptrs[1][0] + strides[1][0];
+        ptrs[0][0] = ptrs[1][0] = ptr;
+        ptr = ptrs[1][1] + strides[1][1];
+        ptrs[0][1] = ptrs[1][1] = ptr;
+    }
+
+    return 0;
+}
+
+static int
+unbuffered_loop_nop1_ndim3(NpyIter *iter)
+{
+    npy_intp coords[2], shape[3], strides[3][2];
+    char *ptrs[3][2], *ptr;
+    sum_of_products_fn sop;
+
+#if NPY_EINSUM_DBG_TRACING 
+    NpyIter_DebugPrint(iter);
+#endif
+    NPY_EINSUM_DBG_PRINTF("running hand-coded 1-op 3-dim loop\n");
+
+    NpyIter_GetShape(iter, shape);
+    memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
+                                            2*sizeof(npy_intp));
+    memcpy(strides[1], NpyIter_GetAxisStrideArray(iter, 1),
+                                            2*sizeof(npy_intp));
+    memcpy(strides[2], NpyIter_GetAxisStrideArray(iter, 2),
+                                            2*sizeof(npy_intp));
+    memcpy(ptrs[0], NpyIter_GetInitialDataPtrArray(iter),
+                                            2*sizeof(char *));
+    memcpy(ptrs[1], ptrs[0], 2*sizeof(char*));
+    memcpy(ptrs[2], ptrs[0], 2*sizeof(char*));
+
+    sop = get_sum_of_products_function(1,
+                    NpyIter_GetDescrArray(iter)[0]->type_num,
+                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    strides[0]);
+
+    if (sop == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                    "invalid data type for einsum");
+        return -1;
+    }
+
+    /*
+     * Since the iterator wasn't tracking coordinates, the
+     * loop provided by the iterator is in Fortran-order.
+     */
+    for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
+        for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
+            sop(1, ptrs[0], strides[0], shape[0]);
+
+            ptr = ptrs[1][0] + strides[1][0];
+            ptrs[0][0] = ptrs[1][0] = ptr;
+            ptr = ptrs[1][1] + strides[1][1];
+            ptrs[0][1] = ptrs[1][1] = ptr;
+        }
+        ptr = ptrs[2][0] + strides[2][0];
+        ptrs[0][0] = ptrs[1][0] = ptrs[2][0] = ptr;
+        ptr = ptrs[2][1] + strides[2][1];
+        ptrs[0][1] = ptrs[1][1] = ptrs[2][1] = ptr;
+    }
+
+    return 0;
+}
+
+static int
+unbuffered_loop_nop2_ndim2(NpyIter *iter)
+{
+    npy_intp coord, shape[2], strides[2][3];
+    char *ptrs[2][3], *ptr;
+    sum_of_products_fn sop;
+
+#if NPY_EINSUM_DBG_TRACING 
+    NpyIter_DebugPrint(iter);
+#endif
+    NPY_EINSUM_DBG_PRINTF("running hand-coded 2-op 2-dim loop\n");
+
+    NpyIter_GetShape(iter, shape);
+    memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
+                                            3*sizeof(npy_intp));
+    memcpy(strides[1], NpyIter_GetAxisStrideArray(iter, 1),
+                                            3*sizeof(npy_intp));
+    memcpy(ptrs[0], NpyIter_GetInitialDataPtrArray(iter),
+                                            3*sizeof(char *));
+    memcpy(ptrs[1], ptrs[0], 3*sizeof(char*));
+
+    sop = get_sum_of_products_function(2,
+                    NpyIter_GetDescrArray(iter)[0]->type_num,
+                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    strides[0]);
+
+    if (sop == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                    "invalid data type for einsum");
+        return -1;
+    }
+
+    /*
+     * Since the iterator wasn't tracking coordinates, the
+     * loop provided by the iterator is in Fortran-order.
+     */
+    for (coord = shape[1]; coord > 0; --coord) {
+        sop(2, ptrs[0], strides[0], shape[0]);
+
+        ptr = ptrs[1][0] + strides[1][0];
+        ptrs[0][0] = ptrs[1][0] = ptr;
+        ptr = ptrs[1][1] + strides[1][1];
+        ptrs[0][1] = ptrs[1][1] = ptr;
+        ptr = ptrs[1][2] + strides[1][2];
+        ptrs[0][2] = ptrs[1][2] = ptr;
+    }
+
+    return 0;
+}
+
+static int
+unbuffered_loop_nop2_ndim3(NpyIter *iter)
+{
+    npy_intp coords[2], shape[3], strides[3][3];
+    char *ptrs[3][3], *ptr;
+    sum_of_products_fn sop;
+
+#if NPY_EINSUM_DBG_TRACING 
+    NpyIter_DebugPrint(iter);
+#endif
+    NPY_EINSUM_DBG_PRINTF("running hand-coded 2-op 3-dim loop\n");
+
+    NpyIter_GetShape(iter, shape);
+    memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
+                                            3*sizeof(npy_intp));
+    memcpy(strides[1], NpyIter_GetAxisStrideArray(iter, 1),
+                                            3*sizeof(npy_intp));
+    memcpy(strides[2], NpyIter_GetAxisStrideArray(iter, 2),
+                                            3*sizeof(npy_intp));
+    memcpy(ptrs[0], NpyIter_GetInitialDataPtrArray(iter),
+                                            3*sizeof(char *));
+    memcpy(ptrs[1], ptrs[0], 3*sizeof(char*));
+    memcpy(ptrs[2], ptrs[0], 3*sizeof(char*));
+
+    sop = get_sum_of_products_function(2,
+                    NpyIter_GetDescrArray(iter)[0]->type_num,
+                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    strides[0]);
+
+    if (sop == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                    "invalid data type for einsum");
+        return -1;
+    }
+
+    /*
+     * Since the iterator wasn't tracking coordinates, the
+     * loop provided by the iterator is in Fortran-order.
+     */
+    for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
+        for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
+            sop(2, ptrs[0], strides[0], shape[0]);
+
+            ptr = ptrs[1][0] + strides[1][0];
+            ptrs[0][0] = ptrs[1][0] = ptr;
+            ptr = ptrs[1][1] + strides[1][1];
+            ptrs[0][1] = ptrs[1][1] = ptr;
+            ptr = ptrs[1][2] + strides[1][2];
+            ptrs[0][2] = ptrs[1][2] = ptr;
+        }
+        ptr = ptrs[2][0] + strides[2][0];
+        ptrs[0][0] = ptrs[1][0] = ptrs[2][0] = ptr;
+        ptr = ptrs[2][1] + strides[2][1];
+        ptrs[0][1] = ptrs[1][1] = ptrs[2][1] = ptr;
+        ptr = ptrs[2][2] + strides[2][2];
+        ptrs[0][2] = ptrs[1][2] = ptrs[2][2] = ptr;
+    }
+
+    return 0;
+}
+
 
 /*NUMPY_API
  * This function provides summation of array elements according to
@@ -2435,6 +2744,57 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     ret = NpyIter_GetOperandArray(iter)[nop];
     Py_INCREF(ret);
     PyArray_FillWithZero(ret);
+
+
+    /***************************/
+    /*
+     * Accceleration for some specific loop structures. Note
+     * that with axis coalescing, inputs with more dimensions can
+     * be reduced to fit into these patterns.
+     */
+    if (!NpyIter_RequiresBuffering(iter)) {
+        npy_intp ndim = NpyIter_GetNDim(iter);
+        switch (nop) {
+            case 1:
+                if (ndim == 2) {
+                    if (unbuffered_loop_nop1_ndim2(iter) < 0) {
+                        Py_DECREF(ret);
+                        ret = NULL;
+                        goto fail;
+                    }
+                    goto finish;
+                }
+                else if (ndim == 3) {
+                    if (unbuffered_loop_nop1_ndim3(iter) < 0) {
+                        Py_DECREF(ret);
+                        ret = NULL;
+                        goto fail;
+                    }
+                    goto finish;
+                }
+                break;
+            case 2:
+                if (ndim == 2) {
+                    if (unbuffered_loop_nop2_ndim2(iter) < 0) {
+                        Py_DECREF(ret);
+                        ret = NULL;
+                        goto fail;
+                    }
+                    goto finish;
+                }
+                else if (ndim == 3) {
+                    if (unbuffered_loop_nop2_ndim3(iter) < 0) {
+                        Py_DECREF(ret);
+                        ret = NULL;
+                        goto fail;
+                    }
+                    goto finish;
+                }
+                break;
+        }
+    }
+    /***************************/
+
     if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
         Py_DECREF(ret);
         goto fail;
@@ -2497,6 +2857,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         }
     }
 
+finish:
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
         Py_DECREF(op[iop]);
