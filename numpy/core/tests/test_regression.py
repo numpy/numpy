@@ -1493,11 +1493,11 @@ class TestRegression(TestCase):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
         a[()] = a
-        assert_raises(ValueError, int, a)
-        assert_raises(ValueError, long, a)
-        assert_raises(ValueError, float, a)
-        assert_raises(ValueError, oct, a)
-        assert_raises(ValueError, hex, a)
+        assert_raises(TypeError, int, a)
+        assert_raises(TypeError, long, a)
+        assert_raises(TypeError, float, a)
+        assert_raises(TypeError, oct, a)
+        assert_raises(TypeError, hex, a)
 
         # This was causing a to become like the above
         a = np.array(0, dtype=object)

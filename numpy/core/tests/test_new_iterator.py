@@ -670,6 +670,16 @@ def test_iter_flags_errors():
     # Can't iterate if size is zero
     assert_raises(ValueError, newiter, np.array([]))
 
+def test_iter_slice():
+    a, b, c = np.arange(3), np.arange(3), np.arange(3.)
+    i = newiter([a,b,c], [], ['readwrite'])
+    i[0:2] = (3,3)
+    assert_equal(a, [3,1,2])
+    assert_equal(b, [3,1,2])
+    assert_equal(c, [0,1,2])
+    i[1] = 12
+    assert_equal(i[0:2], [3,12])
+
 def test_iter_nbo_align_contig():
     # Check that byte order, alignment, and contig changes work
 

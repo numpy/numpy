@@ -1636,8 +1636,8 @@ static PyObject *npyiter_index_get(NewNpyArrayIterObject *self)
     }
 
     if (NpyIter_HasIndex(self->iter)) {
-        npy_intp index = *NpyIter_GetIndexPtr(self->iter);
-        return PyInt_FromLong(index);
+        npy_intp ind = *NpyIter_GetIndexPtr(self->iter);
+        return PyInt_FromLong(ind);
     }
     else {
         PyErr_SetString(PyExc_ValueError,
@@ -1661,12 +1661,12 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 
     if (NpyIter_HasIndex(self->iter)) {
-        npy_intp index;
-        index = PyInt_AsLong(value);
-        if (index==-1 && PyErr_Occurred()) {
+        npy_intp ind;
+        ind = PyInt_AsLong(value);
+        if (ind==-1 && PyErr_Occurred()) {
             return -1;
         }
-        if (NpyIter_GotoIndex(self->iter, index) != NPY_SUCCEED) {
+        if (NpyIter_GotoIndex(self->iter, ind) != NPY_SUCCEED) {
             return -1;
         }
         self->started = 0;
@@ -2109,7 +2109,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     niter = NpyIter_GetNIter(self->iter);
     if (i < 0 || i >= niter) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index  %d is out of bounds", (int)i);
+                "Iterator operand index %d is out of bounds", (int)i);
         return -1;
     }
     if (!self->writeflags[i]) {
@@ -2143,6 +2143,156 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
     return ret;
+}
+
+static int
+npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
+                Py_ssize_t ihigh, PyObject *v)
+{
+    npy_intp niter;
+    Py_ssize_t i;
+
+    if (v == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot delete iterator elements");
+        return -1;
+    }
+
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return -1;
+    }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator construction used delayed buffer allocation, "
+                "and no reset has been done yet");
+        return -1;
+    }
+
+    niter = NpyIter_GetNIter(self->iter);
+    if (ilow < 0) {
+        ilow = 0;
+    }
+    else if (ilow >= niter) {
+        ilow = niter-1;
+    }
+    if (ihigh < ilow) {
+        ihigh = ilow;
+    }
+    else if (ihigh > niter) {
+        ihigh = niter;
+    }
+
+    if (!PySequence_Check(v) || PySequence_Size(v) != ihigh-ilow) {
+        PyErr_SetString(PyExc_ValueError,
+                "Wrong size to assign to iterator slice");
+        return -1;
+    }
+
+    for (i = ilow; i < ihigh ; ++i) {
+        PyObject *item = PySequence_GetItem(v, i-ilow);
+        if (item == NULL) {
+            return -1;
+        }
+        if (npyiter_seq_ass_item(self, i, item) < 0) {
+            Py_DECREF(item);
+            return -1;
+        }
+        Py_DECREF(item);
+    }
+
+    return 0;
+}
+
+static PyObject *
+npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
+{
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return NULL;
+    }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator construction used delayed buffer allocation, "
+                "and no reset has been done yet");
+        return NULL;
+    }
+
+    if (PyInt_Check(op) || PyLong_Check(op) ||
+                    (PyIndex_Check(op) && !PySequence_Check(op))) {
+        npy_intp i = PyArray_PyIntAsIntp(op);
+        if (i == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
+        return npyiter_seq_item(self, i);
+    }
+    else if (PySlice_Check(op)) {
+        Py_ssize_t istart = 0, iend = 0, istep = 0;
+        if (PySlice_GetIndices((PySliceObject *)op,
+                            NpyIter_GetNIter(self->iter),
+                            &istart, &iend, &istep) < 0) {
+            return NULL;
+        }
+        if (istep != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator slicing only supports a step of 1");
+            return NULL;
+        }
+        return npyiter_seq_slice(self, istart, iend);
+    }
+
+    PyErr_SetString(PyExc_TypeError,
+            "invalid index type for iterator indexing");
+    return NULL;
+}
+
+static int
+npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
+                        PyObject *value)
+{
+    if (self->iter == NULL || self->finished) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is past the end");
+        return -1;
+    }
+
+    if (NpyIter_HasDelayedBufAlloc(self->iter)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator construction used delayed buffer allocation, "
+                "and no reset has been done yet");
+        return -1;
+    }
+
+    if (PyInt_Check(op) || PyLong_Check(op) ||
+                    (PyIndex_Check(op) && !PySequence_Check(op))) {
+        npy_intp i = PyArray_PyIntAsIntp(op);
+        if (i == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        return npyiter_seq_ass_item(self, i, value);
+    }
+    else if (PySlice_Check(op)) {
+        Py_ssize_t istart = 0, iend = 0, istep = 0;
+        if (PySlice_GetIndices((PySliceObject *)op,
+                            NpyIter_GetNIter(self->iter),
+                            &istart, &iend, &istep) < 0) {
+            return -1;
+        }
+        if (istep != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator slice assignment only supports a step of 1");
+            return -1;
+        }
+        return npyiter_seq_ass_slice(self, istart, iend, value);
+    }
+
+    PyErr_SetString(PyExc_TypeError,
+            "invalid index type for iterator indexing");
+    return -1;
 }
 
 static PyMethodDef npyiter_methods[] = {
@@ -2230,7 +2380,7 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
     (ssizessizeargfunc)npyiter_seq_slice,   /*sq_slice*/
     (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
-    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
+    (ssizessizeobjargproc)npyiter_seq_ass_slice,/*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
     (binaryfunc)NULL,                       /*sq_inplace_concat */
     (ssizeargfunc)NULL,                     /*sq_inplace_repeat */
@@ -2241,11 +2391,21 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (intargfunc)npyiter_seq_item,           /*sq_item*/
     (intintargfunc)npyiter_seq_slice,       /*sq_slice*/
     (intobjargproc)npyiter_seq_ass_item,    /*sq_ass_item*/
-    (intintobjargproc)NULL,                 /*sq_ass_slice*/
+    (intintobjargproc)npyiter_seq_ass_slice,/*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
     (binaryfunc)NULL,                       /*sg_inplace_concat */
     (intargfunc)NULL                        /*sg_inplace_repeat */
 #endif
+};
+
+NPY_NO_EXPORT PyMappingMethods npyiter_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+    (lenfunc)npyiter_seq_length,          /*mp_length*/
+#else
+    (inquiry)npyiter_seq_length,          /*mp_length*/
+#endif
+    (binaryfunc)npyiter_subscript,        /*mp_subscript*/
+    (objobjargproc)npyiter_ass_subscript, /*mp_ass_subscript*/
 };
 
 NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
@@ -2271,7 +2431,7 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     &npyiter_as_sequence,                       /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
+    &npyiter_as_mapping,                        /* tp_as_mapping */
     0,                                          /* tp_hash */
     0,                                          /* tp_call */
     0,                                          /* tp_str */

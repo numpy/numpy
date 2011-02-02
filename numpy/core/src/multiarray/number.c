@@ -613,7 +613,7 @@ array_int(PyArrayObject *v)
      * because it could point back at 'v'.
      */
     if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
     }
@@ -653,7 +653,7 @@ array_float(PyArrayObject *v)
      * because it could point back at 'v'.
      */
     if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
     }
@@ -689,7 +689,7 @@ array_long(PyArrayObject *v)
      * because it could point back at 'v'.
      */
     if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
     }
@@ -723,7 +723,7 @@ array_oct(PyArrayObject *v)
      * because it could point back at 'v'.
      */
     if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
     }
@@ -757,7 +757,7 @@ array_hex(PyArrayObject *v)
      * because it could point back at 'v'.
      */
     if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
     }
