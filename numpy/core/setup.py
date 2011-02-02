@@ -739,7 +739,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
-            join('src', 'multiarray', 'lowlevel_strided_loops.h')]
+            join('src', 'private', 'lowlevel_strided_loops.h')]
 
     multiarray_src = [join('src', 'multiarray', 'multiarraymodule.c'),
         join('src', 'multiarray', 'hashdescr.c'),

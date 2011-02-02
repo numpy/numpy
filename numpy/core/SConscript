@@ -460,9 +460,14 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'usertypes.c'),
         pjoin('src', 'multiarray', 'buffer.c'),
         pjoin('src', 'multiarray', 'numpymemoryview.c'),
-        pjoin('src', 'multiarray', 'scalarapi.c')]
+        pjoin('src', 'multiarray', 'scalarapi.c'),
+        pjoin('src', 'multiarray', 'new_iterator_pywrap.c'),
+        pjoin('src', 'multiarray', 'dtype_transfer.c')]
     multiarray_src.extend(arraytypes_src)
     multiarray_src.extend(scalartypes_src)
+    multiarray_src.extend(lowlevel_strided_loops_src)
+    multiarray_src.extend(new_iterator_src)
+    multiarray_src.extend(einsum_src)
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.extend([pjoin("src", "multiarray", "ucsnarrow.c")])
 else:
