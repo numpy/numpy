@@ -2923,21 +2923,29 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         }
 
         if (operation == UFUNC_ACCUMULATE) {
+            /* In case COPY or UPDATEIFCOPY occurred */
+            op[0] = NpyIter_GetOperandArray(iter)[0];
+            op[1] = NpyIter_GetOperandArray(iter)[1];
+
+            if (PyArray_SIZE(op[0]) == 0) {
+                if (out == NULL) {
+                    out = op[0];
+                    Py_INCREF(out);
+                }
+                goto finish;
+            }
+
             if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
                 goto fail;
             }
             if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
                 goto fail;
             }
-
-            /* In case COPY or UPDATEIFCOPY occurred */
-            op[0] = NpyIter_GetOperandArray(iter)[0];
-            op[1] = NpyIter_GetOperandArray(iter)[1];
         }
     }
 
     /* Get the output */
-    if (!out) {
+    if (out == NULL) {
         if (iter) {
             op[0] = out = NpyIter_GetOperandArray(iter)[0];
             Py_INCREF(out);
@@ -2968,27 +2976,29 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
      * unit for UFUNC_REDUCE, or return the zero-sized output array
      * for UFUNC_ACCUMULATE.
      */
-    if (operation == UFUNC_REDUCE && PyArray_DIM(op[1], axis) == 0) {
-        if (self->identity == PyUFunc_None) {
-            PyErr_Format(PyExc_ValueError,
-                         "zero-size array to %s.%s "
-                         "without identity", ufunc_name, opname);
-            goto fail;
-        }
-        if (self->identity == PyUFunc_One) {
-            PyObject *obj = PyInt_FromLong((long) 1);
-            if (obj == NULL) {
+    if (PyArray_DIM(op[1], axis) == 0) {
+        if (operation == UFUNC_REDUCE) {
+            if (self->identity == PyUFunc_None) {
+                PyErr_Format(PyExc_ValueError,
+                             "zero-size array to %s.%s "
+                             "without identity", ufunc_name, opname);
                 goto fail;
             }
-            PyArray_FillWithScalar(op[0], obj);
-            Py_DECREF(obj);
-        } else {
-            PyObject *obj = PyInt_FromLong((long) 0);
-            if (obj == NULL) {
-                goto fail;
+            if (self->identity == PyUFunc_One) {
+                PyObject *obj = PyInt_FromLong((long) 1);
+                if (obj == NULL) {
+                    goto fail;
+                }
+                PyArray_FillWithScalar(op[0], obj);
+                Py_DECREF(obj);
+            } else {
+                PyObject *obj = PyInt_FromLong((long) 0);
+                if (obj == NULL) {
+                    goto fail;
+                }
+                PyArray_FillWithScalar(op[0], obj);
+                Py_DECREF(obj);
             }
-            PyArray_FillWithScalar(op[0], obj);
-            Py_DECREF(obj);
         }
 
         goto finish;

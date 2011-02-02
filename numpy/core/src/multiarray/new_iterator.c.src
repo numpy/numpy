@@ -858,7 +858,7 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
 
     npy_intp xdim = 0;
     char *perm = NIT_PERM(iter);
-    NpyIter_AxisData *axisdata0 = NIT_AXISDATA(iter), *axisdata;
+    NpyIter_AxisData *axisdata_del = NIT_AXISDATA(iter), *axisdata;
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
 
     npy_intp *baseoffsets = NIT_BASEOFFSETS(iter);
@@ -892,7 +892,7 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
     axis = ndim-1-axis;
 
     /* First find the axis in question */
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata0, 1)) {
+    for (idim = 0; idim < ndim; ++idim) {
         /* If this is it, and it's iterated forward, done */
         if (perm[idim] == axis) {
             xdim = idim;
@@ -900,8 +900,8 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
         }
         /* If this is it, but it's iterated backward, must reverse the axis */
         else if (-1-perm[idim] == axis) {
-            npy_intp *strides = NAD_STRIDES(axisdata0);
-            npy_intp shape = NAD_SHAPE(axisdata0), offset;
+            npy_intp *strides = NAD_STRIDES(axisdata_del);
+            npy_intp shape = NAD_SHAPE(axisdata_del), offset;
 
             xdim = idim;
 
@@ -916,11 +916,19 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
             }
             break;
         }
+        
+        NIT_ADVANCE_AXISDATA(axisdata_del, 1);
     }
 
     if (idim == ndim) {
         PyErr_SetString(PyExc_RuntimeError,
                 "internal error in iterator perm");
+        return NPY_FAIL;
+    }
+
+    if (NAD_SHAPE(axisdata_del) == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "cannot remove a zero-sized axis from an iterator");
         return NPY_FAIL;
     }
 
@@ -941,11 +949,11 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
     }
 
     /* Adjust the iteration size */
-    NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata0);
+    NIT_ITERSIZE(iter) /= NAD_SHAPE(axisdata_del);
 
     /* Shift all the axisdata structures by one */
-    axisdata = NIT_INDEX_AXISDATA(axisdata0, 1);
-    memmove(axisdata0, axisdata, (ndim-1-xdim)*sizeof_axisdata);
+    axisdata = NIT_INDEX_AXISDATA(axisdata_del, 1);
+    memmove(axisdata_del, axisdata, (ndim-1-xdim)*sizeof_axisdata);
 
     /* If there is more than one dimension, shrink the iterator */
     if (ndim > 1) {
@@ -953,8 +961,8 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
     }
     /* Otherwise convert it to a singleton dimension */
     else {
-        npy_intp *strides = NAD_STRIDES(axisdata0);
-        NAD_SHAPE(axisdata0) = 1;
+        npy_intp *strides = NAD_STRIDES(axisdata_del);
+        NAD_SHAPE(axisdata_del) = 1;
         for (iiter = 0; iiter < niter; ++iiter) {
             strides[iiter] = 0;
         }

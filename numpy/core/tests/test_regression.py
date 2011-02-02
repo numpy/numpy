@@ -1504,6 +1504,10 @@ class TestRegression(TestCase):
         a[...] += 1
         assert_equal(a, 1)
 
+    def test_zerosize_accumulate(self):
+        "Ticket #1733"
+        x = np.array([[42, 0]], dtype=np.uint32)
+        assert_equal(np.add.accumulate(x[:-1,0]), [])
 
 if __name__ == "__main__":
     run_module_suite()
