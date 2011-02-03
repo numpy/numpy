@@ -150,7 +150,7 @@ typedef struct {
 /* zero-padded data copy function */
 void *_strided_zero_pad_data_copy(void *data)
 {
-    _strided_zero_pad_data *newdata = 
+    _strided_zero_pad_data *newdata =
             (_strided_zero_pad_data *)PyArray_malloc(
                                     sizeof(_strided_zero_pad_data));
     if (newdata == NULL) {
@@ -470,7 +470,7 @@ void _wrap_copy_swap_data_free(void *data)
 /* wrap copy swap data copy function */
 void *_wrap_copy_swap_data_copy(void *data)
 {
-    _wrap_copy_swap_data *newdata = 
+    _wrap_copy_swap_data *newdata =
         (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
     if (newdata == NULL) {
         return NULL;
@@ -559,7 +559,7 @@ void _strided_cast_data_free(void *data)
 /* strided cast data copy function */
 void *_strided_cast_data_copy(void *data)
 {
-    _strided_cast_data *newdata = 
+    _strided_cast_data *newdata =
             (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
     if (newdata == NULL) {
         return NULL;
@@ -1050,7 +1050,7 @@ _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
                     subN, src_itemsize,
                     subdata);
 
-        
+
         stransfer_finish_src(NULL, 0,
                             src, 0,
                             1, src_itemsize,
@@ -1304,7 +1304,7 @@ get_n_to_n_transfer_function(int aligned,
 {
     PyArray_StridedTransferFn *stransfer;
     void *data;
-    
+
     /*
      * src_stride and dst_stride are set to contiguous, because
      * subarrays are always contiguous.
@@ -1522,7 +1522,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     npy_intp structsize, loop_index, run, run_size,
              src_index, dst_index, i, ndim;
     _subarray_broadcast_offsetrun *offsetruns;
-    
+
     structsize = sizeof(_subarray_broadcast_data) +
                         dst_size*sizeof(_subarray_broadcast_offsetrun);
 
@@ -1806,7 +1806,7 @@ typedef struct {
     free_strided_transfer_data freefunc;
     copy_strided_transfer_data copyfunc;
     npy_intp field_count;
-    
+
     _single_field_transfer fields;
 } _field_transfer_data;
 
@@ -1858,7 +1858,7 @@ void *_field_transfer_data_copy(void *data)
                 return NULL;
             }
         }
-        
+
     }
 
     return (void *)newdata;
@@ -2475,7 +2475,7 @@ typedef struct {
 /* zero-padded data copy function */
 void *_dst_memset_zero_data_copy(void *data)
 {
-    _dst_memset_zero_data *newdata = 
+    _dst_memset_zero_data *newdata =
             (_dst_memset_zero_data *)PyArray_malloc(
                                     sizeof(_dst_memset_zero_data));
     if (newdata == NULL) {
@@ -2532,7 +2532,7 @@ _null_to_strided_reference_setzero(char *dst,
         /* Release the reference in dst */
         NPY_DT_DBG_REFTRACE("dec dest ref (to set zero)", dst_ref);
         Py_XDECREF(dst_ref);
-        
+
         /* Set it to zero */
         dst_ref = NULL;
         NPY_COPY_PYOBJECT_PTR(dst, &dst_ref);
@@ -2714,7 +2714,7 @@ get_decsrcref_transfer_function(int aligned,
         }
         src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
         PyDimMem_FREE(src_shape.ptr);
-        
+
         /* Get a function for contiguous src of the subarray type */
         if (get_decsrcref_transfer_function(aligned,
                                 src_dtype->subarray->base->elsize,
@@ -2968,4 +2968,3 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     out_stransfer, out_transferdata,
                     out_needs_api);
 }
-

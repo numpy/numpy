@@ -394,7 +394,7 @@ PyArray_FillWithZero(PyArrayObject *a)
     iter = NpyIter_New(a, NPY_ITER_WRITEONLY|NPY_ITER_NO_INNER_ITERATION,
                     NPY_KEEPORDER, NPY_NO_CASTING,
                     NULL, 0, NULL, 0);
-    
+
     if (iter == NULL) {
         return -1;
     }

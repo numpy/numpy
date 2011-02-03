@@ -1703,5 +1703,3 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
 };
 
 /** END of Subscript Iterator **/
-
-

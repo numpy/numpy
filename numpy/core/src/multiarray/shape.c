@@ -924,5 +924,3 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     }
     return (PyObject *)ret;
 }
-
-

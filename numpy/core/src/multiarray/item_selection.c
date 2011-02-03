@@ -622,7 +622,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     if (ap == NULL) {
         goto fail;
     }
-    /* Broadcast all arrays to each other, index array at the end. */ 
+    /* Broadcast all arrays to each other, index array at the end. */
     multi = (PyArrayMultiIterObject *)
         PyArray_MultiIterFromObjects((PyObject **)mps, n, 1, ap);
     if (multi == NULL) {
@@ -1903,4 +1903,3 @@ finish:
 
     return ret_tuple;
 }
-

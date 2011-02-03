@@ -422,7 +422,7 @@ NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
 
 /*
  * _NumPyOS_ascii_strtod_plain:
- * 
+ *
  * PyOS_ascii_strtod work-alike, with no enhanced features,
  * for forward compatibility with Python >= 2.7
  */

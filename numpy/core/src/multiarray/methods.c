@@ -741,7 +741,7 @@ array_setasflat(PyArrayObject *self, PyObject *args)
 {
     PyObject *arr_in;
     PyArrayObject *arr;
-    
+
     if (!PyArg_ParseTuple(args, "O", &arr_in)) {
         return NULL;
     }

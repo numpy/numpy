@@ -776,4 +776,3 @@ PyArray_IntTupleFromIntp(int len, npy_intp *vals)
  fail:
     return intTuple;
 }
-

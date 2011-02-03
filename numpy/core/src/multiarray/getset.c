@@ -607,7 +607,7 @@ _get_part(PyArrayObject *self, int imag)
                      "Cannot convert complex type number %d to float",
                      self->descr->type_num);
             return NULL;
-            
+
     }
     type = PyArray_DescrFromType(float_type_num);
 

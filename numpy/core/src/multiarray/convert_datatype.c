@@ -431,7 +431,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 
         type_num = min_scalar_type_num((char *)&value, from->type_num,
                                         &is_small_unsigned);
-        
+
         /*
          * If we've got a small unsigned scalar, and the 'to' type
          * is not unsigned, then make it signed to allow the value
@@ -569,7 +569,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     /* If one or both are user defined, calculate it */
     else {
         int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
-  
+
         if (PyArray_CanCastTo(type2, type1)) {
             /* Promoted types are always native byte order */
             if (PyArray_ISNBO(type1->byteorder)) {
@@ -761,7 +761,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
 
     /* TODO: Also combine fields, subarrays, strings, etc */
-    
+
     /*
     printf("invalid type promotion: ");
     PyObject_Print(type1, stdout, 0);
@@ -1063,7 +1063,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
  * If arr is a scalar (has 0 dimensions) with a built-in number data type,
  * finds the smallest type size/kind which can still represent its data.
  * Otherwise, returns the array's data type.
- * 
+ *
  */
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_MinScalarType(PyArrayObject *arr)
@@ -1099,7 +1099,7 @@ PyArray_MinScalarType(PyArrayObject *arr)
  * type promotion.  Otherwise, does a type promotion on the MinScalarType
  * of all the inputs.  Data types passed directly are treated as vector
  * types.
- * 
+ *
  */
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
@@ -1517,4 +1517,3 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     PyDataMem_FREE(mps);
     return NULL;
 }
-

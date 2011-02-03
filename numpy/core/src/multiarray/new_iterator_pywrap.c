@@ -472,7 +472,7 @@ npyiter_convert_op_flags_array(PyObject *op_flags_in,
             Py_DECREF(f);
             return 0;
         }
-        
+
         Py_DECREF(f);
     }
 
@@ -628,7 +628,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
                 "must be contained within it");
         return 0;
     }
-    
+
     return 1;
 }
 
@@ -656,7 +656,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             PyErr_SetString(PyExc_ValueError, "Too many operands");
             return 0;
         }
-    
+
         for (iiter = 0; iiter < niter; ++iiter) {
             PyObject *item = PySequence_GetItem(op_in, iiter);
             if (item == NULL) {
@@ -712,7 +712,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
         if (op[iiter] != NULL) {
             PyArrayObject *ao;
             int fromanyflags = 0;
-            
+
             if (op_flags[iiter]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
                 fromanyflags = NPY_UPDATEIFCOPY;
             }
@@ -1050,7 +1050,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
             printf("\n");
         }
         */
-        
+
         /* Allocate the iterator */
         iter = (NewNpyArrayIterObject *)npyiter_new(&NpyIter_Type, NULL, NULL);
         if (iter == NULL) {
@@ -2469,4 +2469,3 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     0,                                          /* tp_version_tag */
 #endif
 };
-

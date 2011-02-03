@@ -1082,4 +1082,3 @@ PyArray_Trace(PyArrayObject *self, int offset, int axis1, int axis2,
     Py_DECREF(diag);
     return ret;
 }
-

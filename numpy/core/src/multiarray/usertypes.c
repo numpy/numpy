@@ -272,4 +272,3 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     }
     return 0;
 }
-

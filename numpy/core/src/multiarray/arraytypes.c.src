@@ -1131,7 +1131,7 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     else if (PyUString_Check(op) || PyUnicode_Check(op)) {
 #endif
         /* FIXME:  Converts to DateTime first and therefore does not handle extended notation */
-        /* import _mx_datetime_parser 
+        /* import _mx_datetime_parser
          * res = _mx_datetime_parser(name)
          *  Convert from datetime to Int
          */

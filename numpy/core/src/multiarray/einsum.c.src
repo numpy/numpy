@@ -267,7 +267,7 @@ static void
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b;
 #endif
-    
+
     NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_two (%d)\n", (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -1602,7 +1602,7 @@ parse_operand_subscripts(char *subscripts, int length,
                             "einstein sum subscripts string contains a "
                             "'.' that is not part of an ellipsis ('...')");
                 return 0;
-                
+
             }
         }
         else if (label != ' ') {
@@ -1794,7 +1794,7 @@ parse_output_subscripts(char *subscripts, int length,
                             "einstein sum subscripts string contains a "
                             "'.' that is not part of an ellipsis ('...')");
                 return -1;
-                
+
             }
         }
     }
@@ -2064,7 +2064,7 @@ prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
     /* Regular broadcasting */
     if (broadcast == BROADCAST_RIGHT) {
         /* broadcast dimensions get placed in rightmost position */
-        ibroadcast = ndim-1; 
+        ibroadcast = ndim-1;
         for (i = ndim_iter-1; i >= 0; --i) {
             label = iter_labels[i];
             /*
@@ -2105,7 +2105,7 @@ prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
     /* Reverse broadcasting */
     else if (broadcast == BROADCAST_LEFT) {
         /* broadcast dimensions get placed in leftmost position */
-        ibroadcast = 0; 
+        ibroadcast = 0;
         for (i = 0; i < ndim_iter; ++i) {
             label = iter_labels[i];
             /*
@@ -2146,7 +2146,7 @@ prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
     /* Middle or None broadcasting */
     else {
         /* broadcast dimensions get placed in leftmost position */
-        ibroadcast = 0; 
+        ibroadcast = 0;
         for (i = 0; i < ndim_iter; ++i) {
             label = iter_labels[i];
             /*
@@ -2201,7 +2201,7 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
     char *ptrs[2][2], *ptr;
     sum_of_products_fn sop;
 
-#if NPY_EINSUM_DBG_TRACING 
+#if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
     NPY_EINSUM_DBG_PRINTF("running hand-coded 1-op 2-dim loop\n");
@@ -2249,7 +2249,7 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
     char *ptrs[3][2], *ptr;
     sum_of_products_fn sop;
 
-#if NPY_EINSUM_DBG_TRACING 
+#if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
     NPY_EINSUM_DBG_PRINTF("running hand-coded 1-op 3-dim loop\n");
@@ -2306,7 +2306,7 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
     char *ptrs[2][3], *ptr;
     sum_of_products_fn sop;
 
-#if NPY_EINSUM_DBG_TRACING 
+#if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
     NPY_EINSUM_DBG_PRINTF("running hand-coded 2-op 2-dim loop\n");
@@ -2356,7 +2356,7 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
     char *ptrs[3][3], *ptr;
     sum_of_products_fn sop;
 
-#if NPY_EINSUM_DBG_TRACING 
+#if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
     NPY_EINSUM_DBG_PRINTF("running hand-coded 2-op 3-dim loop\n");
@@ -2516,7 +2516,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                         &broadcast[iop])) {
             return NULL;
         }
-        
+
         /* Move subscripts to the start of the labels for the next op */
         subscripts += length;
         if (iop < nop-1) {
@@ -2735,7 +2735,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                                        order, casting,
                                        op_flags, op_dtypes,
                                        ndim_iter, op_axes, 0);
-    
+
     if (iter == NULL) {
         goto fail;
     }
@@ -2810,7 +2810,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                         NpyIter_GetDescrArray(iter)[0]->elsize,
                         fixed_strides);
 
-#if NPY_EINSUM_DBG_TRACING 
+#if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
 

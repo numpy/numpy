@@ -298,9 +298,9 @@ static void
 npyiter_flip_negative_strides(NpyIter *iter);
 static void
 npyiter_reverse_axis_ordering(NpyIter *iter);
-static void 
+static void
 npyiter_find_best_axis_ordering(NpyIter *iter);
-static void 
+static void
 npyiter_coalesce_axes(NpyIter *iter);
 
 static PyArray_Descr *
@@ -621,7 +621,7 @@ NpyIter_MultiNew(npy_intp niter, PyArrayObject **op_in, npy_uint32 flags,
     /*
      * If REFS_OK was specified, check whether there are any
      * reference arrays and flag it if so.
-     */ 
+     */
     if (flags&NPY_ITER_REFS_OK) {
         for (iiter = 0; iiter < niter; ++iiter) {
             PyArray_Descr *rdt = op_dtype[iiter];
@@ -916,7 +916,7 @@ NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)
             }
             break;
         }
-        
+
         NIT_ADVANCE_AXISDATA(axisdata_del, 1);
     }
 
@@ -1024,7 +1024,7 @@ NpyIter_RemoveInnerLoop(NpyIter *iter)
     if (!(itflags&NPY_ITFLAG_NOINNER)) {
         itflags |= NPY_ITFLAG_NOINNER;
         NIT_ITFLAGS(iter) = itflags;
-        
+
         /*
          * Check whether we can apply the single iteration
          * optimization to the iternext function.
@@ -1082,7 +1082,7 @@ NpyIter_Reset(NpyIter *iter, char **errmsg)
             npyiter_copy_from_buffers(iter);
         }
     }
-    
+
     npyiter_goto_iterindex(iter, NIT_ITERSTART(iter));
 
     if (itflags&NPY_ITFLAG_BUFFER) {
@@ -1129,7 +1129,7 @@ NpyIter_ResetBasePointers(NpyIter *iter, char **baseptrs, char **errmsg)
     for (iiter = 0; iiter < niter; ++iiter) {
         resetdataptr[iiter] = baseptrs[iiter] + baseoffsets[iiter];
     }
-    
+
     npyiter_goto_iterindex(iter, NIT_ITERSTART(iter));
 
     if (itflags&NPY_ITFLAG_BUFFER) {
@@ -1271,7 +1271,7 @@ NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
                     "coordinates.");
             return NPY_FAIL;
         }
-        
+
         NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
@@ -1582,7 +1582,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 # if @const_ndim@ == 2
     return 0;
 # else
-    
+
     axisdata2 = NIT_INDEX_AXISDATA(axisdata1, 1);
     /* Increment coordinate 2 */
     NAD_COORD(axisdata2)++;
@@ -1634,7 +1634,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
     return 0;
 
 # endif /* ndim != 2 */
-    
+
 #endif /* ndim != 1 */
 }
 
@@ -2026,7 +2026,7 @@ NpyIter_GetGetCoords(NpyIter *iter, char **errmsg)
                 NPY_ITFLAG_IDENTPERM |
                 NPY_ITFLAG_NEGPERM |
                 NPY_ITFLAG_BUFFER);
-    
+
     switch (itflags) {
 /**begin repeat
  * #const_itflags = 0,
@@ -2192,7 +2192,7 @@ NpyIter_GetBufferSize(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     /*npy_intp ndim = NIT_NDIM(iter);*/
     npy_intp niter = NIT_NITER(iter);
-    
+
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         return NBF_BUFFERSIZE(bufferdata);
@@ -2243,7 +2243,7 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
             else {
                 outshape[ndim-p-1] = NAD_SHAPE(axisdata);
             }
-            
+
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
     }
@@ -2370,7 +2370,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
         shape[ndim-idim-1] = NAD_SHAPE(axisdata);
         strides[ndim-idim-1] = NAD_STRIDES(axisdata)[i];
     }
-    
+
     Py_INCREF(dtype);
     view = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                 shape, strides, dataptr,
@@ -2986,7 +2986,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             /* Check byte order */
             if (!PyArray_ISNBO((*op_dtype)->byteorder)) {
                 PyArray_Descr *nbo_dtype;
-                
+
                 /* Replace with a new descr which is in native byte order */
                 nbo_dtype = PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE);
                 Py_DECREF(*op_dtype);
@@ -3122,7 +3122,7 @@ npyiter_check_casting(npy_intp niter, PyArrayObject **op,
     for(iiter = 0; iiter < niter; ++iiter) {
         NPY_IT_DBG_PRINTF("Iterator: Checking casting for operand %d\n",
                             (int)iiter);
-#if NPY_IT_DBG_TRACING 
+#if NPY_IT_DBG_TRACING
         printf("op: ");
         if (op[iiter] != NULL) {
             PyObject_Print((PyObject *)PyArray_DESCR(op[iiter]), stdout, 0);
@@ -3307,7 +3307,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
             }
             else if (i < ondim) {
                 npy_intp shape;
-                
+
                 if (op[0] != NULL) {
                     shape = PyArray_DIM(op[0], i);
                 }
@@ -3355,7 +3355,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
             }
             for (idim = 0; idim < ondim; ++idim) {
                 npy_intp shape;
-                
+
                 /* op[iiter] != NULL, because we set ondim to 0 in that case */
                 shape = PyArray_DIM(op[iiter], ondim-idim-1);
 
@@ -3398,7 +3398,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                 }
                 else if (i < ondim) {
                     npy_intp shape;
-                    
+
                     if (op[iiter] != NULL) {
                         shape = PyArray_DIM(op[iiter], i);
                     }
@@ -3488,7 +3488,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
                         op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
                     }
-                    
+
                     NIT_ADVANCE_AXISDATA(axisdata, 1);
                 }
             }
@@ -3519,7 +3519,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                         op_itflags[iiter] |= NPY_OP_ITFLAG_REDUCE;
                         break;
                     }
-                    
+
                     NIT_ADVANCE_AXISDATA(axisdata, 1);
                 }
             }
@@ -3686,7 +3686,7 @@ operand_different_than_broadcast: {
         axisdata = NIT_AXISDATA(iter);
         for (idim = 0; idim < ndim; ++idim) {
             remdims[idim] = NAD_SHAPE(axisdata);
-            
+
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
 
@@ -3743,7 +3743,7 @@ npyiter_replace_axisdata(NpyIter *iter, npy_intp iiter,
     for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
         char p;
         npy_intp i, shape;
-        
+
         /* Apply the perm to get the original axis */
         p = perm[idim];
         if (p < 0) {
@@ -4030,7 +4030,7 @@ static npy_intp intp_abs(npy_intp x)
     return (x < 0) ? -x : x;
 }
 
-static void 
+static void
 npyiter_find_best_axis_ordering(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -4045,7 +4045,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
     int permuted = 0;
 
     perm = NIT_PERM(iter);
-    
+
     /*
      * Do a custom stable insertion sort.  Note that because
      * the AXISDATA has been reversed from C order, this
@@ -4084,7 +4084,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
                             shouldswap = 1;
                         }
                     }
-                    
+
                     /*
                      * A comparison has been done, so it's
                      * no longer ambiguous
@@ -4170,7 +4170,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
     }
 }
 
-static void 
+static void
 npyiter_coalesce_axes(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -4296,7 +4296,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
         char p;
-        
+
         /* Apply the perm to get the original axis */
         p = perm[idim];
         if (p < 0) {
@@ -4450,7 +4450,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     if (ret == NULL) {
         return NULL;
     }
-    
+
     /* If there are any reversed axes, create a view that reverses them */
     if (anyreverse) {
         char *dataptr = PyArray_DATA(ret);
@@ -5049,7 +5049,7 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
             }
 
             dataptr = ptrs;
-            
+
             NIT_ADVANCE_AXISDATA(axisdata, -1);
         }
     }
@@ -5088,7 +5088,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
 
     PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
-    
+
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, niter) /
                                 NPY_SIZEOF_INTP;
 
@@ -5967,7 +5967,7 @@ NpyIter_DebugPrint(NpyIter *iter)
             PyObject_Print((PyObject*)NIT_DTYPES(iter)[iiter], stdout, 0);
         else
             printf("(nil) ");
-        printf(" "); 
+        printf(" ");
     }
     printf("\n");
     printf("| InitDataPtrs: ");
@@ -6002,7 +6002,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         else {
             printf("(op nil) ");
         }
-        printf(" "); 
+        printf(" ");
     }
     printf("\n");
     printf("| OpItFlags:\n");
@@ -6117,4 +6117,3 @@ NpyIter_DebugPrint(NpyIter *iter)
 
     PyGILState_Release(gilstate);
 }
-
