@@ -1541,7 +1541,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                 return 0;
         }
     }
- 
+
     NPY_UF_DBG_PRINTF("Searching loops for specified sig\n");
     for (i = 0; i < self->ntypes; ++i) {
         char *orig_types = self->types + i*self->nargs;
@@ -3066,7 +3066,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         stride = NpyIter_GetInnerStrideArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        
+
         /* Execute the loop with two nested iterators */
         if (iter_inner) {
             /* Only UFUNC_REDUCE uses iter_inner */
@@ -3110,7 +3110,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                 else {
                     memcpy(dataptr_inner[0], dataptr_inner[1], itemsize);
                 }
-                
+
                 stride_copy[0] = 0;
                 stride_copy[2] = 0;
                 do {
@@ -3157,7 +3157,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             }
 
             do {
-                
+
                 dataptr_copy[0] = dataptr[0];
                 dataptr_copy[1] = dataptr[1];
                 dataptr_copy[2] = dataptr[0];
@@ -3240,7 +3240,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             else {
                 memcpy(dataptr_inner[0], dataptr_inner[1], itemsize);
             }
-            
+
             stride_copy[0] = 0;
             stride_copy[2] = 0;
             do {
@@ -3611,7 +3611,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         stride = NpyIter_GetInnerStrideArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        
+
         /* Execute the loop with just the outer iterator */
         npy_intp count_m1 = PyArray_DIM(op[1], axis)-1;
         npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);

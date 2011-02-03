@@ -22,7 +22,7 @@
  *  command line as follows:
  *
  *  $ cd <NumPy source root directory>
- *  $ python  numpy/distutils/conv_template.py numpy/core/src/umath/loops.h.src 
+ *  $ python  numpy/distutils/conv_template.py numpy/core/src/umath/loops.h.src
  *  $
  */
 
@@ -2716,4 +2716,3 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
  */
 
 #endif
-

@@ -64,7 +64,7 @@
     intp n = dimensions[0]; \
     intp i; \
     for(i = 0; i < n; i++, ip2 += is2)
-    
+
 #define BINARY_REDUCE_LOOP(TYPE)\
     char *iop1 = args[0]; \
     TYPE io1 = *(TYPE *)iop1; \
@@ -1026,7 +1026,7 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
-/* FIXME: implement the following correctly using the metadata:  data is the 
+/* FIXME: implement the following correctly using the metadata:  data is the
    sequence of ndarrays in the same order as args.
  */
 NPY_NO_EXPORT void
@@ -2089,5 +2089,3 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
  **                              END LOOPS                                  **
  *****************************************************************************
  */
-
-
