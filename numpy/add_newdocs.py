@@ -1517,6 +1517,10 @@ add_newdoc('numpy.core', 'einsum',
 
     Evaluates the Einstein summation convention on the operands.
 
+    An alternative way to provide the subscripts and operands is as
+    einsum(op0, sublist0, op1, sublist1, ..., [sublistout]). The examples
+    below have corresponding einsum calls with the two parameter methods.
+
     Using the Einstein summation convention, many common multi-dimensional
     array operations can be represented in a simple fashion.  This function
     provides a way compute such summations.
@@ -1540,13 +1544,16 @@ add_newdoc('numpy.core', 'einsum',
     ``np.einsum('ji', a)`` takes its transpose.
 
     The output can be controlled by specifying output subscript labels
-    as well.  This specifies the label order, and allows summing to be
-    disallowed or forced when desired.  The call ``np.einsum('i->', a)``
-    is equivalent to ``np.sum(a, axis=-1)``, and
-    ``np.einsum('ii->i', a)`` is equivalent to ``np.diag(a)``.
+    as well.  This specifies the label order, and allows summing to
+    be disallowed or forced when desired.  The call ``np.einsum('i->', a)``
+    is like ``np.sum(a, axis=-1)``, and ``np.einsum('ii->i', a)``
+    is like ``np.diag(a)``.  The difference is that ``einsum`` does not
+    allow broadcasting by default.
 
-    It is also possible to control how broadcasting occurs using
-    an ellipsis.  To take the trace along the first and last axes,
+    To enable and control broadcasting, use an ellipsis.  Default
+    NumPy-style broadcasting is done by adding an ellipsis
+    to the left of each term, like ``np.einsum('...ii->...i', a)``.
+    To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
     product with the left-most indices instead of rightmost, you can do
     ``np.einsum('ij...,jk...->ik...', a, b)``.
@@ -1602,15 +1609,21 @@ add_newdoc('numpy.core', 'einsum',
 
     >>> np.einsum('ii', a)
     60
+    >>> np.einsum(a, [0,0])
+    60
     >>> np.trace(a)
     60
 
     >>> np.einsum('ii->i', a)
     array([ 0,  6, 12, 18, 24])
+    >>> np.einsum(a, [0,0], [0])
+    array([ 0,  6, 12, 18, 24])
     >>> np.diag(a)
     array([ 0,  6, 12, 18, 24])
 
     >>> np.einsum('ij,j', a, b)
+    array([ 30,  80, 130, 180, 230])
+    >>> np.einsum(a, [0,1], b, [1])
     array([ 30,  80, 130, 180, 230])
     >>> np.dot(a, b)
     array([ 30,  80, 130, 180, 230])
@@ -1619,12 +1632,19 @@ add_newdoc('numpy.core', 'einsum',
     array([[0, 3],
            [1, 4],
            [2, 5]])
+    >>> np.einsum(c, [1,0])
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
     >>> c.T
     array([[0, 3],
            [1, 4],
            [2, 5]])
 
-    >>> np.einsum(',', 3, c)
+    >>> np.einsum('..., ...', 3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.einsum(3, [Ellipsis], c, [Ellipsis])
     array([[ 0,  3,  6],
            [ 9, 12, 15]])
     >>> np.multiply(3, c)
@@ -1633,17 +1653,24 @@ add_newdoc('numpy.core', 'einsum',
 
     >>> np.einsum('i,i', b, b)
     30
+    >>> np.einsum(b, [0], b, [0])
+    30
     >>> np.inner(b,b)
     30
 
     >>> np.einsum('i,j', np.arange(2)+1, b)
     array([[0, 1, 2, 3, 4],
            [0, 2, 4, 6, 8]])
+    >>> np.einsum(np.arange(2)+1, [0], b, [1])
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
     >>> np.outer(np.arange(2)+1, b)
     array([[0, 1, 2, 3, 4],
            [0, 2, 4, 6, 8]])
 
-    >>> np.einsum('i...->', a)
+    >>> np.einsum('i...->...', a)
+    array([50, 55, 60, 65, 70])
+    >>> np.einsum(a, [0,Ellipsis], [Ellipsis])
     array([50, 55, 60, 65, 70])
     >>> np.sum(a, axis=0)
     array([50, 55, 60, 65, 70])
@@ -1651,6 +1678,12 @@ add_newdoc('numpy.core', 'einsum',
     >>> a = np.arange(60.).reshape(3,4,5)
     >>> b = np.arange(24.).reshape(4,3,2)
     >>> np.einsum('ijk,jil->kl', a, b)
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    >>> np.einsum(a, [0,1,2], b, [1,0,3], [2,3])
     array([[ 4400.,  4730.],
            [ 4532.,  4874.],
            [ 4664.,  5018.],

@@ -1953,47 +1953,40 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return _ARET(PyArray_MatrixProduct(a, v));
 }
 
-static PyObject *
-array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+static int
+einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
+                       PyArrayObject **op)
 {
-    char *subscripts;
     int i, nop;
-    PyArrayObject *op[NPY_MAXARGS];
-    NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_SAFE_CASTING;
-    PyArrayObject *out = NULL;
-    PyArray_Descr *dtype = NULL;
-    PyObject *ret = NULL;
     PyObject *subscripts_str;
-    PyObject *str_obj = NULL;
-    PyObject *str_key_obj = NULL;
 
     nop = PyTuple_GET_SIZE(args) - 1;
     if (nop <= 0) {
         PyErr_SetString(PyExc_ValueError,
                         "must specify the einstein sum subscripts string "
                         "and at least one operand");
-        return NULL;
+        return -1;
     }
-    else if (nop > NPY_MAXARGS) {
+    else if (nop >= NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError, "too many operands");
-        return NULL;
+        return -1;
     }
 
     /* Get the subscripts string */
     subscripts_str = PyTuple_GET_ITEM(args, 0);
     if (PyUnicode_Check(subscripts_str)) {
-        str_obj = PyUnicode_AsASCIIString(subscripts_str);
-        if (str_obj == NULL) {
-            return NULL;
+        *str_obj = PyUnicode_AsASCIIString(subscripts_str);
+        if (*str_obj == NULL) {
+            return -1;
         }
-        subscripts_str = str_obj;
+        subscripts_str = *str_obj;
     }
 
-    subscripts = PyBytes_AsString(subscripts_str);
+    *subscripts = PyBytes_AsString(subscripts_str);
     if (subscripts == NULL) {
-        Py_XDECREF(str_obj);
-        return NULL;
+        Py_XDECREF(*str_obj);
+        *str_obj = NULL;
+        return -1;
     }
 
     /* Set the operands to NULL */
@@ -2004,17 +1997,235 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     /* Get the operands */
     for (i = 0; i < nop; ++i) {
         PyObject *obj = PyTuple_GET_ITEM(args, i+1);
-        if (PyArray_Check(obj)) {
-            Py_INCREF(obj);
-            op[i] = (PyArrayObject *)obj;
+
+        op[i] = (PyArrayObject *)PyArray_FromAny(obj,
+                                NULL, 0, 0, NPY_ENSUREARRAY, NULL);
+        if (op[i] == NULL) {
+            goto fail;
         }
-        else {
-            op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                    NULL, 0, 0, NPY_ENSUREARRAY, NULL);
-            if (op[i] == NULL) {
-                goto finish;
+    }
+
+    return nop;
+
+fail:
+    for (i = 0; i < nop; ++i) {
+        Py_XDECREF(op[i]);
+        op[i] = NULL;
+    }
+
+    return -1;
+}
+
+/*
+ * Converts a list of subscripts to a string.
+ *
+ * Returns -1 on error, the number of characters placed in subscripts
+ * otherwise.
+ */
+static int
+einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
+{
+    int ellipsis = 0, subindex = 0;
+    npy_intp i, size;
+    PyObject *item;
+
+    obj = PySequence_Fast(obj, "the subscripts for each operand must "
+                               "be a list or a tuple");
+    if (obj == NULL) {
+        return -1;
+    }
+    size = PySequence_Size(obj);
+
+
+    for (i = 0; i < size; ++i) {
+        item = PySequence_Fast_GET_ITEM(obj, i);
+        /* Ellipsis */
+        if (item == Py_Ellipsis) {
+            if (ellipsis) {
+                PyErr_SetString(PyExc_ValueError,
+                        "each subscripts list may have only one ellipsis");
+                Py_DECREF(obj);
+                return -1;
+            }
+            if (subindex + 3 >= subsize) {
+                PyErr_SetString(PyExc_ValueError,
+                        "subscripts list is too long");
+                Py_DECREF(obj);
+                return -1;
+            }
+            subscripts[subindex++] = '.';
+            subscripts[subindex++] = '.';
+            subscripts[subindex++] = '.';
+            ellipsis = 1;
+        }
+        /* Subscript */
+        else if (PyInt_Check(item) || PyLong_Check(item)) {
+            long s = PyInt_AsLong(item);
+            if ( s < 0 || s > 2*26) {
+                PyErr_SetString(PyExc_ValueError,
+                        "subscript is not within the valid range [0, 52]");
+                Py_DECREF(obj);
+                return -1;
+            }
+            if (s < 26) {
+                subscripts[subindex++] = 'A' + s;
+            }
+            else {
+                subscripts[subindex++] = 'a' + s;
+            }
+            if (subindex >= subsize) {
+                PyErr_SetString(PyExc_ValueError,
+                        "subscripts list is too long");
+                Py_DECREF(obj);
+                return -1;
             }
         }
+        /* Invalid */
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                    "each subscript must be either an integer "
+                    "or an ellipsis");
+            Py_DECREF(obj);
+            return -1;
+        }
+    }
+
+    Py_DECREF(obj);
+
+    return subindex;
+}
+
+/*
+ * Fills in the subscripts, with maximum size subsize, and op,
+ * with the values in the tuple 'args'.
+ *
+ * Returns -1 on error, number of operands placed in op otherwise.
+ */
+static int
+einsum_sub_op_from_lists(PyObject *args,
+                char *subscripts, int subsize, PyArrayObject **op)
+{
+    int subindex = 0;
+    npy_intp i, nop;
+
+    nop = PyTuple_Size(args)/2;
+
+    if (nop == 0) {
+        PyErr_SetString(PyExc_ValueError, "must provide at least an "
+                        "operand and a subscripts list to einsum");
+        return -1;
+    }
+    else if(nop >= NPY_MAXARGS) {
+        PyErr_SetString(PyExc_ValueError, "too many operands");
+        return -1;
+    }
+
+    /* Set the operands to NULL */
+    for (i = 0; i < nop; ++i) {
+        op[nop] = NULL;
+    }
+
+    /* Get the operands and build the subscript string */
+    for (i = 0; i < nop; ++i) {
+        PyObject *obj = PyTuple_GET_ITEM(args, 2*i);
+        int n;
+
+        /* Comma between the subscripts for each operand */
+        if (i != 0) {
+            subscripts[subindex++] = ',';
+            if (subindex >= subsize) {
+                PyErr_SetString(PyExc_ValueError,
+                        "subscripts list is too long");
+                goto fail;
+            }
+        }
+
+        op[i] = (PyArrayObject *)PyArray_FromAny(obj,
+                                NULL, 0, 0, NPY_ENSUREARRAY, NULL);
+        if (op[i] == NULL) {
+            goto fail;
+        }
+
+        obj = PyTuple_GET_ITEM(args, 2*i+1);
+        n = einsum_list_to_subscripts(obj, subscripts+subindex,
+                                      subsize-subindex);
+        if (n < 0) {
+            goto fail;
+        }
+        subindex += n;
+    }
+
+    /* Add the '->' to the string if provided */
+    if (PyTuple_Size(args) == 2*nop+1) {
+        PyObject *obj;
+        int n;
+
+        if (subindex + 2 >= subsize) {
+            PyErr_SetString(PyExc_ValueError,
+                    "subscripts list is too long");
+            goto fail;
+        }
+        subscripts[subindex++] = '-';
+        subscripts[subindex++] = '>';
+
+        obj = PyTuple_GET_ITEM(args, 2*nop);
+        n = einsum_list_to_subscripts(obj, subscripts+subindex,
+                                      subsize-subindex);
+        if (n < 0) {
+            goto fail;
+        }
+        subindex += n;
+    }
+
+    /* NULL-terminate the subscripts string */
+    subscripts[subindex] = '\0';
+
+    return nop;
+
+fail:
+    for (i = 0; i < nop; ++i) {
+        Py_XDECREF(op[i]);
+        op[i] = NULL;
+    }
+
+    return -1;
+}
+
+static PyObject *
+array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    char *subscripts = NULL, subscripts_buffer[256];
+    PyObject *str_obj = NULL, *str_key_obj = NULL;
+    PyObject *arg0;
+    int i, nop;
+    PyArrayObject *op[NPY_MAXARGS];
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    PyArrayObject *out = NULL;
+    PyArray_Descr *dtype = NULL;
+    PyObject *ret = NULL;
+
+    if (PyTuple_GET_SIZE(args) < 1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "must specify the einstein sum subscripts string "
+                        "and at least one operand, or at least one operand "
+                        "and its corresponding subscripts list");
+        return NULL;
+    }
+    arg0 = PyTuple_GET_ITEM(args, 0);
+
+    /* einsum('i,j', a, b), einsum('i,j->ij', a, b) */
+    if (PyString_Check(arg0) || PyUnicode_Check(arg0)) {
+        nop = einsum_sub_op_from_str(args, &str_obj, &subscripts, op);
+    }
+    /* einsum(a, [0], b, [1]), einsum(a, [0], b, [1], [0,1]) */
+    else {
+        nop = einsum_sub_op_from_lists(args, subscripts_buffer,
+                                    sizeof(subscripts_buffer), op);
+        subscripts = subscripts_buffer;
+    }
+    if (nop <= 0) {
+        goto finish;
     }
 
     /* Get the keyword arguments */
@@ -2090,6 +2301,7 @@ finish:
     Py_XDECREF(dtype);
     Py_XDECREF(str_obj);
     Py_XDECREF(str_key_obj);
+    /* out is a borrowed reference */
 
     return ret;
 }
@@ -2722,20 +2934,20 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     int cmp_op;
     Bool rstrip;
     char *cmp_str;
-    Py_ssize_t strlen;
+    Py_ssize_t strlength;
     PyObject *res = NULL;
     static char msg[] = "comparision must be '==', '!=', '<', '>', '<=', '>='";
     static char *kwlist[] = {"a1", "a2", "cmp", "rstrip", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOs#O&", kwlist,
-                &array, &other, &cmp_str, &strlen,
+                &array, &other, &cmp_str, &strlength,
                 PyArray_BoolConverter, &rstrip)) {
         return NULL;
     }
-    if (strlen < 1 || strlen > 2) {
+    if (strlength < 1 || strlength > 2) {
         goto err;
     }
-    if (strlen > 1) {
+    if (strlength > 1) {
         if (cmp_str[1] != '=') {
             goto err;
         }
