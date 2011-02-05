@@ -4290,6 +4290,7 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     weights : array_like, optional
         Weights, array of the same shape as `x`.
     minlength : integer, optional
+        .. versionadded:: 1.6.0
         A minimum number of bins for the output array.
 
     Returns
