@@ -149,7 +149,8 @@ static int
         temp = (@type@)@func2@(op);
     }
     if (PyErr_Occurred()) {
-        if (PySequence_Check(op)) {
+        if (PySequence_Check(op) && !PyString_Check(op) &&
+                                            !PyUnicode_Check(op)) {
             PyErr_Clear();
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");

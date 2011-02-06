@@ -723,15 +723,15 @@ class TestRegression(TestCase):
         arr = np.zeros(5, dtype=np.object_)
 
         arr[:] = a
-        assert cnt(a) == cnt0_a + 5
+        assert_equal(cnt(a), cnt0_a + 5)
 
         arr[:] = b
-        assert cnt(a) == cnt0_a
-        assert cnt(b) == cnt0_b + 5
+        assert_equal(cnt(a), cnt0_a)
+        assert_equal(cnt(b), cnt0_b + 5)
 
         arr[:2] = c
-        assert cnt(b) == cnt0_b + 3
-        assert cnt(c) == cnt0_c + 2
+        assert_equal(cnt(b), cnt0_b + 3)
+        assert_equal(cnt(c), cnt0_c + 2)
 
         del arr
 
@@ -1131,14 +1131,18 @@ class TestRegression(TestCase):
     def test_array_from_sequence_scalar_array(self):
         """Ticket #1078: segfaults when creating an array with a sequence of 0d
         arrays."""
-        a = np.ones(2)
-        b = np.array(3)
-        assert_raises(ValueError, lambda: np.array((a, b)))
+        a = np.array((np.ones(2), np.array(2)))
+        assert_equal(a.shape, (2,))
+        assert_equal(a.dtype, np.dtype(object))
+        assert_equal(a[0], np.ones(2))
+        assert_equal(a[1], np.array(2))
 
-        t = ((1,), np.array(1))
-        assert_raises(ValueError, lambda: np.array(t))
+        a = np.array(((1,), np.array(1)))
+        assert_equal(a.shape, (2,))
+        assert_equal(a.dtype, np.dtype(object))
+        assert_equal(a[0], (1,))
+        assert_equal(a[1], np.array(1))
 
-    @dec.knownfailureif(True, "This is a corner case, see ticket #1081.")
     def test_array_from_sequence_scalar_array2(self):
         """Ticket #1081: weird array with strange input..."""
         t = np.array([np.array([]), np.array(0, object)])
@@ -1508,6 +1512,12 @@ class TestRegression(TestCase):
         "Ticket #1733"
         x = np.array([[42, 0]], dtype=np.uint32)
         assert_equal(np.add.accumulate(x[:-1,0]), [])
+
+    def test_objectarray_setfield(self):
+        # Setfield directly manipulates the raw array data,
+        # so is invalid for object arrays.
+        x = np.array([1,2,3], dtype=object)
+        assert_raises(RuntimeError, x.setfield, 4, np.int32, 0)
 
 if __name__ == "__main__":
     run_module_suite()

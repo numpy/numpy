@@ -311,6 +311,7 @@ multiarray_funcs_api = {
     'PyArray_EinsteinSum':                  274,
     'PyArray_FillWithZero':                 275,
     'PyArray_NewLikeArray':                 276,
+    'PyArray_GetArrayParamsFromObject':     277,
 }
 
 ufunc_types_api = {
