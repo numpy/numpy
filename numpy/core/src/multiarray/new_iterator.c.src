@@ -4905,7 +4905,12 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
 
     for (iiter = 0; iiter < niter; ++iiter) {
         char flags = op_itflags[iiter];
-        op_stride = strides[iiter];
+        /*
+         * Reduction operands may be buffered with a different stride,
+         * so we must pass NPY_MAX_INTP to the transfer function factory.
+         */
+        op_stride = (flags&NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
+                                                   strides[iiter];
 
         /*
          * If we have determined that a buffer may be needed,
