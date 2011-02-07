@@ -6,8 +6,10 @@
 
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline
-#elif defined(__GNUC__)
+#elif defined(inline)
         #define NPY_INLINE inline
+#elif defined(__inline__)
+        #define NPY_INLINE __inline__
 #else
         #define NPY_INLINE
 #endif
