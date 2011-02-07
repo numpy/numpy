@@ -1519,5 +1519,19 @@ class TestRegression(TestCase):
         x = np.array([1,2,3], dtype=object)
         assert_raises(RuntimeError, x.setfield, 4, np.int32, 0)
 
+    def test_setting_rank0_string(self):
+        "Ticket #1736"
+        a = np.zeros((), dtype="S10")
+        a[()] = b"hello1"
+        assert_equal(a, np.array(b"hello1"))
+        a[()] = np.array(b"hello2")
+        assert_equal(a, np.array(b"hello2"))
+
+        a = np.zeros((), dtype='f4')
+        a[()] = 3
+        assert_equal(a, np.array(3))
+        a[()] = np.array(4)
+        assert_equal(a, np.array(4))
+
 if __name__ == "__main__":
     run_module_suite()
