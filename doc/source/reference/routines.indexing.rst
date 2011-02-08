@@ -20,6 +20,7 @@ Generating index arrays
    indices
    ix_
    ogrid
+   ravel_coords
    unravel_index
    diag_indices
    diag_indices_from

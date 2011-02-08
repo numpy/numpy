@@ -2319,6 +2319,8 @@ NpyIter_GetIterIndexRange(NpyIter *iter,
  * Gets the broadcast shape if coords are enabled, otherwise
  * gets the shape of the iteration as Fortran-order (fastest-changing
  * coordinate first)
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
  */
 NPY_NO_EXPORT int
 NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
@@ -2353,6 +2355,74 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
             outshape[idim] = NAD_SHAPE(axisdata);
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
+    }
+
+    return NPY_SUCCEED;
+}
+
+/*NUMPY_API
+ * Builds a set of strides which are compatible with the iteration order
+ * for data packed contiguously, but not necessarily C or Fortran.
+ * The strides this produces are equivalent to the strides for an
+ * automatically allocated output created without an op_axes parameter,
+ * and should be used together with NpyIter_GetShape and NpyIter_GetNDim.
+ *
+ * A use case for this function is to match the shape and layout of
+ * the iterator and tack on one or more dimensions.  For example,
+ * if you want to generate a vector per input value for a numerical gradient,
+ * you pass in ndim*itemsize for itemsize, then add another dimension to
+ * the end with size ndim and stride itemsize.  To do the Hessian matrix,
+ * you do the same thing but add two dimensions, or take advantage of
+ * the symmetry and pack it into 1 dimension with a particular encoding.
+ *
+ * This function may only be called if the iterator is tracking coordinates
+ * and if NPY_ITER_DONT_NEGATE_STRIDES was used to prevent an axis from
+ * being iterated in reverse order.
+ *
+ * If an array is created with this method, simply adding 'itemsize'
+ * for each iteration will traverse the new array matching the
+ * iterator.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+NpyIter_CreateCompatibleStrides(NpyIter *iter,
+                            npy_intp itemsize, npy_intp *outstrides)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    npy_intp idim, ndim = NIT_NDIM(iter);
+    npy_intp niter = NIT_NITER(iter);
+
+    npy_intp sizeof_axisdata;
+    NpyIter_AxisData *axisdata;
+    char *perm;
+
+    if (!(itflags&NPY_ITFLAG_HASCOORDS)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Iterator CreateCompatibleStrides may only be called "
+                "if coordinates are being tracked");
+        return NPY_FAIL;
+    }
+    
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
+
+    perm = NIT_PERM(iter);
+    for(idim = 0; idim < ndim; ++idim) {
+        char p = perm[idim];
+        if (p < 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Iterator CreateCompatibleStrides may only be called "
+                    "if DONT_NEGATE_STRIDES was used to prevent reverse "
+                    "iteration of an axis");
+            return NPY_FAIL;
+        }
+        else {
+            outstrides[ndim-p-1] = itemsize;
+        }
+
+        itemsize *= NAD_SHAPE(axisdata);
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
     return NPY_SUCCEED;
