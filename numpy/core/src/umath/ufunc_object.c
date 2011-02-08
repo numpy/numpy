@@ -1014,12 +1014,12 @@ ufunc_loop_matches(PyUFuncObject *self,
             }
             if (!PyArray_CanCastTypeTo(tmp, PyArray_DESCR(op[i]),
                                                         output_casting)) {
-                Py_DECREF(tmp);
                 if (!(*out_no_castable_output)) {
                     *out_no_castable_output = 1;
                     *out_err_src_typecode = tmp->type;
                     *out_err_dst_typecode = PyArray_DESCR(op[i])->type;
                 }
+                Py_DECREF(tmp);
                 return 0;
             }
             Py_DECREF(tmp);
