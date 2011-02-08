@@ -1311,6 +1311,42 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
     return PY_FAIL;
 }
 
+/*NUMPY_API
+ * Convert an object to an array of n NPY_CLIPMODE values.
+ */
+NPY_NO_EXPORT int
+PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *vals, int n)
+{
+    int i;
+    /* Get the clip mode(s) */
+    if(object && (PyTuple_Check(object) || PyList_Check(object))) {
+        if (PySequence_Size(object) != n) {
+            PyErr_Format(PyExc_ValueError,
+                    "list of clipmodes has wrong length (%d instead of %d)",
+                    (int)PySequence_Size(object), n);
+            return PY_FAIL;
+        }
+        for (i = 0; i < n; ++i) {
+            PyObject *item = PySequence_GetItem(object, i);
+            if(item == NULL) {
+                return PY_FAIL;
+            }
+            if(PyArray_ClipmodeConverter(item, &vals[i]) != PY_SUCCEED) {
+                Py_DECREF(item);
+                return PY_FAIL;
+            }
+            Py_DECREF(item);
+        }
+    } else if(PyArray_ClipmodeConverter(object, &vals[0]) == PY_SUCCEED) {
+        for(i = 1; i < n; ++i) {
+            vals[i] = vals[0];
+        }
+    } else {
+        return PY_FAIL;
+    }
+    return PY_SUCCEED;
+}
+
 /*
  * compare the field dictionary for two types
  * return 1 if the same or 0 if not

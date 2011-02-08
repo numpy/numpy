@@ -565,6 +565,489 @@ fail:
     return NULL;
 }
 
+static int sequence_to_arrays(PyObject *seq,
+                                PyArrayObject **op, int count,
+                                char *paramname)
+{
+    int i;
+
+    if (!PySequence_Check(seq) || PySequence_Size(seq) != count) {
+        PyErr_Format(PyExc_ValueError,
+                "parameter %s must be a sequence of length %d",
+                paramname, count);
+        return -1;
+    }
+
+    for (i = 0; i < count; ++i) {
+        PyObject *item = PySequence_GetItem(seq, i);
+        if (item == NULL) {
+            while (--i >= 0) {
+                Py_DECREF(op[i]);
+                op[i] = NULL;
+            }
+            return -1;
+        }
+
+        op[i] = (PyArrayObject *)PyArray_FromAny(item, NULL, 0, 0, 0, NULL);
+        if (op[i] == NULL) {
+            while (--i >= 0) {
+                Py_DECREF(op[i]);
+                op[i] = NULL;
+            }
+            Py_DECREF(item);
+            return -1;
+        }
+
+        Py_DECREF(item);
+    }
+
+    return 0;
+}
+
+static int
+ravel_coords_loop(int ravel_ndim, npy_intp *ravel_dims,
+                        npy_intp *ravel_strides,
+                        npy_intp count,
+                        NPY_CLIPMODE *modes,
+                        char **coords, npy_intp *coords_strides)
+{
+    int i;
+    npy_intp j, m;
+
+    while (count--) {
+        npy_intp raveled = 0;
+        for (i = 0; i < ravel_ndim; ++i) {
+            m = ravel_dims[i];
+            j = *(npy_intp *)coords[i];
+            switch (modes[i]) {
+                case NPY_RAISE:
+                    if(j < 0 || j>=m) {
+                        PyErr_SetString(PyExc_ValueError,
+                              "invalid entry in coordinates array");
+                        return NPY_FAIL;
+                    }
+                    break;
+                case NPY_WRAP:
+                    if(j < 0) {
+                        j += m;
+                        if(j < 0) {
+                            j = j%m;
+                            if(j != 0) {
+                                j += m;
+                            }
+                        }
+                    }
+                    else if(j >= m) {
+                        j -= m;
+                        if(j >= m) {
+                            j = j%m;
+                        }
+                    }
+                    break;
+                case NPY_CLIP:
+                    if(j < 0) {
+                        j = 0;
+                    }
+                    else if(j >= m) {
+                        j = m-1;
+                    }
+                    break;
+
+            }
+            raveled += j * ravel_strides[i];
+
+            coords[i] += coords_strides[i];
+        }
+        *(npy_intp *)coords[ravel_ndim] = raveled;
+        coords[ravel_ndim] += coords_strides[ravel_ndim];
+    }
+
+    return NPY_SUCCEED;
+}
+
+static PyObject *
+arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    int i, s;
+    PyObject *mode0=NULL, *coords0=NULL, *ret;
+    PyArray_Dims dimensions={0,0};
+    npy_intp ravel_strides[NPY_MAXDIMS];
+    PyArray_ORDER order = NPY_CORDER;
+    NPY_CLIPMODE modes[NPY_MAXDIMS];
+
+    PyArrayObject *op[NPY_MAXARGS];
+    PyArray_Descr *dtype[NPY_MAXARGS];
+    npy_uint32 op_flags[NPY_MAXARGS];
+
+    NpyIter *iter = NULL;
+
+    char *kwlist[] = {"coords", "dims", "mode", "order", NULL};
+
+    memset(op, 0, sizeof(op));
+    dtype[0] = NULL;
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|OO&:ravel_coords", kwlist,
+                     &coords0,
+                     PyArray_IntpConverter, &dimensions,
+                     &mode0,
+                     PyArray_OrderConverter, &order)) {
+        goto fail;
+    }
+
+    if (dimensions.len+1 > NPY_MAXARGS) {
+        PyErr_SetString(PyExc_ValueError,
+                    "too many dimensions passed to ravel_coords");
+        goto fail;
+    }
+
+    if(!PyArray_ConvertClipmodeSequence(mode0, modes, dimensions.len)) {
+       goto fail;
+    }
+
+    switch (order) {
+        case NPY_CORDER:
+            s = 1;
+            for (i = dimensions.len-1; i >= 0; --i) {
+                ravel_strides[i] = s;
+                s *= dimensions.ptr[i];
+            }
+            break;
+        case NPY_FORTRANORDER:
+            s = 1;
+            for (i = 0; i < dimensions.len; ++i) {
+                ravel_strides[i] = s;
+                s *= dimensions.ptr[i];
+            }
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError,
+                            "only 'C' or 'F' order is permitted");
+            goto fail;
+    }
+
+    /* Get the coords into op */
+    if (sequence_to_arrays(coords0, op, dimensions.len, "coords") < 0) {
+        goto fail;
+    }
+
+
+    for (i = 0; i < dimensions.len; ++i) {
+        op_flags[i] = NPY_ITER_READONLY|
+                      NPY_ITER_ALIGNED;
+    }
+    op_flags[dimensions.len] = NPY_ITER_WRITEONLY|
+                               NPY_ITER_ALIGNED|
+                               NPY_ITER_ALLOCATE;
+    dtype[0] = PyArray_DescrFromType(NPY_INTP);
+    for (i = 1; i <= dimensions.len; ++i) {
+        dtype[i] = dtype[0];
+    }
+
+    iter = NpyIter_MultiNew(dimensions.len+1, op, NPY_ITER_BUFFERED|
+                                                  NPY_ITER_NO_INNER_ITERATION|
+                                                  NPY_ITER_ZEROSIZE_OK,
+                                                  NPY_KEEPORDER,
+                                                  NPY_SAME_KIND_CASTING,
+                                                  op_flags, dtype,
+                                                  0, NULL, 0);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNext_Fn iternext;
+        char **dataptr;
+        npy_intp *strides;
+        npy_intp *countptr;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strides = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            if (ravel_coords_loop(dimensions.len, dimensions.ptr,
+                        ravel_strides, *countptr, modes,
+                        dataptr, strides) != NPY_SUCCEED) {
+                goto fail;
+            }
+        } while(iternext(iter));
+    }
+
+    ret = (PyObject *)NpyIter_GetOperandArray(iter)[dimensions.len];
+    Py_INCREF(ret);
+
+    Py_DECREF(dtype[0]);
+    for (i = 0; i < dimensions.len; ++i) {
+        Py_XDECREF(op[i]);
+    }
+    PyDimMem_FREE(dimensions.ptr);
+    NpyIter_Deallocate(iter);
+    return PyArray_Return(ret);
+
+fail:
+    Py_XDECREF(dtype[0]);
+    for (i = 0; i < dimensions.len; ++i) {
+        Py_XDECREF(op[i]);
+    }
+    if (dimensions.ptr) {
+        PyDimMem_FREE(dimensions.ptr);
+    }
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    return NULL;
+}
+
+static int
+unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
+                        npy_intp unravel_size, npy_intp count,
+                        char *indices, npy_intp indices_stride,
+                        npy_intp *coords)
+{
+    int i;
+    npy_intp val;
+
+    while (count--) {
+        val = *(npy_intp *)indices;
+        if (val < 0 || val >= unravel_size) {
+            PyErr_SetString(PyExc_ValueError,
+                  "invalid entry in index array");
+            return NPY_FAIL;
+        }
+        for (i = unravel_ndim-1; i >= 0; --i) {
+            coords[i] = val % unravel_dims[i];
+            val /= unravel_dims[i];
+        }
+        coords += unravel_ndim;
+        indices += indices_stride;
+    }
+
+    return NPY_SUCCEED;
+}
+
+static int
+unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
+                        npy_intp unravel_size, npy_intp count,
+                        char *indices, npy_intp indices_stride,
+                        npy_intp *coords)
+{
+    int i;
+    npy_intp val;
+
+    while (count--) {
+        val = *(npy_intp *)indices;
+        if (val < 0 || val >= unravel_size) {
+            PyErr_SetString(PyExc_ValueError,
+                  "invalid entry in index array");
+            return NPY_FAIL;
+        }
+        for (i = 0; i < unravel_ndim; ++i) {
+            *coords++ = val % unravel_dims[i];
+            val /= unravel_dims[i];
+        }
+        indices += indices_stride;
+    }
+
+    return NPY_SUCCEED;
+}
+
+static PyObject *
+arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    PyObject *indices0 = NULL, *ret_tuple = NULL;
+    PyArrayObject *ret_arr = NULL;
+    PyArrayObject *indices = NULL;
+    PyArray_Descr *dtype = NULL;
+    PyArray_Dims dimensions={0,0};
+    PyArray_ORDER order = PyArray_CORDER;
+    npy_intp unravel_size;
+
+    NpyIter *iter = NULL;
+    int i, ret_ndim;
+    npy_intp ret_dims[NPY_MAXDIMS], ret_strides[NPY_MAXDIMS];
+
+    char *kwlist[] = {"indices", "dims", "order", NULL};
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:unravel_index",
+                    kwlist,
+                    &indices0,
+                    PyArray_IntpConverter, &dimensions,
+                    PyArray_OrderConverter, &order)) {
+        goto fail;
+    }
+
+    if (dimensions.len == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "dims must have at least one value");
+        goto fail;
+    }
+
+    unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
+
+    if(!PyArray_Check(indices0)) {
+        indices = (PyArrayObject*)PyArray_FromAny(indices0,
+                                                    NULL, 0, 0, 0, NULL);
+        if(indices == NULL) {
+            goto fail;
+        }
+    }
+    else {
+        indices = (PyArrayObject *)indices0;
+        Py_INCREF(indices);
+    }
+
+    dtype = PyArray_DescrFromType(NPY_INTP);
+    if (dtype == NULL) {
+        goto fail;
+    }
+
+    iter = NpyIter_New(indices, NPY_ITER_READONLY|
+                                NPY_ITER_ALIGNED|
+                                NPY_ITER_BUFFERED|
+                                NPY_ITER_ZEROSIZE_OK|
+                                NPY_ITER_DONT_NEGATE_STRIDES|
+                                NPY_ITER_COORDS,
+                                NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
+                                dtype, 0, NULL, 0);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    /*
+     * Create the return array with a layout compatible with the indices
+     * and with a dimension added to the end for the coordinates
+     */
+    ret_ndim = PyArray_NDIM(indices) + 1;
+    if (NpyIter_GetShape(iter, ret_dims) != NPY_SUCCEED) {
+        goto fail;
+    }
+    ret_dims[ret_ndim-1] = dimensions.len;
+    if (NpyIter_CreateCompatibleStrides(iter,
+                dimensions.len*sizeof(npy_intp), ret_strides) != NPY_SUCCEED) {
+        goto fail;
+    }
+    ret_strides[ret_ndim-1] = sizeof(npy_intp);
+
+    /* Remove the coords and inner loop */
+    if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
+        goto fail;
+    }
+    if (NpyIter_RemoveInnerLoop(iter) != NPY_SUCCEED) {
+        goto fail;
+    }
+
+    ret_arr = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
+                            ret_ndim, ret_dims, ret_strides, NULL, 0, NULL);
+    dtype = NULL;
+    if (ret_arr == NULL) {
+        goto fail;
+    }
+
+    if (order == NPY_CORDER) {
+        if (NpyIter_GetIterSize(iter) != 0) {
+            NpyIter_IterNext_Fn iternext;
+            char **dataptr;
+            npy_intp *strides;
+            npy_intp *countptr, count;
+            npy_intp *coordsptr = (npy_intp *)PyArray_DATA(ret_arr);
+
+            iternext = NpyIter_GetIterNext(iter, NULL);
+            if (iternext == NULL) {
+                goto fail;
+            }
+            dataptr = NpyIter_GetDataPtrArray(iter);
+            strides = NpyIter_GetInnerStrideArray(iter);
+            countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+            do {
+                count = *countptr;
+                if (unravel_index_loop_corder(dimensions.len, dimensions.ptr,
+                            unravel_size, count, *dataptr, *strides,
+                            coordsptr) != NPY_SUCCEED) {
+                    goto fail;
+                }
+                coordsptr += count*dimensions.len;
+            } while(iternext(iter));
+        }
+    }
+    else if (order == NPY_FORTRANORDER) {
+        if (NpyIter_GetIterSize(iter) != 0) {
+            NpyIter_IterNext_Fn iternext;
+            char **dataptr;
+            npy_intp *strides;
+            npy_intp *countptr, count;
+            npy_intp *coordsptr = (npy_intp *)PyArray_DATA(ret_arr);
+
+            iternext = NpyIter_GetIterNext(iter, NULL);
+            if (iternext == NULL) {
+                goto fail;
+            }
+            dataptr = NpyIter_GetDataPtrArray(iter);
+            strides = NpyIter_GetInnerStrideArray(iter);
+            countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+            do {
+                count = *countptr;
+                if (unravel_index_loop_forder(dimensions.len, dimensions.ptr,
+                            unravel_size, count, *dataptr, *strides,
+                            coordsptr) != NPY_SUCCEED) {
+                    goto fail;
+                }
+                coordsptr += count*dimensions.len;
+            } while(iternext(iter));
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                        "only 'C' or 'F' order is permitted");
+        goto fail;
+    }
+
+    /* Now make a tuple of views, one per coordinate */
+    ret_tuple = PyTuple_New(dimensions.len);
+    if (ret_tuple == NULL) {
+        goto fail;
+    }
+    for (i = 0; i < dimensions.len; ++i) {
+        PyArrayObject *view;
+
+        view = (PyArrayObject *)PyArray_New(&PyArray_Type, ret_ndim-1,
+                                ret_dims, NPY_INTP,
+                                ret_strides,
+                                PyArray_BYTES(ret_arr) + i*sizeof(npy_intp),
+                                0, 0, NULL);
+        if (view == NULL) {
+            goto fail;
+        }
+        Py_INCREF(ret_arr);
+        view->base = (PyObject *)ret_arr;
+        PyTuple_SET_ITEM(ret_tuple, i, PyArray_Return(view));
+    }
+
+    Py_DECREF(ret_arr);
+    Py_XDECREF(indices);
+    PyDimMem_FREE(dimensions.ptr);
+    NpyIter_Deallocate(iter);
+
+    return ret_tuple;
+
+fail:
+    Py_XDECREF(ret_tuple);
+    Py_XDECREF(ret_arr);
+    Py_XDECREF(dtype);
+    Py_XDECREF(indices);
+    if (dimensions.ptr) {
+        PyDimMem_FREE(dimensions.ptr);
+    }
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    return NULL;
+}
 
 
 static PyTypeObject *PyMemberDescr_TypePtr = NULL;
@@ -905,6 +1388,7 @@ io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return pack_or_unpack_bits(obj, axis, 1);
 }
 
+/* The docstrings for many of these methods are in add_newdocs.py. */
 static struct PyMethodDef methods[] = {
     {"_insert", (PyCFunction)arr_insert,
         METH_VARARGS | METH_KEYWORDS, arr_insert__doc__},
@@ -913,6 +1397,10 @@ static struct PyMethodDef methods[] = {
     {"digitize", (PyCFunction)arr_digitize,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"ravel_coords", (PyCFunction)arr_ravel_coords,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"unravel_index", (PyCFunction)arr_unravel_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"add_docstring", (PyCFunction)arr_add_docstring,
         METH_VARARGS, NULL},

@@ -4337,6 +4337,100 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
 
     """)
 
+add_newdoc('numpy.lib._compiled_base', 'ravel_coords',
+    """
+    ravel_coords(coords, dims, mode='raise', order='C')
+
+    Converts a tuple of coordinate arrays into an array of flat
+    indices, applying boundary modes to the coordinates.
+
+    Parameters
+    ----------
+    coords : tuple of array_like
+        A tuple of integer arrays, one array for each dimension.
+    dims : tuple of ints
+        The shape of an array into which indices from `coords` are for.
+    mode : {'raise', 'wrap', 'clip'}, optional
+        Specifies how out-of-bounds indices will behave.  Can specify
+        either one mode or a tuple of modes, with length matching that
+        of ``dims``.
+
+        * 'raise' -- raise an error (default)
+        * 'wrap' -- wrap around
+        * 'clip' -- clip to the range
+
+        Note that in 'clip' mode, a negative index which would normally
+        wrap will clip to 0 instead.
+    order : {'C', 'F'}, optional
+        Determines whether the coords should be viewed as indexing in
+        C (row-major) order or FORTRAN (column-major) order.
+
+    Returns
+    -------
+    raveled_indices : ndarray
+        This is a new array with the same shape as the broadcast shape
+        of the arrays in ``coords``.
+
+    See Also
+    --------
+    unravel_index
+
+    Examples
+    --------
+    >>> arr = np.array([[3,6,6],[4,5,1]])
+    >>> np.ravel_coords(arr, (7,6))
+    array([22, 41, 37])
+    >>> np.ravel_coords(arr, (7,6), order='F')
+    array([31, 41, 13])
+    >>> np.ravel_coords(arr, (4,6), mode='clip')
+    array([22, 23, 19])
+    >>> np.ravel_coords(arr, (4,4), mode=('clip','wrap'))
+    array([12, 13, 13])
+
+    >>> np.ravel_coords((3,1,4,1), (6,7,8,9))
+    1621
+    """)
+
+add_newdoc('numpy.lib._compiled_base', 'unravel_index',
+    """
+    unravel_index(indices, dims, order='C')
+
+    Converts a flat index or array of flat indices into a tuple
+    of coordinate arrays.
+
+    Parameters
+    ----------
+    indices : array_like
+        An integer type array whose elements are indices for a
+        flattened array with shape `dims`.
+    dims : tuple of ints
+        The shape of an array into which flattened indices from
+        ``indices`` are for.
+    order : {'C', 'F'}, optional
+        Determines whether the indices should be viewed as indexing in
+        C (row-major) order or FORTRAN (column-major) order.
+
+    Returns
+    -------
+    unraveled_coords : tuple of ndarray
+        Each array in the tuple is the same shape as the input ``indices``
+        array.
+
+    See Also
+    --------
+    ravel_coords
+
+    Examples
+    --------
+    >>> np.unravel_index([22, 41, 37], (7,6))
+    (array([3, 6, 6]), array([4, 5, 1]))
+    >>> np.unravel_index([31, 41, 13], (7,6), order='F')
+    (array([3, 6, 6]), array([4, 5, 1]))
+
+    >>> np.unravel_index(1621, (6,7,8,9))
+    (3, 1, 4, 1)
+    """)
+
 add_newdoc('numpy.lib._compiled_base', 'add_docstring',
     """
     docstring(obj, docstring)
