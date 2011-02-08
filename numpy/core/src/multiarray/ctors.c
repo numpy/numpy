@@ -1308,10 +1308,12 @@ fail:
  * actually converting to an array.
  *
  * In some cases, such as structured arrays and the __array__ interface,
- * a data type needs to be input to make sense of the object.  When
- * this is needed, provide a Descr for 'dtype', otherwise provide NULL.
- * This reference is not stolen.  Also, out_dtype will still get
- * the "innate" dtype of the object, not the descr passed in 'dtype'.
+ * a data type needs to be used to make sense of the object.  When
+ * this is needed, provide a Descr for 'requested_dtype', otherwise
+ * provide NULL. This reference is not stolen. Also, if the requested
+ * dtype doesn't modify the interpretation of the input, out_dtype will
+ * still get the "innate" dtype of the object, not the dtype passed
+ * in 'requested_dtype'.
  *
  * If writing to the value in 'op' is desired, set the boolean
  * 'writeable' to 1.  This raises an error when 'op' is a scalar, list
@@ -1357,7 +1359,7 @@ fail:
  */
 NPY_NO_EXPORT int
 PyArray_GetArrayParamsFromObject(PyObject *op,
-                        PyArray_Descr *dtype,
+                        PyArray_Descr *requested_dtype,
                         npy_bool writeable,
                         PyArray_Descr **out_dtype,
                         int *out_ndim, npy_intp *out_dims,
@@ -1445,7 +1447,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
      *      this should be changed!
      */
     if (!writeable) {
-        tmp = PyArray_FromArrayAttr(op, dtype, context);
+        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp != Py_NotImplemented) {
             if (writeable && !PyArray_ISWRITEABLE(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError,
@@ -1464,18 +1466,18 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         int type_num, type;
 
         /*
-         * Determine the type, using the given data type if
+         * Determine the type, using the requested data type if
          * it will affect how the array is retrieved
          */
-        if (dtype != NULL && (
-                        dtype->type_num == NPY_STRING ||
-                        dtype->type_num == NPY_UNICODE ||
-                        (dtype->type_num == NPY_VOID &&
-                                (dtype->names || dtype->subarray)) ||
-                        dtype->type == NPY_CHARLTR ||
-                        dtype->type_num == NPY_OBJECT)) {
-            Py_INCREF(dtype);
-            *out_dtype = dtype;
+        if (requested_dtype != NULL && (
+                requested_dtype->type_num == NPY_STRING ||
+                requested_dtype->type_num == NPY_UNICODE ||
+                (requested_dtype->type_num == NPY_VOID &&
+                    (requested_dtype->names || requested_dtype->subarray)) ||
+                requested_dtype->type == NPY_CHARLTR ||
+                requested_dtype->type_num == NPY_OBJECT)) {
+            Py_INCREF(requested_dtype);
+            *out_dtype = requested_dtype;
         }
         else {
             *out_dtype = _array_find_type(op, NULL, MAX_DIMS);
@@ -1527,7 +1529,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         /* If object arrays are forced */
         if (is_object) {
             Py_DECREF(*out_dtype);
-            *out_dtype = dtype = PyArray_DescrFromType(NPY_OBJECT);
+            *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
             if (*out_dtype == NULL) {
                 return -1;
             }
@@ -1679,7 +1681,13 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             else {
                 /*
                  * TODO: would be nice to do this too, but it's
-                 *       a behavior change.
+                 *       a behavior change.  It's also a bit tricky
+                 *       for downcasting to small integer and float
+                 *       types, and might be better to modify
+                 *       PyArray_AssignFromSequence and descr->f->setitem
+                 *       to have a 'casting' parameter and
+                 *       to check each value with scalar rules like
+                 *       in PyArray_MinScalarType.
                  */
                 /*
                 if (!(flags&NPY_FORCECAST) && ndim > 0 &&
