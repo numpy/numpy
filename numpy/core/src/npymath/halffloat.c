@@ -1,5 +1,4 @@
 #include "numpy/halffloat.h"
-#include "numpy/ufuncobject.h"
 
 /*
  * This chooses between 'ties to even' and 'ties away from zero'.
