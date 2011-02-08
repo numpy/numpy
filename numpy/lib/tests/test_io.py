@@ -1050,7 +1050,7 @@ M   33  21.99
         converters = {4: lambda x:"(%s)" % x}
         kwargs = dict(delimiter=",", converters=converters,
                       dtype=[(_, int) for _ in 'abcde'],)
-        assert_raises(TypeError, np.genfromtxt, mdata, **kwargs)
+        assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
 
     def test_default_field_format(self):

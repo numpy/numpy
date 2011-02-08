@@ -1593,7 +1593,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
  finish:
     Py_XDECREF(type);
-    if (!ret || (nd=PyArray_NDIM(ret)) >= ndmin) {
+    if (!ret) {
+        return ret;
+    }
+    else if ((nd=PyArray_NDIM(ret)) >= ndmin) {
         return ret;
     }
     /*

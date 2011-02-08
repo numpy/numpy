@@ -383,6 +383,13 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "cannot call setfield on an object array");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
     if (PyArray_SetField(self, dtype, offset, value) < 0) {
         return NULL;
     }

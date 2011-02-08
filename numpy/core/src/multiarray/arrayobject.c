@@ -68,10 +68,13 @@ PyArray_Size(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
-    PyArrayObject *src;
-    PyObject *r;
     int ret;
+    PyArrayObject *src;
+    PyArray_Descr *dtype = NULL;
+    int ndim = 0;
+    npy_intp dims[NPY_MAXDIMS];
 
+    Py_INCREF(src_object);
     /*
      * Special code to mimic Numeric behavior for
      * character arrays.
@@ -90,33 +93,87 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             memset(new_string + n_old, ' ', n_new - n_old);
             tmp = PyString_FromStringAndSize(new_string, n_new);
             free(new_string);
+            Py_DECREF(src_object);
             src_object = tmp;
         }
     }
 
-    if (PyArray_Check(src_object)) {
-        src = (PyArrayObject *)src_object;
-        Py_INCREF(src);
-    }
-    else if (!PyArray_IsScalar(src_object, Generic) &&
-             PyArray_HasArrayInterface(src_object, r)) {
-        src = (PyArrayObject *)r;
-    }
-    else {
-        PyArray_Descr* dtype;
-        dtype = dest->descr;
-        Py_INCREF(dtype);
-        src = (PyArrayObject *)PyArray_FromAny(src_object, dtype, 0,
-                                               dest->nd,
-                                               FORTRAN_IF(dest),
-                                               NULL);
-    }
-    if (src == NULL) {
+    /*
+     * Get either an array object we can copy from, or its parameters
+     * if there isn't a convenient array available.
+     */
+    if (PyArray_GetArrayParamsFromObject(src_object, PyArray_DESCR(dest),
+                0, &dtype, &ndim, dims, &src, NULL) < 0) {
+        Py_DECREF(src_object);
         return -1;
     }
 
+    /* If it's not an array, either assign from a sequence or as a scalar */
+    if (src == NULL) {
+        /* If the input is scalar */
+        if (ndim == 0) {
+            /* If there's one dest element and src is a Python scalar */
+            if (PyArray_IsScalar(src_object, Generic)) {
+                src = (PyArrayObject *)PyArray_FromScalar(src_object, dtype);
+                if (src == NULL) {
+                    Py_DECREF(src_object);
+                    return -1;
+                }
+            }
+            else {
+                if (PyArray_SIZE(dest) == 1) {
+                    Py_DECREF(dtype);
+                    return PyArray_DESCR(dest)->f->setitem(src_object,
+                                                    PyArray_DATA(dest), dest);
+                }
+                else {
+                    src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                                        dtype, 0, NULL, NULL,
+                                                        NULL, 0, NULL);
+                    if (src == NULL) {
+                        Py_DECREF(src_object);
+                        return -1;
+                    }
+                    if (PyArray_DESCR(src)->f->setitem(src_object,
+                                                PyArray_DATA(src), src) < 0) {
+                        Py_DECREF(src_object);
+                        Py_DECREF(src);
+                        return -1;
+                    }
+                }
+            }
+        }
+        else {
+            /* If the dims match exactly, can assign directly */
+            if (ndim == PyArray_NDIM(dest) &&
+                        PyArray_CompareLists(dims, PyArray_DIMS(dest),
+                                                ndim)) {
+                int res;
+                Py_DECREF(dtype);
+                res = PyArray_AssignFromSequence(dest, src_object);
+                Py_DECREF(src_object);
+                return res;
+            }
+            /* Otherwise convert to an array and do an array-based copy */
+            src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                        dtype, ndim, dims, NULL, NULL,
+                                        PyArray_ISFORTRAN(dest), NULL);
+            if (src == NULL) {
+                Py_DECREF(src_object);
+                return -1;
+            }
+            if (PyArray_AssignFromSequence(src, src_object) < 0) {
+                Py_DECREF(src);
+                Py_DECREF(src_object);
+                return -1;
+            }
+        }
+    }
+
+    /* If it's an array, do a move (handling possible overlapping data) */
     ret = PyArray_MoveInto(dest, src);
     Py_DECREF(src);
+    Py_DECREF(src_object);
     return ret;
 }
 
@@ -627,7 +684,7 @@ _uni_release(char *ptr, int nc)
                 relfunc(aptr, N1);                              \
                 return -1;                                      \
             }                                                   \
-            val = cmpfunc(aptr, bptr, N1, N2);                  \
+            val = compfunc(aptr, bptr, N1, N2);                  \
             *dptr = (val CMP 0);                                \
             PyArray_ITER_NEXT(iself);                           \
             PyArray_ITER_NEXT(iother);                          \
@@ -639,7 +696,7 @@ _uni_release(char *ptr, int nc)
 
 #define _reg_loop(CMP) {                                \
         while(size--) {                                 \
-            val = cmpfunc((void *)iself->dataptr,       \
+            val = compfunc((void *)iself->dataptr,       \
                           (void *)iother->dataptr,      \
                           N1, N2);                      \
             *dptr = (val CMP 0);                        \
@@ -661,18 +718,18 @@ _compare_strings(PyObject *result, PyArrayMultiIterObject *multi,
     npy_intp size;
     int val;
     int N1, N2;
-    int (*cmpfunc)(void *, void *, int, int);
+    int (*compfunc)(void *, void *, int, int);
     void (*relfunc)(char *, int);
     char* (*stripfunc)(char *, char *, int);
 
-    cmpfunc = func;
+    compfunc = func;
     dptr = (Bool *)PyArray_DATA(result);
     iself = multi->iters[0];
     iother = multi->iters[1];
     size = multi->size;
     N1 = iself->ao->descr->elsize;
     N2 = iother->ao->descr->elsize;
-    if ((void *)cmpfunc == (void *)_myunincmp) {
+    if ((void *)compfunc == (void *)_myunincmp) {
         N1 >>= 2;
         N2 >>= 2;
         stripfunc = _uni_copy_n_strip;

@@ -69,4 +69,7 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, intp n, int size);
 
+NPY_NO_EXPORT int
+PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
+
 #endif

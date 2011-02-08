@@ -149,7 +149,8 @@ static int
         temp = (@type@)@func2@(op);
     }
     if (PyErr_Occurred()) {
-        if (PySequence_Check(op)) {
+        if (PySequence_Check(op) && !PyString_Check(op) &&
+                                            !PyUnicode_Check(op)) {
             PyErr_Clear();
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");
@@ -437,6 +438,19 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     char *ptr;
     Py_ssize_t len;
     PyObject *temp = NULL;
+
+    /* Handle case of assigning from an array scalar */
+    if (PyArray_Check(op) && PyArray_NDIM(op) == 0) {
+        temp = PyArray_ToScalar(PyArray_DATA(op), op);
+        if (temp == NULL) {
+            return -1;
+        }
+        else {
+            int res = STRING_setitem(temp, ov, ap);
+            Py_DECREF(temp);
+            return res;
+        }
+    }
 
     if (!PyBytes_Check(op) && !PyUnicode_Check(op)
             && PySequence_Check(op) && PySequence_Size(op) != 0) {
