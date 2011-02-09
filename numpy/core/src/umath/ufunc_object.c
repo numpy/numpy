@@ -957,10 +957,7 @@ ufunc_loop_matches(PyUFuncObject *self,
      * to the types for this function
      */
     for (i = 0; i < nin; ++i) {
-        PyArray_Descr *tmp = PyArray_DescrFromType(types[i]);
-        if (tmp == NULL) {
-            return -1;
-        }
+        PyArray_Descr *tmp;
 
         /*
          * If no inputs are objects and there are more than one
@@ -974,6 +971,12 @@ ufunc_loop_matches(PyUFuncObject *self,
         if (types[i] == NPY_OBJECT && !any_object && self->ntypes > 1) {
             return 0;
         }
+
+        tmp = PyArray_DescrFromType(types[i]);
+        if (tmp == NULL) {
+            return -1;
+        }
+
 #if NPY_UF_DBG_TRACING
         printf("Checking type for op %d, type %d: ", (int)i, (int)types[i]);
         PyObject_Print((PyObject *)tmp, stdout, 0);

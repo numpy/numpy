@@ -415,19 +415,15 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
     }
     /* Otherwise, check the value */
     else {
-        char *data = PyArray_BYTES(arr);
         int swap = !PyArray_ISNBO(from->byteorder);
         int is_small_unsigned = 0, type_num;
         npy_bool ret;
         PyArray_Descr *dtype;
 
         /* An aligned memory buffer large enough to hold any type */
-#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
-        npy_longlong value;
-#else
-        npy_clongdouble value;
-#endif
-        from->f->copyswap(&value, data, swap, NULL);
+        npy_longlong value[4];
+
+        from->f->copyswap(&value, PyArray_BYTES(arr), swap, NULL);
 
         type_num = min_scalar_type_num((char *)&value, from->type_num,
                                         &is_small_unsigned);
