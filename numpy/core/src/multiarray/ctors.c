@@ -3726,4 +3726,3 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
     }
     return itemsize;
 }
-
