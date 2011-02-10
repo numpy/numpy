@@ -565,6 +565,14 @@ fail:
     return NULL;
 }
 
+/*
+ * Converts a Python sequence into 'count' PyArrayObjects
+ *
+ * seq       - Input Python object, usually a tuple but any sequence works.
+ * op        - Where the arrays are placed.
+ * count     - How many arrays there should be (errors if it doesn't match).
+ * paramname - The name of the parameter that produced 'seq'.
+ */
 static int sequence_to_arrays(PyObject *seq,
                                 PyArrayObject **op, int count,
                                 char *paramname)
@@ -604,6 +612,7 @@ static int sequence_to_arrays(PyObject *seq,
     return 0;
 }
 
+/* Inner loop for unravel_index */
 static int
 ravel_coords_loop(int ravel_ndim, npy_intp *ravel_dims,
                         npy_intp *ravel_strides,
@@ -665,6 +674,7 @@ ravel_coords_loop(int ravel_ndim, npy_intp *ravel_dims,
     return NPY_SUCCEED;
 }
 
+/* ravel_coords implementation - see add_newdocs.py */
 static PyObject *
 arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -802,6 +812,7 @@ fail:
     return NULL;
 }
 
+/* C-order inner loop for unravel_index */
 static int
 unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
                         npy_intp unravel_size, npy_intp count,
@@ -829,6 +840,7 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
     return NPY_SUCCEED;
 }
 
+/* Fortran-order inner loop for unravel_index */
 static int
 unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
                         npy_intp unravel_size, npy_intp count,
@@ -855,6 +867,7 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
     return NPY_SUCCEED;
 }
 
+/* unravel_index implementation - see add_newdocs.py */
 static PyObject *
 arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 {

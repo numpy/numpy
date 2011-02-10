@@ -4349,17 +4349,16 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_coords',
     coords : tuple of array_like
         A tuple of integer arrays, one array for each dimension.
     dims : tuple of ints
-        The shape of an array into which indices from `coords` are for.
+        The shape of array into which the indices from ``coords`` apply.
     mode : {'raise', 'wrap', 'clip'}, optional
-        Specifies how out-of-bounds indices will behave.  Can specify
-        either one mode or a tuple of modes, with length matching that
-        of ``dims``.
+        Specifies how out-of-bounds indices are handled.  Can specify
+        either one mode or a tuple of modes, one mode per index.
 
         * 'raise' -- raise an error (default)
         * 'wrap' -- wrap around
         * 'clip' -- clip to the range
 
-        Note that in 'clip' mode, a negative index which would normally
+        In 'clip' mode, a negative index which would normally
         wrap will clip to 0 instead.
     order : {'C', 'F'}, optional
         Determines whether the coords should be viewed as indexing in
@@ -4368,12 +4367,16 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_coords',
     Returns
     -------
     raveled_indices : ndarray
-        This is a new array with the same shape as the broadcast shape
-        of the arrays in ``coords``.
+        An array of indices into the flattened version of an array
+        of dimensions ``dims``.
 
     See Also
     --------
     unravel_index
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
 
     Examples
     --------
@@ -4401,19 +4404,20 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
     Parameters
     ----------
     indices : array_like
-        An integer type array whose elements are indices for a
-        flattened array with shape `dims`.
+        An integer array whose elements are indices into the flattened
+        version of an array of dimensions ``dims``. Before version 1.6.0,
+        this function accepted just one index value.
     dims : tuple of ints
-        The shape of an array into which flattened indices from
-        ``indices`` are for.
+        The shape of the array to use for unravelling ``indices``.
     order : {'C', 'F'}, optional
+        .. versionadded:: 1.6.0
         Determines whether the indices should be viewed as indexing in
         C (row-major) order or FORTRAN (column-major) order.
 
     Returns
     -------
     unraveled_coords : tuple of ndarray
-        Each array in the tuple is the same shape as the input ``indices``
+        Each array in the tuple has the same shape as the ``indices``
         array.
 
     See Also

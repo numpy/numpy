@@ -2316,9 +2316,16 @@ NpyIter_GetIterIndexRange(NpyIter *iter,
 }
 
 /*NUMPY_API
- * Gets the broadcast shape if coords are enabled, otherwise
- * gets the shape of the iteration as Fortran-order (fastest-changing
- * coordinate first)
+ * Gets the broadcast shape if coords are being tracked by the iterator,
+ * otherwise gets the shape of the iteration as Fortran-order
+ * (fastest-changing coordinate first).
+ *
+ * The reason Fortran-order is returned when coords
+ * are not enabled is that this is providing a direct view into how
+ * the iterator traverses the n-dimensional space. The iterator organizes
+ * its memory from fastest coordinate to slowest coordinate, and when
+ * coords are enabled, it uses a permutation to recover the original
+ * order.
  *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
@@ -2361,15 +2368,15 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
 }
 
 /*NUMPY_API
- * Builds a set of strides which are compatible with the iteration order
- * for data packed contiguously, but not necessarily C or Fortran.
- * The strides this produces are equivalent to the strides for an
- * automatically allocated output created without an op_axes parameter,
- * and should be used together with NpyIter_GetShape and NpyIter_GetNDim.
+ * Builds a set of strides which are the same as the strides of an
+ * output array created using the NPY_ITER_ALLOCATE flag, where NULL
+ * was passed for op_axes.  This is for data packed contiguously,
+ * but not necessarily in C or Fortran order. This should be used
+ * together with NpyIter_GetShape and NpyIter_GetNDim.
  *
  * A use case for this function is to match the shape and layout of
  * the iterator and tack on one or more dimensions.  For example,
- * if you want to generate a vector per input value for a numerical gradient,
+ * in order to generate a vector per input value for a numerical gradient,
  * you pass in ndim*itemsize for itemsize, then add another dimension to
  * the end with size ndim and stride itemsize.  To do the Hessian matrix,
  * you do the same thing but add two dimensions, or take advantage of
