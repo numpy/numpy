@@ -1521,11 +1521,13 @@ class TestRegression(TestCase):
 
     def test_setting_rank0_string(self):
         "Ticket #1736"
+        s1 = asbytes("hello1")
+        s2 = asbytes("hello2")
         a = np.zeros((), dtype="S10")
-        a[()] = b"hello1"
-        assert_equal(a, np.array(b"hello1"))
-        a[()] = np.array(b"hello2")
-        assert_equal(a, np.array(b"hello2"))
+        a[()] = s1
+        assert_equal(a, np.array(s1))
+        a[()] = np.array(s2)
+        assert_equal(a, np.array(s2))
 
         a = np.zeros((), dtype='f4')
         a[()] = 3
