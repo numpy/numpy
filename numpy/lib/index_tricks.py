@@ -17,7 +17,7 @@ import math
 import function_base
 import numpy.matrixlib as matrix
 from function_base import diff
-from _compiled_base import ravel_coords, unravel_index
+from numpy.lib._compiled_base import ravel_coords, unravel_index
 makemat = matrix.matrix
 
 def ix_(*args):
