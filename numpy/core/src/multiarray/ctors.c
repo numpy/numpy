@@ -785,7 +785,7 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
 #if (PY_VERSION_HEX >= 0x02050000)
                     d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
 #else
-                    d[i] = PyInt_AsInt(PyTuple_GET_ITEM(new, i));
+                    d[i] = PyInt_AsLong(PyTuple_GET_ITEM(new, i));
 #endif
                     if (d[i] < 0) {
                         PyErr_SetString(PyExc_RuntimeError,
