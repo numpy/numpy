@@ -262,7 +262,7 @@ class NpzFile(object):
         return self.files.__contains__(key)
 
 
-def load(file, mmap_mode=None):
+def load(file, mmap_mode=None, offset=0, shape=None):
     """
     Load a pickled, ``.npy``, or ``.npz`` binary file.
 
@@ -324,6 +324,9 @@ def load(file, mmap_mode=None):
     """
     import gzip
 
+    if (not mmap_mode) and (offset or shape):
+        raise ValueError("Offset and shape should be used only with mmap_mode")
+
     own_fid = False
     if isinstance(file, basestring):
         fid = open(file, "rb")
@@ -345,7 +348,7 @@ def load(file, mmap_mode=None):
             return NpzFile(fid, own_fid=True)
         elif magic == format.MAGIC_PREFIX: # .npy file
             if mmap_mode:
-                return format.open_memmap(file, mode=mmap_mode)
+            return open_memmap(file, mode=mmap_mode, shape=shape, offset=offset)
             else:
                 return format.read_array(fid)
         else:  # Try a pickle
@@ -1740,3 +1743,4 @@ def recfromcsv(fname, **kwargs):
     else:
         output = output.view(np.recarray)
     return output
+

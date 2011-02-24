@@ -468,7 +468,7 @@ def read_array(fp):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=(1,0)):
+                fortran_order=False, version=(1,0), offset=0):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -489,8 +489,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         which results in a data-type of `float64`.
     shape : tuple of int
         The shape of the array if we are creating a new file in "write"
-        mode, in which case this parameter is required.  Otherwise, this
-        parameter is ignored and is thus optional.
+        mode, in which case this parameter is required. If opening an 
+        existing file, `shape` may specify a (contiguous) slice to open.
+        Otherwise, this parameter is ignored.
     fortran_order : bool, optional
         Whether the array should be Fortran-contiguous (True) or
         C-contiguous (False, the default) if we are creating a new file
@@ -498,6 +499,8 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     version : tuple of int (major, minor)
         If the mode is a "write" mode, then this is the version of the file
         format used to create the file.  Default: (1,0)
+    offset : int, optional
+        Number of elements to skip along the first dimension.
 
     Returns
     -------
@@ -521,6 +524,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
                          " existing file handles.")
 
     if 'w' in mode:
+        assert offset == 0, "Cannot specify offset when creating memmap"
         # We are creating the file, not reading it.
         # Check if we ought to create the file.
         if version != (1, 0):
@@ -553,11 +557,17 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             if version != (1, 0):
                 msg = "only support version (1,0) of file format, not %r"
                 raise ValueError(msg % (version,))
-            shape, fortran_order, dtype = read_array_header_1_0(fp)
+            fullshape, fortran_order, dtype = read_array_header_1_0(fp)
+            if shape is None:
+                shape = fullshape
+                if offset:
+                    shape = list(fullshape)
+                    shape[0] = shape[0] - offset
+                    shape = tuple(shape)
             if dtype.hasobject:
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)
-            offset = fp.tell()
+            offset = fp.tell() + offset * dtype.itemsize
         finally:
             fp.close()
 
@@ -575,3 +585,4 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         mode=mode, offset=offset)
 
     return marray
+
