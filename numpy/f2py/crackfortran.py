@@ -78,6 +78,7 @@ f2py_version = __version__.version
       B['entry'] --- dictionary {entryname:argslist,..}
       B['varnames'] --- list of variable names given in the order of reading the
                         Fortran code, useful for derived types.
+      B['saved_interface'] --- a string of scanned routine signature, defines explicit interface
   *** Variable definition is a dictionary
       D = B['vars'][<variable name>] =
       {'typespec'[,'attrspec','kindselector','charselector','=','typename']}
@@ -1707,6 +1708,8 @@ def analyzebody(block,args,tab=''):
                 continue
             if onlyfuncs and b['name'] not in onlyfuncs:
                 continue
+            b['saved_interface'] = crack2fortrangen(b, '\n'+' '*6, as_interface=True)
+
         else: as_=args
         b=postcrack(b,as_,tab=tab+'\t')
         if b['block']=='interface' and not b['body']:
@@ -2451,7 +2454,7 @@ def determineexprtype(expr,vars,rules={}):
     return t
 
 ######
-def crack2fortrangen(block,tab='\n'):
+def crack2fortrangen(block,tab='\n', as_interface=False):
     global skipfuncs, onlyfuncs
     setmesstext(block)
     ret=''
@@ -2462,7 +2465,7 @@ def crack2fortrangen(block,tab='\n'):
                     continue
                 if onlyfuncs and g['name'] not in onlyfuncs:
                     continue
-            ret=ret+crack2fortrangen(g,tab)
+            ret=ret+crack2fortrangen(g,tab,as_interface=as_interface)
         return ret
     prefix=''
     name=''
@@ -2503,9 +2506,9 @@ def crack2fortrangen(block,tab='\n'):
     #if 'prefix' in block:
     #    prefix=block['prefix']+' '
     body=crack2fortrangen(block['body'],tab+tabchar)
-    vars=vars2fortran(block,block['vars'],al,tab+tabchar)
+    vars=vars2fortran(block,block['vars'],al,tab+tabchar, as_interface=as_interface)
     mess=''
-    if 'from' in block:
+    if 'from' in block and not as_interface:
         mess='! in %s'%block['from']
     if 'entry' in block:
         entry_stmts = ''
@@ -2558,7 +2561,7 @@ def true_intent_list(var):
             ret.append(intent)
     return ret
 
-def vars2fortran(block,vars,args,tab=''):
+def vars2fortran(block,vars,args,tab='', as_interface=False):
     """
     TODO:
     public sub
@@ -2579,9 +2582,10 @@ def vars2fortran(block,vars,args,tab=''):
                 errmess('vars2fortran: Confused?!: "%s" is not defined in vars.\n'%a)
     if 'varnames' in block:
         nout.extend(block['varnames'])
-    for a in vars.keys():
-        if a not in nout:
-            nout.append(a)
+    if not as_interface:
+        for a in vars.keys():
+            if a not in nout:
+                nout.append(a)
     for a in nout:
         if 'depend' in vars[a]:
             for d in vars[a]['depend']:
