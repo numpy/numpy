@@ -6,12 +6,12 @@ subroutine sum(x, res)
 
   integer :: i
 
-  print *, "sum: size(x) = ", size(x)
+  !print *, "sum: size(x) = ", size(x)
 
   res = 0.0
 
   do i = 1, size(x)
-    res = x(i)
+    res = res + x(i)
   enddo
 
 end subroutine sum
@@ -23,7 +23,7 @@ function fsum(x) result (res)
 
   integer :: i
 
-  print *, "fsum: size(x) = ", size(x)
+  !print *, "fsum: size(x) = ", size(x)
 
   res = 0.0
 

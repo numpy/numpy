@@ -17,8 +17,8 @@ class TestMixed(util.F2PyTest):
         print self.module.__doc__
         r = self.module.fsum([1,2])
         assert r==3,`r`
-        #r = self.module.sum([1,2])
-        #assert r==3,`r`
+        r = self.module.sum([1,2])
+        assert r==3,`r`
 
 if __name__ == "__main__":
     import nose

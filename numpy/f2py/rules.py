@@ -408,7 +408,7 @@ rout_rules=[
         {isthreadsafe:'\t\t\tPy_END_ALLOW_THREADS'},
         {hasexternals:"""\t\t}"""}
          ],
-    '_check':issubroutine,
+    '_check':l_and(issubroutine,l_not(issubroutine_wrap)),
     },{ # Wrapped function
     'functype':'void',
     'declfortranroutine':{l_not(l_or(ismoduleroutine,isdummyroutine)):'extern void #F_WRAPPEDFUNC#(#name_lower#,#NAME#)(#callprotoargument#);',
@@ -444,6 +444,41 @@ rout_rules=[
     {hasexternals:'\t}'}
     ],
     '_check':isfunction_wrap,
+    },{ # Wrapped subroutine
+    'functype':'void',
+    'declfortranroutine':{l_not(l_or(ismoduleroutine,isdummyroutine)):'extern void #F_WRAPPEDFUNC#(#name_lower#,#NAME#)(#callprotoargument#);',
+                          isdummyroutine:'',
+                          },
+
+    'routine_def':{l_not(l_or(ismoduleroutine,isdummyroutine)):'\t{\"#name#\",-1,{{-1}},0,(char *)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),(f2py_init_func)#apiname#,doc_#apiname#},',
+                   isdummyroutine:'\t{\"#name#\",-1,{{-1}},0,NULL,(f2py_init_func)#apiname#,doc_#apiname#},',
+                   },
+    'initf2pywraphook':{l_not(l_or(ismoduleroutine,isdummyroutine)):'''
+    {
+      extern void #F_FUNC#(#name_lower#,#NAME#)(void);
+      PyObject* o = PyDict_GetItemString(d,"#name#");
+      PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+#if PY_VERSION_HEX >= 0x03000000
+      PyObject_SetAttrString(o,"__name__", PyUnicode_FromString("#name#"));
+#else
+      PyObject_SetAttrString(o,"__name__", PyString_FromString("#name#"));
+#endif
+    }
+    '''},
+    'need':{l_not(l_or(ismoduleroutine,isdummyroutine)):['F_WRAPPEDFUNC','F_FUNC']},
+    'callfortranroutine':[
+    {debugcapi:["""\tfprintf(stderr,\"debug-capi:Fortran subroutine `f2pywrap#name_lower#(#callfortran#)\'\\n\");"""]},
+    {hasexternals:"""\
+\tif (#setjmpbuf#) {
+\t\tf2py_success = 0;
+\t} else {"""},
+    {isthreadsafe:'\tPy_BEGIN_ALLOW_THREADS'},
+    {l_not(l_or(hascallstatement,isdummyroutine)):'\t(*f2py_func)(#callfortran#);'},
+    {hascallstatement:'\t#callstatement#;\n\t/*(*f2py_func)(#callfortran#);*/'},
+    {isthreadsafe:'\tPy_END_ALLOW_THREADS'},
+    {hasexternals:'\t}'}
+    ],
+    '_check':issubroutine_wrap,
     },{ # Function
     'functype':'#ctype#',
     'docreturn':{l_not(isintent_hide):'#rname#,'},

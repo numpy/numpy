@@ -164,32 +164,107 @@ def createfuncwrapper(rout,signature=0):
     #print '**'*10
     return ret[0]
 
-def assubr(rout):
-    if not isfunction_wrap(rout):
-        return rout,''
-    fortranname = getfortranname(rout)
+def createsubrwrapper(rout,signature=0):
+    assert issubroutine(rout)
+
+    extra_args = []
+    vars = rout['vars']
+    for a in rout['args']:
+        v = rout['vars'][a]
+        for i,d in enumerate(v.get('dimension',[])):
+            if d==':':
+                dn = 'f2py_%s_d%s' % (a, i)
+                dv = dict(typespec='integer', intent=['hide'])
+                dv['='] = 'shape(%s, %s)' % (a, i)
+                extra_args.append(dn)
+                vars[dn] = dv
+                v['dimension'][i] = dn
+    rout['args'].extend(extra_args)
+    need_interface = bool(extra_args)
+    
+    ret = ['']
+    def add(line,ret=ret):
+        ret[0] = '%s\n      %s'%(ret[0],line)
     name = rout['name']
-    outmess('\t\tCreating wrapper for Fortran function "%s"("%s")...\n'%(name,fortranname))
-    rout = copy.copy(rout)
-    fname = name
-    rname = fname
-    if 'result' in rout:
-        rname = rout['result']
-        rout['vars'][fname]=rout['vars'][rname]
-    fvar = rout['vars'][fname]
-    if not isintent_out(fvar):
-        if 'intent' not in fvar:
-            fvar['intent']=[]
-        fvar['intent'].append('out')
-        flag=1
-        for i in fvar['intent']:
-            if i.startswith('out='):
-                flag = 0
-                break
-        if flag:
-            fvar['intent'].append('out=%s' % (rname))
+    fortranname = getfortranname(rout)
+    f90mode = ismoduleroutine(rout)
 
-    rout['args'] = [fname] + rout['args']
-    return rout,createfuncwrapper(rout)
+    args = rout['args']
 
+    sargs = ', '.join(args)
+    if f90mode:
+        add('subroutine f2pywrap_%s_%s (%s)'%(rout['modulename'],name,sargs))
+        if not signature:
+            add('use %s, only : %s'%(rout['modulename'],fortranname))
+    else:
+        add('subroutine f2pywrap%s (%s)'%(name,sargs))
+        if not need_interface:
+            add('external %s'%(fortranname))
+
+    dumped_args = []
+    for a in args:
+        if isexternal(vars[a]):
+            add('external %s'%(a))
+            dumped_args.append(a)
+    for a in args:
+        if a in dumped_args: continue
+        if isscalar(vars[a]):
+            add(var2fixfortran(vars,a,f90mode=f90mode))
+            dumped_args.append(a)
+    for a in args:
+        if a in dumped_args: continue
+        add(var2fixfortran(vars,a,f90mode=f90mode))
+
+    if need_interface:
+        add('interface')
+        add(rout['saved_interface'].lstrip())
+        add('end interface')
+
+    sargs = ', '.join([a for a in args if a not in extra_args])
+
+    if not signature:
+        add('call %s(%s)'%(fortranname,sargs))
+    if f90mode:
+        add('end subroutine f2pywrap_%s_%s'%(rout['modulename'],name))
+    else:
+        add('end')
+    #print '**'*10
+    #print ret[0]
+    #print '**'*10
+    return ret[0]
+
+
+def assubr(rout):
+    if isfunction_wrap(rout):
+        fortranname = getfortranname(rout)
+        name = rout['name']
+        outmess('\t\tCreating wrapper for Fortran function "%s"("%s")...\n'%(name,fortranname))
+        rout = copy.copy(rout)
+        fname = name
+        rname = fname
+        if 'result' in rout:
+            rname = rout['result']
+            rout['vars'][fname]=rout['vars'][rname]
+        fvar = rout['vars'][fname]
+        if not isintent_out(fvar):
+            if 'intent' not in fvar:
+                fvar['intent']=[]
+            fvar['intent'].append('out')
+            flag=1
+            for i in fvar['intent']:
+                if i.startswith('out='):
+                    flag = 0
+                    break
+            if flag:
+                fvar['intent'].append('out=%s' % (rname))
+
+        rout['args'] = [fname] + rout['args']
+        return rout,createfuncwrapper(rout)
+    if issubroutine_wrap(rout):
+        fortranname = getfortranname(rout)
+        name = rout['name']
+        outmess('\t\tCreating wrapper for Fortran subroutine "%s"("%s")...\n'%(name,fortranname))
+        rout = copy.copy(rout)
+        return rout,createsubrwrapper(rout)
+    return rout,''
 
