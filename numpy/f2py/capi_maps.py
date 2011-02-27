@@ -192,8 +192,8 @@ if os.path.isfile('.f2py_f2cmap'):
                 else:
                     errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"%(k,k1,d[k][k1],d[k][k1],c2py_map.keys()))
         outmess('Succesfully applied user defined changes from .f2py_f2cmap\n')
-    except:
-        errmess('Failed to apply user defined changes from .f2py_f2cmap. Skipping.\n')
+    except Exception, msg:
+        errmess('Failed to apply user defined changes from .f2py_f2cmap: %s. Skipping.\n' % (msg))
 cformat_map={'double':'%g',
              'float':'%g',
              'long_double':'%Lg',
@@ -251,8 +251,9 @@ def getctype(var):
                     try:
                         ctype=f2cmap[str(var['kindselector']['kind'])]
                     except KeyError:
-                        errmess('getctype: "%s(kind=%s)" not supported (use .f2py_f2cmap).\n'\
-                                %(typespec,var['kindselector']['kind']))
+                        errmess('getctype: "%s(kind=%s)" is mapped to C "%s" (to override define dict(%s = dict(%s="<C typespec>")) in %s/.f2py_f2cmap file).\n'\
+                                %(typespec,var['kindselector']['kind'], ctype,
+                                  typespec,var['kindselector']['kind'], os.getcwd()))
 
     else:
         if not isexternal(var):
@@ -436,7 +437,7 @@ def getinit(a,var):
                     v = eval(v,{},{})
                     ret['init.r'],ret['init.i']=str(v.real),str(v.imag)
             except:
-                raise ValueError('sign2map: expected complex number `(r,i)\' but got `%s\' as initial value of %r.' % (init, a))
+                raise ValueError('getinit: expected complex number `(r,i)\' but got `%s\' as initial value of %r.' % (init, a))
             if isarray(var):
                 init='(capi_c.r=%s,capi_c.i=%s,capi_c)'%(ret['init.r'],ret['init.i'])
         elif isstring(var):

@@ -106,6 +106,12 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         shutil.copyfile(fn, dst)
         dst_sources.append(dst)
 
+        fn = os.path.join(os.path.dirname(fn), '.f2py_f2cmap')
+        if os.path.isfile(fn):
+            dst = os.path.join(d, os.path.basename(fn))
+            if not os.path.isfile(dst):
+                shutil.copyfile(fn, dst)
+
     # Prepare options
     if module_name is None:
         module_name = get_temp_module_name()
