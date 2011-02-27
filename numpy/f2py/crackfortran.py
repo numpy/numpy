@@ -1956,8 +1956,15 @@ def _selected_int_kind_func(r):
     if m<=2**8: return 1
     if m<=2**16: return 2
     if m<=2**32: return 4
-    if m<=2**64: return 8
+    if m<=2**63: return 8
     if m<=2**128: return 16
+    return -1
+
+def _selected_real_kind_func(p,r=0,radix=0):
+    #XXX: This should be processor dependent
+    if p<7: return 4
+    if p<16: return 8
+    if p<19: return 10
     return -1
 
 def get_parameters(vars, global_params={}):
@@ -1965,6 +1972,7 @@ def get_parameters(vars, global_params={}):
     g_params = copy.copy(global_params)
     for name,func in [('kind',_kind_func),
                       ('selected_int_kind',_selected_int_kind_func),
+                      ('selected_real_kind',_selected_real_kind_func),
                       ]:
         if name not in g_params:
             g_params[name] = func
@@ -1974,6 +1982,7 @@ def get_parameters(vars, global_params={}):
             param_names.append(n)
     kind_re = re.compile(r'\bkind\s*\(\s*(?P<value>.*)\s*\)',re.I)
     selected_int_kind_re = re.compile(r'\bselected_int_kind\s*\(\s*(?P<value>.*)\s*\)',re.I)
+    selected_kind_re = re.compile(r'\bselected_(int|real)_kind\s*\(\s*(?P<value>.*)\s*\)',re.I)
     for n in param_names:
         if '=' in vars[n]:
             v = vars[n]['=']
@@ -1987,7 +1996,7 @@ def get_parameters(vars, global_params={}):
                     v = v.replace(*repl)
             v = kind_re.sub(r'kind("\1")',v)
             v = selected_int_kind_re.sub(r'selected_int_kind(\1)',v)
-            if isinteger(vars[n]) and not selected_int_kind_re.match(v):
+            if isinteger(vars[n]) and not selected_kind_re.match(v):
                 v = v.split('_')[0]
             if isdouble(vars[n]):
                 tt = list(v)
