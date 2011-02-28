@@ -2547,7 +2547,7 @@ def use2fortran(use,tab=''):
             if ret and ret[-1]==',': ret=ret[:-1]
             continue
         if 'only' in use[m] and use[m]['only']:
-            ret='%s,only:'%(ret)
+            ret='%s only:'%(ret)
         if 'map' in use[m] and use[m]['map']:
             c=' '
             for k in use[m]['map'].keys():
