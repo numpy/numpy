@@ -421,7 +421,7 @@ class TestTypes(TestCase):
         assert_(np.can_cast(np.int32, np.int64))
         assert_(np.can_cast(np.float64, np.complex))
         assert_(not np.can_cast(np.complex, np.float))
-        
+
         assert_(np.can_cast('i8', 'f8'))
         assert_(not np.can_cast('i8', 'f4'))
         assert_(np.can_cast('i4', 'S4'))
@@ -1027,7 +1027,7 @@ class TestClip(TestCase):
         a2 = clip(a, m, M, out=a)
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a2, ac)
-        self.assert_(a2 is a)
+        self.assertTrue(a2 is a)
 
 
 class test_allclose_inf(TestCase):
@@ -1150,7 +1150,7 @@ class TestLikeFuncs(TestCase):
             # default (K) order, dtype
             dz = like_function(d, dtype=dtype)
             assert_equal(dz.shape, d.shape)
-            assert_equal(array(dz.strides)*d.dtype.itemsize, 
+            assert_equal(array(dz.strides)*d.dtype.itemsize,
                          array(d.strides)*dz.dtype.itemsize)
             if dtype is None:
                 assert_equal(dz.dtype, d.dtype)

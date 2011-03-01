@@ -115,11 +115,11 @@ class TestRegression(TestCase):
         """Ticket #72"""
         a = np.array(['test', 'auto'])
         assert_array_equal(a == 'auto', np.array([False,True]))
-        self.assert_(a[1] == 'auto')
-        self.assert_(a[0] != 'auto')
+        self.assertTrue(a[1] == 'auto')
+        self.assertTrue(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
-        self.assert_(b != 'auto')
-        self.assert_(b[0] != 'auto')
+        self.assertTrue(b != 'auto')
+        self.assertTrue(b[0] != 'auto')
 
     def test_unicode_swapping(self,level=rlevel):
         """Ticket #79"""
