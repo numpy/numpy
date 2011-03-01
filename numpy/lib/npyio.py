@@ -1028,7 +1028,7 @@ def fromregex(file, regexp, dtype):
         return output
     finally:
         if own_fh:
-            fh.close()
+            file.close()
 
 
 
@@ -1502,7 +1502,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                      if _[0] > nbrows + skip_header])
             invalid = invalid[:nbinvalid - nbinvalid_skipped]
             skip_footer -= nbinvalid_skipped
-#            
+#
 #            nbrows -= skip_footer
 #            errmsg = [template % (i, nb)
 #                      for (i, nb) in invalid if i < nbrows]
