@@ -150,7 +150,7 @@ class TestDataSourceExists(TestCase):
         del self.ds
 
     def test_ValidHTTP(self):
-        assert self.ds.exists(valid_httpurl())
+        assert_(self.ds.exists(valid_httpurl()))
 
     def test_InvalidHTTP(self):
         self.assertEqual(self.ds.exists(invalid_httpurl()), False)
@@ -158,11 +158,11 @@ class TestDataSourceExists(TestCase):
     def test_ValidFile(self):
         # Test valid file in destpath
         tmpfile = valid_textfile(self.tmpdir)
-        assert self.ds.exists(tmpfile)
+        assert_(self.ds.exists(tmpfile))
         # Test valid local file not in destpath
         localdir = mkdtemp()
         tmpfile = valid_textfile(localdir)
-        assert self.ds.exists(tmpfile)
+        assert_(self.ds.exists(tmpfile))
         rmtree(localdir)
 
     def test_InvalidFile(self):
@@ -214,13 +214,13 @@ class TestDataSourceAbspath(TestCase):
 
         tmp_path = lambda x: os.path.abspath(self.ds.abspath(x))
 
-        assert tmp_path(valid_httpurl()).startswith(self.tmpdir)
-        assert tmp_path(invalid_httpurl()).startswith(self.tmpdir)
-        assert tmp_path(tmpfile).startswith(self.tmpdir)
-        assert tmp_path(tmpfilename).startswith(self.tmpdir)
+        assert_(tmp_path(valid_httpurl()).startswith(self.tmpdir))
+        assert_(tmp_path(invalid_httpurl()).startswith(self.tmpdir))
+        assert_(tmp_path(tmpfile).startswith(self.tmpdir))
+        assert_(tmp_path(tmpfilename).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert tmp_path(http_path+fn).startswith(self.tmpdir)
-            assert tmp_path(fn).startswith(self.tmpdir)
+            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
@@ -253,10 +253,10 @@ class TestRepositoryAbspath(TestCase):
 
     def test_sandboxing(self):
         tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
-        assert tmp_path(valid_httpfile()).startswith(self.tmpdir)
+        assert_(tmp_path(valid_httpfile()).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert tmp_path(http_path+fn).startswith(self.tmpdir)
-            assert tmp_path(fn).startswith(self.tmpdir)
+            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
@@ -280,14 +280,14 @@ class TestRepositoryExists(TestCase):
     def test_ValidFile(self):
         # Create local temp file
         tmpfile = valid_textfile(self.tmpdir)
-        assert self.repos.exists(tmpfile)
+        assert_(self.repos.exists(tmpfile))
 
     def test_InvalidFile(self):
         tmpfile = invalid_textfile(self.tmpdir)
         self.assertEqual(self.repos.exists(tmpfile), False)
 
     def test_RemoveHTTPFile(self):
-        assert self.repos.exists(valid_httpurl())
+        assert_(self.repos.exists(valid_httpurl()))
 
     def test_CachedHTTPFile(self):
         localfile = valid_httpurl()
@@ -298,7 +298,7 @@ class TestRepositoryExists(TestCase):
         local_path = os.path.join(self.repos._destpath, netloc)
         os.mkdir(local_path, 0700)
         tmpfile = valid_textfile(local_path)
-        assert self.repos.exists(tmpfile)
+        assert_(self.repos.exists(tmpfile))
 
 class TestOpenFunc(TestCase):
     def setUp(self):

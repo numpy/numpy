@@ -160,8 +160,8 @@ class TestRegression(TestCase):
         yb = ((b>2) & (b<6))
         assert_array_almost_equal(xa,ya.nonzero())
         assert_array_almost_equal(xb,yb.nonzero())
-        assert(np.all(a[ya] > 0.5))
-        assert(np.all(b[yb] > 0.5))
+        assert_(np.all(a[ya] > 0.5))
+        assert_(np.all(b[yb] > 0.5))
 
     def test_mem_dot(self,level=rlevel):
         """Ticket #106"""
@@ -183,7 +183,7 @@ class TestRegression(TestCase):
 #        """Ticket #112"""
 #        if np.longfloat(0).itemsize > 8:
 #            a = np.exp(np.array([1000],dtype=np.longfloat))
-#            assert(str(a)[1:9] == str(a[0])[:8])
+#            assert_(str(a)[1:9] == str(a[0])[:8])
 
     def test_argmax(self,level=rlevel):
         """Ticket #119"""
@@ -207,8 +207,8 @@ class TestRegression(TestCase):
         """Ticket #133"""
         a = np.array([3])
         b = np.array(3)
-        assert(type(a.squeeze()) is np.ndarray)
-        assert(type(b.squeeze()) is np.ndarray)
+        assert_(type(a.squeeze()) is np.ndarray)
+        assert_(type(b.squeeze()) is np.ndarray)
 
     def test_add_identity(self,level=rlevel):
         """Ticket #143"""
@@ -347,7 +347,7 @@ class TestRegression(TestCase):
         dt = np.dtype([('one', '<i4'),('two', '<i4')])
         x = np.array((1,2), dtype=dt)
         x = x.byteswap()
-        assert(x['one'] > 1 and x['two'] > 2)
+        assert_(x['one'] > 1 and x['two'] > 2)
 
     def test_method_args(self, level=rlevel):
         # Make sure methods and functions have same default axis
@@ -488,7 +488,7 @@ class TestRegression(TestCase):
                   np.rec.array([(1,2),(3,4)]),
                   np.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
                   np.rec.fromarrays([(1,2),(3,4)])]:
-            assert(a.dtype in [dt0,dt1])
+            assert_(a.dtype in [dt0,dt1])
 
     def test_random_shuffle(self, level=rlevel):
         """Ticket #374"""
@@ -990,8 +990,8 @@ class TestRegression(TestCase):
         buf = np.zeros(40, dtype=np.int8)
         a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
         b = a.tolist()
-        assert( a[0].tolist() == b[0])
-        assert( a[1].tolist() == b[1])
+        assert_( a[0].tolist() == b[0])
+        assert_( a[1].tolist() == b[1])
 
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')
