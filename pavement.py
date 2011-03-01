@@ -81,6 +81,22 @@ try:
 finally:
     sys.path.pop(0)
 
+
+#-----------------------------------
+# Things to be changed for a release
+#-----------------------------------
+
+# Source of the release notes
+RELEASE_NOTES = 'doc/release/2.0.0-notes.rst'
+
+# Start/end of the log (from git)
+LOG_START = 'svn/tags/1.5.0'
+LOG_END = 'master'
+
+
+#-------------------------------------------------------
+# Hardcoded build/install dirs, virtualenv options, etc.
+#-------------------------------------------------------
 DEFAULT_PYTHON = "2.6"
 
 # Where to put the final installers, as put on sourceforge
@@ -148,10 +164,6 @@ else:
     WINDOWS_ENV = os.environ
     MAKENSIS = ["wine", "makensis"]
 
-# Start/end of the log (from git)
-LOG_START = 'svn/tags/1.4.0'
-LOG_END = 'master'
-RELEASE_NOTES = 'doc/release/1.5.0-notes.rst'
 
 #-------------------
 # Windows installers
