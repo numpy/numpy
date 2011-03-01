@@ -104,30 +104,30 @@ class create_zeros(object):
     def test_zeros0D(self):
         """Check creation of 0-dimensional objects"""
         h = np.zeros((), dtype=self._descr)
-        self.assert_(normalize_descr(self._descr) == h.dtype.descr)
-        self.assert_(h.dtype.fields['x'][0].name[:4] == 'void')
-        self.assert_(h.dtype.fields['x'][0].char == 'V')
-        self.assert_(h.dtype.fields['x'][0].type == np.void)
+        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        self.assertTrue(h.dtype.fields['x'][0].name[:4] == 'void')
+        self.assertTrue(h.dtype.fields['x'][0].char == 'V')
+        self.assertTrue(h.dtype.fields['x'][0].type == np.void)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((), dtype='u1'))
 
     def test_zerosSD(self):
         """Check creation of single-dimensional objects"""
         h = np.zeros((2,), dtype=self._descr)
-        self.assert_(normalize_descr(self._descr) == h.dtype.descr)
-        self.assert_(h.dtype['y'].name[:4] == 'void')
-        self.assert_(h.dtype['y'].char == 'V')
-        self.assert_(h.dtype['y'].type == np.void)
+        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        self.assertTrue(h.dtype['y'].name[:4] == 'void')
+        self.assertTrue(h.dtype['y'].char == 'V')
+        self.assertTrue(h.dtype['y'].type == np.void)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((2,), dtype='u1'))
 
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
         h = np.zeros((2,3), dtype=self._descr)
-        self.assert_(normalize_descr(self._descr) == h.dtype.descr)
-        self.assert_(h.dtype['z'].name == 'uint8')
-        self.assert_(h.dtype['z'].char == 'B')
-        self.assert_(h.dtype['z'].type == np.uint8)
+        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        self.assertTrue(h.dtype['z'].name == 'uint8')
+        self.assertTrue(h.dtype['z'].char == 'B')
+        self.assertTrue(h.dtype['z'].type == np.uint8)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((2,3), dtype='u1'))
 
@@ -147,29 +147,29 @@ class create_values(object):
     def test_tuple(self):
         """Check creation from tuples"""
         h = np.array(self._buffer, dtype=self._descr)
-        self.assert_(normalize_descr(self._descr) == h.dtype.descr)
+        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assert_(h.shape == (2,))
+            self.assertTrue(h.shape == (2,))
         else:
-            self.assert_(h.shape == ())
+            self.assertTrue(h.shape == ())
 
     def test_list_of_tuple(self):
         """Check creation from list of tuples"""
         h = np.array([self._buffer], dtype=self._descr)
-        self.assert_(normalize_descr(self._descr) == h.dtype.descr)
+        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assert_(h.shape == (1,2))
+            self.assertTrue(h.shape == (1,2))
         else:
-            self.assert_(h.shape == (1,))
+            self.assertTrue(h.shape == (1,))
 
     def test_list_of_list_of_tuple(self):
         """Check creation from list of list of tuples"""
         h = np.array([[self._buffer]], dtype=self._descr)
-        self.assert_(normalize_descr(self._descr) == h.dtype.descr)
+        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assert_(h.shape == (1,1,2))
+            self.assertTrue(h.shape == (1,1,2))
         else:
-            self.assert_(h.shape == (1,1))
+            self.assertTrue(h.shape == (1,1))
 
 
 class test_create_values_plain_single(create_values, TestCase):
@@ -207,12 +207,12 @@ class read_values_plain(object):
     def test_access_fields(self):
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
-            self.assert_(h.shape == ())
+            self.assertTrue(h.shape == ())
             assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
             assert_equal(h['y'], np.array(self._buffer[1], dtype='f8'))
             assert_equal(h['z'], np.array(self._buffer[2], dtype='u1'))
         else:
-            self.assert_(len(h) == 2)
+            self.assertTrue(len(h) == 2)
             assert_equal(h['x'], np.array([self._buffer[0][0],
                                              self._buffer[1][0]], dtype='i4'))
             assert_equal(h['y'], np.array([self._buffer[0][1],
@@ -241,12 +241,12 @@ class read_values_nested(object):
         """Check reading the top fields of a nested array"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
-            self.assert_(h.shape == ())
+            self.assertTrue(h.shape == ())
             assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
             assert_equal(h['y'], np.array(self._buffer[4], dtype='f8'))
             assert_equal(h['z'], np.array(self._buffer[5], dtype='u1'))
         else:
-            self.assert_(len(h) == 2)
+            self.assertTrue(len(h) == 2)
             assert_equal(h['x'], np.array([self._buffer[0][0],
                                            self._buffer[1][0]], dtype='i4'))
             assert_equal(h['y'], np.array([self._buffer[0][4],
@@ -306,19 +306,19 @@ class read_values_nested(object):
     def test_nested1_descriptor(self):
         """Check access nested descriptors of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
-        self.assert_(h.dtype['Info']['value'].name == 'complex128')
-        self.assert_(h.dtype['Info']['y2'].name == 'float64')
+        self.assertTrue(h.dtype['Info']['value'].name == 'complex128')
+        self.assertTrue(h.dtype['Info']['y2'].name == 'float64')
         if sys.version_info[0] >= 3:
-            self.assert_(h.dtype['info']['Name'].name == 'str256')
+            self.assertTrue(h.dtype['info']['Name'].name == 'str256')
         else:
-            self.assert_(h.dtype['info']['Name'].name == 'unicode256')
-        self.assert_(h.dtype['info']['Value'].name == 'complex128')
+            self.assertTrue(h.dtype['info']['Name'].name == 'unicode256')
+        self.assertTrue(h.dtype['info']['Value'].name == 'complex128')
 
     def test_nested2_descriptor(self):
         """Check access nested descriptors of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
-        self.assert_(h.dtype['Info']['Info2']['value'].name == 'void256')
-        self.assert_(h.dtype['Info']['Info2']['z3'].name == 'void64')
+        self.assertTrue(h.dtype['Info']['Info2']['value'].name == 'void256')
+        self.assertTrue(h.dtype['Info']['Info2']['z3'].name == 'void64')
 
 
 class test_read_values_nested_single(read_values_nested, TestCase):
