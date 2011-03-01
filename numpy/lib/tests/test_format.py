@@ -463,7 +463,7 @@ def test_memmap_roundtrip():
             # Check that reading the file using memmap works.
             ma = format.open_memmap(nfn, mode='r')
             #yield assert_array_equal, ma, arr
-            #del ma
+            del ma
 
 
 def test_write_version_1_0():

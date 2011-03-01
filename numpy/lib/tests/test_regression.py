@@ -70,8 +70,8 @@ class TestRegression(TestCase):
         """Ticket #554"""
         x = np.poly1d([1,2,3])
         y = np.poly1d([3,4])
-        assert x != y
-        assert x == x
+        assert_(x != y)
+        assert_(x == x)
 
     def test_mem_insert(self, level=rlevel):
         """Ticket #572"""
@@ -152,19 +152,21 @@ class TestRegression(TestCase):
     def test_void_coercion(self, level=rlevel):
         dt = np.dtype([('a','f4'),('b','i4')])
         x = np.zeros((1,),dt)
-        assert(np.r_[x,x].dtype == dt)
+        assert_(np.r_[x,x].dtype == dt)
 
     def test_who_with_0dim_array(self, level=rlevel) :
         """ticket #1243"""
         import os, sys
 
+        oldstdout = sys.stdout
         sys.stdout = open(os.devnull, 'w')
-        try :
-            tmp = np.who({'foo' : np.array(1)})
-            sys.stdout = sys.__stdout__
-        except :
-            sys.stdout = sys.__stdout__
-            raise AssertionError("ticket #1243")
+        try:
+            try:
+                tmp = np.who({'foo' : np.array(1)})
+            except:
+                raise AssertionError("ticket #1243")
+        finally:
+            sys.stdout = oldstdout
 
     def test_bincount_empty(self):
         """Ticket #1387: empty array as input for bincount."""
@@ -178,8 +180,8 @@ class TestRegression(TestCase):
         include_dirs = [np.get_include(), np.get_numarray_include(),
                         np.get_numpy_include()]
         for path in include_dirs:
-            assert isinstance(path, (str, unicode))
-            assert path != ''
+            assert_(isinstance(path, (str, unicode)))
+            assert_(path != '')
 
     def test_polyder_return_type(self):
         """Ticket #1249"""
