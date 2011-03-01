@@ -2,7 +2,7 @@ import sys
 if sys.version_info[0] < 3:
     from ConfigParser import SafeConfigParser, NoOptionError
 else:
-    from configparser import SafeConfigParser, NoOptionError
+    from configparser import ConfigParser, SafeConfigParser, NoOptionError
 import re
 import os
 import shlex
@@ -270,7 +270,12 @@ def parse_config(filename, dirs=None):
     else:
         filenames = [filename]
 
-    config = SafeConfigParser()
+    if sys.version[:3] > '3.1':
+        # SafeConfigParser is deprecated in py-3.2 and renamed to ConfigParser
+        config = ConfigParser()
+    else:
+        config = SafeConfigParser()
+
     n = config.read(filenames)
     if not len(n) >= 1:
         raise PkgNotFound("Could not find file(s) %s" % str(filenames))

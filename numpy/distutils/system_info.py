@@ -117,9 +117,9 @@ import copy
 import warnings
 from glob import glob
 if sys.version_info[0] < 3:
-    from ConfigParser import SafeConfigParser, NoOptionError, ConfigParser
+    from ConfigParser import NoOptionError, ConfigParser
 else:
-    from configparser import SafeConfigParser, NoOptionError, ConfigParser
+    from configparser import NoOptionError, ConfigParser
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
