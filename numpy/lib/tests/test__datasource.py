@@ -83,7 +83,9 @@ class TestDataSourceOpen(TestCase):
         del self.ds
 
     def test_ValidHTTP(self):
-        assert self.ds.open(valid_httpurl())
+        fh = self.ds.open(valid_httpurl())
+        assert_(fh)
+        fh.close()
 
     def test_InvalidHTTP(self):
         url = invalid_httpurl()
@@ -92,14 +94,16 @@ class TestDataSourceOpen(TestCase):
             self.ds.open(url)
         except IOError, e:
             # Regression test for bug fixed in r4342.
-            assert e.errno is None
+            assert_(e.errno is None)
 
     def test_InvalidHTTPCacheURLError(self):
         self.assertRaises(URLError, self.ds._cache, invalid_httpurl())
 
     def test_ValidFile(self):
         local_file = valid_textfile(self.tmpdir)
-        assert self.ds.open(local_file)
+        fh = self.ds.open(local_file)
+        assert_(fh)
+        fh.close()
 
     def test_InvalidFile(self):
         invalid_file = invalid_textfile(self.tmpdir)
@@ -310,9 +314,13 @@ class TestOpenFunc(TestCase):
     def test_DataSourceOpen(self):
         local_file = valid_textfile(self.tmpdir)
         # Test case where destpath is passed in
-        assert datasource.open(local_file, destpath=self.tmpdir)
+        fp = datasource.open(local_file, destpath=self.tmpdir)
+        assert_(fp)
+        fp.close()
         # Test case where default destpath is used
-        assert datasource.open(local_file)
+        fp = datasource.open(local_file)
+        assert_(fp)
+        fp.close()
 
 
 if __name__ == "__main__":
