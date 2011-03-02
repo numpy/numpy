@@ -27,7 +27,7 @@ except NameError:
 
 from numpy.compat import open_latin1
 
-from distutils.sysconfig import get_config_var, get_python_lib
+from distutils.sysconfig import get_config_var, get_config_vars, get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError, \
      DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
@@ -196,6 +196,9 @@ class FCompiler(CCompiler):
     src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95','.F','.F90']
     obj_extension = ".o"
     shared_lib_extension = get_config_var('SO')  # or .dll
+    # fix long extension for Python >=3.2, see PEP 3149.
+    if 'SOABI' in get_config_vars():
+        shared_lib_extension = shared_lib_extension.replace('.'+get_config_var('SOABI'), '', 1)
     static_lib_extension = ".a"  # or .lib
     static_lib_format = "lib%s%s" # or %s%s
     shared_lib_format = "%s%s"
