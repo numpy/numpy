@@ -899,7 +899,7 @@ cdef class RandomState:
         Returns
         -------
         out : str
-            String of length `N`.
+            String of length `length`.
 
         Examples
         --------
@@ -931,7 +931,7 @@ cdef class RandomState:
         high : float
             Upper boundary of the output interval.  All values generated will be
             less than high.  The default value is 1.0.
-        size : tuple of ints, int, optional
+        size : int or tuple of ints, optional
             Shape of output.  If the given size is, for example, (m,n,k),
             m*n*k samples are generated.  If no shape is specified, a single sample
             is returned.
@@ -944,13 +944,13 @@ cdef class RandomState:
         See Also
         --------
         randint : Discrete uniform distribution, yielding integers.
-        random_integers : Discrete uniform distribution over the closed interval
-                          ``[low, high]``.
+        random_integers : Discrete uniform distribution over the closed
+                          interval ``[low, high]``.
         random_sample : Floats uniformly distributed over ``[0, 1)``.
         random : Alias for `random_sample`.
         rand : Convenience function that accepts dimensions as input, e.g.,
-               ``rand(2,2)`` would generate a 2-by-2 array of floats, uniformly
-               distributed over ``[0, 1)``.
+               ``rand(2,2)`` would generate a 2-by-2 array of floats,
+               uniformly distributed over ``[0, 1)``.
 
         Notes
         -----
@@ -970,7 +970,6 @@ cdef class RandomState:
 
         >>> np.all(s >= -1)
         True
-
         >>> np.all(s < 0)
         True
 
@@ -2251,11 +2250,16 @@ cdef class RandomState:
         """
         pareto(a, size=None)
 
-        Draw samples from a Pareto distribution with specified shape.
+        Draw samples from a Pareto II or Lomax distribution with specified shape.
 
-        This is a simplified version of the Generalized Pareto distribution
-        (available in SciPy), with the scale set to one and the location set to
-        zero. Most authors default the location to one.
+        The Lomax or Pareto II distribution is a shifted Pareto distribution. The
+        classical Pareto distribution can be obtained from the Lomax distribution
+        by adding the location parameter m, see below. The smallest value of the
+        Lomax distribution is zero while for the classical Pareto distribution it
+        is m, where the standard Pareto distribution has location m=1.
+        Lomax can also be considered as a simplified version of the Generalized
+        Pareto distribution (available in SciPy), with the scale set to one and
+        the location set to zero.
 
         The Pareto distribution must be greater than zero, and is unbounded above.
         It is also known as the "80-20 rule".  In this distribution, 80 percent of
@@ -2272,6 +2276,8 @@ cdef class RandomState:
 
         See Also
         --------
+        scipy.stats.distributions.lomax.pdf : probability density function,
+            distribution or cumulative density function, etc.
         scipy.stats.distributions.genpareto.pdf : probability density function,
             distribution or cumulative density function, etc.
 
@@ -2343,7 +2349,7 @@ cdef class RandomState:
         Weibull distribution.
 
         Draw samples from a 1-parameter Weibull distribution with the given
-        shape parameter.
+        shape parameter `a`.
 
         .. math:: X = (-ln(U))^{1/a}
 
@@ -2351,11 +2357,6 @@ cdef class RandomState:
 
         The more common 2-parameter Weibull, including a scale parameter
         :math:`\\lambda` is just :math:`X = \\lambda(-ln(U))^{1/a}`.
-
-        The Weibull (or Type III asymptotic extreme value distribution for smallest
-        values, SEV Type III, or Rosin-Rammler distribution) is one of a class of
-        Generalized Extreme Value (GEV) distributions used in modeling extreme
-        value problems.  This class includes the Gumbel and Frechet distributions.
 
         Parameters
         ----------
@@ -2374,6 +2375,11 @@ cdef class RandomState:
 
         Notes
         -----
+        The Weibull (or Type III asymptotic extreme value distribution for smallest
+        values, SEV Type III, or Rosin-Rammler distribution) is one of a class of
+        Generalized Extreme Value (GEV) distributions used in modeling extreme
+        value problems.  This class includes the Gumbel and Frechet distributions.
+
         The probability density for the Weibull distribution is
 
         .. math:: p(x) = \\frac{a}
@@ -2641,16 +2647,9 @@ cdef class RandomState:
 
         Gumbel distribution.
 
-        Draw samples from a Gumbel distribution with specified location (or mean)
-        and scale (or standard deviation).
-
-        The Gumbel (or Smallest Extreme Value (SEV) or the Smallest Extreme Value
-        Type I) distribution is one of a class of Generalized Extreme Value (GEV)
-        distributions used in modeling extreme value problems.  The Gumbel is a
-        special case of the Extreme Value Type I distribution for maximums from
-        distributions with "exponential-like" tails, it may be derived by
-        considering a Gaussian process of measurements, and generating the pdf for
-        the maximum values from that set of measurements (see examples).
+        Draw samples from a Gumbel distribution with specified location and scale.
+        For more information on the Gumbel distribution, see Notes and References
+        below.
 
         Parameters
         ----------
@@ -2662,21 +2661,35 @@ cdef class RandomState:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.
 
+        Returns
+        -------
+        out : ndarray
+            The samples
+
         See Also
         --------
-        scipy.stats.gumbel : probability density function,
-            distribution or cumulative density function, etc.
-        weibull, scipy.stats.genextreme
+        scipy.stats.gumbel_l
+        scipy.stats.gumbel_r
+        scipy.stats.genextreme
+            probability density function, distribution, or cumulative density
+            function, etc. for each of the above
+        weibull
 
         Notes
         -----
+        The Gumbel (or Smallest Extreme Value (SEV) or the Smallest Extreme Value
+        Type I) distribution is one of a class of Generalized Extreme Value (GEV)
+        distributions used in modeling extreme value problems.  The Gumbel is a
+        special case of the Extreme Value Type I distribution for maximums from
+        distributions with "exponential-like" tails.
+
         The probability density for the Gumbel distribution is
 
         .. math:: p(x) = \\frac{e^{-(x - \\mu)/ \\beta}}{\\beta} e^{ -e^{-(x - \\mu)/
                   \\beta}},
 
-        where :math:`\\mu` is the mode, a location parameter, and :math:`\\beta`
-        is the scale parameter.
+        where :math:`\\mu` is the mode, a location parameter, and :math:`\\beta` is
+        the scale parameter.
 
         The Gumbel (named for German mathematician Emil Julius Gumbel) was used
         very early in the hydrology literature, for modeling the occurrence of
@@ -2687,6 +2700,7 @@ cdef class RandomState:
         initially modeled as a Gaussian process, which underestimated the frequency
         of extreme events.
 
+
         It is one of a class of extreme value distributions, the Generalized
         Extreme Value (GEV) distributions, which also includes the Weibull and
         Frechet.
@@ -2696,13 +2710,12 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] Gumbel, E.J. (1958). Statistics of Extremes. Columbia University
-               Press.
-        .. [2] Reiss, R.-D. and Thomas M. (2001), Statistical Analysis of Extreme
-               Values, from Insurance, Finance, Hydrology and Other Fields,
-               Birkhauser Verlag, Basel: Boston : Berlin.
-        .. [3] Wikipedia, "Gumbel distribution",
-               http://en.wikipedia.org/wiki/Gumbel_distribution
+        Gumbel, E. J., *Statistics of Extremes*, New York: Columbia University
+        Press, 1958.
+
+        Reiss, R.-D. and Thomas, M., *Statistical Analysis of Extreme Values from
+        Insurance, Finance, Hydrology and Other Fields*, Basel: Birkhauser Verlag,
+        2001.
 
         Examples
         --------
@@ -3865,32 +3878,30 @@ cdef class RandomState:
         Draw random samples from a multivariate normal distribution.
 
         The multivariate normal, multinormal or Gaussian distribution is a
-        generalisation of the one-dimensional normal distribution to higher
-        dimensions.
-
-        Such a distribution is specified by its mean and covariance matrix,
-        which are analogous to the mean (average or "centre") and variance
-        (standard deviation squared or "width") of the one-dimensional normal
-        distribution.
+        generalization of the one-dimensional normal distribution to higher
+        dimensions.  Such a distribution is specified by its mean and
+        covariance matrix.  These parameters are analogous to the mean
+        (average or "center") and variance (standard deviation, or "width,"
+        squared) of the one-dimensional normal distribution.
 
         Parameters
         ----------
-        mean : (N,) ndarray
+        mean : 1-D array_like, of length N
             Mean of the N-dimensional distribution.
-        cov : (N,N) ndarray
-            Covariance matrix of the distribution.
+        cov : 2-D array_like, of shape (N, N)
+            Covariance matrix of the distribution.  Must be symmetric and
+            positive semi-definite for "physically meaningful" results.
         size : tuple of ints, optional
-            Given a shape of, for example, (m,n,k), m*n*k samples are
-            generated, and packed in an m-by-n-by-k arrangement.  Because each
-            sample is N-dimensional, the output shape is (m,n,k,N).  If no
-            shape is specified, a single sample is returned.
+            Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
+            generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
+            each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
+            If no shape is specified, a single (`N`-D) sample is returned.
 
         Returns
         -------
         out : ndarray
-            The drawn samples, arranged according to `size`.  If the
-            shape given is (m,n,...), then the shape of `out` is is
-            (m,n,...,N).
+            The drawn samples, of shape *size*, if that was provided.  If not,
+            the shape is ``(N,)``.
 
             In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
             value drawn from the distribution.
@@ -3912,8 +3923,8 @@ cdef class RandomState:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
+          - Spherical covariance (*cov* is a multiple of the identity matrix)
+          - Diagonal covariance (*cov* has non-negative elements, and only on
             the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
@@ -3930,10 +3941,11 @@ cdef class RandomState:
 
         References
         ----------
-        .. [1] A. Papoulis, "Probability, Random Variables, and Stochastic
-               Processes," 3rd ed., McGraw-Hill Companies, 1991
-        .. [2] R.O. Duda, P.E. Hart, and D.G. Stork, "Pattern Classification,"
-               2nd ed., Wiley, 2001.
+        Papoulis, A., *Probability, Random Variables, and Stochastic Processes*,
+        3rd ed., New York: McGraw-Hill, 1991.
+
+        Duda, R. O., Hart, P. E., and Stork, D. G., *Pattern Classification*,
+        2nd ed., New York: Wiley, 2001.
 
         Examples
         --------
@@ -4103,6 +4115,11 @@ cdef class RandomState:
         size : array
             Number of samples to draw.
 
+        Returns
+        -------
+        samples : ndarray,
+            The drawn samples, of shape (alpha.ndim, size).
+
         Notes
         -----
         .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
@@ -4118,6 +4135,23 @@ cdef class RandomState:
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
                http://www.inference.phy.cam.ac.uk/mackay/
+        .. [2] Wikipedia, "Dirichlet distribution",
+               http://en.wikipedia.org/wiki/Dirichlet_distribution
+
+        Examples
+        --------
+        Taking an example cited in Wikipedia, this distribution can be used if
+        one wanted to cut strings (each of initial length 1.0) into K pieces
+        with different lengths, where each piece had, on average, a designated
+        average length, but allowing some variation in the relative sizes of the
+        pieces.
+
+        >>> s = np.random.dirichlet((10, 5, 3), 20).transpose()
+
+        >>> plt.barh(range(20), s[0])
+        >>> plt.barh(range(20), s[1], left=s[0], color='g')
+        >>> plt.barh(range(20), s[2], left=s[0]+s[1], color='r')
+        >>> plt.title("Lengths of Strings")
 
         """
 
@@ -4184,6 +4218,32 @@ cdef class RandomState:
 
         Modify a sequence in-place by shuffling its contents.
 
+        Parameters
+        ----------
+        x : array_like
+            The array or list to be shuffled.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> arr = np.arange(10)
+        >>> np.random.shuffle(arr)
+        >>> arr
+        [1 7 5 2 9 4 3 6 0 8]
+
+        This function only shuffles the array along the first index of a
+        multi-dimensional array:
+
+        >>> arr = np.arange(9).reshape((3, 3))
+        >>> np.random.shuffle(arr)
+        >>> arr
+        array([[3, 4, 5],
+               [6, 7, 8],
+               [0, 1, 2]])
+
         """
         cdef long i, j
         cdef int copy
@@ -4220,6 +4280,9 @@ cdef class RandomState:
 
         Randomly permute a sequence, or return a permuted range.
 
+        If `x` is a multi-dimensional array, it is only shuffled along its
+        first index.
+
         Parameters
         ----------
         x : int or array_like
@@ -4239,6 +4302,12 @@ cdef class RandomState:
 
         >>> np.random.permutation([1, 4, 9, 12, 15])
         array([15,  1,  9,  4, 12])
+
+        >>> arr = np.arange(9).reshape((3, 3))
+        >>> np.random.permutation(arr)
+        array([[6, 7, 8],
+               [0, 1, 2],
+               [3, 4, 5]])
 
         """
         if isinstance(x, (int, long, np.integer)):
