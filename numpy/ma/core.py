@@ -2580,9 +2580,9 @@ class MaskedArray(ndarray):
 
     Construction::
 
-      x = MaskedArray(data, mask=nomask, dtype=None, copy=True,
-                      fill_value=None, keep_mask=True, hard_mask=False,
-                      shrink=True)
+      x = MaskedArray(data, mask=nomask, dtype=None,
+                      copy=False, subok=True, ndmin=0, fill_value=None,
+                      keep_mask=True, hard_mask=None, flag=None, shrink=True)
 
     Parameters
     ----------
@@ -3372,6 +3372,12 @@ class MaskedArray(ndarray):
         fill_value : scalar, optional
             The value to use for invalid entries (None by default).
             If None, the `fill_value` attribute of the array is used instead.
+
+        Returns
+        -------
+        filled_array : ndarray
+            A copy of ``self`` with invalid entries replaced by *fill_value*
+            (be it the function argument or the attribute of ``self``.
 
         Notes
         -----

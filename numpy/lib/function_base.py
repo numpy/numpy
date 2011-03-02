@@ -99,7 +99,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
 
     See Also
     --------
-    histogramdd, bincount, searchsorted
+    histogramdd, bincount, searchsorted, digitize
 
     Notes
     -----

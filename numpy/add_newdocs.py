@@ -2605,8 +2605,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
     Parameters
     ----------
-    t : string or dtype
+    t : str or dtype
         Typecode or data-type to which the array is cast.
+
+    Raises
+    ------
+    ComplexWarning :
+        When casting from complex to float or int. To avoid this,
+        one should use ``a.real.astype(t)``.
 
     Examples
     --------
@@ -4297,8 +4303,9 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
         Input array.
     weights : array_like, optional
         Weights, array of the same shape as `x`.
-    minlength : integer, optional
+    minlength : int, optional
         .. versionadded:: 1.6.0
+
         A minimum number of bins for the output array.
 
     Returns
@@ -4329,6 +4336,9 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
     >>> x = np.array([0, 1, 1, 3, 2, 1, 7, 23])
     >>> np.bincount(x).size == np.amax(x)+1
     True
+
+    The input array needs to be of integer dtype, otherwise a
+    TypeError is raised:
 
     >>> np.bincount(np.arange(5, dtype=np.float))
     Traceback (most recent call last):
