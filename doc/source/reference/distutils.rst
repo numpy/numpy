@@ -16,6 +16,7 @@ dictionary obtained from the todict() method of the class). More
 information is available in the NumPy Distutils Users Guide in
 ``<site-packages>/numpy/doc/DISTUTILS.txt``.
 
+
 .. index::
    single: distutils
 
@@ -31,7 +32,6 @@ misc_util
 .. autosummary::
    :toctree: generated/
 
-   Configuration
    get_numpy_include_dirs
    dict_append
    appendpath
@@ -59,9 +59,9 @@ misc_util
 .. class:: Configuration(package_name=None, parent_name=None, top_path=None, package_path=None, **attrs)
 
     Construct a configuration instance for the given package name. If
-    *parent_name* is not :const:`None`, then construct the package as a
+    *parent_name* is not None, then construct the package as a
     sub-package of the *parent_name* package. If *top_path* and
-    *package_path* are :const:`None` then they are assumed equal to
+    *package_path* are None then they are assumed equal to
     the path of the file this instance was created in. The setup.py
     files in the numpy distribution are good examples of how to use
     the :class:`Configuration` instance.

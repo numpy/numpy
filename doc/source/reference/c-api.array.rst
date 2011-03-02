@@ -373,25 +373,25 @@ From other objects
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
 
-    .. cvar:: NPY_INOUT_ARRAY
-
-        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED`
-
-    .. cvar:: NPY_INOUT_FARRAY
-
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED`
-
     .. cvar:: NPY_OUT_ARRAY
 
         :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+        :cdata:`NPY_ALIGNED`
 
     .. cvar:: NPY_OUT_FARRAY
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED` \| :cdata:`UPDATEIFCOPY`
+        :cdata:`NPY_ALIGNED`
+
+    .. cvar:: NPY_INOUT_ARRAY
+
+        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
+        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+
+    .. cvar:: NPY_INOUT_FARRAY
+
+        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
+        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
 
 
 .. cfunction:: PyObject* PyArray_CheckFromAny(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context)
