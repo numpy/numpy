@@ -24,11 +24,15 @@
 #   library_dirs
 #       List of directories to add to the library search path when compiling
 #       extensions with this dependency. Use the character given by os.pathsep
-#       to separate the items in the list. On UN*X-type systems (Linux, FreeBSD,
-#       OS X):
+#       to separate the items in the list. Note that this character is known to
+#       vary on some unix-like systems; if a colon does not work, try a comma.
+#       This also applies to include_dirs and src_dirs (see below).
+#       On UN*X-type systems (OS X, most BSD and Linux systems):
 #           library_dirs = /usr/lib:/usr/local/lib
 #       On Windows:
 #           library_dirs = c:\mingw\lib,c:\atlas\lib
+#       On some BSD and Linux systems:
+#           library_dirs = /usr/lib,/usr/local/lib
 #
 #   include_dirs
 #       List of directories to add to the header file earch path.
