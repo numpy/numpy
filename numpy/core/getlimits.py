@@ -27,9 +27,10 @@ class finfo(object):
 
     Attributes
     ----------
-    eps : floating point number of the appropriate type
+    eps : float
         The smallest representable positive number such that
-        ``1.0 + eps != 1.0``.
+        ``1.0 + eps != 1.0``.  Type of `eps` is an appropriate floating
+        point type.
     epsneg : floating point number of the appropriate type
         The smallest representable positive number such that
         ``1.0 - epsneg != 1.0``.
@@ -62,12 +63,13 @@ class finfo(object):
     resolution : floating point number of the appropriate type
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
-    tiny : floating point number of the appropriate type
-        The smallest positive usable number.
+    tiny : float
+        The smallest positive usable number.  Type of `tiny` is an
+        appropriate floating point type.
 
     Parameters
     ----------
-    dtype : floating point type, data-type, or instance
+    dtype : float, dtype, or instance
         Kind of floating point data-type about which to get information.
 
     See Also
