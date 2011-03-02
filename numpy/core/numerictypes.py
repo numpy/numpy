@@ -601,6 +601,44 @@ def issctype(rep):
         return False
 
 def obj2sctype(rep, default=None):
+    """
+    Return the scalar dtype or NumPy equivalent of Python type of an object.
+
+    Parameters
+    ----------
+    rep : any
+        The object of which the type is returned.
+    default : any, optional
+        If given, this is returned for objects whose types can not be
+        determined. If not given, None is returned for those objects.
+
+    Returns
+    -------
+    dtype : dtype or Python type
+        The data type of `rep`.
+
+    See Also
+    --------
+    sctype2char, issctype, issubsctype, issubdtype, maximum_sctype
+
+    Examples
+    --------
+    >>> np.obj2sctype(np.int32)
+    <type 'numpy.int32'>
+    >>> np.obj2sctype(np.array([1., 2.]))
+    <type 'numpy.float64'>
+    >>> np.obj2sctype(np.array([1.j]))
+    <type 'numpy.complex128'>
+
+    >>> np.obj2sctype(dict)
+    <type 'numpy.object_'>
+    >>> np.obj2sctype('string')
+    <type 'numpy.string_'>
+
+    >>> np.obj2sctype(1, default=list)
+    <type 'list'>
+
+    """
     try:
         if issubclass(rep, generic):
             return rep
@@ -620,6 +658,38 @@ def obj2sctype(rep, default=None):
 
 
 def issubclass_(arg1, arg2):
+    """
+    Determine if a class is a subclass of a second class.
+
+    `issubclass_` is equivalent to the Python built-in ``issubclass``,
+    except that it returns False instead of raising a TypeError is one
+    of the arguments is not a class.
+
+    Parameters
+    ----------
+    arg1 : class
+        Input class. True is returned if `arg1` is a subclass of `arg2`.
+    arg2 : class or tuple of classes.
+        Input class. If a tuple of classes, True is returned if `arg1` is a
+        subclass of any of the tuple elements.
+
+    Returns
+    -------
+    out : bool
+        Whether `arg1` is a subclass of `arg2` or not.
+
+    See Also
+    --------
+    issubsctype, issubdtype, issctype
+
+    Examples
+    --------
+    >>> np.issubclass_(np.int32, np.int)
+    True
+    >>> np.issubclass_(np.int32, np.float)
+    False
+
+    """
     try:
         return issubclass(arg1, arg2)
     except TypeError:

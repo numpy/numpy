@@ -66,7 +66,7 @@ def zeros_like(a, dtype=None, order='K'):
     """
     Return an array of zeros with the same shape and type as a given array.
 
-    With default paramters, is equivalent to ``a.copy().fill(0)``.
+    With default parameters, is equivalent to ``a.copy().fill(0)``.
 
     Parameters
     ----------
@@ -77,8 +77,8 @@ def zeros_like(a, dtype=None, order='K'):
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
-        'C' otherwise. 'K' means match the layout of ``a`` as closely
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
 
     Returns
@@ -763,7 +763,7 @@ def outer(a,b):
 
     See also
     --------
-    numpy.inner, numpy.einsum
+    inner, einsum
 
     References
     ----------
@@ -855,7 +855,7 @@ def tensordot(a, b, axes=2):
 
     See Also
     --------
-    numpy.dot, numpy.einsum
+    dot, einsum
 
     Notes
     -----

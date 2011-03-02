@@ -28,17 +28,19 @@ class finfo(object):
     Attributes
     ----------
     eps : floating point number of the appropriate type
-        The smallest representable number such that ``1.0 + eps != 1.0``.
+        The smallest representable positive number such that
+        ``1.0 + eps != 1.0``.
     epsneg : floating point number of the appropriate type
-        The smallest representable number such that ``1.0 - epsneg != 1.0``.
+        The smallest representable positive number such that
+        ``1.0 - epsneg != 1.0``.
     iexp : int
         The number of bits in the exponent portion of the floating point
         representation.
     machar : MachAr
-        The object which calculated these parameters and holds more detailed
-        information.
+        The object which calculated these parameters and holds more
+        detailed information.
     machep : int
-        The exponent that yields ``eps``.
+        The exponent that yields `eps`.
     max : floating point number of the appropriate type
         The largest representable number.
     maxexp : int
@@ -46,27 +48,27 @@ class finfo(object):
     min : floating point number of the appropriate type
         The smallest representable number, typically ``-max``.
     minexp : int
-        The most negative power of the base (2) consistent with there being
-        no leading 0's in the mantissa.
+        The most negative power of the base (2) consistent with there
+        being no leading 0's in the mantissa.
     negep : int
-        The exponent that yields ``epsneg``.
+        The exponent that yields `epsneg`.
     nexp : int
         The number of bits in the exponent including its sign and bias.
     nmant : int
         The number of bits in the mantissa.
     precision : int
-        The approximate number of decimal digits to which this kind of float
-        is precise.
+        The approximate number of decimal digits to which this kind of
+        float is precise.
     resolution : floating point number of the appropriate type
-        The approximate decimal resolution of this type, i.e.
+        The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
     tiny : floating point number of the appropriate type
-        The smallest-magnitude usable number.
+        The smallest positive usable number.
 
     Parameters
     ----------
-    dtype : floating point type, dtype, or instance
-        The kind of floating point data type to get information about.
+    dtype : floating point type, data-type, or instance
+        Kind of floating point data-type about which to get information.
 
     See Also
     --------
@@ -75,10 +77,10 @@ class finfo(object):
 
     Notes
     -----
-    For developers of NumPy: do not instantiate this at the module level. The
-    initial calculation of these parameters is expensive and negatively impacts
-    import times. These objects are cached, so calling ``finfo()`` repeatedly
-    inside your functions is not a problem.
+    For developers of NumPy: do not instantiate this at the module level.
+    The initial calculation of these parameters is expensive and negatively
+    impacts import times.  These objects are cached, so calling ``finfo()``
+    repeatedly inside your functions is not a problem.
 
     """
 

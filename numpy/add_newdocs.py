@@ -284,6 +284,36 @@ add_newdoc('numpy.core', 'broadcast', ('size',
 
     """))
 
+add_newdoc('numpy.core', 'broadcast', ('reset',
+    """
+    reset()
+
+    Reset the broadcasted result's iterator(s).
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([[4], [5], [6]]
+    >>> b = np.broadcast(x, y)
+    >>> b.index
+    0
+    >>> b.next(), b.next(), b.next()
+    ((1, 4), (2, 4), (3, 4))
+    >>> b.index
+    3
+    >>> b.reset()
+    >>> b.index
+    0
+
+    """))
 
 ###############################################################################
 #
@@ -329,6 +359,15 @@ add_newdoc('numpy.core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
         needed to meet this requirement.
+
+    Returns
+    -------
+    out : ndarray
+        An array object satisfying the specified requirements.
+
+    See Also
+    --------
+    empty, empty_like, zeros, zeros_like, ones, ones_like, fill
 
     Examples
     --------
@@ -574,28 +613,29 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     """
     fromstring(string, dtype=float, count=-1, sep='')
 
-    Return a new 1-D array initialized from raw binary or text data in string.
+    A new 1-D array initialized from raw binary or text data in a string.
 
     Parameters
     ----------
     string : str
         A string containing the data.
-    dtype : dtype, optional
-        The data type of the array. For binary input data, the data must be
-        in exactly this format.
+    dtype : data-type, optional
+        The data type of the array; default: float.  For binary input data,
+        the data must be in exactly this format.
     count : int, optional
-        Read this number of `dtype` elements from the data. If this is
-        negative, then the size will be determined from the length of the
-        data.
+        Read this number of `dtype` elements from the data.  If this is
+        negative (the default), the count will be determined from the
+        length of the data.
     sep : str, optional
-        If provided and not empty, then the data will be interpreted as
-        ASCII text with decimal numbers. This argument is interpreted as the
-        string separating numbers in the data. Extra whitespace between
-        elements is also ignored.
+        If not provided or, equivalently, the empty string, the data will
+        be interpreted as binary data; otherwise, as ASCII text with
+        decimal numbers.  Also in this latter case, this argument is
+        interpreted as the string separating numbers in the data; extra
+        whitespace between elements is also ignored.
 
     Returns
     -------
-    arr : array
+    arr : ndarray
         The constructed array.
 
     Raises
@@ -603,6 +643,10 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     ValueError
         If the string is not the correct size to satisfy the requested
         `dtype` and `count`.
+
+    See Also
+    --------
+    frombuffer, fromfile, fromiter
 
     Examples
     --------
@@ -614,17 +658,6 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     array([1, 2])
     >>> np.fromstring('\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
     array([1, 2, 3], dtype=uint8)
-
-    Invalid inputs:
-
-    >>> np.fromstring('\\x01\\x02\\x03\\x04\\x05', dtype=np.int32)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: string size must be a multiple of element size
-    >>> np.fromstring('\\x01\\x02', dtype=np.uint8, count=3)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: string is smaller than requested size
 
     """)
 
@@ -639,9 +672,9 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     iterable : iterable object
         An iterable object providing data for the array.
     dtype : data-type
-        The data type of the returned array.
+        The data-type of the returned array.
     count : int, optional
-        The number of items to read from iterable. The default is -1,
+        The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
 
     Returns
@@ -651,9 +684,8 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
 
     Notes
     -----
-    Specify ``count`` to improve performance.  It allows
-    ``fromiter`` to pre-allocate the output array, instead of
-    resizing it on demand.
+    Specify `count` to improve performance.  It allows ``fromiter`` to
+    pre-allocate the output array, instead of resizing it on demand.
 
     Examples
     --------
@@ -746,26 +778,26 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
     Parameters
     ----------
-    buffer
+    buffer : buffer_like
         An object that exposes the buffer interface.
     dtype : data-type, optional
-        Data type of the returned array.
+        Data-type of the returned array; default: float.
     count : int, optional
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
-        Start reading the buffer from this offset.
+        Start reading the buffer from this offset; default: 0.
 
     Notes
     -----
-    If the buffer has data that is not in machine byte-order, this
-    should be specified as part of the data-type, e.g.::
+    If the buffer has data that is not in machine byte-order, this should
+    be specified as part of the data-type, e.g.::
 
       >>> dt = np.dtype(int)
       >>> dt = dt.newbyteorder('>')
       >>> np.frombuffer(buf, dtype=dt)
 
-    The data of the resulting array will not be byteswapped,
-    but will be interpreted correctly.
+    The data of the resulting array will not be byteswapped, but will be
+    interpreted correctly.
 
     Examples
     --------
@@ -1373,7 +1405,7 @@ add_newdoc('numpy.core.multiarray', 'result_type',
     like C++, with some slight differences.  When both scalars and
     arrays are used, the array's type takes precedence and the actual value
     of the scalar is taken into account.
-    
+
     For example, calculating 3*a, where a is an array of 32-bit floats,
     intuitively should result in a 32-bit float output.  If the 3 is a
     32-bit integer, the NumPy rules indicate it can't convert losslessly
@@ -1536,12 +1568,12 @@ add_newdoc('numpy.core', 'einsum',
     The best way to understand this function is to try the examples below,
     which show how many common NumPy functions can be implemented as
     calls to einsum.
-    
+
     The subscripts string is a comma-separated list of subscript labels,
     where each label refers to a dimension of the corresponding operand.
     Repeated subscripts labels in one operand take the diagonal.  For example,
     ``np.einsum('ii', a)`` is equivalent to ``np.trace(a)``.
-    
+
     Whenever a label is repeated, it is summed, so ``np.einsum('i,i', a, b)``
     is equivalent to ``np.inner(a,b)``.  If a label appears only once,
     it is not summed, so ``np.einsum('i', a)`` produces a view of ``a``
@@ -1607,7 +1639,7 @@ add_newdoc('numpy.core', 'einsum',
     --------
     dot, inner, outer, tensordot
 
-    
+
     Examples
     --------
 

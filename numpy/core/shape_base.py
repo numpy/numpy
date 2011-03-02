@@ -102,18 +102,18 @@ def atleast_3d(*arys):
     Parameters
     ----------
     array1, array2, ... : array_like
-        One or more array-like sequences.  Non-array inputs are converted
-        to arrays. Arrays that already have three or more dimensions are
+        One or more array-like sequences.  Non-array inputs are converted to
+        arrays.  Arrays that already have three or more dimensions are
         preserved.
 
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 3``.
-        Copies are avoided where possible, and views with three or more
-        dimensions are returned.  For example, a 1-D array of shape ``N``
-        becomes a view of shape ``(1, N, 1)``.  A 2-D array of shape ``(M, N)``
-        becomes a view of shape ``(M, N, 1)``.
+        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
+        avoided where possible, and views with three or more dimensions are
+        returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
+        of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
+        view of shape ``(M, N, 1)``.
 
     See Also
     --------
