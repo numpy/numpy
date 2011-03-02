@@ -1,6 +1,6 @@
 """
 =====================================
-Structured Arrays (aka Record Arrays)
+Structured Arrays (and Record Arrays)
 =====================================
 
 Introduction
@@ -172,5 +172,36 @@ They do not have to be strings.
 
  >>> x.dtype.fields['x'][2]
  'title 1'
+
+Accessing multiple fields at once
+====================================
+
+You can access multiple fields at once using a list of field names: ::
+
+ >>> x = np.array([(1.5,2.5,(1.0,2.0)),(3.,4.,(4.,5.)),(1.,3.,(2.,6.))],
+         dtype=[('x','f4'),('y',np.float32),('value','f4',(2,2))])
+
+Notice that `x` is created with a list of tuples.
+
+ >>> x[['x','y']]
+ array([(1.5, 2.5), (3.0, 4.0), (1.0, 3.0)],
+      dtype=[('x', '<f4'), ('y', '<f4')])
+ >>> x[['x','value']]
+ array([(1.5, [[1.0, 2.0], [1.0, 2.0]]), (3.0, [[4.0, 5.0], [4.0, 5.0]]),
+       (1.0, [[2.0, 6.0], [2.0, 6.0]])],
+      dtype=[('x', '<f4'), ('value', '<f4', (2, 2))])
+
+Notice that the fields are always returned in the same order regardless of
+the sequence they are asked for.
+
+ >>> x[['y','x']]
+ array([(1.5, 2.5), (3.0, 4.0), (1.0, 3.0)],
+      dtype=[('x', '<f4'), ('y', '<f4')])
+
+More information
+====================================
+You can find some more information on recarrays and structured  arrays
+(including the difference between the two) `here
+<http://www.scipy.org/Cookbook/Recarray>`_.
 
 """
