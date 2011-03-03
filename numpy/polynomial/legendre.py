@@ -21,6 +21,7 @@ Arithmetic
 - `legsub` -- subtract one Legendre series from another.
 - `legmul` -- multiply two Legendre series.
 - `legdiv` -- divide one Legendre series by another.
+- `legpow` -- raise a Legendre series to an positive integer power
 - `legval` -- evaluate a Legendre series at given points.
 
 Calculus
@@ -35,7 +36,7 @@ Misc Functions
 - `legvander` -- Vandermonde-like matrix for Legendre polynomials.
 - `legfit` -- least-squares fit returning a Legendre series.
 - `legtrim` -- trim leading coefficients from a Legendre series.
-- `legline` -- Legendre series of given straight line.
+- `legline` -- Legendre series representing given straight line.
 - `leg2poly` -- convert a Legendre series to a polynomial.
 - `poly2leg` -- convert a polynomial to a Legendre series.
 
@@ -51,9 +52,10 @@ See also
 from __future__ import division
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
-        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legval',
-        'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
-        'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre']
+        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow',
+        'legval', 'legder', 'legint', 'leg2poly', 'poly2leg',
+        'legfromroots', 'legvander', 'legfit', 'legtrim', 'legroots',
+        'Legendre']
 
 import numpy as np
 import numpy.linalg as la
