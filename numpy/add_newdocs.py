@@ -1569,18 +1569,53 @@ add_newdoc('numpy.core', 'einsum',
 
     Evaluates the Einstein summation convention on the operands.
 
-    An alternative way to provide the subscripts and operands is as
-    einsum(op0, sublist0, op1, sublist1, ..., [sublistout]). The examples
-    below have corresponding einsum calls with the two parameter methods.
-
     Using the Einstein summation convention, many common multi-dimensional
     array operations can be represented in a simple fashion.  This function
-    provides a way compute such summations.
+    provides a way compute such summations. The best way to understand this
+    function is to try the examples below, which show how many common NumPy
+    functions can be implemented as calls to `einsum`.
 
-    The best way to understand this function is to try the examples below,
-    which show how many common NumPy functions can be implemented as
-    calls to einsum.
+    Parameters
+    ----------
+    subscripts : str
+        Specifies the subscripts for summation.
+    operands : list of array_like
+        These are the arrays for the operation.
+    out : ndarray, optional
+        If provided, the calculation is done into this array.
+    dtype : data-type, optional
+        If provided, forces the calculation to use the data type specified.
+        Note that you may have to also give a more liberal `casting`
+        parameter to allow the conversions.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Controls the memory layout of the output. 'C' means it should
+        be C contiguous. 'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout as the inputs as
+        is possible, including arbitrarily permuted axes.
+        Default is 'K'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.  Setting this to
+        'unsafe' is not recommended, as it can adversely affect accumulations.
 
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'unsafe' means any data conversions may be done.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+
+    Returns
+    -------
+    output : ndarray
+        The calculation based on the Einstein summation convention.
+
+    See Also
+    --------
+    dot, inner, outer, tensordot
+
+    Notes
+    -----
     The subscripts string is a comma-separated list of subscript labels,
     where each label refers to a dimension of the corresponding operand.
     Repeated subscripts labels in one operand take the diagonal.  For example,
@@ -1599,7 +1634,7 @@ add_newdoc('numpy.core', 'einsum',
     as well.  This specifies the label order, and allows summing to
     be disallowed or forced when desired.  The call ``np.einsum('i->', a)``
     is like ``np.sum(a, axis=-1)``, and ``np.einsum('ii->i', a)``
-    is like ``np.diag(a)``.  The difference is that ``einsum`` does not
+    is like ``np.diag(a)``.  The difference is that `einsum` does not
     allow broadcasting by default.
 
     To enable and control broadcasting, use an ellipsis.  Default
@@ -1615,46 +1650,12 @@ add_newdoc('numpy.core', 'einsum',
     of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
     produces a view.
 
-    Parameters
-    ----------
-    subscripts : string
-        Specifies the subscripts for summation.
-    operands : list of array_like
-        These are the arrays for the operation.
-    out : None or array
-        If provided, the calculation is done into this array.
-    dtype : None or data type
-        If provided, forces the calculation to use the data type specified.
-        Note that you may have to also give a more liberal ``casting``
-        parameter to allow the conversions.
-    order : 'C', 'F', 'A', or 'K'
-        Controls the memory layout of the output. 'C' means it should
-        be C contiguous. 'F' means it should be Fortran contiguous,
-        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout as the inputs as
-        is possible, including arbitrarily permuted axes.
-    casting : 'no', 'equiv', 'safe', 'same_kind', 'unsafe'
-        Controls what kind of data casting may occur.  Setting this to
-        'unsafe' is not recommended, as it can adversely affect accumulations.
-        'no' means the data types should not be cast at all. 'equiv' means
-        only byte-order changes are allowed. 'safe' means only casts
-        which can preserve values are allowed. 'same_kind' means only
-        safe casts or casts within a kind, like float64 to float32, are
-        allowed.  'unsafe' means any data conversions may be done.
-
-    Returns
-    -------
-    output : ndarray
-        The calculation based on the Einstein summation convention.
-
-    See Also
-    --------
-    dot, inner, outer, tensordot
-
+    An alternative way to provide the subscripts and operands is as
+    ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``. The examples
+    below have corresponding `einsum` calls with the two parameter methods.
 
     Examples
     --------
-
     >>> a = np.arange(25).reshape(5,5)
     >>> b = np.arange(5)
     >>> c = np.arange(6).reshape(2,3)
