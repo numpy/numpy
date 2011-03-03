@@ -1344,12 +1344,12 @@ def chebpts1(npts):
 
     Parameters
     ----------
-    npts: int
+    npts : int
         Number of sample points desired.
 
     Returns
     -------
-    pts: ndarray
+    pts : ndarray
         The Chebyshev points of the second kind.
 
     Notes
@@ -1375,12 +1375,12 @@ def chebpts2(npts):
 
     Parameters
     ----------
-    npts: int
+    npts : int
         Number of sample points desired.
 
     Returns
     -------
-    pts: ndarray
+    pts : ndarray
         The Chebyshev points of the second kind.
 
     Notes

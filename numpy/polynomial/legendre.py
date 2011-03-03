@@ -65,8 +65,6 @@ legtrim = pu.trimcoef
 
 def poly2leg(pol) :
     """
-    poly2leg(pol)
-
     Convert a polynomial to a Legendre series.
 
     Convert an array representing the coefficients of a polynomial (relative
@@ -463,7 +461,7 @@ def legmulx(cs):
 
     .. math::
 
-    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+      xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
 
     """
     # cs is a trimmed copy
@@ -564,12 +562,12 @@ def legdiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
     -------
-    [quo, rem] : ndarrays
+    quo, rem : ndarrays
         Of Legendre series coefficients representing the quotient and
         remainder.
 
@@ -683,8 +681,8 @@ def legder(cs, m=1, scl=1) :
 
     Parameters
     ----------
-    cs: array_like
-        1-d array of Legendre series coefficients ordered from low to high.
+    cs : array_like
+        1-D array of Legendre series coefficients ordered from low to high.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
@@ -886,9 +884,6 @@ def legval(x, cs):
     See Also
     --------
     legfit
-
-    Examples
-    --------
 
     Notes
     -----
