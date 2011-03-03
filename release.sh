@@ -5,10 +5,13 @@
 # downloads, i.e. two versions for Python 2.7. The Intel 32/64-bit version is
 # for OS X 10.6+, the other dmg installers are for 10.3+ and are built on 10.5
 
+# bootstrap needed to ensure we build the docs from the right scipy version
 paver bootstrap
 source bootstrap/bin/activate
 python setupsconsegg.py install
 
+# build docs
+paver pdf
 
 #------------------------------------------------------------------
 # Build tarballs, Windows and 64-bit OS X installers (on OS X 10.6)

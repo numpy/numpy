@@ -223,7 +223,15 @@ def bdist_superpack(options):
             os.remove(target)
         if not os.path.exists(os.path.dirname(target)):
             os.makedirs(os.path.dirname(target))
-        os.rename(source, target)
+        try:
+            os.rename(source, target)
+        except OSError:
+            # When git is installed on OS X but not under Wine, the name of the
+            # .exe has "-Unknown" in it instead of the correct git revision.
+            # Try to fix this here:
+            revidx = source.index(".dev-") + 5
+            gitrev = source[revidx:revidx+7]
+            os.rename(source.replace(gitrev, "Unknown"), target)
 
     bdist_wininst_arch(pyver, 'nosse')
     copy_bdist("nosse")
@@ -390,11 +398,20 @@ def macosx_version():
 
 def mpkg_name(pyver):
     maj, min = macosx_version()[:2]
+    # Note that bdist_mpkg breaks this if building a dev version with a git
+    # commit string attached. make_fullplatcomponents() in
+    # bdist_mpkg/cmd_bdist_mpkg.py replaces '-' with '_', comment this out if
+    # needed.
     return "numpy-%s-py%s-macosx%s.%s.mpkg" % (FULLVERSION, pyver, maj, min)
 
 def _build_mpkg(pyver):
-    ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
+    # account for differences between Python 2.7.1 versions from python.org
+    if os.environ.get('MACOSX_DEPLOYMENT_TARGET', None) == "10.6":
+        ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch x86_64 -Wl,-search_paths_first"
+    else:
+        ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
     ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
+
     if pyver == "2.5":
         sh("CC=gcc-4.0 LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
     else:
@@ -440,7 +457,6 @@ def _create_dmg(pyver, src_dir, volname=None):
     sh(" ".join(cmd))
 
 @task
-@needs("pdf")
 @cmdopts([("python-version=", "p", "python version")])
 def dmg(options):
     try:
@@ -449,11 +465,17 @@ def dmg(options):
         pyver = DEFAULT_PYTHON
     idirs = options.installers.installersdir
 
+    # Check if docs exist. If not, say so and quit.
+    ref = os.path.join(options.doc.destdir_pdf, "reference.pdf")
+    user = os.path.join(options.doc.destdir_pdf, "userguide.pdf")
+    if (not os.path.exists(ref)) or (not os.path.exists(user)):
+        warnings.warn("Docs need to be built first! Can't find them.")
+
+    # Build the mpkg package
     call_task("clean")
     _build_mpkg(pyver)
 
     macosx_installer_dir = "tools/numpy-macosx-installer"
-
     dmg = os.path.join(macosx_installer_dir, dmg_name(FULLVERSION, pyver))
     if os.path.exists(dmg):
         os.remove(dmg)
@@ -474,10 +496,7 @@ def dmg(options):
     if os.path.exists(pdf_docs):
         shutil.rmtree(pdf_docs)
     os.makedirs(pdf_docs)
-
-    user = os.path.join(options.doc.destdir_pdf, "userguide.pdf")
     shutil.copy(user, os.path.join(pdf_docs, "userguide.pdf"))
-    ref = os.path.join(options.doc.destdir_pdf, "reference.pdf")
     shutil.copy(ref, os.path.join(pdf_docs, "reference.pdf"))
 
     # Build the dmg
