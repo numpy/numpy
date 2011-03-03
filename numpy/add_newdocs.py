@@ -1337,6 +1337,11 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     out : dtype
         The promoted data type.
 
+    See Also
+    --------
+    issctype, issubsctype, issubdtype, obj2sctype, sctype2char,
+    maximum_sctype, min_scalar_type
+
     Examples
     --------
     >>> np.promote_types('f4', 'f8')
@@ -1352,6 +1357,7 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: invalid type promotion
+
     """)
 
 add_newdoc('numpy.core.multiarray', 'min_scalar_type',
@@ -1374,6 +1380,12 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     -------
     out : dtype
         The minimal data type.
+
+
+    See Also
+    --------
+    issctype, issubsctype, issubdtype, obj2sctype, sctype2char,
+    maximum_sctype, promote_types
 
     Examples
     --------
@@ -2850,6 +2862,35 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     See Also
     --------
     numpy.diagonal : equivalent function
+
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('dot',
+    """
+    a.dot(b, out=None)
+
+    Dot product of two arrays.
+
+    Refer to `numpy.dot` for full documentation.
+
+    See Also
+    --------
+    numpy.dot : equivalent function
+
+    Examples
+    --------
+    >>> a = np.eye(2)
+    >>> b = np.ones((2, 2)) * 2
+    >>> a.dot(b)
+    array([[ 2.,  2.],
+           [ 2.,  2.]])
+
+    This array method can be conveniently chained:
+
+    >>> a.dot(b).dot(b)
+    array([[ 8.,  8.],
+           [ 8.,  8.]])
 
     """))
 
@@ -4458,9 +4499,10 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
         version of an array of dimensions ``dims``. Before version 1.6.0,
         this function accepted just one index value.
     dims : tuple of ints
-        The shape of the array to use for unravelling ``indices``.
+        The shape of the array to use for unraveling ``indices``.
     order : {'C', 'F'}, optional
         .. versionadded:: 1.6.0
+
         Determines whether the indices should be viewed as indexing in
         C (row-major) order or FORTRAN (column-major) order.
 
@@ -4483,6 +4525,7 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
 
     >>> np.unravel_index(1621, (6,7,8,9))
     (3, 1, 4, 1)
+
     """)
 
 add_newdoc('numpy.lib._compiled_base', 'add_docstring',

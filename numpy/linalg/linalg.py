@@ -1567,8 +1567,8 @@ def slogdet(a):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
-        Input array.
+    a : array_like
+        Input array, has to be a square 2-D array.
 
     Returns
     -------
@@ -1580,18 +1580,22 @@ def slogdet(a):
         The natural log of the absolute value of the determinant.
 
     If the determinant is zero, then `sign` will be 0 and `logdet` will be
-    -Inf. In all cases, the determinant is equal to `sign * np.exp(logdet)`.
+    -Inf. In all cases, the determinant is equal to ``sign * np.exp(logdet)``.
+
+    See Also
+    --------
+    det
 
     Notes
     -----
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
 
-    .. versionadded:: 2.0.0.
+    .. versionadded:: 1.6.0.
 
     Examples
     --------
-    The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
+    The determinant of a 2-D array ``[[a, b], [c, d]]`` is ``ad - bc``:
 
     >>> a = np.array([[1, 2], [3, 4]])
     >>> (sign, logdet) = np.linalg.slogdet(a)
@@ -1606,10 +1610,6 @@ def slogdet(a):
     0.0
     >>> np.linalg.slogdet(np.eye(500) * 0.1)
     (1, -1151.2925464970228)
-
-    See Also
-    --------
-    det
 
     """
     a = asarray(a)

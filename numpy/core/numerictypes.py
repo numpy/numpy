@@ -589,6 +589,11 @@ def issctype(rep):
     >>> np.issctype(1.1)
     False
 
+    Strings are also a scalar type:
+
+    >>> np.issctype(np.dtype('str'))
+    True
+
     """
     if not isinstance(rep, (type, dtype)):
         return False

@@ -500,7 +500,7 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : string
+    file : str
         File name of .npz file.
     args : Arguments
         Function arguments.

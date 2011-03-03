@@ -2921,22 +2921,22 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     a : array_like
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
-        percentile to compute which must be between 0 and 100 inclusive
-    axis : {None, int}, optional
-        Axis along which the percentiles are computed. The default (axis=None)
+        Percentile to compute which must be between 0 and 100 inclusive.
+    axis : int, optional
+        Axis along which the percentiles are computed. The default (None)
         is to compute the median along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
-    overwrite_input : {False, True}, optional
-       If True, then allow use of memory of input array (a) for
+    overwrite_input : bool, optional
+       If True, then allow use of memory of input array `a` for
        calculations. The input array will be modified by the call to
        median. This will save memory when you do not need to preserve
        the contents of the input array. Treat the input as undefined,
-       but it will probably be fully or partially sorted. Default is
-       False. Note that, if `overwrite_input` is True and the input
-       is not already an ndarray, an error will be raised.
+       but it will probably be fully or partially sorted.
+       Default is False. Note that, if `overwrite_input` is True and the
+       input is not already an array, an error will be raised.
 
     Returns
     -------
@@ -2954,10 +2954,10 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     Notes
     -----
     Given a vector V of length N, the qth percentile of V is the qth ranked
-    value in a sorted copy of V.  A weighted average of the two nearest neighbors
-    is used if the normalized ranking does not match q exactly.
-    The same as the median if q is 0.5; the same as the min if q is 0;
-    and the same as the max if q is 1
+    value in a sorted copy of V.  A weighted average of the two nearest
+    neighbors is used if the normalized ranking does not match q exactly.
+    The same as the median if ``q=0.5``, the same as the minimum if ``q=0``
+    and the same as the maximum if ``q=1``.
 
     Examples
     --------
@@ -2971,12 +2971,14 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     array([ 6.5,  4.5,  2.5])
     >>> np.percentile(a, 0.5, axis=1)
     array([ 7.,  2.])
+
     >>> m = np.percentile(a, 0.5, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.percentile(a, 0.5, axis=0, out=m)
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
+
     >>> b = a.copy()
     >>> np.percentile(b, 0.5, axis=1, overwrite_input=True)
     array([ 7.,  2.])
