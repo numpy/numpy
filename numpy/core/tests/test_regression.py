@@ -1535,5 +1535,15 @@ class TestRegression(TestCase):
         a[()] = np.array(4)
         assert_equal(a, np.array(4))
 
+    def test_string_astype(self):
+        "Ticket #1748"
+        s1 = asbytes('black')
+        s2 = asbytes('white')
+        s3 = asbytes('other')
+        a = np.array([[s1],[s2],[s3]])
+        assert_equal(a.dtype, np.dtype('S5'))
+        b = a.astype('str')
+        assert_equal(b.dtype, np.dtype('S5'))
+
 if __name__ == "__main__":
     run_module_suite()
