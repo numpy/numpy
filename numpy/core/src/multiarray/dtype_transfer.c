@@ -2950,7 +2950,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
     }
 
     /* Check for different-sized strings, unicodes, or voids */
-    if (src_type_num == dst_type_num) switch (src_type_num) {
+    if (src_type_num == dst_type_num) {
+        switch (src_type_num) {
         case NPY_STRING:
         case NPY_UNICODE:
         case NPY_VOID:
@@ -2958,6 +2959,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                     src_stride, dst_stride,
                                     src_dtype->elsize, dst_dtype->elsize,
                                     out_stransfer, out_transferdata);
+        }
     }
 
     /* Otherwise a cast is necessary */

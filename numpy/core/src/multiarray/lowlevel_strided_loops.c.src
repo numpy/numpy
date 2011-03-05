@@ -302,14 +302,14 @@ _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
 }
 
 static void
-_strided_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
+_strided_to_contig(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         void *NPY_UNUSED(data))
 {
     while (N > 0) {
-        memcpy(dst, src, src_itemsize);
-        dst += src_itemsize;
+        memcpy(dst, src, dst_stride);
+        dst += dst_stride;
         src += src_stride;
         --N;
     }
