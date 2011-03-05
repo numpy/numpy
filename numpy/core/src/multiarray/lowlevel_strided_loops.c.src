@@ -302,34 +302,6 @@ _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
 }
 
 static void
-_strided_to_contig(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        void *NPY_UNUSED(data))
-{
-    while (N > 0) {
-        memcpy(dst, src, dst_stride);
-        dst += dst_stride;
-        src += src_stride;
-        --N;
-    }
-}
-
-static void
-_contig_to_strided(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp src_itemsize,
-                        void *NPY_UNUSED(data))
-{
-    while (N > 0) {
-        memcpy(dst, src, src_itemsize);
-        dst += dst_stride;
-        src += src_itemsize;
-        --N;
-    }
-}
-
-static void
 _contig_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp src_itemsize,
@@ -381,7 +353,7 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
                 }
             }
 
-            return &_strided_to_contig;
+            return &_strided_to_strided;
         }
         /* general dst */
         else {
@@ -408,7 +380,7 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
 /**end repeat**/
                 }
 
-                return &_contig_to_strided;
+                return &_strided_to_strided;
             }
             else {
                 switch (itemsize) {
@@ -445,7 +417,7 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
                 }
             }
 
-            return &_strided_to_contig;
+            return &_strided_to_strided;
         }
         /* general dst */
         else {
@@ -462,7 +434,7 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
 /**end repeat**/
                 }
 
-                return &_contig_to_strided;
+                return &_strided_to_strided;
             }
             /* general src */
             else {
@@ -578,7 +550,7 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
 /**end repeat1**/
                 }
 
-                return &_contig_to_strided;
+                return &_strided_to_strided;
             }
             else {
                 switch (itemsize) {
@@ -626,7 +598,7 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
                 }
             }
 
-            return &_strided_to_contig;
+            return &_strided_to_strided;
         }
         /* general dst */
         else {
@@ -643,7 +615,7 @@ NPY_NO_EXPORT PyArray_StridedTransferFn *
 /**end repeat1**/
                 }
 
-                return &_contig_to_strided;
+                return &_strided_to_strided;
             }
             /* general src */
             else {

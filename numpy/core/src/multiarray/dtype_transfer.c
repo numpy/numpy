@@ -185,6 +185,27 @@ _strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
     }
 }
 
+/*
+ * Does a strided to strided zero-padded copy for the case where
+ * dst_itemsize < src_itemsize
+ */
+static void
+_strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    _strided_zero_pad_data *d = (_strided_zero_pad_data *)data;
+    npy_intp dst_itemsize = d->dst_itemsize;
+
+    while (N > 0) {
+        memcpy(dst, src, dst_itemsize);
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+}
+
 NPY_NO_EXPORT int
 PyArray_GetStridedZeroPadCopyFn(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
@@ -192,13 +213,9 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
                             PyArray_StridedTransferFn **out_stransfer,
                             void **out_transferdata)
 {
-    if (src_itemsize >= dst_itemsize) {
-        /* If the sizes are different, the alignment flag isn't trustworthy */
-        if (src_itemsize != dst_itemsize) {
-            aligned = 0;
-        }
+    if (src_itemsize == dst_itemsize) {
         *out_stransfer = PyArray_GetStridedCopyFn(aligned, src_stride,
-                                dst_stride, dst_itemsize);
+                                dst_stride, src_itemsize);
         *out_transferdata = NULL;
         return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
     }
@@ -213,7 +230,13 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
         d->freefunc = &PyArray_free;
         d->copyfunc = &_strided_zero_pad_data_copy;
 
-        *out_stransfer = &_strided_to_strided_zero_pad_copy;
+        if (src_itemsize < dst_itemsize) {
+            *out_stransfer = &_strided_to_strided_zero_pad_copy;
+        }
+        else {
+            *out_stransfer = &_strided_to_strided_truncate_copy;
+        }
+
         *out_transferdata = d;
         return NPY_SUCCEED;
     }
