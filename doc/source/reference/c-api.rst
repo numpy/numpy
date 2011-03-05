@@ -44,6 +44,7 @@ code.
    c-api.config
    c-api.dtype
    c-api.array
+   c-api.iterator
    c-api.ufunc
    c-api.generalized-ufuncs
    c-api.coremath
