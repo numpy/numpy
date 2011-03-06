@@ -1547,9 +1547,9 @@ class TestRegression(TestCase):
 
     def test_string_astype(self):
         """Ticket #1756 """
-        s = asbytes('12345')
+        s = asbytes('0123456789abcdef')
         a = np.array([s]*5)
-        for i in range(1,6):
+        for i in range(1,17):
             a1 = np.array(a, "|S%d"%i)
             a2 = np.array([s[:i]]*5)
             assert_equal(a1, a2)
