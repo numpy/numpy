@@ -278,11 +278,6 @@ class memmap(ndarray):
         if self._mmap is not None:
             self._mmap.flush()
 
-    def sync(self):
-        """This method is deprecated, use `flush`."""
-        warnings.warn("Use ``flush``.", DeprecationWarning)
-        self.flush()
-
     def _close(self):
         """Close the memmap file.  Only do this when deleting the object."""
         if self.base is self._mmap:
@@ -291,11 +286,6 @@ class memmap(ndarray):
             self._mmap.flush()
             self._mmap.close()
             self._mmap = None
-
-    def close(self):
-        """Close the memmap file. Does nothing."""
-        warnings.warn("``close`` is deprecated on memmap arrays.  Use del",
-                      DeprecationWarning)
 
     def __del__(self):
         # We first check if we are the owner of the mmap, rather than

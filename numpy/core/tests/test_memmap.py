@@ -4,7 +4,7 @@ import warnings
 
 from numpy import memmap
 from numpy import arange, allclose
-from numpy.testing import *
+from numpy.testing import TestCase, assert_, assert_array_equal
 
 class TestMemmap(TestCase):
     def setUp(self):
@@ -27,7 +27,7 @@ class TestMemmap(TestCase):
         # Read data back from file
         newfp = memmap(self.tmpfp, dtype=self.dtype, mode='r',
                        shape=self.shape)
-        assert allclose(self.data, newfp)
+        assert_(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
 
     def test_open_with_filename(self):
@@ -70,10 +70,6 @@ class TestMemmap(TestCase):
                     shape=self.shape)
         fp[:] = self.data[:]
         fp.flush()
-
-        warnings.simplefilter('ignore', DeprecationWarning)
-        fp.sync()
-        warnings.simplefilter('default', DeprecationWarning)
 
     def test_del(self):
         # Make sure a view does not delete the underlying mmap
