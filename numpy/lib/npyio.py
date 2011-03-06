@@ -1049,7 +1049,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     """
     Load data from a text file, with missing values handled as specified.
 
-    Each line past the first `skiprows` lines is split at the `delimiter`
+    Each line past the first `skip_header` lines is split at the `delimiter`
     character, and characters following the `comments` character are discarded.
 
     Parameters
@@ -1072,20 +1072,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The numbers of lines to skip at the beginning of the file.
     skip_footer : int, optional
         The numbers of lines to skip at the end of the file
-    converters : variable or None, optional
+    converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
         for missing data: ``converters = {3: lambda s: float(s or 0)}``.
-    missing_values : variable or None, optional
+    missing_values : variable, optional
         The set of strings corresponding to missing data.
-    filling_values : variable or None, optional
+    filling_values : variable, optional
         The set of values to be used as default when the data are missing.
-    usecols : sequence or None, optional
+    usecols : sequence, optional
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first valid line
-        after the first `skiprows` lines.
+        after the first `skip_header` lines.
         If `names` is a sequence or a single-string of comma-separated names,
         the names will be used to define the field names in a structured dtype.
         If `names` is None, the names of the dtype fields will be used, if any.
@@ -1218,9 +1218,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Get the first valid lines after the first skiprows ones ..
     if skiprows:
-        warnings.warn("The use of `skiprows` is deprecated.\n"\
-                      "Please use `skip_header` instead.",
-                      DeprecationWarning)
+        warnings.warn(\
+            "The use of `skiprows` is deprecated, it will be removed in numpy 2.0.\n" \
+            "Please use `skip_header` instead.",
+            DeprecationWarning)
         skip_header = skiprows
     # Skip the first `skip_header` rows
     for i in xrange(skip_header):
@@ -1343,9 +1344,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Process the deprecated `missing`
     if missing != asbytes(''):
-        warnings.warn("The use of `missing` is deprecated.\n"\
-                      "Please use `missing_values` instead.",
-                      DeprecationWarning)
+        warnings.warn(\
+            "The use of `missing` is deprecated, it will be removed in Numpy 2.0.\n" \
+            "Please use `missing_values` instead.",
+            DeprecationWarning)
         values = [str(_) for _ in missing.split(asbytes(","))]
         for entry in missing_values:
             entry.extend(values)
