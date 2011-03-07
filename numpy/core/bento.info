@@ -1,0 +1,22 @@
+Library:
+    CompiledLibrary: npymath
+        Sources:
+            src/npymath/_signbit.c,
+            src/npymath/ieee754.c.src,
+            src/npymath/npy_math.c.src,
+            src/npymath/npy_math_complex.c.src
+    Extension: multiarray
+        Sources:
+            src/multiarray/multiarraymodule_onefile.c
+    Extension: multiarray_tests
+        Sources:
+            src/multiarray/multiarray_tests.c.src
+    Extension: _sort
+        Sources:
+            src/_sortmodule.c.src
+    Extension: umath
+        Sources:
+            src/umath/umathmodule_onefile.c
+    Extension: scalarmath
+        Sources:
+            src/scalarmathmodule.c.src
