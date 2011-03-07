@@ -77,3 +77,32 @@ int main()
         return ret == 0
     return ret
 
+@waflib.Configure.conf
+def check_declaration(self, symbol, **kw):
+    code = r"""
+int main()
+{
+#ifndef %s
+    (void) %s;
+#endif
+    ;
+    return 0;
+}
+""" % (symbol, symbol)
+
+    kw["code"] = to_header(kw) + code
+    kw["msg"] = "Checking for macro %r" % symbol
+    kw["errmsg"] = "not found"
+    kw["okmsg"] = "yes"
+
+    validate_arguments(self, kw)
+    try_compile(self, kw)
+    ret = kw["success"]
+
+    kw["define_name"] = "HAVE_DECL_%s" % sanitize_string(symbol)
+    kw["define_comment"] = "/* Set to 1 if %s is defined. */" % symbol
+    self.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
+
