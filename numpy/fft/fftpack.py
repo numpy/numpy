@@ -31,8 +31,7 @@ version of the FFTPACK routines.
 
 """
 __all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
-           'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn',
-           'refft', 'irefft','refftn','irefftn', 'refft2', 'irefft2']
+           'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
      take
@@ -1114,12 +1113,3 @@ def irfft2(a, s=None, axes=(-2,-1)):
     """
 
     return irfftn(a, s, axes)
-
-# Deprecated names
-from numpy import deprecate
-refft = deprecate(rfft, 'refft', 'rfft')
-irefft = deprecate(irfft, 'irefft', 'irfft')
-refft2 = deprecate(rfft2, 'refft2', 'rfft2')
-irefft2 = deprecate(irfft2, 'irefft2', 'irfft2')
-refftn = deprecate(rfftn, 'refftn', 'rfftn')
-irefftn = deprecate(irfftn, 'irefftn', 'irfftn')
