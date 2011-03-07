@@ -106,6 +106,33 @@ int main()
         return ret == 0
     return ret
 
+@waflib.Configure.conf
+def check_type(self, type_name, **kw):
+    code = r"""
+int main() {
+	if ((%(type_name)s *) 0)
+        return 0;
+	if (sizeof (%(type_name)s))
+        return 0;
+}
+""" % {"type_name": type_name}
+
+    kw["code"] = to_header(kw) + code
+    kw["msg"] = "Checking for type %r" % type_name
+    kw["errmsg"] = "not found"
+    kw["okmsg"] = "yes"
+
+    validate_arguments(self, kw)
+    try_compile(self, kw)
+    ret = kw["success"]
+
+    kw["define_name"] = "HAVE_%s" % sanitize_string(type_name)
+    kw["define_comment"] = "/* Set to 1 if %s is defined. */" % type_name
+    self.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
+
 def do_binary_search(conf, type_name, kw):
     code = """\
 typedef %(type)s waf_check_sizeof_type;

@@ -193,6 +193,26 @@ def check_math_runtime(conf):
             except waflib.Errors.ConfigurationError:
                 NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), ''))
 
+def check_complex(conf):
+    if conf.check_header("complex.h"):
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_COMPLEX',
+                                '#define NPY_USE_C99_COMPLEX 1'))
+        for t in C99_COMPLEX_TYPES:
+            try:
+                conf.check_type(t, header_name='complex.h')
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.sanitize_string(t),
+                                        '#define NPY_HAVE_%s' % numpy.build_utils.sanitize_string(t)))
+            except waflib.Errors.ConfigurationError:
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.sanitize_string(t), ''))
+
+        for prec in ["", "f", "l"]:
+            flist = [f + prec for f in C99_COMPLEX_FUNCS]
+            conf.check_functions_at_once(flist, use="M")
+    else:
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_COMPLEX', ''))
+        for t in C99_COMPLEX_TYPES:
+            NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.sanitize_string(t), ''))
+
 @pre_configure()
 def configure(context):
     conf = context.waf_context
@@ -217,6 +237,7 @@ def configure(context):
     signal_smp_checks(conf)
     check_math_runtime(conf)
     numpy.build_utils.check_inline(conf)
+    check_complex(conf)
 
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
