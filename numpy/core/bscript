@@ -216,6 +216,7 @@ def configure(context):
     type_checks(conf)
     signal_smp_checks(conf)
     check_math_runtime(conf)
+    numpy.build_utils.check_inline(conf)
 
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
