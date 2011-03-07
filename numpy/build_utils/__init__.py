@@ -288,6 +288,44 @@ int main (void)
     return ret
 
 @waflib.Configure.conf
+def check_inline(conf, **kw):
+    validate_arguments(conf, kw)
+
+    code = """
+#ifndef __cplusplus
+static %(inline)s int static_func (void)
+{
+    return 0;
+}
+%(inline)s int nostatic_func (void)
+{
+    return 0;
+}
+#endif"""
+
+    conf.start_msg("Checking for inline support")
+    inline = None
+    for k in ['inline', '__inline__', '__inline']:
+        try:
+            kw["code"] = code % {"inline": k}
+            ret = conf.run_c_code(**kw)
+            inline = k
+            break
+        except conf.errors.ConfigurationError:
+            pass
+
+    if inline is None:
+        conf.end_msg("failed", 'YELLOW')
+        if Logs.verbose > 1:
+            raise
+        else:
+            conf.fatal('The configuration failed')
+    else:
+        kw['success'] = ret
+        conf.end_msg(inline)
+        return inline
+
+@waflib.Configure.conf
 def post_check(self, *k, **kw):
     "set the variables after a test was run successfully"
 
