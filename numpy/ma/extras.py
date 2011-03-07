@@ -1087,7 +1087,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
     if assume_unique:
         aux = ma.concatenate((ar1, ar2))
     else:
-        # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
+        # Might be faster than unique( intersect1d( ar1, ar2 ) )?
         aux = ma.concatenate((unique(ar1), unique(ar2)))
     aux.sort()
     return aux[aux[1:] == aux[:-1]]
@@ -1522,7 +1522,7 @@ def flatnotmasked_edges(a):
 
     See Also
     --------
-    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges, 
+    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges,
     clump_masked, clump_unmasked
 
     Notes
@@ -1637,7 +1637,7 @@ def flatnotmasked_contiguous(a):
     >>> a = np.ma.arange(10)
     >>> np.ma.extras.flatnotmasked_contiguous(a)
     slice(0, 10, None)
-    
+
     >>> mask = (a < 3) | (a > 8) | (a == 5)
     >>> a[mask] = np.ma.masked
     >>> np.array(a[~a.mask])
@@ -1761,7 +1761,7 @@ def clump_unmasked(a):
 
     See Also
     --------
-    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges, 
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges,
     notmasked_contiguous, clump_masked
 
     Examples
@@ -1805,7 +1805,7 @@ def clump_masked(a):
 
     See Also
     --------
-    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges, 
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges,
     notmasked_contiguous, clump_unmasked
 
     Examples
