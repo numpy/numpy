@@ -1,0 +1,53 @@
+import sys
+
+from bento.commands.hooks \
+    import \
+        pre_configure
+from bento.commands.extras.waf \
+    import \
+        ConfigureWafContext, BuildWafContext
+
+def check_blas_lapack(conf):
+    conf.env.HAS_CBLAS = False
+    if sys.platform == "win32":
+        print("No blas/lapack check implemented on win32")
+    elif sys.platform == "darwin":
+        try:
+            conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="CBLAS")
+            conf.env.HAS_CBLAS = True
+
+            conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="LAPACK")
+            conf.env.HAS_LAPACK = True
+        except waflib.Errors.ConfigurationError:
+            pass
+    else:
+        try:
+            conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
+            conf.env.HAS_CBLAS = True
+
+            conf.check_cc(lib=["lapack", "f77blas", "cblas", "atlas"],
+                          uselib_store="LAPACK")
+            conf.env.HAS_LAPACK = True
+        except waflib.Errors.ConfigurationError:
+            pass
+
+    # You can manually set up blas/lapack as follows:
+    #conf.env.HAS_CBLAS = True
+    #conf.env.LIB_CBLAS = ["cblas", "atlas"]
+    #conf.env.HAS_LAPACK = True
+    #conf.env.LIB_LAPACK = ["lapack", "f77blas", "cblas", "atlas"]
+
+@pre_configure()
+def configure(context):
+    conf = context.waf_context
+    conf.load("compiler_c")
+    conf.load("python")
+
+    conf.check_python_version((2, 4, 0))
+    conf.check_python_headers()
+
+    check_blas_lapack(conf)
+
+def startup(context):
+    context.register_context("configure", ConfigureWafContext)
+    context.register_context("build", BuildWafContext)

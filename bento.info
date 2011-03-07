@@ -1,0 +1,98 @@
+Name: numpy
+Version: 2.0.0
+Summary: NumPy: array processing for numbers, strings, records, and objects.
+Url: http://numpy.scipy.org
+DownloadUrl: http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103
+Description:
+    NumPy is a general-purpose array-processing package designed to
+    efficiently manipulate large multi-dimensional arrays of arbitrary
+    records without sacrificing too much speed for small multi-dimensional
+    arrays.  NumPy is built on the Numeric code base and adds features
+    introduced by numarray as well as an extended C-API and the ability to
+    create arrays of arbitrary type which also makes NumPy suitable for
+    interfacing with general-purpose data-base applications.
+    
+    There are also basic facilities for discrete fourier transform,
+    basic linear algebra and random number generation.
+Author: Travis E. Oliphant, et.al.
+AuthorEmail: oliphant@enthought.com
+Maintainer: NumPy Developers
+MaintainerEmail: numpy-discussion@scipy.org
+License: BSD
+Platforms: Windows,Linux,Solaris,Mac OS-X,Unix
+Classifiers:
+    Development Status :: 5 - Production/Stable,
+    Intended Audience :: Science/Research,
+    Intended Audience :: Developers,
+    License :: OSI Approved,
+    Programming Language :: C,
+    Programming Language :: Python,
+    Topic :: Software Development,
+    Topic :: Scientific/Engineering,
+    Operating System :: Microsoft :: Windows,
+    Operating System :: POSIX,
+    Operating System :: Unix,
+    Operating System :: MacOS
+
+HookFile:
+    bscript
+
+ExtraSourceFiles:
+    numpy_templates.py,
+    setup.py,
+    numpy/version.py.in,
+    numpy/__config__.py.in,
+    numpy/core/include/numpy/*.h,
+    numpy/core/include/numpy/*.in,
+    numpy/core/include/numpy/fenv/*.h,
+    numpy/core/include/numpy/fenv/*.c,
+    numpy/core/*.ini.in,
+    numpy/core/src/npymath/*.h,
+    numpy/core/src/multiarray/*.c,
+    numpy/core/src/multiarray/*.c.src,
+    numpy/core/src/multiarray/*.h,
+    numpy/core/src/private/*.h,
+    numpy/core/src/umath/*.src,
+    numpy/core/src/umath/*.h,
+    numpy/core/src/umath/*.c,
+    numpy/fft/*.h,
+    numpy/random/mtrand/*.h
+
+DataFiles: tests
+    TargetDir: $sitedir/numpy
+    SourceDir: numpy
+    Files:
+        core/tests/*.py,
+        distutils/tests/*.py,
+        f2py/tests/*.py,
+        fft/tests/*.py,
+        lib/tests/*.py,
+        linalg/tests/*.py,
+        ma/tests/*.py,
+        matrixlib/tests/*.py,
+        oldnumeric/tests/*.py,
+        polynomial/tests/*.py,
+        random/tests/*.py,
+        testing/tests/*.py
+
+Library:
+    Packages:
+        numpy,
+        numpy.compat,
+        numpy.core,
+        numpy.core.code_generators,
+        numpy.distutils,
+        numpy.distutils.command,
+        numpy.distutils.fcompiler,
+        numpy.doc,
+        numpy.f2py,
+        numpy.fft,
+        numpy.lib,
+        numpy.linalg,
+        numpy.ma,
+        numpy.matrixlib,
+        numpy.numarray,
+        numpy.oldnumeric,
+        numpy.polynomial,
+        numpy.random,
+        numpy.testing
