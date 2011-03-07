@@ -1419,7 +1419,7 @@ def is_mask(m):
     except AttributeError:
         return False
 
-def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
+def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     """
     Create a boolean mask from an array.
 
@@ -1436,8 +1436,6 @@ def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
         Whether to return a copy of `m` (True) or `m` itself (False).
     shrink : bool, optional
         Whether to shrink `m` to ``nomask`` if all its values are False.
-    flag : bool, optional
-        Deprecated equivalent of `shrink`.
     dtype : dtype, optional
         Data-type of the output mask. By default, the output mask has
         a dtype of MaskType (bool). If the dtype is flexible, each field
@@ -1491,10 +1489,6 @@ def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
           dtype=[('man', '|b1'), ('mouse', '|b1')])
 
     """
-    if flag is not None:
-        warnings.warn("The flag 'flag' is now called 'shrink'!",
-                      DeprecationWarning)
-        shrink = flag
     if m is nomask:
         return nomask
     elif isinstance(m, ndarray):
@@ -2582,7 +2576,7 @@ class MaskedArray(ndarray):
 
       x = MaskedArray(data, mask=nomask, dtype=None,
                       copy=False, subok=True, ndmin=0, fill_value=None,
-                      keep_mask=True, hard_mask=None, flag=None, shrink=True)
+                      keep_mask=True, hard_mask=None, shrink=True)
 
     Parameters
     ----------
@@ -2625,7 +2619,7 @@ class MaskedArray(ndarray):
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None,
-                keep_mask=True, hard_mask=None, flag=None, shrink=True,
+                keep_mask=True, hard_mask=None, shrink=True,
                 **options):
         """
     Create a new masked array from scratch.
@@ -2635,10 +2629,6 @@ class MaskedArray(ndarray):
     A masked array can also be created by taking a .view(MaskedArray).
 
         """
-        if flag is not None:
-            warnings.warn("The flag 'flag' is now called 'shrink'!",
-                          DeprecationWarning)
-            shrink = flag
         # Process data............
         _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
@@ -3257,27 +3247,6 @@ class MaskedArray(ndarray):
         return ndarray.view(self, self._baseclass)
     _data = property(fget=_get_data)
     data = property(fget=_get_data)
-
-    def raw_data(self):
-        """
-        Return the data part of the masked array.
-
-        DEPRECATED: You should really use ``.data`` instead.
-
-        Examples
-        --------
-        >>> x = np.ma.array([1, 2, 3], mask=[False, True, False])
-        >>> x
-        masked_array(data = [1 -- 3],
-                     mask = [False  True False],
-               fill_value = 999999)
-        >>> x.data
-        array([1, 2, 3])
-
-        """
-        warnings.warn('Use .data instead.', DeprecationWarning)
-        return self._data
-
 
     def _get_flat(self):
         "Return a flat iterator."
@@ -5025,7 +4994,7 @@ class MaskedArray(ndarray):
     >>> a.sort(endwith=False, fill_value=3)
     >>> print a
     [1 -- -- 3 5]
-    
+
         """
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
@@ -6798,7 +6767,7 @@ def allequal (a, b, fill_value=True):
     else:
         return False
 
-def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8, fill_value=None):
+def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
@@ -6819,9 +6788,6 @@ def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8, fill_value=None):
     atol : float, optional
         Absolute tolerance. The absolute difference is equal to `atol`.
         Default is 1e-8.
-    fill_value : bool, optional
-        *Deprecated* - Whether masked values in `a` or `b` are considered equal
-        (True) or not (False).
 
     Returns
     -------
@@ -6873,11 +6839,6 @@ def allclose (a, b, masked_equal=True, rtol=1e-5, atol=1e-8, fill_value=None):
     False
 
     """
-    if fill_value is not None:
-        warnings.warn("The use of fill_value is deprecated."\
-                      " Please use masked_equal instead.")
-        masked_equal = fill_value
-    #
     x = masked_array(a, copy=False)
     y = masked_array(b, copy=False)
     m = mask_or(getmask(x), getmask(y))
