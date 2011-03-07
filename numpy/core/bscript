@@ -50,6 +50,12 @@ def configure(context):
     except waflib.Errors.ConfigurationError:
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_ENDIAN_H', ''))
 
+    try:
+        conf.check_declaration('PRIdPTR', header_name='inttypes.h')
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_FORMATS', '#define NPY_USE_C99_FORMATS 1'))
+    except waflib.Errors.ConfigurationError:
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
+
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
 #ifndef _NPY_NPY_CONFIG_H_
