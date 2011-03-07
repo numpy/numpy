@@ -128,6 +128,71 @@ def signal_smp_checks(conf):
     else:
         NUMPYCONFIG_SYM.append(("NPY_NO_SMP", 0))
 
+def check_math_runtime(conf):
+    header_name = "Python.h math.h"
+    features = "c cprogram pyext"
+
+    mlibs = [None, "m", "cpml"]
+    mathlib = os.environ.get('MATHLIB')
+    if mathlib:
+        mlibs.insert(0, mathlib)
+
+    mlib = None
+    for lib in mlibs:
+        try:
+            if lib is None:
+                kw = {}
+            else:
+                kw = {"lib": lib}
+            st = conf.check_functions_at_once(["exp"], uselib_store="M", **kw)
+            mlib = lib or []
+            break
+        except waflib.Errors.ConfigurationError:
+            pass
+    if mlib is None:
+        raise waflib.Errors.ConfigurationError("No math lib found !")
+
+    # XXX: this is ugly: mathlib has nothing to do in a public header file
+    NUMPYCONFIG_SYM.append(('MATHLIB', ','.join(mlib)))
+
+    conf.check_functions_at_once(MANDATORY_FUNCS, use="M")
+
+    mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
+              'rint', 'trunc')
+    conf.check_functions_at_once(mfuncs, use="M")
+
+    header_name = "Python.h math.h"
+    features = "c pyext"
+    for f in OPTIONAL_STDFUNCS_MAYBE:
+        try:
+            conf.check_declaration("HAVE_%s" % numpy.build_utils.sanitize_string(f),
+                                    header_name=header_name,
+                                    features=features)
+            OPTIONAL_STDFUNCS.remove(f)
+        except waflib.Errors.ConfigurationError:
+            pass
+
+    conf.check_functions_at_once(OPTIONAL_STDFUNCS,
+            features=features, mandatory=False, use="M")
+    conf.check_functions_at_once(C99_FUNCS_SINGLE,
+            features=features, mandatory=False, use="M")
+    conf.check_functions_at_once(C99_FUNCS_EXTENDED,
+            features=features, mandatory=False, use="M")
+
+    for f in ["isnan", "isinf", "signbit", "isfinite"]:
+        try:
+            conf.check_declaration("HAVE_DECL_%s" % f.upper(), header_name=header_name,
+                                   features=features)
+            NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(),
+                '#define NPY_HAVE_DECL_%s' % f.upper()))
+        except waflib.Errors.ConfigurationError:
+            try:
+                conf.check_declaration(f, header_name=header_name, features=features)
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(),
+                    '#define NPY_HAVE_DECL_%s' % f.upper()))
+            except waflib.Errors.ConfigurationError:
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), ''))
+
 @pre_configure()
 def configure(context):
     conf = context.waf_context
@@ -150,6 +215,7 @@ def configure(context):
 
     type_checks(conf)
     signal_smp_checks(conf)
+    check_math_runtime(conf)
 
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
