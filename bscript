@@ -45,6 +45,7 @@ def check_blas_lapack(conf):
 @pre_configure()
 def configure(context):
     conf = context.waf_context
+
     conf.load("compiler_c")
     conf.load("python")
 
