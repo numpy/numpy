@@ -1,5 +1,10 @@
 import sys
 
+# Ugly but necessary hack: import numpy here so that wscript in sub directories
+# will see this numpy and not an already installed one
+import __builtin__
+__builtin__.__NUMPY_SETUP__ = True
+
 from bento.commands.hooks \
     import \
         pre_configure

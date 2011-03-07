@@ -1,0 +1,35 @@
+from bento.commands.hooks \
+    import \
+        pre_configure
+import waflib
+
+# Importing this adds new checkers to waf configure context - I don't like this
+# way of working, should find a more explicit way to attach new functions to
+# context.
+import numpy.waf_utils
+
+from setup_common \
+    import \
+        OPTIONAL_STDFUNCS_MAYBE, OPTIONAL_STDFUNCS, C99_FUNCS_EXTENDED, \
+        C99_FUNCS_SINGLE, C99_COMPLEX_TYPES, C99_COMPLEX_FUNCS, \
+        MANDATORY_FUNCS, C_ABI_VERSION, C_API_VERSION
+
+NUMPYCONFIG_SYM = []
+
+# FIXME
+NUMPYCONFIG_SYM.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', ''))
+NUMPYCONFIG_SYM.append(('VISIBILITY_HIDDEN', ''))
+
+NUMPYCONFIG_SYM.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
+NUMPYCONFIG_SYM.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
+
+@pre_configure()
+def configure(context):
+    conf = context.waf_context
+
+    try:
+        conf.check_header("endian.h")
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_ENDIAN_H',
+                                '#define NPY_HAVE_ENDIAN_H 1'))
+    except waflib.Errors.ConfigurationError:
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_ENDIAN_H', ''))
