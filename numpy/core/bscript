@@ -1,3 +1,4 @@
+import os
 import sys
 
 from bento.commands.hooks \
@@ -24,6 +25,38 @@ NUMPYCONFIG_SYM.append(('VISIBILITY_HIDDEN', ''))
 
 NUMPYCONFIG_SYM.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
 NUMPYCONFIG_SYM.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
+
+def is_npy_no_signal():
+    """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
+    header."""
+    return sys.platform == 'win32'
+
+def define_no_smp():
+    """Returns True if we should define NPY_NOSMP, False otherwise."""
+    #--------------------------------
+    # Checking SMP and thread options
+    #--------------------------------
+    # Python 2.3 causes a segfault when
+    #  trying to re-acquire the thread-state
+    #  which is done in error-handling
+    #  ufunc code.  NPY_ALLOW_C_API and friends
+    #  cause the segfault. So, we disable threading
+    #  for now.
+    if sys.version[:5] < '2.4.2':
+        nosmp = 1
+    else:
+        # Perhaps a fancier check is in order here.
+        #  so that threads are only enabled if there
+        #  are actually multiple CPUS? -- but
+        #  threaded code can be nice even on a single
+        #  CPU so that long-calculating code doesn't
+        #  block.
+        try:
+            nosmp = os.environ['NPY_NOSMP']
+            nosmp = 1
+        except KeyError:
+            nosmp = 0
+    return nosmp == 1
 
 def write_numpy_config(conf):
     subst_dict = {}
@@ -83,6 +116,18 @@ def type_checks(conf):
 
     conf.check_declaration("CHAR_BIT", header_name=header_name, features=features)
 
+def signal_smp_checks(conf):
+    if is_npy_no_signal():
+        NUMPYCONFIG_SYM.append(("DEFINE_NPY_NO_SIGNAL", "#define NPY_NO_SIGNAL\n"))
+        conf.define("__NPY_PRIVATE_NO_SIGNAL", 1)
+    else:
+        NUMPYCONFIG_SYM.append(("DEFINE_NPY_NO_SIGNAL", ""))
+
+    if define_no_smp():
+        NUMPYCONFIG_SYM.append(("NPY_NO_SMP", 1))
+    else:
+        NUMPYCONFIG_SYM.append(("NPY_NO_SMP", 0))
+
 @pre_configure()
 def configure(context):
     conf = context.waf_context
@@ -104,6 +149,7 @@ def configure(context):
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
 
     type_checks(conf)
+    signal_smp_checks(conf)
 
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
