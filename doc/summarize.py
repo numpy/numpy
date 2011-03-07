@@ -42,7 +42,6 @@ random random.info random.mtrand random.ranf random.sample random.random
 
 # --- numpy.fft:
 fft fft.Tester fft.bench fft.fftpack fft.fftpack_lite fft.helper
-fft.refft fft.refft2 fft.refftn fft.irefft fft.irefft2 fft.irefftn
 fft.info fft.test
 
 # --- numpy.linalg:
@@ -67,10 +66,10 @@ def main():
     fn = os.path.join(CUR_DIR, 'dump.xml')
     if os.path.isfile(fn):
         import_phantom_module(fn)
-    
+
     # check
     documented, undocumented = check_numpy()
-    
+
     # report
     in_sections = {}
     for name, locations in documented.iteritems():
@@ -108,7 +107,7 @@ def check_numpy():
             if k.startswith('numpy.'):
                 d[k[6:]] = d[k]
                 del d[k]
-    
+
     return documented, undocumented
 
 def get_undocumented(documented, module, module_name=None, skip=[]):
@@ -123,24 +122,24 @@ def get_undocumented(documented, module, module_name=None, skip=[]):
 
     """
     undocumented = {}
-    
+
     if module_name is None:
         module_name = module.__name__
-    
+
     for name in dir(module):
         obj = getattr(module, name)
         if name.startswith('_'): continue
-        
+
         full_name = '.'.join([module_name, name])
 
         if full_name in skip: continue
         if full_name.startswith('numpy.') and full_name[6:] in skip: continue
         if not (inspect.ismodule(obj) or callable(obj) or inspect.isclass(obj)):
             continue
-        
+
         if full_name not in documented:
             undocumented[full_name] = True
-    
+
     return undocumented
 
 def format_in_columns(lst, max_columns):
@@ -160,9 +159,9 @@ def format_in_columns(lst, max_columns):
         nrows = len(lst)//ncols
     else:
         nrows = 1 + len(lst)//ncols
-    
+
     fmt = ' %%-%ds ' % (col_len-2)
-    
+
     lines = []
     for n in range(nrows):
         lines.append("".join([fmt % x for x in lst[n::nrows]]))
