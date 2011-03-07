@@ -10,11 +10,6 @@ Set operations for 1D numeric arrays based on sorting.
   union1d,
   setdiff1d
 
-:Deprecated:
-  unique1d,
-  intersect1d_nu,
-  setmember1d
-
 :Notes:
 
 For floating point arrays, inaccurate results may appear due to usual round-off
@@ -28,8 +23,8 @@ To do: Optionally return indices analogously to unique for all functions.
 
 :Author: Robert Cimrman
 """
-__all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
-           'setmember1d', 'union1d', 'setdiff1d', 'unique', 'in1d']
+__all__ = ['ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d',
+           'unique', 'in1d']
 
 import numpy as np
 from numpy.lib.utils import deprecate
@@ -417,72 +412,3 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         return aux
     else:
         return np.asarray(ar1)[aux == 0]
-
-@deprecate
-def unique1d(ar1, return_index=False, return_inverse=False):
-    """
-    This function is deprecated. Use unique() instead.
-    """
-    if return_index:
-        import warnings
-        warnings.warn("The order of the output arguments for "
-                      "`return_index` has changed.  Before, "
-                      "the output was (indices, unique_arr), but "
-                      "has now been reversed to be more consistent.")
-
-    ar = np.asanyarray(ar1).flatten()
-    if ar.size == 0:
-        if return_inverse and return_index:
-            return ar, np.empty(0, np.bool), np.empty(0, np.bool)
-        elif return_inverse or return_index:
-            return ar, np.empty(0, np.bool)
-        else:
-            return ar
-
-    if return_inverse or return_index:
-        perm = ar.argsort()
-        aux = ar[perm]
-        flag = np.concatenate(([True], aux[1:] != aux[:-1]))
-        if return_inverse:
-            iflag = np.cumsum(flag) - 1
-            iperm = perm.argsort()
-            if return_index:
-                return aux[flag], perm[flag], iflag[iperm]
-            else:
-                return aux[flag], iflag[iperm]
-        else:
-            return aux[flag], perm[flag]
-
-    else:
-        ar.sort()
-        flag = np.concatenate(([True], ar[1:] != ar[:-1]))
-        return ar[flag]
-
-@deprecate
-def intersect1d_nu(ar1, ar2):
-    """
-    This function is deprecated.  Use intersect1d()
-    instead.
-    """
-    # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
-    aux = np.concatenate((unique1d(ar1), unique1d(ar2)))
-    aux.sort()
-    return aux[aux[1:] == aux[:-1]]
-
-@deprecate
-def setmember1d(ar1, ar2):
-    """
-    This function is deprecated.  Use in1d(assume_unique=True)
-    instead.
-    """
-    # We need this to be a stable sort, so always use 'mergesort' here. The
-    # values from the first array should always come before the values from the
-    # second array.
-    ar = np.concatenate( (ar1, ar2 ) )
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
-    equal_adj = (sar[1:] == sar[:-1])
-    flag = np.concatenate( (equal_adj, [False] ) )
-
-    indx = order.argsort(kind='mergesort')[:len( ar1 )]
-    return flag[indx]
