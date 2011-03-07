@@ -27,17 +27,6 @@ class TestUfunclike(TestCase):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
-    @deprecated()
-    def test_log2(self):
-        a = nx.array([4.5, 2.3, 6.5])
-        out = nx.zeros(a.shape, float)
-        tgt = nx.array([2.169925, 1.20163386, 2.70043972])
-        res = ufl.log2(a)
-        assert_almost_equal(res, tgt)
-        res = ufl.log2(a, out)
-        assert_almost_equal(res, tgt)
-        assert_almost_equal(out, tgt)
-
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
         out = nx.zeros(a.shape, float)
@@ -64,7 +53,7 @@ class TestUfunclike(TestCase):
         m = MyArray(a, metadata='foo')
         f = ufl.fix(m)
         assert_array_equal(f, nx.array([1,-1]))
-        assert isinstance(f, MyArray)
+        assert_(isinstance(f, MyArray))
         assert_equal(f.metadata, 'foo')
 
 if __name__ == "__main__":
