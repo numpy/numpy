@@ -6,7 +6,7 @@ import waflib
 # Importing this adds new checkers to waf configure context - I don't like this
 # way of working, should find a more explicit way to attach new functions to
 # context.
-import numpy.waf_utils
+import numpy.build_utils
 
 from setup_common \
     import \
@@ -23,9 +23,25 @@ NUMPYCONFIG_SYM.append(('VISIBILITY_HIDDEN', ''))
 NUMPYCONFIG_SYM.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
 NUMPYCONFIG_SYM.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
+def write_numpy_config(conf):
+    subst_dict = {}
+    for key, value in NUMPYCONFIG_SYM:
+        subst_dict["@%s@" % key] = str(value)
+    node = conf.path
+    node = node.find_node("include/numpy/_numpyconfig.h.in")
+    cnt = node.read()
+    for k, v in subst_dict.items():
+        cnt = cnt.replace(k, v)
+    assert node is not None
+    onode = conf.bldnode.find_or_declare(node.path_from(conf.srcnode)).change_ext("")
+    onode.write(cnt)
+
 @pre_configure()
 def configure(context):
     conf = context.waf_context
+    # FIXME: bento command's context should have API so that subclasses can
+    # customize recurse behavior
+    conf.path = context.local_node
 
     try:
         conf.check_header("endian.h")
@@ -33,3 +49,12 @@ def configure(context):
                                 '#define NPY_HAVE_ENDIAN_H 1'))
     except waflib.Errors.ConfigurationError:
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_ENDIAN_H', ''))
+
+    conf.env["CONFIG_HEADER_TEMPLATE"] = """\
+%(content)s
+#ifndef _NPY_NPY_CONFIG_H_
+#error config.h should never be included directly, include npy_config.h instead
+#endif"""
+    conf.write_config_header("config.h")
+
+    write_numpy_config(conf)
