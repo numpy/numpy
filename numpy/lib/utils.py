@@ -6,7 +6,7 @@ import re
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import product, ndarray, ufunc
 
-__all__ = ['issubclass_', 'get_numpy_include', 'issubsctype', 'issubdtype',
+__all__ = ['issubclass_', 'issubsctype', 'issubdtype',
         'deprecate', 'deprecate_with_doc', 'get_numarray_include',
         'get_include', 'info', 'source', 'who', 'lookfor', 'byte_bounds',
         'may_share_memory', 'safe_eval']
@@ -215,7 +215,6 @@ def deprecate(*args, **kwargs):
         return _Deprecate(*args, **kwargs)
 
 deprecate_with_doc = lambda msg: _Deprecate(message=msg)
-get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 
 
 #--------------------------------------------
