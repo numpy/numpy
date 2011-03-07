@@ -220,3 +220,175 @@ def check_type_size(conf, type_name, expected_sizes=None, **kw):
     conf.post_check(**kw)
     return size
 
+@waflib.Configure.conf
+def check_functions_at_once(self, funcs, **kw):
+    header = []
+    header = ['#ifdef __cplusplus']
+    header.append('extern "C" {')
+    header.append('#endif')
+    for f in funcs:
+        header.append("\tchar %s();" % f)
+        # Handle MSVC intrinsics: force MS compiler to make a function
+        # call. Useful to test for some functions when built with
+        # optimization on, to avoid build error because the intrinsic
+        # and our 'fake' test declaration do not match.
+        header.append("#ifdef _MSC_VER")
+        header.append("#pragma function(%s)" % f)
+        header.append("#endif")
+    header.append('#ifdef __cplusplus')
+    header.append('};')
+    header.append('#endif')
+    funcs_decl = "\n".join(header)
+
+    tmp = []
+    for f in funcs:
+        tmp.append("\t%s();" % f)
+    tmp = "\n".join(tmp)
+
+    code = r"""
+%(include)s
+%(funcs_decl)s
+
+int main (void)
+{
+    %(tmp)s
+        return 0;
+}
+""" % {"tmp": tmp, "include": to_header(kw), "funcs_decl": funcs_decl}
+    kw["code"] = code
+    if not "features" in kw:
+        kw["features"] = ["c", "cprogram"]
+
+    msg = ", ".join(funcs)
+    if len(msg) > 30:
+        _funcs = list(funcs)
+        msg = []
+        while len(", ".join(msg)) < 30 and _funcs:
+            msg.append(_funcs.pop(0))
+        msg = ", ".join(msg) + ",..."
+    if "lib" in kw:
+        kw["msg"] = "Checking for functions %s in library %r" % (msg, kw["lib"])
+    else:
+        kw["msg"] = "Checking for functions %s" % msg
+
+    validate_arguments(self, kw)
+    try_compile(self, kw)
+    ret = kw["success"]
+
+    # We set the config.h define here because we need to define several of them
+    # in one shot
+    if ret == 0:
+        for f in funcs:
+            self.define_with_comment("HAVE_%s" % sanitize_string(f), 1,
+                                "/* Define to 1 if you have the `%s' function */" % f)
+
+    self.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
+
+@waflib.Configure.conf
+def post_check(self, *k, **kw):
+    "set the variables after a test was run successfully"
+
+    is_success = 0
+    if kw['execute']:
+        if kw['success'] is not None:
+            is_success = kw['success']
+    else:
+        is_success = (kw['success'] == 0)
+
+    def define_or_stuff():
+        nm = kw['define_name']
+        cmt = kw.get('define_comment', None)
+        value = kw.get("define_value", is_success)
+        if kw['execute'] and kw.get('define_ret', None) and isinstance(is_success, str):
+            self.define_with_comment(kw['define_name'], value, cmt, quote=kw.get('quote', 1))
+        else:
+            self.define_cond(kw['define_name'], value, cmt)
+
+    if 'define_name' in kw:
+        define_or_stuff()
+
+    if is_success and 'uselib_store' in kw:
+        from waflib.Tools import ccroot
+
+        # TODO see get_uselib_vars from ccroot.py
+        _vars = set([])
+        for x in kw['features']:
+            if x in ccroot.USELIB_VARS:
+                _vars |= ccroot.USELIB_VARS[x]
+
+        for k in _vars:
+            lk = k.lower()
+            if k == 'INCLUDES': lk = 'includes'
+            if k == 'DEFKEYS': lk = 'defines'
+            if lk in kw:
+                val = kw[lk]
+                # remove trailing slash
+                if isinstance(val, str):
+                    val = val.rstrip(os.path.sep)
+                self.env.append_unique(k + '_' + kw['uselib_store'], val)
+	return is_success
+
+@waflib.Configure.conf
+def define_with_comment(conf, define, value, comment=None, quote=True):
+    if comment is None:
+        return conf.define(define, value, quote)
+
+    assert define and isinstance(define, str)
+
+    comment_tbl = conf.env[DEFINE_COMMENTS] or {}
+    comment_tbl[define] = comment
+    conf.env[DEFINE_COMMENTS] = comment_tbl
+
+    return conf.define(define, value, quote)
+
+@waflib.Configure.conf
+def get_comment(self, key):
+    assert key and isinstance(key, str)
+
+    if key in self.env[DEFINE_COMMENTS]:
+        return self.env[DEFINE_COMMENTS][key]
+    return None
+
+@waflib.Configure.conf
+def define_cond(self, name, value, comment):
+    """Conditionally define a name.
+    Formally equivalent to: if value: define(name, 1) else: undefine(name)"""
+    if value:
+        self.define_with_comment(name, value, comment)
+    else:
+        self.undefine(name)
+
+@waflib.Configure.conf
+def get_config_header(self, defines=True, headers=False):
+    """
+    Create the contents of a ``config.h`` file from the defines and includes
+    set in conf.env.define_key / conf.env.include_key. No include guards are added.
+
+    :param defines: write the defines values
+    :type defines: bool
+    :param headers: write the headers
+    :type headers: bool
+    :return: the contents of a ``config.h`` file
+    :rtype: string
+    """
+    tpl = self.env["CONFIG_HEADER_TEMPLATE"] or "%(content)s"
+
+    lst = []
+    if headers:
+        for x in self.env[INCKEYS]:
+            lst.append('#include <%s>' % x)
+
+    if defines:
+        for x in self.env[DEFKEYS]:
+            if self.is_defined(x):
+                val = self.get_define(x)
+                cmt = self.get_comment(x)
+                if cmt is not None:
+                    lst.append(cmt)
+                lst.append('#define %s %s\n' % (x, val))
+            else:
+                lst.append('/* #undef %s */\n' % x)
+    return tpl % {"content": "\n".join(lst)}
