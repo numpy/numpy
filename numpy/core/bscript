@@ -1,3 +1,5 @@
+import sys
+
 from bento.commands.hooks \
     import \
         pre_configure
@@ -36,6 +38,51 @@ def write_numpy_config(conf):
     onode = conf.bldnode.find_or_declare(node.path_from(conf.srcnode)).change_ext("")
     onode.write(cnt)
 
+def type_checks(conf):
+    header_name = "Python.h"
+    features = "c pyext"
+    for c_type in ("int", "long", "short"):
+        macro_name = "SIZEOF_%s" % numpy.build_utils.sanitize_string(c_type)
+        conf.check_declaration(macro_name, header_name=header_name,
+                               features=features)
+        NUMPYCONFIG_SYM.append((macro_name, macro_name))
+
+    for c_type, e_size in (("float", 4), ("double", 8), ("long double", [12, 16])):
+        macro_name = "SIZEOF_%s" % numpy.build_utils.sanitize_string(c_type)
+        size = conf.check_type_size(c_type, header_name=header_name,
+                                    features=features, expected_sizes=e_size)
+        NUMPYCONFIG_SYM.append((macro_name, str(size)))
+
+        macro_name = "SIZEOF_COMPLEX_%s" % numpy.build_utils.sanitize_string(c_type)
+        complex_def = "struct {%s __x; %s __y;}" % (c_type, c_type)
+        size = conf.check_type_size(complex_def, header_name=header_name,
+                                    features=features, expected_sizes=2*size)
+        NUMPYCONFIG_SYM.append((macro_name, str(size)))
+
+    if sys.platform != 'darwin':
+        conf.check_ldouble_representation()
+
+    size = conf.check_type_size("Py_intptr_t", header_name=header_name,
+                                expected_sizes=[4, 8], features=features)
+    NUMPYCONFIG_SYM.append(('SIZEOF_%s' % numpy.build_utils.sanitize_string("Py_intptr_t"),
+                           '%d' % size))
+
+    # We check declaration AND type because that's how distutils does it.
+    try:
+        conf.check_declaration("PY_LONG_LONG", header_name=header_name,
+                               features=features)
+        size = conf.check_type_size("PY_LONG_LONG", header_name=header_name,
+                                    features=features, expected_sizes=[4, 8])
+        NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_LONGLONG",
+                                "#define NPY_SIZEOF_LONGLONG %d" % size))
+        NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_PY_LONG_LONG",
+                                "#define NPY_SIZEOF_PY_LONG_LONG %d" % size))
+    except waflib.Errors.ConfigurationError:
+        NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_LONGLONG", ""))
+        NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_PY_LONG_LONG", ""))
+
+    conf.check_declaration("CHAR_BIT", header_name=header_name, features=features)
+
 @pre_configure()
 def configure(context):
     conf = context.waf_context
@@ -55,6 +102,8 @@ def configure(context):
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_FORMATS', '#define NPY_USE_C99_FORMATS 1'))
     except waflib.Errors.ConfigurationError:
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
+
+    type_checks(conf)
 
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
