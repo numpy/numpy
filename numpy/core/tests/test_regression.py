@@ -1554,5 +1554,13 @@ class TestRegression(TestCase):
             a2 = np.array([s[:i]]*5)
             assert_equal(a1, a2)
 
+    def test_fields_strides(self):
+        "Ticket #1760"
+        r=np.fromstring('abcdefghijklmnop'*4*3, dtype='i4,(2,3)u2')
+        assert_equal(r[0:3:2]['f1'], r['f1'][0:3:2])
+        assert_equal(r[0:3:2]['f1'][0], r[0:3:2][0]['f1'])
+        assert_equal(r[0:3:2]['f1'][0][()], r[0:3:2][0]['f1'][()])
+        assert_equal(r[0:3:2]['f1'][0].strides, r[0:3:2][0]['f1'].strides)
+
 if __name__ == "__main__":
     run_module_suite()

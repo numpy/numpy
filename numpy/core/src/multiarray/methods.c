@@ -303,7 +303,8 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
                                self->nd, self->dimensions,
                                self->strides,
                                self->data + offset,
-                               self->flags, (PyObject *)self);
+                               self->flags&(~NPY_F_CONTIGUOUS),
+                               (PyObject *)self);
     if (ret == NULL) {
         return NULL;
     }

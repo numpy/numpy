@@ -548,7 +548,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
     int itemsize;
 
     descr = ap->descr;
-    if (descr->names) {
+    if (descr->names != NULL) {
         PyObject *key;
         PyObject *names;
         int i, n;
@@ -560,9 +560,6 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 
         /* get the names from the fields dictionary*/
         names = descr->names;
-        if (!names) {
-            goto finish;
-        }
         n = PyTuple_GET_SIZE(names);
         ret = PyTuple_New(n);
         savedflags = ap->flags;
@@ -604,7 +601,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         Py_INCREF(descr->subarray->base);
         ret = PyArray_NewFromDescr(&PyArray_Type,
                 descr->subarray->base, shape.len, shape.ptr,
-                NULL, ip, ap->flags, NULL);
+                NULL, ip, ap->flags&(~NPY_F_CONTIGUOUS), NULL);
         PyDimMem_FREE(shape.ptr);
         if (!ret) {
             return NULL;
