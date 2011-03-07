@@ -1788,8 +1788,10 @@ def amax(a, axis=None, out=None):
 
     Returns
     -------
-    amax : ndarray
-        A new array or scalar array with the result.
+    amax : ndarray or scalar
+        Maximum of `a`. If `axis` is None, the result is a scalar value.
+        If `axis` is given, the result is an array of dimension
+        ``a.ndim - 1``.
 
     See Also
     --------
