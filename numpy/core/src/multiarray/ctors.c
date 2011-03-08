@@ -823,7 +823,13 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
         int j, maxndim_m1 = *maxndim - 1;
 
         if ((e = PySequence_GetItem(s, 0)) == NULL) {
-            /* not a list */
+            /*
+             * This should probably be an error but we suppress
+             * it to maintain backwards compatibility with pandas
+             * and possibly other existing applications. The making
+             * of the object type instead of a straght return might
+             * cause other errors not to occur.
+             */
             *maxndim = 0;
             *out_is_object = 1;
             PyErr_Clear();
@@ -843,7 +849,7 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
         for (i = 1; i < n; ++i) {
             /* Get the dimensions of the first item */
             if ((e = PySequence_GetItem(s, 0)) == NULL) {
-                /* not a list */
+                /* see comment above */
                 *maxndim = 0;
                 *out_is_object = 1;
                 PyErr_Clear();
