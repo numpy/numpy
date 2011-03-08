@@ -822,22 +822,38 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
         npy_intp dtmp[NPY_MAXDIMS];
         int j, maxndim_m1 = *maxndim - 1;
 
-        e = PySequence_GetItem(s, 0);
+        if ((e = PySequence_GetItem(s, 0)) == NULL) {
+            /* not a list */
+            *maxndim = 0;
+            PyErr_Clear();
+            return 0;
+        }
         r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
                                         stop_at_string, stop_at_tuple,
                                         out_is_object);
         Py_DECREF(e);
+        if (r < 0) {
+            return r;
+        }
 
         /* For the dimension truncation check below */
         *maxndim = maxndim_m1 + 1;
 
         for (i = 1; i < n; ++i) {
             /* Get the dimensions of the first item */
-            e = PySequence_GetItem(s, i);
+            if ((e = PySequence_GetItem(s, 0)) == NULL) {
+                /* not a list */
+                *maxndim = 0;
+                PyErr_Clear();
+                return 0;
+            }
             r = discover_dimensions(e, &maxndim_m1, dtmp, check_it,
                                             stop_at_string, stop_at_tuple,
                                             out_is_object);
             Py_DECREF(e);
+            if (r < 0) {
+                return r;
+            }
 
             /* Reduce max_ndim_m1 to just items which match */
             for (j = 0; j < maxndim_m1; ++j) {
