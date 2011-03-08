@@ -825,6 +825,7 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
         if ((e = PySequence_GetItem(s, 0)) == NULL) {
             /* not a list */
             *maxndim = 0;
+            *out_is_object = 1;
             PyErr_Clear();
             return 0;
         }
@@ -844,6 +845,7 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
             if ((e = PySequence_GetItem(s, 0)) == NULL) {
                 /* not a list */
                 *maxndim = 0;
+                *out_is_object = 1;
                 PyErr_Clear();
                 return 0;
             }
