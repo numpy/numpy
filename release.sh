@@ -21,6 +21,7 @@ paver sdist
 export MACOSX_DEPLOYMENT_TARGET=10.6
 paver dmg -p 2.7   # 32/64-bit version
 
+paver bdist_superpack -p 3.2
 paver bdist_superpack -p 3.1
 paver bdist_superpack -p 2.7
 paver bdist_superpack -p 2.6
