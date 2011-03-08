@@ -824,11 +824,13 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
 
         if ((e = PySequence_GetItem(s, 0)) == NULL) {
             /*
-             * This should probably be an error but we suppress
-             * it to maintain backwards compatibility with pandas
-             * and possibly other existing applications. The making
-             * of the object type instead of a straght return might
-             * cause other errors not to occur.
+             * PySequence_Check looks for the presence of the __getitem__
+             * attribute to detect a sequence. Consequently, dictionaries
+             * and other objects that implement that method may show up
+             * here and the PySequence_GetItem call can fail in those
+             * cases.  Consequently we truncate the dimensions and set the
+             * object creation flag. Raising an error is another option but
+             * it might break backward compatibility.
              */
             *maxndim = 0;
             *out_is_object = 1;
