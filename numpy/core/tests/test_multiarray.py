@@ -302,6 +302,20 @@ class TestCreation(TestCase):
             msg = 'String conversion for %s' % type
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
+    def test_non_sequence_sequence(self):
+        """Should not segfault."""
+        class x(object):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self):
+                raise ValueError('hi there')
+
+        a = np.array([x()])
+        assert_(a.shape == (1,))
+        assert_(a.dtype == np.dtype(object))
+
+
 class TestStructured(TestCase):
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
