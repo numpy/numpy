@@ -647,6 +647,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
  * Take an arbitrary object and discover how many dimensions it
  * has, filling in the dimensions as we go.
  */
+#include <stdio.h>
 static int
 discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
                                     int stop_at_string, int stop_at_tuple,
@@ -688,8 +689,8 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
             PyInstance_Check(s) ||
 #endif
             PySequence_Length(s) < 0) {
-        PyErr_Clear();
         *maxndim = 0;
+        PyErr_Clear();
         return 0;
     }
 
@@ -824,13 +825,17 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
 
         if ((e = PySequence_GetItem(s, 0)) == NULL) {
             /*
-             * PySequence_Check looks for the presence of the __getitem__
-             * attribute to detect a sequence. Consequently, dictionaries
-             * and other objects that implement that method may show up
-             * here and the PySequence_GetItem call can fail in those
-             * cases.  Consequently we truncate the dimensions and set the
-             * object creation flag. Raising an error is another option but
-             * it might break backward compatibility.
+             * PySequence_Check detects whether an old type object is a
+             * sequence by the presence of the __getitem__ attribute, and
+             * for new type objects that aren't dictionaries by the
+             * presence of the __len__ attribute as well. In either case it
+             * is possible to have an object that tests as a sequence but
+             * doesn't behave as a sequence and consequently, the
+             * PySequence_GetItem call can fail. When that happens we
+             * truncate the dimensions and set the object creation flag.
+             * Raising an error is another option but it might break
+             * backward compatibility. We could probably be a bit stricter
+             * here for Python 3k because there are no old type objects.
              */
             *maxndim = 0;
             *out_is_object = 1;
@@ -847,10 +852,9 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
 
         /* For the dimension truncation check below */
         *maxndim = maxndim_m1 + 1;
-
         for (i = 1; i < n; ++i) {
             /* Get the dimensions of the first item */
-            if ((e = PySequence_GetItem(s, 0)) == NULL) {
+            if ((e = PySequence_GetItem(s, i)) == NULL) {
                 /* see comment above */
                 *maxndim = 0;
                 *out_is_object = 1;
