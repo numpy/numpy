@@ -205,25 +205,25 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     """
     Raise an assertion if two objects are not equal.
 
-    Given two objects (lists, tuples, dictionaries or numpy arrays), check
-    that all elements of these objects are equal. An exception is raised at
-    the first conflicting values.
+    Given two objects (scalars, lists, tuples, dictionaries or numpy arrays),
+    check that all elements of these objects are equal. An exception is raised
+    at the first conflicting values.
 
     Parameters
     ----------
-    actual : list, tuple, dict or ndarray
-      The object to check.
-    desired : list, tuple, dict or ndarray
-      The expected object.
-    err_msg : string
-      The error message to be printed in case of failure.
-    verbose : bool
-      If True, the conflicting values are appended to the error message.
+    actual : array_like
+        The object to check.
+    desired : array_like
+        The expected object.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
+        If True, the conflicting values are appended to the error message.
 
     Raises
     ------
     AssertionError
-      If actual and desired are not equal.
+        If actual and desired are not equal.
 
     Examples
     --------
@@ -357,7 +357,12 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """
     Raise an assertion if two items are not equal up to desired precision.
 
-    The test is equivalent to abs(desired-actual) < 0.5 * 10**(-decimal)
+    .. note:: It is recommended to use one of `assert_allclose`,
+              `assert_array_almost_equal_nulp` or `assert_array_max_ulp`
+              instead of this function for more consistent floating point
+              comparisons.
+
+    The test is equivalent to ``abs(desired-actual) < 0.5 * 10**(-decimal)``.
 
     Given two objects (numbers or ndarrays), check that all elements of these
     objects are almost equal. An exception is raised at conflicting values.
@@ -365,16 +370,16 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     Parameters
     ----------
-    actual : number or ndarray
-      The object to check.
-    desired : number or ndarray
-      The expected object.
-    decimal : integer (decimal=7)
-      desired precision
-    err_msg : string
-      The error message to be printed in case of failure.
-    verbose : bool
-      If True, the conflicting values are appended to the error message.
+    actual : array_like
+        The object to check.
+    desired : array_like
+        The expected object.
+    decimal : int, optional
+        Desired precision, default is 7.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
+        If True, the conflicting values are appended to the error message.
 
     Raises
     ------
@@ -383,9 +388,9 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     See Also
     --------
-    assert_array_almost_equal: compares array_like objects
-    assert_equal: tests objects for equality
-
+    assert_allclose: Compare two array_like objects for equality with desired
+                     relative and/or absolute precision.
+    assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
     Examples
     --------
@@ -399,7 +404,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
      DESIRED: 2.3333333399999998
 
     >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
-    \t\t\tnp.array([1.0,2.33333334]), decimal=9)
+    ...                         np.array([1.0,2.33333334]), decimal=9)
     ...
     <type 'exceptions.AssertionError'>:
     Arrays are not almost equal
@@ -467,22 +472,27 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     """
     Raise an assertion if two items are not equal up to significant digits.
 
+    .. note:: It is recommended to use one of `assert_allclose`,
+              `assert_array_almost_equal_nulp` or `assert_array_max_ulp`
+              instead of this function for more consistent floating point
+              comparisons.
+
     Given two numbers, check that they are approximately equal.
     Approximately equal is defined as the number of significant digits
     that agree.
 
     Parameters
     ----------
-    actual : number
-      The object to check.
-    desired : number
-      The expected object.
-    significant : integer (significant=7)
-      desired precision
-    err_msg : string
-      The error message to be printed in case of failure.
-    verbose : bool
-      If True, the conflicting values are appended to the error message.
+    actual : scalar
+        The object to check.
+    desired : scalar
+        The expected object.
+    significant : int, optional
+        Desired precision, default is 7.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
+        If True, the conflicting values are appended to the error message.
 
     Raises
     ------
@@ -491,10 +501,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
     See Also
     --------
-    assert_almost_equal: compares objects by decimals
-    assert_array_almost_equal: compares array_like objects by decimals
-    assert_equal: tests objects for equality
-
+    assert_allclose: Compare two array_like objects for equality with desired
+                     relative and/or absolute precision.
+    assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
     Examples
     --------
@@ -638,36 +647,36 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     Parameters
     ----------
     x : array_like
-      The actual object to check.
+        The actual object to check.
     y : array_like
-      The desired, expected object.
-    err_msg : string
-      The error message to be printed in case of failure.
-    verbose : bool
+        The desired, expected object.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
         If True, the conflicting values are appended to the error message.
 
     Raises
     ------
     AssertionError
-      If actual and desired objects are not equal.
+        If actual and desired objects are not equal.
 
     See Also
     --------
-    assert_array_almost_equal: test objects for equality up to precision
-    assert_equal: tests objects for equality
-
+    assert_allclose: Compare two array_like objects for equality with desired
+                     relative and/or absolute precision.
+    assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
     Examples
     --------
-    the first assert does not raise an exception
+    The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
-    \t\t\t[np.exp(0),2.33333, np.nan])
+    ...                               [np.exp(0),2.33333, np.nan])
 
-    assert fails with numerical inprecision with floats
+    Assert fails with numerical inprecision with floats:
 
     >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
-    \t\t\t[1, np.sqrt(np.pi)**2, np.nan])
+    ...                               [1, np.sqrt(np.pi)**2, np.nan])
     ...
     <type 'exceptions.ValueError'>:
     AssertionError:
@@ -677,10 +686,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
      x: array([ 1.        ,  3.14159265,         NaN])
      y: array([ 1.        ,  3.14159265,         NaN])
 
-    use assert_array_almost_equal for these cases instead
+    Use `assert_allclose` or one of the nulp (number of floating point values)
+    functions for these cases instead:
 
-    >>> np.testing.assert_array_almost_equal([1.0,np.pi,np.nan],
-    \t\t\t[1, np.sqrt(np.pi)**2, np.nan], decimal=15)
+    >>> np.testing.assert_allclose([1.0,np.pi,np.nan],
+    ...                            [1, np.sqrt(np.pi)**2, np.nan],
+    ...                            rtol=1e-10, atol=0)
 
     """
     assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
@@ -690,8 +701,13 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     """
     Raise an assertion if two objects are not equal up to desired precision.
 
+    .. note:: It is recommended to use one of `assert_allclose`,
+              `assert_array_almost_equal_nulp` or `assert_array_max_ulp`
+              instead of this function for more consistent floating point
+              comparisons.
+
     The test verifies identical shapes and verifies values with
-    abs(desired-actual) < 0.5 * 10**(-decimal)
+    ``abs(desired-actual) < 0.5 * 10**(-decimal)``.
 
     Given two array_like objects, check that the shape is equal and all
     elements of these objects are almost equal. An exception is raised at
@@ -702,26 +718,26 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     Parameters
     ----------
     x : array_like
-      The actual object to check.
+        The actual object to check.
     y : array_like
-      The desired, expected object.
-    decimal : integer (decimal=6)
-      desired precision
-    err_msg : string
+        The desired, expected object.
+    decimal : int, optional
+        Desired precision, default is 6.
+    err_msg : str, optional
       The error message to be printed in case of failure.
-    verbose : bool
+    verbose : bool, optional
         If True, the conflicting values are appended to the error message.
 
     Raises
     ------
     AssertionError
-      If actual and desired are not equal up to specified precision.
+        If actual and desired are not equal up to specified precision.
 
     See Also
     --------
-    assert_almost_equal: simple version for comparing numbers
-    assert_array_equal: tests objects for equality
-
+    assert_allclose: Compare two array_like objects for equality with desired
+                     relative and/or absolute precision.
+    assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
     Examples
     --------
@@ -731,7 +747,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
                                              [1.0,2.333,np.nan])
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
-    \t\t\t[1.0,2.33339,np.nan], decimal=5)
+    ...                                      [1.0,2.33339,np.nan], decimal=5)
     ...
     <type 'exceptions.AssertionError'>:
     AssertionError:
@@ -742,7 +758,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      y: array([ 1.     ,  2.33339,      NaN])
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
-    \t\t\t[1.0,2.33333, 5], decimal=5)
+    ...                                      [1.0,2.33333, 5], decimal=5)
     <type 'exceptions.ValueError'>:
     ValueError:
     Arrays are not almost equal
@@ -1094,32 +1110,44 @@ def _assert_valid_refcount(op):
 
     assert(sys.getrefcount(i) >= rc)
 
-def assert_allclose(actual, desired, rtol=1e-7, atol=0,
+def assert_allclose(actual, desired, rtol=1e-5, atol=1e-8,
                     err_msg='', verbose=True):
     """
     Raise an assertion if two objects are not equal up to desired tolerance.
 
-    The test is equivalent to ``allclose(actual, desired, rtol, atol)``
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)``.
+    It compares the difference between `actual` and `desired` to
+    ``atol + rtol * abs(desired)``.
 
     Parameters
     ----------
     actual : array_like
         Array obtained.
     desired : array_like
-        Array desired
+        Array desired.
     rtol : float, optional
-        Relative tolerance
+        Relative tolerance.
     atol : float, optional
-        Absolute tolerance
-    err_msg : string
+        Absolute tolerance.
+    err_msg : str, optional
         The error message to be printed in case of failure.
-    verbose : bool
+    verbose : bool, optional
         If True, the conflicting values are appended to the error message.
 
     Raises
     ------
     AssertionError
         If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    assert_array_almost_equal_nulp, assert_array_max_ulp
+
+    Examples
+    --------
+    >>> x = [1e-5, 1e-3, 1e-1]
+    >>> y = np.arccos(np.cos(x))
+    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
 
     """
     import numpy as np
@@ -1236,7 +1264,7 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     return ret
 
 def nulp_diff(x, y, dtype=None):
-    """For each item in x and y, eeturn the number of representable floating
+    """For each item in x and y, return the number of representable floating
     points between them.
 
     Parameters
