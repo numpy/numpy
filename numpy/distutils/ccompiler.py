@@ -494,10 +494,13 @@ compiler_class['intel'] = ('intelccompiler','IntelCCompiler',
                            "Intel C Compiler for 32-bit applications")
 compiler_class['intele'] = ('intelccompiler','IntelItaniumCCompiler',
                            "Intel C Itanium Compiler for Itanium-based applications")
+compiler_class['intelem'] = ('intelccompiler','IntelEM64TCCompiler',
+                             "Intel C Compiler for 64-bit applications")
 compiler_class['pathcc'] = ('pathccompiler','PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 ccompiler._default_compilers += (('linux.*','intel'),
                                  ('linux.*','intele'),
+                                 ('linux.*','intelem'),
                                  ('linux.*','pathcc'))
 
 if sys.platform == 'win32':
