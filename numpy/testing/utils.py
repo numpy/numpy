@@ -1110,7 +1110,7 @@ def _assert_valid_refcount(op):
 
     assert(sys.getrefcount(i) >= rc)
 
-def assert_allclose(actual, desired, rtol=1e-5, atol=1e-8,
+def assert_allclose(actual, desired, rtol=1e-7, atol=0,
                     err_msg='', verbose=True):
     """
     Raise an assertion if two objects are not equal up to desired tolerance.
