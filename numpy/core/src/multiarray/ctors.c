@@ -647,7 +647,6 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
  * Take an arbitrary object and discover how many dimensions it
  * has, filling in the dimensions as we go.
  */
-#include <stdio.h>
 static int
 discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
                                     int stop_at_string, int stop_at_tuple,
