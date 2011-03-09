@@ -303,15 +303,21 @@ class TestCreation(TestCase):
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
     def test_non_sequence_sequence(self):
-        """Should not segfault."""
-        class x(object):
+        """Should not segfault.
+
+        Class Foo breaks the sequence protocol for new style classes, i.e.,
+        those derived from object. At some point we may raise a warning in
+        this case.
+
+        """
+        class Foo(object):
             def __len__(self):
                 return 1
 
             def __getitem__(self):
                 raise ValueError('hi there')
 
-        a = np.array([x()])
+        a = np.array([Foo()])
         assert_(a.shape == (1,))
         assert_(a.dtype == np.dtype(object))
 
