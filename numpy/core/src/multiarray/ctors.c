@@ -2395,7 +2395,6 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
     PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
-    NPY_BEGIN_THREADS_DEF;
 
     NpyIter_IterNext_Fn dst_iternext, src_iternext;
     char **dst_dataptr, **src_dataptr;
@@ -2407,6 +2406,8 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
     npy_intp src_itemsize;
     npy_intp dst_size, src_size;
     int needs_api;
+
+    NPY_BEGIN_THREADS_DEF;
 
     if (!PyArray_ISWRITEABLE(dst)) {
         PyErr_SetString(PyExc_RuntimeError,

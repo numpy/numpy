@@ -1880,8 +1880,8 @@ finish:
     }
     else {
         for (i = 0; i < ndim; ++i) {
-            stride = ndim*NPY_SIZEOF_INTP;
             PyArrayObject *view;
+            stride = ndim*NPY_SIZEOF_INTP;
 
             view = (PyArrayObject *)PyArray_New(Py_TYPE(self), 1,
                                 &nonzero_count,

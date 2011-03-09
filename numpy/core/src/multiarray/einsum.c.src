@@ -50,7 +50,7 @@
 #if NPY_EINSUM_DBG_TRACING
 #define NPY_EINSUM_DBG_PRINTF(...) printf(__VA_ARGS__)
 #else
-#define NPY_EINSUM_DBG_PRINTF(...)
+#define NPY_EINSUM_DBG_PRINTF
 #endif
 /**********************************************/
 

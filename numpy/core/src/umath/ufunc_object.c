@@ -47,7 +47,7 @@
 #if NPY_UF_DBG_TRACING
 #define NPY_UF_DBG_PRINTF(...) printf(__VA_ARGS__)
 #else
-#define NPY_UF_DBG_PRINTF(...)
+#define NPY_UF_DBG_PRINTF
 #endif
 /**********************************************/
 
@@ -1762,7 +1762,6 @@ iterator_loop(PyUFuncObject *self,
     NpyIter *iter;
     char *baseptrs[NPY_MAXARGS];
     int needs_api;
-    NPY_BEGIN_THREADS_DEF;
 
     NpyIter_IterNext_Fn iternext;
     char **dataptr;
@@ -1770,6 +1769,8 @@ iterator_loop(PyUFuncObject *self,
     npy_intp *count_ptr;
 
     PyArrayObject **op_it;
+
+    NPY_BEGIN_THREADS_DEF;
 
     /* Set up the flags */
     for (i = 0; i < nin; ++i) {
@@ -2792,7 +2793,6 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     npy_uint32 op_flags[2];
     int i, idim, ndim, otype_final;
     int needs_api, need_outer_iterator;
-    NPY_BEGIN_THREADS_DEF;
 
     NpyIter *iter = NULL, *iter_inner = NULL;
 
@@ -2805,6 +2805,8 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
+
+    NPY_BEGIN_THREADS_DEF;
 
     NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
 
@@ -3424,7 +3426,6 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     npy_uint32 op_flags[3];
     int i, idim, ndim, otype_final;
     int needs_api, need_outer_iterator;
-    NPY_BEGIN_THREADS_DEF;
 
     NpyIter *iter = NULL;
 
@@ -3441,6 +3442,8 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
+
+    NPY_BEGIN_THREADS_DEF;
 
     reduceat_ind = (npy_intp *)PyArray_DATA(ind);
     ind_size = PyArray_DIM(ind, 0);
@@ -3599,6 +3602,8 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 
         NpyIter_IterNext_Fn iternext;
         char **dataptr;
+        npy_intp count_m1;
+        npy_intp stride0, stride1;
         npy_intp *stride;
         npy_intp *count_ptr;
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
@@ -3616,8 +3621,9 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 
 
         /* Execute the loop with just the outer iterator */
-        npy_intp count_m1 = PyArray_DIM(op[1], axis)-1;
-        npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
+        count_m1 = PyArray_DIM(op[1], axis)-1;
+        stride0 = 0;
+        stride1 = PyArray_STRIDE(op[1], axis);
 
         NPY_UF_DBG_PRINTF("UFunc: Reduce loop with just outer iterator\n");
 

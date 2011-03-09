@@ -1593,6 +1593,7 @@ static void
         }
         /* convert from Python object to needed one */
 #if @convert@
+        {
         PyObject *new, *args;
         /* call out to the Python builtin given by convstr */
         args = Py_BuildValue("(N)", temp);
@@ -1607,6 +1608,7 @@ static void
         temp = new;
         if (temp == NULL) {
             return;
+        }
         }
 #endif /* @convert@ */
         if (@to@_setitem(temp,(char *)op, aop)) {
