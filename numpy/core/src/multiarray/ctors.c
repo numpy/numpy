@@ -830,16 +830,20 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
              * presence of the __len__ attribute as well. In either case it
              * is possible to have an object that tests as a sequence but
              * doesn't behave as a sequence and consequently, the
-             * PySequence_GetItem call can fail. When that happens we
-             * truncate the dimensions and set the object creation flag.
-             * Raising an error is another option but it might break
-             * backward compatibility. We could probably be a bit stricter
-             * here for Python 3k because there are no old type objects.
+             * PySequence_GetItem call can fail. When that happens and the
+             * object looks like a dictionary, we truncate the dimensions
+             * and set the object creation flag, otherwise we pass the
+             * error back up the call chain.
              */
-            *maxndim = 0;
-            *out_is_object = 1;
-            PyErr_Clear();
-            return 0;
+            if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+                PyErr_Clear();
+                *maxndim = 0;
+                *out_is_object = 1;
+                return 0;
+            }
+            else {
+                return -1;
+            }
         }
         r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
                                         stop_at_string, stop_at_tuple,
@@ -855,10 +859,15 @@ discover_dimensions(PyObject *s, int *maxndim, npy_intp *d, int check_it,
             /* Get the dimensions of the first item */
             if ((e = PySequence_GetItem(s, i)) == NULL) {
                 /* see comment above */
-                *maxndim = 0;
-                *out_is_object = 1;
-                PyErr_Clear();
-                return 0;
+                if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+                    PyErr_Clear();
+                    *maxndim = 0;
+                    *out_is_object = 1;
+                    return 0;
+                }
+                else {
+                    return -1;
+                }
             }
             r = discover_dimensions(e, &maxndim_m1, dtmp, check_it,
                                             stop_at_string, stop_at_tuple,
@@ -1540,13 +1549,9 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                                     stop_at_string, stop_at_tuple,
                                     &is_object) < 0) {
             Py_DECREF(*out_dtype);
-            if (PyErr_Occurred() &&
-                    PyErr_GivenExceptionMatches(PyErr_Occurred(),
-                                            PyExc_MemoryError)) {
+            if (PyErr_Occurred()) {
                 return -1;
             }
-            /* Say it's an OBJECT scalar if there's an error */
-            PyErr_Clear();
             *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
             if (*out_dtype == NULL) {
                 return -1;

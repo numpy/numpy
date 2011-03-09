@@ -305,21 +305,30 @@ class TestCreation(TestCase):
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
-        Class Foo breaks the sequence protocol for new style classes, i.e.,
-        those derived from object. At some point we may raise a warning in
-        this case.
+        Class Fail breaks the sequence protocol for new style classes, i.e.,
+        those derived from object. Class Map is a mapping type indicated by
+        raising a ValueError. At some point we may raise a warning instead
+        of an error in the Fail case.
 
         """
-        class Foo(object):
+        class Fail(object):
             def __len__(self):
                 return 1
 
-            def __getitem__(self):
-                raise ValueError('hi there')
+            def __getitem__(self, index):
+                raise ValueError()
 
-        a = np.array([Foo()])
+        class Map(object):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, index):
+                raise KeyError()
+
+        a = np.array([Map()])
         assert_(a.shape == (1,))
         assert_(a.dtype == np.dtype(object))
+        assert_raises(ValueError, np.array, [Fail()])
 
 
 class TestStructured(TestCase):
