@@ -48,9 +48,15 @@
 #define NPY_EINSUM_DBG_TRACING 0
 
 #if NPY_EINSUM_DBG_TRACING
-#define NPY_EINSUM_DBG_PRINTF(...) printf(__VA_ARGS__)
+#define NPY_EINSUM_DBG_PRINT(s) printf("%s", s);
+#define NPY_EINSUM_DBG_PRINT1(s, p1) printf(s, p1);
+#define NPY_EINSUM_DBG_PRINT2(s, p1, p2) printf(s, p1, p2);
+#define NPY_EINSUM_DBG_PRINT3(s, p1, p2, p3) printf(s);
 #else
-#define NPY_EINSUM_DBG_PRINTF
+#define NPY_EINSUM_DBG_PRINT(s)
+#define NPY_EINSUM_DBG_PRINT1(s, p1)
+#define NPY_EINSUM_DBG_PRINT2(s, p1, p2)
+#define NPY_EINSUM_DBG_PRINT3(s, p1, p2, p3)
 #endif
 /**********************************************/
 
@@ -117,7 +123,7 @@ static void
     npy_intp stride_out = strides[@nop@];
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_@noplabel@ (%d)\n", (int)count);
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_@noplabel@ (%d)\n", (int)count);
 
     while (count--) {
 #if !@complex@
@@ -202,7 +208,7 @@ static void
     npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
     npy_@name@ *data_out = (npy_@name@ *)dataptr[1];
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_one (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_one (%d)\n",
                                                             (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -269,7 +275,7 @@ static void
     __m128 a, b;
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_two (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
                                                             (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -357,7 +363,7 @@ static void
     __m128d a, b, value0_sse;
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
                                                     (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -484,7 +490,7 @@ static void
     __m128 a, b, value1_sse;
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
                                                     (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -570,7 +576,7 @@ static void
     __m128d a, accum_sse = _mm_setzero_pd();
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
                                                     (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -728,7 +734,7 @@ static void
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
                                                     (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -827,7 +833,7 @@ static void
     __m128 a, accum_sse = _mm_setzero_ps();
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_stride0_outstride0_two (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outstride0_two (%d)\n",
                                                     (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -963,7 +969,7 @@ static void
 @name@_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_@noplabel@ (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_@noplabel@ (%d)\n",
                                                     (int)count);
 
     while (count--) {
@@ -1031,7 +1037,7 @@ static void
 #endif
 
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_contig_outstride0_one (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_outstride0_one (%d)\n",
                                                     (int)count);
 
 /* This is placed before the main loop to make small counts faster */
@@ -1212,7 +1218,7 @@ static void
     npy_intp stride2 = strides[2];
 #endif
 
-    NPY_EINSUM_DBG_PRINTF("@name@_sum_of_products_outstride0_@noplabel@ (%d)\n",
+    NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_outstride0_@noplabel@ (%d)\n",
                                                     (int)count);
 
     while (count--) {
@@ -2437,7 +2443,7 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
-    NPY_EINSUM_DBG_PRINTF("running hand-coded 1-op 2-dim loop\n");
+    NPY_EINSUM_DBG_PRINT("running hand-coded 1-op 2-dim loop\n");
 
     NpyIter_GetShape(iter, shape);
     memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
@@ -2485,7 +2491,7 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
-    NPY_EINSUM_DBG_PRINTF("running hand-coded 1-op 3-dim loop\n");
+    NPY_EINSUM_DBG_PRINT("running hand-coded 1-op 3-dim loop\n");
 
     NpyIter_GetShape(iter, shape);
     memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
@@ -2542,7 +2548,7 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
-    NPY_EINSUM_DBG_PRINTF("running hand-coded 2-op 2-dim loop\n");
+    NPY_EINSUM_DBG_PRINT("running hand-coded 2-op 2-dim loop\n");
 
     NpyIter_GetShape(iter, shape);
     memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
@@ -2592,7 +2598,7 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
 #endif
-    NPY_EINSUM_DBG_PRINTF("running hand-coded 2-op 3-dim loop\n");
+    NPY_EINSUM_DBG_PRINT("running hand-coded 2-op 3-dim loop\n");
 
     NpyIter_GetShape(iter, shape);
     memcpy(strides[0], NpyIter_GetAxisStrideArray(iter, 0),
@@ -3075,7 +3081,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (!needs_api) {
             NPY_BEGIN_THREADS;
         }
-        NPY_EINSUM_DBG_PRINTF("Einsum loop\n");
+        NPY_EINSUM_DBG_PRINT("Einsum loop\n");
         do {
             sop(nop, dataptr, stride, *countptr);
         } while(iternext(iter));

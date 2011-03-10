@@ -45,9 +45,15 @@
 #define NPY_UF_DBG_TRACING 0
 
 #if NPY_UF_DBG_TRACING
-#define NPY_UF_DBG_PRINTF(...) printf(__VA_ARGS__)
+#define NPY_UF_DBG_PRINT(s) printf("%s", s)
+#define NPY_UF_DBG_PRINT1(s, p1) printf(s, p1)
+#define NPY_UF_DBG_PRINT2(s, p1, p2) printf(s, p1, p2)
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3) printf(s, p1, p2, p3)
 #else
-#define NPY_UF_DBG_PRINTF
+#define NPY_UF_DBG_PRINT(s)
+#define NPY_UF_DBG_PRINT1(s, p1)
+#define NPY_UF_DBG_PRINT2(s, p1, p2)
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3)
 #endif
 /**********************************************/
 
@@ -1003,7 +1009,7 @@ ufunc_loop_matches(PyUFuncObject *self,
         }
         Py_DECREF(tmp);
     }
-    NPY_UF_DBG_PRINTF("The inputs all worked\n");
+    NPY_UF_DBG_PRINT("The inputs all worked\n");
 
     /*
      * If all the inputs were ok, then check casting back to the
@@ -1028,7 +1034,7 @@ ufunc_loop_matches(PyUFuncObject *self,
             Py_DECREF(tmp);
         }
     }
-    NPY_UF_DBG_PRINTF("The outputs all worked\n");
+    NPY_UF_DBG_PRINT("The outputs all worked\n");
 
     return 1;
 }
@@ -1145,7 +1151,7 @@ find_ufunc_matching_userloop(PyUFuncObject *self,
                         *out_innerloop = funcdata->func;
                         *out_innerloopdata = funcdata->data;
 
-                        NPY_UF_DBG_PRINTF("Returning userdef inner "
+                        NPY_UF_DBG_PRINT("Returning userdef inner "
                                                 "loop successfully\n");
 
                         return 0;
@@ -1238,7 +1244,7 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                         *out_innerloop = funcdata->func;
                         *out_innerloopdata = funcdata->data;
 
-                        NPY_UF_DBG_PRINTF("Returning userdef inner "
+                        NPY_UF_DBG_PRINT("Returning userdef inner "
                                                 "loop successfully\n");
 
                         return 0;
@@ -1348,7 +1354,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
             types[j] = orig_types[j];
         }
 
-        NPY_UF_DBG_PRINTF("Trying function loop %d\n", (int)i);
+        NPY_UF_DBG_PRINT1("Trying function loop %d\n", (int)i);
         switch (ufunc_loop_matches(self, op,
                     input_casting, output_casting,
                     any_object, all_inputs_scalar,
@@ -1367,7 +1373,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
                 *out_innerloop = self->functions[i];
                 *out_innerloopdata = self->data[i];
 
-                NPY_UF_DBG_PRINTF("Returning inner loop successfully\n");
+                NPY_UF_DBG_PRINT("Returning inner loop successfully\n");
 
                 return 0;
         }
@@ -1375,7 +1381,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
     }
 
     /* If no function was found, throw an error */
-    NPY_UF_DBG_PRINTF("No loop was found\n");
+    NPY_UF_DBG_PRINT("No loop was found\n");
     if (no_castable_output) {
         PyErr_Format(PyExc_TypeError,
                 "ufunc '%s' output (typecode '%c') could not be coerced to "
@@ -1501,7 +1507,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                 Py_XDECREF(str_obj);
                 return -1;
             }
-            NPY_UF_DBG_PRINTF("signature character '%c', type num %d\n",
+            NPY_UF_DBG_PRINT2("signature character '%c', type num %d\n",
                                 str[0], dtype->type_num);
             specified_types[0] = dtype->type_num;
             Py_DECREF(dtype);
@@ -1518,7 +1524,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                     Py_XDECREF(str_obj);
                     return -1;
                 }
-                NPY_UF_DBG_PRINTF("signature character '%c', type num %d\n",
+                NPY_UF_DBG_PRINT2("signature character '%c', type num %d\n",
                                     str[istr], dtype->type_num);
                 specified_types[i] = dtype->type_num;
                 Py_DECREF(dtype);
@@ -1529,7 +1535,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
-        NPY_UF_DBG_PRINTF("Searching user loops for specified sig\n");
+        NPY_UF_DBG_PRINT("Searching user loops for specified sig\n");
         switch (find_ufunc_specified_userloop(self,
                         n_specified, specified_types,
                         op, casting,
@@ -1545,12 +1551,12 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
         }
     }
 
-    NPY_UF_DBG_PRINTF("Searching loops for specified sig\n");
+    NPY_UF_DBG_PRINT("Searching loops for specified sig\n");
     for (i = 0; i < self->ntypes; ++i) {
         char *orig_types = self->types + i*self->nargs;
         int matched = 1;
 
-        NPY_UF_DBG_PRINTF("Trying function loop %d\n", (int)i);
+        NPY_UF_DBG_PRINT1("Trying function loop %d\n", (int)i);
 
         /* Copy the types into an int array for matching */
         for (j = 0; j < niter; ++j) {
@@ -1565,7 +1571,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                 }
             }
         } else {
-            NPY_UF_DBG_PRINTF("Specified type: %d, first output type: %d\n",
+            NPY_UF_DBG_PRINT2("Specified type: %d, first output type: %d\n",
                                         specified_types[0], types[nin]);
             if (types[nin] != specified_types[0]) {
                 matched = 0;
@@ -1575,7 +1581,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
             continue;
         }
 
-        NPY_UF_DBG_PRINTF("It matches, confirming type casting\n");
+        NPY_UF_DBG_PRINT("It matches, confirming type casting\n");
         switch (ufunc_loop_matches(self, op,
                     casting, casting,
                     any_object, all_inputs_scalar,
@@ -1594,7 +1600,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                 *out_innerloop = self->functions[i];
                 *out_innerloopdata = self->data[i];
 
-                NPY_UF_DBG_PRINTF("Returning specified inner loop successfully\n");
+                NPY_UF_DBG_PRINT("Returning specified inner loop successfully\n");
 
                 return 0;
             /* Didn't work */
@@ -1611,7 +1617,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
     }
 
     /* If no function was found, throw an error */
-    NPY_UF_DBG_PRINTF("No specified loop was found\n");
+    NPY_UF_DBG_PRINT("No specified loop was found\n");
 
     PyErr_Format(PyExc_TypeError,
             "No loop matching the specified signature was found "
@@ -1638,7 +1644,7 @@ trivial_two_operand_loop(PyArrayObject **op,
                                             data[0], data[1],
                                             stride[0], stride[1]);
     count[1] = count[0];
-    NPY_UF_DBG_PRINTF("two operand loop count %d\n", (int)count[0]);
+    NPY_UF_DBG_PRINT1("two operand loop count %d\n", (int)count[0]);
 
     if (!needs_api) {
         NPY_BEGIN_THREADS;
@@ -1671,7 +1677,7 @@ trivial_three_operand_loop(PyArrayObject **op,
                                             stride[0], stride[1], stride[2]);
     count[1] = count[0];
     count[2] = count[0];
-    NPY_UF_DBG_PRINTF("three operand loop count %d\n", (int)count[0]);
+    NPY_UF_DBG_PRINT1("three operand loop count %d\n", (int)count[0]);
 
     if (!needs_api) {
         NPY_BEGIN_THREADS;
@@ -1855,7 +1861,7 @@ iterator_loop(PyUFuncObject *self,
 
         /* Execute the loop */
         do {
-            NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)*count_ptr);
+            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
             innerloop(dataptr, count_ptr, stride, innerloopdata);
         } while (iternext(iter));
 
@@ -1914,7 +1920,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                     return -1;
                 }
 
-                NPY_UF_DBG_PRINTF("trivial 1 input with allocated output\n");
+                NPY_UF_DBG_PRINT("trivial 1 input with allocated output\n");
                 trivial_two_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -1929,7 +1935,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                     return -1;
                 }
 
-                NPY_UF_DBG_PRINTF("trivial 1 input\n");
+                NPY_UF_DBG_PRINT("trivial 1 input\n");
                 trivial_two_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -1965,7 +1971,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                     return -1;
                 }
 
-                NPY_UF_DBG_PRINTF("trivial 2 input with allocated output\n");
+                NPY_UF_DBG_PRINT("trivial 2 input with allocated output\n");
                 trivial_three_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -1981,7 +1987,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                     return -1;
                 }
 
-                NPY_UF_DBG_PRINTF("trivial 2 input\n");
+                NPY_UF_DBG_PRINT("trivial 2 input\n");
                 trivial_three_operand_loop(op, innerloop, innerloopdata);
 
                 return 0;
@@ -1994,7 +2000,7 @@ execute_ufunc_loop(PyUFuncObject *self,
      * resolve broadcasting, etc
      */
 
-    NPY_UF_DBG_PRINTF("iterator loop\n");
+    NPY_UF_DBG_PRINT("iterator loop\n");
     if (iterator_loop(self, op, dtype, order,
                     buffersize, arr_prep, arr_prep_args,
                     innerloop, innerloopdata) < 0) {
@@ -2112,7 +2118,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
-    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s\n", ufunc_name);
+    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
     for (i = 0; i < niter; ++i) {
@@ -2121,7 +2127,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         arr_prep[i] = NULL;
     }
 
-    NPY_UF_DBG_PRINTF("Getting arguments\n");
+    NPY_UF_DBG_PRINT("Getting arguments\n");
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
@@ -2205,7 +2211,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         }
     }
 
-    NPY_UF_DBG_PRINTF("Finding inner loop\n");
+    NPY_UF_DBG_PRINT("Finding inner loop\n");
 
     /*
      * Decide the casting rules for inputs and outputs.  We want
@@ -2386,7 +2392,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     /* Start with the floating-point exception flags cleared */
     PyUFunc_clearfperr();
 
-    NPY_UF_DBG_PRINTF("Executing inner loop\n");
+    NPY_UF_DBG_PRINT("Executing inner loop\n");
 
     /* Do the ufunc loop */
     if (NpyIter_GetIterSize(iter) != 0) {
@@ -2428,12 +2434,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
-    NPY_UF_DBG_PRINTF("Returning Success\n");
+    NPY_UF_DBG_PRINT("Returning Success\n");
 
     return 0;
 
 fail:
-    NPY_UF_DBG_PRINTF("Returning failure code %d\n", retval);
+    NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
     if (inner_strides) {
         _pya_free(inner_strides);
     }
@@ -2517,7 +2523,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
-    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s\n", ufunc_name);
+    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
     for (i = 0; i < niter; ++i) {
@@ -2526,7 +2532,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         arr_prep[i] = NULL;
     }
 
-    NPY_UF_DBG_PRINTF("Getting arguments\n");
+    NPY_UF_DBG_PRINT("Getting arguments\n");
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
@@ -2551,7 +2557,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         }
     }
 
-    NPY_UF_DBG_PRINTF("Finding inner loop\n");
+    NPY_UF_DBG_PRINT("Finding inner loop\n");
 
     /*
      * Decide the casting rules for inputs and outputs.  We want
@@ -2630,7 +2636,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     /* Start with the floating-point exception flags cleared */
     PyUFunc_clearfperr();
 
-    NPY_UF_DBG_PRINTF("Executing inner loop\n");
+    NPY_UF_DBG_PRINT("Executing inner loop\n");
 
     /* Do the ufunc loop */
     retval = execute_ufunc_loop(self, trivial_loop_ok, op, dtype, order,
@@ -2656,12 +2662,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
 
-    NPY_UF_DBG_PRINTF("Returning Success\n");
+    NPY_UF_DBG_PRINT("Returning Success\n");
 
     return 0;
 
 fail:
-    NPY_UF_DBG_PRINTF("Returning failure code %d\n", retval);
+    NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
     for (i = 0; i < niter; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
@@ -2690,7 +2696,7 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     int i;
     PyUFunc_Loop1d *funcdata;
 
-    NPY_UF_DBG_PRINTF("Getting binary op function for type number %d\n",
+    NPY_UF_DBG_PRINT1("Getting binary op function for type number %d\n",
                                 *otype);
 
     /* If the type is custom and there are userloops, search for it here */
@@ -2723,7 +2729,7 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     for (i = 0; i < self->ntypes; ++i) {
         char *types = self->types + i*self->nargs;
 
-        NPY_UF_DBG_PRINTF("Trying loop with signature %d %d -> %d\n",
+        NPY_UF_DBG_PRINT3("Trying loop with signature %d %d -> %d\n",
                                 types[0], types[1], types[2]);
 
         if (PyArray_CanCastSafely(*otype, types[0]) &&
@@ -2808,7 +2814,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
     NPY_BEGIN_THREADS_DEF;
 
-    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
+    NPY_UF_DBG_PRINT2("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
 
 #if 0
     printf("Doing %s.%s on array with dtype :  ", ufunc_name, opname);
@@ -2917,7 +2923,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             op_dtypes_param = op_dtypes;
             op_dtypes[1] = op_dtypes[0];
         }
-        NPY_UF_DBG_PRINTF("Allocating outer iterator\n");
+        NPY_UF_DBG_PRINT("Allocating outer iterator\n");
         iter = NpyIter_MultiNew(2, op, flags,
                                    NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                    op_flags,
@@ -3019,7 +3025,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         /* Also set the dtype for buffering arr */
         op_dtypes[1] = op_dtypes[0];
 
-        NPY_UF_DBG_PRINTF("Allocating inner iterator\n");
+        NPY_UF_DBG_PRINT("Allocating inner iterator\n");
         if (operation == UFUNC_REDUCE) {
             /* The per-operand flags for the inner loop */
             op_flags[0] = NPY_ITER_READWRITE|
@@ -3080,7 +3086,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             npy_intp *stride_inner;
             npy_intp count, *count_ptr_inner;
 
-            NPY_UF_DBG_PRINTF("UFunc: Reduce loop with two nested iterators\n");
+            NPY_UF_DBG_PRINT("UFunc: Reduce loop with two nested iterators\n");
             iternext_inner = NpyIter_GetIterNext(iter_inner, NULL);
             if (iternext_inner == NULL) {
                 goto fail;
@@ -3130,7 +3136,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                         first = 0;
                     }
                     stride_copy[1] = stride_inner[1];
-                    NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
+                    NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
                     innerloop(dataptr_copy, &count,
                                 stride_copy, innerloopdata);
                 } while(iternext_inner(iter_inner));
@@ -3145,7 +3151,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             npy_intp count_m1 = PyArray_DIM(op[1], axis)-1;
             npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
 
-            NPY_UF_DBG_PRINTF("UFunc: Reduce loop with just outer iterator\n");
+            NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
 
             if (operation == UFUNC_ACCUMULATE) {
                 stride0 = PyArray_STRIDE(op[0], axis);
@@ -3187,7 +3193,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                         dataptr_copy[1] += stride1;
                         dataptr_copy[2] += stride0;
                     }
-                    NPY_UF_DBG_PRINTF("iterator loop count %d\n",
+                    NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                     (int)count_m1);
                     innerloop(dataptr_copy, &count_m1,
                                 stride_copy, innerloopdata);
@@ -3214,7 +3220,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             npy_intp count, *count_ptr_inner;
             int first = 1;
 
-            NPY_UF_DBG_PRINTF("UFunc: Reduce loop with just inner iterator\n");
+            NPY_UF_DBG_PRINT("UFunc: Reduce loop with just inner iterator\n");
 
             iternext_inner = NpyIter_GetIterNext(iter_inner, NULL);
             if (iternext_inner == NULL) {
@@ -3260,7 +3266,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                     first = 0;
                 }
                 stride_copy[1] = stride_inner[1];
-                NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
                 innerloop(dataptr_copy, &count,
                             stride_copy, innerloopdata);
             } while(iternext_inner(iter_inner));
@@ -3274,7 +3280,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             npy_intp count = PyArray_DIM(op[1], axis);
             npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
 
-            NPY_UF_DBG_PRINTF("UFunc: Reduce loop with no iterators\n");
+            NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
             if (operation == UFUNC_REDUCE) {
                 if (PyArray_NDIM(op[0]) != 0) {
@@ -3327,7 +3333,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                     dataptr_copy[2] += stride0;
                 }
 
-                NPY_UF_DBG_PRINTF("iterator loop count %d\n", (int)count);
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
 
                 needs_api = PyDataType_REFCHK(op_dtypes[0]);
 
@@ -3459,7 +3465,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         }
     }
 
-    NPY_UF_DBG_PRINTF("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
+    NPY_UF_DBG_PRINT2("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
 
 #if 0
     printf("Doing %s.%s on array with dtype :  ", ufunc_name, opname);
@@ -3550,7 +3556,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 
         op_dtypes[1] = op_dtypes[0];
 
-        NPY_UF_DBG_PRINTF("Allocating outer iterator\n");
+        NPY_UF_DBG_PRINT("Allocating outer iterator\n");
         iter = NpyIter_MultiNew(3, op, flags,
                                    NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                    op_flags,
@@ -3625,7 +3631,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         stride0 = 0;
         stride1 = PyArray_STRIDE(op[1], axis);
 
-        NPY_UF_DBG_PRINTF("UFunc: Reduce loop with just outer iterator\n");
+        NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
 
         stride_copy[0] = stride0;
         stride_copy[1] = stride1;
@@ -3664,7 +3670,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
                     /* Inner loop like REDUCE */
                     --count;
                     dataptr_copy[1] += stride1;
-                    NPY_UF_DBG_PRINTF("iterator loop count %d\n",
+                    NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                     (int)count);
                     innerloop(dataptr_copy, &count,
                                 stride_copy, innerloopdata);
@@ -3689,7 +3695,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 
         needs_api = PyDataType_REFCHK(op_dtypes[0]);
 
-        NPY_UF_DBG_PRINTF("UFunc: Reduce loop with no iterators\n");
+        NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
         stride_copy[0] = stride0;
         stride_copy[1] = stride1;
@@ -3724,7 +3730,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
                 /* Inner loop like REDUCE */
                 --count;
                 dataptr_copy[1] += stride1;
-                NPY_UF_DBG_PRINTF("iterator loop count %d\n",
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                 (int)count);
                 innerloop(dataptr_copy, &count,
                             stride_copy, innerloopdata);
