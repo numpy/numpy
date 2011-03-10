@@ -595,6 +595,23 @@ def test_iter_broadcasting_errors():
                     [arange(8).reshape(2,4,1), arange(24).reshape(2,3,4)],
                     [], [['readonly']]*2)
 
+    # Verify that the error message mentions the right shapes
+    try:
+        i = newiter([arange(2).reshape(1,2,1),
+                     arange(3).reshape(1,3),
+                     arange(6).reshape(2,3)],
+                    [],
+                    [['readonly'], ['readonly'], ['writeonly','no_broadcast']])
+        assert_(False, 'Should have raised a broadcast error')
+    except ValueError, e:
+        msg = str(e)
+        # The message should contain the shape of the 3rd operand
+        assert_(msg.find('(2,3)') >= 0,
+                'Message "%s" doesn\'t contain operand shape (2,3)' % msg)
+        # The message should contain the broadcast shape
+        assert_(msg.find('(1,2,3)') >= 0,
+                'Message "%s" doesn\'t contain broadcast shape (1,2,3)' % msg)
+
 
 def test_iter_flags_errors():
     # Check that bad combinations of flags produce errors

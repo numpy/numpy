@@ -3766,7 +3766,7 @@ operand_different_than_broadcast: {
         /* Fill in the broadcast shape */
         axisdata = NIT_AXISDATA(iter);
         for (idim = 0; idim < ndim; ++idim) {
-            remdims[idim] = NAD_SHAPE(axisdata);
+            remdims[ndim-idim-1] = NAD_SHAPE(axisdata);
 
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
