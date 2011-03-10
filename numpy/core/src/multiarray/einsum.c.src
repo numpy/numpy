@@ -19,6 +19,8 @@
 
 #include <ctype.h>
 
+#include "convert.h"
+
 #ifdef __SSE__
 #define EINSUM_USE_SSE1 1
 #else
