@@ -366,7 +366,7 @@ PyArray_FillWithZero(PyArrayObject *a)
     PyArray_Descr *dtype = PyArray_DESCR(a);
     NpyIter *iter;
 
-    NpyIter_IterNext_Fn iternext;
+    NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp stride, *countptr;
     int needs_api;

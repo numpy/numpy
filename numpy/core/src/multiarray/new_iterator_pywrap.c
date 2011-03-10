@@ -29,8 +29,8 @@ struct NewNpyArrayIterObject_tag {
     /* Child to update for nested iteration */
     NewNpyArrayIterObject *nested_child;
     /* Cached values from the iterator */
-    NpyIter_IterNext_Fn iternext;
-    NpyIter_GetCoords_Fn getcoords;
+    NpyIter_IterNextFunc *iternext;
+    NpyIter_GetCoordsFunc *getcoords;
     char **dataptrs;
     PyArray_Descr **dtypes;
     PyArrayObject **operands;

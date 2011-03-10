@@ -1698,7 +1698,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     npy_intp nonzero_count = 0;
 
     NpyIter *iter;
-    NpyIter_IterNext_Fn iternext;
+    NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
 
@@ -1783,8 +1783,8 @@ PyArray_Nonzero(PyArrayObject *self)
     npy_intp *coords;
 
     NpyIter *iter;
-    NpyIter_IterNext_Fn iternext;
-    NpyIter_GetCoords_Fn getcoords;
+    NpyIter_IterNextFunc *iternext;
+    NpyIter_GetCoordsFunc *getcoords;
     char **dataptr;
     npy_intp *innersizeptr;
 

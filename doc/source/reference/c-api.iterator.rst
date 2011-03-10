@@ -87,7 +87,7 @@ number of non-zero elements in an array.
         PyArray_NonzeroFunc* nonzero = PyArray_DESCR(self)->f->nonzero;
 
         NpyIter* iter;
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char** dataptr;
         npy_intp* strideptr,* innersizeptr;
 
@@ -171,7 +171,7 @@ NPY_KEEPORDER is desired.
     PyObject *CopyArray(PyObject *arr, NPY_ORDER order)
     {
         NpyIter *iter;
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         PyObject *op[2], *ret;
         npy_uint32 flags;
         npy_uint32 op_flags[2];
@@ -758,7 +758,7 @@ Construction and Destruction
     .. code-block:: c
 
         NpyIter *iter1, *iter1;
-        NpyIter_IterNext_Fn iternext1, iternext2;
+        NpyIter_IterNextFunc *iternext1, *iternext2;
         char **dataptrs1;
 
         /*
@@ -930,7 +930,7 @@ Construction and Destruction
 Functions For Iteration
 -----------------------
 
-.. cfunction:: NpyIter_IterNext_Fn NpyIter_GetIterNext(NpyIter* iter, char** errmsg)
+.. cfunction:: NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* iter, char** errmsg)
 
     Returns a function pointer for iteration.  A specialized version
     of the function pointer may be calculated by this function
@@ -948,7 +948,7 @@ Functions For Iteration
 
     .. code-block:: c
 
-        NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         char** dataptr = NpyIter_GetDataPtrArray(iter);
 
         do {
@@ -960,7 +960,7 @@ Functions For Iteration
 
     .. code-block:: c
 
-        NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         char** dataptr = NpyIter_GetDataPtrArray(iter);
         npy_intp* stride = NpyIter_GetInnerStrideArray(iter);
         npy_intp* size_ptr = NpyIter_GetInnerLoopSizePtr(iter), size;
@@ -994,7 +994,7 @@ Functions For Iteration
         /* The constructor should have buffersize passed as this value */
         #define FIXED_BUFFER_SIZE 1024
 
-        NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         char **dataptr = NpyIter_GetDataPtrArray(iter);
         npy_intp *stride = NpyIter_GetInnerStrideArray(iter);
         npy_intp *size_ptr = NpyIter_GetInnerLoopSizePtr(iter), size;
@@ -1028,7 +1028,7 @@ Functions For Iteration
             }
         } while (iternext());
 
-.. cfunction:: NpyIter_GetCoords_Fn NpyIter_GetGetCoords(NpyIter* iter, char** errmsg)
+.. cfunction:: NpyIter_GetCoordsFunc *NpyIter_GetGetCoords(NpyIter* iter, char** errmsg)
 
     Returns a function pointer for getting the coordinates
     of the iterator.  Returns NULL if the iterator does not

@@ -1769,7 +1769,7 @@ iterator_loop(PyUFuncObject *self,
     char *baseptrs[NPY_MAXARGS];
     int needs_api;
 
-    NpyIter_IterNext_Fn iternext;
+    NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *stride;
     npy_intp *count_ptr;
@@ -2396,7 +2396,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     /* Do the ufunc loop */
     if (NpyIter_GetIterSize(iter) != 0) {
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *count_ptr;
 
@@ -3061,7 +3061,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         char *dataptr_copy[3];
         npy_intp stride_copy[3];
 
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *stride;
         npy_intp *count_ptr;
@@ -3081,7 +3081,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         /* Execute the loop with two nested iterators */
         if (iter_inner) {
             /* Only UFUNC_REDUCE uses iter_inner */
-            NpyIter_IterNext_Fn iternext_inner;
+            NpyIter_IterNextFunc *iternext_inner;
             char **dataptr_inner;
             npy_intp *stride_inner;
             npy_intp count, *count_ptr_inner;
@@ -3214,7 +3214,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         /* Execute the loop with just the inner iterator */
         if (iter_inner) {
             /* Only UFUNC_REDUCE uses iter_inner */
-            NpyIter_IterNext_Fn iternext_inner;
+            NpyIter_IterNextFunc *iternext_inner;
             char **dataptr_inner;
             npy_intp *stride_inner;
             npy_intp count, *count_ptr_inner;
@@ -3606,7 +3606,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         char *dataptr_copy[3];
         npy_intp stride_copy[3];
 
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp count_m1;
         npy_intp stride0, stride1;
