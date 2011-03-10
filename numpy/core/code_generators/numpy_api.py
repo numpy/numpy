@@ -310,12 +310,10 @@ multiarray_funcs_api = {
     'PyArray_CanCastArrayTo':               273,
     'PyArray_CanCastTypeTo':                274,
     'PyArray_EinsteinSum':                  275,
-    'PyArray_FillWithZero':                 276,
-    'PyArray_NewLikeArray':                 277,
-    'PyArray_GetArrayParamsFromObject':     278,
-    'PyArray_ConvertClipmodeSequence':      279,
-    #
-    'PyArray_MatrixProduct2':               280,
+    'PyArray_NewLikeArray':                 276,
+    'PyArray_GetArrayParamsFromObject':     277,
+    'PyArray_ConvertClipmodeSequence':      278,
+    'PyArray_MatrixProduct2':               279,
 }
 
 ufunc_types_api = {

@@ -353,7 +353,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     return 0;
 }
 
-/*NUMPY_API
+/*
  * Fills an array with zeros.
  *
  * Returns 0 on success, -1 on failure.
