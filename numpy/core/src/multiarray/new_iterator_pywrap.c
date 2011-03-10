@@ -547,10 +547,10 @@ try_single_dtype:
 
 static int
 npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
-                        npy_intp **op_axes, npy_intp *oa_ndim)
+                        int **op_axes, int *oa_ndim)
 {
     PyObject *a;
-    npy_intp iiter;
+    int iiter;
 
     if ((!PyTuple_Check(op_axes_in) && !PyList_Check(op_axes_in)) ||
                                 PySequence_Size(op_axes_in) != niter) {
@@ -563,7 +563,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
 
     /* Copy the tuples into op_axes */
     for (iiter = 0; iiter < niter; ++iiter) {
-        npy_intp idim;
+        int idim;
         a = PySequence_GetItem(op_axes_in, iiter);
         if (a == NULL) {
             return 0;
@@ -640,9 +640,9 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
 static int
 npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                     PyArrayObject **op, npy_uint32 *op_flags,
-                    npy_intp *niter_out)
+                    int *niter_out)
 {
-    npy_intp iiter, niter;
+    int iiter, niter;
 
     /* niter and op */
     if (PyTuple_Check(op_in) || PyList_Check(op_in)) {
@@ -749,16 +749,16 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     PyObject *op_in = NULL, *op_flags_in = NULL,
                 *op_dtypes_in = NULL, *op_axes_in = NULL;
 
-    npy_intp iiter, niter = 0;
+    int iiter, niter = 0;
     PyArrayObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0;
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_CASTING casting = NPY_SAFE_CASTING;
     npy_uint32 op_flags[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
-    npy_intp oa_ndim = 0;
-    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
-    npy_intp *op_axes[NPY_MAXARGS];
+    int oa_ndim = 0;
+    int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
+    int *op_axes[NPY_MAXARGS];
     int buffersize = 0;
 
     if (self->iter != NULL) {
@@ -857,7 +857,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
     PyObject *op_in = NULL, *axes_in = NULL,
             *op_flags_in = NULL, *op_dtypes_in = NULL;
 
-    npy_intp iiter, niter = 0, inest, nnest = 0;
+    int iiter, niter = 0, inest, nnest = 0;
     PyArrayObject *op[NPY_MAXARGS];
     npy_uint32 flags = 0, flags_inner = 0;
     NPY_ORDER order = NPY_KEEPORDER;
@@ -865,10 +865,10 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
     npy_uint32 op_flags[NPY_MAXARGS], op_flags_inner[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS],
                   *op_request_dtypes_inner[NPY_MAXARGS];
-    npy_intp op_axes_data[NPY_MAXDIMS];
-    npy_intp *nested_op_axes[NPY_MAXDIMS];
-    npy_intp nested_naxes[NPY_MAXDIMS], iaxes, naxes;
-    npy_intp negones[NPY_MAXDIMS];
+    int op_axes_data[NPY_MAXDIMS];
+    int *nested_op_axes[NPY_MAXDIMS];
+    int nested_naxes[NPY_MAXDIMS], iaxes, naxes;
+    int negones[NPY_MAXDIMS];
     char used_axes[NPY_MAXDIMS];
     int buffersize = 0;
 
@@ -1019,7 +1019,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
     for (inest = 0; inest < nnest; ++inest) {
         NewNpyArrayIterObject *iter;
-        npy_intp *op_axes_niter[NPY_MAXARGS];
+        int *op_axes_niter[NPY_MAXARGS];
 
         /*
          * All the operands' op_axes are the same, except for

@@ -261,7 +261,7 @@ an incomplete struct.
 Construction and Destruction
 ----------------------------
 
-.. cfunction:: NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype, npy_intp a_ndim, npy_intp* axes, npy_intp buffersize)
+.. cfunction:: NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype, int a_ndim, int* axes, npy_intp buffersize)
 
     Creates an iterator for the given numpy array object ``op``.
 
@@ -318,7 +318,7 @@ Construction and Destruction
                             dtype, 0, NULL);
         Py_DECREF(dtype);
 
-.. cfunction:: NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, npy_intp oa_ndim, npy_intp** op_axes, npy_intp buffersize)
+.. cfunction:: NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp buffersize)
 
     Creates an iterator for broadcasting the ``niter`` array objects provided
     in ``op``.
@@ -358,12 +358,12 @@ Construction and Destruction
 
     .. code-block:: c
 
-        npy_intp oa_ndim = 3;               /* # iteration axes */
-        npy_intp op0_axes[] = {0, 1, 2};    /* 3-D operand */
-        npy_intp op1_axes[] = {-1, 0, 1};   /* 2-D operand */
-        npy_intp op2_axes[] = {-1, -1, 0};  /* 1-D operand */
-        npy_intp op3_axes[] = {-1, -1, -1}  /* 0-D (scalar) operand */
-        npy_intp* op_axes[] = {op0_axes, op1_axes, op2_axes, op3_axes};
+        int oa_ndim = 3;               /* # iteration axes */
+        int op0_axes[] = {0, 1, 2};    /* 3-D operand */
+        int op1_axes[] = {-1, 0, 1};   /* 2-D operand */
+        int op2_axes[] = {-1, -1, 0};  /* 1-D operand */
+        int op3_axes[] = {-1, -1, -1}  /* 0-D (scalar) operand */
+        int* op_axes[] = {op0_axes, op1_axes, op2_axes, op3_axes};
 
     If ``buffersize`` is zero, a default buffer size is used,
     otherwise it specifies how big of a buffer to use.  Buffers
@@ -622,7 +622,7 @@ Construction and Destruction
     the functions will pass back errors through it instead of setting
     a Python exception.
 
-.. cfunction:: int NpyIter_RemoveAxis(NpyIter* iter, npy_intp axis)``
+.. cfunction:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)``
 
     Removes an axis from iteration.  This requires that
     ``NPY_ITER_COORDS`` was set for iterator creation, and does not work
@@ -825,29 +825,29 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
-.. cfunction:: int NpyIter_HasInnerLoop(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_HasInnerLoop(NpyIter* iter)
 
     Returns 1 if the iterator handles the inner loop,
     or 0 if the caller needs to handle it.  This is controlled
     by the constructor flag ``NPY_ITER_NO_INNER_ITERATION``.
 
-.. cfunction:: int NpyIter_HasCoords(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_HasCoords(NpyIter* iter)
 
     Returns 1 if the iterator was created with the
     ``NPY_ITER_COORDS`` flag, 0 otherwise.
 
-.. cfunction:: int NpyIter_HasIndex(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_HasIndex(NpyIter* iter)
 
     Returns 1 if the iterator was created with the
     ``NPY_ITER_C_INDEX`` or ``NPY_ITER_F_INDEX``
     flag, 0 otherwise.
 
-.. cfunction:: int NpyIter_IsBuffered(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_IsBuffered(NpyIter* iter)
 
     Returns 1 if the iterator was created with the
     ``NPY_ITER_BUFFERED`` flag, 0 otherwise.
 
-.. cfunction:: int NpyIter_IsGrowInner(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_IsGrowInner(NpyIter* iter)
 
     Returns 1 if the iterator was created with the
     ``NPY_ITER_GROWINNER`` flag, 0 otherwise.
@@ -857,18 +857,18 @@ Construction and Destruction
     If the iterator is buffered, returns the size of the buffer
     being used, otherwise returns 0.
 
-.. cfunction:: npy_intp NpyIter_GetNDim(NpyIter* iter)
+.. cfunction:: int NpyIter_GetNDim(NpyIter* iter)
 
     Returns the number of dimensions being iterated.  If coordinates
     were not requested in the iterator constructor, this value
     may be smaller than the number of dimensions in the original
     objects.
 
-.. cfunction:: npy_intp NpyIter_GetNIter(NpyIter* iter)
+.. cfunction:: int NpyIter_GetNIter(NpyIter* iter)
 
-    Returns the number of objects being iterated.
+    Returns the number of operands in the iterator.
 
-.. cfunction:: npy_intp* NpyIter_GetAxisStrideArray(NpyIter* iter, npy_intp axis)
+.. cfunction:: npy_intp* NpyIter_GetAxisStrideArray(NpyIter* iter, int axis)
 
     Gets the array of strides for the specified axis. Requires that
     the iterator be tracking coordinates, and that buffering not

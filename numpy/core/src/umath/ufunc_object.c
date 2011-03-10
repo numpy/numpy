@@ -2047,8 +2047,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
                         PyObject *args, PyObject *kwds,
                         PyArrayObject **op)
 {
-    npy_intp nin, nout;
-    npy_intp i, idim, niter;
+    int nin, nout;
+    int i, idim, niter;
     char *ufunc_name;
     int retval = -1, any_object = 0;
     NPY_CASTING input_casting;
@@ -2056,9 +2056,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     PyArray_Descr *dtype[NPY_MAXARGS];
 
     /* Use remapped axes for generalized ufunc */
-    npy_intp broadcast_ndim, op_ndim;
-    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
-    npy_intp *op_axes[NPY_MAXARGS];
+    int broadcast_ndim, op_ndim;
+    int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
+    int *op_axes[NPY_MAXARGS];
 
     npy_uint32 op_flags[NPY_MAXARGS];
 
@@ -2133,7 +2133,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     /* Figure out the number of dimensions needed by the iterator */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
-        npy_intp n = PyArray_NDIM(op[i]) - self->core_num_dims[i];
+        int n = PyArray_NDIM(op[i]) - self->core_num_dims[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
         }
@@ -2151,7 +2151,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     core_dim_ixs_size = 0;
     core_dim_ixs = self->core_dim_ixs;
     for (i = 0; i < niter; ++i) {
-        npy_intp n;
+        int n;
         if (op[i]) {
             /*
              * Note that n may be negative if broadcasting
@@ -2463,8 +2463,8 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
                         PyObject *args, PyObject *kwds,
                         PyArrayObject **op)
 {
-    npy_intp nin, nout;
-    npy_intp i, niter;
+    int nin, nout;
+    int i, niter;
     char *ufunc_name;
     int retval = -1, any_object = 0;
     NPY_CASTING input_casting;
@@ -2788,8 +2788,8 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 {
     PyArrayObject *op[2];
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
-    npy_intp op_axes_arrays[2][NPY_MAXDIMS];
-    npy_intp *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
+    int op_axes_arrays[2][NPY_MAXDIMS];
+    int *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
     npy_uint32 op_flags[2];
     int i, idim, ndim, otype_final;
     int needs_api, need_outer_iterator;
@@ -2893,7 +2893,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     }
 
     if (need_outer_iterator) {
-        npy_intp ndim_iter = 0;
+        int ndim_iter = 0;
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
                            NPY_ITER_REFS_OK;
         PyArray_Descr **op_dtypes_param = NULL;
@@ -3420,8 +3420,8 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 {
     PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[3] = {NULL, NULL, NULL};
-    npy_intp op_axes_arrays[3][NPY_MAXDIMS];
-    npy_intp *op_axes[3] = {op_axes_arrays[0], op_axes_arrays[1],
+    int op_axes_arrays[3][NPY_MAXDIMS];
+    int *op_axes[3] = {op_axes_arrays[0], op_axes_arrays[1],
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
     int i, idim, ndim, otype_final;
