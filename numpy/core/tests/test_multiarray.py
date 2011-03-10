@@ -302,6 +302,35 @@ class TestCreation(TestCase):
             msg = 'String conversion for %s' % type
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
+    def test_non_sequence_sequence(self):
+        """Should not segfault.
+
+        Class Fail breaks the sequence protocol for new style classes, i.e.,
+        those derived from object. Class Map is a mapping type indicated by
+        raising a ValueError. At some point we may raise a warning instead
+        of an error in the Fail case.
+
+        """
+        class Fail(object):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, index):
+                raise ValueError()
+
+        class Map(object):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, index):
+                raise KeyError()
+
+        a = np.array([Map()])
+        assert_(a.shape == (1,))
+        assert_(a.dtype == np.dtype(object))
+        assert_raises(ValueError, np.array, [Fail()])
+
+
 class TestStructured(TestCase):
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
