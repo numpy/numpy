@@ -553,6 +553,7 @@ cdef class RandomState:
 
     """
     cdef rk_state *internal_state
+    poisson_lam_max = np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
 
     def __init__(self, seed=None):
         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
@@ -3467,6 +3468,10 @@ cdef class RandomState:
         distribution :math:`f(k; \\lambda)` describes the probability of
         :math:`k` events occurring within the observed interval :math:`\\lambda`.
 
+        Because the output is limited to the range of the C long type, a
+        ValueError is raised when `lam` is within 10 sigma of the maximum
+        representable value.
+
         References
         ----------
         .. [1] Weisstein, Eric W. "Poisson Distribution." From MathWorld--A Wolfram
@@ -3494,6 +3499,8 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if lam < 0:
                 raise ValueError("lam < 0")
+            if lam > self.poisson_lam_max:
+                raise ValueError("lam value too large")
             return discd_array_sc(self.internal_state, rk_poisson, size, flam)
 
         PyErr_Clear()
@@ -3501,6 +3508,8 @@ cdef class RandomState:
         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ALIGNED)
         if np.any(np.less(olam, 0)):
             raise ValueError("lam < 0")
+        if np.any(np.greater(olam, self.poisson_lam_max)):
+            raise ValueError("lam value too large.")
         return discd_array(self.internal_state, rk_poisson, size, olam)
 
     def zipf(self, a, size=None):
