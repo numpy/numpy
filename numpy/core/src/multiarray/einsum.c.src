@@ -2289,8 +2289,8 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
 }
 
 static int
-prepare_op_axes(int ndim, int iop, char *labels, npy_intp *axes,
-            npy_intp ndim_iter, char *iter_labels, EINSUM_BROADCAST broadcast)
+prepare_op_axes(int ndim, int iop, char *labels, int *axes,
+            int ndim_iter, char *iter_labels, EINSUM_BROADCAST broadcast)
 {
     int i, label, ibroadcast;
 
@@ -2703,8 +2703,8 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     PyArrayObject *op[NPY_MAXARGS], *ret = NULL;
     PyArray_Descr *op_dtypes_array[NPY_MAXARGS], **op_dtypes;
 
-    npy_intp op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
-    npy_intp *op_axes[NPY_MAXARGS];
+    int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
+    int *op_axes[NPY_MAXARGS];
     npy_uint32 op_flags[NPY_MAXARGS];
 
     NpyIter *iter;
@@ -2986,7 +2986,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * be reduced to fit into these patterns.
      */
     if (!NpyIter_RequiresBuffering(iter)) {
-        npy_intp ndim = NpyIter_GetNDim(iter);
+        int ndim = NpyIter_GetNDim(iter);
         switch (nop) {
             case 1:
                 if (ndim == 2) {
