@@ -765,7 +765,7 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (NpyIter_GetIterSize(iter) != 0) {
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *strides;
         npy_intp *countptr;
@@ -962,7 +962,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     if (order == NPY_CORDER) {
         if (NpyIter_GetIterSize(iter) != 0) {
-            NpyIter_IterNext_Fn iternext;
+            NpyIter_IterNextFunc *iternext;
             char **dataptr;
             npy_intp *strides;
             npy_intp *countptr, count;
@@ -989,7 +989,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     }
     else if (order == NPY_FORTRANORDER) {
         if (NpyIter_GetIterSize(iter) != 0) {
-            NpyIter_IterNext_Fn iternext;
+            NpyIter_IterNextFunc *iternext;
             char **dataptr;
             npy_intp *strides;
             npy_intp *countptr, count;

@@ -1910,7 +1910,7 @@ npyiter_iternext_sizeone(NpyIter *iter)
  * This is so that the function can be called from code not holding
  * the GIL.
  */
-NPY_NO_EXPORT NpyIter_IterNext_Fn
+NPY_NO_EXPORT NpyIter_IterNextFunc *
 NpyIter_GetIterNext(NpyIter *iter, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -2088,7 +2088,7 @@ npyiter_getcoord_itflags@tag_itflags@(NpyIter *iter, npy_intp *outcoord)
  * This is so that the function can be called from code not holding
  * the GIL.
  */
-NPY_NO_EXPORT NpyIter_GetCoords_Fn
+NPY_NO_EXPORT NpyIter_GetCoordsFunc *
 NpyIter_GetGetCoords(NpyIter *iter, char **errmsg)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);

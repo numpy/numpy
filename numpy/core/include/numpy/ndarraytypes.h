@@ -867,8 +867,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 typedef struct NpyIter_InternalOnly NpyIter;
 
 /* Iterator function pointers that may be specialized */
-typedef int (*NpyIter_IterNext_Fn )(NpyIter *iter);
-typedef void (*NpyIter_GetCoords_Fn )(NpyIter *iter,
+typedef int (NpyIter_IterNextFunc)(NpyIter *iter);
+typedef void (NpyIter_GetCoordsFunc)(NpyIter *iter,
                                       npy_intp *outcoords);
 
 /*** Global flags that may be passed to the iterator constructors ***/

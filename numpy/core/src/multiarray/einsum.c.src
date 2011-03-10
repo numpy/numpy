@@ -3061,7 +3061,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         ret = NULL;
     }
     else if (NpyIter_GetIterSize(iter) != 0) {
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *stride;
         npy_intp *countptr;

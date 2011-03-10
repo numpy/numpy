@@ -2430,7 +2430,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
     void *transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
 
-    NpyIter_IterNext_Fn dst_iternext, src_iternext;
+    NpyIter_IterNextFunc *dst_iternext, *src_iternext;
     char **dst_dataptr, **src_dataptr;
     npy_intp dst_stride, src_stride;
     npy_intp *dst_countptr, *src_countptr;
@@ -2693,7 +2693,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         npy_uint32 op_flags[2];
         NpyIter *iter;
 
-        NpyIter_IterNext_Fn iternext;
+        NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *stride;
         npy_intp *countptr;
