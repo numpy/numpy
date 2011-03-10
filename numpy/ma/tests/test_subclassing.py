@@ -93,8 +93,12 @@ class TestSubclassing(TestCase):
     def test_masked_unary_operations(self):
         "Tests masked_unary_operation"
         (x, mx) = self.data
-        self.assertTrue(isinstance(log(mx), mmatrix))
-        assert_equal(log(x), np.log(x))
+        olderr = np.seterr(divide='ignore')
+        try:
+            self.assertTrue(isinstance(log(mx), mmatrix))
+            assert_equal(log(x), np.log(x))
+        finally:
+            np.seterr(**olderr)
 
     def test_masked_binary_operations(self):
         "Tests masked_binary_operation"
