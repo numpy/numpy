@@ -1857,7 +1857,7 @@ get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
  * value  2  3  3  2  1 1 2 3 3 2 1 1
  *
  * _npy_pos_index_mirror(4, 3) will return 1, because x[4] = x[1]*/
-static inline npy_intp
+NPY_INLINE static npy_intp
 __npy_pos_remainder(npy_intp i, npy_intp n)
 {
     npy_intp k, l, j;
@@ -1903,7 +1903,7 @@ get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
 #undef _INF_SET_PTR_MIRROR
 
 /* compute l such as i = k * n + l, 0 <= l < |k| */
-static inline npy_intp
+NPY_INLINE static npy_intp
 __npy_euclidean_division(npy_intp i, npy_intp n)
 {
     npy_intp l;
