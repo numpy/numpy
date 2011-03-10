@@ -1,4 +1,5 @@
-from numpy.testing import TestCase, run_module_suite, assert_
+from numpy.testing import TestCase, run_module_suite, assert_,\
+        assert_raises
 from numpy import random
 import numpy as np
 
@@ -317,6 +318,14 @@ class TestRandomDist(TestCase):
                          [1, 0],
                          [0, 0]])
         np.testing.assert_array_equal(actual, desired)
+
+    def test_poisson_exceptions(self):
+        lambig = np.iinfo('l').max
+        lamneg = -1
+        assert_raises(ValueError, np.random.poisson, lamneg)
+        assert_raises(ValueError, np.random.poisson, [lamneg]*10)
+        assert_raises(ValueError, np.random.poisson, lambig)
+        assert_raises(ValueError, np.random.poisson, [lambig]*10)
 
     def test_power(self):
         np.random.seed(self.seed)
