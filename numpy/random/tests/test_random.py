@@ -1,6 +1,7 @@
 from numpy.testing import TestCase, run_module_suite, assert_,\
         assert_raises
 from numpy import random
+from numpy.compat import asbytes
 import numpy as np
 
 
@@ -118,8 +119,8 @@ class TestRandomDist(TestCase):
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
-        desired = '\x82Ui\x9e\xff\x97+Wf\xa5'
-        np.testing.assert_string_equal(actual, desired)
+        desired = asbytes('\x82Ui\x9e\xff\x97+Wf\xa5')
+        np.testing.assert_equal(actual, desired)
 
     def test_shuffle(self):
         np.random.seed(self.seed)
