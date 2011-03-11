@@ -115,11 +115,11 @@ class TestRegression(TestCase):
         """Ticket #72"""
         a = np.array(['test', 'auto'])
         assert_array_equal(a == 'auto', np.array([False,True]))
-        self.assert_(a[1] == 'auto')
-        self.assert_(a[0] != 'auto')
+        self.assertTrue(a[1] == 'auto')
+        self.assertTrue(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
-        self.assert_(b != 'auto')
-        self.assert_(b[0] != 'auto')
+        self.assertTrue(b != 'auto')
+        self.assertTrue(b[0] != 'auto')
 
     def test_unicode_swapping(self,level=rlevel):
         """Ticket #79"""
@@ -160,8 +160,8 @@ class TestRegression(TestCase):
         yb = ((b>2) & (b<6))
         assert_array_almost_equal(xa,ya.nonzero())
         assert_array_almost_equal(xb,yb.nonzero())
-        assert(np.all(a[ya] > 0.5))
-        assert(np.all(b[yb] > 0.5))
+        assert_(np.all(a[ya] > 0.5))
+        assert_(np.all(b[yb] > 0.5))
 
     def test_mem_dot(self,level=rlevel):
         """Ticket #106"""
@@ -183,7 +183,7 @@ class TestRegression(TestCase):
 #        """Ticket #112"""
 #        if np.longfloat(0).itemsize > 8:
 #            a = np.exp(np.array([1000],dtype=np.longfloat))
-#            assert(str(a)[1:9] == str(a[0])[:8])
+#            assert_(str(a)[1:9] == str(a[0])[:8])
 
     def test_argmax(self,level=rlevel):
         """Ticket #119"""
@@ -207,8 +207,8 @@ class TestRegression(TestCase):
         """Ticket #133"""
         a = np.array([3])
         b = np.array(3)
-        assert(type(a.squeeze()) is np.ndarray)
-        assert(type(b.squeeze()) is np.ndarray)
+        assert_(type(a.squeeze()) is np.ndarray)
+        assert_(type(b.squeeze()) is np.ndarray)
 
     def test_add_identity(self,level=rlevel):
         """Ticket #143"""
@@ -347,7 +347,7 @@ class TestRegression(TestCase):
         dt = np.dtype([('one', '<i4'),('two', '<i4')])
         x = np.array((1,2), dtype=dt)
         x = x.byteswap()
-        assert(x['one'] > 1 and x['two'] > 2)
+        assert_(x['one'] > 1 and x['two'] > 2)
 
     def test_method_args(self, level=rlevel):
         # Make sure methods and functions have same default axis
@@ -488,7 +488,7 @@ class TestRegression(TestCase):
                   np.rec.array([(1,2),(3,4)]),
                   np.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
                   np.rec.fromarrays([(1,2),(3,4)])]:
-            assert(a.dtype in [dt0,dt1])
+            assert_(a.dtype in [dt0,dt1])
 
     def test_random_shuffle(self, level=rlevel):
         """Ticket #374"""
@@ -608,6 +608,9 @@ class TestRegression(TestCase):
         assert_equal(np.dot(x,z),np.dot(x,y2))
 
     def test_object_casting(self, level=rlevel):
+        # This used to trigger the object-type version of
+        # the bitwise_or operation, because float64 -> object
+        # casting succeeds
         def rs():
             x = np.ones([484,286])
             y = np.zeros([484,286])
@@ -720,15 +723,15 @@ class TestRegression(TestCase):
         arr = np.zeros(5, dtype=np.object_)
 
         arr[:] = a
-        assert cnt(a) == cnt0_a + 5
+        assert_equal(cnt(a), cnt0_a + 5)
 
         arr[:] = b
-        assert cnt(a) == cnt0_a
-        assert cnt(b) == cnt0_b + 5
+        assert_equal(cnt(a), cnt0_a)
+        assert_equal(cnt(b), cnt0_b + 5)
 
         arr[:2] = c
-        assert cnt(b) == cnt0_b + 3
-        assert cnt(c) == cnt0_c + 2
+        assert_equal(cnt(b), cnt0_b + 3)
+        assert_equal(cnt(c), cnt0_c + 2)
 
         del arr
 
@@ -912,7 +915,6 @@ class TestRegression(TestCase):
     def test_attributes(self, level=rlevel):
         """Ticket #791
         """
-        import numpy as np
         class TestArray(np.ndarray):
             def __new__(cls, data, info):
                 result = np.array(data)
@@ -922,63 +924,63 @@ class TestRegression(TestCase):
             def __array_finalize__(self, obj):
                 self.info = getattr(obj, 'info', '')
         dat = TestArray([[1,2,3,4],[5,6,7,8]],'jubba')
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.resize((4,2))
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.sort()
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.fill(2)
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.put([2,3,4],[6,3,4])
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.setfield(4, np.int32,0)
-        assert dat.info == 'jubba'
+        assert_(dat.info == 'jubba')
         dat.setflags()
-        assert dat.info == 'jubba'
-        assert dat.all(1).info == 'jubba'
-        assert dat.any(1).info == 'jubba'
-        assert dat.argmax(1).info == 'jubba'
-        assert dat.argmin(1).info == 'jubba'
-        assert dat.argsort(1).info == 'jubba'
-        assert dat.astype(TestArray).info == 'jubba'
-        assert dat.byteswap().info == 'jubba'
-        assert dat.clip(2,7).info == 'jubba'
-        assert dat.compress([0,1,1]).info == 'jubba'
-        assert dat.conj().info == 'jubba'
-        assert dat.conjugate().info == 'jubba'
-        assert dat.copy().info == 'jubba'
+        assert_(dat.info == 'jubba')
+        assert_(dat.all(1).info == 'jubba')
+        assert_(dat.any(1).info == 'jubba')
+        assert_(dat.argmax(1).info == 'jubba')
+        assert_(dat.argmin(1).info == 'jubba')
+        assert_(dat.argsort(1).info == 'jubba')
+        assert_(dat.astype(TestArray).info == 'jubba')
+        assert_(dat.byteswap().info == 'jubba')
+        assert_(dat.clip(2,7).info == 'jubba')
+        assert_(dat.compress([0,1,1]).info == 'jubba')
+        assert_(dat.conj().info == 'jubba')
+        assert_(dat.conjugate().info == 'jubba')
+        assert_(dat.copy().info == 'jubba')
         dat2 = TestArray([2, 3, 1, 0],'jubba')
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
                    [20, 21, 22, 23], [30, 31, 32, 33]]
-        assert dat2.choose(choices).info == 'jubba'
-        assert dat.cumprod(1).info == 'jubba'
-        assert dat.cumsum(1).info == 'jubba'
-        assert dat.diagonal().info == 'jubba'
-        assert dat.flatten().info == 'jubba'
-        assert dat.getfield(np.int32,0).info == 'jubba'
-        assert dat.imag.info == 'jubba'
-        assert dat.max(1).info == 'jubba'
-        assert dat.mean(1).info == 'jubba'
-        assert dat.min(1).info == 'jubba'
-        assert dat.newbyteorder().info == 'jubba'
-        assert dat.nonzero()[0].info == 'jubba'
-        assert dat.nonzero()[1].info == 'jubba'
-        assert dat.prod(1).info == 'jubba'
-        assert dat.ptp(1).info == 'jubba'
-        assert dat.ravel().info == 'jubba'
-        assert dat.real.info == 'jubba'
-        assert dat.repeat(2).info == 'jubba'
-        assert dat.reshape((2,4)).info == 'jubba'
-        assert dat.round().info == 'jubba'
-        assert dat.squeeze().info == 'jubba'
-        assert dat.std(1).info == 'jubba'
-        assert dat.sum(1).info == 'jubba'
-        assert dat.swapaxes(0,1).info == 'jubba'
-        assert dat.take([2,3,5]).info == 'jubba'
-        assert dat.transpose().info == 'jubba'
-        assert dat.T.info == 'jubba'
-        assert dat.var(1).info == 'jubba'
-        assert dat.view(TestArray).info == 'jubba'
+        assert_(dat2.choose(choices).info == 'jubba')
+        assert_(dat.cumprod(1).info == 'jubba')
+        assert_(dat.cumsum(1).info == 'jubba')
+        assert_(dat.diagonal().info == 'jubba')
+        assert_(dat.flatten().info == 'jubba')
+        assert_(dat.getfield(np.int32,0).info == 'jubba')
+        assert_(dat.imag.info == 'jubba')
+        assert_(dat.max(1).info == 'jubba')
+        assert_(dat.mean(1).info == 'jubba')
+        assert_(dat.min(1).info == 'jubba')
+        assert_(dat.newbyteorder().info == 'jubba')
+        assert_(dat.nonzero()[0].info == 'jubba')
+        assert_(dat.nonzero()[1].info == 'jubba')
+        assert_(dat.prod(1).info == 'jubba')
+        assert_(dat.ptp(1).info == 'jubba')
+        assert_(dat.ravel().info == 'jubba')
+        assert_(dat.real.info == 'jubba')
+        assert_(dat.repeat(2).info == 'jubba')
+        assert_(dat.reshape((2,4)).info == 'jubba')
+        assert_(dat.round().info == 'jubba')
+        assert_(dat.squeeze().info == 'jubba')
+        assert_(dat.std(1).info == 'jubba')
+        assert_(dat.sum(1).info == 'jubba')
+        assert_(dat.swapaxes(0,1).info == 'jubba')
+        assert_(dat.take([2,3,5]).info == 'jubba')
+        assert_(dat.transpose().info == 'jubba')
+        assert_(dat.T.info == 'jubba')
+        assert_(dat.var(1).info == 'jubba')
+        assert_(dat.view(TestArray).info == 'jubba')
 
     def test_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
@@ -988,8 +990,8 @@ class TestRegression(TestCase):
         buf = np.zeros(40, dtype=np.int8)
         a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
         b = a.tolist()
-        assert( a[0].tolist() == b[0])
-        assert( a[1].tolist() == b[1])
+        assert_( a[0].tolist() == b[0])
+        assert_( a[1].tolist() == b[1])
 
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')
@@ -1129,18 +1131,23 @@ class TestRegression(TestCase):
     def test_array_from_sequence_scalar_array(self):
         """Ticket #1078: segfaults when creating an array with a sequence of 0d
         arrays."""
-        a = np.ones(2)
-        b = np.array(3)
-        assert_raises(ValueError, lambda: np.array((a, b)))
+        a = np.array((np.ones(2), np.array(2)))
+        assert_equal(a.shape, (2,))
+        assert_equal(a.dtype, np.dtype(object))
+        assert_equal(a[0], np.ones(2))
+        assert_equal(a[1], np.array(2))
 
-        t = ((1,), np.array(1))
-        assert_raises(ValueError, lambda: np.array(t))
+        a = np.array(((1,), np.array(1)))
+        assert_equal(a.shape, (2,))
+        assert_equal(a.dtype, np.dtype(object))
+        assert_equal(a[0], (1,))
+        assert_equal(a[1], np.array(1))
 
-    @dec.knownfailureif(True, "This is a corner case, see ticket #1081.")
     def test_array_from_sequence_scalar_array2(self):
         """Ticket #1081: weird array with strange input..."""
         t = np.array([np.array([]), np.array(0, object)])
-        assert_raises(ValueError, lambda: np.array(t))
+        assert_equal(t.shape, (2,))
+        assert_equal(t.dtype, np.dtype(object))
 
     def test_array_too_big(self):
         """Ticket #1080."""
@@ -1440,6 +1447,120 @@ class TestRegression(TestCase):
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0], [1]) # [0] if nonzero() ignores swap
+
+    def test_find_common_type_boolean(self):
+        # Ticket #1695
+        assert_(np.find_common_type([],['?','?']) == '?')
+
+    def test_empty_mul(self):
+        a = np.array([1.])
+        a[1:1] *= 2
+        assert_equal(a, [1.])
+
+    def test_array_side_effect(self):
+        assert_equal(np.dtype('S10').itemsize, 10)
+
+        A = np.array([['abc', 2], ['long   ', '0123456789']], dtype=np.string_)
+
+        # This was throwing an exception because in ctors.c,
+        # discover_itemsize was calling PyObject_Length without checking
+        # the return code.  This failed to get the length of the number 2,
+        # and the exception hung around until something checked
+        # PyErr_Occurred() and returned an error.
+        assert_equal(np.dtype('S10').itemsize, 10)
+
+    def test_any_float(self):
+        # all and any for floats
+        a = np.array([0.1, 0.9])
+        assert_(np.any(a))
+        assert_(np.all(a))
+
+    def test_large_float_sum(self):
+        a = np.arange(10000, dtype='f')
+        assert_equal(a.sum(dtype='d'), a.astype('d').sum())
+
+    def test_ufunc_casting_out(self):
+        a = np.array(1.0, dtype=np.float32)
+        b = np.array(1.0, dtype=np.float64)
+        c = np.array(1.0, dtype=np.float32)
+        np.add(a, b, out=c)
+        assert_equal(c, 2.0)
+
+    def test_array_scalar_contiguous(self):
+        # Array scalars are both C and Fortran contiguous
+        assert_(np.array(1.0).flags.c_contiguous)
+        assert_(np.array(1.0).flags.f_contiguous)
+        assert_(np.array(np.float32(1.0)).flags.c_contiguous)
+        assert_(np.array(np.float32(1.0)).flags.f_contiguous)
+
+    def test_object_array_self_reference(self):
+        # Object arrays with references to themselves can cause problems
+        a = np.array(0, dtype=object)
+        a[()] = a
+        assert_raises(TypeError, int, a)
+        assert_raises(TypeError, long, a)
+        assert_raises(TypeError, float, a)
+        assert_raises(TypeError, oct, a)
+        assert_raises(TypeError, hex, a)
+
+        # This was causing a to become like the above
+        a = np.array(0, dtype=object)
+        a[...] += 1
+        assert_equal(a, 1)
+
+    def test_zerosize_accumulate(self):
+        "Ticket #1733"
+        x = np.array([[42, 0]], dtype=np.uint32)
+        assert_equal(np.add.accumulate(x[:-1,0]), [])
+
+    def test_objectarray_setfield(self):
+        # Setfield directly manipulates the raw array data,
+        # so is invalid for object arrays.
+        x = np.array([1,2,3], dtype=object)
+        assert_raises(RuntimeError, x.setfield, 4, np.int32, 0)
+
+    def test_setting_rank0_string(self):
+        "Ticket #1736"
+        s1 = asbytes("hello1")
+        s2 = asbytes("hello2")
+        a = np.zeros((), dtype="S10")
+        a[()] = s1
+        assert_equal(a, np.array(s1))
+        a[()] = np.array(s2)
+        assert_equal(a, np.array(s2))
+
+        a = np.zeros((), dtype='f4')
+        a[()] = 3
+        assert_equal(a, np.array(3))
+        a[()] = np.array(4)
+        assert_equal(a, np.array(4))
+
+    def test_string_astype(self):
+        "Ticket #1748"
+        s1 = asbytes('black')
+        s2 = asbytes('white')
+        s3 = asbytes('other')
+        a = np.array([[s1],[s2],[s3]])
+        assert_equal(a.dtype, np.dtype('S5'))
+        b = a.astype('str')
+        assert_equal(b.dtype, np.dtype('S5'))
+
+    def test_string_astype(self):
+        """Ticket #1756 """
+        s = asbytes('0123456789abcdef')
+        a = np.array([s]*5)
+        for i in range(1,17):
+            a1 = np.array(a, "|S%d"%i)
+            a2 = np.array([s[:i]]*5)
+            assert_equal(a1, a2)
+
+    def test_fields_strides(self):
+        "Ticket #1760"
+        r=np.fromstring('abcdefghijklmnop'*4*3, dtype='i4,(2,3)u2')
+        assert_equal(r[0:3:2]['f1'], r['f1'][0:3:2])
+        assert_equal(r[0:3:2]['f1'][0], r[0:3:2][0]['f1'])
+        assert_equal(r[0:3:2]['f1'][0][()], r[0:3:2][0]['f1'][()])
+        assert_equal(r[0:3:2]['f1'][0].strides, r[0:3:2][0]['f1'].strides)
 
 if __name__ == "__main__":
     run_module_suite()

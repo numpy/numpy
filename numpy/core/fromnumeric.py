@@ -1051,13 +1051,16 @@ def ravel(a, order='C'):
     Parameters
     ----------
     a : array_like
-        Input array.  The elements in `a` are read in the order specified by
+        Input array.  The elements in ``a`` are read in the order specified by
         `order`, and packed as a 1-D array.
-    order : {'C','F', 'A'}, optional
-        The elements of `a` are read in this order.  It can be
-        'C' for row-major order, `F` for column-major order, or
-        'A' to preserve the order of `a` when possible.
-        By default, row-major order is used.
+    order : {'C','F', 'A', 'K'}, optional
+        The elements of ``a`` are read in this order. 'C' means to view
+        the elements in C (row-major) order. 'F' means to view the elements
+        in Fortran (column-major) order. 'A' means to view the elements
+        in 'F' order if a is Fortran contiguous, 'C' order otherwise.
+        'K' means to view the elements in the order they occur in memory,
+        except for reversing the data when strides are negative.
+        By default, 'C' order is used.
 
     Returns
     -------
@@ -1092,12 +1095,33 @@ def ravel(a, order='C'):
     >>> print np.ravel(x, order='F')
     [1 4 2 5 3 6]
 
-    When `order` is 'A', it will preserve the array's 'C' or 'F' ordering:
+    When ``order`` is 'A', it will preserve the array's 'C' or 'F' ordering:
 
     >>> print np.ravel(x.T)
     [1 4 2 5 3 6]
     >>> print np.ravel(x.T, order='A')
     [1 2 3 4 5 6]
+
+    When ``order`` is 'K', it will preserve orderings that are neither 'C'
+    nor 'F', but won't reverse axes:
+
+    >>> a = np.arange(3)[::-1]; a
+    array([2, 1, 0])
+    >>> a.ravel(order='C')
+    array([2, 1, 0])
+    >>> a.ravel(order='K')
+    array([2, 1, 0])
+
+    >>> a = np.arange(12).reshape(2,3,2).swapaxes(1,2); a
+    array([[[ 0,  2,  4],
+            [ 1,  3,  5]],
+           [[ 6,  8, 10],
+            [ 7,  9, 11]]])
+    >>> a.ravel(order='C')
+    array([ 0,  2,  4,  1,  3,  5,  6,  8, 10,  7,  9, 11])
+    >>> a.ravel(order='K')
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+
     """
     return asarray(a).ravel(order)
 
@@ -1136,6 +1160,8 @@ def nonzero(a):
         array.
     ndarray.nonzero :
         Equivalent ndarray method.
+    count_nonzero :
+        Counts the number of non-zero elements in the input array.
 
     Examples
     --------
@@ -1762,8 +1788,10 @@ def amax(a, axis=None, out=None):
 
     Returns
     -------
-    amax : ndarray
-        A new array or scalar array with the result.
+    amax : ndarray or scalar
+        Maximum of `a`. If `axis` is None, the result is a scalar value.
+        If `axis` is given, the result is an array of dimension
+        ``a.ndim - 1``.
 
     See Also
     --------

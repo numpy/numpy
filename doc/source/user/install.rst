@@ -126,13 +126,21 @@ means that g77 has been used. If libgfortran.so is a a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 
-Disabling ATLAS and other accelerater libraries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Disabling ATLAS and other accelerated libraries
+-----------------------------------------------
 
 Usage of ATLAS and other accelerated libraries in Numpy can be disabled
 via::
 
     BLAS=None LAPACK=None ATLAS=None python setup.py build
+
+
+Supplying additional compiler flags
+-----------------------------------
+
+Additional compiler flags can be supplied by setting the ``OPT``,
+``FOPT`` (for Fortran), and ``CC`` environment variables.
+
 
 Building with ATLAS support
 ---------------------------

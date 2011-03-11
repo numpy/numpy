@@ -177,7 +177,7 @@ double npy_spacing(double x);
 #ifndef NPY_HAVE_DECL_SIGNBIT
     int _npy_signbit_f(float x);
     int _npy_signbit_d(double x);
-    int _npy_signbit_ld(npy_longdouble x);
+    int _npy_signbit_ld(long double x);
     #define npy_signbit(x) \
         (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
          : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
@@ -421,5 +421,15 @@ npy_clongdouble npy_csqrtl(npy_clongdouble z);
 
 npy_clongdouble npy_ccosl(npy_clongdouble z);
 npy_clongdouble npy_csinl(npy_clongdouble z);
+
+/*
+ * Functions that set the floating point error
+ * status word.
+ */
+
+void npy_set_floatstatus_divbyzero(void);
+void npy_set_floatstatus_overflow(void);
+void npy_set_floatstatus_underflow(void);
+void npy_set_floatstatus_invalid(void);
 
 #endif

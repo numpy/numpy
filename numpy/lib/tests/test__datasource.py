@@ -83,7 +83,9 @@ class TestDataSourceOpen(TestCase):
         del self.ds
 
     def test_ValidHTTP(self):
-        assert self.ds.open(valid_httpurl())
+        fh = self.ds.open(valid_httpurl())
+        assert_(fh)
+        fh.close()
 
     def test_InvalidHTTP(self):
         url = invalid_httpurl()
@@ -92,14 +94,16 @@ class TestDataSourceOpen(TestCase):
             self.ds.open(url)
         except IOError, e:
             # Regression test for bug fixed in r4342.
-            assert e.errno is None
+            assert_(e.errno is None)
 
     def test_InvalidHTTPCacheURLError(self):
         self.assertRaises(URLError, self.ds._cache, invalid_httpurl())
 
     def test_ValidFile(self):
         local_file = valid_textfile(self.tmpdir)
-        assert self.ds.open(local_file)
+        fh = self.ds.open(local_file)
+        assert_(fh)
+        fh.close()
 
     def test_InvalidFile(self):
         invalid_file = invalid_textfile(self.tmpdir)
@@ -150,7 +154,7 @@ class TestDataSourceExists(TestCase):
         del self.ds
 
     def test_ValidHTTP(self):
-        assert self.ds.exists(valid_httpurl())
+        assert_(self.ds.exists(valid_httpurl()))
 
     def test_InvalidHTTP(self):
         self.assertEqual(self.ds.exists(invalid_httpurl()), False)
@@ -158,11 +162,11 @@ class TestDataSourceExists(TestCase):
     def test_ValidFile(self):
         # Test valid file in destpath
         tmpfile = valid_textfile(self.tmpdir)
-        assert self.ds.exists(tmpfile)
+        assert_(self.ds.exists(tmpfile))
         # Test valid local file not in destpath
         localdir = mkdtemp()
         tmpfile = valid_textfile(localdir)
-        assert self.ds.exists(tmpfile)
+        assert_(self.ds.exists(tmpfile))
         rmtree(localdir)
 
     def test_InvalidFile(self):
@@ -214,13 +218,13 @@ class TestDataSourceAbspath(TestCase):
 
         tmp_path = lambda x: os.path.abspath(self.ds.abspath(x))
 
-        assert tmp_path(valid_httpurl()).startswith(self.tmpdir)
-        assert tmp_path(invalid_httpurl()).startswith(self.tmpdir)
-        assert tmp_path(tmpfile).startswith(self.tmpdir)
-        assert tmp_path(tmpfilename).startswith(self.tmpdir)
+        assert_(tmp_path(valid_httpurl()).startswith(self.tmpdir))
+        assert_(tmp_path(invalid_httpurl()).startswith(self.tmpdir))
+        assert_(tmp_path(tmpfile).startswith(self.tmpdir))
+        assert_(tmp_path(tmpfilename).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert tmp_path(http_path+fn).startswith(self.tmpdir)
-            assert tmp_path(fn).startswith(self.tmpdir)
+            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
@@ -253,10 +257,10 @@ class TestRepositoryAbspath(TestCase):
 
     def test_sandboxing(self):
         tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
-        assert tmp_path(valid_httpfile()).startswith(self.tmpdir)
+        assert_(tmp_path(valid_httpfile()).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert tmp_path(http_path+fn).startswith(self.tmpdir)
-            assert tmp_path(fn).startswith(self.tmpdir)
+            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
@@ -280,14 +284,14 @@ class TestRepositoryExists(TestCase):
     def test_ValidFile(self):
         # Create local temp file
         tmpfile = valid_textfile(self.tmpdir)
-        assert self.repos.exists(tmpfile)
+        assert_(self.repos.exists(tmpfile))
 
     def test_InvalidFile(self):
         tmpfile = invalid_textfile(self.tmpdir)
         self.assertEqual(self.repos.exists(tmpfile), False)
 
     def test_RemoveHTTPFile(self):
-        assert self.repos.exists(valid_httpurl())
+        assert_(self.repos.exists(valid_httpurl()))
 
     def test_CachedHTTPFile(self):
         localfile = valid_httpurl()
@@ -298,7 +302,7 @@ class TestRepositoryExists(TestCase):
         local_path = os.path.join(self.repos._destpath, netloc)
         os.mkdir(local_path, 0700)
         tmpfile = valid_textfile(local_path)
-        assert self.repos.exists(tmpfile)
+        assert_(self.repos.exists(tmpfile))
 
 class TestOpenFunc(TestCase):
     def setUp(self):
@@ -310,9 +314,13 @@ class TestOpenFunc(TestCase):
     def test_DataSourceOpen(self):
         local_file = valid_textfile(self.tmpdir)
         # Test case where destpath is passed in
-        assert datasource.open(local_file, destpath=self.tmpdir)
+        fp = datasource.open(local_file, destpath=self.tmpdir)
+        assert_(fp)
+        fp.close()
         # Test case where default destpath is used
-        assert datasource.open(local_file)
+        fp = datasource.open(local_file)
+        assert_(fp)
+        fp.close()
 
 
 if __name__ == "__main__":

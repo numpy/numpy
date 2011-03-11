@@ -7,7 +7,11 @@
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline
 #elif defined(__GNUC__)
-        #define NPY_INLINE inline
+	#if defined(__STRICT_ANSI__)
+		#define NPY_INLINE __inline__
+	#else
+		#define NPY_INLINE inline
+	#endif
 #else
         #define NPY_INLINE
 #endif

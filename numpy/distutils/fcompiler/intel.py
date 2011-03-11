@@ -136,9 +136,9 @@ class IntelItaniumFCompiler(IntelFCompiler):
 class IntelEM64TFCompiler(IntelFCompiler):
     compiler_type = 'intelem'
     compiler_aliases = ()
-    description = 'Intel Fortran Compiler for EM64T-based apps'
+    description = 'Intel Fortran Compiler for 64-bit apps'
 
-    version_match = intel_version_match('EM64T-based|Intel\\(R\\) 64')
+    version_match = intel_version_match('EM64T-based|Intel\\(R\\) 64|64|IA-64|64-bit')
 
     possible_executables = ['ifort', 'efort', 'efc']
 
@@ -165,9 +165,9 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
     compiler_type = 'intelv'
     description = 'Intel Visual Fortran Compiler for 32-bit apps'
     version_match = intel_version_match('32-bit|IA-32')
-    
+
     def update_executables(self):
-        f = dummy_fortran_file()    
+        f = dummy_fortran_file()
         self.executables['version_cmd'] = ['<F77>', '/FI', '/c',
                                            f + '.f', '/o', f + '.o']
 

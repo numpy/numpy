@@ -151,13 +151,14 @@ def roots(p):
     Return the roots of a polynomial with coefficients given in p.
 
     The values in the rank-1 array `p` are coefficients of a polynomial.
-    If the length of `p` is n+1 then the polynomial is described by
-    p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
+    If the length of `p` is n+1 then the polynomial is described by::
+
+      p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
 
     Parameters
     ----------
-    p : array_like of shape(M,)
-        Rank-1 array of polynomial co-efficients.
+    p : array_like
+        Rank-1 array of polynomial coefficients.
 
     Returns
     -------
@@ -166,32 +167,29 @@ def roots(p):
 
     Raises
     ------
-    ValueError:
+    ValueError :
         When `p` cannot be converted to a rank-1 array.
 
     See also
     --------
-
-    poly : Find the coefficients of a polynomial with
-         a given sequence of roots.
+    poly : Find the coefficients of a polynomial with a given sequence
+           of roots.
     polyval : Evaluate a polynomial at a point.
     polyfit : Least squares polynomial fit.
     poly1d : A one-dimensional polynomial class.
 
     Notes
     -----
-
     The algorithm relies on computing the eigenvalues of the
     companion matrix [1]_.
 
     References
     ----------
-    .. [1] Wikipedia, "Companion matrix",
-           http://en.wikipedia.org/wiki/Companion_matrix
+    .. [1] R. A. Horn & C. R. Johnson, *Matrix Analysis*.  Cambridge, UK:
+        Cambridge University Press, 1999, pp. 146-7.
 
     Examples
     --------
-
     >>> coeff = [3.2, 2, 1]
     >>> np.roots(coeff)
     array([-0.3125+0.46351241j, -0.3125-0.46351241j])

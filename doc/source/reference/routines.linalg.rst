@@ -15,6 +15,7 @@ Matrix and vector products
    inner
    outer
    tensordot
+   einsum
    linalg.matrix_power
    kron
 

@@ -313,7 +313,7 @@ initumath_tests(void)
 
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else    
+#else
     m = Py_InitModule("umath_tests", UMath_TestsMethods);
 #endif
     if (m == NULL)

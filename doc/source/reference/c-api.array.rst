@@ -158,6 +158,24 @@ From scratch
     *dims* and *strides* are copied into newly allocated dimension and
     strides arrays for the new array object.
 
+.. cfunction:: PyObject* PyArray_NewLikeArray(PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr)
+
+    .. versionadded:: 1.6
+
+   This function steals a reference to *descr* if it is not NULL.
+
+   This array creation routine allows for the convenient creation of
+   a new array matching an existing array's shapes and memory layout,
+   possibly changing the layout and/or data type.
+
+   When *order* is :cdata:`NPY_ANYORDER`, the result order is
+   :cdata:`NPY_FORTRANORDER` if *prototype* is a fortran array,
+   :cdata:`NPY_CORDER` otherwise.  When *order* is
+   :cdata:`NPY_KEEPORDER`, the result order matches that of *prototype*, even
+   when the axes of *prototype* aren't in C or Fortran order.
+
+   If *descr* is NULL, the data type of *prototype* is used.
+
 .. cfunction:: PyObject* PyArray_New(PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
     This is similar to :cfunc:`PyArray_DescrNew` (...) except you
@@ -358,26 +376,88 @@ From other objects
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
 
-    .. cvar:: NPY_INOUT_ARRAY
-
-        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED`
-
-    .. cvar:: NPY_INOUT_FARRAY
-
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED`
-
     .. cvar:: NPY_OUT_ARRAY
 
         :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+        :cdata:`NPY_ALIGNED`
 
     .. cvar:: NPY_OUT_FARRAY
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED` \| :cdata:`UPDATEIFCOPY`
+        :cdata:`NPY_ALIGNED`
 
+    .. cvar:: NPY_INOUT_ARRAY
+
+        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
+        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+
+    .. cvar:: NPY_INOUT_FARRAY
+
+        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
+        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+
+.. cfunction:: int PyArray_GetArrayParamsFromObject(PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, PyArrayObject** out_arr, PyObject* context)
+
+    .. versionadded:: 1.6
+
+    Retrieves the array parameters for viewing/converting an arbitrary
+    PyObject* to a NumPy array. This allows the "innate type and shape"
+    of Python list-of-lists to be discovered without
+    actually converting to an array. PyArray_FromAny calls this function
+    to analyze its input.
+
+    In some cases, such as structured arrays and the __array__ interface,
+    a data type needs to be used to make sense of the object.  When
+    this is needed, provide a Descr for 'requested_dtype', otherwise
+    provide NULL. This reference is not stolen. Also, if the requested
+    dtype doesn't modify the interpretation of the input, out_dtype will
+    still get the "innate" dtype of the object, not the dtype passed
+    in 'requested_dtype'.
+
+    If writing to the value in 'op' is desired, set the boolean
+    'writeable' to 1.  This raises an error when 'op' is a scalar, list
+    of lists, or other non-writeable 'op'. This differs from passing
+    NPY_WRITEABLE to PyArray_FromAny, where the writeable array may
+    be a copy of the input.
+
+    When success (0 return value) is returned, either out_arr
+    is filled with a non-NULL PyArrayObject and
+    the rest of the parameters are untouched, or out_arr is
+    filled with NULL, and the rest of the parameters are filled.
+
+    Typical usage:
+
+    .. code-block:: c
+
+        PyArrayObject *arr = NULL;
+        PyArray_Descr *dtype = NULL;
+        int ndim = 0;
+        npy_intp dims[NPY_MAXDIMS];
+
+        if (PyArray_GetArrayParamsFromObject(op, NULL, 1, &dtype,
+                                            &ndim, &dims, &arr, NULL) < 0) {
+            return NULL;
+        }
+        if (arr == NULL) {
+            ... validate/change dtype, validate flags, ndim, etc ...
+            // Could make custom strides here too
+            arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
+                                        dims, NULL,
+                                        fortran ? NPY_F_CONTIGUOUS : 0,
+                                        NULL);
+            if (arr == NULL) {
+                return NULL;
+            }
+            if (PyArray_CopyObject(arr, op) < 0) {
+                Py_DECREF(arr);
+                return NULL;
+            }
+        }
+        else {
+            ... in this case the other parameters weren't filled, just
+                validate and possibly copy arr itself ...
+        }
+        ... use arr ...
 
 .. cfunction:: PyObject* PyArray_CheckFromAny(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context)
 
@@ -817,6 +897,9 @@ Converting data types
 
 .. cfunction:: int PyArray_CastTo(PyArrayObject* out, PyArrayObject* in)
 
+    As of 1.6, this function simply calls :cfunc:`PyArray_CopyInto`,
+    which handles the casting.
+
     Cast the elements of the array *in* into the array *out*. The
     output array should be writeable, have an integer-multiple of the
     number of elements in the input array (more than one copy can be
@@ -844,14 +927,62 @@ Converting data types
 
 .. cfunction:: int PyArray_CanCastTo(PyArray_Descr* fromtype, PyArray_Descr* totype)
 
+    :cfunc:`PyArray_CanCastTypeTo` supercedes this function in
+    NumPy 1.6 and later.
+
+    Equivalent to PyArray_CanCastTypeTo(fromtype, totype, NPY_SAFE_CASTING).
+
+.. cfunction:: int PyArray_CanCastTypeTo(PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING casting)
+
+    .. versionadded:: 1.6
+
     Returns non-zero if an array of data type *fromtype* (which can
     include flexible types) can be cast safely to an array of data
-    type *totype* (which can include flexible types). This is
-    basically a wrapper around :cfunc:`PyArray_CanCastSafely` with
-    additional support for size checking if *fromtype* and *totype*
-    are :cdata:`NPY_STRING` or :cdata:`NPY_UNICODE`.
+    type *totype* (which can include flexible types) according to
+    the casting rule *casting*. For simple types with :cdata:`NPY_SAFE_CASTING`,
+    this is basically a wrapper around :cfunc:`PyArray_CanCastSafely`, but
+    for flexible types such as strings or unicode, it produces results
+    taking into account their sizes.
+
+.. cfunction:: int PyArray_CanCastArrayTo(PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
+
+    .. versionadded:: 1.6
+
+    Returns non-zero if *arr* can be cast to *totype* according
+    to the casting rule given in *casting*.  If *arr* is an array
+    scalar, its value is taken into account, and non-zero is also
+    returned when the value will not overflow or be truncated to
+    an integer when converting to a smaller type.
+
+.. cfunction:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
+
+    .. versionadded:: 1.6
+
+    If *arr* is an array, returns its data type descriptor, but if
+    *arr* is an array scalar (has 0 dimensions), it finds the data type
+    of smallest kind and size to which the value may be converted
+    without overflow or truncation to an integer.
+
+.. cfunction:: PyArray_Descr* PyArray_PromoteTypes(PyArray_Descr* type1, PyArray_Descr* type2)
+
+    .. versionadded:: 1.6
+
+    Finds the data type of smallest size and kind to which *type1* and
+    *type2* may be safely converted.
+
+.. cfunction:: PyArray_Descr* PyArray_ResultType(npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, PyArray_Descr**dtypes)
+
+    .. versionadded:: 1.6
+
+    This applies PyArray_PromoteTypes to all the inputs, along with
+    using the NumPy rules for combining scalars and arrays, to
+    determine the output type of a set of operands.  This is the
+    same result type that ufuncs produce.
 
 .. cfunction:: int PyArray_ObjectType(PyObject* op, int mintype)
+
+    This function is superceded by :cfunc:`PyArray_MinScalarType` and/or
+    :cfunc:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -863,6 +994,8 @@ Converting data types
 
 .. cfunction:: void PyArray_ArrayType(PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
 
+    This function is superceded by :cfunc:`PyArray_ResultType`.
+
     This function works similarly to :cfunc:`PyArray_ObjectType` (...)
     except it handles flexible arrays. The *mintype* argument can have
     an itemsize member and the *outtype* argument will have an
@@ -870,6 +1003,11 @@ Converting data types
     the object *op*.
 
 .. cfunction:: PyArrayObject** PyArray_ConvertToCommonType(PyObject* op, int* n)
+
+    The functionality this provides is largely superceded by iterator
+    :ctype:`NpyIter` introduced in 1.6, with flag
+    :cdata:`NPY_ITER_COMMON_DTYPE` or with the same dtype parameter for
+    all operands.
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
@@ -1018,8 +1156,8 @@ getting (and, if appropriate, setting) these flags.
 Memory areas of all kinds can be pointed to by an ndarray,
 necessitating these flags.  If you get an arbitrary ``PyArrayObject``
 in C-code, you need to be aware of the flags that are set.  If you
-need to guarantee a certain kind of array (like ``NPY_CONTIGUOUS`` and
-``NPY_BEHAVED``), then pass these requirements into the
+need to guarantee a certain kind of array (like :cdata:`NPY_C_CONTIGUOUS` and
+:cdata:`NPY_BEHAVED`), then pass these requirements into the
 PyArray_FromAny function.
 
 
@@ -1044,10 +1182,10 @@ associated with an array.
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
 
-Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN``
+Notice that contiguous 1-d arrays are always both Fortran
 contiguous and C contiguous. Both of these flags can be checked and
 are convenience flags only as whether or not an array is
-``NPY_CONTIGUOUS`` or ``NPY_FORTRAN`` can be determined by the
+:cdata:`NPY_C_CONTIGUOUS` or :cdata:`NPY_F_CONTIGUOUS` can be determined by the
 ``strides``, ``dimensions``, and ``itemsize`` attributes.
 
 .. cvar:: NPY_OWNDATA
@@ -1085,7 +1223,7 @@ are convenience flags only as whether or not an array is
 
 :cfunc:`PyArray_UpdateFlags` (obj, flags) will update the
 ``obj->flags`` for ``flags`` which can be any of
-:cdata:`NPY_CONTIGUOUS`, :cdata:`NPY_FORTRAN`, :cdata:`NPY_ALIGNED`,
+:cdata:`NPY_C_CONTIGUOUS`, :cdata:`NPY_F_CONTIGUOUS`, :cdata:`NPY_ALIGNED`,
 or :cdata:`NPY_WRITEABLE`.
 
 
@@ -1532,6 +1670,12 @@ Item selection and manipulation
     ). Return the *offset* diagonals of the 2-d arrays defined by
     *axis1* and *axis2*.
 
+.. cfunction:: npy_intp PyArray_CountNonzero(PyArrayObject* self)
+
+    .. versionadded:: 1.6
+
+    Counts the number of non-zero elements in the array object *self*.
+
 .. cfunction:: PyObject* PyArray_Nonzero(PyArrayObject* self)
 
     Equivalent to :meth:`ndarray.nonzero` (*self*). Returns a tuple of index
@@ -1747,6 +1891,29 @@ Array Functions
     second-to-last dimension of *obj2*. For 2-d arrays this is a
     matrix-product. Neither array is conjugated.
 
+.. cfunction:: PyObject* PyArray_MatrixProduct2(PyObject* obj1, PyObject* obj, PyObject* out)
+
+    .. versionadded:: 1.6
+
+    Same as PyArray_MatrixProduct, but store the result in *out*.  The
+    output array must have the correct shape, type, and be
+    C-contiguous, or an exception is raised.
+
+.. cfunction:: PyObject* PyArray_EinsteinSum(char* subscripts, npy_intp nop, PyArrayObject** op_in, PyArray_Descr* dtype, NPY_ORDER order, NPY_CASTING casting, PyArrayObject* out)
+
+   .. versionadded:: 1.6
+
+    Applies the einstein summation convention to the array operands
+    provided, returning a new array or placing the result in *out*.
+    The string in *subscripts* is a comma separated list of index
+    letters. The number of operands is in *nop*, and *op_in* is an
+    array containing those operands. The data type of the output can
+    be forced with *dtype*, the output order can be forced with *order*
+    (:cdata:`NPY_KEEPORDER` is recommended), and when *dtype* is specified,
+    *casting* indicates how permissive the data conversion should be.
+
+    See the :func:`einsum` function for more details.
+
 .. cfunction:: PyObject* PyArray_CopyAndTranspose(PyObject \* op)
 
     A specialized copy and transpose function that works only for 2-d
@@ -1826,6 +1993,9 @@ Other functions
 
 Array Iterators
 ---------------
+
+As of Numpy 1.6, these array iterators are superceded by
+the new array iterator, :ctype:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
 N-dimensional array quickly and efficiently. Section `2
@@ -2339,6 +2509,19 @@ to.
     Convert Python strings into one of :cdata:`NPY_SEARCHLEFT` (starts with 'l'
     or 'L'), or :cdata:`NPY_SEARCHRIGHT` (starts with 'r' or 'R').
 
+.. cfunction:: int PyArray_OrderConverter(PyObject* obj, NPY_ORDER* order)
+
+   Convert the Python strings 'C', 'F', 'A', and 'K' into the :ctype:`NPY_ORDER`
+   enumeration :cdata:`NPY_CORDER`, :cdata:`NPY_FORTRANORDER`,
+   :cdata:`NPY_ANYORDER`, and :cdata:`NPY_KEEPORDER`.
+
+.. cfunction:: int PyArray_CastingConverter(PyObject* obj, NPY_CASTING* casting)
+
+   Convert the Python strings 'no', 'equiv', 'safe', 'same_kind', and
+   'unsafe' into the NPY_CASTING enumeration :cdata:`NPY_NO_CASTING`,
+   :cdata:`NPY_EQUIV_CASTING`, :cdata:`NPY_SAFE_CASTING`,
+   :cdata:`NPY_SAME_KIND_CASTING`, and :cdata:`NPY_UNSAFE_CASTING`.
+
 Other conversions
 ^^^^^^^^^^^^^^^^^
 
@@ -2801,7 +2984,6 @@ Enumerated Types
         **INTNEG_SCALAR**, **FLOAT_SCALAR**, **COMPLEX_SCALAR**,
         **OBJECT_SCALAR**
 
-
     .. cvar:: NPY_NSCALARKINDS
 
        Defined to be the number of scalar kinds
@@ -2809,11 +2991,27 @@ Enumerated Types
 
 .. ctype:: NPY_ORDER
 
-    A variable type indicating the order that an array should be
-    interpreted in. The value of a variable of this type can be
-    :cdata:`NPY_{ORDER}` where ``{ORDER}`` is
+    An enumeration type indicating the element order that an array should be
+    interpreted in. When a brand new array is created, generally
+    only **NPY_CORDER** and **NPY_FORTRANORDER** are used, whereas
+    when one or more inputs are provided, the order can be based on them.
 
-        **ANYORDER**, **CORDER**, **FORTRANORDER**
+    .. cvar:: NPY_ANYORDER
+
+        Fortran order if all the inputs are Fortran, C otherwise.
+
+    .. cvar:: NPY_CORDER
+
+        C order.
+
+    .. cvar:: NPY_FORTRANORDER
+
+        Fortran order.
+
+    .. cvar:: NPY_KEEPORDER
+
+        An order as close to the order of the inputs as possible, even
+        if the input is in neither C nor Fortran order.
 
 .. ctype:: NPY_CLIPMODE
 
@@ -2822,6 +3020,36 @@ Enumerated Types
     can be :cdata:`NPY_{MODE}` where ``{MODE}`` is
 
         **CLIP**, **WRAP**, **RAISE**
+
+.. ctype:: NPY_CASTING
+
+    .. versionadded:: 1.6
+
+    An enumeration type indicating how permissive data conversions should
+    be. This is used by the iterator added in NumPy 1.6, and is intended
+    to be used more broadly in a future version.
+
+    .. cvar:: NPY_NO_CASTING
+
+        Only allow identical types.
+
+    .. cvar:: NPY_EQUIV_CASTING
+
+       Allow identical and casts involving byte swapping.
+
+    .. cvar:: NPY_SAFE_CASTING
+
+       Only allow casts which will not cause values to be rounded,
+       truncated, or otherwise changed.
+
+    .. cvar:: NPY_SAME_KIND_CASTING
+
+       Allow any safe casts, and casts between types of the same kind.
+       For example, float64 -> float32 is permitted with this rule.
+
+    .. cvar:: NPY_UNSAFE_CASTING
+
+       Allow any cast, no matter what kind of data loss may occur.
 
 .. index::
    pair: ndarray; C-API

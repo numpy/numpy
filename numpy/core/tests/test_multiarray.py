@@ -239,6 +239,53 @@ class TestScalarIndexing(TestCase):
         self.assertRaises(IndexError, subscript, a, (newaxis, 0))
         self.assertRaises(IndexError, subscript, a, (newaxis,)*50)
 
+    def test_overlapping_assignment(self):
+        # With positive strides
+        a = np.arange(4)
+        a[:-1] = a[1:]
+        assert_equal(a, [1,2,3,3])
+
+        a = np.arange(4)
+        a[1:] = a[:-1]
+        assert_equal(a, [0,0,1,2])
+
+        # With positive and negative strides
+        a = np.arange(4)
+        a[:] = a[::-1]
+        assert_equal(a, [3,2,1,0])
+
+        a = np.arange(6).reshape(2,3)
+        a[::-1,:] = a[:,::-1]
+        assert_equal(a, [[5,4,3],[2,1,0]])
+
+        a = np.arange(6).reshape(2,3)
+        a[::-1,::-1] = a[:,::-1]
+        assert_equal(a, [[3,4,5],[0,1,2]])
+
+        # With just one element overlapping
+        a = np.arange(5)
+        a[:3] = a[2:]
+        assert_equal(a, [2,3,4,3,4])
+
+        a = np.arange(5)
+        a[2:] = a[:3]
+        assert_equal(a, [0,1,0,1,2])
+
+        a = np.arange(5)
+        a[2::-1] = a[2:]
+        assert_equal(a, [4,3,2,3,4])
+
+        a = np.arange(5)
+        a[2:] = a[2::-1]
+        assert_equal(a, [0,1,2,1,0])
+
+        a = np.arange(5)
+        a[2::-1] = a[:1:-1]
+        assert_equal(a, [2,3,4,3,4])
+
+        a = np.arange(5)
+        a[:1:-1] = a[2::-1]
+        assert_equal(a, [0,1,0,1,2])
 
 class TestCreation(TestCase):
     def test_from_attribute(self):
@@ -254,6 +301,35 @@ class TestCreation(TestCase):
         for type in types :
             msg = 'String conversion for %s' % type
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
+
+    def test_non_sequence_sequence(self):
+        """Should not segfault.
+
+        Class Fail breaks the sequence protocol for new style classes, i.e.,
+        those derived from object. Class Map is a mapping type indicated by
+        raising a ValueError. At some point we may raise a warning instead
+        of an error in the Fail case.
+
+        """
+        class Fail(object):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, index):
+                raise ValueError()
+
+        class Map(object):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, index):
+                raise KeyError()
+
+        a = np.array([Map()])
+        assert_(a.shape == (1,))
+        assert_(a.dtype == np.dtype(object))
+        assert_raises(ValueError, np.array, [Fail()])
+
 
 class TestStructured(TestCase):
     def test_subarray_field_access(self):
@@ -594,6 +670,14 @@ class TestMethods(TestCase):
         msg = "Test complex searchsorted with nans, side='r'"
         b = a.searchsorted(a, side='r')
         assert_equal(b, np.arange(1,10), msg)
+        msg = "Test searchsorted with little endian, side='l'"
+        a = np.array([0,128],dtype='<i4')
+        b = a.searchsorted(np.array(128,dtype='<i4'))
+        assert_equal(b, 1, msg)
+        msg = "Test searchsorted with big endian, side='l'"
+        a = np.array([0,128],dtype='>i4')
+        b = a.searchsorted(np.array(128,dtype='>i4'))
+        assert_equal(b, 1, msg)
 
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
@@ -620,18 +704,51 @@ class TestMethods(TestCase):
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
         assert_equal(a.ravel(), [0,1,2,3])
+        assert_(not a.ravel().flags.owndata)
         assert_equal(a.ravel('F'), [0,2,1,3])
         assert_equal(a.ravel(order='C'), [0,1,2,3])
         assert_equal(a.ravel(order='F'), [0,2,1,3])
         assert_equal(a.ravel(order='A'), [0,1,2,3])
+        assert_(not a.ravel(order='A').flags.owndata)
+        assert_equal(a.ravel(order='K'), [0,1,2,3])
+        assert_(not a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel(), a.reshape(-1))
 
         a = np.array([[0,1],[2,3]], order='F')
         assert_equal(a.ravel(), [0,1,2,3])
         assert_equal(a.ravel(order='A'), [0,2,1,3])
+        assert_equal(a.ravel(order='K'), [0,2,1,3])
+        assert_(not a.ravel(order='A').flags.owndata)
+        assert_(not a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel(), a.reshape(-1))
         assert_equal(a.ravel(order='A'), a.reshape(-1, order='A'))
 
+        a = np.array([[0,1],[2,3]])[::-1,:]
+        assert_equal(a.ravel(), [2,3,0,1])
+        assert_equal(a.ravel(order='C'), [2,3,0,1])
+        assert_equal(a.ravel(order='F'), [2,0,3,1])
+        assert_equal(a.ravel(order='A'), [2,3,0,1])
+        # 'K' doesn't reverse the axes of negative strides
+        assert_equal(a.ravel(order='K'), [2,3,0,1])
+        assert_(a.ravel(order='K').flags.owndata)
+
+    def test_setasflat(self):
+        # In this case, setasflat can treat a as a flat array,
+        # and must treat b in chunks of 3
+        a = np.arange(3*3*4).reshape(3,3,4)
+        b = np.arange(3*4*3, dtype='f4').reshape(3,4,3).T
+
+        assert_(not np.all(a.ravel() == b.ravel()))
+        a.setasflat(b)
+        assert_equal(a.ravel(), b.ravel())
+
+        # A case where the strides of neither a nor b can be collapsed
+        a = np.arange(3*2*4).reshape(3,2,4)[:,:,:-1]
+        b = np.arange(3*3*3, dtype='f4').reshape(3,3,3).T[:,:,:-1]
+
+        assert_(not np.all(a.ravel() == b.ravel()))
+        a.setasflat(b)
+        assert_equal(a.ravel(), b.ravel())
 
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
@@ -1088,6 +1205,31 @@ class TestIO(object):
                          array([1,2,3,4]),
                          dtype='<f4')
 
+    @dec.slow # takes > 1 minute on mechanical hard drive
+    def test_big_binary(self):
+        """Test workarounds for 32-bit limited fwrite, fseek, and ftell
+        calls in windows. These normally would hang doing something like this.
+        See http://projects.scipy.org/numpy/ticket/1660"""
+        if sys.platform != 'win32':
+            return
+        try:
+            # before workarounds, only up to 2**32-1 worked
+            fourgbplus = 2**32 + 2**16
+            testbytes = np.arange(8, dtype=np.int8)
+            n = len(testbytes)
+            flike = tempfile.NamedTemporaryFile()
+            f = flike.file
+            np.tile(testbytes, fourgbplus // testbytes.nbytes).tofile(f)
+            flike.seek(0)
+            a = np.fromfile(f, dtype=np.int8)
+            flike.close()
+            assert_(len(a) == fourgbplus)
+            # check only start and end for speed:
+            assert_((a[:n] == testbytes).all())
+            assert_((a[-n:] == testbytes).all())
+        except MemoryError:
+            pass
+
     def test_string(self):
         self._check_from('1,2,3,4', [1., 2., 3., 4.], sep=',')
 
@@ -1116,6 +1258,17 @@ class TestIO(object):
     def test_dtype(self):
         v = np.array([1,2,3,4], dtype=np.int_)
         self._check_from('1,2,3,4', v, sep=',', dtype=np.int_)
+
+    def test_dtype_bool(self):
+        # can't use _check_from because fromstring can't handle True/False
+        v = np.array([True, False, True, False], dtype=np.bool_)
+        s = '1,0,-2.3,0'
+        f = open(self.filename, 'wb')
+        f.write(asbytes(s))
+        f.close()
+        y = np.fromfile(self.filename, sep=',', dtype=np.bool_)
+        assert_(y.dtype == '?')
+        assert_array_equal(y, v)
 
     def test_tofile_sep(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
@@ -1274,6 +1427,68 @@ class TestStats(TestCase):
         res = dat.var(1)
         assert res.info == dat.info
 
+class TestDot(TestCase):
+    def test_dot_2args(self):
+        from numpy.core.multiarray import dot
+
+        a = np.array([[1, 2], [3, 4]], dtype=float)
+        b = np.array([[1, 0], [1, 1]], dtype=float)
+        c = np.array([[3, 2], [7, 4]], dtype=float)
+
+        d = dot(a, b)
+        assert_allclose(c, d)
+
+    def test_dot_3args(self):
+        from numpy.core.multiarray import dot
+
+        np.random.seed(22)
+        f = np.random.random_sample((1024, 16))
+        v = np.random.random_sample((16, 32))
+
+        r = np.empty((1024, 32))
+        for i in xrange(12):
+            dot(f,v,r)
+        assert_equal(sys.getrefcount(r), 2)
+        r2 = dot(f,v,out=None)
+        assert_array_equal(r2, r)
+        assert_(r is dot(f,v,out=r))
+
+        v = v[:,0].copy() # v.shape == (16,)
+        r = r[:,0].copy() # r.shape == (1024,)
+        r2 = dot(f,v)
+        assert_(r is dot(f,v,r))
+        assert_array_equal(r2, r)
+
+    def test_dot_3args_errors(self):
+        from numpy.core.multiarray import dot
+
+        np.random.seed(22)
+        f = np.random.random_sample((1024, 16))
+        v = np.random.random_sample((16, 32))
+
+        r = np.empty((1024, 31))
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((1024,))
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((32,))
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((32, 1024))
+        assert_raises(ValueError, dot, f, v, r)
+        assert_raises(ValueError, dot, f, v, r.T)
+
+        r = np.empty((1024, 64))
+        assert_raises(ValueError, dot, f, v, r[:,::2])
+        assert_raises(ValueError, dot, f, v, r[:,:32])
+
+        r = np.empty((1024, 32), dtype=np.float32)
+        assert_raises(ValueError, dot, f, v, r)
+
+        r = np.empty((1024, 32), dtype=int)
+        assert_raises(ValueError, dot, f, v, r)
+
 
 class TestSummarization(TestCase):
     def test_1d(self):
@@ -1329,23 +1544,23 @@ class TestNeighborhoodIter(TestCase):
     def _test_simple2d(self, dt):
         # Test zero and one padding for simple data type
         x = np.array([[0, 1], [2, 3]], dtype=dt)
-        r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt), 
-             np.array([[0, 0, 0], [0, 1, 0]], dtype=dt), 
-             np.array([[0, 0, 1], [0, 2, 3]], dtype=dt), 
+        r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt),
+             np.array([[0, 0, 0], [0, 1, 0]], dtype=dt),
+             np.array([[0, 0, 1], [0, 2, 3]], dtype=dt),
              np.array([[0, 1, 0], [2, 3, 0]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
-        r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt), 
-             np.array([[1, 1, 1], [0, 1, 1]], dtype=dt), 
-             np.array([[1, 0, 1], [1, 2, 3]], dtype=dt), 
+        r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt),
+             np.array([[1, 1, 1], [0, 1, 1]], dtype=dt),
+             np.array([[1, 0, 1], [1, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 1]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
-        r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt), 
-             np.array([[4, 4, 4], [0, 1, 4]], dtype=dt), 
-             np.array([[4, 0, 1], [4, 2, 3]], dtype=dt), 
+        r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt),
+             np.array([[4, 4, 4], [0, 1, 4]], dtype=dt),
+             np.array([[4, 0, 1], [4, 2, 3]], dtype=dt),
              np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
@@ -1362,9 +1577,9 @@ class TestNeighborhoodIter(TestCase):
 
     def _test_mirror2d(self, dt):
         x = np.array([[0, 1], [2, 3]], dtype=dt)
-        r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt), 
-             np.array([[0, 1, 1], [0, 1, 1]], dtype=dt), 
-             np.array([[0, 0, 1], [2, 2, 3]], dtype=dt), 
+        r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt),
+             np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
+             np.array([[0, 0, 1], [2, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 3]], dtype=dt)]
         l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)

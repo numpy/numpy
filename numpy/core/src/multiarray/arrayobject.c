@@ -53,7 +53,7 @@ maintainer email:  oliphant.travis@ieee.org
 /*NUMPY_API
   Compute the size of an array (in number of items)
 */
-NPY_NO_EXPORT intp
+NPY_NO_EXPORT npy_intp
 PyArray_Size(PyObject *op)
 {
     if (PyArray_Check(op)) {
@@ -68,17 +68,20 @@ PyArray_Size(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
-    PyArrayObject *src;
-    PyObject *r;
     int ret;
+    PyArrayObject *src;
+    PyArray_Descr *dtype = NULL;
+    int ndim = 0;
+    npy_intp dims[NPY_MAXDIMS];
 
+    Py_INCREF(src_object);
     /*
      * Special code to mimic Numeric behavior for
      * character arrays.
      */
     if (dest->descr->type == PyArray_CHARLTR && dest->nd > 0 \
         && PyString_Check(src_object)) {
-        intp n_new, n_old;
+        npy_intp n_new, n_old;
         char *new_string;
         PyObject *tmp;
 
@@ -90,33 +93,87 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             memset(new_string + n_old, ' ', n_new - n_old);
             tmp = PyString_FromStringAndSize(new_string, n_new);
             free(new_string);
+            Py_DECREF(src_object);
             src_object = tmp;
         }
     }
 
-    if (PyArray_Check(src_object)) {
-        src = (PyArrayObject *)src_object;
-        Py_INCREF(src);
-    }
-    else if (!PyArray_IsScalar(src_object, Generic) &&
-             PyArray_HasArrayInterface(src_object, r)) {
-        src = (PyArrayObject *)r;
-    }
-    else {
-        PyArray_Descr* dtype;
-        dtype = dest->descr;
-        Py_INCREF(dtype);
-        src = (PyArrayObject *)PyArray_FromAny(src_object, dtype, 0,
-                                               dest->nd,
-                                               FORTRAN_IF(dest),
-                                               NULL);
-    }
-    if (src == NULL) {
+    /*
+     * Get either an array object we can copy from, or its parameters
+     * if there isn't a convenient array available.
+     */
+    if (PyArray_GetArrayParamsFromObject(src_object, PyArray_DESCR(dest),
+                0, &dtype, &ndim, dims, &src, NULL) < 0) {
+        Py_DECREF(src_object);
         return -1;
     }
 
+    /* If it's not an array, either assign from a sequence or as a scalar */
+    if (src == NULL) {
+        /* If the input is scalar */
+        if (ndim == 0) {
+            /* If there's one dest element and src is a Python scalar */
+            if (PyArray_IsScalar(src_object, Generic)) {
+                src = (PyArrayObject *)PyArray_FromScalar(src_object, dtype);
+                if (src == NULL) {
+                    Py_DECREF(src_object);
+                    return -1;
+                }
+            }
+            else {
+                if (PyArray_SIZE(dest) == 1) {
+                    Py_DECREF(dtype);
+                    return PyArray_DESCR(dest)->f->setitem(src_object,
+                                                    PyArray_DATA(dest), dest);
+                }
+                else {
+                    src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                                        dtype, 0, NULL, NULL,
+                                                        NULL, 0, NULL);
+                    if (src == NULL) {
+                        Py_DECREF(src_object);
+                        return -1;
+                    }
+                    if (PyArray_DESCR(src)->f->setitem(src_object,
+                                                PyArray_DATA(src), src) < 0) {
+                        Py_DECREF(src_object);
+                        Py_DECREF(src);
+                        return -1;
+                    }
+                }
+            }
+        }
+        else {
+            /* If the dims match exactly, can assign directly */
+            if (ndim == PyArray_NDIM(dest) &&
+                        PyArray_CompareLists(dims, PyArray_DIMS(dest),
+                                                ndim)) {
+                int res;
+                Py_DECREF(dtype);
+                res = PyArray_AssignFromSequence(dest, src_object);
+                Py_DECREF(src_object);
+                return res;
+            }
+            /* Otherwise convert to an array and do an array-based copy */
+            src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                        dtype, ndim, dims, NULL, NULL,
+                                        PyArray_ISFORTRAN(dest), NULL);
+            if (src == NULL) {
+                Py_DECREF(src_object);
+                return -1;
+            }
+            if (PyArray_AssignFromSequence(src, src_object) < 0) {
+                Py_DECREF(src);
+                Py_DECREF(src_object);
+                return -1;
+            }
+        }
+    }
+
+    /* If it's an array, do a move (handling possible overlapping data) */
     ret = PyArray_MoveInto(dest, src);
     Py_DECREF(src);
+    Py_DECREF(src_object);
     return ret;
 }
 
@@ -216,12 +273,12 @@ array_dealloc(PyArrayObject *self) {
 
 static int
 dump_data(char **string, int *n, int *max_n, char *data, int nd,
-          intp *dimensions, intp *strides, PyArrayObject* self)
+          npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
 {
     PyArray_Descr *descr=self->descr;
     PyObject *op, *sp;
     char *ostring;
-    intp i, N;
+    npy_intp i, N;
 
 #define CHECK_MEMORY do { if (*n >= *max_n-16) {         \
         *max_n *= 2;                                     \
@@ -444,15 +501,15 @@ _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
     PyArray_UCS4 *sptr;
     PyArray_UCS4 *s1t=s1, *s2t=s2;
     int val;
-    intp size;
+    npy_intp size;
     int diff;
 
-    if ((intp)s1 % sizeof(PyArray_UCS4) != 0) {
+    if ((npy_intp)s1 % sizeof(PyArray_UCS4) != 0) {
         size = len1*sizeof(PyArray_UCS4);
         s1t = malloc(size);
         memcpy(s1t, s1, size);
     }
-    if ((intp)s2 % sizeof(PyArray_UCS4) != 0) {
+    if ((npy_intp)s2 % sizeof(PyArray_UCS4) != 0) {
         size = len2*sizeof(PyArray_UCS4);
         s2t = malloc(size);
         memcpy(s2t, s2, size);
@@ -627,7 +684,7 @@ _uni_release(char *ptr, int nc)
                 relfunc(aptr, N1);                              \
                 return -1;                                      \
             }                                                   \
-            val = cmpfunc(aptr, bptr, N1, N2);                  \
+            val = compfunc(aptr, bptr, N1, N2);                  \
             *dptr = (val CMP 0);                                \
             PyArray_ITER_NEXT(iself);                           \
             PyArray_ITER_NEXT(iother);                          \
@@ -639,7 +696,7 @@ _uni_release(char *ptr, int nc)
 
 #define _reg_loop(CMP) {                                \
         while(size--) {                                 \
-            val = cmpfunc((void *)iself->dataptr,       \
+            val = compfunc((void *)iself->dataptr,       \
                           (void *)iother->dataptr,      \
                           N1, N2);                      \
             *dptr = (val CMP 0);                        \
@@ -658,21 +715,21 @@ _compare_strings(PyObject *result, PyArrayMultiIterObject *multi,
 {
     PyArrayIterObject *iself, *iother;
     Bool *dptr;
-    intp size;
+    npy_intp size;
     int val;
     int N1, N2;
-    int (*cmpfunc)(void *, void *, int, int);
+    int (*compfunc)(void *, void *, int, int);
     void (*relfunc)(char *, int);
     char* (*stripfunc)(char *, char *, int);
 
-    cmpfunc = func;
+    compfunc = func;
     dptr = (Bool *)PyArray_DATA(result);
     iself = multi->iters[0];
     iother = multi->iters[1];
     size = multi->size;
     N1 = iself->ao->descr->elsize;
     N2 = iother->ao->descr->elsize;
-    if ((void *)cmpfunc == (void *)_myunincmp) {
+    if ((void *)compfunc == (void *)_myunincmp) {
         N1 >>= 2;
         N2 >>= 2;
         stripfunc = _uni_copy_n_strip;
@@ -827,7 +884,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         PyObject *key, *value, *temp2;
         PyObject *op;
         Py_ssize_t pos = 0;
-        intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
+        npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
         op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
@@ -863,7 +920,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 /* If the type was multidimensional, collapse that part to 1-D
                  */
                 if (PyArray_NDIM(temp) != result_ndim+1) {
-                    intp dimensions[NPY_MAXDIMS];
+                    npy_intp dimensions[NPY_MAXDIMS];
                     PyArray_Dims newdims;
 
                     newdims.ptr = dimensions;
@@ -871,7 +928,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     memcpy(dimensions, PyArray_DIMS(temp),
                            sizeof(intp)*result_ndim);
                     dimensions[result_ndim] = -1;
-                    temp2 = PyArray_Newshape(temp, &newdims, PyArray_ANYORDER);
+                    temp2 = PyArray_Newshape((PyArrayObject *)temp,
+                                             &newdims, PyArray_ANYORDER);
                     if (temp2 == NULL) {
                         Py_DECREF(temp);
                         Py_XDECREF(res);
@@ -881,7 +939,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     temp = temp2;
                 }
                 /* Reduce the extra dimension of `temp` using `op` */
-                temp2 = PyArray_GenericReduceFunction(temp, op, result_ndim,
+                temp2 = PyArray_GenericReduceFunction((PyArrayObject *)temp,
+                                                      op, result_ndim,
                                                       PyArray_BOOL, NULL);
                 if (temp2 == NULL) {
                     Py_DECREF(temp);
@@ -1099,7 +1158,7 @@ PyArray_ElementStrides(PyObject *arr)
 {
     int itemsize = PyArray_ITEMSIZE(arr);
     int i, N = PyArray_NDIM(arr);
-    intp *strides = PyArray_STRIDES(arr);
+    npy_intp *strides = PyArray_STRIDES(arr);
 
     for (i = 0; i < N; i++) {
         if ((strides[i] % itemsize) != 0) {
@@ -1128,13 +1187,13 @@ PyArray_ElementStrides(PyObject *arr)
 
 /*NUMPY_API*/
 NPY_NO_EXPORT Bool
-PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
-                     intp *dims, intp *newstrides)
+PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
+                     npy_intp *dims, npy_intp *newstrides)
 {
     int i;
-    intp byte_begin;
-    intp begin;
-    intp end;
+    npy_intp byte_begin;
+    npy_intp begin;
+    npy_intp end;
 
     if (numbytes == 0) {
         numbytes = PyArray_MultiplyList(dims, nd) * elsize;
@@ -1201,7 +1260,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     if (strides.ptr != NULL) {
-        intp nb, off;
+        npy_intp nb, off;
         if (strides.len != dims.len) {
             PyErr_SetString(PyExc_ValueError,
                             "strides, if given, must be "   \
@@ -1215,7 +1274,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         else {
             nb = buffer.len;
-            off = (intp) offset;
+            off = (npy_intp) offset;
         }
 
 
@@ -1252,10 +1311,10 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     else {
         /* buffer given -- use it */
         if (dims.len == 1 && dims.ptr[0] == -1) {
-            dims.ptr[0] = (buffer.len-(intp)offset) / itemsize;
+            dims.ptr[0] = (buffer.len-(npy_intp)offset) / itemsize;
         }
         else if ((strides.ptr == NULL) &&
-                 (buffer.len < (offset + (((intp)itemsize)*
+                 (buffer.len < (offset + (((npy_intp)itemsize)*
                                           PyArray_MultiplyList(dims.ptr,
                                                                dims.len))))) {
             PyErr_SetString(PyExc_TypeError,

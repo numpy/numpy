@@ -117,9 +117,9 @@ import copy
 import warnings
 from glob import glob
 if sys.version_info[0] < 3:
-    from ConfigParser import SafeConfigParser, NoOptionError, ConfigParser
+    from ConfigParser import NoOptionError, ConfigParser
 else:
-    from configparser import SafeConfigParser, NoOptionError, ConfigParser
+    from configparser import NoOptionError, ConfigParser
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
@@ -211,6 +211,10 @@ default_include_dirs = filter(os.path.isdir, default_include_dirs)
 default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
 so_ext = distutils.sysconfig.get_config_vars('SO')[0] or ''
+# fix long extension for Python >=3.2, see PEP 3149.
+if 'SOABI' in distutils.sysconfig.get_config_vars():
+    so_ext = so_ext.replace('.'+distutils.sysconfig.get_config_var('SOABI'), '', 1)
+
 
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
@@ -1324,7 +1328,7 @@ class lapack_opt_info(system_info):
                    or ('ATLAS_WITHOUT_LAPACK',None) in l:
                 need_lapack = 1
             info = atlas_info
-            
+
         else:
             warnings.warn(AtlasNotFoundError.__doc__)
             need_blas = 1

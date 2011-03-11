@@ -696,7 +696,7 @@ def appenddecl(decl,decl2,force=1):
     return decl
 
 selectpattern=re.compile(r'\s*(?P<this>(@\(@.*?@\)@|[*][\d*]+|[*]\s*@\(@.*?@\)@|))(?P<after>.*)\Z',re.I)
-nameargspattern=re.compile(r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*(result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))*\s*\Z',re.I)
+nameargspattern=re.compile(r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z',re.I)
 callnameargspattern=re.compile(r'\s*(?P<name>\b[\w$]+\b)\s*@\(@\s*(?P<args>.*)\s*@\)@\s*\Z',re.I)
 real16pattern = re.compile(r'([-+]?(?:\d+(?:\.\d*)?|\d*\.\d+))[dD]((?:[-+]?\d+)?)')
 real8pattern = re.compile(r'([-+]?((?:\d+(?:\.\d*)?|\d*\.\d+))[eE]((?:[-+]?\d+)?)|(\d+\.\d*))')
@@ -711,10 +711,12 @@ def _is_intent_callback(vdecl):
 def _resolvenameargspattern(line):
     line = markouterparen(line)
     m1=nameargspattern.match(line)
-    if m1: return m1.group('name'),m1.group('args'),m1.group('result')
+    if m1:        
+        return m1.group('name'),m1.group('args'),m1.group('result'), m1.group('bind')
     m1=callnameargspattern.match(line)
-    if m1: return m1.group('name'),m1.group('args'),None
-    return None,[],None
+    if m1:
+        return m1.group('name'),m1.group('args'),None, None
+    return None,[],None, None
 
 def analyzeline(m,case,line):
     global groupcounter,groupname,groupcache,grouplist,filepositiontext,\
@@ -743,7 +745,7 @@ def analyzeline(m,case,line):
         block = block.lower()
         if re.match(r'block\s*data',block,re.I): block='block data'
         if re.match(r'python\s*module',block,re.I): block='python module'
-        name,args,result = _resolvenameargspattern(m.group('after'))
+        name,args,result,bind = _resolvenameargspattern(m.group('after'))
         if name is None:
             if block=='block data':
                 name = '_BLOCK_DATA_'
@@ -779,7 +781,8 @@ def analyzeline(m,case,line):
         if f77modulename and neededmodule==-1 and groupcounter<=1:
             neededmodule=groupcounter+2
             needmodule=1
-            needinterface=1
+            if block != 'interface':
+                needinterface=1
         # Create new block(s)
         groupcounter=groupcounter+1
         groupcache[groupcounter]={}
@@ -826,7 +829,9 @@ def analyzeline(m,case,line):
             else:
                 groupcache[groupcounter]['from']='%s:%s'%(groupcache[groupcounter-1]['from'],groupcache[groupcounter-1]['name'])
         for k in groupcache[groupcounter].keys():
-            if not groupcache[groupcounter][k]: del groupcache[groupcounter][k]
+            if not groupcache[groupcounter][k]:
+                del groupcache[groupcounter][k]
+
         groupcache[groupcounter]['args']=args
         groupcache[groupcounter]['body']=[]
         groupcache[groupcounter]['externals']=[]
@@ -860,6 +865,7 @@ def analyzeline(m,case,line):
             if t:
                 typespec,selector,attr,edecl=cracktypespec0(t.group('this'),t.group('after'))
                 updatevars(typespec,selector,attr,edecl)
+
         if case in ['call','callfun']:
             grouplist[groupcounter-1].append(groupcache[groupcounter])
             grouplist[groupcounter-1][-1]['body']=grouplist[groupcounter]
@@ -869,8 +875,9 @@ def analyzeline(m,case,line):
             grouplist[groupcounter-1][-1]['body']=grouplist[groupcounter]
             del grouplist[groupcounter]
             groupcounter=groupcounter-1 # end interface
+
     elif case=='entry':
-        name,args,result=_resolvenameargspattern(m.group('after'))
+        name,args,result,bind=_resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
                 args=rmbadname([x.strip() for x in markoutercomma(args).split('@,@')])
@@ -921,11 +928,12 @@ def analyzeline(m,case,line):
                 if _intentcallbackpattern.match(ap):
                     if k not in groupcache[groupcounter]['args']:
                         if groupcounter>1:
-                            outmess('analyzeline: appending intent(callback) %s'\
-                                    ' to %s arguments\n' % (k,groupcache[groupcounter]['name']))
                             if '__user__' not in groupcache[groupcounter-2]['name']:
                                 outmess('analyzeline: missing __user__ module (could be nothing)\n')
-                            groupcache[groupcounter]['args'].append(k)
+                            if k!=groupcache[groupcounter]['name']: # fixes ticket 1693
+                                outmess('analyzeline: appending intent(callback) %s'\
+                                        ' to %s arguments\n' % (k,groupcache[groupcounter]['name']))
+                                groupcache[groupcounter]['args'].append(k)
                         else:
                             errmess('analyzeline: intent(callback) %s is ignored' % (k))
                     else:

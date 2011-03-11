@@ -23,6 +23,7 @@ Arithmetic
 - `chebsub` -- subtract one Chebyshev series from another.
 - `chebmul` -- multiply two Chebyshev series.
 - `chebdiv` -- divide one Chebyshev series by another.
+- `chebpow` -- raise a Chebyshev series to an positive integer power
 - `chebval` -- evaluate a Chebyshev series at given points.
 
 Calculus
@@ -39,7 +40,7 @@ Misc Functions
 - `chebpts1` -- Chebyshev points of the first kind.
 - `chebpts2` -- Chebyshev points of the second kind.
 - `chebtrim` -- trim leading coefficients from a Chebyshev series.
-- `chebline` -- Chebyshev series of given straight line.
+- `chebline` -- Chebyshev series representing given straight line.
 - `cheb2poly` -- convert a Chebyshev series to a polynomial.
 - `poly2cheb` -- convert a polynomial to a Chebyshev series.
 
@@ -78,10 +79,10 @@ References
 from __future__ import division
 
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
-        'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebval',
-        'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
-        'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
-        'chebpts2', 'Chebyshev']
+        'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow',
+        'chebval', 'chebder', 'chebint', 'cheb2poly', 'poly2cheb',
+        'chebfromroots', 'chebvander', 'chebfit', 'chebtrim', 'chebroots',
+        'chebpts1', 'chebpts2', 'Chebyshev']
 
 import numpy as np
 import numpy.linalg as la
@@ -1344,12 +1345,12 @@ def chebpts1(npts):
 
     Parameters
     ----------
-    npts: int
+    npts : int
         Number of sample points desired.
 
     Returns
     -------
-    pts: ndarray
+    pts : ndarray
         The Chebyshev points of the second kind.
 
     Notes
@@ -1375,12 +1376,12 @@ def chebpts2(npts):
 
     Parameters
     ----------
-    npts: int
+    npts : int
         Number of sample points desired.
 
     Returns
     -------
-    pts: ndarray
+    pts : ndarray
         The Chebyshev points of the second kind.
 
     Notes

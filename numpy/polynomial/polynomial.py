@@ -20,6 +20,7 @@ Arithmetic
 - `polysub` -- subtract one polynomial from another.
 - `polymul` -- multiply two polynomials.
 - `polydiv` -- divide one polynomial by another.
+- `polypow` -- raise a polynomial to an positive integer power
 - `polyval` -- evaluate a polynomial at given points.
 
 Calculus
@@ -34,8 +35,7 @@ Misc Functions
 - `polyvander` -- Vandermonde-like matrix for powers.
 - `polyfit` -- least-squares fit returning a polynomial.
 - `polytrim` -- trim leading coefficients from a polynomial.
-- `polyline` -- Given a straight line, return the equivalent polynomial
-  object.
+- `polyline` -- polynomial representing given straight line.
 
 Classes
 -------
@@ -49,9 +49,9 @@ See also
 from __future__ import division
 
 __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
-        'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polyval',
-        'polyder', 'polyint', 'polyfromroots', 'polyvander', 'polyfit',
-        'polytrim', 'polyroots', 'Polynomial']
+    'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow',
+    'polyval', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
+    'polyfit', 'polytrim', 'polyroots', 'Polynomial']
 
 import numpy as np
 import numpy.linalg as la

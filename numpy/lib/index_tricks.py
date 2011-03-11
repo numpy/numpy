@@ -1,4 +1,5 @@
-__all__ = ['unravel_index',
+__all__ = ['ravel_coords',
+           'unravel_index',
            'mgrid',
            'ogrid',
            'r_', 'c_', 's_',
@@ -16,69 +17,8 @@ import math
 import function_base
 import numpy.matrixlib as matrix
 from function_base import diff
+from numpy.lib._compiled_base import ravel_coords, unravel_index
 makemat = matrix.matrix
-
-# contributed by Stefan van der Walt
-def unravel_index(x,dims):
-    """
-    Convert a flat index to an index tuple for an array of given shape.
-
-    Parameters
-    ----------
-    x : int
-        Flattened index.
-    dims : tuple of ints
-        Input shape, the shape of an array into which indexing is
-        required.
-
-    Returns
-    -------
-    idx : tuple of ints
-        Tuple of the same shape as `dims`, containing the unraveled index.
-
-    Notes
-    -----
-    In the Examples section, since ``arr.flat[x] == arr.max()`` it may be
-    easier to use flattened indexing than to re-map the index to a tuple.
-
-    Examples
-    --------
-    >>> arr = np.arange(20).reshape(5, 4)
-    >>> arr
-    array([[ 0,  1,  2,  3],
-           [ 4,  5,  6,  7],
-           [ 8,  9, 10, 11],
-           [12, 13, 14, 15],
-           [16, 17, 18, 19]])
-    >>> x = arr.argmax()
-    >>> x
-    19
-    >>> dims = arr.shape
-    >>> idx = np.unravel_index(x, dims)
-    >>> idx
-    (4, 3)
-    >>> arr[idx] == arr.max()
-    True
-
-    """
-    if x > _nx.prod(dims)-1 or x < 0:
-        raise ValueError("Invalid index, must be 0 <= x <= number of elements.")
-
-    idx = _nx.empty_like(dims)
-
-    # Take dimensions
-    # [a,b,c,d]
-    # Reverse and drop first element
-    # [d,c,b]
-    # Prepend [1]
-    # [1,d,c,b]
-    # Calculate cumulative product
-    # [1,d,dc,dcb]
-    # Reverse
-    # [dcb,dc,d,1]
-    dim_prod = _nx.cumprod([1] + list(dims)[:0:-1])[::-1]
-    # Indices become [x/dcb % a, x/dc % b, x/d % c, x/1 % d]
-    return tuple(x//dim_prod % dims)
 
 def ix_(*args):
     """

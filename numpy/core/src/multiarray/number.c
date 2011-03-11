@@ -608,6 +608,15 @@ array_int(PyArrayObject *v)
         Py_DECREF(pv);
         return NULL;
     }
+    /*
+     * If we still got an array which can hold references, stop
+     * because it could point back at 'v'.
+     */
+    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+        PyErr_SetString(PyExc_TypeError,
+                "object array may be self-referencing");
+        return NULL;
+    }
 
     pv2 = Py_TYPE(pv)->tp_as_number->nb_int(pv);
     Py_DECREF(pv);
@@ -639,6 +648,15 @@ array_float(PyArrayObject *v)
         Py_DECREF(pv);
         return NULL;
     }
+    /*
+     * If we still got an array which can hold references, stop
+     * because it could point back at 'v'.
+     */
+    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+        PyErr_SetString(PyExc_TypeError,
+                "object array may be self-referencing");
+        return NULL;
+    }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_float(pv);
     Py_DECREF(pv);
     return pv2;
@@ -666,6 +684,15 @@ array_long(PyArrayObject *v)
                         "scalar number to long");
         return NULL;
     }
+    /*
+     * If we still got an array which can hold references, stop
+     * because it could point back at 'v'.
+     */
+    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+        PyErr_SetString(PyExc_TypeError,
+                "object array may be self-referencing");
+        return NULL;
+    }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_long(pv);
     Py_DECREF(pv);
     return pv2;
@@ -691,6 +718,15 @@ array_oct(PyArrayObject *v)
                         "scalar number to oct");
         return NULL;
     }
+    /*
+     * If we still got an array which can hold references, stop
+     * because it could point back at 'v'.
+     */
+    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+        PyErr_SetString(PyExc_TypeError,
+                "object array may be self-referencing");
+        return NULL;
+    }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_oct(pv);
     Py_DECREF(pv);
     return pv2;
@@ -714,6 +750,15 @@ array_hex(PyArrayObject *v)
     if (Py_TYPE(pv)->tp_as_number->nb_hex == 0) {
         PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
                         "scalar number to hex");
+        return NULL;
+    }
+    /*
+     * If we still got an array which can hold references, stop
+     * because it could point back at 'v'.
+     */
+    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+        PyErr_SetString(PyExc_TypeError,
+                "object array may be self-referencing");
         return NULL;
     }
     pv2 = Py_TYPE(pv)->tp_as_number->nb_hex(pv);

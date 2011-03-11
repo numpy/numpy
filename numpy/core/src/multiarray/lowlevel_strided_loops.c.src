@@ -1,0 +1,1184 @@
+/*
+ * This file contains low-level loops for copying and byte-swapping
+ * strided data.
+ *
+ * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
+ * The Univerity of British Columbia
+ *
+ * See LICENSE.txt for the license.
+ */
+
+#define PY_SSIZE_T_CLEAN
+#include "Python.h"
+#include "structmember.h"
+
+#define _MULTIARRAYMODULE
+#include <numpy/ndarrayobject.h>
+#include <numpy/ufuncobject.h>
+#include <numpy/npy_cpu.h>
+#include <numpy/halffloat.h>
+
+#include "lowlevel_strided_loops.h"
+
+/*
+ * x86 platform may work with unaligned access, except when the
+ * compiler uses aligned SSE instructions, which gcc does in some
+ * cases.  This is disabled for the time being.
+ */
+#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
+#  define NPY_USE_UNALIGNED_ACCESS 0
+#else
+#  define NPY_USE_UNALIGNED_ACCESS 0
+#endif
+
+#define _NPY_NOP1(x) (x)
+#define _NPY_NOP2(x) (x)
+#define _NPY_NOP4(x) (x)
+#define _NPY_NOP8(x) (x)
+
+#define _NPY_SWAP2(x) (((((npy_uint16)x)&0xffu) << 8) | \
+                       (((npy_uint16)x) >> 8))
+
+#define _NPY_SWAP4(x) (((((npy_uint32)x)&0xffu) << 24) | \
+                       ((((npy_uint32)x)&0xff00u) << 8) | \
+                       ((((npy_uint32)x)&0xff0000u) >> 8) | \
+                       (((npy_uint32)x) >> 24))
+
+#define _NPY_SWAP_PAIR4(x) (((((npy_uint32)x)&0xffu) << 8) | \
+                       ((((npy_uint32)x)&0xff00u) >> 8) | \
+                       ((((npy_uint32)x)&0xff0000u) << 8) | \
+                       ((((npy_uint32)x)&0xff000000u) >> 8))
+
+#define _NPY_SWAP8(x) (((((npy_uint64)x)&0xffULL) << 56) | \
+                       ((((npy_uint64)x)&0xff00ULL) << 40) | \
+                       ((((npy_uint64)x)&0xff0000ULL) << 24) | \
+                       ((((npy_uint64)x)&0xff000000ULL) << 8) | \
+                       ((((npy_uint64)x)&0xff00000000ULL) >> 8) | \
+                       ((((npy_uint64)x)&0xff0000000000ULL) >> 24) | \
+                       ((((npy_uint64)x)&0xff000000000000ULL) >> 40) | \
+                       (((npy_uint64)x) >> 56))
+
+#define _NPY_SWAP_PAIR8(x) (((((npy_uint64)x)&0xffULL) << 24) | \
+                       ((((npy_uint64)x)&0xff00ULL) << 8) | \
+                       ((((npy_uint64)x)&0xff0000ULL) >> 8) | \
+                       ((((npy_uint64)x)&0xff000000ULL) >> 24) | \
+                       ((((npy_uint64)x)&0xff00000000ULL) << 24) | \
+                       ((((npy_uint64)x)&0xff0000000000ULL) << 8) | \
+                       ((((npy_uint64)x)&0xff000000000000ULL) >> 8) | \
+                       ((((npy_uint64)x)&0xff00000000000000ULL) >> 24))
+
+#define _NPY_SWAP_INPLACE2(x) { \
+        char a = (x)[0]; (x)[0] = (x)[1]; (x)[1] = a; \
+        }
+
+#define _NPY_SWAP_INPLACE4(x) { \
+        char a = (x)[0]; (x)[0] = (x)[3]; (x)[3] = a; \
+        a = (x)[1]; (x)[1] = (x)[2]; (x)[2] = a; \
+        }
+
+#define _NPY_SWAP_INPLACE8(x) { \
+        char a = (x)[0]; (x)[0] = (x)[7]; (x)[7] = a; \
+        a = (x)[1]; (x)[1] = (x)[6]; (x)[6] = a; \
+        a = (x)[2]; (x)[2] = (x)[5]; (x)[5] = a; \
+        a = (x)[3]; (x)[3] = (x)[4]; (x)[4] = a; \
+        }
+
+#define _NPY_SWAP_INPLACE16(x) { \
+        char a = (x)[0]; (x)[0] = (x)[15]; (x)[15] = a; \
+        a = (x)[1]; (x)[1] = (x)[14]; (x)[14] = a; \
+        a = (x)[2]; (x)[2] = (x)[13]; (x)[13] = a; \
+        a = (x)[3]; (x)[3] = (x)[12]; (x)[12] = a; \
+        a = (x)[4]; (x)[4] = (x)[11]; (x)[11] = a; \
+        a = (x)[5]; (x)[5] = (x)[10]; (x)[10] = a; \
+        a = (x)[6]; (x)[6] = (x)[9]; (x)[9] = a; \
+        a = (x)[7]; (x)[7] = (x)[8]; (x)[8] = a; \
+        }
+
+/************* STRIDED COPYING/SWAPPING SPECIALIZED FUNCTIONS *************/
+
+/**begin repeat
+ * #elsize = 1, 2, 4, 8, 16#
+ * #elsize_half = 0, 1, 2, 4, 8#
+ * #type = npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_uint128#
+ */
+/**begin repeat1
+ * #oper = strided_to_strided, strided_to_contig,
+ *         contig_to_strided, contig_to_contig#
+ * #src_contig = 0, 0, 1 ,1#
+ * #dst_contig = 0, 1, 0 ,1#
+ */
+/**begin repeat2
+ * #swap = _NPY_NOP, _NPY_NOP, _NPY_SWAP_INPLACE, _NPY_SWAP,
+ *         _NPY_SWAP_INPLACE, _NPY_SWAP_PAIR#
+ * #prefix = , _aligned, _swap, _aligned_swap, _swap_pair, _aligned_swap_pair#
+ * #is_aligned = 0, 1, 0, 1, 0, 1#
+ * #minelsize = 1, 1, 2, 2, 4, 4#
+ * #is_swap = 0, 0, 1, 1, 2, 2#
+ */
+
+#if (@elsize@ >= @minelsize@) && \
+    (@elsize@ > 1 || @is_aligned@) && \
+    (!NPY_USE_UNALIGNED_ACCESS || @is_aligned@)
+
+
+#if @is_swap@ || @src_contig@ == 0 || @dst_contig@ == 0
+static void
+@prefix@_@oper@_size@elsize@(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *NPY_UNUSED(data))
+{
+    /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
+    while (N > 0) {
+#if @is_aligned@
+
+        /* aligned copy and swap */
+#  if @elsize@ != 16
+        (*((@type@ *)dst)) = @swap@@elsize@(*((@type@ *)src));
+#  else
+#    if @is_swap@ == 0
+        (*((npy_uint64 *)dst)) = (*((npy_uint64 *)src));
+        (*((npy_uint64 *)dst + 1)) = (*((npy_uint64 *)src + 1));
+#    elif @is_swap@ == 1
+        (*((npy_uint64 *)dst)) = _NPY_SWAP8(*((npy_uint64 *)src + 1));
+        (*((npy_uint64 *)dst + 1)) = _NPY_SWAP8(*((npy_uint64 *)src));
+#    elif @is_swap@ == 2
+        (*((npy_uint64 *)dst)) = _NPY_SWAP8(*((npy_uint64 *)src));
+        (*((npy_uint64 *)dst + 1)) = _NPY_SWAP8(*((npy_uint64 *)src + 1));
+#    endif
+#  endif
+
+#else
+
+        /* unaligned copy and swap */
+        memcpy(dst, src, @elsize@);
+#  if @is_swap@ == 1
+        @swap@@elsize@(dst);
+#  elif @is_swap@ == 2
+        @swap@@elsize_half@(dst);
+        @swap@@elsize_half@(dst + @elsize_half@);
+#  endif
+
+#endif
+
+#if @dst_contig@
+        dst += @elsize@;
+#else
+        dst += dst_stride;
+#endif
+
+#if @src_contig@
+        src += @elsize@;
+#else
+        src += src_stride;
+#endif
+
+        --N;
+    }
+}
+#endif
+
+
+/* specialized copy and swap for source stride 0 */
+#if (@src_contig@ == 0) && @is_aligned@
+static void
+@prefix@_@oper@_size@elsize@_srcstride0(char *dst,
+                        npy_intp dst_stride,
+                        char *src, npy_intp NPY_UNUSED(src_stride),
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *NPY_UNUSED(data))
+{
+#if @elsize@ != 16
+    @type@ temp = @swap@@elsize@(*((@type@ *)src));
+#else
+    npy_uint64 temp0, temp1;
+#    if @is_swap@ == 0
+        temp0 = (*((npy_uint64 *)src));
+        temp1 = (*((npy_uint64 *)src + 1));
+#    elif @is_swap@ == 1
+        temp0 = _NPY_SWAP8(*((npy_uint64 *)src + 1));
+        temp1 = _NPY_SWAP8(*((npy_uint64 *)src));
+#    elif @is_swap@ == 2
+        temp0 = _NPY_SWAP8(*((npy_uint64 *)src));
+        temp1 = _NPY_SWAP8(*((npy_uint64 *)src + 1));
+#    endif
+#endif
+
+    while (N > 0) {
+#if @elsize@ != 16
+        *((@type@ *)dst) = temp;
+#else
+        *((npy_uint64 *)dst) = temp0;
+        *((npy_uint64 *)dst + 1) = temp1;
+#endif
+#if @dst_contig@
+        dst += @elsize@;
+#else
+        dst += dst_stride;
+#endif
+        --N;
+    }
+}
+#endif
+
+#endif/* @elsize@ >= @minelsize@ */
+
+/**end repeat2**/
+/**end repeat1**/
+/**end repeat**/
+
+static void
+_strided_to_strided(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *NPY_UNUSED(data))
+{
+    while (N > 0) {
+        memcpy(dst, src, src_itemsize);
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+static void
+_swap_strided_to_strided(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *NPY_UNUSED(data))
+{
+    char *a, *b, c;
+
+    while (N > 0) {
+        memcpy(dst, src, src_itemsize);
+        /* general in-place swap */
+        a = dst;
+        b = dst + src_itemsize - 1;
+        while (a < b) {
+            c = *a;
+            *a = *b;
+            *b = c;
+            ++a; --b;
+        }
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+static void
+_swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *NPY_UNUSED(data))
+{
+    char *a, *b, c;
+    npy_intp itemsize_half = src_itemsize / 2;
+
+    while (N > 0) {
+        memcpy(dst, src, src_itemsize);
+        /* general in-place swap */
+        a = dst;
+        b = dst + itemsize_half - 1;
+        while (a < b) {
+            c = *a;
+            *a = *b;
+            *b = c;
+            ++a; --b;
+        }
+        /* general in-place swap */
+        a = dst + itemsize_half;
+        b = dst + 2*itemsize_half - 1;
+        while (a < b) {
+            c = *a;
+            *a = *b;
+            *b = c;
+            ++a; --b;
+        }
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+static void
+_contig_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
+                        char *src, npy_intp NPY_UNUSED(src_stride),
+                        npy_intp N, npy_intp src_itemsize,
+                        void *NPY_UNUSED(data))
+{
+    memcpy(dst, src, src_itemsize*N);
+}
+
+
+NPY_NO_EXPORT PyArray_StridedTransferFn *
+PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
+                         npy_intp dst_stride, npy_intp itemsize)
+{
+/*
+ * Skip the "unaligned" versions on CPUs which support unaligned
+ * memory accesses.
+ */
+#if !NPY_USE_UNALIGNED_ACCESS
+    if (aligned) {
+#endif/*!NPY_USE_UNALIGNED_ACCESS*/
+
+        /* contiguous dst */
+        if (itemsize != 0 && dst_stride == itemsize) {
+            /* constant src */
+            if (src_stride == 0) {
+                switch (itemsize) {
+/**begin repeat
+ * #elsize = 1, 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return
+                          &_aligned_strided_to_contig_size@elsize@_srcstride0;
+/**end repeat**/
+                }
+            }
+            /* contiguous src */
+            else if (src_stride == itemsize) {
+                return &_contig_to_contig;
+            }
+            /* general src */
+            else {
+                switch (itemsize) {
+/**begin repeat
+ * #elsize = 1, 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return &_aligned_strided_to_contig_size@elsize@;
+/**end repeat**/
+                }
+            }
+
+            return &_strided_to_strided;
+        }
+        /* general dst */
+        else {
+            /* constant src */
+            if (src_stride == 0) {
+                switch (itemsize) {
+/**begin repeat
+ * #elsize = 1, 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return
+                          &_aligned_strided_to_strided_size@elsize@_srcstride0;
+/**end repeat**/
+                }
+            }
+            /* contiguous src */
+            else if (src_stride == itemsize) {
+                switch (itemsize) {
+/**begin repeat
+ * #elsize = 1, 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return &_aligned_contig_to_strided_size@elsize@;
+/**end repeat**/
+                }
+
+                return &_strided_to_strided;
+            }
+            else {
+                switch (itemsize) {
+/**begin repeat
+ * #elsize = 1, 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return &_aligned_strided_to_strided_size@elsize@;
+/**end repeat**/
+                }
+            }
+        }
+
+#if !NPY_USE_UNALIGNED_ACCESS
+    }
+    else {
+        /* contiguous dst */
+        if (itemsize != 0 && dst_stride == itemsize) {
+            /* contiguous src */
+            if (itemsize != 0 && src_stride == itemsize) {
+                return &_contig_to_contig;
+            }
+            /* general src */
+            else {
+                switch (itemsize) {
+                    case 1:
+                        return &_aligned_strided_to_contig_size1;
+/**begin repeat
+ * #elsize = 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return &_strided_to_contig_size@elsize@;
+/**end repeat**/
+                }
+            }
+
+            return &_strided_to_strided;
+        }
+        /* general dst */
+        else {
+            /* contiguous src */
+            if (itemsize != 0 && src_stride == itemsize) {
+                switch (itemsize) {
+                    case 1:
+                        return &_aligned_contig_to_strided_size1;
+/**begin repeat
+ * #elsize = 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return &_contig_to_strided_size@elsize@;
+/**end repeat**/
+                }
+
+                return &_strided_to_strided;
+            }
+            /* general src */
+            else {
+                switch (itemsize) {
+                    case 1:
+                        return &_aligned_strided_to_strided_size1;
+/**begin repeat
+ * #elsize = 2, 4, 8, 16#
+ */
+                    case @elsize@:
+                        return &_strided_to_strided_size@elsize@;
+/**end repeat**/
+                }
+            }
+        }
+    }
+#endif/*!NPY_USE_UNALIGNED_ACCESS*/
+
+    return &_strided_to_strided;
+}
+
+/*
+ * PyArray_GetStridedCopySwapFn and PyArray_GetStridedCopySwapPairFn are
+ * nearly identical, so can do a repeat for them.
+ */
+/**begin repeat
+ * #function = PyArray_GetStridedCopySwapFn, PyArray_GetStridedCopySwapPairFn#
+ * #tag = , _pair#
+ * #not_pair = 1, 0#
+ */
+
+NPY_NO_EXPORT PyArray_StridedTransferFn *
+@function@(npy_intp aligned, npy_intp src_stride,
+                             npy_intp dst_stride, npy_intp itemsize)
+{
+/*
+ * Skip the "unaligned" versions on CPUs which support unaligned
+ * memory accesses.
+ */
+#if !NPY_USE_UNALIGNED_ACCESS
+    if (aligned) {
+#endif/*!NPY_USE_UNALIGNED_ACCESS*/
+
+        /* contiguous dst */
+        if (itemsize != 0 && dst_stride == itemsize) {
+            /* constant src */
+            if (src_stride == 0) {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return
+                 &_aligned_swap@tag@_strided_to_contig_size@elsize@_srcstride0;
+#endif
+/**end repeat1**/
+                }
+            }
+            /* contiguous src */
+            else if (src_stride == itemsize) {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_aligned_swap@tag@_contig_to_contig_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+            }
+            /* general src */
+            else {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_aligned_swap@tag@_strided_to_contig_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+            }
+        }
+        /* general dst */
+        else {
+            /* constant src */
+            if (src_stride == 0) {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return
+                &_aligned_swap@tag@_strided_to_strided_size@elsize@_srcstride0;
+#endif
+/**end repeat1**/
+                }
+            }
+            /* contiguous src */
+            else if (src_stride == itemsize) {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_aligned_swap@tag@_contig_to_strided_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+
+                return &_strided_to_strided;
+            }
+            else {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_aligned_swap@tag@_strided_to_strided_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+            }
+        }
+
+#if !NPY_USE_UNALIGNED_ACCESS
+    }
+    else {
+        /* contiguous dst */
+        if (itemsize != 0 && dst_stride == itemsize) {
+            /* contiguous src */
+            if (itemsize != 0 && src_stride == itemsize) {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_swap@tag@_contig_to_contig_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+            }
+            /* general src */
+            else {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                    case @elsize@:
+                        return &_swap@tag@_strided_to_contig_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+            }
+
+            return &_strided_to_strided;
+        }
+        /* general dst */
+        else {
+            /* contiguous src */
+            if (itemsize != 0 && src_stride == itemsize) {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_swap@tag@_contig_to_strided_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+
+                return &_strided_to_strided;
+            }
+            /* general src */
+            else {
+                switch (itemsize) {
+/**begin repeat1
+ * #elsize = 2, 4, 8, 16#
+ */
+#if @not_pair@ || @elsize@ > 2
+                case @elsize@:
+                    return &_swap@tag@_strided_to_strided_size@elsize@;
+#endif
+/**end repeat1**/
+                }
+            }
+        }
+    }
+#endif/*!NPY_USE_UNALIGNED_ACCESS*/
+
+    return &_swap@tag@_strided_to_strided;
+}
+
+/**end repeat**/
+
+/************* STRIDED CASTING SPECIALIZED FUNCTIONS *************/
+
+/**begin repeat
+ *
+ * #NAME1 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name1 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ * #rname1 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          float, double, longdouble#
+ * #is_bool1 = 1, 0*17#
+ * #is_half1 = 0*11, 1, 0*6#
+ * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
+ * #is_double1 = 0*13, 1, 0, 0, 1, 0#
+ * #is_complex1 = 0*15, 1*3#
+ */
+
+/**begin repeat1
+ *
+ * #NAME2 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name2 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ * #rname2 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          float, double, longdouble#
+ * #is_bool2 = 1, 0*17#
+ * #is_half2 = 0*11, 1, 0*6#
+ * #is_float2 = 0*12, 1, 0, 0, 1, 0, 0#
+ * #is_double2 = 0*13, 1, 0, 0, 1, 0#
+ * #is_complex2 = 0*15, 1*3#
+ */
+
+/**begin repeat2
+ * #prefix = _aligned,,_aligned_contig,_contig#
+ * #aligned = 1,0,1,0#
+ * #contig = 0,0,1,1#
+ */
+
+#if !(NPY_USE_UNALIGNED_ACCESS && !@aligned@)
+
+/* For half types, don't use actual double/float types in conversion */
+#if @is_half1@ || @is_half2@
+
+#  if @is_float1@
+#    define _TYPE1 npy_uint32
+#  elif @is_double1@
+#    define _TYPE1 npy_uint64
+#  else
+#    define _TYPE1 npy_@rname1@
+#  endif
+
+#  if @is_float2@
+#    define _TYPE2 npy_uint32
+#  elif @is_double2@
+#    define _TYPE2 npy_uint64
+#  else
+#    define _TYPE2 npy_@rname2@
+#  endif
+
+#else
+
+#define _TYPE1 npy_@rname1@
+#define _TYPE2 npy_@rname2@
+
+#endif
+
+/* Determine an appropriate casting conversion function */
+#if @is_half1@
+
+#  if @is_float2@
+#    define _CONVERT_FN(x) npy_halfbits_to_floatbits(x)
+#  elif @is_double2@
+#    define _CONVERT_FN(x) npy_halfbits_to_doublebits(x)
+#  elif @is_half2@
+#    define _CONVERT_FN(x) (x)
+#  elif @is_bool2@
+#    define _CONVERT_FN(x) ((npy_bool)!npy_half_iszero(x))
+#  else
+#    define _CONVERT_FN(x) ((_TYPE2)npy_half_to_float(x))
+#  endif
+
+#elif @is_half2@
+
+#  if @is_float1@
+#    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
+#  elif @is_double1@
+#    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
+#  else
+#    define _CONVERT_FN(x) npy_float_to_half((float)x)
+#  endif
+
+#else
+
+#  if @is_bool2@
+#    define _CONVERT_FN(x) ((npy_bool)(x != 0))
+#  else
+#    define _CONVERT_FN(x) ((_TYPE2)x)
+#  endif
+
+#endif
+
+static void
+@prefix@_cast_@name1@_to_@name2@(
+                        char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *NPY_UNUSED(data))
+{
+#if @is_complex1@
+    _TYPE1 src_value[2];
+#elif !@aligned@
+    _TYPE1 src_value;
+#endif
+#if @is_complex2@
+    _TYPE2 dst_value[2];
+#elif !@aligned@
+    _TYPE2 dst_value;
+#endif
+
+    /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
+
+    while (N--) {
+#if @aligned@
+#  if @is_complex1@
+        src_value[0] = ((_TYPE1 *)src)[0];
+        src_value[1] = ((_TYPE1 *)src)[1];
+#  elif !@aligned@
+        src_value = *((_TYPE1 *)src);
+#  endif
+#else
+        memcpy(&src_value, src, sizeof(src_value));
+#endif
+
+/* Do the cast */
+#if @is_complex1@
+#  if @is_complex2@
+    dst_value[0] = _CONVERT_FN(src_value[0]);
+    dst_value[1] = _CONVERT_FN(src_value[1]);
+#  elif !@aligned@
+    dst_value = _CONVERT_FN(src_value[0]);
+#  else
+    *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
+#  endif
+#else
+#  if @is_complex2@
+#    if !@aligned@
+    dst_value[0] = _CONVERT_FN(src_value);
+#    else
+    dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
+#    endif
+    dst_value[1] = 0;
+#  elif !@aligned@
+    dst_value = _CONVERT_FN(src_value);
+#  else
+    *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
+#  endif
+#endif
+
+#if @aligned@
+#  if @is_complex2@
+        ((_TYPE2 *)dst)[0] = dst_value[0];
+        ((_TYPE2 *)dst)[1] = dst_value[1];
+#  elif !@aligned@
+        *((_TYPE2 *)dst) = dst_value;
+#  endif
+#else
+        memcpy(dst, &dst_value, sizeof(dst_value));
+#endif
+
+#if @contig@
+        dst += sizeof(npy_@name2@);
+        src += sizeof(npy_@name1@);
+#else
+        dst += dst_stride;
+        src += src_stride;
+#endif
+    }
+}
+
+#undef _CONVERT_FN
+#undef _TYPE2
+#undef _TYPE1
+
+#endif
+
+/**end repeat2**/
+
+/**end repeat1**/
+
+/**end repeat**/
+
+NPY_NO_EXPORT PyArray_StridedTransferFn *
+PyArray_GetStridedNumericCastFn(npy_intp aligned, npy_intp src_stride,
+                             npy_intp dst_stride,
+                             int src_type_num, int dst_type_num)
+{
+    switch (src_type_num) {
+/**begin repeat
+ *
+ * #NAME1 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name1 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ */
+
+        case NPY_@NAME1@:
+            /*printf("test fn %d - second %d\n", NPY_@NAME1@, dst_type_num);*/
+            switch (dst_type_num) {
+/**begin repeat1
+ *
+ * #NAME2 = BOOL,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #name2 = bool,
+ *          ubyte, ushort, uint, ulong, ulonglong,
+ *          byte, short, int, long, longlong,
+ *          half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ */
+
+                case NPY_@NAME2@:
+                    /*printf("ret fn %d %d\n", NPY_@NAME1@, NPY_@NAME2@);*/
+#  if NPY_USE_UNALIGNED_ACCESS
+                    if (src_stride == sizeof(npy_@name1@) &&
+                                dst_stride == sizeof(npy_@name2@)) {
+                        return &_aligned_contig_cast_@name1@_to_@name2@;
+                    }
+                    else {
+                        return &_aligned_cast_@name1@_to_@name2@;
+                    }
+#  else
+                    if (src_stride == sizeof(npy_@name1@) &&
+                                dst_stride == sizeof(npy_@name2@)) {
+                        return aligned ?
+                                    &_aligned_contig_cast_@name1@_to_@name2@ :
+                                    &_contig_cast_@name1@_to_@name2@;
+                    }
+                    else {
+                        return aligned ? &_aligned_cast_@name1@_to_@name2@ :
+                                         &_cast_@name1@_to_@name2@;
+                    }
+#  endif
+
+/**end repeat1**/
+            }
+            /*printf("switched test fn %d - second %d\n", NPY_@NAME1@, dst_type_num);*/
+
+/**end repeat**/
+    }
+
+    return NULL;
+}
+
+
+/************** STRIDED TRANSFER FUNCTION MEMORY MANAGEMENT **************/
+
+typedef void (*_npy_stridedtransfer_dealloc)(void *);
+NPY_NO_EXPORT void
+PyArray_FreeStridedTransferData(void *transferdata)
+{
+    if (transferdata != NULL) {
+        _npy_stridedtransfer_dealloc dealloc =
+                        *((_npy_stridedtransfer_dealloc *)transferdata);
+        dealloc(transferdata);
+    }
+}
+
+typedef void *(*_npy_stridedtransfer_copy)(void *);
+NPY_NO_EXPORT void *
+PyArray_CopyStridedTransferData(void *transferdata)
+{
+    if (transferdata != NULL) {
+        _npy_stridedtransfer_copy copy =
+                        *((_npy_stridedtransfer_copy *)transferdata + 1);
+        return copy(transferdata);
+    }
+
+    return NULL;
+}
+
+/****************** PRIMITIVE FLAT TO/FROM NDIM FUNCTIONS ******************/
+
+NPY_NO_EXPORT npy_intp
+PyArray_TransferNDimToStrided(npy_intp ndim,
+                char *dst, npy_intp dst_stride,
+                char *src, npy_intp *src_strides, npy_intp src_strides_inc,
+                npy_intp *coords, npy_intp coords_inc,
+                npy_intp *shape, npy_intp shape_inc,
+                npy_intp count, npy_intp src_itemsize,
+                PyArray_StridedTransferFn *stransfer,
+                void *data)
+{
+    npy_intp i, M, N, coord0, shape0, src_stride0, coord1, shape1, src_stride1;
+
+    /* Finish off dimension 0 */
+    coord0 = coords[0];
+    shape0 = shape[0];
+    src_stride0 = src_strides[0];
+    N = shape0 - coord0;
+    if (N >= count) {
+        stransfer(dst, dst_stride, src, src_stride0, count, src_itemsize, data);
+        return 0;
+    }
+    stransfer(dst, dst_stride, src, src_stride0, N, src_itemsize, data);
+    count -= N;
+
+    /* If it's 1-dimensional, there's no more to copy */
+    if (ndim == 1) {
+        return count;
+    }
+
+    /* Adjust the src and dst pointers */
+    coord1 = (coords + coords_inc)[0];
+    shape1 = (shape + shape_inc)[0];
+    src_stride1 = (src_strides + src_strides_inc)[0];
+    src = src - coord0*src_stride0 + src_stride1;
+    dst += N*dst_stride;
+
+    /* Finish off dimension 1 */
+    M = (shape1 - coord1 - 1);
+    N = shape0*M;
+    for (i = 0; i < M; ++i) {
+        if (shape0 >= count) {
+            stransfer(dst, dst_stride, src, src_stride0,
+                        count, src_itemsize, data);
+            return 0;
+        }
+        else {
+            stransfer(dst, dst_stride, src, src_stride0,
+                        shape0, src_itemsize, data);
+        }
+        count -= shape0;
+        src += src_stride1;
+        dst += shape0*dst_stride;
+    }
+
+    /* If it's 2-dimensional, there's no more to copy */
+    if (ndim == 2) {
+        return count;
+    }
+
+    /* General-case loop for everything else */
+    else {
+        /* Iteration structure for dimensions 2 and up */
+        struct {
+            npy_intp coord, shape, src_stride;
+        } it[NPY_MAXDIMS];
+
+        /* Copy the coordinates and shape */
+        coords += 2*coords_inc;
+        shape += 2*shape_inc;
+        src_strides += 2*src_strides_inc;
+        for (i = 0; i < ndim-2; ++i) {
+            it[i].coord = coords[0];
+            it[i].shape = shape[0];
+            it[i].src_stride = src_strides[0];
+            coords += coords_inc;
+            shape += shape_inc;
+            src_strides += src_strides_inc;
+        }
+
+        for (;;) {
+            /* Adjust the src pointer from the dimension 0 and 1 loop */
+            src = src - shape1*src_stride1;
+
+            /* Increment to the next coordinate */
+            for (i = 0; i < ndim-2; ++i) {
+                src += it[i].src_stride;
+                if (++it[i].coord >= it[i].shape) {
+                    it[i].coord = 0;
+                    src -= it[i].src_stride*it[i].shape;
+                }
+                else {
+                    break;
+                }
+            }
+            /* If the last dimension rolled over, we're done */
+            if (i == ndim-2) {
+                return count;
+            }
+
+            /* A loop for dimensions 0 and 1 */
+            for (i = 0; i < shape1; ++i) {
+                if (shape0 >= count) {
+                    stransfer(dst, dst_stride, src, src_stride0,
+                                count, src_itemsize, data);
+                    return 0;
+                }
+                else {
+                    stransfer(dst, dst_stride, src, src_stride0,
+                                shape0, src_itemsize, data);
+                }
+                count -= shape0;
+                src += src_stride1;
+                dst += shape0*dst_stride;
+            }
+        }
+    }
+}
+
+NPY_NO_EXPORT npy_intp
+PyArray_TransferStridedToNDim(npy_intp ndim,
+                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *src, npy_intp src_stride,
+                npy_intp *coords, npy_intp coords_inc,
+                npy_intp *shape, npy_intp shape_inc,
+                npy_intp count, npy_intp src_itemsize,
+                PyArray_StridedTransferFn *stransfer,
+                void *data)
+{
+    npy_intp i, M, N, coord0, shape0, dst_stride0, coord1, shape1, dst_stride1;
+
+    /* Finish off dimension 0 */
+    coord0 = coords[0];
+    shape0 = shape[0];
+    dst_stride0 = dst_strides[0];
+    N = shape0 - coord0;
+    if (N >= count) {
+        stransfer(dst, dst_stride0, src, src_stride, count, src_itemsize, data);
+        return 0;
+    }
+    stransfer(dst, dst_stride0, src, src_stride, N, src_itemsize, data);
+    count -= N;
+
+    /* If it's 1-dimensional, there's no more to copy */
+    if (ndim == 1) {
+        return count;
+    }
+
+    /* Adjust the src and dst pointers */
+    coord1 = (coords + coords_inc)[0];
+    shape1 = (shape + shape_inc)[0];
+    dst_stride1 = (dst_strides + dst_strides_inc)[0];
+    dst = dst - coord0*dst_stride0 + dst_stride1;
+    src += N*src_stride;
+
+    /* Finish off dimension 1 */
+    M = (shape1 - coord1 - 1);
+    N = shape0*M;
+    for (i = 0; i < M; ++i) {
+        if (shape0 >= count) {
+            stransfer(dst, dst_stride0, src, src_stride,
+                        count, src_itemsize, data);
+            return 0;
+        }
+        else {
+            stransfer(dst, dst_stride0, src, src_stride,
+                        shape0, src_itemsize, data);
+        }
+        count -= shape0;
+        dst += dst_stride1;
+        src += shape0*src_stride;
+    }
+
+    /* If it's 2-dimensional, there's no more to copy */
+    if (ndim == 2) {
+        return count;
+    }
+
+    /* General-case loop for everything else */
+    else {
+        /* Iteration structure for dimensions 2 and up */
+        struct {
+            npy_intp coord, shape, dst_stride;
+        } it[NPY_MAXDIMS];
+
+        /* Copy the coordinates and shape */
+        coords += 2*coords_inc;
+        shape += 2*shape_inc;
+        dst_strides += 2*dst_strides_inc;
+        for (i = 0; i < ndim-2; ++i) {
+            it[i].coord = coords[0];
+            it[i].shape = shape[0];
+            it[i].dst_stride = dst_strides[0];
+            coords += coords_inc;
+            shape += shape_inc;
+            dst_strides += dst_strides_inc;
+        }
+
+        for (;;) {
+            /* Adjust the dst pointer from the dimension 0 and 1 loop */
+            dst = dst - shape1*dst_stride1;
+
+            /* Increment to the next coordinate */
+            for (i = 0; i < ndim-2; ++i) {
+                dst += it[i].dst_stride;
+                if (++it[i].coord >= it[i].shape) {
+                    it[i].coord = 0;
+                    dst -= it[i].dst_stride*it[i].shape;
+                }
+                else {
+                    break;
+                }
+            }
+            /* If the last dimension rolled over, we're done */
+            if (i == ndim-2) {
+                return count;
+            }
+
+            /* A loop for dimensions 0 and 1 */
+            for (i = 0; i < shape1; ++i) {
+                if (shape0 >= count) {
+                    stransfer(dst, dst_stride0, src, src_stride,
+                                count, src_itemsize, data);
+                    return 0;
+                }
+                else {
+                    stransfer(dst, dst_stride0, src, src_stride,
+                                shape0, src_itemsize, data);
+                }
+                count -= shape0;
+                dst += dst_stride1;
+                src += shape0*src_stride;
+            }
+        }
+    }
+}

@@ -418,10 +418,21 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     }
 
     if (newtype->elsize == 0) {
-        PyErr_SetString(PyExc_TypeError,
-                        "data-type must not be 0-sized");
-        Py_DECREF(newtype);
-        return -1;
+        /* Allow a void view */
+        if (newtype->type_num == NPY_VOID) {
+            PyArray_DESCR_REPLACE(newtype);
+            if (newtype == NULL) {
+                return -1;
+            }
+            newtype->elsize = self->descr->elsize;
+        }
+        /* But no other flexible types */
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "data-type must not be 0-sized");
+            Py_DECREF(newtype);
+            return -1;
+        }
     }
 
 
@@ -596,7 +607,7 @@ _get_part(PyArrayObject *self, int imag)
                      "Cannot convert complex type number %d to float",
                      self->descr->type_num);
             return NULL;
-            
+
     }
     type = PyArray_DescrFromType(float_type_num);
 

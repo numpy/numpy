@@ -280,4 +280,3 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         return;
     }
 }
-

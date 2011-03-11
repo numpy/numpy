@@ -1,23 +1,20 @@
 """
->>> import numpy.core as nx
->>> from numpy.lib.polynomial import poly1d, polydiv
-
->>> p = poly1d([1.,2,3])
+>>> p = np.poly1d([1.,2,3])
 >>> p
 poly1d([ 1.,  2.,  3.])
 >>> print(p)
    2
 1 x + 2 x + 3
->>> q = poly1d([3.,2,1])
+>>> q = np.poly1d([3.,2,1])
 >>> q
 poly1d([ 3.,  2.,  1.])
 >>> print(q)
    2
 3 x + 2 x + 1
->>> print(poly1d([1.89999+2j, -3j, -5.12345678, 2+1j]))
+>>> print(np.poly1d([1.89999+2j, -3j, -5.12345678, 2+1j]))
             3      2
 (1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)
->>> print(poly1d([-3, -2, -1]))
+>>> print(np.poly1d([-3, -2, -1]))
     2
 -3 x - 2 x - 1
 
@@ -46,7 +43,7 @@ poly1d([  9.,  12.,  16.,   8.,   6.])
 >>> q(p)
 poly1d([  3.,  12.,  32.,  40.,  34.])
 
->>> nx.asarray(p)
+>>> np.asarray(p)
 array([ 1.,  2.,  3.])
 >>> len(p)
 2
@@ -66,16 +63,16 @@ poly1d([ 2.,  2.])
 >>> p.deriv(2)
 poly1d([ 2.])
 
->>> q = poly1d([1.,2,3], variable='y')
+>>> q = np.poly1d([1.,2,3], variable='y')
 >>> print(q)
    2
 1 y + 2 y + 3
->>> q = poly1d([1.,2,3], variable='lambda')
+>>> q = np.poly1d([1.,2,3], variable='lambda')
 >>> print(q)
         2
 1 lambda + 2 lambda + 3
 
->>> polydiv(poly1d([1,0,-1]), poly1d([1,1]))
+>>> np.polydiv(np.poly1d([1,0,-1]), np.poly1d([1,1]))
 (poly1d([ 1., -1.]), poly1d([ 0.]))
 """
 

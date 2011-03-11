@@ -1,6 +1,6 @@
 """
 =====================================
-Structured Arrays (aka Record Arrays)
+Structured Arrays (and Record Arrays)
 =====================================
 
 Introduction
@@ -26,7 +26,7 @@ position we get the second record: ::
 
 Conveniently, one can access any field of the array by indexing using the
 string that names that field. In this case the fields have received the
-default names 'f0', 'f1' and 'f2'.
+default names 'f0', 'f1' and 'f2'. ::
 
  >>> y = x['f1']
  >>> y
@@ -118,7 +118,7 @@ like Fortran equivalencing).
 3) List argument: In this case the record structure is defined with a list of
 tuples. Each tuple has 2 or 3 elements specifying: 1) The name of the field
 ('' is permitted), 2) the type of the field, and 3) the shape (optional).
-For example:
+For example::
 
  >>> x = np.zeros(3, dtype=[('x','f4'),('y',np.float32),('value','f4',(2,2))])
  >>> x
@@ -142,7 +142,7 @@ to be strings), where the value of None is permitted. As an example: ::
        dtype=[('col1', '>i4'), ('col2', '>f4')])
 
 The other dictionary form permitted is a dictionary of name keys with tuple
-values specifying type, offset, and an optional title.
+values specifying type, offset, and an optional title. ::
 
  >>> x = np.zeros(3, dtype={'col1':('i1',0,'title 1'), 'col2':('f4',1,'title 2')})
  >>> x
@@ -168,9 +168,56 @@ Accessing field titles
 ====================================
 
 The field titles provide a standard place to put associated info for fields.
-They do not have to be strings.
+They do not have to be strings. ::
 
  >>> x.dtype.fields['x'][2]
  'title 1'
+
+Accessing multiple fields at once
+====================================
+
+You can access multiple fields at once using a list of field names: ::
+
+ >>> x = np.array([(1.5,2.5,(1.0,2.0)),(3.,4.,(4.,5.)),(1.,3.,(2.,6.))],
+         dtype=[('x','f4'),('y',np.float32),('value','f4',(2,2))])
+
+Notice that `x` is created with a list of tuples. ::
+
+ >>> x[['x','y']]
+ array([(1.5, 2.5), (3.0, 4.0), (1.0, 3.0)],
+      dtype=[('x', '<f4'), ('y', '<f4')])
+ >>> x[['x','value']]
+ array([(1.5, [[1.0, 2.0], [1.0, 2.0]]), (3.0, [[4.0, 5.0], [4.0, 5.0]]),
+       (1.0, [[2.0, 6.0], [2.0, 6.0]])],
+      dtype=[('x', '<f4'), ('value', '<f4', (2, 2))])
+
+Notice that the fields are always returned in the same order regardless of
+the sequence they are asked for. ::
+
+ >>> x[['y','x']]
+ array([(1.5, 2.5), (3.0, 4.0), (1.0, 3.0)],
+      dtype=[('x', '<f4'), ('y', '<f4')])
+
+Filling structured arrays
+=========================
+
+Structured arrays can be filled by field or row by row. ::
+
+ >>> arr = np.zeros((5,), dtype=[('var1','f8'),('var2','f8')])
+ >>> arr['var1'] = np.arange(5)
+
+If you fill it in row by row, it takes a take a tuple
+(but not a list or array!)::
+
+ >>> arr[0] = (10,20)
+ >>> arr
+ array([(10.0, 20.0), (1.0, 0.0), (2.0, 0.0), (3.0, 0.0), (4.0, 0.0)],
+      dtype=[('var1', '<f8'), ('var2', '<f8')])
+
+More information
+====================================
+You can find some more information on recarrays and structured  arrays
+(including the difference between the two) `here
+<http://www.scipy.org/Cookbook/Recarray>`_.
 
 """

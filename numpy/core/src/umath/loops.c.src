@@ -64,7 +64,7 @@
     intp n = dimensions[0]; \
     intp i; \
     for(i = 0; i < n; i++, ip2 += is2)
-    
+
 #define BINARY_REDUCE_LOOP(TYPE)\
     char *iop1 = args[0]; \
     TYPE io1 = *(TYPE *)iop1; \
@@ -388,8 +388,8 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = f(in1);
-        if ((ret == NULL) || PyErr_Occurred()) {
+        PyObject *ret = f(in1 ? in1 : Py_None);
+        if (ret == NULL) {
             return;
         }
         Py_XDECREF(*out);
@@ -405,7 +405,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyObject_CallMethod(in1, meth, NULL);
+        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None, meth, NULL);
         if (ret == NULL) {
             return;
         }
@@ -423,8 +423,8 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = f(in1, in2);
-        if (PyErr_Occurred()) {
+        PyObject *ret = f(in1 ? in1 : Py_None, in2 ? in2 : Py_None);
+        if (ret == NULL) {
             return;
         }
         Py_XDECREF(*out);
@@ -441,7 +441,8 @@ PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyObject_CallMethod(in1, meth, "(O)", in2);
+        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None,
+                                            meth, "(O)", in2);
         if (ret == NULL) {
             return;
         }
@@ -482,8 +483,7 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
         for(j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
             if (in == NULL) {
-                Py_DECREF(arglist);
-                return;
+                in = Py_None;
             }
             PyTuple_SET_ITEM(arglist, j, in);
             Py_INCREF(in);
@@ -760,10 +760,19 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((@s@@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@s@@type@) {
+            const @s@@type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2) ? io1 : in2;
+        }
+        *((@s@@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @s@@type@ in1 = *(@s@@type@ *)ip1;
+            const @s@@type@ in2 = *(@s@@type@ *)ip2;
+            *((@s@@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+        }
     }
 }
 /**end repeat2**/
@@ -795,7 +804,7 @@ NPY_NO_EXPORT void
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@s@@type@ *)op1) = 0;
         }
         else {
@@ -854,10 +863,10 @@ NPY_NO_EXPORT void
          * by -1 causes a SIFGPE (division overflow). We treat this case here
          * (to avoid a SIGFPE crash at python level), but a good solution would
          * be to treat integer division problems separately from FPU exceptions
-         * (i.e. fixing generate_divbyzero_error()).
+         * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
          */
         if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
         else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
@@ -876,7 +885,7 @@ U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const u@type@ in1 = *(u@type@ *)ip1;
         const u@type@ in2 = *(u@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((u@type@ *)op1) = 0;
         }
         else {
@@ -892,7 +901,7 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
         else {
@@ -915,7 +924,7 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
         const u@type@ in1 = *(u@type@ *)ip1;
         const u@type@ in2 = *(u@type@ *)ip2;
         if (in2 == 0) {
-            generate_divbyzero_error();
+            npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
         else {
@@ -998,10 +1007,19 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            const @type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2) ? io1 : in2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+    }
     }
 }
 /**end repeat1**/
@@ -1026,7 +1044,7 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
-/* FIXME: implement the following correctly using the metadata:  data is the 
+/* FIXME: implement the following correctly using the metadata:  data is the
    sequence of ndarrays in the same order as args.
  */
 NPY_NO_EXPORT void
@@ -1216,10 +1234,19 @@ NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            const @type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+        }
     }
 }
 /**end repeat1**/
@@ -1232,10 +1259,19 @@ NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            const @type@ in2 = *(@type@ *)ip2;
+            io1 = (io1 @OP@ in2 || npy_isnan(in2)) ? io1 : in2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
+        }
     }
 }
 /**end repeat1**/
@@ -2037,7 +2073,9 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
-        int ret = PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        int ret = PyObject_RichCompareBool(
+                            in1 ? in1 : Py_None,
+                            in2 ? in2 : Py_None, Py_@OP@);
         if (ret == -1) {
             return;
         }
@@ -2056,7 +2094,7 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         PyObject **out = (PyObject **)op1;
         int v;
         PyObject *ret;
-        PyObject_Cmp(in1, zero, &v);
+        PyObject_Cmp(in1 ? in1 : Py_None, zero, &v);
         ret = PyLong_FromLong(v);
         if (PyErr_Occurred()) {
             return;
@@ -2070,7 +2108,8 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyInt_FromLong(PyObject_Compare(in1, zero));
+        PyObject *ret = PyInt_FromLong(
+                            PyObject_Compare(in1 ? in1 : Py_None, zero));
         if (PyErr_Occurred()) {
             return;
         }
@@ -2086,5 +2125,3 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
  **                              END LOOPS                                  **
  *****************************************************************************
  */
-
-

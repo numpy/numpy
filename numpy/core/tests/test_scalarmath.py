@@ -18,16 +18,22 @@ class TestTypes(TestCase):
     def test_type_add(self, level=1):
         # list of types
         for k, atype in enumerate(types):
-            vala = atype(3)
-            val1 = np.array([3],dtype=atype)
+            a_scalar = atype(3)
+            a_array = np.array([3],dtype=atype)
             for l, btype in enumerate(types):
-                valb = btype(1)
-                val2 = np.array([1],dtype=btype)
-                val = vala+valb
-                valo = val1 + val2
-                assert val.dtype.num == valo.dtype.num and \
-                       val.dtype.char == valo.dtype.char, \
-                       "error with (%d,%d)" % (k,l)
+                b_scalar = btype(1)
+                b_array = np.array([1],dtype=btype)
+                c_scalar = a_scalar + b_scalar
+                c_array = a_array + b_array
+                # It was comparing the type numbers, but the new ufunc
+                # function-finding mechanism finds the lowest function
+                # to which both inputs can be cast - which produces 'l'
+                # when you do 'q' + 'b'.  The old function finding mechanism
+                # skipped ahead based on the first argument, but that
+                # does not produce properly symmetric results...
+                assert_equal(c_scalar.dtype, c_array.dtype,
+                           "error with types (%d/'%c' + %d/'%c')" %
+                            (k,np.dtype(atype).char,l,np.dtype(btype).char))
 
     def test_type_create(self, level=1):
         for k, atype in enumerate(types):

@@ -182,4 +182,3 @@ array_any_nonzero(PyArrayObject *mp)
     Py_DECREF(it);
     return anyTRUE;
 }
-

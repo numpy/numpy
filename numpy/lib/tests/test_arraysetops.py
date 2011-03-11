@@ -17,7 +17,7 @@ class TestAso(TestCase):
         assert_array_equal( c, ec )
 
         vals, indices = unique( a, return_index=True )
-        
+
 
         ed = np.array( [2, 3, 0, 1] )
         assert_array_equal(vals, ec)
@@ -25,7 +25,7 @@ class TestAso(TestCase):
 
         vals, ind0, ind1 = unique( a, return_index=True,
                                      return_inverse=True )
-        
+
 
         ee = np.array( [2, 3, 0, 1, 0, 2, 3] )
         assert_array_equal(vals, ec)
@@ -52,21 +52,6 @@ class TestAso(TestCase):
         assert_array_equal( c, ed )
 
         assert_array_equal([], intersect1d([],[]))
-
-    def test_intersect1d_nu( self ):
-        # This should be removed when intersect1d_nu is removed.
-        a = np.array( [5, 5, 7, 1, 2] )
-        b = np.array( [2, 1, 4, 3, 3, 1, 5] )
-
-        ec = np.array( [1, 2, 5] )
-        warnings.filterwarnings('ignore', message='\s*`intersect1d_nu` is deprecated!')
-        warnings.filterwarnings('ignore', message='\s*`unique1d` is deprecated!')
-        c = intersect1d_nu( a, b )        
-        assert_array_equal( c, ec )
-        assert_array_equal([], intersect1d_nu([],[]))
-        warnings.filters.pop(0)
-        warnings.filters.pop(0)
-
 
     def test_setxor1d( self ):
         a = np.array( [5, 7, 1, 2] )
@@ -104,30 +89,6 @@ class TestAso(TestCase):
         assert_array_equal([],ediff1d(one_elem))
         assert_array_equal([1],ediff1d(two_elem))
 
-    def test_setmember1d( self ):
-        # This should be removed when setmember1d is removed.
-        a = np.array( [5, 7, 1, 2] )
-        b = np.array( [2, 4, 3, 1, 5] )
-
-        ec = np.array( [True, False, True, True] )
-        warnings.filterwarnings('ignore', '\s*`setmember1d` is deprecated!')
-        c = setmember1d( a, b )
-        
-        assert_array_equal( c, ec )
-
-        a[0] = 8
-        ec = np.array( [False, False, True, True] )
-        c = setmember1d( a, b )
-        assert_array_equal( c, ec )
-
-        a[0], a[3] = 4, 8
-        ec = np.array( [True, False, True, False] )
-        c = setmember1d( a, b )
-        assert_array_equal( c, ec )
-
-        assert_array_equal([], setmember1d([],[]))
-        warnings.filters.pop(0)
-
     def test_in1d(self):
         a = np.array( [5, 7, 1, 2] )
         b = np.array( [2, 4, 3, 1, 5] )
@@ -145,7 +106,7 @@ class TestAso(TestCase):
         ec = np.array( [True, False, True, False] )
         c = in1d( a, b, assume_unique=True )
         assert_array_equal( c, ec )
-        
+
         a = np.array([5,4,5,3,4,4,3,4,3,5,2,1,5,5])
         b = [2,3,4]
 

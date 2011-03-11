@@ -345,12 +345,12 @@ class $name(pu.PolyBase) :
 
         Parameters
         ----------
-        domain : {None, array_like}
-            The domain of the new series type instance. If the value is is
-            ``None``, then the default domain of `kind` is used.
-        kind : {None, class}
+        domain : array_like, optional
+            The domain of the new series type instance. If the value is None,
+            then the default domain of `kind` is used.
+        kind : class, optional
             The polynomial series type class to which the current instance
-            should be converted. If kind is ``None``, then the class of the
+            should be converted. If kind is None, then the class of the
             current instance is used.
 
         Returns
@@ -359,13 +359,13 @@ class $name(pu.PolyBase) :
             The returned class can be of different type than the current
             instance and/or have a different domain.
 
-        Examples
-        --------
-
         Notes
         -----
         Conversion between domains and class types can result in
         numerically ill defined series.
+
+        Examples
+        --------
 
         """
         if kind is None :
@@ -390,11 +390,11 @@ class $name(pu.PolyBase) :
         off, scl : floats or complex
             The mapping function is defined by ``off + scl*x``.
 
-        Notes:
-        ------
+        Notes
+        -----
         If the current domain is the interval ``[l_1, r_1]`` and the default
         interval is ``[l_2, r_2]``, then the linear mapping function ``L`` is
-        defined by the equations:
+        defined by the equations::
 
             L(l_1) = l_2
             L(r_1) = r_2
@@ -491,8 +491,8 @@ class $name(pu.PolyBase) :
 
         See Also
         --------
-        `${nick}int` : similar function.
-        `${nick}der` : similar function for derivative.
+        ${nick}int : similar function.
+        ${nick}der : similar function for derivative.
 
         """
         off, scl = self.mapparms()
@@ -521,8 +521,8 @@ class $name(pu.PolyBase) :
 
         See Also
         --------
-        `${nick}der` : similar function.
-        `${nick}int` : similar function for integration.
+        ${nick}der : similar function.
+        ${nick}int : similar function for integration.
 
         """
         off, scl = self.mapparms()
@@ -538,8 +538,8 @@ class $name(pu.PolyBase) :
 
         See Also
         --------
-        `${nick}roots` : similar function
-        `${nick}fromroots` : function to go generate series from roots.
+        ${nick}roots : similar function
+        ${nick}fromroots : function to go generate series from roots.
 
         """
         roots = ${nick}roots(self.coef)
@@ -552,8 +552,8 @@ class $name(pu.PolyBase) :
         Here y is the value of the polynomial at the points x.  This is
         intended as a plotting aid.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         n : int, optional
             Number of point pairs to return. The default value is 100.
 
@@ -577,9 +577,9 @@ class $name(pu.PolyBase) :
         """Least squares fit to data.
 
         Return a `$name` instance that is the least squares fit to the data
-        `y` sampled at `x`. Unlike ${nick}fit, the domain of the returned
+        `y` sampled at `x`. Unlike `${nick}fit`, the domain of the returned
         instance can be specified and this will often result in a superior
-        fit with less chance of ill conditioning. See ${nick}fit for full
+        fit with less chance of ill conditioning. See `${nick}fit` for full
         documentation of the implementation.
 
         Parameters
@@ -591,7 +591,7 @@ class $name(pu.PolyBase) :
             points sharing the same x-coordinates can be fitted at once by
             passing in a 2D-array that contains one dataset per column.
         deg : int
-            Degree of the fitting polynomial
+            Degree of the fitting polynomial.
         domain : {None, [beg, end], []}, optional
             Domain to use for the returned $name instance. If ``None``,
             then a minimal domain that covers the points `x` is chosen.  If
@@ -671,14 +671,14 @@ class $name(pu.PolyBase) :
         If ``p`` is the returned $name object, then ``p(x) == x`` for all
         values of x.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         domain : array_like
             The resulting array must be if the form ``[beg, end]``, where
             ``beg`` and ``end`` are the endpoints of the domain.
 
-        Returns:
-        --------
+        Returns
+        -------
         identity : $name object
 
         """

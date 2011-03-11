@@ -376,7 +376,7 @@ def merge_arrays(seqarrays,
     # Only one item in the input sequence ?
     if (len(seqarrays) == 1):
         seqarrays = np.asanyarray(seqarrays[0])
-    # Do we have a single ndarary as input ?
+    # Do we have a single ndarray as input ?
     if isinstance(seqarrays, (ndarray, np.void)):
         seqdtype = seqarrays.dtype
         if (not flatten) or \

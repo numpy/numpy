@@ -81,6 +81,22 @@ try:
 finally:
     sys.path.pop(0)
 
+
+#-----------------------------------
+# Things to be changed for a release
+#-----------------------------------
+
+# Source of the release notes
+RELEASE_NOTES = 'doc/release/2.0.0-notes.rst'
+
+# Start/end of the log (from git)
+LOG_START = 'svn/tags/1.5.0'
+LOG_END = 'master'
+
+
+#-------------------------------------------------------
+# Hardcoded build/install dirs, virtualenv options, etc.
+#-------------------------------------------------------
 DEFAULT_PYTHON = "2.6"
 
 # Where to put the final installers, as put on sourceforge
@@ -109,6 +125,7 @@ MPKG_PYTHON = {
         "2.6": ["/Library/Frameworks/Python.framework/Versions/2.6/bin/python"],
         "2.7": ["/Library/Frameworks/Python.framework/Versions/2.7/bin/python"],
         "3.1": ["/Library/Frameworks/Python.framework/Versions/3.1/bin/python3"],
+        "3.2": ["/Library/Frameworks/Python.framework/Versions/3.2/bin/python3"],
 }
 
 SSE3_CFG = {'ATLAS': r'C:\local\lib\yop\sse3'}
@@ -119,6 +136,7 @@ SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
 if sys.platform =="darwin":
     WINDOWS_PYTHON = {
+        "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
         "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
@@ -129,7 +147,8 @@ if sys.platform =="darwin":
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
-        "3.1": ["C:\Python31\python3.exe"],
+        "3.2": ["C:\Python32\python.exe"],
+        "3.1": ["C:\Python31\python.exe"],
         "2.7": ["C:\Python27\python.exe"],
         "2.6": ["C:\Python26\python.exe"],
         "2.5": ["C:\Python25\python.exe"],
@@ -140,6 +159,7 @@ elif sys.platform == "win32":
     MAKENSIS = ["makensis"]
 else:
     WINDOWS_PYTHON = {
+        "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
         "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
         "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
@@ -148,10 +168,6 @@ else:
     WINDOWS_ENV = os.environ
     MAKENSIS = ["wine", "makensis"]
 
-# Start/end of the log (from git)
-LOG_START = 'svn/tags/1.4.0'
-LOG_END = 'master'
-RELEASE_NOTES = 'doc/release/1.5.0-notes.rst'
 
 #-------------------
 # Windows installers
@@ -211,7 +227,15 @@ def bdist_superpack(options):
             os.remove(target)
         if not os.path.exists(os.path.dirname(target)):
             os.makedirs(os.path.dirname(target))
-        os.rename(source, target)
+        try:
+            os.rename(source, target)
+        except OSError:
+            # When git is installed on OS X but not under Wine, the name of the
+            # .exe has "-Unknown" in it instead of the correct git revision.
+            # Try to fix this here:
+            revidx = source.index(".dev-") + 5
+            gitrev = source[revidx:revidx+7]
+            os.rename(source.replace(gitrev, "Unknown"), target)
 
     bdist_wininst_arch(pyver, 'nosse')
     copy_bdist("nosse")
@@ -378,11 +402,20 @@ def macosx_version():
 
 def mpkg_name(pyver):
     maj, min = macosx_version()[:2]
+    # Note that bdist_mpkg breaks this if building a dev version with a git
+    # commit string attached. make_fullplatcomponents() in
+    # bdist_mpkg/cmd_bdist_mpkg.py replaces '-' with '_', comment this out if
+    # needed.
     return "numpy-%s-py%s-macosx%s.%s.mpkg" % (FULLVERSION, pyver, maj, min)
 
 def _build_mpkg(pyver):
-    ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
+    # account for differences between Python 2.7.1 versions from python.org
+    if os.environ.get('MACOSX_DEPLOYMENT_TARGET', None) == "10.6":
+        ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch x86_64 -Wl,-search_paths_first"
+    else:
+        ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
     ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
+
     if pyver == "2.5":
         sh("CC=gcc-4.0 LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
     else:
@@ -428,7 +461,6 @@ def _create_dmg(pyver, src_dir, volname=None):
     sh(" ".join(cmd))
 
 @task
-@needs("pdf")
 @cmdopts([("python-version=", "p", "python version")])
 def dmg(options):
     try:
@@ -437,11 +469,17 @@ def dmg(options):
         pyver = DEFAULT_PYTHON
     idirs = options.installers.installersdir
 
+    # Check if docs exist. If not, say so and quit.
+    ref = os.path.join(options.doc.destdir_pdf, "reference.pdf")
+    user = os.path.join(options.doc.destdir_pdf, "userguide.pdf")
+    if (not os.path.exists(ref)) or (not os.path.exists(user)):
+        warnings.warn("Docs need to be built first! Can't find them.")
+
+    # Build the mpkg package
     call_task("clean")
     _build_mpkg(pyver)
 
     macosx_installer_dir = "tools/numpy-macosx-installer"
-
     dmg = os.path.join(macosx_installer_dir, dmg_name(FULLVERSION, pyver))
     if os.path.exists(dmg):
         os.remove(dmg)
@@ -462,10 +500,7 @@ def dmg(options):
     if os.path.exists(pdf_docs):
         shutil.rmtree(pdf_docs)
     os.makedirs(pdf_docs)
-
-    user = os.path.join(options.doc.destdir_pdf, "userguide.pdf")
     shutil.copy(user, os.path.join(pdf_docs, "userguide.pdf"))
-    ref = os.path.join(options.doc.destdir_pdf, "reference.pdf")
     shutil.copy(ref, os.path.join(pdf_docs, "reference.pdf"))
 
     # Build the dmg

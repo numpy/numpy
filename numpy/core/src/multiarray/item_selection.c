@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "ctors.h"
+#include "lowlevel_strided_loops.h"
 
 #define PyAO PyArrayObject
 #define _check_axis PyArray_CheckAxis
@@ -621,7 +622,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     if (ap == NULL) {
         goto fail;
     }
-    /* Broadcast all arrays to each other, index array at the end. */ 
+    /* Broadcast all arrays to each other, index array at the end. */
     multi = (PyArrayMultiIterObject *)
         PyArray_MultiIterFromObjects((PyObject **)mps, n, 1, ap);
     if (multi == NULL) {
@@ -1460,16 +1461,16 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     dtype = PyArray_DescrFromObject((PyObject *)op2, op1->descr);
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
-    ap1 = (PyArrayObject *)PyArray_FromAny((PyObject *)op1, dtype,
-                                           1, 1, NPY_DEFAULT, NULL);
+    ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
+                                1, 1, NPY_DEFAULT | NPY_NOTSWAPPED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
     }
 
     /* need ap2 as contiguous array and of right type */
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype,
-                                          0, 0, NPY_DEFAULT, NULL);
+    ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
+                                0, 0, NPY_DEFAULT | NPY_NOTSWAPPED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
@@ -1605,10 +1606,12 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
          * my_diagonal.append (diagonal (a [i], offset))
          * return array (my_diagonal)
          */
-        PyObject *mydiagonal = NULL, *new = NULL, *ret = NULL, *sel = NULL;
-        intp i, n1;
+        PyObject *mydiagonal = NULL, *ret = NULL, *sel = NULL;
+        intp n1;
         int res;
         PyArray_Descr *typecode;
+
+        new = NULL;
 
         typecode = self->descr;
         mydiagonal = PyList_New(0);
@@ -1682,75 +1685,221 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 }
 
 /*NUMPY_API
+ * Counts the number of non-zero elements in the array
+ *
+ * Returns -1 on error.
+ */
+NPY_NO_EXPORT npy_intp
+PyArray_CountNonzero(PyArrayObject *self)
+{
+    PyArray_NonzeroFunc *nonzero = self->descr->f->nonzero;
+    char *data;
+    npy_intp stride, count;
+    npy_intp nonzero_count = 0;
+
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    char **dataptr;
+    npy_intp *strideptr, *innersizeptr;
+
+    /* If it's a trivial one-dimensional loop, don't use an iterator */
+    if (PyArray_TRIVIALLY_ITERABLE(self)) {
+        PyArray_PREPARE_TRIVIAL_ITERATION(self, count, data, stride);
+
+        while (count--) {
+            if (nonzero(data, self)) {
+                ++nonzero_count;
+            }
+            data += stride;
+        }
+
+        return nonzero_count;
+    }
+
+    /*
+     * If the array has size zero, return zero (the iterator rejects
+     * size zero arrays)
+     */
+    if (PyArray_SIZE(self) == 0) {
+        return 0;
+    }
+
+    /* Otherwise create and use an iterator to count the nonzeros */
+    iter = NpyIter_New(self, NPY_ITER_READONLY|
+                             NPY_ITER_NO_INNER_ITERATION|
+                             NPY_ITER_REFS_OK,
+                        NPY_KEEPORDER, NPY_NO_CASTING,
+                        NULL, 0, NULL, 0);
+    if (iter == NULL) {
+        return -1;
+    }
+
+    /* Get the pointers for inner loop iteration */
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        NpyIter_Deallocate(iter);
+        return -1;
+    }
+    dataptr = NpyIter_GetDataPtrArray(iter);
+    strideptr = NpyIter_GetInnerStrideArray(iter);
+    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    /* Iterate over all the elements to count the nonzeros */
+    do {
+        data = *dataptr;
+        stride = *strideptr;
+        count = *innersizeptr;
+
+        while (count--) {
+            if (nonzero(data, self)) {
+                ++nonzero_count;
+            }
+            data += stride;
+        }
+
+    } while(iternext(iter));
+
+    NpyIter_Deallocate(iter);
+
+    return nonzero_count;
+}
+
+/*NUMPY_API
  * Nonzero
+ *
+ * TODO: In NumPy 2.0, should make the iteration order a parameter.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
-    int n = self->nd, j;
-    intp count = 0, i, size;
-    PyArrayIterObject *it = NULL;
-    PyObject *ret = NULL, *item;
-    intp *dptr[MAX_DIMS];
+    int i, ndim = PyArray_NDIM(self);
+    PyArrayObject *ret = NULL;
+    PyObject *ret_tuple;
+    npy_intp ret_dims[2];
+    PyArray_NonzeroFunc *nonzero = self->descr->f->nonzero;
+    char *data;
+    npy_intp stride, count;
+    npy_intp nonzero_count = PyArray_CountNonzero(self);
+    npy_intp *coords;
 
-    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-    if (it == NULL) {
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    NpyIter_GetCoordsFunc *getcoords;
+    char **dataptr;
+    npy_intp *innersizeptr;
+
+    /* Allocate the result as a 2D array */
+    ret_dims[0] = nonzero_count;
+    ret_dims[1] = (ndim == 0) ? 1 : ndim;
+    ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 2, ret_dims,
+                       NPY_INTP, NULL, NULL, 0, 0,
+                       NULL);
+    if (ret == NULL) {
         return NULL;
     }
-    /* One pass through 'self', counting the non-zero elements */
-    size = it->size;
-    for (i = 0; i < size; i++) {
-        if (self->descr->f->nonzero(it->dataptr, self)) {
-            count++;
+
+    /* If it's a one-dimensional result, don't use an iterator */
+    if (ndim <= 1) {
+        npy_intp j;
+
+        coords = (npy_intp *)PyArray_DATA(ret);
+        data = PyArray_BYTES(self);
+        stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
+        count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
+
+        for (j = 0; j < count; ++j) {
+            if (nonzero(data, self)) {
+                *coords++ = j;
+            }
+            data += stride;
         }
-        PyArray_ITER_NEXT(it);
+
+        goto finish;
     }
 
-    PyArray_ITER_RESET(it);
-    /* Allocate the tuple of coordinates */
-    ret = PyTuple_New(n);
-    if (ret == NULL) {
-        goto fail;
+    /* Build an iterator with coordinates, in C order */
+    iter = NpyIter_New(self, NPY_ITER_READONLY|
+                             NPY_ITER_COORDS|
+                             NPY_ITER_ZEROSIZE_OK|
+                             NPY_ITER_REFS_OK,
+                        NPY_CORDER, NPY_NO_CASTING,
+                        NULL, 0, NULL, 0);
+
+    if (iter == NULL) {
+        Py_DECREF(ret);
+        return NULL;
     }
-    for (j = 0; j < n; j++) {
-        item = PyArray_New(Py_TYPE(self), 1, &count,
-                           PyArray_INTP, NULL, NULL, 0, 0,
-                           (PyObject *)self);
-        if (item == NULL) {
-            goto fail;
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        /* Get the pointers for inner loop iteration */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(ret);
+            return NULL;
         }
-        PyTuple_SET_ITEM(ret, j, item);
-        dptr[j] = (intp *)PyArray_DATA(item);
-    }
-    /* A second pass through 'self', recording the indices */
-    if (n == 1) {
-        for (i = 0; i < size; i++) {
-            if (self->descr->f->nonzero(it->dataptr, self)) {
-                *(dptr[0])++ = i;
+        getcoords = NpyIter_GetGetCoords(iter, NULL);
+        if (getcoords == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(ret);
+            return NULL;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        coords = (npy_intp *)PyArray_DATA(ret);
+
+        /* Get the coordinates for each non-zero element */
+        do {
+            if (nonzero(*dataptr, self)) {
+                getcoords(iter, coords);
+                coords += ndim;
             }
-            PyArray_ITER_NEXT(it);
-        }
+        } while(iternext(iter));
+    }
+
+    NpyIter_Deallocate(iter);
+
+finish:
+    /* Treat zero-dimensional as shape (1,) */
+    if (ndim == 0) {
+        ndim = 1;
+    }
+
+    ret_tuple = PyTuple_New(ndim);
+    if (ret_tuple == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    /* Create views into ret, one for each dimension */
+    if (ndim == 1) {
+        /* Directly switch to one dimensions (dimension 1 is 1 anyway) */
+        ret->nd = 1;
+        PyTuple_SET_ITEM(ret_tuple, 0, (PyObject *)ret);
     }
     else {
-        /* reset contiguous so that coordinates gets updated */
-        it->contiguous = 0;
-        for (i = 0; i < size; i++) {
-            if (self->descr->f->nonzero(it->dataptr, self)) {
-                for (j = 0; j < n; j++) {
-                    *(dptr[j])++ = it->coordinates[j];
-                }
+        for (i = 0; i < ndim; ++i) {
+            PyArrayObject *view;
+            stride = ndim*NPY_SIZEOF_INTP;
+
+            view = (PyArrayObject *)PyArray_New(Py_TYPE(self), 1,
+                                &nonzero_count,
+                                NPY_INTP, &stride,
+                                PyArray_BYTES(ret) + i*NPY_SIZEOF_INTP,
+                                0, 0, (PyObject *)self);
+            if (view == NULL) {
+                Py_DECREF(ret);
+                Py_DECREF(ret_tuple);
+                return NULL;
             }
-            PyArray_ITER_NEXT(it);
+            Py_INCREF(ret);
+            view->base = (PyObject *)ret;
+            PyTuple_SET_ITEM(ret_tuple, i, (PyObject *)view);
         }
+
+        Py_DECREF(ret);
     }
 
-    Py_DECREF(it);
-    return ret;
-
- fail:
-    Py_XDECREF(ret);
-    Py_XDECREF(it);
-    return NULL;
-
+    return ret_tuple;
 }
-

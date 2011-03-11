@@ -540,13 +540,17 @@ class TestStackArrays(TestCase):
 
 
 class TestJoinBy(TestCase):
+    def setUp(self):
+        self.a = np.array(zip(np.arange(10), np.arange(50, 60),
+                        np.arange(100, 110)),
+                        dtype=[('a', int), ('b', int), ('c', int)])
+        self.b = np.array(zip(np.arange(5, 15), np.arange(65, 75),
+                        np.arange(100, 110)),
+                        dtype=[('a', int), ('b', int), ('d', int)])
     #
-    def test_base(self):
+    def test_inner_join(self):
         "Basic test of join_by"
-        a = np.array(zip(np.arange(10), np.arange(50, 60), np.arange(100, 110)),
-                     dtype=[('a', int), ('b', int), ('c', int)])
-        b = np.array(zip(np.arange(5, 15), np.arange(65, 75), np.arange(100, 110)),
-                     dtype=[('a', int), ('b', int), ('d', int)])
+        a, b = self.a, self.b
         #
         test = join_by('a', a, b, jointype='inner')
         control = np.array([(5, 55, 65, 105, 100), (6, 56, 66, 106, 101),
@@ -555,6 +559,9 @@ class TestJoinBy(TestCase):
                            dtype=[('a', int), ('b1', int), ('b2', int),
                                   ('c', int), ('d', int)])
         assert_equal(test, control)
+
+    def test_join(self):
+        a, b = self.a, self.b
         #
         test = join_by(('a', 'b'), a, b)
         control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
@@ -562,6 +569,9 @@ class TestJoinBy(TestCase):
                             (9, 59, 109, 104)],
                            dtype=[('a', int), ('b', int),
                                   ('c', int), ('d', int)])
+
+    def test_outer_join(self):
+        a, b = self.a, self.b
         #
         test = join_by(('a', 'b'), a, b, 'outer')
         control = ma.array([(0, 50, 100, -1), (1, 51, 101, -1),
@@ -587,6 +597,9 @@ class TestJoinBy(TestCase):
                       dtype=[('a', int), ('b', int),
                              ('c', int), ('d', int)])
         assert_equal(test, control)
+
+    def test_leftouter_join(self):
+        a, b = self.a, self.b
         #
         test = join_by(('a', 'b'), a, b, 'leftouter')
         control = ma.array([(0, 50, 100, -1), (1, 51, 101, -1),

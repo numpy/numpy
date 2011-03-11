@@ -94,7 +94,7 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
 {
     int i;
 
-    for(i = 0; i < PyArray_NTYPES; i++) {
+    for(i = 0; i < NPY_NTYPES_ABI_COMPATIBLE; i++) {
         f->cast[i] = NULL;
     }
     f->getitem = NULL;
@@ -188,11 +188,11 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
     PyObject *cobj, *key;
     int ret;
 
-    if (totype < PyArray_NTYPES) {
+    if (totype < NPY_NTYPES_ABI_COMPATIBLE) {
         descr->f->cast[totype] = castfunc;
         return 0;
     }
-    if (!PyTypeNum_ISUSERDEF(totype)) {
+    if (totype >= NPY_NTYPES && !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_TypeError, "invalid type number.");
         return -1;
     }
@@ -272,4 +272,3 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     }
     return 0;
 }
-

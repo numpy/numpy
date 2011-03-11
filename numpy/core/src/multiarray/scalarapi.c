@@ -354,7 +354,19 @@ PyArray_ScalarFromObject(PyObject *object)
     if (PyArray_IsZeroDim(object)) {
         return PyArray_ToScalar(PyArray_DATA(object), object);
     }
-    if (PyInt_Check(object)) {
+    /*
+     * Booleans in Python are implemented as a subclass of integers,
+     * so PyBool_Check must be called before PyInt_Check.
+     */
+    if (PyBool_Check(object)) {
+        if (object == Py_True) {
+            PyArrayScalar_RETURN_TRUE;
+        }
+        else {
+            PyArrayScalar_RETURN_FALSE;
+        }
+    }
+    else if (PyInt_Check(object)) {
         ret = PyArrayScalar_New(Long);
         if (ret == NULL) {
             return NULL;
@@ -388,14 +400,6 @@ PyArray_ScalarFromObject(PyObject *object)
             return NULL;
         }
         PyArrayScalar_VAL(ret, LongLong) = val;
-    }
-    else if (PyBool_Check(object)) {
-        if (object == Py_True) {
-            PyArrayScalar_RETURN_TRUE;
-        }
-        else {
-            PyArrayScalar_RETURN_FALSE;
-        }
     }
     return ret;
 }

@@ -115,7 +115,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
     }
     seq->len = len;
-    nd = PyArray_IntpFromSequence(obj, (intp *)seq->ptr, len);
+    nd = PyArray_IntpFromSequence(obj, (npy_intp *)seq->ptr, len);
     if (nd == -1 || nd != len) {
         PyDimMem_FREE(seq->ptr);
         seq->ptr = NULL;
@@ -155,7 +155,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
             return PY_FAIL;
         }
     }
-    buf->len = (intp) buflen;
+    buf->len = (npy_intp) buflen;
 
     /* Point to the base of the buffer object if present */
 #if defined(NPY_PY3K)
@@ -441,7 +441,7 @@ PyArray_PyIntAsInt(PyObject *o)
 }
 
 /*NUMPY_API*/
-NPY_NO_EXPORT intp
+NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
     longlong long_value = -1;
@@ -449,7 +449,7 @@ PyArray_PyIntAsIntp(PyObject *o)
     static char *msg = "an integer is required";
     PyObject *arr;
     PyArray_Descr *descr;
-    intp ret;
+    npy_intp ret;
 
     if (!o) {
         PyErr_SetString(PyExc_TypeError, msg);
@@ -485,7 +485,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         arr = PyArray_FromScalar(o, descr);
     }
     if (arr != NULL) {
-        ret = *((intp *)PyArray_DATA(arr));
+        ret = *((npy_intp *)PyArray_DATA(arr));
         Py_DECREF(arr);
         return ret;
     }
@@ -536,7 +536,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         return -1;
     }
 #endif
-    return (intp) long_value;
+    return (npy_intp) long_value;
 }
 
 /*NUMPY_API
@@ -545,7 +545,7 @@ PyArray_PyIntAsIntp(PyObject *o)
  * vals must be large enough to hold maxvals
  */
 NPY_NO_EXPORT int
-PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
+PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     int nd, i;
     PyObject *op, *err;
@@ -567,9 +567,9 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 #endif
         nd = 1;
 #if SIZEOF_LONG >= SIZEOF_INTP
-        vals[0] = (intp ) PyInt_AsLong(op);
+        vals[0] = (npy_intp ) PyInt_AsLong(op);
 #else
-        vals[0] = (intp ) PyLong_AsLongLong(op);
+        vals[0] = (npy_intp ) PyLong_AsLongLong(op);
 #endif
         Py_DECREF(op);
 
@@ -596,9 +596,9 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
                 return -1;
             }
 #if SIZEOF_LONG >= SIZEOF_INTP
-            vals[i]=(intp )PyInt_AsLong(op);
+            vals[i]=(npy_intp )PyInt_AsLong(op);
 #else
-            vals[i]=(intp )PyLong_AsLongLong(op);
+            vals[i]=(npy_intp )PyLong_AsLongLong(op);
 #endif
             Py_DECREF(op);
 
@@ -751,7 +751,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
   PyArray_IntTupleFromIntp
 */
 NPY_NO_EXPORT PyObject *
-PyArray_IntTupleFromIntp(int len, intp *vals)
+PyArray_IntTupleFromIntp(int len, npy_intp *vals)
 {
     int i;
     PyObject *intTuple = PyTuple_New(len);
@@ -776,4 +776,3 @@ PyArray_IntTupleFromIntp(int len, intp *vals)
  fail:
     return intTuple;
 }
-

@@ -149,7 +149,8 @@ static int
         temp = (@type@)@func2@(op);
     }
     if (PyErr_Occurred()) {
-        if (PySequence_Check(op)) {
+        if (PySequence_Check(op) && !PyString_Check(op) &&
+                                            !PyUnicode_Check(op)) {
             PyErr_Clear();
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");
@@ -438,15 +439,24 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     Py_ssize_t len;
     PyObject *temp = NULL;
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)
-            && PySequence_Check(op) && PySequence_Size(op) > 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "setting an array element with a sequence");
-        return -1;
+    /* Handle case of assigning from an array scalar */
+    if (PyArray_Check(op) && PyArray_NDIM(op) == 0) {
+        temp = PyArray_ToScalar(PyArray_DATA(op), op);
+        if (temp == NULL) {
+            return -1;
+        }
+        else {
+            int res = STRING_setitem(temp, ov, ap);
+            Py_DECREF(temp);
+            return res;
+        }
     }
-    /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
+
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)
+            && PySequence_Check(op) && PySequence_Size(op) != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "cannot set an array element with a sequence");
+        return -1;
     }
 #if defined(NPY_PY3K)
     if (PyUnicode_Check(op)) {
@@ -501,28 +511,15 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 static PyObject *
 OBJECT_getitem(char *ip, PyArrayObject *ap)
 {
-    /* TODO: We might be able to get away with just the "else" clause now */
-    if (!ap || PyArray_ISALIGNED(ap)) {
-        if (*(PyObject **)ip == NULL) {
-            Py_INCREF(Py_None);
-            return Py_None;
-        }
-        else {
-            Py_INCREF(*(PyObject **)ip);
-            return *(PyObject **)ip;
-        }
+    PyObject *obj;
+    NPY_COPY_PYOBJECT_PTR(&obj, ip);
+    if (obj == NULL) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
     else {
-        PyObject *obj;
-        NPY_COPY_PYOBJECT_PTR(&obj, ip);
-        if (obj == NULL) {
-            Py_INCREF(Py_None);
-            return Py_None;
-        }
-        else {
-            Py_INCREF(obj);
-            return obj;
-        }
+        Py_INCREF(obj);
+        return obj;
     }
 }
 
@@ -530,18 +527,14 @@ OBJECT_getitem(char *ip, PyArrayObject *ap)
 static int
 OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
+    PyObject *obj;
+
+    NPY_COPY_PYOBJECT_PTR(&obj, ov);
+    Py_XDECREF(obj);
+
     Py_INCREF(op);
-    /* TODO: We might be able to get away with just the "else" clause now */
-    if (!ap || PyArray_ISALIGNED(ap)) {
-        Py_XDECREF(*(PyObject **)ov);
-        *(PyObject **)ov = op;
-    }
-    else {
-        PyObject *obj;
-        NPY_COPY_PYOBJECT_PTR(&obj, ov);
-        Py_XDECREF(obj);
-        NPY_COPY_PYOBJECT_PTR(ov, &op);
-    }
+    NPY_COPY_PYOBJECT_PTR(ov, &op);
+
     return PyErr_Occurred() ? -1 : 0;
 }
 
@@ -555,7 +548,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
     int itemsize;
 
     descr = ap->descr;
-    if (descr->names) {
+    if (descr->names != NULL) {
         PyObject *key;
         PyObject *names;
         int i, n;
@@ -567,9 +560,6 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 
         /* get the names from the fields dictionary*/
         names = descr->names;
-        if (!names) {
-            goto finish;
-        }
         n = PyTuple_GET_SIZE(names);
         ret = PyTuple_New(n);
         savedflags = ap->flags;
@@ -611,7 +601,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         Py_INCREF(descr->subarray->base);
         ret = PyArray_NewFromDescr(&PyArray_Type,
                 descr->subarray->base, shape.len, shape.ptr,
-                NULL, ip, ap->flags, NULL);
+                NULL, ip, ap->flags&(~NPY_F_CONTIGUOUS), NULL);
         PyDimMem_FREE(shape.ptr);
         if (!ret) {
             return NULL;
@@ -1152,7 +1142,7 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     else if (PyUString_Check(op) || PyUnicode_Check(op)) {
 #endif
         /* FIXME:  Converts to DateTime first and therefore does not handle extended notation */
-        /* import _mx_datetime_parser 
+        /* import _mx_datetime_parser
          * res = _mx_datetime_parser(name)
          *  Convert from datetime to Int
          */
@@ -1532,6 +1522,7 @@ static void
 #define _NPY_UNUSEDULONG  NPY_UNUSED
 #define _NPY_UNUSEDLONGLONG  NPY_UNUSED
 #define _NPY_UNUSEDULONGLONG  NPY_UNUSED
+#define _NPY_UNUSEDHALF NPY_UNUSED
 #define _NPY_UNUSEDFLOAT  NPY_UNUSED
 #define _NPY_UNUSEDDOUBLE  NPY_UNUSED
 #define _NPY_UNUSEDLONGDOUBLE  NPY_UNUSED
@@ -1540,6 +1531,7 @@ static void
 #define _NPY_UNUSEDCLONGDOUBLE  NPY_UNUSED
 #define _NPY_UNUSEDDATETIME  NPY_UNUSED
 #define _NPY_UNUSEDTIMEDELTA  NPY_UNUSED
+#define _NPY_UNUSEDHALF NPY_UNUSED
 #define _NPY_UNUSEDSTRING
 #define _NPY_UNUSEDVOID
 #define _NPY_UNUSEDUNICODE
@@ -1601,6 +1593,7 @@ static void
         }
         /* convert from Python object to needed one */
 #if @convert@
+        {
         PyObject *new, *args;
         /* call out to the Python builtin given by convstr */
         args = Py_BuildValue("(N)", temp);
@@ -1615,6 +1608,7 @@ static void
         temp = new;
         if (temp == NULL) {
             return;
+        }
         }
 #endif /* @convert@ */
         if (@to@_setitem(temp,(char *)op, aop)) {
@@ -1735,12 +1729,12 @@ static int
 static int
 BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
 {
-    int temp;
-    int num;
+    double result;
+    int ret;
 
-    num = fscanf(fp, "%d", &temp);
-    *ip = (Bool) (temp != 0);
-    return num;
+    ret = NumPyOS_ascii_ftolf(fp, &result);
+    *ip = (Bool) (result != 0.0);
+    return ret;
 }
 
 /**begin repeat
@@ -3622,6 +3616,29 @@ static int
  * #endian = |, |, =#
 */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
+    {
+        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
+        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_INT,
+        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
+        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
+        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+    },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
     (PyArray_CopySwapNFunc*)@from@_copyswapn,
@@ -3646,34 +3663,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     (PyArray_FastClipFunc *)NULL,
     (PyArray_FastPutmaskFunc *)NULL,
-    (PyArray_FastTakeFunc *)NULL,
-    NULL, NULL, NULL, NULL,
-    {
-        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
-        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_INT,
-        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_HALF,
-        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
-        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
-        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
-        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
-    }
+    (PyArray_FastTakeFunc *)NULL
 };
 
 /*
@@ -3685,7 +3675,6 @@ static PyArray_Descr @from@_Descr = {
     PyArray_@from@LTR,
     PyArray_@from@LTR,
     '@endian@',
-    0,
     0,
     PyArray_@from@,
     0,
@@ -3718,6 +3707,29 @@ static PyArray_Descr @from@_Descr = {
  * #isobject= 0*18,NPY_OBJECT_DTYPE_FLAGS,0*2#
  */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
+    {
+        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
+        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
+        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
+        (PyArray_VectorUnaryFunc*)@from@_to_INT,
+        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
+        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
+        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
+        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
+        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
+        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
+        (PyArray_VectorUnaryFunc*)@from@_to_VOID
+    },
     (PyArray_GetItemFunc*)@from@_getitem,
     (PyArray_SetItemFunc*)@from@_setitem,
     (PyArray_CopySwapNFunc*)@from@_copyswapn,
@@ -3742,34 +3754,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     (PyArray_FastClipFunc*)@from@_fastclip,
     (PyArray_FastPutmaskFunc*)@from@_fastputmask,
-    (PyArray_FastTakeFunc*)@from@_fasttake,
-    NULL, NULL, NULL, NULL,
-    {
-        (PyArray_VectorUnaryFunc*)@from@_to_BOOL,
-        (PyArray_VectorUnaryFunc*)@from@_to_BYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_UBYTE,
-        (PyArray_VectorUnaryFunc*)@from@_to_SHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_USHORT,
-        (PyArray_VectorUnaryFunc*)@from@_to_INT,
-        (PyArray_VectorUnaryFunc*)@from@_to_UINT,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_ULONGLONG,
-        (PyArray_VectorUnaryFunc*)@from@_to_HALF,
-        (PyArray_VectorUnaryFunc*)@from@_to_FLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_DOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_LONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CFLOAT,
-        (PyArray_VectorUnaryFunc*)@from@_to_CDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_CLONGDOUBLE,
-        (PyArray_VectorUnaryFunc*)@from@_to_DATETIME,
-        (PyArray_VectorUnaryFunc*)@from@_to_TIMEDELTA,
-        (PyArray_VectorUnaryFunc*)@from@_to_OBJECT,
-        (PyArray_VectorUnaryFunc*)@from@_to_STRING,
-        (PyArray_VectorUnaryFunc*)@from@_to_UNICODE,
-        (PyArray_VectorUnaryFunc*)@from@_to_VOID
-    }
+    (PyArray_FastTakeFunc*)@from@_fasttake
 };
 
 /*
@@ -3781,7 +3766,6 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     PyArray_@kind@LTR,
     PyArray_@from@LTR,
     '@endian@',
-    0,
     @isobject@,
     PyArray_@from@,
     @num@*sizeof(@fromtyp@),
@@ -3833,19 +3817,19 @@ static PyArray_Descr *_builtin_descrs[] = {
     &ULONG_Descr,
     &LONGLONG_Descr,
     &ULONGLONG_Descr,
-    &HALF_Descr,
     &FLOAT_Descr,
     &DOUBLE_Descr,
     &LONGDOUBLE_Descr,
     &CFLOAT_Descr,
     &CDOUBLE_Descr,
     &CLONGDOUBLE_Descr,
-    &DATETIME_Descr,
-    &TIMEDELTA_Descr,
     &OBJECT_Descr,
     &STRING_Descr,
     &UNICODE_Descr,
     &VOID_Descr,
+    &DATETIME_Descr,
+    &TIMEDELTA_Descr,
+    &HALF_Descr
 };
 
 /*NUMPY_API
@@ -3923,8 +3907,49 @@ set_typeinfo(PyObject *dict)
     PyObject *infodict, *s;
     int i;
 
+    PyArray_Descr *dtype;
+    PyObject *cobj, *key;
+
+    /* Add cast functions for the new types */
+/**begin repeat
+ *
+ * #name1 = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID,
+ *         DATETIME,TIMEDELTA#
+ */
+/**begin repeat1
+ *
+ * #name2 = HALF, DATETIME, TIMEDELTA#
+ */
+    dtype = _builtin_descrs[NPY_@name1@];
+    if (dtype->f->castdict == NULL) {
+        dtype->f->castdict = PyDict_New();
+        if (dtype->f->castdict == NULL) {
+            return -1;
+        }
+    }
+    key = PyInt_FromLong(NPY_@name2@);
+    if (key == NULL) {
+        return -1;
+    }
+    cobj = NpyCapsule_FromVoidPtr((void *)@name1@_to_@name2@, NULL);
+    if (cobj == NULL) {
+        Py_DECREF(key);
+        return -1;
+    }
+    if (PyDict_SetItem(dtype->f->castdict, key, cobj) < 0) {
+        Py_DECREF(key);
+        Py_DECREF(cobj);
+        return -1;
+    }
+    Py_DECREF(key);
+    Py_DECREF(cobj);
+/**end repeat1**/
+/**end repeat**/
+
     for (i = 0; i < _MAX_LETTER; i++) {
-        _letter_to_num[i] = PyArray_NTYPES;
+        _letter_to_num[i] = NPY_NTYPES;
     }
 
 /**begin repeat

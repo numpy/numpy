@@ -31,6 +31,10 @@ class TestLoadLibrary(TestCase):
             try:
                 from distutils import sysconfig
                 so = sysconfig.get_config_var('SO')
+                # fix long extension for Python >=3.2, see PEP 3149.
+                if 'SOABI' in sysconfig.get_config_vars():
+                    so = so.replace('.'+sysconfig.get_config_var('SOABI'), '', 1)
+
                 cdll = load_library('multiarray%s' % so,
                                     np.core.multiarray.__file__)
             except ImportError:

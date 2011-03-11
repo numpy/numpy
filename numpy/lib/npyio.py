@@ -500,7 +500,7 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : string
+    file : str
         File name of .npz file.
     args : Arguments
         Function arguments.
@@ -683,19 +683,44 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     X = []
 
     def flatten_dtype(dt):
-        """Unpack a structured data-type."""
+        """Unpack a structured data-type, and produce re-packing info."""
         if dt.names is None:
             # If the dtype is flattened, return.
             # If the dtype has a shape, the dtype occurs
             # in the list more than once.
-            return [dt.base] * int(np.prod(dt.shape))
+            shape = dt.shape
+            if len(shape) == 0:
+                return ([dt.base], None)
+            else:
+                packing = [(shape[-1], tuple)]
+                if len(shape) > 1:
+                    for dim in dt.shape[-2:0:-1]:
+                        packing = [(dim*packing[0][0],packing*dim)]
+                    packing = packing*shape[0]
+                return ([dt.base] * int(np.prod(dt.shape)), packing)
         else:
             types = []
+            packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt = flatten_dtype(tp)
+                flat_dt, flat_packing = flatten_dtype(tp)
                 types.extend(flat_dt)
-            return types
+                packing.append((len(flat_dt),flat_packing))
+            return (types, packing)
+
+    def pack_items(items, packing):
+        """Pack items into nested lists based on re-packing info."""
+        if packing == None:
+            return items[0]
+        elif packing is tuple:
+            return tuple(items)
+        else:
+            start = 0
+            ret = []
+            for length, subpacking in packing:
+                ret.append(pack_items(items[start:start+length], subpacking))
+                start += length
+            return tuple(ret)
 
     def split_line(line):
         """Chop off comments, strip, and split at delimiter."""
@@ -724,7 +749,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             first_vals = split_line(first_line)
         N = len(usecols or first_vals)
 
-        dtype_types = flatten_dtype(dtype)
+        dtype_types, packing = flatten_dtype(dtype)
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
@@ -732,6 +757,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             # All fields have the same dtype
             converters = [defconv for i in xrange(N)]
+            if N > 1:
+                packing = [(N, tuple)]
 
         # By preference, use the converters specified by the user
         for i, conv in (user_converters or {}).iteritems():
@@ -753,27 +780,16 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 vals = [vals[i] for i in usecols]
 
             # Convert each value according to its column and store
-            X.append(tuple([conv(val) for (conv, val) in zip(converters, vals)]))
+            items = [conv(val) for (conv, val) in zip(converters, vals)]
+            # Then pack it according to the dtype's nesting
+            items = pack_items(items, packing)
+
+            X.append(items)
     finally:
         if own_fh:
             fh.close()
 
-    if len(dtype_types) > 1:
-        # We're dealing with a structured array, with a dtype such as
-        # [('x', int), ('y', [('s', int), ('t', float)])]
-        #
-        # First, create the array using a flattened dtype:
-        # [('x', int), ('s', int), ('t', float)]
-        #
-        # Then, view the array using the specified dtype.
-        try:
-            X = np.array(X, dtype=np.dtype([('', t) for t in dtype_types]))
-            X = X.view(dtype)
-        except TypeError:
-            # In the case we have an object dtype
-            X = np.array(X, dtype=dtype)
-    else:
-        X = np.array(X, dtype)
+    X = np.array(X, dtype)
 
     X = np.squeeze(X)
     if unpack:
@@ -1012,7 +1028,7 @@ def fromregex(file, regexp, dtype):
         return output
     finally:
         if own_fh:
-            fh.close()
+            file.close()
 
 
 
@@ -1033,7 +1049,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     """
     Load data from a text file, with missing values handled as specified.
 
-    Each line past the first `skiprows` lines is split at the `delimiter`
+    Each line past the first `skip_header` lines is split at the `delimiter`
     character, and characters following the `comments` character are discarded.
 
     Parameters
@@ -1056,20 +1072,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The numbers of lines to skip at the beginning of the file.
     skip_footer : int, optional
         The numbers of lines to skip at the end of the file
-    converters : variable or None, optional
+    converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
         for missing data: ``converters = {3: lambda s: float(s or 0)}``.
-    missing_values : variable or None, optional
+    missing_values : variable, optional
         The set of strings corresponding to missing data.
-    filling_values : variable or None, optional
+    filling_values : variable, optional
         The set of values to be used as default when the data are missing.
-    usecols : sequence or None, optional
+    usecols : sequence, optional
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first valid line
-        after the first `skiprows` lines.
+        after the first `skip_header` lines.
         If `names` is a sequence or a single-string of comma-separated names,
         the names will be used to define the field names in a structured dtype.
         If `names` is None, the names of the dtype fields will be used, if any.
@@ -1202,9 +1218,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Get the first valid lines after the first skiprows ones ..
     if skiprows:
-        warnings.warn("The use of `skiprows` is deprecated.\n"\
-                      "Please use `skip_header` instead.",
-                      DeprecationWarning)
+        warnings.warn(\
+            "The use of `skiprows` is deprecated, it will be removed in numpy 2.0.\n" \
+            "Please use `skip_header` instead.",
+            DeprecationWarning)
         skip_header = skiprows
     # Skip the first `skip_header` rows
     for i in xrange(skip_header):
@@ -1269,7 +1286,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         elif (names is not None) and (len(names) > nbcols):
             names = [names[_] for _ in usecols]
     elif (names is not None) and (dtype is not None):
-        names = dtype.names
+        names = list(dtype.names)
 
 
     # Process the missing values ...............................
@@ -1327,9 +1344,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Process the deprecated `missing`
     if missing != asbytes(''):
-        warnings.warn("The use of `missing` is deprecated.\n"\
-                      "Please use `missing_values` instead.",
-                      DeprecationWarning)
+        warnings.warn(\
+            "The use of `missing` is deprecated, it will be removed in Numpy 2.0.\n" \
+            "Please use `missing_values` instead.",
+            DeprecationWarning)
         values = [str(_) for _ in missing.split(asbytes(","))]
         for entry in missing_values:
             entry.extend(values)
@@ -1486,7 +1504,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                      if _[0] > nbrows + skip_header])
             invalid = invalid[:nbinvalid - nbinvalid_skipped]
             skip_footer -= nbinvalid_skipped
-#            
+#
 #            nbrows -= skip_footer
 #            errmsg = [template % (i, nb)
 #                      for (i, nb) in invalid if i < nbrows]

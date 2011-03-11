@@ -267,7 +267,7 @@ NPY_NO_EXPORT npy_datetime
 PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 {
     npy_datetime ret;
-    npy_longlong days; /* The absolute number of days since Jan 1, 1970 */
+    npy_longlong days = 0; /* The absolute number of days since Jan 1, 1970 */
 
     if (fr > NPY_FR_M) {
         days = days_from_ymd(d->year, d->month, d->day);
@@ -596,7 +596,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
             ymd = days_to_ymdstruct((val - 86399) / 86400);
             sec = 86399 + (val + 1) % 86400;
         }
-        hms = seconds_to_hmsstruct(val);
+        hms = seconds_to_hmsstruct(sec);
         year   = ymd.year;
         month  = ymd.month;
         day    = ymd.day;

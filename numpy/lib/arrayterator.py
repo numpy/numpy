@@ -141,12 +141,41 @@ class Arrayterator(object):
 
     @property
     def flat(self):
+        """
+        A 1-D flat iterator for Arrayterator objects.
+
+        This iterator returns elements of the array to be iterated over in
+        `Arrayterator` one by one. It is similar to `flatiter`.
+
+        See Also
+        --------
+        `Arrayterator`
+        flatiter
+
+        Examples
+        --------
+        >>> a = np.arange(3 * 4 * 5 * 6).reshape(3, 4, 5, 6)
+        >>> a_itor = np.lib.arrayterator.Arrayterator(a, 2)
+
+        >>> for subarr in a_itor.flat:
+        ...     if not subarr:
+        ...         print subarr, type(subarr)
+        ...
+        0 <type 'numpy.int32'>
+
+        """
         for block in self:
             for value in block.flat:
                 yield value
 
     @property
     def shape(self):
+        """
+        The shape of the array to be iterated over.
+
+        For an example, see `Arrayterator`.
+
+        """
         return tuple(((stop-start-1)//step+1) for start, stop, step in
                 zip(self.start, self.stop, self.step))
 

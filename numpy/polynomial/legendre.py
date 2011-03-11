@@ -21,6 +21,7 @@ Arithmetic
 - `legsub` -- subtract one Legendre series from another.
 - `legmul` -- multiply two Legendre series.
 - `legdiv` -- divide one Legendre series by another.
+- `legpow` -- raise a Legendre series to an positive integer power
 - `legval` -- evaluate a Legendre series at given points.
 
 Calculus
@@ -35,7 +36,7 @@ Misc Functions
 - `legvander` -- Vandermonde-like matrix for Legendre polynomials.
 - `legfit` -- least-squares fit returning a Legendre series.
 - `legtrim` -- trim leading coefficients from a Legendre series.
-- `legline` -- Legendre series of given straight line.
+- `legline` -- Legendre series representing given straight line.
 - `leg2poly` -- convert a Legendre series to a polynomial.
 - `poly2leg` -- convert a polynomial to a Legendre series.
 
@@ -51,9 +52,10 @@ See also
 from __future__ import division
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
-        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legval',
-        'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
-        'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre']
+        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow',
+        'legval', 'legder', 'legint', 'leg2poly', 'poly2leg',
+        'legfromroots', 'legvander', 'legfit', 'legtrim', 'legroots',
+        'Legendre']
 
 import numpy as np
 import numpy.linalg as la
@@ -65,8 +67,6 @@ legtrim = pu.trimcoef
 
 def poly2leg(pol) :
     """
-    poly2leg(pol)
-
     Convert a polynomial to a Legendre series.
 
     Convert an array representing the coefficients of a polynomial (relative
@@ -463,7 +463,7 @@ def legmulx(cs):
 
     .. math::
 
-    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+      xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
 
     """
     # cs is a trimmed copy
@@ -564,12 +564,12 @@ def legdiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
     -------
-    [quo, rem] : ndarrays
+    quo, rem : ndarrays
         Of Legendre series coefficients representing the quotient and
         remainder.
 
@@ -683,8 +683,8 @@ def legder(cs, m=1, scl=1) :
 
     Parameters
     ----------
-    cs: array_like
-        1-d array of Legendre series coefficients ordered from low to high.
+    cs : array_like
+        1-D array of Legendre series coefficients ordered from low to high.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
@@ -886,9 +886,6 @@ def legval(x, cs):
     See Also
     --------
     legfit
-
-    Examples
-    --------
 
     Notes
     -----

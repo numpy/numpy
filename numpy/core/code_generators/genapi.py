@@ -44,6 +44,9 @@ API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'conversion_utils.c'),
              join('multiarray', 'buffer.c'),
              join('multiarray', 'datetime.c'),
+             join('multiarray', 'new_iterator.c.src'),
+             join('multiarray', 'new_iterator_pywrap.c'),
+             join('multiarray', 'einsum.c.src'),
              join('umath', 'ufunc_object.c'),
              join('umath', 'loops.c.src'),
             ]
@@ -57,7 +60,7 @@ def remove_whitespace(s):
     return ''.join(s.split())
 
 def _repl(str):
-    return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
+    return str.replace('Bool','npy_bool')
 
 class Function(object):
     def __init__(self, name, return_type, args, doc=''):

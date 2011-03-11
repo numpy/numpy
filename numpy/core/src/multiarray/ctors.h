@@ -45,10 +45,12 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src);
 NPY_NO_EXPORT PyObject *
 PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags);
 
-/* FIXME: remove those from here */
+/* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
 NPY_NO_EXPORT int
-_flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order);
+PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
+                                NPY_ORDER order);
 
+/* FIXME: remove those from here */
 NPY_NO_EXPORT size_t
 _array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags);
@@ -66,5 +68,8 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, intp n, int size);
+
+NPY_NO_EXPORT int
+PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
 
 #endif

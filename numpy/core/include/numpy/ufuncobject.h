@@ -1,5 +1,8 @@
 #ifndef Py_UFUNCOBJECT_H
 #define Py_UFUNCOBJECT_H
+
+#include <numpy/npy_math.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -8,31 +11,65 @@ typedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
 typedef struct {
         PyObject_HEAD
+        /*
+         * nin: Number of inputs
+         * nout: Number of outputs
+         * nargs: Always nin + nout (Why is it stored?)
+         */
         int nin, nout, nargs;
+
+        /* Identity for reduction, either PyUFunc_One or PyUFunc_Zero */
         int identity;
+
+        /* Array of one-dimensional core loops */
         PyUFuncGenericFunction *functions;
+        /* Array of funcdata that gets passed into the functions */
         void **data;
+        /* The number of elements in 'functions' and 'data' */
         int ntypes;
+
+        /* Does not appear to be used */
         int check_return;
-        char *name, *types;
+
+        /* The name of the ufunc */
+        char *name;
+
+        /* Array of type numbers, of size ('nargs' * 'ntypes') */
+        char *types;
+
+        /* Documentation string */
         char *doc;
+
         void *ptr;
         PyObject *obj;
         PyObject *userloops;
     
-        /* generalized ufunc */
-        int core_enabled;      /* 0 for scalar ufunc; 1 for generalized ufunc */
-        int core_num_dim_ix;   /* number of distinct dimension names in
-                                  signature */
+        /* generalized ufunc parameters */
+
+        /* 0 for scalar ufunc; 1 for generalized ufunc */
+        int core_enabled;
+        /* number of distinct dimension names in signature */
+        int core_num_dim_ix;
  
-        /* dimension indices of input/output argument k are stored in
-           core_dim_ixs[core_offsets[k]..core_offsets[k]+core_num_dims[k]-1] */
-        int *core_num_dims;    /* numbers of core dimensions of each argument */
-        int *core_dim_ixs;     /* dimension indices in a flatted form; indices
-                                  are in the range of [0,core_num_dim_ix) */
-        int *core_offsets;     /* positions of 1st core dimensions of each
-                                  argument in core_dim_ixs */
-        char *core_signature;  /* signature string for printing purpose */
+        /*
+         * dimension indices of input/output argument k are stored in
+         * core_dim_ixs[core_offsets[k]..core_offsets[k]+core_num_dims[k]-1]
+         */
+
+        /* numbers of core dimensions of each argument */
+        int *core_num_dims;
+        /*
+         * dimension indices in a flatted form; indices
+         * are in the range of [0,core_num_dim_ix)
+         */
+        int *core_dim_ixs;
+        /*
+         * positions of 1st core dimensions of each
+         * argument in core_dim_ixs
+         */
+        int *core_offsets;
+        /* signature string for printing purpose */
+        char *core_signature;
 } PyUFuncObject;
 
 #include "arrayobject.h"
@@ -65,7 +102,8 @@ typedef struct {
 #define UFUNC_FPE_UNDERFLOW     4
 #define UFUNC_FPE_INVALID       8
 
-#define UFUNC_ERR_DEFAULT  0      /* Error mode that avoids look-up (no checking) */
+/* Error mode that avoids look-up (no checking) */
+#define UFUNC_ERR_DEFAULT       0
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
@@ -75,126 +113,6 @@ typedef struct {
         (UFUNC_ERR_PRINT << UFUNC_SHIFT_DIVIDEBYZERO) +  \
         (UFUNC_ERR_PRINT << UFUNC_SHIFT_OVERFLOW) +      \
         (UFUNC_ERR_PRINT << UFUNC_SHIFT_INVALID)
-
-        /* Only internal -- not exported, yet*/
-typedef struct {
-        /* Multi-iterator portion --- needs to be present in this order
-           to work with PyArray_Broadcast */
-        PyObject_HEAD
-        int  numiter;
-        npy_intp size;
-        npy_intp index;
-        int nd;
-        npy_intp dimensions[NPY_MAXDIMS];
-        PyArrayIterObject *iters[NPY_MAXARGS];
-        /*  End of Multi-iterator portion */
-
-        /* The ufunc */
-        PyUFuncObject *ufunc;
-
-        /* The error handling */
-        int errormask;         /* Integer showing desired error handling */
-        PyObject *errobj;      /* currently a tuple with
-                                  (string, func or obj with write method or None)
-                               */
-        int first;
-
-        /* Specific function and data to use */
-        PyUFuncGenericFunction function;
-        void *funcdata;
-
-        /* Loop method */
-        int meth;
-
-        /* Whether we need to copy to a buffer or not.*/
-        int needbuffer[NPY_MAXARGS];
-        int leftover;
-        int ninnerloops;
-        int lastdim;
-
-        /* Whether or not to swap */
-        int swap[NPY_MAXARGS];
-
-        /* Buffers for the loop */
-        char *buffer[NPY_MAXARGS];
-        int bufsize;
-        npy_intp bufcnt;
-        char *dptr[NPY_MAXARGS];
-
-        /* For casting */
-        char *castbuf[NPY_MAXARGS];
-        PyArray_VectorUnaryFunc *cast[NPY_MAXARGS];
-
-        /* usually points to buffer but when a cast is to be
-           done it switches for that argument to castbuf.
-        */
-        char *bufptr[NPY_MAXARGS];
-
-        /* Steps filled in from iters or sizeof(item)
-           depending on loop method.
-        */
-        npy_intp steps[NPY_MAXARGS];
-
-        int obj;  /* This loop uses object arrays or needs the Python API */
-                  /* Flags: UFUNC_OBJ_ISOBJECT, UFUNC_OBJ_NEEDS_API */
-        int notimplemented; /* The loop caused notimplemented */
-        int objfunc; /* This loop calls object functions
-                        (an inner-loop function with argument types */
-    
-        /* generalized ufunc */
-        npy_intp *core_dim_sizes;   /* stores sizes of core dimensions;
-                                       contains 1 + core_num_dim_ix elements */
-        npy_intp *core_strides;     /* strides of loop and core dimensions */
-} PyUFuncLoopObject;
-
-/* Could make this more clever someday */
-#define UFUNC_MAXIDENTITY 32
-
-typedef struct {
-        PyObject_HEAD
-        PyArrayIterObject *it;
-        PyArrayObject *ret;
-        PyArrayIterObject *rit;   /* Needed for Accumulate */
-        int  outsize;
-        npy_intp  index;
-        npy_intp  size;
-        char idptr[UFUNC_MAXIDENTITY];
-
-        /* The ufunc */
-        PyUFuncObject *ufunc;
-
-        /* The error handling */
-        int errormask;
-        PyObject *errobj;
-        int first;
-
-        PyUFuncGenericFunction function;
-        void *funcdata;
-        int meth;
-        int swap;
-
-        char *buffer;
-        int bufsize;
-
-        char *castbuf;
-        PyArray_VectorUnaryFunc *cast;
-
-        char *bufptr[3];
-        npy_intp steps[3];
-
-        npy_intp N;
-        int  instrides;
-        int  insize;
-        char *inptr;
-
-        /* For copying small arrays */
-        PyObject *decref;
-
-        int obj;
-        int retbase;
-
-} PyUFuncReduceObject;
-
 
 #if NPY_ALLOW_THREADS
 #define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0)
@@ -289,7 +207,9 @@ typedef struct _loop1d_info {
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
-#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || defined(__NetBSD__)
+#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || \
+      (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || \
+      defined(__NetBSD__)
 #include <ieeefp.h>
 
 #define UFUNC_CHECK_STATUS(ret) {                               \
@@ -303,9 +223,12 @@ typedef struct _loop1d_info {
         (void) fpsetsticky(0);                                          \
         }
 
-#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
+#elif defined(__GLIBC__) || defined(__APPLE__) || \
+      defined(__CYGWIN__) || defined(__MINGW32__) || \
+      (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 
-#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__) || defined(__FreeBSD__)
+#if defined(__GLIBC__) || defined(__APPLE__) || \
+    defined(__MINGW32__) || defined(__FreeBSD__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
 #include "fenv/fenv.c"
@@ -322,11 +245,6 @@ typedef struct _loop1d_info {
                              FE_UNDERFLOW | FE_INVALID);                \
 }
 
-#define generate_divbyzero_error() feraiseexcept(FE_DIVBYZERO)
-#define generate_overflow_error() feraiseexcept(FE_OVERFLOW)
-#define generate_underflow_error() feraiseexcept(FE_UNDERFLOW)
-#define generate_invalid_error() feraiseexcept(FE_INVALID)
-
 #elif defined(_AIX)
 
 #include <float.h>
@@ -334,7 +252,7 @@ typedef struct _loop1d_info {
 
 #define UFUNC_CHECK_STATUS(ret) { \
         fpflag_t fpstatus; \
-                                                \
+ \
         fpstatus = fp_read_flag(); \
         ret = ((FP_DIV_BY_ZERO & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
                 | ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)   \
@@ -343,77 +261,21 @@ typedef struct _loop1d_info {
         fp_swap_flag(0); \
 }
 
-#define generate_divbyzero_error() fp_raise_xcp(FP_DIV_BY_ZERO)
-#define generate_overflow_error() fp_raise_xcp(FP_OVERFLOW)
-#define generate_underflow_error() fp_raise_xcp(FP_UNDERFLOW)
-#define generate_invalid_error() fp_raise_xcp(FP_INVALID)
-
 #else
 
 #define NO_FLOATING_POINT_SUPPORT
 #define UFUNC_CHECK_STATUS(ret) { \
-    ret = 0;                                                         \
+    ret = 0; \
   }
 
 #endif
 
-/* These should really be altered to just set the corresponding bit
-   in the floating point status flag.  Need to figure out how to do that
-   on all the platforms...
-*/
-
-#if !defined(generate_divbyzero_error)
-static int numeric_zero2 = 0;
-static void generate_divbyzero_error(void) {
-        double dummy;
-        dummy = 1./numeric_zero2;
-        if (dummy) /* to prevent optimizer from eliminating expression */
-           return;
-        else /* should never be called */
-           numeric_zero2 += 1;
-        return;
-}
-#endif
-
-#if !defined(generate_overflow_error)
-static double numeric_two = 2.0;
-static void generate_overflow_error(void) {
-        double dummy;
-        dummy = pow(numeric_two,1000);
-        if (dummy)
-           return;
-        else
-           numeric_two += 0.1;
-        return;
-        return;
-}
-#endif
-
-#if !defined(generate_underflow_error)
-static double numeric_small = 1e-300;
-static void generate_underflow_error(void) {
-        double dummy;
-        dummy = numeric_small * 1e-300;
-        if (!dummy)
-           return;
-        else
-           numeric_small += 1e-300;
-        return;
-}
-#endif
-
-#if !defined(generate_invalid_error)
-static double numeric_inv_inf = NPY_INF;
-static void generate_invalid_error(void) {
-        double dummy;
-        dummy = numeric_inv_inf - NPY_INF;
-        if (!dummy)
-           return;
-        else
-           numeric_inv_inf += 1.0;
-        return;
-}
-#endif
+/*
+ * THESE MACROS ARE DEPRECATED.
+ * Use npy_set_floatstatus_* in the npymath library.
+ */
+#define generate_divbyzero_error() npy_set_floatstatus_divbyzero()
+#define generate_overflow_error() npy_set_floatstatus_overflow()
 
   /* Make sure it gets defined if it isn't already */
 #ifndef UFUNC_NOFPE

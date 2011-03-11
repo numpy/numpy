@@ -4,7 +4,7 @@ class YMD(object):
     year = 0
     month = 0
     days = 0
-    
+
 
 month_offset = [
     [ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 ],
@@ -30,7 +30,7 @@ def year_offset(year):
         return_val = year*365 + year/4 - year/100 + year/400;
     else
         return_val = year*365 + (year-3)/4 - (year-99)/100 + (year-399)/400;
-        """        
+        """
     return weave.inline(code,['year'])
 
 
@@ -53,7 +53,7 @@ def days_from_ymd(year, month, day):
     #
     yearoffset = year_offset(year);
 
-    # Calculate the number of days using yearoffset */       
+    # Calculate the number of days using yearoffset */
     # Jan 1, 1970 is day 0 and thus Dec. 31, 1969 is day -1 */
     absdate = day-1 + month_offset[leap][month - 1] + yearoffset;
 
@@ -64,8 +64,3 @@ def ymd_from_days(days):
     ymd = YMD()
 
     year = 1970 + days / 365.2425
-
-    
-    
-    
-    

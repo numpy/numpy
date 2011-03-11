@@ -77,8 +77,7 @@ def assert_equal_records(a, b):
 
 
 def assert_equal(actual, desired, err_msg=''):
-    """Asserts that two items are equal.
-    """
+    "Asserts that two items are equal."
     # Case #1: dictionary .....
     if isinstance(desired, dict):
         if not isinstance(actual, dict):
