@@ -166,6 +166,7 @@ class TestRegression(TestCase):
             except:
                 raise AssertionError("ticket #1243")
         finally:
+            sys.stdout.close()
             sys.stdout = oldstdout
 
     def test_bincount_empty(self):
