@@ -3843,7 +3843,7 @@ npyiter_replace_axisdata(NpyIter *iter, int iiter,
                 i = op_axes[ndim-p-1];
             }
 
-            if ((unsigned int)i < (unsigned int)op_ndim) {
+            if (0 <= i && i < op_ndim) {
                 shape = PyArray_DIM(op, i);
                 if (shape != 1) {
                     npy_intp stride = PyArray_STRIDE(op, i);
