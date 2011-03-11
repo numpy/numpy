@@ -16,9 +16,9 @@ class TestMixed(util.F2PyTest):
 
     @dec.slow
     def test_all(self):
-        assert self.module.bar11() == 11
-        assert self.module.foo_fixed.bar12() == 12
-        assert self.module.foo_free.bar13() == 13
+        assert_( self.module.bar11() == 11)
+        assert_( self.module.foo_fixed.bar12() == 12)
+        assert_( self.module.foo_free.bar13() == 13)
 
 if __name__ == "__main__":
     import nose

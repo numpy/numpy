@@ -18,16 +18,16 @@ class TestKind(util.F2PyTest):
 
     @dec.slow
     def test_all(self):
-        print self.module.__doc__
-
         selectedrealkind = self.module.selectedrealkind
         selectedintkind = self.module.selectedintkind
 
         for i in range(40):
-            assert selected_int_kind(i)==selectedintkind(i),`i, selected_int_kind(i), selectedintkind(i)`
+            assert_(selectedintkind(i) in [selected_int_kind(i),-1],\
+                    'selectedintkind(%s): expected %r but got %r' %  (i, selected_int_kind(i), selectedintkind(i)))
 
         for i in range(20):
-            assert selected_real_kind(i)==selectedrealkind(i),`i, selected_real_kind(i), selectedrealkind(i)`
+            assert_(selectedrealkind(i) in [selected_real_kind(i),-1],\
+                    'selectedrealkind(%s): expected %r but got %r' %  (i, selected_real_kind(i), selectedrealkind(i)))
 
 if __name__ == "__main__":
     import nose

@@ -41,24 +41,24 @@ cf2py  intent(out) a
     def check_function(self, name):
         t = getattr(self.module, name)
         r = t(lambda : 4)
-        assert r==4,`r`
+        assert_( r==4,`r`)
         r = t(lambda a:5,fun_extra_args=(6,))
-        assert r==5,`r`
+        assert_( r==5,`r`)
         r = t(lambda a:a,fun_extra_args=(6,))
-        assert r==6,`r`
+        assert_( r==6,`r`)
         r = t(lambda a:5+a,fun_extra_args=(7,))
-        assert r==12,`r`
+        assert_( r==12,`r`)
         r = t(lambda a:math.degrees(a),fun_extra_args=(math.pi,))
-        assert r==180,`r`
+        assert_( r==180,`r`)
         r = t(math.degrees,fun_extra_args=(math.pi,))
-        assert r==180,`r`
+        assert_( r==180,`r`)
 
         r = t(self.module.func, fun_extra_args=(6,))
-        assert r==17,`r`
+        assert_( r==17,`r`)
         r = t(self.module.func0)
-        assert r==11,`r`
+        assert_( r==11,`r`)
         r = t(self.module.func0._cpointer)
-        assert r==11,`r`
+        assert_( r==11,`r`)
         class A:
             def __call__(self):
                 return 7
@@ -66,9 +66,9 @@ cf2py  intent(out) a
                 return 9
         a = A()
         r = t(a)
-        assert r==7,`r`
+        assert_( r==7,`r`)
         r = t(a.mth)
-        assert r==9,`r`
+        assert_( r==9,`r`)
 
 if __name__ == "__main__":
     import nose

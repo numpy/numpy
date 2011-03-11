@@ -9,26 +9,26 @@ class TestReturnReal(util.F2PyTest):
             err = 1e-5
         else:
             err = 0.0
-        assert abs(t(234)-234.0)<=err
-        assert abs(t(234.6)-234.6)<=err
-        assert abs(t(234l)-234.0)<=err
-        assert abs(t('234')-234)<=err
-        assert abs(t('234.6')-234.6)<=err
-        assert abs(t(-234)+234)<=err
-        assert abs(t([234])-234)<=err
-        assert abs(t((234,))-234.)<=err
-        assert abs(t(array(234))-234.)<=err
-        assert abs(t(array([234]))-234.)<=err
-        assert abs(t(array([[234]]))-234.)<=err
-        assert abs(t(array([234],'b'))+22)<=err
-        assert abs(t(array([234],'h'))-234.)<=err
-        assert abs(t(array([234],'i'))-234.)<=err
-        assert abs(t(array([234],'l'))-234.)<=err
-        assert abs(t(array([234],'B'))-234.)<=err
-        assert abs(t(array([234],'f'))-234.)<=err
-        assert abs(t(array([234],'d'))-234.)<=err
+        assert_( abs(t(234)-234.0)<=err)
+        assert_( abs(t(234.6)-234.6)<=err)
+        assert_( abs(t(234l)-234.0)<=err)
+        assert_( abs(t('234')-234)<=err)
+        assert_( abs(t('234.6')-234.6)<=err)
+        assert_( abs(t(-234)+234)<=err)
+        assert_( abs(t([234])-234)<=err)
+        assert_( abs(t((234,))-234.)<=err)
+        assert_( abs(t(array(234))-234.)<=err)
+        assert_( abs(t(array([234]))-234.)<=err)
+        assert_( abs(t(array([[234]]))-234.)<=err)
+        assert_( abs(t(array([234],'b'))+22)<=err)
+        assert_( abs(t(array([234],'h'))-234.)<=err)
+        assert_( abs(t(array([234],'i'))-234.)<=err)
+        assert_( abs(t(array([234],'l'))-234.)<=err)
+        assert_( abs(t(array([234],'B'))-234.)<=err)
+        assert_( abs(t(array([234],'f'))-234.)<=err)
+        assert_( abs(t(array([234],'d'))-234.)<=err)
         if t.__doc__.split()[0] in ['t0','t4','s0','s4']:
-            assert t(1e200)==t(1e300) # inf
+            assert_( t(1e200)==t(1e300)) # inf
 
         #assert_raises(ValueError, t, array([234], 'S1'))
         assert_raises(ValueError, t, 'abc')
@@ -41,7 +41,7 @@ class TestReturnReal(util.F2PyTest):
 
         try:
             r = t(10l**400)
-            assert `r` in ['inf','Infinity'],`r`
+            assert_( `r` in ['inf','Infinity'],`r`)
         except OverflowError:
             pass
 

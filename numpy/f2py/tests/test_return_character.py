@@ -7,19 +7,19 @@ class TestReturnCharacter(util.F2PyTest):
     def check_function(self, t):
         tname = t.__doc__.split()[0]
         if tname in ['t0','t1','s0','s1']:
-            assert t(23)==asbytes('2')
-            r = t('ab');assert r==asbytes('a'),`r`
-            r = t(array('ab'));assert r==asbytes('a'),`r`
-            r = t(array(77,'u1'));assert r==asbytes('M'),`r`
-            #assert_raises(ValueError, t, array([77,87]))
-            #assert_raises(ValueError, t, array(77))
+            assert_( t(23)==asbytes('2'))
+            r = t('ab');assert_( r==asbytes('a'),`r`)
+            r = t(array('ab'));assert_( r==asbytes('a'),`r`)
+            r = t(array(77,'u1'));assert_( r==asbytes('M'),`r`)
+            #assert_(_raises(ValueError, t, array([77,87])))
+            #assert_(_raises(ValueError, t, array(77)))
         elif tname in ['ts','ss']:
-            assert t(23)==asbytes('23        '),`t(23)`
-            assert t('123456789abcdef')==asbytes('123456789a')
+            assert_( t(23)==asbytes('23        '),`t(23)`)
+            assert_( t('123456789abcdef')==asbytes('123456789a'))
         elif tname in ['t5','s5']:
-            assert t(23)==asbytes('23   '),`t(23)`
-            assert t('ab')==asbytes('ab   '),`t('ab')`
-            assert t('123456789abcdef')==asbytes('12345')
+            assert_( t(23)==asbytes('23   '),`t(23)`)
+            assert_( t('ab')==asbytes('ab   '),`t('ab')`)
+            assert_( t('123456789abcdef')==asbytes('12345'))
         else:
             raise NotImplementedError
 

@@ -9,28 +9,28 @@ class TestReturnComplex(util.F2PyTest):
             err = 1e-5
         else:
             err = 0.0
-        assert abs(t(234j)-234.0j)<=err
-        assert abs(t(234.6)-234.6)<=err
-        assert abs(t(234l)-234.0)<=err
-        assert abs(t(234.6+3j)-(234.6+3j))<=err
-        #assert abs(t('234')-234.)<=err
-        #assert abs(t('234.6')-234.6)<=err
-        assert abs(t(-234)+234.)<=err
-        assert abs(t([234])-234.)<=err
-        assert abs(t((234,))-234.)<=err
-        assert abs(t(array(234))-234.)<=err
-        assert abs(t(array(23+4j,'F'))-(23+4j))<=err
-        assert abs(t(array([234]))-234.)<=err
-        assert abs(t(array([[234]]))-234.)<=err
-        assert abs(t(array([234],'b'))+22.)<=err
-        assert abs(t(array([234],'h'))-234.)<=err
-        assert abs(t(array([234],'i'))-234.)<=err
-        assert abs(t(array([234],'l'))-234.)<=err
-        assert abs(t(array([234],'q'))-234.)<=err
-        assert abs(t(array([234],'f'))-234.)<=err
-        assert abs(t(array([234],'d'))-234.)<=err
-        assert abs(t(array([234+3j],'F'))-(234+3j))<=err
-        assert abs(t(array([234],'D'))-234.)<=err
+        assert_( abs(t(234j)-234.0j)<=err)
+        assert_( abs(t(234.6)-234.6)<=err)
+        assert_( abs(t(234l)-234.0)<=err)
+        assert_( abs(t(234.6+3j)-(234.6+3j))<=err)
+        #assert_( abs(t('234')-234.)<=err)
+        #assert_( abs(t('234.6')-234.6)<=err)
+        assert_( abs(t(-234)+234.)<=err)
+        assert_( abs(t([234])-234.)<=err)
+        assert_( abs(t((234,))-234.)<=err)
+        assert_( abs(t(array(234))-234.)<=err)
+        assert_( abs(t(array(23+4j,'F'))-(23+4j))<=err)
+        assert_( abs(t(array([234]))-234.)<=err)
+        assert_( abs(t(array([[234]]))-234.)<=err)
+        assert_( abs(t(array([234],'b'))+22.)<=err)
+        assert_( abs(t(array([234],'h'))-234.)<=err)
+        assert_( abs(t(array([234],'i'))-234.)<=err)
+        assert_( abs(t(array([234],'l'))-234.)<=err)
+        assert_( abs(t(array([234],'q'))-234.)<=err)
+        assert_( abs(t(array([234],'f'))-234.)<=err)
+        assert_( abs(t(array([234],'d'))-234.)<=err)
+        assert_( abs(t(array([234+3j],'F'))-(234+3j))<=err)
+        assert_( abs(t(array([234],'D'))-234.)<=err)
 
         #assert_raises(TypeError, t, array([234], 'a1'))
         assert_raises(TypeError, t, 'abc')
@@ -43,7 +43,7 @@ class TestReturnComplex(util.F2PyTest):
 
         try:
             r = t(10l**400)
-            assert `r` in ['(inf+0j)','(Infinity+0j)'],`r`
+            assert_( `r` in ['(inf+0j)','(Infinity+0j)'],`r`)
         except OverflowError:
             pass
 
