@@ -35,7 +35,7 @@ existing iterator should be replaceable with the new iterator without
 significant effort. In 1.6, the major exception to this is the neighborhood
 iterator, which does not have corresponding features in this iterator.
 
-Here is a conversion table for which funcitons to use with the new iterator:
+Here is a conversion table for which functions to use with the new iterator:
 
 =====================================  =============================================
 *Iterator Functions*

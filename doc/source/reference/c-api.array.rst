@@ -897,8 +897,8 @@ Converting data types
 
 .. cfunction:: int PyArray_CastTo(PyArrayObject* out, PyArrayObject* in)
 
-    Deprecated, PyArray_CopyInto handles the casting for NumPy 1.6 and
-    later.
+    As of 1.6, this function simply calls :cfunc:`PyArray_CopyInto`,
+    which handles the casting.
 
     Cast the elements of the array *in* into the array *out*. The
     output array should be writeable, have an integer-multiple of the
@@ -927,7 +927,7 @@ Converting data types
 
 .. cfunction:: int PyArray_CanCastTo(PyArray_Descr* fromtype, PyArray_Descr* totype)
 
-    Deprecated, PyArray_CanCastTypeTo subsumes its functionality in
+    :cfunc:`PyArray_CanCastTypeTo` supercedes this function in
     NumPy 1.6 and later.
 
     Equivalent to PyArray_CanCastTypeTo(fromtype, totype, NPY_SAFE_CASTING).
@@ -981,8 +981,8 @@ Converting data types
 
 .. cfunction:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is deprecated, use PyArray_MinScalarType and/or
-    PyArray_ResultType for this functionality.
+    This function is superceded by :cfunc:`PyArray_MinScalarType` and/or
+    :cfunc:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -994,7 +994,7 @@ Converting data types
 
 .. cfunction:: void PyArray_ArrayType(PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
 
-    This function is deprecated, use PyArray_ResultType.
+    This function is superceded by :cfunc:`PyArray_ResultType`.
 
     This function works similarly to :cfunc:`PyArray_ObjectType` (...)
     except it handles flexible arrays. The *mintype* argument can have
@@ -1004,9 +1004,10 @@ Converting data types
 
 .. cfunction:: PyArrayObject** PyArray_ConvertToCommonType(PyObject* op, int* n)
 
-    May be deprecated in the future.  Using the newly introduced
-    :ctype:`NpyIter` with flag :cdata:`NPY_ITER_COMMON_DTYPE` or with
-    the same dtype parameter for all operands is preferred to this method.
+    The functionality this provides is largely superceded by iterator
+    :ctype:`NpyIter` introduced in 1.6, with flag
+    :cdata:`NPY_ITER_COMMON_DTYPE` or with the same dtype parameter for
+    all operands.
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
@@ -1155,8 +1156,8 @@ getting (and, if appropriate, setting) these flags.
 Memory areas of all kinds can be pointed to by an ndarray,
 necessitating these flags.  If you get an arbitrary ``PyArrayObject``
 in C-code, you need to be aware of the flags that are set.  If you
-need to guarantee a certain kind of array (like ``NPY_CONTIGUOUS`` and
-``NPY_BEHAVED``), then pass these requirements into the
+need to guarantee a certain kind of array (like :cdata:`NPY_C_CONTIGUOUS` and
+:cdata:`NPY_BEHAVED`), then pass these requirements into the
 PyArray_FromAny function.
 
 
@@ -1181,10 +1182,10 @@ associated with an array.
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
 
-Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN``
+Notice that contiguous 1-d arrays are always both Fortran
 contiguous and C contiguous. Both of these flags can be checked and
 are convenience flags only as whether or not an array is
-``NPY_CONTIGUOUS`` or ``NPY_FORTRAN`` can be determined by the
+:cdata:`NPY_C_CONTIGUOUS` or :cdata:`NPY_F_CONTIGUOUS` can be determined by the
 ``strides``, ``dimensions``, and ``itemsize`` attributes.
 
 .. cvar:: NPY_OWNDATA
@@ -1222,7 +1223,7 @@ are convenience flags only as whether or not an array is
 
 :cfunc:`PyArray_UpdateFlags` (obj, flags) will update the
 ``obj->flags`` for ``flags`` which can be any of
-:cdata:`NPY_CONTIGUOUS`, :cdata:`NPY_FORTRAN`, :cdata:`NPY_ALIGNED`,
+:cdata:`NPY_C_CONTIGUOUS`, :cdata:`NPY_F_CONTIGUOUS`, :cdata:`NPY_ALIGNED`,
 or :cdata:`NPY_WRITEABLE`.
 
 
@@ -1993,7 +1994,7 @@ Other functions
 Array Iterators
 ---------------
 
-As of Numpy 1.6, these array iterators are deprecated in favor of
+As of Numpy 1.6, these array iterators are superceded by
 the new array iterator, :ctype:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
