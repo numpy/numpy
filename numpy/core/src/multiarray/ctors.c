@@ -2702,7 +2702,13 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 
         op[0] = dst;
         op[1] = src;
-        op_flags[0] = NPY_ITER_WRITEONLY|NPY_ITER_NO_BROADCAST;
+        /*
+         * TODO: In NumPy 2.0, renable NPY_ITER_NO_BROADCAST. This
+         *       was removed during NumPy 1.6 testing for compatibility
+         *       with NumPy 1.5, as per Travis's -10 veto power.
+         */
+        /*op_flags[0] = NPY_ITER_WRITEONLY|NPY_ITER_NO_BROADCAST;*/
+        op_flags[0] = NPY_ITER_WRITEONLY;
         op_flags[1] = NPY_ITER_READONLY;
 
         iter = NpyIter_MultiNew(2, op,

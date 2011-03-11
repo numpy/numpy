@@ -1901,7 +1901,7 @@ Array Functions
 
 .. cfunction:: PyObject* PyArray_EinsteinSum(char* subscripts, npy_intp nop, PyArrayObject** op_in, PyArray_Descr* dtype, NPY_ORDER order, NPY_CASTING casting, PyArrayObject* out)
 
-   .. versionadded:: 1.6
+    .. versionadded:: 1.6
 
     Applies the einstein summation convention to the array operands
     provided, returning a new array or placing the result in *out*.

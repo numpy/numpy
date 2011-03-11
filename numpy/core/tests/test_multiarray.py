@@ -112,6 +112,30 @@ class TestAttributes(TestCase):
         x.fill(x[0])
         assert_equal(x['f1'][1], x['f1'][0])
 
+class TestAssignment(TestCase):
+    def test_assignment_broadcasting(self):
+        a = np.arange(6).reshape(2,3)
+
+        # Broadcasting the input to the output
+        a[...] = np.arange(3)
+        assert_equal(a, [[0,1,2],[0,1,2]])
+        a[...] = np.arange(2).reshape(2,1)
+        assert_equal(a, [[0,0,0],[1,1,1]])
+
+        # For compatibility with <= 1.5, a limited version of broadcasting
+        # the output to the input.
+        #
+        # This behavior is inconsistent with NumPy broadcasting
+        # in general, because it only uses one of the two broadcasting
+        # rules (adding a new "1" dimension to the left of the shape),
+        # applied to the output instead of an input. In NumPy 2.0, this kind
+        # of broadcasting assignment will likely be disallowed.
+        a[...] = np.arange(6)[::-1].reshape(1,2,3)
+        assert_equal(a, [[5,4,3],[2,1,0]])
+        # The other type of broadcasting would require a reduction operation.
+        def assign(a,b):
+            a[...] = b
+        assert_raises(ValueError, assign, a, np.arange(12).reshape(2,2,3))
 
 class TestDtypedescr(TestCase):
     def test_construction(self):
