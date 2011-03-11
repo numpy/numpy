@@ -316,8 +316,6 @@ class TestFloatExceptions(TestCase):
                         lambda a,b:a+b, ft_max, ft_max*ft_eps)
                 self.assert_raises_fpe(overflow,
                         lambda a,b:a-b, -ft_max, ft_max*ft_eps)
-                self.assert_raises_fpe(overflow,
-                        np.power, ftype(2), ftype(2**fi.nexp))
                 self.assert_raises_fpe(divbyzero,
                         lambda a,b:a/b, ftype(1), ftype(0))
                 self.assert_raises_fpe(invalid,
@@ -330,6 +328,28 @@ class TestFloatExceptions(TestCase):
                         lambda a,b:a+b, ftype(np.inf), ftype(-np.inf))
                 self.assert_raises_fpe(invalid,
                         lambda a,b:a*b, ftype(0), ftype(np.inf))
+        finally:
+            np.seterr(**oldsettings)
+
+    @dec.knownfailureif(sys.platform.startswith('win'), "See ticket 1755")
+    def test_floating_exceptions_power(self):
+        """Test basic arithmetic function errors"""
+        oldsettings = np.seterr(all='raise')
+        try:
+            # Test for all real and complex float types
+            for typecode in np.typecodes['AllFloat']:
+                ftype = np.obj2sctype(typecode)
+                if np.dtype(ftype).kind == 'f':
+                    # Get some extreme values for the type
+                    fi = np.finfo(ftype)
+                else:
+                    # 'c', complex, corresponding real dtype
+                    rtype = type(ftype(0).real)
+                    fi = np.finfo(rtype)
+                overflow = 'overflow'
+
+                self.assert_raises_fpe(overflow,
+                        np.power, ftype(2), ftype(2**fi.nexp))
         finally:
             np.seterr(**oldsettings)
 
