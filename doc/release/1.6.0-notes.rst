@@ -1,0 +1,94 @@
+=========================
+NumPy 1.6.0 Release Notes
+=========================
+
+This release includes several new features as well as numerous bug fixes and
+improved documentation.  It is backward compatible with the 1.5.0 release, and
+supports Python 2.4 - 2.7 and 3.1 - 3.2.
+
+
+Highlights
+==========
+
+* Re-introduction of datetime dtype support to deal with dates in arrays.
+
+* A new 16-bit floating point type.
+
+* A new iterator, which improves performance of many functions.
+
+
+New features
+============
+
+New 16-bit floating point type
+------------------------------
+
+This release adds support for the IEEE 754-2008 binary16 format, available as
+the data type ``numpy.half``.  Within Python, the type behaves similarly to
+`float` or `double`, and C extensions can add support for it with the exposed
+half-float API.
+
+
+Einstein summation convention evaluation function
+-------------------------------------------------
+
+
+
+
+Other new functions
+-------------------
+
+``numpy.ravel_coords`` : Converts a tuple of coordinate arrays into an array of
+flat indices, applying boundary modes to the coordinates.
+
+``numpy.slogdet`` : Compute the sign and (natural) logarithm of the determinant
+of an array.
+
+
+
+Changes
+=======
+
+
+
+Removed features
+================
+
+``numpy.fft``
+-------------
+
+The functions `refft`, `refft2`, `refftn`, `irefft`, `irefft2`, `irefftn`,
+which were aliases for the same functions without the 'e' in the name, were
+removed.
+
+
+``numpy.memmap``
+----------------
+
+The `sync()` and `close()` methods of memmap were removed.  Use `flush()` and
+"del memmap" instead.
+
+
+``numpy.lib``
+-------------
+
+The deprecated functions ``numpy.unique1d``, ``numpy.setmember1d``,
+``numpy.intersect1d_nu`` and ``numpy.lib.ufunclike.log2`` were removed.
+
+
+``numpy.ma``
+------------
+
+Several deprecated items were removed from the ``numpy.ma`` module::
+
+  * ``numpy.ma.MaskedArray`` "raw_data" method
+  * ``numpy.ma.MaskedArray`` constructor "flag" keyword
+  * ``numpy.ma.make_mask`` "flag" keyword
+  * ``numpy.ma.allclose`` "fill_value" keyword
+
+
+``numpy.distutils``
+-------------------
+
+The ``numpy.get_numpy_include`` function was removed, use ``numpy.get_include``
+instead.
