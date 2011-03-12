@@ -189,6 +189,13 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         self.assertRaises(AssertionError,
                 lambda : self._assert_func(ainf, anan))
 
+    def test_inf(self):
+        a = np.array([[1., 2.], [3., 4.]])
+        b = a.copy()
+        a[0,0] = np.inf
+        self.assertRaises(AssertionError,
+                lambda : self._assert_func(a, b))
+
 class TestAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_almost_equal
@@ -205,6 +212,8 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
     def test_inf_item(self):
         self._assert_func(np.inf, np.inf)
         self._assert_func(-np.inf, -np.inf)
+        self.assertRaises(AssertionError,
+                lambda : self._assert_func(np.inf, 1))
 
     def test_simple_item(self):
         self._test_not_equal(1, 2)
