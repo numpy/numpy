@@ -44,10 +44,21 @@ Legendre polynomials in ``numpy.polynomial``
 
 
 
-Fortran assumed shape array support in ``numpy.f2py``
------------------------------------------------------
+Fortran assumed shape array and size function support in ``numpy.f2py``
+-----------------------------------------------------------------------
 
+F2py now supports wrapping Fortran 90 routines that use assumed shape
+arrays.  Before such routines could be called from Python but the
+corresponding Fortran routines received assumed shape arrays as zero
+length arrays which caused unpredicted results. Thanks to Lorenz
+Hüdepohl for pointing out the correct way to interface routines with
+assumed shape arrays.
 
+In addition, f2py interprets Fortran expression ``size(array, dim)``
+as ``shape(array, dim-1)`` which makes it possible to automatically
+wrap Fortran routines that use two argument ``size`` function in
+dimension specifications. Before users were forced to apply this
+mapping manually.
 
 
 Other new functions
