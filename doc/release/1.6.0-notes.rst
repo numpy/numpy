@@ -1,3 +1,6 @@
+Note: NumPy 1.6.0 is not yet released.
+
+
 =========================
 NumPy 1.6.0 Release Notes
 =========================
@@ -29,8 +32,20 @@ the data type ``numpy.half``.  Within Python, the type behaves similarly to
 half-float API.
 
 
-Einstein summation convention evaluation function
--------------------------------------------------
+New iterator
+------------
+
+
+
+
+Legendre polynomials in ``numpy.polynomial``
+--------------------------------------------
+
+
+
+
+Fortran assumed shape array support in ``numpy.f2py``
+-----------------------------------------------------
 
 
 
@@ -44,11 +59,38 @@ flat indices, applying boundary modes to the coordinates.
 ``numpy.slogdet`` : Compute the sign and (natural) logarithm of the determinant
 of an array.
 
+``numpy.einsum`` : Evaluate the Einstein summation convention.  Using the
+Einstein summation convention, many common multi-dimensional array operations
+can be represented in a simple fashion.  This function provides a way compute
+such summations. The best way to understand this function is to try the
+examples below, which show how many common NumPy functions can be implemented
+as calls to ``numpy.einsum``.
+
 
 
 Changes
 =======
 
+Changes and improvements in the numpy core
+------------------------------------------
+
+
+
+
+``numpy.distutils``
+-------------------
+
+Several new compilers are supported for building Numpy: the Portland Group
+Fortran compiler on OS X, the PathScale compiler suite and the 64-bit Intel C
+compiler on Linux.
+
+
+``numpy.testing``
+-----------------
+
+The testing framework gained ``numpy.testing.assert_allclose``, which provides
+a more convenient way to compare floating point arrays than
+`assert_almost_equal`, `assert_approx_equal` and `assert_array_almost_equal`. 
 
 
 Removed features
