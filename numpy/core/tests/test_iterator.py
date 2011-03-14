@@ -641,6 +641,23 @@ def test_iter_broadcasting_errors():
         assert_(msg.find('(1,2,3)') >= 0,
                 'Message "%s" doesn\'t contain broadcast shape (1,2,3)' % msg)
 
+    try:
+        i = nditer([arange(6).reshape(2,3), arange(2)], [],
+                    [['readonly'],['readonly']],
+                    op_axes=[[0,1], [0,np.newaxis]],
+                    itershape=(4,3))
+        assert_(False, 'Should have raised a broadcast error')
+    except ValueError, e:
+        msg = str(e)
+        # The message should contain "shape->remappedshape" for each operand
+        assert_(msg.find('(2,3)->(2,3)') >= 0,
+            'Message "%s" doesn\'t contain operand shape (2,3)->(2,3)' % msg)
+        assert_(msg.find('(2)->(2,newaxis)') >= 0,
+                ('Message "%s" doesn\'t contain remapped operand shape' +
+                '(2)->(2,newaxis)') % msg)
+        # The message should contain the itershape parameter
+        assert_(msg.find('(4,3)') >= 0,
+                'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)
 
 def test_iter_flags_errors():
     # Check that bad combinations of flags produce errors

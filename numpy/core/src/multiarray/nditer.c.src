@@ -3736,7 +3736,7 @@ broadcast_error: {
 
                     if (axes != NULL) {
                         for (idim = 0; idim < ndim; ++idim) {
-                            npy_intp i = axes[ndim-idim-1];
+                            npy_intp i = axes[idim];
 
                             if (i >= 0 && i < PyArray_NDIM(op[iiter])) {
                                 remdims[idim] = PyArray_DIM(op[iiter], i);
