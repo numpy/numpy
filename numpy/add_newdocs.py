@@ -1238,8 +1238,8 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
 
     Parameters
     ----------
-    fromtype : dtype or dtype specifier
-        Data type to cast from.
+    from : dtype, dtype specifier, scalar, or array
+        Data type, scalar, or array to cast from.
     totype : dtype or dtype specifier
         Data type to cast to.
     casting : casting rule

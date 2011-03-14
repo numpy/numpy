@@ -35,7 +35,14 @@ half-float API.
 New iterator
 ------------
 
-
+A new iterator has been added, replacing the functionality of the
+existing iterator and multi-iterator with a single object and API.
+This iterator works well with general memory layouts different from
+C or Fortran contiguous, and handles both standard NumPy and
+customized broadcasting. The buffering, automatic data type
+conversion, and optional output parameters, offered by
+ufuncs but difficult to replicate elsewhere, are now exposed by this
+iterator.
 
 
 Legendre polynomials in ``numpy.polynomial``
@@ -73,10 +80,15 @@ of an array.
 ``numpy.einsum`` : Evaluate the Einstein summation convention.  Using the
 Einstein summation convention, many common multi-dimensional array operations
 can be represented in a simple fashion.  This function provides a way compute
-such summations. The best way to understand this function is to try the
-examples below, which show how many common NumPy functions can be implemented
-as calls to ``numpy.einsum``.
+such summations.
 
+``numpy.count_nonzero`` : Counts the number of non-zero elements in an array.
+
+``numpy.result_type`` and ``numpy.min_scalar_type`` : These functions expose
+the underlying type promotion used by the ufuncs and other operations to
+determine the types of outputs. These improve upon the ``numpy.common_type``
+and ``numpy.mintypecode`` which provide similar functionality but do
+not match the ufunc implementation.
 
 
 Changes
@@ -102,6 +114,20 @@ compiler on Linux.
 The testing framework gained ``numpy.testing.assert_allclose``, which provides
 a more convenient way to compare floating point arrays than
 `assert_almost_equal`, `assert_approx_equal` and `assert_array_almost_equal`. 
+
+
+``C API``
+---------
+
+In addition to the APIs for the new iterator and half data type, a number
+of other additions have been made to the C API. The type promotion
+mechanism used by ufuncs is exposed via ``PyArray_PromoteTypes``,
+``PyArray_ResultType``, and ``PyArray_MinScalarType``. A new enumeration
+``NPY_CASTING`` has been added which controls what types of casts are
+permitted. This is used by the new functions ``PyArray_CanCastArrayTo``
+and ``PyArray_CanCastTypeTo``.  A more flexible way to handle
+conversion of arbitrary python objects into arrays is exposed by
+``PyArray_GetArrayParamsFromObject``.
 
 
 Removed features
