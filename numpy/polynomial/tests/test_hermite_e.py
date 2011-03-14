@@ -99,10 +99,10 @@ class TestArithmetic(TestCase) :
 
     def test_hermemulx(self):
         assert_equal(herme.hermemulx([0]), [0])
-        assert_equal(herme.hermemulx([1]), [0,.5])
+        assert_equal(herme.hermemulx([1]), [0,1])
         for i in range(1, 5):
             ser = [0]*i + [1]
-            tgt = [0]*(i - 1) + [i, 0, .5]
+            tgt = [0]*(i - 1) + [i, 0, 1]
             assert_equal(herme.hermemulx(ser), tgt)
 
     def test_hermemul(self) :
@@ -143,7 +143,7 @@ class TestCalculus(TestCase) :
         for i in range(2, 5):
             k = [0]*(i - 2) + [1]
             res = herme.hermeint([0], m=i, k=k)
-            assert_almost_equal(res, [0, .5])
+            assert_almost_equal(res, [0, 1])
 
         # check single integration with integration constant
         for i in range(5) :
@@ -333,11 +333,11 @@ class TestMisc(TestCase) :
 
     def test_herme2poly(self) :
         for i in range(10) :
-            assert_almost_equal(herme.herme2poly([0]*i + [1]), Hlist[i])
+            assert_almost_equal(herme.herme2poly([0]*i + [1]), Helist[i])
 
     def test_poly2herme(self) :
         for i in range(10) :
-            assert_almost_equal(herme.poly2herme(Hlist[i]), [0]*i + [1])
+            assert_almost_equal(herme.poly2herme(Helist[i]), [0]*i + [1])
 
 
 def assert_poly_almost_equal(p1, p2):
@@ -345,13 +345,13 @@ def assert_poly_almost_equal(p1, p2):
     assert_equal(p1.domain, p2.domain)
 
 
-class TestHermite_eClass(TestCase) :
+class TestHermiteEClass(TestCase) :
 
-    p1 = herme.Hermite_e([1,2,3])
-    p2 = herme.Hermite_e([1,2,3], [0,1])
-    p3 = herme.Hermite_e([1,2])
-    p4 = herme.Hermite_e([2,2,3])
-    p5 = herme.Hermite_e([3,2,3])
+    p1 = herme.HermiteE([1,2,3])
+    p2 = herme.HermiteE([1,2,3], [0,1])
+    p3 = herme.HermiteE([1,2])
+    p4 = herme.HermiteE([2,2,3])
+    p5 = herme.HermiteE([3,2,3])
 
     def test_equal(self) :
         assert_(self.p1 == self.p1)
@@ -368,38 +368,38 @@ class TestHermite_eClass(TestCase) :
         assert_(self.p1 != [1,2,3])
 
     def test_add(self) :
-        tgt = herme.Hermite_e([2,4,6])
+        tgt = herme.HermiteE([2,4,6])
         assert_(self.p1 + self.p1 == tgt)
         assert_(self.p1 + [1,2,3] == tgt)
         assert_([1,2,3] + self.p1 == tgt)
 
     def test_sub(self) :
-        tgt = herme.Hermite_e([1])
+        tgt = herme.HermiteE([1])
         assert_(self.p4 - self.p1 == tgt)
         assert_(self.p4 - [1,2,3] == tgt)
         assert_([2,2,3] - self.p1 == tgt)
 
     def test_mul(self) :
-        tgt = herme.Hermite_e([ 81.,  52.,  82.,  12.,   9.])
+        tgt = herme.HermiteE([ 23.,  28.,  46.,  12.,   9.])
         assert_poly_almost_equal(self.p1 * self.p1, tgt)
         assert_poly_almost_equal(self.p1 * [1,2,3], tgt)
         assert_poly_almost_equal([1,2,3] * self.p1, tgt)
 
     def test_floordiv(self) :
-        tgt = herme.Hermite_e([1])
+        tgt = herme.HermiteE([1])
         assert_(self.p4 // self.p1 == tgt)
         assert_(self.p4 // [1,2,3] == tgt)
         assert_([2,2,3] // self.p1 == tgt)
 
     def test_mod(self) :
-        tgt = herme.Hermite_e([1])
+        tgt = herme.HermiteE([1])
         assert_((self.p4 % self.p1) == tgt)
         assert_((self.p4 % [1,2,3]) == tgt)
         assert_(([2,2,3] % self.p1) == tgt)
 
     def test_divmod(self) :
-        tquo = herme.Hermite_e([1])
-        trem = herme.Hermite_e([2])
+        tquo = herme.HermiteE([1])
+        trem = herme.HermiteE([2])
         quo, rem = divmod(self.p5, self.p1)
         assert_(quo == tquo and rem == trem)
         quo, rem = divmod(self.p5, [1,2,3])
@@ -408,7 +408,7 @@ class TestHermite_eClass(TestCase) :
         assert_(quo == tquo and rem == trem)
 
     def test_pow(self) :
-        tgt = herme.Hermite_e([1])
+        tgt = herme.HermiteE([1])
         for i in range(5) :
             res = self.p1**i
             assert_(res == tgt)
@@ -417,7 +417,7 @@ class TestHermite_eClass(TestCase) :
     def test_call(self) :
         # domain = [-1, 1]
         x = np.linspace(-1, 1)
-        tgt = 3*(4*x**2 - 2) + 2*(2*x) + 1
+        tgt = 3*(x**2 - 1) + 2*(x) + 1
         assert_almost_equal(self.p1(x), tgt)
 
         # domain = [0, 1]
@@ -428,7 +428,7 @@ class TestHermite_eClass(TestCase) :
     def test_degree(self) :
         assert_equal(self.p1.degree(), 2)
 
-    def test_trimdeg(self) :
+    def test_cutdeg(self) :
         assert_raises(ValueError, self.p1.cutdeg, .5)
         assert_raises(ValueError, self.p1.cutdeg, -1)
         assert_equal(len(self.p1.cutdeg(3)), 3)
@@ -447,7 +447,7 @@ class TestHermite_eClass(TestCase) :
 
     def test_trim(self) :
         coef = [1, 1e-6, 1e-12, 0]
-        p = herme.Hermite_e(coef)
+        p = herme.HermiteE(coef)
         assert_equal(p.trim().coef, coef[:3])
         assert_equal(p.trim(1e-10).coef, coef[:2])
         assert_equal(p.trim(1e-5).coef, coef[:1])
@@ -480,7 +480,7 @@ class TestHermite_eClass(TestCase) :
         assert_almost_equal(p.deriv(2).coef, self.p2.coef)
 
     def test_roots(self) :
-        p = herme.Hermite_e(herme.poly2herme([0, -1, 0, 1]), [0, 1])
+        p = herme.HermiteE(herme.poly2herme([0, -1, 0, 1]), [0, 1])
         res = p.roots()
         tgt = [0, .5, 1]
         assert_almost_equal(res, tgt)
@@ -494,7 +494,7 @@ class TestHermite_eClass(TestCase) :
 
     def test_fromroots(self) :
         roots = [0, .5, 1]
-        p = herme.Hermite_e.fromroots(roots, domain=[0, 1])
+        p = herme.HermiteE.fromroots(roots, domain=[0, 1])
         res = p.coef
         tgt = herme.poly2herme([0, -1, 0, 1])
         assert_almost_equal(res, tgt)
@@ -506,14 +506,14 @@ class TestHermite_eClass(TestCase) :
         y = f(x)
 
         # test default value of domain
-        p = herme.Hermite_e.fit(x, y, 3)
+        p = herme.HermiteE.fit(x, y, 3)
         assert_almost_equal(p.domain, [0,3])
 
         # test that fit works in given domains
-        p = herme.Hermite_e.fit(x, y, 3, None)
+        p = herme.HermiteE.fit(x, y, 3, None)
         assert_almost_equal(p(x), y)
         assert_almost_equal(p.domain, [0,3])
-        p = herme.Hermite_e.fit(x, y, 3, [])
+        p = herme.HermiteE.fit(x, y, 3, [])
         assert_almost_equal(p(x), y)
         assert_almost_equal(p.domain, [-1, 1])
         # test that fit accepts weights.
@@ -521,14 +521,14 @@ class TestHermite_eClass(TestCase) :
         yw = y.copy()
         w[1::2] = 1
         yw[0::2] = 0
-        p = herme.Hermite_e.fit(x, yw, 3, w=w)
+        p = herme.HermiteE.fit(x, yw, 3, w=w)
         assert_almost_equal(p(x), y)
 
     def test_identity(self) :
         x = np.linspace(0,3)
-        p = herme.Hermite_e.identity()
+        p = herme.HermiteE.identity()
         assert_almost_equal(p(x), x)
-        p = herme.Hermite_e.identity([1,3])
+        p = herme.HermiteE.identity([1,3])
         assert_almost_equal(p(x), x)
 
 
