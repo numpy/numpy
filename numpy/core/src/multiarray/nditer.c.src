@@ -80,7 +80,7 @@
 /* The iteration order was forced on construction */
 #define NPY_ITFLAG_FORCEDORDER  0x0010
 /* The inner loop is handled outside the iterator */
-#define NPY_ITFLAG_NOINNER      0x0020
+#define NPY_ITFLAG_EXLOOP      0x0020
 /* The iterator is ranged */
 #define NPY_ITFLAG_RANGE        0x0040
 /* The iterator is buffered */
@@ -697,7 +697,7 @@ NpyIter_AdvancedNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
      */
     if (!(itflags&NPY_ITFLAG_BUFFER)) {
         NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-        if (itflags&NPY_ITFLAG_NOINNER) {
+        if (itflags&NPY_ITFLAG_EXLOOP) {
             if (NIT_ITERSIZE(iter) == NAD_SHAPE(axisdata)) {
                 NIT_ITFLAGS(iter) |= NPY_ITFLAG_ONEITERATION;
             }
@@ -1116,10 +1116,10 @@ NpyIter_RemoveCoords(NpyIter *iter)
 }
 
 /*NUMPY_API
- * Removes the inner loop handling (so HasInnerLoop returns false)
+ * Removes the inner loop handling (so HasExternalLoop returns true)
  */
 NPY_NO_EXPORT int
-NpyIter_RemoveInnerLoop(NpyIter *iter)
+NpyIter_EnableExternalLoop(NpyIter *iter)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     /*int ndim = NIT_NDIM(iter);*/
@@ -1128,20 +1128,20 @@ NpyIter_RemoveInnerLoop(NpyIter *iter)
     /* Check conditions under which this can be done */
     if (itflags&(NPY_ITFLAG_HASINDEX|NPY_ITFLAG_HASCOORDS)) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator flag NO_INNER_ITERATION cannot be used "
+                "Iterator flag EXTERNAL_LOOP cannot be used "
                 "if coords or an index is being tracked");
         return NPY_FAIL;
     }
-    if ((itflags&(NPY_ITFLAG_BUFFER|NPY_ITFLAG_RANGE|NPY_ITFLAG_NOINNER))
-                        == (NPY_ITFLAG_RANGE|NPY_ITFLAG_NOINNER)) {
+    if ((itflags&(NPY_ITFLAG_BUFFER|NPY_ITFLAG_RANGE|NPY_ITFLAG_EXLOOP))
+                        == (NPY_ITFLAG_RANGE|NPY_ITFLAG_EXLOOP)) {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator flag NO_INNER_ITERATION cannot be used "
+                "Iterator flag EXTERNAL_LOOP cannot be used "
                 "with ranged iteration unless buffering is also enabled");
         return NPY_FAIL;
     }
     /* Set the flag */
-    if (!(itflags&NPY_ITFLAG_NOINNER)) {
-        itflags |= NPY_ITFLAG_NOINNER;
+    if (!(itflags&NPY_ITFLAG_EXLOOP)) {
+        itflags |= NPY_ITFLAG_EXLOOP;
         NIT_ITFLAGS(iter) = itflags;
 
         /*
@@ -1352,10 +1352,10 @@ NpyIter_GotoCoords(NpyIter *iter, npy_intp *coords)
         return NPY_FAIL;
     }
 
-    if (itflags&NPY_ITFLAG_NOINNER) {
+    if (itflags&NPY_ITFLAG_EXLOOP) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoCoords on an iterator which "
-                "has the flag NO_INNER_ITERATION");
+                "has the flag EXTERNAL_LOOP");
         return NPY_FAIL;
     }
 
@@ -1437,10 +1437,10 @@ NpyIter_GotoIndex(NpyIter *iter, npy_intp index)
         return NPY_FAIL;
     }
 
-    if (itflags&NPY_ITFLAG_NOINNER) {
+    if (itflags&NPY_ITFLAG_EXLOOP) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoIndex on an iterator which "
-                "has the flag NO_INNER_ITERATION");
+                "has the flag EXTERNAL_LOOP");
         return NPY_FAIL;
     }
 
@@ -1507,10 +1507,10 @@ NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
     /*int ndim = NIT_NDIM(iter);*/
     int iiter, niter = NIT_NITER(iter);
 
-    if (itflags&NPY_ITFLAG_NOINNER) {
+    if (itflags&NPY_ITFLAG_EXLOOP) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot call GotoIterIndex on an iterator which "
-                "has the flag NO_INNER_ITERATION");
+                "has the flag EXTERNAL_LOOP");
         return NPY_FAIL;
     }
 
@@ -1600,7 +1600,7 @@ NpyIter_GetIterIndex(NpyIter *iter)
 /**begin repeat
  * #const_itflags = 0,
  *                  NPY_ITFLAG_HASINDEX,
- *                  NPY_ITFLAG_NOINNER,
+ *                  NPY_ITFLAG_EXLOOP,
  *                  NPY_ITFLAG_RANGE,
  *                  NPY_ITFLAG_RANGE|NPY_ITFLAG_HASINDEX#
  * #tag_itflags = 0, IND, NOINN, RNG, RNGuIND#
@@ -1651,7 +1651,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, niter);
 
     axisdata0 = NIT_AXISDATA(iter);
-#  if !(@const_itflags@&NPY_ITFLAG_NOINNER)
+#  if !(@const_itflags@&NPY_ITFLAG_EXLOOP)
     /* Increment coordinate 0 */
     NAD_COORD(axisdata0)++;
     /* Increment pointer 0 */
@@ -1662,7 +1662,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 
 #if @const_ndim@ == 1
 
-#  if !(@const_itflags@&NPY_ITFLAG_NOINNER)
+#  if !(@const_itflags@&NPY_ITFLAG_EXLOOP)
     /* Finished when the coordinate equals the shape */
     return NAD_COORD(axisdata0) < NAD_SHAPE(axisdata0);
 #  else
@@ -1674,7 +1674,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_niter@(
 
 #else
 
-#  if !(@const_itflags@&NPY_ITFLAG_NOINNER)
+#  if !(@const_itflags@&NPY_ITFLAG_EXLOOP)
     if (NAD_COORD(axisdata0) < NAD_SHAPE(axisdata0)) {
         return 1;
     }
@@ -1795,7 +1795,7 @@ npyiter_buffered_reduce_iternext_iters@tag_niter@(NpyIter *iter)
      * If the iterator handles the inner loop, need to increment all
      * the coordinates and pointers
      */
-    if (!(itflags&NPY_ITFLAG_NOINNER)) {
+    if (!(itflags&NPY_ITFLAG_EXLOOP)) {
         /* Increment within the buffer */
         if (++NIT_ITERINDEX(iter) < NBF_BUFITEREND(bufferdata)) {
             npy_intp *strides;
@@ -1865,7 +1865,7 @@ npyiter_buffered_iternext(NpyIter *iter)
      * If the iterator handles the inner loop, need to increment all
      * the coordinates and pointers
      */
-    if (!(itflags&NPY_ITFLAG_NOINNER)) {
+    if (!(itflags&NPY_ITFLAG_EXLOOP)) {
         /* Increment within the buffer */
         if (++NIT_ITERINDEX(iter) < NBF_BUFITEREND(bufferdata)) {
             int iiter;
@@ -1963,20 +1963,20 @@ NpyIter_GetIterNext(NpyIter *iter, char **errmsg)
     /*
      * Ignore all the flags that don't affect the iterator memory
      * layout or the iternext function.  Currently only HASINDEX,
-     * NOINNER, and RANGE affect them here.
+     * EXLOOP, and RANGE affect them here.
      */
-    itflags &= (NPY_ITFLAG_HASINDEX|NPY_ITFLAG_NOINNER|NPY_ITFLAG_RANGE);
+    itflags &= (NPY_ITFLAG_HASINDEX|NPY_ITFLAG_EXLOOP|NPY_ITFLAG_RANGE);
 
     /* Switch statements let the compiler optimize this most effectively */
     switch (itflags) {
     /*
-     * The combinations HASINDEX|NOINNER and RANGE|NOINNER are excluded
+     * The combinations HASINDEX|EXLOOP and RANGE|EXLOOP are excluded
      * by the New functions
      */
 /**begin repeat
  * #const_itflags = 0,
  *                  NPY_ITFLAG_HASINDEX,
- *                  NPY_ITFLAG_NOINNER,
+ *                  NPY_ITFLAG_EXLOOP,
  *                  NPY_ITFLAG_RANGE,
  *                  NPY_ITFLAG_RANGE|NPY_ITFLAG_HASINDEX#
  * #tag_itflags = 0, IND, NOINN, RNG, RNGuIND#
@@ -2196,9 +2196,9 @@ NpyIter_HasDelayedBufAlloc(NpyIter *iter)
  * Whether the iterator handles the inner loop
  */
 NPY_NO_EXPORT npy_bool
-NpyIter_HasInnerLoop(NpyIter *iter)
+NpyIter_HasExternalLoop(NpyIter *iter)
 {
-    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NOINNER) == 0;
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_EXLOOP) != 0;
 }
 
 /*NUMPY_API
@@ -2642,7 +2642,7 @@ NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
 
 
 /*NUMPY_API
- * Get the array of strides for the inner loop (when HasInnerLoop is false)
+ * Get the array of strides for the inner loop (when HasExternalLoop is true)
  *
  * This function may be safely called without holding the Python GIL.
  */
@@ -2797,7 +2797,7 @@ NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
 
 
 /*NUMPY_API
- * Get a pointer to the size of the inner loop  (when HasInnerLoop is false)
+ * Get a pointer to the size of the inner loop  (when HasExternalLoop is true)
  *
  * This function may be safely called without holding the Python GIL.
  */
@@ -2818,7 +2818,7 @@ NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
     }
 }
 
-/* Checks 'flags' for (C|F)_ORDER_INDEX, COORDS, and NO_INNER_ITERATION,
+/* Checks 'flags' for (C|F)_ORDER_INDEX, COORDS, and EXTERNAL_LOOP,
  * setting the appropriate internal flags in 'itflags'.
  *
  * Returns 1 on success, 0 on error.
@@ -2853,23 +2853,23 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         (*itflags) |= NPY_ITFLAG_HASCOORDS;
     }
     /* Check if the caller wants to handle inner iteration */
-    if (flags&NPY_ITER_NO_INNER_ITERATION) {
+    if (flags&NPY_ITER_EXTERNAL_LOOP) {
         if ((*itflags)&(NPY_ITFLAG_HASINDEX|NPY_ITFLAG_HASCOORDS)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator flag NO_INNER_ITERATION cannot be used "
+                    "Iterator flag EXTERNAL_LOOP cannot be used "
                     "if coords or an index is being tracked");
             return 0;
         }
-        (*itflags) |= NPY_ITFLAG_NOINNER;
+        (*itflags) |= NPY_ITFLAG_EXLOOP;
     }
     /* Ranged */
     if (flags&NPY_ITER_RANGED) {
         (*itflags) |= NPY_ITFLAG_RANGE;
-        if ((flags&NPY_ITER_NO_INNER_ITERATION) &&
+        if ((flags&NPY_ITER_EXTERNAL_LOOP) &&
                                     !(flags&NPY_ITER_BUFFERED)) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flag RANGED cannot be used with "
-                    "the flag NO_INNER_ITERATION unless "
+                    "the flag EXTERNAL_LOOP unless "
                     "BUFFERED is also enabled");
             return 0;
         }
@@ -6177,8 +6177,8 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("HASCOORDS ");
     if (itflags&NPY_ITFLAG_FORCEDORDER)
         printf("FORCEDORDER ");
-    if (itflags&NPY_ITFLAG_NOINNER)
-        printf("NOINNER ");
+    if (itflags&NPY_ITFLAG_EXLOOP)
+        printf("EXLOOP ");
     if (itflags&NPY_ITFLAG_RANGE)
         printf("RANGE ");
     if (itflags&NPY_ITFLAG_BUFFER)
@@ -6302,7 +6302,7 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("%d ", (int)NBF_STRIDES(bufferdata)[iiter]);
         printf("\n");
         /* Print the fixed strides when there's no inner loop */
-        if (itflags&NPY_ITFLAG_NOINNER) {
+        if (itflags&NPY_ITFLAG_EXLOOP) {
             npy_intp fixedstrides[NPY_MAXDIMS];
             printf("|   Fixed Strides: ");
             NpyIter_GetInnerFixedStrideArray(iter, fixedstrides);

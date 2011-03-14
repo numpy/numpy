@@ -426,17 +426,17 @@ def test_iter_no_inner_full_coalesce():
 
             aview = a.reshape(shape)[dirs_index]
             # C-order
-            i = nditer(aview, ['no_inner_iteration'], [['readonly']])
+            i = nditer(aview, ['external_loop'], [['readonly']])
             assert_equal(i.ndim, 1)
             assert_equal(i[0].shape, (size,))
             # Fortran-order
-            i = nditer(aview.T, ['no_inner_iteration'], [['readonly']])
+            i = nditer(aview.T, ['external_loop'], [['readonly']])
             assert_equal(i.ndim, 1)
             assert_equal(i[0].shape, (size,))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0,1),
-                                    ['no_inner_iteration'], [['readonly']])
+                                    ['external_loop'], [['readonly']])
                 assert_equal(i.ndim, 1)
                 assert_equal(i[0].shape, (size,))
 
@@ -446,21 +446,21 @@ def test_iter_no_inner_dim_coalescing():
     # Skipping the last element in a dimension prevents coalescing
     # with the next-bigger dimension
     a = arange(24).reshape(2,3,4)[:,:,:-1]
-    i = nditer(a, ['no_inner_iteration'], [['readonly']])
+    i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 2)
     assert_equal(i[0].shape, (3,))
     a = arange(24).reshape(2,3,4)[:,:-1,:]
-    i = nditer(a, ['no_inner_iteration'], [['readonly']])
+    i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 2)
     assert_equal(i[0].shape, (8,))
     a = arange(24).reshape(2,3,4)[:-1,:,:]
-    i = nditer(a, ['no_inner_iteration'], [['readonly']])
+    i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 1)
     assert_equal(i[0].shape, (12,))
     
     # Even with lots of 1-sized dimensions, should still coalesce
     a = arange(24).reshape(1,1,2,1,1,3,1,1,4,1,1)
-    i = nditer(a, ['no_inner_iteration'], [['readonly']])
+    i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 1)
     assert_equal(i[0].shape, (24,))
 
@@ -683,11 +683,11 @@ def test_iter_flags_errors():
                 ['c_index','f_index'], [['readonly']])
     # Inner iteration and coords/indices are incompatible
     assert_raises(ValueError, nditer, a,
-                ['no_inner_iteration','coords'], [['readonly']])
+                ['external_loop','coords'], [['readonly']])
     assert_raises(ValueError, nditer, a,
-                ['no_inner_iteration','c_index'], [['readonly']])
+                ['external_loop','c_index'], [['readonly']])
     assert_raises(ValueError, nditer, a,
-                ['no_inner_iteration','f_index'], [['readonly']])
+                ['external_loop','f_index'], [['readonly']])
     # Must specify exactly one of readwrite/readonly/writeonly per operand
     assert_raises(ValueError, nditer, a, [], [[]])
     assert_raises(ValueError, nditer, a, [], [['readonly','writeonly']])
@@ -720,7 +720,7 @@ def test_iter_flags_errors():
         i.iterindex = 0;
     def assign_iterrange(i):
         i.iterrange = (0,1);
-    i = nditer(arange(6), ['no_inner_iteration'])
+    i = nditer(arange(6), ['external_loop'])
     assert_raises(ValueError, assign_coords, i)
     assert_raises(ValueError, assign_index, i)
     assert_raises(ValueError, assign_iterindex, i)
@@ -795,7 +795,7 @@ def test_iter_nbo_align_contig():
     assert_(i.operands[0].flags.contiguous)
     assert_equal(i.operands[0], a[:6]);
     # If it isn't contiguous, should buffer
-    i = nditer(a[::2], ['buffered','no_inner_iteration'],
+    i = nditer(a[::2], ['buffered','external_loop'],
                         [['readonly','contig']],
                         buffersize=10)
     assert_(i[0].flags.contiguous)
@@ -1403,7 +1403,7 @@ def test_iter_remove_coords_inner_loop():
     i.reset()
     assert_equal(i.itersize, 24)
     assert_equal(i[0].shape, tuple())
-    i.remove_inner_loop()
+    i.enable_external_loop()
     assert_equal(i.itersize, 24)
     assert_equal(i[0].shape, (24,))
     assert_equal(i.value, arange(24))
@@ -1473,7 +1473,7 @@ def test_iter_iterrange():
             val = np.concatenate((val, x))
         return val
 
-    i = nditer(a, ['ranged','buffered','no_inner_iteration'],
+    i = nditer(a, ['ranged','buffered','external_loop'],
                 ['readonly'], order='F',
                 op_dtypes='f8', buffersize=buffersize)
     assert_equal(i.iterrange, (0,24))
@@ -1501,7 +1501,7 @@ def test_iter_buffering():
     for a in arrays:
         for buffersize in (1,2,3,5,8,11,16,1024):
             vals = []
-            i = nditer(a, ['buffered','no_inner_iteration'],
+            i = nditer(a, ['buffered','external_loop'],
                            [['readonly','nbo','aligned']],
                            order='C',
                            casting='equiv',
@@ -1558,7 +1558,7 @@ def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast
 
     a = np.arange(10, dtype='f4')
-    i = nditer(a, ['buffered','no_inner_iteration'],
+    i = nditer(a, ['buffered','external_loop'],
                    [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f8')],
@@ -1572,7 +1572,7 @@ def test_iter_buffered_cast_byteswapped():
     # Test that buffering can handle a cast which requires swap->cast->swap
 
     a = np.arange(10, dtype='f4').newbyteorder().byteswap()
-    i = nditer(a, ['buffered','no_inner_iteration'],
+    i = nditer(a, ['buffered','external_loop'],
                    [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f8').newbyteorder()],
@@ -1586,7 +1586,7 @@ def test_iter_buffered_cast_byteswapped():
         warnings.simplefilter("ignore", np.ComplexWarning)
 
         a = np.arange(10, dtype='f8').newbyteorder().byteswap()
-        i = nditer(a, ['buffered','no_inner_iteration'],
+        i = nditer(a, ['buffered','external_loop'],
                        [['readwrite','nbo','aligned']],
                        casting='unsafe',
                        op_dtypes=[np.dtype('c8').newbyteorder()],
@@ -1603,7 +1603,7 @@ def test_iter_buffered_cast_byteswapped_complex():
 
     a = np.arange(10, dtype='c8').newbyteorder().byteswap()
     a += 2j
-    i = nditer(a, ['buffered','no_inner_iteration'],
+    i = nditer(a, ['buffered','external_loop'],
                    [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
@@ -1614,7 +1614,7 @@ def test_iter_buffered_cast_byteswapped_complex():
 
     a = np.arange(10, dtype='c8')
     a += 2j
-    i = nditer(a, ['buffered','no_inner_iteration'],
+    i = nditer(a, ['buffered','external_loop'],
                    [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16').newbyteorder()],
@@ -1625,7 +1625,7 @@ def test_iter_buffered_cast_byteswapped_complex():
 
     a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
     a += 2j
-    i = nditer(a, ['buffered','no_inner_iteration'],
+    i = nditer(a, ['buffered','external_loop'],
                    [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
@@ -1635,7 +1635,7 @@ def test_iter_buffered_cast_byteswapped_complex():
     assert_equal(a, 2*np.arange(10, dtype=np.clongdouble) + 4j)
 
     a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
-    i = nditer(a, ['buffered','no_inner_iteration'],
+    i = nditer(a, ['buffered','external_loop'],
                    [['readwrite','nbo','aligned']],
                    casting='same_kind',
                    op_dtypes=[np.dtype('f4')],
@@ -1941,30 +1941,30 @@ def test_iter_buffering_badwriteback():
     a = np.arange(6).reshape(2,3,1)
     b = np.arange(12).reshape(2,3,2)
     assert_raises(ValueError,nditer,[a,b],
-                        ['buffered','no_inner_iteration'],
+                        ['buffered','external_loop'],
                         [['readwrite'],['writeonly']],
                         order='C')
 
     # But if a is readonly, it's fine
-    i = nditer([a,b],['buffered','no_inner_iteration'],
+    i = nditer([a,b],['buffered','external_loop'],
                         [['readonly'],['writeonly']],
                         order='C')
     
     # If a has just one element, it's fine too (constant 0 stride, a reduction)
     a = np.arange(1).reshape(1,1,1)
-    i = nditer([a,b],['buffered','no_inner_iteration','reduce_ok'],
+    i = nditer([a,b],['buffered','external_loop','reduce_ok'],
                         [['readwrite'],['writeonly']],
                         order='C')
 
     # check that it fails on other dimensions too
     a = np.arange(6).reshape(1,3,2)
     assert_raises(ValueError,nditer,[a,b],
-                        ['buffered','no_inner_iteration'],
+                        ['buffered','external_loop'],
                         [['readwrite'],['writeonly']],
                         order='C')
     a = np.arange(4).reshape(2,1,2)
     assert_raises(ValueError,nditer,[a,b],
-                        ['buffered','no_inner_iteration'],
+                        ['buffered','external_loop'],
                         [['readwrite'],['writeonly']],
                         order='C')
 
@@ -1989,7 +1989,7 @@ def test_iter_buffering_string():
 def test_iter_buffering_growinner():
     # Test that the inner loop grows when no buffering is needed
     a = np.arange(30)
-    i = nditer(a, ['buffered','growinner','no_inner_iteration'],
+    i = nditer(a, ['buffered','growinner','external_loop'],
                            buffersize=5)
     # Should end up with just one inner loop here
     assert_equal(i[0].size, a.size)
@@ -2182,7 +2182,7 @@ def test_iter_reduction_error():
                     op_axes=[[0],[-1]])
 
     a = np.arange(6).reshape(2,3)
-    assert_raises(ValueError, nditer, [a,None], ['no_inner_iteration'],
+    assert_raises(ValueError, nditer, [a,None], ['external_loop'],
                     [['readonly'], ['readwrite','allocate']],
                     op_axes=[[0,1],[-1,-1]])
 
@@ -2203,7 +2203,7 @@ def test_iter_reduction():
     assert_equal(i.operands[1], np.sum(a))
 
     a = np.arange(6).reshape(2,3)
-    i = nditer([a,None], ['reduce_ok','no_inner_iteration'],
+    i = nditer([a,None], ['reduce_ok','external_loop'],
                     [['readonly'], ['readwrite','allocate']],
                     op_axes=[[0,1],[-1,-1]])
     # Need to initialize the output operand to the addition unit
@@ -2237,7 +2237,7 @@ def test_iter_buffering_reduction():
 
     a = np.arange(6).reshape(2,3)
     b = np.array([0,0], dtype='f8').byteswap().newbyteorder()
-    i = nditer([a,b], ['reduce_ok','no_inner_iteration', 'buffered'],
+    i = nditer([a,b], ['reduce_ok','external_loop', 'buffered'],
                     [['readonly'], ['readwrite','nbo']],
                     op_axes=[[0,1],[0,-1]])
     # Reduction shape/strides for the output

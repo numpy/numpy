@@ -41,7 +41,7 @@ Here is a conversion table for which functions to use with the new iterator:
 *Iterator Functions*
 :cfunc:`PyArray_IterNew`               :cfunc:`NpyIter_New`
 :cfunc:`PyArray_IterAllButAxis`        :cfunc:`NpyIter_New` + ``axes`` parameter **or**
-                                       Iterator flag :cdata:`NPY_ITER_NO_INNER_ITERATION`
+                                       Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
 :cfunc:`PyArray_BroadcastToShape`      **NOT SUPPORTED** (Use the support for
                                        multiple operands instead.)
 :cfunc:`PyArrayIter_Check`             Will need to add this in Python exposure
@@ -63,7 +63,7 @@ Here is a conversion table for which functions to use with the new iterator:
                                        :cfunc:`NpyIter_GotoIterIndex`
 :cfunc:`PyArray_MultiIter_NOTDONE`     Return value of ``iternext`` function pointer
 :cfunc:`PyArray_Broadcast`             Handled by :cfunc:`NpyIter_MultiNew`
-:cfunc:`PyArray_RemoveSmallest`        Iterator flag :cdata:`NPY_ITER_NO_INNER_ITERATION`
+:cfunc:`PyArray_RemoveSmallest`        Iterator flag :cdata:`NPY_ITER_EXTERNAL_LOOP`
 *Other Functions* 
 :cfunc:`PyArray_ConvertToCommonType`   Iterator flag :cdata:`NPY_ITER_COMMON_DTYPE`
 =====================================  =============================================
@@ -97,7 +97,7 @@ number of non-zero elements in an array.
          * Create and use an iterator to count the nonzeros.
          *   flag NPY_ITER_READONLY
          *     - The array is never written to.
-         *   flag NPY_ITER_NO_INNER_ITERATION
+         *   flag NPY_ITER_EXTERNAL_LOOP
          *     - Inner loop is done outside the iterator for efficiency.
          *   flag NPY_ITER_NPY_ITER_REFS_OK
          *     - Reference types are acceptable.
@@ -109,7 +109,7 @@ number of non-zero elements in an array.
          *     - No casting is required for this operation.
          */
         iter = NpyIter_New(self, NPY_ITER_READONLY|
-                                 NPY_ITER_NO_INNER_ITERATION|
+                                 NPY_ITER_EXTERNAL_LOOP|
                                  NPY_ITER_REFS_OK,
                             NPY_KEEPORDER, NPY_NO_CASTING,
                             NULL);
@@ -140,7 +140,7 @@ number of non-zero elements in an array.
             npy_intp stride = *strideptr;
             npy_intp count = *innersizeptr;
 
-            /* This is a typical inner loop for NPY_ITER_NO_INNER_ITERATION */
+            /* This is a typical inner loop for NPY_ITER_EXTERNAL_LOOP */
             while (count--) {
                 if (nonzero(data, self)) {
                     ++nonzero_count;
@@ -178,7 +178,7 @@ is used to control the memory layout of the allocated result, typically
         /*
          * No inner iteration - inner loop is handled by CopyArray code
          */
-        flags = NPY_ITER_NO_INNER_ITERATION;
+        flags = NPY_ITER_EXTERNAL_LOOP;
         /*
          * Tell the constructor to automatically allocate the output.
          * The data type of the output will match that of the input.
@@ -366,10 +366,10 @@ Construction and Destruction
             This prevents the iterator from coalescing axes to
             produce bigger inner loops.
 
-        .. cvar:: NPY_ITER_NO_INNER_ITERATION
+        .. cvar:: NPY_ITER_EXTERNAL_LOOP
 
             Causes the iterator to skip iteration of the innermost
-            loop, allowing the user of the iterator to handle it.
+            loop, requiring the user of the iterator to handle it.
 
             This flag is incompatible with :cdata:`NPY_ITER_C_INDEX`,
             :cdata:`NPY_ITER_F_INDEX`, and :cdata:`NPY_ITER_COORDS`.
@@ -436,7 +436,7 @@ Construction and Destruction
             the function :cfunc:`NpyIter_ResetToIterIndexRange` to specify
             a range for iteration.
 
-            This flag can only be used with :cdata:`NPY_ITER_NO_INNER_ITERATION`
+            This flag can only be used with :cdata:`NPY_ITER_EXTERNAL_LOOP`
             when :cdata:`NPY_ITER_BUFFERED` is enabled.  This is because
             without buffering, the inner loop is always the size of the
             innermost iteration dimension, and allowing it to get cut up
@@ -453,7 +453,7 @@ Construction and Destruction
             code using the iterator, allowing for larger chunks
             of data at once to amortize the Python interpreter overhead.
 
-            If used with :cdata:`NPY_ITER_NO_INNER_ITERATION`, the inner loop
+            If used with :cdata:`NPY_ITER_EXTERNAL_LOOP`, the inner loop
             for the caller may get larger chunks than would be possible
             without buffering, because of how the strides are laid out.
 
@@ -632,7 +632,7 @@ Construction and Destruction
 
     The recommended approach to multithreaded iteration is to
     first create an iterator with the flags
-    :cdata:`NPY_ITER_NO_INNER_ITERATION`, :cdata:`NPY_ITER_RANGED`,
+    :cdata:`NPY_ITER_EXTERNAL_LOOP`, :cdata:`NPY_ITER_RANGED`,
     :cdata:`NPY_ITER_BUFFERED`, :cdata:`NPY_ITER_DELAY_BUFALLOC`, and
     possibly :cdata:`NPY_ITER_GROWINNER`.  Create a copy of this iterator
     for each thread (minus one for the first iterator).  Then, take
@@ -687,10 +687,10 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
-.. cfunction:: int NpyIter_RemoveInnerLoop(NpyIter* iter)
+.. cfunction:: int NpyIter_EnableExternalLoop(NpyIter* iter)
 
-    If RemoveCoords was used, you may want to specify the
-    flag :cdata:`NPY_ITER_NO_INNER_ITERATION`.  This flag is not permitted
+    If :cfunc:`NpyIter_RemoveCoords` was called, you may want to enable the
+    flag :cdata:`NPY_ITER_EXTERNAL_LOOP`.  This flag is not permitted
     together with :cdata:`NPY_ITER_COORDS`, so this function is provided
     to enable the feature after :cfunc:`NpyIter_RemoveCoords` is called.
     This function also resets the iterator to its initial state.
@@ -860,11 +860,12 @@ Construction and Destruction
     to the iterator constructor, and no call to one of the Reset
     functions has been done yet, 0 otherwise.
 
-.. cfunction:: npy_bool NpyIter_HasInnerLoop(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_HasExternalLoop(NpyIter* iter)
 
-    Returns 1 if the iterator handles the inner loop,
-    or 0 if the caller needs to handle it.  This is controlled
-    by the constructor flag :cdata:`NPY_ITER_NO_INNER_ITERATION`.
+    Returns 1 if the caller needs to handle the inner-most 1-dimensional
+    loop, or 0 if the iterator handles all looping. This is controlled
+    by the constructor flag :cdata:`NPY_ITER_EXTERNAL_LOOP` or
+    :cfunc:`NpyIter_EnableExternalLoop`.
 
 .. cfunction:: npy_bool NpyIter_HasCoords(NpyIter* iter)
 
@@ -1023,7 +1024,7 @@ Functions For Iteration
             /* use the addresses dataptr[0], ... dataptr[niter-1] */
         } while(iternext(iter));
 
-    When :cdata:`NPY_ITER_NO_INNER_ITERATION` is specified, the typical
+    When :cdata:`NPY_ITER_EXTERNAL_LOOP` is specified, the typical
     inner loop construct is as follows.
 
     .. code-block:: c
@@ -1050,7 +1051,7 @@ Functions For Iteration
     with fresh values, not incrementally updated.
 
     If a compile-time fixed buffer is being used (both flags
-    :cdata:`NPY_ITER_BUFFERED` and :cdata:`NPY_ITER_NO_INNER_ITERATION`), the
+    :cdata:`NPY_ITER_BUFFERED` and :cdata:`NPY_ITER_EXTERNAL_LOOP`), the
     inner size may be used as a signal as well.  The size is guaranteed
     to become zero when ``iternext()`` returns false, enabling the
     following loop construct.  Note that if you use this construct,
@@ -1113,7 +1114,7 @@ Functions For Iteration
 .. cfunction:: char** NpyIter_GetDataPtrArray(NpyIter* iter)
 
     This gives back a pointer to the ``niter`` data pointers.  If
-    :cdata:`NPY_ITER_NO_INNER_ITERATION` was not specified, each data
+    :cdata:`NPY_ITER_EXTERNAL_LOOP` was not specified, each data
     pointer points to the current data item of the iterator.  If
     no inner iteration was specified, it points to the first data
     item of the inner loop.
@@ -1140,7 +1141,7 @@ Functions For Iteration
     the flags :cdata:`NPY_ITER_C_INDEX` or :cdata:`NPY_ITER_F_INDEX`
     were specified during construction.
 
-When the flag :cdata:`NPY_ITER_NO_INNER_ITERATION` is used, the code
+When the flag :cdata:`NPY_ITER_EXTERNAL_LOOP` is used, the code
 needs to know the parameters for doing the inner loop.  These
 functions provide that information.
 

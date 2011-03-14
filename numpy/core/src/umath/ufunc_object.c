@@ -1797,7 +1797,7 @@ iterator_loop(PyUFuncObject *self,
      * is faster to calculate.
      */
     iter = NpyIter_AdvancedNew(niter, op,
-                        NPY_ITER_NO_INNER_ITERATION|
+                        NPY_ITER_EXTERNAL_LOOP|
                         NPY_ITER_REFS_OK|
                         NPY_ITER_ZEROSIZE_OK|
                         NPY_ITER_BUFFERED|
@@ -2369,7 +2369,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         retval = -1;
         goto fail;
     }
-    if (NpyIter_RemoveInnerLoop(iter) != NPY_SUCCEED) {
+    if (NpyIter_EnableExternalLoop(iter) != NPY_SUCCEED) {
         retval = -1;
         goto fail;
     }
@@ -3036,7 +3036,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             op_axes[0][0] = -1;
             op_axes[1][0] = axis;
 
-            iter_inner = NpyIter_AdvancedNew(2, op, NPY_ITER_NO_INNER_ITERATION|
+            iter_inner = NpyIter_AdvancedNew(2, op, NPY_ITER_EXTERNAL_LOOP|
                                        NPY_ITER_BUFFERED|
                                        NPY_ITER_DELAY_BUFALLOC|
                                        NPY_ITER_GROWINNER|

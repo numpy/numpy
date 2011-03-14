@@ -57,13 +57,13 @@ void npyiter_cache_values(NewNpyArrayIterObject *self)
     self->dtypes = NpyIter_GetDescrArray(iter);
     self->operands = NpyIter_GetOperandArray(iter);
 
-    if (NpyIter_HasInnerLoop(iter)) {
-        self->innerstrides = NULL;
-        self->innerloopsizeptr = NULL;
-    }
-    else {
+    if (NpyIter_HasExternalLoop(iter)) {
         self->innerstrides = NpyIter_GetInnerStrideArray(iter);
         self->innerloopsizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+    }
+    else {
+        self->innerstrides = NULL;
+        self->innerloopsizeptr = NULL;
     }
 
     /* The read/write settings */
@@ -163,6 +163,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                     flag = NPY_ITER_DELAY_BUFALLOC;
                 }
                 break;
+            case 'e':
+                if (strcmp(str, "external_loop") == 0) {
+                    flag = NPY_ITER_EXTERNAL_LOOP;
+                }
+                break;
             case 'f':
                 if (strcmp(str, "f_index") == 0) {
                     flag = NPY_ITER_F_INDEX;
@@ -171,11 +176,6 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             case 'g':
                 if (strcmp(str, "growinner") == 0) {
                     flag = NPY_ITER_GROWINNER;
-                }
-                break;
-            case 'n':
-                if (strcmp(str, "no_inner_iteration") == 0) {
-                    flag = NPY_ITER_NO_INNER_ITERATION;
                 }
                 break;
             case 'r':
@@ -1047,7 +1047,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
     /* Only the inner loop gets the buffering and no inner flags */
     flags_inner = flags&~NPY_ITER_COMMON_DTYPE;
-    flags &= ~(NPY_ITER_NO_INNER_ITERATION|
+    flags &= ~(NPY_ITER_EXTERNAL_LOOP|
                     NPY_ITER_BUFFERED);
 
     for (inest = 0; inest < nnest; ++inest) {
@@ -1372,7 +1372,7 @@ npyiter_remove_coords(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_remove_inner_loop(NewNpyArrayIterObject *self)
+npyiter_enable_external_loop(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1380,10 +1380,10 @@ npyiter_remove_inner_loop(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    NpyIter_RemoveInnerLoop(self->iter);
-    /* RemoveInnerLoop invalidates cached values */
+    NpyIter_EnableExternalLoop(self->iter);
+    /* EnableExternalLoop invalidates cached values */
     npyiter_cache_values(self);
-    /* RemoveInnerLoop also resets the iterator */
+    /* EnableExternalLoop also resets the iterator */
     if (NpyIter_GetIterSize(self->iter) == 0) {
         self->started = 1;
         self->finished = 1;
@@ -2037,16 +2037,16 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     dataptr = self->dataptrs[i];
     dtype = self->dtypes[i];
 
-    if (NpyIter_HasInnerLoop(self->iter)) {
+    if (NpyIter_HasExternalLoop(self->iter)) {
+        innerloopsize = *self->innerloopsizeptr;
+        innerstride = self->innerstrides[i];
+        ret_ndim = 1;
+    }
+    else {
         innerloopsize = 1;
         innerstride = 0;
         /* If the iterator is going over every element, return array scalars */
         ret_ndim = 0;
-    }
-    else {
-        innerloopsize = *self->innerloopsizeptr;
-        innerstride = self->innerstrides[i];
-        ret_ndim = 1;
     }
 
     Py_INCREF(dtype);
@@ -2156,13 +2156,13 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     dataptr = self->dataptrs[i];
     dtype = self->dtypes[i];
 
-    if (NpyIter_HasInnerLoop(self->iter)) {
-        innerloopsize = 1;
-        innerstride = 0;
-    }
-    else {
+    if (NpyIter_HasExternalLoop(self->iter)) {
         innerloopsize = *self->innerloopsizeptr;
         innerstride = self->innerstrides[i];
+    }
+    else {
+        innerloopsize = 1;
+        innerstride = 0;
     }
 
     /* TODO - there should be a better way than this... */
@@ -2337,7 +2337,7 @@ static PyMethodDef npyiter_methods[] = {
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
     {"remove_axis", (PyCFunction)npyiter_remove_axis, METH_VARARGS, NULL},
     {"remove_coords", (PyCFunction)npyiter_remove_coords, METH_NOARGS, NULL},
-    {"remove_inner_loop", (PyCFunction)npyiter_remove_inner_loop,
+    {"enable_external_loop", (PyCFunction)npyiter_enable_external_loop,
                 METH_NOARGS, NULL},
     {"debug_print", (PyCFunction)npyiter_debug_print, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},

@@ -2481,7 +2481,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
      * can be processed at once.
      */
     dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY|
-                                NPY_ITER_NO_INNER_ITERATION|
+                                NPY_ITER_EXTERNAL_LOOP|
                                 NPY_ITER_DONT_NEGATE_STRIDES|
                                 NPY_ITER_REFS_OK,
                                 order,
@@ -2491,7 +2491,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
         return -1;
     }
     src_iter = NpyIter_New(src, NPY_ITER_READONLY|
-                                NPY_ITER_NO_INNER_ITERATION|
+                                NPY_ITER_EXTERNAL_LOOP|
                                 NPY_ITER_DONT_NEGATE_STRIDES|
                                 NPY_ITER_REFS_OK,
                                 order,
@@ -2712,7 +2712,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         op_flags[1] = NPY_ITER_READONLY;
 
         iter = NpyIter_MultiNew(2, op,
-                            NPY_ITER_NO_INNER_ITERATION|
+                            NPY_ITER_EXTERNAL_LOOP|
                             NPY_ITER_REFS_OK|
                             NPY_ITER_ZEROSIZE_OK,
                             NPY_KEEPORDER,

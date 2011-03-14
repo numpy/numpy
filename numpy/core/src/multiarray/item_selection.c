@@ -1726,7 +1726,7 @@ PyArray_CountNonzero(PyArrayObject *self)
 
     /* Otherwise create and use an iterator to count the nonzeros */
     iter = NpyIter_New(self, NPY_ITER_READONLY|
-                             NPY_ITER_NO_INNER_ITERATION|
+                             NPY_ITER_EXTERNAL_LOOP|
                              NPY_ITER_REFS_OK,
                         NPY_KEEPORDER, NPY_NO_CASTING,
                         NULL);

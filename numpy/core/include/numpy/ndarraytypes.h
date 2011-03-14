@@ -879,8 +879,8 @@ typedef void (NpyIter_GetCoordsFunc)(NpyIter *iter,
 #define NPY_ITER_F_INDEX                    0x00000002
 /* Track coordinates */
 #define NPY_ITER_COORDS                     0x00000004
-/* Let the caller handle the inner loop of iteration */
-#define NPY_ITER_NO_INNER_ITERATION         0x00000008
+/* User code external to the iterator does the 1-dimensional innermost loop */
+#define NPY_ITER_EXTERNAL_LOOP              0x00000008
 /* Convert all the operands to a common data type */
 #define NPY_ITER_COMMON_DTYPE               0x00000010
 /* Operands may hold references, requiring API access during iteration */

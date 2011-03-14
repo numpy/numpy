@@ -755,7 +755,7 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     iter = NpyIter_MultiNew(dimensions.len+1, op, NPY_ITER_BUFFERED|
-                                                  NPY_ITER_NO_INNER_ITERATION|
+                                                  NPY_ITER_EXTERNAL_LOOP|
                                                   NPY_ITER_ZEROSIZE_OK,
                                                   NPY_KEEPORDER,
                                                   NPY_SAME_KIND_CASTING,
@@ -949,7 +949,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
         goto fail;
     }
-    if (NpyIter_RemoveInnerLoop(iter) != NPY_SUCCEED) {
+    if (NpyIter_EnableExternalLoop(iter) != NPY_SUCCEED) {
         goto fail;
     }
 
