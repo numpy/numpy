@@ -379,8 +379,8 @@ umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath', 'funcs.inc.src'
 umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath', 'loops.c.src'))
 arraytypes_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'arraytypes.c.src'))
-new_iterator_src = env.GenerateFromTemplate(
-    pjoin('src', 'multiarray', 'new_iterator.c.src'))
+nditer_src = env.GenerateFromTemplate(
+    pjoin('src', 'multiarray', 'nditer.c.src'))
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
@@ -461,12 +461,12 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'buffer.c'),
         pjoin('src', 'multiarray', 'numpymemoryview.c'),
         pjoin('src', 'multiarray', 'scalarapi.c'),
-        pjoin('src', 'multiarray', 'new_iterator_pywrap.c'),
+        pjoin('src', 'multiarray', 'nditer_pywrap.c'),
         pjoin('src', 'multiarray', 'dtype_transfer.c')]
     multiarray_src.extend(arraytypes_src)
     multiarray_src.extend(scalartypes_src)
     multiarray_src.extend(lowlevel_strided_loops_src)
-    multiarray_src.extend(new_iterator_src)
+    multiarray_src.extend(nditer_src)
     multiarray_src.extend(einsum_src)
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.extend([pjoin("src", "multiarray", "ucsnarrow.c")])

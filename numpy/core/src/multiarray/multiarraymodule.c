@@ -43,7 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "scalartypes.h"
 #include "numpymemoryview.h"
 #include "convert_datatype.h"
-#include "new_iterator_pywrap.h"
+#include "nditer_pywrap.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
