@@ -3857,7 +3857,7 @@ PyMODINIT_FUNC initmultiarray(void) {
     Py_INCREF(&PyArrayIter_Type);
     PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
     Py_INCREF(&PyArrayMultiIter_Type);
-    PyDict_SetItemString(d, "newiter", (PyObject *)&NpyIter_Type);
+    PyDict_SetItemString(d, "nditer", (PyObject *)&NpyIter_Type);
     Py_INCREF(&NpyIter_Type);
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);

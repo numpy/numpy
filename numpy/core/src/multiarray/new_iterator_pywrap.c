@@ -2450,7 +2450,7 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
-    "numpy.newiter",                            /* tp_name */
+    "numpy.nditer",                             /* tp_name */
     sizeof(NewNpyArrayIterObject),              /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */

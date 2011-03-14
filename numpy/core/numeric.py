@@ -1,4 +1,4 @@
-__all__ = ['newaxis', 'ndarray', 'flatiter', 'newiter', 'nested_iters', 'ufunc',
+__all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
            'dtype', 'fromstring', 'fromfile', 'frombuffer',
            'int_asbuffer', 'where', 'argwhere',
@@ -54,7 +54,7 @@ BUFSIZE = multiarray.BUFSIZE
 
 ndarray = multiarray.ndarray
 flatiter = multiarray.flatiter
-newiter = multiarray.newiter
+nditer = multiarray.nditer
 nested_iters = multiarray.nested_iters
 broadcast = multiarray.broadcast
 dtype = multiarray.dtype
