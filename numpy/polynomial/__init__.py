@@ -17,6 +17,9 @@ from polynomial import *
 from chebyshev import *
 from legendre import *
 from polyutils import *
+from hermite import Hermite
+from hermite_e import HermiteE
+from laguerre import Laguerre
 
 from numpy.testing import Tester
 test = Tester().test
