@@ -45,10 +45,15 @@ ufuncs but difficult to replicate elsewhere, are now exposed by this
 iterator.
 
 
-Legendre polynomials in ``numpy.polynomial``
---------------------------------------------
+Legendre, Laguerre, Hermite, HermiteE polynomials in ``numpy.polynomial``
+-------------------------------------------------------------------------
 
-
+Extend the number of polynomials available in the polynomial package. In
+addition, a new ``window`` attribute has been added to the classes in
+order to specify the range the ``domain`` maps to. This is mostly useful
+for the Laguerre, Hermite, and HermiteE polynomials whose natural domains
+are infinite and provides a more intuitive way to get the correct mapping
+of values without playing unnatural tricks with the domain.
 
 
 Fortran assumed shape array and size function support in ``numpy.f2py``
@@ -113,7 +118,7 @@ compiler on Linux.
 
 The testing framework gained ``numpy.testing.assert_allclose``, which provides
 a more convenient way to compare floating point arrays than
-`assert_almost_equal`, `assert_approx_equal` and `assert_array_almost_equal`. 
+`assert_almost_equal`, `assert_approx_equal` and `assert_array_almost_equal`.
 
 
 ``C API``
