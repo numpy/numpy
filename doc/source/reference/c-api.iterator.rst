@@ -112,7 +112,7 @@ number of non-zero elements in an array.
                                  NPY_ITER_NO_INNER_ITERATION|
                                  NPY_ITER_REFS_OK,
                             NPY_KEEPORDER, NPY_NO_CASTING,
-                            NULL, 0, NULL, 0);
+                            NULL);
         if (iter == NULL) {
             return -1;
         }
@@ -190,7 +190,7 @@ is used to control the memory layout of the allocated result, typically
 
         /* Construct the iterator */
         iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
-                                op_flags, NULL, 0, NULL);
+                                op_flags, NULL);
         if (iter == NULL) {
             return NULL;
         }
@@ -255,6 +255,13 @@ an incomplete struct.
     This is an opaque pointer type for the iterator. Access to its contents
     can only be done through the iterator API.
 
+.. ctype:: NpyIter_Type
+
+   This is the type which exposes the iterator to Python. Currently, no
+   API is exposed which provides access to the values of a Python-created
+   iterator. If an iterator is created in Python, it must be used in Python
+   and vice versa. Such an API will likely be created in a future version.
+
 .. ctype:: NpyIter_IterNextFunc
 
    This is a function pointer for the iteration loop, returned by
@@ -268,7 +275,7 @@ an incomplete struct.
 Construction and Destruction
 ----------------------------
 
-.. cfunction:: NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype, int a_ndim, int* axes, npy_intp buffersize)
+.. cfunction:: NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype)
 
     Creates an iterator for the given numpy array object ``op``.
 
@@ -291,15 +298,6 @@ Construction and Destruction
     is castable.  If :cdata:`NPY_ITER_UPDATEIFCOPY` is enabled, it will
     also copy the data back with another cast upon iterator destruction.
 
-    If ``a_ndim`` is greater than zero, ``axes`` must also be provided.
-    In this case, ``axes`` is an ``a_ndim``-sized array of ``op``'s axes.
-    A value of -1 in ``axes`` means ``newaxis``. Within the ``axes``
-    array, axes may not be repeated.
-
-    If ``buffersize`` is zero, a default buffer size is used,
-    otherwise it specifies how big of a buffer to use.  Buffers
-    which are powers of 2 such as 512 or 1024 are recommended.
-
     Returns NULL if there is an error, otherwise returns the allocated
     iterator.
 
@@ -308,7 +306,7 @@ Construction and Destruction
     .. code-block:: c
 
         iter = NpyIter_New(op, NPY_ITER_READWRITE,
-                            NPY_CORDER, NPY_NO_CASTING, NULL, 0, NULL);
+                            NPY_CORDER, NPY_NO_CASTING, NULL);
 
     If you want to edit an array with aligned ``double`` code,
     but the order doesn't matter, you would use this.
@@ -316,23 +314,19 @@ Construction and Destruction
     .. code-block:: c
 
         dtype = PyArray_DescrFromType(NPY_DOUBLE);
-        iter = NpyIter_New(op, NPY_ITER_READWRITE |
-                            NPY_ITER_BUFFERED |
+        iter = NpyIter_New(op, NPY_ITER_READWRITE|
+                            NPY_ITER_BUFFERED|
                             NPY_ITER_NBO|
                             NPY_ITER_ALIGNED,
                             NPY_KEEPORDER,
                             NPY_SAME_KIND_CASTING,
-                            dtype, 0, NULL);
+                            dtype);
         Py_DECREF(dtype);
 
-.. cfunction:: NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp buffersize)
+.. cfunction:: NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes)
 
     Creates an iterator for broadcasting the ``niter`` array objects provided
-    in ``op``.
-
-    For normal usage, use 0 for ``oa_ndim`` and NULL for ``op_axes``.
-    See below for a description of these parameters, which allow for
-    custom manual broadcasting as well as reordering and leaving out axes.
+    in ``op``, using regular NumPy broadcasting rules.
 
     Any of the :ctype:`NPY_ORDER` enum values may be passed to ``order``.  For
     efficient iteration, :cdata:`NPY_KEEPORDER` is the best option, and the
@@ -349,32 +343,6 @@ Construction and Destruction
 
     If ``op_dtypes`` isn't ``NULL``, it specifies a data type or ``NULL``
     for each ``op[i]``.
-
-    The parameter ``oa_ndim``, when non-zero, specifies the number of
-    dimensions that will be iterated with customized broadcasting.
-    If it is provided, ``op_axes`` must also be provided.
-    These two parameters let you control in detail how the
-    axes of the operand arrays get matched together and iterated.
-    In ``op_axes``, you must provide an array of ``niter`` pointers
-    to ``oa_ndim``-sized arrays of type ``npy_intp``.  If an entry
-    in ``op_axes`` is NULL, normal broadcasting rules will apply.
-    In ``op_axes[j][i]`` is stored either a valid axis of ``op[j]``, or
-    -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
-    may not be repeated.  The following example is how normal broadcasting
-    applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
-
-    .. code-block:: c
-
-        int oa_ndim = 3;               /* # iteration axes */
-        int op0_axes[] = {0, 1, 2};    /* 3-D operand */
-        int op1_axes[] = {-1, 0, 1};   /* 2-D operand */
-        int op2_axes[] = {-1, -1, 0};  /* 1-D operand */
-        int op3_axes[] = {-1, -1, -1}  /* 0-D (scalar) operand */
-        int* op_axes[] = {op0_axes, op1_axes, op2_axes, op3_axes};
-
-    If ``buffersize`` is zero, a default buffer size is used,
-    otherwise it specifies how big of a buffer to use.  Buffers
-    which are powers of 2 such as 512 or 1024 are recommended.
 
     Returns NULL if there is an error, otherwise returns the allocated
     iterator.
@@ -610,6 +578,50 @@ Construction and Destruction
 
             Ensures that the input or output matches the iteration
             dimensions exactly.
+
+.. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
+
+    Extends :cfunc:`NpyIter_MultiNew` with several advanced options providing
+    more control over broadcasting and buffering.
+
+    If 0/NULL values are passed to ``oa_ndim``, ``op_axes``, ``itershape``,
+    and ``buffersize``, it is equivalent to :cfunc:`NpyIter_MultiNew`.
+
+    The parameter ``oa_ndim``, when non-zero, specifies the number of
+    dimensions that will be iterated with customized broadcasting.
+    If it is provided, ``op_axes`` and/or ``itershape`` must also be provided.
+    The ``op_axes`` parameter let you control in detail how the
+    axes of the operand arrays get matched together and iterated.
+    In ``op_axes``, you must provide an array of ``niter`` pointers
+    to ``oa_ndim``-sized arrays of type ``npy_intp``.  If an entry
+    in ``op_axes`` is NULL, normal broadcasting rules will apply.
+    In ``op_axes[j][i]`` is stored either a valid axis of ``op[j]``, or
+    -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
+    may not be repeated.  The following example is how normal broadcasting
+    applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
+
+    .. code-block:: c
+
+        int oa_ndim = 3;               /* # iteration axes */
+        int op0_axes[] = {0, 1, 2};    /* 3-D operand */
+        int op1_axes[] = {-1, 0, 1};   /* 2-D operand */
+        int op2_axes[] = {-1, -1, 0};  /* 1-D operand */
+        int op3_axes[] = {-1, -1, -1}  /* 0-D (scalar) operand */
+        int* op_axes[] = {op0_axes, op1_axes, op2_axes, op3_axes};
+
+    The ``itershape`` parameter allows you to force the iterator
+    to have a specific iteration shape. It is an array of length
+    ``oa_ndim``. When an entry is negative, its value is determined
+    from the operands. This parameter allows automatically allocated
+    outputs to get additional dimensions which don't match up with
+    any dimension of an input.
+
+    If ``buffersize`` is zero, a default buffer size is used,
+    otherwise it specifies how big of a buffer to use.  Buffers
+    which are powers of 2 such as 4096 or 8192 are recommended.
+
+    Returns NULL if there is an error, otherwise returns the allocated
+    iterator.
 
 .. cfunction:: NpyIter* NpyIter_Copy(NpyIter* iter)
 
@@ -955,6 +967,33 @@ Construction and Destruction
 
     Fills ``niter`` flags. Sets ``outwriteflags[i]`` to 1 if
     ``op[i]`` can be written to, and to 0 if not.
+
+.. cfunction:: int NpyIter_CreateCompatibleStrides(NpyIter* iter, npy_intp itemsize, npy_intp* outstrides)
+
+    Builds a set of strides which are the same as the strides of an
+    output array created using the :cdata:`NPY_ITER_ALLOCATE` flag, where NULL
+    was passed for op_axes.  This is for data packed contiguously,
+    but not necessarily in C or Fortran order. This should be used
+    together with :cfunc:`NpyIter_GetShape` and :cfunc:`NpyIter_GetNDim`
+    with the flag :cdata:`NPY_ITER_COORDS` passed into the constructor.
+
+    A use case for this function is to match the shape and layout of
+    the iterator and tack on one or more dimensions.  For example,
+    in order to generate a vector per input value for a numerical gradient,
+    you pass in ndim*itemsize for itemsize, then add another dimension to
+    the end with size ndim and stride itemsize.  To do the Hessian matrix,
+    you do the same thing but add two dimensions, or take advantage of
+    the symmetry and pack it into 1 dimension with a particular encoding.
+
+    This function may only be called if the iterator is tracking coordinates
+    and if :cdata:`NPY_ITER_DONT_NEGATE_STRIDES` was used to prevent an axis
+    from being iterated in reverse order.
+
+    If an array is created with this method, simply adding 'itemsize'
+    for each iteration will traverse the new array matching the
+    iterator.
+
+    Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 Functions For Iteration
 -----------------------

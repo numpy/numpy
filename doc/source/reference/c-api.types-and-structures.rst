@@ -961,7 +961,7 @@ are :cdata:`Py{TYPE}ArrType_Type` where ``{TYPE}`` can be
 
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
-    **Float**, **Double**, **LongDouble**, **CFloat**, **CDouble**,
+    **Half**, **Float**, **Double**, **LongDouble**, **CFloat**, **CDouble**,
     **CLongDouble**, **String**, **Unicode**, **Void**, and
     **Object**.
 

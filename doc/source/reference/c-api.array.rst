@@ -2518,9 +2518,22 @@ to.
 .. cfunction:: int PyArray_CastingConverter(PyObject* obj, NPY_CASTING* casting)
 
    Convert the Python strings 'no', 'equiv', 'safe', 'same_kind', and
-   'unsafe' into the NPY_CASTING enumeration :cdata:`NPY_NO_CASTING`,
+   'unsafe' into the :ctype:`NPY_CASTING` enumeration :cdata:`NPY_NO_CASTING`,
    :cdata:`NPY_EQUIV_CASTING`, :cdata:`NPY_SAFE_CASTING`,
    :cdata:`NPY_SAME_KIND_CASTING`, and :cdata:`NPY_UNSAFE_CASTING`.
+
+.. cfunction:: int PyArray_ClipmodeConverter(PyObject* object, NPY_CLIPMODE* val)
+
+    Convert the Python strings 'clip', 'wrap', and 'raise' into the
+    :ctype:`NPY_CLIPMODE` enumeration :cdata:`NPY_CLIP`, :cdata:`NPY_WRAP`,
+    and :cdata:`NPY_RAISE`.
+
+.. cfunction:: int PyArray_ConvertClipmodeSequence(PyObject* object, NPY_CLIPMODE* modes, int n)
+
+   Converts either a sequence of clipmodes or a single clipmode into
+   a C array of :ctype:`NPY_CLIPMODE` values. The number of clipmodes *n*
+   must be known before calling this function. This function is provided
+   to help functions allow a different clipmode for each dimension.
 
 Other conversions
 ^^^^^^^^^^^^^^^^^
@@ -3016,10 +3029,20 @@ Enumerated Types
 .. ctype:: NPY_CLIPMODE
 
     A variable type indicating the kind of clipping that should be
-    applied in certain functions. The value of a variable of this type
-    can be :cdata:`NPY_{MODE}` where ``{MODE}`` is
+    applied in certain functions.
 
-        **CLIP**, **WRAP**, **RAISE**
+    .. cvar:: NPY_RAISE
+
+        The default for most operations, raises an exception if an index
+        is out of bounds.
+
+    .. cvar:: NPY_CLIP
+
+        Clips an index to the valid range if it is out of bounds.
+
+    .. cvar:: NPY_WRAP
+
+        Wraps an index to the valid range if it is out of bounds.
 
 .. ctype:: NPY_CASTING
 
