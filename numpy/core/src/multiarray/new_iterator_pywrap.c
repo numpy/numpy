@@ -633,7 +633,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp niter,
 }
 
 /*
- * Converts the operand array and op_flags array into the form NpyIter_MultiNew
+ * Converts the operand array and op_flags array into the form NpyIter_AdvancedNew
  * needs.  Sets niter, and on success, each op[i] owns a reference
  * to an array object.
  */
@@ -704,6 +704,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
         for (iiter = 0; iiter < niter; ++iiter) {
             Py_XDECREF(op[iiter]);
         }
+        *niter_out = 0;
         return 0;
     }
 
@@ -729,6 +730,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                 for (iiter = 0; iiter < niter; ++iiter) {
                     Py_DECREF(op[iiter]);
                 }
+                *niter_out = 0;
                 return 0;
             }
             Py_DECREF(op[iiter]);
@@ -743,7 +745,8 @@ static int
 npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"op", "flags", "op_flags", "op_dtypes",
-                             "order", "casting", "op_axes", "buffersize",
+                             "order", "casting", "op_axes", "itershape",
+                             "buffersize",
                              NULL};
 
     PyObject *op_in = NULL, *op_flags_in = NULL,
@@ -759,6 +762,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     int oa_ndim = 0;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
+    PyArray_Dims itershape = {NULL, 0};
     int buffersize = 0;
 
     if (self->iter != NULL) {
@@ -767,7 +771,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&OOO&O&Oi", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&OOO&O&OO&i", kwlist,
                     &op_in,
                     NpyIter_GlobalFlagsConverter, &flags,
                     &op_flags_in,
@@ -775,18 +779,22 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     npyiter_order_converter, &order,
                     PyArray_CastingConverter, &casting,
                     &op_axes_in,
+                    PyArray_IntpConverter, &itershape,
                     &buffersize)) {
+        if (itershape.ptr != NULL) {
+            PyDimMem_FREE(itershape.ptr);
+        }
         return -1;
     }
+
+    /* Set the dtypes and ops to all NULL to start */
+    memset(op_request_dtypes, 0, sizeof(op_request_dtypes));
 
     /* op and op_flags */
     if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &niter)
                                                         != 1) {
-        return -1;
+        goto fail;
     }
-
-    /* Set the dtypes to all NULL to start as well */
-    memset(op_request_dtypes, 0, sizeof(op_request_dtypes[0])*niter);
 
     /* op_request_dtypes */
     if (op_dtypes_in != NULL && op_dtypes_in != Py_None &&
@@ -808,9 +816,27 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    self->iter = NpyIter_MultiNew(niter, op, flags, order, casting, op_flags,
+    if (itershape.len > 0) {
+        if (oa_ndim == 0) {
+            oa_ndim = itershape.len;
+            memset(op_axes, 0, sizeof(op_axes[0])*oa_ndim);
+        }
+        else if (oa_ndim != itershape.len) {
+            PyErr_SetString(PyExc_ValueError,
+                        "'op_axes' and 'itershape' must have the same number "
+                        "of entries equal to the iterator ndim");
+            goto fail;
+        }
+    }
+    else if (itershape.ptr != NULL) {
+        PyDimMem_FREE(itershape.ptr);
+        itershape.ptr = NULL;
+    }
+
+    self->iter = NpyIter_AdvancedNew(niter, op, flags, order, casting, op_flags,
                                   op_request_dtypes,
                                   oa_ndim, oa_ndim > 0 ? op_axes : NULL,
+                                  itershape.ptr,
                                   buffersize);
 
     if (self->iter == NULL) {
@@ -829,6 +855,10 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->finished = 0;
     }
 
+    if (itershape.ptr != NULL) {
+        PyDimMem_FREE(itershape.ptr);
+    }
+
     /* Release the references we got to the ops and dtypes */
     for (iiter = 0; iiter < niter; ++iiter) {
         Py_XDECREF(op[iiter]);
@@ -838,6 +868,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     return 0;
 
 fail:
+    if (itershape.ptr != NULL) {
+        PyDimMem_FREE(itershape.ptr);
+    }
     for (iiter = 0; iiter < niter; ++iiter) {
         Py_XDECREF(op[iiter]);
         Py_XDECREF(op_request_dtypes[iiter]);
@@ -1059,16 +1092,18 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         }
 
         if (inest < nnest-1) {
-            iter->iter = NpyIter_MultiNew(niter, op, flags, order,
+            iter->iter = NpyIter_AdvancedNew(niter, op, flags, order,
                                 casting, op_flags, op_request_dtypes,
                                 nested_naxes[inest], op_axes_niter,
+                                NULL,
                                 0);
         }
         else {
-            iter->iter = NpyIter_MultiNew(niter, op, flags_inner, order,
+            iter->iter = NpyIter_AdvancedNew(niter, op, flags_inner, order,
                                 casting, op_flags_inner,
                                 op_request_dtypes_inner,
                                 nested_naxes[inest], op_axes_niter,
+                                NULL,
                                 buffersize);
         }
 

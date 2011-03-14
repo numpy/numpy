@@ -392,8 +392,7 @@ PyArray_FillWithZero(PyArrayObject *a)
 
     /* Use an iterator to go through all the data */
     iter = NpyIter_New(a, NPY_ITER_WRITEONLY|NPY_ITER_NO_INNER_ITERATION,
-                    NPY_KEEPORDER, NPY_NO_CASTING,
-                    NULL, 0, NULL, 0);
+                    NPY_KEEPORDER, NPY_NO_CASTING, NULL);
 
     if (iter == NULL) {
         return -1;

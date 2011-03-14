@@ -679,7 +679,8 @@ static PyObject *
 arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
 {
     int i, s;
-    PyObject *mode0=NULL, *coords0=NULL, *ret;
+    PyObject *mode0=NULL, *coords0=NULL;
+    PyArrayObject *ret = NULL;
     PyArray_Dims dimensions={0,0};
     npy_intp ravel_strides[NPY_MAXDIMS];
     PyArray_ORDER order = NPY_CORDER;
@@ -758,8 +759,7 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
                                                   NPY_ITER_ZEROSIZE_OK,
                                                   NPY_KEEPORDER,
                                                   NPY_SAME_KIND_CASTING,
-                                                  op_flags, dtype,
-                                                  0, NULL, 0);
+                                                  op_flags, dtype);
     if (iter == NULL) {
         goto fail;
     }
@@ -787,7 +787,7 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
         } while(iternext(iter));
     }
 
-    ret = (PyObject *)NpyIter_GetOperandArray(iter)[dimensions.len];
+    ret = NpyIter_GetOperandArray(iter)[dimensions.len];
     Py_INCREF(ret);
 
     Py_DECREF(dtype[0]);
@@ -925,7 +925,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                                 NPY_ITER_DONT_NEGATE_STRIDES|
                                 NPY_ITER_COORDS,
                                 NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
-                                dtype, 0, NULL, 0);
+                                dtype);
     if (iter == NULL) {
         goto fail;
     }

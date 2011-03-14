@@ -2486,7 +2486,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
                                 NPY_ITER_REFS_OK,
                                 order,
                                 NPY_NO_CASTING,
-                                NULL, 0, NULL, 0);
+                                NULL);
     if (dst_iter == NULL) {
         return -1;
     }
@@ -2496,7 +2496,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
                                 NPY_ITER_REFS_OK,
                                 order,
                                 NPY_NO_CASTING,
-                                NULL, 0, NULL, 0);
+                                NULL);
     if (src_iter == NULL) {
         NpyIter_Deallocate(dst_iter);
         return -1;
@@ -2718,7 +2718,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
                             NPY_KEEPORDER,
                             NPY_NO_CASTING,
                             op_flags,
-                            NULL, 0, NULL, 0);
+                            NULL);
         if (iter == NULL) {
             return -1;
         }

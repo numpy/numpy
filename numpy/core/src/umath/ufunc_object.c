@@ -1796,7 +1796,7 @@ iterator_loop(PyUFuncObject *self,
      * were already checked, we use the casting rule 'unsafe' which
      * is faster to calculate.
      */
-    iter = NpyIter_MultiNew(niter, op,
+    iter = NpyIter_AdvancedNew(niter, op,
                         NPY_ITER_NO_INNER_ITERATION|
                         NPY_ITER_REFS_OK|
                         NPY_ITER_ZEROSIZE_OK|
@@ -1805,7 +1805,7 @@ iterator_loop(PyUFuncObject *self,
                         NPY_ITER_DELAY_BUFALLOC,
                         order, NPY_UNSAFE_CASTING,
                         op_flags, dtype,
-                        0, NULL, buffersize);
+                        0, NULL, NULL, buffersize);
     if (iter == NULL) {
         return -1;
     }
@@ -2305,11 +2305,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     }
 
     /* Create the iterator */
-    iter = NpyIter_MultiNew(niter, op, NPY_ITER_COORDS|
+    iter = NpyIter_AdvancedNew(niter, op, NPY_ITER_COORDS|
                                       NPY_ITER_REFS_OK|
                                       NPY_ITER_REDUCE_OK,
                            order, NPY_UNSAFE_CASTING, op_flags,
-                           dtype, op_ndim, op_axes, 0);
+                           dtype, op_ndim, op_axes, NULL, 0);
     if (iter == NULL) {
         retval = -1;
         goto fail;
@@ -2924,11 +2924,11 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             op_dtypes[1] = op_dtypes[0];
         }
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");
-        iter = NpyIter_MultiNew(2, op, flags,
+        iter = NpyIter_AdvancedNew(2, op, flags,
                                    NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                    op_flags,
                                    op_dtypes_param,
-                                   ndim_iter, op_axes, 0);
+                                   ndim_iter, op_axes, NULL, 0);
         if (iter == NULL) {
             goto fail;
         }
@@ -3036,7 +3036,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             op_axes[0][0] = -1;
             op_axes[1][0] = axis;
 
-            iter_inner = NpyIter_MultiNew(2, op, NPY_ITER_NO_INNER_ITERATION|
+            iter_inner = NpyIter_AdvancedNew(2, op, NPY_ITER_NO_INNER_ITERATION|
                                        NPY_ITER_BUFFERED|
                                        NPY_ITER_DELAY_BUFALLOC|
                                        NPY_ITER_GROWINNER|
@@ -3044,7 +3044,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                                        NPY_ITER_REFS_OK,
                                        NPY_CORDER, NPY_UNSAFE_CASTING,
                                        op_flags, op_dtypes,
-                                       1, op_axes, buffersize);
+                                       1, op_axes, NULL, buffersize);
         }
         /* Should never get an inner iterator for ACCUMULATE */
         else {
@@ -3557,11 +3557,11 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         op_dtypes[1] = op_dtypes[0];
 
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");
-        iter = NpyIter_MultiNew(3, op, flags,
+        iter = NpyIter_AdvancedNew(3, op, flags,
                                    NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                    op_flags,
                                    op_dtypes,
-                                   ndim, op_axes, 0);
+                                   ndim, op_axes, NULL, 0);
         if (iter == NULL) {
             goto fail;
         }

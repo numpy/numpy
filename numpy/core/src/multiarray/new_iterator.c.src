@@ -285,7 +285,8 @@ struct NpyIter_AD {
 static int
 npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags);
 static int
-npyiter_check_op_axes(int niter, int oa_ndim, int **op_axes);
+npyiter_check_op_axes(int niter, int oa_ndim, int **op_axes,
+                        npy_intp *itershape);
 static int
 npyiter_calculate_ndim(int niter, PyArrayObject **op_in,
                        int oa_ndim);
@@ -315,6 +316,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
+                    npy_intp *itershape,
                     int output_scalars);
 static void
 npyiter_replace_axisdata(NpyIter *iter, int iiter,
@@ -372,14 +374,16 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
                                 npy_intp *reduce_outerdim);
 
 /*NUMPY_API
- * Allocate a new iterator for multiple array objects
+ * Allocate a new iterator for multiple array objects, and advanced
+ * options for controlling the broadcasting, shape, and buffer size.
  */
 NPY_NO_EXPORT NpyIter *
-NpyIter_MultiNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
+NpyIter_AdvancedNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
                  NPY_ORDER order, NPY_CASTING casting,
                  npy_uint32 *op_flags,
                  PyArray_Descr **op_request_dtypes,
-                 int oa_ndim, int **op_axes, npy_intp buffersize)
+                 int oa_ndim, int **op_axes, npy_intp *itershape,
+                 npy_intp buffersize)
 {
     npy_uint32 itflags = NPY_ITFLAG_IDENTPERM;
     int idim, ndim;
@@ -433,7 +437,7 @@ NpyIter_MultiNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
     }
 
     /* Error check 'oa_ndim' and 'op_axes', which must be used together */
-    if (!npyiter_check_op_axes(niter, oa_ndim, op_axes)) {
+    if (!npyiter_check_op_axes(niter, oa_ndim, op_axes, itershape)) {
         return NULL;
     }
 
@@ -502,7 +506,8 @@ NpyIter_MultiNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
     if (!npyiter_fill_axisdata(iter, flags, op_itflags, op_dataptr,
-                                        op_flags, op_axes, output_scalars)) {
+                                        op_flags, op_axes, itershape,
+                                        output_scalars)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -516,7 +521,7 @@ NpyIter_MultiNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
          * small enough to be cache-friendly.
          */
         if (buffersize <= 0) {
-            buffersize = 1 << 12;
+            buffersize = NPY_BUFSIZE;
         }
         /* No point in a buffer bigger than the iteration size */
         if (buffersize > NIT_ITERSIZE(iter)) {
@@ -768,28 +773,35 @@ NpyIter_MultiNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
 }
 
 /*NUMPY_API
- * Allocate a new iterator for one array object
+ * Allocate a new iterator for more than one array object, using
+ * standard NumPy broadcasting rules and the default buffer size.
+ */
+NPY_NO_EXPORT NpyIter *
+NpyIter_MultiNew(int niter, PyArrayObject **op_in, npy_uint32 flags,
+                 NPY_ORDER order, NPY_CASTING casting,
+                 npy_uint32 *op_flags,
+                 PyArray_Descr **op_request_dtypes)
+{
+    return NpyIter_AdvancedNew(niter, op_in, flags, order, casting,
+                            op_flags, op_request_dtypes,
+                            0, NULL, NULL, 0);
+}
+
+/*NUMPY_API
+ * Allocate a new iterator for one array object.
  */
 NPY_NO_EXPORT NpyIter *
 NpyIter_New(PyArrayObject *op, npy_uint32 flags,
                   NPY_ORDER order, NPY_CASTING casting,
-                  PyArray_Descr* dtype,
-                  int a_ndim, int *axes, npy_intp buffersize)
+                  PyArray_Descr* dtype)
 {
     /* Split the flags into separate global and op flags */
     npy_uint32 op_flags = flags&NPY_ITER_PER_OP_FLAGS;
     flags &= NPY_ITER_GLOBAL_FLAGS;
 
-    if (a_ndim > 0) {
-        return NpyIter_MultiNew(1, &op, flags, order, casting,
-                                &op_flags, &dtype,
-                                a_ndim, &axes, buffersize);
-    }
-    else {
-        return NpyIter_MultiNew(1, &op, flags, order, casting,
-                                &op_flags, &dtype,
-                                0, NULL, buffersize);
-    }
+    return NpyIter_AdvancedNew(1, &op, flags, order, casting,
+                            &op_flags, &dtype,
+                            0, NULL, NULL, 0);
 }
 
 /*NUMPY_API
@@ -2903,15 +2915,16 @@ npyiter_calculate_ndim(int niter, PyArrayObject **op_in,
 }
 
 static int
-npyiter_check_op_axes(int niter, int oa_ndim, int **op_axes)
+npyiter_check_op_axes(int niter, int oa_ndim, int **op_axes,
+                        npy_intp *itershape)
 {
     char axes_dupcheck[NPY_MAXDIMS];
     int iiter, idim;
 
-    if (oa_ndim == 0 && op_axes != NULL) {
+    if (oa_ndim == 0 && (op_axes != NULL || itershape != NULL)) {
         PyErr_Format(PyExc_ValueError,
-                "If 'op_axes' is not NULL in the iterator constructor, "
-                "'oa_ndim' must be greater than zero");
+                "If 'op_axes' or 'itershape' is not NULL in the"
+                "iterator constructor, 'oa_ndim' must be greater than zero");
         return 0;
     }
     else if (oa_ndim > 0) {
@@ -3420,6 +3433,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
+                    npy_intp *itershape,
                     int output_scalars)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -3433,8 +3447,19 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
     npy_intp broadcast_shape[NPY_MAXDIMS];
 
     /* First broadcast the shapes together */
-    for (idim = 0; idim < ndim; ++idim) {
-        broadcast_shape[idim] = 1;
+    if (itershape == NULL) {
+        for (idim = 0; idim < ndim; ++idim) {
+            broadcast_shape[idim] = 1;
+        }
+    }
+    else {
+        for (idim = 0; idim < ndim; ++idim) {
+            broadcast_shape[idim] = itershape[idim];
+            /* Negative shape entries are deduced from the operands */
+            if (broadcast_shape[idim] < 0) {
+                broadcast_shape[idim] = 1;
+            }
+        }
     }
     for (iiter = 0; iiter < niter; ++iiter) {
         op_cur = op[iiter];
@@ -3490,6 +3515,17 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                         }
                     }
                 }
+            }
+        }
+    }
+    /*
+     * If a shape was provided with a 1 entry, make sure that entry didn't
+     * get expanded by broadcasting.
+     */
+    if (itershape != NULL) {
+        for (idim = 0; idim < ndim; ++idim) {
+            if (itershape[idim] == 1 && broadcast_shape[idim] != 1) {
+                goto broadcast_error;
             }
         }
     }
@@ -3636,12 +3672,16 @@ broadcast_error: {
         if (op_axes == NULL) {
             errmsg = PyUString_FromString("operands could not be broadcast "
                                           "together with shapes ");
+            if (errmsg == NULL) {
+                return 0;
+            }
             for (iiter = 0; iiter < niter; ++iiter) {
                 if (op[iiter] != NULL) {
                     tmp = npyiter_shape_string(PyArray_NDIM(op[iiter]),
                                                     PyArray_DIMS(op[iiter]),
                                                     " ");
                     if (tmp == NULL) {
+                        Py_DECREF(errmsg);
                         return 0;
                     }
                     PyUString_ConcatAndDel(&errmsg, tmp);
@@ -3649,6 +3689,28 @@ broadcast_error: {
                         return 0;
                     }
                 }
+            }
+            if (itershape != NULL) {
+                tmp = PyUString_FromString("and requested shape ");
+                if (tmp == NULL) {
+                    Py_DECREF(errmsg);
+                    return 0;
+                }
+                PyUString_ConcatAndDel(&errmsg, tmp);
+                if (errmsg == NULL) {
+                    return 0;
+                }
+
+                tmp = npyiter_shape_string(ndim, itershape, "");
+                if (tmp == NULL) {
+                    Py_DECREF(errmsg);
+                    return 0;
+                }
+                PyUString_ConcatAndDel(&errmsg, tmp);
+                if (errmsg == NULL) {
+                    return 0;
+                }
+
             }
             PyErr_SetObject(PyExc_ValueError, errmsg);
         }
@@ -3693,6 +3755,28 @@ broadcast_error: {
                         }
                     }
                 }
+            }
+            if (itershape != NULL) {
+                tmp = PyUString_FromString("and requested shape ");
+                if (tmp == NULL) {
+                    Py_DECREF(errmsg);
+                    return 0;
+                }
+                PyUString_ConcatAndDel(&errmsg, tmp);
+                if (errmsg == NULL) {
+                    return 0;
+                }
+
+                tmp = npyiter_shape_string(ndim, itershape, "");
+                if (tmp == NULL) {
+                    Py_DECREF(errmsg);
+                    return 0;
+                }
+                PyUString_ConcatAndDel(&errmsg, tmp);
+                if (errmsg == NULL) {
+                    return 0;
+                }
+
             }
             PyErr_SetObject(PyExc_ValueError, errmsg);
         }

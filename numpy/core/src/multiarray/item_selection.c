@@ -1729,7 +1729,7 @@ PyArray_CountNonzero(PyArrayObject *self)
                              NPY_ITER_NO_INNER_ITERATION|
                              NPY_ITER_REFS_OK,
                         NPY_KEEPORDER, NPY_NO_CASTING,
-                        NULL, 0, NULL, 0);
+                        NULL);
     if (iter == NULL) {
         return -1;
     }
@@ -1823,7 +1823,7 @@ PyArray_Nonzero(PyArrayObject *self)
                              NPY_ITER_ZEROSIZE_OK|
                              NPY_ITER_REFS_OK,
                         NPY_CORDER, NPY_NO_CASTING,
-                        NULL, 0, NULL, 0);
+                        NULL);
 
     if (iter == NULL) {
         Py_DECREF(ret);

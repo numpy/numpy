@@ -2965,7 +2965,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                     NPY_ITER_NO_BROADCAST;
 
     /* Allocate the iterator */
-    iter = NpyIter_MultiNew(nop+1, op, NPY_ITER_NO_INNER_ITERATION|
+    iter = NpyIter_AdvancedNew(nop+1, op, NPY_ITER_NO_INNER_ITERATION|
                 ((dtype != NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
                                        NPY_ITER_BUFFERED|
                                        NPY_ITER_DELAY_BUFALLOC|
@@ -2975,7 +2975,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                                        NPY_ITER_ZEROSIZE_OK,
                                        order, casting,
                                        op_flags, op_dtypes,
-                                       ndim_iter, op_axes, 0);
+                                       ndim_iter, op_axes, NULL, 0);
 
     if (iter == NULL) {
         goto fail;

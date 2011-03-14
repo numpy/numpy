@@ -745,7 +745,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyObject* out)
+PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     PyArrayIterObject *it1, *it2;
@@ -2032,7 +2032,12 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
     if (o == Py_None) {
         o = NULL;
     }
-    return _ARET(PyArray_MatrixProduct2(a, v, o));
+    if (o != NULL && !PyArray_Check(o)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "'out' must be an array");
+        return NULL;
+    }
+    return _ARET(PyArray_MatrixProduct2(a, v, (PyArrayObject *)o));
 }
 
 static int
