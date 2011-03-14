@@ -96,13 +96,9 @@ def poly2lag(pol) :
 
     Examples
     --------
-    >>> from numpy import polynomial as P
-    >>> p = P.Polynomial(np.arange(4))
-    >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> c = P.Laguerre(P.poly2lag(p.coef))
-    >>> c
-    Laguerre([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    >>> from numpy.polynomial.laguerre import poly2lag
+    >>> poly2lag(np.arange(4))
+    array([ 23., -63.,  58., -18.])
 
     """
     [pol] = pu.as_series([pol])
@@ -146,15 +142,9 @@ def lag2poly(cs) :
 
     Examples
     --------
-    >>> c = P.Laguerre(range(4))
-    >>> c
-    Laguerre([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> p = c.convert(kind=P.Polynomial)
-    >>> p
-    Polynomial([-1. , -3.5,  3. ,  7.5], [-1.,  1.])
-    >>> P.lag2poly(range(4))
-    array([-1. , -3.5,  3. ,  7.5])
-
+    >>> from numpy.polynomial.laguerre import lag2poly
+    >>> lag2poly([ 23., -63.,  58., -18.])
+    array([ 0.,  1.,  2.,  3.])
 
     """
     from polynomial import polyadd, polysub, polymulx
@@ -214,11 +204,11 @@ def lagline(off, scl) :
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as L
-    >>> L.lagline(3,2)
-    array([3, 2])
-    >>> L.lagval(-3, L.lagline(3,2)) # should be -3
-    -3.0
+    >>> from numpy.polynomial.laguerre import lagline, lagval
+    >>> lagval(0,lagline(3, 2))
+    3.0
+    >>> lagval(1,lagline(3, 2))
+    5.0
 
     """
     if scl != 0 :
@@ -271,12 +261,13 @@ def lagfromroots(roots) :
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as L
-    >>> L.lagfromroots((-1,0,1)) # x^3 - x relative to the standard basis
-    array([ 0. , -0.4,  0. ,  0.4])
-    >>> j = complex(0,1)
-    >>> L.lagfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j])
+    >>> from numpy.polynomial.laguerre import lagfromroots, lagval
+    >>> coef = lagfromroots((-1, 0, 1))
+    >>> lagval((-1, 0, 1), coef)
+    array([ 0.,  0.,  0.])
+    >>> coef = lagfromroots((-1j, 1j))
+    >>> lagval((-1j, 1j), coef)
+    array([ 0.+0.j,  0.+0.j])
 
     """
     if len(roots) == 0 :
@@ -321,11 +312,10 @@ def lagadd(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.lagadd(c1,c2)
-    array([ 4.,  4.,  4.])
+    >>> from numpy.polynomial.laguerre import lagadd
+    >>> lagadd([1, 2, 3], [1, 2, 3, 4])
+    array([ 2.,  4.,  6.,  4.])
+
 
     """
     # c1, c2 are trimmed copies
@@ -371,13 +361,9 @@ def lagsub(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.lagsub(c1,c2)
-    array([-2.,  0.,  2.])
-    >>> L.lagsub(c2,c1) # -C.lagsub(c1,c2)
-    array([ 2.,  0., -2.])
+    >>> from numpy.polynomial.laguerre import lagsub
+    >>> lagsub([1, 2, 3, 4], [1, 2, 3])
+    array([ 0.,  0.,  0.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -417,7 +403,13 @@ def lagmulx(cs):
 
     .. math::
 
-    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+    xP_i(x) = (-(i + 1)*P_{i + 1}(x) + (2i + 1)P_{i}(x) - iP_{i - 1}(x))
+
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagmulx
+    >>> lagmulx([1, 2, 3])
+    array([ -1.,  -1.,  11.,  -9.])
 
     """
     # cs is a trimmed copy
@@ -469,11 +461,9 @@ def lagmul(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2)
-    >>> P.lagmul(c1,c2) # multiplication requires "reprojection"
-    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ])
+    >>> from numpy.polynomial.laguerre import lagmul
+    >>> lagmul([1, 2, 3], [0, 1, 2])
+    array([  8., -13.,  38., -51.,  36.])
 
     """
     # s1, s2 are trimmed copies
@@ -540,14 +530,11 @@ def lagdiv(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.lagdiv(c1,c2) # quotient "intuitive," remainder not
-    (array([ 3.]), array([-8., -4.]))
-    >>> c2 = (0,1,2,3)
-    >>> L.lagdiv(c2,c1) # neither "intuitive"
-    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852]))
+    >>> from numpy.polynomial.laguerre import lagdiv
+    >>> lagdiv([  8., -13.,  38., -51.,  36.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 0.]))
+    >>> lagdiv([  9., -12.,  38., -51.,  36.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
 
     """
     # c1, c2 are trimmed copies
@@ -601,6 +588,9 @@ def lagpow(cs, pow, maxpower=16) :
 
     Examples
     --------
+    >>> from numpy.polynomial.laguerre import lagpow
+    >>> lagpow([1, 2, 3], 2)
+    array([ 14., -16.,  56., -72.,  54.])
 
     """
     # cs is a trimmed copy
@@ -662,16 +652,11 @@ def lagder(cs, m=1, scl=1) :
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3,4)
-    >>> L.lagder(cs)
-    array([  6.,   9.,  20.])
-    >>> L.lagder(cs,3)
-    array([ 60.])
-    >>> L.lagder(cs,scl=-1)
-    array([ -6.,  -9., -20.])
-    >>> L.lagder(cs,2,-1)
-    array([  9.,  60.])
+    >>> from numpy.polynomial.laguerre import lagder
+    >>> lagder([ 1.,  1.,  1., -3.])
+    array([ 1.,  2.,  3.])
+    >>> lagder([ 1.,  0.,  0., -4.,  3.], m=2)
+    array([ 1.,  2.,  3.])
 
     """
     cnt = int(m)
@@ -761,19 +746,17 @@ def lagint(cs, m=1, k=[], lbnd=0, scl=1):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3)
-    >>> L.lagint(cs)
-    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.lagint(cs,3)
-    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
-            -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
-    >>> L.lagint(cs, k=3)
-    array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.lagint(cs, lbnd=-2)
-    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.lagint(cs, scl=2)
-    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
+    >>> from numpy.polynomial.laguerre import lagint
+    >>> lagint([1,2,3])
+    array([ 1.,  1.,  1., -3.])
+    >>> lagint([1,2,3], m=2)
+    array([ 1.,  0.,  0., -4.,  3.])
+    >>> lagint([1,2,3], k=1)
+    array([ 2.,  1.,  1., -3.])
+    >>> lagint([1,2,3], lbnd=-1)
+    array([ 11.5,   1. ,   1. ,  -3. ])
+    >>> lagint([1,2], m=2, k=[1,2], lbnd=-1)
+    array([ 11.16666667,  -5.        ,  -3.        ,   2.        ])
 
     """
     cnt = int(m)
@@ -847,6 +830,13 @@ def lagval(x, cs):
 
     Examples
     --------
+    >>> from numpy.polynomial.laguerre import lagval
+    >>> coef = [1,2,3]
+    >>> lagval(1, coef)
+    -0.5
+    >>> lagval([[1,2],[3,4]], coef)
+    array([[-0.5, -4. ],
+           [-4.5, -2. ]])
 
     """
     # cs is a trimmed copy
@@ -895,6 +885,15 @@ def lagvander(x, deg) :
     vander : Vandermonde matrix.
         The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
         index is the degree.
+
+    Examples
+    --------
+    >>> from numpy.polynomial.laguerre import lagvander
+    >>> x = np.array([0, 1, 2])
+    >>> lagvander(x, 3)
+    array([[ 1.        ,  1.        ,  1.        ,  1.        ],
+           [ 1.        ,  0.        , -0.5       , -0.66666667],
+           [ 1.        , -1.        , -1.        , -0.33333333]])
 
     """
     ideg = int(deg)
@@ -1013,6 +1012,12 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> from numpy.polynomial.laguerre import lagfit, lagval
+    >>> x = np.linspace(0, 10)
+    >>> err = np.random.randn(len(x))/10
+    >>> y = lagval(x, [1, 2, 3]) + err
+    >>> lagfit(x, y, 2)
+    array([ 0.96971004,  2.00193749,  3.00288744])
 
     """
     order = int(deg) + 1
@@ -1102,12 +1107,12 @@ def lagroots(cs):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> P.polyroots((1, 2, 3, 4)) # 4x^3 + 3x^2 + 2x + 1 has two complex roots
-    array([-0.60582959+0.j        , -0.07208521-0.63832674j,
-           -0.07208521+0.63832674j])
-    >>> P.lagroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
-    array([-0.85099543, -0.11407192,  0.51506735])
+    >>> from numpy.polynomial.laguerre import lagroots, lagfromroots
+    >>> coef = lagfromroots([0, 1, 2])
+    >>> coef
+    array([  2.,  -8.,  12.,  -6.])
+    >>> lagroots(coef)
+    array([ -4.44089210e-16,   1.00000000e+00,   2.00000000e+00])
 
     """
     # cs is a trimmed copy

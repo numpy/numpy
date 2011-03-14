@@ -96,13 +96,9 @@ def poly2herm(pol) :
 
     Examples
     --------
-    >>> from numpy import polynomial as P
-    >>> p = P.Polynomial(np.arange(4))
-    >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> c = P.Hermite(P.poly2herm(p.coef))
-    >>> c
-    Hermite([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    >>> from numpy.polynomial.hermite_e import poly2herme
+    >>> poly2herm(np.arange(4))
+    array([ 1.   ,  2.75 ,  0.5  ,  0.375])
 
     """
     [pol] = pu.as_series([pol])
@@ -146,15 +142,9 @@ def herm2poly(cs) :
 
     Examples
     --------
-    >>> c = P.Hermite(range(4))
-    >>> c
-    Hermite([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> p = c.convert(kind=P.Polynomial)
-    >>> p
-    Polynomial([-1. , -3.5,  3. ,  7.5], [-1.,  1.])
-    >>> P.herm2poly(range(4))
-    array([-1. , -3.5,  3. ,  7.5])
-
+    >>> from numpy.polynomial.hermite import herm2poly
+    >>> herm2poly([ 1.   ,  2.75 ,  0.5  ,  0.375])
+    array([ 0.,  1.,  2.,  3.])
 
     """
     from polynomial import polyadd, polysub, polymulx
@@ -217,11 +207,11 @@ def hermline(off, scl) :
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as L
-    >>> L.hermline(3,2)
-    array([3, 2])
-    >>> L.hermval(-3, L.hermline(3,2)) # should be -3
-    -3.0
+    >>> from numpy.polynomial.hermite import hermline, hermval
+    >>> hermval(0,hermline(3, 2))
+    3.0
+    >>> hermval(1,hermline(3, 2))
+    5.0
 
     """
     if scl != 0 :
@@ -274,12 +264,13 @@ def hermfromroots(roots) :
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as L
-    >>> L.hermfromroots((-1,0,1)) # x^3 - x relative to the standard basis
-    array([ 0. , -0.4,  0. ,  0.4])
-    >>> j = complex(0,1)
-    >>> L.hermfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j])
+    >>> from numpy.polynomial.hermite import hermfromroots, hermval
+    >>> coef = hermfromroots((-1, 0, 1))
+    >>> hermval((-1, 0, 1), coef)
+    array([ 0.,  0.,  0.])
+    >>> coef = hermfromroots((-1j, 1j))
+    >>> hermval((-1j, 1j), coef)
+    array([ 0.+0.j,  0.+0.j])
 
     """
     if len(roots) == 0 :
@@ -324,11 +315,9 @@ def hermadd(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.hermadd(c1,c2)
-    array([ 4.,  4.,  4.])
+    >>> from numpy.polynomial.hermite import hermadd
+    >>> hermadd([1, 2, 3], [1, 2, 3, 4])
+    array([ 2.,  4.,  6.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -374,13 +363,9 @@ def hermsub(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.hermsub(c1,c2)
-    array([-2.,  0.,  2.])
-    >>> L.hermsub(c2,c1) # -C.hermsub(c1,c2)
-    array([ 2.,  0., -2.])
+    >>> from numpy.polynomial.hermite import hermsub
+    >>> hermsub([1, 2, 3, 4], [1, 2, 3])
+    array([ 0.,  0.,  0.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -420,7 +405,13 @@ def hermmulx(cs):
 
     .. math::
 
-    xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+    xP_i(x) = (P_{i + 1}(x)/2 + i*P_{i - 1}(x))
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermmulx
+    >>> hermmulx([1, 2, 3])
+    array([ 2. ,  6.5,  1. ,  1.5])
 
     """
     # cs is a trimmed copy
@@ -471,11 +462,9 @@ def hermmul(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2)
-    >>> P.hermmul(c1,c2) # multiplication requires "reprojection"
-    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ])
+    >>> from numpy.polynomial.hermite import hermmul
+    >>> hermmul([1, 2, 3], [0, 1, 2])
+    array([ 52.,  29.,  52.,   7.,   6.])
 
     """
     # s1, s2 are trimmed copies
@@ -542,14 +531,13 @@ def hermdiv(c1, c2):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.hermdiv(c1,c2) # quotient "intuitive," remainder not
-    (array([ 3.]), array([-8., -4.]))
-    >>> c2 = (0,1,2,3)
-    >>> L.hermdiv(c2,c1) # neither "intuitive"
-    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852]))
+    >>> from numpy.polynomial.hermite import hermdiv
+    >>> hermdiv([ 52.,  29.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 0.]))
+    >>> hermdiv([ 54.,  31.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 2.,  2.]))
+    >>> hermdiv([ 53.,  30.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
 
     """
     # c1, c2 are trimmed copies
@@ -603,6 +591,9 @@ def hermpow(cs, pow, maxpower=16) :
 
     Examples
     --------
+    >>> from numpy.polynomial.hermite import hermpow
+    >>> hermpow([1, 2, 3], 2)
+    array([ 81.,  52.,  82.,  12.,   9.])
 
     """
     # cs is a trimmed copy
@@ -664,16 +655,11 @@ def hermder(cs, m=1, scl=1) :
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3,4)
-    >>> L.hermder(cs)
-    array([  6.,   9.,  20.])
-    >>> L.hermder(cs,3)
-    array([ 60.])
-    >>> L.hermder(cs,scl=-1)
-    array([ -6.,  -9., -20.])
-    >>> L.hermder(cs,2,-1)
-    array([  9.,  60.])
+    >>> from numpy.polynomial.hermite import hermder
+    >>> hermder([ 1. ,  0.5,  0.5,  0.5])
+    array([ 1.,  2.,  3.])
+    >>> hermder([-0.5,  1./2.,  1./8.,  1./12.,  1./16.], m=2)
+    array([ 1.,  2.,  3.])
 
     """
     cnt = int(m)
@@ -762,19 +748,17 @@ def hermint(cs, m=1, k=[], lbnd=0, scl=1):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3)
-    >>> L.hermint(cs)
-    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.hermint(cs,3)
-    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
-            -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
-    >>> L.hermint(cs, k=3)
-    array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.hermint(cs, lbnd=-2)
-    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.hermint(cs, scl=2)
-    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
+    >>> from numpy.polynomial.hermite import hermint
+    >>> hermint([1,2,3]) # integrate once, value 0 at 0.
+    array([ 1. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0 
+    array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ])
+    >>> hermint([1,2,3], k=1) # integrate once, value 1 at 0.
+    array([ 2. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], lbnd=-1) # integrate once, value 0 at -1
+    array([-2. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], m=2, k=[1,2], lbnd=-1)
+    array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ])
 
     """
     cnt = int(m)
@@ -847,6 +831,13 @@ def hermval(x, cs):
 
     Examples
     --------
+    >>> from numpy.polynomial.hermite import hermval
+    >>> coef = [1,2,3]
+    >>> hermval(1, coef)
+    11.0
+    >>> hermval([[1,2],[3,4]], coef)
+    array([[  11.,   51.],
+           [ 115.,  203.]])
 
     """
     # cs is a trimmed copy
@@ -896,6 +887,15 @@ def hermvander(x, deg) :
     vander : Vandermonde matrix.
         The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
         index is the degree.
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermvander
+    >>> x = np.array([-1, 0, 1])
+    >>> hermvander(x, 3)
+    array([[ 1., -2.,  2.,  4.],
+           [ 1.,  0., -2., -0.],
+           [ 1.,  2.,  2., -4.]])
 
     """
     ideg = int(deg)
@@ -1015,6 +1015,12 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> from numpy.polynomial.hermite import hermfit, hermval
+    >>> x = np.linspace(-10, 10)
+    >>> err = np.random.randn(len(x))/10
+    >>> y = hermval(x, [1, 2, 3]) + err
+    >>> hermfit(x, y, 2)
+    array([ 0.97902637,  1.99849131,  3.00006   ])
 
     """
     order = int(deg) + 1
@@ -1104,12 +1110,12 @@ def hermroots(cs):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> P.polyroots((1, 2, 3, 4)) # 4x^3 + 3x^2 + 2x + 1 has two complex roots
-    array([-0.60582959+0.j        , -0.07208521-0.63832674j,
-           -0.07208521+0.63832674j])
-    >>> P.hermroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
-    array([-0.85099543, -0.11407192,  0.51506735])
+    >>> from numpy.polynomial.hermite import hermroots, hermfromroots
+    >>> coef = hermfromroots([-1, 0, 1])
+    >>> coef
+    array([ 0.   ,  0.25 ,  0.   ,  0.125])
+    >>> hermroots(coef)
+    array([ -1.00000000e+00,  -1.38777878e-17,   1.00000000e+00])
 
     """
     # cs is a trimmed copy
