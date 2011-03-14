@@ -400,7 +400,7 @@ class TestPolynomialClass(TestCase) :
     def test_degree(self) :
         assert_equal(self.p1.degree(), 2)
 
-    def test_trimdeg(self) :
+    def test_cutdeg(self) :
         assert_raises(ValueError, self.p1.cutdeg, .5)
         assert_raises(ValueError, self.p1.cutdeg, -1)
         assert_equal(len(self.p1.cutdeg(3)), 3)
@@ -502,3 +502,7 @@ class TestPolynomialClass(TestCase) :
         assert_almost_equal(p(x), x)
         p = poly.Polynomial.identity([1,3])
         assert_almost_equal(p(x), x)
+#
+
+if __name__ == "__main__":
+    run_module_suite()
