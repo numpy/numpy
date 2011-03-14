@@ -1025,7 +1025,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     # check arguments.
     if deg < 0 :
-        raise valueerror, "expected deg >= 0"
+        raise ValueError, "expected deg >= 0"
     if x.ndim != 1:
         raise TypeError, "expected 1D vector for x"
     if x.size == 0:
