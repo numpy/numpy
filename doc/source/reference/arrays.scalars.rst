@@ -266,7 +266,7 @@ The exceptions to the above rules are given below:
    generic
    generic.__array__
    generic.__array_wrap__
-   generic.__squeeze__
+   generic.squeeze
    generic.byteswap
    generic.__reduce__
    generic.__setstate__

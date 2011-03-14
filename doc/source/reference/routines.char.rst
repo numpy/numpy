@@ -63,7 +63,6 @@ String information
    :toctree: generated/
 
    count
-   len
    find
    index
    isalpha
