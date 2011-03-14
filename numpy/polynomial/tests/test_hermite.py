@@ -21,6 +21,7 @@ H9 = np.array([0, 30240, 0, -80640, 0, 48384, 0, -9216, 0, 512])
 
 Hlist = [H0, H1, H2, H3, H4, H5, H6, H7, H8, H9]
 
+
 def trim(x) :
     return herm.hermtrim(x, tol=1e-6)
 
@@ -428,7 +429,7 @@ class TestHermiteClass(TestCase) :
     def test_degree(self) :
         assert_equal(self.p1.degree(), 2)
 
-    def test_trimdeg(self) :
+    def test_cutdeg(self) :
         assert_raises(ValueError, self.p1.cutdeg, .5)
         assert_raises(ValueError, self.p1.cutdeg, -1)
         assert_equal(len(self.p1.cutdeg(3)), 3)
