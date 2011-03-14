@@ -50,16 +50,16 @@ See also
 """
 from __future__ import division
 
-__all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
-        'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermeval',
-        'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
-        'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'Hermite_e']
-
 import numpy as np
 import numpy.linalg as la
 import polyutils as pu
 import warnings
 from polytemplate import polytemplate
+
+__all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
+        'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermeval',
+        'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
+        'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'HermiteE']
 
 hermetrim = pu.trimcoef
 
@@ -430,7 +430,7 @@ def hermemulx(cs):
 
     prd = np.empty(len(cs) + 1, dtype=cs.dtype)
     prd[0] = cs[0]*0
-    prd[1] = cs[0]/2
+    prd[1] = cs[0]
     for i in range(1, len(cs)):
         prd[i + 1] = cs[i]
         prd[i - 1] += cs[i]*i
@@ -1132,7 +1132,7 @@ def hermeroots(cs):
 
 
 #
-# Hermite_e series class
+# HermiteE series class
 #
 
-exec polytemplate.substitute(name='Hermite_e', nick='herme', domain='[-1,1]')
+exec polytemplate.substitute(name='HermiteE', nick='herme', domain='[-1,1]')
