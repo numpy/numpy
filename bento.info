@@ -36,14 +36,18 @@ Classifiers:
 
 Recurse:
     numpy/core,
+    numpy/fft,
     numpy/lib,
-    numpy/linalg
+    numpy/linalg,
+    numpy/random
 
 HookFile:
     bscript,
     numpy/core/bscript,
+    numpy/fft/bscript,
     numpy/lib/bscript,
-    numpy/linalg/bscript
+    numpy/linalg/bscript,
+    numpy/random/bscript
 
 ExtraSourceFiles:
     numpy_templates.py,
