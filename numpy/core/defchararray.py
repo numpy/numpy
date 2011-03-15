@@ -270,7 +270,7 @@ def add(x1, x2):
     Returns
     -------
     out : ndarray
-        Output array of string_ or unicode_, depending on input types
+        Output array of `string_` or `unicode_`, depending on input types
     """
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
@@ -1963,7 +1963,7 @@ class chararray(ndarray):
     def __radd__(self, other):
         """
         Return (other + self), that is string concatenation,
-        element-wise for a pair of array_likes of string_ or unicode_.
+        element-wise for a pair of array_likes of `string_` or `unicode_`.
 
         See also
         --------
@@ -1996,8 +1996,8 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (iterpolation), element-wise for a pair of array_likes of string_
-        or unicode_.
+        (iterpolation), element-wise for a pair of array_likes of `string_`
+        or `unicode_`.
 
         See also
         --------
@@ -2546,7 +2546,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
-       arrays of type string_ or unicode_ and use the free functions
+       arrays of type `string_` or `unicode_` and use the free functions
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
@@ -2560,7 +2560,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
          end when comparing values
 
       3) vectorized string operations are provided as methods
-         (e.g. `str.endswith`) and infix operators (e.g. +, *, %)
+         (e.g. `str.endswith`) and infix operators (e.g. ``+, *, %``)
 
     Parameters
     ----------
