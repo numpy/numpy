@@ -1,0 +1,36 @@
+import os
+
+from bento.commands.hooks \
+    import \
+        pre_build
+
+@pre_build()
+def pbuild(context):
+    bld = context.waf_context
+    old_path = bld.path
+    bld.path = old_path.find_dir(context.local_node.path_from(context.top_node))
+    assert bld.path.__class__ == old_path.__class__
+
+    # FIXME: there has to be a better way to refer to numpy/core include
+    includes = [
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core"),
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include"),
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include/numpy"),
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/src/private")]
+
+    def build_lapack_lite(bld, extension):
+        kw = {}
+        if not bld.env.HAS_LAPACK:
+            for s in ['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
+                      'blas_lite.c', 'dlamch.c', 'f2c_lite.c']:
+                extension.sources.pop(s)
+        else:
+            kw["uselib"] = "LAPACK"
+
+        bld(features="c cshlib pyext",
+            target=extension.name,
+            source=extension.sources,
+            includes=includes, **kw)
+    context.register_builder("lapack_lite", build_lapack_lite)
+
+    bld.path = old_path
