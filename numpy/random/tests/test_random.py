@@ -152,7 +152,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 63.87858175501090585,  68.68407748911370447],
                             [ 65.77116116901505904,  47.09686762438974483],
                             [ 72.3828403199695174 ,  74.18408615260374006]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_dirichlet(self):
         np.random.seed(self.seed)
@@ -188,7 +188,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 24.60509188649287182,  28.54993563207210627],
                              [ 26.13476110204064184,  12.56988482927716078],
                              [ 31.71863275789960568,  33.30143302795922011]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_geometric(self):
         np.random.seed(self.seed)
@@ -236,7 +236,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 16.50698631688883822,  36.54846706092654784],
                          [ 22.67886599981281748,   0.71617561058995771],
                          [ 65.72798501792723869,  86.84341601437161273]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_logseries(self):
         np.random.seed(self.seed)
@@ -285,7 +285,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 23.91905354498517511,  13.35324692733826346],
                          [ 31.22452661329736401,  16.60047399466177254],
                          [  5.03461598262724586,  17.94973089023519464]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_noncentral_f(self):
         np.random.seed(self.seed)
@@ -294,7 +294,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 1.40598099674926669,  0.34207973179285761],
                          [ 3.57715069265772545,  7.92632662577829805],
                          [ 0.43741599463544162,  1.1774208752428319 ]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_normal(self):
         np.random.seed(self.seed)
@@ -342,7 +342,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 13.8882496494248393 ,  13.383318339044731  ],
                          [ 20.95413364294492098,  21.08285015800712614],
                          [ 11.06066537006854311,  17.35468505778271009]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_standard_cauchy(self):
         np.random.seed(self.seed)
@@ -366,7 +366,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 5.50841531318455058,  6.62953470301903103],
                          [ 5.93988484943779227,  2.31044849402133989],
                          [ 7.54838614231317084,  8.012756093271868  ]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_standard_normal(self):
         np.random.seed(self.seed)
@@ -391,7 +391,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 12.68117178949215784,  12.4129206149193152 ],
                          [ 16.20131377335158263,  16.25692138747600524],
                          [ 11.20400690911820263,  14.4978144835829923 ]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_uniform(self):
         np.random.seed(self.seed)
@@ -416,7 +416,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 3.82935265715889983,  5.13125249184285526],
                          [ 0.35045403618358717,  1.50832396872003538],
                          [ 0.24124319895843183,  0.22031101461955038]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_weibull(self):
         np.random.seed(self.seed)
