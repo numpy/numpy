@@ -253,6 +253,16 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
     PyObject *with_prep[NPY_MAXARGS], *preps[NPY_MAXARGS];
     PyObject *obj, *prep = NULL;
 
+    /* If a 'subok' parameter is passed and isn't True, don't wrap */
+    if (kwds != NULL && (obj = PyDict_GetItemString(kwds, "subok")) != NULL) {
+        if (obj != Py_True) {
+            for (i = 0; i < nout; i++) {
+                output_prep[i] = NULL;
+            }
+            return;
+        }
+    }
+
     nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(args, i);
@@ -706,6 +716,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 NPY_CASTING *out_casting,
                 PyObject **out_extobj,
                 PyObject **out_typetup,
+                int *out_subok,
                 int *out_any_object)
 {
     npy_intp i, nargs, nin = self->nin;
@@ -883,6 +894,15 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                         }
                         *out_typetup = value;
                         Py_INCREF(value);
+                        bad_arg = 0;
+                    }
+                    else if (strncmp(str,"subok",5) == 0) {
+                        if (!PyBool_Check(value)) {
+                            PyErr_SetString(PyExc_TypeError,
+                                        "'subok' must be a boolean");
+                            goto fail;
+                        }
+                        *out_subok = (value == Py_True);
                         bad_arg = 0;
                     }
                     break;
@@ -2056,7 +2076,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     int nin, nout;
     int i, idim, niter;
     char *ufunc_name;
-    int retval = -1, any_object = 0;
+    int retval = -1, any_object = 0, subok = 1;
     NPY_CASTING input_casting;
 
     PyArray_Descr *dtype[NPY_MAXARGS];
@@ -2131,7 +2151,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &type_tup, &any_object);
+                op, &order, &casting, &extobj, &type_tup, &subok, &any_object);
     if (retval < 0) {
         goto fail;
     }
@@ -2268,17 +2288,19 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     printf("\n");
 #endif
 
-    /*
-     * Get the appropriate __array_prepare__ function to call
-     * for each output
-     */
-    _find_array_prepare(args, kwds, arr_prep, nin, nout);
+    if (subok) {
+        /*
+         * Get the appropriate __array_prepare__ function to call
+         * for each output
+         */
+        _find_array_prepare(args, kwds, arr_prep, nin, nout);
 
-    /* Set up arr_prep_args if a prep function was needed */
-    for (i = 0; i < nout; ++i) {
-        if (arr_prep[i] != NULL && arr_prep[i] != Py_None) {
-            arr_prep_args = make_arr_prep_args(nin, args, kwds);
-            break;
+        /* Set up arr_prep_args if a prep function was needed */
+        for (i = 0; i < nout; ++i) {
+            if (arr_prep[i] != NULL && arr_prep[i] != Py_None) {
+                arr_prep_args = make_arr_prep_args(nin, args, kwds);
+                break;
+            }
         }
     }
 
@@ -2472,7 +2494,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     int nin, nout;
     int i, niter;
     char *ufunc_name;
-    int retval = -1, any_object = 0;
+    int retval = -1, any_object = 0, subok = 1;
     NPY_CASTING input_casting;
 
     PyArray_Descr *dtype[NPY_MAXARGS];
@@ -2536,7 +2558,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &type_tup, &any_object);
+                op, &order, &casting, &extobj, &type_tup, &subok, &any_object);
     if (retval < 0) {
         goto fail;
     }
@@ -2614,17 +2636,19 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     printf("\n");
 #endif
 
-    /*
-     * Get the appropriate __array_prepare__ function to call
-     * for each output
-     */
-    _find_array_prepare(args, kwds, arr_prep, nin, nout);
+    if (subok) {
+        /*
+         * Get the appropriate __array_prepare__ function to call
+         * for each output
+         */
+        _find_array_prepare(args, kwds, arr_prep, nin, nout);
 
-    /* Set up arr_prep_args if a prep function was needed */
-    for (i = 0; i < nout; ++i) {
-        if (arr_prep[i] != NULL && arr_prep[i] != Py_None) {
-            arr_prep_args = make_arr_prep_args(nin, args, kwds);
-            break;
+        /* Set up arr_prep_args if a prep function was needed */
+        for (i = 0; i < nout; ++i) {
+            if (arr_prep[i] != NULL && arr_prep[i] != Py_None) {
+                arr_prep_args = make_arr_prep_args(nin, args, kwds);
+                break;
+            }
         }
     }
 
@@ -3966,6 +3990,16 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
     int np = 0;
     PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
     PyObject *obj, *wrap = NULL;
+
+    /* If a 'subok' parameter is passed and isn't True, don't wrap */
+    if (kwds != NULL && (obj = PyDict_GetItemString(kwds, "subok")) != NULL) {
+        if (obj != Py_True) {
+            for (i = 0; i < nout; i++) {
+                output_wrap[i] = NULL;
+            }
+            return;
+        }
+    }
 
     nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nin; i++) {

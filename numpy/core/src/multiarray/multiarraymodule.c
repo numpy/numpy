@@ -1730,20 +1730,22 @@ static PyObject *
 array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"prototype","dtype","order",NULL};
+    static char *kwlist[] = {"prototype","dtype","order","subok",NULL};
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *ret = NULL;
+    int subok = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i", kwlist,
                 PyArray_Converter, &prototype,
                 PyArray_DescrConverter2, &dtype,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &subok)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
-    ret = PyArray_NewLikeArray(prototype, order, dtype);
+    ret = PyArray_NewLikeArray(prototype, order, dtype, subok);
     Py_DECREF(prototype);
     return ret;
 

@@ -454,7 +454,7 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
 add_newdoc('numpy.core.multiarray', 'empty_like',
     """
-    empty_like(a, dtype=None, order='K')
+    empty_like(a, dtype=None, order='K', subok=True)
 
     Return a new array with the same shape and type as a given array.
 
@@ -470,6 +470,10 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
         'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of ``a`` as closely
         as possible.
+    subok : bool, optional.
+        If True, then the newly created array will use the sub-class
+        type of 'a', otherwise it will be a base-class array. Defaults
+        to True.
 
     Returns
     -------

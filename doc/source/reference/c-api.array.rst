@@ -158,7 +158,7 @@ From scratch
     *dims* and *strides* are copied into newly allocated dimension and
     strides arrays for the new array object.
 
-.. cfunction:: PyObject* PyArray_NewLikeArray(PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr)
+.. cfunction:: PyObject* PyArray_NewLikeArray(PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, int subok)
 
     .. versionadded:: 1.6
 
@@ -175,6 +175,10 @@ From scratch
    when the axes of *prototype* aren't in C or Fortran order.
 
    If *descr* is NULL, the data type of *prototype* is used.
+
+   If *subok* is 1, the newly created array will use the sub-type of
+   *prototype* to create the new array, otherwise it will create a
+   base-class array.
 
 .. cfunction:: PyObject* PyArray_New(PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 

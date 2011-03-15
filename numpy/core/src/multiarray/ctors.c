@@ -492,7 +492,8 @@ PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
         /*
          * Allocate a temporary copy array.
          */
-        tmp = (PyArrayObject *)PyArray_NewLikeArray(dst, NPY_KEEPORDER, NULL);
+        tmp = (PyArrayObject *)PyArray_NewLikeArray(dst,
+                                        NPY_KEEPORDER, NULL, 0);
         if (tmp == NULL) {
             return -1;
         }
@@ -1135,12 +1136,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
  *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
  * dtype     - If not NULL, overrides the data type of the result.
+ * subok     - If 1, use the prototype's array subtype, otherwise
+ *             always create a base-class array.
  *
  * NOTE: If dtype is not NULL, steals the dtype reference.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
-                     PyArray_Descr *dtype)
+                     PyArray_Descr *dtype, int subok)
 {
     PyObject *ret = NULL;
     int ndim = PyArray_NDIM(prototype);
@@ -1173,14 +1176,14 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
 
     /* If it's not KEEPORDER, this is simple */
     if (order != NPY_KEEPORDER) {
-        ret = PyArray_NewFromDescr(Py_TYPE(prototype),
-                                            dtype,
-                                            ndim,
-                                            PyArray_DIMS(prototype),
-                                            NULL,
-                                            NULL,
-                                            order,
-                                            (PyObject *)prototype);
+        ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
+                                        dtype,
+                                        ndim,
+                                        PyArray_DIMS(prototype),
+                                        NULL,
+                                        NULL,
+                                        order,
+                                        subok ? (PyObject *)prototype : NULL);
     }
     /* KEEPORDER needs some analysis of the strides */
     else {
@@ -1200,14 +1203,14 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         }
 
         /* Finally, allocate the array */
-        ret = PyArray_NewFromDescr(Py_TYPE(prototype),
-                                            dtype,
-                                            ndim,
-                                            shape,
-                                            strides,
-                                            NULL,
-                                            0,
-                                            (PyObject *)prototype);
+        ret = PyArray_NewFromDescr( subok ? Py_TYPE(prototype) : &PyArray_Type,
+                                        dtype,
+                                        ndim,
+                                        shape,
+                                        strides,
+                                        NULL,
+                                        0,
+                                        subok ? (PyObject *)prototype : NULL);
     }
 
     return ret;

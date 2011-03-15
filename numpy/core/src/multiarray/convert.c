@@ -454,7 +454,8 @@ PyArray_FillWithZero(PyArrayObject *a)
 NPY_NO_EXPORT PyObject *
 PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
 {
-    PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(m1, order, NULL);
+    PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(
+                                                    m1, order, NULL, 1);
     if (ret == NULL) {
         return NULL;
     }

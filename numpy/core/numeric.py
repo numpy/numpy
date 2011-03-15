@@ -62,7 +62,7 @@ ufunc = type(sin)
 
 
 # originally from Fernando Perez's IPython
-def zeros_like(a, dtype=None, order='K'):
+def zeros_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of zeros with the same shape and type as a given array.
 
@@ -112,7 +112,7 @@ def zeros_like(a, dtype=None, order='K'):
     array([ 0.,  0.,  0.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok)
     res.fill(0)
     return res
 

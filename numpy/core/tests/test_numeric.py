@@ -1195,6 +1195,15 @@ class TestLikeFuncs(TestCase):
             if not value is None:
                 assert_(all(dz == value))
 
+        # Test the 'subok' parameter'
+        a = np.matrix([[1,2],[3,4]])
+
+        b = like_function(a)
+        assert_(type(b) is np.matrix)
+
+        b = like_function(a, subok=False)
+        assert_(not (type(b) is np.matrix))
+
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)
 
