@@ -3,13 +3,27 @@ import sys
 
 from bento.commands.hooks \
     import \
-        pre_configure
+        pre_configure, pre_build, post_build
 import waflib
+import waflib.Errors
+from waflib.Task \
+    import \
+        Task
+waflib.Logs.verbose = 1
 
 # Importing this adds new checkers to waf configure context - I don't like this
 # way of working, should find a more explicit way to attach new functions to
 # context.
 import numpy.build_utils
+
+from numpy.distutils.conv_template \
+    import \
+        process_str as process_c_str
+from code_generators.numpy_api \
+    import \
+        multiarray_api, ufunc_api
+from code_generators import generate_numpy_api, generate_ufunc_api, \
+        generate_umath
 
 from setup_common \
     import \
@@ -247,3 +261,192 @@ def configure(context):
     conf.write_config_header("config.h")
 
     write_numpy_config(conf)
+
+    conf.env.INCLUDES = [".", "include", "include/numpy"]
+
+    # FIXME: Should be handled in bento context
+    conf.store()
+
+class CTemplateTask(waflib.Task.Task):
+    color = 'BLUE'
+    before = ['c']
+    def run(self):
+        s = self.inputs[0]
+        cnt = s.read()
+        writestr = process_c_str(cnt)
+        o = self.outputs[0]
+        o.write(writestr)
+
+@waflib.TaskGen.extension(".src")
+def c_template(self, node):
+    outs = []
+    outs.append(node.change_ext(""))
+
+    tsk = self.create_task('CTemplateTask', node, outs)
+    if "c" in self.features:
+        self.source.append(outs[0])
+
+class numpy_api_generator(Task):
+    vars = ["API_TUPLE"]
+    color = "BLUE"
+    before = ["c"]
+    def run(self):
+        targets = [o.path_from(self.generator.bld.srcnode) for o in self.outputs]
+        generate_numpy_api.do_generate_api(targets, self.env.API_TUPLE)
+        return 0
+
+class ufunc_api_generator(Task):
+    vars = ["API_TUPLE"]
+    color = "BLUE"
+    before = ["c"]
+    def run(self):
+        targets = [o.path_from(self.generator.bld.srcnode) for o in self.outputs]
+        generate_ufunc_api.do_generate_api(targets, self.env.API_TUPLE)
+        return 0
+
+@waflib.TaskGen.feature("numpy_api_gen")
+def process_multiarray_api_generator(self):
+    tsk = self.create_task("numpy_api_generator")
+    if hasattr(self, "api_tuple"):
+        tsk.env.API_TUPLE = self.api_tuple
+    else:
+        if not "API_TUPLE" in tsk.env:
+            tsk.env.API_TUPLE = ()
+    header = "__%s.h" % self.pattern
+    source = "__%s.c" % self.pattern
+    txt = self.pattern + ".txt"
+    files = [header, source, txt]
+    tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+    return tsk
+
+@waflib.TaskGen.feature("ufunc_api_gen")
+def process_api_ufunc_generator(self):
+    tsk = self.create_task("ufunc_api_generator")
+    if hasattr(self, "api_tuple"):
+        tsk.env.API_TUPLE = self.api_tuple
+    else:
+        if not "API_TUPLE" in tsk.env:
+            tsk.env.API_TUPLE = ()
+    header = "__%s.h" % self.pattern
+    source = "__%s.c" % self.pattern
+    txt = self.pattern + ".txt"
+    files = [header, source, txt]
+    tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+    return tsk
+
+class umath_generator(Task):
+    vars = ["API_TUPLE"]
+    color = "BLUE"
+    before = ["c"]
+    ext_in = ".in"
+    def run(self):
+        if len(self.outputs) > 1:
+            raise ValueError("Only one target (the .c file) is expected in the umath generator task")
+        code = generate_umath.make_code(generate_umath.defdict, generate_umath.__file__)
+        self.outputs[0].write(code)
+        return 0
+
+@waflib.TaskGen.feature("umath_gen")
+def process_umath_generator(self):
+    tsk = self.create_task("umath_generator")
+    source = "__%s.c" % self.pattern
+    tsk.set_outputs(self.path.find_or_declare(source))
+    return tsk
+
+from os.path import join as pjoin
+@pre_build()
+def pbuild(context):
+    bld = context.waf_context
+    # FIXME: bento command's context should have API so that subclasses can
+    # customize recurse behavior
+    # XXX: there is a risk of confusion between waf Node class and our own:
+    # mixing them is a big no no, and may cause very hard to debug issues.
+    # Find a solution
+    old_path = bld.path
+    bld.path = old_path.find_dir(context.local_node.path_from(context.top_node))
+    assert bld.path.__class__ == old_path.__class__
+
+    def builder(bld, library):
+        # FIXME: hack to build static library that can be linked into a dlopen-able
+        # library
+        bld(features="c pyext cstlib",
+            source=library.sources,
+            includes=["src/private", "src/npymath", "include"],
+            use="cshlib",
+            target=library.name)
+    context.register_clib_builder("npymath", builder)
+
+    def builder_multiarray(bld, extension):
+        bld(name="multiarray_api",
+            features="numpy_api_gen",
+            api_tuple=multiarray_api,
+            pattern="multiarray_api")
+
+        multiarray_templates = ["src/multiarray/scalartypes.c.src",
+                "src/multiarray/arraytypes.c.src", 
+                "src/multiarray/new_iterator.c.src", 
+                "src/multiarray/lowlevel_strided_loops.c.src", 
+                "src/multiarray/einsum.c.src"]
+        bld(target="multiarray_templates", source=multiarray_templates)
+        includes = ["src/multiarray", "src/private"]
+        bld(features="c cshlib pyext",
+            includes=includes,
+            target="multiarray",
+            source=extension.sources,
+            use="npymath")
+    context.register_builder("multiarray", builder_multiarray)
+
+    def builder_sort(bld, extension):
+        includes = [".", "src/private"]
+        bld(features="c cshlib pyext",
+            target="_sort",
+            source=extension.sources,
+            includes=includes,
+            use="npymath")
+    context.register_builder("_sort", builder_sort)
+
+    def build_ufunc(bld, extension):
+        bld(features="ufunc_api_gen",
+            api_tuple=ufunc_api,
+            pattern="ufunc_api",
+            name="ufunc_api")
+
+        ufunc_templates = ["src/umath/loops.c.src",
+                "src/umath/umathmodule.c.src",
+                "src/umath/funcs.inc.src"]
+        bld(target="ufunc_templates", source=ufunc_templates)
+
+        bld(features="umath_gen",
+            pattern="umath_generated",
+            name="umath_gen")
+
+        includes = ["src/umath", "src/private"]
+        bld(features="c cshlib pyext",
+            includes=includes,
+            target="umath",
+            source=extension.sources,
+            use="npymath")
+    context.register_builder("umath", build_ufunc)
+
+    def build_scalarmath(bld, extension):
+        bld(features="c cshlib pyext",
+            target=extension.name,
+            source=extension.sources,
+            use="npymath")
+    context.register_builder("scalarmath", build_scalarmath)
+
+    def build_multiarray_tests(bld, extension):
+        bld(features="c cshlib pyext",
+            target=extension.name,
+            source=extension.sources,
+            use="npymath")
+    context.register_builder("multiarray_tests", build_multiarray_tests)
+
+    if bld.env.HAS_CBLAS:
+        bld(features="c cshlib pyext",
+            target="_dotblas",
+            source="blasdot/_dotblas.c",
+            includes="src/private",
+            use="CBLAS")
+
+    bld.path = old_path

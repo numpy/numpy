@@ -1,0 +1,4 @@
+Library:
+    Extension: _compiled_base
+        Sources:
+             src/_compiled_base.c
