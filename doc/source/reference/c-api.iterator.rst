@@ -48,7 +48,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :cfunc:`PyArray_ITER_RESET`            :cfunc:`NpyIter_Reset`
 :cfunc:`PyArray_ITER_NEXT`             Function pointer from :cfunc:`NpyIter_GetIterNext`
 :cfunc:`PyArray_ITER_DATA`             :cfunc:`NpyIter_GetDataPtrArray`
-:cfunc:`PyArray_ITER_GOTO`             :cfunc:`NpyIter_GotoCoords`
+:cfunc:`PyArray_ITER_GOTO`             :cfunc:`NpyIter_GotoMultiIndex`
 :cfunc:`PyArray_ITER_GOTO1D`           :cfunc:`NpyIter_GotoIndex` or
                                        :cfunc:`NpyIter_GotoIterIndex`
 :cfunc:`PyArray_ITER_NOTDONE`          Return value of ``iternext`` function pointer
@@ -58,7 +58,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :cfunc:`PyArray_MultiIter_NEXT`        Function pointer from :cfunc:`NpyIter_GetIterNext`
 :cfunc:`PyArray_MultiIter_DATA`        :cfunc:`NpyIter_GetDataPtrArray`
 :cfunc:`PyArray_MultiIter_NEXTi`       **NOT SUPPORTED** (always lock-step iteration)
-:cfunc:`PyArray_MultiIter_GOTO`        :cfunc:`NpyIter_GotoCoords`
+:cfunc:`PyArray_MultiIter_GOTO`        :cfunc:`NpyIter_GotoMultiIndex`
 :cfunc:`PyArray_MultiIter_GOTO1D`      :cfunc:`NpyIter_GotoIndex` or
                                        :cfunc:`NpyIter_GotoIterIndex`
 :cfunc:`PyArray_MultiIter_NOTDONE`     Return value of ``iternext`` function pointer
@@ -267,10 +267,10 @@ an incomplete struct.
    This is a function pointer for the iteration loop, returned by
    :cfunc:`NpyIter_GetIterNext`.
 
-.. ctype:: NpyIter_GetCoordsFunc
+.. ctype:: NpyIter_GetMultiIndexFunc
 
-   This is a function pointer for getting iterator coordinates, returned by
-   :cfunc:`NpyIter_GetGetCoords`.
+   This is a function pointer for getting the current iterator multi-index,
+   returned by :cfunc:`NpyIter_GetGetMultiIndex`.
 
 Construction and Destruction
 ----------------------------
@@ -360,9 +360,9 @@ Construction and Destruction
             Causes the iterator to track a raveled flat index matching Fortran
             order. This option cannot be used with :cdata:`NPY_ITER_C_INDEX`.
 
-        .. cvar:: NPY_ITER_COORDS
+        .. cvar:: NPY_ITER_MULTI_INDEX
 
-            Causes the iterator to track array coordinates.
+            Causes the iterator to track a multi-index.
             This prevents the iterator from coalescing axes to
             produce bigger inner loops.
 
@@ -372,7 +372,7 @@ Construction and Destruction
             loop, requiring the user of the iterator to handle it.
 
             This flag is incompatible with :cdata:`NPY_ITER_C_INDEX`,
-            :cdata:`NPY_ITER_F_INDEX`, and :cdata:`NPY_ITER_COORDS`.
+            :cdata:`NPY_ITER_F_INDEX`, and :cdata:`NPY_ITER_MULTI_INDEX`.
 
         .. cvar:: NPY_ITER_DONT_NEGATE_STRIDES
 
@@ -654,9 +654,9 @@ Construction and Destruction
 .. cfunction:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)``
 
     Removes an axis from iteration.  This requires that
-    :cdata:`NPY_ITER_COORDS` was set for iterator creation, and does not work
-    if buffering is enabled or an index is being tracked. This function
-    also resets the iterator to its initial state.
+    :cdata:`NPY_ITER_MULTI_INDEX` was set for iterator creation, and does
+    not work if buffering is enabled or an index is being tracked. This
+    function also resets the iterator to its initial state.
 
     This is useful for setting up an accumulation loop, for example.
     The iterator can first be created with all the dimensions, including
@@ -671,10 +671,10 @@ Construction and Destruction
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 
-.. cfunction:: int NpyIter_RemoveCoords(NpyIter* iter)
+.. cfunction:: int NpyIter_RemoveMultiIndex(NpyIter* iter)
 
-    If the iterator has coordinates, this strips support for them, and
-    does further iterator optimizations that are possible if coordinates
+    If the iterator is tracking a multi-index, this strips support for them,
+    and does further iterator optimizations that are possible if multi-indices
     are not needed.  This function also resets the iterator to its initial
     state.
 
@@ -682,17 +682,17 @@ Construction and Destruction
     the iterator.  Any cached functions or pointers from the iterator
     must be retrieved again!
 
-    After calling this function, :cfunc:`NpyIter_HasCoords`(iter) will
+    After calling this function, :cfunc:`NpyIter_HasMultiIndex`(iter) will
     return false.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 .. cfunction:: int NpyIter_EnableExternalLoop(NpyIter* iter)
 
-    If :cfunc:`NpyIter_RemoveCoords` was called, you may want to enable the
+    If :cfunc:`NpyIter_RemoveMultiIndex` was called, you may want to enable the
     flag :cdata:`NPY_ITER_EXTERNAL_LOOP`.  This flag is not permitted
-    together with :cdata:`NPY_ITER_COORDS`, so this function is provided
-    to enable the feature after :cfunc:`NpyIter_RemoveCoords` is called.
+    together with :cdata:`NPY_ITER_MULTI_INDEX`, so this function is provided
+    to enable the feature after :cfunc:`NpyIter_RemoveMultiIndex` is called.
     This function also resets the iterator to its initial state.
 
     **WARNING**: This function changes the internal logic of the iterator.
@@ -808,11 +808,11 @@ Construction and Destruction
             } while (iternext2(iter2));
         } while (iternext1(iter1));
 
-.. cfunction:: int NpyIter_GotoCoords(NpyIter* iter, npy_intp* coords)
+.. cfunction:: int NpyIter_GotoMultiIndex(NpyIter* iter, npy_intp* multi_index)
 
-    Adjusts the iterator to point to the ``ndim`` coordinates
-    pointed to by ``coords``.  Returns an error if coordinates
-    are not being tracked, the coordinates are out of bounds,
+    Adjusts the iterator to point to the ``ndim`` indices
+    pointed to by ``multi_index``.  Returns an error if a multi-index
+    is not being tracked, the indices are out of bounds,
     or inner loop iteration is disabled.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
@@ -867,10 +867,10 @@ Construction and Destruction
     by the constructor flag :cdata:`NPY_ITER_EXTERNAL_LOOP` or
     :cfunc:`NpyIter_EnableExternalLoop`.
 
-.. cfunction:: npy_bool NpyIter_HasCoords(NpyIter* iter)
+.. cfunction:: npy_bool NpyIter_HasMultiIndex(NpyIter* iter)
 
     Returns 1 if the iterator was created with the
-    :cdata:`NPY_ITER_COORDS` flag, 0 otherwise.
+    :cdata:`NPY_ITER_MULTI_INDEX` flag, 0 otherwise.
 
 .. cfunction:: npy_bool NpyIter_HasIndex(NpyIter* iter)
 
@@ -901,8 +901,8 @@ Construction and Destruction
 
 .. cfunction:: int NpyIter_GetNDim(NpyIter* iter)
 
-    Returns the number of dimensions being iterated.  If coordinates
-    were not requested in the iterator constructor, this value
+    Returns the number of dimensions being iterated.  If a multi-index
+    was not requested in the iterator constructor, this value
     may be smaller than the number of dimensions in the original
     objects.
 
@@ -913,7 +913,7 @@ Construction and Destruction
 .. cfunction:: npy_intp* NpyIter_GetAxisStrideArray(NpyIter* iter, int axis)
 
     Gets the array of strides for the specified axis. Requires that
-    the iterator be tracking coordinates, and that buffering not
+    the iterator be tracking a multi-index, and that buffering not
     be enabled.
 
     This may be used when you want to match up operand axes in
@@ -927,7 +927,7 @@ Construction and Destruction
 .. cfunction:: int NpyIter_GetShape(NpyIter* iter, npy_intp* outshape)
 
     Returns the broadcast shape of the iterator in ``outshape``.
-    This can only be called on an iterator which supports coordinates.
+    This can only be called on an iterator which is tracking a multi-index.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
@@ -976,7 +976,7 @@ Construction and Destruction
     was passed for op_axes.  This is for data packed contiguously,
     but not necessarily in C or Fortran order. This should be used
     together with :cfunc:`NpyIter_GetShape` and :cfunc:`NpyIter_GetNDim`
-    with the flag :cdata:`NPY_ITER_COORDS` passed into the constructor.
+    with the flag :cdata:`NPY_ITER_MULTI_INDEX` passed into the constructor.
 
     A use case for this function is to match the shape and layout of
     the iterator and tack on one or more dimensions.  For example,
@@ -986,7 +986,7 @@ Construction and Destruction
     you do the same thing but add two dimensions, or take advantage of
     the symmetry and pack it into 1 dimension with a particular encoding.
 
-    This function may only be called if the iterator is tracking coordinates
+    This function may only be called if the iterator is tracking a multi-index
     and if :cdata:`NPY_ITER_DONT_NEGATE_STRIDES` was used to prevent an axis
     from being iterated in reverse order.
 
@@ -1097,11 +1097,11 @@ Functions For Iteration
             }
         } while (iternext());
 
-.. cfunction:: NpyIter_GetCoordsFunc *NpyIter_GetGetCoords(NpyIter* iter, char** errmsg)
+.. cfunction:: NpyIter_GetMultiIndexFunc *NpyIter_GetGetMultiIndex(NpyIter* iter, char** errmsg)
 
-    Returns a function pointer for getting the coordinates
-    of the iterator.  Returns NULL if the iterator does not
-    support coordinates.  It is recommended that this function
+    Returns a function pointer for getting the current multi-index
+    of the iterator.  Returns NULL if the iterator is not tracking
+    a multi-index.  It is recommended that this function
     pointer be cached in a local variable before the iteration
     loop.
 

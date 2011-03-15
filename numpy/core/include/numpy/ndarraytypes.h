@@ -868,7 +868,7 @@ typedef struct NpyIter_InternalOnly NpyIter;
 
 /* Iterator function pointers that may be specialized */
 typedef int (NpyIter_IterNextFunc)(NpyIter *iter);
-typedef void (NpyIter_GetCoordsFunc)(NpyIter *iter,
+typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
                                       npy_intp *outcoords);
 
 /*** Global flags that may be passed to the iterator constructors ***/
@@ -877,8 +877,8 @@ typedef void (NpyIter_GetCoordsFunc)(NpyIter *iter,
 #define NPY_ITER_C_INDEX                    0x00000001
 /* Track an index representing Fortran order */
 #define NPY_ITER_F_INDEX                    0x00000002
-/* Track coordinates */
-#define NPY_ITER_COORDS                     0x00000004
+/* Track a multi-index */
+#define NPY_ITER_MULTI_INDEX                0x00000004
 /* User code external to the iterator does the 1-dimensional innermost loop */
 #define NPY_ITER_EXTERNAL_LOOP              0x00000008
 /* Convert all the operands to a common data type */

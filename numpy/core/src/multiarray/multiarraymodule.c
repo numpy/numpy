@@ -1345,7 +1345,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
 /*NUMPY_API
  * Convert an object to an array of n NPY_CLIPMODE values.
  * This is intended to be used in functions where a different mode
- * could be applied to each axis, like in ravel_coords.
+ * could be applied to each axis, like in ravel_multi_index.
  */
 NPY_NO_EXPORT int
 PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)

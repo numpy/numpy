@@ -76,8 +76,8 @@ mapping manually.
 Other new functions
 -------------------
 
-``numpy.ravel_coords`` : Converts a tuple of coordinate arrays into an array of
-flat indices, applying boundary modes to the coordinates.
+``numpy.ravel_multi_index`` : Converts a multi-index tuple into
+an array of flat indices, applying boundary modes to the indices.
 
 ``numpy.slogdet`` : Compute the sign and (natural) logarithm of the determinant
 of an array.

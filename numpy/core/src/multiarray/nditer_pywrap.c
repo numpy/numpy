@@ -30,7 +30,7 @@ struct NewNpyArrayIterObject_tag {
     NewNpyArrayIterObject *nested_child;
     /* Cached values from the iterator */
     NpyIter_IterNextFunc *iternext;
-    NpyIter_GetCoordsFunc *getcoords;
+    NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptrs;
     PyArray_Descr **dtypes;
     PyArrayObject **operands;
@@ -43,13 +43,13 @@ void npyiter_cache_values(NewNpyArrayIterObject *self)
 {
     NpyIter *iter = self->iter;
 
-    /* iternext and getcoords functions */
+    /* iternext and get_multi_index functions */
     self->iternext = NpyIter_GetIterNext(iter, NULL);
-    if (NpyIter_HasCoords(iter) && !NpyIter_HasDelayedBufAlloc(iter)) {
-        self->getcoords = NpyIter_GetGetCoords(iter, NULL);
+    if (NpyIter_HasMultiIndex(iter) && !NpyIter_HasDelayedBufAlloc(iter)) {
+        self->get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
     }
     else {
-        self->getcoords = NULL;
+        self->get_multi_index = NULL;
     }
 
     /* Internal data pointers */
@@ -146,11 +146,6 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                             flag = NPY_ITER_C_INDEX;
                         }
                         break;
-                    case 's':
-                        if (strcmp(str, "coords") == 0) {
-                            flag = NPY_ITER_COORDS;
-                        }
-                        break;
                     case 'n':
                         if (strcmp(str, "common_dtype") == 0) {
                             flag = NPY_ITER_COMMON_DTYPE;
@@ -176,6 +171,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             case 'g':
                 if (strcmp(str, "growinner") == 0) {
                     flag = NPY_ITER_GROWINNER;
+                }
+                break;
+            case 'm':
+                if (strcmp(str, "multi_index") == 0) {
+                    flag = NPY_ITER_MULTI_INDEX;
                 }
                 break;
             case 'r':
@@ -1246,8 +1246,8 @@ npyiter_reset(NewNpyArrayIterObject *self)
         self->finished = 0;
     }
 
-    if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
-        self->getcoords = NpyIter_GetGetCoords(self->iter, NULL);
+    if (self->get_multi_index == NULL && NpyIter_HasMultiIndex(self->iter)) {
+        self->get_multi_index = NpyIter_GetGetMultiIndex(self->iter, NULL);
     }
 
     /* If there is nesting, the nested iterators should be reset */
@@ -1347,7 +1347,7 @@ npyiter_remove_axis(NewNpyArrayIterObject *self, PyObject *args)
 }
 
 static PyObject *
-npyiter_remove_coords(NewNpyArrayIterObject *self)
+npyiter_remove_multi_index(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1355,10 +1355,10 @@ npyiter_remove_coords(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    NpyIter_RemoveCoords(self->iter);
-    /* RemoveCoords invalidates cached values */
+    NpyIter_RemoveMultiIndex(self->iter);
+    /* RemoveMultiIndex invalidates cached values */
     npyiter_cache_values(self);
-    /* RemoveCoords also resets the iterator */
+    /* RemoveMultiIndex also resets the iterator */
     if (NpyIter_GetIterSize(self->iter) == 0) {
         self->started = 1;
         self->finished = 1;
@@ -1566,10 +1566,10 @@ static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
     return NULL;
 }
 
-static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
+static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
 {
     PyObject *ret;
-    npy_intp idim, ndim, coords[NPY_MAXDIMS];
+    npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1577,20 +1577,20 @@ static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (self->getcoords != NULL) {
+    if (self->get_multi_index != NULL) {
         ndim = NpyIter_GetNDim(self->iter);
-        self->getcoords(self->iter, coords);
+        self->get_multi_index(self->iter, multi_index);
         ret = PyTuple_New(ndim);
         for (idim = 0; idim < ndim; ++idim) {
             PyTuple_SET_ITEM(ret, idim,
-                    PyInt_FromLong(coords[idim]));
+                    PyInt_FromLong(multi_index[idim]));
         }
         return ret;
     }
     else {
-        if (!NpyIter_HasCoords(self->iter)) {
+        if (!NpyIter_HasMultiIndex(self->iter)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator does not have coordinates");
+                    "Iterator is not tracking a multi-index");
             return NULL;
         }
         else if (NpyIter_HasDelayedBufAlloc(self->iter)) {
@@ -1607,9 +1607,9 @@ static PyObject *npyiter_coords_get(NewNpyArrayIterObject *self)
     }
 }
 
-static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
+static int npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
 {
-    npy_intp idim, ndim, coords[NPY_MAXDIMS];
+    npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1619,30 +1619,30 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
 
     if (value == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot delete coordinates");
+                "Cannot delete the multi_index");
         return -1;
     }
 
-    if (NpyIter_HasCoords(self->iter)) {
+    if (NpyIter_HasMultiIndex(self->iter)) {
         ndim = NpyIter_GetNDim(self->iter);
         if (!PySequence_Check(value)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Coordinates must be set with a sequence");
+                    "multi_index must be set with a sequence");
             return -1;
         }
         if (PySequence_Size(value) != ndim) {
             PyErr_SetString(PyExc_ValueError,
-                    "Wrong number of coordinates");
+                    "Wrong number of indices");
             return -1;
         }
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
-            coords[idim] = PyInt_AsLong(v);
-            if (coords[idim]==-1 && PyErr_Occurred()) {
+            multi_index[idim] = PyInt_AsLong(v);
+            if (multi_index[idim]==-1 && PyErr_Occurred()) {
                 return -1;
             }
         }
-        if (NpyIter_GotoCoords(self->iter, coords) != NPY_SUCCEED) {
+        if (NpyIter_GotoMultiIndex(self->iter, multi_index) != NPY_SUCCEED) {
             return -1;
         }
         self->started = 0;
@@ -1657,7 +1657,7 @@ static int npyiter_coords_set(NewNpyArrayIterObject *self, PyObject *value)
     }
     else {
         PyErr_SetString(PyExc_ValueError,
-                "Iterator does not have coordinates");
+                "Iterator is not tracking a multi-index");
         return -1;
     }
 }
@@ -1829,8 +1829,8 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
         self->started = self->finished = 1;
     }
 
-    if (self->getcoords == NULL && NpyIter_HasCoords(self->iter)) {
-        self->getcoords = NpyIter_GetGetCoords(self->iter, NULL);
+    if (self->get_multi_index == NULL && NpyIter_HasMultiIndex(self->iter)) {
+        self->get_multi_index = NpyIter_GetGetMultiIndex(self->iter, NULL);
     }
 
     /* If there is nesting, the nested iterators should be reset */
@@ -1841,7 +1841,7 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
     return 0;
 }
 
-static PyObject *npyiter_hasdelayedbufalloc_get(NewNpyArrayIterObject *self)
+static PyObject *npyiter_has_delayed_bufalloc_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1873,7 +1873,7 @@ static PyObject *npyiter_iterationneedsapi_get(NewNpyArrayIterObject *self)
     }
 }
 
-static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
+static PyObject *npyiter_has_multi_index_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1881,7 +1881,7 @@ static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (NpyIter_HasCoords(self->iter)) {
+    if (NpyIter_HasMultiIndex(self->iter)) {
         Py_RETURN_TRUE;
     }
     else {
@@ -1889,7 +1889,7 @@ static PyObject *npyiter_hascoords_get(NewNpyArrayIterObject *self)
     }
 }
 
-static PyObject *npyiter_hasindex_get(NewNpyArrayIterObject *self)
+static PyObject *npyiter_has_index_get(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -2336,7 +2336,8 @@ static PyMethodDef npyiter_methods[] = {
     {"__copy__", (PyCFunction)npyiter_copy, METH_NOARGS, NULL},
     {"iternext", (PyCFunction)npyiter_iternext, METH_NOARGS, NULL},
     {"remove_axis", (PyCFunction)npyiter_remove_axis, METH_VARARGS, NULL},
-    {"remove_coords", (PyCFunction)npyiter_remove_coords, METH_NOARGS, NULL},
+    {"remove_multi_index", (PyCFunction)npyiter_remove_multi_index,
+                METH_NOARGS, NULL},
     {"enable_external_loop", (PyCFunction)npyiter_enable_external_loop,
                 METH_NOARGS, NULL},
     {"debug_print", (PyCFunction)npyiter_debug_print, METH_NOARGS, NULL},
@@ -2354,9 +2355,9 @@ static PyGetSetDef npyiter_getsets[] = {
     {"shape",
         (getter)npyiter_shape_get,
         NULL, NULL, NULL},
-    {"coords",
-        (getter)npyiter_coords_get,
-        (setter)npyiter_coords_set,
+    {"multi_index",
+        (getter)npyiter_multi_index_get,
+        (setter)npyiter_multi_index_set,
         NULL, NULL},
     {"index",
         (getter)npyiter_index_get,
@@ -2376,17 +2377,17 @@ static PyGetSetDef npyiter_getsets[] = {
     {"itviews",
         (getter)npyiter_itviews_get,
         NULL, NULL, NULL},
-    {"hasdelayedbufalloc",
-        (getter)npyiter_hasdelayedbufalloc_get,
+    {"has_delayed_bufalloc",
+        (getter)npyiter_has_delayed_bufalloc_get,
         NULL, NULL, NULL},
     {"iterationneedsapi",
         (getter)npyiter_iterationneedsapi_get,
         NULL, NULL, NULL},
-    {"hascoords",
-        (getter)npyiter_hascoords_get,
+    {"has_multi_index",
+        (getter)npyiter_has_multi_index_get,
         NULL, NULL, NULL},
-    {"hasindex",
-        (getter)npyiter_hasindex_get,
+    {"has_index",
+        (getter)npyiter_has_index_get,
         NULL, NULL, NULL},
     {"dtypes",
         (getter)npyiter_dtypes_get,

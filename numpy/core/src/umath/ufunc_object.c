@@ -2305,7 +2305,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     }
 
     /* Create the iterator */
-    iter = NpyIter_AdvancedNew(niter, op, NPY_ITER_COORDS|
+    iter = NpyIter_AdvancedNew(niter, op, NPY_ITER_MULTI_INDEX|
                                       NPY_ITER_REFS_OK|
                                       NPY_ITER_REDUCE_OK,
                            order, NPY_UNSAFE_CASTING, op_flags,
@@ -2365,7 +2365,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
             goto fail;
         }
     }
-    if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
+    if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
         retval = -1;
         goto fail;
     }
@@ -2916,7 +2916,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
              * so make a copy instead when necessary.
              */
             ndim_iter = ndim;
-            flags |= NPY_ITER_COORDS;
+            flags |= NPY_ITER_MULTI_INDEX;
             /* Add some more flags */
             op_flags[0] |= NPY_ITER_UPDATEIFCOPY|NPY_ITER_ALIGNED;
             op_flags[1] |= NPY_ITER_COPY|NPY_ITER_ALIGNED;
@@ -2949,7 +2949,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
                 goto fail;
             }
-            if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
+            if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
                 goto fail;
             }
         }
@@ -3535,7 +3535,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     if (need_outer_iterator) {
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
                            NPY_ITER_REFS_OK|
-                           NPY_ITER_COORDS;
+                           NPY_ITER_MULTI_INDEX;
 
         /*
          * The way reduceat is set up, we can't do buffering,
@@ -3570,7 +3570,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
             goto fail;
         }
-        if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
+        if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
             goto fail;
         }
 

@@ -614,7 +614,7 @@ static int sequence_to_arrays(PyObject *seq,
 
 /* Inner loop for unravel_index */
 static int
-ravel_coords_loop(int ravel_ndim, npy_intp *ravel_dims,
+ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
                         npy_intp *ravel_strides,
                         npy_intp count,
                         NPY_CLIPMODE *modes,
@@ -674,9 +674,9 @@ ravel_coords_loop(int ravel_ndim, npy_intp *ravel_dims,
     return NPY_SUCCEED;
 }
 
-/* ravel_coords implementation - see add_newdocs.py */
+/* ravel_multi_index implementation - see add_newdocs.py */
 static PyObject *
-arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
+arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
 {
     int i, s;
     PyObject *mode0=NULL, *coords0=NULL;
@@ -692,12 +692,13 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
 
     NpyIter *iter = NULL;
 
-    char *kwlist[] = {"coords", "dims", "mode", "order", NULL};
+    char *kwlist[] = {"multi_index", "dims", "mode", "order", NULL};
 
     memset(op, 0, sizeof(op));
     dtype[0] = NULL;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|OO&:ravel_coords", kwlist,
+    if(!PyArg_ParseTupleAndKeywords(args, kwds,
+                        "OO&|OO&:ravel_multi_index", kwlist,
                      &coords0,
                      PyArray_IntpConverter, &dimensions,
                      &mode0,
@@ -707,7 +708,7 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
 
     if (dimensions.len+1 > NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError,
-                    "too many dimensions passed to ravel_coords");
+                    "too many dimensions passed to ravel_multi_index");
         goto fail;
     }
 
@@ -736,8 +737,8 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    /* Get the coords into op */
-    if (sequence_to_arrays(coords0, op, dimensions.len, "coords") < 0) {
+    /* Get the multi_index into op */
+    if (sequence_to_arrays(coords0, op, dimensions.len, "multi_index") < 0) {
         goto fail;
     }
 
@@ -779,7 +780,7 @@ arr_ravel_coords(PyObject *self, PyObject *args, PyObject *kwds)
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         do {
-            if (ravel_coords_loop(dimensions.len, dimensions.ptr,
+            if (ravel_multi_index_loop(dimensions.len, dimensions.ptr,
                         ravel_strides, *countptr, modes,
                         dataptr, strides) != NPY_SUCCEED) {
                 goto fail;
@@ -923,7 +924,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                                 NPY_ITER_BUFFERED|
                                 NPY_ITER_ZEROSIZE_OK|
                                 NPY_ITER_DONT_NEGATE_STRIDES|
-                                NPY_ITER_COORDS,
+                                NPY_ITER_MULTI_INDEX,
                                 NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
                                 dtype);
     if (iter == NULL) {
@@ -932,7 +933,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     /*
      * Create the return array with a layout compatible with the indices
-     * and with a dimension added to the end for the coordinates
+     * and with a dimension added to the end for the multi-index
      */
     ret_ndim = PyArray_NDIM(indices) + 1;
     if (NpyIter_GetShape(iter, ret_dims) != NPY_SUCCEED) {
@@ -945,8 +946,8 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     }
     ret_strides[ret_ndim-1] = sizeof(npy_intp);
 
-    /* Remove the coords and inner loop */
-    if (NpyIter_RemoveCoords(iter) != NPY_SUCCEED) {
+    /* Remove the multi-index and inner loop */
+    if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
         goto fail;
     }
     if (NpyIter_EnableExternalLoop(iter) != NPY_SUCCEED) {
@@ -1020,7 +1021,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    /* Now make a tuple of views, one per coordinate */
+    /* Now make a tuple of views, one per index */
     ret_tuple = PyTuple_New(dimensions.len);
     if (ret_tuple == NULL) {
         goto fail;
@@ -1411,7 +1412,7 @@ static struct PyMethodDef methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"ravel_coords", (PyCFunction)arr_ravel_coords,
+    {"ravel_multi_index", (PyCFunction)arr_ravel_multi_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"unravel_index", (PyCFunction)arr_unravel_index,
         METH_VARARGS | METH_KEYWORDS, NULL},

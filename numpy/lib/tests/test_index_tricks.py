@@ -7,28 +7,28 @@ from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,
 class TestRavelUnravelIndex(TestCase):
     def test_basic(self):
         assert_equal(np.unravel_index(2,(2,2)), (1,0))
-        assert_equal(np.ravel_coords((1,0),(2,2)), 2)
+        assert_equal(np.ravel_multi_index((1,0),(2,2)), 2)
         assert_equal(np.unravel_index(254,(17,94)), (2,66))
-        assert_equal(np.ravel_coords((2,66),(17,94)), 254)
+        assert_equal(np.ravel_multi_index((2,66),(17,94)), 254)
         assert_raises(ValueError, np.unravel_index, -1, (2,2))
         assert_raises(TypeError, np.unravel_index, 0.5, (2,2))
         assert_raises(ValueError, np.unravel_index, 4, (2,2))
-        assert_raises(ValueError, np.ravel_coords, (-3,1), (2,2))
-        assert_raises(ValueError, np.ravel_coords, (2,1), (2,2))
-        assert_raises(ValueError, np.ravel_coords, (0,-3), (2,2))
-        assert_raises(ValueError, np.ravel_coords, (0,2), (2,2))
-        assert_raises(TypeError, np.ravel_coords, (0.1,0.), (2,2))
+        assert_raises(ValueError, np.ravel_multi_index, (-3,1), (2,2))
+        assert_raises(ValueError, np.ravel_multi_index, (2,1), (2,2))
+        assert_raises(ValueError, np.ravel_multi_index, (0,-3), (2,2))
+        assert_raises(ValueError, np.ravel_multi_index, (0,2), (2,2))
+        assert_raises(TypeError, np.ravel_multi_index, (0.1,0.), (2,2))
 
         assert_equal(np.unravel_index((2*3 + 1)*6 + 4, (4,3,6)), [2,1,4])
-        assert_equal(np.ravel_coords([2,1,4], (4,3,6)), (2*3 + 1)*6 + 4)
+        assert_equal(np.ravel_multi_index([2,1,4], (4,3,6)), (2*3 + 1)*6 + 4)
 
         arr = np.array([[3,6,6],[4,5,1]])
-        assert_equal(np.ravel_coords(arr, (7,6)), [22,41,37])
-        assert_equal(np.ravel_coords(arr, (7,6), order='F'), [31,41,13])
-        assert_equal(np.ravel_coords(arr, (4,6), mode='clip'), [22,23,19])
-        assert_equal(np.ravel_coords(arr, (4,4), mode=('clip','wrap')),
+        assert_equal(np.ravel_multi_index(arr, (7,6)), [22,41,37])
+        assert_equal(np.ravel_multi_index(arr, (7,6), order='F'), [31,41,13])
+        assert_equal(np.ravel_multi_index(arr, (4,6), mode='clip'), [22,23,19])
+        assert_equal(np.ravel_multi_index(arr, (4,4), mode=('clip','wrap')),
                         [12,13,13])
-        assert_equal(np.ravel_coords((3,1,4,1), (6,7,8,9)), 1621)
+        assert_equal(np.ravel_multi_index((3,1,4,1), (6,7,8,9)), 1621)
 
         assert_equal(np.unravel_index(np.array([22, 41, 37]), (7,6)),
                         [[3, 6, 6],[4, 5, 1]])
@@ -43,30 +43,30 @@ class TestRavelUnravelIndex(TestCase):
             coords = np.array([[1,0,1,2,3,4],[1,6,1,3,2,0]], dtype=dtype)
             shape = (5,8)
             uncoords = 8*coords[0]+coords[1]
-            assert_equal(np.ravel_coords(coords, shape), uncoords)
+            assert_equal(np.ravel_multi_index(coords, shape), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape))
             uncoords = coords[0]+5*coords[1]
-            assert_equal(np.ravel_coords(coords, shape, order='F'), uncoords)
+            assert_equal(np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
             
             coords = np.array([[1,0,1,2,3,4],[1,6,1,3,2,0],[1,3,1,0,9,5]],
                               dtype=dtype)
             shape = (5,8,10)
             uncoords = 10*(8*coords[0]+coords[1])+coords[2]
-            assert_equal(np.ravel_coords(coords, shape), uncoords)
+            assert_equal(np.ravel_multi_index(coords, shape), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape))
             uncoords = coords[0]+5*(coords[1]+8*coords[2])
-            assert_equal(np.ravel_coords(coords, shape, order='F'), uncoords)
+            assert_equal(np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
 
     def test_clipmodes(self):
         # Test clipmodes
-        assert_equal(np.ravel_coords([5,1,-1,2], (4,3,7,12), mode='wrap'),
-                     np.ravel_coords([1,1,6,2], (4,3,7,12)))
-        assert_equal(np.ravel_coords([5,1,-1,2], (4,3,7,12),
+        assert_equal(np.ravel_multi_index([5,1,-1,2], (4,3,7,12), mode='wrap'),
+                     np.ravel_multi_index([1,1,6,2], (4,3,7,12)))
+        assert_equal(np.ravel_multi_index([5,1,-1,2], (4,3,7,12),
                                  mode=('wrap','raise','clip','raise')),
-                     np.ravel_coords([1,1,0,2], (4,3,7,12)))
-        assert_raises(ValueError, np.ravel_coords, [5,1,-1,2], (4,3,7,12))
+                     np.ravel_multi_index([1,1,0,2], (4,3,7,12)))
+        assert_raises(ValueError, np.ravel_multi_index, [5,1,-1,2], (4,3,7,12))
 
 class TestGrid(TestCase):
     def test_basic(self):

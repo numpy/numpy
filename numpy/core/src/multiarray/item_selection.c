@@ -1780,11 +1780,11 @@ PyArray_Nonzero(PyArrayObject *self)
     char *data;
     npy_intp stride, count;
     npy_intp nonzero_count = PyArray_CountNonzero(self);
-    npy_intp *coords;
+    npy_intp *multi_index;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
-    NpyIter_GetCoordsFunc *getcoords;
+    NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptr;
     npy_intp *innersizeptr;
 
@@ -1802,14 +1802,14 @@ PyArray_Nonzero(PyArrayObject *self)
     if (ndim <= 1) {
         npy_intp j;
 
-        coords = (npy_intp *)PyArray_DATA(ret);
+        multi_index = (npy_intp *)PyArray_DATA(ret);
         data = PyArray_BYTES(self);
         stride = (ndim == 0) ? 0 : PyArray_STRIDE(self, 0);
         count = (ndim == 0) ? 1 : PyArray_DIM(self, 0);
 
         for (j = 0; j < count; ++j) {
             if (nonzero(data, self)) {
-                *coords++ = j;
+                *multi_index++ = j;
             }
             data += stride;
         }
@@ -1817,9 +1817,9 @@ PyArray_Nonzero(PyArrayObject *self)
         goto finish;
     }
 
-    /* Build an iterator with coordinates, in C order */
+    /* Build an iterator tracking a multi-index, in C order */
     iter = NpyIter_New(self, NPY_ITER_READONLY|
-                             NPY_ITER_COORDS|
+                             NPY_ITER_MULTI_INDEX|
                              NPY_ITER_ZEROSIZE_OK|
                              NPY_ITER_REFS_OK,
                         NPY_CORDER, NPY_NO_CASTING,
@@ -1838,8 +1838,8 @@ PyArray_Nonzero(PyArrayObject *self)
             Py_DECREF(ret);
             return NULL;
         }
-        getcoords = NpyIter_GetGetCoords(iter, NULL);
-        if (getcoords == NULL) {
+        get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
+        if (get_multi_index == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
             return NULL;
@@ -1847,13 +1847,13 @@ PyArray_Nonzero(PyArrayObject *self)
         dataptr = NpyIter_GetDataPtrArray(iter);
         innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        coords = (npy_intp *)PyArray_DATA(ret);
+        multi_index = (npy_intp *)PyArray_DATA(ret);
 
-        /* Get the coordinates for each non-zero element */
+        /* Get the multi-index for each non-zero element */
         do {
             if (nonzero(*dataptr, self)) {
-                getcoords(iter, coords);
-                coords += ndim;
+                get_multi_index(iter, multi_index);
+                multi_index += ndim;
             }
         } while(iternext(iter));
     }

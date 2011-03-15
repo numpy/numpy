@@ -6,10 +6,10 @@ import sys, warnings
 
 import warnings
 
-def iter_coords(i):
+def iter_multi_index(i):
     ret = []
     while not i.finished:
-        ret.append(i.coords)
+        ret.append(i.multi_index)
         i.iternext()
     return ret
 
@@ -174,85 +174,85 @@ def test_iter_c_or_f_order():
                 assert_equal([x for x in i],
                                     aview.swapaxes(0,1).ravel(order='A'))
 
-def test_iter_best_order_coords_1d():
-    # The coords should be correct with any reordering
+def test_iter_best_order_multi_index_1d():
+    # The multi-indices should be correct with any reordering
 
     a = arange(4)
     # 1D order
-    i = nditer(a,['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(0,),(1,),(2,),(3,)])
+    i = nditer(a,['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(0,),(1,),(2,),(3,)])
     # 1D reversed order
-    i = nditer(a[::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(3,),(2,),(1,),(0,)])
+    i = nditer(a[::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(3,),(2,),(1,),(0,)])
 
-def test_iter_best_order_coords_2d():
-    # The coords should be correct with any reordering
+def test_iter_best_order_multi_index_2d():
+    # The multi-indices should be correct with any reordering
 
     a = arange(6)
     # 2D C-order
-    i = nditer(a.reshape(2,3),['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)])
+    i = nditer(a.reshape(2,3),['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)])
     # 2D Fortran-order
-    i = nditer(a.reshape(2,3).copy(order='F'),['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)])
+    i = nditer(a.reshape(2,3).copy(order='F'),['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)])
     # 2D reversed C-order
-    i = nditer(a.reshape(2,3)[::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(1,0),(1,1),(1,2),(0,0),(0,1),(0,2)])
-    i = nditer(a.reshape(2,3)[:,::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(0,2),(0,1),(0,0),(1,2),(1,1),(1,0)])
-    i = nditer(a.reshape(2,3)[::-1,::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(1,2),(1,1),(1,0),(0,2),(0,1),(0,0)])
+    i = nditer(a.reshape(2,3)[::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(1,0),(1,1),(1,2),(0,0),(0,1),(0,2)])
+    i = nditer(a.reshape(2,3)[:,::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(0,2),(0,1),(0,0),(1,2),(1,1),(1,0)])
+    i = nditer(a.reshape(2,3)[::-1,::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(1,2),(1,1),(1,0),(0,2),(0,1),(0,0)])
     # 2D reversed Fortran-order
-    i = nditer(a.reshape(2,3).copy(order='F')[::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(1,0),(0,0),(1,1),(0,1),(1,2),(0,2)])
+    i = nditer(a.reshape(2,3).copy(order='F')[::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(1,0),(0,0),(1,1),(0,1),(1,2),(0,2)])
     i = nditer(a.reshape(2,3).copy(order='F')[:,::-1],
-                                                   ['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(0,2),(1,2),(0,1),(1,1),(0,0),(1,0)])
+                                                   ['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(0,2),(1,2),(0,1),(1,1),(0,0),(1,0)])
     i = nditer(a.reshape(2,3).copy(order='F')[::-1,::-1],
-                                                   ['coords'],[['readonly']])
-    assert_equal(iter_coords(i), [(1,2),(0,2),(1,1),(0,1),(1,0),(0,0)])
+                                                   ['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i), [(1,2),(0,2),(1,1),(0,1),(1,0),(0,0)])
 
-def test_iter_best_order_coords_3d():
-    # The coords should be correct with any reordering
+def test_iter_best_order_multi_index_3d():
+    # The multi-indices should be correct with any reordering
 
     a = arange(12)
     # 3D C-order
-    i = nditer(a.reshape(2,3,2),['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+    i = nditer(a.reshape(2,3,2),['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(0,0,0),(0,0,1),(0,1,0),(0,1,1),(0,2,0),(0,2,1),
                              (1,0,0),(1,0,1),(1,1,0),(1,1,1),(1,2,0),(1,2,1)])
     # 3D Fortran-order
-    i = nditer(a.reshape(2,3,2).copy(order='F'),['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+    i = nditer(a.reshape(2,3,2).copy(order='F'),['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,2,0),(1,2,0),
                              (0,0,1),(1,0,1),(0,1,1),(1,1,1),(0,2,1),(1,2,1)])
     # 3D reversed C-order
-    i = nditer(a.reshape(2,3,2)[::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+    i = nditer(a.reshape(2,3,2)[::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(1,0,0),(1,0,1),(1,1,0),(1,1,1),(1,2,0),(1,2,1),
                              (0,0,0),(0,0,1),(0,1,0),(0,1,1),(0,2,0),(0,2,1)])
-    i = nditer(a.reshape(2,3,2)[:,::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+    i = nditer(a.reshape(2,3,2)[:,::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(0,2,0),(0,2,1),(0,1,0),(0,1,1),(0,0,0),(0,0,1),
                              (1,2,0),(1,2,1),(1,1,0),(1,1,1),(1,0,0),(1,0,1)])
-    i = nditer(a.reshape(2,3,2)[:,:,::-1],['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+    i = nditer(a.reshape(2,3,2)[:,:,::-1],['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(0,0,1),(0,0,0),(0,1,1),(0,1,0),(0,2,1),(0,2,0),
                              (1,0,1),(1,0,0),(1,1,1),(1,1,0),(1,2,1),(1,2,0)])
     # 3D reversed Fortran-order
     i = nditer(a.reshape(2,3,2).copy(order='F')[::-1],
-                                                    ['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+                                                    ['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(1,0,0),(0,0,0),(1,1,0),(0,1,0),(1,2,0),(0,2,0),
                              (1,0,1),(0,0,1),(1,1,1),(0,1,1),(1,2,1),(0,2,1)])
     i = nditer(a.reshape(2,3,2).copy(order='F')[:,::-1],
-                                                    ['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+                                                    ['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(0,2,0),(1,2,0),(0,1,0),(1,1,0),(0,0,0),(1,0,0),
                              (0,2,1),(1,2,1),(0,1,1),(1,1,1),(0,0,1),(1,0,1)])
     i = nditer(a.reshape(2,3,2).copy(order='F')[:,:,::-1],
-                                                    ['coords'],[['readonly']])
-    assert_equal(iter_coords(i),
+                                                    ['multi_index'],[['readonly']])
+    assert_equal(iter_multi_index(i),
                             [(0,0,1),(1,0,1),(0,1,1),(1,1,1),(0,2,1),(1,2,1),
                              (0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,2,0),(1,2,0)])
 
@@ -467,9 +467,9 @@ def test_iter_no_inner_dim_coalescing():
 def test_iter_dim_coalescing():
     # Check that the correct number of dimensions are coalesced
 
-    # Tracking coordinates disables coalescing
+    # Tracking a multi-index disables coalescing
     a = arange(24).reshape(2,3,4)
-    i = nditer(a, ['coords'], [['readonly']])
+    i = nditer(a, ['multi_index'], [['readonly']])
     assert_equal(i.ndim, 3)
 
     # A tracked index can allow coalescing if it's compatible with the array
@@ -504,69 +504,69 @@ def test_iter_broadcasting():
     # Standard NumPy broadcasting rules
 
     # 1D with scalar
-    i = nditer([arange(6), np.int32(2)], ['coords'], [['readonly']]*2)
+    i = nditer([arange(6), np.int32(2)], ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 6)
     assert_equal(i.shape, (6,))
 
     # 2D with scalar
     i = nditer([arange(6).reshape(2,3), np.int32(2)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 6)
     assert_equal(i.shape, (2,3))
     # 2D with 1D
     i = nditer([arange(6).reshape(2,3), arange(3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 6)
     assert_equal(i.shape, (2,3))
     i = nditer([arange(2).reshape(2,1), arange(3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 6)
     assert_equal(i.shape, (2,3))
     # 2D with 2D
     i = nditer([arange(2).reshape(2,1), arange(3).reshape(1,3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 6)
     assert_equal(i.shape, (2,3))
 
     # 3D with scalar
     i = nditer([np.int32(2), arange(24).reshape(4,2,3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     # 3D with 1D
     i = nditer([arange(3), arange(24).reshape(4,2,3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     i = nditer([arange(3), arange(8).reshape(4,2,1)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     # 3D with 2D
     i = nditer([arange(6).reshape(2,3), arange(24).reshape(4,2,3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     i = nditer([arange(2).reshape(2,1), arange(24).reshape(4,2,3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     i = nditer([arange(3).reshape(1,3), arange(8).reshape(4,2,1)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     # 3D with 3D
     i = nditer([arange(2).reshape(1,2,1), arange(3).reshape(1,1,3),
                         arange(4).reshape(4,1,1)],
-                        ['coords'], [['readonly']]*3)
+                        ['multi_index'], [['readonly']]*3)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     i = nditer([arange(6).reshape(1,2,3), arange(4).reshape(4,1,1)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
     i = nditer([arange(24).reshape(4,2,3), arange(12).reshape(4,1,3)],
-                        ['coords'], [['readonly']]*2)
+                        ['multi_index'], [['readonly']]*2)
     assert_equal(i.itersize, 24)
     assert_equal(i.shape, (4,2,3))
 
@@ -681,9 +681,9 @@ def test_iter_flags_errors():
     # Cannot track both a C and an F index
     assert_raises(ValueError, nditer, a,
                 ['c_index','f_index'], [['readonly']])
-    # Inner iteration and coords/indices are incompatible
+    # Inner iteration and multi-indices/indices are incompatible
     assert_raises(ValueError, nditer, a,
-                ['external_loop','coords'], [['readonly']])
+                ['external_loop','multi_index'], [['readonly']])
     assert_raises(ValueError, nditer, a,
                 ['external_loop','c_index'], [['readonly']])
     assert_raises(ValueError, nditer, a,
@@ -706,14 +706,14 @@ def test_iter_flags_errors():
     assert_raises(ValueError, nditer, a, [], [['writeonly']])
     assert_raises(ValueError, nditer, a, [], [['readwrite']])
     a.flags.writeable = True
-    # Coords available only with the coords flag
+    # Multi-indices available only with the multi_index flag
     i = nditer(arange(6), [], [['readonly']])
-    assert_raises(ValueError, lambda i:i.coords, i)
+    assert_raises(ValueError, lambda i:i.multi_index, i)
     # Index available only with an index flag
     assert_raises(ValueError, lambda i:i.index, i)
     # GotoCoords and GotoIndex incompatible with buffering or no_inner
-    def assign_coords(i):
-        i.coords = (0,)
+    def assign_multi_index(i):
+        i.multi_index = (0,)
     def assign_index(i):
         i.index = 0
     def assign_iterindex(i):
@@ -721,12 +721,12 @@ def test_iter_flags_errors():
     def assign_iterrange(i):
         i.iterrange = (0,1);
     i = nditer(arange(6), ['external_loop'])
-    assert_raises(ValueError, assign_coords, i)
+    assert_raises(ValueError, assign_multi_index, i)
     assert_raises(ValueError, assign_index, i)
     assert_raises(ValueError, assign_iterindex, i)
     assert_raises(ValueError, assign_iterrange, i)
     i = nditer(arange(6), ['buffered'])
-    assert_raises(ValueError, assign_coords, i)
+    assert_raises(ValueError, assign_multi_index, i)
     assert_raises(ValueError, assign_index, i)
     assert_raises(ValueError, assign_iterrange, i)
     # Can't iterate if size is zero
@@ -1126,14 +1126,14 @@ def test_iter_op_axes():
     # Inner product-style broadcasting
     a = arange(24).reshape(2,3,4)
     b = arange(40).reshape(5,2,4)
-    i = nditer([a,b], ['coords'], [['readonly']]*2,
+    i = nditer([a,b], ['multi_index'], [['readonly']]*2,
                             op_axes=[[0,1,-1,-1],[-1,-1,0,1]])
     assert_equal(i.shape, (2,3,5,2))
 
     # Matrix product-style broadcasting
     a = arange(12).reshape(3,4)
     b = arange(20).reshape(4,5)
-    i = nditer([a,b], ['coords'], [['readonly']]*2,
+    i = nditer([a,b], ['multi_index'], [['readonly']]*2,
                             op_axes=[[0,-1],[-1,1]])
     assert_equal(i.shape, (3,5))
 
@@ -1370,28 +1370,28 @@ def test_iter_allocate_output_errors():
 def test_iter_remove_axis():
     a = arange(24).reshape(2,3,4)
 
-    i = nditer(a,['coords'])
+    i = nditer(a,['multi_index'])
     i.remove_axis(1)
     assert_equal([x for x in i], a[:,0,:].ravel())
 
     a = a[::-1,:,:]
-    i = nditer(a,['coords'])
+    i = nditer(a,['multi_index'])
     i.remove_axis(0)
     assert_equal([x for x in i], a[0,:,:].ravel())
 
-def test_iter_remove_coords_inner_loop():
-    # Check that removing coords support works
+def test_iter_remove_multi_index_inner_loop():
+    # Check that removing multi-index support works
 
     a = arange(24).reshape(2,3,4)
 
-    i = nditer(a,['coords'])
+    i = nditer(a,['multi_index'])
     assert_equal(i.ndim, 3)
     assert_equal(i.shape, (2,3,4))
     assert_equal(i.itviews[0].shape, (2,3,4))
 
-    # Removing coords causes all dimensions to coalesce
+    # Removing the multi-index tracking causes all dimensions to coalesce
     before = [x for x in i]
-    i.remove_coords()
+    i.remove_multi_index()
     after = [x for x in i]
 
     assert_equal(before, after)
@@ -1534,12 +1534,12 @@ def test_iter_buffering_delayed_alloc():
 
     a = np.arange(6)
     b = np.arange(1, dtype='f4')
-    i = nditer([a,b], ['buffered','delay_bufalloc','coords','reduce_ok'],
+    i = nditer([a,b], ['buffered','delay_bufalloc','multi_index','reduce_ok'],
                     ['readwrite'],
                     casting='unsafe',
                     op_dtypes='f4')
-    assert_(i.hasdelayedbufalloc)
-    assert_raises(ValueError, lambda i:i.coords, i)
+    assert_(i.has_delayed_bufalloc)
+    assert_raises(ValueError, lambda i:i.multi_index, i)
     assert_raises(ValueError, lambda i:i[0], i)
     assert_raises(ValueError, lambda i:i[0:2], i)
     def assign_iter(i):
@@ -1547,8 +1547,8 @@ def test_iter_buffering_delayed_alloc():
     assert_raises(ValueError, assign_iter, i)
 
     i.reset()
-    assert_(not i.hasdelayedbufalloc)
-    assert_equal(i.coords, (0,))
+    assert_(not i.has_delayed_bufalloc)
+    assert_equal(i.multi_index, (0,))
     assert_equal(i[0], 0)
     i[1] = 1
     assert_equal(i[0:2], [0,1])

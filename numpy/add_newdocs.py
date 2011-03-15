@@ -4429,19 +4429,19 @@ add_newdoc('numpy.lib._compiled_base', 'bincount',
 
     """)
 
-add_newdoc('numpy.lib._compiled_base', 'ravel_coords',
+add_newdoc('numpy.lib._compiled_base', 'ravel_multi_index',
     """
-    ravel_coords(coords, dims, mode='raise', order='C')
+    ravel_multi_index(multi_index, dims, mode='raise', order='C')
 
-    Converts a tuple of coordinate arrays into an array of flat
-    indices, applying boundary modes to the coordinates.
+    Converts a tuple of index arrays into an array of flat
+    indices, applying boundary modes to the multi-index.
 
     Parameters
     ----------
-    coords : tuple of array_like
+    multi_index : tuple of array_like
         A tuple of integer arrays, one array for each dimension.
     dims : tuple of ints
-        The shape of array into which the indices from ``coords`` apply.
+        The shape of array into which the indices from ``multi_index`` apply.
     mode : {'raise', 'wrap', 'clip'}, optional
         Specifies how out-of-bounds indices are handled.  Can specify
         either one mode or a tuple of modes, one mode per index.
@@ -4453,7 +4453,7 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_coords',
         In 'clip' mode, a negative index which would normally
         wrap will clip to 0 instead.
     order : {'C', 'F'}, optional
-        Determines whether the coords should be viewed as indexing in
+        Determines whether the multi-index should be viewed as indexing in
         C (row-major) order or FORTRAN (column-major) order.
 
     Returns
@@ -4473,16 +4473,16 @@ add_newdoc('numpy.lib._compiled_base', 'ravel_coords',
     Examples
     --------
     >>> arr = np.array([[3,6,6],[4,5,1]])
-    >>> np.ravel_coords(arr, (7,6))
+    >>> np.ravel_multi_index(arr, (7,6))
     array([22, 41, 37])
-    >>> np.ravel_coords(arr, (7,6), order='F')
+    >>> np.ravel_multi_index(arr, (7,6), order='F')
     array([31, 41, 13])
-    >>> np.ravel_coords(arr, (4,6), mode='clip')
+    >>> np.ravel_multi_index(arr, (4,6), mode='clip')
     array([22, 23, 19])
-    >>> np.ravel_coords(arr, (4,4), mode=('clip','wrap'))
+    >>> np.ravel_multi_index(arr, (4,4), mode=('clip','wrap'))
     array([12, 13, 13])
 
-    >>> np.ravel_coords((3,1,4,1), (6,7,8,9))
+    >>> np.ravel_multi_index((3,1,4,1), (6,7,8,9))
     1621
     """)
 
@@ -4515,7 +4515,7 @@ add_newdoc('numpy.lib._compiled_base', 'unravel_index',
 
     See Also
     --------
-    ravel_coords
+    ravel_multi_index
 
     Examples
     --------
