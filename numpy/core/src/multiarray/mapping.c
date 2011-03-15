@@ -813,9 +813,15 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
             }
         }
 
+#if defined(NPY_PY3K)
+        PyErr_Format(PyExc_ValueError,
+                     "field named %S not found.",
+                     index);
+#else
         PyErr_Format(PyExc_ValueError,
                      "field named %s not found.",
                      PyString_AsString(index));
+#endif
         return -1;
     }
 

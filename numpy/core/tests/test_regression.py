@@ -1562,5 +1562,17 @@ class TestRegression(TestCase):
         assert_equal(r[0:3:2]['f1'][0][()], r[0:3:2][0]['f1'][()])
         assert_equal(r[0:3:2]['f1'][0].strides, r[0:3:2][0]['f1'].strides)
 
+    def test_ticket_1770(self):
+        "Should not segfault on python 3k"
+        import numpy as np
+        try:
+            a = np.zeros((1,), dtype=[('f1', 'f')])
+            a['f1'] = 1
+            a['f2'] = 1
+        except ValueError:
+            pass
+        except:
+            raise AssertionError
+
 if __name__ == "__main__":
     run_module_suite()
