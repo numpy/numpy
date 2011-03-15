@@ -35,11 +35,13 @@ Classifiers:
     Operating System :: MacOS
 
 Recurse:
-    numpy/core
+    numpy/core,
+    numpy/lib
 
 HookFile:
     bscript,
-    numpy/core/bscript
+    numpy/core/bscript,
+    numpy/lib/bscript
 
 ExtraSourceFiles:
     numpy_templates.py,

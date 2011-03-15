@@ -4,7 +4,8 @@ Library:
             src/npymath/_signbit.c,
             src/npymath/ieee754.c.src,
             src/npymath/npy_math.c.src,
-            src/npymath/npy_math_complex.c.src
+            src/npymath/npy_math_complex.c.src,
+            src/npymath/halffloat.c
     Extension: multiarray
         Sources:
             src/multiarray/multiarraymodule_onefile.c
