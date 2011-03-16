@@ -104,12 +104,7 @@ version = ""
     if "-i" in sys.argv:
         for g in bld.groups:
             for task_gen in g:
-                if hasattr(task_gen, "link_task"):
-                    ltask = task_gen.link_task
-                    for output in ltask.outputs:
-                        if output.is_child_of(bld.bldnode):
-                            shutil.copy(output.abspath(), output.path_from(bld.bldnode))
-                elif "gen_pymodule" in task_gen.features:
+                if "gen_pymodule" in task_gen.features:
                     if len(task_gen.tasks) > 0:
                         task = task_gen.tasks[0]
                         for output in task.outputs:
