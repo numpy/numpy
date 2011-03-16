@@ -141,6 +141,194 @@ add_newdoc('numpy.core', 'flatiter', ('copy',
 
 ###############################################################################
 #
+# nditer
+#
+###############################################################################
+
+add_newdoc('numpy.core', 'nditer',
+    """
+    Efficient multi-dimensional iterator object to iterate over arrays.
+
+    Parameters
+    ----------
+    op : ndarray or sequence of ndarrays
+        The array(s) to iterate over.
+    flags : sequence of str, optional
+        Flags to control the behavior of the iterator. Valid flags are:
+        "buffered", "c_index", "common_dtype", "delay_bufalloc",
+        "external_loop", "f_index", "grow_inner", "multi_index", "ranged",
+        "refs_ok", "reduce_ok", "zerosize_ok".
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Controls the memory layout of the output. 'C' means it should
+        be C contiguous. 'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout as the inputs as
+        is possible, including arbitrarily permuted axes.
+        Default is 'K'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.  Setting this to
+        'unsafe' is not recommended, as it can adversely affect accumulations.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'unsafe' means any data conversions may be done.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+
+    op_flags : sequence of str, optional
+        Valid operation flags are: "allocate", "aligned", "copy", "contig",
+        "nbo", "no_subtype", ""no_broadcast", "readonly", "readwrite",
+        "updateifcopy", "writeonly".
+
+    Attributes
+    ----------
+    dtypes : tuple of dtype(s)
+        The types of `operands`.
+    finished : bool
+        Whether the iteration over the operands is finished or not.
+    has_delayed_bufalloc : bool
+
+    has_index : bool
+
+    has_multi_index : bool
+
+    index :
+        Raises a ValueError if accessed and `has_index` is False.
+    iterationneedsapi : bool
+
+    iterindex : int
+
+    itersize : int
+        Size of the iterator.
+    itviews :
+        Structured view(s) of `operands` in memory.
+    multi_index :
+        Raises a ValueError if accessed and `has_index` is False.
+    ndim : int
+        The iterator's dimension.
+    niter : int
+        The number of iterations done.
+    operands : tuple of operand(s)
+        The array(s) to be iterated over.
+    shape : tuple of ints
+        Shape tuple, the shape of the iterator.
+    value :
+        Value of `operands` at current iteration.
+
+    Notes
+    -----
+    `nditer` supersedes `flatiter`.  The iterator implementation behind
+    `nditer` is also exposed by the Numpy C API.
+
+    The Python exposure supplies two iteration interfaces, one which follows
+    the Python iterator protocol, and another which mirrors the C-style
+    do-while pattern.  The native Python approach is better in most cases, but
+    if you need the iterator's coordinates or index, use the C-style pattern.
+
+    Examples
+    --------
+    Here is how we might write an ``iter_add`` function, using the
+    Python iterator protocol::
+
+        def iter_add_py(x, y, out=None):
+            addop = np.add
+            it = np.nditer([x, y, out], [],
+                        [['readonly'], ['readonly'], ['writeonly','allocate']])
+            for (a, b, c) in it:
+                addop(a, b, c)
+            return it.operands[2]
+
+    Here is the same function, but following the C-style pattern::
+
+        def iter_add(x, y, out=None):
+            addop = np.add
+
+            it = np.nditer([x, y, out], [],
+                        [['readonly'], ['readonly'], ['writeonly','allocate']])
+
+            while not it.finished:
+                addop(it[0], it[1], it[2])
+                it.iternext()
+
+            return it.operands[2]
+
+    """)
+
+# nditer methods
+
+add_newdoc('numpy.core', 'nditer', ('copy',
+    """
+    copy()
+
+    Get a copy of the iterator in its current state.
+
+    Examples
+    --------
+    >>> x = np.arange(10)
+    >>> y = x + 1
+    >>> it = np.nditer([x, y])
+    >>> it.next()
+    (array(0), array(1))
+    >>> it2 = it.copy()
+    >>> it2.next()
+    (array(1), array(2))
+
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('debug_print',
+    """
+    debug_print()
+
+    Print the current state of the `nditer` instance and debug info to stdout.
+
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('enable_external_loop',
+    """
+    enable_external_loop()
+
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('iternext',
+    """
+    iternext()
+
+    Check whether iterations are left, and perform a single internal iteration
+    without returning the result.  Used in the C-style pattern do-while
+    pattern.  For an example, see `nditer`.
+
+    Returns
+    -------
+    iternext : bool
+        Whether or not there are iterations left.
+
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('remove_axis',
+    """
+    remove_axis()
+
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('remove_multi_index',
+    """
+    remove_multi_index()
+
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('reset',
+    """
+    reset()
+
+    Reset the iterator to its initial state.
+
+    """))
+
+
+
+###############################################################################
+#
 # broadcast
 #
 ###############################################################################
