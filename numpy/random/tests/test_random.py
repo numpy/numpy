@@ -236,7 +236,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 16.50698631688883822,  36.54846706092654784],
                          [ 22.67886599981281748,   0.71617561058995771],
                          [ 65.72798501792723869,  86.84341601437161273]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=13)
 
     def test_logseries(self):
         np.random.seed(self.seed)
