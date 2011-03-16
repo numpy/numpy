@@ -7,26 +7,16 @@ from bento.commands.hooks \
 @pre_build()
 def build(context):
     bld = context.waf_context
-    old_path = bld.path
-    bld.path = old_path.find_dir(context.local_node.path_from(context.top_node))
-    assert bld.path.__class__ == old_path.__class__
-
 
     if os.name == 'nt':
         raise NotImplementedError("Check for wincrypt stuff")
         raise NotImplementedError("Check for mingw time workaround stuff")
 
-    includes = [
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core"),
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include"),
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include/numpy"),
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/src/private")]
-
     def builder(bld, extension):
+        includes = ["../core/include", "../core/include/numpy", "../core",
+                    "../core/src/private"]
         bld(features="c cshlib pyext",
             target=extension.name,
             source=extension.sources,
             includes=includes)
     context.register_builder("mtrand", builder)
-
-    bld.path = old_path
