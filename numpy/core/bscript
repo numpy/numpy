@@ -357,14 +357,6 @@ from os.path import join as pjoin
 @pre_build()
 def pbuild(context):
     bld = context.waf_context
-    # FIXME: bento command's context should have API so that subclasses can
-    # customize recurse behavior
-    # XXX: there is a risk of confusion between waf Node class and our own:
-    # mixing them is a big no no, and may cause very hard to debug issues.
-    # Find a solution
-    old_path = bld.path
-    bld.path = old_path.find_dir(context.local_node.path_from(context.top_node))
-    assert bld.path.__class__ == old_path.__class__
 
     def builder(bld, library):
         # FIXME: hack to build static library that can be linked into a dlopen-able
@@ -449,5 +441,3 @@ def pbuild(context):
                 source=extension.sources,
                 use="CBLAS")
     context.register_builder("_dotblas", build_dotblas)
-
-    bld.path = old_path

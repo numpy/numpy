@@ -7,27 +7,11 @@ from bento.commands.hooks \
 @pre_build()
 def pbuild(context):
     bld = context.waf_context
-    # FIXME: bento command's context should have API so that subclasses can
-    # customize recurse behavior
-    # XXX: there is a risk of confusion between waf Node class and our own:
-    # mixing them is a big no no, and may cause very hard to debug issues.
-    # Find a solution
-    old_path = bld.path
-    bld.path = old_path.find_dir(context.local_node.path_from(context.top_node))
-    assert bld.path.__class__ == old_path.__class__
-
-    # FIXME: there has to be a better way to refer to numpy/core include
-    includes = [
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core"),
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include"),
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include/numpy"),
-            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/src/private")]
-
     def builder_compiled_base(bld, extension):
+        includes = ["../core/include", "../core/include/numpy", "../core",
+                    "../core/src/private"]
         bld(features="c cshlib pyext",
             target=extension.name,
             includes=includes,
             source=extension.sources)
     context.register_builder("_compiled_base", builder_compiled_base)
-
-    bld.path = old_path
