@@ -442,11 +442,12 @@ def pbuild(context):
             use="npymath")
     context.register_builder("multiarray_tests", build_multiarray_tests)
 
-    if bld.env.HAS_CBLAS:
-        bld(features="c cshlib pyext",
-            target="_dotblas",
-            source="blasdot/_dotblas.c",
-            includes="src/private",
-            use="CBLAS")
+    def build_dotblas(bld, extension):
+        if bld.env.HAS_CBLAS:
+            bld(features="c cshlib pyext",
+                target=extension.name,
+                source=extension.sources,
+                use="CBLAS")
+    context.register_builder("_dotblas", build_dotblas)
 
     bld.path = old_path
