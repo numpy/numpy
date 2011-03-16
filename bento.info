@@ -50,10 +50,7 @@ HookFile:
     numpy/random/bscript
 
 ExtraSourceFiles:
-    numpy_templates.py,
     setup.py,
-    numpy/version.py.in,
-    numpy/__config__.py.in,
     numpy/core/include/numpy/*.h,
     numpy/core/include/numpy/*.in,
     numpy/core/include/numpy/fenv/*.h,
@@ -90,6 +87,7 @@ DataFiles: tests
 Library:
     Packages:
         numpy,
+        numpy.build_utils,
         numpy.compat,
         numpy.core,
         numpy.core.code_generators,
