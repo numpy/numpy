@@ -29,7 +29,7 @@ Key benefits include:
 
 A large fraction of this iterator design has already been implemented with
 promising results.  Construction overhead is slightly greater (a.flat:
-0.5 us, newiter(a): 1.4 us and broadcast(a,b): 1.4 us, newiter([a,b]):
+0.5 us, nditer(a): 1.4 us and broadcast(a,b): 1.4 us, nditer([a,b]):
 2.2 us), but, as shown in an example, it is already possible to improve
 on the performance of the built-in NumPy mechanisms in pure Python code
 together with the iterator.  One example rewrites np.add, getting a
@@ -596,7 +596,7 @@ branch, where libndarray has the array named ``NpyArray`` and functions
 named ``NpyArray_*``.  The iterator is named ``NpyIter`` and functions are
 named ``NpyIter_*``.
 
-The Python exposure has the iterator named ``np.newiter``.  One possible
+The Python exposure has the iterator named ``np.nditer``.  One possible
 release strategy for this iterator would be to release a 1.X (1.6?) version
 with the iterator added, but not used by the NumPy code.  Then, 2.0 can
 be release with it fully integrated.  If this strategy is chosen, the
@@ -1670,7 +1670,7 @@ First, here is the definition of the ``luf`` function.::
 
         nargs = len(args)
         op = args + (kwargs.get('out',None),)
-        it = np.newiter(op, ['buffered','no_inner_iteration'],
+        it = np.nditer(op, ['buffered','no_inner_iteration'],
                 [['readonly','nbo_aligned']]*nargs +
                                 [['writeonly','allocate','no_broadcast']],
                 order=kwargs.get('order','K'),
@@ -1719,7 +1719,7 @@ Python iterator protocol.::
     def iter_add_py(x, y, out=None):
         addop = np.add
 
-        it = np.newiter([x,y,out], [],
+        it = np.nditer([x,y,out], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
         
         for (a, b, c) in it:
@@ -1732,7 +1732,7 @@ Here is the same function, but following the C-style pattern.::
     def iter_add(x, y, out=None):
         addop = np.add
 
-        it = np.newiter([x,y,out], [],
+        it = np.nditer([x,y,out], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
         
         while not it.finished:
@@ -1770,7 +1770,7 @@ of the iterator, designed to help speed up the inner loops, is the flag
     def iter_add_noinner(x, y, out=None):
         addop = np.add
 
-        it = np.newiter([x,y,out], ['no_inner_iteration'],
+        it = np.nditer([x,y,out], ['no_inner_iteration'],
                     [['readonly'],['readonly'],['writeonly','allocate']])
         
         for (a, b, c) in it:
@@ -1807,7 +1807,7 @@ using other NumPy machinery to efficiently execute it.  Let's
 modify ``iter_add`` once again.::
 
     def iter_add_itview(x, y, out=None):
-        it = np.newiter([x,y,out], [],
+        it = np.nditer([x,y,out], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
         
         (a, b, c) = it.itviews
@@ -1890,7 +1890,7 @@ Here's the same function, rewritten to use a new iterator.  Note how
 easy it was to add an optional output parameter.::
 
     In [5]: def composite_over_it(im1, im2, out=None, buffersize=4096):
-      ....:     it = np.newiter([im1, im1[:,:,-1], im2, out],
+      ....:     it = np.nditer([im1, im1[:,:,-1], im2, out],
       ....:                     ['buffered','no_inner_iteration'],
       ....:                     [['readonly']]*3+[['writeonly','allocate']],
       ....:                     op_axes=[None,[0,1,np.newaxis],None,None],
@@ -1965,7 +1965,7 @@ implement the composite operation with numexpr.::
 
 This beats the straight NumPy operation, but isn't very good.  Switching
 to the iterator version of numexpr, we get a big improvement over the
-straight Python function using the iterator.  Note that in this is on
+straight Python function using the iterator.  Note that this is on
 a dual core machine.::
 
     In [29]: def composite_over_ne_it(im1, im2, out=None):
