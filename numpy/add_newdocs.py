@@ -151,23 +151,62 @@ add_newdoc('numpy.core', 'nditer',
 
     Parameters
     ----------
-    op : ndarray or sequence of ndarrays
+    op : ndarray or sequence of array_like
         The array(s) to iterate over.
     flags : sequence of str, optional
-        Flags to control the behavior of the iterator. Valid flags are:
-        "buffered", "c_index", "common_dtype", "delay_bufalloc",
-        "external_loop", "f_index", "grow_inner", "multi_index", "ranged",
-        "refs_ok", "reduce_ok", "zerosize_ok".
+        Flags to control the behavior of the iterator.
+
+          * "buffered" enables buffering when required.
+          * "c_index" causes a C-order index to be tracked.
+          * "f_index" causes a Fortran-order index to be tracked.
+          * "common_dtype" causes all the operands to be converted to
+            a common data type.
+          * "delay_bufalloc" delays allocation of the buffers until
+            a reset() call is made. Allows "allocate" operands to
+            be initialized before their values are copied into the buffers.
+          * "external_loop" causes the `values` given to be matched
+            one-dimensional arrays with multiple values.
+          * "grow_inner" allows the `value` array sizes to be made
+            larger than the buffer size when both "buffered" and
+            "external_loop" is used.
+          * "multi_index" causes a multi-index, or a tuple of indices
+            with one per iteration dimension.
+          * "ranged" allows the iterator to be restricted to a sub-range
+            of the iterindex values.
+          * "refs_ok" enables iteration of reference types, such as
+            object arrays.
+          * "reduce_ok" enables iteration of "readwrite" operands
+            which are broadcasted, also known as reduction operands.
+          * "zerosize_ok" allows `itersize` to be zero.
+    op_flags : list of list of str, optional
+        This is a list of flags for each operand. At minimum, one of
+        "readonly", "readwrite", or "writeonly" must be specified.
+
+          * "allocate" causes the array to be allocated if it is None
+            in the `op` parameter.
+          * "aligned" forces the operand data to be aligned.
+          * "copy" allows a temporary read-only copy if required.
+          * "updateifcopy" allows a temporary read-write copy if required.
+          * "contig" forces the operand data to be contiguous.
+          * "nbo" forces the operand data to be in native byte order.
+          * "no_subtype" prevents an "allocate" operand from using a subtype.
+          * "no_broadcast" prevents the operand from being broadcasted.
+          * "readonly" indicates the operand will only be read from.
+          * "readwrite" indicates the operand will be read from and written to.
+          * "writeonly" indicates the operand will only be written to.
+    op_dtypes : dtype or tuple of dtype(s), optional
+        The required data type(s) of the operands. If copying or buffering
+        is enabled, the data will be converted to/from their original types.
     order : {'C', 'F', 'A', or 'K'}, optional
-        Controls the memory layout of the output. 'C' means it should
-        be C contiguous. 'F' means it should be Fortran contiguous,
-        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout as the inputs as
-        is possible, including arbitrarily permuted axes.
+        Controls the iteration order. 'C' means C order, 'F' means
+        Fortran order, 'A' means 'F' order if all the arrays are Fortran
+        contiguous, 'C' order otherwise, and 'K' means as close to the
+        order the array elements appear in memory as possible.
         Default is 'K'.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        Controls what kind of data casting may occur.  Setting this to
-        'unsafe' is not recommended, as it can adversely affect accumulations.
+        Controls what kind of data casting may occur when making a copy
+        or buffering.  Setting this to 'unsafe' is not recommended,
+        as it can adversely affect accumulations.
 
           * 'no' means the data types should not be cast at all.
           * 'equiv' means only byte-order changes are allowed.
@@ -175,46 +214,68 @@ add_newdoc('numpy.core', 'nditer',
           * 'unsafe' means any data conversions may be done.
           * 'same_kind' means only safe casts or casts within a kind,
             like float64 to float32, are allowed.
-
-    op_flags : sequence of str, optional
-        Valid operation flags are: "allocate", "aligned", "copy", "contig",
-        "nbo", "no_subtype", ""no_broadcast", "readonly", "readwrite",
-        "updateifcopy", "writeonly".
+    op_axes : list of list of ints, optional
+        If provided, is a list of ints or None for each operands.
+        The list of axes for an operand is a mapping from the dimensions
+        of the iterator to the dimensions of the operand. A value of
+        -1 can be placed for entries, causing that dimension to be
+        treated as "newaxis".
+    itershape : tuple of ints, optional
+        The desired shape of the iterator. This allows "allocate" operands
+        with a dimension mapped by op_axes not corresponding to a dimension
+        of a different operand to get a value not equal to 1 for that
+        dimension.
+    buffersize : int, optional
+        When buffering is enabled, controls the size of the temporary
+        buffers. Set to 0 for the default value.
 
     Attributes
     ----------
     dtypes : tuple of dtype(s)
-        The types of `operands`.
+        The data types provided in `value`. This may be different
+        from the operand data types if buffering is enabled.
     finished : bool
         Whether the iteration over the operands is finished or not.
     has_delayed_bufalloc : bool
-
+        If True, the iterator was created with the "delay_bufalloc" flag,
+        and no reset() function was called on it yet.
     has_index : bool
-
+        If True, the iterator was created with either the "c_index" or
+        the "f_index" flag, and the property `index` can be used to
+        retrieve it.
     has_multi_index : bool
-
+        If True, the iterator was created with the "multi_index" flag,
+        and the property `multi_index` can be used to retrieve it.
     index :
-        Raises a ValueError if accessed and `has_index` is False.
+        When the "c_index" or "f_index" flag was used, this property
+        provides access to the index. Raises a ValueError if accessed
+        and `has_index` is False.
     iterationneedsapi : bool
-
+        Whether iteration requires access to the Python API, for example
+        if one of the operands is an object array.
     iterindex : int
-
+        An index which matches the order of iteration.
     itersize : int
         Size of the iterator.
     itviews :
-        Structured view(s) of `operands` in memory.
+        Structured view(s) of `operands` in memory, matching the reordered
+        and optimized iterator access pattern.
     multi_index :
-        Raises a ValueError if accessed and `has_index` is False.
+        When the "multi_index" flag was used, this property
+        provides access to the index. Raises a ValueError if accessed
+        accessed and `has_multi_index` is False.
     ndim : int
         The iterator's dimension.
     niter : int
-        The number of iterations done.
+        The number of iterator operands.
     operands : tuple of operand(s)
         The array(s) to be iterated over.
     shape : tuple of ints
         Shape tuple, the shape of the iterator.
     value :
-        Value of `operands` at current iteration.
+        Value of `operands` at current iteration. Normally, this is a
+        tuple of array scalars, but if the flag "external_loop" is used,
+        it is a tuple of one dimensional arrays.
 
     Notes
     -----
@@ -288,6 +349,10 @@ add_newdoc('numpy.core', 'nditer', ('enable_external_loop',
     """
     enable_external_loop()
 
+    When the "external_loop" was not used during construction, but
+    is desired, this modifies the iterator to behave as if the flag
+    was specified.
+
     """))
 
 add_newdoc('numpy.core', 'nditer', ('iternext',
@@ -307,13 +372,19 @@ add_newdoc('numpy.core', 'nditer', ('iternext',
 
 add_newdoc('numpy.core', 'nditer', ('remove_axis',
     """
-    remove_axis()
+    remove_axis(i)
+
+    Removes axis `i` from the iterator. Requires that the flag "multi_index"
+    be enabled.
 
     """))
 
 add_newdoc('numpy.core', 'nditer', ('remove_multi_index',
     """
     remove_multi_index()
+
+    When the "multi_index" flag was specified, this removes it, allowing
+    the internal iteration structure to be optimized further.
 
     """))
 

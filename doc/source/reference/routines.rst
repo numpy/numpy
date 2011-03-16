@@ -18,6 +18,7 @@ indentation.
    routines.array-creation
    routines.array-manipulation
    routines.indexing
+   routines.nditer
    routines.dtype
    routines.io
    routines.fft
