@@ -159,18 +159,19 @@ add_newdoc('numpy.core', 'nditer',
           * "buffered" enables buffering when required.
           * "c_index" causes a C-order index to be tracked.
           * "f_index" causes a Fortran-order index to be tracked.
+          * "multi_index" causes a multi-index, or a tuple of indices
+            with one per iteration dimension, to be tracked.
           * "common_dtype" causes all the operands to be converted to
-            a common data type.
+            a common data type, with copying or buffering as necessary.
           * "delay_bufalloc" delays allocation of the buffers until
             a reset() call is made. Allows "allocate" operands to
             be initialized before their values are copied into the buffers.
-          * "external_loop" causes the `values` given to be matched
-            one-dimensional arrays with multiple values.
+          * "external_loop" causes the `values` given to be
+            one-dimensional arrays with multiple values instead of
+            zero-dimensional arrays.
           * "grow_inner" allows the `value` array sizes to be made
             larger than the buffer size when both "buffered" and
             "external_loop" is used.
-          * "multi_index" causes a multi-index, or a tuple of indices
-            with one per iteration dimension.
           * "ranged" allows the iterator to be restricted to a sub-range
             of the iterindex values.
           * "refs_ok" enables iteration of reference types, such as
@@ -182,18 +183,18 @@ add_newdoc('numpy.core', 'nditer',
         This is a list of flags for each operand. At minimum, one of
         "readonly", "readwrite", or "writeonly" must be specified.
 
-          * "allocate" causes the array to be allocated if it is None
-            in the `op` parameter.
-          * "aligned" forces the operand data to be aligned.
-          * "copy" allows a temporary read-only copy if required.
-          * "updateifcopy" allows a temporary read-write copy if required.
-          * "contig" forces the operand data to be contiguous.
-          * "nbo" forces the operand data to be in native byte order.
-          * "no_subtype" prevents an "allocate" operand from using a subtype.
-          * "no_broadcast" prevents the operand from being broadcasted.
           * "readonly" indicates the operand will only be read from.
           * "readwrite" indicates the operand will be read from and written to.
           * "writeonly" indicates the operand will only be written to.
+          * "no_broadcast" prevents the operand from being broadcasted.
+          * "contig" forces the operand data to be contiguous.
+          * "aligned" forces the operand data to be aligned.
+          * "nbo" forces the operand data to be in native byte order.
+          * "copy" allows a temporary read-only copy if required.
+          * "updateifcopy" allows a temporary read-write copy if required.
+          * "allocate" causes the array to be allocated if it is None
+            in the `op` parameter.
+          * "no_subtype" prevents an "allocate" operand from using a subtype.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -201,7 +202,9 @@ add_newdoc('numpy.core', 'nditer',
         Controls the iteration order. 'C' means C order, 'F' means
         Fortran order, 'A' means 'F' order if all the arrays are Fortran
         contiguous, 'C' order otherwise, and 'K' means as close to the
-        order the array elements appear in memory as possible.
+        order the array elements appear in memory as possible. This also
+        affects the element memory order of "allocate" operands, as they
+        are allocated to be compatible with iteration order.
         Default is 'K'.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur when making a copy
@@ -211,9 +214,9 @@ add_newdoc('numpy.core', 'nditer',
           * 'no' means the data types should not be cast at all.
           * 'equiv' means only byte-order changes are allowed.
           * 'safe' means only casts which can preserve values are allowed.
-          * 'unsafe' means any data conversions may be done.
           * 'same_kind' means only safe casts or casts within a kind,
             like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
     op_axes : list of list of ints, optional
         If provided, is a list of ints or None for each operands.
         The list of axes for an operand is a mapping from the dimensions
@@ -232,8 +235,8 @@ add_newdoc('numpy.core', 'nditer',
     Attributes
     ----------
     dtypes : tuple of dtype(s)
-        The data types provided in `value`. This may be different
-        from the operand data types if buffering is enabled.
+        The data types of the values provided in `value`. This may be
+        different from the operand data types if buffering is enabled.
     finished : bool
         Whether the iteration over the operands is finished or not.
     has_delayed_bufalloc : bool
@@ -297,7 +300,7 @@ add_newdoc('numpy.core', 'nditer',
             it = np.nditer([x, y, out], [],
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
             for (a, b, c) in it:
-                addop(a, b, c)
+                addop(a, b, out=c)
             return it.operands[2]
 
     Here is the same function, but following the C-style pattern::
@@ -309,10 +312,54 @@ add_newdoc('numpy.core', 'nditer',
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
 
             while not it.finished:
-                addop(it[0], it[1], it[2])
+                addop(it[0], it[1], out=it[2])
                 it.iternext()
 
             return it.operands[2]
+
+    Here is an example outer product function::
+
+        def outer_it(x, y, out=None):
+            mulop = np.multiply
+
+            it = np.nditer([x, y, out], ['external_loop'],
+                    [['readonly'], ['readonly'], ['writeonly', 'allocate']],
+                    op_axes=[range(x.ndim)+[-1]*y.ndim,
+                             [-1]*x.ndim+range(y.ndim),
+                             None])
+
+            for (a, b, c) in it:
+                mulop(a, b, out=c)
+
+            return it.operands[2]
+
+        >>> a = np.arange(2)+1
+        >>> b = np.arange(3)+1
+        >>> outer_it(a,b)
+        array([[1, 2, 3],
+               [2, 4, 6]])
+
+    Here is an example function which operates like a "lambda" ufunc::
+
+        def luf(lamdaexpr, *args, **kwargs):
+            "luf(lambdaexpr, op1, ..., opn, out=None, order='K', casting='safe', buffersize=0)"
+            nargs = len(args)
+            op = (kwargs.get('out',None),) + args
+            it = np.nditer(op, ['buffered','external_loop'],
+                    [['writeonly','allocate','no_broadcast']] +
+                                    [['readonly','nbo','aligned']]*nargs,
+                    order=kwargs.get('order','K'),
+                    casting=kwargs.get('casting','safe'),
+                    buffersize=kwargs.get('buffersize',0))
+            while not it.finished:
+                it[0] = lamdaexpr(*it[1:])
+                it.iternext()
+            return it.operands[0]
+
+        >>> a = np.arange(5)
+        >>> b = np.ones(5)
+        >>> luf(lambda i,j:i*i + j/2, a, b)
+        array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
     """)
 
