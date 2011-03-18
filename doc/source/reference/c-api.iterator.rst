@@ -323,9 +323,9 @@ Construction and Destruction
                             dtype);
         Py_DECREF(dtype);
 
-.. cfunction:: NpyIter* NpyIter_MultiNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes)
+.. cfunction:: NpyIter* NpyIter_MultiNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes)
 
-    Creates an iterator for broadcasting the ``niter`` array objects provided
+    Creates an iterator for broadcasting the ``nop`` array objects provided
     in ``op``, using regular NumPy broadcasting rules.
 
     Any of the :ctype:`NPY_ORDER` enum values may be passed to ``order``.  For
@@ -494,7 +494,7 @@ Construction and Destruction
             Then, call :cfunc:`NpyIter_Reset` to allocate and fill the buffers
             with their initial values.
 
-    Flags that may be passed in ``op_flags[i]``, where ``0 <= i < niter``:
+    Flags that may be passed in ``op_flags[i]``, where ``0 <= i < nop``:
 
         .. cvar:: NPY_ITER_READWRITE
         .. cvar:: NPY_ITER_READONLY
@@ -579,7 +579,7 @@ Construction and Destruction
             Ensures that the input or output matches the iteration
             dimensions exactly.
 
-.. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp niter, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
+.. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
     Extends :cfunc:`NpyIter_MultiNew` with several advanced options providing
     more control over broadcasting and buffering.
@@ -592,7 +592,7 @@ Construction and Destruction
     If it is provided, ``op_axes`` and/or ``itershape`` must also be provided.
     The ``op_axes`` parameter let you control in detail how the
     axes of the operand arrays get matched together and iterated.
-    In ``op_axes``, you must provide an array of ``niter`` pointers
+    In ``op_axes``, you must provide an array of ``nop`` pointers
     to ``oa_ndim``-sized arrays of type ``npy_intp``.  If an entry
     in ``op_axes`` is NULL, normal broadcasting rules will apply.
     In ``op_axes[j][i]`` is stored either a valid axis of ``op[j]``, or
@@ -906,7 +906,7 @@ Construction and Destruction
     may be smaller than the number of dimensions in the original
     objects.
 
-.. cfunction:: int NpyIter_GetNIter(NpyIter* iter)
+.. cfunction:: int NpyIter_GetNOp(NpyIter* iter)
 
     Returns the number of operands in the iterator.
 
@@ -933,7 +933,7 @@ Construction and Destruction
 
 .. cfunction:: PyArray_Descr** NpyIter_GetDescrArray(NpyIter* iter)
 
-    This gives back a pointer to the ``niter`` data type Descrs for
+    This gives back a pointer to the ``nop`` data type Descrs for
     the objects being iterated.  The result points into ``iter``,
     so the caller does not gain any references to the Descrs.
 
@@ -942,7 +942,7 @@ Construction and Destruction
 
 .. cfunction:: PyObject** NpyIter_GetOperandArray(NpyIter* iter)
 
-    This gives back a pointer to the ``niter`` operand PyObjects
+    This gives back a pointer to the ``nop`` operand PyObjects
     that are being iterated.  The result points into ``iter``,
     so the caller does not gain any references to the PyObjects.
 
@@ -961,12 +961,12 @@ Construction and Destruction
 
 .. cfunction:: void NpyIter_GetReadFlags(NpyIter* iter, char* outreadflags)
 
-    Fills ``niter`` flags. Sets ``outreadflags[i]`` to 1 if
+    Fills ``nop`` flags. Sets ``outreadflags[i]`` to 1 if
     ``op[i]`` can be read from, and to 0 if not.
 
 .. cfunction:: void NpyIter_GetWriteFlags(NpyIter* iter, char* outwriteflags)
 
-    Fills ``niter`` flags. Sets ``outwriteflags[i]`` to 1 if
+    Fills ``nop`` flags. Sets ``outwriteflags[i]`` to 1 if
     ``op[i]`` can be written to, and to 0 if not.
 
 .. cfunction:: int NpyIter_CreateCompatibleStrides(NpyIter* iter, npy_intp itemsize, npy_intp* outstrides)
@@ -1021,7 +1021,7 @@ Functions For Iteration
         char** dataptr = NpyIter_GetDataPtrArray(iter);
 
         do {
-            /* use the addresses dataptr[0], ... dataptr[niter-1] */
+            /* use the addresses dataptr[0], ... dataptr[nop-1] */
         } while(iternext(iter));
 
     When :cdata:`NPY_ITER_EXTERNAL_LOOP` is specified, the typical
@@ -1033,14 +1033,14 @@ Functions For Iteration
         char** dataptr = NpyIter_GetDataPtrArray(iter);
         npy_intp* stride = NpyIter_GetInnerStrideArray(iter);
         npy_intp* size_ptr = NpyIter_GetInnerLoopSizePtr(iter), size;
-        npy_intp iiter, niter = NpyIter_GetNIter(iter);
+        npy_intp iop, nop = NpyIter_GetNOp(iter);
 
         do {
             size = *size_ptr;
             while (size--) {
-                /* use the addresses dataptr[0], ... dataptr[niter-1] */
-                for (iiter = 0; iiter < niter; ++iiter) {
-                    dataptr[iiter] += stride[iiter];
+                /* use the addresses dataptr[0], ... dataptr[nop-1] */
+                for (iop = 0; iop < nop; ++iop) {
+                    dataptr[iop] += stride[iop];
                 }
             }
         } while (iternext());
@@ -1067,7 +1067,7 @@ Functions For Iteration
         char **dataptr = NpyIter_GetDataPtrArray(iter);
         npy_intp *stride = NpyIter_GetInnerStrideArray(iter);
         npy_intp *size_ptr = NpyIter_GetInnerLoopSizePtr(iter), size;
-        npy_intp i, iiter, niter = NpyIter_GetNIter(iter);
+        npy_intp i, iop, nop = NpyIter_GetNOp(iter);
 
         /* One loop with a fixed inner size */
         size = *size_ptr;
@@ -1077,9 +1077,9 @@ Functions For Iteration
              * which divides into FIXED_BUFFER_SIZE
              */
             for (i = 0; i < FIXED_BUFFER_SIZE; ++i) {
-                /* use the addresses dataptr[0], ... dataptr[niter-1] */
-                for (iiter = 0; iiter < niter; ++iiter) {
-                    dataptr[iiter] += stride[iiter];
+                /* use the addresses dataptr[0], ... dataptr[nop-1] */
+                for (iop = 0; iop < nop; ++iop) {
+                    dataptr[iop] += stride[iop];
                 }
             }
             iternext();
@@ -1090,9 +1090,9 @@ Functions For Iteration
         if (size > 0) do {
             size = *size_ptr;
             while (size--) {
-                /* use the addresses dataptr[0], ... dataptr[niter-1] */
-                for (iiter = 0; iiter < niter; ++iiter) {
-                    dataptr[iiter] += stride[iiter];
+                /* use the addresses dataptr[0], ... dataptr[nop-1] */
+                for (iop = 0; iop < nop; ++iop) {
+                    dataptr[iop] += stride[iop];
                 }
             }
         } while (iternext());
@@ -1113,7 +1113,7 @@ Functions For Iteration
 
 .. cfunction:: char** NpyIter_GetDataPtrArray(NpyIter* iter)
 
-    This gives back a pointer to the ``niter`` data pointers.  If
+    This gives back a pointer to the ``nop`` data pointers.  If
     :cdata:`NPY_ITER_EXTERNAL_LOOP` was not specified, each data
     pointer points to the current data item of the iterator.  If
     no inner iteration was specified, it points to the first data
@@ -1147,7 +1147,7 @@ functions provide that information.
 
 .. cfunction:: npy_intp* NpyIter_GetInnerStrideArray(NpyIter* iter)
 
-    Returns a pointer to an array of the ``niter`` strides,
+    Returns a pointer to an array of the ``nop`` strides,
     one for each iterated object, to be used by the inner loop.
 
     This pointer may be cached before the iteration loop, calling

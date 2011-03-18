@@ -976,7 +976,7 @@ ufunc_loop_matches(PyUFuncObject *self,
                     char *out_err_src_typecode,
                     char *out_err_dst_typecode)
 {
-    npy_intp i, nin = self->nin, niter = nin + self->nout;
+    npy_intp i, nin = self->nin, nop = nin + self->nout;
 
     /*
      * First check if all the inputs can be safely cast
@@ -1035,7 +1035,7 @@ ufunc_loop_matches(PyUFuncObject *self,
      * If all the inputs were ok, then check casting back to the
      * outputs.
      */
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         if (op[i] != NULL) {
             PyArray_Descr *tmp = PyArray_DescrFromType(types[i]);
             if (tmp == NULL) {
@@ -1065,11 +1065,11 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
                     int *types,
                     npy_intp buffersize, int *out_trivial_loop_ok)
 {
-    npy_intp i, nin = self->nin, niter = nin + self->nout;
+    npy_intp i, nin = self->nin, nop = nin + self->nout;
 
     *out_trivial_loop_ok = 1;
     /* Fill the dtypes array */
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         out_dtype[i] = PyArray_DescrFromType(types[i]);
         if (out_dtype[i] == NULL) {
             return -1;
@@ -1203,7 +1203,7 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                         void **out_innerloopdata,
                         int *out_trivial_loop_ok)
 {
-    npy_intp i, j, nin = self->nin, niter = nin + self->nout;
+    npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
@@ -1233,8 +1233,8 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                 int *types = funcdata->arg_types;
                 int matched = 1;
 
-                if (n_specified == niter) {
-                    for (j = 0; j < niter; ++j) {
+                if (n_specified == nop) {
+                    for (j = 0; j < nop; ++j) {
                         if (types[j] != specified_types[j]) {
                             matched = 0;
                             break;
@@ -1313,7 +1313,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
                         void **out_innerloopdata,
                         int *out_trivial_loop_ok)
 {
-    npy_intp i, j, nin = self->nin, niter = nin + self->nout;
+    npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
     char *ufunc_name;
     int no_castable_output, all_inputs_scalar;
@@ -1370,7 +1370,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
         char *orig_types = self->types + i*self->nargs;
 
         /* Copy the types into an int array for matching */
-        for (j = 0; j < niter; ++j) {
+        for (j = 0; j < nop; ++j) {
             types[j] = orig_types[j];
         }
 
@@ -1448,7 +1448,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                         void **out_innerloopdata,
                         int *out_trivial_loop_ok)
 {
-    npy_intp i, j, n, nin = self->nin, niter = nin + self->nout;
+    npy_intp i, j, n, nin = self->nin, nop = nin + self->nout;
     int n_specified = 0;
     int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
     char *ufunc_name;
@@ -1470,10 +1470,10 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
     /* Fill in specified_types from the tuple or string */
     if (PyTuple_Check(type_tup)) {
         n = PyTuple_GET_SIZE(type_tup);
-        if (n != 1 && n != niter) {
+        if (n != 1 && n != nop) {
             PyErr_Format(PyExc_ValueError,
                          "a type-tuple must be specified " \
-                         "of length 1 or %d for ufunc '%s'", (int)niter,
+                         "of length 1 or %d for ufunc '%s'", (int)nop,
                          self->name ? self->name : "(unknown)");
             return -1;
         }
@@ -1507,7 +1507,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
             Py_XDECREF(str_obj);
             return -1;
         }
-        if (length != 1 && (length != niter + 2 ||
+        if (length != 1 && (length != nop + 2 ||
                                 str[nin] != '-' || str[nin+1] != '>')) {
             PyErr_Format(PyExc_ValueError,
                                  "a type-string for %s, "   \
@@ -1534,9 +1534,9 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
         }
         else {
             PyArray_Descr *dtype;
-            n_specified = (int)niter;
+            n_specified = (int)nop;
 
-            for (i = 0; i < niter; ++i) {
+            for (i = 0; i < nop; ++i) {
                 npy_intp istr = i < nin ? i : i+2;
 
                 dtype = PyArray_DescrFromType(str[istr]);
@@ -1579,12 +1579,12 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
         NPY_UF_DBG_PRINT1("Trying function loop %d\n", (int)i);
 
         /* Copy the types into an int array for matching */
-        for (j = 0; j < niter; ++j) {
+        for (j = 0; j < nop; ++j) {
             types[j] = orig_types[j];
         }
 
-        if (n_specified == niter) {
-            for (j = 0; j < niter; ++j) {
+        if (n_specified == nop) {
+            for (j = 0; j < nop; ++j) {
                 if (types[j] != specified_types[j]) {
                     matched = 0;
                     break;
@@ -1783,7 +1783,7 @@ iterator_loop(PyUFuncObject *self,
                     void *innerloopdata)
 {
     npy_intp i, nin = self->nin, nout = self->nout;
-    npy_intp niter = nin + nout;
+    npy_intp nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
     char *baseptrs[NPY_MAXARGS];
@@ -1803,7 +1803,7 @@ iterator_loop(PyUFuncObject *self,
         op_flags[i] = NPY_ITER_READONLY|
                       NPY_ITER_ALIGNED;
     }
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         op_flags[i] = NPY_ITER_WRITEONLY|
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
@@ -1816,7 +1816,7 @@ iterator_loop(PyUFuncObject *self,
      * were already checked, we use the casting rule 'unsafe' which
      * is faster to calculate.
      */
-    iter = NpyIter_AdvancedNew(niter, op,
+    iter = NpyIter_AdvancedNew(nop, op,
                         NPY_ITER_EXTERNAL_LOOP|
                         NPY_ITER_REFS_OK|
                         NPY_ITER_ZEROSIZE_OK|
@@ -1834,7 +1834,7 @@ iterator_loop(PyUFuncObject *self,
 
     /* Copy any allocated outputs */
     op_it = NpyIter_GetOperandArray(iter);
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         if (op[i] == NULL) {
             op[i] = op_it[i];
             Py_INCREF(op[i]);
@@ -1857,7 +1857,7 @@ iterator_loop(PyUFuncObject *self,
         for (i = 0; i < nin; ++i) {
             baseptrs[i] = PyArray_BYTES(op_it[i]);
         }
-        for (i = nin; i < niter; ++i) {
+        for (i = nin; i < nop; ++i) {
             baseptrs[i] = PyArray_BYTES(op[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
@@ -2074,7 +2074,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
                         PyArrayObject **op)
 {
     int nin, nout;
-    int i, idim, niter;
+    int i, idim, nop;
     char *ufunc_name;
     int retval = -1, any_object = 0, subok = 1;
     NPY_CASTING input_casting;
@@ -2134,14 +2134,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     nin = self->nin;
     nout = self->nout;
-    niter = nin + nout;
+    nop = nin + nout;
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         op[i] = NULL;
         dtype[i] = NULL;
         arr_prep[i] = NULL;
@@ -2176,7 +2176,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     /* Fill in op_axes for all the operands */
     core_dim_ixs_size = 0;
     core_dim_ixs = self->core_dim_ixs;
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         int n;
         if (op[i]) {
             /*
@@ -2281,7 +2281,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         printf(" ");
     }
     printf("\noutput types:\n");
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         PyObject_Print((PyObject *)dtype[i], stdout, 0);
         printf(" ");
     }
@@ -2318,7 +2318,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
                       NPY_ITER_COPY|
                       NPY_ITER_ALIGNED;
     }
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         op_flags[i] = NPY_ITER_READWRITE|
                       NPY_ITER_UPDATEIFCOPY|
                       NPY_ITER_ALIGNED|
@@ -2327,7 +2327,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     }
 
     /* Create the iterator */
-    iter = NpyIter_AdvancedNew(niter, op, NPY_ITER_MULTI_INDEX|
+    iter = NpyIter_AdvancedNew(nop, op, NPY_ITER_MULTI_INDEX|
                                       NPY_ITER_REFS_OK|
                                       NPY_ITER_REDUCE_OK,
                            order, NPY_UNSAFE_CASTING, op_flags,
@@ -2338,7 +2338,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     }
 
     /* Fill in any allocated outputs */
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         if (op[i] == NULL) {
             op[i] = NpyIter_GetOperandArray(iter)[i];
             Py_INCREF(op[i]);
@@ -2350,10 +2350,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
      * buffering, the strides are fixed throughout the looping.
      */
     inner_strides = (npy_intp *)_pya_malloc(
-                        NPY_SIZEOF_INTP * (niter+core_dim_ixs_size));
-    /* The strides after the first niter match core_dim_ixs */
+                        NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
+    /* The strides after the first nop match core_dim_ixs */
     core_dim_ixs = self->core_dim_ixs;
-    inner_strides_tmp = inner_strides + niter;
+    inner_strides_tmp = inner_strides + nop;
     for (idim = 0; idim < self->core_num_dim_ix; ++idim) {
         ax_strides_tmp[idim] = NpyIter_GetAxisStrideArray(iter,
                                                 broadcast_ndim+idim);
@@ -2362,7 +2362,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
             goto fail;
         }
     }
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         for (idim = 0; idim < self->core_num_dims[i]; ++idim) {
             inner_strides_tmp[idim] = ax_strides_tmp[core_dim_ixs[idim]][i];
         }
@@ -2397,15 +2397,15 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     }
 
     /*
-     * The first niter strides are for the inner loop (but only can
+     * The first nop strides are for the inner loop (but only can
      * copy them after removing the core axes
      */
     memcpy(inner_strides, NpyIter_GetInnerStrideArray(iter),
-                                    NPY_SIZEOF_INTP * niter);
+                                    NPY_SIZEOF_INTP * nop);
 
 #if 0
     printf("strides: ");
-    for (i = 0; i < niter+core_dim_ixs_size; ++i) {
+    for (i = 0; i < nop+core_dim_ixs_size; ++i) {
         printf("%d ", (int)inner_strides[i]);
     }
     printf("\n");
@@ -2448,7 +2448,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     _pya_free(inner_strides);
     NpyIter_Deallocate(iter);
     /* The caller takes ownership of all the references in op */
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         Py_XDECREF(dtype[i]);
         Py_XDECREF(arr_prep[i]);
     }
@@ -2468,7 +2468,7 @@ fail:
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
         Py_XDECREF(dtype[i]);
@@ -2492,7 +2492,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
                         PyArrayObject **op)
 {
     int nin, nout;
-    int i, niter;
+    int i, nop;
     char *ufunc_name;
     int retval = -1, any_object = 0, subok = 1;
     NPY_CASTING input_casting;
@@ -2541,14 +2541,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     nin = self->nin;
     nout = self->nout;
-    niter = nin + nout;
+    nop = nin + nout;
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         op[i] = NULL;
         dtype[i] = NULL;
         arr_prep[i] = NULL;
@@ -2629,7 +2629,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         printf(" ");
     }
     printf("\noutput types:\n");
-    for (i = nin; i < niter; ++i) {
+    for (i = nin; i < nop; ++i) {
         PyObject_Print((PyObject *)dtype[i], stdout, 0);
         printf(" ");
     }
@@ -2678,7 +2678,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     }
 
     /* The caller takes ownership of all the references in op */
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         Py_XDECREF(dtype[i]);
         Py_XDECREF(arr_prep[i]);
     }
@@ -2692,7 +2692,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
 fail:
     NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
-    for (i = 0; i < niter; ++i) {
+    for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
         Py_XDECREF(dtype[i]);
