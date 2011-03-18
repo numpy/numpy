@@ -266,7 +266,7 @@ add_newdoc('numpy.core', 'nditer',
         accessed and `has_multi_index` is False.
     ndim : int
         The iterator's dimension.
-    niter : int
+    nop : int
         The number of iterator operands.
     operands : tuple of operand(s)
         The array(s) to be iterated over.

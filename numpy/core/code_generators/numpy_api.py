@@ -271,7 +271,7 @@ multiarray_funcs_api = {
     'NpyIter_ResetBasePointers':            235,
     'NpyIter_ResetToIterIndexRange':        236,
     'NpyIter_GetNDim':                      237,
-    'NpyIter_GetNIter':                     238,
+    'NpyIter_GetNOp':                       238,
     'NpyIter_GetIterNext':                  239,
     'NpyIter_GetIterSize':                  240,
     'NpyIter_GetIterIndexRange':            241,
