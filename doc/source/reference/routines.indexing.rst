@@ -57,6 +57,7 @@ Iterating over arrays
 .. autosummary::
    :toctree: generated/
 
+   nditer
    ndenumerate
    ndindex
    flatiter
