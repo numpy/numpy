@@ -8,4 +8,4 @@
 0x00000005 = 77e2e846db87f25d7cf99f9d812076f0
 # Version 6 added new iterator, half float and casting functions,
 # PyArray_CountNonzero, PyArray_NewLikeArray and PyArray_MatrixProduct2.
-0x00000006 = a413221a7ff73fcf251aeb5ee8fa73ff
+0x00000006 = e61d5dc51fa1c6459328266e215d6987
