@@ -52,14 +52,14 @@ class TestFromrecords(TestCase):
 
         mine = np.rec.fromarrays([a, b, c], names='date,data1,data2')
         for i in range(len(a)):
-            assert (mine.date[i] == range(1, 10))
-            assert (mine.data1[i] == 0.0)
-            assert (mine.data2[i] == 0.0)
+            assert_((mine.date[i] == range(1, 10)))
+            assert_((mine.data1[i] == 0.0))
+            assert_((mine.data2[i] == 0.0))
 
     def test_recarray_from_repr(self):
         x = np.rec.array([ (1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
         y = eval("np." + repr(x))
-        assert isinstance(y, np.recarray)
+        assert_(isinstance(y, np.recarray))
         assert_equal(y, x)
 
     def test_recarray_from_names(self):
@@ -73,10 +73,10 @@ class TestFromrecords(TestCase):
             (2, 'xy', 6.6999998092651367, 1),
             (0, ' ', 0.40000000596046448, 0)],
                        names='c1, c2, c3, c4')
-        assert ra.dtype == pa.dtype
-        assert ra.shape == pa.shape
+        assert_(ra.dtype == pa.dtype)
+        assert_(ra.shape == pa.shape)
         for k in xrange(len(ra)):
-            assert ra[k].item() == pa[k].item()
+            assert_(ra[k].item() == pa[k].item())
 
     def test_recarray_conflict_fields(self):
         ra = np.rec.array([(1, 'abc', 2.3), (2, 'xyz', 4.2),
@@ -84,14 +84,14 @@ class TestFromrecords(TestCase):
                        names='field, shape, mean')
         ra.mean = [1.1, 2.2, 3.3]
         assert_array_almost_equal(ra['mean'], [1.1, 2.2, 3.3])
-        assert type(ra.mean) is type(ra.var)
+        assert_(type(ra.mean) is type(ra.var))
         ra.shape = (1, 3)
-        assert ra.shape == (1, 3)
+        assert_(ra.shape == (1, 3))
         ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert callable(ra.field)
+        assert_(callable(ra.field))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -148,16 +148,16 @@ warnings.filterwarnings('ignore', message="Out of order field selection on recar
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
-    assert np.rec.find_duplicate(l1) == []
+    assert_(np.rec.find_duplicate(l1) == [])
 
     l2 = [1, 2, 1, 4, 5, 6]
-    assert np.rec.find_duplicate(l2) == [1]
+    assert_(np.rec.find_duplicate(l2) == [1])
 
     l3 = [1, 2, 1, 4, 1, 6, 2, 3]
-    assert np.rec.find_duplicate(l3) == [1, 2]
+    assert_(np.rec.find_duplicate(l3) == [1, 2])
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
-    assert np.rec.find_duplicate(l3) == [2, 1]
+    assert_(np.rec.find_duplicate(l3) == [2, 1])
 
 if __name__ == "__main__":
     run_module_suite()
