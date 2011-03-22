@@ -135,16 +135,11 @@ class TestRecord(TestCase):
         self.assertRaises(AttributeError, assign_invalid_column, a)
 
     def test_out_of_order_fields(self):
-        """Ticket #1431. Current behavior deprecated in numpy 1.5"""
+        """Ticket #1431."""
         x = self.data[['col1', 'col2']]
         y = self.data[['col2', 'col1']]
-        # make sure change is applied in 1.6/2.0
-        if np.version.short_version[:3] == '1.5':
-            assert_array_equal(x, y)
-        elif float(np.version.short_version[:3]) >= 1.6 and np.version.release:
-            assert_(y[0][0] == 4)
+        assert_equal(x[0][0], y[0][1])
 
-warnings.filterwarnings('ignore', message="Out of order field selection on recarrays")
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
