@@ -1,12 +1,8 @@
-
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
 
 class IntelCCompiler(UnixCCompiler):
-
-    """ A modified Intel compiler compatible with an gcc built Python.
-    """
-
+    """ A modified Intel compiler compatible with an gcc built Python."""
     compiler_type = 'intel'
     cc_exe = 'icc'
     cc_args = 'fPIC'
@@ -31,10 +27,8 @@ class IntelItaniumCCompiler(IntelCCompiler):
             break
 
 class IntelEM64TCCompiler(UnixCCompiler):
-
-""" A modified Intel x86_64 compiler compatible with a 64bit gcc built Python.
+    """ A modified Intel x86_64 compiler compatible with a 64bit gcc built Python.
     """
-
     compiler_type = 'intelem'
     cc_exe = 'icc -m64 -fPIC'
     cc_args = "-fPIC"
