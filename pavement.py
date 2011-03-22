@@ -87,11 +87,11 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/2.0.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.6.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'svn/tags/1.5.0'
-LOG_END = 'master'
+LOG_START = 'v1.5.0'
+LOG_END = 'v1.6.0b1'
 
 
 #-------------------------------------------------------
@@ -568,7 +568,7 @@ Checksums
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
-            ['git', 'svn', 'log',  '%s..%s' % (LOG_START, LOG_END)],
+            ['git', 'log',  '%s..%s' % (LOG_START, LOG_END)],
             stdout=subprocess.PIPE)
 
     out = st.communicate()[0]
