@@ -17,39 +17,52 @@
 
 #include "convert.h"
 
+/*
+ * Converts a subarray of 'self' into lists, with starting data pointer
+ * 'dataptr' and from dimension 'startdim' to the last dimension of 'self'.
+ *
+ * Returns a new reference.
+ */
+static PyObject *
+recursive_tolist(PyArrayObject *self, char *dataptr, int startdim)
+{
+    npy_intp i, n, stride;
+    PyObject *ret, *item;
+
+    /* Base case */
+    if (startdim >= PyArray_NDIM(self)) {
+        return PyArray_DESCR(self)->f->getitem(dataptr,self);
+    }
+
+    n = PyArray_DIM(self, startdim);
+    stride = PyArray_STRIDE(self, startdim);
+
+    ret = PyList_New(n);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    for (i = 0; i < n; ++i) {
+        item = recursive_tolist(self, dataptr, startdim+1);
+        if (item == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        PyList_SET_ITEM(ret, i, item);
+
+        dataptr += stride;
+    }
+
+    return ret;
+}
+
 /*NUMPY_API
  * To List
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ToList(PyArrayObject *self)
 {
-    PyObject *lp;
-    PyArrayObject *v;
-    intp sz, i;
-
-    if (!PyArray_Check(self)) {
-        return (PyObject *)self;
-    }
-    if (self->nd == 0) {
-        return self->descr->f->getitem(self->data,self);
-    }
-
-    sz = self->dimensions[0];
-    lp = PyList_New(sz);
-    for (i = 0; i < sz; i++) {
-        v = (PyArrayObject *)array_big_item(self, i);
-        if (PyArray_Check(v) && (v->nd >= self->nd)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "array_item not returning smaller-" \
-                            "dimensional array");
-            Py_DECREF(v);
-            Py_DECREF(lp);
-            return NULL;
-        }
-        PyList_SetItem(lp, i, PyArray_ToList(v));
-        Py_DECREF(v);
-    }
-    return lp;
+    return recursive_tolist(self, PyArray_DATA(self), 0);
 }
 
 /* XXX: FIXME --- add ordering argument to
