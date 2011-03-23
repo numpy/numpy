@@ -883,68 +883,51 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 }
 
 /*NUMPY_API
- * Fast Copy and Transpose
+ * Copy and Transpose
+ *
+ * Could deprecate this function, as there isn't a speed benefit over
+ * calling Transpose and then Copy.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CopyAndTranspose(PyObject *op)
 {
-    PyObject *ret, *arr;
-    int nd;
-    npy_intp dims[2];
-    npy_intp i,j;
-    int elsize, str2;
-    char *iptr;
-    char *optr;
+    PyArrayObject *arr, *tmp, *ret;
+    int i;
+    npy_intp new_axes_values[NPY_MAXDIMS];
+    PyArray_Dims new_axes;
 
-    /* make sure it is well-behaved */
-    arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY, NULL);
+    /* Make sure we have an array */
+    arr = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, NULL);
     if (arr == NULL) {
         return NULL;
     }
-    nd = PyArray_NDIM(arr);
-    if (nd == 1) {
-        /* we will give in to old behavior */
-        ret = PyArray_Copy((PyArrayObject *)arr);
-        Py_DECREF(arr);
-        return ret;
-    }
-    else if (nd != 2) {
-        Py_DECREF(arr);
-        PyErr_SetString(PyExc_ValueError,
-                        "only 2-d arrays are allowed");
-        return NULL;
-    }
 
-    /* Now construct output array */
-    dims[0] = PyArray_DIM(arr,1);
-    dims[1] = PyArray_DIM(arr,0);
-    elsize = PyArray_ITEMSIZE(arr);
-    Py_INCREF(PyArray_DESCR(arr));
-    ret = PyArray_NewFromDescr(Py_TYPE(arr),
-                               PyArray_DESCR(arr),
-                               2, dims,
-                               NULL, NULL, 0, arr);
-    if (ret == NULL) {
-        Py_DECREF(arr);
-        return NULL;
-    }
+    if (PyArray_NDIM(arr) > 1) {
+        /* Set up the transpose operation */
+        new_axes.len = PyArray_NDIM(arr);
+        for (i = 0; i < new_axes.len; ++i) {
+            new_axes_values[i] = new_axes.len - i - 1;
+        }
+        new_axes.ptr = new_axes_values;
 
-    /* do 2-d loop */
-    NPY_BEGIN_ALLOW_THREADS;
-    optr = PyArray_DATA(ret);
-    str2 = elsize*dims[0];
-    for (i = 0; i < dims[0]; i++) {
-        iptr = PyArray_BYTES(arr) + i*elsize;
-        for (j = 0; j < dims[1]; j++) {
-            /* optr[i,j] = iptr[j,i] */
-            memcpy(optr, iptr, elsize);
-            optr += elsize;
-            iptr += str2;
+        /* Do the transpose (always returns a view) */
+        tmp = (PyArrayObject *)PyArray_Transpose(arr, &new_axes);
+        if (tmp == NULL) {
+            Py_DECREF(arr);
+            return NULL;
         }
     }
-    NPY_END_ALLOW_THREADS;
-    Py_DECREF(arr);
-    return ret;
+    else {
+        tmp = arr;
+        arr = NULL;
+    }
+
+    /* TODO: Change this to NPY_KEEPORDER for NumPy 2.0 */
+    ret = (PyArrayObject *)PyArray_NewCopy(tmp, NPY_CORDER);
+
+    Py_XDECREF(arr);
+    Py_DECREF(tmp);
+    return (PyObject *)ret;
 }
 
 /*
