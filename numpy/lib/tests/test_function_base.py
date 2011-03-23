@@ -565,8 +565,6 @@ class TestHistogram(TestCase):
         area = sum(a * diff(b))
         assert_almost_equal(area, 1)
 
-        warnings.filterwarnings('ignore',
-            message="\s*This release of NumPy fixes a normalization bug")
         # Check with non-constant bin widths
         v = np.arange(10)
         bins = [0,1,3,6,10]
@@ -656,6 +654,11 @@ class TestHistogram(TestCase):
         assert_almost_equal(a, [.2, .1, .1, .075])
         warnings.filters.pop(0)
 
+    def test_empty(self):
+        a, b = histogram([], bins=([0,1]))
+        assert_array_equal(a, array([0]))
+        assert_array_equal(b, array([0, 1]))
+
 
 class TestHistogramdd(TestCase):
     def test_simple(self):
@@ -728,6 +731,10 @@ class TestHistogramdd(TestCase):
         x = zeros((10, 2), int)
         hist, edges = histogramdd(x, bins=2)
         assert_array_equal(edges[0], array([-0.5, 0. , 0.5]))
+
+    def test_empty(self):
+        a, b = histogramdd([[], []], bins=([0,1], [0,1]))
+        assert_array_max_ulp(a, array([ 0., 0.]))
 
 
 class TestUnique(TestCase):

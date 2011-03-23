@@ -222,6 +222,10 @@ class TestHistogram2d(TestCase):
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0,1], [0,1]))
         assert_array_equal(H, 0)
 
+    def test_empty(self):
+        a, edge1, edge2 = histogram2d([],[], bins=([0,1],[0,1]))
+        assert_array_max_ulp(a, array([ 0., 0.]))
+
 
 class TestTri(TestCase):
     def test_dtype(self):
