@@ -195,14 +195,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
         db = array(np.diff(bins), float)
         if not uniform:
             warnings.warn("""
-            This release of NumPy fixes a normalization bug in histogram
-            function occuring with non-uniform bin widths. The returned 
-            value is now a density: n / (N * bin width), where n is the 
-            bin count and N the total number of points. 
+            This release of NumPy (1.6) fixes a normalization bug in histogram
+            function occuring with non-uniform bin widths. The returned value
+            is now a density: n / (N * bin width), where n is the bin count and
+            N the total number of points.
             """)
         return n/db/n.sum(), bins
-        
-        
     else:
         return n, bins
 
@@ -228,7 +226,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         A sequence of lower and upper bin edges to be used if the edges are
         not given explicitely in `bins`. Defaults to the minimum and maximum
         values along each dimension.
-    normed : boolean, optional
+    normed : bool, optional
         If False, returns the number of samples in each bin. If True, returns
         the bin density, ie, the bin count divided by the bin hypervolume.
     weights : array_like (N,), optional
@@ -247,8 +245,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     See Also
     --------
-    histogram: 1D histogram
-    histogram2d: 2D histogram
+    histogram: 1-D histogram
+    histogram2d: 2-D histogram
 
     Examples
     --------
@@ -285,8 +283,13 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Select range for each dimension
     # Used only if number of bins is given.
     if range is None:
-        smin = atleast_1d(array(sample.min(0), float))
-        smax = atleast_1d(array(sample.max(0), float))
+        # Handle empty input. Range can't be determined in that case, use 0-1.
+        if N == 0:
+            smin = zeros(D)
+            smax = ones(D)
+        else:
+            smin = atleast_1d(array(sample.min(0), float))
+            smax = atleast_1d(array(sample.max(0), float))
     else:
         smin = zeros(D)
         smax = zeros(D)
@@ -308,6 +311,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             edges[i] = asarray(bins[i], float)
             nbin[i] = len(edges[i])+1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
+
+    # Handle empty input.
+    if N == 0:
+        return np.zeros(D), edges
 
     nbin =  asarray(nbin)
 
