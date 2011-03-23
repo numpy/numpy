@@ -1574,5 +1574,11 @@ class TestRegression(TestCase):
         except:
             raise AssertionError
 
+    def test_ticket_1608(self):
+        "x.flat shouldn't modify data"
+        x = np.array([[1,2],[3,4]]).T
+        y = np.array(x.flat)
+        assert_equal(x, [[1,3],[2,4]])
+
 if __name__ == "__main__":
     run_module_suite()
