@@ -2387,33 +2387,49 @@ def analyzevars(block):
     return vars
 
 analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z',re.I)
+def expr2name(a, block, args=[]):
+    orig_a = a
+    a_is_expr = not analyzeargs_re_1.match(a)
+    if a_is_expr: # `a` is an expression
+        implicitrules,attrrules=buildimplicitrules(block)
+        at=determineexprtype(a,block['vars'],implicitrules)
+        na='e_'
+        for c in a:
+            c = c.lower()
+            if c not in string.lowercase+string.digits: c='_'
+            na=na+c
+        if na[-1]=='_': na=na+'e'
+        else: na=na+'_e'
+        a=na
+        while a in block['vars'] or a in block['args']:
+            a=a+'r'
+    if a in args:
+        k = 1
+        while a + str(k) in args:
+            k = k + 1
+        a = a + str(k)
+    if a_is_expr:
+        block['vars'][a]=at
+    else:
+        if a not in block['vars']:
+            if orig_a in block['vars']:
+                block['vars'][a] = block['vars'][orig_a]
+            else:
+                block['vars'][a]={}
+        if 'externals' in block and orig_a in block['externals']+block['interfaced']:
+            block['vars'][a]=setattrspec(block['vars'][a],'external')
+    return a
+
 def analyzeargs(block):
     setmesstext(block)
     implicitrules,attrrules=buildimplicitrules(block)
     if 'args' not in block:
         block['args']=[]
     args=[]
-    re_1 = analyzeargs_re_1
     for a in block['args']:
-        if not re_1.match(a): # `a` is an expression
-            at=determineexprtype(a,block['vars'],implicitrules)
-            na='e_'
-            for c in a:
-                if c not in string.lowercase+string.digits: c='_'
-                na=na+c
-            if na[-1]=='_': na=na+'e'
-            else: na=na+'_e'
-            a=na
-            while a in block['vars'] or a in block['args']:
-                a=a+'r'
-            block['vars'][a]=at
+        a = expr2name(a, block, args)
         args.append(a)
-        if a not in block['vars']:
-            block['vars'][a]={}
-        if 'externals' in block and a in block['externals']+block['interfaced']:
-            block['vars'][a]=setattrspec(block['vars'][a],'external')
     block['args']=args
-
     if 'entry' in block:
         for k,args1 in block['entry'].items():
             for a in args1:
@@ -2503,14 +2519,17 @@ def crack2fortrangen(block,tab='\n', as_interface=False):
     args=''
     blocktype=block['block']
     if blocktype=='program': return ''
-    al=[]
+    argsl = []
     if 'name' in block:
         name=block['name']
     if 'args' in block:
         vars = block['vars']
-        al = [a for a in block['args'] if not isintent_callback(vars[a])]
-        if block['block']=='function' or al:
-            args='(%s)'%','.join(al)
+        for a in block['args']:
+            a = expr2name(a, block, argsl)
+            if not isintent_callback(vars[a]):
+                argsl.append(a)
+        if block['block']=='function' or argsl:
+            args='(%s)'%','.join(argsl)
     f2pyenhancements = ''
     if 'f2pyenhancements' in block:
         for k in block['f2pyenhancements'].keys():
@@ -2532,12 +2551,12 @@ def crack2fortrangen(block,tab='\n', as_interface=False):
     result=''
     if 'result' in block:
         result=' result (%s)'%block['result']
-        if block['result'] not in al:
-            al.append(block['result'])
+        if block['result'] not in argsl:
+            argsl.append(block['result'])
     #if 'prefix' in block:
     #    prefix=block['prefix']+' '
     body=crack2fortrangen(block['body'],tab+tabchar)
-    vars=vars2fortran(block,block['vars'],al,tab+tabchar, as_interface=as_interface)
+    vars=vars2fortran(block,block['vars'],argsl,tab+tabchar, as_interface=as_interface)
     mess=''
     if 'from' in block and not as_interface:
         mess='! in %s'%block['from']
