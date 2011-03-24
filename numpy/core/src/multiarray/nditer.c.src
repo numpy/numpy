@@ -3391,7 +3391,7 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
         return PyUString_FromFormat("()%s", ending);
     }
     else {
-        ret = PyUString_FromFormat("(%zd", vals[i++]);
+        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
         if (ret == NULL) {
             return NULL;
         }
@@ -3402,7 +3402,7 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
             tmp = PyUString_FromString(",newaxis");
         }
         else {
-            tmp = PyUString_FromFormat(",%zd", vals[i]);
+            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
