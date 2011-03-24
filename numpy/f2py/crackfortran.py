@@ -13,7 +13,7 @@ $Date: 2005/09/27 07:13:49 $
 Pearu Peterson
 """
 __version__ = "$Revision: 1.177 $"[10:-1]
-
+import platform
 import __version__
 f2py_version = __version__.version
 
@@ -1972,7 +1972,12 @@ def _selected_real_kind_func(p,r=0,radix=0):
     #XXX: This should be processor dependent
     if p<7: return 4
     if p<16: return 8
-    if p<19: return 10
+    if platform.machine().lower().startswith('power'):
+        if p<=20:
+            return 16
+    else:
+        if p<19:
+            return 10
     return -1
 
 def get_parameters(vars, global_params={}):
