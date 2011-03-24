@@ -77,7 +77,18 @@ from paver.easy import \
 sys.path.insert(0, os.path.dirname(__file__))
 try:
     setup_py = __import__("setup")
-    FULLVERSION = setup_py.FULLVERSION
+    FULLVERSION = setup_py.VERSION
+    # This is duplicated from setup.py
+    if os.path.exists('.git'):
+        GIT_REVISION = setup_py.git_version()
+    elif os.path.exists('numpy/version.py'):
+        # must be a source distribution, use existing version file
+        from numpy.version import git_revision as GIT_REVISION
+    else:
+        GIT_REVISION = "Unknown"
+
+    if not setup_py.ISRELEASED:
+        FULLVERSION += '.dev-' + GIT_REVISION[:7]
 finally:
     sys.path.pop(0)
 
@@ -474,6 +485,7 @@ def dmg(options):
     ref = os.path.join(options.doc.destdir_pdf, "reference.pdf")
     user = os.path.join(options.doc.destdir_pdf, "userguide.pdf")
     if (not os.path.exists(ref)) or (not os.path.exists(user)):
+        import warnings
         warnings.warn("Docs need to be built first! Can't find them.")
 
     # Build the mpkg package

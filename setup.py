@@ -94,19 +94,6 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # a lot more robust than what was previously being used.
 builtins.__NUMPY_SETUP__ = True
 
-# Construct full version info. Needs to be in setup.py namespace, otherwise it
-# can't be accessed from pavement.py at build time.
-FULLVERSION = VERSION
-if os.path.exists('.git'):
-    GIT_REVISION = git_version()
-elif os.path.exists('numpy/version.py'):
-    # must be a source distribution, use existing version file
-    from numpy.version import git_revision as GIT_REVISION
-else:
-    GIT_REVISION = "Unknown"
-
-if not ISRELEASED:
-    FULLVERSION += '.dev-' + GIT_REVISION[:7]
 
 def write_version_py(filename='numpy/version.py'):
     cnt = """
@@ -120,6 +107,20 @@ release = %(isrelease)s
 if not release:
     version = full_version
 """
+    # Adding the git rev number needs to be done inside write_version_py(),
+    # otherwise the import of numpy.version messes up the build under Python 3.
+    FULLVERSION = VERSION
+    if os.path.exists('.git'):
+        GIT_REVISION = git_version()
+    elif os.path.exists('numpy/version.py'):
+        # must be a source distribution, use existing version file
+        from numpy.version import git_revision as GIT_REVISION
+    else:
+        GIT_REVISION = "Unknown"
+
+    if not ISRELEASED:
+        FULLVERSION += '.dev-' + GIT_REVISION[:7]
+
     a = open(filename, 'w')
     try:
         a.write(cnt % {'version': VERSION,
