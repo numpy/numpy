@@ -1954,9 +1954,11 @@ if sys.version_info >= (2, 6):
                   ('l', 'S4'),
                   ('m', 'U4'),
                   ('n', 'V3'),
-                  ('o', '?')]
+                  ('o', '?'),
+                  ('p', np.half),
+                 ]
             x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                           asbytes('aaaa'), 'bbbb', asbytes('xxx'), True)],
+                           asbytes('aaaa'), 'bbbb', asbytes('xxx'), True, 1.0)],
                          dtype=dt)
             self._check_roundtrip(x)
 
@@ -1987,6 +1989,25 @@ if sys.version_info >= (2, 6):
                 self._check_roundtrip(x)
                 x = np.array([1,2,3], dtype='<q')
                 assert_raises(ValueError, self._check_roundtrip, x)
+
+        def test_roundtrip_half(self):
+            half_list = [
+                1.0,
+                -2.0,
+                6.5504 * 10**4, #  (max half precision)
+                2**-14, # ~= 6.10352 * 10**-5 (minimum positive normal)
+                2**-24, # ~= 5.96046 * 10**-8 (minimum strictly positive subnormal)
+                0.0,
+                -0.0,
+                float('+inf'),
+                float('-inf'),
+                0.333251953125, # ~= 1/3
+            ]
+
+            x = np.array(half_list, dtype='>e')
+            self._check_roundtrip(x)
+            x = np.array(half_list, dtype='<e')
+            self._check_roundtrip(x)
 
         def test_export_simple_1d(self):
             x = np.array([1,2,3,4,5], dtype='i')
@@ -2038,9 +2059,11 @@ if sys.version_info >= (2, 6):
                   ('l', 'S4'),
                   ('m', 'U4'),
                   ('n', 'V3'),
-                  ('o', '?')]
+                  ('o', '?'),
+                  ('p', np.half),
+                 ]
             x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                           asbytes('aaaa'), 'bbbb', asbytes('   '), True)],
+                           asbytes('aaaa'), 'bbbb', asbytes('   '), True, 1.0)],
                          dtype=dt)
             y = memoryview(x)
             assert_equal(y.shape, (1,))
@@ -2049,9 +2072,9 @@ if sys.version_info >= (2, 6):
 
             sz = sum([dtype(b).itemsize for a, b in dt])
             if dtype('l').itemsize == 4:
-                assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:}')
+                assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
             else:
-                assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:}')
+                assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
             assert_equal(y.strides, (sz,))
             assert_equal(y.itemsize, sz)
 

@@ -348,6 +348,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         case NPY_LONGLONG:     if (_append_char(str, 'q')) return -1; break;
         case NPY_ULONGLONG:    if (_append_char(str, 'Q')) return -1; break;
+        case NPY_HALF:         if (_append_char(str, 'e')) return -1; break;
         case NPY_FLOAT:        if (_append_char(str, 'f')) return -1; break;
         case NPY_DOUBLE:       if (_append_char(str, 'd')) return -1; break;
         case NPY_LONGDOUBLE:   if (_append_char(str, 'g')) return -1; break;
