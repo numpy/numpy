@@ -116,7 +116,29 @@ The sections of the docstring are:
 
      """
 
-2. **Extended summary**
+2. **Deprecation warning**
+
+   A section (use if applicable) to warn users that the object is deprecated.
+   Section contents should include: 
+
+   * In what Numpy version the object was deprecated, and when it will be
+     removed.
+
+   * Reason for deprecation  if this is useful information (e.g., object
+     is superseded, duplicates functionality found elsewhere, etc.).
+
+   * New recommended way of obtaining the same functionality. 
+
+   This section should use the note Sphinx directive instead of an
+   underlined section header.
+
+   ::
+
+     .. note:: Deprecated in Numpy 1.6
+               `ndobj_old` will be removed in Numpy 2.0, it is replaced by
+               `ndobj_new` because the latter works also with array subclasses.
+
+3. **Extended summary**
 
    A few sentences giving an extended description.  This section
    should be used to clarify *functionality*, not to discuss
@@ -125,7 +147,7 @@ The sections of the docstring are:
    parameters and the function name, but parameter descriptions still
    belong in the **parameters** section.
 
-3. **Parameters**
+4. **Parameters**
 
    Description of the function arguments, keywords and their
    respective types.
@@ -177,18 +199,18 @@ The sections of the docstring are:
      x1, x2 : array_like
          Input arrays, description of `x1`, `x2`.
 
-4. **Returns**
+5. **Returns**
 
    Explanation of the returned values and their types, of the same
    format as **parameters**.
 
-5. **Other parameters**
+6. **Other parameters**
 
    An optional section used to describe infrequently used parameters.
    It should only be used if a function has a large number of keyword
    prameters, to prevent cluttering the **parameters** section.
 
-6. **Raises**
+7. **Raises**
 
    An optional section detailing which errors get raised and under
    what conditions::
@@ -201,7 +223,7 @@ The sections of the docstring are:
    This section should be used judiciously, i.e only for errors
    that are non-obvious or have a large chance of getting raised.
 
-7. **See Also**
+8. **See Also**
 
    An optional section used to refer to related code.  This section
    can be very useful, but should be used judiciously.  The goal is to
@@ -240,7 +262,7 @@ The sections of the docstring are:
      func_b, func_c_, func_d
      func_e
 
-8. **Notes**
+9. **Notes**
 
    An optional section that provides additional information about the
    code, possibly including a discussion of the algorithm. This
@@ -285,7 +307,7 @@ The sections of the docstring are:
    where filename is a path relative to the reference guide source
    directory.
 
-9. **References**
+10. **References**
 
    References cited in the **notes** section may be listed here,
    e.g. if you cited the article below using the text ``[1]_``,
@@ -310,7 +332,7 @@ The sections of the docstring are:
    should not be required to understand it.  References are numbered, starting
    from one, in the order in which they are cited.  
 
-10. **Examples**
+11. **Examples**
 
    An optional section for examples, using the `doctest
    <http://www.python.org/doc/lib/module-doctest.html>`_ format.
@@ -512,7 +534,7 @@ output. New paragraphs are marked with a blank line.
 Use *italics*, **bold**, and ``courier`` if needed in any explanations
 (but not for variable names and doctest code or multi-line code).
 Variable, module and class names should be written between single
-backticks (```numpy```).
+back-ticks (```numpy```).
 
 A more extensive example of reST markup can be found in `this example
 document <http://docutils.sourceforge.net/docs/user/rst/demo.txt>`_;
