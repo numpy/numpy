@@ -86,7 +86,7 @@ class IBMFCompiler(FCompiler):
         return opt
 
     def get_flags_opt(self):
-        return ['-O5']
+        return ['-O3']
 
 if __name__ == '__main__':
     log.set_verbosity(2)
