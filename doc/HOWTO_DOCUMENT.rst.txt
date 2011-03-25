@@ -307,11 +307,8 @@ The sections of the docstring are:
 
    Referencing sources of a temporary nature, like web pages, is
    discouraged.  References are meant to augment the docstring, but
-   should not be required to understand it.  Follow the `citation
-   format of the IEEE
-   <http://www.ieee.org/pubs/transactions/auinfo03.pdf>`_, which
-   states that references are numbered, starting from one, in the
-   order in which they are cited.
+   should not be required to understand it.  References are numbered, starting
+   from one, in the order in which they are cited.  
 
 10. **Examples**
 
