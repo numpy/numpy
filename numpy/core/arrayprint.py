@@ -208,12 +208,12 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                 format_function = lambda x: _formatInteger(x, format)
         elif issubclass(dtypeobj, _nt.floating):
             if issubclass(dtypeobj, _nt.longfloat):
-                format_function = _longfloatFormatter(precision)
+                format_function = LongFloatFormat(precision)
             else:
                 format_function = FloatFormat(data, precision, suppress_small)
         elif issubclass(dtypeobj, _nt.complexfloating):
             if issubclass(dtypeobj, _nt.clongfloat):
-                format_function = _clongfloatFormatter(precision)
+                format_function = LongComplexFormat(precision)
             else:
                 format_function = ComplexFormat(data, precision, suppress_small)
         elif issubclass(dtypeobj, _nt.unicode_) or \
@@ -442,6 +442,7 @@ class FloatFormat(object):
             else:
                 format = '%#'
             format = format + '%d.%df' % (self.max_str_len, precision)
+
         self.special_fmt = '%%%ds' % (self.max_str_len,)
         self.format = format
 
@@ -450,10 +451,16 @@ class FloatFormat(object):
         err = _nc.seterr(invalid='ignore')
         try:
             if isnan(x):
-                return self.special_fmt % (_nan_str,)
+                if self.sign:
+                    return self.special_fmt % ('+' + _nan_str,)
+                else:
+                    return self.special_fmt % (_nan_str,)
             elif isinf(x):
                 if x > 0:
-                    return self.special_fmt % (_inf_str,)
+                    if self.sign:
+                        return self.special_fmt % ('+' + _inf_str,)
+                    else:
+                        return self.special_fmt % (_inf_str,)
                 else:
                     return self.special_fmt % ('-' + _inf_str,)
         finally:
@@ -489,26 +496,46 @@ def _formatInteger(x, format):
     else:
         return "%s" % x
 
-def _longfloatFormatter(precision):
+class LongFloatFormat(object):
     # XXX Have to add something to determine the width to use a la FloatFormat
     # Right now, things won't line up properly
-    def formatter(x):
+    def __init__(self, precision, sign=False):
+        self.precision = precision
+        self.sign = sign
+
+    def __call__(self, x):
         if isnan(x):
-            return _nan_str
+            if self.sign:
+                return '+' + _nan_str
+            else:
+                return ' ' + _nan_str
         elif isinf(x):
             if x > 0:
-                return _inf_str
+                if self.sign:
+                    return '+' + _inf_str
+                else:
+                    return ' ' + _inf_str
             else:
                 return '-' + _inf_str
-        return format_longfloat(x, precision)
-    return formatter
+        elif x >= 0:
+            if self.sign:
+                return '+' + format_longfloat(x, self.precision)
+            else:
+                return ' ' + format_longfloat(x, self.precision)
+        else:
+            return format_longfloat(x, self.precision)
 
-def _clongfloatFormatter(precision):
-    def formatter(x):
-        r = format_longfloat(x.real, precision)
-        i = format_longfloat(x.imag, precision)
-        return '%s+%sj' % (r, i)
-    return formatter
+
+class LongComplexFormat(object):
+    def __init__(self, precision):
+        self.real_format = LongFloatFormat(precision)
+        self.imag_format = LongFloatFormat(precision, sign=True)
+
+    def __call__(self, x):
+        r = self.real_format(x.real)
+        i = self.imag_format(x.imag)
+        return r + i + 'j'
+
 
 class ComplexFormat(object):
     def __init__(self, x, precision, suppress_small):
