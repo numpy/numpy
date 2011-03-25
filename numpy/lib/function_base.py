@@ -421,26 +421,12 @@ def average(a, axis=None, weights=None, returned=False):
         When the length of 1D `weights` is not the same as the shape of `a`
         along axis.
 
-    Notes
-    -----
-    When the array `a` contains `None` values, this function will throw
-    an error. If you would like to calculate the average without the `None`
-    values in the calculation, the `list comprehension`_ feature in Python
-    is a great way to do that. If you're new to Python, learning about
-    list comprehensions is well worth your while, as they make
-    manipulating and filtering lists very convenient.
-
-    .. _list comprehension: http://docs.python.org/tutorial/datastructures.html#list-comprehensions
-
-    >>> a = [1, None, 2, None]
-    >>> np.average([x for x in a if x != None])
-    1.5
-
     See Also
     --------
     mean
 
-    ma.average : average for masked arrays
+    ma.average : average for masked arrays -- useful if your data contains
+                 "missing" values
 
     Examples
     --------
