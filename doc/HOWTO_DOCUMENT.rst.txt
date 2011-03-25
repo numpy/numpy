@@ -424,6 +424,7 @@ Method docstrings
 Document these as you would any other function.  Do not include
 ``self`` in the list of parameters.
 
+
 Documenting class instances
 ---------------------------
 Instances of classes that are part of the Numpy API (for example `np.r_`
@@ -437,6 +438,7 @@ instances a useful docstring, we do the following:
   for each instance are written and assigned to the instances'
   ``__doc__`` attributes at run time. The class is documented as usual, and
   the exposed instances can be mentioned in the Notes and See Also sections.
+
 
 Documenting constants
 ---------------------
@@ -452,6 +454,29 @@ Docstrings for constants will not be visible in text terminals
 (constants are of immutable type, so docstrings can not be assigned
 to them like for for class instances), but will appear in the
 documentation built with Sphinx.
+
+
+Documenting modules
+-------------------
+Each module should have a docstring with at least a summary line. Other
+sections are optional, and should be used in the same order as for documenting
+functions when they are appropriate::
+
+    1. summary
+    2. extended summary
+    3. routine listings
+    4. see also
+    5. notes
+    6. references
+    7. examples
+
+Routine listings are encouraged, especially for large modules, for which it is
+hard to get a good overview of all functionality provided by looking at the
+source file(s) or the __all__ dict.
+
+Note that license and author info, while often included in source files, do not
+belong in docstrings. 
+
 
 Other points to keep in mind
 ----------------------------
