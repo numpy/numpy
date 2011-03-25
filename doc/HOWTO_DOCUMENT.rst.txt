@@ -420,7 +420,11 @@ Note that `self` is *not* listed as the first parameter of methods.
 Method docstrings
 `````````````````
 Document these as you would any other function.  Do not include
-``self`` in the list of parameters.
+``self`` in the list of parameters.  If a method has an equivalent function
+(which is the case for many ndarray methods for example), the function
+docstring should contain the detailed documentation, and the method docstring
+should refer to it.  Only put brief summary and See Also sections in the method
+docstring.
 
 
 Documenting class instances
