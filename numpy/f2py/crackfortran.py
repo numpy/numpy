@@ -283,7 +283,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
     cont=0
     finalline=''
     ll=''
-    commentline=re.compile(r'(?P<line>([^"]*"[^"]*"[^"!]*|[^\']*\'[^\']*\'[^\'!]*|[^!]*))!{1}(?P<rest>.*)')
+    commentline=re.compile(r'(?P<line>([^"]*["][^"]*["][^"!]*|[^\']*\'[^\']*\'[^\'!]*|[^!\'"]*))!{1}(?P<rest>.*)')
     includeline=re.compile(r'\s*include\s*(\'|")(?P<name>[^\'"]*)(\'|")',re.I)
     cont1=re.compile(r'(?P<line>.*)&\s*\Z')
     cont2=re.compile(r'(\s*&|)(?P<line>.*)')
