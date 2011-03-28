@@ -124,9 +124,7 @@ def createfuncwrapper(rout,signature=0):
         add('subroutine f2pywrap%s (%s)'%(name,sargs))
         if not need_interface:
             add('external %s'%(fortranname))
-        #if not return_char_star:
-        l = l + ', '+fortranname
-
+            l = l + ', '+fortranname
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
             if line.lstrip().startswith('use '):
