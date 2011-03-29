@@ -2698,7 +2698,7 @@ def vars2fortran(block,vars,args,tab='', as_interface=False):
                 if l not in ['external']:
                     attr.append(l)
             if attr:
-                vardef='%s %s'%(vardef,','.join(attr))
+                vardef='%s, %s'%(vardef,','.join(attr))
                 c=','
         if 'dimension' in vars[a]:
 #             if not isintent_c(vars[a]):
