@@ -13,45 +13,55 @@ class TestComplexArray(TestCase):
         dtypes = [np.complex64, np.cdouble, np.clongdouble]
         actual = [str(np.array([c], dt)) for c in cvals for dt in dtypes]
         wanted = [
-            '[ 0.+0.j]',    '[ 0.+0.j]',    '[ 0.0+0.0j]', 
-            '[ 0.+1.j]',    '[ 0.+1.j]',    '[ 0.0+1.0j]', 
-            '[ 0.-1.j]',    '[ 0.-1.j]',    '[ 0.0-1.0j]', 
-            '[ 0.+infj]',   '[ 0.+infj]',   '[ 0.0+infj]', 
-            '[ 0.-infj]',   '[ 0.-infj]',   '[ 0.0-infj]', 
-            '[ 0.+nanj]',   '[ 0.+nanj]',   '[ 0.0+nanj]', 
-            '[ 1.+0.j]',    '[ 1.+0.j]',    '[ 1.0+0.0j]', 
-            '[ 1.+1.j]',    '[ 1.+1.j]',    '[ 1.0+1.0j]', 
-            '[ 1.-1.j]',    '[ 1.-1.j]',    '[ 1.0-1.0j]', 
-            '[ 1.+infj]',   '[ 1.+infj]',   '[ 1.0+infj]', 
-            '[ 1.-infj]',   '[ 1.-infj]',   '[ 1.0-infj]', 
-            '[ 1.+nanj]',   '[ 1.+nanj]',   '[ 1.0+nanj]', 
-            '[-1.+0.j]',    '[-1.+0.j]',    '[-1.0+0.0j]', 
-            '[-1.+1.j]',    '[-1.+1.j]',    '[-1.0+1.0j]', 
-            '[-1.-1.j]',    '[-1.-1.j]',    '[-1.0-1.0j]', 
-            '[-1.+infj]',   '[-1.+infj]',   '[-1.0+infj]', 
-            '[-1.-infj]',   '[-1.-infj]',   '[-1.0-infj]', 
-            '[-1.+nanj]',   '[-1.+nanj]',   '[-1.0+nanj]', 
-            '[ inf+0.j]',   '[ inf+0.j]',   '[ inf+0.0j]', 
-            '[ inf+1.j]',   '[ inf+1.j]',   '[ inf+1.0j]', 
-            '[ inf-1.j]',   '[ inf-1.j]',   '[ inf-1.0j]', 
-            '[ inf+infj]',  '[ inf+infj]',  '[ inf+infj]', 
-            '[ inf-infj]',  '[ inf-infj]',  '[ inf-infj]', 
-            '[ inf+nanj]',  '[ inf+nanj]',  '[ inf+nanj]', 
-            '[-inf+0.j]',   '[-inf+0.j]',   '[-inf+0.0j]', 
-            '[-inf+1.j]',   '[-inf+1.j]',   '[-inf+1.0j]', 
-            '[-inf-1.j]',   '[-inf-1.j]',   '[-inf-1.0j]', 
-            '[-inf+infj]',  '[-inf+infj]',  '[-inf+infj]', 
-            '[-inf-infj]',  '[-inf-infj]',  '[-inf-infj]', 
-            '[-inf+nanj]',  '[-inf+nanj]',  '[-inf+nanj]', 
-            '[ nan+0.j]',   '[ nan+0.j]',   '[ nan+0.0j]', 
-            '[ nan+1.j]',   '[ nan+1.j]',   '[ nan+1.0j]', 
-            '[ nan-1.j]',   '[ nan-1.j]',   '[ nan-1.0j]', 
-            '[ nan+infj]',  '[ nan+infj]',  '[ nan+infj]', 
-            '[ nan-infj]',  '[ nan-infj]',  '[ nan-infj]', 
+            '[ 0.+0.j]',    '[ 0.+0.j]',    '[ 0.0+0.0j]',
+            '[ 0.+1.j]',    '[ 0.+1.j]',    '[ 0.0+1.0j]',
+            '[ 0.-1.j]',    '[ 0.-1.j]',    '[ 0.0-1.0j]',
+            '[ 0.+infj]',   '[ 0.+infj]',   '[ 0.0+infj]',
+            '[ 0.-infj]',   '[ 0.-infj]',   '[ 0.0-infj]',
+            '[ 0.+nanj]',   '[ 0.+nanj]',   '[ 0.0+nanj]',
+            '[ 1.+0.j]',    '[ 1.+0.j]',    '[ 1.0+0.0j]',
+            '[ 1.+1.j]',    '[ 1.+1.j]',    '[ 1.0+1.0j]',
+            '[ 1.-1.j]',    '[ 1.-1.j]',    '[ 1.0-1.0j]',
+            '[ 1.+infj]',   '[ 1.+infj]',   '[ 1.0+infj]',
+            '[ 1.-infj]',   '[ 1.-infj]',   '[ 1.0-infj]',
+            '[ 1.+nanj]',   '[ 1.+nanj]',   '[ 1.0+nanj]',
+            '[-1.+0.j]',    '[-1.+0.j]',    '[-1.0+0.0j]',
+            '[-1.+1.j]',    '[-1.+1.j]',    '[-1.0+1.0j]',
+            '[-1.-1.j]',    '[-1.-1.j]',    '[-1.0-1.0j]',
+            '[-1.+infj]',   '[-1.+infj]',   '[-1.0+infj]',
+            '[-1.-infj]',   '[-1.-infj]',   '[-1.0-infj]',
+            '[-1.+nanj]',   '[-1.+nanj]',   '[-1.0+nanj]',
+            '[ inf+0.j]',   '[ inf+0.j]',   '[ inf+0.0j]',
+            '[ inf+1.j]',   '[ inf+1.j]',   '[ inf+1.0j]',
+            '[ inf-1.j]',   '[ inf-1.j]',   '[ inf-1.0j]',
+            '[ inf+infj]',  '[ inf+infj]',  '[ inf+infj]',
+            '[ inf-infj]',  '[ inf-infj]',  '[ inf-infj]',
+            '[ inf+nanj]',  '[ inf+nanj]',  '[ inf+nanj]',
+            '[-inf+0.j]',   '[-inf+0.j]',   '[-inf+0.0j]',
+            '[-inf+1.j]',   '[-inf+1.j]',   '[-inf+1.0j]',
+            '[-inf-1.j]',   '[-inf-1.j]',   '[-inf-1.0j]',
+            '[-inf+infj]',  '[-inf+infj]',  '[-inf+infj]',
+            '[-inf-infj]',  '[-inf-infj]',  '[-inf-infj]',
+            '[-inf+nanj]',  '[-inf+nanj]',  '[-inf+nanj]',
+            '[ nan+0.j]',   '[ nan+0.j]',   '[ nan+0.0j]',
+            '[ nan+1.j]',   '[ nan+1.j]',   '[ nan+1.0j]',
+            '[ nan-1.j]',   '[ nan-1.j]',   '[ nan-1.0j]',
+            '[ nan+infj]',  '[ nan+infj]',  '[ nan+infj]',
+            '[ nan-infj]',  '[ nan-infj]',  '[ nan-infj]',
             '[ nan+nanj]',  '[ nan+nanj]',  '[ nan+nanj]']
 
         for res, val in zip(actual, wanted):
             assert_(res == val)
- 
+
+def test_array2string():
+    """Basic test of array2string."""
+    a = np.arange(3)
+    assert_(np.array2string(a) == '[0 1 2]')
+    assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
+    stylestr = np.array2string(np.array(1.5),
+                               style=lambda x: "Value in 0-D array: " + str(x))
+    assert_(stylestr == 'Value in 0-D array: 1.5')
+
+
 if __name__ == "__main__":
     run_module_suite()
