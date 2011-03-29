@@ -132,6 +132,13 @@ conversion of arbitrary python objects into arrays is exposed by
 ``PyArray_GetArrayParamsFromObject``.
 
 
+Deprecated features
+===================
+
+The "normed" keyword in ``numpy.histogram`` is deprecated. Its functionality
+will be replaced by the new "density" keyword.
+
+
 Removed features
 ================
 
