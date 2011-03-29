@@ -3,6 +3,7 @@ import sys
 import os
 import numpy as np
 from numpy.testing import *
+from nose import SkipTest
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
@@ -368,7 +369,6 @@ class TestStructured(TestCase):
         b = a.copy(order='F')
         assert_equal(a['a'].shape, b['a'].shape)
         assert_equal(a.T['a'].shape, a.T.copy()['a'].shape)
-
 
     def test_subarray_comparison(self):
         # Check that comparisons between record arrays with
@@ -1421,6 +1421,49 @@ class TestRecord(TestCase):
             title = unicode('b')
             assert_raises(TypeError, np.dtype, [(title, int)])
             assert_raises(TypeError, np.dtype, [(('a', title), int)])
+
+    def test_field_names(self):
+        # Test unicode and 8-bit / byte strings can be used
+        a = np.zeros((1,), dtype=[('f1', 'i4'),
+                                  ('f2', [('sf1', 'i4')])])
+        is_py3 = sys.version_info[0] >= 3
+        if is_py3:
+            funcs = (str,)
+            # byte string indexing fails gracefully
+            assert_raises(ValueError, a.__setitem__, asbytes('f1'), 1)
+            assert_raises(ValueError, a.__getitem__, asbytes('f1'))
+            assert_raises(ValueError, a['f1'].__setitem__, asbytes('sf1'), 1)
+            assert_raises(ValueError, a['f1'].__getitem__, asbytes('sf1'))
+        else:
+            funcs = (str, unicode)
+        for func in funcs:
+            b = a.copy()
+            fn1 = func('f1')
+            b[fn1] = 1
+            assert_equal(b[fn1], 1)
+            fnn = func('not at all')
+            assert_raises(ValueError, b.__setitem__, fnn, 1)
+            assert_raises(ValueError, b.__getitem__, fnn)
+            b[0][fn1] = 2
+            assert_equal(b[fn1], 2)
+            # Subfield
+            assert_raises(IndexError, b[0].__setitem__, fnn, 1)
+            assert_raises(IndexError, b[0].__getitem__, fnn)
+            # Subfield
+            fn2 = func('f2')
+            sfn1 = func('sf1')
+            b[fn2][sfn1] = 1
+            assert_equal(b[fn2][sfn1], 1)
+            assert_raises(ValueError, b[fn2].__setitem__, fnn, 1)
+            assert_raises(ValueError, b[fn2].__getitem__, fnn)
+        # non-ascii unicode field indexing is well behaved
+        if not is_py3:
+            raise SkipTest('non ascii unicode field indexing skipped; '
+                           'raises segfault on python 2.x')
+        else:
+            assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
+            assert_raises(ValueError, a.__getitem__, u'\u03e0')
+
 
 class TestView(TestCase):
     def test_basic(self):
