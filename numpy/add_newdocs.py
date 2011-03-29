@@ -3295,57 +3295,42 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
     """
-    a.getfield(dtype, offset)
+    a.getfield(dtype, offset=0)
 
     Returns a field of the given array as a certain type.
 
-    A field is a view of the array data with each itemsize determined
-    by the given type and the offset into the current array, i.e. from
-    ``offset * dtype.itemsize`` to ``(offset+1) * dtype.itemsize``.
+    A field is a view of the array data with a given data-type. The values in
+    the view are determined by the given type and the offset into the current
+    array in bytes. The offset needs to be such that the view dtype fits in the
+    array dtype; for example an array of dtype complex128 has 16-byte elements.
+    If taking a view with a 32-bit integer (4 bytes), the offset needs to be
+    between 0 and 12 bytes.
 
     Parameters
     ----------
-    dtype : str
-        String denoting the data type of the field.
+    dtype : str or dtype
+        The data type of the view. The dtype size of the view can not be larger
+        than that of the array itself.
     offset : int
-        Number of `dtype.itemsize`'s to skip before beginning the element view.
+        Number of bytes to skip before beginning the element view.
 
     Examples
     --------
     >>> x = np.diag([1.+1.j]*2)
+    >>> x[1, 1] = 2 + 4.j
     >>> x
     array([[ 1.+1.j,  0.+0.j],
-           [ 0.+0.j,  1.+1.j]])
-    >>> x.dtype
-    dtype('complex128')
-
-    >>> x.getfield('complex64', 0) # Note how this != x
-    array([[ 0.+1.875j,  0.+0.j   ],
-           [ 0.+0.j   ,  0.+1.875j]], dtype=complex64)
-
-    >>> x.getfield('complex64',1) # Note how different this is than x
-    array([[ 0. +5.87173204e-39j,  0. +0.00000000e+00j],
-           [ 0. +0.00000000e+00j,  0. +5.87173204e-39j]], dtype=complex64)
-
-    >>> x.getfield('complex128', 0) # == x
-    array([[ 1.+1.j,  0.+0.j],
-           [ 0.+0.j,  1.+1.j]])
-
-    If the argument dtype is the same as x.dtype, then offset != 0 raises
-    a ValueError:
-
-    >>> x.getfield('complex128', 1)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: Need 0 <= offset <= 0 for requested type but received offset = 1
-
-    >>> x.getfield('float64', 0)
+           [ 0.+0.j,  2.+4.j]])
+    >>> x.getfield(np.float64)
     array([[ 1.,  0.],
-           [ 0.,  1.]])
+           [ 0.,  2.]])
 
-    >>> x.getfield('float64', 1)
-    array([[  1.77658241e-307,   0.00000000e+000],
-           [  0.00000000e+000,   1.77658241e-307]])
+    By choosing an offset of 8 bytes we can select the complex part of the
+    array for our view:
+
+    >>> x.getfield(np.float64, offset=8)
+    array([[ 1.,  0.],
+       [ 0.,  4.]])
 
     """))
 
