@@ -1970,6 +1970,9 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
         raise ValueError("ddof must be integer")
 
     X = array(m, ndmin=2, dtype=float)
+    if X.size == 0:
+        # handle empty arrays
+        return np.array(m)
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
@@ -2017,7 +2020,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
 
     Parameters
     ----------
-    m : array_like
+    x : array_like
         A 1-D or 2-D array containing multiple variables and observations.
         Each row of `m` represents a variable, and each column a single
         observation of all those variables. Also see `rowvar` below.
@@ -2051,6 +2054,9 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
 
     """
     c = cov(x, y, rowvar, bias, ddof)
+    if c.size == 0:
+        # handle empty arrays
+        return c
     try:
         d = diag(c)
     except ValueError: # scalar covariance
