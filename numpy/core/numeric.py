@@ -587,7 +587,7 @@ _mode_from_name_dict = {'v': 0,
                         'f' : 2}
 
 def _mode_from_name(mode):
-    if isinstance(mode, type("")):
+    if isinstance(mode, basestring):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
 
