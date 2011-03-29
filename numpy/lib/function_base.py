@@ -58,7 +58,7 @@ def iterable(y):
     except: return 0
     return 1
 
-def histogram(a, bins=10, range=None, normed=False, weights=None):
+def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
     """
     Compute the histogram of a set of data.
 
@@ -76,17 +76,27 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
         is simply ``(a.min(), a.max())``.  Values outside the range are
         ignored.
     normed : bool, optional
+        This keyword is deprecated in Numpy 1.6 due to confusing/buggy
+        behavior. It will be removed in Numpy 2.0. Use the density keyword
+        instead.
+        If False, the result will contain the number of samples
+        in each bin.  If True, the result is the value of the
+        probability *density* function at the bin, normalized such that
+        the *integral* over the range is 1. Note that this latter behavior is
+        known to be buggy with unequal bin widths; use `density` instead.
+    weights : array_like, optional
+        An array of weights, of the same shape as `a`.  Each value in `a`
+        only contributes its associated weight towards the bin count
+        (instead of 1).  If `normed` is True, the weights are normalized,
+        so that the integral of the density over the range remains 1
+    density : bool, optional
         If False, the result will contain the number of samples
         in each bin.  If True, the result is the value of the
         probability *density* function at the bin, normalized such that
         the *integral* over the range is 1. Note that the sum of the
         histogram values will not be equal to 1 unless bins of unity
         width are chosen; it is not a probability *mass* function.
-    weights : array_like, optional
-        An array of weights, of the same shape as `a`.  Each value in `a`
-        only contributes its associated weight towards the bin count
-        (instead of 1).  If `normed` is True, the weights are normalized,
-        so that the integral of the density over the range remains 1
+        Overrides the `normed` keyword if given.
 
     Returns
     -------
@@ -116,13 +126,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
     --------
     >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
-    >>> np.histogram(np.arange(4), bins=np.arange(5), normed=True)
+    >>> np.histogram(np.arange(4), bins=np.arange(5), density=True)
     (array([ 0.25,  0.25,  0.25,  0.25]), array([0, 1, 2, 3, 4]))
     >>> np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3])
     (array([1, 4, 1]), array([0, 1, 2, 3]))
 
     >>> a = np.arange(5)
-    >>> hist, bin_edges = np.histogram(a, normed=True)
+    >>> hist, bin_edges = np.histogram(a, density=True)
     >>> hist
     array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
     >>> hist.sum()
@@ -155,10 +165,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
             mn -= 0.5
             mx += 0.5
         bins = linspace(mn, mx, bins+1, endpoint=True)
-        uniform = True
     else:
         bins = asarray(bins)
-        uniform = False
         if (np.diff(bins) < 0).any():
             raise AttributeError(
                     'bins must increase monotonically.')
@@ -191,18 +199,19 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
 
     n = np.diff(n)
 
-    if normed:
-        db = array(np.diff(bins), float)
-        if not uniform:
-            warnings.warn("""
-            This release of NumPy (1.6) fixes a normalization bug in histogram
-            function occuring with non-uniform bin widths. The returned value
-            is now a density: n / (N * bin width), where n is the bin count and
-            N the total number of points.
-            """)
-        return n/db/n.sum(), bins
+    if density is not None:
+        if density:
+            db = array(np.diff(bins), float)
+            return n/db/n.sum(), bins
+        else:
+            return n, bins
     else:
-        return n, bins
+        # deprecated, buggy behavior. Remove for Numpy 2.0
+        if normed:
+            db = array(np.diff(bins), float)
+            return n/(n*db).sum(), bins
+        else:
+            return n, bins
 
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
