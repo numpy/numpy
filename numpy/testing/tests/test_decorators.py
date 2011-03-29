@@ -8,7 +8,7 @@ def test_slow():
     def slow_func(x,y,z):
         pass
 
-    assert(slow_func.slow)
+    assert_(slow_func.slow)
 
 def test_setastest():
     @dec.setastest()
@@ -23,11 +23,11 @@ def test_setastest():
     def f_isnottest(a):
         pass
 
-    assert(f_default.__test__)
-    assert(f_istest.__test__)
-    assert(not f_isnottest.__test__)
+    assert_(f_default.__test__)
+    assert_(f_istest.__test__)
+    assert_(not f_isnottest.__test__)
 
-class DidntSkipException(Exception): 
+class DidntSkipException(Exception):
     pass
 
 def test_skip_functions_hardcoded():
@@ -148,9 +148,36 @@ def test_skip_generators_callable():
         pass
 
 
+def test_deprecated():
+    @dec.deprecated(True)
+    def non_deprecated_func():
+        pass
+
+    @dec.deprecated()
+    def deprecated_func():
+        import warnings
+        warnings.warn("TEST: deprecated func", DeprecationWarning)
+
+    @dec.deprecated()
+    def deprecated_func2():
+        import warnings
+        warnings.warn("AHHHH")
+        raise ValueError
+
+    @dec.deprecated()
+    def deprecated_func3():
+        import warnings
+        warnings.warn("AHHHH")
+
+    # marked as deprecated, but does not raise DeprecationWarning
+    assert_raises(AssertionError, non_deprecated_func)
+    # should be silent
+    deprecated_func()
+    # fails if deprecated decorator just disables test. See #1453.
+    assert_raises(ValueError, deprecated_func2)
+    # first warnings is not a DeprecationWarning
+    assert_raises(AssertionError, deprecated_func3)
+
+
 if __name__ == '__main__':
     run_module_suite()
-
-
-
-
