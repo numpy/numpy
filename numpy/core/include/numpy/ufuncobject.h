@@ -110,9 +110,9 @@ typedef struct {
 
    /* Default user error mode */
 #define UFUNC_ERR_DEFAULT2                               \
-        (UFUNC_ERR_PRINT << UFUNC_SHIFT_DIVIDEBYZERO) +  \
-        (UFUNC_ERR_PRINT << UFUNC_SHIFT_OVERFLOW) +      \
-        (UFUNC_ERR_PRINT << UFUNC_SHIFT_INVALID)
+        (UFUNC_ERR_WARN << UFUNC_SHIFT_DIVIDEBYZERO) +  \
+        (UFUNC_ERR_WARN << UFUNC_SHIFT_OVERFLOW) +      \
+        (UFUNC_ERR_WARN << UFUNC_SHIFT_INVALID)
 
 #if NPY_ALLOW_THREADS
 #define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0)
