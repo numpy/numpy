@@ -199,10 +199,10 @@ def vstack(tup):
     concatenate : Join a sequence of arrays together.
     vsplit : Split array into a list of multiple sub-arrays vertically.
 
-
     Notes
     -----
-    Equivalent to ``np.concatenate(tup, axis=0)``
+    Equivalent to ``np.concatenate(tup, axis=0)`` if `tup` contains arrays that
+    are at least 2-dimensional.
 
     Examples
     --------
