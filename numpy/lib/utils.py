@@ -924,8 +924,14 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             continue
 
             for n, v in _getmembers(item):
-                item_name = getattr(v, '__name__', "%s.%s" % (name, n))
-                mod_name = getattr(v, '__module__', None)
+                try:
+                    item_name = getattr(v, '__name__', "%s.%s" % (name, n))
+                    mod_name = getattr(v, '__module__', None)
+                except NameError:
+                    # ref. SWIG's global cvars
+                    #    NameError: Unknown C global variable
+                    item_name = "%s.%s" % (name, n)
+                    mod_name = None
                 if '.' not in item_name and mod_name:
                     item_name = "%s.%s" % (mod_name, item_name)
 
@@ -946,7 +952,10 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
         elif hasattr(item, "__call__"):
             kind = "func"
 
-        doc = inspect.getdoc(item)
+        try:
+            doc = inspect.getdoc(item)
+        except NameError: # ref SWIG's NameError: Unknown C global variable
+            doc = None
         if doc is not None:
             cache[name] = (doc, kind, index)
 
