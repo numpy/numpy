@@ -46,24 +46,28 @@ from the results: ::
  >>> np.nansum(x)
  42.0
 
-How numpy handles numerical exceptions
+How numpy handles numerical exceptions:
+------------------------------------------
 
-Default is to "warn"
-But this can be changed, and it can be set individually for different kinds
-of exceptions. The different behaviors are: ::
+The default is to ``'warn'`` for ``invalid``, ``divide``, and ``overflow``
+and ``'ignore'`` for ``underflow``.  But this can be changed, and it can be
+set individually for different kinds of exceptions. The different behaviors
+are:
 
- 'ignore' : ignore completely
- 'warn'   : print a warning (once only)
- 'raise'  : raise an exception
- 'call'   : call a user-supplied function (set using seterrcall())
+ - 'ignore' : Take no action when the exception occurs.
+ - 'warn'   : Print a `RuntimeWarning` (via the Python `warnings` module).
+ - 'raise'  : Raise a `FloatingPointError`.
+ - 'call'   : Call a function specified using the `seterrcall` function.
+ - 'print'  : Print a warning directly to ``stdout``.
+ - 'log'    : Record error in a Log object specified by `seterrcall`.
 
-These behaviors can be set for all kinds of errors or specific ones: ::
+These behaviors can be set for all kinds of errors or specific ones:
 
- all:       apply to all numeric exceptions
- invalid:   when NaNs are generated
- divide:    divide by zero (for integers as well!)
- overflow:  floating point overflows
- underflow: floating point underflows
+ - all       : apply to all numeric exceptions
+ - invalid   : when NaNs are generated
+ - divide    : divide by zero (for integers as well!)
+ - overflow  : floating point overflows
+ - underflow : floating point underflows
 
 Note that integer divide-by-zero is handled by the same machinery.
 These behaviors are set on a per-thread basis.
