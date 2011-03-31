@@ -556,6 +556,10 @@ class TestHistogram(TestCase):
         hist, edges = histogram([1, 2, 3, 4], [1, 2])
         assert_array_equal(hist, [2, ])
         assert_array_equal(edges, [1, 2])
+        assert_raises(ValueError, histogram, [1, 2], bins=0)
+        h, e = histogram([1,2], bins=1)
+        assert_equal(h, array([2]))
+        assert_allclose(e, array([1., 2.]))
 
     def test_normed(self):
         # Check that the integral of the density equals 1.
@@ -746,6 +750,27 @@ class TestHistogramdd(TestCase):
     def test_empty(self):
         a, b = histogramdd([[], []], bins=([0,1], [0,1]))
         assert_array_max_ulp(a, array([ 0., 0.]))
+
+    def test_bins_errors(self):
+        """There are two ways to specify bins. Check for the right errors when
+        mixing those."""
+        x = np.arange(8).reshape(2, 4)
+        assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
+        assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
+        assert_raises(ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 2, 3]])
+        assert_raises(ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
+        assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
+
+    def test_inf_edges(self):
+        """Test using +/-inf bin edges works. See #1788."""
+        x = np.arange(6).reshape(3, 2)
+        expected = np.array([[1, 0], [0, 1], [0, 1]])
+        h, e = np.histogramdd(x, bins=[3, [-np.inf, 2, 10]])
+        assert_allclose(h, expected)
+        h, e = np.histogramdd(x, bins=[3, np.array([-1, 2, np.inf])])
+        assert_allclose(h, expected)
+        h, e = np.histogramdd(x, bins=[3, [-np.inf, 3, np.inf]])
+        assert_allclose(h, expected)
 
 
 class TestUnique(TestCase):
