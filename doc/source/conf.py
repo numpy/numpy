@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'plot_directive']
+              'matplotlib.sphinxext.plot_directive']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -251,8 +251,7 @@ plot_formats = [('png', 100), 'pdf']
 import math
 phi = (math.sqrt(5) + 1)/2
 
-import matplotlib
-matplotlib.rcParams.update({
+plot_rcparams = {
     'font.size': 8,
     'axes.titlesize': 8,
     'axes.labelsize': 8,
@@ -266,4 +265,4 @@ matplotlib.rcParams.update({
     'figure.subplot.top': 0.85,
     'figure.subplot.wspace': 0.4,
     'text.usetex': False,
-})
+}
