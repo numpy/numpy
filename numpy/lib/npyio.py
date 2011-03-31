@@ -1202,7 +1202,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
     if isinstance(fname, basestring):
-        fhd = np.lib._datasource.open(fname, 'U')
+        fhd = np.lib._datasource.open(fname, 'Ub')
         own_fhd = True
     elif not hasattr(fname, 'read'):
         raise TypeError("The input should be a string or a filehandle. "\
