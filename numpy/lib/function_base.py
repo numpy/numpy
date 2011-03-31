@@ -158,8 +158,14 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
                 'max must be larger than min in range parameter.')
 
     if not iterable(bins):
+        if np.isscalar(bins) and bins < 1:
+            raise ValueError("`bins` should be a positive integer.")
         if range is None:
-            range = (a.min(), a.max())
+            if a.size == 0:
+                # handle empty arrays. Can't determine range, so use 0-1.
+                range = (0, 1)
+            else:
+                range = (a.min(), a.max())
         mn, mx = [mi+0.0 for mi in range]
         if mn == mx:
             mn -= 0.5
@@ -287,6 +293,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                     'The dimension of bins must be equal'\
                     ' to the dimension of the sample x.')
     except TypeError:
+        # bins is an integer
         bins = D*[bins]
 
     # Select range for each dimension
@@ -314,12 +321,19 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Create edge arrays
     for i in arange(D):
         if isscalar(bins[i]):
+            if bins[i] < 1:
+                raise ValueError("Element at index %s in `bins` should be "
+                                 "a positive integer." % i)
             nbin[i] = bins[i] + 2 # +2 for outlier bins
             edges[i] = linspace(smin[i], smax[i], nbin[i]-1)
         else:
             edges[i] = asarray(bins[i], float)
             nbin[i] = len(edges[i])+1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
+        if np.any(np.asarray(dedges[i]) <= 0):
+            raise ValueError("""
+            Found bin edge of size <= 0. Did you specify `bins` with
+            non-monotonic sequence?""")
 
     # Handle empty input.
     if N == 0:
@@ -338,12 +352,14 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     outliers = zeros(N, int)
     for i in arange(D):
         # Rounding precision
-        decimal = int(-log10(dedges[i].min())) +6
-        # Find which points are on the rightmost edge.
-        on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1],
-                                                               decimal))[0]
-        # Shift these points one bin to the left.
-        Ncount[i][on_edge] -= 1
+        mindiff = dedges[i].min()
+        if not np.isinf(mindiff):
+            decimal = int(-log10(mindiff)) + 6
+            # Find which points are on the rightmost edge.
+            on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1],
+                                                                   decimal))[0]
+            # Shift these points one bin to the left.
+            Ncount[i][on_edge] -= 1
 
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
