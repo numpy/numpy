@@ -1248,6 +1248,8 @@ def updatevars(typespec,selector,attrspec,entitydecl):
         l = []
         c = re.compile(r'(?P<start>[a-zA-Z]+)')
         for a in attrspec:
+            if not a:
+                continue
             m = c.match(a)
             if m:
                 s = m.group('start').lower()
@@ -2020,7 +2022,6 @@ def get_parameters(vars, global_params={}):
             if iscomplex(vars[n]):
                 if v[0]=='(' and v[-1]==')':
                     l = markoutercomma(v[1:-1]).split('@,@')
-                    print n,params
             try:
                 params[n] = eval(v,g_params,params)
             except Exception,msg:
