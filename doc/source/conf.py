@@ -20,8 +20,24 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'plot_directive']
+              'sphinx.ext.doctest', 'sphinx.ext.autosummary']
+
+# Determine if the matplotlib has a recent enough version of the
+# plot_directive, otherwise use the local fork.
+try:
+    from matplotlib.sphinxext import plot_directive
+except ImportError:
+    use_matplotlib_plot_directive = False
+else:
+    try:
+        use_matplotlib_plot_directive = (plot_directive.__version__ >= 2)
+    except AttributeError:
+        use_matplotlib_plot_directive = False
+
+if use_matplotlib_plot_directive:
+    extensions.append('matplotlib.sphinxext.plot_directive')
+else:
+    extensions.append('plot_directive')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -251,8 +267,7 @@ plot_formats = [('png', 100), 'pdf']
 import math
 phi = (math.sqrt(5) + 1)/2
 
-import matplotlib
-matplotlib.rcParams.update({
+plot_rcparams = {
     'font.size': 8,
     'axes.titlesize': 8,
     'axes.labelsize': 8,
@@ -266,4 +281,8 @@ matplotlib.rcParams.update({
     'figure.subplot.top': 0.85,
     'figure.subplot.wspace': 0.4,
     'text.usetex': False,
-})
+}
+
+if not use_matplotlib_plot_directive:
+    import matplotlib
+    matplotlib.rcParams.update(plot_rcparams)
