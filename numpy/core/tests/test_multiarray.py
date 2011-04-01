@@ -1941,6 +1941,14 @@ if sys.version_info >= (2, 6):
             self._check('^ixxxx', [('f0', 'i'), ('', 'V4')])
             self._check('^i7x', [('f0', 'i'), ('', 'V7')])
 
+        def test_native_padding_3(self):
+            dt = np.dtype([('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')], align=True)
+            self._check("T{b:a:xxxi:b:T{b:f0:=i:f1:}:sub:xxxi:c:}", dt)
+
+        def test_padding_with_array_inside_struct(self):
+            dt = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
+            self._check("T{b:a:xxxi:b:3b:c:xi:d:}", dt)
+
         def test_byteorder_inside_struct(self):
             # The byte order after @T{=i} should be '=', not '@'.
             # Check this by noting the absence of native alignment.
@@ -2136,6 +2144,14 @@ if sys.version_info >= (2, 6):
             count_2 = sys.getrefcount(np.core._internal)
             assert_equal(count_1, count_2)
 
+        def test_padded_struct_array(self):
+            dt1 = np.dtype([('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')], align=True)
+            x1 = np.arange(dt1.itemsize, dtype=np.int8).view(dt1)
+            self._check_roundtrip(x1)
+        
+            dt2 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
+            x2 = np.arange(dt2.itemsize, dtype=np.int8).view(dt2)
+            self._check_roundtrip(x2)
 
 if __name__ == "__main__":
     run_module_suite()
