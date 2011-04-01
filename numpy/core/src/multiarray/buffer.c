@@ -240,7 +240,6 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 _append_char(str, 'x');
                 ++*offset;
             }
-            *offset += child->elsize;
 
             /* Insert child item */
             _buffer_format_string(child, str, arr, offset,
@@ -286,6 +285,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             descr->type_num == NPY_LONGLONG ||
             descr->type_num == NPY_ULONGLONG);
 #endif
+
+        *offset += descr->elsize;
 
         if (descr->byteorder == '=' &&
                 _is_natively_aligned_at(descr, arr, *offset)) {
