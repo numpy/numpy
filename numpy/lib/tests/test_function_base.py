@@ -910,6 +910,7 @@ class TestCorrCoef(TestCase):
 
     def test_empty(self):
         assert_equal(corrcoef(np.array([])).size, 0)
+        assert_equal(corrcoef(np.array([]).reshape(0, 2)).shape, (0, 2))
 
 
 class TestCov(TestCase):
@@ -919,6 +920,7 @@ class TestCov(TestCase):
 
     def test_empty(self):
         assert_equal(cov(np.array([])).size, 0)
+        assert_equal(cov(np.array([]).reshape(0, 2)).shape, (0, 2))
 
 
 class Test_i0(TestCase):

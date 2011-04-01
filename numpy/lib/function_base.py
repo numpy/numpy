@@ -1947,7 +1947,7 @@ def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     X = array(m, ndmin=2, dtype=float)
     if X.size == 0:
         # handle empty arrays
-        return np.array([])
+        return np.array(m)
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
@@ -2031,7 +2031,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
     c = cov(x, y, rowvar, bias, ddof)
     if c.size == 0:
         # handle empty arrays
-        return np.array([])
+        return c
     try:
         d = diag(c)
     except ValueError: # scalar covariance
