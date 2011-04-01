@@ -24,7 +24,6 @@ import os # standard library imports first
 # convention used by NumPy itself::
 
 import numpy as np
-import scipy as sp
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 

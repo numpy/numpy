@@ -29,9 +29,12 @@ The following import conventions are used throughout the NumPy source
 and documentation::
 
    import numpy as np
-   import scipy as sp
    import matplotlib as mpl
    import matplotlib.pyplot as plt
+
+Do not abbreviate ``scipy``. There is no motivating use case to
+abbreviate it in the real world, so we avoid it in the documentation
+to avoid confusion.
 
 It is not necessary to do ``import numpy as np`` at the beginning of
 an example.  However, some sub-modules, such as ``fft``, are not
@@ -369,9 +372,9 @@ The sections of the docstring are:
    examples work, not for making the examples part of the testing framework.
 
    The examples may assume that ``import numpy as np`` is executed before
-   the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
-   Additional examples may make use of *matplotlib* for plotting, but should
-   import it explicitly, e.g., ``import matplotlib.pyplot as plt``.
+   the example code in *numpy*. Additional examples may make use of
+   *matplotlib* for plotting, but should import it explicitly, e.g.,
+   ``import matplotlib.pyplot as plt``.
 
    
 Documenting classes
