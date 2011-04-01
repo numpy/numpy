@@ -223,16 +223,25 @@ class TestBoolScalar(TestCase):
 
 
 class TestSeterr(TestCase):
+    def test_default(self):
+        err = geterr()
+        self.assertEqual(err, dict(
+            divide='warn',
+            invalid='warn',
+            over='warn',
+            under='ignore',
+        ))
+
     def test_set(self):
         err = seterr()
         try:
-            old = seterr(divide='warn')
+            old = seterr(divide='print')
             self.assertTrue(err == old)
             new = seterr()
-            self.assertTrue(new['divide'] == 'warn')
+            self.assertTrue(new['divide'] == 'print')
             seterr(over='raise')
             self.assertTrue(geterr()['over'] == 'raise')
-            self.assertTrue(new['divide'] == 'warn')
+            self.assertTrue(new['divide'] == 'print')
             seterr(**old)
             self.assertTrue(geterr() == old)
         finally:
