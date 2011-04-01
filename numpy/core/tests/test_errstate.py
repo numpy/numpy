@@ -13,15 +13,6 @@ from numpy.random import rand, randint
 from numpy.testing import *
 
 class TestErrstate(TestCase):
-    def test_default(self):
-        err = geterr()
-        self.assertEqual(err, dict(
-            divide='warn',
-            invalid='warn',
-            over='warn',
-            under='ignore',
-        ))
-
     def test_invalid(self):
         with errstate(all='raise', under='ignore'):
             a = -arange(3)
