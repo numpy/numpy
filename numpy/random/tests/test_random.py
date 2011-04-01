@@ -152,7 +152,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[ 63.87858175501090585,  68.68407748911370447],
                             [ 65.77116116901505904,  47.09686762438974483],
                             [ 72.3828403199695174 ,  74.18408615260374006]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=13)
 
     def test_dirichlet(self):
         np.random.seed(self.seed)
