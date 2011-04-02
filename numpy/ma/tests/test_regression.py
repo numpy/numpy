@@ -37,3 +37,13 @@ class TestRegression(TestCase):
         """Ticket #1256"""
         repr(np.ma.array(u"Unicode"))
 
+    def test_atleast_2d(self):
+        """Ticket #1559"""
+        a = np.ma.masked_array([0.0, 1.2, 3.5], mask=[False, True, False])
+        b = np.atleast_2d(a)
+        assert_(a.mask.ndim == 1)
+        assert_(b.mask.ndim == 2)
+
+
+if __name__ == "__main__":
+    run_module_suite()
