@@ -565,6 +565,10 @@ def _getconv(dtype):
     typ = dtype.type
     if issubclass(typ, np.bool_):
         return lambda x: bool(int(x))
+    if issubclass(typ, np.uint64):
+        return np.uint64
+    if issubclass(typ, np.int64):
+        return np.int64
     if issubclass(typ, np.integer):
         return lambda x: int(float(x))
     elif issubclass(typ, np.floating):
