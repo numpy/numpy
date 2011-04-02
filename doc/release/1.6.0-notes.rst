@@ -99,7 +99,11 @@ Changes
 Changes and improvements in the numpy core
 ------------------------------------------
 
+``default error handling``
+--------------------------
 
+The default error handling has been change from ``print`` to ``warn`` for
+all except for ``underflow``, which remains as ``ignore``.
 
 
 ``numpy.distutils``
