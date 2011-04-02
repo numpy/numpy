@@ -382,10 +382,17 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
     (outp)->real = (a).real * (b).real - (a).imag * (b).imag;   \
     (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;   \
     } while(0)
-#define @name@_ctype_divide(a, b, outp) do{                     \
-    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;          \
-    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;   \
-    (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;   \
+/* Note: complex division by zero must yield some complex inf */
+#define @name@_ctype_divide(a, b, outp) do{                         \
+    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;              \
+    if (d != 0) {                                                   \
+        (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;   \
+        (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;   \
+    }                                                               \
+    else {                                                          \
+        (outp)->real = (a).real/d;                                  \
+        (outp)->imag = (a).imag/d;                                  \
+    }                                                               \
     } while(0)
 #define @name@_ctype_true_divide @name@_ctype_divide
 #define @name@_ctype_floor_divide(a, b, outp) do {      \

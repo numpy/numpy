@@ -29,6 +29,23 @@ class TestDivision(TestCase):
         y = x**2/x
         assert_almost_equal(y/x, [1, 1], err_msg=msg)
 
+    def test_zero_division_complex(self):
+        err = np.seterr(invalid="ignore")
+        try:
+            x = np.array([0.0], dtype=np.complex128)
+            y = 1.0/x
+            assert_(np.isinf(y)[0])
+            y = complex(np.inf, np.nan)/x
+            assert_(np.isinf(y)[0])
+            y = complex(np.nan, np.inf)/x
+            assert_(np.isinf(y)[0])
+            y = complex(np.inf, np.inf)/x
+            assert_(np.isinf(y)[0])
+            y = 0.0/x
+            assert_(np.isnan(y)[0])
+        finally:
+            np.seterr(**err)
+
     def test_floor_division_complex(self):
         # check that implementation is correct
         msg = "Complex floor division implementation check"
