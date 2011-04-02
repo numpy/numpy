@@ -2141,8 +2141,8 @@ def geterr():
 
     Examples
     --------
-    >>> np.geterr()  # default is all set to 'ignore'
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+    >>> np.geterr()
+    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn',
     'under': 'ignore'}
     >>> np.arange(3.) / np.arange(3.)
     array([ NaN,   1.,   1.])
@@ -2390,7 +2390,7 @@ class errstate(object):
     Outside the context the error handling behavior has not changed:
 
     >>> np.geterr()
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn',
     'under': 'ignore'}
 
     """
