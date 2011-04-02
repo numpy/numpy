@@ -218,6 +218,20 @@ class TestStringConverter(TestCase):
                                     missing_values=asbytes("N/A"))
         assert_equal(converter.missing_values, set(asbytes_nested(['', 'N/A'])))
 
+    def test_int64_dtype(self):
+        "Check that int64 integer types can be specified"
+        converter = StringConverter(np.int64, default=0)
+        val = asbytes("-9223372036854775807")
+        assert_(converter(val) == -9223372036854775807)
+        val = asbytes("9223372036854775807")
+        assert_(converter(val) == 9223372036854775807)
+
+    def test_uint64_dtype(self):
+        "Check that uint64 integer types can be specified"
+        converter = StringConverter(np.uint64, default=0)
+        val = asbytes("9223372043271415339")
+        assert_(converter(val) == 9223372043271415339)
+
 #-------------------------------------------------------------------------------
 
 class TestMiscFunctions(TestCase):
@@ -309,3 +323,5 @@ class TestMiscFunctions(TestCase):
         dt_flat = flatten_dtype(dt)
         assert_equal(dt_flat, [float, float])
 
+if __name__ == "__main__":
+    run_module_suite()

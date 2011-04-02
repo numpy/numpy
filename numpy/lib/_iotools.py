@@ -600,9 +600,15 @@ class StringConverter:
             # If the input was a dtype, set the function to the last we saw
             if self.func is None:
                 self.func = func
-            # If the status is 1 (int), change the function to smthg more robust
+            # If the status is 1 (int), change the function to
+            # something more robust.
             if self.func == self._mapper[1][1]:
-                self.func = lambda x : int(float(x))
+                if issubclass(ttype, np.uint64):
+                    self.func = np.uint64
+                elif issubclass(ttype, np.int64):
+                    self.func = np.int64
+                else:
+                    self.func = lambda x : int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
             self.missing_values = set([asbytes('')])
