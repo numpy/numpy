@@ -1945,6 +1945,9 @@ if sys.version_info >= (2, 6):
             dt = np.dtype([('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')], align=True)
             self._check("T{b:a:xxxi:b:T{b:f0:=i:f1:}:sub:xxxi:c:}", dt)
 
+            dt = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'), ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
+            self._check("T{b:a:=i:b:b:c:b:d:b:e:T{b:f0:xxxi:f1:}:sub:}", dt)
+
         def test_padding_with_array_inside_struct(self):
             dt = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
             self._check("T{b:a:xxxi:b:3b:c:xi:d:}", dt)
@@ -2152,6 +2155,10 @@ if sys.version_info >= (2, 6):
             dt2 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
             x2 = np.arange(dt2.itemsize, dtype=np.int8).view(dt2)
             self._check_roundtrip(x2)
+
+            dt3 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'), ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
+            x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
+            self._check_roundtrip(x3)
 
 if __name__ == "__main__":
     run_module_suite()
