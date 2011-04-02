@@ -1580,5 +1580,19 @@ class TestRegression(TestCase):
         y = np.array(x.flat)
         assert_equal(x, [[1,3],[2,4]])
 
+    def test_pickle_string_overwrite(self):
+        import re
+
+        data = np.array([1], dtype='b')
+        blob = pickle.dumps(data, protocol=1)
+        data = pickle.loads(blob)
+
+        # Check that loads does not clobber interned strings
+        s = re.sub("a(.)", "\x01\\1", "a_")
+        assert_equal(s[0], "\x01")
+        data[0] = 0xbb
+        s = re.sub("a(.)", "\x01\\1", "a_")
+        assert_equal(s[0], "\x01")
+
 if __name__ == "__main__":
     run_module_suite()

@@ -1481,7 +1481,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap=!PyArray_ISNOTSWAPPED(self);
         self->data = datastr;
+#ifndef NPY_PY3K
+        /* Check that the string is not interned */
+        if (!_IsAligned(self) || swap || PyString_CHECK_INTERNED(rawdata)) {
+#else
+        /* Bytes are never interned */
         if (!_IsAligned(self) || swap) {
+#endif
             intp num = PyArray_NBYTES(self);
             self->data = PyDataMem_NEW(num);
             if (self->data == NULL) {
