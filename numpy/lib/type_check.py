@@ -645,4 +645,3 @@ def datetime_data(dtype):
     _unitnum2name = ctypes.cast(ctypes.c_void_p(result), ctypes.POINTER(ctypes.c_char_p))
 
     return (_unitnum2name[base], struct.num, struct.den, struct.events)
-

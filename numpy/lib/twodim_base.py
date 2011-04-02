@@ -887,4 +887,3 @@ def triu_indices_from(arr, k=0):
     if not (arr.ndim == 2 and arr.shape[0] == arr.shape[1]):
         raise ValueError("input array must be 2-d and square")
     return triu_indices(arr.shape[0],k)
-

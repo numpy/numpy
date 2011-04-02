@@ -93,12 +93,12 @@ def poly(seq_of_zeros):
 
     >>> np.poly((0, 0, 0)) # Multiple root example
     array([1, 0, 0, 0])
-    
+
     The line above represents z**3 + 0*z**2 + 0*z + 0.
 
     >>> np.poly((-1./2, 0, 1./2))
     array([ 1.  ,  0.  , -0.25,  0.  ])
-    
+
     The line above represents z**3 - z/4
 
     >>> np.poly((np.random.random(1.)[0], 0, np.random.random(1.)[0]))
@@ -940,7 +940,7 @@ class poly1d(object):
     array([-1.+1.41421356j, -1.-1.41421356j])
     >>> p(p.r)
     array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j])
-    
+
     These numbers in the previous line represent (0, 0) to machine precision
 
     Show the coefficients:

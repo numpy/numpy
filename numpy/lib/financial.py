@@ -655,4 +655,3 @@ def mirr(values, finance_rate, reinvest_rate):
     numer = np.abs(npv(reinvest_rate, values*pos))*(1 + reinvest_rate)
     denom = np.abs(npv(finance_rate, values*neg))*(1 + finance_rate)
     return (numer/denom)**(1.0/(n - 1))*(1 + reinvest_rate) - 1
-

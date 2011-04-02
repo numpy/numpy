@@ -42,7 +42,7 @@ def _to_filehandle(fname, flag='r', return_opened=False):
     """
     Returns the filehandle corresponding to a string or a file.
     If the string ends in '.gz', the file is automatically unzipped.
-    
+
     Parameters
     ----------
     fname : string, filehandle
@@ -512,11 +512,11 @@ class StringConverter:
         """
     Upgrade the mapper of a StringConverter by adding a new function and its
     corresponding default.
-    
-    The input function (or sequence of functions) and its associated default 
+
+    The input function (or sequence of functions) and its associated default
     value (if any) is inserted in penultimate position of the mapper.
     The corresponding type is estimated from the dtype of the default value.
-    
+
     Parameters
     ----------
     func : var
@@ -835,4 +835,3 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
             else:
                 ndtype.names = validate(ndtype.names, defaultfmt=defaultfmt)
     return ndtype
-
