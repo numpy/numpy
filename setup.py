@@ -141,12 +141,6 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
 
-    # we want these files also in binaries/installed files, so it belongs here
-    # instead of in Manifest.in
-    config.add_data_files(('doc/cython/'),
-                          ('doc/pyrex/'),
-                          ('doc/swig/'))
-
     config.get_version('numpy/version.py') # sets config.version
 
     return config
