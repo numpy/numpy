@@ -220,6 +220,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
+        int base_offset = *offset;
+
         _append_str(str, "T{");
         for (k = 0; k < PyTuple_GET_SIZE(descr->names); ++k) {
             PyObject *name, *item, *offset_obj, *tmp;
@@ -233,9 +235,16 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
             child = (PyArray_Descr*)PyTuple_GetItem(item, 0);
             offset_obj = PyTuple_GetItem(item, 1);
-            new_offset = PyInt_AsLong(offset_obj);
+            new_offset = base_offset + PyInt_AsLong(offset_obj);
 
             /* Insert padding manually */
+            if (*offset > new_offset) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "This should never happen: Invalid offset in "
+                                "buffer format string generation. Please "
+                                "report a bug to the Numpy developers.");
+                return -1;
+            }
             while (*offset < new_offset) {
                 _append_char(str, 'x');
                 ++*offset;
