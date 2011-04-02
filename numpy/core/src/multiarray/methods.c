@@ -1355,12 +1355,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyArray_Descr *typecode;
     int version = 1;
     int fortran;
-    PyObject *rawdata;
+    PyObject *rawdata = NULL;
     char *datastr;
     Py_ssize_t len;
     intp size, dimensions[MAX_DIMS];
     int nd;
-    int incref_base = 1;
 
     /* This will free any memory associated with a and
        use the string in setstate as the (writeable) memory.
@@ -1417,29 +1416,35 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
+        Py_INCREF(rawdata);
+
 #if defined(NPY_PY3K)
         /* Backward compatibility with Python 2 Numpy pickles */
         if (PyUnicode_Check(rawdata)) {
             PyObject *tmp;
             tmp = PyUnicode_AsLatin1String(rawdata);
+            Py_DECREF(rawdata);
             rawdata = tmp;
-            incref_base = 0;
         }
 #endif
 
         if (!PyBytes_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "pickle not returning string");
+            Py_DECREF(rawdata);
             return NULL;
         }
 
-        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len))
+        if (PyBytes_AsStringAndSize(rawdata, &datastr, &len)) {
+            Py_DECREF(rawdata);
             return NULL;
+        }
 
         if ((len != (self->descr->elsize * size))) {
             PyErr_SetString(PyExc_ValueError,
                             "buffer size does not"  \
                             " match array size");
+            Py_DECREF(rawdata);
             return NULL;
         }
     }
@@ -1482,6 +1487,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             if (self->data == NULL) {
                 self->nd = 0;
                 PyDimMem_FREE(self->dimensions);
+                Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
             if (swap) { /* byte-swap on pickle-read */
@@ -1508,12 +1514,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
             }
             self->flags |= OWNDATA;
             self->base = NULL;
+            Py_DECREF(rawdata);
         }
         else {
             self->base = rawdata;
-            if (incref_base) {
-                Py_INCREF(self->base);
-            }
         }
     }
     else {
