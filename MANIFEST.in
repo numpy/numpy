@@ -21,3 +21,6 @@ include doc/Makefile doc/postprocess.py
 recursive-include doc/release *
 recursive-include doc/source *
 recursive-include doc/sphinxext *
+recursive-include doc/cython *
+recursive-include doc/pyrex *
+recursive-include doc/swig *
