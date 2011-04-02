@@ -425,6 +425,22 @@ class TestLoadTxt(TestCase):
                            dtype=ndtype)
         assert_equal(test, control)
 
+    def test_uint64_type(self):
+        tgt = (9223372043271415339, 9223372043271415853)
+        c = StringIO()
+        c.write(asbytes("%s %s" % tgt))
+        c.seek(0)
+        res = np.loadtxt(c, dtype=np.uint64)
+        assert_equal(res, tgt)
+
+    def test_int64_type(self):
+        tgt = (-9223372036854775807, 9223372036854775807)
+        c = StringIO()
+        c.write(asbytes("%s %s" % tgt))
+        c.seek(0)
+        res = np.loadtxt(c, dtype=np.int64)
+        assert_equal(res, tgt)
+
     def test_universal_newline(self):
         f, name = mkstemp()
         os.write(f, asbytes('1 21\r3 42\r'))
