@@ -2081,8 +2081,8 @@ def blackman(M):
     Returns
     -------
     out : ndarray
-        The window, normalized to one (the value one appears only if the
-        number of samples is odd).
+        The window, with the maximum value normalized to one (the value one
+        appears only if the number of samples is odd).
 
     See Also
     --------
@@ -2112,8 +2112,7 @@ def blackman(M):
 
     Examples
     --------
-    >>> from numpy import blackman
-    >>> blackman(12)
+    >>> np.blackman(12)
     array([ -1.38777878e-17,   3.26064346e-02,   1.59903635e-01,
              4.14397981e-01,   7.36045180e-01,   9.67046769e-01,
              9.67046769e-01,   7.36045180e-01,   4.14397981e-01,
@@ -2122,11 +2121,8 @@ def blackman(M):
 
     Plot the window and the frequency response:
 
-    >>> from numpy import clip, log10, array, blackman, linspace
     >>> from numpy.fft import fft, fftshift
-    >>> import matplotlib.pyplot as plt
-
-    >>> window = blackman(51)
+    >>> window = np.blackman(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Blackman window")
@@ -2140,10 +2136,10 @@ def blackman(M):
     >>> plt.figure()
     <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
-    >>> mag = abs(fftshift(A))
-    >>> freq = linspace(-0.5,0.5,len(A))
-    >>> response = 20*log10(mag)
-    >>> response = clip(response,-100,100)
+    >>> mag = np.abs(fftshift(A))
+    >>> freq = np.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * np.log10(mag)
+    >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of Blackman window")
@@ -2182,9 +2178,9 @@ def bartlett(M):
     Returns
     -------
     out : array
-        The triangular window, normalized to one (the value one
-        appears only if the number of samples is odd), with the first
-        and last samples equal to zero.
+        The triangular window, with the maximum value normalized to one
+        (the value one appears only if the number of samples is odd), with
+        the first and last samples equal to zero.
 
     See Also
     --------
@@ -2231,11 +2227,8 @@ def bartlett(M):
 
     Plot the window and its frequency response (requires SciPy and matplotlib):
 
-    >>> from numpy import clip, log10, array, bartlett, linspace
     >>> from numpy.fft import fft, fftshift
-    >>> import matplotlib.pyplot as plt
-
-    >>> window = bartlett(51)
+    >>> window = np.bartlett(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Bartlett window")
@@ -2249,10 +2242,10 @@ def bartlett(M):
     >>> plt.figure()
     <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
-    >>> mag = abs(fftshift(A))
-    >>> freq = linspace(-0.5,0.5,len(A))
-    >>> response = 20*log10(mag)
-    >>> response = clip(response,-100,100)
+    >>> mag = np.abs(fftshift(A))
+    >>> freq = np.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * np.log10(mag)
+    >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of Bartlett window")
@@ -2288,8 +2281,8 @@ def hanning(M):
     Returns
     -------
     out : ndarray, shape(M,)
-        The window, normalized to one (the value one
-        appears only if `M` is odd).
+        The window, with the maximum value normalized to one (the value
+        one appears only if `M` is odd).
 
     See Also
     --------
@@ -2325,8 +2318,7 @@ def hanning(M):
 
     Examples
     --------
-    >>> from numpy import hanning
-    >>> hanning(12)
+    >>> np.hanning(12)
     array([ 0.        ,  0.07937323,  0.29229249,  0.57115742,  0.82743037,
             0.97974649,  0.97974649,  0.82743037,  0.57115742,  0.29229249,
             0.07937323,  0.        ])
@@ -2334,8 +2326,6 @@ def hanning(M):
     Plot the window and its frequency response:
 
     >>> from numpy.fft import fft, fftshift
-    >>> import matplotlib.pyplot as plt
-
     >>> window = np.hanning(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2350,10 +2340,10 @@ def hanning(M):
     >>> plt.figure()
     <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
-    >>> mag = abs(fftshift(A))
-    >>> freq = np.linspace(-0.5,0.5,len(A))
-    >>> response = 20*np.log10(mag)
-    >>> response = np.clip(response,-100,100)
+    >>> mag = np.abs(fftshift(A))
+    >>> freq = np.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * np.log10(mag)
+    >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of the Hann window")
@@ -2367,10 +2357,6 @@ def hanning(M):
     >>> plt.show()
 
     """
-    # XXX: this docstring is inconsistent with other filter windows, e.g.
-    # Blackman and Bartlett -  they should all follow the same convention for
-    # clarity. Either use np. for all numpy members (as above), or import all
-    # numpy members (as in Blackman and Bartlett examples)
     if M < 1:
         return array([])
     if M == 1:
@@ -2393,8 +2379,8 @@ def hamming(M):
     Returns
     -------
     out : ndarray
-        The window, normalized to one (the value one
-        appears only if the number of samples is odd).
+        The window, with the maximum value normalized to one (the value
+        one appears only if the number of samples is odd).
 
     See Also
     --------
@@ -2437,8 +2423,6 @@ def hamming(M):
     Plot the window and the frequency response:
 
     >>> from numpy.fft import fft, fftshift
-    >>> import matplotlib.pyplot as plt
-
     >>> window = np.hamming(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2638,8 +2622,8 @@ def kaiser(M,beta):
     Returns
     -------
     out : array
-        The window, normalized to one (the value one
-        appears only if the number of samples is odd).
+        The window, with the maximum value normalized to one (the value
+        one appears only if the number of samples is odd).
 
     See Also
     --------
@@ -2682,7 +2666,6 @@ def kaiser(M,beta):
     large enough to sample the increasingly narrow spike, otherwise nans will
     get returned.
 
-
     Most references to the Kaiser window come from the signal processing
     literature, where it is used as one of many windowing functions for
     smoothing values.  It is also known as an apodization (which means
@@ -2701,8 +2684,7 @@ def kaiser(M,beta):
 
     Examples
     --------
-    >>> from numpy import kaiser
-    >>> kaiser(12, 14)
+    >>> np.kaiser(12, 14)
     array([  7.72686684e-06,   3.46009194e-03,   4.65200189e-02,
              2.29737120e-01,   5.99885316e-01,   9.45674898e-01,
              9.45674898e-01,   5.99885316e-01,   2.29737120e-01,
@@ -2711,11 +2693,8 @@ def kaiser(M,beta):
 
     Plot the window and the frequency response:
 
-    >>> from numpy import clip, log10, array, kaiser, linspace
     >>> from numpy.fft import fft, fftshift
-    >>> import matplotlib.pyplot as plt
-
-    >>> window = kaiser(51, 14)
+    >>> window = np.kaiser(51, 14)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Kaiser window")
@@ -2729,10 +2708,10 @@ def kaiser(M,beta):
     >>> plt.figure()
     <matplotlib.figure.Figure object at 0x...>
     >>> A = fft(window, 2048) / 25.5
-    >>> mag = abs(fftshift(A))
-    >>> freq = linspace(-0.5,0.5,len(A))
-    >>> response = 20*log10(mag)
-    >>> response = clip(response,-100,100)
+    >>> mag = np.abs(fftshift(A))
+    >>> freq = np.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * np.log10(mag)
+    >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Frequency response of Kaiser window")
@@ -2809,7 +2788,6 @@ def sinc(x):
             -5.84680802e-02,  -8.90384387e-02,  -8.40918587e-02,
             -4.92362781e-02,  -3.89804309e-17])
 
-    >>> import matplotlib.pyplot as plt
     >>> plt.plot(x, np.sinc(x))
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Sinc Function")
