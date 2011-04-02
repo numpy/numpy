@@ -1804,11 +1804,20 @@ C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (npy_fabs@c@(in2r) >= npy_fabs@c@(in2i)) {
-            const @type@ rat = in2i/in2r;
-            const @type@ scl = 1.0@c@/(in2r + in2i*rat);
-            ((@type@ *)op1)[0] = (in1r + in1i*rat)*scl;
-            ((@type@ *)op1)[1] = (in1i - in1r*rat)*scl;
+        const @type@ in2r_abs = npy_fabs@c@(in2r);
+        const @type@ in2i_abs = npy_fabs@c@(in2i);
+        if (in2r_abs >= in2i_abs) {
+            if (in2r_abs == 0 && in2i_abs == 0) {
+                /* divide by zero should yield a complex inf or nan */
+                ((@type@ *)op1)[0] = in1r/in2r_abs;
+                ((@type@ *)op1)[1] = in1i/in2i_abs;
+            }
+            else {
+                const @type@ rat = in2i/in2r;
+                const @type@ scl = 1.0@c@/(in2r + in2i*rat);
+                ((@type@ *)op1)[0] = (in1r + in1i*rat)*scl;
+                ((@type@ *)op1)[1] = (in1i - in1r*rat)*scl;
+            }
         }
         else {
             const @type@ rat = in2r/in2i;
