@@ -193,19 +193,27 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     }
 
     if (descr->subarray) {
-        PyObject *item;
+        PyObject *item, *subarray_tuple;
         Py_ssize_t total_count = 1;
         Py_ssize_t dim_size;
         char buf[128];
         int old_offset;
         int ret;
 
+        if (PyTuple_Check(descr->subarray->shape)) {
+            subarray_tuple = descr->subarray->shape;
+            Py_INCREF(subarray_tuple);
+        }
+        else {
+            subarray_tuple = Py_BuildValue("(O)", descr->subarray->shape);
+        }
+
         _append_char(str, '(');
-        for (k = 0; k < PyTuple_GET_SIZE(descr->subarray->shape); ++k) {
+        for (k = 0; k < PyTuple_GET_SIZE(subarray_tuple); ++k) {
             if (k > 0) {
                 _append_char(str, ',');
             }
-            item = PyTuple_GET_ITEM(descr->subarray->shape, k);
+            item = PyTuple_GET_ITEM(subarray_tuple, k);
             dim_size = PyNumber_AsSsize_t(item, NULL);
 
             PyOS_snprintf(buf, sizeof(buf), "%ld", (long)dim_size);
@@ -213,6 +221,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             total_count *= dim_size;
         }
         _append_char(str, ')');
+
+        Py_DECREF(subarray_tuple);
+
         old_offset = *offset;
         ret = _buffer_format_string(descr->subarray->base, str, arr, offset,
                                     active_byteorder);
