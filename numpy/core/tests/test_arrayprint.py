@@ -53,14 +53,93 @@ class TestComplexArray(TestCase):
         for res, val in zip(actual, wanted):
             assert_(res == val)
 
-def test_array2string():
-    """Basic test of array2string."""
-    a = np.arange(3)
-    assert_(np.array2string(a) == '[0 1 2]')
-    assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
-    stylestr = np.array2string(np.array(1.5),
-                               style=lambda x: "Value in 0-D array: " + str(x))
-    assert_(stylestr == 'Value in 0-D array: 1.5')
+class TestArray2String(TestCase):
+    def test_basic(self):
+        """Basic test of array2string."""
+        a = np.arange(3)
+        assert_(np.array2string(a) == '[0 1 2]')
+        assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
+
+    def test_style_keyword(self):
+        """This should only apply to 0-D arrays. See #1218."""
+        stylestr = np.array2string(np.array(1.5),
+                                   style=lambda x: "Value in 0-D array: " + str(x))
+        assert_(stylestr == 'Value in 0-D array: 1.5')
+
+    def test_format_function(self):
+        """Test custom format function for each element in array."""
+        def _format_function(x):
+            if np.abs(x) < 1:
+                return '.'
+            elif np.abs(x) < 2:
+                return 'o'
+            else:
+                return 'O'
+        x = np.arange(3)
+        assert_(np.array2string(x, formatter={'all':_format_function}) == \
+                "[. o O]")
+        assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==\
+                "[. o O]")
+        assert_(np.array2string(x, formatter={'timeint':_format_function}) == \
+                "[0 1 2]")
+        assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) == \
+                "[0.0000 1.0000 2.0000]")
+        assert_(np.array2string(x, formatter={'int':lambda x: hex(x)}) == \
+                "[0x0L 0x1L 0x2L]")
+
+        x = np.arange(3.)
+        assert_(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) == \
+                "[0.00 1.00 2.00]")
+        assert_(np.array2string(x, formatter={'float':lambda x: "%.2f" % x}) == \
+                "[0.00 1.00 2.00]")
+
+        s = np.array(['abc', 'def'])
+        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) == \
+            '[abcabc defdef]')
+
+
+class TestPrintOptions:
+    """Test getting and setting global print options."""
+    def setUp(self):
+        self.oldopts = np.get_printoptions()
+
+    def tearDown(self):
+        np.set_printoptions(**self.oldopts)
+
+    def test_basic(self):
+        x = np.array([1.5, 0, 1.234567890])
+        assert_equal(repr(x), "array([ 1.5       ,  0.        ,  1.23456789])")
+        np.set_printoptions(precision=4)
+        assert_equal(repr(x), "array([ 1.5   ,  0.    ,  1.2346])")
+
+    def test_formatter(self):
+        x = np.arange(3)
+        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        assert_equal(repr(x), "array([-1, 0, 1])")
+
+    def test_formatter_reset(self):
+        x = np.arange(3)
+        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        assert_equal(repr(x), "array([-1, 0, 1])")
+        np.set_printoptions(formatter={'int':None})
+        assert_equal(repr(x), "array([0, 1, 2])")
+
+        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        assert_equal(repr(x), "array([-1, 0, 1])")
+        np.set_printoptions(formatter={'all':None})
+        assert_equal(repr(x), "array([0, 1, 2])")
+
+        np.set_printoptions(formatter={'int':lambda x: str(x-1)})
+        assert_equal(repr(x), "array([-1, 0, 1])")
+        np.set_printoptions(formatter={'int_kind':None})
+        assert_equal(repr(x), "array([0, 1, 2])")
+
+        x = np.arange(3.)
+        np.set_printoptions(formatter={'float':lambda x: str(x-1)})
+        assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
+        np.set_printoptions(formatter={'float_kind':None})
+        assert_equal(repr(x), "array([ 0.,  1.,  2.])")
+
 
 
 if __name__ == "__main__":
