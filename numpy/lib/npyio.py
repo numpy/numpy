@@ -583,7 +583,8 @@ def _getconv(dtype):
 
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
-            converters=None, skiprows=0, usecols=None, unpack=False):
+            converters=None, skiprows=0, usecols=None, unpack=False,
+            ndmin=0):
     """
     Load data from a text file.
 
@@ -621,6 +622,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
         data-type, arrays are returned for each field.  Default is False.
+    ndmin : int, optional
+        The returned array must have at least `ndmin` dimensions.
+        Legal values: 0 (default), 1 or 2.
 
     Returns
     -------
@@ -799,7 +803,20 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     X = np.array(X, dtype)
 
-    X = np.squeeze(X)
+    # Verify that the array has at least dimensions `ndmin`.
+    # Check correctness of the values of `ndmin`
+    if not ndmin in [0, 1, 2]:
+        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
+    # Tweak the size and shape of the arrays
+    if X.ndim > ndmin:
+        X = np.squeeze(X)
+    # Has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
+    if X.ndim < ndmin:
+        if ndmin == 1:
+            X.shape = (X.size, )
+        elif ndmin == 2:
+            X.shape = (X.size, 1)
+
     if unpack:
         if len(dtype_types) > 1:
             # For structured arrays, return an array for each field.

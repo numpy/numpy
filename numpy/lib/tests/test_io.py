@@ -468,6 +468,23 @@ class TestLoadTxt(TestCase):
         assert_array_equal(b, np.array([21, 35]))
         assert_array_equal(c, np.array([ 72.,  58.]))
 
+    def test_ndmin_keyword(self):
+        c = StringIO()
+        c.write(asbytes('1,2,3\n4,5,6'))
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', ndmin=1)
+        a = np.array([[1, 2, 3], [4, 5, 6]])
+        assert_array_equal(x, a)
+        d = StringIO()
+        d.write(asbytes('0,1,2'))
+        d.seek(0)
+        x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=2)
+        assert_(x.shape == (3, 1))
+        assert_raises(ValueError, np.loadtxt, d, ndmin=3)
+        assert_raises(ValueError, np.loadtxt, d, ndmin=1.5)
+        e = StringIO()
+        assert_(np.loadtxt(e, ndmin=2).shape == (0, 1,))
+
 
 class Testfromregex(TestCase):
     def test_record(self):
