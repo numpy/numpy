@@ -1269,7 +1269,7 @@ class TestRegression(TestCase):
         """Ticket #1317."""
         def test_type(t):
             min = np.array([np.iinfo(t).min])
-            min /= -1
+            min //= -1
 
         old_err = np.seterr(divide="ignore")
         try:
