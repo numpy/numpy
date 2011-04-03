@@ -393,7 +393,12 @@ class TestLoadTxt(TestCase):
 
     def test_empty_file(self):
         c = StringIO()
-        assert_raises(IOError, np.loadtxt, c)
+        x = np.loadtxt(c)
+        assert_equal(x.shape, (0,))
+        x = np.loadtxt(c, dtype=np.int64)
+        assert_equal(x.shape, (0,))
+        assert_(x.dtype == np.int64)
+
 
     def test_unused_converter(self):
         c = StringIO()
@@ -584,7 +589,7 @@ class TestFromTxt(TestCase):
         import warnings
         basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
         warnings.filterwarnings("ignore")
-        # Footer too small to get rid of all invalid values 
+        # Footer too small to get rid of all invalid values
         assert_raises(ValueError, np.genfromtxt,
                       StringIO(basestr), skip_footer=1)
 #        except ValueError:

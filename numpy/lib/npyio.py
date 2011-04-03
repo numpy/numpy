@@ -750,7 +750,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         while not first_vals:
             first_line = fh.readline()
             if not first_line: # EOF reached
-                raise IOError('End-of-file reached before encountering data.')
+                # Break out of the loop here, so that we return an empty array.
+                first_line = ''
+                first_vals = []
+                break
             first_vals = split_line(first_line)
         N = len(usecols or first_vals)
 
