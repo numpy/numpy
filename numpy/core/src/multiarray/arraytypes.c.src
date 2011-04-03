@@ -1797,9 +1797,18 @@ HALF_fromstr(char *str, npy_half *ip, char **endptr, PyArray_Descr *NPY_UNUSED(i
     return 0;
 }
 
+static int
+BOOL_fromstr(char *str, Bool *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
+{
+    double result;
+
+    result = NumPyOS_ascii_strtod(str, endptr);
+    *ip = (Bool) (result != 0.0);
+    return 0;
+}
 
 /**begin repeat
- * #fname = BOOL, CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID#
+ * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID#
  */
 #define @fname@_fromstr NULL
 /**end repeat**/
