@@ -1148,6 +1148,11 @@ class TestIO(object):
             os.unlink(self.filename)
             #tmp_file.close()
 
+    def test_bool_fromstring(self):
+        v = np.array([True,False,True,False], dtype=np.bool_)
+        y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
+        assert_array_equal(v, y) 
+
     def test_empty_files_binary(self):
         f = open(self.filename, 'w')
         f.close()
