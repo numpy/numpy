@@ -464,7 +464,7 @@ class TestLoadTxt(TestCase):
         assert_(a.dtype.str == '|S1')
         assert_(b.dtype.str == '<i4')
         assert_(c.dtype.str == '<f4')
-        assert_array_equal(a, np.array(['M', 'F']))
+        assert_array_equal(a, np.array([asbytes('M'), asbytes('F')]))
         assert_array_equal(b, np.array([21, 35]))
         assert_array_equal(c, np.array([ 72.,  58.]))
 
