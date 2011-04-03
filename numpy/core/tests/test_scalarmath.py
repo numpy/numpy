@@ -81,7 +81,7 @@ class TestConversion(TestCase):
 #            assert_equal( val, val2 )
 
 
-class TestRepr(TestCase):
+class TestRepr():
     def _test_type_repr(self, t):
         finfo=np.finfo(t)
         last_fraction_bit_idx = finfo.nexp + finfo.nmant
@@ -111,7 +111,7 @@ class TestRepr(TestCase):
         # long double test cannot work, because eval goes through a python
         # float
         for t in [np.float32, np.float64]:
-            yield test_float_repr, t
+            yield self._test_type_repr, t
 
 if __name__ == "__main__":
     run_module_suite()
