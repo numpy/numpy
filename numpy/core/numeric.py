@@ -1911,8 +1911,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     False
 
     """
-    x = array(a, copy=False)
-    y = array(b, copy=False)
+    x = array(a, copy=False, ndmin=1)
+    y = array(b, copy=False, ndmin=1)
     xinf = isinf(x)
     if not all(xinf == isinf(y)):
         return False

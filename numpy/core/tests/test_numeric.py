@@ -123,7 +123,7 @@ class TestDot(TestCase):
                 arg2 = rand(*dim2)
                 c1 = dot(arg1, arg2)
                 c2 = dot_(arg1, arg2)
-                assert (c1.shape == c2.shape)
+                assert_(c1.shape == c2.shape)
                 assert_almost_equal(c1, c2, decimal=self.N)
 
     def test_vecobject(self):
@@ -157,23 +157,23 @@ class TestNonarrayArgs(TestCase):
     # check that non-array arguments to functions wrap them in arrays
     def test_squeeze(self):
         A = [[[1,1,1],[2,2,2],[3,3,3]]]
-        assert squeeze(A).shape == (3,3)
+        assert_(squeeze(A).shape == (3,3))
 
     def test_cumproduct(self):
         A = [[1,2,3],[4,5,6]]
-        assert all(cumproduct(A) == array([1,2,6,24,120,720]))
+        assert_(all(cumproduct(A) == array([1,2,6,24,120,720])))
 
     def test_size(self):
         A = [[1,2,3],[4,5,6]]
-        assert size(A) == 6
-        assert size(A,0) == 2
-        assert size(A,1) == 3
+        assert_(size(A) == 6)
+        assert_(size(A,0) == 2)
+        assert_(size(A,1) == 3)
 
     def test_mean(self):
         A = [[1,2,3],[4,5,6]]
-        assert mean(A) == 3.5
-        assert all(mean(A,0) == array([2.5,3.5,4.5]))
-        assert all(mean(A,1) == array([2.,5.]))
+        assert_(mean(A) == 3.5)
+        assert_(all(mean(A,0) == array([2.5,3.5,4.5])))
+        assert_(all(mean(A,1) == array([2.,5.])))
 
     def test_std(self):
         A = [[1,2,3],[4,5,6]]
@@ -536,7 +536,7 @@ class TestIndex(TestCase):
         g1 = randint(0,5,size=15)
         g2 = randint(0,8,size=15)
         V[g1,g2] = -V[g1,g2]
-        assert (array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all()
+        assert_((array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all())
 
 
 class TestBinaryRepr(TestCase):
@@ -568,55 +568,55 @@ class TestBaseRepr(TestCase):
 class TestArrayComparisons(TestCase):
     def test_array_equal(self):
         res = array_equal(array([1,2]), array([1,2]))
-        assert res
-        assert type(res) is bool
+        assert_(res)
+        assert_(type(res) is bool)
         res = array_equal(array([1,2]), array([1,2,3]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
         res = array_equal(array([1,2]), array([3,4]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
         res = array_equal(array([1,2]), array([1,3]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
 
     def test_array_equiv(self):
         res = array_equiv(array([1,2]), array([1,2]))
-        assert res
-        assert type(res) is bool
+        assert_(res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,2]), array([1,2,3]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,2]), array([3,4]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,2]), array([1,3]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
 
         res = array_equiv(array([1,1]), array([1]))
-        assert res
-        assert type(res) is bool
+        assert_(res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,1]), array([[1],[1]]))
-        assert res
-        assert type(res) is bool
+        assert_(res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,2]), array([2]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,2]), array([[1],[2]]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
         res = array_equiv(array([1,2]), array([[1,2,3],[4,5,6],[7,8,9]]))
-        assert not res
-        assert type(res) is bool
+        assert_(not res)
+        assert_(type(res) is bool)
 
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
     # Check flags
-    assert x.flags == y.flags
+    assert_(x.flags == y.flags)
     # check endianness
-    assert x.dtype.isnative == y.dtype.isnative
+    assert_(x.dtype.isnative == y.dtype.isnative)
 
 
 class TestClip(TestCase):
@@ -656,7 +656,7 @@ class TestClip(TestCase):
     def _generate_non_native_data(self, n, m):
         data = randn(n, m)
         data = self._neg_byteorder(data)
-        assert not data.dtype.isnative
+        assert_(not data.dtype.isnative)
         return data
 
     def _generate_int_data(self, n, m):
@@ -708,7 +708,7 @@ class TestClip(TestCase):
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5
         M   = self._neg_byteorder(0.6)
-        assert not M.dtype.isnative
+        assert_(not M.dtype.isnative)
         ac  = self.fastclip(a, m, M)
         act = self.clip(a, m, M)
         assert_array_equal(ac, act)
@@ -736,8 +736,8 @@ class TestClip(TestCase):
         """Test clip for non contiguous native input and native scalar min/max."""
         a   = self._generate_data(self.nr * 2, self.nc * 3)
         a   = a[::2, ::3]
-        assert not a.flags['F_CONTIGUOUS']
-        assert not a.flags['C_CONTIGUOUS']
+        assert_(not a.flags['F_CONTIGUOUS'])
+        assert_(not a.flags['C_CONTIGUOUS'])
         ac  = self.fastclip(a, -1.6, 1.7)
         act = self.clip(a, -1.6, 1.7)
         assert_array_strict_equal(ac, act)
@@ -821,8 +821,8 @@ class TestClip(TestCase):
         """Test non contiguous double input with double scalar min/max in-place."""
         a   = self._generate_data(self.nr * 2, self.nc * 3)
         a   = a[::2, ::3]
-        assert not a.flags['F_CONTIGUOUS']
-        assert not a.flags['C_CONTIGUOUS']
+        assert_(not a.flags['F_CONTIGUOUS'])
+        assert_(not a.flags['C_CONTIGUOUS'])
         ac  = a.copy()
         m   = -0.5
         M   = 0.6
@@ -892,7 +892,7 @@ class TestClip(TestCase):
         m   = -0.5 * ones(a.shape)
         M   = 1.
         a_s = self._neg_byteorder(a)
-        assert not a_s.dtype.isnative
+        assert_(not a_s.dtype.isnative)
         act = a_s.clip(m, M)
         ac  = self.fastclip(a_s, m, M)
         assert_array_strict_equal(ac, act)
@@ -903,7 +903,7 @@ class TestClip(TestCase):
         m   = -0.5
         M   = 1.
         a_s = self._neg_byteorder(a)
-        assert not a_s.dtype.isnative
+        assert_(not a_s.dtype.isnative)
         ac  = self.fastclip(a_s, m , M)
         act = a_s.clip(m, M)
         assert_array_strict_equal(ac, act)
@@ -914,7 +914,7 @@ class TestClip(TestCase):
         m   = -0.5 * ones(a.shape)
         M   = 1.
         m_s = self._neg_byteorder(m)
-        assert not m_s.dtype.isnative
+        assert_(not m_s.dtype.isnative)
         ac  = self.fastclip(a, m_s , M)
         act = self.clip(a, m_s, M)
         assert_array_strict_equal(ac, act)
@@ -1039,15 +1039,15 @@ class TestClip(TestCase):
         self.assertTrue(a2 is a)
 
 
-class test_allclose_inf(TestCase):
+class TestAllclose():
     rtol = 1e-5
     atol = 1e-8
 
     def tst_allclose(self,x,y):
-        assert allclose(x,y), "%s and %s not close" % (x,y)
+        assert_(allclose(x,y), "%s and %s not close" % (x,y))
 
     def tst_not_allclose(self,x,y):
-        assert not allclose(x,y), "%s and %s shouldn't be close" % (x,y)
+        assert_(not allclose(x,y), "%s and %s shouldn't be close" % (x,y))
 
     def test_ip_allclose(self):
         """Parametric test factory."""
@@ -1062,7 +1062,9 @@ class test_allclose_inf(TestCase):
                 ([1], [1+rtol+atol]),
                 (arr, arr + arr*rtol),
                 (arr, arr + arr*rtol + atol*2),
-                (aran, aran + aran*rtol),]
+                (aran, aran + aran*rtol),
+                (inf, inf),
+                (inf, [inf])]
 
         for (x,y) in data:
             yield (self.tst_allclose,x,y)
