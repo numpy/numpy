@@ -593,16 +593,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     Parameters
     ----------
     fname : file or str
-        File or filename to read.  If the filename extension is ``.gz`` or
-        ``.bz2``, the file is first decompressed.
+        File, filename, or generator to read.  If the filename extension is
+        ``.gz`` or ``.bz2``, the file is first decompressed.
     dtype : data-type, optional
-        Data-type of the resulting array; default: float.  If this is a record
-        data-type, the resulting array will be 1-dimensional, and each row
-        will be interpreted as an element of the array.  In this case, the
-        number of columns used must match the number of fields in the
-        data-type.
+        Data-type of the resulting array; default: float.  If this is a
+        record data-type, the resulting array will be 1-dimensional, and
+        each row will be interpreted as an element of the array.  In this
+        case, the number of columns used must match the number of fields in
+        the data-type.
     comments : str, optional
-        The character used to indicate the start of a comment; default: '#'.
+        The character used to indicate the start of a comment;
+        default: '#'.
     delimiter : str, optional
         The string used to separate values.  By default, this is any
         whitespace.
@@ -667,28 +668,27 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     """
     # Type conversions for Py3 convenience
     comments = asbytes(comments)
+    user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
-
-    user_converters = converters
-
     if usecols is not None:
         usecols = list(usecols)
 
-    own_fh = False
-    if _is_string_like(fname):
-        own_fh = True
-        if fname.endswith('.gz'):
-            fh = seek_gzip_factory(fname)
-        elif fname.endswith('.bz2'):
-            import bz2
-            fh = bz2.BZ2File(fname)
+    fown = False
+    try:
+        if _is_string_like(fname):
+            fown = True
+            if fname.endswith('.gz'):
+                fh = iter(seek_gzip_factory(fname))
+            elif fname.endswith('.bz2'):
+                import bz2
+                fh = iter(bz2.BZ2File(fname))
+            else:
+                fh = iter(open(fname, 'U'))
         else:
-            fh = open(fname, 'U')
-    elif hasattr(fname, 'readline'):
-        fh = fname
-    else:
-        raise ValueError('fname must be a string or file handle')
+            fh = iter(fname)
+    except TypeError:
+        raise ValueError('fname must be a string, file handle, or generator')
     X = []
 
     def flatten_dtype(dt):
@@ -746,19 +746,19 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         # Skip the first `skiprows` lines
         for i in xrange(skiprows):
-            fh.readline()
+            fh.next()
 
         # Read until we find a line with some values, and use
         # it to estimate the number of columns, N.
         first_vals = None
-        while not first_vals:
-            first_line = fh.readline()
-            if not first_line: # EOF reached
-                # Break out of the loop here, so that we return an empty array.
-                first_line = ''
-                first_vals = []
-                break
-            first_vals = split_line(first_line)
+        try:
+            while not first_vals:
+                first_line = fh.next()
+                first_vals = split_line(first_line)
+        except StopIteration:
+            # End of lines reached
+            first_line = ''
+            first_vals = []
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -787,18 +787,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             vals = split_line(line)
             if len(vals) == 0:
                 continue
-
             if usecols:
                 vals = [vals[i] for i in usecols]
-
             # Convert each value according to its column and store
             items = [conv(val) for (conv, val) in zip(converters, vals)]
             # Then pack it according to the dtype's nesting
             items = pack_items(items, packing)
-
             X.append(items)
     finally:
-        if own_fh:
+        if fown:
             fh.close()
 
     X = np.array(X, dtype)

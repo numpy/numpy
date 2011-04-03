@@ -485,6 +485,13 @@ class TestLoadTxt(TestCase):
         e = StringIO()
         assert_(np.loadtxt(e, ndmin=2).shape == (0, 1,))
 
+    def test_generator_source(self):
+        def count():
+            for i in range(10):
+                yield "%d" % i
+
+        res = np.loadtxt(count())
+        assert_array_equal(res, np.arange(10))
 
 class Testfromregex(TestCase):
     def test_record(self):
