@@ -2,7 +2,7 @@ import numpy as np
 import numpy.ma as ma
 from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
     assert_raises, run_module_suite)
-from numpy.testing import assert_warns
+from numpy.testing import assert_warns, assert_
 
 import sys
 
@@ -451,6 +451,17 @@ class TestLoadTxt(TestCase):
             assert_array_equal(data, [[1, 21], [3, 42]])
         finally:
             os.unlink(name)
+
+    def test_structure_unpack(self):
+        txt = StringIO(asbytes("M 21 72\nF 35 58"))
+        dt = { 'names': ('a', 'b', 'c'), 'formats': ('|S1', '<i4', '<f4')}
+        a, b, c = np.loadtxt(txt, dtype=dt, unpack=True)
+        assert_(a.dtype.str == '|S1')
+        assert_(b.dtype.str == '<i4')
+        assert_(c.dtype.str == '<f4')
+        assert_array_equal(a, np.array(['M', 'F']))
+        assert_array_equal(b, np.array([21, 35]))
+        assert_array_equal(c, np.array([ 72.,  58.]))
 
 
 class Testfromregex(TestCase):
