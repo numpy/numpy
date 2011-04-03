@@ -1020,7 +1020,7 @@ class TestClip(TestCase):
         assert np.all(x <= 4)
 
 
-class TestPutmask(TestCase):
+class TestPutmask():
     def tst_basic(self,x,T,mask,val):
         np.putmask(x,mask,val)
         assert np.all(x[mask] == T(val))
@@ -1039,8 +1039,7 @@ class TestPutmask(TestCase):
                         yield self.tst_basic,x.copy().astype(T),T,mask,val
 
     def test_mask_size(self):
-        self.assertRaises(ValueError, np.putmask,
-                              np.array([1,2,3]), [True], 5)
+        assert_raises(ValueError, np.putmask, np.array([1,2,3]), [True], 5)
 
     def tst_byteorder(self,dtype):
         x = np.array([1,2,3],dtype)
@@ -1067,7 +1066,7 @@ class TestPutmask(TestCase):
         pass
 
 
-class TestTake(TestCase):
+class TestTake():
     def tst_basic(self,x):
         ind = range(x.shape[0])
         assert_array_equal(x.take(ind, axis=0), x)
@@ -1085,8 +1084,8 @@ class TestTake(TestCase):
     def test_raise(self):
         x = np.random.random(24)*100
         x.shape = 2,3,4
-        self.assertRaises(IndexError, x.take, [0,1,2], axis=0)
-        self.assertRaises(IndexError, x.take, [-3], axis=0)
+        assert_raises(IndexError, x.take, [0,1,2], axis=0)
+        assert_raises(IndexError, x.take, [-3], axis=0)
         assert_array_equal(x.take([-1], axis=0)[0], x[1])
 
     def test_clip(self):
@@ -1326,7 +1325,7 @@ class TestIO(object):
         in_foreign_locale(self.test_tofile_format)()
 
 
-class TestFromBuffer(TestCase):
+class TestFromBuffer():
     def tst_basic(self,buffer,expected,kwargs):
         assert_array_equal(np.frombuffer(buffer,**kwargs),expected)
 
@@ -2131,7 +2130,7 @@ if sys.version_info >= (2, 6):
             dt1 = np.dtype([('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')], align=True)
             x1 = np.arange(dt1.itemsize, dtype=np.int8).view(dt1)
             self._check_roundtrip(x1)
-        
+
             dt2 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
             x2 = np.arange(dt2.itemsize, dtype=np.int8).view(dt2)
             self._check_roundtrip(x2)
