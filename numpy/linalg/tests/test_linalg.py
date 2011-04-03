@@ -240,7 +240,7 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
 
-class TestMatrixPower(TestCase):
+class TestMatrixPower():
     R90 = array([[0,1],[-1,0]])
     Arb22 = array([[4,-7],[-2,10]])
     noninv = array([[1,0],[0,0]])
@@ -290,8 +290,8 @@ class TestMatrixPower(TestCase):
 
     def test_invert_noninvertible(self):
         import numpy.linalg
-        self.assertRaises(numpy.linalg.linalg.LinAlgError,
-                lambda: matrix_power(self.noninv,-1))
+        assert_raises(numpy.linalg.linalg.LinAlgError,
+                      lambda: matrix_power(self.noninv,-1))
 
 class TestBoolPower(TestCase):
     def test_square(self):
@@ -416,7 +416,7 @@ def test_matrix_rank():
     # Full rank matrix
     yield assert_equal, 4, matrix_rank(np.eye(4))
     # rank deficient matrix
-    I=np.eye(4); I[-1,-1] = 0. 
+    I=np.eye(4); I[-1,-1] = 0.
     yield assert_equal, matrix_rank(I), 3
     # All zeros - zero rank
     yield assert_equal, matrix_rank(np.zeros((4,4))), 0
@@ -429,7 +429,7 @@ def test_matrix_rank():
     yield assert_raises, TypeError, matrix_rank, np.zeros((2,2,2))
     # works on scalar
     yield assert_equal, matrix_rank(1), 1
-    
-    
+
+
 if __name__ == "__main__":
     run_module_suite()
