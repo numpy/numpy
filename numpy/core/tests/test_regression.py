@@ -1272,7 +1272,7 @@ class TestRegression(TestCase):
             min = np.array([np.iinfo(t).min])
             min /= -1
 
-        old_err = np.seterr(divide="ignore")
+        old_err = np.seterr(divide="ignore", invalid="ignore")
         try:
             for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
                 test_type(t)

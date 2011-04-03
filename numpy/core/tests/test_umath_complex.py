@@ -12,7 +12,7 @@ import numpy as np
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-olderr = np.seterr(divide='ignore')
+olderr = np.seterr(invalid='ignore')
 try:
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(np.NZERO, 0)).imag != np.pi))
@@ -434,7 +434,13 @@ class TestCabs(object):
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
-        y = np.abs(x)
+
+        olderr = np.seterr(invalid='ignore')
+        try:
+            y = np.abs(x)
+        finally:
+            np.seterr(**olderr)
+
         for i in range(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
@@ -446,8 +452,12 @@ class TestCabs(object):
         x = np.array([complex(1, np.NZERO)], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
 
-        x = np.array([complex(np.inf, np.NZERO)], dtype=np.complex)
-        assert_array_equal(np.abs(x), np.real(x))
+        olderr = np.seterr(invalid='ignore')
+        try:
+            x = np.array([complex(np.inf, np.NZERO)], dtype=np.complex)
+            assert_array_equal(np.abs(x), np.real(x))
+        finally:
+            np.seterr(**olderr)
 
         x = np.array([complex(np.nan, np.NZERO)], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
