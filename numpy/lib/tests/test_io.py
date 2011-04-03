@@ -488,7 +488,7 @@ class TestLoadTxt(TestCase):
     def test_generator_source(self):
         def count():
             for i in range(10):
-                yield "%d" % i
+                yield asbytes("%d" % i)
 
         res = np.loadtxt(count())
         assert_array_equal(res, np.arange(10))
@@ -1322,6 +1322,14 @@ M   33  21.99
         finally:
             os.close(f)
             os.unlink(name)
+
+    def test_gft_generator_source(self):
+        def count():
+            for i in range(10):
+                yield asbytes("%d" % i)
+
+        res = np.genfromtxt(count())
+        assert_array_equal(res, np.arange(10))
 
 
 def test_gzip_load():

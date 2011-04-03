@@ -594,7 +594,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file or str
         File, filename, or generator to read.  If the filename extension is
-        ``.gz`` or ``.bz2``, the file is first decompressed.
+        ``.gz`` or ``.bz2``, the file is first decompressed. Note that
+        generators should return byte strings for Python 3k.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         record data-type, the resulting array will be 1-dimensional, and
@@ -1081,8 +1082,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     Parameters
     ----------
     fname : file or str
-        File or filename to read.  If the filename extension is `.gz` or
-        `.bz2`, the file is first decompressed.
+        File, filename, or generator to read.  If the filename extension is
+        `.gz` or `.bz2`, the file is first decompressed. Note that
+        generators must return byte strings in Python 3k.
     dtype : dtype, optional
         Data type of the resulting array.
         If None, the dtypes will be determined by the contents of each
@@ -1227,14 +1229,16 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
-    if isinstance(fname, basestring):
-        fhd = np.lib._datasource.open(fname, 'Ub')
-        own_fhd = True
-    elif not hasattr(fname, 'read'):
-        raise TypeError("The input should be a string or a filehandle. "\
+    try:
+        if isinstance(fname, basestring):
+            fhd = iter(np.lib._datasource.open(fname, 'Ub'))
+            own_fhd = True
+        else:
+            fhd = iter(fname)
+    except TypeError:
+        raise TypeError("fname mustbe a string, filehandle, or generator. "\
                         "(got %s instead)" % type(fname))
-    else:
-        fhd = fname
+
     split_line = LineSplitter(delimiter=delimiter, comments=comments,
                               autostrip=autostrip)._handyman
     validate_names = NameValidator(excludelist=excludelist,
@@ -1251,17 +1255,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         skip_header = skiprows
     # Skip the first `skip_header` rows
     for i in xrange(skip_header):
-        fhd.readline()
+        fhd.next()
+
     # Keep on until we find the first valid values
     first_values = None
-    while not first_values:
-        first_line = fhd.readline()
-        if not first_line:
-            raise IOError('End-of-file reached before encountering data.')
-        if names is True:
-            if comments in first_line:
-                first_line = asbytes('').join(first_line.split(comments)[1:])
-        first_values = split_line(first_line)
+    try:
+        while not first_values:
+            first_line = fhd.next()
+            if names is True:
+                if comments in first_line:
+                    first_line = asbytes('').join(first_line.split(comments)[1:])
+            first_values = split_line(first_line)
+    except StopIteration:
+        # might want to return empty array instead of raising error.
+        raise IOError('End-of-file reached before encountering data.')
+
     # Should we take the first values as names ?
     if names is True:
         fval = first_values[0].strip()
