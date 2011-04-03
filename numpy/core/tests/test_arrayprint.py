@@ -53,14 +53,38 @@ class TestComplexArray(TestCase):
         for res, val in zip(actual, wanted):
             assert_(res == val)
 
-def test_array2string():
-    """Basic test of array2string."""
-    a = np.arange(3)
-    assert_(np.array2string(a) == '[0 1 2]')
-    assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
-    stylestr = np.array2string(np.array(1.5),
-                               style=lambda x: "Value in 0-D array: " + str(x))
-    assert_(stylestr == 'Value in 0-D array: 1.5')
+class TestArray2String(TestCase):
+    def test_basic(self):
+        """Basic test of array2string."""
+        a = np.arange(3)
+        assert_(np.array2string(a) == '[0 1 2]')
+        assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
+        stylestr = np.array2string(np.array(1.5),
+                                   style=lambda x: "Value in 0-D array: " + str(x))
+        assert_(stylestr == 'Value in 0-D array: 1.5')
+
+    def test_style_keyword(self):
+        """This should only apply to 0-D arrays. See #1218."""
+        pass
+
+
+
+    def test_format_function(self):
+        """Test custom format function for each element in array."""
+        def _format_function(x):
+            if np.abs(x) < 1:
+                return '.'
+            elif np.abs(x) < 2:
+                return 'o'
+            else:
+                return 'O'
+        x = np.arange(3)
+        assert_(np.array2string(x, formatter=_format_function) == "[. o O]")
+        assert_(np.array2string(x, formatter=lambda x: "%.4f" % x) == \
+                "[0.0000 1.0000 2.0000]")
+        assert_(np.array2string(x, formatter=lambda x: hex(x)) == \
+                "[0x0L 0x1L 0x2L]")
+        assert_raises(TypeError, np.array2string, x, formatter=lambda x: x)
 
 
 if __name__ == "__main__":

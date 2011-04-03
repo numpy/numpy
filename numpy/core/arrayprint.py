@@ -173,7 +173,7 @@ def _boolFormatter(x):
 
 
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
-                  prefix=""):
+                  prefix="", formatter=None):
 
     if max_line_width is None:
         max_line_width = _line_width
@@ -191,36 +191,47 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         summary_insert = ""
         data = ravel(a)
 
-    try:
-        format_function = a._format
-    except AttributeError:
-        dtypeobj = a.dtype.type
-        if issubclass(dtypeobj, _nt.bool_):
-            # make sure True and False line up.
-            format_function = _boolFormatter
-        elif issubclass(dtypeobj, _nt.integer):
-            if issubclass(dtypeobj, _nt.timeinteger):
+    if formatter is not None:
+        # basic sanity check
+        try:
+            _try_a_float = formatter(1.0)
+            if not isinstance(_try_a_float, basestring):
+                raise TypeError("`formatter` does not return a string.")
+        except:
+            # We don't know what formatter is, so this could raise anything
+            pass
+        format_function = formatter
+    else:
+        try:
+            format_function = a._format
+        except AttributeError:
+            dtypeobj = a.dtype.type
+            if issubclass(dtypeobj, _nt.bool_):
+                # make sure True and False line up.
+                format_function = _boolFormatter
+            elif issubclass(dtypeobj, _nt.integer):
+                if issubclass(dtypeobj, _nt.timeinteger):
+                    format_function = str
+                else:
+                    max_str_len = max(len(str(maximum.reduce(data))),
+                                      len(str(minimum.reduce(data))))
+                    format = '%' + str(max_str_len) + 'd'
+                    format_function = lambda x: _formatInteger(x, format)
+            elif issubclass(dtypeobj, _nt.floating):
+                if issubclass(dtypeobj, _nt.longfloat):
+                    format_function = LongFloatFormat(precision)
+                else:
+                    format_function = FloatFormat(data, precision, suppress_small)
+            elif issubclass(dtypeobj, _nt.complexfloating):
+                if issubclass(dtypeobj, _nt.clongfloat):
+                    format_function = LongComplexFormat(precision)
+                else:
+                    format_function = ComplexFormat(data, precision, suppress_small)
+            elif issubclass(dtypeobj, _nt.unicode_) or \
+                     issubclass(dtypeobj, _nt.string_):
+                format_function = repr
+            else:
                 format_function = str
-            else:
-                max_str_len = max(len(str(maximum.reduce(data))),
-                                  len(str(minimum.reduce(data))))
-                format = '%' + str(max_str_len) + 'd'
-                format_function = lambda x: _formatInteger(x, format)
-        elif issubclass(dtypeobj, _nt.floating):
-            if issubclass(dtypeobj, _nt.longfloat):
-                format_function = LongFloatFormat(precision)
-            else:
-                format_function = FloatFormat(data, precision, suppress_small)
-        elif issubclass(dtypeobj, _nt.complexfloating):
-            if issubclass(dtypeobj, _nt.clongfloat):
-                format_function = LongComplexFormat(precision)
-            else:
-                format_function = ComplexFormat(data, precision, suppress_small)
-        elif issubclass(dtypeobj, _nt.unicode_) or \
-                 issubclass(dtypeobj, _nt.string_):
-            format_function = repr
-        else:
-            format_function = str
 
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
@@ -243,9 +254,9 @@ def _convert_arrays(obj):
     return tuple(newtup)
 
 
-def array2string(a, max_line_width = None, precision = None,
-                 suppress_small = None, separator=' ', prefix="",
-                 style=repr):
+def array2string(a, max_line_width=None, precision=None,
+                 suppress_small=None, separator=' ', prefix="",
+                 style=repr, formatter=None):
     """
     Return a string representation of an array.
 
@@ -273,7 +284,11 @@ def array2string(a, max_line_width = None, precision = None,
         output correctly.
     style : function, optional
         A function that accepts an ndarray and returns a string.  Used only
-        when the shape of `a` is equal to ().
+        when the shape of `a` is equal to ``()``, i.e. for 0-D arrays.
+    formatter : callable, optional
+        If given, calls `formatter` for each array element. Should return the
+        desired string representation of array elements. If given, the
+        `precision` argument is ignored.
 
     Returns
     -------
@@ -306,7 +321,7 @@ def array2string(a, max_line_width = None, precision = None,
         lst = "[]"
     else:
         lst = _array2string(a, max_line_width, precision, suppress_small,
-                            separator, prefix)
+                            separator, prefix, formatter=formatter)
     return lst
 
 def _extendLine(s, line, word, max_line_len, next_line_prefix):
