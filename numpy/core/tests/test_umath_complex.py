@@ -12,7 +12,7 @@ import numpy as np
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-olderr = np.seterr(invalid='ignore')
+olderr = np.seterr(invalid='ignore', divide='ignore')
 try:
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(np.NZERO, 0)).imag != np.pi))
