@@ -619,7 +619,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The default, None, results in all columns being read.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  The default is False.
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
+        data-type, arrays are returned for each field.  Default is False.
 
     Returns
     -------
@@ -797,7 +798,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     X = np.squeeze(X)
     if unpack:
-        return X.T
+        if len(dtype_types) > 1:
+            # For structured arrays, return an array for each field.
+            return [X[field] for field in dtype.names]
+        else:
+            return X.T
     else:
         return X
 
