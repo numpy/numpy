@@ -417,10 +417,8 @@ class TestLoadTxt(TestCase):
         "Test using an explicit dtype with an object"
         from datetime import date
         import time
-        data = """
-        1; 2001-01-01
-        2; 2002-01-31
-        """
+        data = asbytes(""" 1; 2001-01-01
+                           2; 2002-01-31 """)
         ndtype = [('idx', int), ('code', np.object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
@@ -456,6 +454,16 @@ class TestLoadTxt(TestCase):
             assert_array_equal(data, [[1, 21], [3, 42]])
         finally:
             os.unlink(name)
+
+    def test_empty_field_after_tab(self):
+        c = StringIO()
+        c.write(asbytes('1 \t2 \t3\tstart \n4\t5\t6\t  \n7\t8\t9.5\t'))
+        c.seek(0)
+        dt = { 'names': ('x', 'y', 'z', 'comment'),
+               'formats': ('<i4', '<i4', '<f4', '|S8')}
+        x = np.loadtxt(c, dtype=dt, delimiter='\t')
+        a = np.array([asbytes('start '), asbytes('  '), asbytes('')])
+        assert_array_equal(x['comment'], a)
 
     def test_structure_unpack(self):
         txt = StringIO(asbytes("M 21 72\nF 35 58"))
@@ -802,10 +810,8 @@ M   33  21.99
         "Test using an explicit dtype with an object"
         from datetime import date
         import time
-        data = asbytes("""
-        1; 2001-01-01
-        2; 2002-01-31
-        """)
+        data = asbytes(""" 1; 2001-01-01
+                           2; 2002-01-31 """)
         ndtype = [('idx', int), ('code', np.object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
