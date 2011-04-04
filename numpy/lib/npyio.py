@@ -6,6 +6,7 @@ import numpy as np
 import format
 import sys
 import os
+import re
 import sys
 import itertools
 import warnings
@@ -975,7 +976,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         if own_fh:
             fh.close()
 
-import re
 def fromregex(file, regexp, dtype):
     """
     Construct an array from a text file, using regular expression parsing.
