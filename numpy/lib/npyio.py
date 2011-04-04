@@ -612,8 +612,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         A dictionary mapping column number to a function that will convert
         that column to a float.  E.g., if column 0 is a date string:
         ``converters = {0: datestr2num}``.  Converters can also be used to
-        provide a default value for missing data:
-        ``converters = {3: lambda s: float(s or 0)}``.  Default: None.
+        provide a default value for missing data (but see also `genfromtxt`):
+        ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
     usecols : sequence, optional
@@ -627,6 +627,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     ndmin : int, optional
         The returned array must have at least `ndmin` dimensions.
         Legal values: 0 (default), 1 or 2.
+        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -734,7 +735,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def split_line(line):
         """Chop off comments, strip, and split at delimiter."""
-        line = asbytes(line).split(comments)[0].strip()
+        line = asbytes(line).split(comments)[0].strip(asbytes('\r\n'))
         if line:
             return line.split(delimiter)
         else:
