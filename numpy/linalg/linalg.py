@@ -151,8 +151,8 @@ def _fastCopyAndTranspose(type, *arrays):
 def _assertRank2(*arrays):
     for a in arrays:
         if len(a.shape) != 2:
-            raise LinAlgError, '%d-dimensional array given. Array must be \
-            two-dimensional' % len(a.shape)
+            raise LinAlgError('%d-dimensional array given. Array must be '
+                    'two-dimensional' % len(a.shape))
 
 def _assertSquareness(*arrays):
     for a in arrays:
@@ -527,8 +527,8 @@ def cholesky(a):
         lapack_routine = lapack_lite.dpotrf
     results = lapack_routine(_L, n, a, m, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'Matrix is not positive definite - \
-        Cholesky decomposition cannot be computed'
+        raise LinAlgError('Matrix is not positive definite - '
+                'Cholesky decomposition cannot be computed')
     s = triu(a, k=0).transpose()
     if (s.dtype != result_t):
         s = s.astype(result_t)

@@ -159,7 +159,7 @@ class _ndptr(_ndptr_base):
                 'typestr': self._dtype_.descr[0][1],
                 'data': (self.value, False),
                 }
-    
+
     @classmethod
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
@@ -175,8 +175,8 @@ class _ndptr(_ndptr_base):
             raise TypeError("array must have shape %s" % str(cls._shape_))
         if cls._flags_ is not None \
                and ((obj.flags.num & cls._flags_) != cls._flags_):
-            raise TypeError, "array must have flags %s" % \
-                  _flags_fromnum(cls._flags_)
+            raise TypeError("array must have flags %s" %
+                    _flags_fromnum(cls._flags_))
         return obj.ctypes
 
 
@@ -386,7 +386,7 @@ if ctypes is not None:
     # public functions
 
     def as_array(obj, shape=None):
-        """Create a numpy array from a ctypes array or a ctypes POINTER.  
+        """Create a numpy array from a ctypes array or a ctypes POINTER.
         The numpy array shares the memory with the ctypes object.
 
         The size parameter must be given if converting from a ctypes POINTER.
@@ -394,7 +394,7 @@ if ctypes is not None:
         """
         tp = type(obj)
         try: tp.__array_interface__
-        except AttributeError: 
+        except AttributeError:
             if hasattr(obj, 'contents'):
                 prep_pointer(obj, shape)
             else:

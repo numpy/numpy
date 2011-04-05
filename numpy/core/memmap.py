@@ -184,7 +184,7 @@ class memmap(ndarray):
             mode = mode_equivalents[mode]
         except KeyError:
             if mode not in valid_filemodes:
-                raise ValueError("mode must be one of %s" % \
+                raise ValueError("mode must be one of %s" %
                                  (valid_filemodes + mode_equivalents.keys()))
 
         if hasattr(filename,'read'):
@@ -204,8 +204,8 @@ class memmap(ndarray):
             bytes = flen - offset
             if (bytes % _dbytes):
                 fid.close()
-                raise ValueError, "Size of available data is not a "\
-                      "multiple of data-type size."
+                raise ValueError("Size of available data is not a "
+                        "multiple of the data-type size.")
             size = bytes // _dbytes
             shape = (size,)
         else:

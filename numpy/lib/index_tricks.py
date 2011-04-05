@@ -267,8 +267,8 @@ class AxisConcatenator(object):
                         newobj = newobj.swapaxes(-1,trans1d)
             elif isinstance(key[k],str):
                 if k != 0:
-                    raise ValueError, "special directives must be the"\
-                          "first entry."
+                    raise ValueError("special directives must be the "
+                            "first entry.")
                 key0 = key[0]
                 if key0 in 'rc':
                     self.matrix = True

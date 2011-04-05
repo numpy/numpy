@@ -244,8 +244,8 @@ class record(nt.void):
                 return obj.view(chararray)
             return obj
         else:
-            raise AttributeError, "'record' object has no "\
-                  "attribute '%s'" % attr
+            raise AttributeError("'record' object has no "
+                    "attribute '%s'" % attr)
 
 
     def __setattr__(self, attr, val):
@@ -259,8 +259,8 @@ class record(nt.void):
             if getattr(self, attr, None):
                 return nt.void.__setattr__(self, attr, val)
             else:
-                raise AttributeError, "'record' object has no "\
-                      "attribute '%s'" % attr
+                raise AttributeError("'record' object has no "
+                        "attribute '%s'" % attr)
 
     def pprint(self):
         """Pretty-print all fields."""
@@ -545,8 +545,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     # Determine shape from data-type.
     if len(descr) != len(arrayList):
-        raise ValueError, "mismatch between the number of fields "\
-              "and the number of arrays"
+        raise ValueError("mismatch between the number of fields "
+                "and the number of arrays")
 
     d0 = descr[0].shape
     nn = len(d0)

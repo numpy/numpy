@@ -187,8 +187,8 @@ def apply_over_axes(func, a, axes):
             if res.ndim == val.ndim:
                 val = res
             else:
-                raise ValueError, "function is not returning"\
-                      " an array of correct shape"
+                raise ValueError("function is not returning "
+                        "an array of the correct shape")
     return val
 
 def expand_dims(a, axis):
