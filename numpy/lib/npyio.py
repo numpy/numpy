@@ -1232,7 +1232,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     own_fhd = False
     try:
         if isinstance(fname, basestring):
-            fhd = iter(np.lib._datasource.open(fname, 'Ub'))
+            fhd = iter(np.lib._datasource.open(fname, 'rbU'))
             own_fhd = True
         else:
             fhd = iter(fname)
