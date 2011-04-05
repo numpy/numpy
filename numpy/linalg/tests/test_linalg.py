@@ -240,7 +240,7 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
 
-class TestMatrixPower():
+class TestMatrixPower:
     R90 = array([[0,1],[-1,0]])
     Arb22 = array([[4,-7],[-2,10]])
     noninv = array([[1,0],[0,0]])

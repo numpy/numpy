@@ -1020,7 +1020,7 @@ class TestClip(TestCase):
         assert np.all(x <= 4)
 
 
-class TestPutmask():
+class TestPutmask:
     def tst_basic(self,x,T,mask,val):
         np.putmask(x,mask,val)
         assert np.all(x[mask] == T(val))
@@ -1066,7 +1066,7 @@ class TestPutmask():
         pass
 
 
-class TestTake():
+class TestTake:
     def tst_basic(self,x):
         ind = range(x.shape[0])
         assert_array_equal(x.take(ind, axis=0), x)
@@ -1330,7 +1330,7 @@ class TestIO(object):
         in_foreign_locale(self.test_tofile_format)()
 
 
-class TestFromBuffer():
+class TestFromBuffer:
     def tst_basic(self,buffer,expected,kwargs):
         assert_array_equal(np.frombuffer(buffer,**kwargs),expected)
 
