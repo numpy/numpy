@@ -1,22 +1,21 @@
-import numpy as np
-import numpy.ma as ma
-from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
-    assert_raises, run_module_suite)
-from numpy.testing import assert_warns, assert_
-
 import sys
-
 import gzip
 import os
 import threading
-
 from tempfile import mkstemp, NamedTemporaryFile
 import time
 from datetime import datetime
 
+import numpy as np
+import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
 from numpy.compat import asbytes, asbytes_nested, bytes
+
+from nose import SkipTest
+from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
+    assert_raises, run_module_suite)
+from numpy.testing import assert_warns, assert_
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -1311,25 +1310,28 @@ M   33  21.99
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
 
-    def test_gft_filename(self):
+    def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file object
-        data = '0 1 2\n3 4 5'
-        exp_res = np.arange(6).reshape((2,3))
-        assert_array_equal(np.genfromtxt(StringIO(data)), exp_res)
-        f, name = mkstemp()
-        # Thanks to another windows brokeness, we can't use
-        # NamedTemporaryFile: a file created from this function cannot be
-        # reopened by another open call. So we first put the string
-        # of the test reference array, write it to a securely opened file,
-        # which is then read from by the loadtxt function
-        try:
-            os.write(f, asbytes(data))
-            assert_array_equal(np.genfromtxt(name), exp_res)
-        finally:
-            os.close(f)
-            os.unlink(name)
+        wanted = np.arange(6).reshape((2,3))
+        if sys.version_info[0] >= 3:
+            # python 3k is known to fail for '\r'
+            linesep = ('\n', '\r\n')
+        else:
+            linesep = ('\n', '\r\n', '\r')
 
-    def test_gft_generator_source(self):
+        for sep in linesep:
+            data = '0 1 2' + sep + '3 4 5'
+            f, name = mkstemp()
+            # We can't use NamedTemporaryFile on windows, because we cannot
+            # reopen the file.
+            try:
+                os.write(f, asbytes(data))
+                assert_array_equal(np.genfromtxt(name), wanted)
+            finally:
+                os.close(f)
+                os.unlink(name)
+
+    def test_gft_using_generator(self):
         def count():
             for i in range(10):
                 yield asbytes("%d" % i)
