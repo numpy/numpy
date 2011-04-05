@@ -119,7 +119,7 @@ class TestUfunc(TestCase):
         assert_almost_equal(ftwo(x,x), ftwo_val, err_msg=msg)
 
         # class to use in testing object method loops
-        class foo :
+        class foo(object):
             def logical_not(self) :
                 return np.bool_(1)
             def logical_and(self, obj) :
