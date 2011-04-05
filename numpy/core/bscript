@@ -45,7 +45,7 @@ NUMPYCONFIG_SYM.append(('VISIBILITY_HIDDEN', '__attribute__((visibility("hidden"
 NUMPYCONFIG_SYM.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
 NUMPYCONFIG_SYM.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
-PYTHON_HAS_UNICODE_WIDE = True
+global PYTHON_HAS_UNICODE_WIDE
 
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
@@ -141,9 +141,18 @@ def type_checks(conf):
     global PYTHON_HAS_UNICODE_WIDE
     try:
         conf.check_declaration('Py_UNICODE_WIDE', header_name=header_name, features=features)
-        PYTHON_HAS_UNICODE_WIDE = True
-    except waflib.Errors.ConfigurationError:
         PYTHON_HAS_UNICODE_WIDE = False
+    except waflib.Errors.ConfigurationError:
+        PYTHON_HAS_UNICODE_WIDE = True
+
+    try:
+        conf.check_declaration('PyOS_ascii_strtod', header_name=header_name, features=features)
+    except waflib.Errors.ConfigurationError:
+        try:
+            conf.check_func('strtod')
+            conf.define('PyOS_ascii_strtod', 'strtod')
+        except waflib.Errors.ConfigurationError:
+            pass
 
 def signal_smp_checks(conf):
     if is_npy_no_signal():
