@@ -378,7 +378,7 @@ def run_main(comline_list):
         if postlist[i]['block']!='python module':
             if 'python module' not in options:
                 errmess('Tip: If your original code is Fortran source then you must use -m option.\n')
-            raise TypeError,'All blocks must be python module blocks but got %s'%(`postlist[i]['block']`)
+            raise TypeError('All blocks must be python module blocks but got %s'%(`postlist[i]['block']`))
     auxfuncs.debugoptions=options['debug']
     f90mod_rules.options=options
     auxfuncs.wrapfuncs=options['wrapfuncs']

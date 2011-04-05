@@ -197,7 +197,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         # So far, so good...
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
@@ -269,7 +269,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         #
         if val is masked:
             _fill_value = _localdict['_fill_value']
@@ -619,7 +619,7 @@ def openfile(fname):
     try:
         f = open(fname)
     except IOError:
-        raise IOError, "No such file: '%s'" % fname
+        raise IOError("No such file: '%s'" % fname)
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f

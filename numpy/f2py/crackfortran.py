@@ -399,7 +399,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                 ll=l
             cont=(r is not None)
         else:
-            raise ValueError,"Flag sourcecodeform must be either 'fix' or 'free': %s"%`sourcecodeform`
+            raise ValueError("Flag sourcecodeform must be either 'fix' or 'free': %s"%`sourcecodeform`)
         filepositiontext='Line #%d in %s:"%s"\n\t' % (fin.filelineno()-1,currentfilename,l1)
         m=includeline.match(origfinalline)
         if m:

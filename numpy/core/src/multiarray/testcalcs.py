@@ -41,12 +41,12 @@ def days_from_ymd(year, month, day):
     # Negative month values indicate months relative to the years end */
     if (month < 0): month += 13
     if not (month >= 1 and month<=12):
-        raise ValueError, "month out of range (1-21): %d" % month
+        raise ValueError("month out of range (1-21): %d" % month)
 
     # Negative values indicate days relative to the months end */
     if (day < 0): day += days_in_month[leap][month - 1] + 1
     if not (day >= 1 and day <= days_in_month[leap][month-1]):
-        raise ValueError, "day out of range: %d" % day
+        raise ValueError("day out of range: %d" % day)
 
     # Number of days between Dec 31, (year - 1) and Dec 31, 1969
     #    (can be negative).

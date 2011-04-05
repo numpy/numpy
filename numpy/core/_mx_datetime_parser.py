@@ -282,10 +282,10 @@ def utc_offset(zone):
         return _zonetable[uzone]*60
     offset = _zoneoffsetRE.match(zone)
     if not offset:
-        raise ValueError,'wrong format or unkown time zone: "%s"' % zone
+        raise ValueError('wrong format or unkown time zone: "%s"' % zone)
     zonesign,hours,minutes,extra = offset.groups()
     if extra:
-        raise ValueError,'illegal time zone offset: "%s"' % zone
+        raise ValueError('illegal time zone offset: "%s"' % zone)
     offset = int(hours or 0) * 60 + int(minutes or 0)
     if zonesign == '-':
         offset = -offset
@@ -518,7 +518,7 @@ def _parse_date(text):
 
     elif not style:
         # Not recognized: raise an error
-        raise ValueError, 'unknown date format: "%s"' % text
+        raise ValueError('unknown date format: "%s"' % text)
 
     # Literal date post-processing
     if style in ('lit', 'altlit', 'eurlit'):
@@ -610,7 +610,7 @@ def _parse_time(text):
 
     if not style:
         # If no default handling should be applied, raise an error
-        raise ValueError, 'unknown time format: "%s"' % text
+        raise ValueError('unknown time format: "%s"' % text)
 
     # Post-processing
     if match is not None:

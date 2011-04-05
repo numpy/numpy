@@ -233,7 +233,7 @@ class NpzFile(object):
             else:
                 return bytes
         else:
-            raise KeyError, "%s is not a file in the archive" % key
+            raise KeyError("%s is not a file in the archive" % key)
 
 
     def __iter__(self):
@@ -530,7 +530,7 @@ def _savez(file, args, kwds, compress):
     for i, val in enumerate(args):
         key = 'arr_%d' % i
         if key in namedict.keys():
-            raise ValueError, "Cannot use un-named variables and keyword %s" % key
+            raise ValueError("Cannot use un-named variables and keyword %s" % key)
         namedict[key] = val
 
     if compress:

@@ -104,7 +104,7 @@ class finfo(object):
             dtypes.append(newdtype)
             dtype = newdtype
         if not issubclass(dtype, numeric.inexact):
-            raise ValueError, "data type %r not inexact" % (dtype)
+            raise ValueError("data type %r not inexact" % (dtype))
         obj = cls._finfo_cache.get(dtype,None)
         if obj is not None:
             return obj

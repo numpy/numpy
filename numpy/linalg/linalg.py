@@ -643,7 +643,7 @@ def qr(a, mode='full'):
     work = zeros((lwork,), t)
     results = lapack_routine(m, n, a, m, tau, work, -1, 0)
     if results['info'] != 0:
-        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # do qr decomposition
     lwork = int(abs(work[0]))
@@ -651,7 +651,7 @@ def qr(a, mode='full'):
     results = lapack_routine(m, n, a, m, tau, work, lwork, 0)
 
     if results['info'] != 0:
-        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     #  economic mode. Isn't actually economic.
     if mode[0] == 'e':
@@ -682,14 +682,14 @@ def qr(a, mode='full'):
     work = zeros((lwork,), t)
     results = lapack_routine(m, mn, mn, a, m, tau, work, -1, 0)
     if results['info'] != 0:
-        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # compute q
     lwork = int(abs(work[0]))
     work = zeros((lwork,), t)
     results = lapack_routine(m, mn, mn, a, m, tau, work, lwork, 0)
     if results['info'] != 0:
-        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     q = _fastCopyAndTranspose(result_t, a[:mn,:])
 

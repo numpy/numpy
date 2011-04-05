@@ -622,7 +622,7 @@ class MaskedArray (object):
                     func, args, i = context
                     fills = ufunc_fills.get(func)
                     if fills is None:
-                        raise MAError, "%s not known to ma" % func
+                        raise MAError("%s not known to ma" % func)
                     return self.filled(fills[i])
             else:  # Mask is all false
                    # Optimize to avoid future invocations of this section.

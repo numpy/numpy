@@ -2179,11 +2179,11 @@ def setbufsize(size):
 
     """
     if size > 10e6:
-        raise ValueError, "Buffer size, %s, is too big." % size
+        raise ValueError("Buffer size, %s, is too big." % size)
     if size < 5:
-        raise ValueError, "Buffer size, %s, is too small." %size
+        raise ValueError("Buffer size, %s, is too small." %size)
     if size % 16 != 0:
-        raise ValueError, "Buffer size, %s, is not a multiple of 16." %size
+        raise ValueError("Buffer size, %s, is not a multiple of 16." %size)
 
     pyvals = umath.geterrobj()
     old = getbufsize()

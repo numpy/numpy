@@ -174,7 +174,7 @@ class format_parser:
             elif (type(names) == str):
                 names = names.split(',')
             else:
-                raise NameError, "illegal input names %s" % `names`
+                raise NameError("illegal input names %s" % `names`)
 
             self._names = [n.strip() for n in names[:self._nfields]]
         else:
@@ -189,7 +189,7 @@ class format_parser:
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
-            raise ValueError, "Duplicate field names: %s" % _dup
+            raise ValueError("Duplicate field names: %s" % _dup)
 
         if (titles):
             self._titles = [n.strip() for n in titles[:self._nfields]]
@@ -250,7 +250,7 @@ class record(nt.void):
 
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
-            raise AttributeError, "Cannot set '%s' attribute" % attr
+            raise AttributeError("Cannot set '%s' attribute" % attr)
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
         if res:
@@ -413,7 +413,7 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
         # normal array
@@ -450,7 +450,7 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
@@ -557,7 +557,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         nn = len(descr[k].shape)
         testshape = obj.shape[:len(obj.shape) - nn]
         if testshape != shape:
-            raise ValueError, "array-shape mismatch in array %d" % k
+            raise ValueError("array-shape mismatch in array %d" % k)
 
     _array = recarray(shape, descr)
 
