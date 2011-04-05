@@ -1313,21 +1313,18 @@ M   33  21.99
 
     def test_gft_filename(self):
         # Test that we can load data from a filename as well as a file object
-        data = '0 1 2\n3 4 5'
         exp_res = np.arange(6).reshape((2,3))
-        assert_array_equal(np.genfromtxt(StringIO(data)), exp_res)
-        f, name = mkstemp()
-        # Thanks to another windows brokeness, we can't use
-        # NamedTemporaryFile: a file created from this function cannot be
-        # reopened by another open call. So we first put the string
-        # of the test reference array, write it to a securely opened file,
-        # which is then read from by the loadtxt function
-        try:
-            os.write(f, asbytes(data))
-            assert_array_equal(np.genfromtxt(name), exp_res)
-        finally:
-            os.close(f)
-            os.unlink(name)
+        for sep in ('\n', '\r', '\r\n'):
+            data = '0 1 2' + sep + '3 4 5'
+            f, name = mkstemp()
+            # We can't use NamedTemporaryFile on windows, because we cannot
+            # reopen the file.
+            try:
+                os.write(f, asbytes(data))
+                assert_array_equal(np.genfromtxt(name), exp_res)
+            finally:
+                os.close(f)
+                os.unlink(name)
 
     def test_gft_generator_source(self):
         def count():
