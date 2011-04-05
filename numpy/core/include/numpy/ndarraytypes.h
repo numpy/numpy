@@ -285,7 +285,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_INT
         #define NPY_MIN_INTP NPY_MIN_INT
         #define NPY_MAX_UINTP NPY_MAX_UINT
-        #define NPY_INTP_FMT "d"
+        #define NPY_INTP_FMT NPY_INT_FMT
 #elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONG
         #define NPY_INTP NPY_LONG
         #define NPY_UINTP NPY_ULONG
@@ -294,7 +294,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONG
         #define NPY_MIN_INTP MIN_LONG
         #define NPY_MAX_UINTP NPY_MAX_ULONG
-        #define NPY_INTP_FMT "ld"
+        #define NPY_INTP_FMT NPY_LONG_FMT
 #elif defined(PY_LONG_LONG) && (NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG)
         #define NPY_INTP NPY_LONGLONG
         #define NPY_UINTP NPY_ULONGLONG
@@ -303,11 +303,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONGLONG
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
-#ifdef _MSC_VER
-        #define NPY_INTP_FMT "lld"
-#else
-        #define NPY_INTP_FMT "Ld"
-#endif
+        #define NPY_INTP_FMT NPY_LONGLONG_FMT
 #endif
 
 /*
