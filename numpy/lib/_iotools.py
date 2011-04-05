@@ -142,7 +142,7 @@ def flatten_dtype(ndtype, flatten_base=False):
 
 
 
-class LineSplitter:
+class LineSplitter(object):
     """
     Object to split a string at a given delimiter or at given places.
 
@@ -228,7 +228,7 @@ class LineSplitter:
 
 
 
-class NameValidator:
+class NameValidator(object):
     """
     Object to validate a list of strings to use as field names.
 
@@ -448,7 +448,7 @@ class ConversionWarning(UserWarning):
 
 
 
-class StringConverter:
+class StringConverter(object):
     """
     Factory class for function transforming a string into another object (int,
     float).

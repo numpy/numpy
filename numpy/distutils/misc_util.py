@@ -30,7 +30,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
            'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info']
 
-class InstallableLib:
+class InstallableLib(object):
     """
     Container to hold information on an installable library.
 

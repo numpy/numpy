@@ -14,7 +14,7 @@ pi = np.pi
 if sys.version_info[0] >= 3:
     from functools import reduce
 
-class moduletester:
+class moduletester(object):
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal

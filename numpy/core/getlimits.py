@@ -181,7 +181,7 @@ nexp  =%(nexp)6s   min=        -max
 ''' % self.__dict__
 
 
-class iinfo:
+class iinfo(object):
     """
     iinfo(type)
 

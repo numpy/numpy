@@ -1380,7 +1380,7 @@ class WarningMessage(object):
                     "line : %r}" % (self.message, self._category_name,
                                     self.filename, self.lineno, self.line))
 
-class WarningManager:
+class WarningManager(object):
     """
     A context manager that copies and restores the warnings filter upon
     exiting the context.

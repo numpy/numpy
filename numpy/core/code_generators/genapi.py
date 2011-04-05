@@ -257,7 +257,7 @@ def should_rebuild(targets, source_files):
     return False
 
 # Those *Api classes instances know how to output strings for the generated code
-class TypeApi:
+class TypeApi(object):
     def __init__(self, name, index, ptr_cast, api_name):
         self.index = index
         self.name = name
@@ -283,7 +283,7 @@ class TypeApi:
 """ % {'type': self.name}
         return astr
 
-class GlobalVarApi:
+class GlobalVarApi(object):
     def __init__(self, name, index, type, api_name):
         self.name = name
         self.index = index
@@ -311,7 +311,7 @@ class GlobalVarApi:
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
-class BoolValuesApi:
+class BoolValuesApi(object):
     def __init__(self, name, index, api_name):
         self.name = name
         self.index = index
@@ -337,7 +337,7 @@ NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 """
         return astr
 
-class FunctionApi:
+class FunctionApi(object):
     def __init__(self, name, index, return_type, args, api_name):
         self.name = name
         self.index = index
