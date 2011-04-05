@@ -277,7 +277,7 @@ def test_tril_indices():
            [-10, -10, -10, -10]]) )
 
 
-class TestTriuIndices():
+class TestTriuIndices:
     def test_triu_indices(self):
         iu1 = triu_indices(4)
         iu2 = triu_indices(4, 2)
@@ -308,14 +308,14 @@ class TestTriuIndices():
                        [ 13,  14,  15,  -1]]) )
 
 
-class TestTrilIndicesFrom():
+class TestTrilIndicesFrom:
     def test_exceptions(self):
         assert_raises(ValueError, tril_indices_from, np.ones((2,)))
         assert_raises(ValueError, tril_indices_from, np.ones((2,2,2)))
         assert_raises(ValueError, tril_indices_from, np.ones((2,3)))
 
 
-class TestTriuIndicesFrom():
+class TestTriuIndicesFrom:
     def test_exceptions(self):
         assert_raises(ValueError, triu_indices_from, np.ones((2,)))
         assert_raises(ValueError, triu_indices_from, np.ones((2,2,2)))
