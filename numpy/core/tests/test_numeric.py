@@ -9,7 +9,7 @@ from numpy.testing.utils import WarningManager
 from numpy.core.multiarray import dot as dot_
 import warnings
 
-class Vec:
+class Vec(object):
     def __init__(self,sequence=None):
         if sequence is None:
             sequence=[]
@@ -1039,7 +1039,7 @@ class TestClip(TestCase):
         self.assertTrue(a2 is a)
 
 
-class TestAllclose:
+class TestAllclose(object):
     rtol = 1e-5
     atol = 1e-8
 
@@ -1283,7 +1283,7 @@ class TestCorrelateNew(_TestCorrelate):
         z = np.correlate(y, x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, r_z)
 
-class TestArgwhere:
+class TestArgwhere(object):
     def test_2D(self):
         x = np.arange(6).reshape((2, 3))
         assert_array_equal(np.argwhere(x > 1),
@@ -1295,7 +1295,7 @@ class TestArgwhere:
     def test_list(self):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
 
-class TestStringFunction:
+class TestStringFunction(object):
     def test_set_string_function(self):
         a = np.array([1])
         np.set_string_function(lambda x: "FOO", repr=True)

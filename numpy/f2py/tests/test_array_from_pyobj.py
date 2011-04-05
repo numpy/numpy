@@ -51,7 +51,7 @@ def flags2names(flags):
             info.append(flagname)
     return info
 
-class Intent:
+class Intent(object):
     def __init__(self,intent_list=[]):
         self.intent_list = intent_list[:]
         flags = 0
@@ -166,7 +166,7 @@ class Type(object):
                 types.append(Type(name))
         return types
 
-class Array:
+class Array(object):
     def __init__(self,typ,dims,intent,obj):
         self.type = typ
         self.dims = dims

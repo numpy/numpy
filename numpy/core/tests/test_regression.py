@@ -804,7 +804,7 @@ class TestRegression(TestCase):
 
     def test_mem_custom_float_to_array(self, level=rlevel):
         """Ticket 702"""
-        class MyFloat:
+        class MyFloat(object):
             def __float__(self):
                 return 1.0
 

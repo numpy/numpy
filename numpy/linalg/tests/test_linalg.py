@@ -22,7 +22,7 @@ def assert_almost_equal(a, b, **kw):
         decimal = 12
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
-class LinalgTestCase:
+class LinalgTestCase(object):
     def test_single(self):
         a = array([[1.,2.], [3.,4.]], dtype=single)
         b = array([2., 1.], dtype=single)
@@ -80,7 +80,7 @@ class LinalgTestCase:
         self.do(a, b)
 
 
-class LinalgNonsquareTestCase:
+class LinalgNonsquareTestCase(object):
     def test_single_nsq_1(self):
         a = array([[1.,2.,3.], [3.,4.,6.]], dtype=single)
         b = array([2., 1.], dtype=single)
@@ -240,7 +240,7 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
 
-class TestMatrixPower:
+class TestMatrixPower(object):
     R90 = array([[0,1],[-1,0]])
     Arb22 = array([[4,-7],[-2,10]])
     noninv = array([[1,0],[0,0]])

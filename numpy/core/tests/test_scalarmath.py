@@ -103,7 +103,7 @@ class TestConversion(TestCase):
 #            assert_equal( val, val2 )
 
 
-class TestRepr:
+class TestRepr(object):
     def _test_type_repr(self, t):
         finfo=np.finfo(t)
         last_fraction_bit_idx = finfo.nexp + finfo.nmant

@@ -382,7 +382,7 @@ class TestArrayConversion(TestCase):
         assert_equal(a.__class__,ndarray)
         assert issubdtype(a.dtype,float)
 
-class TestDateTimeData:
+class TestDateTimeData(object):
 
     @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
     def test_basic(self):
