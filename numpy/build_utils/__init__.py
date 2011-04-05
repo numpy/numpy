@@ -71,6 +71,10 @@ int main()
     validate_arguments(self, kw)
     try_compile(self, kw)
     ret = kw["success"]
+    if ret == 0:
+        kw["define_value"] = 1
+    else:
+        kw["define_value"] = 0
 
     self.post_check(**kw)
     if not kw.get('execute', False):
@@ -125,6 +129,10 @@ int main() {
     validate_arguments(self, kw)
     try_compile(self, kw)
     ret = kw["success"]
+    if ret == 0:
+        kw["define_value"] = 1
+    else:
+        kw["define_value"] = 0
 
     kw["define_name"] = "HAVE_%s" % sanitize_string(type_name)
     kw["define_comment"] = "/* Set to 1 if %s is defined. */" % type_name
