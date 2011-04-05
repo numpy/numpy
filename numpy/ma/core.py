@@ -1798,7 +1798,7 @@ def masked_where(condition, a, copy=True):
 
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
-        raise IndexError("Inconsistant shape between the condition and the input"\
+        raise IndexError("Inconsistant shape between the condition and the input"
                          " (got %s and %s)" % (cshape, ashape))
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
@@ -2703,7 +2703,7 @@ class MaskedArray(ndarray):
                 else:
                     msg = "Mask and data not compatible: data size is %i, " + \
                           "mask size is %i."
-                    raise MaskError, msg % (nd, nm)
+                    raise MaskError(msg % (nd, nm))
                 copy = True
             # Set the mask to the new value
             if _data._mask is nomask:
@@ -2930,7 +2930,7 @@ class MaskedArray(ndarray):
         # This test is useful, but we should keep things light...
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
-#            raise IndexError, msg
+#            raise IndexError(msg)
         _data = ndarray.view(self, ndarray)
         dout = ndarray.__getitem__(_data, indx)
         # We could directly use ndarray.__getitem__ on self...
@@ -2980,7 +2980,7 @@ class MaskedArray(ndarray):
         # This test is useful, but we should keep things light...
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
-#            raise IndexError, msg
+#            raise IndexError(msg)
         _data = ndarray.view(self, ndarray.__getattribute__(self, '_baseclass'))
         _mask = ndarray.__getattribute__(self, '_mask')
         if isinstance(indx, basestring):
@@ -3779,7 +3779,7 @@ class MaskedArray(ndarray):
     def __float__(self):
         "Convert to float."
         if self.size > 1:
-            raise TypeError("Only length-1 arrays can be converted "\
+            raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
             warnings.warn("Warning: converting a masked element to nan.")
@@ -3789,7 +3789,7 @@ class MaskedArray(ndarray):
     def __int__(self):
         "Convert to int."
         if self.size > 1:
-            raise TypeError("Only length-1 arrays can be converted "\
+            raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python int.')

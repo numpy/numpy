@@ -1109,9 +1109,9 @@ def rollaxis(a, axis, start=0):
         start += n
     msg = 'rollaxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < n):
-        raise ValueError, msg % ('axis', axis, n)
+        raise ValueError(msg % ('axis', axis, n))
     if not (0 <= start < n+1):
-        raise ValueError, msg % ('start', start, n+1)
+        raise ValueError(msg % ('start', start, n+1))
     if (axis < start): # it's been removed
         start -= 1
     if axis==start:

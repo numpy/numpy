@@ -1,5 +1,5 @@
 #-*- coding: latin-1 -*-
-""" 
+"""
 Date/Time string parsing module.
 
 This code is a slightly modified version of Parser.py found in mx.DateTime
@@ -540,8 +540,8 @@ def _parse_date(text):
             try:
                 month = litmonthtable[litmonth]
             except KeyError:
-                raise ValueError,\
-                      'wrong month name: "%s"' % litmonth
+                raise ValueError(
+                      'wrong month name: "%s"' % litmonth)
         elif month:
             month = int(month)
         else:
@@ -726,8 +726,8 @@ def datetime_from_string(text):
         return dt.datetime(year,month,day,hour,minute,second, microsecond) - \
                                         dt.timedelta(minutes=offset)
     except ValueError, why:
-        raise RangeError,\
-              'Failed to parse "%s": %s' % (origtext, why)
+        raise RangeError(
+              'Failed to parse "%s": %s' % (origtext, why))
 
 def date_from_string(text):
 
@@ -745,8 +745,8 @@ def date_from_string(text):
     try:
         return dt.datetime(year,month,day)
     except ValueError, why:
-        raise RangeError,\
-              'Failed to parse "%s": %s' % (text, why)
+        raise RangeError(
+              'Failed to parse "%s": %s' % (text, why))
 
 def validateDateTimeString(text):
 

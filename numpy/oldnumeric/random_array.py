@@ -19,10 +19,10 @@ def seed(x=0, y=0):
         mt.seed((x,y))
 
 def get_seed():
-    raise NotImplementedError, \
-          "If you want to save the state of the random number generator.\n"\
-          "Then you should use obj = numpy.random.get_state() followed by.\n"\
-          "numpy.random.set_state(obj)."
+    raise NotImplementedError(
+          "If you want to save the state of the random number generator.\n"
+          "Then you should use obj = numpy.random.get_state() followed by.\n"
+          "numpy.random.set_state(obj).")
 
 def random(shape=[]):
     "random(n) or random([n, m, ...]) returns array of random numbers"

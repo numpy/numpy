@@ -306,8 +306,8 @@ def polyint(p, m=1, k=None):
     if len(k) == 1 and m > 1:
         k = k[0]*NX.ones(m, float)
     if len(k) < m:
-        raise ValueError, \
-              "k must be a scalar or a rank-1 array of length 1 or >m."
+        raise ValueError(
+              "k must be a scalar or a rank-1 array of length 1 or >m.")
 
     truepoly = isinstance(p, poly1d)
     p = NX.asarray(p)

@@ -633,7 +633,7 @@ class Repository (DataSource):
 
         """
         if self._isurl(self._baseurl):
-            raise NotImplementedError, \
-                  "Directory listing of URLs, not supported yet."
+            raise NotImplementedError(
+                  "Directory listing of URLs, not supported yet.")
         else:
             return os.listdir(self._baseurl)

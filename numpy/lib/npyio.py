@@ -113,7 +113,7 @@ class BagObj(object):
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
-            raise AttributeError, key
+            raise AttributeError(key)
 
 def zipfile_factory(*args, **kwargs):
     import zipfile
@@ -353,8 +353,8 @@ def load(file, mmap_mode=None):
             try:
                 return _cload(fid)
             except:
-                raise IOError, \
-                    "Failed to interpret file %s as a pickle" % repr(file)
+                raise IOError(
+                    "Failed to interpret file %s as a pickle" % repr(file))
     finally:
         if own_fid:
             fid.close()

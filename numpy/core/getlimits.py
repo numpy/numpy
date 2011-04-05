@@ -140,7 +140,7 @@ class finfo(object):
             fmt = '%12.5e'
             precname = 'half'
         else:
-            raise ValueError, repr(dtype)
+            raise ValueError(repr(dtype))
 
         machar = MachAr(lambda v:array([v], dtype),
                         lambda v:_frz(v.astype(itype))[0],

@@ -614,10 +614,10 @@ class MaskedArray (object):
                                   "numeric because data\n    is masked in one or "\
                                   "more locations.");
                     return self._data
-                    #raise MAError, \
+                    #raise MAError(
                     #      """Cannot automatically convert masked array to numeric because data
                     #      is masked in one or more locations.
-                    #      """
+                    #      """)
                 else:
                     func, args, i = context
                     fills = ufunc_fills.get(func)

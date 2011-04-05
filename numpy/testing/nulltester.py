@@ -9,7 +9,7 @@ See pkgtester, nosetester modules
 
 class NullTester(object):
     def test(self, labels=None, *args, **kwargs):
-        raise ImportError, \
-              'Need nose >=0.10 for tests - see %s' % \
-              'http://somethingaboutorange.com/mrl/projects/nose'
+        raise ImportError(
+              'Need nose >=0.10 for tests - see %s' %
+              'http://somethingaboutorange.com/mrl/projects/nose')
     bench = test
