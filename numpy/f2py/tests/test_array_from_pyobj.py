@@ -301,7 +301,7 @@ class _test_shared_memory:
             if not str(msg).startswith('failed to initialize intent(inout|inplace|cache) array'):
                 raise
         else:
-            raise SystemError,'intent(inout) should have failed on sequence'
+            raise SystemError('intent(inout) should have failed on sequence')
 
     def test_f_inout_23seq(self):
         obj = array(self.num23seq,dtype=self.type.dtype,order='F')
@@ -317,7 +317,7 @@ class _test_shared_memory:
             if not str(msg).startswith('failed to initialize intent(inout) array'):
                 raise
         else:
-            raise SystemError,'intent(inout) should have failed on improper array'
+            raise SystemError('intent(inout) should have failed on improper array')
 
     def test_c_inout_23seq(self):
         obj = array(self.num23seq,dtype=self.type.dtype)
@@ -402,7 +402,7 @@ class _test_shared_memory:
                 if not str(msg).startswith('failed to initialize intent(cache) array'):
                     raise
             else:
-                raise SystemError,'intent(cache) should have failed on multisegmented array'
+                raise SystemError('intent(cache) should have failed on multisegmented array')
     def test_in_cache_from_2casttype_failure(self):
         for t in self.type.all_types():
             if t.elsize >= self.type.elsize:
@@ -415,7 +415,7 @@ class _test_shared_memory:
                 if not str(msg).startswith('failed to initialize intent(cache) array'):
                     raise
             else:
-                raise SystemError,'intent(cache) should have failed on smaller array'
+                raise SystemError('intent(cache) should have failed on smaller array')
 
     def test_cache_hidden(self):
         shape = (2,)
@@ -433,7 +433,7 @@ class _test_shared_memory:
             if not str(msg).startswith('failed to create intent(cache|hide)|optional array'):
                 raise
         else:
-            raise SystemError,'intent(cache) should have failed on undefined dimensions'
+            raise SystemError('intent(cache) should have failed on undefined dimensions')
 
     def test_hidden(self):
         shape = (2,)
@@ -460,7 +460,7 @@ class _test_shared_memory:
             if not str(msg).startswith('failed to create intent(cache|hide)|optional array'):
                 raise
         else:
-            raise SystemError,'intent(hide) should have failed on undefined dimensions'
+            raise SystemError('intent(hide) should have failed on undefined dimensions')
 
     def test_optional_none(self):
         shape = (2,)

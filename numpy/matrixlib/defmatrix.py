@@ -47,7 +47,7 @@ def _convert_from_string(data):
         if count == 0:
             Ncols = len(newrow)
         elif len(newrow) != Ncols:
-            raise ValueError, "Rows not the same size."
+            raise ValueError("Rows not the same size.")
         count += 1
         newdata.append(newrow)
     return newdata
@@ -258,7 +258,7 @@ class matrix(N.ndarray):
         ndim = arr.ndim
         shape = arr.shape
         if (ndim > 2):
-            raise ValueError, "matrix must be 2-dimensional"
+            raise ValueError("matrix must be 2-dimensional")
         elif ndim == 0:
             shape = (1,1)
         elif ndim == 1:
@@ -289,7 +289,7 @@ class matrix(N.ndarray):
                 self.shape = newshape
                 return
             elif (ndim > 2):
-                raise ValueError, "shape too large to be a matrix."
+                raise ValueError("shape too large to be a matrix.")
         else:
             newshape = self.shape
         if ndim == 0:
@@ -373,7 +373,7 @@ class matrix(N.ndarray):
         elif axis==1:
             return self.transpose()
         else:
-            raise ValueError, "unsupported axis"
+            raise ValueError("unsupported axis")
 
     # Necessary because base-class tolist expects dimension
     #  reduction by x[0]

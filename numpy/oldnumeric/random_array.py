@@ -41,12 +41,12 @@ def randint(minimum, maximum=None, shape=[]):
     """randint(min, max, shape=[]) = random integers >=min, < max
     If max not given, random integers >= 0, <min"""
     if not isinstance(minimum, int):
-        raise ArgumentError, "randint requires first argument integer"
+        raise ArgumentError("randint requires first argument integer")
     if maximum is None:
         maximum = minimum
         minimum = 0
     if not isinstance(maximum, int):
-        raise ArgumentError, "randint requires second argument integer"
+        raise ArgumentError("randint requires second argument integer")
     a = ((maximum-minimum)* random(shape))
     if isinstance(a, np.ndarray):
         return minimum + a.astype(np.int)

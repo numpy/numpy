@@ -977,7 +977,7 @@ def tensordot(a, b, axes=2):
             if axes_b[k] < 0:
                 axes_b[k] += ndb
     if not equal:
-        raise ValueError, "shape-mismatch for sum"
+        raise ValueError("shape-mismatch for sum")
 
     # Move the axes to sum over to the end of "a"
     # and to the front of "b"
@@ -2279,7 +2279,7 @@ def seterrcall(func):
     """
     if func is not None and not callable(func):
         if not hasattr(func, 'write') or not callable(func.write):
-            raise ValueError, "Only callable can be used as callback"
+            raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()
     pyvals[2] = func

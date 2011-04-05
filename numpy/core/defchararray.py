@@ -301,7 +301,7 @@ def multiply(a, i):
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
     if not issubclass(i_arr.dtype.type, integer):
-        raise ValueError, "Can only multiply by integers"
+        raise ValueError("Can only multiply by integers")
     out_size = _get_num_chars(a_arr) * max(long(i_arr.max()), 0)
     return _vec_string(
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
@@ -1660,7 +1660,7 @@ def isnumeric(a):
     unicode.isnumeric
     """
     if _use_unicode(a) != unicode_:
-        raise TypeError, "isnumeric is only available for Unicode strings and arrays"
+        raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isnumeric')
 
 def isdecimal(a):
@@ -1688,7 +1688,7 @@ def isdecimal(a):
     unicode.isdecimal
     """
     if _use_unicode(a) != unicode_:
-        raise TypeError, "isnumeric is only available for Unicode strings and arrays"
+        raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
 
@@ -1872,7 +1872,7 @@ class chararray(ndarray):
     def __array_finalize__(self, obj):
         # The b is a special case because it is used for reconstructing.
         if not _globalvar and self.dtype.char not in 'SUbc':
-            raise ValueError, "Can only create a chararray from string data."
+            raise ValueError("Can only create a chararray from string data.")
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)

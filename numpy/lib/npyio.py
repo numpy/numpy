@@ -45,7 +45,7 @@ def seek_gzip_factory(f):
                 offset = self.offset + offset
 
             if whence not in [0, 1]:
-                raise IOError, "Illegal argument"
+                raise IOError("Illegal argument")
 
             if offset < self.offset:
                 # for negative seek, rewind and do positive seek

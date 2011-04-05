@@ -842,7 +842,7 @@ def sctype2char(sctype):
     """
     sctype = obj2sctype(sctype)
     if sctype is None:
-        raise ValueError, "unrecognized type"
+        raise ValueError("unrecognized type")
     return _sctype2char_dict[sctype]
 
 # Create dictionary of casting functions that wrap sequences

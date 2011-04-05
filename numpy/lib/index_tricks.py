@@ -70,7 +70,7 @@ def ix_(*args):
     for k in range(nd):
         new = _nx.asarray(args[k])
         if (new.ndim != 1):
-            raise ValueError, "Cross index must be 1 dimensional"
+            raise ValueError("Cross index must be 1 dimensional")
         if issubclass(new.dtype.type, _nx.bool_):
             new = new.nonzero()[0]
         baseshape[k] = len(new)
@@ -283,12 +283,12 @@ class AxisConcatenator(object):
                             trans1d = int(vec[2])
                         continue
                     except:
-                        raise ValueError, "unknown special directive"
+                        raise ValueError("unknown special directive")
                 try:
                     self.axis = int(key[k])
                     continue
                 except (ValueError, TypeError):
-                    raise ValueError, "unknown special directive"
+                    raise ValueError("unknown special directive")
             elif type(key[k]) in ScalarType:
                 newobj = array(key[k],ndmin=ndmin)
                 scalars.append(k)

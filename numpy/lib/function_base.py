@@ -3049,7 +3049,7 @@ def _compute_qth_percentile(sorted, q, axis, out):
 
     q = q / 100.0
     if (q < 0) or (q > 1):
-        raise ValueError, "percentile must be either in the range [0,100]"
+        raise ValueError("percentile must be either in the range [0,100]")
 
     indexer = [slice(None)] * sorted.ndim
     Nx = sorted.shape[axis]

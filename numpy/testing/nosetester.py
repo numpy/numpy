@@ -174,7 +174,7 @@ class NoseTester(object):
         argv = [__file__, self.package_path, '-s']
         if label and label != 'full':
             if not isinstance(label, basestring):
-                raise TypeError, 'Selection label should be a string'
+                raise TypeError('Selection label should be a string')
             if label == 'fast':
                 label = 'not slow'
             argv += ['-A', label]

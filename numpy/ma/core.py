@@ -2976,7 +2976,7 @@ class MaskedArray(ndarray):
 
         """
         if self is masked:
-            raise MaskError, 'Cannot alter the masked element.'
+            raise MaskError('Cannot alter the masked element.')
         # This test is useful, but we should keep things light...
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
@@ -3792,7 +3792,7 @@ class MaskedArray(ndarray):
             raise TypeError("Only length-1 arrays can be converted "\
                             "to Python scalars")
         elif self._mask:
-            raise MaskError, 'Cannot convert masked element to a Python int.'
+            raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
 
 
@@ -5992,7 +5992,7 @@ def power(a, b, third=None):
 
     """
     if third is not None:
-        raise MaskError, "3-argument power not supported."
+        raise MaskError("3-argument power not supported.")
     # Get the masks
     ma = getmask(a)
     mb = getmask(b)
@@ -6536,7 +6536,7 @@ def where (condition, x=None, y=None):
     if x is None and y is None:
         return filled(condition, 0).nonzero()
     elif x is None or y is None:
-        raise ValueError, "Either both or neither x and y should be given."
+        raise ValueError("Either both or neither x and y should be given.")
     # Get the condition ...............
     fc = filled(condition, 0).astype(MaskType)
     notfc = np.logical_not(fc)

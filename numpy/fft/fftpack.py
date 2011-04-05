@@ -509,7 +509,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     if axes is None:
         axes = range(-len(s), 0)
     if len(s) != len(axes):
-        raise ValueError, "Shape and axes have different lengths."
+        raise ValueError("Shape and axes have different lengths.")
     if invreal and shapeless:
         s[axes[-1]] = (s[axes[-1]] - 1) * 2
     return s, axes

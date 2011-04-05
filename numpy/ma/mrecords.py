@@ -589,7 +589,7 @@ on the first line. An exception is raised if the file is 3D or more.
     if len(arr.shape) == 2 :
         arr = arr[0]
     elif len(arr.shape) > 2:
-        raise ValueError, "The array should be 2D at most!"
+        raise ValueError("The array should be 2D at most!")
     # Start the conversion loop .......
     for f in arr:
         try:
@@ -623,7 +623,7 @@ def openfile(fname):
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f
-    raise NotImplementedError, "Wow, binary file"
+    raise NotImplementedError("Wow, binary file")
 
 
 def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',

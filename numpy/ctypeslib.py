@@ -72,7 +72,7 @@ if ctypes is None:
             If ctypes is not available.
 
         """
-        raise ImportError, "ctypes is not available."
+        raise ImportError("ctypes is not available.")
     ctypes_load_library = _dummy
     load_library = _dummy
     as_ctypes = _dummy
@@ -163,7 +163,7 @@ class _ndptr(_ndptr_base):
     @classmethod
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
-            raise TypeError, "argument must be an ndarray"
+            raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
                and obj.dtype != cls._dtype_:
             raise TypeError, "array must have data type %s" % cls._dtype_
@@ -251,7 +251,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             try:
                 flags = [x.strip().upper() for x in flags]
             except:
-                raise TypeError, "invalid flags specification"
+                raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
     try:
         return _pointer_type_cache[(dtype, ndim, shape, num)]

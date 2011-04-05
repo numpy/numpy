@@ -112,6 +112,6 @@ else:
 
 class Pickler(pickle.Pickler):
     def __init__(self, *args, **kwds):
-        raise NotImplementedError, "Don't pickle new arrays with this"
+        raise NotImplementedError("Don't pickle new arrays with this")
     def save_array(self, object):
-        raise NotImplementedError, "Don't pickle new arrays with this"
+        raise NotImplementedError("Don't pickle new arrays with this")

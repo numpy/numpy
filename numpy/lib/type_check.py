@@ -607,10 +607,10 @@ def datetime_data(dtype):
     try:
         import ctypes
     except ImportError:
-        raise RuntimeError, "Cannot access date-time internals without ctypes installed"
+        raise RuntimeError("Cannot access date-time internals without ctypes installed")
 
     if dtype.kind not in ['m','M']:
-        raise ValueError, "Not a date-time dtype"
+        raise ValueError("Not a date-time dtype")
 
     obj = dtype.metadata[METADATA_DTSTR]
     class DATETIMEMETA(ctypes.Structure):

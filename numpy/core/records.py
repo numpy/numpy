@@ -149,7 +149,7 @@ class format_parser:
         """ Parse the field formats """
 
         if formats is None:
-            raise ValueError, "Need formats argument"
+            raise ValueError("Need formats argument")
         if isinstance(formats, list):
             if len(formats) < 2:
                 formats.append('')
@@ -528,7 +528,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         formats = ''
         for obj in arrayList:
             if not isinstance(obj, ndarray):
-                raise ValueError, "item in the array list must be an ndarray."
+                raise ValueError("item in the array list must be an ndarray.")
             formats += _typestr[obj.dtype.type]
             if issubclass(obj.dtype.type, nt.flexible):
                 formats += `obj.itemsize`
@@ -618,7 +618,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         if isinstance(shape, (int, long)):
             shape = (shape,)
         if len(shape) > 1:
-            raise ValueError, "Can only deal with 1-d array."
+            raise ValueError("Can only deal with 1-d array.")
         _array = recarray(shape, descr)
         for k in xrange(_array.size):
             _array[k] = tuple(recList[k])
@@ -639,7 +639,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
 
     if dtype is None and formats is None:
-        raise ValueError, "Must have dtype= or formats="
+        raise ValueError("Must have dtype= or formats=")
 
     if dtype is not None:
         descr = sb.dtype(dtype)

@@ -57,7 +57,7 @@ class LinAlgError(Exception):
         in inv return wrap(solve(a, identity(a.shape[0], dtype=a.dtype)))
       File "...linalg.py", line 249,
         in solve
-        raise LinAlgError, 'Singular matrix'
+        raise LinAlgError('Singular matrix')
     numpy.linalg.linalg.LinAlgError: Singular matrix
 
     """
@@ -157,12 +157,12 @@ def _assertRank2(*arrays):
 def _assertSquareness(*arrays):
     for a in arrays:
         if max(a.shape) != min(a.shape):
-            raise LinAlgError, 'Array must be square'
+            raise LinAlgError('Array must be square')
 
 def _assertFinite(*arrays):
     for a in arrays:
         if not (isfinite(a).all()):
-            raise LinAlgError, "Array must not contain infs or NaNs"
+            raise LinAlgError("Array must not contain infs or NaNs")
 
 def _assertNonEmpty(*arrays):
     for a in arrays:
@@ -313,7 +313,7 @@ def solve(a, b):
     n_eq = a.shape[0]
     n_rhs = b.shape[1]
     if n_eq != b.shape[0]:
-        raise LinAlgError, 'Incompatible dimensions'
+        raise LinAlgError('Incompatible dimensions')
     t, result_t = _commonType(a, b)
 #    lapack_routine = _findLapackRoutine('gesv', t)
     if isComplexType(t):
@@ -325,7 +325,7 @@ def solve(a, b):
     pivots = zeros(n_eq, fortran_int)
     results = lapack_routine(n_eq, n_rhs, a, n_eq, pivots, b, n_eq, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'Singular matrix'
+        raise LinAlgError('Singular matrix')
     if one_eq:
         return wrap(b.ravel().astype(result_t))
     else:
@@ -393,7 +393,7 @@ def tensorinv(a, ind=2):
         for k in oldshape[ind:]:
             prod *= k
     else:
-        raise ValueError, "Invalid ind argument."
+        raise ValueError("Invalid ind argument.")
     a = a.reshape(prod, -1)
     ia = inv(a)
     return ia.reshape(*invshape)
@@ -802,7 +802,7 @@ def eigvals(a):
             w = wr+1j*wi
             result_t = _complexType(result_t)
     if results['info'] > 0:
-        raise LinAlgError, 'Eigenvalues did not converge'
+        raise LinAlgError('Eigenvalues did not converge')
     return w.astype(result_t)
 
 
@@ -891,7 +891,7 @@ def eigvalsh(a, UPLO='L'):
         results = lapack_routine(_N, UPLO, n, a, n, w, work, lwork,
                                  iwork, liwork, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'Eigenvalues did not converge'
+        raise LinAlgError('Eigenvalues did not converge')
     return w.astype(result_t)
 
 def _convertarray(a):
@@ -1061,7 +1061,7 @@ def eig(a):
             result_t = _complexType(result_t)
 
     if results['info'] > 0:
-        raise LinAlgError, 'Eigenvalues did not converge'
+        raise LinAlgError('Eigenvalues did not converge')
     vt = v.transpose().astype(result_t)
     return w.astype(result_t), wrap(vt)
 
@@ -1184,7 +1184,7 @@ def eigh(a, UPLO='L'):
         results = lapack_routine(_V, UPLO, n, a, n, w, work, lwork,
                 iwork, liwork, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'Eigenvalues did not converge'
+        raise LinAlgError('Eigenvalues did not converge')
     at = a.transpose().astype(result_t)
     return w.astype(_realType(result_t)), wrap(at)
 
@@ -1317,7 +1317,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
                                  work, lwork, iwork, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'SVD did not converge'
+        raise LinAlgError('SVD did not converge')
     s = s.astype(_realType(result_t))
     if compute_uv:
         u = u.transpose().astype(result_t)
@@ -1627,7 +1627,7 @@ def slogdet(a):
     results = lapack_routine(n, n, a, n, pivots, 0)
     info = results['info']
     if (info < 0):
-        raise TypeError, "Illegal input to Fortran routine"
+        raise TypeError("Illegal input to Fortran routine")
     elif (info > 0):
         return (t(0.0), _realType(t)(-Inf))
     sign = 1. - 2. * (add.reduce(pivots != arange(1, n + 1)) % 2)
@@ -1771,7 +1771,7 @@ def lstsq(a, b, rcond=-1):
     n_rhs = b.shape[1]
     ldb = max(n, m)
     if m != b.shape[0]:
-        raise LinAlgError, 'Incompatible dimensions'
+        raise LinAlgError('Incompatible dimensions')
     t, result_t = _commonType(a, b)
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
@@ -1812,7 +1812,7 @@ def lstsq(a, b, rcond=-1):
         results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
                                  0, work, lwork, iwork, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'SVD did not converge in Linear Least Squares'
+        raise LinAlgError('SVD did not converge in Linear Least Squares')
     resids = array([], result_real_t)
     if is_1d:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
@@ -1959,7 +1959,7 @@ def norm(x, ord=None):
             try:
                 ord + 1
             except TypeError:
-                raise ValueError, "Invalid norm order for vectors."
+                raise ValueError("Invalid norm order for vectors.")
             return ((abs(x)**ord).sum())**(1.0/ord)
     elif nd == 2:
         if ord == 2:
@@ -1977,6 +1977,6 @@ def norm(x, ord=None):
         elif ord in ['fro','f']:
             return sqrt(add.reduce((x.conj() * x).real.ravel()))
         else:
-            raise ValueError, "Invalid norm order for matrices."
+            raise ValueError("Invalid norm order for matrices.")
     else:
-        raise ValueError, "Improper number of dimensions to norm."
+        raise ValueError("Improper number of dimensions to norm.")

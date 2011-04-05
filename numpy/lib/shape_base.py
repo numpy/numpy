@@ -383,7 +383,7 @@ def array_split(ary,indices_or_sections,axis = 0):
     except TypeError: #indices_or_sections is a scalar, not an array.
         Nsections = int(indices_or_sections)
         if Nsections <= 0:
-            raise ValueError, 'number sections must be larger than 0.'
+            raise ValueError('number sections must be larger than 0.')
         Neach_section,extras = divmod(Ntotal,Nsections)
         section_sizes = [0] + \
                         extras * [Neach_section+1] + \
@@ -474,7 +474,7 @@ def split(ary,indices_or_sections,axis=0):
         sections = indices_or_sections
         N = ary.shape[axis]
         if N % sections:
-            raise ValueError, 'array split does not result in an equal division'
+            raise ValueError('array split does not result in an equal division')
     res = array_split(ary,indices_or_sections,axis)
     return res
 
@@ -534,7 +534,7 @@ def hsplit(ary,indices_or_sections):
 
     """
     if len(_nx.shape(ary)) == 0:
-        raise ValueError, 'hsplit only works on arrays of 1 or more dimensions'
+        raise ValueError('hsplit only works on arrays of 1 or more dimensions')
     if len(ary.shape) > 1:
         return split(ary,indices_or_sections,1)
     else:
@@ -588,7 +588,7 @@ def vsplit(ary,indices_or_sections):
 
     """
     if len(_nx.shape(ary)) < 2:
-        raise ValueError, 'vsplit only works on arrays of 2 or more dimensions'
+        raise ValueError('vsplit only works on arrays of 2 or more dimensions')
     return split(ary,indices_or_sections,0)
 
 def dsplit(ary,indices_or_sections):
@@ -633,7 +633,7 @@ def dsplit(ary,indices_or_sections):
 
     """
     if len(_nx.shape(ary)) < 3:
-        raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'
+        raise ValueError('vsplit only works on arrays of 3 or more dimensions')
     return split(ary,indices_or_sections,2)
 
 def get_array_prepare(*args):

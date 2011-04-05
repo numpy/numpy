@@ -193,7 +193,7 @@ class memmap(ndarray):
             fid = open(filename, (mode == 'c' and 'r' or mode)+'b')
 
         if (mode == 'w+') and shape is None:
-            raise ValueError, "shape must be given"
+            raise ValueError("shape must be given")
 
         fid.seek(0, 2)
         flen = fid.tell()
