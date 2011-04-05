@@ -404,11 +404,48 @@ def pbuild(context):
                 "src/multiarray/lowlevel_strided_loops.c.src", 
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
+        if ENABLE_SEPARATE_COMPILATION:
+            sources = [join('src', 'multiarray', 'multiarraymodule.c'),
+                join('src', 'multiarray', 'hashdescr.c'),
+                join('src', 'multiarray', 'arrayobject.c'),
+                join('src', 'multiarray', 'numpymemoryview.c'),
+                join('src', 'multiarray', 'buffer.c'),
+                join('src', 'multiarray', 'datetime.c'),
+                join('src', 'multiarray', 'numpyos.c'),
+                join('src', 'multiarray', 'conversion_utils.c'),
+                join('src', 'multiarray', 'flagsobject.c'),
+                join('src', 'multiarray', 'descriptor.c'),
+                join('src', 'multiarray', 'iterators.c'),
+                join('src', 'multiarray', 'mapping.c'),
+                join('src', 'multiarray', 'number.c'),
+                join('src', 'multiarray', 'getset.c'),
+                join('src', 'multiarray', 'sequence.c'),
+                join('src', 'multiarray', 'methods.c'),
+                join('src', 'multiarray', 'ctors.c'), join('src', 'multiarray', 'convert_datatype.c'),
+                join('src', 'multiarray', 'convert.c'),
+                join('src', 'multiarray', 'shape.c'),
+                join('src', 'multiarray', 'item_selection.c'),
+                join('src', 'multiarray', 'calculation.c'),
+                join('src', 'multiarray', 'common.c'),
+                join('src', 'multiarray', 'usertypes.c'),
+                join('src', 'multiarray', 'scalarapi.c'),
+                join('src', 'multiarray', 'refcount.c'),
+                join('src', 'multiarray', 'arraytypes.c.src'),
+                join('src', 'multiarray', 'scalartypes.c.src'),
+                join('src', 'multiarray', 'new_iterator.c.src'),
+                join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
+                join('src', 'multiarray', 'dtype_transfer.c'),
+                join('src', 'multiarray', 'new_iterator_pywrap.c'),
+                join('src', 'multiarray', 'einsum.c.src')]
+            if PYTHON_HAS_UNICODE_WIDE:
+                sources.append(join('src', 'multiarray', 'ucsnarrow.c'))
+        else:
+            sources = extension.sources
         includes = ["src/multiarray", "src/private"]
         bld(features="c cshlib pyext",
             includes=includes,
             target="multiarray",
-            source=extension.sources,
+            source=sources,
             use="npymath")
     context.register_builder("multiarray", builder_multiarray)
 
