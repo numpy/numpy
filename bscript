@@ -6,9 +6,7 @@ import shutil
 import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
-from bento.commands.hooks \
-    import \
-        pre_configure, post_build
+from bento.commands import hooks
 from bento.commands.extras.waf \
     import \
         ConfigureWafContext, BuildWafContext
@@ -45,8 +43,8 @@ def check_blas_lapack(conf):
     #conf.env.HAS_LAPACK = True
     #conf.env.LIB_LAPACK = ["lapack", "f77blas", "cblas", "atlas"]
 
-@pre_configure()
-def configure(context):
+@hooks.pre_configure()
+def pre_configure(context):
     conf = context.waf_context
 
     conf.load("compiler_c")
@@ -80,8 +78,8 @@ def process_write_config(self):
     tsk.set_outputs(self.path.find_or_declare(self.target))
     return tsk
 
-@post_build()
-def pbuild(context):
+@hooks.pre_build()
+def pre_build(context):
     bld = context.waf_context
 
     bld(features="gen_pymodule",
@@ -98,8 +96,10 @@ git_revision = ""
 version = ""
 """,
         always=True)
-    bld.compile()
 
+@hooks.post_build()
+def post_build(context):
+    bld = context.waf_context
     # Poor man's and temporary replacement for in-place build
     if "-i" in sys.argv:
         for g in bld.groups:
