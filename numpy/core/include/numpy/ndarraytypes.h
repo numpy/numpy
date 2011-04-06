@@ -314,7 +314,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONGLONG
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
-    #if (PY_VERSION_HEX > 0x02060000)
+    #if (PY_VERSION_HEX >= 0x02070000)
         #define NPY_INTP_FMT "lld"
     #else
         #define NPY_INTP_FMT "zd"
