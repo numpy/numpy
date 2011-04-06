@@ -278,6 +278,9 @@ def configure(context):
     numpy.build_utils.waf.check_inline(conf)
     check_complex(conf)
 
+    if ENABLE_SEPARATE_COMPILATION:
+        conf.define("ENABLE_SEPARATE_COMPILATION", 1)
+
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
 #ifndef _NPY_NPY_CONFIG_H_
@@ -407,40 +410,41 @@ def pbuild(context):
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
-            sources = [join('src', 'multiarray', 'multiarraymodule.c'),
-                join('src', 'multiarray', 'hashdescr.c'),
-                join('src', 'multiarray', 'arrayobject.c'),
-                join('src', 'multiarray', 'numpymemoryview.c'),
-                join('src', 'multiarray', 'buffer.c'),
-                join('src', 'multiarray', 'datetime.c'),
-                join('src', 'multiarray', 'numpyos.c'),
-                join('src', 'multiarray', 'conversion_utils.c'),
-                join('src', 'multiarray', 'flagsobject.c'),
-                join('src', 'multiarray', 'descriptor.c'),
-                join('src', 'multiarray', 'iterators.c'),
-                join('src', 'multiarray', 'mapping.c'),
-                join('src', 'multiarray', 'number.c'),
-                join('src', 'multiarray', 'getset.c'),
-                join('src', 'multiarray', 'sequence.c'),
-                join('src', 'multiarray', 'methods.c'),
-                join('src', 'multiarray', 'ctors.c'), join('src', 'multiarray', 'convert_datatype.c'),
-                join('src', 'multiarray', 'convert.c'),
-                join('src', 'multiarray', 'shape.c'),
-                join('src', 'multiarray', 'item_selection.c'),
-                join('src', 'multiarray', 'calculation.c'),
-                join('src', 'multiarray', 'common.c'),
-                join('src', 'multiarray', 'usertypes.c'),
-                join('src', 'multiarray', 'scalarapi.c'),
-                join('src', 'multiarray', 'refcount.c'),
-                join('src', 'multiarray', 'arraytypes.c.src'),
-                join('src', 'multiarray', 'scalartypes.c.src'),
-                join('src', 'multiarray', 'new_iterator.c.src'),
-                join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
-                join('src', 'multiarray', 'dtype_transfer.c'),
-                join('src', 'multiarray', 'new_iterator_pywrap.c'),
-                join('src', 'multiarray', 'einsum.c.src')]
+            sources = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
+                pjoin('src', 'multiarray', 'hashdescr.c'),
+                pjoin('src', 'multiarray', 'arrayobject.c'),
+                pjoin('src', 'multiarray', 'numpymemoryview.c'),
+                pjoin('src', 'multiarray', 'buffer.c'),
+                pjoin('src', 'multiarray', 'datetime.c'),
+                pjoin('src', 'multiarray', 'numpyos.c'),
+                pjoin('src', 'multiarray', 'conversion_utils.c'),
+                pjoin('src', 'multiarray', 'flagsobject.c'),
+                pjoin('src', 'multiarray', 'descriptor.c'),
+                pjoin('src', 'multiarray', 'iterators.c'),
+                pjoin('src', 'multiarray', 'mapping.c'),
+                pjoin('src', 'multiarray', 'number.c'),
+                pjoin('src', 'multiarray', 'getset.c'),
+                pjoin('src', 'multiarray', 'sequence.c'),
+                pjoin('src', 'multiarray', 'methods.c'),
+                pjoin('src', 'multiarray', 'ctors.c'),
+                pjoin('src', 'multiarray', 'convert_datatype.c'),
+                pjoin('src', 'multiarray', 'convert.c'),
+                pjoin('src', 'multiarray', 'shape.c'),
+                pjoin('src', 'multiarray', 'item_selection.c'),
+                pjoin('src', 'multiarray', 'calculation.c'),
+                pjoin('src', 'multiarray', 'common.c'),
+                pjoin('src', 'multiarray', 'usertypes.c'),
+                pjoin('src', 'multiarray', 'scalarapi.c'),
+                pjoin('src', 'multiarray', 'refcount.c'),
+                pjoin('src', 'multiarray', 'arraytypes.c.src'),
+                pjoin('src', 'multiarray', 'scalartypes.c.src'),
+                pjoin('src', 'multiarray', 'nditer.c.src'),
+                pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
+                pjoin('src', 'multiarray', 'dtype_transfer.c'),
+                pjoin('src', 'multiarray', 'nditer_pywrap.c'),
+                pjoin('src', 'multiarray', 'einsum.c.src')]
             if PYTHON_HAS_UNICODE_WIDE:
-                sources.append(join('src', 'multiarray', 'ucsnarrow.c'))
+                sources.append(pjoin('src', 'multiarray', 'ucsnarrow.c'))
         else:
             sources = extension.sources
         includes = ["src/multiarray", "src/private"]
@@ -476,10 +480,16 @@ def pbuild(context):
             name="umath_gen")
 
         includes = ["src/umath", "src/private"]
+        if ENABLE_SEPARATE_COMPILATION:
+            sources = [pjoin("src", "umath", "umathmodule.c.src"),
+                    pjoin("src", "umath", "ufunc_object.c"),
+                    pjoin("src", "umath", "loops.c.src")]
+        else:
+            sources = extension.sources
         bld(features="c cshlib pyext",
             includes=includes,
             target="umath",
-            source=extension.sources,
+            source=sources,
             use="npymath")
     context.register_builder("umath", build_ufunc)
 
