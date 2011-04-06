@@ -1,22 +1,21 @@
-import numpy as np
-import numpy.ma as ma
-from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
-    assert_raises, run_module_suite)
-from numpy.testing import assert_warns, assert_
-
 import sys
-
 import gzip
 import os
 import threading
-
 from tempfile import mkstemp, NamedTemporaryFile
 import time
 from datetime import datetime
 
+import numpy as np
+import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
 from numpy.compat import asbytes, asbytes_nested, bytes
+
+from nose import SkipTest
+from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
+    assert_raises, run_module_suite)
+from numpy.testing import assert_warns, assert_
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -1313,15 +1312,18 @@ M   33  21.99
 
     def test_gft_filename(self):
         # Test that we can load data from a filename as well as a file object
-        exp_res = np.arange(6).reshape((2,3))
-        for sep in ('\n', '\r', '\r\n'):
+        wanted = np.arange(6).reshape((2,3))
+        is_py3 = sys.version_info[0] >= 3
+        for sep in ('\n', '\r\n', '\r'):
+            if sep == '\r' and is_py3:
+                raise SkipTest(r'Py3 version does not split lines on \r')
             data = '0 1 2' + sep + '3 4 5'
             f, name = mkstemp()
             # We can't use NamedTemporaryFile on windows, because we cannot
             # reopen the file.
             try:
                 os.write(f, asbytes(data))
-                assert_array_equal(np.genfromtxt(name), exp_res)
+                assert_array_equal(np.genfromtxt(name), wanted)
             finally:
                 os.close(f)
                 os.unlink(name)
