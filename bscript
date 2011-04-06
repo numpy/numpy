@@ -92,6 +92,7 @@ def pre_configure(context):
         remove_flag_prevalue("ppc", conf.env.CFLAGS_PYEXT)
         remove_flag_prevalue("ppc", conf.env.LINKFLAGS_PYEXT)
         conf.env.LINKFLAGS_cshlib.extend(["-undefined", "dynamic_lookup", "-bundle"])
+        conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
 
     conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
     check_blas_lapack(conf)
