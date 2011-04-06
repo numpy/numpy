@@ -45,6 +45,8 @@ NUMPYCONFIG_SYM.append(('VISIBILITY_HIDDEN', '__attribute__((visibility("hidden"
 NUMPYCONFIG_SYM.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
 NUMPYCONFIG_SYM.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
+PYTHON_HAS_UNICODE_WIDE = True
+
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
     header."""
@@ -134,6 +136,14 @@ def type_checks(conf):
         NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_PY_LONG_LONG", ""))
 
     conf.check_declaration("CHAR_BIT", header_name=header_name, features=features)
+
+    # Check whether we need our own wide character support
+    global PYTHON_HAS_UNICODE_WIDE
+    try:
+        conf.check_declaration('Py_UNICODE_WIDE', header_name=header_name, features=features)
+        PYTHON_HAS_UNICODE_WIDE = True
+    except waflib.Errors.ConfigurationError:
+        PYTHON_HAS_UNICODE_WIDE = False
 
 def signal_smp_checks(conf):
     if is_npy_no_signal():
