@@ -81,7 +81,7 @@ class TestRecFunctions(TestCase):
         assert_equal(test, control)
         #
         test = drop_fields(a, ['a', 'b'])
-        assert(test is None)
+        assert_(test is None)
 
 
     def test_rename_fields(self):
@@ -308,7 +308,7 @@ class TestMergeArrays(TestCase):
         assert_equal(test, control)
         test = merge_arrays((x, mx), usemask=True, asrecarray=True)
         assert_equal(test, control)
-        assert(isinstance(test, MaskedRecords))
+        assert_(isinstance(test, MaskedRecords))
     #
     def test_w_singlefield(self):
         "Test single field"

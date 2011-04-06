@@ -142,6 +142,7 @@ def fail_if_equal(actual, desired, err_msg='',):
     msg = build_err_msg([actual, desired], err_msg)
     if not desired != actual:
         raise AssertionError(msg)
+
 assert_not_equal = fail_if_equal
 
 
@@ -230,7 +231,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
 def assert_mask_equal(m1, m2, err_msg=''):
     """Asserts the equality of two masks."""
     if m1 is nomask:
-        assert(m2 is nomask)
+        assert_(m2 is nomask)
     if m2 is nomask:
-        assert(m1 is nomask)
+        assert_(m1 is nomask)
     assert_array_equal(m1, m2, err_msg=err_msg)

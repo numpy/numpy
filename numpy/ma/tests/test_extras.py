@@ -770,13 +770,13 @@ class TestArraySetOps(TestCase):
         a = array([1, 2, 3])
         b = array([6, 5, 4])
         test = setxor1d(a, b)
-        assert(isinstance(test, MaskedArray))
+        assert_(isinstance(test, MaskedArray))
         assert_equal(test, [1, 2, 3, 4, 5, 6])
         #
         a = array([1, 8, 2, 3], mask=[0, 1, 0, 0])
         b = array([6, 5, 4, 8], mask=[0, 0, 0, 1])
         test = setxor1d(a, b)
-        assert(isinstance(test, MaskedArray))
+        assert_(isinstance(test, MaskedArray))
         assert_equal(test, [1, 2, 3, 4, 5, 6])
         #
         assert_array_equal([], setxor1d([], []))

@@ -930,7 +930,7 @@ class TestArgmax(TestCase):
             aargmax = a.argmax(i)
             axes = range(a.ndim)
             axes.remove(i)
-            assert all(amax == aargmax.choose(*a.transpose(i,*axes)))
+            assert_(all(amax == aargmax.choose(*a.transpose(i,*axes))))
 
     def test_combinations(self):
         for arr, pos in self.nan_arr:
@@ -961,8 +961,8 @@ class TestNewaxis(TestCase):
 
 class TestClip(TestCase):
     def _check_range(self,x,cmin,cmax):
-        assert np.all(x >= cmin)
-        assert np.all(x <= cmax)
+        assert_(np.all(x >= cmin))
+        assert_(np.all(x <= cmax))
 
     def _clip_type(self,type_group,array_max,
                    clip_min,clip_max,inplace=False,
@@ -1013,18 +1013,18 @@ class TestClip(TestCase):
     def test_max_or_min(self):
         val = np.array([0,1,2,3,4,5,6,7])
         x = val.clip(3)
-        assert np.all(x >= 3)
+        assert_(np.all(x >= 3))
         x = val.clip(min=3)
-        assert np.all(x >= 3)
+        assert_(np.all(x >= 3))
         x = val.clip(max=4)
-        assert np.all(x <= 4)
+        assert_(np.all(x <= 4))
 
 
 class TestPutmask(object):
     def tst_basic(self,x,T,mask,val):
         np.putmask(x,mask,val)
-        assert np.all(x[mask] == T(val))
-        assert x.dtype == T
+        assert_(np.all(x[mask] == T(val)))
+        assert_(x.dtype == T)
 
     def test_ip_types(self):
         unchecked_types = [str, unicode, np.void, object]
@@ -1114,7 +1114,7 @@ class TestTake(object):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
                       dtype=[('x', '<f8'), ('y', '>f8'), ('z', '<f8')])
         rec1 = rec.take([1])
-        assert rec1['x'] == 5.0 and rec1['y'] == 4.0
+        assert_(rec1['x'] == 5.0 and rec1['y'] == 4.0)
 
 
 class TestLexsort(TestCase):
@@ -1492,11 +1492,11 @@ class TestStats(TestCase):
                 self.info = getattr(obj, "info", '')
         dat = TestArray([[1,2,3,4],[5,6,7,8]], 'jubba')
         res = dat.mean(1)
-        assert res.info == dat.info
+        assert_(res.info == dat.info)
         res = dat.std(1)
-        assert res.info == dat.info
+        assert_(res.info == dat.info)
         res = dat.var(1)
-        assert res.info == dat.info
+        assert_(res.info == dat.info)
 
 class TestDot(TestCase):
     def test_dot_2args(self):
@@ -1565,20 +1565,20 @@ class TestSummarization(TestCase):
     def test_1d(self):
         A = np.arange(1001)
         strA = '[   0    1    2 ...,  998  999 1000]'
-        assert str(A) == strA
+        assert_(str(A) == strA)
 
         reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
-        assert repr(A) == reprA
+        assert_(repr(A) == reprA)
 
     def test_2d(self):
         A = np.arange(1002).reshape(2,501)
         strA = '[[   0    1    2 ...,  498  499  500]\n' \
                ' [ 501  502  503 ...,  999 1000 1001]]'
-        assert str(A) == strA
+        assert_(str(A) == strA)
 
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
                 '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
-        assert repr(A) == reprA
+        assert_(repr(A) == reprA)
 
 
 class TestChoose(TestCase):
@@ -1976,8 +1976,8 @@ if sys.version_info >= (2, 6):
             x = memoryview(obj)
             y = np.asarray(x)
             y2 = np.array(x)
-            assert not y.flags.owndata
-            assert y2.flags.owndata
+            assert_(not y.flags.owndata)
+            assert_(y2.flags.owndata)
             assert_equal(y.dtype, obj.dtype)
             assert_array_equal(obj, y)
             assert_equal(y2.dtype, obj.dtype)

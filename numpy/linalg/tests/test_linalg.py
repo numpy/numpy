@@ -136,13 +136,13 @@ class TestSolve(LinalgTestCase, TestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot(a, x))
-        assert imply(isinstance(b, matrix), isinstance(x, matrix))
+        assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
 
 class TestInv(LinalgTestCase, TestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
-        assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
 
 class TestEigvals(LinalgTestCase, TestCase):
     def do(self, a, b):
@@ -154,14 +154,14 @@ class TestEig(LinalgTestCase, TestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
-        assert imply(isinstance(a, matrix), isinstance(evectors, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
 
 class TestSVD(LinalgTestCase, TestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
         assert_almost_equal(a, dot(multiply(u, s), vt))
-        assert imply(isinstance(a, matrix), isinstance(u, matrix))
-        assert imply(isinstance(a, matrix), isinstance(vt, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(u, matrix)))
+        assert_(imply(isinstance(a, matrix), isinstance(vt, matrix)))
 
 class TestCondSVD(LinalgTestCase, TestCase):
     def do(self, a, b):
@@ -184,7 +184,7 @@ class TestPinv(LinalgTestCase, TestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
         assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
-        assert imply(isinstance(a, matrix), isinstance(a_ginv, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 class TestDet(LinalgTestCase, TestCase):
     def do(self, a, b):
@@ -237,8 +237,8 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
             expect_resids = type(x)([])
         assert_almost_equal(residuals, expect_resids)
         assert_(np.issubdtype(residuals.dtype, np.floating))
-        assert imply(isinstance(b, matrix), isinstance(x, matrix))
-        assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
+        assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
+        assert_(imply(isinstance(b, matrix), isinstance(residuals, matrix)))
 
 class TestMatrixPower(object):
     R90 = array([[0,1],[-1,0]])

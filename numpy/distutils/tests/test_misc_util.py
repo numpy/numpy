@@ -49,9 +49,9 @@ class TestGpaths(TestCase):
     def test_gpaths(self):
         local_path = minrelpath(join(dirname(__file__),'..'))
         ls = gpaths('command/*.py', local_path)
-        assert join(local_path,'command','build_src.py') in ls,`ls`
+        assert_(join(local_path,'command','build_src.py') in ls,`ls`)
         f = gpaths('system_info.py', local_path)
-        assert join(local_path,'system_info.py')==f[0],`f`
+        assert_(join(local_path,'system_info.py')==f[0],`f`)
 
 
 if __name__ == "__main__":

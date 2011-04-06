@@ -421,7 +421,7 @@ def roundtrip(arr):
     return arr2
 
 def assert_equal(o1, o2):
-    assert o1 == o2
+    assert_(o1 == o2)
 
 
 def test_roundtrip():

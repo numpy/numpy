@@ -13,7 +13,7 @@ class TestTypes(TestCase):
     def test_types(self, level=1):
         for atype in types:
             a = atype(1)
-            assert a == 1, "error with %r: got %r" % (atype,a)
+            assert_(a == 1, "error with %r: got %r" % (atype,a))
 
     def test_type_add(self, level=1):
         # list of types
@@ -47,7 +47,7 @@ class TestPower(TestCase):
         for t in [np.int8, np.int16]:
             a = t(3)
             b = a ** 4
-            assert b == 81, "error with %r: got %r" % (t,b)
+            assert_(b == 81, "error with %r: got %r" % (t,b))
 
     def test_large_types(self):
         for t in [np.int32, np.int64, np.float32, np.float64, np.longdouble]:
@@ -55,7 +55,7 @@ class TestPower(TestCase):
             b = a ** 4
             msg = "error with %r: got %r" % (t,b)
             if np.issubdtype(t, np.integer):
-                assert b == 6765201, msg
+                assert_(b == 6765201, msg)
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
 

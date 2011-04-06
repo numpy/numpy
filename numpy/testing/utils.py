@@ -341,9 +341,8 @@ def print_assert_equal(test_string,actual,desired):
 
     """
     import pprint
-    try:
-        assert(actual == desired)
-    except AssertionError:
+
+    if not (actual == desired):
         import cStringIO
         msg = cStringIO.StringIO()
         msg.write(test_string)
@@ -1117,7 +1116,7 @@ def _assert_valid_refcount(op):
     for j in range(15):
         d = op(b,c)
 
-    assert(sys.getrefcount(i) >= rc)
+    assert_(sys.getrefcount(i) >= rc)
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0,
                     err_msg='', verbose=True):

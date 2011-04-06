@@ -74,7 +74,8 @@ def run_module_suite(file_to_run = None):
     if file_to_run is None:
         f = sys._getframe(1)
         file_to_run = f.f_locals.get('__file__', None)
-        assert file_to_run is not None
+        if file_to_run is None:
+            raise AssertionError
 
     import_nose().run(argv=['',file_to_run])
 
@@ -149,7 +150,8 @@ class NoseTester(object):
         if package is None:
             f = sys._getframe(1)
             package_path = f.f_locals.get('__file__', None)
-            assert package_path is not None
+            if package_path is None:
+                raise AssertionError
             package_path = os.path.dirname(package_path)
             package_name = f.f_locals.get('__name__', None)
         elif isinstance(package, type(os)):
@@ -202,7 +204,7 @@ class NoseTester(object):
         print "nose version %d.%d.%d" % nose.__versioninfo__
 
 
-    def prepare_test_args(self, label='fast', verbose=1, extra_argv=None, 
+    def prepare_test_args(self, label='fast', verbose=1, extra_argv=None,
                           doctests=False, coverage=False):
         """
         Run tests for module using nose.

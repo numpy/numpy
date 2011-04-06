@@ -11,7 +11,7 @@ def assert_shapes_correct(input_shapes, expected_shape):
     outarrays = broadcast_arrays(*inarrays)
     outshapes = [a.shape for a in outarrays]
     expected = [expected_shape] * len(inarrays)
-    assert outshapes == expected
+    assert_(outshapes == expected)
 
 def assert_incompatible_shapes_raise(input_shapes):
     """ Broadcast a list of arrays with the given (incompatible) input shapes

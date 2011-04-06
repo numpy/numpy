@@ -1393,21 +1393,21 @@ def test_npzfile_dict():
 
     z = np.load(s)
 
-    assert 'x' in z
-    assert 'y' in z
-    assert 'x' in z.keys()
-    assert 'y' in z.keys()
+    assert_('x' in z)
+    assert_('y' in z)
+    assert_('x' in z.keys())
+    assert_('y' in z.keys())
 
     for f, a in z.iteritems():
-        assert f in ['x', 'y']
+        assert_(f in ['x', 'y'])
         assert_equal(a.shape, (3, 3))
 
-    assert len(z.items()) == 2
+    assert_(len(z.items()) == 2)
 
     for f in z:
-        assert f in ['x', 'y']
+        assert_(f in ['x', 'y'])
 
-    assert 'x' in list(z.iterkeys())
+    assert_('x' in list(z.iterkeys()))
 
 if __name__ == "__main__":
     run_module_suite()

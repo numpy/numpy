@@ -337,25 +337,25 @@ class TestEmptyField(TestCase):
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
         a.dtype = [("int",   "<0i4"),("float", "<2f4")]
-        assert(a['int'].shape == (5,0))
-        assert(a['float'].shape == (5,2))
+        assert_(a['int'].shape == (5,0))
+        assert_(a['float'].shape == (5,2))
 
 class TestCommonType(TestCase):
     def test_scalar_loses1(self):
         res = np.find_common_type(['f4','f4','i2'],['f8'])
-        assert(res == 'f4')
+        assert_(res == 'f4')
     def test_scalar_loses2(self):
         res = np.find_common_type(['f4','f4'],['i8'])
-        assert(res == 'f4')
+        assert_(res == 'f4')
     def test_scalar_wins(self):
         res = np.find_common_type(['f4','f4','i2'],['c8'])
-        assert(res == 'c8')
+        assert_(res == 'c8')
     def test_scalar_wins2(self):
         res = np.find_common_type(['u4','i4','i4'],['f4'])
-        assert(res == 'f8')
+        assert_(res == 'f8')
     def test_scalar_wins3(self): # doesn't go up to 'f16' on purpose
         res = np.find_common_type(['u8','i8','i8'],['f8'])
-        assert(res == 'f8')
+        assert_(res == 'f8')
 
 class TestMultipleFields(TestCase):
     def setUp(self):
@@ -366,7 +366,7 @@ class TestMultipleFields(TestCase):
         self.assertRaises(ValueError, self._bad_call)
     def test_return(self):
         res = self.ary[['f0','f2']].tolist()
-        assert(res == [(1,3), (5,7)])
+        assert_(res == [(1,3), (5,7)])
 
 if __name__ == "__main__":
     run_module_suite()

@@ -128,24 +128,24 @@ class TestUfunc(TestCase):
         # check unary PyUFunc_O_O
         msg = "PyUFunc_O_O"
         x = np.ones(10, dtype=np.object)[0::2]
-        assert np.all(np.abs(x) == 1), msg
+        assert_(np.all(np.abs(x) == 1), msg)
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert np.all(np.logical_not(x) == True), msg
+        assert_(np.all(np.logical_not(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
         x = np.ones(10, dtype=np.object)[0::2]
-        assert np.all(np.add(x,x) == 2), msg
+        assert_(np.all(np.add(x,x) == 2), msg)
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert np.all(np.logical_and(x,x) == 1), msg
+        assert_(np.all(np.logical_and(x,x) == 1), msg)
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
