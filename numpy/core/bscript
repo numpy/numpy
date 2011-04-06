@@ -402,7 +402,7 @@ def pbuild(context):
 
         multiarray_templates = ["src/multiarray/scalartypes.c.src",
                 "src/multiarray/arraytypes.c.src", 
-                "src/multiarray/new_iterator.c.src", 
+                "src/multiarray/nditer.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src", 
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
