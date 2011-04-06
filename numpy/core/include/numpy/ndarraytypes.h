@@ -277,6 +277,17 @@ typedef Py_uintptr_t npy_uintp;
 #define constchar char
 #endif
 
+/* NPY_INTP_FMT Note:
+ *      Unlike the other NPY_*_FMT macros which are used with
+ *      PyOS_snprintf, NPY_INTP_FMT is used with PyErr_Format and
+ *      PyString_Format. These functions use different formatting
+ *      codes which are portably specified according to the Python
+ *      documentation. See ticket #1795.
+ *
+ *      On Windows x64, the LONGLONG formatter should be used, but
+ *      in Python 2.6 the %lld formatter is not supported. In this
+ *      case we work around the problem by using the %zd formatter.
+ */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT
         #define NPY_UINTP NPY_UINT
@@ -285,7 +296,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_INT
         #define NPY_MIN_INTP NPY_MIN_INT
         #define NPY_MAX_UINTP NPY_MAX_UINT
-        #define NPY_INTP_FMT NPY_INT_FMT
+        #define NPY_INTP_FMT "d"
 #elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONG
         #define NPY_INTP NPY_LONG
         #define NPY_UINTP NPY_ULONG
@@ -294,7 +305,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONG
         #define NPY_MIN_INTP MIN_LONG
         #define NPY_MAX_UINTP NPY_MAX_ULONG
-        #define NPY_INTP_FMT NPY_LONG_FMT
+        #define NPY_INTP_FMT "ld"
 #elif defined(PY_LONG_LONG) && (NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG)
         #define NPY_INTP NPY_LONGLONG
         #define NPY_UINTP NPY_ULONGLONG
@@ -303,7 +314,11 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONGLONG
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
-        #define NPY_INTP_FMT NPY_LONGLONG_FMT
+    #if (PY_VERSION_HEX > 0x02060000)
+        #define NPY_INTP_FMT "lld"
+    #else
+        #define NPY_INTP_FMT "zd"
+    #endif
 #endif
 
 /*
