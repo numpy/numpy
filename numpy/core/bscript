@@ -254,10 +254,6 @@ def check_complex(conf):
 @pre_configure()
 def configure(context):
     conf = context.waf_context
-    # FIXME: bento command's context should have API so that subclasses can
-    # customize recurse behavior
-    old_path = conf.path
-    conf.path = conf.path.make_node(context.local_node.path_from(context.top_node))
 
     try:
         conf.check_header("endian.h")
@@ -293,7 +289,6 @@ def configure(context):
     conf.env.INCLUDES = [".", "include", "include/numpy"]
 
     # FIXME: Should be handled in bento context
-    conf.path = old_path
     conf.store()
 
 class CTemplateTask(waflib.Task.Task):
