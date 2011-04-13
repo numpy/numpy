@@ -1560,6 +1560,10 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
     out : bool
         True if cast can occur according to the casting rule.
 
+    See also
+    --------
+    dtype, result_type
+
     Examples
     --------
 
@@ -1635,6 +1639,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     kind to which both ``type1`` and ``type2`` may be safely cast.
     The returned data type is always in native byte order.
 
+    This function is symmetric and associative.
+
     Parameters
     ----------
     type1 : dtype or dtype specifier
@@ -1647,10 +1653,13 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     out : dtype
         The promoted data type.
 
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
     See Also
     --------
-    issctype, issubsctype, issubdtype, obj2sctype, sctype2char,
-    maximum_sctype, min_scalar_type
+    result_type, dtype, can_cast
 
     Examples
     --------
@@ -1678,7 +1687,7 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     and smallest scalar kind which can hold its value.  For non-scalar
     array ``a``, returns the vector's dtype unmodified.
 
-    As a special case, floating point values are not demoted to integers,
+    Floating point values are not demoted to integers,
     and complex values are not demoted to floats.
 
     Parameters
@@ -1691,11 +1700,13 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     out : dtype
         The minimal data type.
 
+    Notes
+    -----
+    .. versionadded:: 1.6.0
 
     See Also
     --------
-    issctype, issubsctype, issubdtype, obj2sctype, sctype2char,
-    maximum_sctype, promote_types
+    result_type, promote_types, dtype, can_cast
 
     Examples
     --------
@@ -1744,6 +1755,33 @@ add_newdoc('numpy.core.multiarray', 'result_type',
     -------
     out : dtype
         The result type.
+
+    See also
+    --------
+    dtype, promote_types, min_scalar_type, can_cast
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    The specific algorithm used is as follows.
+
+    Categories are determined by first checking which of boolean,
+    integer (int/uint), or floating point (float/complex) the maximum
+    kind of all the arrays and the scalars are.
+    
+    If there are only scalars or the maximum category of the scalars
+    is higher than the maximum category of the arrays,
+    the data types are combined with :func:`promote_types`
+    to produce the return value.
+
+    Otherwise, `min_scalar_type` is called on each array, and
+    the resulting data types are all combined with :func:`promote_types`
+    to produce the return value.
+
+    The set of int values is not a subset of the uint values for types
+    with the same number of bits, something not reflected in
+    :func:`min_scalar_type`, but handled as a special case in `result_type`.
 
     Examples
     --------
@@ -1911,9 +1949,9 @@ add_newdoc('numpy.core', 'einsum',
           * 'no' means the data types should not be cast at all.
           * 'equiv' means only byte-order changes are allowed.
           * 'safe' means only casts which can preserve values are allowed.
-          * 'unsafe' means any data conversions may be done.
           * 'same_kind' means only safe casts or casts within a kind,
             like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -1926,6 +1964,8 @@ add_newdoc('numpy.core', 'einsum',
 
     Notes
     -----
+    .. versionadded:: 1.6.0
+
     The subscripts string is a comma-separated list of subscript labels,
     where each label refers to a dimension of the corresponding operand.
     Repeated subscripts labels in one operand take the diagonal.  For example,
@@ -5495,6 +5535,10 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     copy : bool, optional
         Make a new copy of the data-type object. If ``False``, the result
         may just be a reference to a built-in data-type object.
+
+    See also
+    --------
+    result_type
 
     Examples
     --------

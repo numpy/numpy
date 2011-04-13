@@ -958,30 +958,60 @@ Converting data types
     returned when the value will not overflow or be truncated to
     an integer when converting to a smaller type.
 
+    This is almost the same as the result of
+    PyArray_CanCastTypeTo(PyArray_MinScalarType(arr), totype, casting),
+    but it also handles a special case arising because the set
+    of uint values is not a subset of the int values for types with the
+    same number of bits.
+
 .. cfunction:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
 
     .. versionadded:: 1.6
 
     If *arr* is an array, returns its data type descriptor, but if
     *arr* is an array scalar (has 0 dimensions), it finds the data type
-    of smallest kind and size to which the value may be converted
+    of smallest size to which the value may be converted
     without overflow or truncation to an integer.
+    
+    This function will not demote complex to float or anything to
+    boolean, but will demote a signed integer to an unsigned integer
+    when the scalar value is positive.
 
 .. cfunction:: PyArray_Descr* PyArray_PromoteTypes(PyArray_Descr* type1, PyArray_Descr* type2)
 
     .. versionadded:: 1.6
 
     Finds the data type of smallest size and kind to which *type1* and
-    *type2* may be safely converted.
+    *type2* may be safely converted. This function is symmetric and
+    associative.
 
 .. cfunction:: PyArray_Descr* PyArray_ResultType(npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, PyArray_Descr**dtypes)
 
     .. versionadded:: 1.6
 
-    This applies PyArray_PromoteTypes to all the inputs, along with
+    This applies type promotion to all the inputs,
     using the NumPy rules for combining scalars and arrays, to
     determine the output type of a set of operands.  This is the
-    same result type that ufuncs produce.
+    same result type that ufuncs produce. The specific algorithm
+    used is as follows.
+
+    Categories are determined by first checking which of boolean,
+    integer (int/uint), or floating point (float/complex) the maximum
+    kind of all the arrays and the scalars are.
+    
+    If there are only scalars or the maximum category of the scalars
+    is higher than the maximum category of the arrays,
+    the data types are combined with :cfunc:`PyArray_PromoteTypes`
+    to produce the return value.
+
+    Otherwise, PyArray_MinScalarType is called on each array, and
+    the resulting data types are all combined with
+    :cfunc:`PyArray_PromoteTypes` to produce the return value.
+
+    The set of int values is not a subset of the uint values for types
+    with the same number of bits, something not reflected in
+    :cfunc:`PyArray_MinScalarType`, but handled as a special case in
+    PyArray_ResultType.
 
 .. cfunction:: int PyArray_ObjectType(PyObject* op, int mintype)
 
@@ -2287,6 +2317,9 @@ Array Scalars
 
 .. cfunction:: NPY_SCALARKIND PyArray_ScalarKind(int typenum, PyArrayObject** arr)
 
+    See the function :cfunc:`PyArray_MinScalarType` for an alternative
+    mechanism introduced in NumPy 1.6.0.
+
     Return the kind of scalar represented by *typenum* and the array
     in *\*arr* (if *arr* is not ``NULL`` ). The array is assumed to be
     rank-0 and only used if *typenum* represents a signed integer. If
@@ -2299,6 +2332,9 @@ Array Scalars
     :ctype:`NPY_SCALARKIND` variables can take on.
 
 .. cfunction:: int PyArray_CanCoerceScalar(char thistype, char neededtype, NPY_SCALARKIND scalar)
+
+    See the function :cfunc:`PyArray_ResultType` for details of
+    NumPy type promotion, updated in NumPy 1.6.0.
 
     Implements the rules for scalar coercion. Scalars are only
     silently coerced from thistype to neededtype if this function
