@@ -345,12 +345,13 @@ class TestFloatExceptions(TestCase):
 class TestTypes(TestCase):
     def check_promotion_cases(self, promote_func):
         """Tests that the scalars get coerced correctly."""
+        b = np.bool_(0)
         i8, i16, i32, i64 = int8(0), int16(0), int32(0), int64(0)
         u8, u16, u32, u64 = uint8(0), uint16(0), uint32(0), uint64(0)
         f32, f64, fld = float32(0), float64(0), longdouble(0)
         c64, c128, cld = complex64(0), complex128(0), clongdouble(0)
 
-        # coercion within the same type
+        # coercion within the same kind
         assert_equal(promote_func(i8,i16), np.dtype(int16))
         assert_equal(promote_func(i32,i8), np.dtype(int32))
         assert_equal(promote_func(i16,i64), np.dtype(int64))
@@ -362,7 +363,9 @@ class TestTypes(TestCase):
         assert_equal(promote_func(cld,c128), np.dtype(clongdouble))
         assert_equal(promote_func(c64,fld), np.dtype(clongdouble))
 
-        # coercion between types
+        # coercion between kinds
+        assert_equal(promote_func(b,i32), np.dtype(int32))
+        assert_equal(promote_func(b,u8), np.dtype(uint8))
         assert_equal(promote_func(i8,u8), np.dtype(int16))
         assert_equal(promote_func(u8,i32), np.dtype(int32))
         assert_equal(promote_func(i64,u32), np.dtype(int64))
@@ -384,49 +387,35 @@ class TestTypes(TestCase):
         assert_equal(promote_func(fld,array([f32])), np.dtype(float32))
         assert_equal(promote_func(array([f64]),fld), np.dtype(float64))
         assert_equal(promote_func(fld,array([c64])), np.dtype(complex64))
+        assert_equal(promote_func(c64,array([f64])), np.dtype(complex128))
+        assert_equal(promote_func(complex64(3j),array([f64])),
+                                                    np.dtype(complex128))
+
+        # coercion between scalars and 1-D arrays, where
+        # the scalar has greater kind than the array
+        assert_equal(promote_func(array([b]),f64), np.dtype(float64))
+        assert_equal(promote_func(array([b]),i64), np.dtype(int64))
+        assert_equal(promote_func(array([b]),u64), np.dtype(uint64))
+        assert_equal(promote_func(array([i8]),f64), np.dtype(float64))
+        assert_equal(promote_func(array([u16]),f64), np.dtype(float64))
+        # uint and int are treated as the same "kind" for
+        # the purposes of array-scalar promotion.
+        assert_equal(promote_func(array([u16]), i32), np.dtype(uint16))
+        # float and complex are treated as the same "kind" for
+        # the purposes of array-scalar promotion, so that you can do
+        # (1j * float32array) to get a complex64 array instead of
+        # a complex128 array.
+        assert_equal(promote_func(array([f32]),c128), np.dtype(complex64))
 
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
-
-        ctx = WarningManager()
-        ctx.__enter__()
-        warnings.simplefilter('ignore', np.ComplexWarning)
-
         self.check_promotion_cases(res_type)
-
-        f64 = float64(0)
-        c64 = complex64(0)
-        ## Scalars do not coerce to complex if the value is real
-        #assert_equal(res_type(c64,array([f64])), np.dtype(float64))
-        # But they do if the value is complex
-        assert_equal(res_type(complex64(3j),array([f64])),
-                                                    np.dtype(complex128))
-
-        # Scalars do coerce to complex even if the value is real
-        # This is so "a+0j" can be reliably used to make something complex.
-        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
-
-        ctx.__exit__()
-
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
 
-        f64 = float64(0)
-        c64 = complex64(0)
-        ## Scalars do not coerce to complex if the value is real
-        #assert_equal(np.result_type(c64,array([f64])), np.dtype(float64))
-        # But they do if the value is complex
-        assert_equal(np.result_type(complex64(3j),array([f64])),
-                                                    np.dtype(complex128))
-
-        # Scalars do coerce to complex even if the value is real
-        # This is so "a+0j" can be reliably used to make something complex.
-        assert_equal(np.result_type(c64,array([f64])), np.dtype(complex128))
-
-
-    def can_cast(self):
+    def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
         assert_(np.can_cast(np.float64, np.complex))
         assert_(not np.can_cast(np.complex, np.float))

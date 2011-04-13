@@ -1545,7 +1545,7 @@ class TestRegression(TestCase):
         b = a.astype('str')
         assert_equal(b.dtype, np.dtype('S5'))
 
-    def test_string_astype(self):
+    def test_ticket_1756(self):
         """Ticket #1756 """
         s = asbytes('0123456789abcdef')
         a = np.array([s]*5)
