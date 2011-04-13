@@ -1552,8 +1552,15 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
         Data type, scalar, or array to cast from.
     totype : dtype or dtype specifier
         Data type to cast to.
-    casting : casting rule
-        May be any of 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
     Returns
     -------

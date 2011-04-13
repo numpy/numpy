@@ -286,6 +286,44 @@ advanced usage and will not typically be used.
 .. index::
    pair: ufunc; keyword arguments
 
+*out*
+
+    .. versionadded:: 1.6
+
+    The first output can provided as either a positional or a keyword parameter.
+
+*casting*
+
+    .. versionadded:: 1.6
+
+    Provides a policy for what kind of casting is permitted. For compatibility
+    with previous versions of NumPy, this defaults to 'unsafe'. May be 'no',
+    'equiv', 'safe', 'same_kind', or 'unsafe'. See :func:`can_cast` for
+    explanations of the parameter values.
+
+*order*
+
+    .. versionadded:: 1.6
+
+    Specifies the calculation iteration order/memory layout of the output array.
+    Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
+    F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous, C-contiguous
+    otherwise, and 'K' means to match the element ordering of the inputs
+    as closely as possible.
+
+*dtype*
+
+    .. versionadded:: 1.6
+
+    Overrides the dtype of the calculation and output arrays. Similar to *sig*.
+
+*subok*
+
+    .. versionadded:: 1.6
+
+    Defaults to true. If set to false, the output will always be a strict
+    array, not a subtype.
+
 *sig*
 
     Either a data-type, a tuple of data-types, or a special signature
@@ -308,6 +346,7 @@ advanced usage and will not typically be used.
     provided for the error mode. This may be useful, for example, as an
     optimization for calculations requiring many ufunc calls on small arrays
     in a loop.
+
 
 
 Attributes
