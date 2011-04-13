@@ -970,7 +970,7 @@ ufunc_loop_matches(PyUFuncObject *self,
                     NPY_CASTING input_casting,
                     NPY_CASTING output_casting,
                     int any_object,
-                    int all_inputs_scalar,
+                    int use_min_scalar,
                     int *types,
                     int *out_no_castable_output,
                     char *out_err_src_typecode,
@@ -1014,7 +1014,7 @@ ufunc_loop_matches(PyUFuncObject *self,
          * If all the inputs are scalars, use the regular
          * promotion rules, not the special value-checking ones.
          */
-        if (all_inputs_scalar) {
+        if (!use_min_scalar) {
             if (!PyArray_CanCastTypeTo(PyArray_DESCR(op[i]), tmp,
                                                     input_casting)) {
                 Py_DECREF(tmp);
@@ -1119,7 +1119,7 @@ find_ufunc_matching_userloop(PyUFuncObject *self,
                         NPY_CASTING output_casting,
                         npy_intp buffersize,
                         int any_object,
-                        int all_inputs_scalar,
+                        int use_min_scalar,
                         PyArray_Descr **out_dtype,
                         PyUFuncGenericFunction *out_innerloop,
                         void **out_innerloopdata,
@@ -1155,7 +1155,7 @@ find_ufunc_matching_userloop(PyUFuncObject *self,
                 int *types = funcdata->arg_types;
                 switch (ufunc_loop_matches(self, op,
                             input_casting, output_casting,
-                            any_object, all_inputs_scalar,
+                            any_object, use_min_scalar,
                             types,
                             out_no_castable_output, out_err_src_typecode,
                             out_err_dst_typecode)) {
@@ -1197,7 +1197,7 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                         NPY_CASTING casting,
                         npy_intp buffersize,
                         int any_object,
-                        int all_inputs_scalar,
+                        int use_min_scalar,
                         PyArray_Descr **out_dtype,
                         PyUFuncGenericFunction *out_innerloop,
                         void **out_innerloopdata,
@@ -1251,7 +1251,7 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
 
                 switch (ufunc_loop_matches(self, op,
                             casting, casting,
-                            any_object, all_inputs_scalar,
+                            any_object, use_min_scalar,
                             types,
                             &no_castable_output, &err_src_typecode,
                             &err_dst_typecode)) {
@@ -1292,6 +1292,74 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
 }
 
 /*
+ * Provides an ordering for the dtype 'kind' character codes, to help
+ * determine when to use the min_scalar_type function. This groups
+ * 'kind' into boolean, integer, floating point, and everything else.
+ */
+
+static int
+dtype_kind_to_simplified_ordering(char kind)
+{
+    switch (kind) {
+        /* Boolean kind */
+        case 'b':
+            return 0;
+        /* Unsigned int kind */
+        case 'u':
+        /* Signed int kind */
+        case 'i':
+            return 1;
+        /* Float kind */
+        case 'f':
+        /* Complex kind */
+        case 'c':
+            return 2;
+        /* Anything else */
+        default:
+            return 3;
+    }
+}
+
+static int
+should_use_min_scalar(PyArrayObject **op, int nop)
+{
+    int i, use_min_scalar, kind;
+    int all_scalars = 1, max_scalar_kind = -1, max_array_kind = -1;
+
+    /*
+     * Determine if there are any scalars, and if so, whether
+     * the maximum "kind" of the scalars surpasses the maximum
+     * "kind" of the arrays
+     */
+    use_min_scalar = 0;
+    if (nop > 1) {
+        for(i = 0; i < nop; ++i) {
+            kind = dtype_kind_to_simplified_ordering(
+                                PyArray_DESCR(op[i])->kind);
+            if (PyArray_NDIM(op[i]) == 0) {
+                if (kind > max_scalar_kind) {
+                    max_scalar_kind = kind;
+                }
+            }
+            else {
+                all_scalars = 0;
+                if (kind > max_array_kind) {
+                    max_array_kind = kind;
+                }
+
+            }
+        }
+
+        /* Indicate whether to use the min_scalar_type function */
+        if (!all_scalars && max_array_kind >= max_scalar_kind) {
+            use_min_scalar = 1;
+        }
+    }
+
+    return use_min_scalar;
+}
+
+/*
  * Does a linear search for the best inner loop of the ufunc.
  * When op[i] is a scalar or a one dimensional array smaller than
  * the buffersize, and needs a dtype conversion, this function
@@ -1316,26 +1384,20 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
     char *ufunc_name;
-    int no_castable_output, all_inputs_scalar;
+    int no_castable_output, use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
     ufunc_name = self->name ? self->name : "(unknown)";
 
-    /* Check whether all the inputs are scalar */
-    all_inputs_scalar = 1;
-    for(i = 0; i < nin; ++i) {
-        if (PyArray_NDIM(op[i]) > 0) {
-            all_inputs_scalar = 0;
-        }
-    }
+    use_min_scalar = should_use_min_scalar(op, nin);
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
         switch (find_ufunc_matching_userloop(self, op,
                                 input_casting, output_casting,
-                                buffersize, any_object, all_inputs_scalar,
+                                buffersize, any_object, use_min_scalar,
                                 out_dtype, out_innerloop, out_innerloopdata,
                                 out_trivial_loop_ok,
                                 &no_castable_output, &err_src_typecode,
@@ -1377,7 +1439,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
         NPY_UF_DBG_PRINT1("Trying function loop %d\n", (int)i);
         switch (ufunc_loop_matches(self, op,
                     input_casting, output_casting,
-                    any_object, all_inputs_scalar,
+                    any_object, use_min_scalar,
                     types,
                     &no_castable_output, &err_src_typecode,
                     &err_dst_typecode)) {
@@ -1452,20 +1514,14 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
     int n_specified = 0;
     int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
     char *ufunc_name;
-    int no_castable_output, all_inputs_scalar;
+    int no_castable_output, use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
     ufunc_name = self->name ? self->name : "(unknown)";
 
-    /* Check whether all the inputs are scalar */
-    all_inputs_scalar = 1;
-    for(i = 0; i < nin; ++i) {
-        if (PyArray_NDIM(op[i]) > 0) {
-            all_inputs_scalar = 0;
-        }
-    }
+    use_min_scalar = should_use_min_scalar(op, nin);
 
     /* Fill in specified_types from the tuple or string */
     if (PyTuple_Check(type_tup)) {
@@ -1559,7 +1615,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
         switch (find_ufunc_specified_userloop(self,
                         n_specified, specified_types,
                         op, casting,
-                        buffersize, any_object, all_inputs_scalar,
+                        buffersize, any_object, use_min_scalar,
                         out_dtype, out_innerloop, out_innerloopdata,
                         out_trivial_loop_ok)) {
             /* Error */
@@ -1604,7 +1660,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
         NPY_UF_DBG_PRINT("It matches, confirming type casting\n");
         switch (ufunc_loop_matches(self, op,
                     casting, casting,
-                    any_object, all_inputs_scalar,
+                    any_object, use_min_scalar,
                     types,
                     &no_castable_output, &err_src_typecode,
                     &err_dst_typecode)) {
@@ -2116,7 +2172,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     int trivial_loop_ok = 0;
 
-    /* TODO: For 1.6, the default should probably be NPY_CORDER */
     NPY_ORDER order = NPY_KEEPORDER;
     /*
      * Many things in NumPy do unsafe casting (doing int += float, etc).
