@@ -174,6 +174,13 @@ Casting Rules
 .. index::
    pair: ufunc; casting rules
 
+.. note::
+
+   In NumPy 1.6.0, a type promotion API was created to encapsulate the
+   mechansim for determining output types. See the functions
+   :func:`result_type`, :func:`promote_types`, and
+   :func:`min_scalar_type` for more details.
+
 At the core of every ufunc is a one-dimensional strided loop that
 implements the actual function for a specific type combination. When a
 ufunc is created, it is given a static list of inner loops and a
@@ -267,15 +274,14 @@ types, are interpreted accordingly in ufuncs) without worrying about
 whether the precision of the scalar constant will cause upcasting on
 your large (small precision) array.
 
-
 :class:`ufunc`
 ==============
 
 Optional keyword arguments
 --------------------------
 
-All ufuncs take optional keyword arguments. These represent rather
-advanced usage and will not typically be used by most Numpy users.
+All ufuncs take optional keyword arguments. Most of these represent
+advanced usage and will not typically be used.
 
 .. index::
    pair: ufunc; keyword arguments
