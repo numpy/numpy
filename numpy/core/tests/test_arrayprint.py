@@ -87,5 +87,25 @@ class TestArray2String(TestCase):
         assert_raises(TypeError, np.array2string, x, formatter=lambda x: x)
 
 
+class TestPrintOptions:
+    """Test getting and setting global print options."""
+    def setUp(self):
+        self.oldopts = np.get_printoptions()
+
+    def tearDown(self):
+        np.set_printoptions(**self.oldopts)
+
+    def test_basic(self):
+        x = np.array([1.5, 0, 1.234567890])
+        assert_equal(repr(x), "array([ 1.5       ,  0.        ,  1.23456789])")
+        np.set_printoptions(precision=4)
+        assert_equal(repr(x), "array([ 1.5   ,  0.    ,  1.2346])")
+
+    def test_formatter(self):
+        x = np.arange(3)
+        np.set_printoptions(formatter=lambda x: str(x-1))
+        assert_equal(repr(x), "array([-1, 0, 1])")
+
+
 if __name__ == "__main__":
     run_module_suite()

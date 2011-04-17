@@ -29,13 +29,14 @@ _float_output_suppress_small = False
 _line_width = 75
 _nan_str = 'nan'
 _inf_str = 'inf'
+_formatter = None  # formatting function for array elements
 
 if sys.version_info[0] >= 3:
     from functools import reduce
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None,
-                     nanstr=None, infstr=None):
+                     nanstr=None, infstr=None, formatter=None):
     """
     Set printing options.
 
@@ -62,6 +63,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
         String representation of floating point infinity (default inf).
+    formatter : callable, optional
+        If not None, ``formatter(x)`` is called for each array element x to
+        obtain its string representation. The precision argument is ignored.
+        `formatter` is always reset with a call to `set_printoptions`.
 
     See Also
     --------
@@ -91,15 +96,22 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     >>> x**2 - (x + eps)**2
     array([-0., -0.,  0.,  0.])
 
+    A custom formatter can be used to display array elements as desired:
+
+    >>> np.set_printoptions(formatter=lambda x: 'int: '+str(-x))
+    >>> np.arange(3)
+    array([int: 0, int: -1, int: -2])
+
     To put back the default options, you can use:
 
-    >>> np.set_printoptions(edgeitems=3,infstr='Inf',
-    ... linewidth=75, nanstr='NaN', precision=8,
-    ... suppress=False, threshold=1000)
+    >>> np.set_printoptions(edgeitems=3,infstr='inf',
+    ... linewidth=75, nanstr='nan', precision=8,
+    ... suppress=False, threshold=1000, formatter=None)
     """
 
     global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
-           _line_width, _float_output_suppress_small, _nan_str, _inf_str
+           _line_width, _float_output_suppress_small, _nan_str, _inf_str, \
+           _formatter
     if linewidth is not None:
         _line_width = linewidth
     if threshold is not None:
@@ -114,6 +126,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         _nan_str = nanstr
     if infstr is not None:
         _inf_str = infstr
+    _formatter = formatter
 
 def get_printoptions():
     """
@@ -131,6 +144,7 @@ def get_printoptions():
           - suppress : bool
           - nanstr : str
           - infstr : str
+          - formatter : callable
 
         For a full description of these options, see `set_printoptions`.
 
@@ -145,7 +159,8 @@ def get_printoptions():
              linewidth=_line_width,
              suppress=_float_output_suppress_small,
              nanstr=_nan_str,
-             infstr=_inf_str)
+             infstr=_inf_str,
+             formatter=_formatter)
     return d
 
 def _leading_trailing(a):
@@ -183,6 +198,9 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 
     if suppress_small is None:
         suppress_small = _float_output_suppress_small
+
+    if formatter is None:
+        formatter = _formatter
 
     if a.size > _summaryThreshold:
         summary_insert = "..., "
@@ -286,9 +304,8 @@ def array2string(a, max_line_width=None, precision=None,
         A function that accepts an ndarray and returns a string.  Used only
         when the shape of `a` is equal to ``()``, i.e. for 0-D arrays.
     formatter : callable, optional
-        If given, calls `formatter` for each array element. Should return the
-        desired string representation of array elements. If given, the
-        `precision` argument is ignored.
+        If not None, ``formatter(x)`` is called for each array element x to
+        obtain its string representation. The precision argument is ignored.
 
     Returns
     -------
