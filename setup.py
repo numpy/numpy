@@ -114,7 +114,12 @@ if not release:
         GIT_REVISION = git_version()
     elif os.path.exists('numpy/version.py'):
         # must be a source distribution, use existing version file
-        from numpy.version import git_revision as GIT_REVISION
+        try:
+            from numpy.version import git_revision as GIT_REVISION
+        except ImportError:
+            raise ImportError("Unable to import git_revision. Try removing " \
+                              "numpy/version.py and the build directory " \
+                              "before building.")
     else:
         GIT_REVISION = "Unknown"
 
