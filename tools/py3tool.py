@@ -268,7 +268,7 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()
-            lib2to3.main.main("lib2to3.fixes", ['-w'] + flags.split()+filenames)
+            lib2to3.main.main("lib2to3.fixes", ['-w', '-n'] + flags.split()+filenames)
         finally:
             sys.stdout = _old_stdout
 
