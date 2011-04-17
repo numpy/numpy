@@ -138,7 +138,8 @@ class TestRegression(TestCase):
         self.assertRaises(TypeError,np.dtype,
                               {'names':['a'],'formats':['foo']},align=1)
 
-    @dec.knownfailureif(sys.version_info[0] >= 3,
+    @dec.knownfailureif((sys.version_info[0] >= 3) or
+                        (sys.platform == "win32" and platform.architecture()[0] == "64bit"),
                         "numpy.intp('0xff', 16) not supported on Py3, "
                         "as it does not inherit from Python int")
     def test_intp(self,level=rlevel):
