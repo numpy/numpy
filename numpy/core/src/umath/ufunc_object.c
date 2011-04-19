@@ -3438,6 +3438,9 @@ finish:
     if (iter_inner != NULL) {
         NpyIter_Deallocate(iter_inner);
     }
+
+    Py_XDECREF(errobj);
+
     return (PyObject *)out;
 
 fail:
@@ -3826,6 +3829,9 @@ finish:
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }
+
+    Py_XDECREF(errobj);
+
     return (PyObject *)out;
 
 fail:
