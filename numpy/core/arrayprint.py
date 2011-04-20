@@ -70,7 +70,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     See Also
     --------
-    get_printoptions, set_string_function
+    get_printoptions, set_string_function, array2string
 
     Examples
     --------
@@ -98,9 +98,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     A custom formatter can be used to display array elements as desired:
 
-    >>> np.set_printoptions(formatter=lambda x: 'int: '+str(-x))
-    >>> np.arange(3)
+    >>> np.set_printoptions(formatter={'all':lambda x: 'int: '+str(-x)})
+    >>> x = np.arange(3)
+    >>> x
     array([int: 0, int: -1, int: -2])
+    >>> np.set_printoptions()  # formatter gets reset
+    >>> x
+    array([0, 1, 2])
 
     To put back the default options, you can use:
 
@@ -144,7 +148,7 @@ def get_printoptions():
           - suppress : bool
           - nanstr : str
           - infstr : str
-          - formatter : callable
+          - formatter : dict of callables
 
         For a full description of these options, see `set_printoptions`.
 
@@ -209,50 +213,70 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         summary_insert = ""
         data = ravel(a)
 
+    formatdict = {'bool' : _boolFormatter,
+                  'int' : _formatInteger(data),
+                  'timeint' : str,
+                  'float' : FloatFormat(data, precision, suppress_small),
+                  'longfloat' : LongFloatFormat(precision),
+                  'complexfloat' : ComplexFormat(data, precision,
+                                                 suppress_small),
+                  'longcomplexfloat' : LongComplexFormat(precision),
+                  'numpystr' : repr,
+                  'str' : str}
     if formatter is not None:
-        # basic sanity check
-        try:
-            _try_a_float = formatter(1.0)
-            if not isinstance(_try_a_float, basestring):
-                raise TypeError("`formatter` does not return a string.")
-        except:
-            # We don't know what formatter is, so this could raise anything
-            pass
-        format_function = formatter
-    else:
-        try:
-            format_function = a._format
-        except AttributeError:
-            dtypeobj = a.dtype.type
-            if issubclass(dtypeobj, _nt.bool_):
-                # make sure True and False line up.
-                format_function = _boolFormatter
-            elif issubclass(dtypeobj, _nt.integer):
-                if issubclass(dtypeobj, _nt.timeinteger):
-                    format_function = str
-                else:
-                    max_str_len = max(len(str(maximum.reduce(data))),
-                                      len(str(minimum.reduce(data))))
-                    format = '%' + str(max_str_len) + 'd'
-                    format_function = lambda x: _formatInteger(x, format)
-            elif issubclass(dtypeobj, _nt.floating):
-                if issubclass(dtypeobj, _nt.longfloat):
-                    format_function = LongFloatFormat(precision)
-                else:
-                    format_function = FloatFormat(data, precision, suppress_small)
-            elif issubclass(dtypeobj, _nt.complexfloating):
-                if issubclass(dtypeobj, _nt.clongfloat):
-                    format_function = LongComplexFormat(precision)
-                else:
-                    format_function = ComplexFormat(data, precision, suppress_small)
-            elif issubclass(dtypeobj, _nt.unicode_) or \
-                     issubclass(dtypeobj, _nt.string_):
-                format_function = repr
-            else:
-                format_function = str
+        fkeys = formatter.keys()
+        if 'all' in fkeys and formatter['all'] is not None:
+            for key in formatdict.keys():
+                formatdict[key] = formatter['all']
+        if 'int_kind' in fkeys and formatter['int_kind'] is not None:
+            for key in ['int', 'timeint']:
+                formatdict[key] = formatter['int_kind']
+        if 'float_kind' in fkeys and formatter['float_kind'] is not None:
+            for key in ['float', 'longfloat']:
+                formatdict[key] = formatter['float_kind']
+        if 'complex_kind' in fkeys and formatter['complex_kind'] is not None:
+            for key in ['complexfloat', 'longcomplexfloat']:
+                formatdict[key] = formatter['complex_kind']
+        if 'str_kind' in fkeys and formatter['str_kind'] is not None:
+            for key in ['numpystr', 'str']:
+                formatdict[key] = formatter['str_kind']
+        for key in formatdict.keys():
+            if key in fkeys and formatter[key] is not None:
+                formatdict[key] = formatter[key]
 
-    next_line_prefix = " " # skip over "["
-    next_line_prefix += " "*len(prefix)                  # skip over array(
+    try:
+        format_function = a._format
+        msg = "The `_format` attribute is deprecated in Numpy 2.0 and " \
+              "will be removed in 2.1. Use the `formatter` kw instead."
+        import warnings
+        warnings.warn(msg, DeprecationWarning)
+    except AttributeError:
+        # find the right formatting function for the array
+        dtypeobj = a.dtype.type
+        if issubclass(dtypeobj, _nt.bool_):
+            format_function = formatdict['bool']
+        elif issubclass(dtypeobj, _nt.integer):
+            if issubclass(dtypeobj, _nt.timeinteger):
+                format_function = formatdict['timeint']
+            else:
+                format_function = formatdict['int']
+        elif issubclass(dtypeobj, _nt.floating):
+            if issubclass(dtypeobj, _nt.longfloat):
+                format_function = formatdict['longfloat']
+            else:
+                format_function = formatdict['float']
+        elif issubclass(dtypeobj, _nt.complexfloating):
+            if issubclass(dtypeobj, _nt.clongfloat):
+                format_function = formatdict['longcomplexfloat']
+            else:
+                format_function = formatdict['complexfloat']
+        elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
+            format_function = formatdict['numpystr']
+        else:
+            format_function = formatdict['str']
+
+    next_line_prefix = " "                # skip over "["
+    next_line_prefix += " "*len(prefix)   # skip over array(
 
     lst = _formatArray(a, format_function, len(a.shape), max_line_width,
                        next_line_prefix, separator,
@@ -303,18 +327,33 @@ def array2string(a, max_line_width=None, precision=None,
     style : function, optional
         A function that accepts an ndarray and returns a string.  Used only
         when the shape of `a` is equal to ``()``, i.e. for 0-D arrays.
-    formatter : callable, optional
-        If not None, ``formatter(x)`` is called for each array element x to
-        obtain its string representation. The precision argument is ignored.
+    formatter : dict of callables, optional
+        If not None, the keys should be in ``{'all', 'bool', 'int_kind', 'int',
+        'timeint', 'float_kind', 'float', 'longfloat', 'complex_kind',
+        'complexfloat', 'longcomplexfloat', 'str'}``.  'all' sets a single
+        formatter for all array dtypes.  The keys 'int_kind', 'float_kind' and
+        'complex_kind' handle all types of their kind, while other keys are
+        more specific.  The callables should return a string.  Types that are
+        not specified (by their corresponding keys) are handled by the default
+        formatters.
 
     Returns
     -------
     array_str : str
         String representation of the array.
 
+    Raises
+    ------
+    TypeError : if a callable in `formatter` does not return a string.
+
     See Also
     --------
-    array_str, array_repr, set_printoptions
+    array_str, array_repr, set_printoptions, get_printoptions
+
+    Notes
+    -----
+    If a formatter is specified for a certain type, the `precision` keyword is
+    ignored for that type.
 
     Examples
     --------
@@ -323,12 +362,24 @@ def array2string(a, max_line_width=None, precision=None,
     ...                       suppress_small=True)
     [ 0., 1., 2., 3.]
 
+    >>> x  = np.arange(3.)
+    >>> np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x})
+    '[0.00 1.00 2.00]'
+
+    >>> x  = np.arange(3)
+    >>> np.array2string(x, formatter={'int':lambda x: hex(x)})
+    '[0x0L 0x1L 0x2L]'
+
     """
 
     if a.shape == ():
         x = a.item()
         try:
             lst = a._format(x)
+            msg = "The `_format` attribute is deprecated in Numpy 2.0 and " \
+                  "will be removed in 2.1. Use the `formatter` kw instead."
+            import warnings
+            warnings.warn(msg, DeprecationWarning)
         except AttributeError:
             if isinstance(x, tuple):
                 x = _convert_arrays(x)
@@ -424,7 +475,12 @@ class FloatFormat(object):
         self.exp_format = False
         self.large_exponent = False
         self.max_str_len = 0
-        self.fillFormat(data)
+        try:
+            self.fillFormat(data)
+        except (TypeError, NotImplementedError):
+            # if reduce(data) fails, this instance will not be called, just
+            # instantiated in formatdict.
+            pass
 
     def fillFormat(self, data):
         import numeric as _nc
@@ -522,11 +578,22 @@ def _digits(x, precision, format):
 
 _MAXINT = sys.maxint
 _MININT = -sys.maxint-1
-def _formatInteger(x, format):
-    if _MININT < x < _MAXINT:
-        return format % x
-    else:
-        return "%s" % x
+class _formatInteger(object):
+    def __init__(self, data):
+        try:
+            max_str_len = max(len(str(maximum.reduce(data))),
+                              len(str(minimum.reduce(data))))
+            self.format = '%' + str(max_str_len) + 'd'
+        except TypeError, NotImplementedError:
+            # if reduce(data) fails, this instance will not be called, just
+            # instantiated in formatdict.
+            pass
+
+    def __call__(self, x):
+        if _MININT < x < _MAXINT:
+            return self.format % x
+        else:
+            return "%s" % x
 
 class LongFloatFormat(object):
     # XXX Have to add something to determine the width to use a la FloatFormat
@@ -584,5 +651,3 @@ class ComplexFormat(object):
         else:
             i = i + 'j'
         return r + i
-
-## end
