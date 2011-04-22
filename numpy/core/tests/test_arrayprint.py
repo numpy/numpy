@@ -94,6 +94,8 @@ class TestArray2String(TestCase):
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
+        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) == \
+            '[abcabc defdef]')
 
 
 class TestPrintOptions:
