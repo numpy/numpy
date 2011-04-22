@@ -57,7 +57,7 @@ class IntelFCompiler(BaseIntelFCompiler):
         return ["-FR"]
 
     def get_flags_opt(self):
-        return ['-O3','-unroll']
+        return ['-O1']
 
     def get_flags_arch(self):
         v = self.get_version()
@@ -201,7 +201,7 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return ['/4Yb','/d2']
 
     def get_flags_opt(self):
-        return ['/O3','/Qip']
+        return ['/O1']
 
     def get_flags_arch(self):
         opt = []
