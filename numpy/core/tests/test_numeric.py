@@ -379,6 +379,10 @@ class TestTypes(TestCase):
         assert_equal(promote_func(cld,f64), np.dtype(clongdouble))
 
         # coercion between scalars and 1-D arrays
+        assert_equal(promote_func(array([b]),i8), np.dtype(int8))
+        assert_equal(promote_func(array([b]),u8), np.dtype(uint8))
+        assert_equal(promote_func(array([b]),i32), np.dtype(int32))
+        assert_equal(promote_func(array([b]),u32), np.dtype(uint32))
         assert_equal(promote_func(array([i8]),i64), np.dtype(int8))
         assert_equal(promote_func(u64,array([i32])), np.dtype(int32))
         assert_equal(promote_func(i64,array([u32])), np.dtype(uint32))
@@ -403,7 +407,7 @@ class TestTypes(TestCase):
         assert_equal(promote_func(array([u16]), i32), np.dtype(uint16))
         # float and complex are treated as the same "kind" for
         # the purposes of array-scalar promotion, so that you can do
-        # (1j * float32array) to get a complex64 array instead of
+        # (0j + float32array) to get a complex64 array instead of
         # a complex128 array.
         assert_equal(promote_func(array([f32]),c128), np.dtype(complex64))
 
@@ -411,6 +415,51 @@ class TestTypes(TestCase):
         def res_type(a, b):
             return np.add(a, b).dtype
         self.check_promotion_cases(res_type)
+
+        # Use-case: float/complex scalar * bool/int8 array
+        #           shouldn't narrow the float/complex type
+        for a in [np.array([True,False]), np.array([-3,12], dtype=np.int8)]:
+            b = 1.234 * a
+            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            b = np.longdouble(1.234) * a
+            assert_equal(b.dtype, np.dtype(np.longdouble),
+                                                "array type %s" % a.dtype)
+            b = np.float64(1.234) * a
+            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            b = np.float32(1.234) * a
+            assert_equal(b.dtype, np.dtype('f4'), "array type %s" % a.dtype)
+            b = np.float16(1.234) * a
+            assert_equal(b.dtype, np.dtype('f2'), "array type %s" % a.dtype)
+
+            b = 1.234j * a
+            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            b = np.clongdouble(1.234j) * a
+            assert_equal(b.dtype, np.dtype(np.clongdouble),
+                                                "array type %s" % a.dtype)
+            b = np.complex128(1.234j) * a
+            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            b = np.complex64(1.234j) * a
+            assert_equal(b.dtype, np.dtype('c8'), "array type %s" % a.dtype)
+
+        # The following use-case is problematic, and to resolve its
+        # tricky side-effects requires more changes.
+        #
+        ## Use-case: (1-t)*a, where 't' is a boolean array and 'a' is
+        ##            a float32, shouldn't promote to float64
+        #a = np.array([1.0, 1.5], dtype=np.float32)
+        #t = np.array([True, False])
+        #b = t*a
+        #assert_equal(b, [1.0, 0.0])
+        #assert_equal(b.dtype, np.dtype('f4'))
+        #b = (1-t)*a
+        #assert_equal(b, [0.0, 1.5])
+        #assert_equal(b.dtype, np.dtype('f4'))
+        ## Probably ~t (bitwise negation) is more proper to use here,
+        ## but this is arguably less intuitive to understand at a glance, and
+        ## would fail if 't' is actually an integer array instead of boolean:
+        #b = (~t)*a
+        #assert_equal(b, [0.0, 1.5])
+        #assert_equal(b.dtype, np.dtype('f4'))
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
