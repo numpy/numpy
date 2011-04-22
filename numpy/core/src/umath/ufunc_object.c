@@ -442,7 +442,11 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 
 
 
-/*UFUNC_API*/
+/*UFUNC_API
+ *
+ * On return, if errobj is populated with a non-NULL value, the caller
+ * owns a new reference to errobj.
+ */
 NPY_NO_EXPORT int
 PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
