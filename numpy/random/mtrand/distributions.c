@@ -231,8 +231,8 @@ double rk_f(rk_state *state, double dfnum, double dfden)
 
 double rk_noncentral_f(rk_state *state, double dfnum, double dfden, double nonc)
 {
-    return ((rk_noncentral_chisquare(state, dfnum, nonc)*dfden) /
-            (rk_chisquare(state, dfden)*dfnum));
+    double t = rk_noncentral_chisquare(state, dfnum, nonc) * dfden;
+    return t / (rk_chisquare(state, dfden) * dfnum);
 }
 
 long rk_binomial_btpe(rk_state *state, long n, double p)
