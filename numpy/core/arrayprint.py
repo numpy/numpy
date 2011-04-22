@@ -63,14 +63,23 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
         String representation of floating point infinity (default inf).
-    formatter : callable, optional
-        If not None, ``formatter(x)`` is called for each array element x to
-        obtain its string representation. The precision argument is ignored.
-        `formatter` is always reset with a call to `set_printoptions`.
+    formatter : dict of callables, optional
+        If not None, the keys should be in ``{'all', 'bool', 'int_kind', 'int',
+        'timeint', 'float_kind', 'float', 'longfloat', 'complex_kind',
+        'complexfloat', 'longcomplexfloat', 'str'}``.  'all' sets a single
+        formatter for all array dtypes.  The keys 'int_kind', 'float_kind' and
+        'complex_kind' handle all types of their kind, while other keys are
+        more specific.  The callables should return a string.  Types that are
+        not specified (by their corresponding keys) are handled by the default
+        formatters.
 
     See Also
     --------
     get_printoptions, set_string_function, array2string
+
+    Notes
+    -----
+    `formatter` is always reset with a call to `set_printoptions`.
 
     Examples
     --------
