@@ -1619,22 +1619,23 @@ static int
 npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
                                                       NpyIter *iter)
 {
+#if !(@const_itflags@&NPY_ITFLAG_EXLOOP) || (@const_ndim@ > 1)
     const npy_uint32 itflags = @const_itflags@;
-#if @const_ndim@ >= NPY_MAXDIMS
+#  if @const_ndim@ >= NPY_MAXDIMS
     int idim, ndim = NIT_NDIM(iter);
-#endif
-#if @const_nop@ < NPY_MAXDIMS
+#  endif
+#  if @const_nop@ < NPY_MAXDIMS
     const int nop = @const_nop@;
-#else
+#  else
     int nop = NIT_NOP(iter);
-#endif
+#  endif
 
-    npy_intp istrides, nstrides, sizeof_axisdata;
-#if @const_ndim@ > 0
     NpyIter_AxisData *axisdata0;
+    npy_intp istrides, nstrides = NAD_NSTRIDES();
 #endif
 #if @const_ndim@ > 1
     NpyIter_AxisData *axisdata1;
+    npy_intp sizeof_axisdata;
 #endif
 #if @const_ndim@ > 2
     NpyIter_AxisData *axisdata2;
@@ -1647,10 +1648,13 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
     }
 #endif
 
-    nstrides = NAD_NSTRIDES();
+#if @const_ndim@ > 1
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+#endif
 
+#  if !(@const_itflags@&NPY_ITFLAG_EXLOOP) || (@const_ndim@ > 1)
     axisdata0 = NIT_AXISDATA(iter);
+#  endif
 #  if !(@const_itflags@&NPY_ITFLAG_EXLOOP)
     /* Increment index 0 */
     NAD_INDEX(axisdata0)++;
@@ -1666,9 +1670,6 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
     /* Finished when the index equals the shape */
     return NAD_INDEX(axisdata0) < NAD_SHAPE(axisdata0);
 #  else
-    /* Get rid of unused variable warning */
-    istrides = 0;
-
     return 0;
 #  endif
 
@@ -4335,14 +4336,13 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
 
             /* If this axis hasn't been touched yet, process it */
             if (NAD_INDEX(ad_i) == 1) {
-                npy_int8 pidim = perm[idim], qidim;
+                npy_int8 pidim = perm[idim];
                 npy_intp tmp;
                 NpyIter_AxisData *ad_p, *ad_q;
 
                 if (pidim != idim) {
                     /* Follow the cycle, copying the data */
                     for (i = 0; i < size; ++i) {
-                        qidim = (npy_int8)idim;
                         pidim = perm[idim];
                         ad_q = ad_i;
                         tmp = *((npy_intp*)ad_q + i);
@@ -4350,7 +4350,6 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
                             ad_p = NIT_INDEX_AXISDATA(axisdata, pidim);
                             *((npy_intp*)ad_q + i) = *((npy_intp*)ad_p + i);
 
-                            qidim = pidim;
                             ad_q = ad_p;
                             pidim = perm[(int)pidim];
                         }
@@ -5347,7 +5346,6 @@ npyiter_copy_from_buffers(NpyIter *iter)
 
     npy_intp reduce_outerdim = 0;
     npy_intp *reduce_outerstrides = NULL;
-    char **reduce_outerptrs = NULL;
 
     PyArray_StridedTransferFn *stransfer = NULL;
     void *transferdata = NULL;
@@ -5365,7 +5363,6 @@ npyiter_copy_from_buffers(NpyIter *iter)
     if (itflags&NPY_ITFLAG_REDUCE) {
         reduce_outerdim = NBF_REDUCE_OUTERDIM(bufferdata);
         reduce_outerstrides = NBF_REDUCE_OUTERSTRIDES(bufferdata);
-        reduce_outerptrs = NBF_REDUCE_OUTERPTRS(bufferdata);
         reduce_outeraxisdata = NIT_INDEX_AXISDATA(axisdata, reduce_outerdim);
         transfersize *= NBF_REDUCE_OUTERSIZE(bufferdata);
     }

@@ -612,7 +612,6 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         return ret;
     }
 
-finish:
     if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
             || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
         PyErr_SetString(PyExc_ValueError,

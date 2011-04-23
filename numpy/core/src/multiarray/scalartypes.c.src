@@ -1217,12 +1217,11 @@ gentype_byteswap(PyObject *self, PyObject *args)
     else {
         /* get the data, copyswap it and pass it to a new Array scalar */
         char *data;
-        int numbytes;
         PyArray_Descr *descr;
         PyObject *new;
         char *newmem;
 
-        numbytes = gentype_getreadbuf(self, 0, (void **)&data);
+        gentype_getreadbuf(self, 0, (void **)&data);
         descr = PyArray_DescrFromScalar(self);
         newmem = _pya_malloc(descr->elsize);
         if (newmem == NULL) {

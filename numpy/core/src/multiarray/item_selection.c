@@ -1786,7 +1786,6 @@ PyArray_Nonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptr;
-    npy_intp *innersizeptr;
 
     /* Allocate the result as a 2D array */
     ret_dims[0] = nonzero_count;
@@ -1845,7 +1844,6 @@ PyArray_Nonzero(PyArrayObject *self)
             return NULL;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         multi_index = (npy_intp *)PyArray_DATA(ret);
 
