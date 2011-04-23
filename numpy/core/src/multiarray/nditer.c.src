@@ -192,7 +192,7 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         (iter->iterend)
 #define NIT_ITERINDEX(iter) \
         (iter->iterindex)
-#define NIT_PERM(iter)  ((npy_int8*)( \
+#define NIT_PERM(iter)  ((npy_int8 *)( \
         &(iter)->iter_flexdata + NIT_PERM_OFFSET()))
 #define NIT_DTYPES(iter) ((PyArray_Descr **)( \
         &(iter)->iter_flexdata + NIT_DTYPES_OFFSET(itflags, ndim, nop)))
@@ -4438,7 +4438,7 @@ npyiter_coalesce_axes(NpyIter *iter)
 
         /* Reset to an identity perm */
         for (idim = 0; idim < new_ndim; ++idim) {
-            perm[idim] = (char)idim;
+            perm[idim] = (npy_int8)idim;
         }
         NIT_NDIM(iter) = new_ndim;
     }
