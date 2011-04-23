@@ -978,14 +978,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             return NULL;
         }
 
-        size *= dim;
-
-        if (size > largest) {
+        if (dim > largest) {
             PyErr_SetString(PyExc_ValueError,
                             "array is too big.");
             Py_DECREF(descr);
             return NULL;
         }
+        size *= dim;
+        largest /= dim;
     }
 
     self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
