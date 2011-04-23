@@ -192,7 +192,7 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         (iter->iterend)
 #define NIT_ITERINDEX(iter) \
         (iter->iterindex)
-#define NIT_PERM(iter)  ((char*)( \
+#define NIT_PERM(iter)  ((npy_int8*)( \
         &(iter)->iter_flexdata + NIT_PERM_OFFSET()))
 #define NIT_DTYPES(iter) ((PyArray_Descr **)( \
         &(iter)->iter_flexdata + NIT_DTYPES_OFFSET(itflags, ndim, nop)))
@@ -398,7 +398,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     char *op_itflags;
     char **op_dataptr;
 
-    char *perm;
+    npy_int8 *perm;
     NpyIter_BufferData *bufferdata = NULL;
     int any_allocate = 0, any_missing_dtypes = 0,
             output_scalars = 0, need_subtype = 0;
@@ -542,7 +542,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     /* Initialize the perm to the identity */
     perm = NIT_PERM(iter);
     for(idim = 0; idim < ndim; ++idim) {
-        perm[idim] = (char)idim;
+        perm[idim] = (npy_int8)idim;
     }
 
     /*
@@ -976,7 +976,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
     int iop, nop = NIT_NOP(iter);
 
     int xdim = 0;
-    char *perm = NIT_PERM(iter);
+    npy_int8 *perm = NIT_PERM(iter);
     NpyIter_AxisData *axisdata_del = NIT_AXISDATA(iter), *axisdata;
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
@@ -1008,7 +1008,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
     }
 
     /* Reverse axis, since the iterator treats them that way */
-    axis = ndim-1-axis;
+    axis = ndim - 1 - axis;
 
     /* First find the axis in question */
     for (idim = 0; idim < ndim; ++idim) {
@@ -1018,7 +1018,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
             break;
         }
         /* If this is it, but it's iterated backward, must reverse the axis */
-        else if (-1-perm[idim] == axis) {
+        else if (-1 - perm[idim] == axis) {
             npy_intp *strides = NAD_STRIDES(axisdata_del);
             npy_intp shape = NAD_SHAPE(axisdata_del), offset;
 
@@ -1053,7 +1053,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
 
     /* Adjust the permutation */
     for (idim = 0; idim < ndim-1; ++idim) {
-        char p = (idim < xdim) ? perm[idim] : perm[idim+1];
+        npy_int8 p = (idim < xdim) ? perm[idim] : perm[idim+1];
         if (p >= 0) {
             if (p > axis) {
                 --p;
@@ -1336,7 +1336,7 @@ NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp *multi_index)
     npy_intp iterindex, factor;
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
-    char *perm;
+    npy_int8 *perm;
 
     if (!(itflags&NPY_ITFLAG_HASMULTIINDEX)) {
         PyErr_SetString(PyExc_ValueError,
@@ -1367,7 +1367,7 @@ NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp *multi_index)
     iterindex = 0;
     factor = 1;
     for (idim = 0; idim < ndim; ++idim) {
-        char p = perm[idim];
+        npy_int8 p = perm[idim];
         npy_intp i, shape;
 
         shape = NAD_SHAPE(axisdata);
@@ -2062,7 +2062,7 @@ npyiter_get_multi_index_itflags@tag_itflags@(
     npy_intp sizeof_axisdata;
     NpyIter_AxisData *axisdata;
 #if !((@const_itflags@)&NPY_ITFLAG_IDENTPERM)
-    char* perm = NIT_PERM(iter);
+    npy_int8 *perm = NIT_PERM(iter);
 #endif
 
     axisdata = NIT_AXISDATA(iter);
@@ -2075,12 +2075,12 @@ npyiter_get_multi_index_itflags@tag_itflags@(
     }
 #elif !((@const_itflags@)&NPY_ITFLAG_NEGPERM)
     for(idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        char p = perm[idim];
+        npy_int8 p = perm[idim];
         out_multi_index[ndim-p-1] = NAD_INDEX(axisdata);
     }
 #else
     for(idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        char p = perm[idim];
+        npy_int8 p = perm[idim];
         if (p < 0) {
             /* If the perm entry is negative, reverse the index */
             out_multi_index[ndim+p] = NAD_SHAPE(axisdata) - NAD_INDEX(axisdata) - 1;
@@ -2358,7 +2358,7 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
 
     int idim, sizeof_axisdata;
     NpyIter_AxisData *axisdata;
-    char *perm;
+    npy_int8 *perm;
 
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
@@ -2366,7 +2366,7 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
     if (itflags&NPY_ITFLAG_HASMULTIINDEX) {
         perm = NIT_PERM(iter);
         for(idim = 0; idim < ndim; ++idim) {
-            char p = perm[idim];
+            npy_int8 p = perm[idim];
             if (p < 0) {
                 outshape[ndim+p] = NAD_SHAPE(axisdata);
             }
@@ -2422,7 +2422,7 @@ NpyIter_CreateCompatibleStrides(NpyIter *iter,
 
     npy_intp sizeof_axisdata;
     NpyIter_AxisData *axisdata;
-    char *perm;
+    npy_int8 *perm;
 
     if (!(itflags&NPY_ITFLAG_HASMULTIINDEX)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -2436,7 +2436,7 @@ NpyIter_CreateCompatibleStrides(NpyIter *iter,
 
     perm = NIT_PERM(iter);
     for(idim = 0; idim < ndim; ++idim) {
-        char p = perm[idim];
+        npy_int8 p = perm[idim];
         if (p < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                     "Iterator CreateCompatibleStrides may only be called "
@@ -2679,7 +2679,7 @@ NpyIter_GetAxisStrideArray(NpyIter *iter, int axis)
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
 
-    char *perm = NIT_PERM(iter);
+    npy_int8 *perm = NIT_PERM(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
@@ -2695,7 +2695,7 @@ NpyIter_GetAxisStrideArray(NpyIter *iter, int axis)
 
         /* First find the axis in question */
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            if (perm[idim] == axis || -1-perm[idim] == axis) {
+            if (perm[idim] == axis || -1 - perm[idim] == axis) {
                 return NAD_STRIDES(axisdata);
             }
         }
@@ -3900,7 +3900,7 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
 
     NpyIter_AxisData *axisdata0, *axisdata;
     npy_intp sizeof_axisdata;
-    char *perm;
+    npy_int8 *perm;
     npy_intp baseoffset = 0;
 
     perm = NIT_PERM(iter);
@@ -3915,7 +3915,7 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
 
     if (op_axes != NULL) {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            char p;
+            npy_int8 p;
             int i;
             npy_intp shape;
 
@@ -3946,7 +3946,7 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
     }
     else {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            char p;
+            npy_int8 p;
             int i;
             npy_intp shape;
 
@@ -4201,7 +4201,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
 
     npy_intp i, temp, size;
     npy_intp *first, *last;
-    char *perm;
+    npy_int8 *perm;
 
     size = NIT_AXISDATA_SIZEOF(itflags, ndim, nop)/NPY_SIZEOF_INTP;
     first = (npy_intp*)NIT_AXISDATA(iter);
@@ -4221,7 +4221,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
     /* Store the perm we applied */
     perm = NIT_PERM(iter);
     for(i = ndim-1; i >= 0; --i, ++perm) {
-        *perm = (char)i;
+        *perm = (npy_int8)i;
     }
 
     NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_IDENTPERM;
@@ -4241,7 +4241,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
 
     npy_intp ax_i0, ax_i1, ax_ipos;
     char ax_j0, ax_j1;
-    char *perm;
+    npy_int8 *perm;
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
     int permuted = 0;
@@ -4335,14 +4335,14 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
 
             /* If this axis hasn't been touched yet, process it */
             if (NAD_INDEX(ad_i) == 1) {
-                char pidim = perm[idim], qidim;
+                npy_int8 pidim = perm[idim], qidim;
                 npy_intp tmp;
                 NpyIter_AxisData *ad_p, *ad_q;
 
                 if (pidim != idim) {
                     /* Follow the cycle, copying the data */
                     for (i = 0; i < size; ++i) {
-                        qidim = (char)idim;
+                        qidim = (npy_int8)idim;
                         pidim = perm[idim];
                         ad_q = ad_i;
                         tmp = *((npy_intp*)ad_q + i);
@@ -4434,7 +4434,7 @@ npyiter_coalesce_axes(NpyIter *iter)
      * compress the data into the new layout.
      */
     if (new_ndim < ndim) {
-        char *perm = NIT_PERM(iter);
+        npy_int8 *perm = NIT_PERM(iter);
 
         /* Reset to an identity perm */
         for (idim = 0; idim < new_ndim; ++idim) {
@@ -4464,7 +4464,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
 
-    char *perm = NIT_PERM(iter);
+    npy_int8 *perm = NIT_PERM(iter);
     npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS],
              stride = op_dtype->elsize;
     char reversestride[NPY_MAXDIMS], anyreverse = 0;
@@ -4503,7 +4503,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     if (op_axes != NULL) {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            char p;
+            npy_int8 p;
 
             /* Apply the perm to get the original axis */
             p = perm[idim];
@@ -4572,15 +4572,15 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     }
     else {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            char p;
+            npy_int8 p;
 
             /* Apply the perm to get the original axis */
             p = perm[idim];
             if (p < 0) {
-                i = op_ndim+p;
+                i = op_ndim + p;
             }
             else {
-                i = op_ndim-p-1;
+                i = op_ndim - p - 1;
             }
 
             if (i >= 0) {
