@@ -889,13 +889,11 @@ static int
 iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
                  PyArrayIterObject *val, int swap)
 {
-    PyArray_Descr *typecode;
     npy_intp num;
     PyArrayIterObject *ind_it;
     npy_intp index;
     PyArray_CopySwapFunc *copyswap;
 
-    typecode = self->ao->descr;
     copyswap = self->ao->descr->f->copyswap;
     if (ind->nd == 0) {
         num = *((npy_intp *)ind->data);

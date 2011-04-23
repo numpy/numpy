@@ -1417,8 +1417,6 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     PyObject *ret;
 
     npy_intp iop, nop;
-    PyArray_Descr **dtypes;
-    char **dataptrs;
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1427,8 +1425,6 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     }
 
     nop = NpyIter_GetNOp(self->iter);
-    dtypes = self->dtypes;
-    dataptrs = self->dataptrs;
 
     /* Return an array  or tuple of arrays with the values */
     if (nop == 1) {

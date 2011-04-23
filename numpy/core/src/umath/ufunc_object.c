@@ -3146,8 +3146,6 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
-        npy_intp *stride;
-        npy_intp *count_ptr;
 
         int itemsize = op_dtypes[0]->elsize;
 
@@ -3157,8 +3155,6 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        stride = NpyIter_GetInnerStrideArray(iter);
-        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
 
         /* Execute the loop with two nested iterators */
@@ -3696,8 +3692,6 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         char **dataptr;
         npy_intp count_m1;
         npy_intp stride0, stride1;
-        npy_intp *stride;
-        npy_intp *count_ptr;
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
         int itemsize = op_dtypes[0]->elsize;
@@ -3708,9 +3702,6 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        stride = NpyIter_GetInnerStrideArray(iter);
-        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
-
 
         /* Execute the loop with just the outer iterator */
         count_m1 = PyArray_DIM(op[1], axis)-1;
