@@ -978,6 +978,12 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             return NULL;
         }
 
+        /*
+         * Care needs to be taken to avoid integer overflow when
+         * multiplying the dimensions together to get the total size of the
+         * array. Hence before each multiplication we first check that the
+         * product will not exceed the maximum allowable size.
+         */
         if (dim > largest) {
             PyErr_SetString(PyExc_ValueError,
                             "array is too big.");
