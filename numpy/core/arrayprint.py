@@ -64,14 +64,29 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     infstr : str, optional
         String representation of floating point infinity (default inf).
     formatter : dict of callables, optional
-        If not None, the keys should be in ``{'all', 'bool', 'int_kind', 'int',
-        'timeint', 'float_kind', 'float', 'longfloat', 'complex_kind',
-        'complexfloat', 'longcomplexfloat', 'str'}``.  'all' sets a single
-        formatter for all array dtypes.  The keys 'int_kind', 'float_kind' and
-        'complex_kind' handle all types of their kind, while other keys are
-        more specific.  The callables should return a string.  Types that are
-        not specified (by their corresponding keys) are handled by the default
-        formatters.
+        If not None, the keys should indicate the type(s) that the respective
+        formatting function applies to.  Callables should return a string.
+        Types that are not specified (by their corresponding keys) are handled
+        by the default formatters.  Individual types for which a formatter
+        can be set are::
+
+            - 'bool'
+            - 'int'
+            - 'timeint' : a `numpy.timeinteger`
+            - 'float'
+            - 'longfloat' : 128-bit floats
+            - 'complexfloat'
+            - 'longcomplexfloat' : composed of two 128-bit floats
+            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'str' : all other strings
+
+        Other keys that can be used to set a group of types at once are::
+
+            - 'all' : sets all types
+            - 'int_kind' : sets 'int' and 'timeint'
+            - 'float_kind' : sets 'float' and 'longfloat'
+            - 'complex_kind' : sets 'complexfloat' and 'longcomplexfloat'
+            - 'str_kind' : sets 'str' and 'numpystr'
 
     See Also
     --------
