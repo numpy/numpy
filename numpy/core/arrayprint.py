@@ -223,7 +223,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         data = ravel(a)
 
     formatdict = {'bool' : _boolFormatter,
-                  'int' : _formatInteger(data),
+                  'int' : IntegerFormat(data),
                   'timeint' : str,
                   'float' : FloatFormat(data, precision, suppress_small),
                   'longfloat' : LongFloatFormat(precision),
@@ -233,24 +233,24 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'numpystr' : repr,
                   'str' : str}
     if formatter is not None:
-        fkeys = formatter.keys()
-        if 'all' in fkeys and formatter['all'] is not None:
+        fkeys = [k for k in formatter.keys() if formatter[k] is not None]
+        if 'all' in fkeys:
             for key in formatdict.keys():
                 formatdict[key] = formatter['all']
-        if 'int_kind' in fkeys and formatter['int_kind'] is not None:
+        if 'int_kind' in fkeys:
             for key in ['int', 'timeint']:
                 formatdict[key] = formatter['int_kind']
-        if 'float_kind' in fkeys and formatter['float_kind'] is not None:
+        if 'float_kind' in fkeys:
             for key in ['float', 'longfloat']:
                 formatdict[key] = formatter['float_kind']
-        if 'complex_kind' in fkeys and formatter['complex_kind'] is not None:
+        if 'complex_kind' in fkeys:
             for key in ['complexfloat', 'longcomplexfloat']:
                 formatdict[key] = formatter['complex_kind']
-        if 'str_kind' in fkeys and formatter['str_kind'] is not None:
+        if 'str_kind' in fkeys:
             for key in ['numpystr', 'str']:
                 formatdict[key] = formatter['str_kind']
         for key in formatdict.keys():
-            if key in fkeys and formatter[key] is not None:
+            if key in fkeys:
                 formatdict[key] = formatter[key]
 
     try:
@@ -284,13 +284,14 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         else:
             format_function = formatdict['str']
 
-    next_line_prefix = " "                # skip over "["
-    next_line_prefix += " "*len(prefix)   # skip over array(
+    # skip over "["
+    next_line_prefix = " "
+    # skip over array(
+    next_line_prefix += " "*len(prefix)
 
     lst = _formatArray(a, format_function, len(a.shape), max_line_width,
                        next_line_prefix, separator,
                        _summaryEdgeItems, summary_insert)[:-1]
-
     return lst
 
 def _convert_arrays(obj):
@@ -337,14 +338,29 @@ def array2string(a, max_line_width=None, precision=None,
         A function that accepts an ndarray and returns a string.  Used only
         when the shape of `a` is equal to ``()``, i.e. for 0-D arrays.
     formatter : dict of callables, optional
-        If not None, the keys should be in ``{'all', 'bool', 'int_kind', 'int',
-        'timeint', 'float_kind', 'float', 'longfloat', 'complex_kind',
-        'complexfloat', 'longcomplexfloat', 'str'}``.  'all' sets a single
-        formatter for all array dtypes.  The keys 'int_kind', 'float_kind' and
-        'complex_kind' handle all types of their kind, while other keys are
-        more specific.  The callables should return a string.  Types that are
-        not specified (by their corresponding keys) are handled by the default
-        formatters.
+        If not None, the keys should indicate the type(s) that the respective
+        formatting function applies to.  Callables should return a string.
+        Types that are not specified (by their corresponding keys) are handled
+        by the default formatters.  Individual types for which a formatter
+        can be set are::
+
+            - 'bool'
+            - 'int'
+            - 'timeint' : a `numpy.timeinteger`
+            - 'float'
+            - 'longfloat' : 128-bit floats
+            - 'complexfloat'
+            - 'longcomplexfloat' : composed of two 128-bit floats
+            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'str' : all other strings
+
+        Other keys that can be used to set a group of types at once are::
+
+            - 'all' : sets all types
+            - 'int_kind' : sets 'int' and 'timeint'
+            - 'float_kind' : sets 'float' and 'longfloat'
+            - 'complex_kind' : sets 'complexfloat' and 'longcomplexfloat'
+            - 'str_kind' : sets 'str' and 'numpystr'
 
     Returns
     -------
@@ -587,7 +603,7 @@ def _digits(x, precision, format):
 
 _MAXINT = sys.maxint
 _MININT = -sys.maxint-1
-class _formatInteger(object):
+class IntegerFormat(object):
     def __init__(self, data):
         try:
             max_str_len = max(len(str(maximum.reduce(data))),
