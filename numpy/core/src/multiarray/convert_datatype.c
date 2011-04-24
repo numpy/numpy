@@ -770,14 +770,14 @@ static int min_scalar_type_num(char *valueptr, int type_num,
             return NPY_BOOL;
         }
         case NPY_UBYTE: {
-            char value = *valueptr;
+            npy_ubyte value = *(npy_ubyte *)valueptr;
             if (value <= NPY_MAX_BYTE) {
                 *is_small_unsigned = 1;
             }
             return NPY_UBYTE;
         }
         case NPY_BYTE: {
-            char value = *valueptr;
+            npy_byte value = *(npy_byte *)valueptr;
             if (value >= 0) {
                 *is_small_unsigned = 1;
                 return NPY_UBYTE;
