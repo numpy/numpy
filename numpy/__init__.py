@@ -115,7 +115,7 @@ except NameError:
 
 if __NUMPY_SETUP__:
     import sys as _sys
-    _sys.stderr.write('Running from numpy source directory.')
+    _sys.stderr.write('Running from numpy source directory.\n')
     del _sys
 else:
     try:
