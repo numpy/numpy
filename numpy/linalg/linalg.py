@@ -1297,7 +1297,8 @@ def svd(a, full_matrices=1, compute_uv=1):
     iwork = zeros((8*min(m, n),), fortran_int)
     if isComplexType(t):
         lapack_routine = lapack_lite.zgesdd
-        rwork = zeros((5*min(m, n)*min(m, n) + 5*min(m, n),), real_t)
+        lrwork = min(m,n)*max(5*min(m,n)+7, 2*max(m,n)+2*min(m,n)+1)
+        rwork = zeros((lrwork,), real_t)
         lwork = 1
         work = zeros((lwork,), t)
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
