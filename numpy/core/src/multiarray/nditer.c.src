@@ -4241,7 +4241,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
     int iop, nop = NIT_NOP(iter);
 
     npy_intp ax_i0, ax_i1, ax_ipos;
-    char ax_j0, ax_j1;
+    npy_int8 ax_j0, ax_j1;
     npy_int8 *perm;
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
