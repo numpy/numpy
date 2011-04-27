@@ -1155,7 +1155,7 @@ class TestRegression(TestCase):
         """Ticket #1080."""
         assert_raises(ValueError, np.zeros, [1023]*10, np.int8)
         assert_raises(ValueError, np.zeros, [26244]*5, np.int8)
-        assert_raises(MemoryError, np.zeros, [2**30]*2, np.int8)
+        assert_raises(ValueError, np.zeros, [2**30]*2, np.int8)
 
     def test_dtype_keyerrors_(self):
         """Ticket #1106."""
