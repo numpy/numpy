@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import pickle
 import sys
+import platform
 import gc
 import copy
 from os import path
