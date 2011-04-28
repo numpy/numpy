@@ -1153,9 +1153,8 @@ class TestRegression(TestCase):
 
     def test_array_too_big(self):
         """Ticket #1080."""
-        assert_raises(ValueError, np.zeros, [1023]*10, np.int8)
+        assert_raises(ValueError, np.zeros, [975]*7, np.int8)
         assert_raises(ValueError, np.zeros, [26244]*5, np.int8)
-        assert_raises(ValueError, np.zeros, [2**30]*2, np.int8)
 
     def test_dtype_keyerrors_(self):
         """Ticket #1106."""
