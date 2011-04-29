@@ -3009,28 +3009,27 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     >>> a
     array([[10,  7,  4],
            [ 3,  2,  1]])
-    >>> np.percentile(a, 0.5)
+    >>> np.percentile(a, 50)
     3.5
     >>> np.percentile(a, 0.5, axis=0)
     array([ 6.5,  4.5,  2.5])
-    >>> np.percentile(a, 0.5, axis=1)
+    >>> np.percentile(a, 50, axis=1)
     array([ 7.,  2.])
 
-    >>> m = np.percentile(a, 0.5, axis=0)
+    >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 0.5, axis=0, out=m)
+    >>> np.percentile(a, 50, axis=0, out=m)
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
 
     >>> b = a.copy()
-    >>> np.percentile(b, 0.5, axis=1, overwrite_input=True)
+    >>> np.percentile(b, 50, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
-    >>> np.percentile(b, 0.5, axis=None, overwrite_input=True)
+    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
     3.5
-    >>> assert not np.all(a==b)
 
     """
     a = np.asarray(a)
