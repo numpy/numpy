@@ -1151,7 +1151,7 @@ class TestIO(object):
     def test_bool_fromstring(self):
         v = np.array([True,False,True,False], dtype=np.bool_)
         y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool_)
-        assert_array_equal(v, y) 
+        assert_array_equal(v, y)
 
     def test_empty_files_binary(self):
         f = open(self.filename, 'w')
@@ -1255,7 +1255,7 @@ class TestIO(object):
             # check only start and end for speed:
             assert_((a[:n] == testbytes).all())
             assert_((a[-n:] == testbytes).all())
-        except MemoryError:
+        except (MemoryError, ValueError):
             pass
 
     def test_string(self):
