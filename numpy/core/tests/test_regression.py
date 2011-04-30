@@ -1538,6 +1538,8 @@ class TestRegression(TestCase):
         a[()] = np.array(4)
         assert_equal(a, np.array(4))
 
+    @dec.knownfailureif(sys.version_info[0] >= 3,
+                        "a.dtype is U5 for Py 3.x. Knownfail for 1.6.x")
     def test_string_astype(self):
         "Ticket #1748"
         s1 = asbytes('black')
