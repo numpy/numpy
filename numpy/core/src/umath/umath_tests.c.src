@@ -271,6 +271,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     if (f == NULL) return NULL;
     core_enabled = ((PyUFuncObject*)f)->core_enabled;
+    Py_DECREF(f);
     return Py_BuildValue("i", core_enabled);
 }
 
