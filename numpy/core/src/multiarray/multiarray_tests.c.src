@@ -44,7 +44,6 @@ static int copy_@type@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
             ptr += 1;
         }
 
-        Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
         PyArray_ITER_NEXT(itx);
@@ -84,7 +83,6 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
             PyArrayNeighborhoodIter_Next(niterx);
         }
 
-        Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
         PyArray_ITER_NEXT(itx);
@@ -238,7 +236,6 @@ copy_double_double(PyArrayNeighborhoodIterObject *itx,
             ptr += 1;
             PyArrayNeighborhoodIter_Next(niterx);
         }
-        Py_INCREF(aout);
         PyList_Append(*out, (PyObject*)aout);
         Py_DECREF(aout);
         PyArrayNeighborhoodIter_Next(itx);
