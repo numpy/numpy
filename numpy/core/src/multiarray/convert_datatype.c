@@ -1059,15 +1059,12 @@ PyArray_MinScalarType(PyArrayObject *arr)
         int swap = !PyArray_ISNBO(dtype->byteorder);
         int is_small_unsigned = 0;
         /* An aligned memory buffer large enough to hold any type */
-#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
-        npy_longlong value;
-#else
-        npy_clongdouble value;
-#endif
+        npy_longlong value[4];
         dtype->f->copyswap(&value, data, swap, NULL);
 
         return PyArray_DescrFromType(
-                        min_scalar_type_num((char *)&value, dtype->type_num, &is_small_unsigned));
+                        min_scalar_type_num((char *)&value,
+                                dtype->type_num, &is_small_unsigned));
 
     }
 }
@@ -1240,11 +1237,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 int swap = !PyArray_ISNBO(tmp->byteorder);
                 int type_num;
                 /* An aligned memory buffer large enough to hold any type */
-#if NPY_SIZEOF_LONGLONG >= NPY_SIZEOF_CLONGDOUBLE
-                npy_longlong value;
-#else
-                npy_clongdouble value;
-#endif
+                npy_longlong value[4];
                 tmp->f->copyswap(&value, data, swap, NULL);
                 type_num = min_scalar_type_num((char *)&value,
                                         tmp->type_num, &tmp_is_small_unsigned);
