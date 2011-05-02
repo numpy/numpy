@@ -4466,6 +4466,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     self->core_signature = NULL;
     if (signature != NULL) {
         if (_parse_signature(self, signature) != 0) {
+            Py_DECREF(self);
             return NULL;
         }
     }
