@@ -53,8 +53,10 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
     dims[i] = (npy_intp)PyInt_AsLong(PySequence_GetItem(dims_capi,i));
 
   capi_arr_tmp = array_from_pyobj(type_num,dims,rank,intent|F2PY_INTENT_OUT,arr_capi);
-  if (capi_arr_tmp == NULL)
+  if (capi_arr_tmp == NULL) {
+    free(dims);
     return NULL;
+  }
   capi_buildvalue = Py_BuildValue("N",capi_arr_tmp);
   free(dims);
   return capi_buildvalue;
