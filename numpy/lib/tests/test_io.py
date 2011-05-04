@@ -487,11 +487,17 @@ class TestLoadTxt(TestCase):
         d.write(asbytes('0,1,2'))
         d.seek(0)
         x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=2)
-        assert_(x.shape == (3, 1))
+        assert_(x.shape == (1, 3))
         assert_raises(ValueError, np.loadtxt, d, ndmin=3)
         assert_raises(ValueError, np.loadtxt, d, ndmin=1.5)
         e = StringIO()
-        assert_(np.loadtxt(e, ndmin=2).shape == (0, 1,))
+        e.write(asbytes('0\n1\n2'))
+        e.seek(0)
+        x = np.loadtxt(e, dtype=int, delimiter=',', ndmin=2)
+        assert_(x.shape == (3, 1))
+        f = StringIO()
+        assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
+        assert_(np.loadtxt(f, ndmin=1).shape == (0,))
 
     def test_generator_source(self):
         def count():

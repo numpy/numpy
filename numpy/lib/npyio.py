@@ -625,7 +625,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
         data-type, arrays are returned for each field.  Default is False.
     ndmin : int, optional
-        The returned array must have at least `ndmin` dimensions.
+        The returned array will have at least `ndmin` dimensions.
+        Otherwise single-dimensional axes will be squeezed. 
         Legal values: 0 (default), 1 or 2.
         .. versionadded:: 1.6.0
 
@@ -801,6 +802,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh.close()
 
     X = np.array(X, dtype)
+    if X.ndim == 3 and X.shape[:2] == (1, 1):
+        X.shape = (1, -1)
 
     # Verify that the array has at least dimensions `ndmin`.
     # Check correctness of the values of `ndmin`
