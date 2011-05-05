@@ -180,8 +180,13 @@ def buildhooks(pymod):
                     #efargs.append(fargs[-1])
                     ifargs.append(func2subr.createfuncwrapper(b,signature=1))
                 else:
-                    fargs.append(b['name'])
-                    mfargs.append(fargs[-1])
+                    if wrap:
+                        fhooks[0]=fhooks[0]+wrap
+                        fargs.append('f2pywrap_%s_%s'%(m['name'],b['name']))
+                        ifargs.append(func2subr.createsubrwrapper(b,signature=1))
+                    else:
+                        fargs.append(b['name'])
+                        mfargs.append(fargs[-1])
                     #if '--external-modroutines' in options and options['--external-modroutines']:
                     #    outmess('\t\t\tapplying --external-modroutines for %s\n'%(b['name']))
                     #     efargs.append(fargs[-1])
