@@ -148,9 +148,13 @@ def createfuncwrapper(rout,signature=0):
     add(l)
 
     if need_interface:
-        add('interface')
-        add(rout['saved_interface'].lstrip())
-        add('end interface')
+        if f90mode:
+            # f90 module already defines needed interface
+            pass
+        else:
+            add('interface')
+            add(rout['saved_interface'].lstrip())
+            add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])
 
@@ -185,7 +189,7 @@ def createsubrwrapper(rout,signature=0):
                 v['dimension'][i] = dn
     rout['args'].extend(extra_args)
     need_interface = bool(extra_args)
-    
+
     ret = ['']
     def add(line,ret=ret):
         ret[0] = '%s\n      %s'%(ret[0],line)
@@ -225,9 +229,13 @@ def createsubrwrapper(rout,signature=0):
         add(var2fixfortran(vars,a,f90mode=f90mode))
 
     if need_interface:
-        add('interface')
-        add(rout['saved_interface'].lstrip())
-        add('end interface')
+        if f90mode:
+            # f90 module already defines needed interface
+            pass
+        else:
+            add('interface')
+            add(rout['saved_interface'].lstrip())
+            add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])
 
@@ -266,8 +274,7 @@ def assubr(rout):
                     break
             if flag:
                 fvar['intent'].append('out=%s' % (rname))
-
-        rout['args'] = [fname] + rout['args']
+        rout['args'][:] = [fname] + rout['args']
         return rout,createfuncwrapper(rout)
     if issubroutine_wrap(rout):
         fortranname = getfortranname(rout)
