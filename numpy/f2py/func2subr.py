@@ -90,7 +90,6 @@ def createfuncwrapper(rout,signature=0):
                 v['dimension'][i] = dn
     rout['args'].extend(extra_args)
     need_interface = bool(extra_args)
-
     
     ret = ['']
     def add(line,ret=ret):
@@ -143,8 +142,13 @@ def createfuncwrapper(rout,signature=0):
             dumped_args.append(a)
     for a in args:
         if a in dumped_args: continue
+        if isintent_in(vars[a]):
+            add(var2fixfortran(vars,a,f90mode=f90mode))
+            dumped_args.append(a)
+    for a in args:
+        if a in dumped_args: continue
         add(var2fixfortran(vars,a,f90mode=f90mode))
-
+            
     add(l)
 
     if need_interface:
