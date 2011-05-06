@@ -66,11 +66,8 @@ length arrays which caused unpredicted results. Thanks to Lorenz
 Hüdepohl for pointing out the correct way to interface routines with
 assumed shape arrays.
 
-In addition, f2py interprets Fortran expression ``size(array, dim)``
-as ``shape(array, dim-1)`` which makes it possible to automatically
-wrap Fortran routines that use two argument ``size`` function in
-dimension specifications. Before users were forced to apply this
-mapping manually.
+In addition, f2py supports now automatic wrapping of Fortran routines
+that use two argument ``size`` function in dimension specifications.
 
 
 Other new functions
