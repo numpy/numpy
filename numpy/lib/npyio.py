@@ -626,7 +626,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         data-type, arrays are returned for each field.  Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.
-        Otherwise single-dimensional axes will be squeezed. 
+        Otherwise mono-dimensional axes will be squeezed. 
         Legal values: 0 (default), 1 or 2.
         .. versionadded:: 1.6.0
 
@@ -802,6 +802,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh.close()
 
     X = np.array(X, dtype)
+    # Multicolumn data are returned with shape (1, N, M), i.e. 
+    # (1, 1, M) for a single row - remove the singleton dimension there
     if X.ndim == 3 and X.shape[:2] == (1, 1):
         X.shape = (1, -1)
 
@@ -809,15 +811,16 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Check correctness of the values of `ndmin`
     if not ndmin in [0, 1, 2]:
         raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
-    # Tweak the size and shape of the arrays
+    # Tweak the size and shape of the arrays - remove extraneous dimensions
     if X.ndim > ndmin:
         X = np.squeeze(X)
-    # Has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
+    # and ensure we have the minimum number of dimensions asked for
+    # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
     if X.ndim < ndmin:
         if ndmin == 1:
-            X.shape = (X.size, )
+            X = np.atleast_1d(X)
         elif ndmin == 2:
-            X.shape = (X.size, 1)
+            X = np.atleast_2d(X).T
 
     if unpack:
         if len(dtype_types) > 1:
