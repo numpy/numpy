@@ -2058,13 +2058,6 @@ def _eval_scalar(value,params):
                 % (msg,value,params.keys()))
     return value
 
-_size_call_sub = re.compile(r'size\s*\((?P<arg1>\w+)\s*[,]').sub
-def two_argument_size_hook(expr):
-    new_expr = _size_call_sub(r'shape(\g<arg1>,-1+', expr)
-    if verbose > 1 and expr!=new_expr:
-        outmess('two_argument_size_hook: mapping %r to %r\n' % (expr, new_expr))
-    return new_expr
-
 def analyzevars(block):
     global f90modulevars
     setmesstext(block)
@@ -2207,7 +2200,6 @@ def analyzevars(block):
                         if d[:4] == '1 * ': d = d[4:]
                         if di and di[-4:] == '/(1)': di = di[:-4]
                         if v: savelindims[d] = v,di
-                    d = two_argument_size_hook(d)
                     vars[n]['dimension'].append(d)
         if 'dimension' in vars[n]:
             if isintent_c(vars[n]):
@@ -2324,7 +2316,6 @@ def analyzevars(block):
                 if not vars[n]['depend']: del vars[n]['depend']
             if isscalar(vars[n]):
                 vars[n]['='] = _eval_scalar(vars[n]['='],params)
-                vars[n]['='] = two_argument_size_hook(vars[n]['='])
 
     for n in vars.keys():
         if n==block['name']: # n is block name
