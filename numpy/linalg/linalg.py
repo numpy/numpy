@@ -625,6 +625,7 @@ def qr(a, mode='full'):
     """
     a, wrap = _makearray(a)
     _assertRank2(a)
+    _assertNonEmpty(a)
     m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
