@@ -455,6 +455,11 @@ class TestQR(TestCase):
         a = np.zeros((0,2))
         self.assertRaises(linalg.LinAlgError, linalg.qr, a)
 
+@raises(linalg.LinAlgError)
+def test_qr_empty():
+    a = np.zeros((0,2))
+    linalg.qr(a)
+
 
 if __name__ == "__main__":
     run_module_suite()
