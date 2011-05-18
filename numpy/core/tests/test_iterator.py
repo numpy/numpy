@@ -2236,7 +2236,7 @@ def test_iter_reduction():
     for x in it2:
         x[1][...] += x[0]
     assert_equal(it1.operands[1], it2.operands[1])
-    assert_equal(it2.operands[2].sum(), a.size)
+    assert_equal(it2.operands[1].sum(), a.size)
 
 def test_iter_buffering_reduction():
     # Test doing buffered reductions with the iterator
