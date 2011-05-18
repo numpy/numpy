@@ -256,7 +256,7 @@ cppmacros['len..']="""\
 #define old_size(var) PyArray_SIZE((PyArrayObject *)(capi_ ## var ## _tmp))
 /* #define index(i) capi_i ## i */
 #define slen(var) capi_ ## var ## _len
-#define size(var, dim...) f2py_size((PyArrayObject *)(capi_ ## var ## _tmp), ##dim, -1)
+#define size(var, ...) f2py_size((PyArrayObject *)(capi_ ## var ## _tmp), ## __VA_ARGS__, -1)
 """
 needs['f2py_size']=['stdarg.h']
 cfuncs['f2py_size']="""\
