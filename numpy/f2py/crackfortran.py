@@ -1149,7 +1149,6 @@ def analyzeline(m,case,line):
                     groupcache[groupcounter]['use'][name]['map']=rl
             else:
                 pass
-
         else:
             print m.groupdict()
             outmess('analyzeline: Could not crack the use statement.\n')
@@ -1492,6 +1491,7 @@ def get_useparameters(block, param_map=None):
     for usename,mapping in usedict.items():
         usename = usename.lower()
         if usename not in f90modulevars:
+            outmess('get_useparameters: no module %s info used by %s\n' % (usename, block.get('name')))
             continue
         mvars = f90modulevars[usename]
         params = get_parameters(mvars)
@@ -1505,6 +1505,7 @@ def get_useparameters(block, param_map=None):
                 outmess('get_useparameters: overriding parameter %s with'\
                         ' value from module %s' % (`k`,`usename`))
             param_map[k] = v
+
     return param_map
 
 def postcrack2(block,tab='',param_map=None):
