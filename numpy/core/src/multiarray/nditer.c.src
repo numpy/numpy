@@ -5539,13 +5539,30 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
     /* If last time around, the reduce loop structure was full, we reuse it */
     if (reuse_reduce_loops) {
+        npy_intp full_transfersize;
+
         reduce_outerstrides = NBF_REDUCE_OUTERSTRIDES(bufferdata);
         reduce_outerptrs = NBF_REDUCE_OUTERPTRS(bufferdata);
         reduce_outerdim = NBF_REDUCE_OUTERDIM(bufferdata);
         reduce_outeraxisdata = NIT_INDEX_AXISDATA(axisdata, reduce_outerdim);
         reduce_innersize = NBF_SIZE(bufferdata);
         NBF_REDUCE_POS(bufferdata) = 0;
-        transfersize = NBF_REDUCE_OUTERSIZE(bufferdata)*reduce_innersize;
+        /*
+         * Try to do make the outersize as big as possible. This allows
+         * it to shrink when processing the last bit of the outer reduce loop,
+         * then grow again at the beginnning of the next outer reduce loop.
+         */
+        NBF_REDUCE_OUTERSIZE(bufferdata) = (NAD_SHAPE(reduce_outeraxisdata)-
+                                            NAD_INDEX(reduce_outeraxisdata));
+        full_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata)*reduce_innersize;
+        /* If the full transfer size doesn't fit in the buffer, truncate it */
+        if (full_transfersize > NBF_BUFFERSIZE(bufferdata)) {
+            NBF_REDUCE_OUTERSIZE(bufferdata) = transfersize/reduce_innersize;
+            transfersize = NBF_REDUCE_OUTERSIZE(bufferdata)*reduce_innersize;
+        }
+        else {
+            transfersize = full_transfersize;
+        }
         NBF_BUFITEREND(bufferdata) = iterindex + reduce_innersize;
 
         NPY_IT_DBG_PRINT3("Reused reduce transfersize: %d innersize: %d "
@@ -5553,6 +5570,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                             (int)transfersize,
                             (int)reduce_innersize,
                             (int)NpyIter_GetIterSize(iter));
+        NPY_IT_DBG_PRINT1("Reduced reduce outersize: %d",
+                            (int)NBF_REDUCE_OUTERSIZE(bufferdata));
     }
     /*
      * If there are any reduction operands, we may have to make

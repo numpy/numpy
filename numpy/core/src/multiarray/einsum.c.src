@@ -3006,7 +3006,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     /***************************/
     /*
-     * Accceleration for some specific loop structures. Note
+     * Acceleration for some specific loop structures. Note
      * that with axis coalescing, inputs with more dimensions can
      * be reduced to fit into these patterns.
      */
