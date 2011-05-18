@@ -466,5 +466,13 @@ class TestEinSum(TestCase):
     def test_einsum_sums_clongdouble(self):
         self.check_einsum_sums(np.clongdouble);
 
+    def test_einsum_misc(self):
+        # This call used to crash because of a bug in
+        # PyArray_FillWithZero
+        a = np.ones((1,2))
+        b = np.ones((2,2,1))
+        assert_equal(np.einsum('ij...,j...->i...',a,b), [[[2],[2]]])
+
+
 if __name__ == "__main__":
     run_module_suite()

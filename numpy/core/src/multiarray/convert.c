@@ -447,7 +447,7 @@ PyArray_FillWithZero(PyArrayObject *a)
     }
 
     do {
-        stransfer(NULL, 0, *dataptr, stride,
+        stransfer(*dataptr, stride, NULL, 0,
                     *countptr, 0, transferdata);
     } while(iternext(iter));
 
