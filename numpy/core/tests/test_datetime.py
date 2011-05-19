@@ -11,6 +11,19 @@ class TestDateTime(TestCase):
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
             dt2 = np.dtype('m8[%s]' % unit)
             assert_(dt2 == np.dtype('timedelta64[%s]' % unit))
+        
+        # Check that the parser rejects bad datetime types
+        assert_raises(ValueError, np.dtype, 'M8[badunit]')
+        assert_raises(ValueError, np.dtype, 'm8[badunit]')
+        assert_raises(ValueError, np.dtype, 'm8[badunit]')
+        assert_raises(ValueError, np.dtype, 'M8[YY]')
+        assert_raises(ValueError, np.dtype, 'm8[YY]')
+        assert_raises(ValueError, np.dtype, 'M4')
+        assert_raises(ValueError, np.dtype, 'm4')
+        assert_raises(ValueError, np.dtype, 'M7')
+        assert_raises(ValueError, np.dtype, 'm7')
+        assert_raises(ValueError, np.dtype, 'M16')
+        assert_raises(ValueError, np.dtype, 'm16')
 
 
     def test_hours(self):
