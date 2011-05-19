@@ -542,7 +542,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     /* If they're built-in types, use the promotion table */
     if (type_num1 < NPY_NTYPES && type_num2 < NPY_NTYPES) {
         ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
-        /* The table doesn't handle string/unicode/void, check the result */
+        /*
+         * The table doesn't handle string/unicode/void/datetime/timedelta,
+         * so check the result
+         */
         if (ret_type_num >= 0) {
             return PyArray_DescrFromType(ret_type_num);
         }
@@ -647,10 +650,16 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
 
     switch (type_num1) {
-        /* BOOL can convert to anything */
+        /* BOOL can convert to anything except datetime/timedelta/void */
         case NPY_BOOL:
-            Py_INCREF(type2);
-            return type2;
+            if (type_num2 != NPY_DATETIME && type_num2 != NPY_TIMEDELTA &&
+                                    type_num2 != NPY_VOID) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            else {
+                break;
+            }
         /* For strings and unicodes, take the larger size */
         case NPY_STRING:
             if (type_num2 == NPY_STRING) {
@@ -713,13 +722,37 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 return type1;
             }
             break;
+        case NPY_DATETIME:
+            if (type_num2 == NPY_DATETIME) {
+            }
+            /* 'M[A]','m[B]' -> 'M[A]' */
+            else if (type_num2 == NPY_TIMEDELTA) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            break;
+        case NPY_TIMEDELTA:
+            if (type_num2 == NPY_DATETIME) {
+            }
+            else if (type_num2 == NPY_TIMEDELTA) {
+            }
+            else if (PyTypeNum_ISINTEGER(type_num2) ||
+                            PyTypeNum_ISFLOAT(type_num2)) {
+            }
+            break;
     }
 
     switch (type_num2) {
         /* BOOL can convert to anything */
         case NPY_BOOL:
-            Py_INCREF(type1);
-            return type1;
+            if (type_num1 != NPY_DATETIME && type_num1 != NPY_TIMEDELTA &&
+                                    type_num1 != NPY_VOID) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            else {
+                break;
+            }
         case NPY_STRING:
             /* Allow NUMBER -> STRING */
             if (PyTypeNum_ISNUMBER(type_num1)) {

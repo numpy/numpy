@@ -3576,8 +3576,9 @@ initialize_casting_tables(void)
      */
     for (i = 0; i < NPY_NTYPES; ++i) {
         _npy_type_promotion_table[i][i] = i;
-        /* Don't let number promote to string/unicode/void */
-        if (i == NPY_STRING || i == NPY_UNICODE || i == NPY_VOID) {
+        /* Don't let number promote to string/unicode/void/datetime/timedelta */
+        if (i == NPY_STRING || i == NPY_UNICODE || i == NPY_VOID ||
+							i == NPY_DATETIME || i == NPY_TIMEDELTA) {
             /* Promoting these types requires examining their contents */
             _npy_type_promotion_table[i][i] = -1;
             for (j = i+1; j < NPY_NTYPES; ++j) {
