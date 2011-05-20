@@ -604,11 +604,11 @@ datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr)
 
     /* If nothing matched, it's an error */
     if (metastr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "Invalid datetime unit in metadata");
     }
     else {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(PyExc_TypeError,
                 "Invalid datetime unit in metadata string \"%s\"",
                 metastr);
     }
@@ -727,7 +727,6 @@ static PyObject *
 _convert_datetime_tuple_to_cobj(PyObject *tuple)
 {
     PyArray_DatetimeMetaData *dt_data;
-    PyObject *ret;
     char *basestr = NULL;
     Py_ssize_t len = 0;
 
@@ -763,7 +762,6 @@ datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
 {
     PyArray_DatetimeMetaData *dt_data;
     char *substr = metastr, *substrend = NULL;
-    int sublen = 0;
 
     dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
     if (dt_data == NULL) {
@@ -842,7 +840,7 @@ datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
 
         if (dt_data->den > 1) {
             if (convert_datetime_divisor_to_multiple(dt_data, metastr) < 0) {
-                goto bad_input;
+                goto error;
             }
         }
     }
@@ -850,9 +848,16 @@ datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
     return NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
 
 bad_input:
-    PyErr_Format(PyExc_ValueError,
-            "Invalid datetime metadata string \"%s\" at position %d",
-            metastr, (int)(substr-metastr));
+    if (substr != metastr) {
+        PyErr_Format(PyExc_TypeError,
+                "Invalid datetime metadata string \"%s\" at position %d",
+                metastr, (int)(substr-metastr));
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+                "Invalid datetime metadata string \"%s\"",
+                metastr);
+    }
 error:
     _pya_free(dt_data);
     return NULL;
@@ -872,7 +877,7 @@ dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
     PyObject *metacobj = NULL;
 
     if (len < 2) {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(PyExc_TypeError,
                 "Invalid datetime typestr \"%s\"",
                 typestr);
         return NULL;
@@ -903,7 +908,7 @@ dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
         metalen = len - 10;
     }
     else {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(PyExc_TypeError,
                 "Invalid datetime typestr \"%s\"",
                 typestr);
         return NULL;
@@ -1449,18 +1454,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* check for datetime format */
         if (is_datetime_typestr(type, len)) {
             *at = dtype_from_datetime_typestr(type, len);
-            if (*at) {
-                return PY_SUCCEED;
-            }
-            return PY_FAIL;
+            return (*at) ? PY_SUCCEED : PY_FAIL;
         }
         /* check for commas present or first (or second) element a digit */
         if (_check_for_commastring(type, len)) {
             *at = _convert_from_commastring(obj, 0);
-            if (*at) {
-                return PY_SUCCEED;
-            }
-            return PY_FAIL;
+            return (*at) ? PY_SUCCEED : PY_FAIL;
         }
         check_num = (int) type[0];
         if ((char) check_num == '>'
@@ -1597,7 +1596,13 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     return PY_SUCCEED;
 
  fail:
-    PyErr_SetString(PyExc_TypeError, "data type not understood");
+    if (PyBytes_Check(obj)) {
+        PyErr_Format(PyExc_TypeError, "data type \"%s\" not understood",
+                            PyBytes_AS_STRING(obj));
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError, "data type not understood");
+    }
     *at = NULL;
     return PY_FAIL;
 }

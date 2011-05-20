@@ -3527,10 +3527,10 @@ class MaskedArray(ndarray):
                 # convert to object array to make filled work
                 names = self.dtype.names
                 if names is None:
-                    res = self._data.astype("|O8")
+                    res = self._data.astype("O")
                     res[m] = f
                 else:
-                    rdtype = _recursive_make_descr(self.dtype, "|O8")
+                    rdtype = _recursive_make_descr(self.dtype, "O")
                     res = self._data.astype(rdtype)
                     _recursive_printoption(res, m, f)
         else:

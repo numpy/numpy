@@ -257,6 +257,10 @@ def bitname(obj):
         char = 'O'
         base = 'object'
         bits = 0
+    elif name=='datetime64':
+        char = 'M'
+    elif name=='timedelta64':
+        char = 'm'
 
     if sys.version_info[0] >= 3:
         if name=='bytes_':
