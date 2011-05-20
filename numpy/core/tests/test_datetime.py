@@ -1,6 +1,7 @@
 from os import path
 import numpy as np
 from numpy.testing import *
+from numpy.compat import asbytes
 
 class TestDateTime(TestCase):
     def test_creation(self):
@@ -91,6 +92,12 @@ class TestDateTime(TestCase):
                          err_msg='Datetime conversion error for unit %s' % unit)
 
         assert_equal(x[0].astype(np.int64), 322689600000000000)
+
+class TestDateTimeData(TestCase):
+
+    def test_basic(self):
+        a = np.array(['1980-03-23'], dtype=np.datetime64)
+        assert_equal(np.datetime_data(a.dtype), (asbytes('us'), 1, 1))
 
 if __name__ == "__main__":
     run_module_suite()

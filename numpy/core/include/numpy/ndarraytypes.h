@@ -676,10 +676,11 @@ typedef struct {
 typedef struct {
         NPY_DATETIMEUNIT base;
         int num;
-        int den;      /*
-                       * Converted to 1 on input for now -- an
-                       * input-only mechanism
-                       */
+        /*
+         * 'den' is unused, kept here for ABI compatibility with 1.6.
+         * TODO: Remove for 2.0.
+         */
+        int den;
         int events;
 } PyArray_DatetimeMetaData;
 

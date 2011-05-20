@@ -47,27 +47,6 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
     NPY_STR_as
 };
 
-static NPY_DATETIMEUNIT _multiples_table[16][4] = {
-    {12, 52, 365},                            /* NPY_FR_Y */
-    {NPY_FR_M, NPY_FR_W, NPY_FR_D},
-    {4,  30, 720},                            /* NPY_FR_M */
-    {NPY_FR_W, NPY_FR_D, NPY_FR_h},
-    {5,  7,  168, 10080},                     /* NPY_FR_W */
-    {NPY_FR_B, NPY_FR_D, NPY_FR_h, NPY_FR_m},
-    {24, 1440, 86400},                        /* NPY_FR_B */
-    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
-    {24, 1440, 86400},                        /* NPY_FR_D */
-    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
-    {60, 3600},                               /* NPY_FR_h */
-    {NPY_FR_m, NPY_FR_s},
-    {60, 60000},                              /* NPY_FR_m */
-    {NPY_FR_s, NPY_FR_ms},
-    {1000, 1000000},                          /* >=NPY_FR_s */
-    {0, 0}
-};
-
-
-
 /*
   ====================================================
   == Beginning of section borrowed from mx.DateTime ==
@@ -1006,6 +985,7 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
 {
     PyArray_DatetimeMetaData *dt_data;
     char *substr = metastr, *substrend = NULL;
+    int den = 1;
 
     dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
     if (dt_data == NULL) {
@@ -1016,7 +996,6 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
     if (len == 0) {
         dt_data->num = 1;
         dt_data->base = NPY_DATETIME_DEFAULTUNIT;
-        dt_data->den = 1;
         dt_data->events = 1;
     }
     else {
@@ -1051,7 +1030,7 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
         /* Next comes an optional integer denominator */
         if (*substr == '/') {
             substr++;
-            dt_data->den = (int)strtol(substr, &substrend, 10);
+            den = (int)strtol(substr, &substrend, 10);
             /* If the '/' exists, there must be a number followed by ']' */
             if (substr == substrend || *substrend != ']') {
                 goto bad_input;
@@ -1059,7 +1038,6 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
             substr = substrend + 1;
         }
         else if (*substr == ']') {
-            dt_data->den = 1;
             substr++;
         }
         else {
@@ -1082,8 +1060,9 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
             dt_data->events = 1;
         }
 
-        if (dt_data->den > 1) {
-            if (convert_datetime_divisor_to_multiple(dt_data, metastr) < 0) {
+        if (den != 1) {
+            if (convert_datetime_divisor_to_multiple(
+                                    dt_data, den, metastr) < 0) {
                 goto error;
             }
         }
@@ -1199,6 +1178,26 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
     return dtype;
 }
 
+static NPY_DATETIMEUNIT _multiples_table[16][4] = {
+    {12, 52, 365},                            /* NPY_FR_Y */
+    {NPY_FR_M, NPY_FR_W, NPY_FR_D},
+    {4,  30, 720},                            /* NPY_FR_M */
+    {NPY_FR_W, NPY_FR_D, NPY_FR_h},
+    {5,  7,  168, 10080},                     /* NPY_FR_W */
+    {NPY_FR_B, NPY_FR_D, NPY_FR_h, NPY_FR_m},
+    {24, 1440, 86400},                        /* NPY_FR_B */
+    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
+    {24, 1440, 86400},                        /* NPY_FR_D */
+    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
+    {60, 3600},                               /* NPY_FR_h */
+    {NPY_FR_m, NPY_FR_s},
+    {60, 60000},                              /* NPY_FR_m */
+    {NPY_FR_s, NPY_FR_ms},
+    {1000, 1000000},                          /* >=NPY_FR_s */
+    {0, 0}
+};
+
+
 
 /*
  * Translate divisors into multiples of smaller units.
@@ -1209,7 +1208,7 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
  */
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
-                                    char *metastr)
+                                    int den, char *metastr)
 {
     int i, num, ind;
     NPY_DATETIMEUNIT *totry;
@@ -1242,8 +1241,8 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
     }
 
     for (i = 0; i < num; i++) {
-        q = totry[i] / meta->den;
-        r = totry[i] % meta->den;
+        q = totry[i] / den;
+        r = totry[i] % den;
         if (r == 0) {
             break;
         }
@@ -1252,17 +1251,16 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         if (metastr == NULL) {
             PyErr_Format(PyExc_ValueError,
                     "divisor (%d) is not a multiple of a lower-unit "
-                    "in datetime metadata", meta->den);
+                    "in datetime metadata", den);
         }
         else {
             PyErr_Format(PyExc_ValueError,
                     "divisor (%d) is not a multiple of a lower-unit "
-                    "in datetime metadata \"%s\"", meta->den, metastr);
+                    "in datetime metadata \"%s\"", den, metastr);
         }
         return -1;
     }
     meta->base = baseunit[i];
-    meta->den = 1;
     meta->num *= q;
 
     return 0;
@@ -1336,7 +1334,7 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
 {
     PyObject *dt_tuple;
 
-    dt_tuple = PyTuple_New(4);
+    dt_tuple = PyTuple_New(3);
     if (dt_tuple == NULL) {
         return NULL;
     }
@@ -1346,8 +1344,6 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
     PyTuple_SET_ITEM(dt_tuple, 1,
             PyInt_FromLong(meta->num));
     PyTuple_SET_ITEM(dt_tuple, 2,
-            PyInt_FromLong(meta->den));
-    PyTuple_SET_ITEM(dt_tuple, 3,
             PyInt_FromLong(meta->events));
 
     return dt_tuple;
@@ -1358,7 +1354,22 @@ convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple)
 {
     PyArray_DatetimeMetaData *dt_data;
     char *basestr = NULL;
-    Py_ssize_t len = 0;
+    Py_ssize_t len = 0, tuple_size;
+    int den = 1;
+
+    if (!PyTuple_Check(tuple)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Require tuple for tuple->metacobj conversion");
+        return NULL;
+    }
+
+    tuple_size = PyTuple_GET_SIZE(tuple);
+    if (tuple_size < 3 || tuple_size > 4) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Require tuple of size 3 or 4 for "
+                        "tuple->metacobj conversion");
+        return NULL;
+    }
 
     if (PyBytes_AsStringAndSize(PyTuple_GET_ITEM(tuple, 0),
                                         &basestr, &len) < 0) {
@@ -1372,13 +1383,26 @@ convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple)
         return NULL;
     }
 
-    /* Assumes other objects are Python integers */
-    dt_data->num = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 1));
-    dt_data->den = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 2));
-    dt_data->events = PyInt_AS_LONG(PyTuple_GET_ITEM(tuple, 3));
+    /* Convert the values to longs */
+    dt_data->num = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 1));
+    if (tuple_size == 3) {
+        dt_data->events = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
+    }
+    else {
+        den = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
+        dt_data->events = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 3));
+    }
 
-    if (dt_data->den > 1) {
-        if (convert_datetime_divisor_to_multiple(dt_data, NULL) < 0) {
+    if (dt_data->num <= 0 || dt_data->events <= 0 || den <= 0) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Invalid tuple values for "
+                        "tuple->metacobj conversion");
+        PyArray_free(dt_data);
+        return NULL;
+    }
+
+    if (den != 1) {
+        if (convert_datetime_divisor_to_multiple(dt_data, den, NULL) < 0) {
             PyArray_free(dt_data);
             return NULL;
         }
@@ -1398,7 +1422,7 @@ append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
 {
     PyObject *tmp;
     PyObject *res;
-    int num, den, events;
+    int num, events;
     char *basestr;
     PyArray_DatetimeMetaData *dt_data;
 
@@ -1409,7 +1433,6 @@ append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
     }
 
     num = dt_data->num;
-    den = dt_data->den;
     events = dt_data->events;
     basestr = _datetime_strings[dt_data->base];
 
@@ -1418,10 +1441,6 @@ append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
     }
     else {
         tmp = PyUString_FromFormat("%d%s", num, basestr);
-    }
-    if (den != 1) {
-        res = PyUString_FromFormat("/%d", den);
-        PyUString_ConcatAndDel(&tmp, res);
     }
 
     res = PyUString_FromString("[");

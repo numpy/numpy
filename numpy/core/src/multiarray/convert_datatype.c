@@ -738,7 +738,6 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 
                 if (meta1->base == meta2->base &&
                             meta1->num == meta2->num &&
-                            meta1->den == meta2->den &&
                             meta1->events == meta2->events) {
                     Py_INCREF(type1);
                     return type1;

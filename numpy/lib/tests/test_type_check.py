@@ -382,13 +382,5 @@ class TestArrayConversion(TestCase):
         assert_equal(a.__class__,ndarray)
         assert_(issubdtype(a.dtype,float))
 
-class TestDateTimeData(object):
-
-    @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
-    def test_basic(self):
-        a = array(['1980-03-23'], dtype=datetime64)
-        assert_equal(datetime_data(a.dtype), (asbytes('us'), 1, 1, 1))
-
-
 if __name__ == "__main__":
     run_module_suite()

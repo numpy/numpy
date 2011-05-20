@@ -3796,7 +3796,6 @@ _init_datetime_descr(PyArray_Descr *descr)
     dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
     dt_data->base = NPY_FR_us;
     dt_data->num = 1;
-    dt_data->den = 1;
     dt_data->events = 1;
 
 /* FIXME

@@ -91,9 +91,10 @@ Exported symbols include:
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
-           'issubdtype']
+           'issubdtype','datetime_data']
 
-from numpy.core.multiarray import typeinfo, ndarray, array, empty, dtype
+from numpy.core.multiarray import typeinfo, ndarray, array, \
+                                  empty, dtype, datetime_data
 import types as _types
 import sys
 

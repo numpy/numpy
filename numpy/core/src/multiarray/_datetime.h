@@ -58,7 +58,7 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
  */
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
-                                    char *metastr);
+                                    int den, char *metastr);
 
 /*
  * Given an the CObject/Capsule datetime metadata object,
@@ -68,7 +68,7 @@ NPY_NO_EXPORT PyObject *
 convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
 
 /*
- * Given a tuple representing datetime metadata tuple,
+ * Given a tuple representing datetime metadata,
  * returns a CObject/Capsule datetime metadata object.
  */
 NPY_NO_EXPORT PyObject *

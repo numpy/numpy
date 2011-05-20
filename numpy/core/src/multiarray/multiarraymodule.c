@@ -44,6 +44,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "numpymemoryview.h"
 #include "convert_datatype.h"
 #include "nditer_pywrap.h"
+#include "_datetime.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1401,35 +1402,31 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
 }
 
 /*
- * compare the metadata for two date-times
+ * Compare the metadata for two date-times
  * return 1 if they are the same
  * or 0 if not
  */
 static int
-_equivalent_units(PyObject *meta1, PyObject *meta2)
+_equivalent_datetime_units(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
 {
-    PyObject *cobj1, *cobj2;
     PyArray_DatetimeMetaData *data1, *data2;
 
+    data1 = get_datetime_metadata_from_dtype(dtype1);
+    data2 = get_datetime_metadata_from_dtype(dtype1);
+
+    /* If there's a metadata problem, it doesn't match */
+    if (data1 == NULL || data2 == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+
     /* Same meta object */
-    if (meta1 == meta2) {
+    if (data1 == data2) {
         return 1;
     }
 
-    cobj1 = PyDict_GetItemString(meta1, NPY_METADATA_DTSTR);
-    cobj2 = PyDict_GetItemString(meta2, NPY_METADATA_DTSTR);
-    if (cobj1 == cobj2) {
-        return 1;
-    }
-
-/* FIXME
- * There is no err handling here.
- */
-    data1 = NpyCapsule_AsVoidPtr(cobj1);
-    data2 = NpyCapsule_AsVoidPtr(cobj2);
     return ((data1->base == data2->base)
             && (data1->num == data2->num)
-            && (data1->den == data2->den)
             && (data1->events == data2->events));
 }
 
@@ -1494,17 +1491,17 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
         return ((typenum1 == typenum2)
                 && _equivalent_subarrays(typ1->subarray, typ2->subarray));
     }
-    if (typenum1 == PyArray_VOID
-        || typenum2 == PyArray_VOID) {
+    if (typenum1 == NPY_VOID
+        || typenum2 == NPY_VOID) {
         return ((typenum1 == typenum2)
                 && _equivalent_fields(typ1->fields, typ2->fields));
     }
-    if (typenum1 == PyArray_DATETIME
-            || typenum1 == PyArray_DATETIME
-            || typenum2 == PyArray_TIMEDELTA
-            || typenum2 == PyArray_TIMEDELTA) {
+    if (typenum1 == NPY_DATETIME
+            || typenum1 == NPY_DATETIME
+            || typenum2 == NPY_TIMEDELTA
+            || typenum2 == NPY_TIMEDELTA) {
         return ((typenum1 == typenum2)
-                && _equivalent_units(typ1->metadata, typ2->metadata));
+                && _equivalent_datetime_units(typ1, typ2));
     }
     return typ1->kind == typ2->kind;
 }
@@ -2844,6 +2841,25 @@ finish:
     return ret;
 }
 
+static PyObject *
+array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyArray_Descr *dtype;
+    PyArray_DatetimeMetaData *meta;
+
+    if(!PyArg_ParseTuple(args, "O&:datetime_data",
+                PyArray_DescrConverter, &dtype)) {
+        return NULL;
+    }
+
+    meta = get_datetime_metadata_from_dtype(dtype);
+    if (meta == NULL) {
+        return NULL;
+    }
+
+    return convert_datetime_metadata_to_tuple(meta);
+}
+
 #if !defined(NPY_PY3K)
 static PyObject *
 new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
@@ -3463,6 +3479,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"result_type",
         (PyCFunction)array_result_type,
+        METH_VARARGS, NULL},
+    {"datetime_data",
+        (PyCFunction)array_datetime_data,
         METH_VARARGS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",
