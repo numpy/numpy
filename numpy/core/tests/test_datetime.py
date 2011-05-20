@@ -24,6 +24,11 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
 
+    def test_dtype_promotion(self):
+        assert_equal(np.promote_types(np.dtype('M8[Y]'), np.dtype('M8[Y]')),
+                     np.dtype('M8[Y]'))
+        assert_raises(TypeError, np.promote_types,
+                            np.dtype('M8[Y]'), np.dtype('M8[M]'))
 
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')

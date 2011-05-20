@@ -16,6 +16,7 @@
 #include "mapping.h"
 
 #include "convert_datatype.h"
+#include "_datetime.h"
 
 /*NUMPY_API
  * For backward compatibility
@@ -723,10 +724,54 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_DATETIME:
+            /* 'M[A],'M[B]' -> M[A] when A==B, error otherwise */
             if (type_num2 == NPY_DATETIME) {
+                PyArray_DatetimeMetaData *meta1, *meta2;
+                meta1 = get_datetime_metadata_from_dtype(type1);
+                if (meta1 == NULL) {
+                    return NULL;
+                }
+                meta2 = get_datetime_metadata_from_dtype(type2);
+                if (meta2 == NULL) {
+                    return NULL;
+                }
+
+                if (meta1->base == meta2->base &&
+                            meta1->num == meta2->num &&
+                            meta1->den == meta2->den &&
+                            meta1->events == meta2->events) {
+                    Py_INCREF(type1);
+                    return type1;
+                }
+                else {
+                    PyObject *errmsg;
+                    errmsg = PyUString_FromString("Cannot promote "
+                                "datetime types ");
+                    PyUString_ConcatAndDel(&errmsg,
+                            PyObject_Repr((PyObject *)type1));
+                    PyUString_ConcatAndDel(&errmsg,
+                            PyUString_FromString(" and "));
+                    PyUString_ConcatAndDel(&errmsg,
+                            PyObject_Repr((PyObject *)type2));
+                    PyUString_ConcatAndDel(&errmsg,
+                            PyUString_FromString(" because they have "
+                                "different units metadata"));
+                    PyErr_SetObject(PyExc_TypeError, errmsg);
+                    return NULL;
+                }
             }
-            /* 'M[A]','m[B]' -> 'M[A]' */
+            /* 'M[A]','m[B]' -> 'M[A]', but only when A divides into B */
             else if (type_num2 == NPY_TIMEDELTA) {
+                PyArray_DatetimeMetaData *meta1, *meta2;
+                meta1 = get_datetime_metadata_from_dtype(type1);
+                if (meta1 == NULL) {
+                    return NULL;
+                }
+                meta2 = get_datetime_metadata_from_dtype(type2);
+                if (meta2 == NULL) {
+                    return NULL;
+                }
+
                 Py_INCREF(type1);
                 return type1;
             }
