@@ -23,7 +23,7 @@ NPY_NO_EXPORT PyArray_DatetimeMetaData *
 get_datetime_metadata_from_dtype(PyArray_Descr *dtype);
 
 /*
- * This function returns a reference to a PyCObject/Capsule
+ * This function returns a reference to a capsule
  * which contains the datetime metadata parsed from a metadata
  * string. 'metastr' should be NULL-terminated, and len should
  * contain its string length.
@@ -59,9 +59,20 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
                                     int den, char *metastr);
+/*
+ * Computes the GCD of the two date-time metadata values. Raises
+ * an exception if there is no reasonable GCD, such as with
+ * years and days.
+ *
+ * Returns a capsule with the GCD metadata.
+ */
+NPY_NO_EXPORT PyObject *
+compute_datetime_metadata_greatest_common_divisor(
+                        PyArray_Descr *type1,
+                        PyArray_Descr *type2);
 
 /*
- * Given an the CObject/Capsule datetime metadata object,
+ * Given an the capsule datetime metadata object,
  * returns a tuple for pickling and other purposes.
  */
 NPY_NO_EXPORT PyObject *
@@ -69,7 +80,7 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
 
 /*
  * Given a tuple representing datetime metadata,
- * returns a CObject/Capsule datetime metadata object.
+ * returns a capsule datetime metadata object.
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple);

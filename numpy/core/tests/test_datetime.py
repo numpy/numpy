@@ -26,10 +26,47 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.dtype, 'm16')
 
     def test_dtype_promotion(self):
+        # datetime <op> datetime requires matching units
         assert_equal(np.promote_types(np.dtype('M8[Y]'), np.dtype('M8[Y]')),
                      np.dtype('M8[Y]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('M8[Y]'), np.dtype('M8[M]'))
+        # timedelta <op> timedelta computes the metadata gcd
+        assert_equal(
+                np.promote_types(np.dtype('m8[2Y]'), np.dtype('m8[2Y]')),
+                np.dtype('m8[2Y]'))
+        assert_equal(
+                np.promote_types(np.dtype('m8[12Y]'), np.dtype('m8[15Y]')),
+                np.dtype('m8[3Y]'))
+        assert_equal(
+                np.promote_types(np.dtype('m8[62M]'), np.dtype('m8[24M]')),
+                np.dtype('m8[2M]'))
+        assert_equal(
+                np.promote_types(np.dtype('m8[1W]'), np.dtype('m8[2D]')),
+                np.dtype('m8[1D]'))
+        assert_equal(
+                np.promote_types(np.dtype('m8[W]'), np.dtype('m8[13s]')),
+                np.dtype('m8[s]'))
+        assert_equal(
+                np.promote_types(np.dtype('m8[13W]'), np.dtype('m8[49s]')),
+                np.dtype('m8[7s]'))
+        # timedelta <op> timedelta raises when there is no reasonable gcd
+        assert_raises(TypeError, np.promote_types,
+                            np.dtype('m8[Y]'), np.dtype('m8[M]'))
+        assert_raises(TypeError, np.promote_types,
+                            np.dtype('m8[Y]'), np.dtype('m8[D]'))
+        assert_raises(TypeError, np.promote_types,
+                            np.dtype('m8[Y]'), np.dtype('m8[B]'))
+        assert_raises(TypeError, np.promote_types,
+                            np.dtype('m8[D]'), np.dtype('m8[B]'))
+        assert_raises(TypeError, np.promote_types,
+                            np.dtype('m8[M]'), np.dtype('m8[W]'))
+        # timedelta <op> timedelta may overflow with big unit ranges
+        assert_raises(OverflowError, np.promote_types,
+                            np.dtype('m8[W]'), np.dtype('m8[fs]'))
+        assert_raises(OverflowError, np.promote_types,
+                            np.dtype('m8[s]'), np.dtype('m8[as]'))
+
 
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')

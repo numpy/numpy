@@ -759,35 +759,67 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                     return NULL;
                 }
             }
-            /* 'M[A]','m[B]' -> 'M[A]', but only when A divides into B */
+            /* 'M[A]','m[B]' -> 'M[A]' */
             else if (type_num2 == NPY_TIMEDELTA) {
-                PyArray_DatetimeMetaData *meta1, *meta2;
-                meta1 = get_datetime_metadata_from_dtype(type1);
-                if (meta1 == NULL) {
-                    return NULL;
-                }
-                meta2 = get_datetime_metadata_from_dtype(type2);
-                if (meta2 == NULL) {
-                    return NULL;
-                }
-
                 Py_INCREF(type1);
                 return type1;
             }
             break;
         case NPY_TIMEDELTA:
+            /* 'm[A]','M[B]' -> 'M[B]' */
             if (type_num2 == NPY_DATETIME) {
+                Py_INCREF(type2);
+                return type2;
             }
+            /* 'm[A]','m[B]' -> 'm[gcd(A,B)]' */
             else if (type_num2 == NPY_TIMEDELTA) {
+                PyObject *gcdmeta;
+                PyArray_Descr *dtype;
+
+                /* Get the metadata GCD */
+                gcdmeta = compute_datetime_metadata_greatest_common_divisor(
+                                                            type1, type2);
+                if (gcdmeta == NULL) {
+                    return NULL;
+                }
+
+                /* Create a TIMEDELTA dtype */
+                dtype = PyArray_DescrNewFromType(PyArray_TIMEDELTA);
+                if (dtype == NULL) {
+                    Py_DECREF(gcdmeta);
+                    return NULL;
+                }
+
+                /* Replace the metadata dictionary */
+                Py_XDECREF(dtype->metadata);
+                dtype->metadata = PyDict_New();
+                if (dtype->metadata == NULL) {
+                    Py_DECREF(dtype);
+                    Py_DECREF(gcdmeta);
+                    return NULL;
+                }
+
+                /* Set the metadata object in the dictionary. */
+                if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
+                                                            gcdmeta) < 0) {
+                    Py_DECREF(dtype);
+                    Py_DECREF(gcdmeta);
+                    return NULL;
+                }
+                Py_DECREF(gcdmeta);
+                
+                return dtype;
             }
             else if (PyTypeNum_ISINTEGER(type_num2) ||
                             PyTypeNum_ISFLOAT(type_num2)) {
+                Py_INCREF(type1);
+                return type1;
             }
             break;
     }
 
     switch (type_num2) {
-        /* BOOL can convert to anything */
+        /* BOOL can convert to almost anything */
         case NPY_BOOL:
             if (type_num1 != NPY_DATETIME && type_num1 != NPY_TIMEDELTA &&
                                     type_num1 != NPY_VOID) {

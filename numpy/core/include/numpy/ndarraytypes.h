@@ -214,20 +214,20 @@ typedef enum {
 } NPY_CLIPMODE;
 
 typedef enum {
-        NPY_FR_Y,
-        NPY_FR_M,
-        NPY_FR_W,
-        NPY_FR_B,
-        NPY_FR_D,
-        NPY_FR_h,
-        NPY_FR_m,
-        NPY_FR_s,
-        NPY_FR_ms,
-        NPY_FR_us,
-        NPY_FR_ns,
-        NPY_FR_ps,
-        NPY_FR_fs,
-        NPY_FR_as
+        NPY_FR_Y, /* Years */
+        NPY_FR_M, /* Months */
+        NPY_FR_W, /* Weeks */
+        NPY_FR_B, /* Business days (weekdays, doesn't account for holidays) */
+        NPY_FR_D, /* Days */
+        NPY_FR_h, /* hours */
+        NPY_FR_m, /* minutes */
+        NPY_FR_s, /* seconds */
+        NPY_FR_ms,/* milliseconds */
+        NPY_FR_us,/* microseconds */
+        NPY_FR_ns,/* nanoseconds */
+        NPY_FR_ps,/* picoseconds */
+        NPY_FR_fs,/* femtoseconds */
+        NPY_FR_as /* attoseconds */
 } NPY_DATETIMEUNIT;
 
 #define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)

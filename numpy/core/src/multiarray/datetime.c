@@ -1159,7 +1159,7 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
         return NULL;
     }
 
-    /* Parse the metadata string into a metadata CObject */
+    /* Parse the metadata string into a metadata capsule */
     metacobj = parse_datetime_metacobj_from_metastr(metastr, metalen);
     if (metacobj == NULL) {
         Py_DECREF(dtype);
@@ -1264,6 +1264,200 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
     meta->num *= q;
 
     return 0;
+}
+
+/*
+ * Lookup table for factors between datetime units, except
+ * for years, months, and business days.
+ */
+static npy_uint32
+_datetime_factors[] = {
+    1,  /* Years - not used */
+    1,  /* Months - not used */
+    7,  /* Weeks -> Days */
+    1,  /* Business days - not used */
+    24, /* Days -> Hours */
+    60, /* Hours -> Minutes */
+    60, /* Minutes -> Seconds */
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1   /* Attoseconds are the smallest base unit */
+};
+
+/*
+ * Returns the scale factor between the units. Does not validate
+ * that bigbase represents larger units than littlebase.
+ *
+ * Returns 0 if there is an overflow.
+ */
+static npy_uint64
+get_datetime_units_factor(NPY_DATETIMEUNIT bigbase, NPY_DATETIMEUNIT littlebase)
+{
+    npy_uint64 factor = 1;
+    int unit = (int)bigbase;
+    while (littlebase > unit) {
+        factor *= _datetime_factors[unit];
+        /*
+         * Detect overflow by disallowing the top 16 bits to be 1.
+         * That alows a margin of error much bigger than any of
+         * the datetime factors.
+         */
+        if (factor&0xff00000000000000ULL) {
+            return 0;
+        }
+        ++unit;
+    }
+    return factor;
+}
+
+/* Euclidean algorithm on two positive numbers */
+static npy_uint64
+_uint64_euclidean_gcd(npy_uint64 x, npy_uint64 y)
+{
+    npy_uint64 tmp;
+
+    if (x > y) {
+        tmp = x;
+        x = y;
+        y = tmp;
+    }
+    while (x != y && y != 0) {
+        tmp = x % y;
+        x = y;
+        y = tmp;
+    }
+
+    return x;
+}
+
+NPY_NO_EXPORT PyObject *
+compute_datetime_metadata_greatest_common_divisor(
+                        PyArray_Descr *type1,
+                        PyArray_Descr *type2)
+{
+    PyArray_DatetimeMetaData *meta1, *meta2, *dt_data;
+    NPY_DATETIMEUNIT base;
+    npy_uint64 num1, num2, num;
+    int events = 1;
+
+    if ((type1->type_num != NPY_DATETIME &&
+                        type1->type_num != NPY_TIMEDELTA) ||
+                    (type1->type_num != NPY_DATETIME &&
+                        type1->type_num != NPY_TIMEDELTA)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Require datetime types for metadata "
+                "greatest common divisor operation");
+        return NULL;
+    }
+
+    meta1 = get_datetime_metadata_from_dtype(type1);
+    if (meta1 == NULL) {
+        return NULL;
+    }
+    meta2 = get_datetime_metadata_from_dtype(type2);
+    if (meta2 == NULL) {
+        return NULL;
+    }
+
+    if (meta1->events != 1 || meta2->events != 1) {
+        /*
+         * When there are events specified, both the units
+         * base and the events must match.
+         */
+        if (meta1->base != meta2->base || meta1->events != meta2->events) {
+            goto incompatible_units;
+        }
+        events = meta1->events;
+    }
+
+    num1 = (npy_uint64)meta1->num;
+    num2 = (npy_uint64)meta2->num;
+
+    /* First validate that the units have a reasonable GCD */
+    if (meta1->base == meta2->base) {
+        base = meta1->base;
+    }
+    else {
+        /*
+         * Years, Months, and Business days are incompatible with
+         * all other units.
+         */
+        if (meta1->base == NPY_FR_Y || meta1->base == NPY_FR_M ||
+                            meta1->base == NPY_FR_B ||
+                            meta2->base == NPY_FR_Y ||
+                            meta2->base == NPY_FR_M ||
+                            meta2->base == NPY_FR_B) {
+            goto incompatible_units;
+        }
+
+        /* Take the greater base (unit sizes are decreasing in enum) */
+        if (meta1->base > meta2->base) {
+            base = meta1->base;
+            num2 *= get_datetime_units_factor(meta2->base, meta1->base);
+            if (num2 == 0) {
+                goto units_overflow;
+            }
+        }
+        else {
+            base = meta2->base;
+            num1 *= get_datetime_units_factor(meta1->base, meta2->base);
+            if (num1 == 0) {
+                goto units_overflow;
+            }
+        }
+    }
+
+    /* Compute the GCD of the resulting multipliers */
+    num = _uint64_euclidean_gcd(num1, num2);
+
+    /* Create and return the metadata capsule */
+    dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
+    if (dt_data == NULL) {
+        return PyErr_NoMemory();
+    }
+
+    dt_data->base = base;
+    dt_data->num = (int)num;
+    if (dt_data->num <= 0 || num != (npy_uint64)dt_data->num) {
+        goto units_overflow;
+    }
+    dt_data->events = events;
+
+    return NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
+
+incompatible_units: {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Cannot get "
+                    "a common metadata divisor for types ");
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)type1));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)type2));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" because they have "
+                    "incompatible base units or events"));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        return NULL;
+    }
+units_overflow: {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Integer overflow "
+                    "getting a common metadata divisor for types ");
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)type1));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)type2));
+        PyErr_SetObject(PyExc_OverflowError, errmsg);
+        return NULL;
+    }
 }
 
 /*
