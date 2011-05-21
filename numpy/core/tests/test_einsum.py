@@ -473,6 +473,11 @@ class TestEinSum(TestCase):
         b = np.ones((2,2,1))
         assert_equal(np.einsum('ij...,j...->i...',a,b), [[[2],[2]]])
 
+        # The iterator had an issue with buffering this reduction
+        a = np.ones((5, 12, 4, 2, 3), np.int64)
+        b = np.ones((5, 12, 11), np.int64)
+        assert_equal(np.einsum('ijklm,ijn,ijn->',a,b,b),
+                        np.einsum('ijklm,ijn->',a,b))
 
 if __name__ == "__main__":
     run_module_suite()

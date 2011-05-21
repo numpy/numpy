@@ -6024,6 +6024,8 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     for (iop = 0; iop < nop; ++iop) {
         stride0op[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) &&
                            (strides[iop] == 0);
+        NPY_IT_DBG_PRINT2("Iterator: Operand %d has stride 0 in "
+                        "the inner loop? %d\n", iop, (int)stride0op[iop]);
     }
     shape = NAD_SHAPE(axisdata);
     coord = NAD_INDEX(axisdata);
@@ -6034,6 +6036,9 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     /* Go forward through axisdata, calculating the space available */
     for (idim = 1; idim < ndim && reducespace < count;
                                 ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+        NPY_IT_DBG_PRINT2("Iterator: inner loop reducespace %d, count %d\n",
+                                (int)reducespace, (int)count);
+
         strides = NAD_STRIDES(axisdata);
         for (iop = 0; iop < nop; ++iop) {
             /*
@@ -6073,6 +6078,8 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
         }
         /* If we broke out of the loop early, we found reduce_innersize */
         if (iop != nop) {
+            NPY_IT_DBG_PRINT2("Iterator: Found first dim not "
+                            "reduce (%d of %d)\n", iop, nop);
             break;
         }
 
@@ -6085,8 +6092,11 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
         factor *= shape;
     }
 
-    /* If there was any non-zero coordinate, can't do the double loop */
-    if (nonzerocoord) {
+    /*
+     * If there was any non-zero coordinate or the reduction inner
+     * loop doesn't fit in the buffersize, can't do the double loop
+     */
+    if (nonzerocoord || count < reducespace) {
         if (reducespace < count) {
             count = reducespace;
         }
@@ -6102,6 +6112,9 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     *reduce_innersize = reducespace;
     count /= reducespace;
 
+    NPY_IT_DBG_PRINT2("Iterator: reduce_innersize %d count /ed %d\n",
+                    (int)reducespace, (int)count);
+
     /*
      * Continue through the rest of the dimensions.  If there are
      * two separated reduction axes, we may have to cut the buffer
@@ -6115,6 +6128,8 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     for (iop = 0; iop < nop; ++iop) {
         stride0op[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) &&
                            (strides[iop] == 0);
+        NPY_IT_DBG_PRINT2("Iterator: Operand %d has stride 0 in "
+                        "the outer loop? %d\n", iop, (int)stride0op[iop]);
     }
     shape = NAD_SHAPE(axisdata);
     coord = NAD_INDEX(axisdata);
@@ -6125,6 +6140,8 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
 
     for (; idim < ndim && reducespace < count;
                                 ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+        NPY_IT_DBG_PRINT2("Iterator: outer loop reducespace %d, count %d\n",
+                                (int)reducespace, (int)count);
         strides = NAD_STRIDES(axisdata);
         for (iop = 0; iop < nop; ++iop) {
             /*
