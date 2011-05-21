@@ -1666,12 +1666,15 @@ def test_iter_buffered_cast_structured_type():
 
     # object -> struct type
     sdt = [('a', 'f4'), ('b', 'i8'), ('c', 'c8', (2,3)), ('d', 'O')]
-    a = np.arange(3, dtype='O') + 0.5
+    a = np.zeros((3,), dtype='O')
+    a[0] = (0.5,0.5,[[0.5,0.5,0.5],[0.5,0.5,0.5]],0.5)
+    a[1] = (1.5,1.5,[[1.5,1.5,1.5],[1.5,1.5,1.5]],1.5)
+    a[2] = (2.5,2.5,[[2.5,2.5,2.5],[2.5,2.5,2.5]],2.5)
     rc = sys.getrefcount(a[0])
     i = nditer(a, ['buffered','refs_ok'], ['readonly'],
                     casting='unsafe',
                     op_dtypes=sdt)
-    vals = [np.array(x) for x in i]
+    vals = [x.copy() for x in i]
     assert_equal(vals[0]['a'], 0.5)
     assert_equal(vals[0]['b'], 0)
     assert_equal(vals[0]['c'], [[(0.5)]*3]*2)
