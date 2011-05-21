@@ -1579,5 +1579,21 @@ class TestRegression(TestCase):
         except:
             raise AssertionError
 
+    def test_structured_type_to_object(self):
+        a_rec = np.array([(0,1), (3,2)], dtype='i4,i8')
+        a_obj = np.empty((2,), dtype=object)
+        a_obj[0] = (0,1)
+        a_obj[1] = (3,2)
+        # astype records -> object
+        assert_equal(a_rec.astype(object), a_obj)
+        # '=' records -> object
+        b = np.empty_like(a_obj)
+        b[...] = a_rec
+        assert_equal(b, a_obj)
+        # '=' object -> records
+        b = np.empty_like(a_rec)
+        b[...] = a_obj
+        assert_equal(b, a_rec)
+
 if __name__ == "__main__":
     run_module_suite()

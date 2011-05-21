@@ -2962,8 +2962,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
     }
 
     /* Handle fields */
-    if (PyDataType_HASFIELDS(src_dtype) ||
-                PyDataType_HASFIELDS(dst_dtype)) {
+    if ((PyDataType_HASFIELDS(src_dtype) || PyDataType_HASFIELDS(dst_dtype)) &&
+            src_type_num != NPY_OBJECT && dst_type_num != NPY_OBJECT) {
         return get_fields_transfer_function(aligned,
                         src_stride, dst_stride,
                         src_dtype, dst_dtype,
