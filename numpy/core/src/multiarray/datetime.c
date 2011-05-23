@@ -1386,7 +1386,8 @@ compute_datetime_metadata_greatest_common_divisor(
          * Years, Months, and Business days are incompatible with
          * all other units.
          */
-        if (meta1->base == NPY_FR_Y || meta1->base == NPY_FR_M ||
+        if (meta1->base == NPY_FR_Y ||
+                            meta1->base == NPY_FR_M ||
                             meta1->base == NPY_FR_B ||
                             meta2->base == NPY_FR_Y ||
                             meta2->base == NPY_FR_M ||
@@ -1552,6 +1553,7 @@ convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple)
     int den = 1;
 
     if (!PyTuple_Check(tuple)) {
+        PyObject_Print(tuple, stderr, 0);
         PyErr_SetString(PyExc_TypeError,
                         "Require tuple for tuple->metacobj conversion");
         return NULL;
@@ -1579,12 +1581,29 @@ convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple)
 
     /* Convert the values to longs */
     dt_data->num = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 1));
+    if (dt_data->num == -1 && PyErr_Occurred()) {
+        PyArray_free(dt_data);
+        return NULL;
+    }
+
     if (tuple_size == 3) {
         dt_data->events = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
+        if (dt_data->events == -1 && PyErr_Occurred()) {
+            PyArray_free(dt_data);
+            return NULL;
+        }
     }
     else {
         den = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
+        if (den == -1 && PyErr_Occurred()) {
+            PyArray_free(dt_data);
+            return NULL;
+        }
         dt_data->events = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 3));
+        if (dt_data->events == -1 && PyErr_Occurred()) {
+            PyArray_free(dt_data);
+            return NULL;
+        }
     }
 
     if (dt_data->num <= 0 || dt_data->events <= 0 || den <= 0) {

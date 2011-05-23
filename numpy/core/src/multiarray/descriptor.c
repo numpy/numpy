@@ -1740,7 +1740,55 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
     return (PyObject *)conv;
 }
 
-/* return a tuple of (callable object, args, state). */
+/*
+ * Return a tuple of
+ * (cleaned metadata dictionary, tuple with (str, num, events))
+ */
+static PyObject *
+_get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
+{
+    PyObject *newdict;
+    PyObject *ret, *dt_tuple;
+    PyArray_DatetimeMetaData *meta;
+
+    /* Create the 2-item tuple to return */
+    ret = PyTuple_New(2);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Make a cleaned copy of the metadata dictionary */
+    newdict = PyDict_Copy(dtype->metadata);
+    if (newdict == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    PyDict_DelItemString(newdict, NPY_METADATA_DTSTR);
+    PyTuple_SET_ITEM(ret, 0, newdict);
+
+    /* Convert the datetime metadata into a tuple */
+    meta = get_datetime_metadata_from_dtype(dtype);
+    if (meta == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    dt_tuple = convert_datetime_metadata_to_tuple(meta);
+    if (dt_tuple == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    PyTuple_SET_ITEM(ret, 1, dt_tuple);
+
+    return ret;
+}
+
+/*
+ * return a tuple of (callable object, args, state).
+ *
+ * TODO: This method needs to change so that unpickling doesn't
+ *       use __setstate__. This is required for the dtype
+ *       to be an immutable object.
+ */
 static PyObject *
 arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
 {
@@ -1801,19 +1849,19 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         state = PyTuple_New(9);
         PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
         if (PyDataType_ISDATETIME(self)) {
-            PyArray_DatetimeMetaData *meta;
-            PyObject *dt_tuple;
-            meta = get_datetime_metadata_from_dtype(self);
-            if (meta == NULL) {
+            PyObject *newobj;
+            /* Handle CObject in NPY_METADATA_DTSTR key separately */
+            /*
+             * newobj is a tuple of cleaned metadata dictionary
+             * and tuple of date_time info (str, num, den, events)
+             */
+            newobj = _get_pickleabletype_from_datetime_metadata(self);
+            if (newobj == NULL) {
+                Py_DECREF(state);
                 Py_DECREF(ret);
                 return NULL;
             }
-            dt_tuple = convert_datetime_metadata_to_tuple(meta);
-            if (dt_tuple == NULL) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-            PyTuple_SET_ITEM(state, 8, dt_tuple);
+            PyTuple_SET_ITEM(state, 8, newobj);
         }
         else {
             Py_INCREF(self->metadata);

@@ -1,4 +1,4 @@
-from os import path
+import os, pickle
 import numpy as np
 from numpy.testing import *
 from numpy.compat import asbytes
@@ -24,6 +24,13 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.dtype, 'm7')
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
+
+    def test_pickle(self):
+        # Check that pickle roundtripping works
+        dt = np.dtype('M8[7D]//3')
+        assert_equal(dt, pickle.loads(pickle.dumps(dt)))
+        dt = np.dtype('M8[B]')
+        assert_equal(dt, pickle.loads(pickle.dumps(dt)))
 
     def test_dtype_promotion(self):
         # datetime <op> datetime requires matching units
