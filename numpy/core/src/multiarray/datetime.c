@@ -282,6 +282,173 @@ seconds_to_hmsstruct(npy_longlong dlong)
  Structure is assumed to be already normalized
 */
 
+/*
+ * Converts a datetime from a datetimestruct to a datetime based
+ * on some metadata.
+ *
+ * TODO: If meta->num is really big, there could be overflow
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+                                    const npy_datetimestruct *dts,
+                                    npy_datetime *out)
+{
+    npy_datetime ret;
+    NPY_DATETIMEUNIT base = meta->base;
+
+    if (dts->event < 0 || dts->event >= meta->events) {
+        PyErr_Format(PyExc_ValueError,
+                    "NumPy datetime event %d is outside range [0,%d)",
+                    (int)dts->event, (int)meta->events);
+        return -1;
+    }
+
+    if (base == NPY_FR_Y) {
+        /* Truncate to the year */
+        ret = dts->year - 1970;
+    }
+    else if (base == NPY_FR_M) {
+        /* Truncate to the month */
+        ret = 12 * (dts->year - 1970) + dts->month;
+    }
+    else {
+        /* Otherwise calculate the number of days to start */
+        npy_int64 days = days_from_ymd(dts->year, dts->month, dts->day);
+
+        if (base == NPY_FR_W) {
+            /* Truncate to weeks */
+            if (days >= 0) {
+                ret = days / 7;
+            }
+            else {
+                ret = (days - 6) / 7;
+            }
+        }
+        else if (base == NPY_FR_B) {
+            /* TODO: this needs work... */
+            npy_longlong x;
+            int dotw = day_of_week(days);
+
+            if (dotw > 4) {
+                /* Invalid business day */
+                ret = 0;
+            }
+            else {
+                if (days >= 0) {
+                    /* offset to adjust first week */
+                    x = days - 4;
+                }
+                else {
+                    x = days - 2;
+                }
+                ret = 2 + (x / 7) * 5 + x % 7;
+            }
+        }
+        else if (base == NPY_FR_D) {
+            ret = days;
+        }
+        else if (base == NPY_FR_h) {
+            ret = days * 24 + dts->hour;
+        }
+        else if (base == NPY_FR_m) {
+            ret = days * 1440 + dts->hour * 60 + dts->min;
+        }
+        else if (base == NPY_FR_s) {
+            ret = days * (npy_int64)(86400) +
+                secs_from_hms(dts->hour, dts->min, dts->sec, 1);
+        }
+        else if (base == NPY_FR_ms) {
+            ret = days * (npy_int64)(86400000)
+                + secs_from_hms(dts->hour, dts->min, dts->sec, 1000)
+                + (dts->us / 1000);
+        }
+        else if (base == NPY_FR_us) {
+            npy_int64 num = 86400 * 1000;
+            num *= (npy_int64)(1000);
+            ret = days * num + secs_from_hms(dts->hour, dts->min, dts->sec,
+                                                    1000000)
+                + dts->us;
+        }
+        else if (base == NPY_FR_ns) {
+            npy_int64 num = 86400 * 1000;
+            num *= (npy_int64)(1000 * 1000);
+            ret = days * num + secs_from_hms(dts->hour, dts->min, dts->sec,
+                                                    1000000000)
+                + dts->us * (npy_int64)(1000) + (dts->ps / 1000);
+        }
+        else if (base == NPY_FR_ps) {
+            npy_int64 num2 = 1000 * 1000;
+            npy_int64 num1;
+
+            num2 *= (npy_int64)(1000 * 1000);
+            num1 = (npy_int64)(86400) * num2;
+            ret = days * num1 + secs_from_hms(dts->hour, dts->min, dts->sec, num2)
+                + dts->us * (npy_int64)(1000000) + dts->ps;
+        }
+        else if (base == NPY_FR_fs) {
+            /* only 2.6 hours */
+            npy_int64 num2 = 1000000;
+            num2 *= (npy_int64)(1000000);
+            num2 *= (npy_int64)(1000);
+
+            /* get number of seconds as a postive or negative number */
+            if (days >= 0) {
+                ret = secs_from_hms(dts->hour, dts->min, dts->sec, 1);
+            }
+            else {
+                ret = ((dts->hour - 24)*3600 + dts->min*60 + dts->sec);
+            }
+            ret = ret * num2 + dts->us * (npy_int64)(1000000000)
+                + dts->ps * (npy_int64)(1000) + (dts->as / 1000);
+        }
+        else if (base == NPY_FR_as) {
+            /* only 9.2 secs */
+            npy_int64 num1, num2;
+
+            num1 = 1000000;
+            num1 *= (npy_int64)(1000000);
+            num2 = num1 * (npy_int64)(1000000);
+
+            if (days >= 0) {
+                ret = dts->sec;
+            }
+            else {
+                ret = dts->sec - 60;
+            }
+            ret = ret * num2 + dts->us * num1 + dts->ps * (npy_int64)(1000000)
+                + dts->as;
+        }
+        else {
+            /* Something got corrupted */
+            PyErr_SetString(PyExc_ValueError,
+                        "NumPy datetime metadata with corrupt unit value");
+            return -1;
+        }
+    }
+
+    /* Divide by the multiplier */
+    if (meta->num > 1) {
+        if (ret >= 0) {
+            ret /= meta->num;
+        }
+        else {
+            ret = (ret - meta->num + 1) / meta->num;
+        }
+    }
+
+    /* Add in the event number if needed */
+    if (meta->events > 1) {
+        /* Multiply by the number of events and put in the event number */
+        ret = ret * meta->events + dts->event;
+    }
+
+    *out = ret;
+
+    return 0;
+}
+
 /*NUMPY_API
  * Create a datetime value from a filled datetime struct and resolution unit.
  */
@@ -289,121 +456,16 @@ NPY_NO_EXPORT npy_datetime
 PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 {
     npy_datetime ret;
-    npy_longlong days = 0; /* The absolute number of days since Jan 1, 1970 */
+    PyArray_DatetimeMetaData meta;
 
-    if (fr > NPY_FR_M) {
-        days = days_from_ymd(d->year, d->month, d->day);
-    }
-    if (fr == NPY_FR_Y) {
-        ret = d->year - 1970;
-    }
-    else if (fr == NPY_FR_M) {
-        ret = (d->year - 1970) * 12 + d->month - 1;
-    }
-    else if (fr == NPY_FR_W) {
-        /* This is just 7-days for now. */
-        if (days >= 0) {
-            ret = days / 7;
-        }
-        else {
-            ret = (days - 6) / 7;
-        }
-    }
-    else if (fr == NPY_FR_B) {
-        npy_longlong x;
-        int dotw = day_of_week(days);
+    /* Set up a dummy metadata for the conversion */
+    meta.base = fr;
+    meta.num = 1;
+    meta.events = 1;
 
-        if (dotw > 4) {
-            /* Invalid business day */
-            ret = 0;
-        }
-        else {
-            if (days >= 0) {
-                /* offset to adjust first week */
-                x = days - 4;
-            }
-            else {
-                x = days - 2;
-            }
-            ret = 2 + (x / 7) * 5 + x % 7;
-        }
-    }
-    else if (fr == NPY_FR_D) {
-        ret = days;
-    }
-    else if (fr == NPY_FR_h) {
-        ret = days * 24 + d->hour;
-    }
-    else if (fr == NPY_FR_m) {
-        ret = days * 1440 + d->hour * 60 + d->min;
-    }
-    else if (fr == NPY_FR_s) {
-        ret = days * (npy_int64)(86400) +
-            secs_from_hms(d->hour, d->min, d->sec, 1);
-    }
-    else if (fr == NPY_FR_ms) {
-        ret = days * (npy_int64)(86400000)
-            + secs_from_hms(d->hour, d->min, d->sec, 1000)
-            + (d->us / 1000);
-    }
-    else if (fr == NPY_FR_us) {
-        npy_int64 num = 86400 * 1000;
-        num *= (npy_int64)(1000);
-        ret = days * num + secs_from_hms(d->hour, d->min, d->sec, 1000000)
-            + d->us;
-    }
-    else if (fr == NPY_FR_ns) {
-        npy_int64 num = 86400 * 1000;
-        num *= (npy_int64)(1000 * 1000);
-        ret = days * num + secs_from_hms(d->hour, d->min, d->sec, 1000000000)
-            + d->us * (npy_int64)(1000) + (d->ps / 1000);
-    }
-    else if (fr == NPY_FR_ps) {
-        npy_int64 num2 = 1000 * 1000;
-        npy_int64 num1;
-
-        num2 *= (npy_int64)(1000 * 1000);
-        num1 = (npy_int64)(86400) * num2;
-        ret = days * num1 + secs_from_hms(d->hour, d->min, d->sec, num2)
-            + d->us * (npy_int64)(1000000) + d->ps;
-    }
-    else if (fr == NPY_FR_fs) {
-        /* only 2.6 hours */
-        npy_int64 num2 = 1000000;
-        num2 *= (npy_int64)(1000000);
-        num2 *= (npy_int64)(1000);
-
-        /* get number of seconds as a postive or negative number */
-        if (days >= 0) {
-            ret = secs_from_hms(d->hour, d->min, d->sec, 1);
-        }
-        else {
-            ret = ((d->hour - 24)*3600 + d->min*60 + d->sec);
-        }
-        ret = ret * num2 + d->us * (npy_int64)(1000000000)
-            + d->ps * (npy_int64)(1000) + (d->as / 1000);
-    }
-    else if (fr == NPY_FR_as) {
-        /* only 9.2 secs */
-        npy_int64 num1, num2;
-
-        num1 = 1000000;
-        num1 *= (npy_int64)(1000000);
-        num2 = num1 * (npy_int64)(1000000);
-
-        if (days >= 0) {
-            ret = d->sec;
-        }
-        else {
-            ret = d->sec - 60;
-        }
-        ret = ret * num2 + d->us * num1 + d->ps * (npy_int64)(1000000)
-            + d->as;
-    }
-    else {
-        /* Shouldn't get here */
-        PyErr_SetString(PyExc_ValueError, "invalid internal frequency");
-        ret = -1;
+    if (convert_datetimestruct_to_datetime(&meta, d, &ret) < 0) {
+        /* The caller then needs to check PyErr_Occurred() */
+        return -1;
     }
 
     return ret;
@@ -1761,6 +1823,7 @@ get_timezone_minutes_offset()
 /*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
+ * + After the date and time, may place a ' ' followed by an event number.
  * + The date "20100312" is parsed as the year 20100312, not as
  *   equivalent to "2010-03-12". The '-' in the dates are not optional.
  * + Only seconds may have a decimal point, with up to 18 digits after it
@@ -2042,6 +2105,8 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         out->us *= 10;
         if (sublen > 0  && isdigit(*substr)) {
             out->us += (*substr - '0');
+            ++substr;
+            --sublen;
         }
     }
 
@@ -2054,6 +2119,8 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         out->ps *= 10;
         if (sublen > 0 && isdigit(*substr)) {
             out->ps += (*substr - '0');
+            ++substr;
+            --sublen;
         }
     }
 
@@ -2066,12 +2133,22 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         out->as *= 10;
         if (sublen > 0 && isdigit(*substr)) {
             out->as += (*substr - '0');
+            ++substr;
+            --sublen;
         }
     }
 
 parse_timezone:
     if (sublen == 0) {
-        /* TODO: Convert from local time zone, as ISO states? */
+        int minutes_offset;
+
+        /* Convert from local time zone since lacked 'Z' or an offset */
+        minutes_offset = get_timezone_minutes_offset();
+        if (minutes_offset == -1) {
+            goto error;
+        }
+        datetimestruct_timezone_offset(out, minutes_offset);
+
         goto finish;
     }
 
@@ -2082,7 +2159,7 @@ parse_timezone:
         }
         else {
             ++substr;
-            goto parse_error;
+            --sublen;
         }
     }
     /* Time zone offset */
@@ -2119,8 +2196,10 @@ parse_timezone:
             }
 
             /* The minutes offset (at the end of the string) */
-            if (sublen == 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+            if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
                 offset_minute = 10 * (substr[0] - '0') + (substr[1] - '0');
+                substr += 2;
+                sublen -= 2;
                 if (offset_minute >= 60) {
                     PyErr_Format(PyExc_ValueError,
                                 "Timezone minutes offset out of range "
@@ -2140,7 +2219,32 @@ parse_timezone:
         }
         datetimestruct_timezone_offset(out, 60 * offset_hour + offset_minute);
     }
+
+    /* May have a ' ' followed by an event number */
+    if (sublen == 0) {
+        goto finish;
+    }
+    else if (sublen > 0 && *substr == ' ') {
+        ++substr;
+        --sublen;
+
+        while (sublen > 0 && isdigit(*substr)) {
+            out->event = 10 * out->event + (*substr - '0');
+            ++substr;
+            --sublen;
+        }
+    }
     else {
+        goto parse_error;
+    }
+
+    /* Skip trailing whitespace */
+    while (sublen > 0 && isspace(*substr)) {
+        ++substr;
+        --sublen;
+    }
+
+    if (sublen != 0) {
         goto parse_error;
     }
 

@@ -16,6 +16,15 @@ NPY_NO_EXPORT npy_datetime
 PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d);
 
 /*
+ * Converts a datetime from a datetimestruct to a datetime based
+ * on some metadata.
+ */
+NPY_NO_EXPORT int
+convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+                                    const npy_datetimestruct *dts,
+                                    npy_datetime *out);
+
+/*
  * This function returns a pointer to the DateTimeMetaData
  * contained within the provided datetime dtype.
  */

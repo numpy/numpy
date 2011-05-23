@@ -145,12 +145,12 @@ class TestDateTime(TestCase):
         assert_equal(np.array(['-1980-02-29T01:02:03Z'], np.dtype('M8')),
                      np.array(['-1980-02-29 01:02:03Z'], np.dtype('M8')))
         # Time zone offset
-        assert_equal(np.array(['-1980-02-29T01:02:03Z'], np.dtype('M8')),
-                     np.array(['-1980-02-29 00:32:03+0130'], np.dtype('M8')))
-        assert_equal(np.array(['-1980-02-28T22:32:03Z'], np.dtype('M8')),
-                     np.array(['-1980-02-29 00:02:03-01:30'], np.dtype('M8')))
-        assert_equal(np.array(['-1980-02-29T02:32:03.506Z'], np.dtype('M8')),
-                     np.array(['-1980-02-29 00:32:03.506+02'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-29T02:02:03Z'], np.dtype('M8')),
+                     np.array(['1980-02-29 00:32:03+0130'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-28T22:32:03Z'], np.dtype('M8')),
+                     np.array(['1980-02-29 00:02:03-01:30'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-29T02:32:03.506Z'], np.dtype('M8')),
+                     np.array(['1980-02-29 00:32:03.506+02'], np.dtype('M8')))
 
     def test_string_parser_error_check(self):
         # Arbitrary bad string

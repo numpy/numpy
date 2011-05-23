@@ -1129,7 +1129,7 @@ TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
 static int
 DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     /* ensure alignment */
-    npy_datetime temp;
+    npy_datetime temp = 0;
 
     if (PyArray_IsScalar(op, Datetime)) {
         /* TODO: This needs to convert based on type */
@@ -1139,7 +1139,7 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         PyObject *bytes = NULL;
         char *str = NULL;
         int len = 0;
-        npy_datetimestruct dt;
+        npy_datetimestruct dts;
         PyArray_DatetimeMetaData *meta = NULL;
 
         /* Convert to an ASCII string for the date parser */
@@ -1159,20 +1159,21 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         }
 
         /* Parse the ISO date */
-        if (parse_iso_8601_date(str, len, &dt) < 0) {
+        if (parse_iso_8601_date(str, len, &dts) < 0) {
             Py_DECREF(bytes);
             return -1;
         }
+        Py_DECREF(bytes);
 
         /* Get the datetime units metadata */
         meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
         if (meta == NULL) {
-            Py_DECREF(bytes);
             return -1;
         }
 
-        /* TODO: convert the datetimestruct to the npy_datetime */
-        return 0;
+        if (convert_datetimestruct_to_datetime(meta, &dts, &temp) < 0) {
+            return -1;
+        }
     }
     else if (PyInt_Check(op)) {
         temp = PyInt_AS_LONG(op);

@@ -684,14 +684,20 @@ typedef struct {
         int events;
 } PyArray_DatetimeMetaData;
 
+/*
+ * This structure contains an exploded view of a date-time value.
+ * NaT is represented by year == NPY_MIN_INT64.
+ */
 typedef struct {
         npy_int64 year;
         npy_int32 month, day, hour, min, sec, us, ps, as;
+        npy_int32 event;
 } npy_datetimestruct;
 
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
+        npy_int32 event;
 } npy_timedeltastruct;
 
 #if PY_VERSION_HEX >= 0x03000000
