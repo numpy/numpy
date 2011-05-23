@@ -94,4 +94,21 @@ convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple);
 NPY_NO_EXPORT PyObject *
 append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret);
 
+/*
+ * Parses (almost) standard ISO 8601 date strings. The differences are:
+ *
+ * + The date "20100312" is parsed as the year 20100312, not as
+ *   equivalent to "2010-03-12". The '-' in the dates are not optional.
+ * + Only seconds may have a decimal point, with up to 18 digits after it
+ *   (maximum attoseconds precision).
+ * + Either a 'T' as in ISO 8601 or a ' ' may be used to separate
+ *   the date and the time. Both are treated equivalently.
+ *
+ * 'str' must be a NULL-terminated string, and 'len' must be its length.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+parse_iso_8601_date(char *str, int len, npy_datetimestruct *out);
+
 #endif

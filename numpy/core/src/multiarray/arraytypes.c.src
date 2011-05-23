@@ -1129,32 +1129,50 @@ TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
 static int
 DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     /* ensure alignment */
-    datetime temp;
+    npy_datetime temp;
 
     if (PyArray_IsScalar(op, Datetime)) {
-        /* This needs to convert based on type */
+        /* TODO: This needs to convert based on type */
         temp = ((PyDatetimeScalarObject *)op)->obval;
     }
-#if defined(NPY_PY3K)
-    else if (PyUString_Check(op)) {
-#else
-    else if (PyUString_Check(op) || PyUnicode_Check(op)) {
-#endif
-        /* FIXME:  Converts to DateTime first and therefore does not handle extended notation */
-        /* import _mx_datetime_parser
-         * res = _mx_datetime_parser(name)
-         *  Convert from datetime to Int
-         */
-        PyObject *res, *module;
+    else if (PyBytes_Check(op) || PyUnicode_Check(op)) {
+        PyObject *bytes = NULL;
+        char *str = NULL;
+        int len = 0;
+        npy_datetimestruct dt;
+        PyArray_DatetimeMetaData *meta = NULL;
 
-        module = PyImport_ImportModule("numpy.core._mx_datetime_parser");
-        if (module == NULL) { return -1; }
-        res = PyObject_CallMethod(module, "datetime_from_string", "O", op);
-        Py_DECREF(module);
-        if (res == NULL) { return -1; }
-        temp = PyDateTime_AsInt64(res, ap->descr);
-        Py_DECREF(res);
-        if (PyErr_Occurred()) return -1;
+        /* Convert to an ASCII string for the date parser */
+        if (PyUnicode_Check(op)) {
+            bytes = PyUnicode_AsASCIIString(op);
+            if (bytes == NULL) {
+                return -1;
+            }
+        }
+        else {
+            bytes = op;
+            Py_INCREF(bytes);
+        }
+        if (PyBytes_AsStringAndSize(bytes, &str, &len) == -1) {
+            Py_DECREF(bytes);
+            return -1;
+        }
+
+        /* Parse the ISO date */
+        if (parse_iso_8601_date(str, len, &dt) < 0) {
+            Py_DECREF(bytes);
+            return -1;
+        }
+
+        /* Get the datetime units metadata */
+        meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
+        if (meta == NULL) {
+            Py_DECREF(bytes);
+            return -1;
+        }
+
+        /* TODO: convert the datetimestruct to the npy_datetime */
+        return 0;
     }
     else if (PyInt_Check(op)) {
         temp = PyInt_AS_LONG(op);

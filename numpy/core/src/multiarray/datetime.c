@@ -81,7 +81,7 @@ static int days_in_month[2][12] = {
 
 /* Return 1/0 iff year points to a leap year in calendar. */
 static int
-is_leapyear(long year)
+is_leapyear(npy_int64 year)
 {
     return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
 }
@@ -508,8 +508,6 @@ PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
     return ret;
 }
 
-
-
 /*NUMPY_API
  * Fill the datetime struct from the value and resolution unit.
  */
@@ -526,9 +524,10 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
     hmsstruct hms;
 
     /*
-     * Note that what looks like val / N and val % N for positive numbers maps to
-     * [val - (N-1)] / N and [N-1 + (val+1) % N] for negative numbers (with the 2nd
-     * value, the remainder, being positive in both cases).
+     * Note that what looks like val / N and val % N for positive numbers
+     * maps to [val - (N-1)] / N and [N-1 + (val+1) % N] for negative
+     * numbers (with the 2nd value, the remainder, being positive in
+     * both cases).
      */
     if (fr == NPY_FR_Y) {
         year = 1970 + val;
@@ -554,7 +553,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
         /* Number of business days since Thursday, 1-1-70 */
         npy_longlong absdays;
         /*
-         * A buisness day is M T W Th F (i.e. all but Sat and Sun.)
+         * A business day is M T W Th F (i.e. all but Sat and Sun.)
          * Convert the business day to the number of actual days.
          *
          * Must convert [0,1,2,3,4,5,6,7,...] to
@@ -1667,4 +1666,494 @@ append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
     return ret;
 }
 
+/*
+ * Adjusts a datetimestruct based on a time zone offset. Assumes
+ * the current values are valid.
+ */
+NPY_NO_EXPORT void
+datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
+{
+    int isleap;
+
+    /* MINUTES */
+    dts->min += minutes;
+    while (dts->min < 0) {
+        dts->min += 60;
+        dts->hour--;
+    }
+    while (dts->min >= 60) {
+        dts->min -= 60;
+        dts->hour++;
+    }
+
+    /* HOURS */
+    while (dts->hour < 0) {
+        dts->hour += 24;
+        dts->day--;
+    }
+    while (dts->hour >= 24) {
+        dts->hour -= 24;
+        dts->day++;
+    }
+
+    /* DAYS */
+    if (dts->day < 0) {
+        dts->month--;
+        if (dts->month < 0) {
+            dts->year--;
+            dts->month = 11;
+        }
+        isleap = is_leapyear(dts->year);
+        dts->day += days_in_month[isleap][dts->month];
+    }
+    else if (dts->day > 28) {
+        isleap = is_leapyear(dts->year);
+        if (dts->day >= days_in_month[isleap][dts->month]) {
+            dts->day -= days_in_month[isleap][dts->month];
+            dts->month++;
+            if (dts->month >= 12) {
+                dts->year++;
+                dts->month = 0;
+            }
+        }
+    }
+}
+
+/*
+ * Gets the offset (in minutes) between local time and UTC, as:
+ *
+ * UTC = local + offset
+ *
+ * Windows appears to have reasonable access to the time zone, but
+ * gcc requires you to either understand all the nuances, or call
+ * the function localtime_r, getting the time in a nonstandard field.
+ *
+ * Returns -1 on failure.
+ */
+NPY_NO_EXPORT int
+get_timezone_minutes_offset()
+{
+#if defined(_WIN32)
+    TIME_ZONE_INFORMATION tzinfo;
+
+    if (GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_INVALID) {
+        PyErr_SetString(PyExc_WindowsError, "Failed to get local time zone");
+        return -1;
+    }
+    return tzinfo.Bias / 60;
+#elif defined(__GNUC__)
+    time_t rawtime;
+    struct tm tmfortz;
+
+    time(&rawtime);
+    /* Using localtime_r instead of localtime to avoid threading issues */
+    if (localtime_r(&rawtime, &tmfortz) == NULL) {
+        PyErr_SetString(PyExc_OSError, "Failed to use localtime_r to "
+                                        "get local time zone");
+        return -1;
+    }
+    return -tmfortz.tm_gmtoff / 60;
+#else
+#error TODO: Need to write platform-specific time zone code here! Please contact numpy-discussion@scipy.org with full information about your platform.
+#endif
+}
+
+/*
+ * Parses (almost) standard ISO 8601 date strings. The differences are:
+ *
+ * + The date "20100312" is parsed as the year 20100312, not as
+ *   equivalent to "2010-03-12". The '-' in the dates are not optional.
+ * + Only seconds may have a decimal point, with up to 18 digits after it
+ *   (maximum attoseconds precision).
+ * + Either a 'T' as in ISO 8601 or a ' ' may be used to separate
+ *   the date and the time. Both are treated equivalently.
+ * + Doesn't (yet) handle the "YYYY-DDD" or "YYYY-Www" formats.
+ * + Doesn't handle leap seconds (seconds value gets 60 in these cases).
+ * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00)
+ *
+ * 'str' must be a NULL-terminated string, and 'len' must be its length.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
+{
+    int year_leap = 0;
+    int i;
+    char *substr, sublen;
+
+    /* Initialize the output to all zeros */
+    memset(out, 0, sizeof(npy_datetimestruct));
+    
+    /* The empty string and case-variants of "NaT" parse to not-a-time */
+    if (len <= 0 || (len == 3 &&
+                        tolower(str[0]) == 'n' &&
+                        tolower(str[1]) == 'a' &&
+                        tolower(str[2]) == 't')) {
+        out->year = NPY_MIN_INT64;
+        return 0;
+    }
+
+    /*
+     * The string "today" resolves to midnight of today's local date in UTC.
+     * This is perhaps a little weird, but done so that further truncation
+     * to a 'datetime64[D]' type produces the date you expect, rather than
+     * switching to an adjacent day depending on the current time and your
+     * timezone.
+     */
+    if (len == 5 && tolower(str[0]) == 't' &&
+                    tolower(str[1]) == 'o' &&
+                    tolower(str[2]) == 'd' &&
+                    tolower(str[3]) == 'a' &&
+                    tolower(str[4]) == 'y') {
+        time_t rawtime = 0;
+        int minutes_offset;
+        time(&rawtime);
+        /* Convert the seconds from 1970 into the npy_datetimestruct */
+        PyArray_DatetimeToDatetimeStruct(rawtime, NPY_FR_s, out);
+        /* Adjust it into local time */
+        minutes_offset = get_timezone_minutes_offset();
+        if (minutes_offset == -1) {
+            return -1;
+        }
+        datetimestruct_timezone_offset(out, -minutes_offset);
+        out->hour = 0;
+        out->min = 0;
+        out->sec = 0;
+        out->us = 0;
+        out->ps = 0;
+        out->as = 0;
+        return 0;
+    }
+
+    /* The string "now" resolves to the current time */
+    if (len == 3 && tolower(str[0]) == 'n' &&
+                    tolower(str[1]) == 'o' &&
+                    tolower(str[1]) == 'w') {
+        time_t rawtime = 0;
+        time(&rawtime);
+        PyArray_DatetimeToDatetimeStruct(rawtime, NPY_FR_s, out);
+        return 0;
+    }
+
+    substr = str;
+    sublen = len;
+
+    /* Skip leading whitespace */
+    while (sublen > 0 && isspace(*substr)) {
+        ++substr;
+        --sublen;
+    }
+
+    /* Leading '-' sign for negative year */
+    if (*substr == '-') {
+        ++substr;
+        --sublen;
+    }
+
+    if (sublen == 0) {
+        goto parse_error;
+    }
+
+    /* PARSE THE YEAR (digits until the '-' character) */
+    out->year = 0;
+    while (sublen > 0 && isdigit(*substr)) {
+        out->year = 10 * out->year + (*substr - '0');
+        ++substr;
+        --sublen;
+    }
+
+    /* Negate the year if necessary */
+    if (str[0] == '-') {
+        out->year = -out->year;
+    }
+    /* Check whether it's a leap-year */
+    year_leap = is_leapyear(out->year);
+
+    /* Next character must be a '-' or the end of the string */
+    if (sublen == 0) {
+        goto finish;
+    }
+    else if (*substr == '-') {
+        ++substr;
+        --sublen;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Can't have a trailing '-' */
+    if (sublen == 0) {
+        goto parse_error;
+    }
+
+    /* PARSE THE MONTH (2 digits) */
+    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+        out->month = 10 * (substr[0] - '0') + (substr[1] - '0');
+        /* Store the month as range [0,11] */
+        out->month--;
+
+        if (out->month < 0 || out->month > 11) {
+            PyErr_Format(PyExc_ValueError,
+                        "Month out of range in datetime string \"%s\"", str);
+            goto error;
+        }
+        substr += 2;
+        sublen -= 2;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Next character must be a '-' or the end of the string */
+    if (sublen == 0) {
+        goto finish;
+    }
+    else if (*substr == '-') {
+        ++substr;
+        --sublen;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Can't have a trailing '-' */
+    if (sublen == 0) {
+        goto parse_error;
+    }
+
+    /* PARSE THE DAY (2 digits) */
+    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+        out->day = 10 * (substr[0] - '0') + (substr[1] - '0');
+        /* Store the day as range [0,len-1] */
+        out->day--;
+
+        if (out->day < 0 || out->day >= days_in_month[year_leap][out->month]) {
+            PyErr_Format(PyExc_ValueError,
+                        "Day out of range in datetime string \"%s\"", str);
+            goto error;
+        }
+        substr += 2;
+        sublen -= 2;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Next character must be a 'T', ' ', or end of string */
+    if (sublen == 0) {
+        goto finish;
+    }
+    else if (*substr != 'T' && *substr != ' ') {
+        goto parse_error;
+    }
+    else {
+        ++substr;
+        --sublen;
+    }
+
+    /* PARSE THE HOURS (2 digits) */
+    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+        out->hour = 10 * (substr[0] - '0') + (substr[1] - '0');
+
+        if (out->hour < 0 || out->hour >= 24) {
+            PyErr_Format(PyExc_ValueError,
+                        "Hours out of range in datetime string \"%s\"", str);
+            goto error;
+        }
+        substr += 2;
+        sublen -= 2;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Next character must be a ':' or the end of the string */
+    if (sublen > 0 && *substr == ':') {
+        ++substr;
+        --sublen;
+    }
+    else {
+        goto parse_timezone;
+    }
+
+    /* Can't have a trailing ':' */
+    if (sublen == 0) {
+        goto parse_error;
+    }
+
+    /* PARSE THE MINUTES (2 digits) */
+    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+        out->min = 10 * (substr[0] - '0') + (substr[1] - '0');
+
+        if (out->hour < 0 || out->min >= 60) {
+            PyErr_Format(PyExc_ValueError,
+                        "Minutes out of range in datetime string \"%s\"", str);
+            goto error;
+        }
+        substr += 2;
+        sublen -= 2;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Next character must be a ':' or the end of the string */
+    if (sublen > 0 && *substr == ':') {
+        ++substr;
+        --sublen;
+    }
+    else {
+        goto parse_timezone;
+    }
+
+    /* Can't have a trailing ':' */
+    if (sublen == 0) {
+        goto parse_error;
+    }
+
+    /* PARSE THE SECONDS (2 digits) */
+    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+        out->sec = 10 * (substr[0] - '0') + (substr[1] - '0');
+
+        if (out->sec < 0 || out->sec >= 60) {
+            PyErr_Format(PyExc_ValueError,
+                        "Seconds out of range in datetime string \"%s\"", str);
+            goto error;
+        }
+        substr += 2;
+        sublen -= 2;
+    }
+    else {
+        goto parse_error;
+    }
+
+    /* Next character may be a '.' indicating fractional seconds */
+    if (sublen > 0 && *substr == '.') {
+        ++substr;
+        --sublen;
+    }
+    else {
+        goto parse_timezone;
+    }
+
+    /* PARSE THE MICROSECONDS (0 to 6 digits) */
+    for (i = 0; i < 6; ++i) {
+        out->us *= 10;
+        if (sublen > 0  && isdigit(*substr)) {
+            out->us += (*substr - '0');
+        }
+    }
+
+    if (sublen == 0 || !isdigit(*substr)) {
+        goto parse_timezone;
+    }
+
+    /* PARSE THE PICOSECONDS (0 to 6 digits) */
+    for (i = 0; i < 6; ++i) {
+        out->ps *= 10;
+        if (sublen > 0 && isdigit(*substr)) {
+            out->ps += (*substr - '0');
+        }
+    }
+
+    if (sublen == 0 || !isdigit(*substr)) {
+        goto parse_timezone;
+    }
+
+    /* PARSE THE ATTOSECONDS (0 to 6 digits) */
+    for (i = 0; i < 6; ++i) {
+        out->as *= 10;
+        if (sublen > 0 && isdigit(*substr)) {
+            out->as += (*substr - '0');
+        }
+    }
+
+parse_timezone:
+    if (sublen == 0) {
+        /* TODO: Convert from local time zone, as ISO states? */
+        goto finish;
+    }
+
+    /* UTC specifier */
+    if (*substr == 'Z') {
+        if (sublen == 1) {
+            goto finish;
+        }
+        else {
+            ++substr;
+            goto parse_error;
+        }
+    }
+    /* Time zone offset */
+    else if (*substr == '-' || *substr == '+') {
+        int offset_neg = 0, offset_hour = 0, offset_minute = 0;
+        if (*substr == '-') {
+            offset_neg = 1;
+        }
+        ++substr;
+        --sublen;
+
+        /* The hours offset */
+        if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+            offset_hour = 10 * (substr[0] - '0') + (substr[1] - '0');
+            substr += 2;
+            sublen -= 2;
+            if (offset_hour >= 24) {
+                PyErr_Format(PyExc_ValueError,
+                            "Timezone hours offset out of range "
+                            "in datetime string \"%s\"", str);
+                goto error;
+            }
+        }
+        else {
+            goto parse_error;
+        }
+
+        /* The minutes offset is optional */
+        if (sublen > 0) {
+            /* Optional ':' */
+            if (*substr == ':') {
+                ++substr;
+                --sublen;
+            }
+
+            /* The minutes offset (at the end of the string) */
+            if (sublen == 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+                offset_minute = 10 * (substr[0] - '0') + (substr[1] - '0');
+                if (offset_minute >= 60) {
+                    PyErr_Format(PyExc_ValueError,
+                                "Timezone minutes offset out of range "
+                                "in datetime string \"%s\"", str);
+                    goto error;
+                }
+            }
+            else {
+                goto parse_error;
+            }
+        }
+
+        /* Apply the time zone offset */
+        if (offset_neg) {
+            offset_hour = -offset_hour;
+            offset_minute = -offset_minute;
+        }
+        datetimestruct_timezone_offset(out, 60 * offset_hour + offset_minute);
+    }
+    else {
+        goto parse_error;
+    }
+
+finish:
+    return 0;
+
+parse_error:
+    PyErr_Format(PyExc_ValueError,
+            "Error parsing datetime string \"%s\" at position %d",
+            str, (int)(substr-str));
+    return -1;
+
+error:
+    return -1;
+}
 

@@ -125,6 +125,106 @@ class TestDateTime(TestCase):
     def test_divisor_conversion_as(self):
         self.assertRaises(ValueError, lambda : np.dtype('M8[as/10]'))
 
+    def test_string_parser_variants(self):
+        """
+        # Different month formats
+        assert_equal(np.array(['1980-02-29'], np.dtype('M8')),
+                     np.array(['1980-Feb-29'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-29'], np.dtype('M8')),
+                     np.array(['1980-feb-29'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-29'], np.dtype('M8')),
+                     np.array(['1980-FEB-29'], np.dtype('M8')))
+        """
+        # Allow space instead of 'T' between date and time
+        assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8')),
+                     np.array(['1980-02-29 01:02:03'], np.dtype('M8')))
+        # Allow negative years
+        assert_equal(np.array(['-1980-02-29T01:02:03'], np.dtype('M8')),
+                     np.array(['-1980-02-29 01:02:03'], np.dtype('M8')))
+        # UTC specifier
+        assert_equal(np.array(['-1980-02-29T01:02:03Z'], np.dtype('M8')),
+                     np.array(['-1980-02-29 01:02:03Z'], np.dtype('M8')))
+        # Time zone offset
+        assert_equal(np.array(['-1980-02-29T01:02:03Z'], np.dtype('M8')),
+                     np.array(['-1980-02-29 00:32:03+0130'], np.dtype('M8')))
+        assert_equal(np.array(['-1980-02-28T22:32:03Z'], np.dtype('M8')),
+                     np.array(['-1980-02-29 00:02:03-01:30'], np.dtype('M8')))
+        assert_equal(np.array(['-1980-02-29T02:32:03.506Z'], np.dtype('M8')),
+                     np.array(['-1980-02-29 00:32:03.506+02'], np.dtype('M8')))
+
+    def test_string_parser_error_check(self):
+        # Arbitrary bad string
+        assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8'))
+        # Character after year must be '-'
+        assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8'))
+        # Cannot have trailing '-'
+        assert_raises(ValueError, np.array, ['1980-'], np.dtype('M8'))
+        # Month must be in range [1,12]
+        assert_raises(ValueError, np.array, ['1980-00'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-13'], np.dtype('M8'))
+        # Month must have two digits
+        assert_raises(ValueError, np.array, ['1980-1'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-1-02'], np.dtype('M8'))
+        # 'Mor' is not a valid month
+        assert_raises(ValueError, np.array, ['1980-Mor'], np.dtype('M8'))
+        # Cannot have trailing '-'
+        assert_raises(ValueError, np.array, ['1980-01-'], np.dtype('M8'))
+        # Day must be in range [1,len(month)]
+        assert_raises(ValueError, np.array, ['1980-01-0'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-01-00'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-01-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1979-02-29'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-30'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-03-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-04-31'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-05-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-06-31'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-07-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-08-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-09-31'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-10-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-11-31'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-12-32'], np.dtype('M8'))
+        # Cannot have trailing characters
+        assert_raises(ValueError, np.array, ['1980-02-03%'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 q'], np.dtype('M8'))
+
+        # Hours must be in range [0, 23]
+        assert_raises(ValueError, np.array, ['1980-02-03 25'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03T25'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 24:01'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03T24:01'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 -1'], np.dtype('M8'))
+        # No trailing ':'
+        assert_raises(ValueError, np.array, ['1980-02-03 01:'], np.dtype('M8'))
+        # Minutes must be in range [0, 59]
+        assert_raises(ValueError, np.array, ['1980-02-03 01:-1'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:60'],
+                                                        np.dtype('M8'))
+        # No trailing ':'
+        assert_raises(ValueError, np.array, ['1980-02-03 01:60:'],
+                                                        np.dtype('M8'))
+        # Seconds must be in range [0, 59]
+        assert_raises(ValueError, np.array, ['1980-02-03 01:10:-1'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:01:60'],
+                                                        np.dtype('M8'))
+        # Timezone offset must within a reasonable range
+        assert_raises(ValueError, np.array, ['1980-02-03 01:01:00+0661'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:01:00+2500'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-0070'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-3000'],
+                                                        np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-25:00'],
+                                                        np.dtype('M8'))
+
+
     def test_creation_overflow(self):
         date = '1980-03-23 20:00:00'
         timesteps = np.array([date], dtype='datetime64[s]')[0].astype(np.int64)

@@ -685,13 +685,13 @@ typedef struct {
 } PyArray_DatetimeMetaData;
 
 typedef struct {
-        npy_longlong year;
-        int month, day, hour, min, sec, us, ps, as;
+        npy_int64 year;
+        npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
 typedef struct {
-        npy_longlong day;
-        int sec, us, ps, as;
+        npy_int64 day;
+        npy_int32 sec, us, ps, as;
 } npy_timedeltastruct;
 
 #if PY_VERSION_HEX >= 0x03000000
