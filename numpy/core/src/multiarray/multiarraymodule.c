@@ -3752,6 +3752,9 @@ PyMODINIT_FUNC initmultiarray(void) {
         1);
 #endif
 
+    /* Initialize access to the PyDateTime API */
+    numpy_pydatetime_import();
+
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {

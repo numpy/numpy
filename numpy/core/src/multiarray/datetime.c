@@ -13,6 +13,17 @@
 
 #include "_datetime.h"
 
+/*
+ * Imports the PyDateTime functions so we can create these objects.
+ * This is called during module initialization
+ */
+NPY_NO_EXPORT void
+numpy_pydatetime_import()
+{
+    PyDateTime_IMPORT;
+}
+
+
 /* For defaults and errors */
 #define NPY_FR_ERR  -1
 
@@ -298,6 +309,12 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     npy_datetime ret;
     NPY_DATETIMEUNIT base = meta->base;
 
+    /* If the datetimestruct is NaT, return NaT */
+    if (dts->year == NPY_MIN_INT64) {
+        *out = NPY_MIN_INT64;
+        return 0;
+    }
+
     if (dts->event < 0 || dts->event >= meta->events) {
         PyErr_Format(PyExc_ValueError,
                     "NumPy datetime event %d is outside range [0,%d)",
@@ -570,6 +587,313 @@ PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
     return ret;
 }
 
+/*
+ * Converts a datetime based on the given metadata into a datetimestruct
+ */
+NPY_NO_EXPORT int
+convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+                                    npy_datetime dt,
+                                    npy_datetimestruct *out)
+{
+    ymdstruct ymd;
+    hmsstruct hms;
+    npy_int64 absdays;
+    npy_int64 tmp, num1, num2, num3;
+
+    /* Initialize the output to all zeros */
+    memset(out, 0, sizeof(npy_datetimestruct));
+    out->year = 1970;
+    out->month = 1;
+    out->day = 1;
+    
+    /* Extract the event number */
+    if (meta->events > 1) {
+        out->event = dt % meta->events;
+        dt = dt / meta->events;
+    }
+
+    /* TODO: Change to a mechanism that avoids the potential overflow */
+    dt *= meta->num;
+
+    /*
+     * Note that care must be taken with the / and % operators
+     * for negative values.
+     */
+    switch (meta->base) {
+        case NPY_FR_Y:
+            out->year = 1970 + dt;
+            break;
+
+        case NPY_FR_M:
+            if (dt >= 0) {
+                out->year  = 1970 + dt / 12;
+                out->month = dt % 12 + 1;
+            }
+            else {
+                out->year  = 1969 + (dt + 1) / 12;
+                out->month = 12 + (dt + 1)% 12;
+            }
+            break;
+
+        case NPY_FR_W:
+            /* A week is 7 days */
+            ymd = days_to_ymdstruct(dt * 7);
+            out->year  = ymd.year;
+            out->month = ymd.month;
+            out->day   = ymd.day;
+            break;
+
+        case NPY_FR_B:
+            /* TODO: fix up business days */
+            /* Number of business days since Thursday, 1-1-70 */
+            /*
+             * A business day is M T W Th F (i.e. all but Sat and Sun.)
+             * Convert the business day to the number of actual days.
+             *
+             * Must convert [0,1,2,3,4,5,6,7,...] to
+             *                  [0,1,4,5,6,7,8,11,...]
+             * and  [...,-9,-8,-7,-6,-5,-4,-3,-2,-1,0] to
+             *        [...,-13,-10,-9,-8,-7,-6,-3,-2,-1,0]
+             */
+            if (dt >= 0) {
+                absdays = 7 * ((dt + 3) / 5) + ((dt + 3) % 5) - 3;
+            }
+            else {
+                /* Recall how C computes / and % with negative numbers */
+                absdays = 7 * ((dt - 1) / 5) + ((dt - 1) % 5) + 1;
+            }
+            ymd = days_to_ymdstruct(absdays);
+            out->year  = ymd.year;
+            out->month = ymd.month;
+            out->day   = ymd.day;
+            break;
+
+        case NPY_FR_D:
+            ymd = days_to_ymdstruct(dt);
+            out->year  = ymd.year;
+            out->month = ymd.month;
+            out->day   = ymd.day;
+            break;
+
+        case NPY_FR_h:
+            if (dt >= 0) {
+                ymd  = days_to_ymdstruct(dt / 24);
+                out->hour  = dt % 24;
+            }
+            else {
+                ymd  = days_to_ymdstruct((dt - 23) / 24);
+                out->hour = 23 + (dt + 1) % 24;
+            }
+            out->year  = ymd.year;
+            out->month = ymd.month;
+            out->day   = ymd.day;
+            break;
+
+        case NPY_FR_m:
+            if (dt >= 0) {
+                ymd = days_to_ymdstruct(dt / 1440);
+                out->min = dt % 1440;
+            }
+            else {
+                ymd = days_to_ymdstruct((dt - 1439) / 1440);
+                out->min = 1439 + (dt + 1) % 1440;
+            }
+            hms = seconds_to_hmsstruct(out->min * 60);
+            out->year   = ymd.year;
+            out->month  = ymd.month;
+            out->day    = ymd.day;
+            out->hour   = hms.hour;
+            out->min = hms.min;
+            break;
+
+        case NPY_FR_s:
+            if (dt >= 0) {
+                ymd = days_to_ymdstruct(dt / 86400);
+                out->sec = dt % 86400;
+            }
+            else {
+                ymd = days_to_ymdstruct((dt - 86399) / 86400);
+                out->sec = 86399 + (dt + 1) % 86400;
+            }
+            hms = seconds_to_hmsstruct(out->sec);
+            out->year   = ymd.year;
+            out->month  = ymd.month;
+            out->day    = ymd.day;
+            out->hour   = hms.hour;
+            out->min = hms.min;
+            out->sec = hms.sec;
+            break;
+
+        case NPY_FR_ms:
+            if (dt >= 0) {
+                ymd = days_to_ymdstruct(dt / 86400000);
+                tmp  = dt % 86400000;
+            }
+            else {
+                ymd = days_to_ymdstruct((dt - 86399999) / 86400000);
+                tmp  = 86399999 + (dt + 1) % 86399999;
+            }
+            hms = seconds_to_hmsstruct(tmp / 1000);
+            out->us  = (tmp % 1000)*1000;
+            out->year    = ymd.year;
+            out->month   = ymd.month;
+            out->day     = ymd.day;
+            out->hour    = hms.hour;
+            out->min     = hms.min;
+            out->sec     = hms.sec;
+            break;
+
+        case NPY_FR_us:
+            num1 = 86400000;
+            num1 *= 1000;
+            num2 = num1 - 1;
+            if (dt >= 0) {
+                ymd = days_to_ymdstruct(dt / num1);
+                tmp = dt % num1;
+            }
+            else {
+                ymd = days_to_ymdstruct((dt - num2)/ num1);
+                tmp = num2 + (dt + 1) % num1;
+            }
+            hms = seconds_to_hmsstruct(tmp / 1000000);
+            out->us = tmp % 1000000;
+            out->year    = ymd.year;
+            out->month   = ymd.month;
+            out->day     = ymd.day;
+            out->hour    = hms.hour;
+            out->min     = hms.min;
+            out->sec     = hms.sec;
+            break;
+
+        case NPY_FR_ns:
+            num1 = 86400000;
+            num1 *= 1000000000;
+            num2 = num1 - 1;
+            num3 = 1000000;
+            num3 *= 1000000;
+            if (dt >= 0) {
+                ymd = days_to_ymdstruct(dt / num1);
+                tmp = dt % num1;
+            }
+            else {
+                ymd = days_to_ymdstruct((dt - num2)/ num1);
+                tmp = num2 + (dt + 1) % num1;
+            }
+            hms = seconds_to_hmsstruct(tmp / 1000000000);
+            tmp = tmp % 1000000000;
+            out->us = tmp / 1000;
+            out->ps = (tmp % 1000) * (npy_int64)(1000);
+            out->year    = ymd.year;
+            out->month   = ymd.month;
+            out->day     = ymd.day;
+            out->hour    = hms.hour;
+            out->min     = hms.min;
+            out->sec     = hms.sec;
+            break;
+
+        case NPY_FR_ps:
+            num3 = 1000000000;
+            num3 *= (npy_int64)(1000);
+            num1 = (npy_int64)(86400) * num3;
+            num2 = num1 - 1;
+
+            if (dt >= 0) {
+                ymd = days_to_ymdstruct(dt / num1);
+                tmp = dt % num1;
+            }
+            else {
+                ymd = days_to_ymdstruct((dt - num2) / num1);
+                tmp = num2 + (dt + 1) % num1;
+            }
+            hms = seconds_to_hmsstruct(tmp / num3);
+            tmp = tmp % num3;
+            out->us = tmp / 1000000;
+            out->ps = tmp % 1000000;
+            out->year    = ymd.year;
+            out->month   = ymd.month;
+            out->day     = ymd.day;
+            out->hour    = hms.hour;
+            out->min     = hms.min;
+            out->sec     = hms.sec;
+            break;
+
+        case NPY_FR_fs:
+            /* entire range is only += 2.6 hours */
+            num1 = 1000000000;
+            num1 *= (npy_int64)(1000);
+            num2 = num1 * (npy_int64)(1000);
+
+            if (dt >= 0) {
+                out->sec = dt / num2;
+                tmp = dt % num2;
+                hms = seconds_to_hmsstruct(out->sec);
+                out->hour = hms.hour;
+                out->min = hms.min;
+                out->sec = hms.sec;
+            }
+            else {
+                /* tmp (number of fs) will be positive after this segment */
+                out->year = 1969;
+                out->day = 31;
+                out->month = 12;
+                out->sec = (dt - (num2-1))/num2;
+                tmp = (num2-1) + (dt + 1) % num2;
+                if (out->sec == 0) {
+                    /* we are at the last second */
+                    out->hour = 23;
+                    out->min = 59;
+                    out->sec = 59;
+                }
+                else {
+                    out->hour = 24 + (out->sec - 3599)/3600;
+                    out->sec = 3599 + (out->sec+1)%3600;
+                    out->min = out->sec / 60;
+                    out->sec = out->sec % 60;
+                }
+            }
+            out->us = tmp / 1000000000;
+            tmp = tmp % 1000000000;
+            out->ps = tmp / 1000;
+            out->as = (tmp % 1000) * (npy_int64)(1000);
+            break;
+
+        case NPY_FR_as:
+            /* entire range is only += 9.2 seconds */
+            num1 = 1000000;
+            num2 = num1 * (npy_int64)(1000000);
+            num3 = num2 * (npy_int64)(1000000);
+            if (dt >= 0) {
+                out->hour = 0;
+                out->min = 0;
+                out->sec = dt / num3;
+                tmp = dt % num3;
+            }
+            else {
+                out->year = 1969;
+                out->day = 31;
+                out->month = 12;
+                out->hour = 23;
+                out->min = 59;
+                out->sec = 60 + (dt - (num3-1)) / num3;
+                tmp = (num3-1) + (dt+1) % num3;
+            }
+            out->us = tmp / num2;
+            tmp = tmp % num2;
+            out->ps = tmp / num1;
+            out->as = tmp % num1;
+            break;
+
+        default:
+            PyErr_SetString(PyExc_RuntimeError,
+                        "NumPy datetime metadata is corrupted with invalid "
+                        "base unit");
+            return -1;
+    }
+
+    return 0;
+}
+
+
 /*NUMPY_API
  * Fill the datetime struct from the value and resolution unit.
  */
@@ -577,287 +901,17 @@ NPY_NO_EXPORT void
 PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
                                  npy_datetimestruct *result)
 {
-    int year = 1970, month = 1, day = 1,
-        hour = 0, min = 0, sec = 0,
-        us = 0, ps = 0, as = 0;
+    PyArray_DatetimeMetaData meta;
 
-    npy_int64 tmp;
-    ymdstruct ymd;
-    hmsstruct hms;
+    /* Set up a dummy metadata for the conversion */
+    meta.base = fr;
+    meta.num = 1;
+    meta.events = 1;
 
-    /*
-     * Note that what looks like val / N and val % N for positive numbers
-     * maps to [val - (N-1)] / N and [N-1 + (val+1) % N] for negative
-     * numbers (with the 2nd value, the remainder, being positive in
-     * both cases).
-     */
-    if (fr == NPY_FR_Y) {
-        year = 1970 + val;
+    if (convert_datetime_to_datetimestruct(&meta, val, result) < 0) {
+        /* The caller needs to check PyErr_Occurred() */
+        return;
     }
-    else if (fr == NPY_FR_M) {
-        if (val >= 0) {
-            year  = 1970 + val / 12;
-            month = val % 12 + 1;
-        }
-        else {
-            year  = 1969 + (val + 1) / 12;
-            month = 12 + (val + 1)% 12;
-        }
-    }
-    else if (fr == NPY_FR_W) {
-        /* A week is the same as 7 days */
-        ymd = days_to_ymdstruct(val * 7);
-        year  = ymd.year;
-        month = ymd.month;
-        day   = ymd.day;
-    }
-    else if (fr == NPY_FR_B) {
-        /* Number of business days since Thursday, 1-1-70 */
-        npy_longlong absdays;
-        /*
-         * A business day is M T W Th F (i.e. all but Sat and Sun.)
-         * Convert the business day to the number of actual days.
-         *
-         * Must convert [0,1,2,3,4,5,6,7,...] to
-         *                  [0,1,4,5,6,7,8,11,...]
-         * and  [...,-9,-8,-7,-6,-5,-4,-3,-2,-1,0] to
-         *        [...,-13,-10,-9,-8,-7,-6,-3,-2,-1,0]
-         */
-        if (val >= 0) {
-            absdays = 7 * ((val + 3) / 5) + ((val + 3) % 5) - 3;
-        }
-        else {
-            /* Recall how C computes / and % with negative numbers */
-            absdays = 7 * ((val - 1) / 5) + ((val - 1) % 5) + 1;
-        }
-        ymd = days_to_ymdstruct(absdays);
-        year  = ymd.year;
-        month = ymd.month;
-        day   = ymd.day;
-    }
-    else if (fr == NPY_FR_D) {
-        ymd = days_to_ymdstruct(val);
-        year  = ymd.year;
-        month = ymd.month;
-        day   = ymd.day;
-    }
-    else if (fr == NPY_FR_h) {
-        if (val >= 0) {
-            ymd  = days_to_ymdstruct(val / 24);
-            hour  = val % 24;
-        }
-        else {
-            ymd  = days_to_ymdstruct((val - 23) / 24);
-            hour = 23 + (val + 1) % 24;
-        }
-        year  = ymd.year;
-        month = ymd.month;
-        day   = ymd.day;
-    }
-    else if (fr == NPY_FR_m) {
-        if (val >= 0) {
-            ymd = days_to_ymdstruct(val / 1440);
-            min = val % 1440;
-        }
-        else {
-            ymd = days_to_ymdstruct((val - 1439) / 1440);
-            min = 1439 + (val + 1) % 1440;
-        }
-        hms = seconds_to_hmsstruct(min * 60);
-        year   = ymd.year;
-        month  = ymd.month;
-        day    = ymd.day;
-        hour   = hms.hour;
-        min = hms.min;
-    }
-    else if (fr == NPY_FR_s) {
-        if (val >= 0) {
-            ymd = days_to_ymdstruct(val / 86400);
-            sec = val % 86400;
-        }
-        else {
-            ymd = days_to_ymdstruct((val - 86399) / 86400);
-            sec = 86399 + (val + 1) % 86400;
-        }
-        hms = seconds_to_hmsstruct(sec);
-        year   = ymd.year;
-        month  = ymd.month;
-        day    = ymd.day;
-        hour   = hms.hour;
-        min = hms.min;
-        sec = hms.sec;
-    }
-    else if (fr == NPY_FR_ms) {
-        if (val >= 0) {
-            ymd = days_to_ymdstruct(val / 86400000);
-            tmp  = val % 86400000;
-        }
-        else {
-            ymd = days_to_ymdstruct((val - 86399999) / 86400000);
-            tmp  = 86399999 + (val + 1) % 86399999;
-        }
-        hms = seconds_to_hmsstruct(tmp / 1000);
-        us  = (tmp % 1000)*1000;
-        year    = ymd.year;
-        month   = ymd.month;
-        day     = ymd.day;
-        hour    = hms.hour;
-        min     = hms.min;
-        sec     = hms.sec;
-    }
-    else if (fr == NPY_FR_us) {
-        npy_int64 num1, num2;
-        num1 = 86400000;
-        num1 *= 1000;
-        num2 = num1 - 1;
-        if (val >= 0) {
-            ymd = days_to_ymdstruct(val / num1);
-            tmp = val % num1;
-        }
-        else {
-            ymd = days_to_ymdstruct((val - num2)/ num1);
-            tmp = num2 + (val + 1) % num1;
-        }
-        hms = seconds_to_hmsstruct(tmp / 1000000);
-        us = tmp % 1000000;
-        year    = ymd.year;
-        month   = ymd.month;
-        day     = ymd.day;
-        hour    = hms.hour;
-        min     = hms.min;
-        sec     = hms.sec;
-    }
-    else if (fr == NPY_FR_ns) {
-        npy_int64 num1, num2, num3;
-        num1 = 86400000;
-        num1 *= 1000000000;
-        num2 = num1 - 1;
-        num3 = 1000000;
-        num3 *= 1000000;
-        if (val >= 0) {
-            ymd = days_to_ymdstruct(val / num1);
-            tmp = val % num1;
-        }
-        else {
-            ymd = days_to_ymdstruct((val - num2)/ num1);
-            tmp = num2 + (val + 1) % num1;
-        }
-        hms = seconds_to_hmsstruct(tmp / 1000000000);
-        tmp = tmp % 1000000000;
-        us = tmp / 1000;
-        ps = (tmp % 1000) * (npy_int64)(1000);
-        year    = ymd.year;
-        month   = ymd.month;
-        day     = ymd.day;
-        hour    = hms.hour;
-        min     = hms.min;
-        sec     = hms.sec;
-    }
-    else if (fr == NPY_FR_ps) {
-        npy_int64 num1, num2, num3;
-        num3 = 1000000000;
-        num3 *= (npy_int64)(1000);
-        num1 = (npy_int64)(86400) * num3;
-        num2 = num1 - 1;
-
-        if (val >= 0) {
-            ymd = days_to_ymdstruct(val / num1);
-            tmp = val % num1;
-        }
-        else {
-            ymd = days_to_ymdstruct((val - num2) / num1);
-            tmp = num2 + (val + 1) % num1;
-        }
-        hms = seconds_to_hmsstruct(tmp / num3);
-        tmp = tmp % num3;
-        us = tmp / 1000000;
-        ps = tmp % 1000000;
-        year    = ymd.year;
-        month   = ymd.month;
-        day     = ymd.day;
-        hour    = hms.hour;
-        min     = hms.min;
-        sec     = hms.sec;
-    }
-    else if (fr == NPY_FR_fs) {
-        /* entire range is only += 2.6 hours */
-        npy_int64 num1, num2;
-        num1 = 1000000000;
-        num1 *= (npy_int64)(1000);
-        num2 = num1 * (npy_int64)(1000);
-
-        if (val >= 0) {
-            sec = val / num2;
-            tmp = val % num2;
-            hms = seconds_to_hmsstruct(sec);
-            hour = hms.hour;
-            min = hms.min;
-            sec = hms.sec;
-        }
-        else {
-            /* tmp (number of fs) will be positive after this segment */
-            year = 1969;
-            day = 31;
-            month = 12;
-            sec = (val - (num2-1))/num2;
-            tmp = (num2-1) + (val + 1) % num2;
-            if (sec == 0) {
-                /* we are at the last second */
-                hour = 23;
-                min = 59;
-                sec = 59;
-            }
-            else {
-                hour = 24 + (sec - 3599)/3600;
-                sec = 3599 + (sec+1)%3600;
-                min = sec / 60;
-                sec = sec % 60;
-            }
-        }
-        us = tmp / 1000000000;
-        tmp = tmp % 1000000000;
-        ps = tmp / 1000;
-        as = (tmp % 1000) * (npy_int64)(1000);
-    }
-    else if (fr == NPY_FR_as) {
-        /* entire range is only += 9.2 seconds */
-        npy_int64 num1, num2, num3;
-        num1 = 1000000;
-        num2 = num1 * (npy_int64)(1000000);
-        num3 = num2 * (npy_int64)(1000000);
-        if (val >= 0) {
-            hour = 0;
-            min = 0;
-            sec = val / num3;
-            tmp = val % num3;
-        }
-        else {
-            year = 1969;
-            day = 31;
-            month = 12;
-            hour = 23;
-            min = 59;
-            sec = 60 + (val - (num3-1)) / num3;
-            tmp = (num3-1) + (val+1) % num3;
-        }
-        us = tmp / num2;
-        tmp = tmp % num2;
-        ps = tmp / num1;
-        as = tmp % num1;
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError, "invalid internal time resolution");
-    }
-
-    result->year  = year;
-    result->month = month;
-    result->day   = day;
-    result->hour  = hour;
-    result->min   = min;
-    result->sec   = sec;
-    result->us    = us;
-    result->ps    = ps;
-    result->as    = as;
 
     return;
 }
@@ -1792,8 +1846,9 @@ datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
  * + Either a 'T' as in ISO 8601 or a ' ' may be used to separate
  *   the date and the time. Both are treated equivalently.
  * + Doesn't (yet) handle the "YYYY-DDD" or "YYYY-Www" formats.
- * + Doesn't handle leap seconds (seconds value gets 60 in these cases).
- * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00)
+ * + Doesn't handle leap seconds (seconds value has 60 in these cases).
+ * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00) tomorrow
+ * + Accepts special values "NaT" (not a time), "Today", and "Now".
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
  *
@@ -1808,6 +1863,8 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
+    out->month = 1;
+    out->day = 1;
     
     /* The empty string and case-variants of "NaT" parse to not-a-time */
     if (len <= 0 || (len == 3 &&
@@ -1857,7 +1914,7 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
     /* The string "now" resolves to the current time */
     if (len == 3 && tolower(str[0]) == 'n' &&
                     tolower(str[1]) == 'o' &&
-                    tolower(str[1]) == 'w') {
+                    tolower(str[2]) == 'w') {
         time_t rawtime = 0;
         time(&rawtime);
         PyArray_DatetimeToDatetimeStruct(rawtime, NPY_FR_s, out);
@@ -2223,6 +2280,11 @@ error:
  * Tests for and converts a Python datetime.datetime or datetime.date
  * object into a NumPy npy_datetimestruct.
  *
+ * While the C API has PyDate_* and PyDateTime_* functions, the following
+ * implementation just asks for attributes, and thus supports
+ * datetime duck typing. The tzinfo time zone conversion would require
+ * this style of access anyway.
+ *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the neeeded date or datetime attributes.
  */
@@ -2234,6 +2296,8 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
+    out->month = 1;
+    out->day = 1;
 
     /* Need at least year/month/day attributes */
     if (!PyObject_HasAttrString(obj, "year") ||
@@ -2487,4 +2551,72 @@ convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
             "Could not convert object to NumPy datetime");
     return -1;
 }
+
+/*
+ * Converts a datetime into a PyObject *.
+ *
+ * Not-a-time is returned as the string "NaT".
+ * For days or coarser, returns a datetime.date.
+ * For microseconds or coarser, returns a datetime.datetime.
+ * For units finer than microseconds, returns an integer.
+ */
+NPY_NO_EXPORT PyObject *
+convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
+{
+    PyObject *ret = NULL, *tup = NULL;
+    npy_datetimestruct dts;
+
+    /* Handle not-a-time */
+    if (dt == NPY_MIN_INT64) {
+        return PyUString_FromString("NaT");
+    }
+
+    /* If the type's precision is greater than microseconds, return an int */
+    if (meta->base > NPY_FR_us) {
+        ret = PyLong_FromLongLong(dt);
+    }
+    else {
+        /* Convert to a datetimestruct */
+        if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+            return NULL;
+        }
+
+        /* If the type's precision is greater than days, return a datetime */
+        if (meta->base > NPY_FR_D) {
+            ret = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
+                                    dts.hour, dts.min, dts.sec, dts.us);
+        }
+        /* Otherwise return a date */
+        else {
+            ret = PyDate_FromDate(dts.year, dts.month, dts.day);
+        }
+    }
+
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* If there is one event, just return the datetime */
+    if (meta->events == 1) {
+        return ret;
+    }
+    /* Otherwise return a tuple with the event in the second position */
+    else {
+        tup = PyTuple_New(2);
+        if (tup == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(tup, 0, ret);
+        ret = PyInt_FromLong(dts.event);
+        if (ret == NULL) {
+            Py_DECREF(tup);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(tup, 1, ret);
+
+        return tup;
+    }
+}
+
 

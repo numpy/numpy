@@ -2,6 +2,9 @@
 #define _NPY_PRIVATE__DATETIME_H_
 
 NPY_NO_EXPORT void
+numpy_pydatetime_import();
+
+NPY_NO_EXPORT void
 PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
                                  npy_datetimestruct *result);
 
@@ -16,6 +19,13 @@ NPY_NO_EXPORT npy_datetime
 PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d);
 
 /*
+ * This function returns a pointer to the DateTimeMetaData
+ * contained within the provided datetime dtype.
+ */
+NPY_NO_EXPORT PyArray_DatetimeMetaData *
+get_datetime_metadata_from_dtype(PyArray_Descr *dtype);
+
+/*
  * Converts a datetime from a datetimestruct to a datetime based
  * on some metadata.
  */
@@ -23,13 +33,6 @@ NPY_NO_EXPORT int
 convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
-
-/*
- * This function returns a pointer to the DateTimeMetaData
- * contained within the provided datetime dtype.
- */
-NPY_NO_EXPORT PyArray_DatetimeMetaData *
-get_datetime_metadata_from_dtype(PyArray_Descr *dtype);
 
 /*
  * This function returns a reference to a capsule
@@ -131,12 +134,22 @@ NPY_NO_EXPORT int
 convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out);
 
 /*
- * Converts a PyObject * into a datetime, in any of the forms supported
+ * Converts a PyObject * into a datetime, in any of the input forms supported.
  *
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
                                 npy_datetime *out);
+
+/*
+ * Converts a datetime into a PyObject *.
+ *
+ * For days or coarser, returns a datetime.date.
+ * For microseconds or coarser, returns a datetime.datetime.
+ * For units finer than microseconds, returns an integer.
+ */
+NPY_NO_EXPORT PyObject *
+convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
 
 #endif

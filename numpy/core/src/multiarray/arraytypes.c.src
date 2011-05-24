@@ -1061,43 +1061,25 @@ PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
 }
 
 
-/*
- * Always return DateTime Object after normalizing to basic units (or a tuple
- * if meta->events > 1):
- *
- *  Problem:  DateTime does not support all the resolutions (ns) nor the
- *  dynamic range (pre 1 AD) of NumPy Date-times.
- *
- * getitem is not used that much --- if losing resolution hurts, stick
- * with the array scalar versions of the date-time.
- *
- * considered returning array scalars here just like longdouble. This has the
- * problem of recursion in some cases (because in a few places the code
- * expects getitem to return a Python-system object)
- *
- * considered returning different things depending on the resolution but this
- * would make it hard to write generic code  --- but do you need to write
- * generic code on all the frequencies because they cover a wide range.
- *
- * Solution:  The use-case of actually wanting a date-time object when the
- * resolution and dynamic range match, make it the compelling default. When it
- * does fails, there are alternatives for the programmer to use.
- *
- * New question: Should we change (c)longdouble at this point? to return Python Float?
- */
-
 static PyObject *
 DATETIME_getitem(char *ip, PyArrayObject *ap) {
-    datetime t1;
+    npy_datetime dt;
+    PyArray_DatetimeMetaData *meta = NULL;
+
+    /* Get the datetime units metadata */
+    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
+    if (meta == NULL) {
+        return -1;
+    }
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        t1 = *((datetime *)ip);
-        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+        dt = *((datetime *)ip);
     }
     else {
-        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
-        return PyDateTime_FromInt64((datetime)t1, ap->descr);
+        ap->descr->f->copyswap(&dt, ip, !PyArray_ISNOTSWAPPED(ap), ap);
     }
+
+    return convert_datetime_to_pyobject(dt, meta);
 }
 
 

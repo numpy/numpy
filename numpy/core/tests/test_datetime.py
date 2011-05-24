@@ -39,8 +39,12 @@ class TestDateTime(TestCase):
         assert_equal(a[0], a[1])
         a = np.array(['2000-01-01', datetime.date(2000, 1, 1)], dtype='M8[s]')
         assert_equal(a[0], a[1])
+        # Will fail if the date changes during the exact right moment
         a = np.array(['today', datetime.date.today()], dtype='M8[s]')
         assert_equal(a[0], a[1])
+        # datetime.datetime.now() returns local time, not UTC
+        #a = np.array(['now', datetime.datetime.now()], dtype='M8[s]')
+        #assert_equal(a[0], a[1])
 
     def test_pickle(self):
         # Check that pickle roundtripping works
