@@ -1782,45 +1782,6 @@ datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
 }
 
 /*
- * Gets the offset (in minutes) between local time and UTC, as:
- *
- * UTC = local + offset
- *
- * Windows appears to have reasonable access to the time zone, but
- * gcc requires you to either understand all the nuances, or call
- * the function localtime_r, getting the time in a nonstandard field.
- *
- * Returns -1 on failure.
- */
-NPY_NO_EXPORT int
-get_timezone_minutes_offset()
-{
-#if defined(_WIN32)
-    TIME_ZONE_INFORMATION tzinfo;
-
-    if (GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_INVALID) {
-        PyErr_SetString(PyExc_WindowsError, "Failed to get local time zone");
-        return -1;
-    }
-    return tzinfo.Bias / 60;
-#elif defined(__GNUC__)
-    time_t rawtime;
-    struct tm tmfortz;
-
-    time(&rawtime);
-    /* Using localtime_r instead of localtime to avoid threading issues */
-    if (localtime_r(&rawtime, &tmfortz) == NULL) {
-        PyErr_SetString(PyExc_OSError, "Failed to use localtime_r to "
-                                        "get local time zone");
-        return -1;
-    }
-    return -tmfortz.tm_gmtoff / 60;
-#else
-#error TODO: Need to write platform-specific time zone code here! Please contact numpy-discussion@scipy.org with full information about your platform.
-#endif
-}
-
-/*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
  * + After the date and time, may place a ' ' followed by an event number.
@@ -1870,22 +1831,26 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
                     tolower(str[3]) == 'a' &&
                     tolower(str[4]) == 'y') {
         time_t rawtime = 0;
-        int minutes_offset;
+        struct tm tm_;
+
         time(&rawtime);
-        /* Convert the seconds from 1970 into the npy_datetimestruct */
-        PyArray_DatetimeToDatetimeStruct(rawtime, NPY_FR_s, out);
-        /* Adjust it into local time */
-        minutes_offset = get_timezone_minutes_offset();
-        if (minutes_offset == -1) {
+#if defined(_WIN32)
+        if (localtime_s(&tm_, &rawtime) != 0) {
+            PyErr_SetString(PyExc_OSError, "Failed to use localtime_s to "
+                                        "get local time");
             return -1;
         }
-        datetimestruct_timezone_offset(out, -minutes_offset);
-        out->hour = 0;
-        out->min = 0;
-        out->sec = 0;
-        out->us = 0;
-        out->ps = 0;
-        out->as = 0;
+#else
+        /* Other platforms may require something else */
+        if (localtime_r(&rawtime, &tm_) == NULL) {
+            PyErr_SetString(PyExc_OSError, "Failed to use localtime_r to "
+                                        "get local time");
+            return -1;
+        }
+#endif
+        out->year = tm_.tm_year;
+        out->month = tm_.tm_mon;
+        out->day = tm_.tm_mday;
         return 0;
     }
 
@@ -2140,14 +2105,10 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
 parse_timezone:
     if (sublen == 0) {
-        int minutes_offset;
-
-        /* Convert from local time zone since lacked 'Z' or an offset */
-        minutes_offset = get_timezone_minutes_offset();
-        if (minutes_offset == -1) {
-            goto error;
-        }
-        datetimestruct_timezone_offset(out, minutes_offset);
+        /* TODO: In this case, ISO 8601 states to treat
+         *       it as a local time, but we are leaving
+         *       it as a UTC time for now.
+         */
 
         goto finish;
     }
@@ -2258,6 +2219,279 @@ parse_error:
     return -1;
 
 error:
+    return -1;
+}
+
+/*
+ * Tests for and converts a Python datetime.datetime or datetime.date
+ * object into a NumPy npy_datetimestruct.
+ *
+ * Returns -1 on error, 0 on success, and 1 (with no error set)
+ * if obj doesn't have the neeeded date or datetime attributes.
+ */
+NPY_NO_EXPORT int
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
+{
+    PyObject *tmp;
+    int isleap;
+
+    /* Initialize the output to all zeros */
+    memset(out, 0, sizeof(npy_datetimestruct));
+
+    /* Need at least year/month/day attributes */
+    if (!PyObject_HasAttrString(obj, "year") ||
+            !PyObject_HasAttrString(obj, "month") ||
+            !PyObject_HasAttrString(obj, "day")) {
+        return 1;
+    }
+
+    /* Get the year */
+    tmp = PyObject_GetAttrString(obj, "year");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->year = PyInt_AsLong(tmp);
+    if (out->year == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    /* Get the month */
+    tmp = PyObject_GetAttrString(obj, "month");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->month = PyInt_AsLong(tmp);
+    if (out->month == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    /* Get the day */
+    tmp = PyObject_GetAttrString(obj, "day");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->day = PyInt_AsLong(tmp);
+    if (out->day == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    /* Validate that the month and day are valid for the year */
+    if (out->month < 1 || out->month > 12) {
+        goto invalid_date;
+    }
+    isleap = is_leapyear(out->year);
+    if (out->day < 1 || out->day > days_in_month[isleap][out->month]) {
+        goto invalid_date;
+    }
+
+    /* Adjust the month and day to be zero-based */
+    out->month--;
+    out->day--;
+
+    /* Check for time attributes (if not there, return success as a date) */
+    if (!PyObject_HasAttrString(obj, "hour") ||
+            !PyObject_HasAttrString(obj, "minute") ||
+            !PyObject_HasAttrString(obj, "second") ||
+            !PyObject_HasAttrString(obj, "microsecond")) {
+        return 0;
+    }
+
+    /* Get the hour */
+    tmp = PyObject_GetAttrString(obj, "hour");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->hour = PyInt_AsLong(tmp);
+    if (out->hour == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    /* Get the minute */
+    tmp = PyObject_GetAttrString(obj, "minute");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->min = PyInt_AsLong(tmp);
+    if (out->min == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    /* Get the second */
+    tmp = PyObject_GetAttrString(obj, "second");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->sec = PyInt_AsLong(tmp);
+    if (out->sec == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    /* Get the microsecond */
+    tmp = PyObject_GetAttrString(obj, "microsecond");
+    if (tmp == NULL) {
+        return -1;
+    }
+    out->us = PyInt_AsLong(tmp);
+    if (out->us == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        return -1;
+    }
+    Py_DECREF(tmp);
+
+    if (out->hour < 0 || out->hour >= 24 ||
+            out->min < 0 || out->min >= 60 ||
+            out->sec < 0 || out->sec >= 60 ||
+            out->us < 0 || out->us >= 1000000) {
+        goto invalid_time;
+    }
+
+    /* Apply the time zone offset if it exists */
+    if (PyObject_HasAttrString(obj, "tzinfo")) {
+        tmp = PyObject_GetAttrString(obj, "tzinfo");
+        if (tmp == NULL) {
+            return -1;
+        }
+        if (tmp == Py_None) {
+            Py_DECREF(tmp);
+        }
+        else {
+            PyObject *offset;
+            int seconds_offset, minutes_offset;
+
+            /* The utcoffset function should return a timedelta */
+            offset = PyObject_CallMethod(tmp, "utcoffset", "O", obj);
+            if (offset == NULL) {
+                Py_DECREF(tmp);
+                return -1;
+            }
+            Py_DECREF(tmp);
+
+            /*
+             * The timedelta should have an attribute "seconds"
+             * which contains the value we want.
+             */
+            tmp = PyObject_GetAttrString(obj, "seconds");
+            if (tmp == NULL) {
+                return -1;
+            }
+            seconds_offset = PyInt_AsLong(tmp);
+            if (seconds_offset == -1 && PyErr_Occurred()) {
+                Py_DECREF(tmp);
+                return -1;
+            }
+            Py_DECREF(tmp);
+
+            /* Convert to a minutes offset and apply it */
+            minutes_offset = seconds_offset / 60;
+
+            datetimestruct_timezone_offset(out, minutes_offset);
+        }
+    }
+
+    return 0;
+
+invalid_date:
+    PyErr_Format(PyExc_ValueError,
+            "Invalid date (%d,%d,%d) when converting to NumPy datetime",
+            (int)out->year, (int)out->month, (int)out->day);
+    return -1;
+
+invalid_time:
+    PyErr_Format(PyExc_ValueError,
+            "Invalid time (%d,%d,%d,%d) when converting "
+            "to NumPy datetime",
+            (int)out->hour, (int)out->min, (int)out->sec, (int)out->us);
+    return -1;
+}
+
+/*
+ * Converts a PyObject * into a datetime, in any of the forms supported
+ *
+ * Returns -1 on error, 0 on success.
+ */
+NPY_NO_EXPORT int
+convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
+                                npy_datetime *out)
+{
+    if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        PyObject *bytes = NULL;
+        char *str = NULL;
+        int len = 0;
+        npy_datetimestruct dts;
+        /* Convert to an ASCII string for the date parser */
+        if (PyUnicode_Check(obj)) {
+            bytes = PyUnicode_AsASCIIString(obj);
+            if (bytes == NULL) {
+                return -1;
+            }
+        }
+        else {
+            bytes = obj;
+            Py_INCREF(bytes);
+        }
+        if (PyBytes_AsStringAndSize(bytes, &str, &len) == -1) {
+            Py_DECREF(bytes);
+            return -1;
+        }
+
+        /* Parse the ISO date */
+        if (parse_iso_8601_date(str, len, &dts) < 0) {
+            Py_DECREF(bytes);
+            return -1;
+        }
+        Py_DECREF(bytes);
+
+        if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+    /* Do no conversion on raw integers */
+    else if (PyInt_Check(obj)) {
+        *out = PyInt_AS_LONG(obj);
+        return 0;
+    }
+    else if (PyLong_Check(obj)) {
+        *out = PyLong_AsLongLong(obj);
+        return 0;
+    }
+    /* TODO datetime64 scalars require conversion
+    else if (PyArray_IsScalar(op, Datetime)) {
+    }
+    */
+    /* Convert from a Python date or datetime object */
+    else {
+        int code;
+        npy_datetimestruct dts;
+
+        code = convert_pydatetime_to_datetimestruct(obj, &dts);
+        if (code == -1) {
+            return -1;
+        }
+        else if (code == 0) {
+            if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
+                return -1;
+            }
+
+            return 0;
+        }
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+            "Could not convert object to NumPy datetime");
     return -1;
 }
 

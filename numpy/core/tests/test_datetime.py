@@ -2,6 +2,7 @@ import os, pickle
 import numpy as np
 from numpy.testing import *
 from numpy.compat import asbytes
+import datetime
 
 class TestDateTime(TestCase):
     def test_creation(self):
@@ -24,6 +25,22 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.dtype, 'm7')
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
+
+    def test_pydatetime_creation(self):
+        a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[D]')
+        assert_equal(a[0], a[1])
+        a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[s]')
+        assert_equal(a[0], a[1])
+        a = np.array(['1999-12-31', datetime.date(1999, 12, 31)], dtype='M8[D]')
+        assert_equal(a[0], a[1])
+        a = np.array(['1999-12-31', datetime.date(1999, 12, 31)], dtype='M8[s]')
+        assert_equal(a[0], a[1])
+        a = np.array(['2000-01-01', datetime.date(2000, 1, 1)], dtype='M8[D]')
+        assert_equal(a[0], a[1])
+        a = np.array(['2000-01-01', datetime.date(2000, 1, 1)], dtype='M8[s]')
+        assert_equal(a[0], a[1])
+        a = np.array(['today', datetime.date.today()], dtype='M8[s]')
+        assert_equal(a[0], a[1])
 
     def test_pickle(self):
         # Check that pickle roundtripping works
@@ -226,7 +243,7 @@ class TestDateTime(TestCase):
 
 
     def test_creation_overflow(self):
-        date = '1980-03-23 20:00:00'
+        date = '1980-03-23 20:00:00Z'
         timesteps = np.array([date], dtype='datetime64[s]')[0].astype(np.int64)
         for unit in ['ms', 'us', 'ns']:
             timesteps *= 1000

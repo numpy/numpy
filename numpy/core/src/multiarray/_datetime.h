@@ -120,4 +120,23 @@ append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret);
 NPY_NO_EXPORT int
 parse_iso_8601_date(char *str, int len, npy_datetimestruct *out);
 
+/*
+ * Tests for and converts a Python datetime.datetime or datetime.date
+ * object into a NumPy npy_datetimestruct.
+ *
+ * Returns -1 on error, 0 on success, and 1 (with no error set)
+ * if obj doesn't have the neeeded date or datetime attributes.
+ */
+NPY_NO_EXPORT int
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out);
+
+/*
+ * Converts a PyObject * into a datetime, in any of the forms supported
+ *
+ * Returns -1 on error, 0 on success.
+ */
+NPY_NO_EXPORT int
+convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
+                                npy_datetime *out);
+
 #endif
