@@ -1759,23 +1759,23 @@ datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
     }
 
     /* DAYS */
-    if (dts->day < 0) {
+    if (dts->day < 1) {
         dts->month--;
-        if (dts->month < 0) {
+        if (dts->month < 1) {
             dts->year--;
-            dts->month = 11;
+            dts->month = 12;
         }
         isleap = is_leapyear(dts->year);
-        dts->day += days_in_month[isleap][dts->month];
+        dts->day += days_in_month[isleap][dts->month-1];
     }
     else if (dts->day > 28) {
         isleap = is_leapyear(dts->year);
-        if (dts->day >= days_in_month[isleap][dts->month]) {
-            dts->day -= days_in_month[isleap][dts->month];
+        if (dts->day > days_in_month[isleap][dts->month-1]) {
+            dts->day -= days_in_month[isleap][dts->month-1];
             dts->month++;
-            if (dts->month >= 12) {
+            if (dts->month > 12) {
                 dts->year++;
-                dts->month = 0;
+                dts->month = 1;
             }
         }
     }
@@ -1848,8 +1848,8 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
             return -1;
         }
 #endif
-        out->year = tm_.tm_year;
-        out->month = tm_.tm_mon;
+        out->year = tm_.tm_year + 1900;
+        out->month = tm_.tm_mon + 1;
         out->day = tm_.tm_mday;
         return 0;
     }
@@ -1918,10 +1918,8 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
     /* PARSE THE MONTH (2 digits) */
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->month = 10 * (substr[0] - '0') + (substr[1] - '0');
-        /* Store the month as range [0,11] */
-        out->month--;
 
-        if (out->month < 0 || out->month > 11) {
+        if (out->month < 1 || out->month > 12) {
             PyErr_Format(PyExc_ValueError,
                         "Month out of range in datetime string \"%s\"", str);
             goto error;
@@ -1953,10 +1951,9 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
     /* PARSE THE DAY (2 digits) */
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->day = 10 * (substr[0] - '0') + (substr[1] - '0');
-        /* Store the day as range [0,len-1] */
-        out->day--;
 
-        if (out->day < 0 || out->day >= days_in_month[year_leap][out->month]) {
+        if (out->day < 1 ||
+                        out->day > days_in_month[year_leap][out->month-1]) {
             PyErr_Format(PyExc_ValueError,
                         "Day out of range in datetime string \"%s\"", str);
             goto error;
@@ -2286,13 +2283,9 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
         goto invalid_date;
     }
     isleap = is_leapyear(out->year);
-    if (out->day < 1 || out->day > days_in_month[isleap][out->month]) {
+    if (out->day < 1 || out->day > days_in_month[isleap][out->month-1]) {
         goto invalid_date;
     }
-
-    /* Adjust the month and day to be zero-based */
-    out->month--;
-    out->day--;
 
     /* Check for time attributes (if not there, return success as a date) */
     if (!PyObject_HasAttrString(obj, "hour") ||
