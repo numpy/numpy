@@ -139,7 +139,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out);
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
-convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
+convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 npy_datetime *out);
 
 /*

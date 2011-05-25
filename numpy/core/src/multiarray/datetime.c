@@ -610,6 +610,10 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
     if (meta->events > 1) {
         out->event = dt % meta->events;
         dt = dt / meta->events;
+        if (out->event < 0) {
+            out->event += meta->events;
+            --dt;
+        }
     }
 
     /* TODO: Change to a mechanism that avoids the potential overflow */
@@ -2479,7 +2483,7 @@ invalid_time:
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
-convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
+convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 npy_datetime *out)
 {
     if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
@@ -2523,6 +2527,31 @@ convert_pyobject_to_datetime(PyObject *obj, PyArray_DatetimeMetaData *meta,
     }
     else if (PyLong_Check(obj)) {
         *out = PyLong_AsLongLong(obj);
+        return 0;
+    }
+    /* Could be a tuple with event number in the second entry */
+    else if (PyTuple_Check(obj) && PyTuple_Size(obj) == 2) {
+        int event, event_old;
+        if (convert_pyobject_to_datetime(meta, PyTuple_GET_ITEM(obj, 0),
+                                                                out) < 0) {
+            return -1;
+        }
+        event = (int)PyInt_AsLong(PyTuple_GET_ITEM(obj, 1));
+        if (event == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        if (event < 0 || event >= meta->events) {
+            PyErr_SetString(PyExc_ValueError, "event value for NumPy "
+                            "datetime is out of range");
+            return -1;
+        }
+        /* Replace the event with the one from the tuple */
+        event_old = *out % meta->events;
+        if (event_old < 0) {
+            event_old += meta->events;
+        }
+        *out = *out - event_old + event;
+
         return 0;
     }
     /* TODO datetime64 scalars require conversion

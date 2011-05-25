@@ -1110,7 +1110,7 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     }
 
     /* Convert the object into a NumPy datetime */
-    if (convert_pyobject_to_datetime(op, meta, &temp) < 0) {
+    if (convert_pyobject_to_datetime(meta, op, &temp) < 0) {
         return -1;
     }
 

@@ -96,6 +96,18 @@ class TestDateTime(TestCase):
                             np.dtype('m8[s]'), np.dtype('m8[as]'))
 
 
+    """
+    def test_pyobject_conversion(self):
+        # All datetime types should be able to roundtrip through object
+        a = np.array([-1020040340, -2942398, -1, 0, 1, 234523453, 1199164176],
+                                                        dtype=np.int64)
+        for unit in ['M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[us]',
+                     'M8[as//12]', 'M8[us//16]', 'M8[D]', 'M8[D]//4',
+                     'M8[W]', 'M8[M]', 'M8[Y]']:
+            assert_equal(a.view(dtype=unit).astype(object).astype(unit),
+                                                        a.view(dtype=unit))
+    """
+
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')
         t[0] = 60*60*24 + 60*60*10
