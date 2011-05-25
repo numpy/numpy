@@ -577,12 +577,12 @@ _parse_signature(PyUFuncObject *self, const char *signature)
     }
 
     len = strlen(signature);
-    self->core_signature = _pya_malloc(sizeof(char) * (len+1));
+    self->core_signature = PyArray_malloc(sizeof(char) * (len+1));
     if (self->core_signature) {
         strcpy(self->core_signature, signature);
     }
     /* Allocate sufficient memory to store pointers to all dimension names */
-    var_names = _pya_malloc(sizeof(char const*) * len);
+    var_names = PyArray_malloc(sizeof(char const*) * len);
     if (var_names == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -590,9 +590,9 @@ _parse_signature(PyUFuncObject *self, const char *signature)
 
     self->core_enabled = 1;
     self->core_num_dim_ix = 0;
-    self->core_num_dims = _pya_malloc(sizeof(int) * self->nargs);
-    self->core_dim_ixs = _pya_malloc(sizeof(int) * len); /* shrink this later */
-    self->core_offsets = _pya_malloc(sizeof(int) * self->nargs);
+    self->core_num_dims = PyArray_malloc(sizeof(int) * self->nargs);
+    self->core_dim_ixs = PyArray_malloc(sizeof(int) * len); /* shrink this later */
+    self->core_offsets = PyArray_malloc(sizeof(int) * self->nargs);
     if (self->core_num_dims == NULL || self->core_dim_ixs == NULL
         || self->core_offsets == NULL) {
         PyErr_NoMemory();
@@ -677,24 +677,24 @@ _parse_signature(PyUFuncObject *self, const char *signature)
         parse_error = "incomplete signature: not all arguments found";
         goto fail;
     }
-    self->core_dim_ixs = _pya_realloc(self->core_dim_ixs,
+    self->core_dim_ixs = PyArray_realloc(self->core_dim_ixs,
             sizeof(int)*cur_core_dim);
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0) {
         self->core_enabled = 0;
     }
-    _pya_free((void*)var_names);
+    PyArray_free((void*)var_names);
     return 0;
 
 fail:
-    _pya_free((void*)var_names);
+    PyArray_free((void*)var_names);
     if (parse_error) {
-        char *buf = _pya_malloc(sizeof(char) * (len + 200));
+        char *buf = PyArray_malloc(sizeof(char) * (len + 200));
         if (buf) {
             sprintf(buf, "%s at position %d in \"%s\"",
                     parse_error, i, signature);
             PyErr_SetString(PyExc_ValueError, signature);
-            _pya_free(buf);
+            PyArray_free(buf);
         }
         else {
             PyErr_NoMemory();
@@ -720,8 +720,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 NPY_CASTING *out_casting,
                 PyObject **out_extobj,
                 PyObject **out_typetup,
-                int *out_subok,
-                int *out_any_object)
+                int *out_subok)
 {
     npy_intp i, nargs, nin = self->nin;
     PyObject *obj, *context;
@@ -938,8 +937,6 @@ static int get_ufunc_arguments(PyUFuncObject *self,
         }
     }
 
-    *out_any_object = any_object;
-
     Py_XDECREF(str_key_obj);
     return 0;
 
@@ -1066,25 +1063,49 @@ ufunc_loop_matches(PyUFuncObject *self,
 static int
 set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
                     PyArray_Descr **out_dtype,
-                    int *types,
-                    npy_intp buffersize, int *out_trivial_loop_ok)
+                    int *types)
 {
-    npy_intp i, nin = self->nin, nop = nin + self->nout;
+    int i, nin = self->nin, nop = nin + self->nout;
 
-    *out_trivial_loop_ok = 1;
     /* Fill the dtypes array */
     for (i = 0; i < nop; ++i) {
         out_dtype[i] = PyArray_DescrFromType(types[i]);
         if (out_dtype[i] == NULL) {
+            while (--i >= 0) {
+                Py_DECREF(out_dtype[i]);
+                out_dtype[i] = NULL;
+            }
             return -1;
         }
+    }
+
+    return 0;
+}
+
+/*
+ * This checks whether a trivial loop is ok,
+ * making copies of scalar and one dimensional operands if that will
+ * help.
+ *
+ * Returns 1 if a trivial loop is ok, 0 if it is not, and
+ * -1 if there is an error.
+ */
+static int
+check_for_trivial_loop(PyUFuncObject *self,
+                        PyArrayObject **op,
+                        PyArray_Descr **dtype,
+                        npy_intp buffersize)
+{
+    npy_intp i, nin = self->nin, nop = nin + self->nout;
+
+    for (i = 0; i < nop; ++i) {
         /*
          * If the dtype doesn't match, or the array isn't aligned,
          * indicate that the trivial loop can't be done.
          */
-        if (*out_trivial_loop_ok && op[i] != NULL &&
+        if (op[i] != NULL &&
                 (!PyArray_ISALIGNED(op[i]) ||
-                !PyArray_EquivTypes(out_dtype[i], PyArray_DESCR(op[i]))
+                !PyArray_EquivTypes(dtype[i], PyArray_DESCR(op[i]))
                                         )) {
             /*
              * If op[j] is a scalar or small one dimensional
@@ -1095,9 +1116,9 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
                     (PyArray_NDIM(op[i]) == 1 &&
                      PyArray_DIM(op[i],0) <= buffersize))) {
                 PyArrayObject *tmp;
-                Py_INCREF(out_dtype[i]);
+                Py_INCREF(dtype[i]);
                 tmp = (PyArrayObject *)
-                            PyArray_CastToType(op[i], out_dtype[i], 0);
+                            PyArray_CastToType(op[i], dtype[i], 0);
                 if (tmp == NULL) {
                     return -1;
                 }
@@ -1105,12 +1126,12 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
                 op[i] = tmp;
             }
             else {
-                *out_trivial_loop_ok = 0;
+                return 0;
             }
         }
     }
 
-    return 0;
+    return 1;
 }
 
 /*
@@ -1121,13 +1142,11 @@ find_ufunc_matching_userloop(PyUFuncObject *self,
                         PyArrayObject **op,
                         NPY_CASTING input_casting,
                         NPY_CASTING output_casting,
-                        npy_intp buffersize,
                         int any_object,
                         int use_min_scalar,
                         PyArray_Descr **out_dtype,
                         PyUFuncGenericFunction *out_innerloop,
                         void **out_innerloopdata,
-                        int *out_trivial_loop_ok,
                         int *out_no_castable_output,
                         char *out_err_src_typecode,
                         char *out_err_dst_typecode)
@@ -1168,8 +1187,7 @@ find_ufunc_matching_userloop(PyUFuncObject *self,
                         return -1;
                     /* Found a match */
                     case 1:
-                        set_ufunc_loop_data_types(self, op, out_dtype, types,
-                                            buffersize, out_trivial_loop_ok);
+                        set_ufunc_loop_data_types(self, op, out_dtype, types);
 
                         /* Save the inner loop and its data */
                         *out_innerloop = funcdata->func;
@@ -1199,13 +1217,11 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                         int *specified_types,
                         PyArrayObject **op,
                         NPY_CASTING casting,
-                        npy_intp buffersize,
                         int any_object,
                         int use_min_scalar,
                         PyArray_Descr **out_dtype,
                         PyUFuncGenericFunction *out_innerloop,
-                        void **out_innerloopdata,
-                        int *out_trivial_loop_ok)
+                        void **out_innerloopdata)
 {
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     PyUFunc_Loop1d *funcdata;
@@ -1261,8 +1277,7 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                             &err_dst_typecode)) {
                     /* It works */
                     case 1:
-                        set_ufunc_loop_data_types(self, op, out_dtype, types,
-                                            buffersize, out_trivial_loop_ok);
+                        set_ufunc_loop_data_types(self, op, out_dtype, types);
 
                         /* Save the inner loop and its data */
                         *out_innerloop = funcdata->func;
@@ -1365,10 +1380,6 @@ should_use_min_scalar(PyArrayObject **op, int nop)
 
 /*
  * Does a linear search for the best inner loop of the ufunc.
- * When op[i] is a scalar or a one dimensional array smaller than
- * the buffersize, and needs a dtype conversion, this function
- * may substitute op[i] with a version cast to the correct type.  This way,
- * the later trivial loop detection has a higher chance of being triggered.
  *
  * Note that if an error is returned, the caller must free the non-zero
  * references in out_dtype.  This function does not do its own clean-up.
@@ -1378,12 +1389,10 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
                         PyArrayObject **op,
                         NPY_CASTING input_casting,
                         NPY_CASTING output_casting,
-                        npy_intp buffersize,
                         int any_object,
                         PyArray_Descr **out_dtype,
                         PyUFuncGenericFunction *out_innerloop,
-                        void **out_innerloopdata,
-                        int *out_trivial_loop_ok)
+                        void **out_innerloopdata)
 {
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
@@ -1401,9 +1410,8 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
     if (self->userloops) {
         switch (find_ufunc_matching_userloop(self, op,
                                 input_casting, output_casting,
-                                buffersize, any_object, use_min_scalar,
+                                any_object, use_min_scalar,
                                 out_dtype, out_innerloop, out_innerloopdata,
-                                out_trivial_loop_ok,
                                 &no_castable_output, &err_src_typecode,
                                 &err_dst_typecode)) {
             /* Error */
@@ -1452,8 +1460,7 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
                 return -1;
             /* Found a match */
             case 1:
-                set_ufunc_loop_data_types(self, op, out_dtype, types,
-                                    buffersize, out_trivial_loop_ok);
+                set_ufunc_loop_data_types(self, op, out_dtype, types);
 
                 /* Save the inner loop and its data */
                 *out_innerloop = self->functions[i];
@@ -1494,10 +1501,6 @@ find_best_ufunc_inner_loop(PyUFuncObject *self,
 
 /*
  * Does a linear search for the inner loop of the ufunc specified by type_tup.
- * When op[i] is a scalar or a one dimensional array smaller than
- * the buffersize, and needs a dtype conversion, this function
- * may substitute op[i] with a version cast to the correct type.  This way,
- * the later trivial loop detection has a higher chance of being triggered.
  *
  * Note that if an error is returned, the caller must free the non-zero
  * references in out_dtype.  This function does not do its own clean-up.
@@ -1507,12 +1510,10 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                         PyObject *type_tup,
                         PyArrayObject **op,
                         NPY_CASTING casting,
-                        npy_intp buffersize,
                         int any_object,
                         PyArray_Descr **out_dtype,
                         PyUFuncGenericFunction *out_innerloop,
-                        void **out_innerloopdata,
-                        int *out_trivial_loop_ok)
+                        void **out_innerloopdata)
 {
     npy_intp i, j, n, nin = self->nin, nop = nin + self->nout;
     int n_specified = 0;
@@ -1619,9 +1620,8 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
         switch (find_ufunc_specified_userloop(self,
                         n_specified, specified_types,
                         op, casting,
-                        buffersize, any_object, use_min_scalar,
-                        out_dtype, out_innerloop, out_innerloopdata,
-                        out_trivial_loop_ok)) {
+                        any_object, use_min_scalar,
+                        out_dtype, out_innerloop, out_innerloopdata)) {
             /* Error */
             case -1:
                 return -1;
@@ -1673,8 +1673,7 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
                 return -1;
             /* It worked */
             case 1:
-                set_ufunc_loop_data_types(self, op, out_dtype, types,
-                                    buffersize, out_trivial_loop_ok);
+                set_ufunc_loop_data_types(self, op, out_dtype, types);
 
                 /* Save the inner loop and its data */
                 *out_innerloop = self->functions[i];
@@ -1705,6 +1704,49 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
 
     return -1;
 }
+
+int generic_ufunc_type_resolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    int i, nop = ufunc->nin + ufunc->nout;
+    int retval = 0, any_object = 0;
+    NPY_CASTING input_casting;
+
+    for (i = 0; i < nop; ++i) {
+        if (operands[i] != NULL &&
+                PyTypeNum_ISOBJECT(PyArray_DESCR(operands[i])->type_num)) {
+            any_object = 1;
+            break;
+        }
+    }
+
+    /*
+     * Decide the casting rules for inputs and outputs.  We want
+     * NPY_SAFE_CASTING or stricter, so that the loop selection code
+     * doesn't choose an integer loop for float inputs, for example.
+     */
+    input_casting = (casting > NPY_SAFE_CASTING) ? NPY_SAFE_CASTING : casting;
+
+    if (type_tup == NULL) {
+        /* Find the best ufunc inner loop, and fill in the dtypes */
+        retval = find_best_ufunc_inner_loop(ufunc, operands,
+                        input_casting, casting, any_object,
+                        out_dtypes, out_innerloop, out_innerloopdata);
+    } else {
+        /* Find the specified ufunc inner loop, and fill in the dtypes */
+        retval = find_specified_ufunc_inner_loop(ufunc, type_tup,
+                        operands, casting, any_object, out_dtypes,
+                        out_innerloop, out_innerloopdata);
+    }
+
+    return retval;
+}
+
 
 static void
 trivial_two_operand_loop(PyArrayObject **op,
@@ -2136,8 +2178,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     int nin, nout;
     int i, idim, nop;
     char *ufunc_name;
-    int retval = -1, any_object = 0, subok = 1;
-    NPY_CASTING input_casting;
+    int retval = -1, subok = 1;
 
     PyArray_Descr *dtype[NPY_MAXARGS];
 
@@ -2174,8 +2215,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
      */
     PyObject *arr_prep_args = NULL;
 
-    int trivial_loop_ok = 0;
-
     NPY_ORDER order = NPY_KEEPORDER;
     /*
      * Many things in NumPy do unsafe casting (doing int += float, etc).
@@ -2210,7 +2249,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &type_tup, &subok, &any_object);
+                op, &order, &casting, &extobj, &type_tup, &subok);
     if (retval < 0) {
         goto fail;
     }
@@ -2292,25 +2331,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    /*
-     * Decide the casting rules for inputs and outputs.  We want
-     * NPY_SAFE_CASTING or stricter, so that the loop selection code
-     * doesn't choose an integer loop for float inputs, for example.
-     */
-    input_casting = (casting > NPY_SAFE_CASTING) ? NPY_SAFE_CASTING : casting;
 
-    if (type_tup == NULL) {
-        /* Find the best ufunc inner loop, and fill in the dtypes */
-        retval = find_best_ufunc_inner_loop(self, op, input_casting, casting,
-                        buffersize, any_object, dtype,
-                        &innerloop, &innerloopdata, &trivial_loop_ok);
-    } else {
-        /* Find the specified ufunc inner loop, and fill in the dtypes */
-        retval = find_specified_ufunc_inner_loop(self, type_tup,
-                        op, casting,
-                        buffersize, any_object, dtype,
-                        &innerloop, &innerloopdata, &trivial_loop_ok);
-    }
+    retval = self->type_resolution_function(self, casting,
+                        op, type_tup, dtype, &innerloop, &innerloopdata);
     if (retval < 0) {
         goto fail;
     }
@@ -2408,7 +2431,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
      * Set up the inner strides array. Because we're not doing
      * buffering, the strides are fixed throughout the looping.
      */
-    inner_strides = (npy_intp *)_pya_malloc(
+    inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
     /* The strides after the first nop match core_dim_ixs */
     core_dim_ixs = self->core_dim_ixs;
@@ -2504,7 +2527,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         goto fail;
     }
 
-    _pya_free(inner_strides);
+    PyArray_free(inner_strides);
     NpyIter_Deallocate(iter);
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
@@ -2522,7 +2545,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 fail:
     NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
     if (inner_strides) {
-        _pya_free(inner_strides);
+        PyArray_free(inner_strides);
     }
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
@@ -2553,8 +2576,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     int nin, nout;
     int i, nop;
     char *ufunc_name;
-    int retval = -1, any_object = 0, subok = 1;
-    NPY_CASTING input_casting;
+    int retval = -1, subok = 1;
 
     PyArray_Descr *dtype[NPY_MAXARGS];
 
@@ -2577,7 +2599,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     int trivial_loop_ok = 0;
 
-    /* TODO: For 1.6, the default should probably be NPY_CORDER */
     NPY_ORDER order = NPY_KEEPORDER;
     /*
      * Many things in NumPy do unsafe casting (doing int += float, etc).
@@ -2593,7 +2614,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         return -1;
     }
 
-    /* TODO: support generalized ufunc */
     if (self->core_enabled) {
         return PyUFunc_GeneralizedFunction(self, args, kwds, op);
     }
@@ -2617,7 +2637,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &type_tup, &subok, &any_object);
+                op, &order, &casting, &extobj, &type_tup, &subok);
     if (retval < 0) {
         goto fail;
     }
@@ -2640,26 +2660,19 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    /*
-     * Decide the casting rules for inputs and outputs.  We want
-     * NPY_SAFE_CASTING or stricter, so that the loop selection code
-     * doesn't choose an integer loop for float inputs, for example.
-     */
-    input_casting = (casting > NPY_SAFE_CASTING) ? NPY_SAFE_CASTING : casting;
-
-    if (type_tup == NULL) {
-        /* Find the best ufunc inner loop, and fill in the dtypes */
-        retval = find_best_ufunc_inner_loop(self, op, input_casting, casting,
-                        buffersize, any_object, dtype,
-                        &innerloop, &innerloopdata, &trivial_loop_ok);
-    } else {
-        /* Find the specified ufunc inner loop, and fill in the dtypes */
-        retval = find_specified_ufunc_inner_loop(self, type_tup,
-                        op, casting,
-                        buffersize, any_object, dtype,
-                        &innerloop, &innerloopdata, &trivial_loop_ok);
-    }
+    retval = self->type_resolution_function(self, casting,
+                        op, type_tup, dtype, &innerloop, &innerloopdata);
     if (retval < 0) {
+        goto fail;
+    }
+
+    /*
+     * This checks whether a trivial loop is ok,
+     * making copies of scalar and one dimensional operands if that will
+     * help.
+     */
+    trivial_loop_ok = check_for_trivial_loop(self, op, dtype, buffersize);
+    if (trivial_loop_ok < 0) {
         goto fail;
     }
 
@@ -2680,6 +2693,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
             goto fail;
         }
     }
+
 
 #if NPY_UF_DBG_TRACING
     printf("input types:\n");
@@ -4424,7 +4438,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 {
     PyUFuncObject *self;
 
-    self = _pya_malloc(sizeof(PyUFuncObject));
+    self = PyArray_malloc(sizeof(PyUFuncObject));
     if (self == NULL) {
         return NULL;
     }
@@ -4443,6 +4457,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     self->ptr = NULL;
     self->obj = NULL;
     self->userloops=NULL;
+
+    self->type_resolution_function = &generic_ufunc_type_resolution;
 
     if (name == NULL) {
         self->name = "?";
@@ -4484,8 +4500,12 @@ PyUFunc_SetUsesArraysAsData(void **data, size_t i)
     return 0;
 }
 
-/* Return 1 if the given data pointer for the loop specifies that it needs the
+/*
+ * Return 1 if the given data pointer for the loop specifies that it needs the
  * arrays as the data pointer.
+ *
+ * NOTE: This is easier to specify with the type_resolution_function
+ *       in the ufunc object.
  */
 static int
 _does_loop_use_arrays(void *data)
@@ -4535,8 +4555,8 @@ _free_loop1d_list(PyUFunc_Loop1d *data)
 {
     while (data != NULL) {
         PyUFunc_Loop1d *next = data->next;
-        _pya_free(data->arg_types);
-        _pya_free(data);
+        PyArray_free(data->arg_types);
+        PyArray_free(data);
         data = next;
     }
 }
@@ -4586,11 +4606,11 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     if (key == NULL) {
         return -1;
     }
-    funcdata = _pya_malloc(sizeof(PyUFunc_Loop1d));
+    funcdata = PyArray_malloc(sizeof(PyUFunc_Loop1d));
     if (funcdata == NULL) {
         goto fail;
     }
-    newtypes = _pya_malloc(sizeof(int)*ufunc->nargs);
+    newtypes = PyArray_malloc(sizeof(int)*ufunc->nargs);
     if (newtypes == NULL) {
         goto fail;
     }
@@ -4645,8 +4665,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             /* just replace it with new function */
             current->func = function;
             current->data = data;
-            _pya_free(newtypes);
-            _pya_free(funcdata);
+            PyArray_free(newtypes);
+            PyArray_free(funcdata);
         }
         else {
             /*
@@ -4669,8 +4689,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 
  fail:
     Py_DECREF(key);
-    _pya_free(funcdata);
-    _pya_free(newtypes);
+    PyArray_free(funcdata);
+    PyArray_free(newtypes);
     if (!PyErr_Occurred()) PyErr_NoMemory();
     return -1;
 }
@@ -4682,23 +4702,23 @@ static void
 ufunc_dealloc(PyUFuncObject *self)
 {
     if (self->core_num_dims) {
-        _pya_free(self->core_num_dims);
+        PyArray_free(self->core_num_dims);
     }
     if (self->core_dim_ixs) {
-        _pya_free(self->core_dim_ixs);
+        PyArray_free(self->core_dim_ixs);
     }
     if (self->core_offsets) {
-        _pya_free(self->core_offsets);
+        PyArray_free(self->core_offsets);
     }
     if (self->core_signature) {
-        _pya_free(self->core_signature);
+        PyArray_free(self->core_signature);
     }
     if (self->ptr) {
-        _pya_free(self->ptr);
+        PyArray_free(self->ptr);
     }
     Py_XDECREF(self->userloops);
     Py_XDECREF(self->obj);
-    _pya_free(self);
+    PyArray_free(self);
 }
 
 static PyObject *
@@ -4956,7 +4976,7 @@ ufunc_get_types(PyUFuncObject *self)
     if (list == NULL) {
         return NULL;
     }
-    t = _pya_malloc(no+ni+2);
+    t = PyArray_malloc(no+ni+2);
     n = 0;
     for (k = 0; k < nt; k++) {
         for (j = 0; j<ni; j++) {
@@ -4972,7 +4992,7 @@ ufunc_get_types(PyUFuncObject *self)
         str = PyUString_FromStringAndSize(t, no + ni + 2);
         PyList_SET_ITEM(list, k, str);
     }
-    _pya_free(t);
+    PyArray_free(t);
     return list;
 }
 

@@ -117,7 +117,7 @@ class TestDateTime(TestCase):
             assert_equal(b.astype(object).astype(unit), b,
                             "Error roundtripping unit %s" % unit)
 
-    def test_month_trucation(self):
+    def test_month_truncation(self):
         # Make sure that months are truncating correctly
         assert_equal(np.array('1945-03-01', dtype='M8[M]'),
                      np.array('1945-03-31', dtype='M8[M]'))
@@ -129,6 +129,33 @@ class TestDateTime(TestCase):
                      np.array('1970-01-31T23:59:59.999999Z', dtype='M8[M]'))
         assert_equal(np.array('1980-02-01', dtype='M8[M]'),
                      np.array('1980-02-29T23:59:59.999999Z', dtype='M8[M]'))
+
+    def test_different_unit_comparison(self):
+        # Check some years
+        for unit1 in ['Y', 'M', 'D', '6h', 'h', 'm', 's', '10ms',
+                                                        'ms', 'us', 'ps']:
+            dt1 = np.dtype('M8[%s]' % unit1)
+            for unit2 in ['Y', 'M', 'D', 'h', 'm', 's', 'ms', 'us', 'ps']:
+                dt2 = np.dtype('M8[%s]' % unit2)
+                assert_equal(np.array('1945', dtype=dt1),
+                             np.array('1945', dtype=dt2))
+                assert_equal(np.array('1970', dtype=dt1),
+                             np.array('1970', dtype=dt2))
+                assert_equal(np.array('9999', dtype=dt1),
+                             np.array('9999', dtype=dt2))
+                assert_equal(np.array('10000', dtype=dt1),
+                             np.array('10000-01-01', dtype=dt2))
+        # Check some days
+        for unit1 in ['D', '12h', 'h', 'm', 's', '4s', 'ms', 'us', 'ps']:
+            dt1 = np.dtype('M8[%s]' % unit1)
+            for unit2 in ['D', 'h', 'm', 's', 'ms', 'us', 'ps']:
+                dt2 = np.dtype('M8[%s]' % unit2)
+                assert_equal(np.array('1932-02-17', dtype=dt1),
+                             np.array('1932-02-17T00:00:00', dtype=dt2))
+                assert_equal(np.array('10000-04-27', dtype=dt1),
+                             np.array('10000-04-27T00:00:00', dtype=dt2))
+                assert_equal(np.array('today', dtype=dt1),
+                             np.array('today', dtype=dt2))
 
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')

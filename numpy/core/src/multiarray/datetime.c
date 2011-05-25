@@ -1852,7 +1852,8 @@ datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
  * + Doesn't (yet) handle the "YYYY-DDD" or "YYYY-Www" formats.
  * + Doesn't handle leap seconds (seconds value has 60 in these cases).
  * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00) tomorrow
- * + Accepts special values "NaT" (not a time), "Today", and "Now".
+ * + Accepts special values "NaT" (not a time), "Today", (current
+ *   day according to local time) and "Now" (current time in UTC).
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
  *
@@ -1915,7 +1916,7 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         return 0;
     }
 
-    /* The string "now" resolves to the current time */
+    /* The string "now" resolves to the current UTC time */
     if (len == 3 && tolower(str[0]) == 'n' &&
                     tolower(str[1]) == 'o' &&
                     tolower(str[2]) == 'w') {
@@ -2163,10 +2164,53 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
 parse_timezone:
     if (sublen == 0) {
-        /* TODO: In this case, ISO 8601 states to treat
-         *       it as a local time, but we are leaving
-         *       it as a UTC time for now.
-         */
+        /* Only do this timezone adjustment for recent and future years */
+        if (out->year > 1900 && out->year < 10000) {
+            time_t rawtime = 0;
+            struct tm tm_;
+            /*
+             * ISO 8601 states to treat date-times without a timezone offset
+             * or 'Z' for UTC as local time. The C standard libary functions
+             * mktime and gmtime allow us to do this conversion.
+             */
+            tm_.tm_sec = out->sec;
+            tm_.tm_min = out->min;
+            tm_.tm_hour = out->hour;
+            tm_.tm_mday = out->day;
+            tm_.tm_mon = out->month - 1;
+            tm_.tm_year = out->year - 1900;
+            tm_.tm_isdst = -1;
+
+            /* mktime converts a local 'struct tm' into a time_t */
+            rawtime = mktime(&tm_);
+            if (rawtime == -1) {
+                PyErr_SetString(PyExc_OSError, "Failed to use mktime to "
+                                            "convert local time to UTC");
+                goto error;
+            }
+
+            /* gmtime converts a 'time_t' into a UTC 'struct tm' */
+#if defined(_WIN32)
+            if (gmtime_s(&tm_, &rawtime) != 0) {
+                PyErr_SetString(PyExc_OSError, "Failed to use gmtime_s to "
+                                            "get a UTC time");
+                goto error;
+            }
+#else
+            /* Other platforms may require something else */
+            if (gmtime_r(&rawtime, &tm_) == NULL) {
+                PyErr_SetString(PyExc_OSError, "Failed to use gmtime_r to "
+                                            "get a UTC time");
+                goto error;
+            }
+#endif
+            out->sec = tm_.tm_sec;
+            out->min = tm_.tm_min;
+            out->hour = tm_.tm_hour;
+            out->day = tm_.tm_mday;
+            out->month = tm_.tm_mon + 1;
+            out->year = tm_.tm_year + 1900;
+        }
 
         goto finish;
     }

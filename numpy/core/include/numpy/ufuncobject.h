@@ -9,7 +9,41 @@ extern "C" {
 
 typedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *);
 
-typedef struct {
+/* Forward declaration for the type resolution function */
+struct _tagPyUFuncObject;
+
+/*
+ * Given the operands for calling a ufunc, should determine the
+ * calculation input and output data types and return an inner loop function.
+ * This function should validate that the casting rule is being followed,
+ * and fail if it is not.
+ *
+ * ufunc:             The ufunc object.
+ * casting:           The 'casting' parameter provided to the ufunc.
+ * operands:          An array of length (ufunc->nin + ufunc->nout),
+ *                    with the output parameters possibly NULL.
+ * type_tup:          Either NULL, or the type_tup passed to the ufunc.
+ * out_dtypes:        An array which should be populated with new
+ *                    references to (ufunc->nin + ufunc->nout) new
+ *                    dtypes, one for each input and output.
+ * out_innerloop:     Should be populated with the correct ufunc inner
+ *                    loop for the given type.
+ * out_innerloopdata: Should be populated with the void* data to
+ *                    be passed into the out_innerloop function.
+ *
+ * Should return 0 on success, -1 on failure (with exception set),
+ * or -2 if Py_NotImplemented should be returned.
+ */
+typedef int (PyUFunc_TypeResolutionFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata);
+
+typedef struct _tagPyUFuncObject {
         PyObject_HEAD
         /*
          * nin: Number of inputs
@@ -70,6 +104,13 @@ typedef struct {
         int *core_offsets;
         /* signature string for printing purpose */
         char *core_signature;
+
+        /*
+         * A function which resolves the types and returns an inner loop.
+         * This is used by the regular ufunc, the reduction operations
+         * have a different set of rules.
+         */
+        PyUFunc_TypeResolutionFunc *type_resolution_function;
 } PyUFuncObject;
 
 #include "arrayobject.h"

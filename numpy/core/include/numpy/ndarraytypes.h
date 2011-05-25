@@ -809,7 +809,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * Size of internal buffers used for alignment Make BUFSIZE a multiple
- * of sizeof(cdouble) -- ususally 16 so that ufunc buffers are aligned
+ * of sizeof(cdouble) -- usually 16 so that ufunc buffers are aligned
  */
 #define NPY_MIN_BUFSIZE ((int)sizeof(cdouble))
 #define NPY_MAX_BUFSIZE (((int)sizeof(cdouble))*1000000)

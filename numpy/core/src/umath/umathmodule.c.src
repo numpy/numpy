@@ -43,6 +43,32 @@
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
+static int object_ufunc_type_resolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    int i, nop = ufunc->nin + ufunc->nout;
+
+    out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
+
+    for (i = 1; i < nop; ++i) {
+        out_dtypes[i] = out_dtypes[0];
+        Py_INCREF(out_dtypes[0]);
+    }
+
+    *out_innerloop = ufunc->functions[0];
+    *out_innerloopdata = ufunc->data[0];
+
+    return 0;
+}
+
 static PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
     /* Keywords are ignored for now */
@@ -62,7 +88,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
         PyErr_SetString(PyExc_TypeError, "function must be callable");
         return NULL;
     }
-    self = _pya_malloc(sizeof(PyUFuncObject));
+    self = PyArray_malloc(sizeof(PyUFuncObject));
     if (self == NULL) {
         return NULL;
     }
@@ -84,6 +110,8 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->core_dim_ixs = NULL;
     self->core_offsets = NULL;
     self->core_signature = NULL;
+
+    self->type_resolution_function = &object_ufunc_type_resolution;
 
     pyname = PyObject_GetAttrString(function, "__name__");
     if (pyname) {
@@ -115,7 +143,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     if (i) {
         offset[1] += (sizeof(void *)-i);
     }
-    self->ptr = _pya_malloc(offset[0] + offset[1] + sizeof(void *) +
+    self->ptr = PyArray_malloc(offset[0] + offset[1] + sizeof(void *) +
                             (fname_len + 14));
     if (self->ptr == NULL) {
         Py_XDECREF(pyname);

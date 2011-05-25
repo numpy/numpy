@@ -782,28 +782,6 @@ fail:
 
 
 /*
- * Return a Python Datetime Object from a number representing the number of
- * units since the epoch (1970-01-01T00:00:00Z) ignoring leap seconds.
- */
-
-NPY_NO_EXPORT PyObject *
-PyDateTime_FromNormalized(npy_datetime val, NPY_DATETIMEUNIT base)
-{
-    npy_datetimestruct ydate;
-
-    /* Must be here to use PyDateTime_FromDateAndTime */
-    PyDateTime_IMPORT;
-
-    /* We just truncate the unused variables and don't wory about overflow */
-    PyArray_DatetimeToDatetimeStruct(val, base, &ydate);
-
-    /* FIXME?: We discard ydate.ns, ydate.ps, ydate.fs, and ydate.as */
-    return PyDateTime_FromDateAndTime(ydate.year, ydate.month, ydate.day,
-                                      ydate.hour, ydate.min, ydate.sec,
-                                      ydate.us);
-}
-
-/*
  * We also can lose precision and range here.  Ignored.
  * Don't use this function if you care.
  */
@@ -819,53 +797,6 @@ PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
     /* We discard td.ps and td.as */
     return PyDelta_FromDSU(td.day, td.sec, td.us);
 }
-
-
-NPY_NO_EXPORT PyObject *
-PyDateTime_FromInt64(datetime val, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "metadata not set for descriptor");
-        return NULL;
-    }
-
-    if (meta->events > 1) {
-        int events, rem, div;
-        PyObject *obj;
-
-        obj = PyTuple_New(2);
-        events = meta->events;
-        div = val/events;
-        rem = val % events;
-        PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
-        /* This resets meta->events for recursive call */
-        meta->events = 1;
-        PyTuple_SET_ITEM(obj, 0, PyDateTime_FromInt64(div, descr));
-        meta->events = events;
-        if (PyErr_Occurred()) {
-            Py_DECREF(obj);
-            return NULL;
-        }
-        return obj;
-    }
-
-    /*
-     * We normalize the number to a base-unit and then return a
-     * Python Datetime Object
-     *
-     * FIXME? : We silently truncate if it doesn't fit, either too
-     *  wide (e.g. 10 BC) or too narrow (nanoseconds)
-     */
-
-    /* Normalization and then conversion to Datetime */
-    /* FIXME? : Check for Overflow... */
-    return PyDateTime_FromNormalized(val*meta->num, meta->base);
-}
-
 
 NPY_NO_EXPORT PyObject *
 PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
@@ -902,46 +833,6 @@ PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
     return PyTimeDelta_FromNormalized(val*meta->num, meta->base);
 }
 
-
-
-NPY_NO_EXPORT npy_datetime
-PyDateTime_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
-{
-    npy_datetimestruct ydate;
-
-    /* Must be here to use PyDateTime_FromDateAndTime */
-    PyDateTime_IMPORT;
-
-    if (!PyDateTime_Check(obj) && !PyDate_Check(obj)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Must be a datetime.date or datetime.datetime object");
-        return -1;
-    }
-
-    ydate.year = PyDateTime_GET_YEAR(obj);
-    ydate.month = PyDateTime_GET_MONTH(obj);
-    ydate.day = PyDateTime_GET_DAY(obj);
-
-    if (PyDateTime_Check(obj)) {
-        ydate.hour = PyDateTime_DATE_GET_HOUR(obj);
-        ydate.min = PyDateTime_DATE_GET_MINUTE(obj);
-        ydate.sec = PyDateTime_DATE_GET_SECOND(obj);
-        ydate.us = PyDateTime_DATE_GET_MICROSECOND(obj);
-    }
-    else {
-        ydate.hour = 0;
-        ydate.min = 0;
-        ydate.sec = 0;
-        ydate.us = 0;
-    }
-
-    ydate.ps = 0;
-    ydate.as = 0;
-
-    /* We just truncate the unused variables and don't wory about overflow */
-    return PyArray_DatetimeStructToDatetime(base, &ydate);
-}
-
 NPY_NO_EXPORT npy_timedelta
 PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 {
@@ -963,59 +854,6 @@ PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
 
     return PyArray_TimedeltaStructToTimedelta(base, &td);
 }
-
-
-/*
- * These expect a 2-tuple if meta->events > 1  (baseobj, num-counts)
- * where baseobj is a datetime object or a timedelta object respectively.
- *
- */
-
-NPY_NO_EXPORT npy_datetime
-PyDateTime_AsInt64(PyObject *obj, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-    npy_datetime res;
-
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "metadata not set for descriptor");
-        return -1;
-    }
-
-
-    if (meta->events > 1) {
-        datetime tmp;
-        int events;
-
-        if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
-            PyErr_SetString(PyExc_ValueError,
-                    "need a 2-tuple on setting if events > 1");
-            return -1;
-        }
-        /* Alter the dictionary and call again */
-        /* FIXME:  not thread safe */
-        events = meta->events;
-        meta->events = 1;
-        tmp = PyDateTime_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
-        meta->events = events;
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        /* FIXME: Check for overflow */
-        tmp *= events;
-        tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return tmp;
-    }
-
-    res = PyDateTime_AsNormalized(obj, meta->base);
-    return res/meta->num;
-}
-
 
 NPY_NO_EXPORT timedelta
 PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
