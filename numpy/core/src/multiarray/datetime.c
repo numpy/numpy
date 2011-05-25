@@ -328,7 +328,7 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     }
     else if (base == NPY_FR_M) {
         /* Truncate to the month */
-        ret = 12 * (dts->year - 1970) + dts->month;
+        ret = 12 * (dts->year - 1970) + (dts->month - 1);
     }
     else {
         /* Otherwise calculate the number of days to start */
@@ -2602,27 +2602,33 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 
     /* If the type's precision is greater than microseconds, return an int */
     if (meta->base > NPY_FR_us) {
-        ret = PyLong_FromLongLong(dt);
-    }
-    else {
-        /* Convert to a datetimestruct */
-        if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
-            return NULL;
-        }
-
-        /* If the type's precision is greater than days, return a datetime */
-        if (meta->base > NPY_FR_D) {
-            ret = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
-                                    dts.hour, dts.min, dts.sec, dts.us);
-        }
-        /* Otherwise return a date */
-        else {
-            ret = PyDate_FromDate(dts.year, dts.month, dts.day);
-        }
+        /* Skip use of a tuple for the events, just return the raw int */
+        return PyLong_FromLongLong(dt);
     }
 
-    if (ret == NULL) {
+    /* Convert to a datetimestruct */
+    if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
         return NULL;
+    }
+
+    /*
+     * If the year is outside the range of years supported by Python's
+     * datetime, or the datetime64 falls on a leap second,
+     * return a raw int.
+     */
+    if (dts.year < 1 || dts.year > 9999 || dts.sec == 60) {
+        /* Also skip use of a tuple for the events */
+        return PyLong_FromLongLong(dt);
+    }
+
+    /* If the type's precision is greater than days, return a datetime */
+    if (meta->base > NPY_FR_D) {
+        ret = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
+                                dts.hour, dts.min, dts.sec, dts.us);
+    }
+    /* Otherwise return a date */
+    else {
+        ret = PyDate_FromDate(dts.year, dts.month, dts.day);
     }
 
     /* If there is one event, just return the datetime */
@@ -2637,6 +2643,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
             return NULL;
         }
         PyTuple_SET_ITEM(tup, 0, ret);
+
         ret = PyInt_FromLong(dts.event);
         if (ret == NULL) {
             Py_DECREF(tup);

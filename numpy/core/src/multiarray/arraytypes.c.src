@@ -1069,7 +1069,7 @@ DATETIME_getitem(char *ip, PyArrayObject *ap) {
     /* Get the datetime units metadata */
     meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
     if (meta == NULL) {
-        return -1;
+        return NULL;
     }
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
