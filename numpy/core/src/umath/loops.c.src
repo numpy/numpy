@@ -941,10 +941,72 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
  *****************************************************************************
  */
 
+NPY_NO_EXPORT void
+TIMEDELTA_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((npy_timedelta *)op1) = (npy_timedelta)(-(npy_timedelta)in1);
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((npy_timedelta *)op1) = (in1 >= 0) ? in1 : -in1;
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((npy_timedelta *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((Bool *)op1) = !in1;
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+    }
+}
+
+
+/**begin repeat
+ * #kind = logical_and, logical_or#
+ * #OP   = &&, ||#
+ */
+NPY_NO_EXPORT void
+TIMEDELTA_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        *((Bool *)op1) = in1 @OP@ in2;
+    }
+}
+/**end repeat**/
+
+
 /**begin repeat
  * #type = datetime, timedelta#
  * #TYPE = DATETIME, TIMEDELTA#
- * #ftype = double, double#
  */
 
 NPY_NO_EXPORT void
@@ -955,29 +1017,9 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT void
-@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = (@type@)(-(@type@)in1);
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((Bool *)op1) = !in1;
-    }
-}
-
-
 /**begin repeat1
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or#
- * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP =  ==, !=, >, >=, <, <=#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
@@ -989,16 +1031,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
-NPY_NO_EXPORT void
-@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
-    }
-}
 
 /**begin repeat1
  * #kind = maximum, minimum#
@@ -1023,24 +1055,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
-NPY_NO_EXPORT void
-@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = (in1 >= 0) ? in1 : -in1;
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
-    }
-}
 
 /**end repeat**/
 

@@ -1223,7 +1223,7 @@ find_ufunc_specified_userloop(PyUFuncObject *self,
                         PyUFuncGenericFunction *out_innerloop,
                         void **out_innerloopdata)
 {
-    npy_intp i, j, nin = self->nin, nop = nin + self->nout;
+    int i, j, nin = self->nin, nop = nin + self->nout;
     PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
@@ -1705,7 +1705,16 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
     return -1;
 }
 
-int generic_ufunc_type_resolution(PyUFuncObject *ufunc,
+/*UFUNC_API
+ *
+ * This function applies the default type resolution rules
+ * for the provided ufunc, filling out_dtypes, out_innerloop,
+ * and out_innerloopdata.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_DefaultTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
@@ -1747,6 +1756,178 @@ int generic_ufunc_type_resolution(PyUFuncObject *ufunc,
     return retval;
 }
 
+/*UFUNC_API
+ *
+ * This function applies special type resolution rules for the case
+ * where all the functions have the pattern XX->bool, using
+ * PyArray_ResultType instead of a linear search to get the best
+ * loop.
+ *
+ * Note that a simpler linear search through the functions loop
+ * is still done, but switching to a simple array lookup for
+ * built-in types would be better at some point.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_BinaryComparisonTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    int i, type_num;
+    char *ufunc_name;
+
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+
+    /* Use the default type resolution if there's a custom data type */
+    if (PyArray_DESCR(operands[0])->type_num >= NPY_NTYPES ||
+                    PyArray_DESCR(operands[1])->type_num >= NPY_NTYPES) {
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+    }
+
+    if (type_tup == NULL) {
+        /* Input types are the result type */
+        out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+
+    }
+    else {
+        /*
+         * If the type tuple isn't a single-element tuple, let the
+         * default type resolution handle this one.
+         */
+        if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
+            return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+        }
+
+        if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "require data type in the type tuple");
+            return -1;
+        }
+
+        out_dtypes[0] = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0);
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[0]);
+        Py_INCREF(out_dtypes[1]);
+    }
+
+    /* Output type is always boolean */
+    out_dtypes[2] = PyArray_DescrFromType(NPY_BOOL);
+    if (out_dtypes[2] == NULL) {
+        for (i = 0; i < 2; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    type_num = out_dtypes[0]->type_num;
+
+    /* If we have a built-in type, search in the functions list */
+    if (type_num < NPY_NTYPES) {
+        char *types = ufunc->types;
+        int n = ufunc->ntypes;
+
+        for (i = 0; i < n; ++i) {
+            if (types[3*i] == type_num) {
+                *out_innerloop = ufunc->functions[i];
+                *out_innerloopdata = ufunc->data[i];
+                return 0;
+            }
+        }
+
+        PyErr_Format(PyExc_TypeError,
+                "ufunc '%s' not supported for the input types",
+                ufunc_name);
+        return -1;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError,
+                "user type shouldn't have resulted from type promotion");
+        return -1;
+    }
+}
+
+/*UFUNC_API
+ *
+ * Validates that the input operands can be cast to
+ * the input types, and the output types can be cast to
+ * the output operands where provided.
+ *
+ * Returns 0 on success, -1 (with exception raised) on validation failure.
+ */
+NPY_NO_EXPORT int
+PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
+                            NPY_CASTING casting,
+                            PyArrayObject **operands,
+                            PyArray_Descr **dtypes)
+{
+    int i, nin = ufunc->nin, nop = nin + ufunc->nout;
+    char *ufunc_name;
+
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+
+    for (i = 0; i < nop; ++i) {
+        if (i < nin) {
+            if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
+                PyObject *errmsg;
+                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
+                                "input from ", ufunc_name);
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromString(" to "));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)dtypes[i]));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromFormat(" with casting rule %s",
+                                        _casting_to_string(casting)));
+                PyErr_SetObject(PyExc_TypeError, errmsg);
+                return -1;
+            }
+        } else if (operands[i] != NULL) {
+            if (!PyArray_CanCastTypeTo(dtypes[i],
+                                    PyArray_DESCR(operands[i]), casting)) {
+                PyObject *errmsg;
+                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
+                                "output from ", ufunc_name);
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)dtypes[i]));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromString(" to "));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromFormat(" with casting rule %s",
+                                        _casting_to_string(casting)));
+                PyErr_SetObject(PyExc_TypeError, errmsg);
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
 
 static void
 trivial_two_operand_loop(PyArrayObject **op,
@@ -4458,7 +4639,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     self->obj = NULL;
     self->userloops=NULL;
 
-    self->type_resolution_function = &generic_ufunc_type_resolution;
+    self->type_resolution_function = &PyUFunc_DefaultTypeResolution;
 
     if (name == NULL) {
         self->name = "?";

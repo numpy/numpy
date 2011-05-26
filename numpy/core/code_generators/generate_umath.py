@@ -193,6 +193,7 @@ O = 'O'
 P = 'P'
 ints = 'bBhHiIlLqQ'
 times = 'Mm'
+timedeltaonly = 'm'
 intsO = ints + O
 bints = '?' + ints
 bintsO = bints + O
@@ -209,12 +210,14 @@ allP = bints+times+flts+cmplxP
 nobool = all[1:]
 noobj = all[:-3]+all[-2:]
 nobool_or_obj = all[1:-3]+all[-2:]
+nobool_or_datetime = all[1:-2]+all[-1:]
 intflt = ints+flts
 intfltcmplx = ints+flts+cmplx
 nocmplx = bints+times+flts
 nocmplxO = nocmplx+O
 nocmplxP = nocmplx+P
 notimes_or_obj = bints + inexact
+nodatetime_or_obj = bints + inexact
 
 # Find which code corresponds to int64.
 int64 = ''
@@ -317,7 +320,7 @@ defdict = {
 'absolute' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
-          TD(bints+flts+times),
+          TD(bints+flts+timedeltaonly),
           TD(cmplx, out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
@@ -329,14 +332,14 @@ defdict = {
 'negative' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
-          TD(bints+flts+times),
+          TD(bints+flts+timedeltaonly),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
 'sign' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),
-          TD(nobool),
+          TD(nobool_or_datetime),
           ),
 'greater' :
     Ufunc(2, 1, None,
@@ -371,25 +374,25 @@ defdict = {
 'logical_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.logical_and'),
-          TD(noobj, out='?'),
+          TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_and'),
           ),
 'logical_not' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.logical_not'),
-          TD(noobj, out='?'),
+          TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_not'),
           ),
 'logical_or' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.logical_or'),
-          TD(noobj, out='?'),
+          TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_or'),
           ),
 'logical_xor' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.logical_xor'),
-          TD(noobj, out='?'),
+          TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_xor'),
           ),
 'maximum' :

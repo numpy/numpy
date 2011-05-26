@@ -1581,6 +1581,88 @@ units_overflow: {
 }
 
 /*
+ * Uses type1's type_num and the gcd of the metadata to create
+ * the result type.
+ */
+static PyArray_Descr *
+datetime_gcd_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    PyObject *gcdmeta;
+    PyArray_Descr *dtype;
+
+    /* Get the metadata GCD */
+    gcdmeta = compute_datetime_metadata_greatest_common_divisor(
+                                                type1, type2);
+    if (gcdmeta == NULL) {
+        return NULL;
+    }
+
+    /* Create a DATETIME or TIMEDELTA dtype */
+    dtype = PyArray_DescrNewFromType(type1->type_num);
+    if (dtype == NULL) {
+        Py_DECREF(gcdmeta);
+        return NULL;
+    }
+
+    /* Replace the metadata dictionary */
+    Py_XDECREF(dtype->metadata);
+    dtype->metadata = PyDict_New();
+    if (dtype->metadata == NULL) {
+        Py_DECREF(dtype);
+        Py_DECREF(gcdmeta);
+        return NULL;
+    }
+
+    /* Set the metadata object in the dictionary. */
+    if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
+                                                gcdmeta) < 0) {
+        Py_DECREF(dtype);
+        Py_DECREF(gcdmeta);
+        return NULL;
+    }
+    Py_DECREF(gcdmeta);
+    
+    return dtype;
+}
+
+/*
+ * Both type1 and type2 must be either NPY_DATETIME or NPY_TIMEDELTA.
+ * Applies the type promotion rules between the two types, returning
+ * the promoted type.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    int type_num1, type_num2;
+
+    type_num1 = type1->type_num;
+    type_num2 = type2->type_num;
+
+    if (type_num1 == NPY_DATETIME) {
+        if (type_num2 == NPY_DATETIME) {
+            return datetime_gcd_type_promotion(type1, type2);
+        }
+        else if (type_num2 == NPY_TIMEDELTA) {
+            Py_INCREF(type1);
+            return type1;
+        }
+    }
+    else if (type_num1 == NPY_TIMEDELTA) {
+        if (type_num2 == NPY_DATETIME) {
+            Py_INCREF(type2);
+            return type2;
+        }
+        else if (type_num2 == NPY_TIMEDELTA) {
+            return datetime_gcd_type_promotion(type1, type2);
+        }
+    }
+
+    PyErr_SetString(PyExc_RuntimeError,
+            "Called datetime_type_promotion on non-datetype type");
+    return NULL;
+}
+
+/*
  * Converts a substring given by 'str' and 'len' into
  * a date time unit enum value. The 'metastr' parameter
  * is used for error messages, and may be NULL.
@@ -2164,15 +2246,17 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
 parse_timezone:
     if (sublen == 0) {
-        /* Only do this timezone adjustment for recent and future years */
+        /*
+         * ISO 8601 states to treat date-times without a timezone offset
+         * or 'Z' for UTC as local time. The C standard libary functions
+         * mktime and gmtime allow us to do this conversion.
+         *
+         * Only do this timezone adjustment for recent and future years.
+         */
         if (out->year > 1900 && out->year < 10000) {
             time_t rawtime = 0;
             struct tm tm_;
-            /*
-             * ISO 8601 states to treat date-times without a timezone offset
-             * or 'Z' for UTC as local time. The C standard libary functions
-             * mktime and gmtime allow us to do this conversion.
-             */
+
             tm_.tm_sec = out->sec;
             tm_.tm_min = out->min;
             tm_.tm_hour = out->hour;

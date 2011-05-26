@@ -724,91 +724,17 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_DATETIME:
-            /* 'M[A],'M[B]' -> M[A] when A==B, error otherwise */
-            if (type_num2 == NPY_DATETIME) {
-                PyArray_DatetimeMetaData *meta1, *meta2;
-                meta1 = get_datetime_metadata_from_dtype(type1);
-                if (meta1 == NULL) {
-                    return NULL;
-                }
-                meta2 = get_datetime_metadata_from_dtype(type2);
-                if (meta2 == NULL) {
-                    return NULL;
-                }
-
-                if (meta1->base == meta2->base &&
-                            meta1->num == meta2->num &&
-                            meta1->events == meta2->events) {
-                    Py_INCREF(type1);
-                    return type1;
-                }
-                else {
-                    PyObject *errmsg;
-                    errmsg = PyUString_FromString("Cannot promote "
-                                "datetime types ");
-                    PyUString_ConcatAndDel(&errmsg,
-                            PyObject_Repr((PyObject *)type1));
-                    PyUString_ConcatAndDel(&errmsg,
-                            PyUString_FromString(" and "));
-                    PyUString_ConcatAndDel(&errmsg,
-                            PyObject_Repr((PyObject *)type2));
-                    PyUString_ConcatAndDel(&errmsg,
-                            PyUString_FromString(" because they have "
-                                "different units metadata"));
-                    PyErr_SetObject(PyExc_TypeError, errmsg);
-                    return NULL;
-                }
+            if (type_num2 == NPY_DATETIME || type_num2 == NPY_TIMEDELTA) {
+                return datetime_type_promotion(type1, type2);
             }
-            /* 'M[A]','m[B]' -> 'M[A]' */
-            else if (type_num2 == NPY_TIMEDELTA) {
+            else if (PyTypeNum_ISINTEGER(type_num2)) {
                 Py_INCREF(type1);
                 return type1;
             }
             break;
         case NPY_TIMEDELTA:
-            /* 'm[A]','M[B]' -> 'M[B]' */
-            if (type_num2 == NPY_DATETIME) {
-                Py_INCREF(type2);
-                return type2;
-            }
-            /* 'm[A]','m[B]' -> 'm[gcd(A,B)]' */
-            else if (type_num2 == NPY_TIMEDELTA) {
-                PyObject *gcdmeta;
-                PyArray_Descr *dtype;
-
-                /* Get the metadata GCD */
-                gcdmeta = compute_datetime_metadata_greatest_common_divisor(
-                                                            type1, type2);
-                if (gcdmeta == NULL) {
-                    return NULL;
-                }
-
-                /* Create a TIMEDELTA dtype */
-                dtype = PyArray_DescrNewFromType(PyArray_TIMEDELTA);
-                if (dtype == NULL) {
-                    Py_DECREF(gcdmeta);
-                    return NULL;
-                }
-
-                /* Replace the metadata dictionary */
-                Py_XDECREF(dtype->metadata);
-                dtype->metadata = PyDict_New();
-                if (dtype->metadata == NULL) {
-                    Py_DECREF(dtype);
-                    Py_DECREF(gcdmeta);
-                    return NULL;
-                }
-
-                /* Set the metadata object in the dictionary. */
-                if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
-                                                            gcdmeta) < 0) {
-                    Py_DECREF(dtype);
-                    Py_DECREF(gcdmeta);
-                    return NULL;
-                }
-                Py_DECREF(gcdmeta);
-                
-                return dtype;
+            if (type_num2 == NPY_DATETIME || type_num2 == NPY_TIMEDELTA) {
+                return datetime_type_promotion(type1, type2);
             }
             else if (PyTypeNum_ISINTEGER(type_num2) ||
                             PyTypeNum_ISFLOAT(type_num2)) {
@@ -838,6 +764,19 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         case NPY_UNICODE:
             /* Allow NUMBER -> UNICODE */
             if (PyTypeNum_ISNUMBER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            break;
+        case NPY_DATETIME:
+            if (PyTypeNum_ISINTEGER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            break;
+        case NPY_TIMEDELTA:
+            if (PyTypeNum_ISINTEGER(type_num1) ||
+                            PyTypeNum_ISFLOAT(type_num1)) {
                 Py_INCREF(type2);
                 return type2;
             }
