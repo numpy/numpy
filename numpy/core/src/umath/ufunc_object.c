@@ -4383,6 +4383,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     for(i = 0; i < self->nargs; i++) {
         mps[i] = NULL;
     }
+
     errval = PyUFunc_GenericFunction(self, args, kwds, mps);
     if (errval < 0) {
         for (i = 0; i < self->nargs; i++) {
@@ -4405,7 +4406,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 
     /* Free the input references */
     for (i = 0; i < self->nin; i++) {
-        Py_DECREF(mps[i]);
+        Py_XDECREF(mps[i]);
     }
 
     /*

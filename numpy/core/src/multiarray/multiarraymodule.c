@@ -1402,9 +1402,8 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
 }
 
 /*
- * Compare the metadata for two date-times
- * return 1 if they are the same
- * or 0 if not
+ * Compare the metadata for two date-times.
+ * Return 1 if they are the same or 0 if not.
  */
 static int
 _equivalent_datetime_units(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
@@ -1412,7 +1411,7 @@ _equivalent_datetime_units(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
     PyArray_DatetimeMetaData *data1, *data2;
 
     data1 = get_datetime_metadata_from_dtype(dtype1);
-    data2 = get_datetime_metadata_from_dtype(dtype1);
+    data2 = get_datetime_metadata_from_dtype(dtype2);
 
     /* If there's a metadata problem, it doesn't match */
     if (data1 == NULL || data2 == NULL) {
@@ -1468,42 +1467,42 @@ _equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
  * equivalent (same basic kind and same itemsize).
  */
 NPY_NO_EXPORT unsigned char
-PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
+PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-    int typenum1, typenum2, size1, size2;
+    int type_num1, type_num2, size1, size2;
 
-    if (typ1 == typ2) {
+    if (type1 == type2) {
         return TRUE;
     }
 
-    typenum1 = typ1->type_num;
-    typenum2 = typ2->type_num;
-    size1 = typ1->elsize;
-    size2 = typ2->elsize;
+    type_num1 = type1->type_num;
+    type_num2 = type2->type_num;
+    size1 = type1->elsize;
+    size2 = type2->elsize;
 
     if (size1 != size2) {
         return FALSE;
     }
-    if (PyArray_ISNBO(typ1->byteorder) != PyArray_ISNBO(typ2->byteorder)) {
+    if (PyArray_ISNBO(type1->byteorder) != PyArray_ISNBO(type2->byteorder)) {
         return FALSE;
     }
-    if (typ1->subarray || typ2->subarray) {
-        return ((typenum1 == typenum2)
-                && _equivalent_subarrays(typ1->subarray, typ2->subarray));
+    if (type1->subarray || type2->subarray) {
+        return ((type_num1 == type_num2)
+                && _equivalent_subarrays(type1->subarray, type2->subarray));
     }
-    if (typenum1 == NPY_VOID
-        || typenum2 == NPY_VOID) {
-        return ((typenum1 == typenum2)
-                && _equivalent_fields(typ1->fields, typ2->fields));
+    if (type_num1 == NPY_VOID
+        || type_num2 == NPY_VOID) {
+        return ((type_num1 == type_num2)
+                && _equivalent_fields(type1->fields, type2->fields));
     }
-    if (typenum1 == NPY_DATETIME
-            || typenum1 == NPY_DATETIME
-            || typenum2 == NPY_TIMEDELTA
-            || typenum2 == NPY_TIMEDELTA) {
-        return ((typenum1 == typenum2)
-                && _equivalent_datetime_units(typ1, typ2));
+    if (type_num1 == NPY_DATETIME
+            || type_num1 == NPY_DATETIME
+            || type_num2 == NPY_TIMEDELTA
+            || type_num2 == NPY_TIMEDELTA) {
+        return ((type_num1 == type_num2)
+                && _equivalent_datetime_units(type1, type2));
     }
-    return typ1->kind == typ2->kind;
+    return type1->kind == type2->kind;
 }
 
 /*NUMPY_API*/
