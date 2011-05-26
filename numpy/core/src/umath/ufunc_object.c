@@ -1778,14 +1778,26 @@ PyUFunc_BinaryComparisonTypeResolution(PyUFuncObject *ufunc,
                                 PyUFuncGenericFunction *out_innerloop,
                                 void **out_innerloopdata)
 {
-    int i, type_num;
+    int i, type_num, type_num1, type_num2;
     char *ufunc_name;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
-    /* Use the default type resolution if there's a custom data type */
-    if (PyArray_DESCR(operands[0])->type_num >= NPY_NTYPES ||
-                    PyArray_DESCR(operands[1])->type_num >= NPY_NTYPES) {
+    if (ufunc->nin != 2 || ufunc->nout != 1) {
+        PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
+                "to use binary comparison type resolution but has "
+                "the wrong number of inputs or outputs");
+        return -1;
+    }
+
+    /*
+     * Use the default type resolution if there's a custom data type
+     * or object arrays.
+     */
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
+            type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
         return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
                 type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
@@ -1798,7 +1810,6 @@ PyUFunc_BinaryComparisonTypeResolution(PyUFuncObject *ufunc,
         }
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
-
     }
     else {
         /*
