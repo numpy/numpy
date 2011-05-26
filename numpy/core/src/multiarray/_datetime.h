@@ -26,6 +26,14 @@ NPY_NO_EXPORT PyArray_DatetimeMetaData *
 get_datetime_metadata_from_dtype(PyArray_Descr *dtype);
 
 /*
+ * Both type1 and type2 must be either NPY_DATETIME or NPY_TIMEDELTA.
+ * Applies the type promotion rules between the two types, returning
+ * the promoted type.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
+
+/*
  * Converts a datetime from a datetimestruct to a datetime based
  * on some metadata.
  */

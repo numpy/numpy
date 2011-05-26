@@ -1453,6 +1453,96 @@ _uint64_euclidean_gcd(npy_uint64 x, npy_uint64 y)
     return x;
 }
 
+/*
+ * Computes the conversion factor to convert data with 'src_meta' metadata
+ * into data with 'dst_meta' metadata, not taking into account the events.
+ *
+ * To convert a npy_datetime or npy_timedelta, first the event number needs
+ * to be divided away, then it needs to be scaled by num/denom, and
+ * finally the event number can be added back in.
+ */
+NPY_NO_EXPORT void
+get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
+                                PyArray_DatetimeMetaData *dst_meta,
+                                npy_int64 *out_num, npy_int64 *out_denom)
+{
+    int src_base, dst_base, swapped;
+    npy_uint64 num = 1, denom = 1, tmp, gcd;
+
+    if (src_meta->base <= dst_meta->base) {
+        src_base = src_meta->base;
+        dst_base = dst_meta->base;
+        swapped = 0;
+    }
+    else {
+        src_base = dst_meta->base;
+        dst_base = src_meta->base;
+        swapped = 1;
+    }
+
+    if (src_base != dst_base) {
+        /*
+         * Conversions between years/months and other units use
+         * the factor averaged over the 400 year leap year cycle.
+         */
+        if (src_base == NPY_FR_Y) {
+            if (dst_base == NPY_FR_M) {
+                num *= 12;
+            }
+            else if (dst_base == NPY_FR_W) {
+                num *= (97 + 400*365);
+                denom *= 400*7;
+            }
+            else {
+                /* Year -> Day */
+                num *= (97 + 400*365);
+                denom *= 400;
+                /* Day -> dst_base */
+                denom *= get_datetime_units_factor(NPY_FR_D, dst_base);
+            }
+        }
+        else if (src_base == NPY_FR_M) {
+            if (dst_base == NPY_FR_W) {
+                num *= (97 + 400*365);
+                denom *= 400*12*7;
+            }
+            else {
+                /* Month -> Day */
+                num *= (97 + 400*365);
+                denom *= 400*12;
+                /* Day -> dst_base */
+                denom *= get_datetime_units_factor(NPY_FR_D, dst_base);
+            }
+        }
+        else {
+            denom *= get_datetime_units_factor(src_base, dst_base);
+        }
+    }
+
+    /* If something overflowed, make both num and denom 0 */
+    if (denom == 0) {
+        *out_num = 0;
+        *out_denom = 0;
+        return;
+    }
+
+    /* Swap the numerator and denominator if necessary */
+    if (swapped) {
+        tmp = num;
+        num = denom;
+        denom = tmp;
+    }
+
+    num *= src_meta->num;
+    denom *= dst_meta->num;
+
+    /* Return as a fraction in reduced form */
+    gcd = _uint64_euclidean_gcd(num, denom);
+    *out_num = (npy_int64)(num / gcd);
+    *out_denom = (npy_int64)(denom / gcd);
+}
+
+
 NPY_NO_EXPORT PyObject *
 compute_datetime_metadata_greatest_common_divisor(
                         PyArray_Descr *type1,
@@ -1484,13 +1574,13 @@ compute_datetime_metadata_greatest_common_divisor(
 
     if (meta1->events != 1 || meta2->events != 1) {
         /*
-         * When there are events specified, both the units
-         * base and the events must match.
+         * When there are events specified, the metadata must
+         * match exactly.
          */
-        if (meta1->base != meta2->base || meta1->events != meta2->events) {
+        if (meta1->base != meta2->base || meta1->events != meta2->events
+                || meta1->num != meta2->num) {
             goto incompatible_units;
         }
-        events = meta1->events;
     }
 
     num1 = (npy_uint64)meta1->num;
@@ -1503,12 +1593,29 @@ compute_datetime_metadata_greatest_common_divisor(
     else {
         /*
          * Years, Months, and Business days are incompatible with
-         * all other units.
+         * all other units (except years and months are compatible
+         * with each other).
          */
-        if (meta1->base == NPY_FR_Y ||
-                            meta1->base == NPY_FR_M ||
+        if (meta1->base == NPY_FR_Y) {
+            if (meta2->base == NPY_FR_M) {
+                base = NPY_FR_M;
+                num1 *= 12;
+            }
+            else {
+                goto incompatible_units;
+            }
+        }
+        else if (meta2->base == NPY_FR_Y) {
+            if (meta1->base == NPY_FR_M) {
+                base = NPY_FR_M;
+                num2 *= 12;
+            }
+            else {
+                goto incompatible_units;
+            }
+        }
+        else if (meta1->base == NPY_FR_M ||
                             meta1->base == NPY_FR_B ||
-                            meta2->base == NPY_FR_Y ||
                             meta2->base == NPY_FR_M ||
                             meta2->base == NPY_FR_B) {
             goto incompatible_units;

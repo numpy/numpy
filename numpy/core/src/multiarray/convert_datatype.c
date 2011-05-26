@@ -724,22 +724,9 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_DATETIME:
-            if (type_num2 == NPY_DATETIME || type_num2 == NPY_TIMEDELTA) {
-                return datetime_type_promotion(type1, type2);
-            }
-            else if (PyTypeNum_ISINTEGER(type_num2)) {
-                Py_INCREF(type1);
-                return type1;
-            }
-            break;
         case NPY_TIMEDELTA:
             if (type_num2 == NPY_DATETIME || type_num2 == NPY_TIMEDELTA) {
                 return datetime_type_promotion(type1, type2);
-            }
-            else if (PyTypeNum_ISINTEGER(type_num2) ||
-                            PyTypeNum_ISFLOAT(type_num2)) {
-                Py_INCREF(type1);
-                return type1;
             }
             break;
     }

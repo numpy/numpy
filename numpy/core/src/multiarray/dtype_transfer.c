@@ -2872,7 +2872,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
     if (src_itemsize == dst_itemsize && src_dtype->kind == dst_dtype->kind &&
                 !PyDataType_HASFIELDS(src_dtype) &&
                 !PyDataType_HASFIELDS(dst_dtype) &&
-                src_dtype->subarray == NULL && dst_dtype->subarray == NULL) {
+                src_dtype->subarray == NULL && dst_dtype->subarray == NULL &&
+                src_type_num != NPY_DATETIME && src_type_num != NPY_TIMEDELTA) {
         /* A custom data type requires that we use its copy/swap */
         if (src_type_num >= NPY_NTYPES || dst_type_num >= NPY_NTYPES) {
             /*
@@ -2895,8 +2896,6 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                         PyArray_ISNBO(dst_dtype->byteorder),
                                 out_stransfer, out_transferdata);
             }
-
-
         }
 
         /* The special types, which have no byte-order */

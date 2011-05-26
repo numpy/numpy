@@ -26,6 +26,14 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
 
+    def test_dtype_comparison(self):
+        assert_(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
+        assert_(np.dtype('M8[us]') != np.dtype('M8[ms]'))
+        assert_(np.dtype('M8[D]') != np.dtype('M8[B]'))
+        assert_(np.dtype('M8[2D]') != np.dtype('M8[D]'))
+        assert_(np.dtype('M8[D]') != np.dtype('M8[2D]'))
+        assert_(np.dtype('M8[Y]//3') != np.dtype('M8[Y]'))
+
     def test_pydatetime_creation(self):
         a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[D]')
         assert_equal(a[0], a[1])
@@ -54,33 +62,28 @@ class TestDateTime(TestCase):
         assert_equal(dt, pickle.loads(pickle.dumps(dt)))
 
     def test_dtype_promotion(self):
-        # datetime <op> datetime requires matching units
-        assert_equal(np.promote_types(np.dtype('M8[Y]'), np.dtype('M8[Y]')),
-                     np.dtype('M8[Y]'))
-        assert_raises(TypeError, np.promote_types,
-                            np.dtype('M8[Y]'), np.dtype('M8[M]'))
+        # datetime <op> datetime computes the metadata gcd
         # timedelta <op> timedelta computes the metadata gcd
-        assert_equal(
-                np.promote_types(np.dtype('m8[2Y]'), np.dtype('m8[2Y]')),
-                np.dtype('m8[2Y]'))
-        assert_equal(
-                np.promote_types(np.dtype('m8[12Y]'), np.dtype('m8[15Y]')),
-                np.dtype('m8[3Y]'))
-        assert_equal(
-                np.promote_types(np.dtype('m8[62M]'), np.dtype('m8[24M]')),
-                np.dtype('m8[2M]'))
-        assert_equal(
-                np.promote_types(np.dtype('m8[1W]'), np.dtype('m8[2D]')),
-                np.dtype('m8[1D]'))
-        assert_equal(
-                np.promote_types(np.dtype('m8[W]'), np.dtype('m8[13s]')),
-                np.dtype('m8[s]'))
-        assert_equal(
-                np.promote_types(np.dtype('m8[13W]'), np.dtype('m8[49s]')),
-                np.dtype('m8[7s]'))
+        for mM in ['m', 'M']:
+            assert_equal(
+                np.promote_types(np.dtype(mM+'8[2Y]'), np.dtype(mM+'8[2Y]')),
+                np.dtype(mM+'8[2Y]'))
+            assert_equal(
+                np.promote_types(np.dtype(mM+'8[12Y]'), np.dtype(mM+'8[15Y]')),
+                np.dtype(mM+'8[3Y]'))
+            assert_equal(
+                np.promote_types(np.dtype(mM+'8[62M]'), np.dtype(mM+'8[24M]')),
+                np.dtype(mM+'8[2M]'))
+            assert_equal(
+                np.promote_types(np.dtype(mM+'8[1W]'), np.dtype(mM+'8[2D]')),
+                np.dtype(mM+'8[1D]'))
+            assert_equal(
+                np.promote_types(np.dtype(mM+'8[W]'), np.dtype(mM+'8[13s]')),
+                np.dtype(mM+'8[s]'))
+            assert_equal(
+                np.promote_types(np.dtype(mM+'8[13W]'), np.dtype(mM+'8[49s]')),
+                np.dtype(mM+'8[7s]'))
         # timedelta <op> timedelta raises when there is no reasonable gcd
-        assert_raises(TypeError, np.promote_types,
-                            np.dtype('m8[Y]'), np.dtype('m8[M]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
         assert_raises(TypeError, np.promote_types,
