@@ -1786,7 +1786,8 @@ PyUFunc_BinaryComparisonTypeResolution(PyUFuncObject *ufunc,
     if (ufunc->nin != 2 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
                 "to use binary comparison type resolution but has "
-                "the wrong number of inputs or outputs");
+                "the wrong number of inputs or outputs",
+                ufunc_name);
         return -1;
     }
 
@@ -4389,11 +4390,11 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         for (i = 0; i < self->nargs; i++) {
             PyArray_XDECREF_ERR(mps[i]);
         }
-        if (errval == -1)
+        if (errval == -1) {
             return NULL;
+        }
         else if (self->nin == 2 && self->nout == 1) {
-          /* To allow the other argument to be given a chance
-           */
+            /* To allow the other argument to be given a chance */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
         }

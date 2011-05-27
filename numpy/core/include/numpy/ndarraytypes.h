@@ -213,6 +213,9 @@ typedef enum {
         NPY_RAISE=2
 } NPY_CLIPMODE;
 
+/* The special not-a-time (NaT) value */
+#define NPY_DATETIME_NAT NPY_MIN_INT64
+
 typedef enum {
         NPY_FR_Y, /* Years */
         NPY_FR_M, /* Months */

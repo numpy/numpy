@@ -89,7 +89,24 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
 NPY_NO_EXPORT PyObject *
 compute_datetime_metadata_greatest_common_divisor(
                         PyArray_Descr *type1,
-                        PyArray_Descr *type2);
+                        PyArray_Descr *type2,
+                        int strict_with_nonlinear_units);
+
+/*
+ * Computes the conversion factor to convert data with 'src_meta' metadata
+ * into data with 'dst_meta' metadata, not taking into account the events.
+ *
+ * To convert a npy_datetime or npy_timedelta, first the event number needs
+ * to be divided away, then it needs to be scaled by num/denom, and
+ * finally the event number can be added back in.
+ *
+ * If overflow occurs, both out_num and out_denom are set to 0, but
+ * no error is set.
+ */
+NPY_NO_EXPORT void
+get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
+                                PyArray_DatetimeMetaData *dst_meta,
+                                npy_int64 *out_num, npy_int64 *out_denom);
 
 /*
  * Given an the capsule datetime metadata object,
@@ -159,5 +176,26 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
+
+/*
+ * Converts a datetime based on the given metadata into a datetimestruct
+ */
+NPY_NO_EXPORT int
+convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+                                    npy_datetime dt,
+                                    npy_datetimestruct *out);
+
+/*
+ * Converts a datetime from a datetimestruct to a datetime based
+ * on some metadata. The date is assumed to be valid.
+ *
+ * TODO: If meta->num is really big, there could be overflow
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+                                    const npy_datetimestruct *dts,
+                                    npy_datetime *out);
 
 #endif

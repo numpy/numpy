@@ -23,6 +23,9 @@ numpy_pydatetime_import()
     PyDateTime_IMPORT;
 }
 
+static int
+is_leapyear(npy_int64 year);
+
 
 /* For defaults and errors */
 #define NPY_FR_ERR  -1
@@ -32,10 +35,6 @@ numpy_pydatetime_import()
 */
 
 /* Calendar Structure for Parsing Long -> Date */
-typedef struct {
-    int year, month, day;
-} ymdstruct;
-
 typedef struct {
     int hour, min, sec;
 } hmsstruct;
@@ -78,25 +77,11 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
         } \
     }
 
-/* Table with day offsets for each month (0-based, without and with leap) */
-static int month_offset[2][13] = {
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
-    { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
-};
-
 /* Table of number of days in a month (0-based, without and with leap) */
 static int days_in_month[2][12] = {
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
     { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
-
-/* Return 1/0 iff year points to a leap year in calendar. */
-static int
-is_leapyear(npy_int64 year)
-{
-    return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
-}
-
 
 /*
  * Return the day of the week for the given absolute date.
@@ -116,146 +101,11 @@ day_of_week(npy_longlong absdate)
     }
 }
 
-/*
- * Return the year offset, that is the absolute date of the day
- * 31.12.(year-1) since 31.12.1969 in the proleptic Gregorian calendar.
- */
-static npy_longlong
-year_offset(npy_longlong year)
-{
-    /* Note that 477 == 1969/4 - 1969/100 + 1969/400 */
-    year--;
-    if (year >= 0 || -1/4 == -1)
-        return (year-1969)*365 + year/4 - year/100 + year/400 - 477;
-    else
-        return (year-1969)*365 + (year-3)/4 - (year-99)/100 + (year-399)/400 - 477;
-}
-
-/*
- * Modified version of mxDateTime function
- * Returns absolute number of days since Jan 1, 1970
- * assuming a proleptic Gregorian Calendar
- * Raises a ValueError if out of range month or day
- * day -1 is Dec 31, 1969, day 0 is Jan 1, 1970, day 1 is Jan 2, 1970
- */
-static npy_longlong
-days_from_ymd(int year, int month, int day)
-{
-
-    /* Calculate the absolute date */
-    int leap;
-    npy_longlong yearoffset, absdate;
-
-    /* Is it a leap year ? */
-    leap = is_leapyear(year);
-
-    /* Negative month values indicate months relative to the years end */
-    if (month < 0) month += 13;
-    Py_AssertWithArg(month >= 1 && month <= 12,
-                     PyExc_ValueError,
-                     "month out of range (1-12): %i",
-                     month);
-
-    /* Negative values indicate days relative to the months end */
-    if (day < 0) day += days_in_month[leap][month - 1] + 1;
-    Py_AssertWithArg(day >= 1 && day <= days_in_month[leap][month - 1],
-                     PyExc_ValueError,
-                     "day out of range: %i",
-                     day);
-
-    /*
-     * Number of days between Dec 31, (year - 1) and Dec 31, 1969
-     *    (can be negative).
-     */
-    yearoffset = year_offset(year);
-
-    if (PyErr_Occurred()) goto onError;
-
-    /*
-     * Calculate the number of days using yearoffset
-     * Jan 1, 1970 is day 0 and thus Dec. 31, 1969 is day -1
-     */
-    absdate = day-1 + month_offset[leap][month - 1] + yearoffset;
-
-    return absdate;
-
- onError:
-    return 0;
-
-}
-
 /* Returns absolute seconds from an hour, minute, and second
  */
 #define secs_from_hms(hour, min, sec, multiplier) (\
   ((hour)*3600 + (min)*60 + (sec)) * (npy_int64)(multiplier)\
 )
-
-/*
- * Takes a number of days since Jan 1, 1970 (positive or negative)
- * and returns the year. month, and day in the proleptic
- * Gregorian calendar
- *
- * Examples:
- *
- * -1 returns 1969, 12, 31
- * 0  returns 1970, 1, 1
- * 1  returns 1970, 1, 2
- */
-
-static ymdstruct
-days_to_ymdstruct(npy_datetime dlong)
-{
-    ymdstruct ymd;
-    long year;
-    npy_longlong yearoffset;
-    int leap, dayoffset;
-    int month = 1, day = 1;
-    int *monthoffset;
-
-    dlong += 1;
-
-    /* Approximate year */
-    year = 1970 + dlong / 365.2425;
-
-    /* Apply corrections to reach the correct year */
-    while (1) {
-        /* Calculate the year offset */
-        yearoffset = year_offset(year);
-
-        /*
-         * Backward correction: absdate must be greater than the
-         * yearoffset
-         */
-        if (yearoffset >= dlong) {
-            year--;
-            continue;
-        }
-
-        dayoffset = dlong - yearoffset;
-        leap = is_leapyear(year);
-
-        /* Forward correction: non leap years only have 365 days */
-        if (dayoffset > 365 && !leap) {
-            year++;
-            continue;
-        }
-        break;
-    }
-
-    /* Now iterate to find the month */
-    monthoffset = month_offset[leap];
-    for (month = 1; month < 13; month++) {
-        if (monthoffset[month] >= dayoffset)
-            break;
-    }
-    day = dayoffset - month_offset[leap][month-1];
-
-    ymd.year  = year;
-    ymd.month = month;
-    ymd.day   = day;
-
-    return ymd;
-}
 
 /*
  * Converts an integer number of seconds in a day to hours minutes seconds.
@@ -286,16 +136,145 @@ seconds_to_hmsstruct(npy_longlong dlong)
 */
 
 
-/*==================================================
-// Parsing DateTime struct and returns a date-time number
-// =================================================
+static int
+is_leapyear(npy_int64 year)
+{
+    return (year & 0x3) == 0 && /* year % 4 == 0 */
+           ((year % 100) != 0 ||
+            (year % 400) == 0);
+}
 
- Structure is assumed to be already normalized
-*/
+/*
+ * Calculates the days offset from the 1970 epoch.
+ */
+static npy_int64
+get_datetimestruct_days(const npy_datetimestruct *dts)
+{
+    int i, month;
+    npy_int64 year, days = 0;
+    int *month_lengths;
+
+    year = dts->year - 1970;
+    days = year * 365;
+
+    /* Adjust for leap years */
+    if (days >= 0) {
+        /*
+         * 1968 is the closest leap year before 1970.
+         * Exclude the current year, so add 1.
+         */
+        year += 1;
+        /* Add one day for each 4 years */
+        days += year / 4;
+        /* 1900 is the closest previous year divisible by 100 */
+        year += 68;
+        /* Subtract one day for each 100 years */
+        days -= year / 100;
+        /* 1600 is the closest previous year divisible by 400 */
+        year += 300;
+        /* Add one day for each 400 years */
+        days += year / 400;
+    }
+    else {
+        /*
+         * 1972 is the closest later year after 1970.
+         * Include the current year, so subtract 2.
+         */
+        year -= 2;
+        /* Subtract one day for each 4 years */
+        days += year / 4;
+        /* 2000 is the closest later year divisible by 100 */
+        year -= 28;
+        /* Add one day for each 100 years */
+        days -= year / 100;
+        /* 2000 is also the closest later year divisible by 400 */
+        /* Subtract one day for each 400 years */
+        days += year / 400;
+    }
+
+    month_lengths = days_in_month[is_leapyear(dts->year)];
+    month = dts->month - 1;
+
+    /* Add the months */
+    for (i = 0; i < month; ++i) {
+        days += month_lengths[i];
+    }
+
+    /* Add the days */
+    days += dts->day - 1;
+
+    return days;
+}
+
+/*
+ * Modifies '*days_' to be the day offset within the year,
+ * and returns the year.
+ */
+static npy_int64
+days_to_yearsdays(npy_int64 *days_)
+{
+    const npy_int64 days_per_400years = (400*365 + 100 - 4 + 1);
+    /* Adjust so it's relative to the year 2000 (divisible by 400) */
+    npy_int64 days = (*days_) - (365*30 + 7), year;
+
+    /* Break down the 400 year cycle to get the year and day within the year */
+    if (days >= 0) {
+        year = 400 * (days / days_per_400years);
+        days = days % days_per_400years;
+    }
+    else {
+        year = 400 * ((days - (days_per_400years - 1)) / days_per_400years);
+        days = days % days_per_400years;
+        if (days < 0) {
+            days += days_per_400years;
+        }
+    }
+
+    /* Work out the year/day within the 400 year cycle */
+    if (days >= 366) {
+        year += 100 * ((days-1) / (100*365 + 25 - 1));
+        days = (days-1) % (100*365 + 25 - 1);
+        if (days >= 365) {
+            year += 4 * ((days+1) / (4*365 + 1));
+            days = (days+1) % (4*365 + 1);
+            if (days >= 366) {
+                year += (days-1) / 365;
+                days = (days-1) % 365;
+            }
+        }
+    }
+
+    *days_ = days;
+    return year + 2000;
+}
+
+/*
+ * Fills in the year, month, day in 'dts' based on the days
+ * offset from 1970.
+ */
+static void
+set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
+{
+    int *month_lengths, i;
+
+    dts->year = days_to_yearsdays(&days);
+
+    month_lengths = days_in_month[is_leapyear(dts->year)];
+    for (i = 0; i < 12; ++i) {
+        if (days < month_lengths[i]) {
+            dts->month = i + 1;
+            dts->day = days + 1;
+            return;
+        }
+        else {
+            days -= month_lengths[i];
+        }
+    }
+}
 
 /*
  * Converts a datetime from a datetimestruct to a datetime based
- * on some metadata.
+ * on some metadata. The date is assumed to be valid.
  *
  * TODO: If meta->num is really big, there could be overflow
  *
@@ -310,8 +289,8 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     NPY_DATETIMEUNIT base = meta->base;
 
     /* If the datetimestruct is NaT, return NaT */
-    if (dts->year == NPY_MIN_INT64) {
-        *out = NPY_MIN_INT64;
+    if (dts->year == NPY_DATETIME_NAT) {
+        *out = NPY_DATETIME_NAT;
         return 0;
     }
 
@@ -332,7 +311,7 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     }
     else {
         /* Otherwise calculate the number of days to start */
-        npy_int64 days = days_from_ymd(dts->year, dts->month, dts->day);
+        npy_int64 days = get_datetimestruct_days(dts);
 
         if (base == NPY_FR_W) {
             /* Truncate to weeks */
@@ -595,7 +574,6 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
-    ymdstruct ymd;
     hmsstruct hms;
     npy_int64 absdays;
     npy_int64 tmp, num1, num2, num3;
@@ -641,10 +619,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
 
         case NPY_FR_W:
             /* A week is 7 days */
-            ymd = days_to_ymdstruct(dt * 7);
-            out->year  = ymd.year;
-            out->month = ymd.month;
-            out->day   = ymd.day;
+            set_datetimestruct_days(dt * 7, out);
             break;
 
         case NPY_FR_B:
@@ -666,63 +641,48 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 /* Recall how C computes / and % with negative numbers */
                 absdays = 7 * ((dt - 1) / 5) + ((dt - 1) % 5) + 1;
             }
-            ymd = days_to_ymdstruct(absdays);
-            out->year  = ymd.year;
-            out->month = ymd.month;
-            out->day   = ymd.day;
+            set_datetimestruct_days(absdays, out);
             break;
 
         case NPY_FR_D:
-            ymd = days_to_ymdstruct(dt);
-            out->year  = ymd.year;
-            out->month = ymd.month;
-            out->day   = ymd.day;
+            set_datetimestruct_days(dt, out);
             break;
 
         case NPY_FR_h:
             if (dt >= 0) {
-                ymd  = days_to_ymdstruct(dt / 24);
+                set_datetimestruct_days(dt / 24, out);
                 out->hour  = dt % 24;
             }
             else {
-                ymd  = days_to_ymdstruct((dt - 23) / 24);
+                set_datetimestruct_days((dt - 23) / 24, out);
                 out->hour = 23 + (dt + 1) % 24;
             }
-            out->year  = ymd.year;
-            out->month = ymd.month;
-            out->day   = ymd.day;
             break;
 
         case NPY_FR_m:
             if (dt >= 0) {
-                ymd = days_to_ymdstruct(dt / 1440);
+                set_datetimestruct_days(dt / 1440, out);
                 out->min = dt % 1440;
             }
             else {
-                ymd = days_to_ymdstruct((dt - 1439) / 1440);
+                set_datetimestruct_days((dt - 1439) / 1440, out);
                 out->min = 1439 + (dt + 1) % 1440;
             }
             hms = seconds_to_hmsstruct(out->min * 60);
-            out->year   = ymd.year;
-            out->month  = ymd.month;
-            out->day    = ymd.day;
             out->hour   = hms.hour;
             out->min = hms.min;
             break;
 
         case NPY_FR_s:
             if (dt >= 0) {
-                ymd = days_to_ymdstruct(dt / 86400);
+                set_datetimestruct_days(dt / 86400, out);
                 out->sec = dt % 86400;
             }
             else {
-                ymd = days_to_ymdstruct((dt - 86399) / 86400);
+                set_datetimestruct_days((dt - 86399) / 86400, out);
                 out->sec = 86399 + (dt + 1) % 86400;
             }
             hms = seconds_to_hmsstruct(out->sec);
-            out->year   = ymd.year;
-            out->month  = ymd.month;
-            out->day    = ymd.day;
             out->hour   = hms.hour;
             out->min = hms.min;
             out->sec = hms.sec;
@@ -730,18 +690,15 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
 
         case NPY_FR_ms:
             if (dt >= 0) {
-                ymd = days_to_ymdstruct(dt / 86400000);
+                set_datetimestruct_days(dt / 86400000, out);
                 tmp  = dt % 86400000;
             }
             else {
-                ymd = days_to_ymdstruct((dt - 86399999) / 86400000);
+                set_datetimestruct_days((dt - 86399999) / 86400000, out);
                 tmp  = 86399999 + (dt + 1) % 86399999;
             }
             hms = seconds_to_hmsstruct(tmp / 1000);
             out->us  = (tmp % 1000)*1000;
-            out->year    = ymd.year;
-            out->month   = ymd.month;
-            out->day     = ymd.day;
             out->hour    = hms.hour;
             out->min     = hms.min;
             out->sec     = hms.sec;
@@ -752,18 +709,15 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             num1 *= 1000;
             num2 = num1 - 1;
             if (dt >= 0) {
-                ymd = days_to_ymdstruct(dt / num1);
+                set_datetimestruct_days(dt / num1, out);
                 tmp = dt % num1;
             }
             else {
-                ymd = days_to_ymdstruct((dt - num2)/ num1);
+                set_datetimestruct_days((dt - num2)/ num1, out);
                 tmp = num2 + (dt + 1) % num1;
             }
             hms = seconds_to_hmsstruct(tmp / 1000000);
             out->us = tmp % 1000000;
-            out->year    = ymd.year;
-            out->month   = ymd.month;
-            out->day     = ymd.day;
             out->hour    = hms.hour;
             out->min     = hms.min;
             out->sec     = hms.sec;
@@ -776,20 +730,17 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             num3 = 1000000;
             num3 *= 1000000;
             if (dt >= 0) {
-                ymd = days_to_ymdstruct(dt / num1);
+                set_datetimestruct_days(dt / num1, out);
                 tmp = dt % num1;
             }
             else {
-                ymd = days_to_ymdstruct((dt - num2)/ num1);
+                set_datetimestruct_days((dt - num2)/ num1, out);
                 tmp = num2 + (dt + 1) % num1;
             }
             hms = seconds_to_hmsstruct(tmp / 1000000000);
             tmp = tmp % 1000000000;
             out->us = tmp / 1000;
             out->ps = (tmp % 1000) * (npy_int64)(1000);
-            out->year    = ymd.year;
-            out->month   = ymd.month;
-            out->day     = ymd.day;
             out->hour    = hms.hour;
             out->min     = hms.min;
             out->sec     = hms.sec;
@@ -802,20 +753,17 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             num2 = num1 - 1;
 
             if (dt >= 0) {
-                ymd = days_to_ymdstruct(dt / num1);
+                set_datetimestruct_days(dt / num1, out);
                 tmp = dt % num1;
             }
             else {
-                ymd = days_to_ymdstruct((dt - num2) / num1);
+                set_datetimestruct_days((dt - num2) / num1, out);
                 tmp = num2 + (dt + 1) % num1;
             }
             hms = seconds_to_hmsstruct(tmp / num3);
             tmp = tmp % num3;
             out->us = tmp / 1000000;
             out->ps = tmp % 1000000;
-            out->year    = ymd.year;
-            out->month   = ymd.month;
-            out->day     = ymd.day;
             out->hour    = hms.hour;
             out->min     = hms.min;
             out->sec     = hms.sec;
@@ -1460,6 +1408,9 @@ _uint64_euclidean_gcd(npy_uint64 x, npy_uint64 y)
  * To convert a npy_datetime or npy_timedelta, first the event number needs
  * to be divided away, then it needs to be scaled by num/denom, and
  * finally the event number can be added back in.
+ *
+ * If overflow occurs, both out_num and out_denom are set to 0, but
+ * no error is set.
  */
 NPY_NO_EXPORT void
 get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
@@ -1498,7 +1449,7 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
                 num *= (97 + 400*365);
                 denom *= 400;
                 /* Day -> dst_base */
-                denom *= get_datetime_units_factor(NPY_FR_D, dst_base);
+                num *= get_datetime_units_factor(NPY_FR_D, dst_base);
             }
         }
         else if (src_base == NPY_FR_M) {
@@ -1511,11 +1462,11 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
                 num *= (97 + 400*365);
                 denom *= 400*12;
                 /* Day -> dst_base */
-                denom *= get_datetime_units_factor(NPY_FR_D, dst_base);
+                num *= get_datetime_units_factor(NPY_FR_D, dst_base);
             }
         }
         else {
-            denom *= get_datetime_units_factor(src_base, dst_base);
+            num *= get_datetime_units_factor(src_base, dst_base);
         }
     }
 
@@ -1546,7 +1497,8 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
 NPY_NO_EXPORT PyObject *
 compute_datetime_metadata_greatest_common_divisor(
                         PyArray_Descr *type1,
-                        PyArray_Descr *type2)
+                        PyArray_Descr *type2,
+                        int strict_with_nonlinear_units)
 {
     PyArray_DatetimeMetaData *meta1, *meta2, *dt_data;
     NPY_DATETIMEUNIT base;
@@ -1572,15 +1524,12 @@ compute_datetime_metadata_greatest_common_divisor(
         return NULL;
     }
 
-    if (meta1->events != 1 || meta2->events != 1) {
-        /*
-         * When there are events specified, the metadata must
-         * match exactly.
-         */
-        if (meta1->base != meta2->base || meta1->events != meta2->events
-                || meta1->num != meta2->num) {
-            goto incompatible_units;
-        }
+    /* Take the maximum of the events */
+    if (meta1->events > meta2->events) {
+        events = meta1->events;
+    }
+    else {
+        events = meta2->events;
     }
 
     num1 = (npy_uint64)meta1->num;
@@ -1601,8 +1550,12 @@ compute_datetime_metadata_greatest_common_divisor(
                 base = NPY_FR_M;
                 num1 *= 12;
             }
-            else {
+            else if (strict_with_nonlinear_units) {
                 goto incompatible_units;
+            }
+            else {
+                base = meta2->base;
+                /* Don't multiply num1 since there is no even factor */
             }
         }
         else if (meta2->base == NPY_FR_Y) {
@@ -1610,15 +1563,37 @@ compute_datetime_metadata_greatest_common_divisor(
                 base = NPY_FR_M;
                 num2 *= 12;
             }
-            else {
+            else if (strict_with_nonlinear_units) {
                 goto incompatible_units;
+            }
+            else {
+                base = meta1->base;
+                /* Don't multiply num2 since there is no even factor */
             }
         }
         else if (meta1->base == NPY_FR_M ||
                             meta1->base == NPY_FR_B ||
                             meta2->base == NPY_FR_M ||
                             meta2->base == NPY_FR_B) {
-            goto incompatible_units;
+            if (strict_with_nonlinear_units) {
+                goto incompatible_units;
+            }
+            else {
+                if (meta1->base > meta2->base) {
+                    base = meta1->base;
+                }
+                else {
+                    base = meta2->base;
+                }
+
+                /*
+                 * When combining business days with other units, end
+                 * up with days instead of business days.
+                 */
+                if (base == NPY_FR_B) {
+                    base = NPY_FR_D;
+                }
+            }
         }
 
         /* Take the greater base (unit sizes are decreasing in enum) */
@@ -1668,7 +1643,7 @@ incompatible_units: {
                 PyObject_Repr((PyObject *)type2));
         PyUString_ConcatAndDel(&errmsg,
                 PyUString_FromString(" because they have "
-                    "incompatible base units or events"));
+                    "incompatible nonlinear base time units"));
         PyErr_SetObject(PyExc_TypeError, errmsg);
         return NULL;
     }
@@ -1697,9 +1672,13 @@ datetime_gcd_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
     PyObject *gcdmeta;
     PyArray_Descr *dtype;
 
-    /* Get the metadata GCD */
+    /*
+     * Get the metadata GCD, being strict about nonlinear units for
+     * timedelta and relaxed for datetime.
+     */
     gcdmeta = compute_datetime_metadata_greatest_common_divisor(
-                                                type1, type2);
+                                            type1, type2,
+                                            type1->type_num == NPY_TIMEDELTA);
     if (gcdmeta == NULL) {
         return NULL;
     }
@@ -2065,7 +2044,7 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
                         tolower(str[0]) == 'n' &&
                         tolower(str[1]) == 'a' &&
                         tolower(str[2]) == 't')) {
-        out->year = NPY_MIN_INT64;
+        out->year = NPY_DATETIME_NAT;
         return 0;
     }
 
@@ -2831,7 +2810,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
     npy_datetimestruct dts;
 
     /* Handle not-a-time */
-    if (dt == NPY_MIN_INT64) {
+    if (dt == NPY_DATETIME_NAT) {
         return PyUString_FromString("NaT");
     }
 
