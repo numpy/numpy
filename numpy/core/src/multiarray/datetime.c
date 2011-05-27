@@ -69,14 +69,6 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
  * license version 1.0.0
  */
 
-#define Py_AssertWithArg(x,errortype,errorstr,a1) \
-    { \
-        if (!(x)) { \
-            PyErr_Format(errortype,errorstr,a1); \
-            goto onError; \
-        } \
-    }
-
 /* Table of number of days in a month (0-based, without and with leap) */
 static int days_in_month[2][12] = {
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
@@ -1013,14 +1005,13 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
 }
 
 /*
- * This function returns a pointer to the DateTimeMetaData
- * contained within the provided datetime dtype.
+ * This function returns the a new reference to the
+ * capsule with the datetime metadata.
  */
-NPY_NO_EXPORT PyArray_DatetimeMetaData *
-get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
+NPY_NO_EXPORT PyObject *
+get_datetime_metacobj_from_dtype(PyArray_Descr *dtype)
 {
-    PyObject *tmp;
-    PyArray_DatetimeMetaData *meta = NULL;
+    PyObject *metacobj;
 
     /* Check that the dtype has metadata */
     if (dtype->metadata == NULL) {
@@ -1030,14 +1021,34 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
     }
 
     /* Check that the dtype has unit metadata */
-    tmp = PyDict_GetItemString(dtype->metadata, NPY_METADATA_DTSTR);
-    if (tmp == NULL) {
+    metacobj = PyDict_GetItemString(dtype->metadata, NPY_METADATA_DTSTR);
+    if (metacobj == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "Datetime type object is invalid, lacks unit metadata");
         return NULL;
     }
+
+    Py_INCREF(metacobj);
+    return metacobj;
+}
+
+/*
+ * This function returns a pointer to the DateTimeMetaData
+ * contained within the provided datetime dtype.
+ */
+NPY_NO_EXPORT PyArray_DatetimeMetaData *
+get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
+{
+    PyObject *metacobj;
+    PyArray_DatetimeMetaData *meta = NULL;
+
+    metacobj = get_datetime_metacobj_from_dtype(dtype);
+    if (metacobj == NULL) {
+        return NULL;
+    }
+
     /* Check that the dtype has an NpyCapsule for the metadata */
-    meta = (PyArray_DatetimeMetaData *)NpyCapsule_AsVoidPtr(tmp);
+    meta = (PyArray_DatetimeMetaData *)NpyCapsule_AsVoidPtr(metacobj);
     if (meta == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "Datetime type object is invalid, unit metadata is corrupt");
@@ -1206,10 +1217,10 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
 
     /* Create a default datetime or timedelta */
     if (is_timedelta) {
-        dtype = PyArray_DescrNewFromType(PyArray_TIMEDELTA);
+        dtype = PyArray_DescrNewFromType(NPY_TIMEDELTA);
     }
     else {
-        dtype = PyArray_DescrNewFromType(PyArray_DATETIME);
+        dtype = PyArray_DescrNewFromType(NPY_DATETIME);
     }
     if (dtype == NULL) {
         return NULL;
@@ -1243,6 +1254,43 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
     Py_DECREF(metacobj);
 
     return dtype;
+}
+
+/*
+ * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
+ * from the given dtype.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
+{
+    PyArray_Descr *ret;
+    PyObject *metacobj;
+
+    ret = PyArray_DescrNewFromType(NPY_TIMEDELTA);
+    if (ret == NULL) {
+        return NULL;
+    }
+    Py_XDECREF(ret->metadata);
+    ret->metadata = PyDict_New();
+    if (ret->metadata == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    metacobj = get_datetime_metacobj_from_dtype(dtype);
+    if (metacobj == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    if (PyDict_SetItemString(ret->metadata, NPY_METADATA_DTSTR,
+                                                metacobj) < 0) {
+        Py_DECREF(metacobj);
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return ret;
 }
 
 static NPY_DATETIMEUNIT _multiples_table[16][4] = {

@@ -950,6 +950,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             return NULL;
         }
         PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
         if (descr->type_num == NPY_STRING) {
             sd = descr->elsize = 1;
         }

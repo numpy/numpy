@@ -7,4 +7,13 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
 NPY_NO_EXPORT PyObject *
 ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
 
+NPY_NO_EXPORT int
+PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata);
+
 #endif

@@ -1880,6 +1880,252 @@ PyUFunc_BinaryComparisonTypeResolution(PyUFuncObject *ufunc,
     }
 }
 
+/*
+ * This function returns the a new reference to the
+ * capsule with the datetime metadata.
+ *
+ * NOTE: This function is copied from datetime.c in multiarray,
+ *       in order
+ */
+static PyObject *
+get_datetime_metacobj_from_dtype(PyArray_Descr *dtype)
+{
+    PyObject *metacobj;
+
+    /* Check that the dtype has metadata */
+    if (dtype->metadata == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "Datetime type object is invalid, lacks metadata");
+        return NULL;
+    }
+
+    /* Check that the dtype has unit metadata */
+    metacobj = PyDict_GetItemString(dtype->metadata, NPY_METADATA_DTSTR);
+    if (metacobj == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "Datetime type object is invalid, lacks unit metadata");
+        return NULL;
+    }
+
+    Py_INCREF(metacobj);
+    return metacobj;
+}
+
+/*
+ * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
+ * from the given dtype.
+ *
+ * NOTE: This function is copied from datetime.c in multiarray,
+ *       in order
+ */
+static PyArray_Descr *
+timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
+{
+    PyArray_Descr *ret;
+    PyObject *metacobj;
+
+    ret = PyArray_DescrNewFromType(NPY_TIMEDELTA);
+    if (ret == NULL) {
+        return NULL;
+    }
+    Py_XDECREF(ret->metadata);
+    ret->metadata = PyDict_New();
+    if (ret->metadata == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    metacobj = get_datetime_metacobj_from_dtype(dtype);
+    if (metacobj == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    if (PyDict_SetItemString(ret->metadata, NPY_METADATA_DTSTR,
+                                                metacobj) < 0) {
+        Py_DECREF(metacobj);
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return ret;
+}
+
+
+
+/*
+ * This function applies the type resolution rules for addition.
+ * In particular, there are a number of special cases with datetime:
+ *    m8[<A>] + m8[<B>] => m8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)]
+ *    m8[<A>] + int     => m8[<A>] + m8[<A>]
+ *    int     + m8[<A>] => m8[<A>] + m8[<A>]
+ *    M8[<A>] + int     => M8[<A>] + m8[<A>]
+ *    int     + M8[<A>] => m8[<A>] + M8[<A>]
+ *    M8[<A>] + m8[<B>] => M8[<A>] + m8[<A>]
+ *    m8[<A>] + M8[<B>] => m8[<B>] + M8[<B>]
+ * TODO: Non-linear time unit cases require highly special-cased loops
+ *    M8[<A>] + m8[Y|M|B]
+ *    m8[Y|M|B] + M8[<A>] 
+ */
+NPY_NO_EXPORT int
+PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    int type_num1, type_num2;
+    char *types;
+    int i, n;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* Use the default when datetime and timedelta are not involved */
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+    }
+
+    if (type_num1 == NPY_TIMEDELTA) {
+        /* m8[<A>] + m8[<B>] => m8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+        }
+        /* m8[<A>] + M8[<B>] => m8[<B>] + M8[<B>] */
+        else if (type_num2 == NPY_DATETIME) {
+            /* Make a new NPY_TIMEDELTA, and copy type2's metadata */
+            out_dtypes[0] = timedelta_dtype_with_copied_meta(
+                                            PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = PyArray_DESCR(operands[1]);
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[1];
+            Py_INCREF(out_dtypes[2]);
+        }
+        /* m8[<A>] + int => m8[<A>] + m8[<A>] */
+        else if (PyTypeNum_ISINTEGER(type_num2)) {
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num2 = NPY_TIMEDELTA;
+        }
+        else {
+            goto type_reso_error;
+        }
+    }
+    else if (type_num1 == NPY_DATETIME) {
+        /* M8[<A>] + m8[<B>] => M8[<A>] + m8[<A>] */
+        /* M8[<A>] + int => M8[<A>] + m8[<A>] */
+        if (type_num2 == NPY_TIMEDELTA ||
+                    PyTypeNum_ISINTEGER(type_num2)) {
+            /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
+            out_dtypes[1] = timedelta_dtype_with_copied_meta(
+                                            PyArray_DESCR(operands[0]));
+            if (out_dtypes[1] == NULL) {
+                return -1;
+            }
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num2 = NPY_TIMEDELTA;
+        }
+        else {
+            goto type_reso_error;
+        }
+    }
+    else if (PyTypeNum_ISINTEGER(type_num1)) {
+        /* int + m8[<A>] => m8[<A>] + m8[<A>] */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num1 = NPY_TIMEDELTA;
+        }
+        else if (type_num2 == NPY_DATETIME) {
+            /* Make a new NPY_TIMEDELTA, and copy type2's metadata */
+            out_dtypes[0] = timedelta_dtype_with_copied_meta(
+                                            PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = PyArray_DESCR(operands[1]);
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[1];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num1 = NPY_TIMEDELTA;
+        }
+        else {
+            goto type_reso_error;
+        }
+    }
+    else {
+        goto type_reso_error;
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    /* Search in the functions list */
+    types = ufunc->types;
+    n = ufunc->ntypes;
+
+    for (i = 0; i < n; ++i) {
+        if (types[3*i] == type_num1 && types[3*i+1] == type_num2) {
+            *out_innerloop = ufunc->functions[i];
+            *out_innerloopdata = ufunc->data[i];
+            return 0;
+        }
+    }
+
+    PyErr_SetString(PyExc_TypeError,
+            "internal error: could not find appropriate datetime "
+            "inner loop in add ufunc");
+    return -1;
+
+type_reso_error: {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Cannot add operands with types ");
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        return -1;
+    }
+}
+
 /*UFUNC_API
  *
  * Validates that the input operands can be cast to

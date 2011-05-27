@@ -19,6 +19,13 @@ NPY_NO_EXPORT npy_datetime
 PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d);
 
 /*
+ * This function returns the a new reference to the
+ * capsule with the datetime metadata.
+ */
+NPY_NO_EXPORT PyObject *
+get_datetime_metacobj_from_dtype(PyArray_Descr *dtype);
+
+/*
  * This function returns a pointer to the DateTimeMetaData
  * contained within the provided datetime dtype.
  */
@@ -58,6 +65,13 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len);
  */
 NPY_NO_EXPORT PyArray_Descr *
 parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len);
+
+/*
+ * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
+ * from the given dtype.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+timedelta_dtype_with_copied_meta(PyArray_Descr *dtype);
 
 /*
  * Converts a substring given by 'str' and 'len' into

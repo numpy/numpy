@@ -237,7 +237,7 @@ defdict = {
 'add' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
-          None,
+          'PyUFunc_AdditionTypeResolution',
           TD(notimes_or_obj),
           [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
            TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
