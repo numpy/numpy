@@ -16,4 +16,13 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
                                 PyUFuncGenericFunction *out_innerloop,
                                 void **out_innerloopdata);
 
+NPY_NO_EXPORT int
+PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata);
+
 #endif

@@ -1885,7 +1885,7 @@ PyUFunc_BinaryComparisonTypeResolution(PyUFuncObject *ufunc,
  * capsule with the datetime metadata.
  *
  * NOTE: This function is copied from datetime.c in multiarray,
- *       in order
+ *       because umath and multiarray are not linked together.
  */
 static PyObject *
 get_datetime_metacobj_from_dtype(PyArray_Descr *dtype)
@@ -1912,11 +1912,40 @@ get_datetime_metacobj_from_dtype(PyArray_Descr *dtype)
 }
 
 /*
+ * This function returns a pointer to the DateTimeMetaData
+ * contained within the provided datetime dtype.
+ *
+ * NOTE: This function is copied from datetime.c in multiarray,
+ *       because umath and multiarray are not linked together.
+ */
+static PyArray_DatetimeMetaData *
+get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
+{
+    PyObject *metacobj;
+    PyArray_DatetimeMetaData *meta = NULL;
+
+    metacobj = get_datetime_metacobj_from_dtype(dtype);
+    if (metacobj == NULL) {
+        return NULL;
+    }
+
+    /* Check that the dtype has an NpyCapsule for the metadata */
+    meta = (PyArray_DatetimeMetaData *)NpyCapsule_AsVoidPtr(metacobj);
+    if (meta == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "Datetime type object is invalid, unit metadata is corrupt");
+        return NULL;
+    }
+
+    return meta;
+}
+
+/*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
  * from the given dtype.
  *
  * NOTE: This function is copied from datetime.c in multiarray,
- *       in order
+ *       because umath and multiarray are not linked together.
  */
 static PyArray_Descr *
 timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
@@ -1979,6 +2008,9 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     char *types;
     int i, n;
+    char *ufunc_name;
+
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -2107,14 +2139,196 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
         }
     }
 
-    PyErr_SetString(PyExc_TypeError,
+    PyErr_Format(PyExc_TypeError,
             "internal error: could not find appropriate datetime "
-            "inner loop in add ufunc");
+            "inner loop in %s ufunc", ufunc_name);
     return -1;
 
 type_reso_error: {
         PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot add operands with types ");
+        errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
+                            "with types ", ufunc_name);
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        return -1;
+    }
+}
+
+/*
+ * This function applies the type resolution rules for addition.
+ * In particular, there are a number of special cases with datetime:
+ *    m8[<A>] - m8[<B>] => m8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)]
+ *    m8[<A>] - int     => m8[<A>] - m8[<A>]
+ *    int     - m8[<A>] => m8[<A>] - m8[<A>]
+ *    M8[<A>] - int     => M8[<A>] - m8[<A>]
+ *    M8[<A>] - m8[<B>] => M8[<A>] - m8[<A>]
+ * TODO: Non-linear time unit cases require highly special-cased loops
+ *    M8[<A>] - m8[Y|M|B]
+ */
+NPY_NO_EXPORT int
+PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    int type_num1, type_num2;
+    char *types;
+    int i, n;
+    char *ufunc_name;
+
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* Use the default when datetime and timedelta are not involved */
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+    }
+
+    if (type_num1 == NPY_TIMEDELTA) {
+        /* m8[<A>] - m8[<B>] => m8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)] */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+        }
+        /* m8[<A>] - int => m8[<A>] - m8[<A>] */
+        else if (PyTypeNum_ISINTEGER(type_num2)) {
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num2 = NPY_TIMEDELTA;
+        }
+        else {
+            goto type_reso_error;
+        }
+    }
+    else if (type_num1 == NPY_DATETIME) {
+        /* M8[<A>] - m8[<B>] => M8[<A>] - m8[<A>] */
+        /* M8[<A>] - int => M8[<A>] - m8[<A>] */
+        if (type_num2 == NPY_TIMEDELTA ||
+                    PyTypeNum_ISINTEGER(type_num2)) {
+            /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
+            out_dtypes[1] = timedelta_dtype_with_copied_meta(
+                                            PyArray_DESCR(operands[0]));
+            if (out_dtypes[1] == NULL) {
+                return -1;
+            }
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num2 = NPY_TIMEDELTA;
+        }
+        /* M8[<A>] - M8[<A>] (producing m8[<A>])*/
+        else if (type_num2 == NPY_DATETIME) {
+            PyArray_DatetimeMetaData *meta1, *meta2;
+
+            meta1 = get_datetime_metadata_from_dtype(
+                                    PyArray_DESCR(operands[0]));
+            if (meta1 == NULL) {
+                return -1;
+            }
+            meta2 = get_datetime_metadata_from_dtype(
+                                    PyArray_DESCR(operands[1]));
+            if (meta2 == NULL) {
+                return -1;
+            }
+
+            /* If the metadata matches up, the subtraction is ok */
+            if (meta1->num == meta2->num &&
+                        meta1->base == meta2->base &&
+                        meta1->events == meta2->events) {
+                out_dtypes[0] = PyArray_DESCR(operands[1]);
+                Py_INCREF(out_dtypes[0]);
+                out_dtypes[1] = out_dtypes[0];
+                Py_INCREF(out_dtypes[1]);
+                /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
+                out_dtypes[2] = timedelta_dtype_with_copied_meta(
+                                                PyArray_DESCR(operands[0]));
+                if (out_dtypes[2] == NULL) {
+                    return -1;
+                }
+            }
+            else {
+                goto type_reso_error;
+            }
+        }
+        else {
+            goto type_reso_error;
+        }
+    }
+    else if (PyTypeNum_ISINTEGER(type_num1)) {
+        /* int - m8[<A>] => m8[<A>] - m8[<A>] */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+
+            type_num1 = NPY_TIMEDELTA;
+        }
+        else {
+            goto type_reso_error;
+        }
+    }
+    else {
+        goto type_reso_error;
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    /* Search in the functions list */
+    types = ufunc->types;
+    n = ufunc->ntypes;
+
+    for (i = 0; i < n; ++i) {
+        if (types[3*i] == type_num1 && types[3*i+1] == type_num2) {
+            *out_innerloop = ufunc->functions[i];
+            *out_innerloopdata = ufunc->data[i];
+            return 0;
+        }
+    }
+
+    PyErr_Format(PyExc_TypeError,
+            "internal error: could not find appropriate datetime "
+            "inner loop in %s ufunc", ufunc_name);
+    return -1;
+
+type_reso_error: {
+        PyObject *errmsg;
+        errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
+                            "with types ", ufunc_name);
         PyUString_ConcatAndDel(&errmsg,
                 PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
         PyUString_ConcatAndDel(&errmsg,

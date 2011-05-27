@@ -248,7 +248,7 @@ defdict = {
 'subtract' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.subtract'),
-          None,
+          'PyUFunc_SubtractionTypeResolution',
           TD(notimes_or_obj),
           [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
            TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
