@@ -259,14 +259,14 @@ defdict = {
 'multiply' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.multiply'),
-          None,
+          'PyUFunc_MultiplicationTypeResolution',
           TD(notimes_or_obj),
           TD(O, f='PyNumber_Multiply'),
           ),
 'divide' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.divide'),
-          None,
+          'PyUFunc_DivisionTypeResolution',
           TD(intfltcmplx),
           TD(O, f='PyNumber_Divide'),
           ),
