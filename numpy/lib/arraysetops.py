@@ -321,6 +321,15 @@ def in1d(ar1, ar2, assume_unique=False):
     array([0, 2, 0])
 
     """
+    # This code is significantly faster when the condition is
+    # satisfied
+    if len(ar2) < 10 * len(ar1) ** 0.145:
+        mask = np.zeros(len(ar1), bool)
+        for a in ar2:
+            mask |= (ar1 == a)
+        return mask
+
+    # Otherwise use sorting
     if not assume_unique:
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
