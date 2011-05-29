@@ -277,7 +277,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
 def in1d(ar1, ar2, assume_unique=False):
     """
-    Test whether each element of a 1D array is also present in a second array.
+    Test whether each element of a 1-D array is also present in a second array.
 
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise.
@@ -305,7 +305,7 @@ def in1d(ar1, ar2, assume_unique=False):
     Notes
     -----
     `in1d` can be considered as an element-wise function version of the
-    python keyword `in`, for 1D sequences. ``in1d(a, b)`` is roughly
+    python keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly
     equivalent to ``np.array([item in b for item in a])``.
 
     .. versionadded:: 1.4.0
@@ -321,6 +321,14 @@ def in1d(ar1, ar2, assume_unique=False):
     array([0, 2, 0])
 
     """
+    # This code is significantly faster when the condition is satisfied.
+    if len(ar2) < 10 * len(ar1) ** 0.145:
+        mask = np.zeros(len(ar1), dtype=np.bool)
+        for a in ar2:
+            mask |= (ar1 == a)
+        return mask
+
+    # Otherwise use sorting
     if not assume_unique:
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
