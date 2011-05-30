@@ -1,3 +1,4 @@
+import os
 import sys
 import shutil
 
@@ -6,6 +7,9 @@ import shutil
 import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
+from bento.installed_package_description \
+    import \
+        InstalledSection
 from bento.commands import hooks
 from bento.commands.extras.waf \
     import \
@@ -111,14 +115,28 @@ def process_write_config(self):
         raise ValueError("task gen %r expects a 'content' argument" % self.name)
     else:
         self.env.CONTENT = self.content
+    output = self.path.find_or_declare(self.target)
+    name = getattr(self, "name", None) or self.target
+
+    bento_context = self.bld.bento_context
+    b_output = bento_context.build_node.make_node(output.bldpath())
+    bento_context.outputs_registry.register_outputs(
+        "gen_pymodule", name, [b_output], bento_context.build_node, "$sitedir")
+
     tsk = self.create_task("write_module")
-    tsk.set_outputs(self.path.find_or_declare(self.target))
+    tsk.set_outputs(output)
     return tsk
 
 @hooks.pre_build()
 def pre_build(context):
     bld = context.waf_context
 
+    def iregistrer(category, name, nodes, from_node, target_dir):
+        source_dir = os.path.join("$_srcrootdir", from_node.bldpath())
+        files = [n.path_from(from_node) for n in nodes]
+        return InstalledSection.from_source_target_directories(category, name, source_dir, target_dir, files)
+    context.isection_registry.register_category("gen_pymodule", iregistrer)
+    context.outputs_registry.register_category("gen_pymodule", "pythonfiles")
     bld(features="gen_pymodule",
         target="numpy/__config__.py",
         content="""\
@@ -134,20 +152,8 @@ version = ""
 """,
         always=True)
 
-@hooks.post_build()
-def post_build(context):
-    bld = context.waf_context
-    # Poor man's and temporary replacement for in-place build
-    if "-i" in sys.argv:
-        for g in bld.groups:
-            for task_gen in g:
-                if "gen_pymodule" in task_gen.features:
-                    if len(task_gen.tasks) > 0:
-                        task = task_gen.tasks[0]
-                        for output in task.outputs:
-                            if output.is_child_of(bld.bldnode):
-                                shutil.copy(output.abspath(), output.path_from(bld.bldnode))
 
+@hooks.startup
 def startup(context):
     context.register_context("configure", ConfigureWafContext)
     context.register_context("build", BuildWafContext)

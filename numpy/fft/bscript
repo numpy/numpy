@@ -8,10 +8,10 @@ from bento.commands.hooks \
 def build(context):
     bld = context.waf_context
 
-    def build(bld, extension):
+    def build(extension):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext",
+        bld(features="c cshlib pyext bento",
             target=extension.name,
             source=extension.sources,
             includes=includes)
