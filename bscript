@@ -13,7 +13,7 @@ from bento.installed_package_description \
 from bento.commands import hooks
 from bento.commands.extras.waf \
     import \
-        ConfigureWafContext, BuildWafContext
+        ConfigureWafContext, BuildWafContext, register_options
 
 import waflib
 
@@ -152,6 +152,9 @@ version = ""
 """,
         always=True)
 
+@hooks.options
+def options(context):
+    register_options(context)
 
 @hooks.startup
 def startup(context):
