@@ -12,10 +12,10 @@ def build(context):
         raise NotImplementedError("Check for wincrypt stuff")
         raise NotImplementedError("Check for mingw time workaround stuff")
 
-    def builder(bld, extension):
+    def builder(extension):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext",
+        bld(features="c cshlib pyext bento",
             target=extension.name,
             source=extension.sources,
             includes=includes)

@@ -8,7 +8,7 @@ from bento.commands.hooks \
 def pbuild(context):
     bld = context.waf_context
 
-    def build_lapack_lite(bld, extension):
+    def build_lapack_lite(extension):
         kw = {}
         if bld.env.HAS_LAPACK:
             for s in ['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
@@ -18,7 +18,7 @@ def pbuild(context):
 
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext",
+        bld(features="c cshlib pyext bento",
             target=extension.name,
             source=extension.sources,
             includes=includes, **kw)

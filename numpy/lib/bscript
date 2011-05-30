@@ -7,10 +7,10 @@ from bento.commands.hooks \
 @pre_build()
 def pbuild(context):
     bld = context.waf_context
-    def builder_compiled_base(bld, extension):
+    def builder_compiled_base(extension):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext",
+        bld(features="c cshlib pyext bento",
             target=extension.name,
             includes=includes,
             source=extension.sources)
