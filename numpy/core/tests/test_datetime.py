@@ -65,7 +65,7 @@ class TestDateTime(TestCase):
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('i8'),
                  (2000 - 1970)*365 + (2000 - 1972)/4 + 366 + 31 + 28 + 21)
 
-    def test_days_to_pydatetime(self):
+    def test_days_to_pydate(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('O'),
                     datetime.date(1599, 1, 1))
         assert_equal(np.array('1600', dtype='M8[D]').astype('O'),
@@ -221,6 +221,187 @@ class TestDateTime(TestCase):
                              np.array('10000-04-27T00:00:00Z', dtype=dt2))
                 assert_equal(np.array('today', dtype=dt1),
                              np.array('today', dtype=dt2))
+
+    def test_datetime_add(self):
+        dta = np.array('2012-12-21', dtype='M8[D]')
+        dtb = np.array('2012-12-24', dtype='M8[D]')
+        dtc = np.array('1940-12-24', dtype='M8[D]')
+        tda = np.array(3, dtype='m8[D]')
+        tdb = np.array(11, dtype='m8[h]')
+        tdc = np.array(3*24 + 11, dtype='m8[h]')
+
+        # m8 + m8
+        assert_equal(tda + tdb, tdc)
+        assert_equal((tda + tdb).dtype, np.dtype('m8[h]'))
+        # m8 + int
+        assert_equal(tdb + 3*24, tdc)
+        assert_equal((tdb + 3*24).dtype, np.dtype('m8[h]'))
+        # int + m8
+        assert_equal(3*24 + tdb, tdc)
+        assert_equal((3*24 + tdb).dtype, np.dtype('m8[h]'))
+        # M8 + int
+        assert_equal(dta + 3, dtb)
+        assert_equal((dta + 3).dtype, np.dtype('M8[D]'))
+        # int + M8
+        assert_equal(3 + dta, dtb)
+        assert_equal((3 + dta).dtype, np.dtype('M8[D]'))
+        # M8 + m8
+        assert_equal(dta + tda, dtb)
+        assert_equal((dta + tda).dtype, np.dtype('M8[D]'))
+        # m8 + M8
+        assert_equal(tda + dta, dtb)
+        assert_equal((tda + dta).dtype, np.dtype('M8[D]'))
+
+        # In M8 + m8, the M8 controls the result type
+        assert_equal(dta + tdb, dta)
+        assert_equal((dta + tdb).dtype, np.dtype('M8[D]'))
+        assert_equal(dtc + tdb, dtc)
+        assert_equal((dtc + tdb).dtype, np.dtype('M8[D]'))
+        assert_equal(tdb + dta, dta)
+        assert_equal((tdb + dta).dtype, np.dtype('M8[D]'))
+        assert_equal(tdb + dtc, dtc)
+        assert_equal((tdb + dtc).dtype, np.dtype('M8[D]'))
+
+        # M8 + M8
+        assert_raises(TypeError, np.add, dta, dtb)
+
+    def test_datetime_subtract(self):
+        dta = np.array('2012-12-21', dtype='M8[D]')
+        dtb = np.array('2012-12-24', dtype='M8[D]')
+        dtc = np.array('1940-12-24', dtype='M8[D]')
+        dtd = np.array('1940-12-24', dtype='M8[h]')
+        tda = np.array(3, dtype='m8[D]')
+        tdb = np.array(11, dtype='m8[h]')
+        tdc = np.array(3*24 - 11, dtype='m8[h]')
+
+        # m8 - m8
+        assert_equal(tda - tdb, tdc)
+        assert_equal((tda - tdb).dtype, np.dtype('m8[h]'))
+        assert_equal(tdb - tda, -tdc)
+        assert_equal((tdb - tda).dtype, np.dtype('m8[h]'))
+        # m8 - int
+        assert_equal(tdc - 3*24, -tdb)
+        assert_equal((tdc - 3*24).dtype, np.dtype('m8[h]'))
+        # int - m8
+        assert_equal(3*24 - tdb, tdc)
+        assert_equal((3*24 - tdb).dtype, np.dtype('m8[h]'))
+        # M8 - int
+        assert_equal(dtb - 3, dta)
+        assert_equal((dtb - 3).dtype, np.dtype('M8[D]'))
+        # M8 - m8
+        assert_equal(dtb - tda, dta)
+        assert_equal((dtb - tda).dtype, np.dtype('M8[D]'))
+
+        # In M8 - m8, the M8 controls the result type
+        assert_equal(dta - tdb, dta)
+        assert_equal((dta - tdb).dtype, np.dtype('M8[D]'))
+        assert_equal(dtc - tdb, dtc)
+        assert_equal((dtc - tdb).dtype, np.dtype('M8[D]'))
+
+        # M8 - M8 with different metadata
+        assert_raises(TypeError, np.subtract, dtc, dtd)
+        # m8 - M8
+        assert_raises(TypeError, np.subtract, tda, dta)
+        # int - M8
+        assert_raises(TypeError, np.subtract, 3, dta)
+
+    def test_datetime_multiply(self):
+        dta = np.array('2012-12-21', dtype='M8[D]')
+        tda = np.array(6, dtype='m8[h]')
+        tdb = np.array(9, dtype='m8[h]')
+        tdc = np.array(12, dtype='m8[h]')
+
+        # m8 * int
+        assert_equal(tda * 2, tdc)
+        assert_equal((tda * 2).dtype, np.dtype('m8[h]'))
+        # int * m8
+        assert_equal(2 * tda, tdc)
+        assert_equal((2 * tda).dtype, np.dtype('m8[h]'))
+        # m8 * float
+        assert_equal(tda * 1.5, tdb)
+        assert_equal((tda * 1.5).dtype, np.dtype('m8[h]'))
+        # float * m8
+        assert_equal(1.5 * tda, tdb)
+        assert_equal((1.5 * tda).dtype, np.dtype('m8[h]'))
+
+        # m8 * m8
+        assert_raises(TypeError, np.multiply, tda, tdb)
+        # m8 * M8
+        assert_raises(TypeError, np.multiply, dta, tda)
+        # M8 * m8
+        assert_raises(TypeError, np.multiply, tda, dta)
+        # M8 * int
+        assert_raises(TypeError, np.multiply, dta, 2)
+        # int * M8
+        assert_raises(TypeError, np.multiply, 2, dta)
+        # M8 * float
+        assert_raises(TypeError, np.multiply, dta, 1.5)
+        # float * M8
+        assert_raises(TypeError, np.multiply, 1.5, dta)
+
+    def test_datetime_divide(self):
+        dta = np.array('2012-12-21', dtype='M8[D]')
+        tda = np.array(6, dtype='m8[h]')
+        tdb = np.array(9, dtype='m8[h]')
+        tdc = np.array(12, dtype='m8[h]')
+
+        # m8 / int
+        assert_equal(tdc / 2, tda)
+        assert_equal((tdc / 2).dtype, np.dtype('m8[h]'))
+        # m8 / float
+        assert_equal(tda / 0.5, tdc)
+        assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
+
+        # int / m8
+        assert_raises(TypeError, np.divide, 2, tdb)
+        # float / m8
+        assert_raises(TypeError, np.divide, 0.5, tdb)
+        # m8 / m8
+        assert_raises(TypeError, np.divide, tda, tdb)
+        # m8 / M8
+        assert_raises(TypeError, np.divide, dta, tda)
+        # M8 / m8
+        assert_raises(TypeError, np.divide, tda, dta)
+        # M8 / int
+        assert_raises(TypeError, np.divide, dta, 2)
+        # int / M8
+        assert_raises(TypeError, np.divide, 2, dta)
+        # M8 / float
+        assert_raises(TypeError, np.divide, dta, 1.5)
+        # float / M8
+        assert_raises(TypeError, np.divide, 1.5, dta)
+
+    def test_datetime_minmax(self):
+        # The metadata of the result should become the GCD
+        # of the operand metadata
+        a = np.array('1999-03-12T13Z', dtype='M8[2m]')
+        b = np.array('1999-03-12T12Z', dtype='M8[s]')
+        assert_equal(np.minimum(a,b), b)
+        assert_equal(np.minimum(a,b).dtype, np.dtype('M8[s]'))
+        assert_equal(np.fmin(a,b), b)
+        assert_equal(np.fmin(a,b).dtype, np.dtype('M8[s]'))
+        assert_equal(np.maximum(a,b), a)
+        assert_equal(np.maximum(a,b).dtype, np.dtype('M8[s]'))
+        assert_equal(np.fmax(a,b), a)
+        assert_equal(np.fmax(a,b).dtype, np.dtype('M8[s]'))
+        # Viewed as integers, the comparison is opposite because
+        # of the units chosen
+        assert_equal(np.minimum(a.view('i8'),b.view('i8')), a.view('i8'))
+
+        # Also do timedelta
+        a = np.array(3, dtype='m8[h]')
+        b = np.array(3*3600 - 3, dtype='m8[s]')
+        assert_equal(np.minimum(a,b), b)
+        assert_equal(np.minimum(a,b).dtype, np.dtype('m8[s]'))
+        assert_equal(np.fmin(a,b), b)
+        assert_equal(np.fmin(a,b).dtype, np.dtype('m8[s]'))
+        assert_equal(np.maximum(a,b), a)
+        assert_equal(np.maximum(a,b).dtype, np.dtype('m8[s]'))
+        assert_equal(np.fmax(a,b), a)
+        assert_equal(np.fmax(a,b).dtype, np.dtype('m8[s]'))
+        # Viewed as integers, the comparison is opposite because
+        # of the units chosen
+        assert_equal(np.minimum(a.view('i8'),b.view('i8')), a.view('i8'))
 
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')

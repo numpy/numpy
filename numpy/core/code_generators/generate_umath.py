@@ -375,7 +375,7 @@ defdict = {
 'greater' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(all, out='?'),
           ),
 'greater_equal' :
@@ -387,31 +387,31 @@ defdict = {
 'less' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(all, out='?'),
           ),
 'less_equal' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(all, out='?'),
           ),
 'equal' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(all, out='?'),
           ),
 'not_equal' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(all, out='?'),
           ),
 'logical_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.logical_and'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_and'),
           ),
@@ -425,42 +425,42 @@ defdict = {
 'logical_or' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.logical_or'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_or'),
           ),
 'logical_xor' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.logical_xor'),
-          'PyUFunc_BinaryComparisonTypeResolution',
+          'PyUFunc_SimpleBinaryComparisonTypeResolution',
           TD(nodatetime_or_obj, out='?'),
           TD(P, f='logical_xor'),
           ),
 'maximum' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.maximum'),
-          None,
+          'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'minimum' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.minimum'),
-          None,
+          'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
 'fmax' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.fmax'),
-          None,
+          'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.fmin'),
-          None,
+          'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
