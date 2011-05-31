@@ -1121,6 +1121,68 @@ TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UN
     }
 }
 
+/* Note: Assuming 'q' == NPY_LONGLONG */
+NPY_NO_EXPORT void
+TIMEDELTA_mq_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_int64 in2 = *(npy_int64 *)ip2;
+        *((npy_timedelta *)op1) = in1 * in2;
+    }
+}
+
+/* Note: Assuming 'q' == NPY_LONGLONG */
+NPY_NO_EXPORT void
+TIMEDELTA_qm_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_int64 in1 = *(npy_int64 *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        *((npy_timedelta *)op1) = in1 * in2;
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_md_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const double in2 = *(double *)ip2;
+        *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_dm_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const double in1 = *(double *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+    }
+}
+
+/* Note: Assuming 'q' == NPY_LONGLONG */
+NPY_NO_EXPORT void
+TIMEDELTA_mq_m_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_int64 in2 = *(npy_int64 *)ip2;
+        *((npy_timedelta *)op1) = in1 / in2;
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_md_m_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const double in2 = *(double *)ip2;
+        *((npy_timedelta *)op1) = (npy_timedelta)(in1 / in2);
+    }
+}
 
 /*
  *****************************************************************************

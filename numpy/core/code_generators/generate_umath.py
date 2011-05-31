@@ -12,10 +12,10 @@ Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
 None_ = "PyUFunc_None"
 
-# Sentinel value to specify that the loop for the given TypeDescription uses the
-# pointer to arrays as its func_data.
-UsesArraysAsData = object()
-
+# Sentinel value to specify using the full type description in the
+# function name
+class FullTypeDescr(object):
+    pass
 
 class TypeDescription(object):
     """Type signature for a ufunc.
@@ -24,7 +24,7 @@ class TypeDescription(object):
     ----------
     type : str
         Character representing the nominal type.
-    func_data : str or None or UsesArraysAsData, optional
+    func_data : str or None or FullTypeDescr, optional
         The string representing the expression to insert into the data array, if
         any.
     in_ : str or None, optional
@@ -239,9 +239,9 @@ defdict = {
           docstrings.get('numpy.core.umath.add'),
           'PyUFunc_AdditionTypeResolution',
           TD(notimes_or_obj),
-          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
-           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
-           TypeDescription('M', UsesArraysAsData, 'mM', 'M'),
+          [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
+           TypeDescription('m', FullTypeDescr, 'mm', 'm'),
+           TypeDescription('M', FullTypeDescr, 'mM', 'M'),
           ],
           TD(O, f='PyNumber_Add'),
           ),
@@ -250,9 +250,9 @@ defdict = {
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolution',
           TD(notimes_or_obj),
-          [TypeDescription('M', UsesArraysAsData, 'Mm', 'M'),
-           TypeDescription('m', UsesArraysAsData, 'mm', 'm'),
-           TypeDescription('M', UsesArraysAsData, 'MM', 'm'),
+          [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
+           TypeDescription('m', FullTypeDescr, 'mm', 'm'),
+           TypeDescription('M', FullTypeDescr, 'MM', 'm'),
           ],
           TD(O, f='PyNumber_Subtract'),
           ),
@@ -261,6 +261,11 @@ defdict = {
           docstrings.get('numpy.core.umath.multiply'),
           'PyUFunc_MultiplicationTypeResolution',
           TD(notimes_or_obj),
+          [TypeDescription('m', FullTypeDescr, 'm' + int64, 'm'),
+           TypeDescription('m', FullTypeDescr, int64 + 'm', 'm'),
+           TypeDescription('m', FullTypeDescr, 'md', 'm'),
+           TypeDescription('m', FullTypeDescr, 'dm', 'm'),
+          ],
           TD(O, f='PyNumber_Multiply'),
           ),
 'divide' :
@@ -268,22 +273,31 @@ defdict = {
           docstrings.get('numpy.core.umath.divide'),
           'PyUFunc_DivisionTypeResolution',
           TD(intfltcmplx),
+          [TypeDescription('m', FullTypeDescr, 'm' + int64, 'm'),
+           TypeDescription('m', FullTypeDescr, 'md', 'm'),
+          ],
           TD(O, f='PyNumber_Divide'),
           ),
 'floor_divide' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.floor_divide'),
-          None,
+          'PyUFunc_DivisionTypeResolution',
           TD(intfltcmplx),
+          [TypeDescription('m', FullTypeDescr, 'm' + int64, 'm'),
+           TypeDescription('m', FullTypeDescr, 'md', 'm'),
+          ],
           TD(O, f='PyNumber_FloorDivide'),
           ),
 'true_divide' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.true_divide'),
-          None,
+          'PyUFunc_DivisionTypeResolution',
           TD('bBhH', out='d'),
           TD('iIlLqQ', out='d'),
           TD(flts+cmplx),
+          [TypeDescription('m', FullTypeDescr, 'm' + int64, 'm'),
+           TypeDescription('m', FullTypeDescr, 'md', 'm'),
+          ],
           TD(O, f='PyNumber_TrueDivide'),
           ),
 'conjugate' :
@@ -833,7 +847,7 @@ def make_arrays(funcdict):
             thedict = chartotype1  # one input and one output
 
         for t in uf.type_descriptions:
-            if t.func_data not in (None, UsesArraysAsData):
+            if t.func_data not in (None, FullTypeDescr):
                 funclist.append('NULL')
                 astype = ''
                 if not t.astype is None:
@@ -855,11 +869,10 @@ def make_arrays(funcdict):
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
                 sub += 1
-            elif t.func_data is UsesArraysAsData:
+            elif t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
                 datalist.append('(void *)NULL')
                 funclist.append('%s_%s_%s_%s' % (tname, t.in_, t.out, name))
-                code2list.append('PyUFunc_SetUsesArraysAsData(%s_data, %s);' % (name, k))
             else:
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
