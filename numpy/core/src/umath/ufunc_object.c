@@ -2164,7 +2164,8 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
             Py_INCREF(out_dtypes[2]);
         }
         /* m8[<A>] + int => m8[<A>] + m8[<A>] */
-        else if (PyTypeNum_ISINTEGER(type_num2)) {
+        else if (PyTypeNum_ISINTEGER(type_num2) ||
+                                    PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
             out_dtypes[1] = out_dtypes[0];
@@ -2182,7 +2183,8 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
         /* M8[<A>] + m8[<B>] => M8[<A>] + m8[<A>] */
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA ||
-                    PyTypeNum_ISINTEGER(type_num2)) {
+                    PyTypeNum_ISINTEGER(type_num2) ||
+                    PyTypeNum_ISBOOL(type_num2)) {
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
             out_dtypes[1] = timedelta_dtype_with_copied_meta(
                                             PyArray_DESCR(operands[0]));
@@ -2200,7 +2202,7 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
             goto type_reso_error;
         }
     }
-    else if (PyTypeNum_ISINTEGER(type_num1)) {
+    else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
             out_dtypes[0] = PyArray_DESCR(operands[1]);
@@ -2325,7 +2327,8 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
             Py_INCREF(out_dtypes[2]);
         }
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
-        else if (PyTypeNum_ISINTEGER(type_num2)) {
+        else if (PyTypeNum_ISINTEGER(type_num2) ||
+                                        PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
             out_dtypes[1] = out_dtypes[0];
@@ -2343,7 +2346,8 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
         /* M8[<A>] - m8[<B>] => M8[<A>] - m8[<A>] */
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA ||
-                    PyTypeNum_ISINTEGER(type_num2)) {
+                    PyTypeNum_ISINTEGER(type_num2) ||
+                    PyTypeNum_ISBOOL(type_num2)) {
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
             out_dtypes[1] = timedelta_dtype_with_copied_meta(
                                             PyArray_DESCR(operands[0]));
@@ -2395,7 +2399,7 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
             goto type_reso_error;
         }
     }
-    else if (PyTypeNum_ISINTEGER(type_num1)) {
+    else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int - m8[<A>] => m8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
             out_dtypes[0] = PyArray_DESCR(operands[1]);
@@ -2491,7 +2495,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
 
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] * int## => m8[<A>] * int64 */
-        if (PyTypeNum_ISINTEGER(type_num2)) {
+        if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
             out_dtypes[1] = PyArray_DescrNewFromType(NPY_INT64);
@@ -2524,7 +2528,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
             goto type_reso_error;
         }
     }
-    else if (PyTypeNum_ISINTEGER(type_num1)) {
+    else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int## * m8[<A>] => int64 * m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
             out_dtypes[0] = PyArray_DescrNewFromType(NPY_INT64);

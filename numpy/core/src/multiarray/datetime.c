@@ -575,6 +575,12 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
     out->year = 1970;
     out->month = 1;
     out->day = 1;
+
+    /* NaT is signaled in the year */
+    if (dt == NPY_DATETIME_NAT) {
+        out->year = NPY_DATETIME_NAT;
+        return 0;
+    }
     
     /* Extract the event number */
     if (meta->events > 1) {
@@ -1541,6 +1547,108 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
     *out_denom = (npy_int64)(denom / gcd);
 }
 
+/*
+ * Determines whether the 'divisor' metadata divides evenly into
+ * the 'dividend' metadata.
+ */
+NPY_NO_EXPORT npy_bool
+datetime_metadata_divides(
+                        PyArray_Descr *dividend,
+                        PyArray_Descr *divisor,
+                        int strict_with_nonlinear_units)
+{
+    PyArray_DatetimeMetaData *meta1, *meta2;
+    npy_uint64 num1, num2;
+
+    /* Must be datetime types */
+    if ((dividend->type_num != NPY_DATETIME &&
+                        dividend->type_num != NPY_TIMEDELTA) ||
+                    (divisor->type_num != NPY_DATETIME &&
+                        divisor->type_num != NPY_TIMEDELTA)) {
+        return 0;
+    }
+
+    meta1 = get_datetime_metadata_from_dtype(dividend);
+    if (meta1 == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+    meta2 = get_datetime_metadata_from_dtype(divisor);
+    if (meta2 == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+
+    /* Events must match */
+    if (meta1->events != meta2->events) {
+        return 0;
+    }
+
+    num1 = (npy_uint64)meta1->num;
+    num2 = (npy_uint64)meta2->num;
+
+    /* If the bases are different, factor in a conversion */
+    if (meta1->base != meta2->base) {
+        /*
+         * Years, Months, and Business days are incompatible with
+         * all other units (except years and months are compatible
+         * with each other).
+         */
+        if (meta1->base == NPY_FR_B || meta2->base == NPY_FR_B) {
+            return 0;
+        }
+        else if (meta1->base == NPY_FR_Y) {
+            if (meta2->base == NPY_FR_M) {
+                num1 *= 12;
+            }
+            else if (strict_with_nonlinear_units) {
+                return 0;
+            }
+            else {
+                /* Could do something complicated here */
+                return 1;
+            }
+        }
+        else if (meta2->base == NPY_FR_Y) {
+            if (meta1->base == NPY_FR_M) {
+                num2 *= 12;
+            }
+            else if (strict_with_nonlinear_units) {
+                return 0;
+            }
+            else {
+                /* Could do something complicated here */
+                return 1;
+            }
+        }
+        else if (meta1->base == NPY_FR_M || meta2->base == NPY_FR_M) {
+            if (strict_with_nonlinear_units) {
+                return 0;
+            }
+            else {
+                /* Could do something complicated here */
+                return 1;
+            }
+        }
+
+        /* Take the greater base (unit sizes are decreasing in enum) */
+        if (meta1->base > meta2->base) {
+            num2 *= get_datetime_units_factor(meta2->base, meta1->base);
+            if (num2 == 0) {
+                return 0;
+            }
+        }
+        else {
+            num1 *= get_datetime_units_factor(meta1->base, meta2->base);
+            if (num1 == 0) {
+                return 0;
+            }
+        }
+    }
+
+    return (num2 % num1) == 0;
+}
+
 
 NPY_NO_EXPORT PyObject *
 compute_datetime_metadata_greatest_common_divisor(
@@ -1555,8 +1663,8 @@ compute_datetime_metadata_greatest_common_divisor(
 
     if ((type1->type_num != NPY_DATETIME &&
                         type1->type_num != NPY_TIMEDELTA) ||
-                    (type1->type_num != NPY_DATETIME &&
-                        type1->type_num != NPY_TIMEDELTA)) {
+                    (type2->type_num != NPY_DATETIME &&
+                        type2->type_num != NPY_TIMEDELTA)) {
         PyErr_SetString(PyExc_TypeError,
                 "Require datetime types for metadata "
                 "greatest common divisor operation");

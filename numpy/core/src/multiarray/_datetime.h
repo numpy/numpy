@@ -93,6 +93,17 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
                                     int den, char *metastr);
+
+/*
+ * Determines whether the 'divisor' metadata divides evenly into
+ * the 'dividend' metadata.
+ */
+NPY_NO_EXPORT npy_bool
+datetime_metadata_divides(
+                        PyArray_Descr *dividend,
+                        PyArray_Descr *divisor,
+                        int strict_with_nonlinear_units);
+
 /*
  * Computes the GCD of the two date-time metadata values. Raises
  * an exception if there is no reasonable GCD, such as with

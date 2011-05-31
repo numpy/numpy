@@ -946,7 +946,12 @@ TIMEDELTA_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
 {
     UNARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        *((npy_timedelta *)op1) = (npy_timedelta)(-(npy_timedelta)in1);
+        if (in1 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = -in1;
+        }
     }
 }
 
@@ -955,7 +960,12 @@ TIMEDELTA_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
 {
     UNARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        *((npy_timedelta *)op1) = (in1 >= 0) ? in1 : -in1;
+        if (in1 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = (in1 >= 0) ? in1 : -in1;
+        }
     }
 }
 
@@ -1027,7 +1037,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((Bool *)op1) = in1 @OP@ in2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat1**/
@@ -1042,16 +1052,24 @@ NPY_NO_EXPORT void
     if (IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP(@type@) {
             const @type@ in2 = *(@type@ *)ip2;
-            io1 = (io1 @OP@ in2) ? io1 : in2;
+            io1 = (io1 @OP@ in2 || in2 == NPY_DATETIME_NAT) ? io1 : in2;
         }
         *((@type@ *)iop1) = io1;
     }
     else {
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
-    }
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            if (in1 == NPY_DATETIME_NAT) {
+                *((@type@ *)op1) = in2;
+            }
+            else if (in2 == NPY_DATETIME_NAT) {
+                *((@type@ *)op1) = in1;
+            }
+            else {
+                *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+            }
+        }
     }
 }
 /**end repeat1**/
@@ -1064,7 +1082,12 @@ DATETIME_Mm_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(d
     BINARY_LOOP {
         const datetime in1 = *(datetime *)ip1;
         const timedelta in2 = *(timedelta *)ip2;
-        *((datetime *)op1) = in1 + in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            *((npy_datetime *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_datetime *)op1) = in1 + in2;
+        }
     }
 }
 
@@ -1074,7 +1097,12 @@ DATETIME_mM_M_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
     BINARY_LOOP {
         const timedelta in1 = *(timedelta *)ip1;
         const datetime in2 = *(datetime *)ip2;
-        *((datetime *)op1) = in1 + in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            *((npy_datetime *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_datetime *)op1) = in1 + in2;
+        }
     }
 }
 
@@ -1084,7 +1112,12 @@ TIMEDELTA_mm_m_add(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
     BINARY_LOOP {
         const timedelta in1 = *(timedelta *)ip1;
         const timedelta in2 = *(timedelta *)ip2;
-        *((timedelta *)op1) = in1 + in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = in1 + in2;
+        }
     }
 }
 
@@ -1094,7 +1127,12 @@ DATETIME_Mm_M_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNU
     BINARY_LOOP {
         const datetime in1 = *(datetime *)ip1;
         const timedelta in2 = *(timedelta *)ip2;
-        *((datetime *)op1) = in1 - in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            *((npy_datetime *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_datetime *)op1) = in1 - in2;
+        }
     }
 }
 
@@ -1104,7 +1142,12 @@ DATETIME_MM_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UNU
     BINARY_LOOP {
         const datetime in1 = *(datetime *)ip1;
         const datetime in2 = *(datetime *)ip2;
-        *((timedelta *)op1) = in1 - in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = in1 - in2;
+        }
     }
 }
 
@@ -1114,7 +1157,12 @@ TIMEDELTA_mm_m_subtract(char **args, intp *dimensions, intp *steps, void *NPY_UN
     BINARY_LOOP {
         const timedelta in1 = *(timedelta *)ip1;
         const timedelta in2 = *(timedelta *)ip2;
-        *((timedelta *)op1) = in1 - in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = in1 - in2;
+        }
     }
 }
 
@@ -1125,7 +1173,12 @@ TIMEDELTA_mq_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UN
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_int64 in2 = *(npy_int64 *)ip2;
-        *((npy_timedelta *)op1) = in1 * in2;
+        if (in1 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = in1 * in2;
+        }
     }
 }
 
@@ -1136,7 +1189,12 @@ TIMEDELTA_qm_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UN
     BINARY_LOOP {
         const npy_int64 in1 = *(npy_int64 *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        *((npy_timedelta *)op1) = in1 * in2;
+        if (in2 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = in1 * in2;
+        }
     }
 }
 
@@ -1146,7 +1204,12 @@ TIMEDELTA_md_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UN
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const double in2 = *(double *)ip2;
-        *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+        if (in1 == NPY_DATETIME_NAT || isnan(in2)) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+        }
     }
 }
 
@@ -1156,7 +1219,12 @@ TIMEDELTA_dm_m_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UN
     BINARY_LOOP {
         const double in1 = *(double *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+        if (isnan(in1) || in2 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = (npy_timedelta)(in1 * in2);
+        }
     }
 }
 
@@ -1167,7 +1235,12 @@ TIMEDELTA_mq_m_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_int64 in2 = *(npy_int64 *)ip2;
-        *((npy_timedelta *)op1) = in1 / in2;
+        if (in1 == NPY_DATETIME_NAT || in2 == 0) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            *((npy_timedelta *)op1) = in1 / in2;
+        }
     }
 }
 
@@ -1177,7 +1250,18 @@ TIMEDELTA_md_m_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const double in2 = *(double *)ip2;
-        *((npy_timedelta *)op1) = (npy_timedelta)(in1 / in2);
+        if (in1 == NPY_DATETIME_NAT) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+        }
+        else {
+            double result = in1 / in2;
+            if (isnan(result)) {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
+            else {
+                *((npy_timedelta *)op1) = (npy_timedelta)(result);
+            }
+        }
     }
 }
 

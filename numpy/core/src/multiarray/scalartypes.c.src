@@ -3426,18 +3426,21 @@ initialize_casting_tables(void)
     for (i = 0; i < NPY_NTYPES; ++i) {
         /* Identity */
         _npy_can_cast_safely_table[i][i] = 1;
-        /* Bool -> <Anything> */
-        _npy_can_cast_safely_table[NPY_BOOL][i] = 1;
-        /* DateTime sits out for these... */
-        if (i != PyArray_DATETIME && i != PyArray_TIMEDELTA) {
-            /* <Anything> -> Object */
-            _npy_can_cast_safely_table[i][NPY_OBJECT] = 1;
-            /* <Anything> -> Void */
-            _npy_can_cast_safely_table[i][NPY_VOID] = 1;
+        if (i != NPY_DATETIME) {
+            /*
+             * Bool -> <Anything> except datetime (since
+             *                    it conceptually has no zero)
+             */
+            _npy_can_cast_safely_table[NPY_BOOL][i] = 1;
         }
+        /* <Anything> -> Object */
+        _npy_can_cast_safely_table[i][NPY_OBJECT] = 1;
+        /* <Anything> -> Void */
+        _npy_can_cast_safely_table[i][NPY_VOID] = 1;
     }
 
     _npy_can_cast_safely_table[NPY_STRING][NPY_UNICODE] = 1;
+    _npy_can_cast_safely_table[NPY_BOOL][NPY_TIMEDELTA] = 1;
 
 #ifndef NPY_SIZEOF_BYTE
 #define NPY_SIZEOF_BYTE 1
@@ -3467,8 +3470,13 @@ initialize_casting_tables(void)
 #define _FROM_BSIZE NPY_SIZEOF_@FROM_BASENAME@
 #define _FROM_NUM   (NPY_@FROM_NAME@)
 
-    _npy_can_cast_safely_table[_FROM_NUM][PyArray_STRING] = 1;
-    _npy_can_cast_safely_table[_FROM_NUM][PyArray_UNICODE] = 1;
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_STRING] = 1;
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_UNICODE] = 1;
+
+    /* Allow casts from any integer to the TIMEDELTA type */
+#if @from_isint@ || @from_isuint@
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_TIMEDELTA] = 1;
+#endif
 
 /**begin repeat1
  * #TO_NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
@@ -3651,9 +3659,6 @@ initialize_casting_tables(void)
             }
         }
     }
-    /* Special case date-time */
-    _npy_type_promotion_table[NPY_DATETIME][NPY_TIMEDELTA] = NPY_DATETIME;
-    _npy_type_promotion_table[NPY_TIMEDELTA][NPY_DATETIME] = NPY_DATETIME;
 }
 
 

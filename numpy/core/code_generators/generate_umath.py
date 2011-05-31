@@ -476,7 +476,6 @@ defdict = {
           None,
           TD(flts, f="logaddexp2", astype={'e':'f'})
           ),
-# FIXME: decide if the times should have the bitwise operations.
 'bitwise_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.bitwise_and'),
