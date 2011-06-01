@@ -978,42 +978,6 @@ TIMEDELTA_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
     }
 }
 
-NPY_NO_EXPORT void
-TIMEDELTA_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP {
-        const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        *((Bool *)op1) = !in1;
-    }
-}
-
-NPY_NO_EXPORT void
-TIMEDELTA_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
-    }
-}
-
-
-/**begin repeat
- * #kind = logical_and, logical_or#
- * #OP   = &&, ||#
- */
-NPY_NO_EXPORT void
-TIMEDELTA_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        *((Bool *)op1) = in1 @OP@ in2;
-    }
-}
-/**end repeat**/
-
-
 /**begin repeat
  * #type = datetime, timedelta#
  * #TYPE = DATETIME, TIMEDELTA#

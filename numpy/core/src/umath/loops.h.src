@@ -425,22 +425,6 @@ TIMEDELTA_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
 NPY_NO_EXPORT void
 TIMEDELTA_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-TIMEDELTA_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-TIMEDELTA_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-
-
-/**begin repeat
- * #kind = logical_and, logical_or#
- * #OP   = &&, ||#
- */
-NPY_NO_EXPORT void
-TIMEDELTA_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
-/**end repeat**/
-
-
 /**begin repeat
  * #type = datetime, timedelta#
  * #TYPE = DATETIME, TIMEDELTA#
