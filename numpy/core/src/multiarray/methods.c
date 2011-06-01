@@ -791,7 +791,7 @@ static PyObject *
 array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"dtype", "order", "casting",
-                             "subok", "forcecopy", NULL};
+                             "subok", "copy", NULL};
     PyArray_Descr *dtype = NULL;
     /*
      * TODO: UNSAFE default for compatibility, I think

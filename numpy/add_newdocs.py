@@ -3001,7 +3001,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     """
-    a.astype(dtype, order='K', casting='unsafe', subok=True, forcecopy=True)
+    a.astype(dtype, order='K', casting='unsafe', subok=True, copy=True)
 
     Copy of the array, cast to a specified type.
 
@@ -3029,10 +3029,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
-    forcecopy : bool, optional
-        By default, astype always returns a new array. If this is set to
-        false, and the `dtype`, `order`, and `subok` requirements are
-        satisfied, the input array is returned instead of a copy.
+    copy : bool, optional
+        By default, astype always returns a newly allocated array. If this
+        is set to false, and the `dtype`, `order`, and `subok`
+        requirements are satisfied, the input array is returned instead
+        of a copy.
 
     Raises
     ------

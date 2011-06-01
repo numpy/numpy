@@ -40,18 +40,18 @@ def test_array_astype():
     assert_equal(a, b)
     assert_(not (a is b))
 
-    # forcecopy=False parameter can sometimes skip a copy
-    b = a.astype('f4', forcecopy=False)
+    # copy=False parameter can sometimes skip a copy
+    b = a.astype('f4', copy=False)
     assert_(a is b)
 
     # order parameter allows overriding of the memory layout,
     # forcing a copy if the layout is wrong
-    b = a.astype('f4', order='F', forcecopy=False)
+    b = a.astype('f4', order='F', copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(b.flags.f_contiguous)
 
-    b = a.astype('f4', order='C', forcecopy=False)
+    b = a.astype('f4', order='C', copy=False)
     assert_equal(a, b)
     assert_(a is b)
     assert_(b.flags.c_contiguous)
@@ -64,22 +64,22 @@ def test_array_astype():
     assert_raises(TypeError, a.astype, 'i4', casting='safe')
 
     # subok=False passes through a non-subclassed array
-    b = a.astype('f4', subok=0, forcecopy=False)
+    b = a.astype('f4', subok=0, copy=False)
     assert_(a is b)
 
     a = np.matrix([[0,1,2],[3,4,5]], dtype='f4')
 
     # subok=True passes through a matrix
-    b = a.astype('f4', subok=True, forcecopy=False)
+    b = a.astype('f4', subok=True, copy=False)
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
-    b = a.astype('i4', forcecopy=False)
+    b = a.astype('i4', copy=False)
     assert_equal(a, b)
     assert_equal(type(b), np.matrix)
 
     # subok=False never returns a matrix
-    b = a.astype('f4', subok=False, forcecopy=False)
+    b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(type(b) != np.matrix)
