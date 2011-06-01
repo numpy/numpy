@@ -50,6 +50,16 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     npy_datetime *out);
 
 /*
+ * Parses the metadata string into the metadata C structure.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
+                                    PyArray_DatetimeMetaData *out_meta);
+
+
+/*
  * This function returns a reference to a capsule
  * which contains the datetime metadata parsed from a metadata
  * string. 'metastr' should be NULL-terminated, and len should
@@ -141,11 +151,30 @@ NPY_NO_EXPORT PyObject *
 convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
 
 /*
+ * Converts a metadata tuple into a datetime metadata C struct.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
+                                        PyArray_DatetimeMetaData *out_meta);
+
+/*
  * Given a tuple representing datetime metadata,
  * returns a capsule datetime metadata object.
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple);
+
+/*
+ * Converts an input object into datetime metadata. The input
+ * may be either a string or a tuple.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+convert_pyobject_to_datetime_metadata(PyObject *obj,
+                                        PyArray_DatetimeMetaData *out_meta);
 
 /*
  * 'ret' is a PyUString containing the datetime string, and this
@@ -191,6 +220,16 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out);
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 npy_datetime *out);
+
+/*
+ * Converts a PyObject * into a timedelta, in any of the forms supported
+ *
+ * Returns -1 on error, 0 on success.
+ */
+NPY_NO_EXPORT int
+convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
+                                npy_timedelta *out);
+
 
 /*
  * Converts a datetime into a PyObject *.

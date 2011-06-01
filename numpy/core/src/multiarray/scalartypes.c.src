@@ -21,6 +21,7 @@
 #include "numpyos.h"
 #include "common.h"
 #include "scalartypes.h"
+#include "_datetime.h"
 
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
@@ -2212,12 +2213,15 @@ object_arrtype_dealloc(PyObject *v)
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
- *         clongdouble, string, unicode, object, datetime, timedelta#
+ *         clongdouble, string, unicode, object#
+ * #Name = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
+ *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
+ *         CLongDouble, String, Unicode, Object#
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
  *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
- *         CLONGDOUBLE, STRING, UNICODE, OBJECT, DATETIME, TIMEDELTA#
- * #work = 0,0,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0,0,0#
- * #default = 0*17,1*2,2,0*2#
+ *         CLONGDOUBLE, STRING, UNICODE, OBJECT#
+ * #work = 0,0,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
+ * #default = 0*17,1*2,2#
  */
 
 #define _NPY_UNUSED2_1
@@ -2248,18 +2252,22 @@ static PyObject *
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
         return NULL;
     }
-    typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+    typecode = PyArray_DescrFromType(NPY_@TYPE@);
+    if (typecode == NULL) {
+        return NULL;
+    }
     /*
      * typecode is new reference and stolen by
      * PyArray_FromAny but not PyArray_Scalar
      */
     if (obj == NULL) {
 #if @default@ == 0
-        char *mem = malloc(sizeof(npy_@name@));
-
-        memset(mem, 0, sizeof(npy_@name@));
-        robj = PyArray_Scalar(mem, typecode, NULL);
-        free(mem);
+        robj = PyArray_Scalar(NULL, typecode, NULL);
+        if (robj == NULL) {
+            Py_DECREF(typecode);
+            return NULL;
+        }
+        memset(&((Py@Name@ScalarObject *)robj)->obval, 0, sizeof(npy_@name@));
 #elif @default@ == 1
         robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
@@ -2338,6 +2346,59 @@ finish:
 #undef _WORKz
 #undef _WORK0
 #undef _WORK
+
+/**begin repeat
+ * #name = datetime, timedelta#
+ * #Name = Datetime, Timedelta#
+ * #TYPE = DATETIME, TIMEDELTA#
+ */
+
+static PyObject *
+@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    PyObject *obj = NULL, *meta_obj = NULL;
+    Py@Name@ScalarObject *ret;
+
+    if (!PyArg_ParseTuple(args, "|OO", &obj, &meta_obj)) {
+        return NULL;
+    }
+
+    /* Allocate the return scalar */
+    ret = (Py@Name@ScalarObject *)Py@Name@ArrType_Type.tp_alloc(
+                                            &Py@Name@ArrType_Type, 0);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Incorporate the metadata if its provided */
+    if (meta_obj != NULL) {
+        /* Parse the provided metadata input */
+        if (convert_pyobject_to_datetime_metadata(meta_obj, &ret->obmeta)
+                                                                    < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+    else {
+        ret->obmeta.base = NPY_DATETIME_DEFAULTUNIT;
+        ret->obmeta.num = 1;
+        ret->obmeta.events = 1;
+    }
+
+    if (obj == NULL) {
+        ret->obval = 0;
+    }
+    else {
+        if (convert_pyobject_to_@name@(&ret->obmeta, obj, &ret->obval)
+                                                                    < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    return (PyObject *)ret;
+}
+/**end repeat**/
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
