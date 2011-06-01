@@ -380,7 +380,6 @@ array_repr_builtin(PyArrayObject *self, int repr)
 
 static PyObject *PyArray_StrFunction = NULL;
 static PyObject *PyArray_ReprFunction = NULL;
-static PyObject *PyArray_DatetimeParseFunction = NULL;
 
 /*NUMPY_API
  * Set the array print function to be a Python function.
@@ -407,17 +406,11 @@ PyArray_SetStringFunction(PyObject *op, int repr)
 }
 
 /*NUMPY_API
- * Set the date time print function to be a Python function.
+ * This function is scheduled to be removed
  */
 NPY_NO_EXPORT void
 PyArray_SetDatetimeParseFunction(PyObject *op)
 {
-    /* Dispose of previous callback */
-    Py_XDECREF(PyArray_DatetimeParseFunction);
-    /* Add a reference to the new callback */
-    Py_XINCREF(op);
-    /* Remember new callback */
-    PyArray_DatetimeParseFunction = op;
 }
 
 
