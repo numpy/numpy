@@ -1881,6 +1881,114 @@ PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
 
 /*
  * This function applies special type resolution rules for the case
+ * where all the functions have the pattern X->X, copying
+ * the input descr directly so that metadata is maintained.
+ *
+ * Note that a simpler linear search through the functions loop
+ * is still done, but switching to a simple array lookup for
+ * built-in types would be better at some point.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    int i, type_num, type_num1;
+    char *ufunc_name;
+
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+
+    if (ufunc->nin != 1 || ufunc->nout != 1) {
+        PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
+                "to use unary operation type resolution but has "
+                "the wrong number of inputs or outputs",
+                ufunc_name);
+        return -1;
+    }
+
+    /*
+     * Use the default type resolution if there's a custom data type
+     * or object arrays.
+     */
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    if (type_num1 >= NPY_NTYPES || type_num1 == NPY_OBJECT) {
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+    }
+
+    if (type_tup == NULL) {
+        /* Input types are the result type */
+        out_dtypes[0] = PyArray_DESCR(operands[0]);
+        Py_INCREF(out_dtypes[0]);
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+    }
+    else {
+        /*
+         * If the type tuple isn't a single-element tuple, let the
+         * default type resolution handle this one.
+         */
+        if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
+            return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+        }
+
+        if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "require data type in the type tuple");
+            return -1;
+        }
+
+        out_dtypes[0] = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0);
+        Py_INCREF(out_dtypes[0]);
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 2; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    type_num = out_dtypes[0]->type_num;
+
+    /* If we have a built-in type, search in the functions list */
+    if (type_num < NPY_NTYPES) {
+        char *types = ufunc->types;
+        int n = ufunc->ntypes;
+
+        for (i = 0; i < n; ++i) {
+            if (types[2*i] == type_num) {
+                *out_innerloop = ufunc->functions[i];
+                *out_innerloopdata = ufunc->data[i];
+                return 0;
+            }
+        }
+
+        PyErr_Format(PyExc_TypeError,
+                "ufunc '%s' not supported for the input types",
+                ufunc_name);
+        return -1;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError,
+                "user type shouldn't have resulted from type promotion");
+        return -1;
+    }
+}
+
+/*
+ * This function applies special type resolution rules for the case
  * where all the functions have the pattern XX->X, using
  * PyArray_ResultType instead of a linear search to get the best
  * loop.
@@ -1995,6 +2103,35 @@ PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
         return -1;
     }
 }
+
+/*
+ * This function applies special type resolution rules for the absolute
+ * ufunc. This ufunc converts complex -> float, so isn't covered
+ * by the simple unary type resolution.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AbsoluteTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    /* Use the default for complex types, to find the loop producing float */
+    if (PyTypeNum_ISCOMPLEX(PyArray_DESCR(operands[0])->type_num)) {
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+    }
+    else {
+        return PyUFunc_SimpleUnaryOperationTypeResolution(ufunc, casting,
+                    operands, type_tup, out_dtypes, out_innerloop,
+                    out_innerloopdata);
+    }
+}
+
 
 /*
  * This function returns the a new reference to the

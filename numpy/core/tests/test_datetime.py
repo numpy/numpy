@@ -287,6 +287,40 @@ class TestDateTime(TestCase):
         #b = np.array(3, dtype='m8[D]')
         #assert_raises(TypeError, np.less, a, b, casting='same_kind')
 
+    def test_datetime_like(self):
+        a = np.array([3], dtype='m8[4D]//6')
+        b = np.array(['2012-12-21'], dtype='M8[D]//3')
+
+        assert_equal(np.ones_like(a).dtype, a.dtype)
+        assert_equal(np.zeros_like(a).dtype, a.dtype)
+        assert_equal(np.empty_like(a).dtype, a.dtype)
+        assert_equal(np.ones_like(b).dtype, b.dtype)
+        assert_equal(np.zeros_like(b).dtype, b.dtype)
+        assert_equal(np.empty_like(b).dtype, b.dtype)
+
+    def test_datetime_unary(self):
+        tda = np.array(3, dtype='m8[D]')
+        tdb = np.array(-3, dtype='m8[D]')
+        tdzero = np.array(0, dtype='m8[D]')
+        tdone = np.array(1, dtype='m8[D]')
+        tdmone = np.array(-1, dtype='m8[D]')
+
+        # negative ufunc
+        assert_equal(-tdb, tda)
+        assert_equal((-tdb).dtype, tda.dtype)
+        assert_equal(np.negative(tdb), tda)
+        assert_equal(np.negative(tdb).dtype, tda.dtype)
+
+        # absolute ufunc
+        assert_equal(np.absolute(tdb), tda)
+        assert_equal(np.absolute(tdb).dtype, tda.dtype)
+
+        # sign ufunc
+        assert_equal(np.sign(tda), tdone)
+        assert_equal(np.sign(tdb), tdmone)
+        assert_equal(np.sign(tdzero), tdzero)
+        assert_equal(np.sign(tda).dtype, tda.dtype)
+
     def test_datetime_add(self):
         dta = np.array('2012-12-21', dtype='M8[D]')
         dtb = np.array('2012-12-24', dtype='M8[D]')

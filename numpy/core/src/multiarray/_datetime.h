@@ -223,4 +223,10 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
 
+/*
+ * Returns true if the datetime metadata matches
+ */
+NPY_NO_EXPORT npy_bool
+has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2);
+
 #endif

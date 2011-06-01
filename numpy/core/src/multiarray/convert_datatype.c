@@ -373,15 +373,35 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
             return ret;
         }
 
-        switch (casting) {
-            case NPY_NO_CASTING:
-                return PyArray_EquivTypes(from, to);
-            case NPY_EQUIV_CASTING:
-                return (from->elsize == to->elsize);
-            case NPY_SAFE_CASTING:
-                return (from->elsize <= to->elsize);
+        switch (from->type_num) {
+            case NPY_DATETIME:
+            case NPY_TIMEDELTA:
+                switch (casting) {
+                    case NPY_NO_CASTING:
+                        return PyArray_ISNBO(from->byteorder) ==
+                                            PyArray_ISNBO(to->byteorder) &&
+                                has_equivalent_datetime_metadata(from, to);
+                    case NPY_EQUIV_CASTING:
+                        return has_equivalent_datetime_metadata(from, to);
+                    case NPY_SAFE_CASTING:
+                        return datetime_metadata_divides(from, to,
+                                            from->type_num == NPY_TIMEDELTA);
+                    default:
+                        return 1;
+                }
+                break;
             default:
-                return 1;
+                switch (casting) {
+                    case NPY_NO_CASTING:
+                        return PyArray_EquivTypes(from, to);
+                    case NPY_EQUIV_CASTING:
+                        return (from->elsize == to->elsize);
+                    case NPY_SAFE_CASTING:
+                        return (from->elsize <= to->elsize);
+                    default:
+                        return 1;
+                }
+                break;
         }
     }
     /* If safe or same-kind casts are allowed */

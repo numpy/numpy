@@ -1646,7 +1646,12 @@ datetime_metadata_divides(
         }
     }
 
-    return (num2 % num1) == 0;
+    /* Crude, incomplete check for overflow */
+    if (num1&0xff00000000000000LL || num2&0xff00000000000000LL ) {
+        return 0;
+    }
+
+    return (num1 % num2) == 0;
 }
 
 
@@ -3025,4 +3030,34 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
     }
 }
 
+/*
+ * Returns true if the datetime metadata matches
+ */
+NPY_NO_EXPORT npy_bool
+has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    PyArray_DatetimeMetaData *meta1, *meta2;
+
+    if ((type1->type_num != NPY_DATETIME &&
+                        type1->type_num != NPY_TIMEDELTA) ||
+                    (type2->type_num != NPY_DATETIME &&
+                        type2->type_num != NPY_TIMEDELTA)) {
+        return 0;
+    }
+
+    meta1 = get_datetime_metadata_from_dtype(type1);
+    if (meta1 == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+    meta2 = get_datetime_metadata_from_dtype(type2);
+    if (meta2 == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+
+    return meta1->base == meta2->base &&
+            meta1->num == meta2->num &&
+            meta1->events == meta2->events;
+}
 

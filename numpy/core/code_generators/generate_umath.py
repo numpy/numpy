@@ -332,7 +332,7 @@ defdict = {
 'ones_like' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.ones_like'),
-          None,
+          'PyUFunc_SimpleUnaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='Py_get_one'),
           ),
@@ -347,7 +347,7 @@ defdict = {
 'absolute' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
-          None,
+          'PyUFunc_AbsoluteTypeResolution',
           TD(bints+flts+timedeltaonly),
           TD(cmplx, out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
@@ -361,7 +361,7 @@ defdict = {
 'negative' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
-          None,
+          'PyUFunc_SimpleUnaryOperationTypeResolution',
           TD(bints+flts+timedeltaonly),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
@@ -369,7 +369,7 @@ defdict = {
 'sign' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),
-          None,
+          'PyUFunc_SimpleUnaryOperationTypeResolution',
           TD(nobool_or_datetime),
           ),
 'greater' :

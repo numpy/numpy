@@ -1402,34 +1402,6 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
 }
 
 /*
- * Compare the metadata for two date-times.
- * Return 1 if they are the same or 0 if not.
- */
-static int
-_equivalent_datetime_units(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
-{
-    PyArray_DatetimeMetaData *data1, *data2;
-
-    data1 = get_datetime_metadata_from_dtype(dtype1);
-    data2 = get_datetime_metadata_from_dtype(dtype2);
-
-    /* If there's a metadata problem, it doesn't match */
-    if (data1 == NULL || data2 == NULL) {
-        PyErr_Clear();
-        return 0;
-    }
-
-    /* Same meta object */
-    if (data1 == data2) {
-        return 1;
-    }
-
-    return ((data1->base == data2->base)
-            && (data1->num == data2->num)
-            && (data1->events == data2->events));
-}
-
-/*
  * Compare the subarray data for two types.
  * Return 1 if they are the same, 0 if not.
  */
@@ -1500,7 +1472,7 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             || type_num2 == NPY_TIMEDELTA
             || type_num2 == NPY_TIMEDELTA) {
         return ((type_num1 == type_num2)
-                && _equivalent_datetime_units(type1, type2));
+                && has_equivalent_datetime_metadata(type1, type2));
     }
     return type1->kind == type2->kind;
 }
