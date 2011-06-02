@@ -99,6 +99,33 @@ class TestDateTime(TestCase):
         assert_equal(np.datetime64(b, 's'), a)
         assert_equal(np.datetime64(b, 's').dtype, np.dtype('M8[s]'))
 
+    def test_timedelta_scalar_construction(self):
+        # Construct with different units
+        assert_equal(np.timedelta64(7, 'D'),
+                     np.timedelta64(1, 'W'))
+        assert_equal(np.timedelta64(120, 's'),
+                     np.timedelta64(2, 'm'))
+
+        # When constructing from a scalar or zero-dimensional array,
+        # it either keeps the units or you can override them.
+        a = np.timedelta64(2, 'h')
+        b = np.array(2, dtype='m8[h]')
+
+        assert_equal(a.dtype, np.dtype('m8[h]'))
+        assert_equal(b.dtype, np.dtype('m8[h]'))
+
+        assert_equal(np.timedelta64(a), a);
+        assert_equal(np.timedelta64(a).dtype, np.dtype('m8[h]'))
+
+        assert_equal(np.timedelta64(b), a)
+        assert_equal(np.timedelta64(b).dtype, np.dtype('m8[h]'))
+
+        assert_equal(np.timedelta64(a, 's'), a)
+        assert_equal(np.timedelta64(a, 's').dtype, np.dtype('m8[s]'))
+
+        assert_equal(np.timedelta64(b, 's'), a)
+        assert_equal(np.timedelta64(b, 's').dtype, np.dtype('m8[s]'))
+
     def test_datetime_nat_casting(self):
         a = np.array('NaT', dtype='M8[D]')
         b = np.datetime64('NaT', '[D]')

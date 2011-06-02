@@ -280,5 +280,16 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
                           npy_datetime src_dt,
                           npy_datetime *dst_dt);
 
+/*
+ * Casts a single timedelta from having src_meta metadata into
+ * dst_meta metadata.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
+                          PyArray_DatetimeMetaData *dst_meta,
+                          npy_timedelta src_dt,
+                          npy_timedelta *dst_dt);
 
 #endif

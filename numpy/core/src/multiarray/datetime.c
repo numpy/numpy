@@ -2169,7 +2169,6 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
     PyObject *ascii = NULL;
     char *str = NULL;
     Py_ssize_t len = 0;
-    NPY_DATETIMEUNIT unit;
 
     if (PyTuple_Check(obj)) {
         return convert_datetime_metadata_tuple_to_datetime_metadata(obj,
@@ -3137,6 +3136,31 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
+    /* Timedelta scalar */
+    else if (PyArray_IsScalar(obj, Timedelta)) {
+        PyTimedeltaScalarObject *dts = (PyTimedeltaScalarObject *)obj;
+
+        return cast_timedelta_to_timedelta(&dts->obmeta, meta,
+                                            dts->obval, out);
+    }
+    /* Timedelta zero-dimensional array */
+    else if (PyArray_Check(obj) &&
+                    PyArray_NDIM(obj) == 0 &&
+                    PyArray_DESCR(obj)->type_num == NPY_TIMEDELTA) {
+        PyArray_DatetimeMetaData *obj_meta;
+        npy_timedelta dt = 0;
+
+        obj_meta = get_datetime_metadata_from_dtype(PyArray_DESCR(obj));
+        if (obj_meta == NULL) {
+            return -1;
+        }
+        PyArray_DESCR(obj)->f->copyswap(&dt,
+                                        PyArray_DATA(obj),
+                                        !PyArray_ISNOTSWAPPED(obj),
+                                        obj);
+
+        return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
+    }
     /* TODO: Finish this function */
 
     PyErr_SetString(PyExc_ValueError,
@@ -3282,6 +3306,66 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
     if (convert_datetimestruct_to_datetime(dst_meta, &dts, dst_dt) < 0) {
         *dst_dt = NPY_DATETIME_NAT;
         return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Casts a single timedelta from having src_meta metadata into
+ * dst_meta metadata.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
+                          PyArray_DatetimeMetaData *dst_meta,
+                          npy_timedelta src_dt,
+                          npy_timedelta *dst_dt)
+{
+    npy_int64 num = 0, denom = 0;
+    int event = 0;
+
+    /* If the metadata is the same, short-circuit the conversion */
+    if (src_meta->base == dst_meta->base &&
+            src_meta->num == dst_meta->num &&
+            src_meta->events == dst_meta->events) {
+        *dst_dt = src_dt;
+        return 0;
+    }
+
+    /* Get the conversion factor */
+    get_datetime_conversion_factor(src_meta, dst_meta, &num, &denom);
+
+    if (num == 0) {
+        PyErr_SetString(PyExc_OverflowError,
+                    "Integer overflow getting a conversion factor between "
+                    "different timedelta types");
+        return -1;
+    }
+
+    /* Remove the event number from the value */
+    if (src_meta->events > 1) {
+        event = (int)(src_dt % src_meta->events);
+        src_dt = src_dt / src_meta->events;
+        if (event < 0) {
+            --src_dt;
+            event += src_meta->events;
+        }
+    }
+
+    /* Apply the scaling */
+    if (src_dt < 0) {
+        *dst_dt = (src_dt * num - (denom - 1)) / denom;
+    }
+    else {
+        *dst_dt = src_dt * num / denom;
+    }
+
+    /* Add the event number back in */
+    if (dst_meta->events > 1) {
+        event = event % dst_meta->events;
+        *dst_dt = (*dst_dt) * dst_meta->events + event;
     }
 
     return 0;
