@@ -268,4 +268,17 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
 NPY_NO_EXPORT npy_bool
 has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2);
 
+/*
+ * Casts a single datetime from having src_meta metadata into
+ * dst_meta metadata.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
+                          PyArray_DatetimeMetaData *dst_meta,
+                          npy_datetime src_dt,
+                          npy_datetime *dst_dt);
+
+
 #endif

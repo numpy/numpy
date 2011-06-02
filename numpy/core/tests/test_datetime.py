@@ -72,13 +72,57 @@ class TestDateTime(TestCase):
         # Can cast safely if the integer multiplier does divide
         assert_(np.can_cast('M8[6h]', 'M8[3h]', casting='safe'))
 
+    def test_datetime_scalar_construction(self):
+        # Construct with different units
+        assert_equal(np.datetime64('1950-03-12', 'D'),
+                     np.datetime64('1950-03-12'))
+        assert_equal(np.datetime64('1950-03-12', 's'),
+                     np.datetime64('1950-03-12', 'm'))
+
+        # When constructing from a scalar or zero-dimensional array,
+        # it either keeps the units or you can override them.
+        a = np.datetime64('2000-03-18T16Z', 'h')
+        b = np.array('2000-03-18T16Z', dtype='M8[h]')
+
+        assert_equal(a.dtype, np.dtype('M8[h]'))
+        assert_equal(b.dtype, np.dtype('M8[h]'))
+
+        assert_equal(np.datetime64(a), a);
+        assert_equal(np.datetime64(a).dtype, np.dtype('M8[h]'))
+
+        assert_equal(np.datetime64(b), a)
+        assert_equal(np.datetime64(b).dtype, np.dtype('M8[h]'))
+
+        assert_equal(np.datetime64(a, 's'), a)
+        assert_equal(np.datetime64(a, 's').dtype, np.dtype('M8[s]'))
+
+        assert_equal(np.datetime64(b, 's'), a)
+        assert_equal(np.datetime64(b, 's').dtype, np.dtype('M8[s]'))
+
     def test_datetime_nat_casting(self):
         a = np.array('NaT', dtype='M8[D]')
+        b = np.datetime64('NaT', '[D]')
+
+        # Arrays
         assert_equal(a.astype('M8[s]'), np.array('NaT', dtype='M8[s]'))
         assert_equal(a.astype('M8[ms]'), np.array('NaT', dtype='M8[ms]'))
         assert_equal(a.astype('M8[M]'), np.array('NaT', dtype='M8[M]'))
         assert_equal(a.astype('M8[Y]'), np.array('NaT', dtype='M8[Y]'))
         assert_equal(a.astype('M8[W]'), np.array('NaT', dtype='M8[W]'))
+
+        # Scalars -> Scalars
+        assert_equal(np.datetime64(b, '[s]'), np.datetime64('NaT', '[s]'))
+        assert_equal(np.datetime64(b, '[ms]'), np.datetime64('NaT', '[ms]'))
+        assert_equal(np.datetime64(b, '[M]'), np.datetime64('NaT', '[M]'))
+        assert_equal(np.datetime64(b, '[Y]'), np.datetime64('NaT', '[Y]'))
+        assert_equal(np.datetime64(b, '[W]'), np.datetime64('NaT', '[W]'))
+
+        # Arrays -> Scalars
+        assert_equal(np.datetime64(a, '[s]'), np.datetime64('NaT', '[s]'))
+        assert_equal(np.datetime64(a, '[ms]'), np.datetime64('NaT', '[ms]'))
+        assert_equal(np.datetime64(a, '[M]'), np.datetime64('NaT', '[M]'))
+        assert_equal(np.datetime64(a, '[Y]'), np.datetime64('NaT', '[Y]'))
+        assert_equal(np.datetime64(a, '[W]'), np.datetime64('NaT', '[W]'))
 
     def test_days_creation(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('i8'),

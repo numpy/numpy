@@ -11,6 +11,7 @@
 
 #include "numpy/npy_3kcompat.h"
 
+#include "numpy/arrayscalars.h"
 #include "_datetime.h"
 
 /*
@@ -3022,10 +3023,30 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
         return 0;
     }
-    /* TODO
-    else if (PyArray_IsScalar(op, Datetime)) {
+    /* Datetime scalar */
+    else if (PyArray_IsScalar(obj, Datetime)) {
+        PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
+
+        return cast_datetime_to_datetime(&dts->obmeta, meta, dts->obval, out);
     }
-    */
+    /* Datetime zero-dimensional array */
+    else if (PyArray_Check(obj) &&
+                    PyArray_NDIM(obj) == 0 &&
+                    PyArray_DESCR(obj)->type_num == NPY_DATETIME) {
+        PyArray_DatetimeMetaData *obj_meta;
+        npy_datetime dt = 0;
+
+        obj_meta = get_datetime_metadata_from_dtype(PyArray_DESCR(obj));
+        if (obj_meta == NULL) {
+            return -1;
+        }
+        PyArray_DESCR(obj)->f->copyswap(&dt,
+                                        PyArray_DATA(obj),
+                                        !PyArray_ISNOTSWAPPED(obj),
+                                        obj);
+
+        return cast_datetime_to_datetime(obj_meta, meta, dt, out);
+    }
     /* Convert from a Python date or datetime object */
     else {
         int code;
@@ -3177,5 +3198,43 @@ has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2)
     return meta1->base == meta2->base &&
             meta1->num == meta2->num &&
             meta1->events == meta2->events;
+}
+
+/*
+ * Casts a single datetime from having src_meta metadata into
+ * dst_meta metadata.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
+                          PyArray_DatetimeMetaData *dst_meta,
+                          npy_datetime src_dt,
+                          npy_datetime *dst_dt)
+{
+    npy_datetimestruct dts;
+
+    /* If the metadata is the same, short-circuit the conversion */
+    if (src_meta->base == dst_meta->base &&
+            src_meta->num == dst_meta->num &&
+            src_meta->events == dst_meta->events) {
+        *dst_dt = src_dt;
+        return 0;
+    }
+
+    /* Otherwise convert through a datetimestruct */
+    if (convert_datetime_to_datetimestruct(src_meta, src_dt, &dts) < 0) {
+            *dst_dt = NPY_DATETIME_NAT;
+            return -1;
+    }
+    if (dts.event >= dst_meta->events) {
+        dts.event = dts.event % dst_meta->events;
+    }
+    if (convert_datetimestruct_to_datetime(dst_meta, &dts, dst_dt) < 0) {
+        *dst_dt = NPY_DATETIME_NAT;
+        return -1;
+    }
+
+    return 0;
 }
 
