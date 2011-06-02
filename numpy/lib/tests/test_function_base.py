@@ -1131,6 +1131,17 @@ class TestBincount(TestCase):
         y = np.bincount(x, w, 8)
         assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1, 0, 0]))
 
+    def test_empty(self):
+        x = np.array([], dtype=int)
+        y = np.bincount(x)
+        assert_array_equal(x,y)
+
+    def test_empty_with_minlength(self):
+        x = np.array([], dtype=int)
+        y = np.bincount(x, minlength=5)
+        assert_array_equal(y, np.zeros(5, dtype=int))
+
+
 class TestInterp(TestCase):
     def test_exceptions(self):
         assert_raises(ValueError, interp, 0, [], [])
