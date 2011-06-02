@@ -169,10 +169,6 @@ class TestRegression(TestCase):
             sys.stdout.close()
             sys.stdout = oldstdout
 
-    def test_bincount_empty(self):
-        """Ticket #1387: empty array as input for bincount."""
-        assert_raises(ValueError, lambda : np.bincount(np.array([], dtype=np.intp)))
-
     def test_include_dirs(self):
         """As a sanity check, just test that get_include and
         get_numarray_include include something reasonable.  Somewhat
