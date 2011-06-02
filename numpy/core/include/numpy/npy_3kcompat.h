@@ -348,7 +348,7 @@ NpyCapsule_Check(PyObject *ptr)
     return PyCapsule_CheckExact(ptr);
 }
 
-static void
+static NPY_INLINE void
 simple_capsule_dtor(PyObject *cap)
 {
     PyArray_free(PyCapsule_GetPointer(cap, NULL));
@@ -387,7 +387,7 @@ NpyCapsule_Check(PyObject *ptr)
     return PyCObject_Check(ptr);
 }
 
-static void
+static NPY_INLINE void
 simple_capsule_dtor(void *ptr)
 {
     PyArray_free(ptr);

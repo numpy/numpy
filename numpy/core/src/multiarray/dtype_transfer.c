@@ -16,7 +16,6 @@
 
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
-#include <numpy/ufuncobject.h>
 #include <numpy/npy_cpu.h>
 
 #include "numpy/npy_3kcompat.h"
