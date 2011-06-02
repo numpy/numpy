@@ -48,6 +48,13 @@ class Extension(old_Extension):
 
         # Python 2.4 distutils new features
         self.swig_opts = swig_opts or []
+        # swig_opts is assumed to be a list. Here we handle the case where it
+        # is specified as a string instead.
+        if isinstance(self.swig_opts, basestring):
+            import warnings
+            msg = "swig_opts is specified as a string instead of a list"
+            warnings.warn(msg, SyntaxWarning)
+            self.swig_opts = self.swig_opts.split()
 
         # Python 2.3 distutils new features
         self.depends = depends or []
