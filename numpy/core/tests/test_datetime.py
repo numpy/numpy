@@ -99,6 +99,17 @@ class TestDateTime(TestCase):
         assert_equal(np.datetime64(b, 's'), a)
         assert_equal(np.datetime64(b, 's').dtype, np.dtype('M8[s]'))
 
+        # Construction from datetime.date
+        assert_equal(np.datetime64('1945-03-25'),
+                     np.datetime64(datetime.date(1945,3,25)))
+        assert_equal(np.datetime64('2045-03-25', 'D'),
+                     np.datetime64(datetime.date(2045,3,25), 'D'))
+        # Construction from datetime.datetime
+        assert_equal(np.datetime64('1980-01-25T14:36:22.5Z'),
+                     np.datetime64(datetime.datetime(1980,1,25,
+                                                14,36,22,500000)))
+        
+
     def test_timedelta_scalar_construction(self):
         # Construct with different units
         assert_equal(np.timedelta64(7, 'D'),
@@ -125,6 +136,26 @@ class TestDateTime(TestCase):
 
         assert_equal(np.timedelta64(b, 's'), a)
         assert_equal(np.timedelta64(b, 's').dtype, np.dtype('m8[s]'))
+
+        # Construction from datetime.timedelta
+        assert_equal(np.timedelta64(5, 'D'),
+                     np.timedelta64(datetime.timedelta(days=5)))
+        assert_equal(np.timedelta64(102347621, 's'),
+                     np.timedelta64(datetime.timedelta(seconds=102347621)))
+        assert_equal(np.timedelta64(-10234760000, 'us'),
+                     np.timedelta64(datetime.timedelta(
+                                            microseconds=-10234760000)))
+        assert_equal(np.timedelta64(10234760000, 'us'),
+                     np.timedelta64(datetime.timedelta(
+                                            microseconds=10234760000)))
+        assert_equal(np.timedelta64(1023476, 'ms'),
+                     np.timedelta64(datetime.timedelta(milliseconds=1023476)))
+        assert_equal(np.timedelta64(10, 'm'),
+                     np.timedelta64(datetime.timedelta(minutes=10)))
+        assert_equal(np.timedelta64(281, 'h'),
+                     np.timedelta64(datetime.timedelta(hours=281)))
+        assert_equal(np.timedelta64(28, 'W'),
+                     np.timedelta64(datetime.timedelta(weeks=28)))
 
     def test_datetime_nat_casting(self):
         a = np.array('NaT', dtype='M8[D]')

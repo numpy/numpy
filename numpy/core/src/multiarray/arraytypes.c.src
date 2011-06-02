@@ -106,8 +106,6 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  */
 
 
-static char * _SEQUENCE_MESSAGE = "error setting an array element with a sequence";
-
 /**begin repeat
  *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
@@ -764,141 +762,6 @@ fail:
     return -1;
 }
 
-/*
- * Acknowledgement:  Example code contributed by Marty Fuhr sponsored by
- * Google Summer of Code 2009 was used to integrate and adapt the mxDateTime
- * parser
- */
-
-/* #include "datetime.c" --- now included in multiarray_onefile */
-
-
-/* DateTime Objects in Python only keep microsecond resolution.
- *
- * When converting from datetime objects with an event component return a
- * tuple: * (baseunit, number of event)  where baseunit follows is a datetime
- * type and number of events is a Python integer
- */
-
-
-/*
- * We also can lose precision and range here.  Ignored.
- * Don't use this function if you care.
- */
-
-NPY_NO_EXPORT PyObject *
-PyTimeDelta_FromNormalized(npy_timedelta val, NPY_DATETIMEUNIT base)
-{
-    npy_timedeltastruct td;
-
-    PyDateTime_IMPORT;
-    PyArray_TimedeltaToTimedeltaStruct(val, base, &td);
-
-    /* We discard td.ps and td.as */
-    return PyDelta_FromDSU(td.day, td.sec, td.us);
-}
-
-NPY_NO_EXPORT PyObject *
-PyTimeDelta_FromInt64(timedelta val, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "metadata not set for descriptor");
-        return NULL;
-    }
-
-    if (meta->events > 1) {
-        int events, rem, div;
-        PyObject *obj;
-
-        obj = PyTuple_New(2);
-        events = meta->events;
-        div = val/events;
-        rem = val % events;
-        PyTuple_SET_ITEM(obj, 1, PyInt_FromLong(rem));
-        /* This resets meta->events for recursive call */
-        meta->events = 1;
-        PyTuple_SET_ITEM(obj, 0, PyTimeDelta_FromInt64(div, descr));
-        meta->events = events;
-        if (PyErr_Occurred()) {
-            Py_DECREF(obj);
-            return NULL;
-        }
-        return obj;
-    }
-
-    /* FIXME? : Check for Overflow */
-    return PyTimeDelta_FromNormalized(val*meta->num, meta->base);
-}
-
-NPY_NO_EXPORT npy_timedelta
-PyTimeDelta_AsNormalized(PyObject *obj, NPY_DATETIMEUNIT base)
-{
-    npy_timedeltastruct td;
-
-    PyDateTime_IMPORT;
-
-    if (!PyDelta_Check(obj)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Must be a datetime.timedelta object");
-        return -1;
-    }
-
-    td.day = ((PyDateTime_Delta *)obj)->days;
-    td.sec = ((PyDateTime_Delta *)obj)->seconds;
-    td.us  = ((PyDateTime_Delta *)obj)->microseconds;
-    td.ps  = 0;
-    td.as  = 0;
-
-    return PyArray_TimedeltaStructToTimedelta(base, &td);
-}
-
-NPY_NO_EXPORT timedelta
-PyTimeDelta_AsInt64(PyObject *obj, PyArray_Descr *descr)
-{
-    PyArray_DatetimeMetaData *meta;
-    npy_timedelta res;
-
-    meta = PyDataType_GetDatetimeMetaData(descr);
-    if (meta == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "metadata not set for descriptor");
-        return -1;
-    }
-
-    if (meta->events > 1) {
-        timedelta tmp;
-        int events;
-
-        if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2) {
-            PyErr_SetString(PyExc_ValueError,
-                    "need a 2-tuple on setting if events > 1");
-            return -1;
-        }
-        /* Alter the dictionary and call again (not thread safe) */
-        events = meta->events;
-        meta->events = 1;
-        tmp = PyTimeDelta_AsInt64(PyTuple_GET_ITEM(obj, 0), descr);
-        meta->events = events;
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        /* FIXME: Check for overflow */
-        tmp *= events;
-        tmp += MyPyLong_AsLongLong(PyTuple_GET_ITEM(obj, 1));
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return tmp;
-    }
-
-    res = PyTimeDelta_AsNormalized(obj, meta->base);
-    return res / meta->num;
-}
-
-
 static PyObject *
 DATETIME_getitem(char *ip, PyArrayObject *ap) {
     npy_datetime dt;
@@ -911,7 +774,7 @@ DATETIME_getitem(char *ip, PyArrayObject *ap) {
     }
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        dt = *((datetime *)ip);
+        dt = *((npy_datetime *)ip);
     }
     else {
         ap->descr->f->copyswap(&dt, ip, !PyArray_ISNOTSWAPPED(ap), ap);
@@ -923,16 +786,23 @@ DATETIME_getitem(char *ip, PyArrayObject *ap) {
 
 static PyObject *
 TIMEDELTA_getitem(char *ip, PyArrayObject *ap) {
-    timedelta t1;
+    npy_timedelta td;
+    PyArray_DatetimeMetaData *meta = NULL;
+
+    /* Get the datetime units metadata */
+    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
+    if (meta == NULL) {
+        return NULL;
+    }
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        t1 = *((timedelta *)ip);
-        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
+        td = *((npy_timedelta *)ip);
     }
     else {
-        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
-        return PyTimeDelta_FromInt64((timedelta)t1, ap->descr);
+        ap->descr->f->copyswap(&td, ip, !PyArray_ISNOTSWAPPED(ap), ap);
     }
+
+    return convert_timedelta_to_pyobject(td, meta);
 }
 
 static int
@@ -954,7 +824,7 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 
     /* Copy the value into the output */
     if (ap == NULL || PyArray_ISBEHAVED(ap)) {
-        *((datetime *)ov)=temp;
+        *((npy_datetime *)ov)=temp;
     }
     else {
         ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
@@ -963,43 +833,31 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     return 0;
 }
 
-/* FIXME: This needs to take
- *    1) Integers and Longs (anything that can be converted to an Int)
- *    2) Timedelta scalar objects (with resolution conversion)
- *    3) Python Timedelta objects
- *
- *    Plus a tuple for meta->events > 1
- */
-
 static int
 TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     /* ensure alignment */
-    timedelta temp;
+    npy_timedelta temp = 0;
+    PyArray_DatetimeMetaData *meta = NULL;
 
-    if (PyArray_IsScalar(op, Timedelta)) {
-        temp = ((PyTimedeltaScalarObject *)op)->obval;
-    }
-    else if (PyInt_Check(op)) {
-        temp = PyInt_AS_LONG(op);
-    }
-    else if (PyLong_Check(op)) {
-        temp = PyLong_AsLongLong(op);
-    }
-    else {
-        temp = PyTimeDelta_AsInt64(op, ap->descr);
-    }
-    if (PyErr_Occurred()) {
-        if (PySequence_Check(op)) {
-            PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError, _SEQUENCE_MESSAGE);
-        }
+    /* Get the datetime units metadata */
+    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
+    if (meta == NULL) {
         return -1;
     }
-    if (ap == NULL || PyArray_ISBEHAVED(ap))
-        *((timedelta *)ov)=temp;
+
+    /* Convert the object into a NumPy datetime */
+    if (convert_pyobject_to_timedelta(meta, op, &temp) < 0) {
+        return -1;
+    }
+
+    /* Copy the value into the output */
+    if (ap == NULL || PyArray_ISBEHAVED(ap)) {
+        *((npy_timedelta *)ov)=temp;
+    }
     else {
         ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
     }
+
     return 0;
 }
 

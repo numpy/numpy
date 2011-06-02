@@ -4,20 +4,6 @@
 NPY_NO_EXPORT void
 numpy_pydatetime_import();
 
-NPY_NO_EXPORT void
-PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
-                                 npy_datetimestruct *result);
-
-NPY_NO_EXPORT void
-PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
-                                 npy_timedeltastruct *result);
-
-NPY_NO_EXPORT npy_datetime
-PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d);
-
-NPY_NO_EXPORT npy_datetime
-PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d);
-
 /*
  * This function returns the a new reference to the
  * capsule with the datetime metadata.
@@ -240,6 +226,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
+
+/*
+ * Converts a timedelta into a PyObject *.
+ *
+ * Not-a-time is returned as the string "NaT".
+ * For microseconds or coarser, returns a datetime.timedelta.
+ * For units finer than microseconds, returns an integer.
+ */
+NPY_NO_EXPORT PyObject *
+convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
 
 /*
  * Converts a datetime based on the given metadata into a datetimestruct

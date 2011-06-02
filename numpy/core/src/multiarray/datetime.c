@@ -440,6 +440,8 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
 
 /*NUMPY_API
  * Create a datetime value from a filled datetime struct and resolution unit.
+ *
+ * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT npy_datetime
 PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
@@ -467,6 +469,8 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 
 /*NUMPY_API
  * Create a timdelta value from a filled timedelta struct and resolution unit.
+ *
+ * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT npy_datetime
 PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
@@ -847,6 +851,8 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
 
 /*NUMPY_API
  * Fill the datetime struct from the value and resolution unit.
+ *
+ * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
 PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
@@ -875,6 +881,8 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
 
 /*NUMPY_API
  * Fill the timedelta struct from the timedelta value and resolution unit.
+ *
+ * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
 PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
@@ -2392,9 +2400,15 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
                     tolower(str[1]) == 'o' &&
                     tolower(str[2]) == 'w') {
         time_t rawtime = 0;
+        PyArray_DatetimeMetaData meta;
         time(&rawtime);
-        PyArray_DatetimeToDatetimeStruct(rawtime, NPY_FR_s, out);
-        return 0;
+
+        /* Set up a dummy metadata for the conversion */
+        meta.base = NPY_FR_s;
+        meta.num = 1;
+        meta.events = 1;
+
+        return convert_datetime_to_datetimestruct(&meta, rawtime, out);
     }
 
     substr = str;
@@ -3161,7 +3175,63 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
         return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
     }
-    /* TODO: Finish this function */
+    /* Convert from a Python timedelta object */
+    else if (PyObject_HasAttrString(obj, "days") &&
+                PyObject_HasAttrString(obj, "seconds") &&
+                PyObject_HasAttrString(obj, "microseconds")) {
+        PyObject *tmp;
+        PyArray_DatetimeMetaData us_meta;
+        npy_timedelta td;
+        npy_int64 days;
+        int seconds = 0, useconds = 0;
+
+        /* Get the days */
+        tmp = PyObject_GetAttrString(obj, "days");
+        if (tmp == NULL) {
+            return -1;
+        }
+        days = PyLong_AsLongLong(tmp);
+        if (days == -1 && PyErr_Occurred()) {
+            Py_DECREF(tmp);
+            return -1;
+        }
+        Py_DECREF(tmp);
+
+        /* Get the seconds */
+        tmp = PyObject_GetAttrString(obj, "seconds");
+        if (tmp == NULL) {
+            return -1;
+        }
+        seconds = PyInt_AsLong(tmp);
+        if (seconds == -1 && PyErr_Occurred()) {
+            Py_DECREF(tmp);
+            return -1;
+        }
+        Py_DECREF(tmp);
+
+        /* Get the microseconds */
+        tmp = PyObject_GetAttrString(obj, "microseconds");
+        if (tmp == NULL) {
+            return -1;
+        }
+        useconds = PyInt_AsLong(tmp);
+        if (useconds == -1 && PyErr_Occurred()) {
+            Py_DECREF(tmp);
+            return -1;
+        }
+        Py_DECREF(tmp);
+
+        /*
+         * Convert to a microseconds timedelta, then cast to the
+         * desired units.
+         */
+        td = days*(24*60*60*1000000LL) + seconds*1000000LL + useconds;
+        us_meta.base = NPY_FR_us;
+        us_meta.num = 1;
+        us_meta.events = 1;
+        
+        return cast_timedelta_to_timedelta(&us_meta, meta, td, out);
+    }
 
     PyErr_SetString(PyExc_ValueError,
             "Could not convert object to NumPy timedelta");
@@ -3232,6 +3302,127 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
         PyTuple_SET_ITEM(tup, 0, ret);
 
         ret = PyInt_FromLong(dts.event);
+        if (ret == NULL) {
+            Py_DECREF(tup);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(tup, 1, ret);
+
+        return tup;
+    }
+}
+
+/*
+ * Converts a timedelta into a PyObject *.
+ *
+ * Not-a-time is returned as the string "NaT".
+ * For microseconds or coarser, returns a datetime.timedelta.
+ * For units finer than microseconds, returns an integer.
+ */
+NPY_NO_EXPORT PyObject *
+convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
+{
+    PyObject *ret = NULL, *tup = NULL;
+    npy_timedelta value;
+    int event = 0;
+    int days = 0, seconds = 0, useconds = 0;
+
+    /* Handle not-a-time */
+    if (td == NPY_DATETIME_NAT) {
+        return PyUString_FromString("NaT");
+    }
+
+    /*
+     * If the type's precision is greater than microseconds or is
+     * Y/M/B (nonlinear units), return an int
+     */
+    if (meta->base > NPY_FR_us ||
+                    meta->base == NPY_FR_Y ||
+                    meta->base == NPY_FR_M ||
+                    meta->base == NPY_FR_B) {
+        /* Skip use of a tuple for the events, just return the raw int */
+        return PyLong_FromLongLong(td);
+    }
+
+    value = td;
+
+    /* If there are events, extract the event */
+    if (meta->events > 1) {
+        event = (int)(value % meta->events);
+        value = value / meta->events;
+        if (event < 0) {
+            --value;
+            event += meta->events;
+        }
+    }
+
+    /* Apply the unit multiplier (TODO: overflow treatment...) */
+    value *= meta->num;
+
+    /* Convert to days/seconds/useconds */
+    switch (meta->base) {
+        case NPY_FR_W:
+            value *= 7;
+            break;
+        case NPY_FR_D:
+            break;
+        case NPY_FR_h:
+            seconds = (int)((value % 24) * (60*60));
+            value = value / 24;
+            break;
+        case NPY_FR_m:
+            seconds = (int)(value % (24*60)) * 60;
+            value = value / (24*60);
+            break;
+        case NPY_FR_s:
+            seconds = (int)(value % (24*60*60));
+            value = value / (24*60*60);
+            break;
+        case NPY_FR_ms:
+            useconds = (int)(value % 1000) * 1000;
+            value = value / 1000;
+            seconds = (int)(value % (24*60*60));
+            value = value / (24*60*60);
+            break;
+        case NPY_FR_us:
+            useconds = (int)(value % (1000*1000));
+            value = value / (1000*1000);
+            seconds = (int)(value % (24*60*60));
+            value = value / (24*60*60);
+            break;
+        default:
+            break;
+    }
+    /*
+     * 'value' represents days, and seconds/useconds are filled.
+     *
+     * If it would overflow the datetime.timedelta days, return a raw int
+     */
+    if (value < -999999999 || value > 999999999) {
+        return PyLong_FromLongLong(td);
+    }
+    else {
+        days = (int)value;
+        ret = PyDelta_FromDSU(days, seconds, useconds);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    /* If there is one event, just return the datetime */
+    if (meta->events == 1) {
+        return ret;
+    }
+    /* Otherwise return a tuple with the event in the second position */
+    else {
+        tup = PyTuple_New(2);
+        if (tup == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(tup, 0, ret);
+
+        ret = PyInt_FromLong(event);
         if (ret == NULL) {
             Py_DECREF(tup);
             return NULL;

@@ -697,12 +697,14 @@ typedef struct {
         npy_int32 event;
 } npy_datetimestruct;
 
+/* TO BE REMOVED - NOT USED INTERNALLY. */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
         npy_int32 event;
 } npy_timedeltastruct;
 
+/* TO BE REMOVED - NOT USED INTERNALLY. */
 #if PY_VERSION_HEX >= 0x03000000
 #define PyDataType_GetDatetimeMetaData(descr)                                 \
     ((descr->metadata == NULL) ? NULL :                                       \
