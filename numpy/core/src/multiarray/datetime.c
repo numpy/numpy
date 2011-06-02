@@ -1066,21 +1066,21 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
 }
 
 /*
- * Parses the metadata string into the metadata C structure.
+ * Converts a substring given by 'str' and 'len' into
+ * a date time unit multiplier + enum value, which are populated
+ * into out_meta. Other metadata is left along.
+ *
+ * 'metastr' is only used in the error message, and may be NULL.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
+parse_datetime_extended_unit_from_string(char *str, Py_ssize_t len,
+                                    char *metastr,
                                     PyArray_DatetimeMetaData *out_meta)
 {
-    char *substr = metastr, *substrend = NULL;
+    char *substr = str, *substrend = NULL;
     int den = 1;
-
-    /* The metadata string must start with a '[' */
-    if (len < 3 || *substr++ != '[') {
-        goto bad_input;
-    }
 
     /* First comes an optional integer multiplier */
     out_meta->num = (int)strtol(substr, &substrend, 10);
@@ -1089,12 +1089,12 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
     }
     substr = substrend;
 
-    /* Next comes the unit itself, followed by either '/' or ']' */
+    /* Next comes the unit itself, followed by either '/' or the string end */
     substrend = substr;
-    while (*substrend != '\0' && *substrend != '/' && *substrend != ']') {
+    while (substrend-str < len && *substrend != '/') {
         ++substrend;
     }
-    if (*substrend == '\0') {
+    if (substr == substrend) {
         goto bad_input;
     }
     out_meta->base = parse_datetime_unit_from_string(substr,
@@ -1105,7 +1105,7 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
     substr = substrend;
 
     /* Next comes an optional integer denominator */
-    if (*substr == '/') {
+    if (substr-str < len && *substr == '/') {
         substr++;
         den = (int)strtol(substr, &substrend, 10);
         /* If the '/' exists, there must be a number followed by ']' */
@@ -1114,12 +1114,66 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
         }
         substr = substrend + 1;
     }
-    else if (*substr == ']') {
-        substr++;
-    }
-    else {
+    else if (substr-str != len) {
         goto bad_input;
     }
+
+    if (den != 1) {
+        if (convert_datetime_divisor_to_multiple(
+                                out_meta, den, metastr) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+
+bad_input:
+    if (metastr != NULL) {
+        PyErr_Format(PyExc_TypeError,
+                "Invalid datetime metadata string \"%s\" at position %d",
+                metastr, (int)(substr-metastr));
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+                "Invalid datetime metadata string \"%s\"",
+                str);
+    }
+
+    return -1;
+}
+
+/*
+ * Parses the metadata string into the metadata C structure.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
+                                    PyArray_DatetimeMetaData *out_meta)
+{
+    char *substr = metastr, *substrend = NULL;
+
+    /* The metadata string must start with a '[' */
+    if (len < 3 || *substr++ != '[') {
+        goto bad_input;
+    }
+
+    substrend = substr;
+    while (*substrend != '\0' && *substrend != ']') {
+        ++substrend;
+    }
+    if (*substrend == '\0' || substr == substrend) {
+        substr = substrend;
+        goto bad_input;
+    }
+
+    /* Parse the extended unit inside the [] */
+    if (parse_datetime_extended_unit_from_string(substr, substrend-substr,
+                                                    metastr, out_meta) < 0) {
+        return -1;
+    }
+
+    substr = substrend+1;
 
     /* Finally comes an optional number of events */
     if (substr[0] == '/' && substr[1] == '/') {
@@ -1135,13 +1189,6 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
     }
     else {
         out_meta->events = 1;
-    }
-
-    if (den != 1) {
-        if (convert_datetime_divisor_to_multiple(
-                                out_meta, den, metastr) < 0) {
-            return -1;
-        }
     }
 
     return 0;
@@ -1341,6 +1388,8 @@ static NPY_DATETIMEUNIT _multiples_table[16][4] = {
  * Translate divisors into multiples of smaller units.
  * 'metastr' is used for the error message if the divisor doesn't work,
  * and can be NULL if the metadata didn't come from a string.
+ *
+ * This function only affects the 'base' and 'num' values in the metadata.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -2149,21 +2198,21 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
         return -1;
     }
 
-    /* First try for just the base unit */
-    unit = parse_datetime_unit_from_string(str, len, NULL);
-    if (unit != -1) {
-        out_meta->num = 1;
-        out_meta->base = unit;
+    if (len > 0 && str[0] == '[') {
+        return parse_datetime_metadata_from_metastr(str, len, out_meta);
+    }
+    else {
+        if (parse_datetime_extended_unit_from_string(str, len,
+                                                NULL, out_meta) < 0) {
+            return -1;
+        }
+
+        /* extended_unit is only 'num' and 'base', we have to fill the rest */
         out_meta->events = 1;
 
         return 0;
     }
-    /* If it failed, clear the error and use the main metastr parser */
-    else {
-        PyErr_Clear();
-    }
 
-    return parse_datetime_metadata_from_metastr(str, len, out_meta);
 }
 
 /*

@@ -309,6 +309,14 @@ class TestDateTime(TestCase):
                              np.array('9999', dtype=dt2))
                 assert_equal(np.array('10000', dtype=dt1),
                              np.array('10000-01-01', dtype=dt2))
+                assert_equal(np.datetime64('1945', unit1),
+                             np.datetime64('1945', unit2))
+                assert_equal(np.datetime64('1970', unit1),
+                             np.datetime64('1970', unit2))
+                assert_equal(np.datetime64('9999', unit1),
+                             np.datetime64('9999', unit2))
+                assert_equal(np.datetime64('10000', unit1),
+                             np.datetime64('10000-01-01', unit2))
         # Check some days with units that won't overflow
         for unit1 in ['D', '12h', 'h', 'm', 's', '4s', 'ms', 'us']:
             dt1 = np.dtype('M8[%s]' % unit1)
