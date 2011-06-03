@@ -768,18 +768,121 @@ array_setasflat(PyArrayObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyObject *
-array_astype(PyArrayObject *self, PyObject *args)
+static const char *
+npy_casting_to_string(NPY_CASTING casting)
 {
-    PyArray_Descr *descr = NULL;
+    switch (casting) {
+        case NPY_NO_CASTING:
+            return "'no'";
+        case NPY_EQUIV_CASTING:
+            return "'equiv'";
+        case NPY_SAFE_CASTING:
+            return "'safe'";
+        case NPY_SAME_KIND_CASTING:
+            return "'same_kind'";
+        case NPY_UNSAFE_CASTING:
+            return "'unsafe'";
+        default:
+            return "<unknown>";
+    }
+}
 
-    if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
-                          &descr)) {
-        Py_XDECREF(descr);
+static PyObject *
+array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"dtype", "order", "casting",
+                             "subok", "copy", NULL};
+    PyArray_Descr *dtype = NULL;
+    /*
+     * TODO: UNSAFE default for compatibility, I think
+     *       switching to SAME_KIND by default would be good.
+     */
+    NPY_CASTING casting = NPY_UNSAFE_CASTING;
+    NPY_ORDER order = NPY_KEEPORDER;
+    int forcecopy = 1, subok = 1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&ii", kwlist,
+                            PyArray_DescrConverter, &dtype,
+                            PyArray_OrderConverter, &order,
+                            PyArray_CastingConverter, &casting,
+                            &subok,
+                            &forcecopy)) {
+        Py_XDECREF(dtype);
         return NULL;
     }
 
-    return PyArray_CastToType(self, descr, PyArray_ISFORTRAN(self));
+    /*
+     * If the memory layout matches and, data types are equivalent,
+     * and it's not a subtype if subok is False, then we
+     * can skip the copy.
+     */
+    if (!forcecopy && (order == NPY_KEEPORDER ||
+                       (order == NPY_ANYORDER &&
+                            (PyArray_IS_C_CONTIGUOUS(self) ||
+                            PyArray_IS_F_CONTIGUOUS(self))) ||
+                       (order == NPY_CORDER &&
+                            PyArray_IS_C_CONTIGUOUS(self)) ||
+                       (order == NPY_FORTRANORDER &&
+                            PyArray_IS_F_CONTIGUOUS(self))) &&
+                    (subok || PyArray_CheckExact(self)) &&
+                    PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
+        Py_DECREF(dtype);
+        Py_INCREF(self);
+        return (PyObject *)self;
+    }
+    else if (PyArray_CanCastArrayTo(self, dtype, casting)) {
+        PyArrayObject *ret;
+
+        if (dtype->elsize == 0) {
+            PyArray_DESCR_REPLACE(dtype);
+            if (dtype == NULL) {
+                return NULL;
+            }
+
+            if (dtype->type_num == PyArray_DESCR(self)->type_num ||
+                                        dtype->type_num == NPY_VOID) {
+                dtype->elsize = PyArray_DESCR(self)->elsize;
+            }
+            else if (PyArray_DESCR(self)->type_num == NPY_STRING &&
+                                    dtype->type_num == NPY_UNICODE) {
+                dtype->elsize = PyArray_DESCR(self)->elsize * 4;
+            }
+            else if (PyArray_DESCR(self)->type_num == NPY_UNICODE &&
+                                    dtype->type_num == NPY_STRING) {
+                dtype->elsize = PyArray_DESCR(self)->elsize / 4;
+            }
+        }
+        
+        /* This steals the reference to dtype, so no DECREF of dtype */
+        ret = (PyArrayObject *)PyArray_NewLikeArray(
+                                    self, order, dtype, subok);
+
+        if (ret == NULL) {
+            return NULL;
+        }
+        if (PyArray_CopyInto(ret, self) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        return (PyObject *)ret;
+    }
+    else {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Cannot cast array from ");
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)PyArray_DESCR(self)));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" to "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)dtype));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromFormat(" according to the rule %s",
+                        npy_casting_to_string(casting)));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(dtype);
+        return NULL;
+    }
 }
 
 /* default sub-type implementation */
@@ -2196,7 +2299,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
         (PyCFunction)array_astype,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)array_byteswap,
         METH_VARARGS, NULL},
