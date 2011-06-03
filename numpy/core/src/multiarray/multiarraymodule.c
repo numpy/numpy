@@ -3574,9 +3574,10 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    SINGLE_INHERIT(TimeInteger, SignedInteger);
-    SINGLE_INHERIT(Datetime, TimeInteger);
-    SINGLE_INHERIT(Timedelta, TimeInteger);
+    /* Datetime doesn't fit in any category */
+    SINGLE_INHERIT(Datetime, Generic);
+    /* Timedelta is an integer with an associated unit */
+    SINGLE_INHERIT(Timedelta, SignedInteger);
 
     /*
        fprintf(stderr,

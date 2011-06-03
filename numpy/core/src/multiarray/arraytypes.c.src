@@ -3767,7 +3767,6 @@ set_typeinfo(PyObject *dict)
     SETTYPE(Integer);
     SETTYPE(Inexact);
     SETTYPE(SignedInteger);
-    SETTYPE(TimeInteger);
     SETTYPE(UnsignedInteger);
     SETTYPE(Floating);
     SETTYPE(ComplexFloating);

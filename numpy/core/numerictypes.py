@@ -39,8 +39,9 @@ Exported symbols include:
     longfloat, clongfloat,
 
 
-    datetime_, timedelta_,  (these inherit from timeinteger which inherits
-    from signedinteger)
+    datetime_
+    timedelta_,  (this inherits from from signedinteger, as it is
+                  a signed integer with an associated time unit)
 
 
    As part of the type-hierarchy:    xx -- is bit-width

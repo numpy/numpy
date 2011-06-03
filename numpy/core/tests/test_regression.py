@@ -1317,7 +1317,7 @@ class TestRegression(TestCase):
     def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()
                   if (issubclass(x, np.number)
-                      and not issubclass(x, np.timeinteger))]
+                      and not issubclass(x, np.timedelta_))]
         a = np.array([], dtypes[0])
         failures = []
         for x in dtypes:

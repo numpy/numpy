@@ -80,8 +80,6 @@ class TestArray2String(TestCase):
                 "[. o O]")
         assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==\
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'timeint':_format_function}) == \
-                "[0 1 2]")
         assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) == \
                 "[0.0000 1.0000 2.0000]")
         assert_(np.array2string(x, formatter={'int':lambda x: hex(x)}) == \
