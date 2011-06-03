@@ -950,6 +950,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             return NULL;
         }
         PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
         if (descr->type_num == NPY_STRING) {
             sd = descr->elsize = 1;
         }
@@ -2787,11 +2790,11 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 
 
 /*NUMPY_API
-  PyArray_CheckAxis
-
-  check that axis is valid
-  convert 0-d arrays to 1-d arrays
-*/
+ * PyArray_CheckAxis
+ *
+ * check that axis is valid
+ * convert 0-d arrays to 1-d arrays
+ */
 NPY_NO_EXPORT PyObject *
 PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {

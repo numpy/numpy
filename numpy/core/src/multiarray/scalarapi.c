@@ -94,10 +94,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 _IFCASE(Int);
                 _IFCASE(Long);
                 _IFCASE(LongLong);
-                if _CHK(TimeInteger) {
-                    _IFCASE(Datetime);
-                    _IFCASE(Timedelta);
-                }
+                _IFCASE(Timedelta);
             }
             else {
                 /* Unsigned Integer */
@@ -126,6 +123,9 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     else if (_CHK(Bool)) {
         return _OBJ(Bool);
+    }
+    else if (_CHK(Datetime)) {
+        return _OBJ(Datetime);
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
@@ -522,7 +522,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         return descr;
     }
 
-    if (PyArray_IsScalar(sc, TimeInteger)) {
+    if (PyArray_IsScalar(sc, Datetime) || PyArray_IsScalar(sc, Timedelta)) {
         PyObject *cobj;
         PyArray_DatetimeMetaData *dt_data;
 

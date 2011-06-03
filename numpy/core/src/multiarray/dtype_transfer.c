@@ -16,8 +16,11 @@
 
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
-#include <numpy/ufuncobject.h>
 #include <numpy/npy_cpu.h>
+
+#include "numpy/npy_3kcompat.h"
+
+#include "_datetime.h"
 
 #include "lowlevel_strided_loops.h"
 
@@ -696,6 +699,241 @@ get_nbo_cast_numeric_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
+/* Does a datetime->datetime or timedelta->timedelta cast */
+typedef struct {
+    free_strided_transfer_data freefunc;
+    copy_strided_transfer_data copyfunc;
+    /* The conversion fraction */
+    npy_int64 num, denom;
+    /* The number of events in the source and destination */
+    int src_events, dst_events;
+    /*
+     * The metadata for when dealing with Months, Years, or
+     * Business Days (all of which behave non-linearly).
+     */
+    PyArray_DatetimeMetaData src_meta, dst_meta;
+} _strided_datetime_cast_data;
+
+/* strided cast data copy function */
+void *_strided_datetime_cast_data_copy(void *data)
+{
+    _strided_datetime_cast_data *newdata =
+            (_strided_datetime_cast_data *)PyArray_malloc(
+                                        sizeof(_strided_datetime_cast_data));
+    if (newdata == NULL) {
+        return NULL;
+    }
+
+    memcpy(newdata, data, sizeof(_strided_datetime_cast_data));
+
+    return (void *)newdata;
+}
+
+static void
+_strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_int64 dt;
+    npy_datetimestruct dts;
+
+    while (N > 0) {
+        memcpy(&dt, src, sizeof(dt));
+
+        if (convert_datetime_to_datetimestruct(&d->src_meta,
+                                               dt, &dts) < 0) {
+            dt = NPY_DATETIME_NAT;
+        }
+        else {
+            dts.event = dts.event % d->dst_meta.events;
+            if (convert_datetimestruct_to_datetime(&d->dst_meta,
+                                                   &dts, &dt) < 0) {
+                dt = NPY_DATETIME_NAT;
+            }
+        }
+
+        memcpy(dst, &dt, sizeof(dt));
+
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+static void
+_strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_int64 num = d->num, denom = d->denom;
+    npy_int64 dt;
+    int event = 0, src_events = d->src_events, dst_events = d->dst_events;
+
+    while (N > 0) {
+        memcpy(&dt, src, sizeof(dt));
+
+        if (dt != NPY_DATETIME_NAT) {
+            /* Remove the event number from the value */
+            if (src_events > 1) {
+                event = (int)(dt % src_events);
+                dt = dt / src_events;
+                if (event < 0) {
+                    --dt;
+                    event += src_events;
+                }
+            }
+
+            /* Apply the scaling */
+            if (dt < 0) {
+                dt = (dt * num - (denom - 1)) / denom;
+            }
+            else {
+                dt = dt * num / denom;
+            }
+
+            /* Add the event number back in */
+            if (dst_events > 1) {
+                event = event % dst_events;
+                dt = dt * dst_events + event;
+            }
+        }
+
+        memcpy(dst, &dt, sizeof(dt));
+
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+static void
+_aligned_strided_to_strided_datetime_cast_no_events(char *dst,
+                        npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_int64 num = d->num, denom = d->denom;
+    npy_int64 dt;
+
+    while (N > 0) {
+        dt = *(npy_int64 *)src;
+
+        if (dt != NPY_DATETIME_NAT) {
+            /* Apply the scaling */
+            if (dt < 0) {
+                dt = (dt * num - (denom - 1)) / denom;
+            }
+            else {
+                dt = dt * num / denom;
+            }
+        }
+
+        *(npy_int64 *)dst = dt;
+
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+/*
+ * Assumes src_dtype and dst_dtype are both datetimes or both timedeltas
+ */
+static int
+get_nbo_cast_datetime_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
+{
+    PyArray_DatetimeMetaData *src_meta, *dst_meta;
+    npy_int64 num = 0, denom = 0;
+    _strided_datetime_cast_data *data;
+
+    src_meta = get_datetime_metadata_from_dtype(src_dtype);
+    if (src_meta == NULL) {
+        return NPY_FAIL;
+    }
+    dst_meta = get_datetime_metadata_from_dtype(dst_dtype);
+    if (dst_meta == NULL) {
+        return NPY_FAIL;
+    }
+
+    get_datetime_conversion_factor(src_meta, dst_meta, &num, &denom);
+
+    if (num == 0) {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Integer overflow "
+                    "getting a conversion factor between types ");
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)src_dtype));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)dst_dtype));
+        PyErr_SetObject(PyExc_OverflowError, errmsg);
+        return NPY_FAIL;
+    }
+
+    /* Allocate the data for the casting */
+    data = (_strided_datetime_cast_data *)PyArray_malloc(
+                                    sizeof(_strided_datetime_cast_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
+        return NPY_FAIL;
+    }
+    data->freefunc = &PyArray_free;
+    data->copyfunc = &_strided_datetime_cast_data_copy;
+    data->num = num;
+    data->denom = denom;
+    data->src_events = src_meta->events;
+    data->dst_events = dst_meta->events;
+
+    /*
+     * Special case the datetime (but not timedelta) with the nonlinear
+     * units (years, months, business days). For timedelta, an average
+     * years and months value is used.
+     */
+    if (src_dtype->type_num == NPY_DATETIME &&
+            (src_meta->base == NPY_FR_Y ||
+             src_meta->base == NPY_FR_M ||
+             src_meta->base == NPY_FR_B ||
+             dst_meta->base == NPY_FR_Y ||
+             dst_meta->base == NPY_FR_M ||
+             dst_meta->base == NPY_FR_B)) {
+        memcpy(&data->src_meta, src_meta, sizeof(data->src_meta));
+        memcpy(&data->dst_meta, dst_meta, sizeof(data->dst_meta));
+        *out_stransfer = &_strided_to_strided_datetime_general_cast;
+    }
+    else if (aligned && data->src_events == 1 && data->dst_events == 1) {
+        *out_stransfer = &_aligned_strided_to_strided_datetime_cast_no_events;
+    }
+    else {
+        *out_stransfer = &_strided_to_strided_datetime_cast;
+    }
+    *out_transferdata = data;
+
+#if NPY_DT_DBG_TRACING
+    printf("Dtype transfer from ");
+    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    printf(" to ");
+    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    printf("\n");
+    printf("has conversion fraction %lld/%lld\n", num, denom);
+#endif
+
+
+    return NPY_SUCCEED;
+}
+
 static int
 get_nbo_cast_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
@@ -719,6 +957,19 @@ get_nbo_cast_transfer_function(int aligned,
         return get_nbo_cast_numeric_transfer_function(aligned,
                                     src_stride, dst_stride,
                                     src_dtype->type_num, dst_dtype->type_num,
+                                    out_stransfer, out_transferdata);
+    }
+
+    /* As a parameterized type, datetime->datetime sometimes needs casting */
+    if ((src_dtype->type_num == NPY_DATETIME &&
+                dst_dtype->type_num == NPY_DATETIME) ||
+            (src_dtype->type_num == NPY_TIMEDELTA &&
+                dst_dtype->type_num == NPY_TIMEDELTA)) {
+        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                          !PyArray_ISNBO(dst_dtype->byteorder);
+        return get_nbo_cast_datetime_transfer_function(aligned,
+                                    src_stride, dst_stride,
+                                    src_dtype, dst_dtype,
                                     out_stransfer, out_transferdata);
     }
 
@@ -854,7 +1105,9 @@ get_cast_transfer_function(int aligned,
     npy_intp src_itemsize = src_dtype->elsize,
             dst_itemsize = dst_dtype->elsize;
 
-    if (src_dtype->type_num == dst_dtype->type_num) {
+    if (src_dtype->type_num == dst_dtype->type_num &&
+            src_dtype->type_num != NPY_DATETIME &&
+            src_dtype->type_num != NPY_TIMEDELTA) {
         PyErr_SetString(PyExc_ValueError,
                 "low level cast function is for unequal type numbers");
         return NPY_FAIL;
@@ -2872,7 +3125,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
     if (src_itemsize == dst_itemsize && src_dtype->kind == dst_dtype->kind &&
                 !PyDataType_HASFIELDS(src_dtype) &&
                 !PyDataType_HASFIELDS(dst_dtype) &&
-                src_dtype->subarray == NULL && dst_dtype->subarray == NULL) {
+                src_dtype->subarray == NULL && dst_dtype->subarray == NULL &&
+                src_type_num != NPY_DATETIME && src_type_num != NPY_TIMEDELTA) {
         /* A custom data type requires that we use its copy/swap */
         if (src_type_num >= NPY_NTYPES || dst_type_num >= NPY_NTYPES) {
             /*
@@ -2895,8 +3149,6 @@ PyArray_GetDTypeTransferFunction(int aligned,
                                         PyArray_ISNBO(dst_dtype->byteorder),
                                 out_stransfer, out_transferdata);
             }
-
-
         }
 
         /* The special types, which have no byte-order */

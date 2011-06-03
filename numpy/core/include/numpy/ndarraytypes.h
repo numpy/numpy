@@ -213,21 +213,37 @@ typedef enum {
         NPY_RAISE=2
 } NPY_CLIPMODE;
 
+/* The special not-a-time (NaT) value */
+#define NPY_DATETIME_NAT NPY_MIN_INT64
+/*
+ * Theoretical maximum length of a DATETIME ISO 8601 string
+ *   YEAR: 21 (64-bit year)
+ *   MONTH: 3
+ *   DAY: 3
+ *   HOURS: 3
+ *   MINUTES: 3
+ *   SECONDS: 3
+ *   ATTOSECONDS: 1 + 3*6
+ *   TIMEZONE: 5
+ *   NULL TERMINATOR: 1
+ */
+#define NPY_DATETIME_MAX_ISO8601_STRLEN (21+3*5+1+3*6+6+1)
+
 typedef enum {
-        NPY_FR_Y,
-        NPY_FR_M,
-        NPY_FR_W,
-        NPY_FR_B,
-        NPY_FR_D,
-        NPY_FR_h,
-        NPY_FR_m,
-        NPY_FR_s,
-        NPY_FR_ms,
-        NPY_FR_us,
-        NPY_FR_ns,
-        NPY_FR_ps,
-        NPY_FR_fs,
-        NPY_FR_as
+        NPY_FR_Y, /* Years */
+        NPY_FR_M, /* Months */
+        NPY_FR_W, /* Weeks */
+        NPY_FR_B, /* Business days (weekdays, doesn't account for holidays) */
+        NPY_FR_D, /* Days */
+        NPY_FR_h, /* hours */
+        NPY_FR_m, /* minutes */
+        NPY_FR_s, /* seconds */
+        NPY_FR_ms,/* milliseconds */
+        NPY_FR_us,/* microseconds */
+        NPY_FR_ns,/* nanoseconds */
+        NPY_FR_ps,/* picoseconds */
+        NPY_FR_fs,/* femtoseconds */
+        NPY_FR_as /* attoseconds */
 } NPY_DATETIMEUNIT;
 
 #define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
@@ -676,23 +692,32 @@ typedef struct {
 typedef struct {
         NPY_DATETIMEUNIT base;
         int num;
-        int den;      /*
-                       * Converted to 1 on input for now -- an
-                       * input-only mechanism
-                       */
+        /*
+         * 'den' is unused, kept here for ABI compatibility with 1.6.
+         * TODO: Remove for 2.0.
+         */
+        int den;
         int events;
 } PyArray_DatetimeMetaData;
 
+/*
+ * This structure contains an exploded view of a date-time value.
+ * NaT is represented by year == NPY_DATETIME_NAT.
+ */
 typedef struct {
-        npy_longlong year;
-        int month, day, hour, min, sec, us, ps, as;
+        npy_int64 year;
+        npy_int32 month, day, hour, min, sec, us, ps, as;
+        npy_int32 event;
 } npy_datetimestruct;
 
+/* TO BE REMOVED - NOT USED INTERNALLY. */
 typedef struct {
-        npy_longlong day;
-        int sec, us, ps, as;
+        npy_int64 day;
+        npy_int32 sec, us, ps, as;
+        npy_int32 event;
 } npy_timedeltastruct;
 
+/* TO BE REMOVED - NOT USED INTERNALLY. */
 #if PY_VERSION_HEX >= 0x03000000
 #define PyDataType_GetDatetimeMetaData(descr)                                 \
     ((descr->metadata == NULL) ? NULL :                                       \
@@ -802,7 +827,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * Size of internal buffers used for alignment Make BUFSIZE a multiple
- * of sizeof(cdouble) -- ususally 16 so that ufunc buffers are aligned
+ * of sizeof(cdouble) -- usually 16 so that ufunc buffers are aligned
  */
 #define NPY_MIN_BUFSIZE ((int)sizeof(cdouble))
 #define NPY_MAX_BUFSIZE (((int)sizeof(cdouble))*1000000)

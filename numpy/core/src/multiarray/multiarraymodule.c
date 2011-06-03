@@ -44,6 +44,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "numpymemoryview.h"
 #include "convert_datatype.h"
 #include "nditer_pywrap.h"
+#include "_datetime.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1401,39 +1402,6 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
 }
 
 /*
- * compare the metadata for two date-times
- * return 1 if they are the same
- * or 0 if not
- */
-static int
-_equivalent_units(PyObject *meta1, PyObject *meta2)
-{
-    PyObject *cobj1, *cobj2;
-    PyArray_DatetimeMetaData *data1, *data2;
-
-    /* Same meta object */
-    if (meta1 == meta2) {
-        return 1;
-    }
-
-    cobj1 = PyDict_GetItemString(meta1, NPY_METADATA_DTSTR);
-    cobj2 = PyDict_GetItemString(meta2, NPY_METADATA_DTSTR);
-    if (cobj1 == cobj2) {
-        return 1;
-    }
-
-/* FIXME
- * There is no err handling here.
- */
-    data1 = NpyCapsule_AsVoidPtr(cobj1);
-    data2 = NpyCapsule_AsVoidPtr(cobj2);
-    return ((data1->base == data2->base)
-            && (data1->num == data2->num)
-            && (data1->den == data2->den)
-            && (data1->events == data2->events));
-}
-
-/*
  * Compare the subarray data for two types.
  * Return 1 if they are the same, 0 if not.
  */
@@ -1471,42 +1439,42 @@ _equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
  * equivalent (same basic kind and same itemsize).
  */
 NPY_NO_EXPORT unsigned char
-PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
+PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-    int typenum1, typenum2, size1, size2;
+    int type_num1, type_num2, size1, size2;
 
-    if (typ1 == typ2) {
+    if (type1 == type2) {
         return TRUE;
     }
 
-    typenum1 = typ1->type_num;
-    typenum2 = typ2->type_num;
-    size1 = typ1->elsize;
-    size2 = typ2->elsize;
+    type_num1 = type1->type_num;
+    type_num2 = type2->type_num;
+    size1 = type1->elsize;
+    size2 = type2->elsize;
 
     if (size1 != size2) {
         return FALSE;
     }
-    if (PyArray_ISNBO(typ1->byteorder) != PyArray_ISNBO(typ2->byteorder)) {
+    if (PyArray_ISNBO(type1->byteorder) != PyArray_ISNBO(type2->byteorder)) {
         return FALSE;
     }
-    if (typ1->subarray || typ2->subarray) {
-        return ((typenum1 == typenum2)
-                && _equivalent_subarrays(typ1->subarray, typ2->subarray));
+    if (type1->subarray || type2->subarray) {
+        return ((type_num1 == type_num2)
+                && _equivalent_subarrays(type1->subarray, type2->subarray));
     }
-    if (typenum1 == PyArray_VOID
-        || typenum2 == PyArray_VOID) {
-        return ((typenum1 == typenum2)
-                && _equivalent_fields(typ1->fields, typ2->fields));
+    if (type_num1 == NPY_VOID
+        || type_num2 == NPY_VOID) {
+        return ((type_num1 == type_num2)
+                && _equivalent_fields(type1->fields, type2->fields));
     }
-    if (typenum1 == PyArray_DATETIME
-            || typenum1 == PyArray_DATETIME
-            || typenum2 == PyArray_TIMEDELTA
-            || typenum2 == PyArray_TIMEDELTA) {
-        return ((typenum1 == typenum2)
-                && _equivalent_units(typ1->metadata, typ2->metadata));
+    if (type_num1 == NPY_DATETIME
+            || type_num1 == NPY_DATETIME
+            || type_num2 == NPY_TIMEDELTA
+            || type_num2 == NPY_TIMEDELTA) {
+        return ((type_num1 == type_num2)
+                && has_equivalent_datetime_metadata(type1, type2));
     }
-    return typ1->kind == typ2->kind;
+    return type1->kind == type2->kind;
 }
 
 /*NUMPY_API*/
@@ -2569,36 +2537,11 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
 }
 
 static PyObject *
-array_set_datetimeparse_function(PyObject *NPY_UNUSED(self), PyObject *args,
-        PyObject *kwds)
+array_set_datetimeparse_function(PyObject *NPY_UNUSED(self),
+        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
-    PyObject *op = NULL;
-    static char *kwlist[] = {"f", NULL};
-    PyObject *_numpy_internal;
-
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &op)) {
-        return NULL;
-    }
-    /* reset the array_repr function to built-in */
-    if (op == Py_None) {
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        op = PyObject_GetAttrString(_numpy_internal, "datetime_from_string");
-    }
-    else { /* Must balance reference count increment in both branches */
-        if (!PyCallable_Check(op)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "Argument must be callable.");
-            return NULL;
-        }
-        Py_INCREF(op);
-    }
-    PyArray_SetDatetimeParseFunction(op);
-    Py_DECREF(op);
-    Py_INCREF(Py_None);
-    return Py_None;
+    PyErr_SetString(PyExc_RuntimeError, "This function is to be removed");
+    return NULL;
 }
 
 
@@ -2843,6 +2786,189 @@ finish:
     }
     return ret;
 }
+
+static PyObject *
+array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyArray_Descr *dtype;
+    PyArray_DatetimeMetaData *meta;
+
+    if(!PyArg_ParseTuple(args, "O&:datetime_data",
+                PyArray_DescrConverter, &dtype)) {
+        return NULL;
+    }
+
+    meta = get_datetime_metadata_from_dtype(dtype);
+    if (meta == NULL) {
+        return NULL;
+    }
+
+    return convert_datetime_metadata_to_tuple(meta);
+}
+
+static PyObject *
+array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
+                                PyObject *kwds)
+{
+    PyObject *arr_in = NULL, *unit_in = NULL;
+    int local = 0, tzoffset = -1;
+    NPY_DATETIMEUNIT unit;
+    PyArray_DatetimeMetaData *meta;
+    int strsize;
+
+    PyArrayObject *ret = NULL;
+
+    NpyIter *iter = NULL;
+    PyArrayObject *op[2] = {NULL, NULL};
+    PyArray_Descr *op_dtypes[2] = {NULL, NULL};
+    npy_uint32 flags, op_flags[2];
+
+    static char *kwlist[] = {"arr", "local", "unit", "tzoffset", NULL};
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "O|iOi:datetime_as_string", kwlist,
+                                &arr_in,
+                                &local,
+                                &unit_in,
+                                &tzoffset)) {
+        goto fail;
+    }
+
+    op[0] = (PyArrayObject *)PyArray_FromAny(arr_in,
+                                    NULL, 0, 0, 0, NULL);
+    if (PyArray_DESCR(op[0])->type_num != NPY_DATETIME) {
+        PyErr_SetString(PyExc_TypeError,
+                    "input must have type NumPy datetime");
+        goto fail;
+    }
+
+    /* Get the datetime metadata */
+    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(op[0]));
+    if (meta == NULL) {
+        goto fail;
+    }
+
+    /* Use the metadata's unit for printing by default */
+    unit = meta->base;
+
+    /* Parse the input unit if provided */
+    if (unit_in != NULL && unit_in != Py_None) {
+        PyObject *strobj;
+        char *str = NULL;
+        Py_ssize_t len = 0;
+
+        if (PyUnicode_Check(unit_in)) {
+            strobj = PyUnicode_AsASCIIString(unit_in);
+            if (strobj == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            strobj = unit_in;
+            Py_INCREF(strobj);
+        }
+
+        if (PyBytes_AsStringAndSize(strobj, &str, &len) < 0) {
+            Py_DECREF(strobj);
+            goto fail;
+        }
+
+        /* unit == -1 means to autodetect the unit from the datetime data */
+        if (strcmp(str, "auto") == 0) {
+            unit = -1;
+        }
+        else {
+            unit = parse_datetime_unit_from_string(str, len, NULL);
+            if (unit == -1) {
+                Py_DECREF(strobj);
+                goto fail;
+            }
+        }
+        Py_DECREF(strobj);
+    }
+
+    if (!local && tzoffset != -1) {
+        PyErr_SetString(PyExc_ValueError,
+                "Can only use 'tzoffset' parameter when 'local' is "
+                "set to True");
+        goto fail;
+    }
+
+    /* Create the output string data type with a big enough length */
+    op_dtypes[1] = PyArray_DescrNewFromType(NPY_STRING);
+    if (op_dtypes[1] == NULL) {
+        goto fail;
+    }
+    strsize = get_datetime_iso_8601_strlen(local, unit);
+    op_dtypes[1]->elsize = strsize;
+
+    flags = NPY_ITER_ZEROSIZE_OK|
+            NPY_ITER_BUFFERED;
+    op_flags[0] = NPY_ITER_READONLY|
+                  NPY_ITER_ALIGNED;
+    op_flags[1] = NPY_ITER_WRITEONLY|
+                  NPY_ITER_ALLOCATE;
+
+    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_NO_CASTING,
+                            op_flags, op_dtypes);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_datetime dt;
+        npy_datetimestruct dts;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+
+        do {
+            /* Get the datetime */
+            dt = *(datetime *)dataptr[0];
+            /* Convert it to a struct */
+            if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+                goto fail;
+            }
+            /* Zero the destination string completely */
+            memset(dataptr[1], 0, strsize);
+            /* Convert that into a string */
+            if (make_iso_8601_date(&dts, (char *)dataptr[1], strsize,
+                                local, unit, tzoffset) < 0) {
+                goto fail;
+            }
+        } while(iternext(iter));
+    }
+
+    ret = NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+
+    Py_XDECREF(op[0]);
+    Py_XDECREF(op[1]);
+    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(op_dtypes[1]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+
+    return PyArray_Return(ret);
+
+fail:
+    Py_XDECREF(op[0]);
+    Py_XDECREF(op[1]);
+    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(op_dtypes[1]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+
+    return NULL;
+}
+
 
 #if !defined(NPY_PY3K)
 static PyObject *
@@ -3464,6 +3590,12 @@ static struct PyMethodDef array_module_methods[] = {
     {"result_type",
         (PyCFunction)array_result_type,
         METH_VARARGS, NULL},
+    {"datetime_data",
+        (PyCFunction)array_datetime_data,
+        METH_VARARGS, NULL},
+    {"datetime_as_string",
+        (PyCFunction)array_datetime_as_string,
+        METH_VARARGS | METH_KEYWORDS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",
         (PyCFunction)new_buffer,
@@ -3609,9 +3741,10 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    SINGLE_INHERIT(TimeInteger, SignedInteger);
-    SINGLE_INHERIT(Datetime, TimeInteger);
-    SINGLE_INHERIT(Timedelta, TimeInteger);
+    /* Datetime doesn't fit in any category */
+    SINGLE_INHERIT(Datetime, Generic);
+    /* Timedelta is an integer with an associated unit */
+    SINGLE_INHERIT(Timedelta, SignedInteger);
 
     /*
        fprintf(stderr,
@@ -3732,6 +3865,9 @@ PyMODINIT_FUNC initmultiarray(void) {
         "CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS",
         1);
 #endif
+
+    /* Initialize access to the PyDateTime API */
+    numpy_pydatetime_import();
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
