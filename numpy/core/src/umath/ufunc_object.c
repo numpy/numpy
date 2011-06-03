@@ -3486,11 +3486,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     NPY_ORDER order = NPY_KEEPORDER;
     /*
-     * Many things in NumPy do unsafe casting (doing int += float, etc).
-     * The strictness should probably become a state parameter, similar
-     * to the seterr/geterr.
+     * Currently trying out SAME_KIND casting rule by default.
      */
-    NPY_CASTING casting = NPY_UNSAFE_CASTING;
+    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *type_tup = NULL;
 
@@ -3870,11 +3868,9 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     NPY_ORDER order = NPY_KEEPORDER;
     /*
-     * Many things in NumPy do unsafe casting (doing int += float, etc).
-     * The strictness should probably become a state parameter, similar
-     * to the seterr/geterr.
+     * Currently trying out SAME_KIND casting rule by default.
      */
-    NPY_CASTING casting = NPY_UNSAFE_CASTING;
+    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *type_tup = NULL;
 
