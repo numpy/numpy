@@ -224,7 +224,7 @@ typedef enum {
  *   MINUTES: 3
  *   SECONDS: 3
  *   ATTOSECONDS: 1 + 3*6
- *   TIMEZONE: 6
+ *   TIMEZONE: 5
  *   NULL TERMINATOR: 1
  */
 #define NPY_DATETIME_MAX_ISO8601_STRLEN (21+3*5+1+3*6+6+1)

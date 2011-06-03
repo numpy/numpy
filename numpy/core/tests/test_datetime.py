@@ -873,6 +873,125 @@ class TestDateTime(TestCase):
 
         assert_equal(x[0].astype(np.int64), 322689600000000000)
 
+    def test_datetime_as_string(self):
+        # Check all the units with default string conversion
+        date = '1959-10-13T12:34:56.789012345678901234Z'
+
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'Y')),
+                     '1959')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'M')),
+                     '1959-10')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'D')),
+                     '1959-10-13')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'h')),
+                     '1959-10-13T12Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'm')),
+                     '1959-10-13T12:34Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 's')),
+                     '1959-10-13T12:34:56Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'ms')),
+                     '1959-10-13T12:34:56.789Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'us')),
+                     '1959-10-13T12:34:56.789012Z')
+
+        date = '1969-12-31T23:34:56.789012345678901234Z'
+
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'ns')),
+                     '1969-12-31T23:34:56.789012345Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'ps')),
+                     '1969-12-31T23:34:56.789012345678Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'fs')),
+                     '1969-12-31T23:34:56.789012345678901Z')
+
+        date = '1969-12-31T23:59:57.789012345678901234Z'
+
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'as')),
+                     date);
+        date = '1970-01-01T00:34:56.789012345678901234Z'
+
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'ns')),
+                     '1970-01-01T00:34:56.789012345Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'ps')),
+                     '1970-01-01T00:34:56.789012345678Z')
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'fs')),
+                     '1970-01-01T00:34:56.789012345678901Z')
+
+        date = '1970-01-01T00:00:05.789012345678901234Z'
+
+        assert_equal(np.datetime_as_string(np.datetime64(date, 'as')),
+                     date);
+
+        # String conversion with the unit= parameter
+        a = np.datetime64('2032-07-18T12:23:34.123456Z', 'us')
+        assert_equal(np.datetime_as_string(a, unit='Y'), '2032')
+        assert_equal(np.datetime_as_string(a, unit='M'), '2032-07')
+        assert_equal(np.datetime_as_string(a, unit='W'), '2032-07-18')
+        assert_equal(np.datetime_as_string(a, unit='D'), '2032-07-18')
+        assert_equal(np.datetime_as_string(a, unit='h'), '2032-07-18T12Z')
+        assert_equal(np.datetime_as_string(a, unit='m'),
+                            '2032-07-18T12:23Z')
+        assert_equal(np.datetime_as_string(a, unit='s'),
+                            '2032-07-18T12:23:34Z')
+        assert_equal(np.datetime_as_string(a, unit='ms'),
+                            '2032-07-18T12:23:34.123Z')
+        assert_equal(np.datetime_as_string(a, unit='us'),
+                            '2032-07-18T12:23:34.123456Z')
+        assert_equal(np.datetime_as_string(a, unit='ns'),
+                            '2032-07-18T12:23:34.123456000Z')
+        assert_equal(np.datetime_as_string(a, unit='ps'),
+                            '2032-07-18T12:23:34.123456000000Z')
+        assert_equal(np.datetime_as_string(a, unit='fs'),
+                            '2032-07-18T12:23:34.123456000000000Z')
+        assert_equal(np.datetime_as_string(a, unit='as'),
+                            '2032-07-18T12:23:34.123456000000000000Z')
+
+        # unit='auto' parameter
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-18T12:23:34.123456Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-18T12:23:34.123456Z')
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-18T12:23:34.12Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-18T12:23:34.120Z')
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-18T12:23:34Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-18T12:23:34Z')
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-18T12:23:00Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-18T12:23Z')
+        # 'auto' doesn't split up hour and minute
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-18T12:00:00Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-18T12:00Z')
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-18T00:00:00Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-18')
+        # 'auto' doesn't split up the date
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-07-01T00:00:00Z', 'us'),
+                                            unit='auto'),
+                            '2032-07-01')
+        assert_equal(np.datetime_as_string(
+                            np.datetime64('2032-01-01T00:00:00Z', 'us'),
+                                            unit='auto'),
+                            '2032-01-01')
+
+        # local=True
+        a = np.datetime64('2010-03-15T06:30Z', 'm')
+        assert_(np.datetime_as_string(a, local=True) != '2010-03-15T6:30Z')
+        # local=True with tzoffset
+        assert_equal(np.datetime_as_string(a, local=True, tzoffset=-60),
+                     '2010-03-15T05:30-0100')
+        assert_equal(np.datetime_as_string(a, local=True, tzoffset=+30),
+                     '2010-03-15T07:00+0030')
+        assert_equal(np.datetime_as_string(a, local=True, tzoffset=-5*60),
+                     '2010-03-15T01:30-0500')
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):

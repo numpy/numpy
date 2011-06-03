@@ -31,15 +31,6 @@ is_leapyear(npy_int64 year);
 /* For defaults and errors */
 #define NPY_FR_ERR  -1
 
-/* Offset for number of days between Dec 31, 1969 and Jan 1, 0001
-*  Assuming Gregorian calendar was always in effect (proleptic Gregorian calendar)
-*/
-
-/* Calendar Structure for Parsing Long -> Date */
-typedef struct {
-    int hour, min, sec;
-} hmsstruct;
-
 /* Exported as DATETIMEUNITS in multiarraymodule.c */
 NPY_NO_EXPORT char *_datetime_strings[] = {
     NPY_STR_Y,
@@ -60,6 +51,7 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
 
 /*
   ====================================================
+    }
   == Beginning of section borrowed from mx.DateTime ==
   ====================================================
 */
@@ -92,34 +84,6 @@ day_of_week(npy_longlong absdate)
     else {
         return 6 + (absdate + 1) % 7;
     }
-}
-
-/* Returns absolute seconds from an hour, minute, and second
- */
-#define secs_from_hms(hour, min, sec, multiplier) (\
-  ((hour)*3600 + (min)*60 + (sec)) * (npy_int64)(multiplier)\
-)
-
-/*
- * Converts an integer number of seconds in a day to hours minutes seconds.
- * It assumes seconds is between 0 and 86399.
- */
-
-static hmsstruct
-seconds_to_hmsstruct(npy_longlong dlong)
-{
-    int hour, minute, second;
-    hmsstruct hms;
-
-    hour   = dlong / 3600;
-    minute = (dlong % 3600) / 60;
-    second = dlong - (hour*3600 + minute*60);
-
-    hms.hour   = hour;
-    hms.min = minute;
-    hms.sec = second;
-
-    return hms;
 }
 
 /*
@@ -305,115 +269,111 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     else {
         /* Otherwise calculate the number of days to start */
         npy_int64 days = get_datetimestruct_days(dts);
+        int dotw;
 
-        if (base == NPY_FR_W) {
-            /* Truncate to weeks */
-            if (days >= 0) {
-                ret = days / 7;
-            }
-            else {
-                ret = (days - 6) / 7;
-            }
-        }
-        else if (base == NPY_FR_B) {
-            /* TODO: this needs work... */
-            npy_longlong x;
-            int dotw = day_of_week(days);
-
-            if (dotw > 4) {
-                /* Invalid business day */
-                ret = 0;
-            }
-            else {
+        switch (base) {
+            case NPY_FR_W:
+                /* Truncate to weeks */
                 if (days >= 0) {
-                    /* offset to adjust first week */
-                    x = days - 4;
+                    ret = days / 7;
                 }
                 else {
-                    x = days - 2;
+                    ret = (days - 6) / 7;
                 }
-                ret = 2 + (x / 7) * 5 + x % 7;
-            }
-        }
-        else if (base == NPY_FR_D) {
-            ret = days;
-        }
-        else if (base == NPY_FR_h) {
-            ret = days * 24 + dts->hour;
-        }
-        else if (base == NPY_FR_m) {
-            ret = days * 1440 + dts->hour * 60 + dts->min;
-        }
-        else if (base == NPY_FR_s) {
-            ret = days * (npy_int64)(86400) +
-                secs_from_hms(dts->hour, dts->min, dts->sec, 1);
-        }
-        else if (base == NPY_FR_ms) {
-            ret = days * (npy_int64)(86400000)
-                + secs_from_hms(dts->hour, dts->min, dts->sec, 1000)
-                + (dts->us / 1000);
-        }
-        else if (base == NPY_FR_us) {
-            npy_int64 num = 86400 * 1000;
-            num *= (npy_int64)(1000);
-            ret = days * num + secs_from_hms(dts->hour, dts->min, dts->sec,
-                                                    1000000)
-                + dts->us;
-        }
-        else if (base == NPY_FR_ns) {
-            npy_int64 num = 86400 * 1000;
-            num *= (npy_int64)(1000 * 1000);
-            ret = days * num + secs_from_hms(dts->hour, dts->min, dts->sec,
-                                                    1000000000)
-                + dts->us * (npy_int64)(1000) + (dts->ps / 1000);
-        }
-        else if (base == NPY_FR_ps) {
-            npy_int64 num2 = 1000 * 1000;
-            npy_int64 num1;
+                break;
+            case NPY_FR_B:
+                /* TODO: this needs work... */
+                dotw = day_of_week(days);
 
-            num2 *= (npy_int64)(1000 * 1000);
-            num1 = (npy_int64)(86400) * num2;
-            ret = days * num1 + secs_from_hms(dts->hour, dts->min, dts->sec, num2)
-                + dts->us * (npy_int64)(1000000) + dts->ps;
-        }
-        else if (base == NPY_FR_fs) {
-            /* only 2.6 hours */
-            npy_int64 num2 = 1000000;
-            num2 *= (npy_int64)(1000000);
-            num2 *= (npy_int64)(1000);
-
-            /* get number of seconds as a postive or negative number */
-            if (days >= 0) {
-                ret = secs_from_hms(dts->hour, dts->min, dts->sec, 1);
-            }
-            else {
-                ret = ((dts->hour - 24)*3600 + dts->min*60 + dts->sec);
-            }
-            ret = ret * num2 + dts->us * (npy_int64)(1000000000)
-                + dts->ps * (npy_int64)(1000) + (dts->as / 1000);
-        }
-        else if (base == NPY_FR_as) {
-            /* only 9.2 secs */
-            npy_int64 num1, num2;
-
-            num1 = 1000000;
-            num1 *= (npy_int64)(1000000);
-            num2 = num1 * (npy_int64)(1000000);
-
-            if (days >= 0) {
-                ret = dts->sec;
-            }
-            else {
-                ret = dts->sec - 60;
-            }
-            ret = ret * num2 + dts->us * num1 + dts->ps * (npy_int64)(1000000)
-                + dts->as;
-        }
-        else {
-            /* Something got corrupted */
-            PyErr_SetString(PyExc_ValueError,
+                if (dotw > 4) {
+                    /* Invalid business day */
+                    ret = 0;
+                }
+                else {
+                    npy_int64 x;
+                    if (days >= 0) {
+                        /* offset to adjust first week */
+                        x = days - 4;
+                    }
+                    else {
+                        x = days - 2;
+                    }
+                    ret = 2 + (x / 7) * 5 + x % 7;
+                }
+                break;
+            case NPY_FR_D:
+                ret = days;
+                break;
+            case NPY_FR_h:
+                ret = days * 24 +
+                      dts->hour;
+                break;
+            case NPY_FR_m:
+                ret = (days * 24 +
+                      dts->hour) * 60 +
+                      dts->min;
+                break;
+            case NPY_FR_s:
+                ret = ((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec;
+                break;
+            case NPY_FR_ms:
+                ret = (((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec) * 1000 +
+                      dts->us / 1000;
+                break;
+            case NPY_FR_us:
+                ret = (((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec) * 1000000 +
+                      dts->us;
+                break;
+            case NPY_FR_ns:
+                ret = ((((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec) * 1000000 +
+                      dts->us) * 1000 +
+                      dts->ps / 1000;
+                break;
+            case NPY_FR_ps:
+                ret = ((((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec) * 1000000 +
+                      dts->us) * 1000000 +
+                      dts->ps;
+                break;
+            case NPY_FR_fs:
+                /* only 2.6 hours */
+                ret = (((((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec) * 1000000 +
+                      dts->us) * 1000000 +
+                      dts->ps) * 1000 +
+                      dts->as / 1000;
+                break;
+            case NPY_FR_as:
+                /* only 9.2 secs */
+                ret = (((((days * 24 +
+                      dts->hour) * 60 +
+                      dts->min) * 60 +
+                      dts->sec) * 1000000 +
+                      dts->us) * 1000000 +
+                      dts->ps) * 1000000 +
+                      dts->as;
+                break;
+            default:
+                /* Something got corrupted */
+                PyErr_SetString(PyExc_ValueError,
                         "NumPy datetime metadata with corrupt unit value");
-            return -1;
+                return -1;
         }
     }
 
@@ -571,9 +531,8 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
-    hmsstruct hms;
     npy_int64 absdays;
-    npy_int64 tmp, num1, num2, num3;
+    npy_int64 perday;
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
@@ -652,190 +611,171 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             break;
 
         case NPY_FR_h:
+            perday = 24LL;
+
             if (dt >= 0) {
-                set_datetimestruct_days(dt / 24, out);
-                out->hour  = dt % 24;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - 23) / 24, out);
-                out->hour = 23 + (dt + 1) % 24;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
+            out->hour = dt;
             break;
 
         case NPY_FR_m:
+            perday = 24LL * 60;
+
             if (dt >= 0) {
-                set_datetimestruct_days(dt / 1440, out);
-                out->min = dt % 1440;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - 1439) / 1440, out);
-                out->min = 1439 + (dt + 1) % 1440;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
-            hms = seconds_to_hmsstruct(out->min * 60);
-            out->hour   = hms.hour;
-            out->min = hms.min;
+            out->hour = dt / 60;
+            out->min = dt % 60;
             break;
 
         case NPY_FR_s:
+            perday = 24LL * 60 * 60;
+
             if (dt >= 0) {
-                set_datetimestruct_days(dt / 86400, out);
-                out->sec = dt % 86400;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - 86399) / 86400, out);
-                out->sec = 86399 + (dt + 1) % 86400;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
-            hms = seconds_to_hmsstruct(out->sec);
-            out->hour   = hms.hour;
-            out->min = hms.min;
-            out->sec = hms.sec;
+            out->hour = dt / (60*60);
+            out->min = (dt / 60) % 60;
+            out->sec = dt % 60;
             break;
 
         case NPY_FR_ms:
+            perday = 24LL * 60 * 60 * 1000;
+
             if (dt >= 0) {
-                set_datetimestruct_days(dt / 86400000, out);
-                tmp  = dt % 86400000;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - 86399999) / 86400000, out);
-                tmp  = 86399999 + (dt + 1) % 86399999;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
-            hms = seconds_to_hmsstruct(tmp / 1000);
-            out->us  = (tmp % 1000)*1000;
-            out->hour    = hms.hour;
-            out->min     = hms.min;
-            out->sec     = hms.sec;
+            out->hour = dt / (60*60*1000LL);
+            out->min = (dt / (60*1000LL)) % 60;
+            out->sec = (dt / 1000LL) % 60;
+            out->us = (dt % 1000LL) * 1000;
             break;
 
         case NPY_FR_us:
-            num1 = 86400000;
-            num1 *= 1000;
-            num2 = num1 - 1;
+            perday = 24LL * 60LL * 60LL * 1000LL * 1000LL;
+
             if (dt >= 0) {
-                set_datetimestruct_days(dt / num1, out);
-                tmp = dt % num1;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - num2)/ num1, out);
-                tmp = num2 + (dt + 1) % num1;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
-            hms = seconds_to_hmsstruct(tmp / 1000000);
-            out->us = tmp % 1000000;
-            out->hour    = hms.hour;
-            out->min     = hms.min;
-            out->sec     = hms.sec;
+            out->hour = dt / (60*60*1000000LL);
+            out->min = (dt / (60*1000000LL)) % 60;
+            out->sec = (dt / 1000000LL) % 60;
+            out->us = dt % 1000000LL;
             break;
 
         case NPY_FR_ns:
-            num1 = 86400000;
-            num1 *= 1000000000;
-            num2 = num1 - 1;
-            num3 = 1000000;
-            num3 *= 1000000;
+            perday = 24LL * 60LL * 60LL * 1000LL * 1000LL * 1000LL;
+
             if (dt >= 0) {
-                set_datetimestruct_days(dt / num1, out);
-                tmp = dt % num1;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - num2)/ num1, out);
-                tmp = num2 + (dt + 1) % num1;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
-            hms = seconds_to_hmsstruct(tmp / 1000000000);
-            tmp = tmp % 1000000000;
-            out->us = tmp / 1000;
-            out->ps = (tmp % 1000) * (npy_int64)(1000);
-            out->hour    = hms.hour;
-            out->min     = hms.min;
-            out->sec     = hms.sec;
+            out->hour = dt / (60*60*1000000000LL);
+            out->min = (dt / (60*1000000000LL)) % 60;
+            out->sec = (dt / 1000000000LL) % 60;
+            out->us = (dt / 1000LL) % 1000000LL;
+            out->ps = (dt % 1000LL) * 1000;
             break;
 
         case NPY_FR_ps:
-            num3 = 1000000000;
-            num3 *= (npy_int64)(1000);
-            num1 = (npy_int64)(86400) * num3;
-            num2 = num1 - 1;
+            perday = 24LL * 60 * 60 * 1000 * 1000 * 1000 * 1000;
 
             if (dt >= 0) {
-                set_datetimestruct_days(dt / num1, out);
-                tmp = dt % num1;
+                set_datetimestruct_days(dt / perday, out);
+                dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - num2) / num1, out);
-                tmp = num2 + (dt + 1) % num1;
+                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                dt = (perday-1) + (dt + 1) % perday;
             }
-            hms = seconds_to_hmsstruct(tmp / num3);
-            tmp = tmp % num3;
-            out->us = tmp / 1000000;
-            out->ps = tmp % 1000000;
-            out->hour    = hms.hour;
-            out->min     = hms.min;
-            out->sec     = hms.sec;
+            out->hour = dt / (60*60*1000000000000LL);
+            out->min = (dt / (60*1000000000000LL)) % 60;
+            out->sec = (dt / 1000000000000LL) % 60;
+            out->us = (dt / 1000000LL) % 1000000LL;
+            out->ps = dt % 1000000LL;
             break;
 
         case NPY_FR_fs:
-            /* entire range is only += 2.6 hours */
-            num1 = 1000000000;
-            num1 *= (npy_int64)(1000);
-            num2 = num1 * (npy_int64)(1000);
-
+            /* entire range is only +- 2.6 hours */
             if (dt >= 0) {
-                out->sec = dt / num2;
-                tmp = dt % num2;
-                hms = seconds_to_hmsstruct(out->sec);
-                out->hour = hms.hour;
-                out->min = hms.min;
-                out->sec = hms.sec;
+                out->hour = dt / (60*60*1000000000000000LL);
+                out->min = (dt / (60*1000000000000000LL)) % 60;
+                out->sec = (dt / 1000000000000000LL) % 60;
+                out->us = (dt / 1000000000LL) % 1000000LL;
+                out->ps = (dt / 1000LL) % 1000000LL;
+                out->as = (dt % 1000LL) * 1000;
             }
             else {
-                /* tmp (number of fs) will be positive after this segment */
-                out->year = 1969;
-                out->day = 31;
-                out->month = 12;
-                out->sec = (dt - (num2-1))/num2;
-                tmp = (num2-1) + (dt + 1) % num2;
-                if (out->sec == 0) {
-                    /* we are at the last second */
-                    out->hour = 23;
-                    out->min = 59;
-                    out->sec = 59;
+                npy_datetime minutes;
+
+                minutes = dt / (60*1000000000000000LL);
+                dt = dt % (60*1000000000000000LL);
+                if (dt < 0) {
+                    dt += (60*1000000000000000LL);
+                    --minutes;
                 }
-                else {
-                    out->hour = 24 + (out->sec - 3599)/3600;
-                    out->sec = 3599 + (out->sec+1)%3600;
-                    out->min = out->sec / 60;
-                    out->sec = out->sec % 60;
-                }
+                /* Offset the negative minutes */
+                add_minutes_to_datetimestruct(out, minutes);
+                out->sec = (dt / 1000000000000000LL) % 60;
+                out->us = (dt / 1000000000LL) % 1000000LL;
+                out->ps = (dt / 1000LL) % 1000000LL;
+                out->as = (dt % 1000LL) * 1000;
             }
-            out->us = tmp / 1000000000;
-            tmp = tmp % 1000000000;
-            out->ps = tmp / 1000;
-            out->as = (tmp % 1000) * (npy_int64)(1000);
             break;
 
         case NPY_FR_as:
-            /* entire range is only += 9.2 seconds */
-            num1 = 1000000;
-            num2 = num1 * (npy_int64)(1000000);
-            num3 = num2 * (npy_int64)(1000000);
+            /* entire range is only +- 9.2 seconds */
             if (dt >= 0) {
-                out->hour = 0;
-                out->min = 0;
-                out->sec = dt / num3;
-                tmp = dt % num3;
+                out->sec = (dt / 1000000000000000000LL) % 60;
+                out->us = (dt / 1000000000000LL) % 1000000LL;
+                out->ps = (dt / 1000000LL) % 1000000LL;
+                out->as = dt % 1000000LL;
             }
             else {
-                out->year = 1969;
-                out->day = 31;
-                out->month = 12;
-                out->hour = 23;
-                out->min = 59;
-                out->sec = 60 + (dt - (num3-1)) / num3;
-                tmp = (num3-1) + (dt+1) % num3;
+                npy_datetime seconds;
+
+                seconds = dt / 1000000000000000000LL;
+                dt = dt % 1000000000000000000LL;
+                if (dt < 0) {
+                    dt += 1000000000000000000LL;
+                    --seconds;
+                }
+                /* Offset the negative seconds */
+                add_seconds_to_datetimestruct(out, seconds);
+                out->us = (dt / 1000000000000LL) % 1000000LL;
+                out->ps = (dt / 1000000LL) % 1000000LL;
+                out->as = dt % 1000000LL;
             }
-            out->us = tmp / num2;
-            tmp = tmp % num2;
-            out->ps = tmp / num1;
-            out->as = tmp % num1;
             break;
 
         default:
@@ -2280,16 +2220,42 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 }
 
 /*
- * Adjusts a datetimestruct based on a time zone offset. Assumes
+ * Adjusts a datetimestruct based on a seconds offset. Assumes
  * the current values are valid.
  */
 NPY_NO_EXPORT void
-datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
+add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds)
+{
+    int minutes;
+
+    dts->sec += seconds;
+    if (dts->sec < 0) {
+        minutes = dts->sec / 60;
+        dts->sec = dts->sec % 60;
+        if (dts->sec < 0) {
+            --minutes;
+            dts->sec += 60;
+        }
+        add_minutes_to_datetimestruct(dts, minutes);
+    }
+    else if (dts->sec >= 60) {
+        minutes = dts->sec / 60;
+        dts->sec = dts->sec % 60;
+        add_minutes_to_datetimestruct(dts, minutes);
+    }
+}
+
+/*
+ * Adjusts a datetimestruct based on a minutes offset. Assumes
+ * the current values are valid.
+ */
+NPY_NO_EXPORT void
+add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
 {
     int isleap;
 
     /* MINUTES */
-    dts->min -= minutes;
+    dts->min += minutes;
     while (dts->min < 0) {
         dts->min += 60;
         dts->hour--;
@@ -2781,7 +2747,7 @@ parse_timezone:
             offset_hour = -offset_hour;
             offset_minute = -offset_minute;
         }
-        datetimestruct_timezone_offset(out, 60 * offset_hour + offset_minute);
+        add_minutes_to_datetimestruct(out, -60 * offset_hour - offset_minute);
     }
 
     /* May have a ' ' followed by an event number */
@@ -2826,6 +2792,64 @@ error:
 }
 
 /*
+ * Provides a string length to use for converting datetime
+ * objects with the given local and unit settings.
+ */
+NPY_NO_EXPORT int
+get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+{
+    int len = 0;
+
+    /* If no unit is provided, return the maximum length */
+    if (base == -1) {
+        return NPY_DATETIME_MAX_ISO8601_STRLEN;
+    }
+
+    switch (base) {
+        case NPY_FR_as:
+            len += 3;  /* "###" */
+        case NPY_FR_fs:
+            len += 3;  /* "###" */
+        case NPY_FR_ps:
+            len += 3;  /* "###" */
+        case NPY_FR_ns:
+            len += 3;  /* "###" */
+        case NPY_FR_us:
+            len += 3;  /* "###" */
+        case NPY_FR_ms:
+            len += 4;  /* ".###" */
+        case NPY_FR_s:
+            len += 3;  /* ":##" */
+        case NPY_FR_m:
+            len += 3;  /* ":##" */
+        case NPY_FR_h:
+            len += 3;  /* "T##" */
+        case NPY_FR_D:
+        case NPY_FR_B:
+        case NPY_FR_W:
+            len += 3;  /* "-##" */
+        case NPY_FR_M:
+            len += 3;  /* "-##" */
+        case NPY_FR_Y:
+            len += 21; /* 64-bit year */
+            break;
+    }
+
+    if (base >= NPY_FR_h) {
+        if (local) {
+            len += 5;  /* "+####" or "-####" */
+        }
+        else {
+            len += 1;  /* "Z" */
+        }
+    }
+
+    len += 1; /* NULL terminator */
+
+    return len;
+}
+
+/*
  * Converts an npy_datetimestruct to an (almost) ISO 8601
  * NULL-terminated string.
  *
@@ -2835,12 +2859,16 @@ error:
  * 'base' restricts the output to that unit. Set 'base' to
  * -1 to auto-detect a base after which all the values are zero.
  *
+ *  'tzoffset' is used if 'local' is enabled, and 'tzoffset' is
+ *  set to a value other than -1. This is a manual override for
+ *  the local time zone to use, as an offset in minutes.
+ *
  *  Returns 0 on success, -1 on failure (for example if the output
  *  string was too short).
  */
 NPY_NO_EXPORT int
 make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base)
+                    int local, NPY_DATETIMEUNIT base, int tzoffset)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;
@@ -2862,7 +2890,7 @@ make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* Only do local time within a reasonable year range */
-    if (dts->year <= 1900 || dts->year >= 10000) {
+    if ((dts->year <= 1900 || dts->year >= 10000) && tzoffset == -1) {
         local = 0;
     }
 
@@ -2889,22 +2917,16 @@ make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
         else if (dts->sec != 0) {
             base = NPY_FR_s;
         }
-        /* If 'local' is enabled, always include minutes with hours */
-        else if (dts->min != 0 || (local && dts->hour != 0)) {
+        /*
+         * hours and minutes don't get split up by default, and printing
+         * in local time forces minutes
+         */
+        else if (local || dts->min != 0 || dts->hour != 0) {
             base = NPY_FR_m;
         }
-        else if (dts->hour != 0) {
-            base = NPY_FR_h;
-        }
-        /* 'local' has no effect on date-only printing */
-        else if (dts->day != 1) {
-            base = NPY_FR_D;
-        }
-        else if (dts->month != 1) {
-            base = NPY_FR_M;
-        }
+        /* dates don't get split up by default */
         else {
-            base = NPY_FR_Y;
+            base = NPY_FR_D;
         }
     }
     /*
@@ -2923,7 +2945,7 @@ make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* Use the C API to convert from UTC to local time */
-    if (local) {
+    if (local && tzoffset == -1) {
         time_t rawtime = 0, localrawtime;
         struct tm tm_;
 
@@ -2972,6 +2994,16 @@ make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
 
         /* Set dts to point to our local time instead of the UTC time */
         dts = &dts_local;
+    }
+    /* Use the manually provided tzoffset */
+    else if (local) {
+        /* Make a copy of the npy_datetimestruct we can modify */
+        dts_local = *dts;
+        dts = &dts_local;
+
+        /* Set and apply the required timezone offset */
+        timezone_offset = tzoffset;
+        add_minutes_to_datetimestruct(dts, timezone_offset);
     }
 
     /* YEAR */
@@ -3466,7 +3498,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
             /* Convert to a minutes offset and apply it */
             minutes_offset = seconds_offset / 60;
 
-            datetimestruct_timezone_offset(out, minutes_offset);
+            add_minutes_to_datetimestruct(out, -minutes_offset);
         }
     }
 

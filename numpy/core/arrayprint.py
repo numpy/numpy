@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import numerictypes as _nt
 from umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from multiarray import format_longfloat
+from multiarray import format_longfloat, datetime_as_string
 from fromnumeric import ravel
 
 
@@ -245,7 +245,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'complexfloat' : ComplexFormat(data, precision,
                                                  suppress_small),
                   'longcomplexfloat' : LongComplexFormat(precision),
-                  'datetime' : DatetimeFormat(True, None),
+                  'datetime' : DatetimeFormat(True, None, -1),
                   'timedelta' : TimedeltaFormat(data),
                   'numpystr' : repr,
                   'str' : str}
@@ -698,12 +698,16 @@ class ComplexFormat(object):
         return r + i
 
 class DatetimeFormat(object):
-    def __init__(self, uselocaltime=True, overrideunit=None):
+    def __init__(self, uselocaltime=True, overrideunit=None, tzoffset=-1):
         self.local = uselocaltime
         self.unit = overrideunit
+        self.tzoffset = -1
 
     def __call__(self, x):
-        return "'%s'" % str(x)
+        return "'%s'" % datetime_as_string(x,
+                                        local=self.local,
+                                        unit=self.unit,
+                                        tzoffset=self.tzoffset)
 
 class TimedeltaFormat(object):
     def __init__(self, data):

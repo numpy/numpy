@@ -2790,11 +2790,11 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 
 
 /*NUMPY_API
-  PyArray_CheckAxis
-
-  check that axis is valid
-  convert 0-d arrays to 1-d arrays
-*/
+ * PyArray_CheckAxis
+ *
+ * check that axis is valid
+ * convert 0-d arrays to 1-d arrays
+ */
 NPY_NO_EXPORT PyObject *
 PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {

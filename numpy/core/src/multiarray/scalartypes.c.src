@@ -618,7 +618,8 @@ datetimetype_repr(PyObject *self)
         return NULL;
     }
 
-    if (make_iso_8601_date(&dts, iso, sizeof(iso), 1, scal->obmeta.base) < 0) {
+    if (make_iso_8601_date(&dts, iso, sizeof(iso), 1,
+                            scal->obmeta.base, -1) < 0) {
         return NULL;
     }
 
@@ -678,7 +679,8 @@ datetimetype_str(PyObject *self)
         return NULL;
     }
 
-    if (make_iso_8601_date(&dts, iso, sizeof(iso), 1, scal->obmeta.base) < 0) {
+    if (make_iso_8601_date(&dts, iso, sizeof(iso), 1,
+                            scal->obmeta.base, -1) < 0) {
         return NULL;
     }
 

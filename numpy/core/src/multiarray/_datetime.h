@@ -175,6 +175,13 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
                                     int skip_brackets,
                                     PyObject *ret);
 
+/*
+ * Provides a string length to use for converting datetime
+ * objects with the given local and unit settings.
+ */
+NPY_NO_EXPORT int
+get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
+
 
 /*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
@@ -203,12 +210,17 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out);
  * 'base' restricts the output to that unit. Set 'base' to
  * -1 to auto-detect a base after which all the values are zero.
  *
+ *  'tzoffset' is used if 'local' is enabled, and 'tzoffset' is
+ *  set to a value other than -1. This is a manual override for
+ *  the local time zone to use, as an offset in minutes.
+ *
  *  Returns 0 on success, -1 on failure (for example if the output
  *  string was too short).
  */
 NPY_NO_EXPORT int
 make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base);
+                    int local, NPY_DATETIMEUNIT base, int tzoffset);
+
 
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date
@@ -279,6 +291,20 @@ NPY_NO_EXPORT int
 convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
+
+/*
+ * Adjusts a datetimestruct based on a seconds offset. Assumes
+ * the current values are valid.
+ */
+NPY_NO_EXPORT void
+add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds);
+
+/*
+ * Adjusts a datetimestruct based on a minutes offset. Assumes
+ * the current values are valid.
+ */
+NPY_NO_EXPORT void
+add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes);
 
 /*
  * Returns true if the datetime metadata matches
