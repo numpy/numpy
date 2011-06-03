@@ -2226,40 +2226,54 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
  * 'ret' is a PyUString containing the datetime string, and this
  * function appends the metadata string to it.
  *
+ * If 'skip_brackets' is true, skips the '[]' when events == 1.
+ *
  * This function steals the reference 'ret'
  */
 NPY_NO_EXPORT PyObject *
-append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret)
+append_metastr_to_string(PyArray_DatetimeMetaData *meta,
+                                    int skip_brackets,
+                                    PyObject *ret)
 {
-    PyObject *tmp;
     PyObject *res;
     int num, events;
     char *basestr;
-    PyArray_DatetimeMetaData *dt_data;
 
-    dt_data = get_datetime_metadata_from_dtype(self);
-    if (dt_data == NULL) {
-        Py_DECREF(ret);
+    if (ret == NULL) {
         return NULL;
     }
 
-    num = dt_data->num;
-    events = dt_data->events;
-    basestr = _datetime_strings[dt_data->base];
-
-    if (num == 1) {
-        tmp = PyUString_FromString(basestr);
+    num = meta->num;
+    events = meta->events;
+    if (meta->base >= 0 && meta->base < NPY_DATETIME_NUMUNITS) {
+        basestr = _datetime_strings[meta->base];
     }
     else {
-        tmp = PyUString_FromFormat("%d%s", num, basestr);
+        PyErr_SetString(PyExc_RuntimeError,
+                "NumPy datetime metadata is corrupted");
+        return NULL;
     }
 
-    res = PyUString_FromString("[");
-    PyUString_ConcatAndDel(&res, tmp);
-    PyUString_ConcatAndDel(&res, PyUString_FromString("]"));
+    if (num == 1) {
+        if (skip_brackets && events == 1) {
+            res = PyUString_FromFormat("%s", basestr);
+        }
+        else {
+            res = PyUString_FromFormat("[%s]", basestr);
+        }
+    }
+    else {
+        if (skip_brackets && events == 1) {
+            res = PyUString_FromFormat("%d%s", num, basestr);
+        }
+        else {
+            res = PyUString_FromFormat("[%d%s]", num, basestr);
+        }
+    }
+
     if (events != 1) {
-        tmp = PyUString_FromFormat("//%d", events);
-        PyUString_ConcatAndDel(&res, tmp);
+        PyUString_ConcatAndDel(&res,
+                    PyUString_FromFormat("//%d", events));
     }
     PyUString_ConcatAndDel(&ret, res);
     return ret;
@@ -2275,7 +2289,7 @@ datetimestruct_timezone_offset(npy_datetimestruct *dts, int minutes)
     int isleap;
 
     /* MINUTES */
-    dts->min += minutes;
+    dts->min -= minutes;
     while (dts->min < 0) {
         dts->min += 60;
         dts->hour--;
@@ -2808,6 +2822,470 @@ parse_error:
     return -1;
 
 error:
+    return -1;
+}
+
+/*
+ * Converts an npy_datetimestruct to an (almost) ISO 8601
+ * NULL-terminated string.
+ *
+ * If 'local' is non-zero, it produces a string in local time with
+ * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
+ *
+ * 'base' restricts the output to that unit. Set 'base' to
+ * -1 to auto-detect a base after which all the values are zero.
+ *
+ *  Returns 0 on success, -1 on failure (for example if the output
+ *  string was too short).
+ */
+NPY_NO_EXPORT int
+make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
+                    int local, NPY_DATETIMEUNIT base)
+{
+    npy_datetimestruct dts_local;
+    int timezone_offset = 0;
+
+    char *substr = outstr, sublen = outlen;
+    int tmplen;
+
+    /* Handle NaT */
+    if (dts->year == NPY_DATETIME_NAT) {
+        if (outlen < 4) {
+            goto string_too_short;
+        }
+        outstr[0] = 'N';
+        outstr[0] = 'a';
+        outstr[0] = 'T';
+        outstr[0] = '\0';
+
+        return 0;
+    }
+
+    /* Only do local time within a reasonable year range */
+    if (dts->year <= 1900 || dts->year >= 10000) {
+        local = 0;
+    }
+
+    /* Automatically detect a good unit */
+    if (base == -1) {
+        if (dts->as % 1000 != 0) {
+            base = NPY_FR_as;
+        }
+        else if (dts->as != 0) {
+            base = NPY_FR_fs;
+        }
+        else if (dts->ps % 1000 != 0) {
+            base = NPY_FR_ps;
+        }
+        else if (dts->ps != 0) {
+            base = NPY_FR_ns;
+        }
+        else if (dts->us % 1000 != 0) {
+            base = NPY_FR_us;
+        }
+        else if (dts->us != 0) {
+            base = NPY_FR_ms;
+        }
+        else if (dts->sec != 0) {
+            base = NPY_FR_s;
+        }
+        /* If 'local' is enabled, always include minutes with hours */
+        else if (dts->min != 0 || (local && dts->hour != 0)) {
+            base = NPY_FR_m;
+        }
+        else if (dts->hour != 0) {
+            base = NPY_FR_h;
+        }
+        /* 'local' has no effect on date-only printing */
+        else if (dts->day != 1) {
+            base = NPY_FR_D;
+        }
+        else if (dts->month != 1) {
+            base = NPY_FR_M;
+        }
+        else {
+            base = NPY_FR_Y;
+        }
+    }
+    /*
+     * Print business days and weeks with the same precision as days.
+     *
+     * TODO: Could print weeks with YYYY-Www format if the week
+     *       epoch is a Monday.
+     */
+    else if (base == NPY_FR_B || base == NPY_FR_W) {
+        base = NPY_FR_D;
+    }
+
+    /* Printed dates have no time zone */
+    if (base < NPY_FR_h) {
+        local = 0;
+    }
+
+    /* Use the C API to convert from UTC to local time */
+    if (local) {
+        time_t rawtime = 0, localrawtime;
+        struct tm tm_;
+
+        /*
+         * Convert everything in 'dts' to a time_t, to minutes precision.
+         * This is POSIX time, which skips leap-seconds, but because
+         * we drop the seconds value from the npy_datetimestruct, everything
+         * is ok for this operation.
+         */
+        rawtime = (time_t)get_datetimestruct_days(dts) * 24 * 60 * 60;
+        rawtime += dts->hour * 60 * 60;
+        rawtime += dts->min * 60;
+
+        /* localtime converts a 'time_t' into a local 'struct tm' */
+#if defined(_WIN32)
+        if (localtime_s(&tm_, &rawtime) != 0) {
+            PyErr_SetString(PyExc_OSError, "Failed to use localtime_s to "
+                                        "get a local time");
+            return -1;
+        }
+#else
+        /* Other platforms may require something else */
+        if (localtime_r(&rawtime, &tm_) == NULL) {
+            PyErr_SetString(PyExc_OSError, "Failed to use localtime_r to "
+                                        "get a local time");
+            return -1;
+        }
+#endif
+        /* Make a copy of the npy_datetimestruct we can modify */
+        dts_local = *dts;
+
+        /* Copy back all the values except seconds */
+        dts_local.min = tm_.tm_min;
+        dts_local.hour = tm_.tm_hour;
+        dts_local.day = tm_.tm_mday;
+        dts_local.month = tm_.tm_mon + 1;
+        dts_local.year = tm_.tm_year + 1900;
+
+        /* Extract the timezone offset that was applied */
+        rawtime /= 60;
+        localrawtime = (time_t)get_datetimestruct_days(&dts_local) * 24 * 60;
+        localrawtime += dts_local.hour * 60;
+        localrawtime += dts_local.min;
+
+        timezone_offset = localrawtime - rawtime;
+
+        /* Set dts to point to our local time instead of the UTC time */
+        dts = &dts_local;
+    }
+
+    /* YEAR */
+#ifdef _WIN32
+    tmplen = _snprintf(substr, sublen, "%04" NPY_INT64_FMT, dts->year);
+#else
+    tmplen = snprintf(substr, sublen, "%04" NPY_INT64_FMT, dts->year);
+#endif
+    /* If it ran out of space or there isn't space for the NULL terminator */
+    if (tmplen < 0 || tmplen >= sublen) {
+        goto string_too_short;
+    }
+    substr += tmplen;
+    sublen -= tmplen;
+
+    /* Stop if the unit is years */
+    if (base == NPY_FR_Y) {
+        *substr = '\0';
+        return 0;
+    }
+
+    /* MONTH */
+    substr[0] = '-';
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->month / 10) + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->month % 10) + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is months */
+    if (base == NPY_FR_M) {
+        *substr = '\0';
+        return 0;
+    }
+
+    /* DAY */
+    substr[0] = '-';
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->day / 10) + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->day % 10) + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is days */
+    if (base == NPY_FR_D) {
+        *substr = '\0';
+        return 0;
+    }
+
+    /* HOUR */
+    substr[0] = 'T';
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->hour / 10) + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->hour % 10) + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is hours */
+    if (base == NPY_FR_h) {
+        goto add_time_zone;
+    }
+
+    /* MINUTE */
+    substr[0] = ':';
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->min / 10) + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->min % 10) + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is minutes */
+    if (base == NPY_FR_m) {
+        goto add_time_zone;
+    }
+
+    /* SECOND */
+    substr[0] = ':';
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->sec / 10) + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->sec % 10) + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is seconds */
+    if (base == NPY_FR_s) {
+        goto add_time_zone;
+    }
+
+    /* MILLISECOND */
+    substr[0] = '.';
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->us / 100000) % 10 + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->us / 10000) % 10 + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr[3] = (char)((dts->us / 1000) % 10 + '0');
+    if (sublen <= 4 ) {
+        goto string_too_short;
+    }
+    substr += 4;
+    sublen -= 4;
+
+    /* Stop if the unit is milliseconds */
+    if (base == NPY_FR_ms) {
+        goto add_time_zone;
+    }
+
+    /* MICROSECOND */
+    substr[0] = (char)((dts->us / 100) % 10 + '0');
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->us / 10) % 10 + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)(dts->us % 10 + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is microseconds */
+    if (base == NPY_FR_us) {
+        goto add_time_zone;
+    }
+
+    /* NANOSECOND */
+    substr[0] = (char)((dts->ps / 100000) % 10 + '0');
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->ps / 10000) % 10 + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->ps / 1000) % 10 + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is nanoseconds */
+    if (base == NPY_FR_ns) {
+        goto add_time_zone;
+    }
+
+    /* PICOSECOND */
+    substr[0] = (char)((dts->ps / 100) % 10 + '0');
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->ps / 10) % 10 + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)(dts->ps % 10 + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is picoseconds */
+    if (base == NPY_FR_ps) {
+        goto add_time_zone;
+    }
+
+    /* FEMTOSECOND */
+    substr[0] = (char)((dts->as / 100000) % 10 + '0');
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->as / 10000) % 10 + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)((dts->as / 1000) % 10 + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+    /* Stop if the unit is femtoseconds */
+    if (base == NPY_FR_fs) {
+        goto add_time_zone;
+    }
+
+    /* ATTOSECOND */
+    substr[0] = (char)((dts->as / 100) % 10 + '0');
+    if (sublen <= 1 ) {
+        goto string_too_short;
+    }
+    substr[1] = (char)((dts->as / 10) % 10 + '0');
+    if (sublen <= 2 ) {
+        goto string_too_short;
+    }
+    substr[2] = (char)(dts->as % 10 + '0');
+    if (sublen <= 3 ) {
+        goto string_too_short;
+    }
+    substr += 3;
+    sublen -= 3;
+
+add_time_zone:
+    if (local) {
+        /* Add the +/- sign */
+        if (timezone_offset < 0) {
+            substr[0] = '-';
+            timezone_offset = -timezone_offset;
+        }
+        else {
+            substr[0] = '+';
+        }
+        if (sublen <= 1) {
+            goto string_too_short;
+        }
+        substr += 1;
+        sublen -= 1;
+
+        /* Add the timezone offset */
+        substr[0] = (char)((timezone_offset / (10*60)) % 10 + '0');
+        if (sublen <= 1 ) {
+            goto string_too_short;
+        }
+        substr[1] = (char)((timezone_offset / 60) % 10 + '0');
+        if (sublen <= 2 ) {
+            goto string_too_short;
+        }
+        substr[2] = (char)(((timezone_offset % 60) / 10) % 10 + '0');
+        if (sublen <= 3 ) {
+            goto string_too_short;
+        }
+        substr[3] = (char)((timezone_offset % 60) % 10 + '0');
+        if (sublen <= 4 ) {
+            goto string_too_short;
+        }
+        substr += 4;
+        sublen -= 4;
+    }
+    /* UTC "Zulu" time */
+    else {
+        substr[0] = 'Z';
+        if (sublen <= 1) {
+            goto string_too_short;
+        }
+        substr += 1;
+        sublen -= 1;
+    }
+
+    /* Add a NULL terminator, and return */
+    substr[0] = '\0';
+
+    return 0;
+
+string_too_short:
+    /* Put a NULL terminator on anyway */
+    if (outlen > 0) {
+        outstr[outlen-1] = '\0';
+    }
+
+    PyErr_Format(PyExc_RuntimeError,
+                "The string provided for NumPy ISO datetime formatting "
+                "was too short, with length %d",
+                outlen);
     return -1;
 }
 

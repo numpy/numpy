@@ -1319,7 +1319,15 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 
     ret = PyUString_FromFormat("%c%c%d", endian, basic_, size);
     if (PyDataType_ISDATETIME(self)) {
-        ret = append_metastr_to_datetime_typestr(self, ret);
+        PyArray_DatetimeMetaData *meta;
+
+        meta = get_datetime_metadata_from_dtype(self);
+        if (meta == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        ret = append_metastr_to_string(meta, 0, ret);
     }
 
     return ret;
@@ -1362,7 +1370,15 @@ arraydescr_typename_get(PyArray_Descr *self)
         PyUString_ConcatAndDel(&res, p);
     }
     if (PyDataType_ISDATETIME(self)) {
-        res = append_metastr_to_datetime_typestr(self, res);
+        PyArray_DatetimeMetaData *meta;
+
+        meta = get_datetime_metadata_from_dtype(self);
+        if (meta == NULL) {
+            Py_DECREF(res);
+            return NULL;
+        }
+
+        res = append_metastr_to_string(meta, 0, res);
     }
 
     return res;

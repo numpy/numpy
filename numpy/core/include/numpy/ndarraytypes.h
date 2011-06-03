@@ -215,6 +215,19 @@ typedef enum {
 
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
+/*
+ * Theoretical maximum length of a DATETIME ISO 8601 string
+ *   YEAR: 21 (64-bit year)
+ *   MONTH: 3
+ *   DAY: 3
+ *   HOURS: 3
+ *   MINUTES: 3
+ *   SECONDS: 3
+ *   ATTOSECONDS: 1 + 3*6
+ *   TIMEZONE: 6
+ *   NULL TERMINATOR: 1
+ */
+#define NPY_DATETIME_MAX_ISO8601_STRLEN (21+3*5+1+3*6+6+1)
 
 typedef enum {
         NPY_FR_Y, /* Years */
@@ -689,7 +702,7 @@ typedef struct {
 
 /*
  * This structure contains an exploded view of a date-time value.
- * NaT is represented by year == NPY_MIN_INT64.
+ * NaT is represented by year == NPY_DATETIME_NAT.
  */
 typedef struct {
         npy_int64 year;

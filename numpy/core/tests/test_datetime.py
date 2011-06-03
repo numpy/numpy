@@ -1,4 +1,5 @@
 import os, pickle
+import numpy
 import numpy as np
 from numpy.testing import *
 from numpy.compat import asbytes
@@ -767,15 +768,6 @@ class TestDateTime(TestCase):
         self.assertRaises(ValueError, lambda : np.dtype('M8[as/10]'))
 
     def test_string_parser_variants(self):
-        """
-        # Different month formats
-        assert_equal(np.array(['1980-02-29'], np.dtype('M8')),
-                     np.array(['1980-Feb-29'], np.dtype('M8')))
-        assert_equal(np.array(['1980-02-29'], np.dtype('M8')),
-                     np.array(['1980-feb-29'], np.dtype('M8')))
-        assert_equal(np.array(['1980-02-29'], np.dtype('M8')),
-                     np.array(['1980-FEB-29'], np.dtype('M8')))
-        """
         # Allow space instead of 'T' between date and time
         assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8')),
                      np.array(['1980-02-29 01:02:03'], np.dtype('M8')))
@@ -787,11 +779,14 @@ class TestDateTime(TestCase):
                      np.array(['-1980-02-29 01:02:03Z'], np.dtype('M8')))
         # Time zone offset
         assert_equal(np.array(['1980-02-29T02:02:03Z'], np.dtype('M8')),
-                     np.array(['1980-02-29 00:32:03+0130'], np.dtype('M8')))
+                     np.array(['1980-02-29 00:32:03-0130'], np.dtype('M8')))
         assert_equal(np.array(['1980-02-28T22:32:03Z'], np.dtype('M8')),
-                     np.array(['1980-02-29 00:02:03-01:30'], np.dtype('M8')))
+                     np.array(['1980-02-29 00:02:03+01:30'], np.dtype('M8')))
         assert_equal(np.array(['1980-02-29T02:32:03.506Z'], np.dtype('M8')),
-                     np.array(['1980-02-29 00:32:03.506+02'], np.dtype('M8')))
+                     np.array(['1980-02-29 00:32:03.506-02'], np.dtype('M8')))
+        assert_equal(np.datetime64('1977-03-02T12:30-0230'),
+                     np.datetime64('1977-03-02T15:00Z'))
+
 
     def test_string_parser_error_check(self):
         # Arbitrary bad string

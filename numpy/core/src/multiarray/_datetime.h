@@ -166,10 +166,15 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
  * 'ret' is a PyUString containing the datetime string, and this
  * function appends the metadata string to it.
  *
+ * If 'skip_brackets' is true, skips the '[]' when events == 1.
+ *
  * This function steals the reference 'ret'
  */
 NPY_NO_EXPORT PyObject *
-append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret);
+append_metastr_to_string(PyArray_DatetimeMetaData *meta,
+                                    int skip_brackets,
+                                    PyObject *ret);
+
 
 /*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
@@ -187,6 +192,23 @@ append_metastr_to_datetime_typestr(PyArray_Descr *self, PyObject *ret);
  */
 NPY_NO_EXPORT int
 parse_iso_8601_date(char *str, int len, npy_datetimestruct *out);
+
+/*
+ * Converts an npy_datetimestruct to an (almost) ISO 8601
+ * NULL-terminated string.
+ *
+ * If 'local' is non-zero, it produces a string in local time with
+ * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
+ *
+ * 'base' restricts the output to that unit. Set 'base' to
+ * -1 to auto-detect a base after which all the values are zero.
+ *
+ *  Returns 0 on success, -1 on failure (for example if the output
+ *  string was too short).
+ */
+NPY_NO_EXPORT int
+make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
+                    int local, NPY_DATETIMEUNIT base);
 
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date

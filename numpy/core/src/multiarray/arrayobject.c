@@ -340,8 +340,7 @@ array_repr_builtin(PyArrayObject *self, int repr)
     max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
 
     if ((string = (char *)_pya_malloc(max_n)) == NULL) {
-        PyErr_SetString(PyExc_MemoryError, "out of memory");
-        return NULL;
+        return PyErr_NoMemory();
     }
 
     if (repr) {
@@ -407,6 +406,8 @@ PyArray_SetStringFunction(PyObject *op, int repr)
 
 /*NUMPY_API
  * This function is scheduled to be removed
+ *
+ * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
 PyArray_SetDatetimeParseFunction(PyObject *op)

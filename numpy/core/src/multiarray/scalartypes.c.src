@@ -334,15 +334,13 @@ gentype_nonzero_number(PyObject *m1)
 static PyObject *
 gentype_str(PyObject *self)
 {
-    PyArrayObject *arr;
-    PyObject *ret;
+    PyObject *arr, *ret = NULL;
 
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
+    arr = PyArray_FromScalar(self, NULL);
+    if (arr != NULL) {
+        ret = PyObject_Str((PyObject *)arr);
+        Py_DECREF(arr);
     }
-    ret = PyObject_Str((PyObject *)arr);
-    Py_DECREF(arr);
     return ret;
 }
 
@@ -350,15 +348,14 @@ gentype_str(PyObject *self)
 static PyObject *
 gentype_repr(PyObject *self)
 {
-    PyArrayObject *arr;
-    PyObject *ret;
+    PyObject *arr, *ret = NULL;
 
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
+    arr = PyArray_FromScalar(self, NULL);
+    if (arr != NULL) {
+        /* XXX: Why are we using str here? */
+        ret = PyObject_Str((PyObject *)arr);
+        Py_DECREF(arr);
     }
-    ret = PyObject_Str((PyObject *)arr);
-    Py_DECREF(arr);
     return ret;
 }
 
@@ -596,6 +593,145 @@ static PyObject *
     return ret;
 }
 /**end repeat**/
+
+static PyObject *
+datetimetype_repr(PyObject *self)
+{
+    PyDatetimeScalarObject *scal;
+    npy_datetimestruct dts;
+    PyObject *ret;
+    char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
+
+    if (!PyArray_IsScalar(self, Datetime)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "Called NumPy datetime repr on a non-datetime type");
+        return NULL;
+    }
+
+    scal = (PyDatetimeScalarObject *)self;
+
+    if (convert_datetime_to_datetimestruct(&scal->obmeta, scal->obval,
+                                                            &dts) < 0) {
+        return NULL;
+    }
+
+    if (make_iso_8601_date(&dts, iso, sizeof(iso), 1, scal->obmeta.base) < 0) {
+        return NULL;
+    }
+
+    ret = PyUString_FromString("numpy.datetime64('");
+    PyUString_ConcatAndDel(&ret,
+            PyUString_FromString(iso));
+    PyUString_ConcatAndDel(&ret,
+            PyUString_FromString("','"));
+    ret = append_metastr_to_string(&scal->obmeta, 1, ret);
+    PyUString_ConcatAndDel(&ret,
+            PyUString_FromString("')"));
+
+    return ret;
+}
+
+static PyObject *
+timedeltatype_repr(PyObject *self)
+{
+    PyTimedeltaScalarObject *scal;
+    PyObject *ret;
+
+    if (!PyArray_IsScalar(self, Timedelta)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "Called NumPy timedelta repr on a non-datetime type");
+        return NULL;
+    }
+
+    scal = (PyTimedeltaScalarObject *)self;
+
+    ret = PyUString_FromFormat("numpy.timedelta64(%lld", scal->obval);
+    PyUString_ConcatAndDel(&ret,
+            PyUString_FromString(",'"));
+    ret = append_metastr_to_string(&scal->obmeta, 1, ret);
+    PyUString_ConcatAndDel(&ret,
+            PyUString_FromString("')"));
+
+    return ret;
+}
+
+static PyObject *
+datetimetype_str(PyObject *self)
+{
+    PyDatetimeScalarObject *scal;
+    npy_datetimestruct dts;
+    char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
+
+    if (!PyArray_IsScalar(self, Datetime)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "Called NumPy datetime str on a non-datetime type");
+        return NULL;
+    }
+
+    scal = (PyDatetimeScalarObject *)self;
+
+    if (convert_datetime_to_datetimestruct(&scal->obmeta, scal->obval,
+                                                            &dts) < 0) {
+        return NULL;
+    }
+
+    if (make_iso_8601_date(&dts, iso, sizeof(iso), 1, scal->obmeta.base) < 0) {
+        return NULL;
+    }
+
+    return PyUString_FromString(iso);
+}
+
+static char *_datetime_strings[] = {
+    "years",
+    "months",
+    "weeks",
+    "business days",
+    "days",
+    "hours",
+    "minutes",
+    "seconds",
+    "milliseconds",
+    "microseconds",
+    "nanoseconds",
+    "picoseconds",
+    "femtoseconds",
+    "attoseconds"
+};
+
+static PyObject *
+timedeltatype_str(PyObject *self)
+{
+    PyTimedeltaScalarObject *scal;
+    PyObject *ret;
+    char *basestr = "invalid";
+
+    if (!PyArray_IsScalar(self, Timedelta)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "Called NumPy timedelta str on a non-datetime type");
+        return NULL;
+    }
+
+    scal = (PyTimedeltaScalarObject *)self;
+
+    /* TODO: Account for events, etc */
+
+    if (scal->obmeta.base >= 0 && scal->obmeta.base < NPY_DATETIME_NUMUNITS) {
+        basestr = _datetime_strings[scal->obmeta.base];
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError,
+                "NumPy datetime metadata is corrupted");
+        return NULL;
+    }
+
+    ret = PyUString_FromFormat("%lld ",
+                                (long long)(scal->obval * scal->obmeta.num));
+    PyUString_ConcatAndDel(&ret,
+            PyUString_FromString(basestr));
+
+    return ret;
+}
 
 /* The REPR values are finfo.precision + 2 */
 #define HALFPREC_REPR 5
@@ -3872,6 +4008,9 @@ initialize_numeric_types(void)
 
     PyDoubleArrType_Type.tp_@name@ = doubletype_@name@;
     PyCDoubleArrType_Type.tp_@name@  = cdoubletype_@name@;
+
+    PyDatetimeArrType_Type.tp_@name@ = datetimetype_@name@;
+    PyTimedeltaArrType_Type.tp_@name@ = timedeltatype_@name@;
     /**end repeat**/
 
     PyHalfArrType_Type.tp_print = halftype_print;
@@ -3897,6 +4036,7 @@ initialize_numeric_types(void)
     PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
     PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
     /**end repeat**/
+
 
 #if !defined(NPY_PY3K)
     /**begin repeat
