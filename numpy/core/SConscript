@@ -384,7 +384,7 @@ nditer_src = env.GenerateFromTemplate(
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
-sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
+sortmodule_src = env.GenerateFromTemplate(pjoin('src', 'sorting','sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',

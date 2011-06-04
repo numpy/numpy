@@ -668,7 +668,7 @@ def configuration(parent_package='',top_path=None):
         config.add_data_dir('include/numpy/fenv')
 
     config.add_extension('_sort',
-                         sources=[join('src','_sortmodule.c.src'),
+                         sources=[join('src','sorting','sortmodule.c.src'),
                                   generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
