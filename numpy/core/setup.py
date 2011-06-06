@@ -653,6 +653,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
+    config.add_include_dirs(join('src', 'sorting'))
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
