@@ -1031,7 +1031,7 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_noshrinking(self):
         "Check that we don't shrink a mask when not wanted"
         # Binary operations
-        a = masked_array([1, 2, 3], mask=[False, False, False], shrink=False)
+        a = masked_array([1., 2., 3.], mask=[False, False, False], shrink=False)
         b = a + 1
         assert_equal(b.mask, [0, 0, 0])
         # In place binary operation
@@ -1646,7 +1646,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         """Test of inplace additions"""
         (x, y, xm) = self.intdata
         m = xm.mask
-        a = arange(10, dtype=float)
+        a = arange(10, dtype=np.int16)
         a[-1] = masked
         x += a
         xm += a

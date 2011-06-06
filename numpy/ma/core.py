@@ -4771,7 +4771,7 @@ class MaskedArray(ndarray):
         if dvar is not masked:
             dvar = sqrt(dvar)
             if out is not None:
-                out **= 0.5
+                np.power(out, 0.5, out=out, casting='unsafe')
                 return out
         return dvar
     std.__doc__ = np.std.__doc__
@@ -5207,7 +5207,8 @@ class MaskedArray(ndarray):
             result -= self.min(axis=axis, fill_value=fill_value)
             return result
         out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
-        out -= self.min(axis=axis, fill_value=fill_value)
+        min_value = self.min(axis=axis, fill_value=fill_value)
+        np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
     def take(self, indices, axis=None, out=None, mode='raise'):
