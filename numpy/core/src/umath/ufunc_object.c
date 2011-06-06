@@ -2012,6 +2012,27 @@ PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
 }
 
 /*
+ * The ones_like function shouldn't really be a ufunc, but while it
+ * still is, this provides type resolution that always forces UNSAFE
+ * casting.
+ */
+NPY_NO_EXPORT int
+PyUFunc_OnesLikeTypeResolution(PyUFuncObject *ufunc,
+                                NPY_CASTING NPY_UNUSED(casting),
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericFunction *out_innerloop,
+                                void **out_innerloopdata)
+{
+    return PyUFunc_SimpleUnaryOperationTypeResolution(ufunc,
+                        NPY_UNSAFE_CASTING,
+                        operands, type_tup, out_dtypes,
+                        out_innerloop, out_innerloopdata);
+}
+
+
+/*
  * This function applies special type resolution rules for the case
  * where all the functions have the pattern XX->X, using
  * PyArray_ResultType instead of a linear search to get the best
