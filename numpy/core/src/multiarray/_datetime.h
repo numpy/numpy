@@ -192,6 +192,8 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
  *   day according to local time) and "Now" (current time in UTC).
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
+ * 'unit' should contain -1 if the unit is unknown, or the unit
+ *      which will be used if it is.
  *
  * 'out' gets filled with the parsed date-time.
  * 'out_local' gets set to 1 if the parsed time was in local time,
@@ -210,11 +212,11 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
  */
 NPY_NO_EXPORT int
 parse_iso_8601_date(char *str, int len,
+                    NPY_DATETIMEUNIT unit,
                     npy_datetimestruct *out,
                     npy_bool *out_local,
                     NPY_DATETIMEUNIT *out_bestunit,
                     npy_bool *out_special);
-
 
 /*
  * Converts an npy_datetimestruct to an (almost) ISO 8601
