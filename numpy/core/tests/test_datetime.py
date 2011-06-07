@@ -450,7 +450,7 @@ class TestDateTime(TestCase):
                      # One-dimensional arrays
                      (np.array(['2012-12-21'], dtype='M8[D]'),
                       np.array(['2012-12-24'], dtype='M8[D]'),
-                      np.array(['1940-12-24'], dtype='M8[D]'),
+                      np.array(['2012-12-21T11Z'], dtype='M8[h]'),
                       np.array(['NaT'], dtype='M8[D]'),
                       np.array([3], dtype='m8[D]'),
                       np.array([11], dtype='m8[h]'),
@@ -458,7 +458,7 @@ class TestDateTime(TestCase):
                      # NumPy scalars
                      (np.datetime64('2012-12-21', '[D]'),
                       np.datetime64('2012-12-24', '[D]'),
-                      np.datetime64('1940-12-24', '[D]'),
+                      np.datetime64('2012-12-21T11Z', '[h]'),
                       np.datetime64('NaT', '[D]'),
                       np.timedelta64(3, '[D]'),
                       np.timedelta64(11, '[h]'),
@@ -503,27 +503,24 @@ class TestDateTime(TestCase):
             assert_equal(tda + dtnat, dtnat)
             assert_equal((tda + dta).dtype, np.dtype('M8[D]'))
 
-            # In M8 + m8, the M8 controls the result type
-            assert_equal(dta + tdb, dta)
-            assert_equal((dta + tdb).dtype, np.dtype('M8[D]'))
-            assert_equal(dtc + tdb, dtc)
-            assert_equal((dtc + tdb).dtype, np.dtype('M8[D]'))
-            assert_equal(tdb + dta, dta)
-            assert_equal((tdb + dta).dtype, np.dtype('M8[D]'))
-            assert_equal(tdb + dtc, dtc)
-            assert_equal((tdb + dtc).dtype, np.dtype('M8[D]'))
+            # In M8 + m8, the result goes to higher precision
+            assert_equal(dta + tdb, dtc)
+            assert_equal((dta + tdb).dtype, np.dtype('M8[h]'))
+            assert_equal(tdb + dta, dtc)
+            assert_equal((tdb + dta).dtype, np.dtype('M8[h]'))
 
             # M8 + M8
             assert_raises(TypeError, np.add, dta, dtb)
 
     def test_datetime_subtract(self):
-        for dta, dtb, dtc, dtd, dtnat, tda, tdb, tdc in \
+        for dta, dtb, dtc, dtd, dte, dtnat, tda, tdb, tdc in \
                     [
                      # One-dimensional arrays
                      (np.array(['2012-12-21'], dtype='M8[D]'),
                       np.array(['2012-12-24'], dtype='M8[D]'),
                       np.array(['1940-12-24'], dtype='M8[D]'),
                       np.array(['1940-12-24'], dtype='M8[h]'),
+                      np.array(['1940-12-23T13Z'], dtype='M8[h]'),
                       np.array(['NaT'], dtype='M8[D]'),
                       np.array([3], dtype='m8[D]'),
                       np.array([11], dtype='m8[h]'),
@@ -533,6 +530,7 @@ class TestDateTime(TestCase):
                       np.datetime64('2012-12-24', '[D]'),
                       np.datetime64('1940-12-24', '[D]'),
                       np.datetime64('1940-12-24', '[h]'),
+                      np.datetime64('1940-12-23T13Z', '[h]'),
                       np.datetime64('NaT', '[D]'),
                       np.timedelta64(3, '[D]'),
                       np.timedelta64(11, '[h]'),
@@ -567,14 +565,16 @@ class TestDateTime(TestCase):
             assert_equal(dtnat - tda, dtnat)
             assert_equal((dtb - tda).dtype, np.dtype('M8[D]'))
 
-            # In M8 - m8, the M8 controls the result type
-            assert_equal(dta - tdb, dta)
-            assert_equal((dta - tdb).dtype, np.dtype('M8[D]'))
-            assert_equal(dtc - tdb, dtc)
-            assert_equal((dtc - tdb).dtype, np.dtype('M8[D]'))
+            # In M8 - m8, the result goes to higher precision
+            assert_equal(dtc - tdb, dte)
+            assert_equal((dtc - tdb).dtype, np.dtype('M8[h]'))
 
-            # M8 - M8 with different metadata
-            assert_raises(TypeError, np.subtract, dtc, dtd)
+            # M8 - M8 with different goes to higher precision
+            assert_equal(dtc - dtd, 0)
+            assert_equal((dtc - dtd).dtype, np.dtype('m8[h]'))
+            assert_equal(dtd - dtc, 0)
+            assert_equal((dtd - dtc).dtype, np.dtype('m8[h]'))
+
             # m8 - M8
             assert_raises(TypeError, np.subtract, tda, dta)
             # bool - M8

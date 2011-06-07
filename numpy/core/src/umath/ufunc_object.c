@@ -2243,8 +2243,8 @@ timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
  *    int     + m8[<A>] => m8[<A>] + m8[<A>]
  *    M8[<A>] + int     => M8[<A>] + m8[<A>]
  *    int     + M8[<A>] => m8[<A>] + M8[<A>]
- *    M8[<A>] + m8[<B>] => M8[<A>] + m8[<A>]
- *    m8[<A>] + M8[<B>] => m8[<B>] + M8[<B>]
+ *    M8[<A>] + m8[<B>] => M8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)]
+ *    m8[<A>] + M8[<B>] => m8[gcd(<A>,<B>)] + M8[gcd(<A>,<B>)]
  * TODO: Non-linear time unit cases require highly special-cased loops
  *    M8[<A>] + m8[Y|M|B]
  *    m8[Y|M|B] + M8[<A>] 
@@ -2287,16 +2287,20 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
             out_dtypes[2] = out_dtypes[0];
             Py_INCREF(out_dtypes[2]);
         }
-        /* m8[<A>] + M8[<B>] => m8[<B>] + M8[<B>] */
+        /* m8[<A>] + M8[<B>] => m8[gcd(<A>,<B>)] + M8[gcd(<A>,<B>)] */
         else if (type_num2 == NPY_DATETIME) {
-            /* Make a new NPY_TIMEDELTA, and copy type2's metadata */
-            out_dtypes[0] = timedelta_dtype_with_copied_meta(
-                                            PyArray_DESCR(operands[1]));
-            if (out_dtypes[0] == NULL) {
+            out_dtypes[1] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[1] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[1]);
+            /* Make a new NPY_TIMEDELTA, and copy the datetime's metadata */
+            out_dtypes[0] = timedelta_dtype_with_copied_meta(out_dtypes[1]);
+            if (out_dtypes[0] == NULL) {
+                Py_DECREF(out_dtypes[1]);
+                out_dtypes[1] = NULL;
+                return -1;
+            }
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[2]);
         }
@@ -2317,10 +2321,25 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
         }
     }
     else if (type_num1 == NPY_DATETIME) {
-        /* M8[<A>] + m8[<B>] => M8[<A>] + m8[<A>] */
+        /* M8[<A>] + m8[<B>] => M8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            /* Make a new NPY_TIMEDELTA, and copy the datetime's metadata */
+            out_dtypes[1] = timedelta_dtype_with_copied_meta(out_dtypes[0]);
+            if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
+                return -1;
+            }
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+        }
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
-        if (type_num2 == NPY_TIMEDELTA ||
-                    PyTypeNum_ISINTEGER(type_num2) ||
+        else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
             out_dtypes[1] = timedelta_dtype_with_copied_meta(
@@ -2421,7 +2440,7 @@ type_reso_error: {
  *    m8[<A>] - int     => m8[<A>] - m8[<A>]
  *    int     - m8[<A>] => m8[<A>] - m8[<A>]
  *    M8[<A>] - int     => M8[<A>] - m8[<A>]
- *    M8[<A>] - m8[<B>] => M8[<A>] - m8[<A>]
+ *    M8[<A>] - m8[<B>] => M8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)]
  * TODO: Non-linear time unit cases require highly special-cased loops
  *    M8[<A>] - m8[Y|M|B]
  */
@@ -2480,10 +2499,25 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
         }
     }
     else if (type_num1 == NPY_DATETIME) {
-        /* M8[<A>] - m8[<B>] => M8[<A>] - m8[<A>] */
+        /* M8[<A>] - m8[<B>] => M8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)] */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            /* Make a new NPY_TIMEDELTA, and copy the datetime's metadata */
+            out_dtypes[1] = timedelta_dtype_with_copied_meta(out_dtypes[0]);
+            if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
+                return -1;
+            }
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+        }
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
-        if (type_num2 == NPY_TIMEDELTA ||
-                    PyTypeNum_ISINTEGER(type_num2) ||
+        else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
             out_dtypes[1] = timedelta_dtype_with_copied_meta(
@@ -2498,39 +2532,21 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
 
             type_num2 = NPY_TIMEDELTA;
         }
-        /* M8[<A>] - M8[<A>] (producing m8[<A>])*/
+        /* M8[<A>] - M8[<B>] => M8[gcd(<A>,<B>)] - M8[gcd(<A>,<B>)] */
         else if (type_num2 == NPY_DATETIME) {
-            PyArray_DatetimeMetaData *meta1, *meta2;
-
-            meta1 = get_datetime_metadata_from_dtype(
-                                    PyArray_DESCR(operands[0]));
-            if (meta1 == NULL) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            meta2 = get_datetime_metadata_from_dtype(
-                                    PyArray_DESCR(operands[1]));
-            if (meta2 == NULL) {
+            /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
+            out_dtypes[2] = timedelta_dtype_with_copied_meta(out_dtypes[0]);
+            if (out_dtypes[2] == NULL) {
+                Py_DECREF(out_dtypes[0]);
                 return -1;
             }
-
-            /* If the metadata matches up, the subtraction is ok */
-            if (meta1->num == meta2->num &&
-                        meta1->base == meta2->base &&
-                        meta1->events == meta2->events) {
-                out_dtypes[0] = PyArray_DESCR(operands[1]);
-                Py_INCREF(out_dtypes[0]);
-                out_dtypes[1] = out_dtypes[0];
-                Py_INCREF(out_dtypes[1]);
-                /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
-                out_dtypes[2] = timedelta_dtype_with_copied_meta(
-                                                PyArray_DESCR(operands[0]));
-                if (out_dtypes[2] == NULL) {
-                    return -1;
-                }
-            }
-            else {
-                goto type_reso_error;
-            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
         }
         else {
             goto type_reso_error;
