@@ -653,7 +653,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
-    config.add_include_dirs(join('src', 'sorting'))
+    config.add_include_dirs(join('src', 'npysort'))
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
@@ -669,7 +669,7 @@ def configuration(parent_package='',top_path=None):
         config.add_data_dir('include/numpy/fenv')
 
     config.add_extension('_sort',
-                         sources=[join('src','sorting','sortmodule.c.src'),
+                         sources=[join('src','npysort','sortmodule.c.src'),
                                   generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
