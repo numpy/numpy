@@ -1168,8 +1168,8 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
 
     /* If there's no metastr, use the default */
     if (len == 0) {
-        dt_data->num = 1;
         dt_data->base = NPY_DATETIME_DEFAULTUNIT;
+        dt_data->num = 1;
         dt_data->events = 1;
     }
     else {
@@ -2316,13 +2316,30 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
  *
+ * 'out' gets filled with the parsed date-time.
+ * 'out_local' gets set to 1 if the parsed time was in local time,
+ *      to 0 otherwise. The values 'now' and 'today' don't get counted
+ *      as local, and neither do UTC +/-#### timezone offsets, because
+ *      they aren't using the computer's local timezone offset.
+ * 'out_bestunit' gives a suggested unit based on the amount of
+ *      resolution provided in the string, or -1 for NaT.
+ * 'out_special' gets set to 1 if the parsed time was 'today',
+ *      'now', or ''/'NaT'. For 'today', the unit recommended is
+ *      'D', for 'now', the unit recommended is 's', and for 'NaT'
+ *      the unit recommended is 'Y'.
+ *
+ *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
+parse_iso_8601_date(char *str, int len,
+                    npy_datetimestruct *out,
+                    npy_bool *out_local,
+                    NPY_DATETIMEUNIT *out_bestunit,
+                    npy_bool *out_special)
 {
     int year_leap = 0;
-    int i;
+    int i, numdigits;
     char *substr, sublen;
 
     /* Initialize the output to all zeros */
@@ -2336,6 +2353,22 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
                         tolower(str[1]) == 'a' &&
                         tolower(str[2]) == 't')) {
         out->year = NPY_DATETIME_NAT;
+
+        /*
+         * Indicate that this was a special value, and
+         * recommend 'Y' as the unit because when promoted
+         * with any other unit, will produce that unit.
+         */
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_Y;
+        }
+        if (out_special != NULL) {
+            *out_special = 1;
+        }
+
         return 0;
     }
 
@@ -2372,6 +2405,21 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         out->year = tm_.tm_year + 1900;
         out->month = tm_.tm_mon + 1;
         out->day = tm_.tm_mday;
+
+        /*
+         * Indicate that this was a special value, and
+         * is a date (unit 'D').
+         */
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_D;
+        }
+        if (out_special != NULL) {
+            *out_special = 1;
+        }
+
         return 0;
     }
 
@@ -2388,7 +2436,27 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         meta.num = 1;
         meta.events = 1;
 
+        /*
+         * Indicate that this was a special value, and
+         * use 's' because the time() function has resolution
+         * seconds.
+         */
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_s;
+        }
+        if (out_special != NULL) {
+            *out_special = 1;
+        }
+
         return convert_datetime_to_datetimestruct(&meta, rawtime, out);
+    }
+
+    /* Anything else isn't a special value */
+    if (out_special != NULL) {
+        *out_special = 0;
     }
 
     substr = str;
@@ -2427,6 +2495,12 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
     /* Next character must be a '-' or the end of the string */
     if (sublen == 0) {
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_Y;
+        }
         goto finish;
     }
     else if (*substr == '-') {
@@ -2460,6 +2534,12 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
     /* Next character must be a '-' or the end of the string */
     if (sublen == 0) {
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_M;
+        }
         goto finish;
     }
     else if (*substr == '-') {
@@ -2494,6 +2574,12 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
 
     /* Next character must be a 'T', ' ', or end of string */
     if (sublen == 0) {
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_D;
+        }
         goto finish;
     }
     else if (*substr != 'T' && *substr != ' ') {
@@ -2526,6 +2612,9 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         --sublen;
     }
     else {
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_h;
+        }
         goto parse_timezone;
     }
 
@@ -2556,6 +2645,9 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         --sublen;
     }
     else {
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_m;
+        }
         goto parse_timezone;
     }
 
@@ -2586,44 +2678,78 @@ parse_iso_8601_date(char *str, int len, npy_datetimestruct *out)
         --sublen;
     }
     else {
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_s;
+        }
         goto parse_timezone;
     }
 
     /* PARSE THE MICROSECONDS (0 to 6 digits) */
+    numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->us *= 10;
         if (sublen > 0  && isdigit(*substr)) {
             out->us += (*substr - '0');
             ++substr;
             --sublen;
+            ++numdigits;
         }
     }
 
     if (sublen == 0 || !isdigit(*substr)) {
+        if (out_bestunit != NULL) {
+            if (numdigits > 3) {
+                *out_bestunit = NPY_FR_us;
+            }
+            else {
+                *out_bestunit = NPY_FR_ms;
+            }
+        }
         goto parse_timezone;
     }
 
     /* PARSE THE PICOSECONDS (0 to 6 digits) */
+    numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->ps *= 10;
         if (sublen > 0 && isdigit(*substr)) {
             out->ps += (*substr - '0');
             ++substr;
             --sublen;
+            ++numdigits;
         }
     }
 
     if (sublen == 0 || !isdigit(*substr)) {
+        if (out_bestunit != NULL) {
+            if (numdigits > 3) {
+                *out_bestunit = NPY_FR_ps;
+            }
+            else {
+                *out_bestunit = NPY_FR_ns;
+            }
+        }
         goto parse_timezone;
     }
 
     /* PARSE THE ATTOSECONDS (0 to 6 digits) */
+    numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->as *= 10;
         if (sublen > 0 && isdigit(*substr)) {
             out->as += (*substr - '0');
             ++substr;
             --sublen;
+            ++numdigits;
+        }
+    }
+
+    if (out_bestunit != NULL) {
+        if (numdigits > 3) {
+            *out_bestunit = NPY_FR_as;
+        }
+        else {
+            *out_bestunit = NPY_FR_fs;
         }
     }
 
@@ -2679,11 +2805,21 @@ parse_timezone:
             out->year = tm_.tm_year + 1900;
         }
 
+        /* Since neither "Z" nor a time-zone was specified, it's local */
+        if (out_local != NULL) {
+            *out_local = 1;
+        }
+
         goto finish;
     }
 
     /* UTC specifier */
     if (*substr == 'Z') {
+        /* "Z" means not local */
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+
         if (sublen == 1) {
             goto finish;
         }
@@ -2695,6 +2831,15 @@ parse_timezone:
     /* Time zone offset */
     else if (*substr == '-' || *substr == '+') {
         int offset_neg = 0, offset_hour = 0, offset_minute = 0;
+
+        /*
+         * Since "local" means local with respect to the current
+         * machine, we say this is non-local.
+         */
+        if (out_local != NULL) {
+            *out_local = 0;
+        }
+
         if (*substr == '-') {
             offset_neg = 1;
         }
@@ -2748,24 +2893,6 @@ parse_timezone:
             offset_minute = -offset_minute;
         }
         add_minutes_to_datetimestruct(out, -60 * offset_hour - offset_minute);
-    }
-
-    /* May have a ' ' followed by an event number */
-    if (sublen == 0) {
-        goto finish;
-    }
-    else if (sublen > 0 && *substr == ' ') {
-        ++substr;
-        --sublen;
-
-        while (sublen > 0 && isdigit(*substr)) {
-            out->event = 10 * out->event + (*substr - '0');
-            ++substr;
-            --sublen;
-        }
-    }
-    else {
-        goto parse_error;
     }
 
     /* Skip trailing whitespace */
@@ -3330,11 +3457,15 @@ string_too_short:
  * datetime duck typing. The tzinfo time zone conversion would require
  * this style of access anyway.
  *
+ * 'out_bestunit' gives a suggested unit based on whether the object
+ *      was a datetime.date or datetime.datetime object.
+ *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the neeeded date or datetime attributes.
  */
 NPY_NO_EXPORT int
-convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+                                     NPY_DATETIMEUNIT *out_bestunit)
 {
     PyObject *tmp;
     int isleap;
@@ -3401,6 +3532,10 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
             !PyObject_HasAttrString(obj, "minute") ||
             !PyObject_HasAttrString(obj, "second") ||
             !PyObject_HasAttrString(obj, "microsecond")) {
+        /* The best unit for date is 'D' */
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_D;
+        }
         return 0;
     }
 
@@ -3502,6 +3637,11 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out)
         }
     }
 
+    /* The resolution of Python's datetime is 'us' */
+    if (out_bestunit != NULL) {
+        *out_bestunit = NPY_FR_us;
+    }
+
     return 0;
 
 invalid_date:
@@ -3519,7 +3659,11 @@ invalid_time:
 }
 
 /*
- * Converts a PyObject * into a datetime, in any of the forms supported
+ * Converts a PyObject * into a datetime, in any of the forms supported.
+ *
+ * If the units metadata isn't known ahead of time, set meta->base
+ * to -1, and this function will populate meta with either default
+ * values or values from the input object.
  *
  * Returns -1 on error, 0 on success.
  */
@@ -3532,6 +3676,8 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         char *str = NULL;
         int len = 0;
         npy_datetimestruct dts;
+        NPY_DATETIMEUNIT bestunit = -1;
+
         /* Convert to an ASCII string for the date parser */
         if (PyUnicode_Check(obj)) {
             bytes = PyUnicode_AsASCIIString(obj);
@@ -3549,11 +3695,18 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         /* Parse the ISO date */
-        if (parse_iso_8601_date(str, len, &dts) < 0) {
+        if (parse_iso_8601_date(str, len, &dts, NULL, &bestunit, NULL) < 0) {
             Py_DECREF(bytes);
             return -1;
         }
         Py_DECREF(bytes);
+
+        /* Use the detected unit if none was specified */
+        if (meta->base == -1) {
+            meta->base = bestunit;
+            meta->num = 1;
+            meta->events = 1;
+        }
 
         if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
             return -1;
@@ -3563,10 +3716,22 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     }
     /* Do no conversion on raw integers */
     else if (PyInt_Check(obj)) {
+        /* Use the default unit if none was specified */
+        if (meta->base == -1) {
+            meta->base = NPY_DATETIME_DEFAULTUNIT;
+            meta->num = 1;
+            meta->events = 1;
+        }
         *out = PyInt_AS_LONG(obj);
         return 0;
     }
     else if (PyLong_Check(obj)) {
+        /* Use the default unit if none was specified */
+        if (meta->base == -1) {
+            meta->base = NPY_DATETIME_DEFAULTUNIT;
+            meta->num = 1;
+            meta->events = 1;
+        }
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
@@ -3599,7 +3764,18 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     else if (PyArray_IsScalar(obj, Datetime)) {
         PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
 
-        return cast_datetime_to_datetime(&dts->obmeta, meta, dts->obval, out);
+        /* Copy the scalar directly if units weren't specified */
+        if (meta->base == -1) {
+            *meta = dts->obmeta;
+            *out = dts->obval;
+
+            return 0;
+        }
+        /* Otherwise do a casting transformation */
+        else {
+            return cast_datetime_to_datetime(&dts->obmeta, meta,
+                                             dts->obval, out);
+        }
     }
     /* Datetime zero-dimensional array */
     else if (PyArray_Check(obj) &&
@@ -3617,18 +3793,36 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                         !PyArray_ISNOTSWAPPED(obj),
                                         obj);
 
-        return cast_datetime_to_datetime(obj_meta, meta, dt, out);
+        /* Copy the value directly if units weren't specified */
+        if (meta->base == -1) {
+            *meta = *obj_meta;
+            *out = dt;
+
+            return 0;
+        }
+        /* Otherwise do a casting transformation */
+        else {
+            return cast_datetime_to_datetime(obj_meta, meta, dt, out);
+        }
     }
     /* Convert from a Python date or datetime object */
     else {
         int code;
         npy_datetimestruct dts;
+        NPY_DATETIMEUNIT bestunit = -1;
 
-        code = convert_pydatetime_to_datetimestruct(obj, &dts);
+        code = convert_pydatetime_to_datetimestruct(obj, &dts, &bestunit);
         if (code == -1) {
             return -1;
         }
         else if (code == 0) {
+            /* Use the detected unit if none was specified */
+            if (meta->base == -1) {
+                meta->base = bestunit;
+                meta->num = 1;
+                meta->events = 1;
+            }
+
             if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
                 return -1;
             }
@@ -3645,6 +3839,10 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 /*
  * Converts a PyObject * into a timedelta, in any of the forms supported
  *
+ * If the units metadata isn't known ahead of time, set meta->base
+ * to -1, and this function will populate meta with either default
+ * values or values from the input object.
+ *
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
@@ -3653,10 +3851,24 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 {
     /* Do no conversion on raw integers */
     if (PyInt_Check(obj)) {
+        /* Use the default unit if none was specified */
+        if (meta->base == -1) {
+            meta->base = NPY_DATETIME_DEFAULTUNIT;
+            meta->num = 1;
+            meta->events = 1;
+        }
+
         *out = PyInt_AS_LONG(obj);
         return 0;
     }
     else if (PyLong_Check(obj)) {
+        /* Use the default unit if none was specified */
+        if (meta->base == -1) {
+            meta->base = NPY_DATETIME_DEFAULTUNIT;
+            meta->num = 1;
+            meta->events = 1;
+        }
+
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
@@ -3664,8 +3876,18 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
     else if (PyArray_IsScalar(obj, Timedelta)) {
         PyTimedeltaScalarObject *dts = (PyTimedeltaScalarObject *)obj;
 
-        return cast_timedelta_to_timedelta(&dts->obmeta, meta,
-                                            dts->obval, out);
+        /* Copy the scalar directly if units weren't specified */
+        if (meta->base == -1) {
+            *meta = dts->obmeta;
+            *out = dts->obval;
+
+            return 0;
+        }
+        /* Otherwise do a casting transformation */
+        else {
+            return cast_timedelta_to_timedelta(&dts->obmeta, meta,
+                                                dts->obval, out);
+        }
     }
     /* Timedelta zero-dimensional array */
     else if (PyArray_Check(obj) &&
@@ -3683,7 +3905,17 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                         !PyArray_ISNOTSWAPPED(obj),
                                         obj);
 
-        return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
+        /* Copy the value directly if units weren't specified */
+        if (meta->base == -1) {
+            *meta = *obj_meta;
+            *out = dt;
+
+            return 0;
+        }
+        /* Otherwise do a casting transformation */
+        else {
+            return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
+        }
     }
     /* Convert from a Python timedelta object */
     else if (PyObject_HasAttrString(obj, "days") &&
@@ -3731,16 +3963,29 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         Py_DECREF(tmp);
 
-        /*
-         * Convert to a microseconds timedelta, then cast to the
-         * desired units.
-         */
         td = days*(24*60*60*1000000LL) + seconds*1000000LL + useconds;
-        us_meta.base = NPY_FR_us;
-        us_meta.num = 1;
-        us_meta.events = 1;
-        
-        return cast_timedelta_to_timedelta(&us_meta, meta, td, out);
+
+        /* Use microseconds if none was specified */
+        if (meta->base == -1) {
+            meta->base = NPY_FR_us;
+            meta->num = 1;
+            meta->events = 1;
+
+            *out = td;
+
+            return 0;
+        }
+        else {
+            /*
+             * Convert to a microseconds timedelta, then cast to the
+             * desired units.
+             */
+            us_meta.base = NPY_FR_us;
+            us_meta.num = 1;
+            us_meta.events = 1;
+            
+            return cast_timedelta_to_timedelta(&us_meta, meta, td, out);
+        }
     }
 
     PyErr_SetString(PyExc_ValueError,
