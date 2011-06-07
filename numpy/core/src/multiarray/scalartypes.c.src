@@ -687,7 +687,7 @@ datetimetype_str(PyObject *self)
     return PyUString_FromString(iso);
 }
 
-static char *_datetime_strings[] = {
+static char *_datetime_verbose_strings[] = {
     "years",
     "months",
     "weeks",
@@ -722,7 +722,7 @@ timedeltatype_str(PyObject *self)
     /* TODO: Account for events, etc */
 
     if (scal->obmeta.base >= 0 && scal->obmeta.base < NPY_DATETIME_NUMUNITS) {
-        basestr = _datetime_strings[scal->obmeta.base];
+        basestr = _datetime_verbose_strings[scal->obmeta.base];
     }
     else {
         PyErr_SetString(PyExc_RuntimeError,

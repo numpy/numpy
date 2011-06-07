@@ -1274,43 +1274,6 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
     return dtype;
 }
 
-/*
- * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
- * from the given dtype.
- */
-NPY_NO_EXPORT PyArray_Descr *
-timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
-{
-    PyArray_Descr *ret;
-    PyObject *metacobj;
-
-    ret = PyArray_DescrNewFromType(NPY_TIMEDELTA);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_XDECREF(ret->metadata);
-    ret->metadata = PyDict_New();
-    if (ret->metadata == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    metacobj = get_datetime_metacobj_from_dtype(dtype);
-    if (metacobj == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    if (PyDict_SetItemString(ret->metadata, NPY_METADATA_DTSTR,
-                                                metacobj) < 0) {
-        Py_DECREF(metacobj);
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    return ret;
-}
-
 static NPY_DATETIMEUNIT _multiples_table[16][4] = {
     {12, 52, 365},                            /* NPY_FR_Y */
     {NPY_FR_M, NPY_FR_W, NPY_FR_D},

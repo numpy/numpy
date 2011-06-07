@@ -63,13 +63,6 @@ NPY_NO_EXPORT PyArray_Descr *
 parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len);
 
 /*
- * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
- * from the given dtype.
- */
-NPY_NO_EXPORT PyArray_Descr *
-timedelta_dtype_with_copied_meta(PyArray_Descr *dtype);
-
-/*
  * Converts a substring given by 'str' and 'len' into
  * a date time unit enum value. The 'metastr' parameter
  * is used for error messages, and may be NULL.
