@@ -94,19 +94,6 @@ datetime_metadata_divides(
                         int strict_with_nonlinear_units);
 
 /*
- * Computes the GCD of the two date-time metadata values. Raises
- * an exception if there is no reasonable GCD, such as with
- * years and days.
- *
- * Returns a capsule with the GCD metadata.
- */
-NPY_NO_EXPORT PyObject *
-compute_datetime_metadata_greatest_common_divisor(
-                        PyArray_Descr *type1,
-                        PyArray_Descr *type2,
-                        int strict_with_nonlinear_units);
-
-/*
  * Computes the conversion factor to convert data with 'src_meta' metadata
  * into data with 'dst_meta' metadata, not taking into account the events.
  *
