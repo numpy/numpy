@@ -2315,6 +2315,8 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  *   day according to local time) and "Now" (current time in UTC).
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
+ * 'unit' should contain -1 if the unit is unknown, or the unit
+ *      which will be used if it is.
  *
  * 'out' gets filled with the parsed date-time.
  * 'out_local' gets set to 1 if the parsed time was in local time,
@@ -2333,6 +2335,7 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  */
 NPY_NO_EXPORT int
 parse_iso_8601_date(char *str, int len,
+                    NPY_DATETIMEUNIT unit,
                     npy_datetimestruct *out,
                     npy_bool *out_local,
                     NPY_DATETIMEUNIT *out_bestunit,
@@ -2387,6 +2390,14 @@ parse_iso_8601_date(char *str, int len,
         time_t rawtime = 0;
         struct tm tm_;
 
+        /* 'today' only works for units of days or larger */
+        if (unit != -1 && unit > NPY_FR_D) {
+            PyErr_SetString(PyExc_ValueError,
+                        "Special value 'today' can only be converted "
+                        "to a NumPy datetime with 'D' or larger units");
+            return -1;
+        }
+
         time(&rawtime);
 #if defined(_WIN32)
         if (localtime_s(&tm_, &rawtime) != 0) {
@@ -2429,6 +2440,15 @@ parse_iso_8601_date(char *str, int len,
                     tolower(str[2]) == 'w') {
         time_t rawtime = 0;
         PyArray_DatetimeMetaData meta;
+
+        /* 'now' only works for units of hours or smaller */
+        if (unit != -1 && unit < NPY_FR_h) {
+            PyErr_SetString(PyExc_ValueError,
+                        "Special value 'now' can only be converted "
+                        "to a NumPy datetime with 'h' or smaller units");
+            return -1;
+        }
+
         time(&rawtime);
 
         /* Set up a dummy metadata for the conversion */
@@ -3695,7 +3715,8 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         /* Parse the ISO date */
-        if (parse_iso_8601_date(str, len, &dts, NULL, &bestunit, NULL) < 0) {
+        if (parse_iso_8601_date(str, len, meta->base, &dts,
+                                NULL, &bestunit, NULL) < 0) {
             Py_DECREF(bytes);
             return -1;
         }

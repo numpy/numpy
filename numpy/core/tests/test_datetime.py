@@ -239,9 +239,17 @@ class TestDateTime(TestCase):
         assert_equal(np.datetime64('today').dtype,
                      np.dtype('M8[D]'))
 
+        assert_raises(ValueError, np.datetime64, 'today', 'h')
+        assert_raises(ValueError, np.datetime64, 'today', 's')
+        assert_raises(ValueError, np.datetime64, 'today', 'as')
+
         # 'now' special value
         assert_equal(np.datetime64('now').dtype,
                      np.dtype('M8[s]'))
+
+        assert_raises(ValueError, np.datetime64, 'now', 'Y')
+        assert_raises(ValueError, np.datetime64, 'now', 'M')
+        assert_raises(ValueError, np.datetime64, 'now', 'D')
 
     def test_datetime_nat_casting(self):
         a = np.array('NaT', dtype='M8[D]')
@@ -352,7 +360,7 @@ class TestDateTime(TestCase):
         a = np.array(['2000-01-01', datetime.date(2000, 1, 1)], dtype='M8[s]')
         assert_equal(a[0], a[1])
         # Will fail if the date changes during the exact right moment
-        a = np.array(['today', datetime.date.today()], dtype='M8[s]')
+        a = np.array(['today', datetime.date.today()], dtype='M8[D]')
         assert_equal(a[0], a[1])
         # datetime.datetime.now() returns local time, not UTC
         #a = np.array(['now', datetime.datetime.now()], dtype='M8[s]')
@@ -470,14 +478,10 @@ class TestDateTime(TestCase):
                              np.array('1932-02-17T00:00:00Z', dtype=dt2))
                 assert_equal(np.array('10000-04-27', dtype=dt1),
                              np.array('10000-04-27T00:00:00Z', dtype=dt2))
-                assert_equal(np.array('today', dtype=dt1),
-                             np.array('today', dtype=dt2))
                 assert_equal(np.datetime64('1932-02-17', unit1),
                              np.datetime64('1932-02-17T00:00:00Z', unit2))
                 assert_equal(np.datetime64('10000-04-27', unit1),
                              np.datetime64('10000-04-27T00:00:00Z', unit2))
-                assert_equal(np.datetime64('today', unit1),
-                             np.datetime64('today', unit2))
 
         # Shouldn't be able to compare datetime and timedelta
         # TODO: Changing to 'same_kind' or 'safe' casting in the ufuncs by
