@@ -3856,16 +3856,8 @@ operand_different_than_broadcast: {
             return 0;
         }
 
-        /* Fill in the broadcast shape */
-        axisdata = NIT_AXISDATA(iter);
-        for (idim = 0; idim < ndim; ++idim) {
-            remdims[ndim-idim-1] = NAD_SHAPE(axisdata);
-
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-        }
-
         /* Broadcast shape */
-        tmp = npyiter_shape_string(ndim, remdims, "");
+        tmp = npyiter_shape_string(ndim, broadcast_shape, "");
         if (tmp == NULL) {
             return 0;
         }
