@@ -185,8 +185,6 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     if ((out_dtype) &&
         (PyArray_DescrConverter(out_dtype, &dtype) == PY_FAIL)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "Dtype must be a numpy data-type");
         return NULL;
     }
 

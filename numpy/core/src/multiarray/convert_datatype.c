@@ -16,6 +16,7 @@
 #include "mapping.h"
 
 #include "convert_datatype.h"
+#include "_datetime.h"
 
 /*NUMPY_API
  * For backward compatibility
@@ -234,18 +235,28 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
     ret = (npy_bool) PyArray_CanCastSafely(fromtype, totype);
     if (ret) {
         /* Check String and Unicode more closely */
-        if (fromtype == PyArray_STRING) {
-            if (totype == PyArray_STRING) {
+        if (fromtype == NPY_STRING) {
+            if (totype == NPY_STRING) {
                 ret = (from->elsize <= to->elsize);
             }
-            else if (totype == PyArray_UNICODE) {
+            else if (totype == NPY_UNICODE) {
                 ret = (from->elsize << 2 <= to->elsize);
             }
         }
-        else if (fromtype == PyArray_UNICODE) {
-            if (totype == PyArray_UNICODE) {
+        else if (fromtype == NPY_UNICODE) {
+            if (totype == NPY_UNICODE) {
                 ret = (from->elsize <= to->elsize);
             }
+        }
+        /*
+         * For datetime/timedelta, only treat casts moving towards
+         * more precision as safe.
+         */
+        else if (fromtype == NPY_DATETIME && totype == NPY_DATETIME) {
+            return datetime_metadata_divides(from, to, 0);
+        }
+        else if (fromtype == NPY_TIMEDELTA && totype == NPY_TIMEDELTA) {
+            return datetime_metadata_divides(from, to, 1);
         }
         /*
          * TODO: If totype is STRING or unicode
@@ -289,9 +300,12 @@ dtype_kind_to_ordering(char kind)
         /* Object kind */
         case 'O':
             return 9;
-        /* Anything else - ideally shouldn't happen... */
+        /*
+         * Anything else, like datetime, is special cased to
+         * not fit in this hierarchy
+         */
         default:
-            return 10;
+            return -1;
     }
 }
 
@@ -359,17 +373,35 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
             return ret;
         }
 
-        switch (casting) {
-            case NPY_NO_CASTING:
-                return (from->elsize == to->elsize) &&
-                        PyArray_ISNBO(from->byteorder) ==
-                                    PyArray_ISNBO(to->byteorder);
-            case NPY_EQUIV_CASTING:
-                return (from->elsize == to->elsize);
-            case NPY_SAFE_CASTING:
-                return (from->elsize <= to->elsize);
+        switch (from->type_num) {
+            case NPY_DATETIME:
+            case NPY_TIMEDELTA:
+                switch (casting) {
+                    case NPY_NO_CASTING:
+                        return PyArray_ISNBO(from->byteorder) ==
+                                            PyArray_ISNBO(to->byteorder) &&
+                                has_equivalent_datetime_metadata(from, to);
+                    case NPY_EQUIV_CASTING:
+                        return has_equivalent_datetime_metadata(from, to);
+                    case NPY_SAFE_CASTING:
+                        return datetime_metadata_divides(from, to,
+                                            from->type_num == NPY_TIMEDELTA);
+                    default:
+                        return 1;
+                }
+                break;
             default:
-                return 1;
+                switch (casting) {
+                    case NPY_NO_CASTING:
+                        return PyArray_EquivTypes(from, to);
+                    case NPY_EQUIV_CASTING:
+                        return (from->elsize == to->elsize);
+                    case NPY_SAFE_CASTING:
+                        return (from->elsize <= to->elsize);
+                    default:
+                        return 1;
+                }
+                break;
         }
     }
     /* If safe or same-kind casts are allowed */
@@ -381,9 +413,15 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
             /*
              * Also allow casting from lower to higher kinds, according
              * to the ordering provided by dtype_kind_to_ordering.
+             * Some kinds, like datetime, don't fit in the hierarchy,
+             * and are special cased as -1.
              */
-            return dtype_kind_to_ordering(from->kind) <=
-                            dtype_kind_to_ordering(to->kind);
+            int from_order, to_order;
+
+            from_order = dtype_kind_to_ordering(from->kind);
+            to_order = dtype_kind_to_ordering(to->kind);
+
+            return from_order != -1 && from_order <= to_order;
         }
         else {
             return 0;
@@ -542,7 +580,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     /* If they're built-in types, use the promotion table */
     if (type_num1 < NPY_NTYPES && type_num2 < NPY_NTYPES) {
         ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
-        /* The table doesn't handle string/unicode/void, check the result */
+        /*
+         * The table doesn't handle string/unicode/void/datetime/timedelta,
+         * so check the result
+         */
         if (ret_type_num >= 0) {
             return PyArray_DescrFromType(ret_type_num);
         }
@@ -647,10 +688,15 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
 
     switch (type_num1) {
-        /* BOOL can convert to anything */
+        /* BOOL can convert to anything except datetime/void */
         case NPY_BOOL:
-            Py_INCREF(type2);
-            return type2;
+            if (type_num2 != NPY_DATETIME && type_num2 != NPY_VOID) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            else {
+                break;
+            }
         /* For strings and unicodes, take the larger size */
         case NPY_STRING:
             if (type_num2 == NPY_STRING) {
@@ -713,13 +759,25 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 return type1;
             }
             break;
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
+            if (type_num2 == NPY_DATETIME || type_num2 == NPY_TIMEDELTA) {
+                return datetime_type_promotion(type1, type2);
+            }
+            break;
     }
 
     switch (type_num2) {
-        /* BOOL can convert to anything */
+        /* BOOL can convert to almost anything */
         case NPY_BOOL:
-            Py_INCREF(type1);
-            return type1;
+            if (type_num1 != NPY_DATETIME && type_num1 != NPY_TIMEDELTA &&
+                                    type_num1 != NPY_VOID) {
+                Py_INCREF(type1);
+                return type1;
+            }
+            else {
+                break;
+            }
         case NPY_STRING:
             /* Allow NUMBER -> STRING */
             if (PyTypeNum_ISNUMBER(type_num1)) {
@@ -729,6 +787,19 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         case NPY_UNICODE:
             /* Allow NUMBER -> UNICODE */
             if (PyTypeNum_ISNUMBER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            break;
+        case NPY_DATETIME:
+            if (PyTypeNum_ISINTEGER(type_num1)) {
+                Py_INCREF(type2);
+                return type2;
+            }
+            break;
+        case NPY_TIMEDELTA:
+            if (PyTypeNum_ISINTEGER(type_num1) ||
+                            PyTypeNum_ISFLOAT(type_num1)) {
                 Py_INCREF(type2);
                 return type2;
             }

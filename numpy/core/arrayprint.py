@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import numerictypes as _nt
 from umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from multiarray import format_longfloat
+from multiarray import format_longfloat, datetime_as_string
 from fromnumeric import ravel
 
 
@@ -72,7 +72,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
             - 'bool'
             - 'int'
-            - 'timeint' : a `numpy.timeinteger`
+            - 'timedelta' : a `numpy.timedelta64`
+            - 'datetime' : a `numpy.datetime64`
             - 'float'
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
@@ -83,7 +84,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         Other keys that can be used to set a group of types at once are::
 
             - 'all' : sets all types
-            - 'int_kind' : sets 'int' and 'timeint'
+            - 'int_kind' : sets 'int'
             - 'float_kind' : sets 'float' and 'longfloat'
             - 'complex_kind' : sets 'complexfloat' and 'longcomplexfloat'
             - 'str_kind' : sets 'str' and 'numpystr'
@@ -239,12 +240,13 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 
     formatdict = {'bool' : _boolFormatter,
                   'int' : IntegerFormat(data),
-                  'timeint' : str,
                   'float' : FloatFormat(data, precision, suppress_small),
                   'longfloat' : LongFloatFormat(precision),
                   'complexfloat' : ComplexFormat(data, precision,
                                                  suppress_small),
                   'longcomplexfloat' : LongComplexFormat(precision),
+                  'datetime' : DatetimeFormat(True, None, -1),
+                  'timedelta' : TimedeltaFormat(data),
                   'numpystr' : repr,
                   'str' : str}
     if formatter is not None:
@@ -253,7 +255,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             for key in formatdict.keys():
                 formatdict[key] = formatter['all']
         if 'int_kind' in fkeys:
-            for key in ['int', 'timeint']:
+            for key in ['int']:
                 formatdict[key] = formatter['int_kind']
         if 'float_kind' in fkeys:
             for key in ['float', 'longfloat']:
@@ -280,8 +282,8 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         if issubclass(dtypeobj, _nt.bool_):
             format_function = formatdict['bool']
         elif issubclass(dtypeobj, _nt.integer):
-            if issubclass(dtypeobj, _nt.timeinteger):
-                format_function = formatdict['timeint']
+            if issubclass(dtypeobj, _nt.timedelta64):
+                format_function = formatdict['timedelta']
             else:
                 format_function = formatdict['int']
         elif issubclass(dtypeobj, _nt.floating):
@@ -296,6 +298,8 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                 format_function = formatdict['complexfloat']
         elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
             format_function = formatdict['numpystr']
+        elif issubclass(dtypeobj, _nt.datetime64):
+            format_function = formatdict['datetime']
         else:
             format_function = formatdict['str']
 
@@ -361,7 +365,8 @@ def array2string(a, max_line_width=None, precision=None,
 
             - 'bool'
             - 'int'
-            - 'timeint' : a `numpy.timeinteger`
+            - 'timedelta' : a `numpy.timedelta64`
+            - 'datetime' : a `numpy.datetime64`
             - 'float'
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
@@ -372,7 +377,7 @@ def array2string(a, max_line_width=None, precision=None,
         Other keys that can be used to set a group of types at once are::
 
             - 'all' : sets all types
-            - 'int_kind' : sets 'int' and 'timeint'
+            - 'int_kind' : sets 'int'
             - 'float_kind' : sets 'float' and 'longfloat'
             - 'complex_kind' : sets 'complexfloat' and 'longcomplexfloat'
             - 'str_kind' : sets 'str' and 'numpystr'
@@ -691,3 +696,30 @@ class ComplexFormat(object):
         else:
             i = i + 'j'
         return r + i
+
+class DatetimeFormat(object):
+    def __init__(self, uselocaltime=True, overrideunit=None, tzoffset=-1):
+        self.local = uselocaltime
+        self.unit = overrideunit
+        self.tzoffset = -1
+
+    def __call__(self, x):
+        return "'%s'" % datetime_as_string(x,
+                                        local=self.local,
+                                        unit=self.unit,
+                                        tzoffset=self.tzoffset)
+
+class TimedeltaFormat(object):
+    def __init__(self, data):
+        if data.dtype.kind == 'm':
+            v = data.view('i8')
+            max_str_len = max(len(str(maximum.reduce(v))),
+                              len(str(minimum.reduce(v))))
+            self.format = '%' + str(max_str_len) + 'd'
+
+    def __call__(self, x):
+        if _MININT < x < _MAXINT:
+            return self.format % x.astype('i8')
+        else:
+            return "%s" % x
+
