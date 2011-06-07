@@ -175,23 +175,46 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 NPY_NO_EXPORT int
 get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
 
-
 /*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
+ * + After the date and time, may place a ' ' followed by an event number.
  * + The date "20100312" is parsed as the year 20100312, not as
  *   equivalent to "2010-03-12". The '-' in the dates are not optional.
  * + Only seconds may have a decimal point, with up to 18 digits after it
  *   (maximum attoseconds precision).
  * + Either a 'T' as in ISO 8601 or a ' ' may be used to separate
  *   the date and the time. Both are treated equivalently.
+ * + Doesn't (yet) handle the "YYYY-DDD" or "YYYY-Www" formats.
+ * + Doesn't handle leap seconds (seconds value has 60 in these cases).
+ * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00) tomorrow
+ * + Accepts special values "NaT" (not a time), "Today", (current
+ *   day according to local time) and "Now" (current time in UTC).
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
+ *
+ * 'out' gets filled with the parsed date-time.
+ * 'out_local' gets set to 1 if the parsed time was in local time,
+ *      to 0 otherwise. The values 'now' and 'today' don't get counted
+ *      as local, and neither do UTC +/-#### timezone offsets, because
+ *      they aren't using the computer's local timezone offset.
+ * 'out_bestunit' gives a suggested unit based on the amount of
+ *      resolution provided in the string, or -1 for NaT.
+ * 'out_special' gets set to 1 if the parsed time was 'today',
+ *      'now', or ''/'NaT'. For 'today', the unit recommended is
+ *      'D', for 'now', the unit recommended is 's', and for 'NaT'
+ *      the unit recommended is 'Y'.
+ *
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_date(char *str, int len, npy_datetimestruct *out);
+parse_iso_8601_date(char *str, int len,
+                    npy_datetimestruct *out,
+                    npy_bool *out_local,
+                    NPY_DATETIMEUNIT *out_bestunit,
+                    npy_bool *out_special);
+
 
 /*
  * Converts an npy_datetimestruct to an (almost) ISO 8601
@@ -214,19 +237,26 @@ NPY_NO_EXPORT int
 make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
                     int local, NPY_DATETIMEUNIT base, int tzoffset);
 
-
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date
  * object into a NumPy npy_datetimestruct.
+ *
+ * 'out_bestunit' gives a suggested unit based on whether the object
+ *      was a datetime.date or datetime.datetime object.
  *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the neeeded date or datetime attributes.
  */
 NPY_NO_EXPORT int
-convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out);
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+                                     NPY_DATETIMEUNIT *out_bestunit);
 
 /*
- * Converts a PyObject * into a datetime, in any of the input forms supported.
+ * Converts a PyObject * into a datetime, in any of the forms supported.
+ *
+ * If the units metadata isn't known ahead of time, set meta->base
+ * to -1, and this function will populate meta with either default
+ * values or values from the input object.
  *
  * Returns -1 on error, 0 on success.
  */
@@ -236,6 +266,10 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
 /*
  * Converts a PyObject * into a timedelta, in any of the forms supported
+ *
+ * If the units metadata isn't known ahead of time, set meta->base
+ * to -1, and this function will populate meta with either default
+ * values or values from the input object.
  *
  * Returns -1 on error, 0 on success.
  */
