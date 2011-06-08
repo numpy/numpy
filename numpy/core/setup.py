@@ -592,6 +592,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join(local_dir, "src", "private"))
     config.add_include_dirs(join(local_dir, "src"))
     config.add_include_dirs(join(local_dir))
+
     # Multiarray version: this function is needed to build foo.c from foo.c.src
     # when foo.c is included in another file and as such not in the src
     # argument of build_ext command
@@ -608,10 +609,8 @@ def configuration(parent_package='',top_path=None):
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
         config.add_include_dirs(join(build_dir, subpath))
-
         cmd = get_cmd('build_src')
         cmd.ensure_finalized()
-
         cmd.template_sources(sources, ext)
 
     # umath version: this function is needed to build foo.c from foo.c.src
@@ -629,14 +628,12 @@ def configuration(parent_package='',top_path=None):
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
         config.add_include_dirs(join(build_dir, subpath))
-
         cmd = get_cmd('build_src')
         cmd.ensure_finalized()
-
         cmd.template_sources(sources, ext)
 
 
-    def generate_umath_c(ext,build_dir):
+    def generate_umath_c(ext, build_dir):
         target = join(build_dir,header_dir,'__umath_generated.c')
         dir = os.path.dirname(target)
         if not os.path.exists(dir):
@@ -667,14 +664,6 @@ def configuration(parent_package='',top_path=None):
     # Don't install fenv unless we need them.
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
-
-    config.add_extension('_sort',
-                         sources=[join('src','npysort','sortmodule.c.src'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api,
-                                  ],
-                         libraries=['npymath'])
 
     # npymath needs the config.h and numpyconfig.h files to be generated, but
     # build_clib cannot handle generate_config_h and generate_numpyconfig_h
@@ -742,53 +731,93 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'private', 'lowlevel_strided_loops.h')]
 
-    multiarray_src = [join('src', 'multiarray', 'multiarraymodule.c'),
-        join('src', 'multiarray', 'hashdescr.c'),
-        join('src', 'multiarray', 'arrayobject.c'),
-        join('src', 'multiarray', 'numpymemoryview.c'),
-        join('src', 'multiarray', 'buffer.c'),
-        join('src', 'multiarray', 'datetime.c'),
-        join('src', 'multiarray', 'datetime_busday.c'),
-        join('src', 'multiarray', 'datetime_busdaycal.c'),
-        join('src', 'multiarray', 'numpyos.c'),
-        join('src', 'multiarray', 'conversion_utils.c'),
-        join('src', 'multiarray', 'flagsobject.c'),
-        join('src', 'multiarray', 'descriptor.c'),
-        join('src', 'multiarray', 'iterators.c'),
-        join('src', 'multiarray', 'mapping.c'),
-        join('src', 'multiarray', 'number.c'),
-        join('src', 'multiarray', 'getset.c'),
-        join('src', 'multiarray', 'sequence.c'),
-        join('src', 'multiarray', 'methods.c'),
-        join('src', 'multiarray', 'ctors.c'),
-        join('src', 'multiarray', 'convert_datatype.c'),
-        join('src', 'multiarray', 'convert.c'),
-        join('src', 'multiarray', 'shape.c'),
-        join('src', 'multiarray', 'item_selection.c'),
-        join('src', 'multiarray', 'calculation.c'),
-        join('src', 'multiarray', 'common.c'),
-        join('src', 'multiarray', 'usertypes.c'),
-        join('src', 'multiarray', 'scalarapi.c'),
-        join('src', 'multiarray', 'refcount.c'),
-        join('src', 'multiarray', 'arraytypes.c.src'),
-        join('src', 'multiarray', 'scalartypes.c.src'),
-        join('src', 'multiarray', 'nditer.c.src'),
-        join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
-        join('src', 'multiarray', 'dtype_transfer.c'),
-        join('src', 'multiarray', 'nditer_pywrap.c'),
-        join('src', 'multiarray', 'einsum.c.src')]
+    multiarray_src = [
+            join('src', 'multiarray', 'multiarraymodule.c'),
+            join('src', 'multiarray', 'hashdescr.c'),
+            join('src', 'multiarray', 'arrayobject.c'),
+            join('src', 'multiarray', 'numpymemoryview.c'),
+            join('src', 'multiarray', 'buffer.c'),
+            join('src', 'multiarray', 'datetime.c'),
+            join('src', 'multiarray', 'datetime_busday.c'),
+            join('src', 'multiarray', 'datetime_busdaycal.c'),
+            join('src', 'multiarray', 'numpyos.c'),
+            join('src', 'multiarray', 'conversion_utils.c'),
+            join('src', 'multiarray', 'flagsobject.c'),
+            join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'iterators.c'),
+            join('src', 'multiarray', 'mapping.c'),
+            join('src', 'multiarray', 'number.c'),
+            join('src', 'multiarray', 'getset.c'),
+            join('src', 'multiarray', 'sequence.c'),
+            join('src', 'multiarray', 'methods.c'),
+            join('src', 'multiarray', 'ctors.c'),
+            join('src', 'multiarray', 'convert_datatype.c'),
+            join('src', 'multiarray', 'convert.c'),
+            join('src', 'multiarray', 'shape.c'),
+            join('src', 'multiarray', 'item_selection.c'),
+            join('src', 'multiarray', 'calculation.c'),
+            join('src', 'multiarray', 'common.c'),
+            join('src', 'multiarray', 'usertypes.c'),
+            join('src', 'multiarray', 'scalarapi.c'),
+            join('src', 'multiarray', 'refcount.c'),
+            join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'scalartypes.c.src'),
+            join('src', 'multiarray', 'nditer.c.src'),
+            join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
+            join('src', 'multiarray', 'dtype_transfer.c'),
+            join('src', 'multiarray', 'nditer_pywrap.c'),
+            join('src', 'multiarray', 'einsum.c.src')]
 
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))
 
-    umath_src = [join('src', 'umath', 'umathmodule.c.src'),
+    umath_src = [
+            join('src', 'umath', 'umathmodule.c.src'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c')]
 
-    umath_deps = [generate_umath_py,
+    umath_deps = [
+            generate_umath_py,
             join(codegen_dir,'generate_ufunc_api.py')]
 
+    #######################################################################
+    #                            Sort Module                              #
+    #######################################################################
+
+    # _sort version: this function is needed to build foo.c from foo.c.src
+    # when foo.c is included in another file and as such not in the src
+    # argument of build_ext command
+    def generate_sort_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'npysort')
+        sources = [join(local_dir, subpath, 'sort.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+        cmd.template_sources(sources, ext)
+
+    sort_deps = [
+            join('src', 'npysort', 'npy_sort_common.h'),
+            join('src', 'npysort', 'sort.c.src'),
+            join('src', 'npysort', 'sortmodule.c')]
+
+    sort_src = [
+            join('src', 'npysort', 'sortmodule.c'),
+            generate_sort_templated_sources,
+            generate_config_h,
+            generate_numpyconfig_h,
+            generate_numpy_api]
+
+    config.add_extension('_sort',
+            sources = sort_src,
+            depends = deps + sort_deps,
+            libraries=['npymath'])
+#
     if not ENABLE_SEPARATE_COMPILATION:
         multiarray_deps.extend(multiarray_src)
         multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
@@ -801,7 +830,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('multiarray',
                          sources = multiarray_src +
-                                [generate_config_h,
+                                 [generate_config_h,
                                  generate_numpyconfig_h,
                                  generate_numpy_api,
                                  join(codegen_dir,'generate_numpy_api.py'),
@@ -810,11 +839,11 @@ def configuration(parent_package='',top_path=None):
                          libraries=['npymath'])
 
     config.add_extension('umath',
-                         sources = [generate_config_h,
-                                    generate_numpyconfig_h,
-                                    generate_umath_c,
-                                    generate_ufunc_api,
-                                    ] + umath_src,
+                         sources = umath_src +
+                                 [generate_config_h,
+                                 generate_numpyconfig_h,
+                                 generate_umath_c,
+                                 generate_ufunc_api],
                          depends = deps + umath_deps,
                          libraries=['npymath'],
                          )
