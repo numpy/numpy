@@ -243,11 +243,12 @@ typedef enum {
         NPY_FR_ns,/* nanoseconds */
         NPY_FR_ps,/* picoseconds */
         NPY_FR_fs,/* femtoseconds */
-        NPY_FR_as /* attoseconds */
+        NPY_FR_as,/* attoseconds */
+        NPY_FR_GENERIC /* Generic, unbound units, can convert to anything */
 } NPY_DATETIMEUNIT;
 
-#define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
-#define NPY_DATETIME_DEFAULTUNIT NPY_FR_us
+#define NPY_DATETIME_NUMUNITS (NPY_FR_GENERIC + 1)
+#define NPY_DATETIME_DEFAULTUNIT NPY_FR_GENERIC
 
 #define NPY_STR_Y "Y"
 #define NPY_STR_M "M"

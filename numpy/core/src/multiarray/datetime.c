@@ -27,10 +27,6 @@ numpy_pydatetime_import()
 static int
 is_leapyear(npy_int64 year);
 
-
-/* For defaults and errors */
-#define NPY_FR_ERR  -1
-
 /* Exported as DATETIMEUNITS in multiarraymodule.c */
 NPY_NO_EXPORT char *_datetime_strings[] = {
     NPY_STR_Y,
@@ -46,7 +42,8 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
     NPY_STR_ns,
     NPY_STR_ps,
     NPY_STR_fs,
-    NPY_STR_as
+    NPY_STR_as,
+    "generic"
 };
 
 /*
@@ -249,6 +246,14 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     if (dts->year == NPY_DATETIME_NAT) {
         *out = NPY_DATETIME_NAT;
         return 0;
+    }
+
+    /* Cannot instantiate a datetime with generic units */
+    if (meta->base == NPY_FR_GENERIC) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot create a NumPy datetime other than NaT "
+                    "with generic units");
+        return -1;
     }
 
     if (dts->event < 0 || dts->event >= meta->events) {
@@ -544,6 +549,14 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
     if (dt == NPY_DATETIME_NAT) {
         out->year = NPY_DATETIME_NAT;
         return 0;
+    }
+
+    /* Datetimes can't be in generic units */
+    if (meta->base == NPY_FR_GENERIC) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot convert a NumPy datetime value other than NaT "
+                    "with generic units");
+        return -1;
     }
     
     /* Extract the event number */
@@ -1101,6 +1114,15 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
 {
     char *substr = metastr, *substrend = NULL;
 
+    /* Treat the empty string as generic units */
+    if (len == 0) {
+        out_meta->base = NPY_FR_GENERIC;
+        out_meta->num = 1;
+        out_meta->events = 1;
+
+        return 0;
+    }
+
     /* The metadata string must start with a '[' */
     if (len < 3 || *substr++ != '[') {
         goto bad_input;
@@ -1313,6 +1335,12 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
     NPY_DATETIMEUNIT *baseunit;
     int q, r;
 
+    if (meta->base == NPY_FR_GENERIC) {
+        PyErr_SetString(PyExc_ValueError,
+            "Can't use 'den' divisor with generic units");
+        return -1;
+    }
+
     ind = ((int)meta->base - (int)NPY_FR_Y)*2;
     totry = _multiples_table[ind];
     baseunit = _multiples_table[ind + 1];
@@ -1330,10 +1358,10 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         baseunit = _multiples_table[ind + 1];
         baseunit[0] = meta->base + 1;
         baseunit[1] = meta->base + 2;
-        if (meta->base == NPY_DATETIME_NUMUNITS - 2) {
+        if (meta->base == NPY_FR_as - 1) {
             num = 1;
         }
-        if (meta->base == NPY_DATETIME_NUMUNITS - 1) {
+        if (meta->base == NPY_FR_as) {
             num = 0;
         }
     }
@@ -1383,12 +1411,14 @@ _datetime_factors[] = {
     1000,
     1000,
     1000,
-    1   /* Attoseconds are the smallest base unit */
+    1,   /* Attoseconds are the smallest base unit */
+    0    /* Generic units don't have a conversion */
 };
 
 /*
  * Returns the scale factor between the units. Does not validate
- * that bigbase represents larger units than littlebase.
+ * that bigbase represents larger units than littlebase, or that
+ * the units are not generic.
  *
  * Returns 0 if there is an overflow.
  */
@@ -1451,6 +1481,25 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
     int src_base, dst_base, swapped;
     npy_uint64 num = 1, denom = 1, tmp, gcd;
 
+    /* Generic units change to the destination with no conversion factor */
+    if (src_meta->base == NPY_FR_GENERIC) {
+        *out_num = 1;
+        *out_denom = 1;
+        return;
+    }
+    /*
+     * Converting to a generic unit from something other than a generic
+     * unit is an error.
+     */
+    else if (dst_meta->base == NPY_FR_GENERIC) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot convert from specific units to generic "
+                    "units in NumPy datetimes or timedeltas");
+        *out_num = 0;
+        *out_denom = 0;
+        return;
+    }
+
     if (src_meta->base <= dst_meta->base) {
         src_base = src_meta->base;
         dst_base = dst_meta->base;
@@ -1503,6 +1552,11 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
 
     /* If something overflowed, make both num and denom 0 */
     if (denom == 0) {
+        PyErr_Format(PyExc_OverflowError,
+                    "Integer overflow getting a conversion factor between "
+                    "NumPy datetime unit %s and %s",
+                    _datetime_strings[src_base],
+                    _datetime_strings[dst_base]);
         *out_num = 0;
         *out_denom = 0;
         return;
@@ -1553,6 +1607,15 @@ datetime_metadata_divides(
     meta2 = get_datetime_metadata_from_dtype(divisor);
     if (meta2 == NULL) {
         PyErr_Clear();
+        return 0;
+    }
+
+    /* Generic units divide into anything */
+    if (meta2->base == NPY_FR_GENERIC) {
+        return 1;
+    }
+    /* Non-generic units never divide into generic units */
+    else if (meta1->base == NPY_FR_GENERIC) {
         return 0;
     }
 
@@ -1651,6 +1714,16 @@ compute_datetime_metadata_greatest_common_divisor(
     NPY_DATETIMEUNIT base;
     npy_uint64 num1, num2, num;
     int events = 1;
+
+    /* If either unit is generic, adopt the metadata from the other one */
+    if (meta1->base == NPY_FR_GENERIC) {
+        *out_meta = *meta2;
+        return 0;
+    }
+    else if (meta2->base == NPY_FR_GENERIC) {
+        *out_meta = *meta1;
+        return 0;
+    }
 
     /* Take the maximum of the events */
     if (meta1->events > meta2->events) {
@@ -1918,6 +1991,8 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
  * a date time unit enum value. The 'metastr' parameter
  * is used for error messages, and may be NULL.
  *
+ * Generic units have no representation as a string in this form.
+ *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT NPY_DATETIMEUNIT
@@ -2173,6 +2248,18 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
         return NULL;
     }
 
+    if (meta->base == NPY_FR_GENERIC) {
+        /* Without brackets, give a string "generic" */
+        if (skip_brackets) {
+            PyUString_ConcatAndDel(&ret, PyUString_FromString("generic"));
+            return ret;
+        }
+        /* But with brackets, append nothing */
+        else {
+            return ret;
+        }
+    }
+
     num = meta->num;
     events = meta->events;
     if (meta->base >= 0 && meta->base < NPY_DATETIME_NUMUNITS) {
@@ -2349,20 +2436,26 @@ parse_iso_8601_date(char *str, int len,
 
         /*
          * Indicate that this was a special value, and
-         * recommend 'Y' as the unit because when promoted
-         * with any other unit, will produce that unit.
+         * recommend generic units.
          */
         if (out_local != NULL) {
             *out_local = 0;
         }
         if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_Y;
+            *out_bestunit = NPY_FR_GENERIC;
         }
         if (out_special != NULL) {
             *out_special = 1;
         }
 
         return 0;
+    }
+
+    if (unit == NPY_FR_GENERIC) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot create a NumPy datetime other than NaT "
+                    "with generic units");
+        return -1;
     }
 
     /*
@@ -2943,6 +3036,9 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
     }
 
     switch (base) {
+        /* Generic units can only be used to represent NaT */
+        case NPY_FR_GENERIC:
+            return 4;
         case NPY_FR_as:
             len += 3;  /* "###" */
         case NPY_FR_fs:
@@ -3013,8 +3109,8 @@ make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
     char *substr = outstr, sublen = outlen;
     int tmplen;
 
-    /* Handle NaT */
-    if (dts->year == NPY_DATETIME_NAT) {
+    /* Handle NaT, and treat a datetime with generic units as NaT */
+    if (dts->year == NPY_DATETIME_NAT || base == NPY_FR_GENERIC) {
         if (outlen < 4) {
             goto string_too_short;
         }
@@ -3728,7 +3824,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     /* Do no conversion on raw integers */
     else if (PyInt_Check(obj) || PyLong_Check(obj)) {
         /* Don't allow conversion from an integer without specifying a unit */
-        if (meta->base == -1) {
+        if (meta->base == -1 || meta->base == NPY_FR_GENERIC) {
             PyErr_SetString(PyExc_ValueError, "Converting an integer to a "
                             "NumPy datetime requires a specified unit");
             return -1;
@@ -3851,18 +3947,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 npy_timedelta *out)
 {
     /* Do no conversion on raw integers */
-    if (PyInt_Check(obj)) {
-        /* Use the default unit if none was specified */
-        if (meta->base == -1) {
-            meta->base = NPY_DATETIME_DEFAULTUNIT;
-            meta->num = 1;
-            meta->events = 1;
-        }
-
-        *out = PyInt_AS_LONG(obj);
-        return 0;
-    }
-    else if (PyLong_Check(obj)) {
+    if (PyInt_Check(obj) || PyLong_Check(obj)) {
         /* Use the default unit if none was specified */
         if (meta->base == -1) {
             meta->base = NPY_DATETIME_DEFAULTUNIT;
@@ -4008,8 +4093,8 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
     PyObject *ret = NULL, *tup = NULL;
     npy_datetimestruct dts;
 
-    /* Handle not-a-time */
-    if (dt == NPY_DATETIME_NAT) {
+    /* Handle not-a-time, and generic units as NaT as well */
+    if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
         return PyUString_FromString("NaT");
     }
 
@@ -4089,13 +4174,14 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
     }
 
     /*
-     * If the type's precision is greater than microseconds or is
-     * Y/M/B (nonlinear units), return an int
+     * If the type's precision is greater than microseconds, is
+     * Y/M/B (nonlinear units), or is generic units, return an int
      */
     if (meta->base > NPY_FR_us ||
                     meta->base == NPY_FR_Y ||
                     meta->base == NPY_FR_M ||
-                    meta->base == NPY_FR_B) {
+                    meta->base == NPY_FR_B ||
+                    meta->base == NPY_FR_GENERIC) {
         /* Skip use of a tuple for the events, just return the raw int */
         return PyLong_FromLongLong(td);
     }
@@ -4215,6 +4301,11 @@ has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2)
         return 0;
     }
 
+    /* For generic units, the num and events are ignored */
+    if (meta1->base == NPY_FR_GENERIC && meta2->base == NPY_FR_GENERIC) {
+        return 1;
+    }
+
     return meta1->base == meta2->base &&
             meta1->num == meta2->num &&
             meta1->events == meta2->events;
@@ -4285,9 +4376,6 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
     get_datetime_conversion_factor(src_meta, dst_meta, &num, &denom);
 
     if (num == 0) {
-        PyErr_SetString(PyExc_OverflowError,
-                    "Integer overflow getting a conversion factor between "
-                    "different timedelta types");
         return -1;
     }
 
@@ -4361,7 +4449,7 @@ NPY_NO_EXPORT PyObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype)
 {
-    PyArray_DatetimeMetaData meta_value, meta_step;
+    PyArray_DatetimeMetaData meta_value;
     int is_timedelta = 0;
     /*
      * Both datetime and timedelta are stored as int64, so they can
@@ -4497,7 +4585,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 /* Merge the metadata */
                 if (compute_datetime_metadata_greatest_common_divisor(
                                                 &meta_tmp1, &meta_tmp2,
-                                                &meta_value, 1) < 0) {
+                                                &meta_value, 0, 1) < 0) {
                     return NULL;
                 }
 
@@ -4549,7 +4637,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 /* Merge the metadata */
                 if (compute_datetime_metadata_greatest_common_divisor(
                                                 &meta_tmp1, &meta_tmp2,
-                                                &meta_value, 0) < 0) {
+                                                &meta_value, 0, 0) < 0) {
                     return NULL;
                 }
 
@@ -4627,7 +4715,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                     /* Merge the metadata */
                     if (compute_datetime_metadata_greatest_common_divisor(
                                                     &meta_tmp1, &meta_tmp2,
-                                                    &meta_value, 1) < 0) {
+                                                    &meta_value, 1, 1) < 0) {
                         return NULL;
                     }
 

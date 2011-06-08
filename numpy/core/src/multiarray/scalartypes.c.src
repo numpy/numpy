@@ -701,7 +701,8 @@ static char *_datetime_verbose_strings[] = {
     "nanoseconds",
     "picoseconds",
     "femtoseconds",
-    "attoseconds"
+    "attoseconds",
+    "generic time units"
 };
 
 static PyObject *
@@ -2492,6 +2493,7 @@ finish:
  * #name = datetime, timedelta#
  * #Name = Datetime, Timedelta#
  * #NAME = DATETIME, TIMEDELTA#
+ * #is_datetime = 1, 0#
  */
 
 static PyObject *
@@ -2535,7 +2537,12 @@ static PyObject *
             ret->obmeta.events = 1;
         }
 
+        /* Make datetime default to NaT, timedelta default to zero */
+#if @is_datetime@
+        ret->obval = NPY_DATETIME_NAT;
+#else
         ret->obval = 0;
+#endif
     }
     else if (convert_pyobject_to_@name@(&ret->obmeta, obj, &ret->obval)
                                                                     < 0) {

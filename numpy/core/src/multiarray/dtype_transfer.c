@@ -868,16 +868,6 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     get_datetime_conversion_factor(src_meta, dst_meta, &num, &denom);
 
     if (num == 0) {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Integer overflow "
-                    "getting a conversion factor between types ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)src_dtype));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)dst_dtype));
-        PyErr_SetObject(PyExc_OverflowError, errmsg);
         return NPY_FAIL;
     }
 

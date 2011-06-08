@@ -14,7 +14,10 @@ class TestDateTime(TestCase):
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
             dt2 = np.dtype('m8[%s]' % unit)
             assert_(dt2 == np.dtype('timedelta64[%s]' % unit))
-        
+
+        # Generic units shouldn't add [] to the end
+        assert_equal(str(np.dtype("M8")), "datetime64")
+
         # Check that the parser rejects bad datetime types
         assert_raises(TypeError, np.dtype, 'M8[badunit]')
         assert_raises(TypeError, np.dtype, 'm8[badunit]')
@@ -80,8 +83,15 @@ class TestDateTime(TestCase):
         assert_equal(np.datetime64('1950-03-12', 's'),
                      np.datetime64('1950-03-12', 'm'))
 
-        # Default construction means 0
-        assert_equal(np.datetime64(), np.datetime64(0))
+        # Default construction means NaT
+        assert_equal(np.datetime64(), np.datetime64('NaT'))
+
+        # Default construction of NaT is in generic units
+        assert_equal(np.datetime64().dtype, np.dtype('M8'))
+        assert_equal(np.datetime64('NaT').dtype, np.dtype('M8'))
+
+        # Construction from integers requires a specified unit
+        assert_raises(ValueError, np.datetime64, 17)
 
         # When constructing from a scalar or zero-dimensional array,
         # it either keeps the units or you can override them.
@@ -122,6 +132,9 @@ class TestDateTime(TestCase):
 
         # Default construction means 0
         assert_equal(np.timedelta64(), np.timedelta64(0))
+
+        # Construction from an integer produces generic units
+        assert_equal(np.timedelta64(12).dtype, np.dtype('m8'))
 
         # When constructing from a scalar or zero-dimensional array,
         # it either keeps the units or you can override them.
@@ -858,96 +871,102 @@ class TestDateTime(TestCase):
 
     def test_string_parser_variants(self):
         # Allow space instead of 'T' between date and time
-        assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8')),
-                     np.array(['1980-02-29 01:02:03'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8[s]')),
+                     np.array(['1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # Allow negative years
-        assert_equal(np.array(['-1980-02-29T01:02:03'], np.dtype('M8')),
-                     np.array(['-1980-02-29 01:02:03'], np.dtype('M8')))
+        assert_equal(np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
+                     np.array(['-1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # UTC specifier
-        assert_equal(np.array(['-1980-02-29T01:02:03Z'], np.dtype('M8')),
-                     np.array(['-1980-02-29 01:02:03Z'], np.dtype('M8')))
+        assert_equal(np.array(['-1980-02-29T01:02:03Z'], np.dtype('M8[s]')),
+                     np.array(['-1980-02-29 01:02:03Z'], np.dtype('M8[s]')))
         # Time zone offset
-        assert_equal(np.array(['1980-02-29T02:02:03Z'], np.dtype('M8')),
-                     np.array(['1980-02-29 00:32:03-0130'], np.dtype('M8')))
-        assert_equal(np.array(['1980-02-28T22:32:03Z'], np.dtype('M8')),
-                     np.array(['1980-02-29 00:02:03+01:30'], np.dtype('M8')))
-        assert_equal(np.array(['1980-02-29T02:32:03.506Z'], np.dtype('M8')),
-                     np.array(['1980-02-29 00:32:03.506-02'], np.dtype('M8')))
+        assert_equal(np.array(['1980-02-29T02:02:03Z'], np.dtype('M8[s]')),
+                     np.array(['1980-02-29 00:32:03-0130'], np.dtype('M8[s]')))
+        assert_equal(np.array(['1980-02-28T22:32:03Z'], np.dtype('M8[s]')),
+                     np.array(['1980-02-29 00:02:03+01:30'], np.dtype('M8[s]')))
+        assert_equal(np.array(['1980-02-29T02:32:03.506Z'], np.dtype('M8[s]')),
+                 np.array(['1980-02-29 00:32:03.506-02'], np.dtype('M8[s]')))
         assert_equal(np.datetime64('1977-03-02T12:30-0230'),
                      np.datetime64('1977-03-02T15:00Z'))
 
 
     def test_string_parser_error_check(self):
         # Arbitrary bad string
-        assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8[us]'))
         # Character after year must be '-'
-        assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8[us]'))
         # Cannot have trailing '-'
-        assert_raises(ValueError, np.array, ['1980-'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-'], np.dtype('M8[us]'))
         # Month must be in range [1,12]
-        assert_raises(ValueError, np.array, ['1980-00'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-13'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-00'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-13'], np.dtype('M8[us]'))
         # Month must have two digits
-        assert_raises(ValueError, np.array, ['1980-1'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-1-02'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-1'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-1-02'], np.dtype('M8[us]'))
         # 'Mor' is not a valid month
-        assert_raises(ValueError, np.array, ['1980-Mor'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-Mor'], np.dtype('M8[us]'))
         # Cannot have trailing '-'
-        assert_raises(ValueError, np.array, ['1980-01-'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-01-'], np.dtype('M8[us]'))
         # Day must be in range [1,len(month)]
-        assert_raises(ValueError, np.array, ['1980-01-0'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-01-00'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-01-32'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1979-02-29'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-02-30'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-03-32'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-04-31'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-05-32'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-06-31'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-07-32'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-08-32'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-09-31'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-10-32'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-11-31'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-12-32'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-01-0'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-01-00'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-01-32'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1979-02-29'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-02-30'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-03-32'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-04-31'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-05-32'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-06-31'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-07-32'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-08-32'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-09-31'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-10-32'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-11-31'], np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-12-32'], np.dtype('M8[us]'))
         # Cannot have trailing characters
-        assert_raises(ValueError, np.array, ['1980-02-03%'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-02-03 q'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03%'],
+                                                        np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-02-03 q'],
+                                                        np.dtype('M8[us]'))
 
         # Hours must be in range [0, 23]
-        assert_raises(ValueError, np.array, ['1980-02-03 25'], np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-02-03T25'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 25'],
+                                                        np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-02-03T25'],
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 24:01'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03T24:01'],
-                                                        np.dtype('M8'))
-        assert_raises(ValueError, np.array, ['1980-02-03 -1'], np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
+        assert_raises(ValueError, np.array, ['1980-02-03 -1'],
+                                                        np.dtype('M8[us]'))
         # No trailing ':'
-        assert_raises(ValueError, np.array, ['1980-02-03 01:'], np.dtype('M8'))
+        assert_raises(ValueError, np.array, ['1980-02-03 01:'],
+                                                        np.dtype('M8[us]'))
         # Minutes must be in range [0, 59]
         assert_raises(ValueError, np.array, ['1980-02-03 01:-1'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:60'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         # No trailing ':'
         assert_raises(ValueError, np.array, ['1980-02-03 01:60:'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         # Seconds must be in range [0, 59]
         assert_raises(ValueError, np.array, ['1980-02-03 01:10:-1'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:60'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         # Timezone offset must within a reasonable range
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:00+0661'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:00+2500'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-0070'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-3000'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
         assert_raises(ValueError, np.array, ['1980-02-03 01:01:00-25:00'],
-                                                        np.dtype('M8'))
+                                                        np.dtype('M8[us]'))
 
 
     def test_creation_overflow(self):
