@@ -3651,7 +3651,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
         PyObject *bytes = NULL;
         char *str = NULL;
-        int len = 0;
+        Py_ssize_t len = 0;
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = -1;
 
