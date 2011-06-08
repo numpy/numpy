@@ -2635,7 +2635,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
         if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
-            out_dtypes[1] = PyArray_DescrNewFromType(NPY_INT64);
+            out_dtypes[1] = PyArray_DescrNewFromType(NPY_LONGLONG);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -2644,7 +2644,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
             out_dtypes[2] = out_dtypes[0];
             Py_INCREF(out_dtypes[2]);
 
-            type_num2 = NPY_INT64;
+            type_num2 = NPY_LONGLONG;
         }
         /* m8[<A>] * float## => m8[<A>] * float64 */
         else if (PyTypeNum_ISFLOAT(type_num2)) {
@@ -2668,7 +2668,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int## * m8[<A>] => int64 * m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_DescrNewFromType(NPY_INT64);
+            out_dtypes[0] = PyArray_DescrNewFromType(NPY_LONGLONG);
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -2677,7 +2677,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[2]);
 
-            type_num1 = NPY_INT64;
+            type_num1 = NPY_LONGLONG;
         }
         else {
             goto type_reso_error;
@@ -2782,7 +2782,7 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
         if (PyTypeNum_ISINTEGER(type_num2)) {
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
-            out_dtypes[1] = PyArray_DescrNewFromType(NPY_INT64);
+            out_dtypes[1] = PyArray_DescrNewFromType(NPY_LONGLONG);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -2791,7 +2791,7 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
             out_dtypes[2] = out_dtypes[0];
             Py_INCREF(out_dtypes[2]);
 
-            type_num2 = NPY_INT64;
+            type_num2 = NPY_LONGLONG;
         }
         /* m8[<A>] / float## => m8[<A>] / float64 */
         else if (PyTypeNum_ISFLOAT(type_num2)) {
