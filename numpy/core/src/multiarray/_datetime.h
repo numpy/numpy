@@ -352,4 +352,18 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
                           npy_timedelta src_dt,
                           npy_timedelta *dst_dt);
 
+/*
+ * Returns true if the object is something that is best considered
+ * a Datetime or Timedelta, false otherwise.
+ */
+NPY_NO_EXPORT npy_bool
+is_any_numpy_datetime_or_timedelta(PyObject *obj);
+
+/*
+ * Implements a datetime-specific arange
+ */
+NPY_NO_EXPORT PyObject *
+datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
+                PyArray_Descr *dtype);
+
 #endif

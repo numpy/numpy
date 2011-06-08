@@ -3083,6 +3083,15 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     PyArray_Descr *native = NULL;
     int swap;
 
+    /* Datetime arange is handled specially */
+    if ((dtype != NULL && (dtype->type_num == NPY_DATETIME ||
+                           dtype->type_num == NPY_TIMEDELTA)) ||
+            (dtype == NULL && is_any_numpy_datetime_or_timedelta(start) ||
+                              is_any_numpy_datetime_or_timedelta(stop) ||
+                              is_any_numpy_datetime_or_timedelta(step))) {
+        return datetime_arange(start, stop, step, dtype);
+    }
+
     if (!dtype) {
         PyArray_Descr *deftype;
         PyArray_Descr *newtype;

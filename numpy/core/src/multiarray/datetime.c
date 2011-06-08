@@ -4295,3 +4295,76 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
     return 0;
 }
 
+/*
+ * Returns true if the object is something that is best considered
+ * a Datetime, false otherwise.
+ */
+static npy_bool
+is_any_numpy_datetime(PyObject *obj)
+{
+    return (PyArray_IsScalar(obj, Datetime) ||
+            (PyArray_Check(obj) && (
+                PyArray_DESCR(obj)->type_num == NPY_DATETIME)) ||
+            PyDate_Check(obj) ||
+            PyDatetime_Check(obj));
+}
+
+/*
+ * Returns true if the object is something that is best considered
+ * a Timedelta, false otherwise.
+ */
+static npy_bool
+is_any_numpy_timedelta(PyObject *obj)
+{
+    return (PyArray_IsScalar(obj, Timedelta) ||
+            (PyArray_Check(obj) && (
+                PyArray_DESCR(obj)->type_num == NPY_TIMEDELTA)) ||
+            PyDelta_Check(obj));
+}
+
+/*
+ * Returns true if the object is something that is best considered
+ * a Datetime or Timedelta, false otherwise.
+ */
+NPY_NO_EXPORT npy_bool
+is_any_numpy_datetime_or_timedelta(PyObject *obj)
+{
+    return obj != NULL &&
+           (is_any_numpy_datetime(obj) ||
+            is_any_numpy_timedelta(obj));
+}
+
+NPY_NO_EXPORT PyObject *
+datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
+                PyArray_Descr *dtype)
+{
+    PyArray_DatetimeMetaData meta_start, meta_stop, meta_step;
+    /*
+     * First normalize the input parameters so there is no Py_None,
+     * and start is moved to stop if stop is unspecified.
+     */
+    if (step == Py_None) {
+        step = NULL;
+    }
+    if (stop == NULL || stop == Py_None) {
+        stop = start;
+        start = NULL;
+        /* If start was NULL or None, raise an exception */
+        if (stop == NULL || stop == Py_None) {
+            PyErr_SetString(PyExc_ValueError,
+                    "arange needs at least a stopping value");
+            return NULL;
+        }
+    }
+    if (start == Py_None) {
+        start = NULL;
+    }
+
+    /*
+     * Now figure out whether we're doing a datetime or a timedelta
+     * arange, and extract the values.
+     */
+    
+    PyErr_SetString(PyExc_RuntimeError, "datetime_arange is incomplete");
+    return NULL;
+}
