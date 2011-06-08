@@ -14,16 +14,12 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "common.h"
-
 #include "ctors.h"
-
 #include "shape.h"
-
 #include "buffer.h"
-
 #include "numpymemoryview.h"
-
 #include "lowlevel_strided_loops.h"
+#include "_datetime.h"
 
 /*
  * Reading from a file or a string.
@@ -3086,9 +3082,9 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     /* Datetime arange is handled specially */
     if ((dtype != NULL && (dtype->type_num == NPY_DATETIME ||
                            dtype->type_num == NPY_TIMEDELTA)) ||
-            (dtype == NULL && is_any_numpy_datetime_or_timedelta(start) ||
+            (dtype == NULL && (is_any_numpy_datetime_or_timedelta(start) ||
                               is_any_numpy_datetime_or_timedelta(stop) ||
-                              is_any_numpy_datetime_or_timedelta(step))) {
+                              is_any_numpy_datetime_or_timedelta(step)))) {
         return datetime_arange(start, stop, step, dtype);
     }
 

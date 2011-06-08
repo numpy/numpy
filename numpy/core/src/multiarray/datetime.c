@@ -1631,37 +1631,26 @@ datetime_metadata_divides(
     return (num1 % num2) == 0;
 }
 
-
-static PyObject *
+/*
+ * Computes the GCD of the two date-time metadata values. Raises
+ * an exception if there is no reasonable GCD, such as with
+ * years and days.
+ *
+ * The result is placed in 'out_meta'.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
 compute_datetime_metadata_greatest_common_divisor(
-                        PyArray_Descr *type1,
-                        PyArray_Descr *type2,
+                        PyArray_DatetimeMetaData *meta1,
+                        PyArray_DatetimeMetaData *meta2,
+                        PyArray_DatetimeMetaData *out_meta,
                         int strict_with_nonlinear_units1,
                         int strict_with_nonlinear_units2)
 {
-    PyArray_DatetimeMetaData *meta1, *meta2, *dt_data;
     NPY_DATETIMEUNIT base;
     npy_uint64 num1, num2, num;
     int events = 1;
-
-    if ((type1->type_num != NPY_DATETIME &&
-                        type1->type_num != NPY_TIMEDELTA) ||
-                    (type2->type_num != NPY_DATETIME &&
-                        type2->type_num != NPY_TIMEDELTA)) {
-        PyErr_SetString(PyExc_TypeError,
-                "Require datetime types for metadata "
-                "greatest common divisor operation");
-        return NULL;
-    }
-
-    meta1 = get_datetime_metadata_from_dtype(type1);
-    if (meta1 == NULL) {
-        return NULL;
-    }
-    meta2 = get_datetime_metadata_from_dtype(type2);
-    if (meta2 == NULL) {
-        return NULL;
-    }
 
     /* Take the maximum of the events */
     if (meta1->events > meta2->events) {
@@ -1770,50 +1759,94 @@ compute_datetime_metadata_greatest_common_divisor(
     /* Compute the GCD of the resulting multipliers */
     num = _uint64_euclidean_gcd(num1, num2);
 
+    /* Fill the 'out_meta' values */
+    out_meta->base = base;
+    out_meta->num = (int)num;
+    if (out_meta->num <= 0 || num != (npy_uint64)out_meta->num) {
+        goto units_overflow;
+    }
+    out_meta->events = events;
+
+    return 0;
+
+incompatible_units: {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Cannot get "
+                    "a common metadata divisor for "
+                    "NumPy datetime metadata ");
+        errmsg = append_metastr_to_string(meta1, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        errmsg = append_metastr_to_string(meta2, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" because they have "
+                    "incompatible nonlinear base time units"));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        return -1;
+    }
+units_overflow: {
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Integer overflow "
+                    "getting a common metadata divisor for "
+                    "NumPy datetime metadata ");
+        errmsg = append_metastr_to_string(meta1, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" and "));
+        errmsg = append_metastr_to_string(meta2, 0, errmsg);
+        PyErr_SetObject(PyExc_OverflowError, errmsg);
+        return -1;
+    }
+}
+
+/*
+ * Computes the GCD of the two date-time metadata values. Raises
+ * an exception if there is no reasonable GCD, such as with
+ * years and days.
+ *
+ * Returns a capsule with the GCD metadata.
+ */
+NPY_NO_EXPORT PyObject *
+compute_datetime_metadata_greatest_common_divisor_capsule(
+                        PyArray_Descr *type1,
+                        PyArray_Descr *type2,
+                        int strict_with_nonlinear_units1,
+                        int strict_with_nonlinear_units2)
+{
+    PyArray_DatetimeMetaData *meta1, *meta2, *dt_data;
+
+    if ((type1->type_num != NPY_DATETIME &&
+                        type1->type_num != NPY_TIMEDELTA) ||
+                    (type2->type_num != NPY_DATETIME &&
+                        type2->type_num != NPY_TIMEDELTA)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Require datetime types for metadata "
+                "greatest common divisor operation");
+        return NULL;
+    }
+
+    meta1 = get_datetime_metadata_from_dtype(type1);
+    if (meta1 == NULL) {
+        return NULL;
+    }
+    meta2 = get_datetime_metadata_from_dtype(type2);
+    if (meta2 == NULL) {
+        return NULL;
+    }
+
     /* Create and return the metadata capsule */
     dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
     if (dt_data == NULL) {
         return PyErr_NoMemory();
     }
 
-    dt_data->base = base;
-    dt_data->num = (int)num;
-    if (dt_data->num <= 0 || num != (npy_uint64)dt_data->num) {
-        goto units_overflow;
+    if (compute_datetime_metadata_greatest_common_divisor(meta1, meta2,
+                            dt_data, strict_with_nonlinear_units1,
+                            strict_with_nonlinear_units2) < 0) {
+        PyArray_free(dt_data);
+        return NULL;
     }
-    dt_data->events = events;
 
     return NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
-
-incompatible_units: {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot get "
-                    "a common metadata divisor for types ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)type1));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)type2));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" because they have "
-                    "incompatible nonlinear base time units"));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        return NULL;
-    }
-units_overflow: {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Integer overflow "
-                    "getting a common metadata divisor for types ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)type1));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)type2));
-        PyErr_SetObject(PyExc_OverflowError, errmsg);
-        return NULL;
-    }
 }
 
 /*
@@ -1838,7 +1871,7 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
      * Get the metadata GCD, being strict about nonlinear units for
      * timedelta and relaxed for datetime.
      */
-    gcdmeta = compute_datetime_metadata_greatest_common_divisor(
+    gcdmeta = compute_datetime_metadata_greatest_common_divisor_capsule(
                                             type1, type2,
                                             type_num1 == NPY_TIMEDELTA,
                                             type_num2 == NPY_TIMEDELTA);
@@ -2069,7 +2102,7 @@ convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple)
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime_metadata(PyObject *obj,
-                                        PyArray_DatetimeMetaData *out_meta)
+                                      PyArray_DatetimeMetaData *out_meta)
 {
     PyObject *ascii = NULL;
     char *str = NULL;
@@ -3693,22 +3726,12 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         return 0;
     }
     /* Do no conversion on raw integers */
-    else if (PyInt_Check(obj)) {
-        /* Use the default unit if none was specified */
+    else if (PyInt_Check(obj) || PyLong_Check(obj)) {
+        /* Don't allow conversion from an integer without specifying a unit */
         if (meta->base == -1) {
-            meta->base = NPY_DATETIME_DEFAULTUNIT;
-            meta->num = 1;
-            meta->events = 1;
-        }
-        *out = PyInt_AS_LONG(obj);
-        return 0;
-    }
-    else if (PyLong_Check(obj)) {
-        /* Use the default unit if none was specified */
-        if (meta->base == -1) {
-            meta->base = NPY_DATETIME_DEFAULTUNIT;
-            meta->num = 1;
-            meta->events = 1;
+            PyErr_SetString(PyExc_ValueError, "Converting an integer to a "
+                            "NumPy datetime requires a specified unit");
+            return -1;
         }
         *out = PyLong_AsLongLong(obj);
         return 0;
@@ -4306,7 +4329,7 @@ is_any_numpy_datetime(PyObject *obj)
             (PyArray_Check(obj) && (
                 PyArray_DESCR(obj)->type_num == NPY_DATETIME)) ||
             PyDate_Check(obj) ||
-            PyDatetime_Check(obj));
+            PyDateTime_Check(obj));
 }
 
 /*
@@ -4338,7 +4361,14 @@ NPY_NO_EXPORT PyObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype)
 {
-    PyArray_DatetimeMetaData meta_start, meta_stop, meta_step;
+    PyArray_DatetimeMetaData meta_value, meta_step;
+    int is_timedelta = 0;
+    /*
+     * Both datetime and timedelta are stored as int64, so they can
+     * share value variables.
+     */
+    npy_int64 start_value = 0, stop_value = 0;
+
     /*
      * First normalize the input parameters so there is no Py_None,
      * and start is moved to stop if stop is unspecified.
@@ -4362,8 +4392,260 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
 
     /*
      * Now figure out whether we're doing a datetime or a timedelta
-     * arange, and extract the values.
+     * arange, and get the metadata for start and stop.
      */
+    if (dtype != NULL) {
+        PyArray_DatetimeMetaData *meta;
+
+        if (dtype->type_num == NPY_TIMEDELTA) {
+            is_timedelta = 1;
+        }
+        else if (dtype->type_num != NPY_DATETIME) {
+            PyErr_SetString(PyExc_ValueError,
+                        "datetime_arange was given a non-datetime dtype");
+            return NULL;
+        }
+
+        meta = get_datetime_metadata_from_dtype(dtype);
+        if (meta == NULL) {
+            return NULL;
+        }
+
+        meta_value = *meta;
+
+        if (is_timedelta) {
+            /* Get 'start', defaulting to 0 if not provided */
+            if (start == NULL) {
+                start_value = 0;
+            }
+            else {
+                if (convert_pyobject_to_timedelta(&meta_value, start,
+                                                &start_value) < 0) {
+                    return NULL;
+                }
+            }
+            /* Get 'stop' */
+            if (convert_pyobject_to_timedelta(&meta_value, stop,
+                                            &stop_value) < 0) {
+                return NULL;
+            }
+        }
+        else {
+            /* Get 'start', raising an exception if it is not provided */
+            if (start == NULL) {
+                PyErr_SetString(PyExc_ValueError,
+                        "arange requires both a start and a stop for "
+                        "NumPy datetime64 ranges");
+                return NULL;
+            }
+            else {
+                if (convert_pyobject_to_datetime(&meta_value, start,
+                                                &start_value) < 0) {
+                    return NULL;
+                }
+            }
+            /*
+             * Get 'stop', treating it specially if it's an integer
+             * or a timedelta.
+             */
+            if (PyInt_Check(stop) ||
+                            PyLong_Check(stop) ||
+                            PyArray_IsScalar(stop, Integer) ||
+                            is_any_numpy_timedelta(stop)) {
+                if (convert_pyobject_to_timedelta(&meta_value, stop,
+                                                &stop_value) < 0) {
+                    return NULL;
+                }
+
+                /* Add the start value to make it a datetime */
+                stop_value += start_value;
+            }
+            else {
+                if (convert_pyobject_to_datetime(&meta_value, stop,
+                                                &stop_value) < 0) {
+                    return NULL;
+                }
+            }
+        }
+    }
+    /* if dtype is NULL */
+    else {
+        /* Datetime arange */
+        if (start != NULL && is_any_numpy_datetime(start)) {
+            PyArray_DatetimeMetaData meta_tmp1, meta_tmp2;
+            npy_datetime tmp1 = 0, tmp2 = 0;
+
+            /* Get 'start' as a datetime */
+            meta_tmp1.base = -1;
+            if (convert_pyobject_to_datetime(&meta_tmp1, start,
+                                            &tmp1) < 0) {
+                return NULL;
+            }
+
+            /*
+             * If 'stop' is a timedelta, resolve the metadata
+             * and treat it specially
+             */
+            if (is_any_numpy_timedelta(stop)) {
+                meta_tmp2.base = -1;
+                /* Convert to a timedelta */
+                if (convert_pyobject_to_timedelta(&meta_tmp2, stop,
+                                                &tmp2) < 0) {
+                    return NULL;
+                }
+
+                /* Merge the metadata */
+                if (compute_datetime_metadata_greatest_common_divisor(
+                                                &meta_tmp1, &meta_tmp2,
+                                                &meta_value, 1) < 0) {
+                    return NULL;
+                }
+
+                /* Convert 'start' to the merged metadata */
+                if (cast_datetime_to_datetime(&meta_tmp1, &meta_value,
+                                             tmp1, &start_value) < 0) {
+                    return NULL;
+                }
+
+                /* Convert the timedelta to the merged metadata */
+                if (cast_timedelta_to_timedelta(&meta_tmp2, &meta_value,
+                                             tmp2, &stop_value) < 0) {
+                    return NULL;
+                }
+
+                /* Add the start to the stop timedelta */
+                stop_value += start_value;
+            }
+            /*
+             * If 'stop' is an integer, treat it specially
+             * like a timedelta with units matching the start datetime
+             */
+            else if (PyInt_Check(stop) ||
+                            PyLong_Check(stop) ||
+                            PyArray_IsScalar(stop, Integer)) {
+                npy_longlong tmp;
+
+                /* Get the integer value */
+                tmp = PyLong_AsLongLong(stop);
+                if (tmp == -1 && PyErr_Occurred()) {
+                    return NULL;
+                }
+
+                /* Copy the 'start' metadata and value */
+                meta_value = meta_tmp1;
+                start_value = tmp1;
+
+                stop_value = start_value + tmp;
+            }
+            /* Otherwise try to interpret 'stop' as a datetime */
+            else {
+                meta_tmp2.base = -1;
+                /* Convert to a datetime */
+                if (convert_pyobject_to_datetime(&meta_tmp2, stop,
+                                                &tmp2) < 0) {
+                    return NULL;
+                }
+
+                /* Merge the metadata */
+                if (compute_datetime_metadata_greatest_common_divisor(
+                                                &meta_tmp1, &meta_tmp2,
+                                                &meta_value, 0) < 0) {
+                    return NULL;
+                }
+
+                /* Convert 'start' to the merged metadata */
+                if (cast_datetime_to_datetime(&meta_tmp1, &meta_value,
+                                             tmp1, &start_value) < 0) {
+                    return NULL;
+                }
+
+                /* Convert 'stop' to the merged metadata */
+                if (cast_datetime_to_datetime(&meta_tmp2, &meta_value,
+                                             tmp2, &stop_value) < 0) {
+                    return NULL;
+                }
+            }
+        }
+        /* Timedelta arange */
+        else {
+            PyArray_DatetimeMetaData meta_tmp1, meta_tmp2;
+            npy_timedelta tmp1 = 0, tmp2 = 0;
+
+            is_timedelta = 1;
+
+            if (start == NULL ||
+                            PyInt_Check(start) ||
+                            PyLong_Check(start) ||
+                            PyArray_IsScalar(start, Integer)) {
+                if (start == NULL) {
+                    start_value = 0;
+                }
+                else {
+                    start_value = PyLong_AsLongLong(start);
+                    if (start_value == -1 && PyErr_Occurred()) {
+                        return NULL;
+                    }
+                }
+
+                meta_value.base = -1;
+                /* Convert 'stop' to a timedelta */
+                if (convert_pyobject_to_timedelta(&meta_value, stop,
+                                                &stop_value) < 0) {
+                    return NULL;
+                }
+            }
+            else {
+                meta_tmp1.base = -1;
+                /* Convert 'start' to a timedelta */
+                if (convert_pyobject_to_timedelta(&meta_tmp1, start,
+                                                &tmp1) < 0) {
+                    return NULL;
+                }
+
+                if (PyInt_Check(stop) ||
+                            PyLong_Check(stop) ||
+                            PyArray_IsScalar(stop, Integer)) {
+                    /* Use the metadata and value from 'start' */
+                    meta_value = meta_tmp1;
+                    start_value = tmp1;
+
+                    /* Get the integer value for stop */
+                    stop_value = PyLong_AsLongLong(stop);
+                    if (stop_value == -1 && PyErr_Occurred()) {
+                        return NULL;
+                    }
+                }
+                /* Otherwise try to interpret 'stop' as a timedelta */
+                else {
+                    meta_tmp2.base = -1;
+                    /* Convert to a datetime */
+                    if (convert_pyobject_to_timedelta(&meta_tmp2, stop,
+                                                    &tmp2) < 0) {
+                        return NULL;
+                    }
+
+                    /* Merge the metadata */
+                    if (compute_datetime_metadata_greatest_common_divisor(
+                                                    &meta_tmp1, &meta_tmp2,
+                                                    &meta_value, 1) < 0) {
+                        return NULL;
+                    }
+
+                    /* Convert 'start' to the merged metadata */
+                    if (cast_timedelta_to_timedelta(&meta_tmp1, &meta_value,
+                                                 tmp1, &start_value) < 0) {
+                        return NULL;
+                    }
+
+                    /* Convert 'stop' to the merged metadata */
+                    if (cast_timedelta_to_timedelta(&meta_tmp2, &meta_value,
+                                                 tmp2, &stop_value) < 0) {
+                        return NULL;
+                    }
+                }
+            }
+        }
+    }
     
     PyErr_SetString(PyExc_RuntimeError, "datetime_arange is incomplete");
     return NULL;
