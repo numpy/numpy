@@ -1101,7 +1101,7 @@ class TestDateTime(TestCase):
                      '2010-03-15T01:30-0500')
 
     def test_datetime_arange(self):
-        # Default mode
+        # With two datetimes provided as strings
         a = np.arange('2010-01-05', '2010-01-10', dtype='M8[D]')
         assert_equal(a.dtype, np.dtype('M8[D]'))
         assert_equal(a,
@@ -1113,6 +1113,12 @@ class TestDateTime(TestCase):
         assert_equal(a,
             np.array(['1950-02-10', '1950-02-09', '1950-02-08',
                       '1950-02-07'], dtype='M8[D]'))
+
+        # Unit should be detected as months here
+        a = np.arange('1969-05', '1970-05', 2, dtype='M8')
+        assert_equal(a.dtype, np.dtype('M8[M]'))
+        assert_equal(a,
+            np.datetime64('1969-05') + np.arange(12, step=2))
 
 class TestDateTimeData(TestCase):
 

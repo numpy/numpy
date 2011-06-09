@@ -4457,7 +4457,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype)
 {
     PyArray_DatetimeMetaData meta;
-    int is_timedelta = 0;
+    int type_num = 0;
     /*
      * Both datetime and timedelta are stored as int64, so they can
      * share value variables.
@@ -4496,17 +4496,14 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         return NULL;
     }
 
-    /*
-     * Now figure out whether we're doing a datetime or a timedelta
-     * arange, and get the metadata for start and stop.
+    /* Check if the units of the given dtype are generic, in which
+     * case we use the code path that detects the units
      */
     if (dtype != NULL) {
         PyArray_DatetimeMetaData *meta_tmp;
 
-        if (dtype->type_num == NPY_TIMEDELTA) {
-            is_timedelta = 1;
-        }
-        else if (dtype->type_num != NPY_DATETIME) {
+        type_num = dtype->type_num;
+        if (type_num != NPY_DATETIME && type_num != NPY_TIMEDELTA) {
             PyErr_SetString(PyExc_ValueError,
                         "datetime_arange was given a non-datetime dtype");
             return NULL;
@@ -4517,9 +4514,33 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
             return NULL;
         }
 
-        meta = *meta_tmp;
+        /*
+         * If the dtype specified is in generic units, detect the
+         * units from the input parameters.
+         */
+        if (meta_tmp->base == NPY_FR_GENERIC) {
+            dtype = NULL;
+        }
+        /* Otherwise use the provided metadata */
+        else {
+            meta = *meta_tmp;
+        }
+    }
+    else {
+        if (is_any_numpy_datetime(start) || is_any_numpy_datetime(stop)) {
+            type_num = NPY_DATETIME;
+        }
+        else {
+            type_num = NPY_TIMEDELTA;
+        }
+    }
 
-        if (is_timedelta) {
+    /*
+     * Now figure out whether we're doing a datetime or a timedelta
+     * arange, and get the metadata for start and stop.
+     */
+    if (dtype != NULL) {
+        if (type_num == NPY_TIMEDELTA) {
             /* Get 'start', defaulting to 0 if not provided */
             if (start == NULL) {
                 start_value = 0;
@@ -4594,10 +4615,8 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         meta.base = NPY_FR_GENERIC;
 
         /* Timedelta arange */
-        if (!is_any_numpy_datetime(start) && !is_any_numpy_datetime(stop)) {
+        if (type_num == NPY_TIMEDELTA) {
             PyArray_DatetimeMetaData meta_tmp, meta_mrg;
-
-            is_timedelta = 1;
 
             /* Convert start to a timedelta */
             if (start == NULL) {
@@ -4795,9 +4814,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         Py_INCREF(dtype);
     }
     else {
-        dtype = create_datetime_dtype(
-                        is_timedelta ? NPY_TIMEDELTA : NPY_DATETIME,
-                        &meta);
+        dtype = create_datetime_dtype(type_num, &meta);
         if (dtype == NULL) {
             return NULL;
         }
