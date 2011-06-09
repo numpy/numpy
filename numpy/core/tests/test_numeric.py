@@ -1227,6 +1227,8 @@ class TestLikeFuncs(TestCase):
             assert_equal(dz.shape, d.shape)
             assert_equal(array(dz.strides)*d.dtype.itemsize,
                          array(d.strides)*dz.dtype.itemsize)
+            assert_equal(d.flags.c_contiguous, dz.flags.c_contiguous)
+            assert_equal(d.flags.f_contiguous, dz.flags.f_contiguous)
             if dtype is None:
                 assert_equal(dz.dtype, d.dtype)
             else:
