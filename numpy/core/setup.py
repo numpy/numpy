@@ -593,59 +593,6 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join(local_dir, "src"))
     config.add_include_dirs(join(local_dir))
 
-    # Multiarray version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_multiarray_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'multiarray')
-        sources = [join(local_dir, subpath, 'scalartypes.c.src'),
-                   join(local_dir, subpath, 'arraytypes.c.src'),
-                   join(local_dir, subpath, 'nditer.c.src'),
-                   join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-                   join(local_dir, subpath, 'einsum.c.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
-
-    # umath version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_umath_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'umath')
-        # NOTE: For manual template conversion of loops.h.src, read the note
-        #       in that file.
-        sources = [join(local_dir, subpath, 'loops.c.src'),
-                   join(local_dir, subpath, 'umathmodule.c.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
-
-
-    def generate_umath_c(ext, build_dir):
-        target = join(build_dir,header_dir,'__umath_generated.c')
-        dir = os.path.dirname(target)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        script = generate_umath_py
-        if newer(script,target):
-            f = open(target,'w')
-            f.write(generate_umath.make_code(generate_umath.defdict,
-                                             generate_umath.__file__))
-            f.close()
-        return []
-
     config.add_data_files('include/numpy/*.h')
     config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
@@ -664,6 +611,10 @@ def configuration(parent_package='',top_path=None):
     # Don't install fenv unless we need them.
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
+
+    #######################################################################
+    #                          npymath library                            #
+    #######################################################################
 
     # npymath needs the config.h and numpyconfig.h files to be generated, but
     # build_clib cannot handle generate_config_h and generate_numpyconfig_h
@@ -702,6 +653,67 @@ def configuration(parent_package='',top_path=None):
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
             subst_dict)
+
+    #######################################################################
+    #                            sort module                              #
+    #######################################################################
+
+    # _sort version: this function is needed to build foo.c from foo.c.src
+    # when foo.c is included in another file and as such not in the src
+    # argument of build_ext command
+    def generate_sort_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'npysort')
+        sources = [join(local_dir, subpath, 'sort.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+        cmd.template_sources(sources, ext)
+
+    sort_deps = [
+            join('src', 'npysort', 'npy_sort_common.h'),
+            join('src', 'npysort', 'sort.c.src'),
+            join('src', 'npysort', 'sortmodule.c')]
+
+    sort_src = [
+            join('src', 'npysort', 'sortmodule.c'),
+            generate_sort_templated_sources,
+            generate_config_h,
+            generate_numpyconfig_h,
+            generate_numpy_api]
+
+    config.add_extension('_sort',
+            sources = sort_src,
+            depends = deps + sort_deps,
+            libraries = ['npymath'])
+
+    #######################################################################
+    #                        multiarray module                            #
+    #######################################################################
+
+    # Multiarray version: this function is needed to build foo.c from foo.c.src
+    # when foo.c is included in another file and as such not in the src
+    # argument of build_ext command
+    def generate_multiarray_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'multiarray')
+        sources = [join(local_dir, subpath, 'scalartypes.c.src'),
+                   join(local_dir, subpath, 'arraytypes.c.src'),
+                   join(local_dir, subpath, 'nditer.c.src'),
+                   join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
+                   join(local_dir, subpath, 'einsum.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+        cmd.template_sources(sources, ext)
 
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
@@ -771,6 +783,58 @@ def configuration(parent_package='',top_path=None):
     if PYTHON_HAS_UNICODE_WIDE:
         multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))
 
+    if not ENABLE_SEPARATE_COMPILATION:
+        multiarray_deps.extend(multiarray_src)
+        multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
+        multiarray_src.append(generate_multiarray_templated_sources)
+
+    config.add_extension('multiarray',
+                         sources = multiarray_src +
+                                 [generate_config_h,
+                                 generate_numpyconfig_h,
+                                 generate_numpy_api,
+                                 join(codegen_dir,'generate_numpy_api.py'),
+                                 join('*.py')],
+                         depends = deps + multiarray_deps,
+                         libraries = ['npymath'])
+
+    #######################################################################
+    #                           umath module                              #
+    #######################################################################
+
+    # umath version: this function is needed to build foo.c from foo.c.src
+    # when foo.c is included in another file and as such not in the src
+    # argument of build_ext command
+    def generate_umath_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'umath')
+        # NOTE: For manual template conversion of loops.h.src, read the note
+        #       in that file.
+        sources = [join(local_dir, subpath, 'loops.c.src'),
+                   join(local_dir, subpath, 'umathmodule.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+        cmd.template_sources(sources, ext)
+
+
+    def generate_umath_c(ext, build_dir):
+        target = join(build_dir,header_dir,'__umath_generated.c')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        script = generate_umath_py
+        if newer(script,target):
+            f = open(target,'w')
+            f.write(generate_umath.make_code(generate_umath.defdict,
+                                             generate_umath.__file__))
+            f.close()
+        return []
+
     umath_src = [
             join('src', 'umath', 'umathmodule.c.src'),
             join('src', 'umath', 'funcs.inc.src'),
@@ -781,62 +845,11 @@ def configuration(parent_package='',top_path=None):
             generate_umath_py,
             join(codegen_dir,'generate_ufunc_api.py')]
 
-    #######################################################################
-    #                            Sort Module                              #
-    #######################################################################
-
-    # _sort version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_sort_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'npysort')
-        sources = [join(local_dir, subpath, 'sort.c.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
-
-    sort_deps = [
-            join('src', 'npysort', 'npy_sort_common.h'),
-            join('src', 'npysort', 'sort.c.src'),
-            join('src', 'npysort', 'sortmodule.c')]
-
-    sort_src = [
-            join('src', 'npysort', 'sortmodule.c'),
-            generate_sort_templated_sources,
-            generate_config_h,
-            generate_numpyconfig_h,
-            generate_numpy_api]
-
-    config.add_extension('_sort',
-            sources = sort_src,
-            depends = deps + sort_deps,
-            libraries=['npymath'])
-#
     if not ENABLE_SEPARATE_COMPILATION:
-        multiarray_deps.extend(multiarray_src)
-        multiarray_src = [join('src', 'multiarray', 'multiarraymodule_onefile.c')]
-        multiarray_src.append(generate_multiarray_templated_sources)
-
         umath_deps.extend(umath_src)
         umath_src = [join('src', 'umath', 'umathmodule_onefile.c')]
         umath_src.append(generate_umath_templated_sources)
         umath_src.append(join('src', 'umath', 'funcs.inc.src'))
-
-    config.add_extension('multiarray',
-                         sources = multiarray_src +
-                                 [generate_config_h,
-                                 generate_numpyconfig_h,
-                                 generate_numpy_api,
-                                 join(codegen_dir,'generate_numpy_api.py'),
-                                 join('*.py')],
-                         depends = deps + multiarray_deps,
-                         libraries=['npymath'])
 
     config.add_extension('umath',
                          sources = umath_src +
@@ -845,17 +858,26 @@ def configuration(parent_package='',top_path=None):
                                  generate_umath_c,
                                  generate_ufunc_api],
                          depends = deps + umath_deps,
-                         libraries=['npymath'],
+                         libraries = ['npymath'],
                          )
 
+    #######################################################################
+    #                         scalarmath module                           #
+    #######################################################################
+
     config.add_extension('scalarmath',
-                         sources=[join('src','scalarmathmodule.c.src'),
+                         sources = [join('src','scalarmathmodule.c.src'),
                                   generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
                                   generate_ufunc_api],
-                         libraries=['npymath'],
+                         depends = deps,
+                         libraries = ['npymath'],
                          )
+
+    #######################################################################
+    #                          _dotblas module                            #
+    #######################################################################
 
     # Configure blasdot
     blas_info = get_info('blas_opt',0)
@@ -869,15 +891,23 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_dotblas',
                          sources = [get_dotblas_sources],
-                         depends=[join('blasdot','_dotblas.c'),
+                         depends = [join('blasdot','_dotblas.c'),
                                   join('blasdot','cblas.h'),
                                   ],
                          include_dirs = ['blasdot'],
                          extra_info = blas_info
                          )
 
+    #######################################################################
+    #                        umath_tests module                           #
+    #######################################################################
+
     config.add_extension('umath_tests',
                     sources = [join('src','umath', 'umath_tests.c.src')])
+
+    #######################################################################
+    #                     multiarray_tests module                         #
+    #######################################################################
 
     config.add_extension('multiarray_tests',
                     sources = [join('src', 'multiarray', 'multiarray_tests.c.src')])
